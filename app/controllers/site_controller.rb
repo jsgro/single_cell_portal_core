@@ -1755,43 +1755,9 @@ class SiteController < ApplicationController
 
   # load box plot scores from gene expression values using data array of cell names for given cluster
   def load_expression_boxplot_data_array_scores(annotation, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    values = initialize_plotly_objects_by_annotation(annotation)
-
-    # grab all cells present in the cluster, and use as keys to load expression scores
-    # if a cell is not present for the gene, score gets set as 0.0
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    if annotation[:scope] == 'cluster'
-      # we can take a subsample of the same size for the annotations since the sort order is non-stochastic (i.e. the indices chosen are the same every time for all arrays)
-      annotations = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:y] << @gene['scores'][cell].to_f.round(4)
-      end
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotations = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:y] << @gene['scores'][cell].to_f.round(4)
-      end
-    else
-      # since annotations are in a hash format, subsampling isn't necessary as we're going to retrieve values by key lookup
-      annotations =  @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type]).cell_annotations
-      cells.each do |cell|
-        val = annotations[cell]
-        # must check if key exists
-        if values.has_key?(val)
-          values[annotations[cell]][:y] << @gene['scores'][cell].to_f.round(4)
-          values[annotations[cell]][:cells] << cell
-        end
-      end
-    end
-    # remove any empty values as annotations may have created keys that don't exist in cluster
-    values.delete_if {|key, data| data[:y].empty?}
-    values
+    ExpressionRenderingService.load_expression_boxplot_data_array_scores(
+        @study, @gene, @cluster, annotation, subsample_threshold
+    )
   end
 
   # load cluster_group data_array values, but use expression scores to set numerical color array
