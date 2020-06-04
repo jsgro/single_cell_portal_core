@@ -31,6 +31,8 @@ See partials referenced below and scp-igv.js for larger bodies of code.
   <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   if (typeof bamAndBaiFiles === 'undefined') {
     window.bamAndBaiFiles = <%= raw @study.get_bam_files.to_json %>;
+    console.log('window.bamAndBaiFiles')
+    console.log(window.bamAndBaiFiles)
     window.gtfFiles = <%= raw @study.get_genome_annotations_by_assembly.to_json %>;
   }
   </script>

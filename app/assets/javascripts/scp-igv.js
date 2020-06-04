@@ -6,6 +6,8 @@
  * Provides a way to view nucleotide sequencing reads in genomic context.
  */
 
+console.log('start scp-igv.js')
+
 // Persists 'Genome' tab and IGV embed across view states.
 // Ensures that IGV doesn't disappear when user clicks 'Browse in genome' in
 // default view, then searches a gene.
@@ -83,7 +85,7 @@ function getBamTracks() {
  */
 function getGenesTrack(genome, genesTrackName) {
   // gtfFiles assigned in _genome.html.erb
-  const gtfFile = gtfFiles[genome].genome_annotations
+  const gtfFile = window.gtfFiles[genome].genome_annotations
 
   const genesTrack = {
     name: genesTrackName,
@@ -128,6 +130,8 @@ function igvIsDisplayed() {
  * Instantiates and renders igv.js widget on the page
  */
 function initializeIgv() {
+  console.log('start initializeIgv')
+
   // Bail if already displayed
   if (igvIsDisplayed()) return
 
@@ -142,13 +146,19 @@ function initializeIgv() {
   const genes = $('.queried-gene')
   const locus = (genes.length === 0) ? ['myc'] : [genes.first().text()]
 
-  const genome = bamsToViewInIgv[0].genomeAssembly
+  const genomeId = bamsToViewInIgv[0].genomeAssembly
+  const reference = {
+    id: genomeId,
+    cytobandURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/cytobands%2Fmacaca-fascicularis-cytobands.txt?alt=media',
+    fastaURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/genomes%2FMacaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.gz?alt=media',
+    indexURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/genomes%2FMacaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.gz.fai?alt=media'
+  }
   const genesTrackName = `Genes | ${bamsToViewInIgv[0].genomeAnnotation.name}`
-  const genesTrack = getGenesTrack(genome, genesTrackName)
+  const genesTrack = getGenesTrack(genomeId, genesTrackName)
   const bamTracks = getBamTracks()
   const tracks = [genesTrack].concat(bamTracks)
 
-  const igvOptions = { genome, locus, tracks }
+  const igvOptions = { reference, locus, tracks }
 
   igv.createBrowser(igvContainer, igvOptions)
 
@@ -158,12 +168,16 @@ function initializeIgv() {
 }
 
 $(document).on('click', '#genome-tab-nav > a', event => {
+  console.log('in #genome-tab-nav click handler, bamAndBaiFiles:')
+  console.log(bamAndBaiFiles)
   if (typeof bamAndBaiFiles !== 'undefined') {
     initializeIgv()
   }
 })
 
 $(document).ready(() => {
+  console.log('in scp-igv.js, $(document).ready(), accessToken:')
+  console.log(accessToken)
   // Bail if on a page without genome visualization support
   if (typeof accessToken === 'undefined') return
 
