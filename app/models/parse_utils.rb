@@ -209,7 +209,6 @@ class ParseUtils
         delete_remote_file_on_fail(barcodes_study_file, study)
       end
       bundle = matrix_study_file.study_file_bundle
-      puts "bundle: #{bundle}"
       bundle.destroy
       matrix_study_file.destroy
       genes_study_file.destroy
