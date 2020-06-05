@@ -104,7 +104,7 @@ class ParseUtils
       # create array of known cells for this expression matrix
       @barcodes.each_slice(DataArray::MAX_ENTRIES).with_index do |slice, index|
         Rails.logger.info "#{Time.zone.now}: Create known cells array ##{index + 1} for #{matrix_study_file.name}:#{matrix_study_file.id} in #{study.name}"
-        known_cells = DataArray.new(study_id: self.id, name: "#{matrix_study_file.name} Cells", cluster_name: matrix_study_file.name,
+        known_cells = DataArray.new(study_id: study.id, name: "#{matrix_study_file.name} Cells", cluster_name: matrix_study_file.name,
                                     array_type: 'cells', array_index: index + 1, values: slice, study_file_id: matrix_study_file.id,
                                     linear_data_type: 'Study', linear_data_id: study.id)
         known_cells.save
@@ -209,6 +209,7 @@ class ParseUtils
         delete_remote_file_on_fail(barcodes_study_file, study)
       end
       bundle = matrix_study_file.study_file_bundle
+      puts "bundle: #{bundle}"
       bundle.destroy
       matrix_study_file.destroy
       genes_study_file.destroy
