@@ -1358,8 +1358,15 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       retry_time = retry_count * RETRY_INTERVAL
       sleep(retry_time) unless RETRY_BACKOFF_BLACKLIST.include?(method_name)
       # only retry if status code indicates a possible temporary error, and we are under the retry limit and
-      # not calling a method that is blocked from retries
-      status_code = e.respond_to?(:code) ? e.code : nil
+      # not calling a method that is blocked from retries.  In case of a NoMethodError or RuntimeError, use 500 as the
+      # status code since these are unrecoverable errors
+      if e.respond_to?(:code)
+        status_code = e.code
+      elsif e.is_a?(NoMethodError) || e.is_a?(RuntimeError)
+        status_code = 500
+      else
+        status_code = nil
+      end
       if should_retry?(status_code) && retry_count < MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(method_name)
         execute_gcloud_method(method_name, current_retry, *params)
       else
