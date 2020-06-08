@@ -17,7 +17,7 @@ class ParseUtilsTest < ActiveSupport::TestCase
 
     # control values
     @expected_genes = File.open(genes.upload.path).readlines.map {|line| line.split.map(&:strip)}
-    @expected_cells = File.open(barcodes.upload.path).readlines.map(&:strip)
+    @expected_cells = File.open(barcodes_file.upload.path).readlines.map(&:strip)
     matrix_file = File.open(matrix.upload.path).readlines
     matrix_file.shift(3) # discard header lines
     expressed_gene_idx = matrix_file.map {|line| line.split.first.strip.to_i}
