@@ -144,7 +144,7 @@ function initializeIgv() {
   const igvContainer = document.getElementById('igv-container')
 
   const genes = $('.queried-gene')
-  const locus = (genes.length === 0) ? ['myc'] : [genes.first().text()]
+  const locus = (genes.length === 0) ? ['chr1:1-2'] : [genes.first().text()]
 
   const genomeId = bamsToViewInIgv[0].genomeAssembly
   const reference = {
