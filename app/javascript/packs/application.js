@@ -47,8 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
     )
   }
   if (document.getElementById('covid19-page-content')) {
-    logPageView()
-
     ReactDOM.render(
       <Covid19PageContent />, document.getElementById('covid19-page-content')
     )
