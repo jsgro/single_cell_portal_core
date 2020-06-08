@@ -13,7 +13,7 @@ class ParseUtilsTest < ActiveSupport::TestCase
     # load study files
     matrix = @study.study_files.by_type('MM Coordinate Matrix').first
     genes = @study.study_files.by_type('10X Genes File').first
-    barcodes = @study.study_files.by_type('10X Barcodes File').first
+    barcodes_file = @study.study_files.by_type('10X Barcodes File').first
 
     # control values
     @expected_genes = File.open(genes.upload.path).readlines.map {|line| line.split.map(&:strip)}
@@ -27,7 +27,7 @@ class ParseUtilsTest < ActiveSupport::TestCase
 
     user = User.first
     puts 'Parsing 10X GRCh38 output...'
-    ParseUtils.cell_ranger_expression_parse(@study, user, matrix, genes, barcodes, {skip_upload: true})
+    ParseUtils.cell_ranger_expression_parse(@study, user, matrix, genes, barcodes_file, {skip_upload: true})
     puts 'Parse of 10X GRCh38 complete'
     # validate that the expected significant values have been created
     @expected_genes.each do |entry|
@@ -59,7 +59,7 @@ class ParseUtilsTest < ActiveSupport::TestCase
                                       file_type: 'MM Coordinate Matrix', study_id: study.id)
     genes_file = StudyFile.create!(name: 'GRCh38/test_genes.tsv', upload: File.open(Rails.root.join('test', 'test_data', 'GRCh38', 'test_genes.tsv')),
                                    file_type: '10X Genes File', study_id: study.id, options: {matrix_id: mm_coord_file.id.to_s})
-    barcodes = StudyFile.create!(name: 'GRCh38/barcodes.tsv', upload: File.open(Rails.root.join('test', 'test_data', 'GRCh38', 'barcodes.tsv')),
+    barcodes_file = StudyFile.create!(name: 'GRCh38/barcodes.tsv', upload: File.open(Rails.root.join('test', 'test_data', 'GRCh38', 'barcodes.tsv')),
                                  file_type: '10X Barcodes File', study_id: study.id, options: {matrix_id: mm_coord_file.id.to_s})
 
     study_file_bundle = study.study_file_bundles.build(bundle_type: mm_coord_file.file_type)
@@ -72,11 +72,11 @@ class ParseUtilsTest < ActiveSupport::TestCase
 
     begin
       puts 'Parsing 10X incorrectly sorted matrix...'
-      ParseUtils.cell_ranger_expression_parse(study, user, mm_coord_file, genes_file, barcodes, {skip_upload: true, sync: true})
+      ParseUtils.cell_ranger_expression_parse(study, user, mm_coord_file, genes_file, barcodes_file, {skip_upload: true, sync: true})
     rescue => e
       assert e.is_a?(StandardError), "Did not raise the correct error, expected StandardError but found #{e.class}"
       assert e.message.starts_with?('Your input matrix is not sorted in the correct order.'), "Error message did not specify incorrect sort order: #{e.message}"
-      assert study.genes.count == 0, "Should not have saved any genes, found #{@study.genes.count}"
+      assert study.genes.count == 0, "Should not have saved any genes, found #{study.genes.count}"
     end
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
