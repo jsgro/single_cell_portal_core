@@ -2978,14 +2978,19 @@ class Study
 
   # check whether a study is "detached" (bucket/workspace missing)
   def set_study_detached_state(error)
-    case error.class.name
-    when 'NoMethodError'
-      if error.message == "undefined method `files' for nil:NilClass"
-        Rails.logger.error "Marking #{self.name} as 'detached' due to missing bucket: #{self.bucket_id}"
-        self.update(detached: true)
-      end
-    when 'RuntimeError'
-      if error.message == "#{self.firecloud_project}/#{self.firecloud_workspace} does not exist"
+    # missing bucket errors should have one of three messages
+    #
+    # nil:NilClass => returned from a NoMethodError when calling bucket.files
+    # forbidden, does not have storage.buckets.get access => resulting from 403 when accessing bucket as ACLs
+    # have been revoked pending delete
+    if /(nil\:NilClass|does not have storage.buckets.get access|forbidden)/.match(error.message)
+      Rails.logger.error "Marking #{self.name} as 'detached' due to error reading bucket files; #{error.class.name}: #{error.message}"
+      self.update(detached: true)
+    else
+      # check if workspace is still available, otherwise mark detached
+      begin
+        Study.firecloud_client.get_workspace(self.firecloud_project, self.firecloud_workspace)
+      rescue RuntimeError => e
         Rails.logger.error "Marking #{self.name} as 'detached' due to missing workspace: #{self.firecloud_project}/#{self.firecloud_workspace}"
         self.update(detached: true)
       end
