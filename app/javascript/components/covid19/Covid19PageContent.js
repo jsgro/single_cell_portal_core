@@ -32,7 +32,6 @@ function CovidRawPageContent() {
           <StudySearchProvider preset="covid19" >
             <ErrorBoundary>
               <SearchPanel showCommonButtons={false}
-                showDownloadButton={false}
                 keywordPrompt="Search within COVID-19 studies"
                 searchOnLoad={true}/>
             </ErrorBoundary>
