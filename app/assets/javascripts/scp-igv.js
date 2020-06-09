@@ -6,8 +6,6 @@
  * Provides a way to view nucleotide sequencing reads in genomic context.
  */
 
-console.log('start scp-igv.js')
-
 // Persists 'Genome' tab and IGV embed across view states.
 // Ensures that IGV doesn't disappear when user clicks 'Browse in genome' in
 // default view, then searches a gene.
@@ -130,8 +128,6 @@ function igvIsDisplayed() {
  * Instantiates and renders igv.js widget on the page
  */
 function initializeIgv() {
-  console.log('start initializeIgv')
-
   // Bail if already displayed
   if (igvIsDisplayed()) return
 
@@ -147,11 +143,20 @@ function initializeIgv() {
   const locus = (genes.length === 0) ? ['chr1:1-2'] : [genes.first().text()]
 
   const genomeId = bamsToViewInIgv[0].genomeAssembly
-  const reference = {
-    id: genomeId,
-    cytobandURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/cytobands%2Fmacaca-fascicularis-cytobands.txt?alt=media',
-    fastaURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/genomes%2FMacaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.gz?alt=media',
-    indexURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/genomes%2FMacaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.gz.fai?alt=media'
+
+  let reference
+  if (genomeId === 'Macaca_fascicularis_5.0') {
+    // To consider:
+    //  - Move these to reference data bucket
+    //  - Update genomes pipeline to make such files automatically reproducible
+    reference = {
+      id: genomeId,
+      cytobandURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/cytobands%2Fmacaca-fascicularis-cytobands.txt?alt=media',
+      fastaURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/genomes%2FMacaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa?alt=media',
+      indexURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/genomes%2FMacaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.fai?alt=media'
+    }
+  } else {
+    reference = genomeId
   }
   const genesTrackName = `Genes | ${bamsToViewInIgv[0].genomeAnnotation.name}`
   const genesTrack = getGenesTrack(genomeId, genesTrackName)
@@ -168,16 +173,12 @@ function initializeIgv() {
 }
 
 $(document).on('click', '#genome-tab-nav > a', event => {
-  console.log('in #genome-tab-nav click handler, bamAndBaiFiles:')
-  console.log(bamAndBaiFiles)
   if (typeof bamAndBaiFiles !== 'undefined') {
     initializeIgv()
   }
 })
 
 $(document).ready(() => {
-  console.log('in scp-igv.js, $(document).ready(), accessToken:')
-  console.log(accessToken)
   // Bail if on a page without genome visualization support
   if (typeof accessToken === 'undefined') return
 
