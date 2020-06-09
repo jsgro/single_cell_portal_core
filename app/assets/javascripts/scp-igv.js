@@ -140,12 +140,14 @@ function initializeIgv() {
   const igvContainer = document.getElementById('igv-container')
 
   const genes = $('.queried-gene')
-  const locus = (genes.length === 0) ? ['chr1:1-2'] : [genes.first().text()]
 
   const genomeId = bamsToViewInIgv[0].genomeAssembly
 
   let reference
+  let locus
   if (genomeId === 'Macaca_fascicularis_5.0') {
+    locus = ['chr1:1-2']
+
     // To consider:
     //  - Update genomes pipeline to make such files automatically reproducible
     const genomeAnnotationObj = bamsToViewInIgv[0].genomeAnnotation
@@ -161,6 +163,7 @@ function initializeIgv() {
       indexURL: `${macacaFascicularisBase}Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.fai?alt=media`
     }
   } else {
+    locus = (genes.length === 0) ? ['myc'] : [genes.first().text()]
     reference = genomeId
   }
   const genesTrackName = `Genes | ${bamsToViewInIgv[0].genomeAnnotation.name}`
