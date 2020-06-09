@@ -147,13 +147,18 @@ function initializeIgv() {
   let reference
   if (genomeId === 'Macaca_fascicularis_5.0') {
     // To consider:
-    //  - Move these to reference data bucket
     //  - Update genomes pipeline to make such files automatically reproducible
+    const genomeAnnotationObj = bamsToViewInIgv[0].genomeAnnotation
+    const genomePath = `${genomeAnnotationObj.link.split('/').slice(0, -2).join('%2F')}%2F`
+    const bucket = genomeAnnotationObj.bucket_id
+    const gcsBase = 'https://www.googleapis.com/storage/v1/b/'
+    const macacaFascicularisBase = `${gcsBase + bucket}/o/${genomePath}`
+
     reference = {
       id: genomeId,
-      cytobandURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/cytobands%2Fmacaca-fascicularis-cytobands.txt?alt=media',
-      fastaURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/genomes%2FMacaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa?alt=media',
-      indexURL: 'https://www.googleapis.com/storage/v1/b/broad-singlecellportal-public/o/genomes%2FMacaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.fai?alt=media'
+      cytobandURL: `${macacaFascicularisBase}macaca-fascicularis-cytobands.txt?alt=media`,
+      fastaURL: `${macacaFascicularisBase}Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa?alt=media`,
+      indexURL: `${macacaFascicularisBase}Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.fai?alt=media`
     }
   } else {
     reference = genomeId
