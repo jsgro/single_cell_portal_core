@@ -60,7 +60,7 @@ class ParseUtilsTest < ActiveSupport::TestCase
     genes_file = StudyFile.create!(name: 'GRCh38/test_genes.tsv', upload: File.open(Rails.root.join('test', 'test_data', 'GRCh38', 'test_genes.tsv')),
                                    file_type: '10X Genes File', study_id: study.id, options: {matrix_id: mm_coord_file.id.to_s})
     barcodes_file = StudyFile.create!(name: 'GRCh38/barcodes.tsv', upload: File.open(Rails.root.join('test', 'test_data', 'GRCh38', 'barcodes.tsv')),
-                                      file_type: '10X Barcodes File', study_id: study.id, options: {matrix_id: mm_coord_file.id.to_s})
+                                 file_type: '10X Barcodes File', study_id: study.id, options: {matrix_id: mm_coord_file.id.to_s})
 
     study_file_bundle = study.study_file_bundles.build(bundle_type: mm_coord_file.file_type)
     bundle_payload = StudyFileBundle.generate_file_list(mm_coord_file)

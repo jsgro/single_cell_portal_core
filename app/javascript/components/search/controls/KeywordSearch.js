@@ -59,8 +59,8 @@ export default function KeywordSearch({ keywordPrompt }) {
         </div>
         { showClear &&
           <Button className="keyword-clear"
-                  type='button'
-                  onClick={ handleClear } >
+            type='button'
+            onClick={ handleClear } >
             <FontAwesomeIcon icon={ faTimes } />
           </Button> }
       </InputGroup>
