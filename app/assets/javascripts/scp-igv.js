@@ -83,7 +83,7 @@ function getBamTracks() {
  */
 function getGenesTrack(genome, genesTrackName) {
   // gtfFiles assigned in _genome.html.erb
-  const gtfFile = gtfFiles[genome].genome_annotations
+  const gtfFile = window.gtfFiles[genome].genome_annotations
 
   const genesTrack = {
     name: genesTrackName,
@@ -140,15 +140,38 @@ function initializeIgv() {
   const igvContainer = document.getElementById('igv-container')
 
   const genes = $('.queried-gene')
-  const locus = (genes.length === 0) ? ['myc'] : [genes.first().text()]
 
-  const genome = bamsToViewInIgv[0].genomeAssembly
+  const genomeId = bamsToViewInIgv[0].genomeAssembly
+
+  let reference
+  let locus
+  if (genomeId === 'Macaca_fascicularis_5.0') {
+    locus = ['chr1:1-2']
+
+    // To consider:
+    //  - Update genomes pipeline to make such files automatically reproducible
+    const genomeAnnotationObj = bamsToViewInIgv[0].genomeAnnotation
+    const genomePath = `${genomeAnnotationObj.link.split('/').slice(0, -2).join('%2F')}%2F`
+    const bucket = genomeAnnotationObj.bucket_id
+    const gcsBase = 'https://www.googleapis.com/storage/v1/b/'
+    const macacaFascicularisBase = `${gcsBase + bucket}/o/${genomePath}`
+
+    reference = {
+      id: genomeId,
+      cytobandURL: `${macacaFascicularisBase}macaca-fascicularis-cytobands.txt?alt=media`,
+      fastaURL: `${macacaFascicularisBase}Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa?alt=media`,
+      indexURL: `${macacaFascicularisBase}Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.fai?alt=media`
+    }
+  } else {
+    locus = (genes.length === 0) ? ['myc'] : [genes.first().text()]
+    reference = genomeId
+  }
   const genesTrackName = `Genes | ${bamsToViewInIgv[0].genomeAnnotation.name}`
-  const genesTrack = getGenesTrack(genome, genesTrackName)
+  const genesTrack = getGenesTrack(genomeId, genesTrackName)
   const bamTracks = getBamTracks()
   const tracks = [genesTrack].concat(bamTracks)
 
-  const igvOptions = { genome, locus, tracks }
+  const igvOptions = { reference, locus, tracks }
 
   igv.createBrowser(igvContainer, igvOptions)
 
