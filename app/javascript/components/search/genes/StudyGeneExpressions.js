@@ -3,13 +3,16 @@ import React from 'react'
 import { getByline } from 'components/search/results/Study'
 // import StudyGeneDotPlot from './StudyGeneDotPlot'
 import StudyViolinPlot from './StudyViolinPlot'
+import Study from 'components/search/results/Study'
 
 /** Renders expression data for a study.  This assumes that the study has a 'gene_matches' property
     to inform which genes to show data for
   */
 export default function StudyGeneExpressions({ study }) {
   let studyRenderComponent
-
+  if (!study.gene_matches) {
+    return <Study study={study}/>
+  }
   if (!study.can_visualize_clusters) {
     studyRenderComponent = (
       <div className="text-center">
