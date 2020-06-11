@@ -104,7 +104,7 @@ export function PropsStudySearchProvider(props) {
     // reset the page to 1 for new searches, unless otherwise specified
     search.page = newParams.page ? newParams.page : 1
     search.preset = undefined // for now, exclude preset from the page URL--it's in the component props instead
-    const mergedParams = Object.assign(search, buildGeneParamsFromQuery(window.location.search))
+    const mergedParams = Object.assign(buildGeneParamsFromQuery(window.location.search), search)
     const queryString = buildSearchQueryString('study', mergedParams)
     navigate(`?${queryString}`)
   }
