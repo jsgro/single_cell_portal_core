@@ -42,13 +42,13 @@ export default function GeneKeyword({ placeholder }) {
     <form className="gene-keyword-search form-horizontal" onSubmit={ handleSubmit }>
       <div className="input-group">
         <input type="text"
-          ref = { inputField }
+          ref={ inputField }
           className="form-control"
-          value={genes}
+          value={ genes }
           size="50"
           onChange={ e => setGenes(e.target.value) }
           placeholder={ placeholder }
-          name="genesText"/>
+          name="genes-text-input"/>
         <div className="input-group-append">
           <Button type="submit">
             <FontAwesomeIcon icon={ faSearch } />
