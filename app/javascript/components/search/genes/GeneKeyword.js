@@ -13,7 +13,7 @@ import { StudySearchContext } from 'providers/StudySearchProvider'
   * having it inlined in GeneSearchView led to a mysterious infinite-repaint bug in StudyResults
   * this shares a lot of UI/functionality with KeywordSearch.js, so it's a candidate for future refactoring
   */
-export default function GeneKeyword({placeholder}) {
+export default function GeneKeyword({ placeholder }) {
   const geneSearchState = useContext(GeneSearchContext)
   const studySearchState = useContext(StudySearchContext)
   const [genes, setGenes] = useState(_clone(geneSearchState.params.genes))
@@ -38,7 +38,7 @@ export default function GeneKeyword({placeholder}) {
     setGenes('')
   }
 
-  return  (
+  return (
     <form className="gene-keyword-search form-horizontal" onSubmit={ handleSubmit }>
       <div className="input-group">
         <input type="text"
@@ -56,8 +56,8 @@ export default function GeneKeyword({placeholder}) {
         </div>
         { showClear &&
           <Button className="keyword-clear"
-                  type='button'
-                  onClick={ handleClear } >
+            type='button'
+            onClick={ handleClear } >
             <FontAwesomeIcon icon={ faTimes } />
           </Button> }
       </div>

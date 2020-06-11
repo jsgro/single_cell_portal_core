@@ -1,13 +1,12 @@
 import React, { useContext, useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlusSquare, faMinusSquare, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons'
+import { faPlusSquare, faMinusSquare } from '@fortawesome/free-solid-svg-icons'
 
 import { GeneSearchContext } from 'providers/GeneSearchProvider'
 import GeneKeyword from './GeneKeyword'
 import { hasSearchParams, StudySearchContext } from 'providers/StudySearchProvider'
 import SearchPanel from 'components/search/controls/SearchPanel'
 import ResultsPanel from 'components/search/results/ResultsPanel'
-import SearchQueryDisplay from 'components/search/results/SearchQueryDisplay'
 import StudyGeneExpressions from './StudyGeneExpressions'
 import { FeatureFlagContext } from 'providers/FeatureFlagProvider'
 
@@ -30,7 +29,7 @@ export default function GeneSearchView() {
 
   let geneSearchPlaceholder = 'Search for genes across all studies'
   if (hasSearchParams(studySearchState.params) && featureFlagState.gene_study_filter) {
-    geneSearchPlaceholder = 'Search for genes in the filtered studies';
+    geneSearchPlaceholder = 'Search for genes in the filtered studies'
   }
 
   useEffect(() => {
@@ -46,7 +45,7 @@ export default function GeneSearchView() {
     <div>
       <div className="row">
         <div className="col-md-12 col-sm-12 col-xs-12">
-           <GeneKeyword placeholder={geneSearchPlaceholder}/>
+          <GeneKeyword placeholder={geneSearchPlaceholder}/>
         </div>
       </div>
       { featureFlagState.gene_study_filter &&
