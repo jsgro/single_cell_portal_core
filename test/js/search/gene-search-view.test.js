@@ -45,7 +45,7 @@ describe('Gene search page landing', () => {
         </PropsStudySearchProvider>
       </FeatureFlagContext.Provider>
     ))
-    console.log(wrapper.debug())
+
     expect(wrapper.find(Study)).toHaveLength(0)
     const wrapperText = wrapper.find('.study-gene-result').text()
     expect(wrapperText.indexOf('This study contains agpat2 in expression data')).toBeGreaterThan(0)

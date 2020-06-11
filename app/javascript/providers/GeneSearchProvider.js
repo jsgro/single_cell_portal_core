@@ -103,11 +103,12 @@ export function PropsGeneSearchProvider(props) {
   )
 }
 
-export function buildParamsFromQuery(query) {
+export function buildParamsFromQuery(query, preset) {
   const queryParams = queryString.parse(query)
   return {
     page: queryParams.genePage ? parseInt(queryParams.genePage) : 1,
-    genes: queryParams.genes ? queryParams.genes : ''
+    genes: queryParams.genes ? queryParams.genes : '',
+    preset: preset ? preset : queryString.preset_search
   }
 }
 
@@ -118,7 +119,7 @@ export function buildParamsFromQuery(query) {
  */
 export default function GeneSearchProvider(props) {
   const location = useLocation()
-  const searchParams = buildParamsFromQuery(location.search)
+  const searchParams = buildParamsFromQuery(location.search, props.preset)
   return (
     <PropsGeneSearchProvider searchParams={searchParams}>
       {props.children}
