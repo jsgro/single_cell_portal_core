@@ -10,6 +10,7 @@ import {
   buildFacetsFromQueryString
 } from 'lib/scp-api'
 import SearchSelectionProvider from './SearchSelectionProvider'
+import { buildParamsFromQuery as buildGeneParamsFromQuery } from './GeneSearchProvider'
 
 const emptySearch = {
   params: {
@@ -103,7 +104,8 @@ export function PropsStudySearchProvider(props) {
     // reset the page to 1 for new searches, unless otherwise specified
     search.page = newParams.page ? newParams.page : 1
     search.preset = undefined // for now, exclude preset from the page URL--it's in the component props instead
-    const queryString = buildSearchQueryString('study', search)
+    const mergedParams = Object.assign(search, buildGeneParamsFromQuery(window.location.search))
+    const queryString = buildSearchQueryString('study', mergedParams)
     navigate(`?${queryString}`)
   }
 
@@ -142,6 +144,16 @@ export function PropsStudySearchProvider(props) {
   )
 }
 
+export function buildParamsFromQuery(query, preset) {
+  const queryParams = queryString.parse(query)
+  return {
+    page: queryParams.page ? parseInt(queryParams.page) : 1,
+    terms: queryParams.terms ? queryParams.terms : '',
+    facets: buildFacetsFromQueryString(queryParams.facets),
+    preset: preset ? preset : queryString.preset_search,
+    order: queryParams.order
+  }
+}
 
 /**
  * Self-contained component for providing a url-routable
@@ -150,14 +162,7 @@ export function PropsStudySearchProvider(props) {
  */
 export default function StudySearchProvider(props) {
   const location = useLocation()
-  const queryParams = queryString.parse(location.search)
-  const searchParams = {
-    page: queryParams.page ? parseInt(queryParams.page) : 1,
-    terms: queryParams.terms ? queryParams.terms : '',
-    facets: buildFacetsFromQueryString(queryParams.facets),
-    preset: props.preset ? props.preset : queryString.preset_search,
-    order: queryParams.order
-  }
+  const searchParams = buildParamsFromQuery(location.search, props.preset)
 
   return (
     <PropsStudySearchProvider searchParams={searchParams}>
