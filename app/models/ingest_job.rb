@@ -246,10 +246,11 @@ class IngestJob
         SearchFacet.delay.update_all_facet_filters
       end
     when /Matrix/
-      self.study.set_gene_count
+      self.study.delay.set_gene_count
     when 'Cluster'
       self.set_study_default_options
       self.launch_subsample_jobs
+      self.set_subsampling_flags
     end
     self.set_study_initialized
   end
@@ -306,9 +307,9 @@ class IngestJob
       cluster_ingested = self.action.to_sym == :ingest_cluster
       cluster = ClusterGroup.find_by(study_id: self.study.id, study_file_id: self.study_file.id)
       metadata_parsed = self.study.metadata_file.present? && self.study.metadata_file.parsed?
-      if cluster_ingested && cluster.can_subsample? && metadata_parsed
-        # immediately set cluster.subsampled = true to gate race condition if metadata file just finished parsing
-        cluster.update(subsampled: true)
+      if cluster_ingested && metadata_parsed && cluster.can_subsample? && !cluster.is_subsampling?
+        # immediately set cluster.is_subsampling = true to gate race condition if metadata file just finished parsing
+        cluster.update(is_subsampling: true)
         file_identifier = "#{self.study_file.bucket_location}:#{self.study_file.id}"
         Rails.logger.info "Launching subsampling ingest run for #{file_identifier} after #{self.action}"
         submission = ApplicationController.papi_client.run_pipeline(study_file: self.study_file, user: self.user,
@@ -323,9 +324,9 @@ class IngestJob
       metadata_identifier = "#{self.study_file.bucket_location}:#{self.study_file.id}"
       self.study.study_files.where(file_type: 'Cluster', parse_status: 'parsed').each do |cluster_file|
         cluster = ClusterGroup.find_by(study_id: self.study.id, study_file_id: cluster_file.id)
-        if cluster.can_subsample?
-          # set cluster.subsampled = true to avoid future race conditions
-          cluster.update(subsampled: true)
+        if cluster.can_subsample? && !cluster.is_subsampling?
+          # set cluster.is_subsampling = true to avoid future race conditions
+          cluster.update(is_subsampling: true)
           file_identifier = "#{cluster_file.bucket_location}:#{cluster_file.id}"
           Rails.logger.info "Launching subsampling ingest run for #{file_identifier} after #{self.action} of #{metadata_identifier}"
           submission = ApplicationController.papi_client.run_pipeline(study_file: cluster_file, user: self.user,
@@ -334,6 +335,18 @@ class IngestJob
           IngestJob.new(pipeline_name: submission.name, study: self.study, study_file: cluster_file,
                         user: self.user, action: :ingest_subsample).poll_for_completion
         end
+      end
+    end
+  end
+
+  # Set correct subsampling flags on a cluster after job completion
+  def set_subsampling_flags
+    case self.action
+    when :ingest_subsample
+      cluster_group = ClusterGroup.find_by(study_id: self.study.id, study_file_id: self.study_file.id)
+      if cluster_group.is_subsampling? && cluster_group.find_subsampled_data_arrays.any?
+        Rails.logger.info "Setting subsampled flags for #{self.study_file.upload_file_name}:#{self.study_file.id} (#{cluster_group.name}) for visualization"
+        cluster_group.update(subsampled: true, is_subsampling: false)
       end
     end
   end
@@ -406,6 +419,12 @@ class IngestJob
           end
         end
         message << "Total points in cluster: #{cluster.points}"
+        # notify user that subsampling is about to run and inform them they can't delete cluster/metadata files
+        if cluster.can_subsample? && self.study.metadata_file.present?
+          message << "This cluster file will now be processed to compute representative subsamples for visualization."
+          message << "You will receive an additional email once this has completed."
+          message << "While subsamples are being computed, you will not be able to remove this cluster file or your metadata file."
+        end
       else
         message << "Subsampling has completed for #{cluster.name}"
         message << "Subsamples generated: #{cluster.subsample_thresholds_required.join(', ')}"
@@ -469,25 +488,24 @@ class IngestJob
   # *returns*
   #  - (String) => String showing annotation information for email
   def get_annotation_message(annotation_source:, cell_annotation: nil)
+    max_values = CellMetadatum::GROUP_VIZ_THRESHOLD.max
     case annotation_source.class
     when CellMetadatum
       message = "#{annotation_source.name}: #{annotation_source.annotation_type}"
-      if annotation_source.can_visualize?
+      if annotation_source.values.size < max_values || annotation_source.annotation_type == 'numeric'
         values = annotation_source.values.any? ? ' (' + annotation_source.values.join(', ') + ')' : ''
       else
-        values = ' (List too large for email)'
+        values = " (List too large for email -- #{annotation_source.values.size} values present, max is #{max_values})"
       end
       message + values
     when ClusterGroup
       message = "#{cell_annotation['name']}: #{cell_annotation['type']}"
-      if annotation_source.can_visualize_cell_annotation?(cell_annotation)
+      if cell_annotation['values'].size < max_values || cell_annotation['type'] == 'numeric'
         values = cell_annotation['type'] == 'group' ? ' (' + cell_annotation['values'].join(',') + ')' : ''
       else
-        values = ' (List too large for email)'
+        values = " (List too large for email -- #{cell_annotation['values'].size} values present, max is #{max_values})"
       end
       message + values
-    else
-      nil
     end
   end
 end

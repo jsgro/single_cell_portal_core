@@ -43,6 +43,10 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   # List of projects where computes are not permitted (sets canCompute to false for all users by default, can only be overridden
   # by PROJECT_OWNER)
   COMPUTE_BLACKLIST = %w(single-cell-portal)
+  # Name of user group to set as workspace owner for user-controlled billing projects.  Reduces the amount of
+  # groups the portal service account needs to be a member of
+  # defaults to the Terra billing project this instance is configured against, plus "-sa-owner-group"
+  WS_OWNER_GROUP_NAME = "#{PORTAL_NAMESPACE}-sa-owner-group"
 
   ##
   # SERVICE NAMES AND DESCRIPTIONS
@@ -106,18 +110,8 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
     else
       self.user = user
       self.project = project
-      # when initializing with a user, pull access token from user object and set desired project
-      if user.refresh_token.nil? && user.api_access_token.present?
-        # as this client is only getting instantiated for a single request via the API, set expiration timestamp
-        # to 5 minutes, as this is the length of an HTTP request
-        expiration_timestamp = Time.now + 5.minutes
-        self.access_token = {
-            'access_token' => user.api_access_token, 'expires_in' => 5.minutes.to_i, 'expires_at' => expiration_timestamp
-        }
-      else
-        self.access_token = user.valid_access_token
-      end
-
+      # user.token_for_api_call will retrieve valid access token to use, if present
+      self.access_token = user.token_for_api_call
       self.expires_at = self.access_token['expires_at']
 
       # use user-defined project instead of portal default
@@ -134,7 +128,6 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
 
       self.storage = Google::Cloud::Storage.new(storage_attr)
     end
-
     # set FireCloud API base url
     self.api_root = BASE_URL
   end
@@ -1365,8 +1358,15 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       retry_time = retry_count * RETRY_INTERVAL
       sleep(retry_time) unless RETRY_BACKOFF_BLACKLIST.include?(method_name)
       # only retry if status code indicates a possible temporary error, and we are under the retry limit and
-      # not calling a method that is blocked from retries
-      status_code = e.respond_to?(:code) ? e.code : nil
+      # not calling a method that is blocked from retries.  In case of a NoMethodError or RuntimeError, use 500 as the
+      # status code since these are unrecoverable errors
+      if e.respond_to?(:code)
+        status_code = e.code
+      elsif e.is_a?(NoMethodError) || e.is_a?(RuntimeError)
+        status_code = 500
+      else
+        status_code = nil
+      end
       if should_retry?(status_code) && retry_count < MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(method_name)
         execute_gcloud_method(method_name, current_retry, *params)
       else

@@ -1,4 +1,9 @@
 class RequestUtils
+
+  # load same sanitizer as ActionView for stripping html/js from inputs
+  # using FullSanitizer as it is the most strict
+  SANITIZER ||= Rails::Html::FullSanitizer.new
+
   def self.get_selected_annotation(params, study, cluster)
     selector = params[:annotation].nil? ? params[:gene_set_annotation] : params[:annotation]
     annot_name, annot_type, annot_scope = selector.nil? ? study.default_annotation.split('--') : selector.split('--')
@@ -54,5 +59,21 @@ class RequestUtils
       page_num = parsed_num
     end
     page_num
+  end
+
+  # safely determine min/max bounds of an array, accounting for NaN value
+  def self.get_minmax(values_array)
+    begin
+      values_array.minmax
+    rescue TypeError, ArgumentError
+      values_array.dup.reject!(&:nan?).minmax
+    end
+  end
+
+  # safely strip unsafe characters and encode search parameters for query/rendering
+  # strips out unsafe characters that break rendering notices/modals
+  def self.sanitize_search_terms(terms)
+    inputs = terms.is_a?(Array) ? terms.join(',') : terms
+    SANITIZER.sanitize(inputs).encode('ASCII-8BIT', invalid: :replace, undef: :replace)
   end
 end

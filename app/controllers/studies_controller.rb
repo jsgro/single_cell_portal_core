@@ -365,7 +365,7 @@ class StudiesController < ApplicationController
         end
         if @study.previous_changes.keys.include?('name')
           # if user renames a study, invalidate all caches
-          CacheRemovalJob.new(@study.accession).delay.perform
+          CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
         end
         if @study.study_shares.any?
           SingleCellMailer.share_update_notification(@study, changes, current_user).deliver_now
@@ -411,7 +411,7 @@ class StudiesController < ApplicationController
       end
 
       # queue jobs to delete study caches & study itself
-      CacheRemovalJob.new(@study.accession).delay.perform
+      CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
       DeleteQueueJob.new(@study).delay.perform
 
       # notify users of deletion before removing shares & owner
@@ -452,32 +452,38 @@ class StudiesController < ApplicationController
     if study_file.nil?
       # don't use helper as we're about to mass-assign params
       study_file = @study.study_files.build
-      if study_file.update(study_file_params)
-        # determine if we need to create a study_file_bundle for the new study_file
-        if StudyFileBundle::BUNDLE_TYPES.include?(study_file.file_type) && study_file.file_type != 'Cluster'
-          matching_bundle = @study.study_file_bundles.detect {|bundle| bundle.bundle_type == study_file.file_type && bundle.parent == study_file}
-          if matching_bundle.nil?
-            study_file_bundle = @study.study_file_bundles.build(bundle_type: study_file.file_type)
-            bundle_payload = StudyFileBundle.generate_file_list(study_file)
-            study_file_bundle.original_file_list = bundle_payload
-            study_file_bundle.save! # saving the study_file_bundle will create new placeholder entries for the bundled study_files
-          end
-        end
-        # we need to add this file to a study_file_bundle if it was assigned
-        if study_file_params[:study_file_bundle_id].present?
-          # we're processing a bundled upload, which means there might be a placeholder file entry we need to find
-          study_file_bundle = StudyFileBundle.find_by(study_id: @study.id, id: study_file_params[:study_file_bundle_id])
-          file_type = study_file.file_type
-          # ignore if this is the parent file
-          unless file_type == study_file_bundle.bundle_type
-            study_file_bundle.add_files(study_file)
-          end
-        end
-        render json: { file: { name: study_file.upload_file_name,size: upload.size } } and return
-      else
+      begin
+        study_file.update!(study_file_params)
+      rescue => e
         logger.error "#{Time.zone.now} #{study_file.errors.full_messages.join(", ")}"
+        existing_file = StudyFile.find(study_file.id)
+        if existing_file
+          ErrorTracker.report_exception(e, current_user, params)
+          logger.error("do_upload Failed: Existing file for #{study_file.id} -- type:#{existing_file.type} name:#{existing_file.name}")
+        end
         render json: { file: { name: study_file.upload_file_name, errors: study_file.errors.full_messages.join(", ") } }, status: 422 and return
       end
+      # determine if we need to create a study_file_bundle for the new study_file
+      if StudyFileBundle::BUNDLE_TYPES.include?(study_file.file_type) && study_file.file_type != 'Cluster'
+        matching_bundle = @study.study_file_bundles.detect {|bundle| bundle.bundle_type == study_file.file_type && bundle.parent == study_file}
+        if matching_bundle.nil?
+          study_file_bundle = @study.study_file_bundles.build(bundle_type: study_file.file_type)
+          bundle_payload = StudyFileBundle.generate_file_list(study_file)
+          study_file_bundle.original_file_list = bundle_payload
+          study_file_bundle.save! # saving the study_file_bundle will create new placeholder entries for the bundled study_files
+        end
+      end
+      # we need to add this file to a study_file_bundle if it was assigned
+      if study_file_params[:study_file_bundle_id].present?
+        # we're processing a bundled upload, which means there might be a placeholder file entry we need to find
+        study_file_bundle = StudyFileBundle.find_by(study_id: @study.id, id: study_file_params[:study_file_bundle_id])
+        file_type = study_file.file_type
+        # ignore if this is the parent file
+        unless file_type == study_file_bundle.bundle_type
+          study_file_bundle.add_files(study_file)
+        end
+      end
+      render json: { file: { name: study_file.upload_file_name,size: upload.size } } and return
     else
       current_size = study_file.upload_file_size
       content_range = request.headers['CONTENT-RANGE']
@@ -573,9 +579,12 @@ class StudiesController < ApplicationController
 
   # method to download files if study is private, will create temporary signed_url after checking user quota
   def download_private_file
-    @study = Study.find_by(accession: params[:accession], url_safe_name: params[:study_name])
-    # make sure user is signed in
-    if !user_signed_in? || !@study.can_view?(current_user)
+    @study = Study.find_by(accession: params[:accession])
+    # make study exists, then ensure user is signed in
+    if @study.nil?
+      redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
+                  alert: 'The study you requested was not found.' and return
+    elsif !user_signed_in? || !@study.can_view?(current_user)
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
                   alert: 'You do not have permission to perform that action.' and return
     elsif @study.detached?
@@ -678,9 +687,8 @@ class StudiesController < ApplicationController
           @study.default_options[:cluster] = @study_file.name
           @study.save
         end
+        old_name = @cluster.name.dup
         @cluster.update(name: @study_file.name)
-        # also update data_arrays
-        @cluster.data_arrays.update_all(cluster_name: @study_file.name)
       elsif ['Expression Matrix', 'MM Coordinate Matrix'].include?(study_file_params[:file_type]) && !study_file_params[:y_axis_label].blank?
         # if user is supplying an expression axis label, update default options hash
         @study.update(default_options: @study.default_options.merge(expression_label: study_file_params[:y_axis_label]))
@@ -819,7 +827,7 @@ class StudiesController < ApplicationController
     @study_file = StudyFile.find(params[:study_file_id])
     @message = ""
     unless @study_file.nil?
-      if @study_file.parsing?
+      if !@study_file.can_delete_safely?
         render action: 'abort_delete_study_file'
       else
         human_data = @study_file.human_data # store this reference for later
@@ -1113,7 +1121,7 @@ class StudiesController < ApplicationController
     @form = "#study-file-#{@study_file.id}"
     @message = ""
     unless @study_file.nil?
-      if @study_file.parsing?
+      if !@study_file.can_delete_safely?
         render action: 'abort_delete_study_file'
       else
         begin
