@@ -57,7 +57,7 @@ export function PropsGeneSearchProvider(props) {
     // doesn't conflict with the study search page
     mergedParams.genePage = newParams.page ? newParams.page : 1
     // merge in the study params so that state is saved between tabs
-    mergedParams = Object.assign(mergedParams, buildStudyParamsFromQuery(window.location.search))
+    mergedParams = Object.assign(buildStudyParamsFromQuery(window.location.search), mergedParams)
     const queryString = buildSearchQueryString('study', mergedParams)
     navigate(`?${queryString}`)
   }
