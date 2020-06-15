@@ -80,7 +80,7 @@ describe('Filter slider works within more facets', () => {
       </PropsStudySearchProvider>
     ))
     wrapper.find('#more-facets-button > a').simulate('click')
-    console.log(wrapper.debug())
+
     wrapper.find('#facet-organism-age > a').simulate('click')
 
     expect(ageFacet().find('input[type="number"]').length).toEqual(2)

@@ -11,6 +11,7 @@ export const SearchSelectionContext = React.createContext({
   performSearch: undefined
 })
 
+/** returns the currently selected filter ids for the given facet object */
 export function getSelectionForFacet(facet, selectionContext) {
   let selection = []
   if (selectionContext.facets[facet.id]) {
@@ -19,6 +20,8 @@ export function getSelectionForFacet(facet, selectionContext) {
   return selection
 }
 
+/** returns whether or not the current selection for the given facet object is different
+  * than what the most recently performed search was */
 export function isFacetApplicable(facet, selectionContext, searchContext) {
   const selection = getSelectionForFacet(facet, selectionContext)
   const appliedSelection = getAppliedParamsForFacet(facet, searchContext)
