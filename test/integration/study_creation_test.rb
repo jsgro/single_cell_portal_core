@@ -45,8 +45,8 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
         name: 'expression_matrix_example.txt'
       },
       metadata: {
-        name: 'metadata.v2-0-0.tsv',
-        path: 'alexandria_convention/metadata.v2-0-0.tsv'
+        name: 'metadata.v2-0-0.txt',
+        path: 'alexandria_convention/metadata.v2-0-0.txt'
       },
       cluster: {
         name: 'cluster_example_2.txt'
