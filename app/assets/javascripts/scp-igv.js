@@ -160,7 +160,10 @@ function initializeIgv() {
       id: genomeId,
       cytobandURL: `${macacaFascicularisBase}macaca-fascicularis-cytobands.txt?alt=media`,
       fastaURL: `${macacaFascicularisBase}Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa?alt=media`,
-      indexURL: `${macacaFascicularisBase}Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.fai?alt=media`
+      indexURL: `${macacaFascicularisBase}Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.fai?alt=media`,
+      headers: {
+        'Authorization': `Bearer ${window.accessToken}`
+      }
     }
   } else {
     locus = (genes.length === 0) ? ['myc'] : [genes.first().text()]
