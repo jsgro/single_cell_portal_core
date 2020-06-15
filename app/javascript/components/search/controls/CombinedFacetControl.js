@@ -71,8 +71,8 @@ export default function CombinedFacetControl({ controlName, facetIds }) {
     }
   }
 
-  if (facetContents.length != facetIds.length) {
-    // either this instance doesn't the facets populated, or the facets havent finished loading yet
+  if (!facetContents.length) {
+    // either this instance doesn't have the facets populated, or the facets havent finished loading yet
     return <span></span>
   }
 
@@ -87,7 +87,8 @@ export default function CombinedFacetControl({ controlName, facetIds }) {
             { facetContents.map((facetContent, index) => {
               return facetContent.facet &&
                 <div className="single-facet" key={facetContent.facet.id}>
-                  <h4>{facetContent.facet.name}</h4>
+                  { /* only show the facet names if there are more than one */ }
+                  { facetContents.legnth > 1 && <h4>{facetContent.facet.name}</h4> }
                   <FiltersBoxSearchable
                     show={showFilters}
                     facet={facetContent.facet}
