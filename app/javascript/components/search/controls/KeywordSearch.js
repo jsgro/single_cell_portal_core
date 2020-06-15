@@ -5,7 +5,6 @@ import Form from 'react-bootstrap/lib/Form'
 import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { SearchSelectionContext } from 'providers/SearchSelectionProvider'
-import { StudySearchContext } from 'providers/StudySearchProvider'
 
 /**
  * Component to search using a keyword value

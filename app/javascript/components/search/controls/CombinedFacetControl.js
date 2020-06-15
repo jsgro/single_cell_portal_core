@@ -9,6 +9,7 @@ import { SearchSelectionContext, isFacetApplicable, getSelectionForFacet } from 
 import useCloseableModal from 'hooks/closeableModal'
 import _kebabCase from 'lodash/kebabCase'
 import _compact from 'lodash/compact'
+import _flatten from 'lodash/flatten'
 
 /**
  * Component for combining two facets into a single panel control.
@@ -17,14 +18,14 @@ import _compact from 'lodash/compact'
  * Note that this does NOT support numeric facets -- to support those the display CSS would have to be
  * updated and the handleApplyClick() numeric logic from FiltersBox would have to be included
  */
-export default function CombinedFacetControl({ controlName, facetNames }) {
+export default function CombinedFacetControl({ controlName, facetIds }) {
   const [showFilters, setShowFilters] = useState(false)
   const facetContext = useContext(SearchFacetContext)
   const selectionContext = useContext(SearchSelectionContext)
   const searchContext = useContext(StudySearchContext)
 
 
-  const facetContents = _compact(facetNames.map(facetId => {
+  const facetContents = _compact(facetIds.map(facetId => {
     const facet = _find(facetContext.facets, { id: facetId })
     if (!facet) {
       return null
@@ -43,9 +44,18 @@ export default function CombinedFacetControl({ controlName, facetNames }) {
     return facetContent.selection.length > 0
   }).some(canClear => {return canClear})
 
+  // if any of the contained facets have selections, indicate the number in the control name
+  const appliedSelection = _compact(_flatten(facetIds.map(facetId => searchContext.params.facets[facetId])))
+  let appliedControlName = controlName
+  let hasSeachedFilters = false
+  if (appliedSelection.length) {
+    appliedControlName = `${controlName} (${appliedSelection.length})`
+    hasSeachedFilters = true
+  }
+
   /** clear the selection, don't perform the search */
   function clearFilters() {
-    const updatedSelection = { facets: {} }
+    const updatedSelection = { facets: searchContext.params.facets }
     facetContents.forEach(facetContent => {
       updatedSelection.facets[facetContent.facet.id] = []
     })
@@ -61,15 +71,15 @@ export default function CombinedFacetControl({ controlName, facetNames }) {
     }
   }
 
-  if (facetContents.length != facetNames.length) {
+  if (facetContents.length != facetIds.length) {
     // either this instance doesn't the facets populated, or the facets havent finished loading yet
     return <span></span>
   }
 
   return (
-    <span ref={node} className={`facet ${showFilters ? 'active' : ''}`}>
+    <span ref={node} className={`facet ${showFilters ? 'active' : ''} ${hasSeachedFilters ? 'selected' : ''}`}>
       <a onClick={handleButtonClick}>
-        {controlName}
+        {appliedControlName}
       </a>
       {
         showFilters && <div className="filters-box-searchable combined-facet">
