@@ -1,9 +1,8 @@
 import React, { useContext } from 'react'
-import _isEqual from 'lodash/isEqual'
 import Button from 'react-bootstrap/lib/Button'
 
-import { StudySearchContext } from 'providers/StudySearchProvider'
-import { SearchSelectionContext } from 'providers/SearchSelectionProvider'
+import { StudySearchContext, getAppliedParamsForFacet } from 'providers/StudySearchProvider'
+import { SearchSelectionContext, isFacetApplicable } from 'providers/SearchSelectionProvider'
 import Filters from './Filters'
 
 
@@ -24,12 +23,12 @@ import Filters from './Filters'
 /**
  * Component that can be clicked to unselect filters
  */
-function ClearFilters(props) {
+export function ClearFilters({ facetId, onClick }) {
   return (
     <span
-      id={`clear-filters-${props.facetId}`}
+      id={`clear-filters-${facetId}`}
       className='clear-filters'
-      onClick={props.onClick}
+      onClick={onClick}
     >
       CLEAR
     </span>
@@ -40,18 +39,19 @@ function ClearFilters(props) {
  * Component for the "APPLY" button that can be clicked it to save selected
  * filters for the current facet or facet accordion.
  */
-function ApplyButton(props) {
+export function ApplyButton({ facetId, isActive, onClick }) {
   return (
     <Button
-      id={props.id}
+      id={`apply-filters-box-${facetId}`}
       bsStyle='primary'
-      className={props.className}
-      onClick={props.onClick}
+      className={`facet-apply-button ${isActive ? 'active' : 'disabled'}`}
+      onClick={onClick}
     >
     APPLY
     </Button>
   )
 }
+
 
 /**
  * Component for filter lists that have Apply and Clear
@@ -60,27 +60,15 @@ function ApplyButton(props) {
  * Currently, FiltersBox has to own a lot of logic about canApply and applyClick
  * handling that is probably better encapsulated in the individual controls
  */
-export default function FiltersBox({facet, selection, setSelection, filters, setShow, hideApply}) {
+export default function FiltersBox({ facet, selection, setSelection, filters, setShow, hideControls }) {
   const searchContext = useContext(StudySearchContext)
   const selectionContext = useContext(SearchSelectionContext)
 
-  let appliedSelection = searchContext.params.facets[facet.id]
-  appliedSelection = appliedSelection ? appliedSelection : []
-
+  const appliedSelection = getAppliedParamsForFacet(facet, searchContext)
+  const canApply = isFacetApplicable(facet, selectionContext, searchContext)
   const showClear = selection.length > 0
-  const isSelectionValid = facet.type != 'number' ||
-                             (selection.length === 0 ||
-                              !isNaN(parseInt(selection[0])) && !isNaN(parseInt(selection[1])))
-
-  const canApply = isSelectionValid &&
-                   (!_isEqual(selection, appliedSelection) ||
-                   facet.type === 'number' && appliedSelection.length === 0)
-                   // allow application of number filters to default range
 
   const facetId = facet.id
-  const componentName = 'filters-box'
-  const filtersBoxId = `${componentName}-${facetId}`
-  const applyId = `apply-${filtersBoxId}`
 
   /**
    * Update search context with applied facets upon clicking "Apply"
@@ -105,33 +93,34 @@ export default function FiltersBox({facet, selection, setSelection, filters, set
     }
   }
 
+  /** clears any selected filters */
   function clearFilters() {
     setSelection([])
   }
 
   return (
-    <div id={filtersBoxId}>
+    <div id={`apply-filters-${facetId}`}>
       <Filters
         facet={facet}
         filters={filters}
         selection={selection}
         setSelection={setSelection}
       />
-      <div className='filters-box-footer'>
-        {showClear &&
-        <ClearFilters
-          facetId={facet.id}
-          onClick={clearFilters}
-        />
-        }
-        {!hideApply &&
-          <ApplyButton
-          id={applyId}
-          className={`facet-apply-button ${canApply ? 'active' : 'disabled'}`}
-          onClick={handleApplyClick}
+      { !hideControls &&
+        <div className='filters-box-footer'>
+          {showClear &&
+          <ClearFilters
+            facetId={facet.id}
+            onClick={clearFilters}
           />
-        }
-      </div>
+          }
+          <ApplyButton
+            facetId={facetId}
+            isActive={canApply}
+            onClick={handleApplyClick}
+          />
+        </div>
+      }
     </div>
   )
 }

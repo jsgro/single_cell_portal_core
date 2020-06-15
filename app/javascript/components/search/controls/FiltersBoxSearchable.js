@@ -12,7 +12,7 @@ import FiltersSearchBar from './FiltersSearchBar'
 /**
  * Component for filter search and filter lists
  */
-export default function FiltersBoxSearchable({ facet, selection, setSelection, show, setShow, hideApply }) {
+export default function FiltersBoxSearchable({ facet, selection, setSelection, show, setShow, hideControls }) {
   // State that is specific to FiltersBox
   const [matchingFilters, setMatchingFilters] = useState(facet.filters.slice(0, 15))
   const [hasFilterSearchResults, setHasFilterSearchResults] = useState(false)
@@ -75,6 +75,7 @@ consensus=&heatmap_row_centering=z-score&heatmap_size=NaN&plot_type=violin&subsa
     return filtersSummary
   }
 
+  /** remove a single filter from the selection */
   function removeFilter(filterId) {
     const newSelections = selection.slice()
     _remove(newSelections, id => {return id === filterId})
@@ -142,7 +143,7 @@ consensus=&heatmap_row_centering=z-score&heatmap_size=NaN&plot_type=violin&subsa
             setShow={setShow}
             selection={selection}
             setSelection={setSelection}
-            hideApply={hideApply}
+            hideControls={hideControls}
           />
         </div>
       }

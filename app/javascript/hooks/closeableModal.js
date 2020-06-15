@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react'
+import { useEffect, useRef } from 'react'
 
 /**
  * Hook for a component that shows/hides a modal on click.  the modal will also close on
@@ -21,7 +21,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react'
   </span>
  */
 export default function useCloseableModal(show, setShow) {
-   const clearNode = useRef()
+  const clearNode = useRef()
   /**
     * Click on the facet control itself
     */
@@ -32,14 +32,6 @@ export default function useCloseableModal(show, setShow) {
       setShow(!show)
     }
   }
-
-  /**
-    * Clear the selection and update search results
-    */
-  function clearFacet() {
-    selectionContext.updateFacet(props.facet.id, [], true)
-  }
-
 
   const node = useRef()
   const handleOtherClick = e => {

@@ -76,6 +76,15 @@ export function hasSearchParams(params) {
   return numTerms + numFacets + numFilters > 0
 }
 
+/** returns the applied (i.e. sent to server for search) params for the given facet object */
+export function getAppliedParamsForFacet(facet, searchContext) {
+  let appliedParams = []
+  if (searchContext.params.facets[facet.id]) {
+    appliedParams = searchContext.params.facets[facet.id]
+  }
+  return appliedParams
+}
+
 /** Wrapper for deep mocking via Jest / Enzyme */
 export function useContextStudySearch() {
   return useContext(StudySearchContext)
@@ -144,6 +153,7 @@ export function PropsStudySearchProvider(props) {
   )
 }
 
+/** returns an object with the query params and defaults applied */
 export function buildParamsFromQuery(query, preset) {
   const queryParams = queryString.parse(query)
   return {

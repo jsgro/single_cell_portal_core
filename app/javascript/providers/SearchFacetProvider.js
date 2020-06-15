@@ -34,7 +34,7 @@ export default function SearchFacetProvider(props) {
     })
     const facets = await fetchFacets()
     setFacetState({
-      facets: facets,
+      facets,
       isLoading: false,
       isLoaded: true
     })

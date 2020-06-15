@@ -9,9 +9,10 @@ import Button from 'react-bootstrap/lib/Button'
  * Component to search filters within a given facet
  * Used when facet has many available filters (e.g. disease)
  */
-export default function FiltersSearchBar({searchFilters, filtersBoxId}) {
+export default function FiltersSearchBar({ searchFilters, filtersBoxId }) {
   const [searchText, setSearchText] = useState('')
 
+  /** perform a search for matching filters */
   async function handleFilterSearchSubmit(event) {
     event.preventDefault() // catch keyboard return and prevent form submit
     await searchFilters(searchText)

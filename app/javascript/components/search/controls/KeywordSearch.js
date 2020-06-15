@@ -14,7 +14,6 @@ import { StudySearchContext } from 'providers/StudySearchProvider'
 export default function KeywordSearch({ keywordPrompt }) {
   const placeholder = keywordPrompt ? keywordPrompt : 'Enter keyword'
   const selectionContext = useContext(SearchSelectionContext)
-  const searchContext = useContext(StudySearchContext)
   // show clear button after a search has been done,
   //  as long as the text hasn't been updated
   const showClear = selectionContext.terms && selectionContext.terms.length

@@ -1,5 +1,4 @@
 import React, { useContext } from 'react'
-import _find from 'lodash/find'
 
 import FacetControl from './FacetControl'
 import CombinedFacetControl from './CombinedFacetControl'

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext } from 'react'
+import React, { useState, useContext } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSlidersH } from '@fortawesome/free-solid-svg-icons'
 
@@ -15,7 +15,7 @@ export default function MoreFacetsButton(props) {
   const searchContext = useContext(StudySearchContext)
   const [show, setShow] = useState(false)
 
-  const { node, clearNode, handleButtonClick } = useCloseableModal(show, setShow)
+  const { node, handleButtonClick } = useCloseableModal(show, setShow)
 
   const numFacetsApplied = props.facets.filter(facet => {
     const facets = searchContext.params.facets
