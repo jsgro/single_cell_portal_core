@@ -10,6 +10,7 @@ import useCloseableModal from 'hooks/closeableModal'
 import _kebabCase from 'lodash/kebabCase'
 import _compact from 'lodash/compact'
 import _flatten from 'lodash/flatten'
+import _clone from 'lodash/clone'
 
 /**
  * Component for combining two facets into a single panel control.
@@ -55,7 +56,7 @@ export default function CombinedFacetControl({ controlName, facetIds }) {
 
   /** clear the selection, don't perform the search */
   function clearFilters() {
-    const updatedSelection = { facets: searchContext.params.facets }
+    const updatedSelection = { facets: _clone(searchContext.params.facets) }
     facetContents.forEach(facetContent => {
       updatedSelection.facets[facetContent.facet.id] = []
     })
@@ -88,7 +89,7 @@ export default function CombinedFacetControl({ controlName, facetIds }) {
               return facetContent.facet &&
                 <div className="single-facet" key={facetContent.facet.id}>
                   { /* only show the facet names if there are more than one */ }
-                  { facetContents.legnth > 1 && <h4>{facetContent.facet.name}</h4> }
+                  { facetContents.length > 1 && <h4>{facetContent.facet.name}</h4> }
                   <FiltersBoxSearchable
                     show={showFilters}
                     facet={facetContent.facet}
