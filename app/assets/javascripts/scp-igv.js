@@ -151,16 +151,20 @@ function initializeIgv() {
     // To consider:
     //  - Update genomes pipeline to make such files automatically reproducible
     const genomeAnnotationObj = bamsToViewInIgv[0].genomeAnnotation
-    const genomePath = `${genomeAnnotationObj.link.split('/').slice(0, -2).join('%2F')}%2F`
+    const genomePath =
+      `${genomeAnnotationObj.link.split('/').slice(0, -2).join('%2F')}%2F`
     const bucket = genomeAnnotationObj.bucket_id
     const gcsBase = 'https://www.googleapis.com/storage/v1/b/'
     const macacaFascicularisBase = `${gcsBase + bucket}/o/${genomePath}`
 
+    const fasta = 'Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa'
+    const cytoband = 'macaca-fascicularis-cytobands.txt'
+
     reference = {
       id: genomeId,
-      cytobandURL: `${macacaFascicularisBase}macaca-fascicularis-cytobands.txt?alt=media`,
-      fastaURL: `${macacaFascicularisBase}Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa?alt=media`,
-      indexURL: `${macacaFascicularisBase}Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa.fai?alt=media`,
+      cytobandURL: `${macacaFascicularisBase}${cytoband}?alt=media`,
+      fastaURL: `${macacaFascicularisBase}${fasta}?alt=media`,
+      indexURL: `${macacaFascicularisBase}${fasta}.fai?alt=media`,
       headers: {
         'Authorization': `Bearer ${window.accessToken}`
       }
