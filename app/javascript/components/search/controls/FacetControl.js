@@ -57,7 +57,7 @@ function RawFacetControl({ facet }) {
         <button
           ref={clearNode}
           className='facet-clear'
-          onClick={ clearFacet }
+          onClick={clearFacet}
         >
           <FontAwesomeIcon icon={faTimesCircle}/>
         </button>

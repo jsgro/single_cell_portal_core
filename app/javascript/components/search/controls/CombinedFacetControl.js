@@ -93,12 +93,12 @@ export default function CombinedFacetControl({ controlName, facetIds }) {
                   <FiltersBoxSearchable
                     show={showFilters}
                     facet={facetContent.facet}
-                    setShow={ () => {} }
+                    setShow={() => {}}
                     selection={facetContent.selection}
                     setSelection={selection =>
                       selectionContext.updateFacet(facetContent.facet.id, selection)
                     }
-                    hideControls={ true }/>
+                    hideControls={true}/>
                 </div>
             })
             }

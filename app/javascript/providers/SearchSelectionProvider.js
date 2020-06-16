@@ -25,7 +25,7 @@ export function getSelectionForFacet(facet, selectionContext) {
 export function isFacetApplicable(facet, selectionContext, searchContext) {
   const selection = getSelectionForFacet(facet, selectionContext)
   const appliedSelection = getAppliedParamsForFacet(facet, searchContext)
-  const isSelectionValid = facet.type != 'number' ||
+  const isSelectionValid = facet.type !== 'number' ||
                             (selection.length === 0 ||
                               !isNaN(parseInt(selection[0])) && !isNaN(parseInt(selection[1])))
 

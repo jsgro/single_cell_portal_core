@@ -22,9 +22,7 @@ import { useEffect, useRef } from 'react'
  */
 export default function useCloseableModal(show, setShow) {
   const clearNode = useRef()
-  /**
-    * Click on the facet control itself
-    */
+  /** Click on the facet control itself */
   function handleButtonClick(e) {
     if (clearNode.current && clearNode.current.contains(e.target)) {
       setShow(false)
