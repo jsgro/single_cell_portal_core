@@ -693,7 +693,7 @@ class Study
       owned = self.where(user_id: user._id, public: false, queued_for_deletion: false).map(&:id)
       shares = StudyShare.where(email: user.email).map(&:study).select {|s| !s.queued_for_deletion }.map(&:id)
       group_shares = []
-      if user.registered_for_firecloud
+      if user.registered_for_firecloud && (user.refresh_token.present? || user.api_access_token.present?)
         user_client = FireCloudClient.new(user, FireCloudClient::PORTAL_NAMESPACE)
         user_groups = user_client.get_user_groups.map {|g| g['groupEmail']}
         group_shares = StudyShare.where(:email.in => user_groups).map(&:study).select {|s| !s.queued_for_deletion }.map(&:id)
