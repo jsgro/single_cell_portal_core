@@ -19,8 +19,8 @@ export default function FacetsPanel() {
   const moreFacets = searchFacetContext.facets.filter(facet => moreFacetIds.includes(facet.id))
   return (
     <>
-      <CombinedFacetControl controlName="cell type" facetIds={['cell_type', 'cell_type__custom']}/>
-      <CombinedFacetControl controlName="organ" facetIds={['organ', 'organ_region']}/>
+      <CombinedFacetControl controlDisplayName="cell type" facetIds={['cell_type', 'cell_type__custom']}/>
+      <CombinedFacetControl controlDisplayName="organ" facetIds={['organ', 'organ_region']}/>
       {
         defaultFacets.map((facet, i) => {
           return <FacetControl facet={facet} key={i}/>

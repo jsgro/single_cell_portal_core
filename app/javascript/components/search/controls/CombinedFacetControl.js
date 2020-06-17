@@ -19,7 +19,7 @@ import _clone from 'lodash/clone'
  * Note that this does NOT support numeric facets -- to support those the display CSS would have to be
  * updated and the handleApplyClick() numeric logic from FiltersBox would have to be included
  */
-export default function CombinedFacetControl({ controlName, facetIds }) {
+export default function CombinedFacetControl({ controlDisplayName, facetIds }) {
   const [showFilters, setShowFilters] = useState(false)
   const facetContext = useContext(SearchFacetContext)
   const selectionContext = useContext(SearchSelectionContext)
@@ -47,10 +47,10 @@ export default function CombinedFacetControl({ controlName, facetIds }) {
 
   // if any of the contained facets have selections, indicate the number in the control name
   const appliedSelection = _compact(_flatten(facetIds.map(facetId => searchContext.params.facets[facetId])))
-  let appliedControlName = controlName
+  let appliedControlName = controlDisplayName
   let hasSeachedFilters = false
   if (appliedSelection.length) {
-    appliedControlName = `${controlName} (${appliedSelection.length})`
+    appliedControlName = `${controlDisplayName} (${appliedSelection.length})`
     hasSeachedFilters = true
   }
 
@@ -106,12 +106,12 @@ export default function CombinedFacetControl({ controlName, facetIds }) {
           <div className='filters-box-footer'>
             {canClear &&
                 <ClearFilters
-                  facetId={_kebabCase(controlName)}
+                  facetId={_kebabCase(controlDisplayName)}
                   onClick={clearFilters}
                 />
             }
             <ApplyButton
-              facetId={_kebabCase(controlName)}
+              facetId={_kebabCase(controlDisplayName)}
               isActive={canApply}
               onClick={handleApplyClick}
             />
