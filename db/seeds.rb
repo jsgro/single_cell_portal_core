@@ -101,8 +101,11 @@ gene2_cells.save!
 api_study = Study.create!(name: "API Test Study #{@random_seed}", data_dir: 'api_test_study', user_id: user.id,
                           firecloud_project: ENV['PORTAL_NAMESPACE'])
 StudyShare.create!(email: 'fake.email@gmail.com', permission: 'Reviewer', study_id: api_study.id)
-StudyFile.create!(name: 'cluster_example.txt', upload: File.open(Rails.root.join('test', 'test_data', 'cluster_example.txt')),
+api_cluster_file = StudyFile.create!(name: 'cluster_example.txt', upload: File.open(Rails.root.join('test', 'test_data', 'cluster_example.txt')),
                   study_id: api_study.id, file_type: 'Cluster')
+# push file to bucket for use in API download tests
+api_study.send_to_firecloud(api_cluster_file)
+
 DirectoryListing.create!(name: 'csvs', file_type: 'csv', files: [{name: 'foo.csv', size: 100, generation: '12345'}],
                          sync_status: true, study_id: api_study.id)
 StudyFileBundle.create!(bundle_type: 'BAM', original_file_list: [{'name' => 'sample_1.bam', 'file_type' => 'BAM'},

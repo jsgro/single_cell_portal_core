@@ -77,4 +77,51 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     @study.update(detached: false)
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
+
+  test 'should download file' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    @study = Study.find_by(name: "API Test Study #{@random_seed}")
+    file = @study.study_files.first
+
+    execute_http_request(:get, api_v1_site_study_download_data_path(accession: @study.accession, filename: file.upload_file_name))
+    assert_response 302, "Did not correctly redirect to file: #{response.code}"
+
+    # since this is an external redirect, we cannot call follow_redirect! but instead have to get the location header
+    signed_url = response.headers['Location']
+    assert signed_url.include?(file.upload_file_name), "Redirect url does not point at requested file"
+
+    # now assert 401 if user isn't signed in
+    # we can mimic the sign-out by unsetting the user object so that no Authorization: Bearer token is passed with the request
+    @user = nil
+    execute_http_request(:get, api_v1_site_study_download_data_path(accession: @study.accession, filename: file.upload_file_name))
+    assert_response 401, "Did not correctly respond 401 if user is not signed in: #{response.code}"
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'should get stream options for file' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    @study = Study.find_by(name: "API Test Study #{@random_seed}")
+    file = @study.study_files.first
+
+    execute_http_request(:get, api_v1_site_study_stream_data_path(accession: @study.accession, filename: file.upload_file_name))
+    assert_response :success
+    assert_equal file.upload_file_name, json['filename'],
+                 "Incorrect file was returned; #{file.upload_file_name} != #{json['filename']}"
+    assert json['url'].include? file.upload_file_name,
+                                "Url does not contain correct file: #{file.upload_file_name} is not in #{json['url']}"
+
+    # since this is a 'public' study, the access token in the read-only service account token
+    public_token = Study.read_only_firecloud_client.valid_access_token['access_token']
+    assert_equal public_token, json['access_token']
+
+    # assert 401 if no user is signed in
+    @user = nil
+    execute_http_request(:get, api_v1_site_study_stream_data_path(accession: @study.accession, filename: file.upload_file_name))
+    assert_response 401, "Did not correctly respond 401 if user is not signed in: #{response.code}"
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
 end
