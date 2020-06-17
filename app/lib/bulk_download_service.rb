@@ -68,15 +68,10 @@ class BulkDownloadService
       file_types += ['Expression Matrix', 'MM Coordinate Matrix']
     end
 
-    # get requested files
     studies = Study.where(:accession.in => study_accessions)
-    if file_types.present?
-      return studies.map {
-          |study| study.study_files.by_type(file_types)
-      }.flatten
-    else
-      return studies.map(&:study_files).flatten
-    end
+    # get requested files, excluding externally stored sequence data
+    base_file_selector = StudyFile.where(human_fastq_url: nil, :study_id.in => studies.pluck(:id))
+    file_types.present? ? base_file_selector.where(:file_type.in => file_types) : base_file_selector
   end
 
   # Get a preview of the number of files/total bytes by StudyAccession and file_type

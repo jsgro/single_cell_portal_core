@@ -209,7 +209,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
       assert config_file.include?(output_path), "Did not correctly set output path for #{filename} to #{output_path}"
     end
 
-    # ensure bad/missing auth_token return 403
+    # ensure bad/missing auth_token return 401
     invalid_auth_code = auth_code.to_i + 1
     execute_http_request(:get, api_v1_search_bulk_download_path(
         auth_code: invalid_auth_code, accessions: study.accession, file_types: file_types)
