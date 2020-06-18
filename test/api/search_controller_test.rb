@@ -430,4 +430,27 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
+
+  test 'should generate correct bigQuery queries for facets' do
+    # handles a simple case
+    facets = [{id: 'disease',
+               object_id: SearchFacet.find_by!(identifier: 'disease').id,
+               filters: [{id: 'd1', name: 'tuberculosis'}]}]
+    query_string = Api::V1::SearchController.generate_bq_query_string(facets)
+    assert_equal 'WITH disease_filters AS (SELECT["d1"] as disease_value) SELECT DISTINCT study_accession, disease_val FROM alexandria_convention, disease_filters, UNNEST(disease_filters.disease_value) AS disease_val WHERE (disease_val IN UNNEST(disease))', query_string
+
+    # handles a case with two facets
+    facets = [{
+                id: 'disease',
+                object_id: SearchFacet.find_by!(identifier: 'disease').id,
+                filters: [{id: 'd1', name: 'tuberculosis'}]
+              },{
+                id: 'species',
+                object_id: SearchFacet.find_by!(identifier: 'species').id,
+                filters: [{id: 's1', name: 'human'}, {id: 's2', name: 'mouse'}]
+              }]
+    query_string = Api::V1::SearchController.generate_bq_query_string(facets)
+    assert_equal "WITH disease_filters AS (SELECT[\"d1\"] as disease_value) SELECT DISTINCT study_accession, disease_val, species FROM alexandria_convention, disease_filters, UNNEST(disease_filters.disease_value) AS disease_val WHERE (disease_val IN UNNEST(disease)) AND species IN ('s1','s2')", query_string
+
+  end
 end

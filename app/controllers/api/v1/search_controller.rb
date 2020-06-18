@@ -683,51 +683,87 @@ module Api
         from_clause = " FROM #{CellMetadatum::BIGQUERY_TABLE}"
         where_clauses = []
         with_clauses = []
-        facets.each do |facet_obj|
-          # get the facet instance in order to run query
-          search_facet = SearchFacet.find(facet_obj[:object_id])
-          column_name = search_facet.big_query_id_column
-          if search_facet.is_array_based?
-            # if facet is array-based, we need to format an array of filter values selected by user
-            # and add this as a WITH clause, then add two UNNEST() calls for both the BQ array column
-            # and the user filters to optimize the query
-            # example query:
-            # WITH disease_filters AS (SELECT['MONDO_0000001', 'MONDO_0006052'] as disease_value)
-            # FROM cell_metadata.alexandria_convention, disease_filters, UNNEST(disease_filters.disease_value) AS disease_val
-            # WHERE (disease_val IN UNNEST(disease))
-            facet_id = search_facet.identifier
-            filter_arr_name = "#{facet_id}_filters"
-            filter_val_name = "#{facet_id}_value"
-            filter_where_val = "#{facet_id}_val"
-            filter_values = facet_obj[:filters].map {|filter| filter[:id]}
-            with_clauses << "#{filter_arr_name} AS (SELECT#{filter_values} as #{filter_val_name})"
-            from_clause += ", #{filter_arr_name}, UNNEST(#{filter_arr_name}.#{filter_val_name}) AS #{filter_where_val}"
-            where_clauses << "(#{filter_where_val} IN UNNEST(#{column_name}))"
-            base_query += ", #{filter_where_val}"
-          elsif search_facet.is_numeric?
-            # run a range query (e.g. WHERE organism_age BETWEEN 20 and 60)
-            base_query += ", #{column_name}"
-            query_on = column_name
-            min_value = facet_obj[:filters][:min]
-            max_value = facet_obj[:filters][:max]
-            unit = facet_obj[:filters][:unit]
-            if search_facet.must_convert?
-              query_on = search_facet.big_query_conversion_column
-              min_value = search_facet.calculate_time_in_seconds(base_value: min_value, unit_label: unit)
-              max_value = search_facet.calculate_time_in_seconds(base_value: max_value, unit_label: unit)
-            end
-            where_clauses << "#{query_on} BETWEEN #{min_value} AND #{max_value}"
+        or_facets = [['cell_type', 'cell_type__custom'], ['organ', 'organ_region']]
+        leading_or_facets = or_facets.map{|g| g[0]}
+        trailing_or_facets = or_facets.map{|g| g[1]}
+        or_grouped_where_clause = nil
+        # sort the facets so that OR'ed facets will be next to each other
+        sorted_facets = facets.sort_by {|facet| or_facets.flatten.find_index(facet[:id]) || 99}
+
+        sorted_facets.each_with_index do |facet_obj, index|
+          query_elements = get_query_elements_for_facet(facet_obj)
+          from_clause += ", #{query_elements[:from]}" if query_elements[:from]
+          base_query += ", #{query_elements[:select]}" if query_elements[:select]
+          with_clauses << query_elements[:with] if query_elements[:with]
+
+          # check if we're at the start of a pair of facets that should be grouped by OR
+          if leading_or_facets.find_index(facet_obj[:id]) &&
+             trailing_or_facets.find_index(sorted_facets[index + 1].try(:[], :id))
+             or_grouped_where_clause = "(#{query_elements[:where]} OR "
           else
-            base_query += ", #{column_name}"
-            # for non-array columns we can pass an array of quoted values and call IN directly
-            filter_values = facet_obj[:filters].map {|filter| filter[:id]}
-            where_clauses << "#{column_name} IN ('#{filter_values.join('\',\'')}')"
+            if or_grouped_where_clause
+              # we're on the second of a pair of facets that should be grouped by OR
+              or_grouped_where_clause += "#{query_elements[:where]})"
+              where_clauses << or_grouped_where_clause
+              or_grouped_where_clause = nil
+            else
+              where_clauses << "#{query_elements[:where]}"
+            end
           end
         end
         # prepend WITH clauses before base_query (if needed), then add FROM and dependent WHERE clauses
         # all facets are treated as AND clauses
         with_statement = with_clauses.any? ? "WITH #{with_clauses.join(", ")} " : ""
         with_statement + base_query + from_clause + " WHERE " + where_clauses.join(" AND ")
+      end
+
+      def self.get_query_elements_for_facet(facet_obj)
+        query_elements = {
+          where: nil,
+          with: nil,
+          from: nil,
+          select: nil
+        }
+        # get the facet instance in order to run query
+        search_facet = SearchFacet.find(facet_obj[:object_id])
+        column_name = search_facet.big_query_id_column
+        if search_facet.is_array_based?
+          # if facet is array-based, we need to format an array of filter values selected by user
+          # and add this as a WITH clause, then add two UNNEST() calls for both the BQ array column
+          # and the user filters to optimize the query
+          # example query:
+          # WITH disease_filters AS (SELECT['MONDO_0000001', 'MONDO_0006052'] as disease_value)
+          # FROM cell_metadata.alexandria_convention, disease_filters, UNNEST(disease_filters.disease_value) AS disease_val
+          # WHERE (disease_val IN UNNEST(disease))
+          facet_id = search_facet.identifier
+          filter_arr_name = "#{facet_id}_filters"
+          filter_val_name = "#{facet_id}_value"
+          filter_where_val = "#{facet_id}_val"
+          filter_values = facet_obj[:filters].map {|filter| filter[:id]}
+          query_elements[:with] = "#{filter_arr_name} AS (SELECT#{filter_values} as #{filter_val_name})"
+          query_elements[:from] = "#{filter_arr_name}, UNNEST(#{filter_arr_name}.#{filter_val_name}) AS #{filter_where_val}"
+          query_elements[:where] = "(#{filter_where_val} IN UNNEST(#{column_name}))"
+          query_elements[:select] = "#{filter_where_val}"
+        elsif search_facet.is_numeric?
+          # run a range query (e.g. WHERE organism_age BETWEEN 20 and 60)
+          query_elements[:select] = ", #{column_name}"
+          query_on = column_name
+          min_value = facet_obj[:filters][:min]
+          max_value = facet_obj[:filters][:max]
+          unit = facet_obj[:filters][:unit]
+          if search_facet.must_convert?
+            query_on = search_facet.big_query_conversion_column
+            min_value = search_facet.calculate_time_in_seconds(base_value: min_value, unit_label: unit)
+            max_value = search_facet.calculate_time_in_seconds(base_value: max_value, unit_label: unit)
+          end
+          query_elements[:where] = "#{query_on} BETWEEN #{min_value} AND #{max_value}"
+        else
+          query_elements[:select] = "#{column_name}"
+          # for non-array columns we can pass an array of quoted values and call IN directly
+          filter_values = facet_obj[:filters].map {|filter| filter[:id]}
+          query_elements[:where] = "#{column_name} IN ('#{filter_values.join('\',\'')}')"
+        end
+        query_elements
       end
 
       # convert a list of facet filters into a keyword search for inferred matching
@@ -756,10 +792,13 @@ module Api
           result.keys.keep_if { |key| key != :study_accession }.each do |key|
             facet_name = key.to_s.chomp('_val')
             matching_filter = match_results_by_filter(search_result: result, result_key: key, facets: search_facets)
-            matches[accession][facet_name] ||= []
-            if !matches[accession][facet_name].include?(matching_filter)
-              matches[accession][facet_name] << matching_filter
-              matches[accession][:facet_search_weight] += 1
+            # there may not be a matching filter if the facet was OR'ed
+            if matching_filter
+              matches[accession][facet_name] ||= []
+              if !matches[accession][facet_name].include?(matching_filter)
+                matches[accession][facet_name] << matching_filter
+                matches[accession][:facet_search_weight] += 1
+              end
             end
           end
         end
