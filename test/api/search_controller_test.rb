@@ -251,6 +251,25 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  test 'bulk download should exclude external sequence data' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study = Study.find_by(name: "API Test Study #{@random_seed}")
+    execute_http_request(:post, api_v1_create_auth_code_path)
+    assert_response :success
+    auth_code = json['auth_code']
+
+    excluded_file = study.study_files.primary_data.first
+    execute_http_request(:get, api_v1_search_bulk_download_path(
+        auth_code: auth_code, accessions: study.accession)
+    )
+    assert_response :success
+
+    refute json.include?(excluded_file.name), 'Bulk download config did not exclude external fastq link'
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
   test 'should filter search results by branding group' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 

@@ -105,7 +105,8 @@ api_cluster_file = StudyFile.create!(name: 'cluster_example.txt', upload: File.o
                   study_id: api_study.id, file_type: 'Cluster')
 # push file to bucket for use in API download tests
 api_study.send_to_firecloud(api_cluster_file)
-
+StudyFile.create(study_id: api_study.id, name: 'SRA Study for housing fastq data', description: 'SRA Study for housing fastq data',
+                 file_type: 'Fastq', status: 'uploaded', human_fastq_url: 'https://www.ncbi.nlm.nih.gov/sra/ERX4159348[accn]')
 DirectoryListing.create!(name: 'csvs', file_type: 'csv', files: [{name: 'foo.csv', size: 100, generation: '12345'}],
                          sync_status: true, study_id: api_study.id)
 StudyFileBundle.create!(bundle_type: 'BAM', original_file_list: [{'name' => 'sample_1.bam', 'file_type' => 'BAM'},

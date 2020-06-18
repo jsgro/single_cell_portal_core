@@ -32,7 +32,7 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     @study = Study.find_by(name: "API Test Study #{@random_seed}")
     execute_http_request(:get, api_v1_site_study_view_path(accession: @study.accession))
     assert_response :success
-    assert json['study_files'].size == 3, "Did not find correct number of files, expected 3 but found #{json['study_files'].size}"
+    assert json['study_files'].size == 4, "Did not find correct number of files, expected 4 but found #{json['study_files'].size}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
@@ -121,6 +121,22 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     @user = nil
     execute_http_request(:get, api_v1_site_study_stream_data_path(accession: @study.accession, filename: file.upload_file_name))
     assert_response 401, "Did not correctly respond 401 if user is not signed in: #{response.code}"
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'external sequence data should return correct download link' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    @study = Study.find_by(name: "API Test Study #{@random_seed}")
+    external_sequence_file = @study.study_files.primary_data.first
+    execute_http_request(:get, api_v1_site_study_view_path(accession: @study.accession))
+    assert_response :success
+    external_entry = json['study_files'].detect {|file| file['name'] == external_sequence_file.name}
+    assert_equal external_sequence_file.human_fastq_url, external_entry['download_url'],
+                 "Did not return correct download url for external fastq; #{external_entry['download_url']} != #{external_sequence_file.human_fastq_url}"
+    # cleanup
+    external_sequence_file.delete
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
