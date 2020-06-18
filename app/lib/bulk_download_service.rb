@@ -42,7 +42,7 @@ class BulkDownloadService
   #   - (RuntimeError) => User download quota exceeded
   def self.update_user_download_quota(user:, files:)
     download_quota = ApplicationController.get_download_quota
-    bytes_requested = files.map(&:upload_file_size).reduce(:+)
+    bytes_requested = files.map(&:upload_file_size).compact.reduce(:+)
     bytes_allowed = download_quota - user.daily_download_quota
     if bytes_requested > bytes_allowed
       raise RuntimeError.new "Total file size exceeds user download quota: #{bytes_requested} bytes requested, #{bytes_allowed} bytes allowed"
@@ -89,7 +89,7 @@ class BulkDownloadService
     requested_types = requested_files.map(&:simplified_file_type).uniq
     requested_types.each do |req_type|
       files = requested_files.select {|file| file.simplified_file_type == req_type}
-      files_by_type[req_type] = {total_files: files.size, total_bytes: files.map(&:upload_file_size).reduce(:+)}
+      files_by_type[req_type] = {total_files: files.size, total_bytes: files.map(&:upload_file_size).compact.reduce(:+)}
     end
     files_by_type
   end
