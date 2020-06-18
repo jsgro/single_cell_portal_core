@@ -99,7 +99,7 @@ module Api
           key :summary, 'Download a StudyFile'
           key :description, "Download a single StudyFile (via signed URL)<br/><br/><strong>NOTE</strong>: Due to CORS issues, files cannot be " + \
                             "downloaded via Swagger.  To download a file, either use a client such as Postman, or copy/paste " + \
-                            "the CURL command into a terminal and add the '-L' flag.".html_safe
+                            "the CURL command into a terminal and add the '-L' flag immediately before the URL.".html_safe
           key :operationId, 'site_study_download_data_path'
           parameter do
             key :name, :accession
