@@ -110,7 +110,7 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal file.upload_file_name, json['filename'],
                  "Incorrect file was returned; #{file.upload_file_name} != #{json['filename']}"
-    assert json['url'].include? file.upload_file_name,
+    assert json['url'].include?(file.upload_file_name),
                                 "Url does not contain correct file: #{file.upload_file_name} is not in #{json['url']}"
 
     # since this is a 'public' study, the access token in the read-only service account token
@@ -129,14 +129,12 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     @study = Study.find_by(name: "API Test Study #{@random_seed}")
-    external_sequence_file = @study.study_files.primary_data.first
+    external_sequence_file = @study.study_files.by_type('Fastq').first
     execute_http_request(:get, api_v1_site_study_view_path(accession: @study.accession))
     assert_response :success
     external_entry = json['study_files'].detect {|file| file['name'] == external_sequence_file.name}
     assert_equal external_sequence_file.human_fastq_url, external_entry['download_url'],
                  "Did not return correct download url for external fastq; #{external_entry['download_url']} != #{external_sequence_file.human_fastq_url}"
-    # cleanup
-    external_sequence_file.delete
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

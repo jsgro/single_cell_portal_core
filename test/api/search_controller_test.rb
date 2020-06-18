@@ -259,9 +259,10 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     auth_code = json['auth_code']
 
-    excluded_file = study.study_files.primary_data.first
+    file_types = %w(Cluster Fastq)
+    excluded_file = study.study_files.by_type('Fastq').first
     execute_http_request(:get, api_v1_search_bulk_download_path(
-        auth_code: auth_code, accessions: study.accession)
+        auth_code: auth_code, accessions: study.accession, file_types: file_types)
     )
     assert_response :success
 
