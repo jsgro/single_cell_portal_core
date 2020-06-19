@@ -1,5 +1,11 @@
 import React, { useContext, useState } from 'react'
 import _find from 'lodash/find'
+import _kebabCase from 'lodash/kebabCase'
+import _compact from 'lodash/compact'
+import _flatten from 'lodash/flatten'
+import _clone from 'lodash/clone'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons'
 
 import { StudySearchContext } from 'providers/StudySearchProvider'
 import { SearchFacetContext } from 'providers/SearchFacetProvider'
@@ -7,10 +13,7 @@ import FiltersBoxSearchable from './FiltersBoxSearchable'
 import { ApplyButton, ClearFilters } from './FiltersBox'
 import { SearchSelectionContext, isFacetApplicable, getSelectionForFacet } from 'providers/SearchSelectionProvider'
 import useCloseableModal from 'hooks/closeableModal'
-import _kebabCase from 'lodash/kebabCase'
-import _compact from 'lodash/compact'
-import _flatten from 'lodash/flatten'
-import _clone from 'lodash/clone'
+
 
 /**
  * Component for combining two facets into a single panel control.
@@ -35,7 +38,7 @@ export default function CombinedFacetControl({ controlDisplayName, facetIds }) {
     return { facet, selection }
   }))
 
-  const { node, handleButtonClick } = useCloseableModal(showFilters, setShowFilters)
+  const { node, clearNode, handleButtonClick } = useCloseableModal(showFilters, setShowFilters)
 
   const canApply = facetContents.map(facetContent => {
     return isFacetApplicable(facetContent.facet, selectionContext, searchContext)
@@ -47,20 +50,30 @@ export default function CombinedFacetControl({ controlDisplayName, facetIds }) {
 
   // if any of the contained facets have selections, indicate the number in the control name
   const appliedSelection = _compact(_flatten(facetIds.map(facetId => searchContext.params.facets[facetId])))
-  let appliedControlName = controlDisplayName
+  let controlContent = controlDisplayName
   let hasSeachedFilters = false
   if (appliedSelection.length) {
-    appliedControlName = `${controlDisplayName} (${appliedSelection.length})`
     hasSeachedFilters = true
+    controlContent =
+      <>
+        { `${controlDisplayName} (${appliedSelection.length})` }
+        <button
+          ref={clearNode}
+          className='facet-clear'
+          onClick={() => clearFilters(true)}
+        >
+          <FontAwesomeIcon icon={faTimesCircle}/>
+        </button>
+      </>
   }
 
-  /** clear the selection, don't perform the search */
-  function clearFilters() {
+  /** clear the selection, and perform the search if performSearch === true */
+  function clearFilters(performSearch) {
     const updatedSelection = { facets: _clone(searchContext.params.facets) }
     facetContents.forEach(facetContent => {
       updatedSelection.facets[facetContent.facet.id] = []
     })
-    selectionContext.updateSelection(updatedSelection)
+    selectionContext.updateSelection(updatedSelection, performSearch)
   }
 
   /** do the search and close the modal */
@@ -80,7 +93,7 @@ export default function CombinedFacetControl({ controlDisplayName, facetIds }) {
   return (
     <span ref={node} className={`facet ${showFilters ? 'active' : ''} ${hasSeachedFilters ? 'selected' : ''}`}>
       <a onClick={handleButtonClick}>
-        {appliedControlName}
+        {controlContent}
       </a>
       {
         showFilters && <div className="filters-box-searchable combined-facet">

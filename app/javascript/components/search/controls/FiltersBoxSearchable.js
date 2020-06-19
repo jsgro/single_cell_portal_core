@@ -73,7 +73,7 @@ export default function FiltersBoxSearchable({ facet, selection, setSelection, s
     setSelection(newSelections)
   }
 
-  const showSearchBar = facet.links.length > 0 || facet.filters.length > 10
+  const showSearchBar = facet.links.length > 0 || facet.filters.length > 4
   let selectedFilterBadges = <></>
   if (selection.length && facet.type != 'number') {
     selectedFilterBadges = (

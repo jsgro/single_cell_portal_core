@@ -611,7 +611,7 @@ module Api
                 @facets << {
                     id: facet.identifier,
                     filters: matching_filters,
-                    object_id: facet.id # used for lookup later in :generate_bq_query_string
+                    db_facet: facet # used for lookup later in :generate_bq_query_string
                 }
               end
             end
@@ -697,8 +697,8 @@ module Api
           with_clauses << query_elements[:with] if query_elements[:with]
 
           # check if we're at the start of a pair of facets that should be grouped by OR
-          if leading_or_facets.find_index(facet_obj[:id]) &&
-             trailing_or_facets.find_index(sorted_facets[index + 1].try(:[], :id))
+          or_group_index = leading_or_facets.find_index(facet_obj[:id])
+          if or_group_index && trailing_or_facets[or_group_index] == (sorted_facets[index + 1].try(:[], :id))
              or_grouped_where_clause = "(#{query_elements[:where]} OR "
           else
             if or_grouped_where_clause
@@ -707,7 +707,7 @@ module Api
               where_clauses << or_grouped_where_clause
               or_grouped_where_clause = nil
             else
-              where_clauses << "#{query_elements[:where]}"
+              where_clauses << query_elements[:where]
             end
           end
         end
@@ -722,10 +722,11 @@ module Api
           where: nil,
           with: nil,
           from: nil,
-          select: nil
+          select: nil,
+          display_where: nil
         }
         # get the facet instance in order to run query
-        search_facet = SearchFacet.find(facet_obj[:object_id])
+        search_facet = facet_obj[:db_facet]
         column_name = search_facet.big_query_id_column
         if search_facet.is_array_based?
           # if facet is array-based, we need to format an array of filter values selected by user
@@ -771,7 +772,7 @@ module Api
       def self.convert_filters_for_inferred_search(facets:)
         terms_by_facet = {}
         facets.each do |facet|
-          search_facet = SearchFacet.find(facet[:object_id])
+          search_facet = facet[:db_facet]
           # only use non-numeric facets
           if search_facet.is_numeric?
             # we can't do inferred matching on numerics, and because the facets are ANDed,
@@ -857,8 +858,8 @@ module Api
       def self.match_results_by_filter(search_result:, result_key:, facets:)
         facet_name = result_key.to_s.chomp('_val')
         matching_facet = facets.detect { |facet| facet[:id] == facet_name }
-        facet_obj = SearchFacet.find(matching_facet[:object_id])
-        if facet_obj.is_numeric?
+        db_facet = matching_facet[:db_facet]
+        if db_facet.is_numeric?
           match = matching_facet[:filters].dup
           match.delete(:name)
           return match

@@ -7,7 +7,7 @@ import { fetchFacets } from 'lib/scp-api'
  * see https://broadworkbench.atlassian.net/browse/SCP-2108
  */
 export function getDisplayNameForFacet(facetId) {
-  return facetId.replace(/_/gi, ' ')
+  return facetId.replace(/__|_/gi, ' ')
 }
 
 export const SearchFacetContext = React.createContext({
