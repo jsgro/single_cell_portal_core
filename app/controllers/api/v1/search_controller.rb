@@ -551,7 +551,7 @@ module Api
 
         # validate request parameters
         if totat.blank? || valid_totat == false
-          render json: {error: 'Invalid authorization token'}, status: 403 and return
+          render json: {error: 'Invalid authorization token'}, status: 401 and return
         elsif valid_accessions.blank?
           render json: {error: 'Invalid request parameters; study accessions not found'}, status: 400 and return
         end
@@ -559,10 +559,20 @@ module Api
         # load the user from the auth token
         requested_user = valid_totat
 
+        # final auth check - ensure user has permission to download from requested studies
+        # rather than fail entire request, allow subset if user can view some but not others
+        viewable_accessions = Study.viewable(requested_user).pluck(:accession)
+        permitted_accessions = valid_accessions & viewable_accessions
+
+        if permitted_accessions.empty?
+          render json: {error: "Forbidden: cannot access requested accessions"},
+                 status: 403 and return
+        end
+
         # get requested files
         # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
         files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
-                                                                    study_accessions: valid_accessions)
+                                                                    study_accessions: permitted_accessions)
 
         # determine quota impact & update user's download quota
         # will throw a RuntimeError if the download exceeds the user's daily quota
