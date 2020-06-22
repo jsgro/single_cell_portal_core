@@ -344,10 +344,11 @@ class AdminConfigurationsController < ApplicationController
   # deliver an email to all portal users
   def deliver_users_email
     begin
-      SingleCellMailer.users_email(users_email_params, current_user).deliver_now
+      # send in background so operation doesn't time out with lots of users
+      SingleCellMailer.delay.users_email(users_email_params, current_user)
       @notice = 'Your email has successfully been delivered.'
     rescue => e
-      ErrorTracker.report_exception(e, current_user, params)
+      ErrorTracker.report_exception(e, current_user, users_email_params.to_unsafe_hash)
       logger.error "#{Time.zone.now}: Error delivering users email: #{e.message}"
       @alert = "Unabled to deliver users email due to the following error: #{e.message}"
     end
