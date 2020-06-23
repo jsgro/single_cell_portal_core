@@ -145,6 +145,7 @@ function initializeIgv() {
 
   let reference
   let locus
+  let searchOptions
   if (genomeId === 'Macaca_fascicularis_5.0') {
     locus = ['chr1:1-2']
 
@@ -159,6 +160,12 @@ function initializeIgv() {
 
     const fasta = 'Macaca_fascicularis.Macaca_fascicularis_5.0.dna.toplevel.fa'
     const cytoband = 'macaca-fascicularis-cytobands.txt'
+
+    searchOptions = {
+      url: 'https://rest.ensembl.org/lookup/symbol/macaca_fascicularis/$FEATURE$?content-type=application/json',
+      chromosomeField: 'seq_region_name',
+      displayName: 'display_name'
+    }
 
     reference = {
       id: genomeId,
@@ -180,7 +187,12 @@ function initializeIgv() {
 
   const igvOptions = { reference, locus, tracks }
 
+  if (typeof searchOptions !== 'undefined') {
+    igvOptions['search'] = searchOptions
+  }
+
   igv.createBrowser(igvContainer, igvOptions)
+
 
   // Log igv.js initialization in Google Analytics
   ga('send', 'event', 'igv', 'initialize')
