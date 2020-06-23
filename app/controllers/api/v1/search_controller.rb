@@ -684,10 +684,11 @@ module Api
         where_clauses = []
         with_clauses = []
         or_facets = [['cell_type', 'cell_type__custom'], ['organ', 'organ_region']]
-        leading_or_facets = or_facets.map{|g| g[0]}
-        trailing_or_facets = or_facets.map{|g| g[1]}
+        leading_or_facets = or_facets.map(&:first)
+        trailing_or_facets = or_facets.map(&:last)
         or_grouped_where_clause = nil
-        # sort the facets so that OR'ed facets will be next to each other
+        # sort the facets so that OR'ed facets will be next to each other, the 99 is just
+        # an arbitrary large-ish number to make sure the non-or-grouped facets are sorted together
         sorted_facets = facets.sort_by {|facet| or_facets.flatten.find_index(facet[:id]) || 99}
 
         sorted_facets.each_with_index do |facet_obj, index|
@@ -696,17 +697,21 @@ module Api
           base_query += ", #{query_elements[:select]}" if query_elements[:select]
           with_clauses << query_elements[:with] if query_elements[:with]
 
-          # check if we're at the start of a pair of facets that should be grouped by OR
+
           or_group_index = leading_or_facets.find_index(facet_obj[:id])
-          if or_group_index && trailing_or_facets[or_group_index] == (sorted_facets[index + 1].try(:[], :id))
+          next_facet_id = sorted_facets[index + 1].try(:[], :id)
+
+          # this block handles 3 cases: (1) regular AND (2) leading OR (3) trailing OR
+          if or_group_index && trailing_or_facets[or_group_index] == next_facet_id
+             # we're at the start of a pair of facets that should be grouped by OR
              or_grouped_where_clause = "(#{query_elements[:where]} OR "
           else
             if or_grouped_where_clause
               # we're on the second of a pair of facets that should be grouped by OR
-              or_grouped_where_clause += "#{query_elements[:where]})"
-              where_clauses << or_grouped_where_clause
+              where_clauses << or_grouped_where_clause + "#{query_elements[:where]})"
               or_grouped_where_clause = nil
             else
+              # we're on a regular AND facet
               where_clauses << query_elements[:where]
             end
           end
