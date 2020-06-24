@@ -60,8 +60,8 @@ function getBamTracks() {
 
   const bamTracks = []
 
-  for (i = 0; i < bamsToViewInIgv.length; i++) {
-    bam = bamsToViewInIgv[i]
+  for (i = 0; i < bamAndBaiFiles.length; i++) {
+    bam = bamAndBaiFiles[i]
 
     // Extracts BAM file name from its GCS API URL
     bamFileName = bam.url.split('/o/')[1].split('?')[0]
@@ -74,9 +74,6 @@ function getBamTracks() {
     }
     bamTracks.push(bamTrack)
   }
-
-  console.log('bamTracks')
-  console.log(bamTracks)
 
   return bamTracks
 }
