@@ -1685,7 +1685,7 @@ class Study
 
           # batch insert records in groups of 1000
           if @child_records.size >= 1000
-            Gene.create(@records) # genes must be saved first, otherwise the linear data polymorphic association is invalid and will cause a parse fail
+            Gene.create!(@records) # genes must be saved first, otherwise the linear data polymorphic association is invalid and will cause a parse fail
             @count += @records.size
             Rails.logger.info "#{Time.zone.now}: Processed #{@count} genes from #{expression_file.name}:#{expression_file.id} for #{self.name}"
             @records = []
@@ -1697,12 +1697,12 @@ class Study
         end
       end
       # process last few records
-      Gene.create(@records)
+      Gene.create!(@records)
       @count += @records.size
       Rails.logger.info "#{Time.zone.now}: Processed #{@count} genes from #{expression_file.name}:#{expression_file.id} for #{self.name}"
       @records = nil
 
-      DataArray.create(@child_records)
+      DataArray.create!(@child_records)
       @child_count += @child_records.size
       Rails.logger.info "#{Time.zone.now}: Processed #{@child_count} child data arrays from #{expression_file.name}:#{expression_file.id} for #{self.name}"
       @child_records = nil
