@@ -14,8 +14,11 @@ class SingleCellMailer < ApplicationMailer
     @subject = email_params[:subject]
     @from = email_params[:from]
     @message = email_params[:contents]
-    mail(to: @from, bcc: @users, subject: "[Single Cell Portal Message] #{@subject}", from: @from) do |format|
-      format.html {@message.html_safe}
+    # send email in batches to reduce likelihood of errors
+    @users.each_slice(500) do |email_batch|
+      mail(to: @from, bcc: email_batch, subject: "[Single Cell Portal Message] #{@subject}", from: @from) do |format|
+        format.html {@message.html_safe}
+      end
     end
   end
 
