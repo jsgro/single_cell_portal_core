@@ -1072,11 +1072,6 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@broadinstitute/igv@2.5.6-beta.1":
-  version "2.5.6-beta.1"
-  resolved "https://registry.yarnpkg.com/@broadinstitute/igv/-/igv-2.5.6-beta.1.tgz#ec9a8f6f5202bfbc890c37d6aadd80d5e914760f"
-  integrity sha512-xqy/O6oA9Lgdo3JznhCIQfB9NTf9X0oHFb/Zpc6GOFjU/e9k063yDEJ7Gd2oSpR4phyHpyQAHeZGUvo1m8QHvA==
-
 "@ckeditor/ckeditor5-build-classic@12.3.1":
   version "12.3.1"
   resolved "https://registry.yarnpkg.com/@ckeditor/ckeditor5-build-classic/-/ckeditor5-build-classic-12.3.1.tgz#b37011d5ee2f2590cf8d29a43dc5c62f14cf0b5a"
@@ -1578,6 +1573,11 @@
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/@sheerun/mutationobserver-shim/-/mutationobserver-shim-0.3.3.tgz#5405ee8e444ed212db44e79351f0c70a582aae25"
   integrity sha512-DetpxZw1fzPD5xUBrIAoplLChO2VB8DlL5Gg+I1IR9b2wPqYIca2WSUxL5g1vLeR4MsQq1NeWriXAVffV+U1Fw==
+
+"@single-cell-portal/igv@2.5.6-beta.2":
+  version "2.5.6-beta.2"
+  resolved "https://registry.yarnpkg.com/@single-cell-portal/igv/-/igv-2.5.6-beta.2.tgz#0e9bf685ff0e7efcb0a708027b0a34021e2defbb"
+  integrity sha512-azNNZeF9ujGfmSEk48IjYRAqkcQH9EN/c7BaGZxJ7TmVfb4rZpQyuHyzTPi/aB1ElzClgbVU1QXnmSEVxuhRRw==
 
 "@sinonjs/commons@^1.7.0":
   version "1.7.2"

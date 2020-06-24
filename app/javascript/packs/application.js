@@ -20,7 +20,7 @@ import 'jquery-ui/ui/widgets/autocomplete'
 import 'jquery-ui/ui/widgets/sortable'
 import 'jquery-ui/ui/widgets/dialog'
 import 'jquery-ui/ui/effects/effect-highlight'
-import igv from '@broadinstitute/igv'
+import igv from '@single-cell-portal/igv'
 import morpheus from 'morpheus-app'
 import Ideogram from 'ideogram'
 // Per https://ckeditor.com/docs/ckeditor5/latest/builds/guides/integration/advanced-setup.html#scenario-1-integrating-existing-builds

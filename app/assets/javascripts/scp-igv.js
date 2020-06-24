@@ -75,6 +75,9 @@ function getBamTracks() {
     bamTracks.push(bamTrack)
   }
 
+  console.log('bamTracks')
+  console.log(bamTracks)
+
   return bamTracks
 }
 
