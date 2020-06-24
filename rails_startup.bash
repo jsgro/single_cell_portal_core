@@ -7,6 +7,17 @@ echo "*** COMPLETED ***"
 echo "*** ROLLING OVER LOGS ***"
 ruby /home/app/webapp/bin/cycle_logs.rb
 echo "*** COMPLETED ***"
+
+# ensure data upload directory exists and has correct permissions
+echo "*** ENSURING DATA UPLOAD DIRECTORY PERMISSIONS ***"
+if [[ ! -d /home/app/webapp/data ]]; then
+    echo "DATA DIRECTORY NOT PRESENT; CREATING"
+    mkdir data
+    echo "DATA DIRECTORY SUCCESSFULLY CREATED"
+fi
+sudo chown -R app:app /home/app/webapp/data
+echo "*** COMPLETED ***"
+
 if [[ $PASSENGER_APP_ENV = "production" ]] || [[ $PASSENGER_APP_ENV = "staging" ]] || [[ $PASSENGER_APP_ENV = "pentest" ]]
 then
     echo "*** PRECOMPILING ASSETS ***"
