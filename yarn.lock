@@ -1072,10 +1072,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@broadinstitute/igv@2.5.5":
-  version "2.5.5"
-  resolved "https://registry.yarnpkg.com/@broadinstitute/igv/-/igv-2.5.5.tgz#1e8f832b85009f9861349f30b2fcf7ec7a515a71"
-  integrity sha512-kkT3ij/hci1QoIwxhc3hjHzkZ5Do2IRLnq0C+BQgw98EGNUp36+MShYK04MCzn3eTiPAx1DbTUVY3Pn3eP6nng==
+"@broadinstitute/igv@2.5.5-beta.1":
+  version "2.5.5-beta.1"
+  resolved "https://registry.yarnpkg.com/@broadinstitute/igv/-/igv-2.5.5-beta.1.tgz#86793a86b13a94e17dea78326d20e734eb025ef1"
+  integrity sha512-r/4u6yr6c1FdiXvtJRnV3evbFZu8C2a4N1OOCrvz2uaew3P+uoF3mMD4MaFLNkki9oqI/XKAfWTJu1npnRsBjw==
 
 "@ckeditor/ckeditor5-build-classic@12.3.1":
   version "12.3.1"
