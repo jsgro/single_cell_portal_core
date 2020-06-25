@@ -11,7 +11,7 @@
 .search-button {
   position: absolute;
   right: 10px;
-  top: 15px;
+  top: 19px;
 }
 
 #bulk-download-modal {
@@ -114,7 +114,21 @@ nav.search-links, #search-panel {
   }
 
   .filters-search-bar {
-    margin: 4px 2px 10px 2px;
+    margin: 6px 2px 12px 2px;
+    input {
+      background: #E9ECEF;
+      border: none;
+      height: 45px;
+    }
+    input::placeholder,input::-ms-input-placeholder {
+      color: #777;
+    }
+    button {
+      background: #eee;
+      border: none;
+      color: $action-color;
+      margin-top: -5px;
+    }
   }
 
   .clear-filters {
@@ -150,7 +164,7 @@ nav.search-links, #search-panel {
 
   li {
     width: 100%;
-    margin-bottom: 0.2em;
+    margin-bottom: 0.5em;
   }
 
   .default-filters-list-name {
@@ -256,21 +270,6 @@ nav.search-links, #search-panel {
     cursor: pointer;
   }
 
-  .filters-search-bar {
-    margin: 2px;
-    input {
-      background: #E9ECEF;
-      border: none;
-      height: 45px;
-    }
-    button {
-      background: #eee;
-      border: none;
-      color: $action-color;
-      margin-top: -5px;
-    }
-  }
-
   .combined-facet {
     width: auto;
     margin-left: -300px;
@@ -282,9 +281,13 @@ nav.search-links, #search-panel {
     }
     .multi-facet-container {
       display: flex;
+      .single-facet:nth-of-type(2) {
+        margin-left: 12px;
+      }
     }
     h4 {
       margin-left: 5px;
+      margin-top: 6px;
     }
   }
 }
