@@ -693,7 +693,7 @@ class Study
       owned = self.where(user_id: user._id, public: false, queued_for_deletion: false).map(&:id)
       shares = StudyShare.where(email: user.email).map(&:study).select {|s| !s.queued_for_deletion }.map(&:id)
       group_shares = []
-      if user.registered_for_firecloud
+      if user.registered_for_firecloud && (user.refresh_token.present? || user.api_access_token.present?)
         user_client = FireCloudClient.new(user, FireCloudClient::PORTAL_NAMESPACE)
         user_groups = user_client.get_user_groups.map {|g| g['groupEmail']}
         group_shares = StudyShare.where(:email.in => user_groups).map(&:study).select {|s| !s.queued_for_deletion }.map(&:id)
@@ -885,7 +885,7 @@ class Study
     }
     terms.each do |term|
       text_blob = "#{self.name} #{self.description}"
-      score = text_blob.scan(/#{term}/i).size
+      score = text_blob.scan(/#{::Regexp.escape(term)}/i).size
       if score > 0
         weights[:total] += score
         weights[:terms][term] = score
@@ -1685,7 +1685,7 @@ class Study
 
           # batch insert records in groups of 1000
           if @child_records.size >= 1000
-            Gene.create(@records) # genes must be saved first, otherwise the linear data polymorphic association is invalid and will cause a parse fail
+            Gene.create!(@records) # genes must be saved first, otherwise the linear data polymorphic association is invalid and will cause a parse fail
             @count += @records.size
             Rails.logger.info "#{Time.zone.now}: Processed #{@count} genes from #{expression_file.name}:#{expression_file.id} for #{self.name}"
             @records = []
@@ -1697,12 +1697,12 @@ class Study
         end
       end
       # process last few records
-      Gene.create(@records)
+      Gene.create!(@records)
       @count += @records.size
       Rails.logger.info "#{Time.zone.now}: Processed #{@count} genes from #{expression_file.name}:#{expression_file.id} for #{self.name}"
       @records = nil
 
-      DataArray.create(@child_records)
+      DataArray.create!(@child_records)
       @child_count += @child_records.size
       Rails.logger.info "#{Time.zone.now}: Processed #{@child_count} child data arrays from #{expression_file.name}:#{expression_file.id} for #{self.name}"
       @child_records = nil

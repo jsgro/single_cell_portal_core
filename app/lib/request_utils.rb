@@ -73,7 +73,7 @@ class RequestUtils
   # safely strip unsafe characters and encode search parameters for query/rendering
   # strips out unsafe characters that break rendering notices/modals
   def self.sanitize_search_terms(terms)
-    inputs = terms.is_a?(Array) ? terms.join(',') : terms
+    inputs = terms.is_a?(Array) ? terms.join(',') : terms.to_s
     SANITIZER.sanitize(inputs).encode('ASCII-8BIT', invalid: :replace, undef: :replace)
   end
 end

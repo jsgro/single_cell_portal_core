@@ -7,6 +7,8 @@
 
 import { accessToken } from 'providers/UserProvider'
 
+let metricsApiMock = false
+
 const defaultInit = {
   method: 'POST',
   headers: {
@@ -30,6 +32,18 @@ if ('SCP' in window) {
   bardDomain = bardDomainsByEnv[env]
   // To consider: Replace SCP-specific userId with DSP-wide userId
   userId = window.SCP.userId
+}
+
+/**
+ * Sets flag on whether to use mock data for Metrics API responses.
+ *
+ * This method is useful for tests and certain development scenarios,
+ * e.g. when evolving a new API or to work around occasional API blockers.
+ *
+ * @param {Boolean} flag Whether to use mock data for all API responses
+ */
+export function setMetricsApiMockFlag(flag) {
+  metricsApiMock = flag
 }
 
 /**
@@ -192,6 +206,9 @@ export function log(name, props={}) {
     // User is unauthenticated / unregistered / anonynmous
     props['distinct_id'] = userId
     delete init['headers']['Authorization']
+    props['authenticated'] = false
+  } else {
+    props['authenticated'] = true
   }
 
   const body = {
@@ -203,7 +220,8 @@ export function log(name, props={}) {
 
   init = Object.assign(init, body)
 
-  if ('SCP' in window) { // Skips fetch during test
+  if ('SCP' in window || metricsApiMock) {
+    // Skips fetch during test, unless explicitly testing Metrics API
     fetch(`${bardDomain}/api/event`, init)
   }
 }

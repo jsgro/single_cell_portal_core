@@ -154,6 +154,10 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_equal "testing", json['studies'].first['term_matches'].first
     assert_equal "API Test Study", json['studies'].last['term_matches'].first
 
+    # test regex escaping
+    execute_http_request(:get, api_v1_search_path(type: 'study', terms: 'foobar scp-105 [('))
+    assert_response :success
+
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
@@ -209,6 +213,19 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
       assert config_file.include?(output_path), "Did not correctly set output path for #{filename} to #{output_path}"
     end
 
+    # ensure bad/missing auth_token return 401
+    invalid_auth_code = auth_code.to_i + 1
+    execute_http_request(:get, api_v1_search_bulk_download_path(
+        auth_code: invalid_auth_code, accessions: study.accession, file_types: file_types)
+    )
+    assert_response :unauthorized
+
+    execute_http_request(:get, api_v1_search_bulk_download_path(
+        auth_code: ' ', accessions: study.accession, file_types: file_types)
+    )
+
+    assert_response :unauthorized
+
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
@@ -235,6 +252,26 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal expected_response, json.with_indifferent_access,
                  "Did not correctly return bulk download sizes, expected #{expected_response} but found #{json}"
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'bulk download should exclude external sequence data' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study = Study.find_by(name: "API Test Study #{@random_seed}")
+    execute_http_request(:post, api_v1_create_auth_code_path)
+    assert_response :success
+    auth_code = json['auth_code']
+
+    file_types = %w(Cluster Fastq)
+    excluded_file = study.study_files.by_type('Fastq').first
+    execute_http_request(:get, api_v1_search_bulk_download_path(
+        auth_code: auth_code, accessions: study.accession, file_types: file_types)
+    )
+    assert_response :success
+
+    refute json.include?(excluded_file.name), 'Bulk download config did not exclude external fastq link'
+
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
