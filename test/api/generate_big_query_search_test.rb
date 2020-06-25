@@ -17,6 +17,16 @@ class GenerateBigQuerySearchTest < ActiveSupport::TestCase
                                               data_type: 'string',
                                               big_query_id_column: 'species',
                                               big_query_name_column: 'species__ontology_label')
+    @sample_age_facet = ::SearchFacet.new(identifier: 'organism_age',
+                                               name: 'age',
+                                               filters: [],
+                                               is_array_based: false,
+                                               data_type: 'number',
+                                               min: 1.0,
+                                               max: 180.0,
+                                               big_query_id_column: 'organism_age',
+                                               big_query_name_column: 'organism_age',
+                                               big_query_conversion_column: 'organism_age__seconds')
     @sample_celltype_facet = ::SearchFacet.new(identifier: 'cell_type',
                                                name: 'cell type',
                                                filters: [{id: 'c1', name: 'amarcrine'}, {id: 'c2', name: 't cell'}],
@@ -43,6 +53,15 @@ class GenerateBigQuerySearchTest < ActiveSupport::TestCase
     expected_query = 'WITH disease_filters AS (SELECT["d1"] as disease_value) SELECT DISTINCT study_accession, disease_val '\
                      'FROM alexandria_convention, disease_filters, UNNEST(disease_filters.disease_value) AS disease_val '\
                      'WHERE (disease_val IN UNNEST(disease))'
+    assert_equal expected_query, query_string
+  end
+
+  test 'should generate correct bigQuery query for a single numeric facet' do
+    facets = [{id: 'organism_age',
+               db_facet: @sample_age_facet,
+               filters: {min: 5, max: 40, unit: 'years'}}]
+    query_string = Api::V1::SearchController.generate_bq_query_string(facets)
+    expected_query = 'SELECT DISTINCT study_accession, organism_age FROM alexandria_convention WHERE organism_age__seconds BETWEEN 157788000.0 AND 1262304000.0'
     assert_equal expected_query, query_string
   end
 

@@ -752,7 +752,7 @@ module Api
           query_elements[:select] = "#{filter_where_val}"
         elsif search_facet.is_numeric?
           # run a range query (e.g. WHERE organism_age BETWEEN 20 and 60)
-          query_elements[:select] = ", #{column_name}"
+          query_elements[:select] = "#{column_name}"
           query_on = column_name
           min_value = facet_obj[:filters][:min]
           max_value = facet_obj[:filters][:max]
