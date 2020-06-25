@@ -58,47 +58,4 @@ describe('Library for client-side usage analytics', () => {
       done()
     })
   })
-
-  it('includes `authenticated: false` when not signed in', done => {
-    // Spy on `fetch()` and its contingent methods like `json()`,
-    // because we want to intercept the outgoing request
-    const mockSuccessResponse = {}
-    const mockJsonPromise = Promise.resolve(mockSuccessResponse)
-    const mockFetchPromise = Promise.resolve({
-      json: () => {
-        mockJsonPromise
-      }
-    })
-    jest.spyOn(global, 'fetch').mockImplementation(() => {
-      mockFetchPromise
-    })
-
-    // Mock the user context, to mimic unauth'd state
-    const userContext = { accessToken: '' }
-    jest.spyOn(UserProvider, 'useContextUser')
-      .mockImplementation(() => {
-        return userContext
-      })
-
-    const event = {
-      target: {
-        localName: 'a',
-        text: 'Text that is linked'
-      }
-    }
-    logClick(event)
-
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.anything(), // URL
-      expect.objectContaining({
-        body: expect.stringContaining(
-          '\"authenticated\":true'
-        )
-      })
-    )
-    process.nextTick(() => {
-      done()
-    })
-  })
-
 })
