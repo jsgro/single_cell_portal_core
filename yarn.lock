@@ -1574,6 +1574,11 @@
   resolved "https://registry.yarnpkg.com/@sheerun/mutationobserver-shim/-/mutationobserver-shim-0.3.3.tgz#5405ee8e444ed212db44e79351f0c70a582aae25"
   integrity sha512-DetpxZw1fzPD5xUBrIAoplLChO2VB8DlL5Gg+I1IR9b2wPqYIca2WSUxL5g1vLeR4MsQq1NeWriXAVffV+U1Fw==
 
+"@single-cell-portal/igv@2.5.6-beta.2":
+  version "2.5.6-beta.2"
+  resolved "https://registry.yarnpkg.com/@single-cell-portal/igv/-/igv-2.5.6-beta.2.tgz#0e9bf685ff0e7efcb0a708027b0a34021e2defbb"
+  integrity sha512-azNNZeF9ujGfmSEk48IjYRAqkcQH9EN/c7BaGZxJ7TmVfb4rZpQyuHyzTPi/aB1ElzClgbVU1QXnmSEVxuhRRw==
+
 "@sinonjs/commons@^1.7.0":
   version "1.7.2"
   resolved "https://registry.yarnpkg.com/@sinonjs/commons/-/commons-1.7.2.tgz#505f55c74e0272b43f6c52d81946bed7058fc0e2"
@@ -7056,11 +7061,6 @@ ignore@^4.0.6:
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-4.0.6.tgz#750e3db5862087b4737ebac8207ffd1ef27b25fc"
   integrity sha512-cyFDKrqc/YdcWFniJhzI42+AzS+gNwmUzOSFcRCQYwySuBBBy/KjuxWLZ/FHEH6Moq1NizMOBWyTcv8O4OZIMg==
-
-igv@2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/igv/-/igv-2.1.0.tgz#1b3b18a2fa1ae1a6c9beb7772f4181ac7eb48a64"
-  integrity sha512-VI2ywuI2FYt2ZkyUO2dMk3xrLpZ5hxSGzDyMgKad95lwzmZNe0nK2ZpY/N8VobEjey/8gozIfk7PCTtYp/SFSA==
 
 immer@1.10.0:
   version "1.10.0"
