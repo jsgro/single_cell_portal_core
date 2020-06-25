@@ -192,6 +192,9 @@ export function log(name, props={}) {
     // User is unauthenticated / unregistered / anonynmous
     props['distinct_id'] = userId
     delete init['headers']['Authorization']
+    props['authenticated'] = false
+  } else {
+    props['authenticated'] = true
   }
 
   const body = {
