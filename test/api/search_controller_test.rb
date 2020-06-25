@@ -154,6 +154,10 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_equal "testing", json['studies'].first['term_matches'].first
     assert_equal "API Test Study", json['studies'].last['term_matches'].first
 
+    # test regex escaping
+    execute_http_request(:get, api_v1_search_path(type: 'study', terms: 'foobar scp-105 [('))
+    assert_response :success
+
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 

@@ -885,7 +885,7 @@ class Study
     }
     terms.each do |term|
       text_blob = "#{self.name} #{self.description}"
-      score = text_blob.scan(/#{term}/i).size
+      score = text_blob.scan(/#{::Regexp.escape(term)}/i).size
       if score > 0
         weights[:total] += score
         weights[:terms][term] = score
