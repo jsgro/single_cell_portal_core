@@ -14,7 +14,7 @@ import FiltersSearchBar from './FiltersSearchBar'
  */
 export default function FiltersBoxSearchable({ facet, selection, setSelection, show, setShow, hideControls }) {
   // State that is specific to FiltersBox
-  const [matchingFilters, setMatchingFilters] = useState(facet.filters.slice(0, 15))
+  const [matchingFilters, setMatchingFilters] = useState(facet.filters)
   const [hasFilterSearchResults, setHasFilterSearchResults] = useState(false)
 
   /*
@@ -56,7 +56,7 @@ export default function FiltersBoxSearchable({ facet, selection, setSelection, s
    * Summarize filters, either default or
    */
   function getFiltersSummary() {
-    let filtersSummary = 'Top Filters'
+    let filtersSummary = 'Available Filters'
 
     if (hasFilterSearchResults) {
       const numMatches = matchingFilters.length
