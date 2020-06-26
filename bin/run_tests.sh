@@ -78,6 +78,7 @@ else
                     test/integration/tos_acceptance_test.rb
                     test/integration/study_creation_test.rb
                     test/api/search_controller_test.rb # running search test here to use data from study_creation_test
+                    test/api/generate_big_query_search_test.rb
                     test/integration/lib/bulk_download_service_test.rb
                     test/integration/study_validation_test.rb
                     test/integration/taxons_controller_test.rb
