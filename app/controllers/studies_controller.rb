@@ -445,8 +445,9 @@ class StudiesController < ApplicationController
   # method to perform chunked uploading of data
   def do_upload
     upload = get_upload
-    # remove spaces from filename since this converted client-side, but original_filename is unchanged in headers
-    filename = upload.original_filename.gsub(/\s/, '_')
+    # remove spaces and + (encoded whitespace character) from filename since this converted client-side,
+    # but original_filename is unchanged in headers
+    filename = upload.original_filename.gsub(/[\s\+]/, '_')
     study_file = @study.study_files.detect {|sf| sf.upload_file_name == filename}
     # If no file has been uploaded or the uploaded file has a different filename,
     # do a new upload from scratch
