@@ -271,5 +271,25 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     assert get_bq_row_count(bq_dataset, study) <= initial_bq_row_count # using "<=" instead of "==" in case there were rows from a previous aborted test to clean up
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
+
+  test 'should allow files with spaces in names' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
+    filename = "12_MB_file_with_space_in_filename 2.txt"
+    sanitized_filename = filename.gsub(/\s/, '_')
+    file_params = {study_file: {file_type: 'Expression Matrix', study_id: study.id.to_s, name: sanitized_filename}}
+    exp_matrix = File.open(Rails.root.join('test', 'test_data', filename))
+    perform_chunked_study_file_upload(filename, file_params, study.id)
+    assert_response 200, "Expression upload failed: #{@response.code}"
+    study_file = study.study_files.detect {|file| file.upload_file_name == sanitized_filename}
+    refute study_file.nil?, 'Did not find newly uploaded expression matrix'
+    assert_equal exp_matrix.size, study_file.upload_file_size, "File sizes do not match; #{exp_matrix.size} != #{study_file.upload_file_size}"
+
+    # clean up
+    study_file.destroy
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
 end
 
