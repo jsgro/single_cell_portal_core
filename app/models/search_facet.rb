@@ -359,13 +359,13 @@ class SearchFacet
     "SELECT DISTINCT id, name FROM(SELECT id_col AS id, name_col as name " + \
     "FROM #{CellMetadatum::BIGQUERY_TABLE}, UNNEST(#{self.big_query_id_column}) AS id_col WITH OFFSET id_pos, " + \
     "UNNEST(#{self.big_query_name_column}) as name_col WITH OFFSET name_pos WHERE id_pos = name_pos) WHERE id IS NOT NULL " + \
-    "ORDER BY name"
+    "ORDER BY LOWER(name)"
   end
 
   # generate query string to retrieve distinct values for non-array based facets
   def generate_non_array_query
     "SELECT DISTINCT #{self.big_query_id_column} AS id, #{self.big_query_name_column} AS name FROM #{CellMetadatum::BIGQUERY_TABLE} " + \
-    "WHERE #{self.big_query_id_column} IS NOT NULL ORDER BY #{self.big_query_name_column}"
+    "WHERE #{self.big_query_id_column} IS NOT NULL ORDER BY LOWER(#{self.big_query_name_column})"
   end
 
   # generate a minmax query string to set bounds for numeric facets
