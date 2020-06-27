@@ -103,6 +103,7 @@ export function PropsGeneSearchProvider(props) {
   )
 }
 
+/** returns an object built from the query params and defaults */
 export function buildParamsFromQuery(query, preset) {
   const queryParams = queryString.parse(query)
   return {

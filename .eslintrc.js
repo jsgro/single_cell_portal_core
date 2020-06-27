@@ -96,6 +96,7 @@ module.exports = {
         // React
         'react/prop-types': 'off',
         'react/jsx-key': 'off',
+        'react/jsx-curly-spacing': ['error', {'when': 'never'}],
          //Jest
          "jest/no-disabled-tests": "warn",
          // remove .only from your tests whenever you are using the exclusivity feature
