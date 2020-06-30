@@ -3227,16 +3227,19 @@ class Study
             errors.add(:firecloud_workspace, ': The workspace you provided is restricted.  We currently do not allow use of restricted workspaces.  Please use another workspace.')
             return false
           end
-          # check permissions
+          # check permissions, falling back to project-level permissions if needed
+          is_project_owner = false
           if acl['acl'][study_owner].nil? || acl['acl'][study_owner]['accessLevel'] == 'READER'
-            # check if user has project-level permission as an 'Owner' before failing validation
-            unless self.user.is_billing_project_owner?(self.firecloud_project)
+            Rails.logger.info "checking project-level permissions for user_id:#{self.user.id} in #{self.firecloud_project}"
+            is_project_owner = self.user.is_billing_project_owner?(self.firecloud_project)
+            unless is_project_owner
               errors.add(:firecloud_workspace, ': You do not have write permission for the workspace you provided.  Please use another workspace.')
               return false
             end
+            Rails.logger.info "project-level permissions check successful"
           end
-          # check compute permissions
-          if acl['acl'][study_owner]['canCompute'] != can_compute
+          # check compute permissions (only if not project owner, as compute is inherited and not present at the workspace level)
+          if !is_project_owner && acl['acl'][study_owner]['canCompute'] != can_compute
             errors.add(:firecloud_workspace, ': There was an error setting the permissions on your workspace (compute permissions were not set correctly).  Please try again.')
             return false
           end
@@ -3273,7 +3276,7 @@ class Study
         error_context = ErrorTracker.format_extra_context(self)
         # remove study description as it's not useful
         error_context['study'].delete('description')
-        ErrorTracker.report_exception(e, user, error_context)
+        ErrorTracker.report_exception(e, self.user, error_context)
         # delete workspace on any fail as this amounts to a validation fail
         Rails.logger.info "#{Time.zone.now}: Error assigning workspace: #{e.message}"
         errors.add(:firecloud_workspace, " assignment failed: #{e.message}; Please check the workspace in question and try again.")
