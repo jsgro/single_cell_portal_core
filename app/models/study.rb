@@ -3229,8 +3229,11 @@ class Study
           end
           # check permissions
           if acl['acl'][study_owner].nil? || acl['acl'][study_owner]['accessLevel'] == 'READER'
-            errors.add(:firecloud_workspace, ': You do not have write permission for the workspace you provided.  Please use another workspace.')
-            return false
+            # check if user has project-level permission as an 'Owner' before failing validation
+            unless self.user.is_billing_project_owner?(self.firecloud_project)
+              errors.add(:firecloud_workspace, ': You do not have write permission for the workspace you provided.  Please use another workspace.')
+              return false
+            end
           end
           # check compute permissions
           if acl['acl'][study_owner]['canCompute'] != can_compute
