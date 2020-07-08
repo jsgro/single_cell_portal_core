@@ -98,7 +98,7 @@ function logClickButton(target) {
  *
  * From https://stackoverflow.com/a/15061155
  */
-function getLabelsForInputElement(element) {
+function getLabelsForElement(element) {
   let labels
   const id = element.id
 
@@ -123,7 +123,7 @@ function getLabelsForInputElement(element) {
  * Log click on input by type, e.g. text, number, checkbox
  */
 function logClickInput(target) {
-  const domLabels = getLabelsForInputElement(target)
+  const domLabels = getLabelsForElement(target)
 
   // User-facing label
   const label = domLabels.length > 0 ? domLabels[0].innerText : ''
@@ -150,6 +150,20 @@ function logClickOther(target) { // eslint-disable-line no-unused-vars
 
   // Google Analytics fallback: remove once Bard and Mixpanel are ready for SCP
   ga('send', 'event', 'click', 'other') // eslint-disable-line no-undef
+}
+
+/** Log text of selected option when dropdown menu (i.e., select) changes */
+export function logMenuChange(event) {
+  // Get user-facing label
+  const domLabels = getLabelsForElement(event.originalEvent.target)
+  const label = domLabels.length > 0 ? domLabels[0].innerText : ''
+
+  // Get newly-selected option
+  const options = event.originalEvent.target.options
+  const text = options[options.selectedIndex].text
+
+  const props = { label, text }
+  log('change:menu', props)
 }
 
 /**
