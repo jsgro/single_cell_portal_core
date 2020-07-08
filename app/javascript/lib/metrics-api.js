@@ -129,6 +129,11 @@ function logClickInput(target) {
   const label = domLabels.length > 0 ? domLabels[0].innerText : ''
 
   const props = { label }
+
+  if (target.type === 'submit') {
+    props.text = target.value
+  }
+
   const element = `input-${target.type}`
   log(`click:${element}`, props)
 
