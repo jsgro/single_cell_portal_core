@@ -99,6 +99,8 @@ function logClickButton(target) {
  * From https://stackoverflow.com/a/15061155
  */
 function getLabelsForElement(element) {
+  if (metricsApiMock === true) return [] // Needed for metrics-api.test.js
+
   let labels
   const id = element.id
 
@@ -155,11 +157,11 @@ function logClickOther(target) { // eslint-disable-line no-unused-vars
 /** Log text of selected option when dropdown menu (i.e., select) changes */
 export function logMenuChange(event) {
   // Get user-facing label
-  const domLabels = getLabelsForElement(event.originalEvent.target)
+  const domLabels = getLabelsForElement(event.target)
   const label = domLabels.length > 0 ? domLabels[0].innerText : ''
 
   // Get newly-selected option
-  const options = event.originalEvent.target.options
+  const options = event.target.options
   const text = options[options.selectedIndex].text
 
   const props = { label, text }
