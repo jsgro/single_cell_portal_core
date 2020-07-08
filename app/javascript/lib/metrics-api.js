@@ -203,6 +203,8 @@ export function log(name, props={}) {
 
   if ('SCP' in window && window.location.search.includes('scpbr=')) {
     props['brand'] = getBrandingGroup()
+  } else {
+    props['brand'] = ''
   }
 
   let init = Object.assign({}, defaultInit)
