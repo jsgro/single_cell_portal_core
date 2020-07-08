@@ -80,10 +80,6 @@ describe('Library for client-side usage analytics', () => {
         return userContext
       })
 
-  // // Get newly-selected option
-  // const options = event.target.options
-  // const text = options[options.selectedIndex].text
-
     const event = {
       target: {
         options: {
