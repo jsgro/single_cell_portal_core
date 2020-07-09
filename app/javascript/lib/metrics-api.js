@@ -6,6 +6,7 @@
  */
 
 import { accessToken } from 'providers/UserProvider'
+import { getBrandingGroup } from 'lib/scp-api'
 
 let metricsApiMock = false
 
@@ -220,6 +221,9 @@ export function log(name, props={}) {
     // For e.g. COVID-19 featured space
     props['featuredSpace'] = window.SCP.featuredSpace
   }
+
+  const brandingGroup = getBrandingGroup()
+  props['brand'] = brandingGroup ? brandingGroup : ''
 
   let init = Object.assign({}, defaultInit)
 
