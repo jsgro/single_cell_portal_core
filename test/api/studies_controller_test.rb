@@ -130,4 +130,13 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     assert_response 204, "Did not successfully delete sync study, expected response of 204 but found #{@response.response_code}"
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
+
+  test 'hidden files are identified by regex' do
+    assert StudiesController::HIDDEN_FILE_REGEX.match('.foo').present?
+    assert StudiesController::HIDDEN_FILE_REGEX.match('/whatever/.foo').present?
+    assert StudiesController::HIDDEN_FILE_REGEX.match('/.config/config').present?
+
+    assert StudiesController::HIDDEN_FILE_REGEX.match('/whatever/metadata.txt').nil?
+    assert StudiesController::HIDDEN_FILE_REGEX.match('metadata.txt').nil?
+  end
 end
