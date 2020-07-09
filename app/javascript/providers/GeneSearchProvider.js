@@ -67,10 +67,13 @@ export function PropsGeneSearchProvider(props) {
     // reset the scroll in case they scrolled down to read prior results
     window.scrollTo(0, 0)
 
-    const results = await fetchSearch('study', {
-      page: searchParams.page,
-      genes: searchParams.genes
-    })
+    const results = await fetchSearch(
+      'gene', // Needed for logging
+      {
+        page: searchParams.page,
+        genes: searchParams.genes
+      }
+    )
 
     setSearchState({
       params: searchParams,
