@@ -201,11 +201,8 @@ export function log(name, props={}) {
     props['featuredSpace'] = window.SCP.featuredSpace
   }
 
-  if ('SCP' in window && window.location.search.includes('scpbr=')) {
-    props['brand'] = getBrandingGroup()
-  } else {
-    props['brand'] = ''
-  }
+  const brandingGroup = getBrandingGroup()
+  props['brand'] = brandingGroup ? brandingGroup : ''
 
   let init = Object.assign({}, defaultInit)
 
