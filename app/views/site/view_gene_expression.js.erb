@@ -10,6 +10,7 @@ closeModalSpinner('#spinner_target', '#loading-modal', function () {
 
     var genes = $('#search_genes').val().split(' ');
     log('search', {
+      type: 'gene',
       context: 'study',
       terms: genes,
       numTerms: genes.length

@@ -8,7 +8,7 @@ import {
 import { log } from './metrics-api'
 
 // See note in logSearch
-let isPageLoadSearch = true
+let searchNumber = 0
 
 const filterNamesById = {}
 
@@ -75,12 +75,18 @@ function getFriendlyFilterListByFacet(facets) {
  * Log study search metrics.  Might support gene, cell search in future.
  */
 export function logSearch(type, searchParams) {
-  if (isPageLoadSearch === true) {
+  searchNumber += 1
+  if (searchNumber < 3) {
     // This prevents over-reporting searches.
-    // Loading home page triggers search, which is a side-effect / artifact
-    // with regard to tracking user interactions.  This variable is set to
-    // false once per page load as a way to omit such artifacts from logging.
-    isPageLoadSearch = false
+    //
+    // Loading home page triggers 2 searches, which is a side-effect / artifact
+    // with regard to tracking user interactions.  So do not log the first
+    // two searches.
+    //
+    // To consider: integrate a way to determine which *interaction* triggered
+    // search.  This was considered very early for separate reasons, but
+    // abandoned as it was invasive.  The clearly-brittle nature of preventing
+    // these artifactual searches shifts that cost-benefit, somewhat.
     return
   }
 
