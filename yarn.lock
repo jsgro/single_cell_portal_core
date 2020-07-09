@@ -1574,10 +1574,10 @@
   resolved "https://registry.yarnpkg.com/@sheerun/mutationobserver-shim/-/mutationobserver-shim-0.3.3.tgz#5405ee8e444ed212db44e79351f0c70a582aae25"
   integrity sha512-DetpxZw1fzPD5xUBrIAoplLChO2VB8DlL5Gg+I1IR9b2wPqYIca2WSUxL5g1vLeR4MsQq1NeWriXAVffV+U1Fw==
 
-"@single-cell-portal/igv@2.5.6-beta.2":
-  version "2.5.6-beta.2"
-  resolved "https://registry.yarnpkg.com/@single-cell-portal/igv/-/igv-2.5.6-beta.2.tgz#0e9bf685ff0e7efcb0a708027b0a34021e2defbb"
-  integrity sha512-azNNZeF9ujGfmSEk48IjYRAqkcQH9EN/c7BaGZxJ7TmVfb4rZpQyuHyzTPi/aB1ElzClgbVU1QXnmSEVxuhRRw==
+"@single-cell-portal/igv@2.6.4-beta.1":
+  version "2.6.4-beta.1"
+  resolved "https://registry.yarnpkg.com/@single-cell-portal/igv/-/igv-2.6.4-beta.1.tgz#1e79523b615c79599a8a96eb4f3f7f14e5f84ce7"
+  integrity sha512-BMpHsdLX7XNpt8CD45vEseUSWt4AvrQJSSlgglrqCljqjzfvM2pBt7HlJGjmL5MPQdeFSayAWPmKz0ddLEY0tg==
 
 "@sinonjs/commons@^1.7.0":
   version "1.7.2"
