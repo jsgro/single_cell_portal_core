@@ -30,7 +30,7 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
 import HomePageContent from 'components/HomePageContent'
 import Covid19PageContent from 'components/covid19/Covid19PageContent'
-import { logPageView, logClick, log } from 'lib/metrics-api'
+import { logPageView, logClick, logMenuChange, log } from 'lib/metrics-api'
 import createTracesAndLayout from 'lib/kernel-functions'
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -39,6 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $(document).on('click', 'body', event => {
     logClick(event)
+  })
+
+  $(document).on('change', 'select', event => {
+    logMenuChange(event)
   })
 
   if (document.getElementById('home-page-content')) {
