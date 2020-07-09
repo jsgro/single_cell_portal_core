@@ -3,7 +3,7 @@
 
 const fetch = require('node-fetch')
 
-import {logClick, setMetricsApiMockFlag} from 'lib/metrics-api'
+import {logClick, logMenuChange, setMetricsApiMockFlag} from 'lib/metrics-api'
 import * as UserProvider from 'providers/UserProvider'
 
 describe('Library for client-side usage analytics', () => {
@@ -51,6 +51,51 @@ describe('Library for client-side usage analytics', () => {
       expect.objectContaining({
         body: expect.stringContaining(
           '\"authenticated\":true'
+        )
+      })
+    )
+    process.nextTick(() => {
+      done()
+    })
+  })
+
+  it('logs text of selected option on changing in menu', done => {
+    // Spy on `fetch()` and its contingent methods like `json()`,
+    // because we want to intercept the outgoing request
+    const mockSuccessResponse = {}
+    const mockJsonPromise = Promise.resolve(mockSuccessResponse)
+    const mockFetchPromise = Promise.resolve({
+      json: () => {
+        mockJsonPromise
+      }
+    })
+    jest.spyOn(global, 'fetch').mockImplementation(() => {
+      mockFetchPromise
+    })
+
+    // Mock the user context, to mimic auth'd state
+    const userContext = { accessToken: 'test' }
+    jest.spyOn(UserProvider, 'useContextUser')
+      .mockImplementation(() => {
+        return userContext
+      })
+
+    const event = {
+      target: {
+        options: {
+          0: {text: 'Yes'},
+          1: {text: 'No'},
+          selectedIndex: 1
+        }
+      }
+    }
+    logMenuChange(event)
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.anything(), // URL
+      expect.objectContaining({
+        body: expect.stringContaining(
+          '\"text\":\"No\"'
         )
       })
     )

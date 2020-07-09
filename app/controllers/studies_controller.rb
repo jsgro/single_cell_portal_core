@@ -26,7 +26,7 @@ class StudiesController < ApplicationController
   before_action :check_firecloud_status, except: [:index, :do_upload, :resume_upload, :update_status,
                                                   :retrieve_wizard_upload, :parse]
   before_action :check_study_detached, only: [:edit, :update, :initialize_study, :sync_study, :sync_submission_outputs]
-
+  helper_method :visible_unsynced_files, :hidden_unsynced_files
   ###
   #
   # STUDY OBJECT METHODS
@@ -1484,4 +1484,15 @@ class StudiesController < ApplicationController
       @unsynced_files << unsynced_output
     end
   end
+
+  # match filenames that start with a . or have a /. in their path
+  HIDDEN_FILE_REGEX = /\/\.|^\./
+  def visible_unsynced_files
+    @unsynced_files.select { |f| HIDDEN_FILE_REGEX.match(f.upload_file_name).nil? }
+  end
+
+  def hidden_unsynced_files
+    @unsynced_files.select { |f| HIDDEN_FILE_REGEX.match(f.upload_file_name).present? }
+  end
+
 end
