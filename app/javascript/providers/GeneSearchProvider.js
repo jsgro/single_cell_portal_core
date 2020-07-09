@@ -68,7 +68,8 @@ export function PropsGeneSearchProvider(props) {
     window.scrollTo(0, 0)
 
     const results = await fetchSearch(
-      'gene', // Needed for logging
+      // Ensures event properties include "type": "gene" in search logging.
+      'gene',
       {
         page: searchParams.page,
         genes: searchParams.genes
