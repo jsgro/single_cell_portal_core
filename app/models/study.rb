@@ -794,10 +794,7 @@ class Study
           workspace_acl = Study.firecloud_client.get_workspace_acl(self.firecloud_project, self.firecloud_workspace)
           if workspace_acl['acl'][user.email].nil?
             # check if user has project-level permissions
-            user_client = FireCloudClient.new(user, self.firecloud_project)
-            projects = user_client.get_billing_projects
-            # billing project users can only create workspaces, so unless user is an owner, user cannot compute
-            projects.detect {|project| project['projectName'] == self.firecloud_project && project['role'] == 'Owner'}.present?
+            user.is_billing_project_owner?(self.firecloud_project)
           else
             workspace_acl['acl'][user.email]['canCompute']
           end
@@ -3227,13 +3224,19 @@ class Study
             errors.add(:firecloud_workspace, ': The workspace you provided is restricted.  We currently do not allow use of restricted workspaces.  Please use another workspace.')
             return false
           end
-          # check permissions
+          # check permissions, falling back to project-level permissions if needed
+          is_project_owner = false
           if acl['acl'][study_owner].nil? || acl['acl'][study_owner]['accessLevel'] == 'READER'
-            errors.add(:firecloud_workspace, ': You do not have write permission for the workspace you provided.  Please use another workspace.')
-            return false
+            Rails.logger.info "checking project-level permissions for user_id:#{self.user.id} in #{self.firecloud_project}"
+            is_project_owner = self.user.is_billing_project_owner?(self.firecloud_project)
+            unless is_project_owner
+              errors.add(:firecloud_workspace, ': You do not have write permission for the workspace you provided.  Please use another workspace.')
+              return false
+            end
+            Rails.logger.info "project-level permissions check successful"
           end
-          # check compute permissions
-          if acl['acl'][study_owner]['canCompute'] != can_compute
+          # check compute permissions (only if not project owner, as compute is inherited and not present at the workspace level)
+          if !is_project_owner && acl['acl'][study_owner]['canCompute'] != can_compute
             errors.add(:firecloud_workspace, ': There was an error setting the permissions on your workspace (compute permissions were not set correctly).  Please try again.')
             return false
           end
@@ -3270,7 +3273,7 @@ class Study
         error_context = ErrorTracker.format_extra_context(self)
         # remove study description as it's not useful
         error_context['study'].delete('description')
-        ErrorTracker.report_exception(e, user, error_context)
+        ErrorTracker.report_exception(e, self.user, error_context)
         # delete workspace on any fail as this amounts to a validation fail
         Rails.logger.info "#{Time.zone.now}: Error assigning workspace: #{e.message}"
         errors.add(:firecloud_workspace, " assignment failed: #{e.message}; Please check the workspace in question and try again.")

@@ -333,7 +333,7 @@ export function buildFacetsFromQueryString(facetsParamString) {
 }
 
 /** returns the current branding group as specified by the url  */
-function getBrandingGroup(path) {
+export function getBrandingGroup() {
   const queryParams = queryString.parse(window.location.search)
   return queryParams.scpbr
 }

@@ -293,6 +293,27 @@ class User
     end
   end
 
+  # retrieve billing projects for a given user (if registered for firecloud)
+  def get_billing_projects
+    projects = {User: [], Owner: []}
+    if self.registered_for_firecloud
+      client = FireCloudClient.new(self, FireCloudClient::PORTAL_NAMESPACE)
+      user_projects = client.get_billing_projects
+      user_projects.each do |project|
+        if project['creationStatus'] == 'Ready'
+          projects[project['role'].to_sym] << project['projectName']
+        end
+      end
+    end
+    Rails.logger.info "projects: #{projects}"
+    projects
+  end
+
+  # return true/false if user is an owner of a given billing project
+  def is_billing_project_owner?(billing_project)
+    self.get_billing_projects[:Owner].include?(billing_project)
+  end
+
   def add_to_portal_user_group
     user_group_config = AdminConfiguration.find_by(config_type: 'Portal FireCloud User Group')
     if user_group_config.present?
