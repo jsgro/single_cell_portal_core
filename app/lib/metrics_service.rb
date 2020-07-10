@@ -3,11 +3,11 @@
 # Mixpanel is a business analytics service for tracking user interactions.
 # Bard is a DSP service that mediates writes to Mixpanel.
 #
-# Most logging to Mixpanel is done in JavaScript (see metrics-api.js and
-# scp-api-metrics.js in /app/javascript/lib/).  But some logging is done
+# Most logging to Mixpanel is done in JavaScript; see metrics-api.js and
+# scp-api-metrics.js in /app/javascript/lib/.  But some logging is done
 # in Rails to make it easy to analyze metrics around long-running events
-# triggered by user interactions -- like upload and ingest -- or events
-# arround auth.
+# triggered by user interactions -- like upload and ingest -- or special
+# identity resolution.
 
 class MetricsService
 
@@ -15,6 +15,17 @@ class MetricsService
 
   IDENTIFY_PATH = BARD_ROOT + '/api/identify'
   EVENT_PATH = BARD_ROOT + '/api/event'
+
+  def self.post_to_bard(params)
+    params.merge!({:method => 'POST'})
+    begin
+      response = RestClient::Request.execute(params)
+    rescue RestClient::ExceptionWithResponse => e
+      Rails.logger.error "Bard error in call to #{params.url}: #{e.message}"
+      # Rails.logger.error e.to_yaml
+      ErrorTracker.report_exception(e, user, params)
+    end
+  end
 
   # Merges unauth’d and auth’d user identities in Mixpanel via Bard
   #
@@ -38,19 +49,12 @@ class MetricsService
     post_body = {'anonId': cookies['user_id']}.to_json
 
     params = {
-      method: 'POST',
       url: IDENTIFY_PATH,
       headers: headers,
       payload: post_body
     }
 
-    begin
-      response = RestClient::Request.execute(params)
-    rescue RestClient::ExceptionWithResponse => e
-      Rails.logger.error "Bard error in call to #{bard_path}: #{e.message}"
-      # Rails.logger.error e.to_yaml
-      ErrorTracker.report_exception(e, user, params)
-    end
+    self.post_to_bard(params)
 
   end
 
