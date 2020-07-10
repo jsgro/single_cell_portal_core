@@ -13,11 +13,12 @@ class MetricsService
 
   BARD_ROOT = Rails.application.config.bard_host_url
 
-  IDENTIFY_PATH = BARD_ROOT + '/api/identify'
   EVENT_PATH = BARD_ROOT + '/api/event'
 
   def self.post_to_bard(params)
-    params.merge!({:method => 'POST'})
+    params.merge!({
+      :method => 'POST'
+    })
     begin
       response = RestClient::Request.execute(params)
     rescue RestClient::ExceptionWithResponse => e
@@ -25,6 +26,13 @@ class MetricsService
       # Rails.logger.error e.to_yaml
       ErrorTracker.report_exception(e, user, params)
     end
+  end
+
+  def self.get_default_headers(user)
+    return {
+      'Authorization' => "Bearer #{user.access_token['access_token']}",
+      'Content-Type': 'application/json'
+    }
   end
 
   # Merges unauth’d and auth’d user identities in Mixpanel via Bard
@@ -41,15 +49,12 @@ class MetricsService
 
     Rails.logger.info "Merging user identity in Mixpanel via Bard"
 
-    headers = {
-      'Authorization' => "Bearer #{user.access_token['access_token']}",
-      'Content-Type': 'application/json'
-    }
+    headers = get_default_headers(user)
 
     post_body = {'anonId': cookies['user_id']}.to_json
 
     params = {
-      url: IDENTIFY_PATH,
+      url: BARD_ROOT + '/api/identify',
       headers: headers,
       payload: post_body
     }
@@ -65,14 +70,36 @@ class MetricsService
   #
   # @param {String} name Name of the event
   # @param {Hash} props Properties associated with the event
-  def log(name, props = {})
+  def log(name, props = {}, user, cookies)
     props.merge!({
       appId: 'single-cell-portal',
       timestamp: Time.now.in_milliseconds,
       env: Rails.env
     })
 
-    post_body = {'anonId': cookies['user_id']}.to_json
+    access_token = user.access_token['access_token']
+    user_id = cookies['user_id']
+
+    headers = get_default_headers(user)
+
+    if (access_token === '') {
+      # User is unauthenticated / unregistered / anonynmous
+      props['distinct_id'] = userId
+      headers.delete('Authorization')
+      props['authenticated'] = false
+    } else {
+      props['authenticated'] = true
+    }
+
+    post_body = {'event': name, 'props': props}.to_json
+
+    params = {
+      url: BARD_ROOT + '/api/event',
+      headers: headers,
+      payload: post_body
+    }
+
+    self.post_to_bard(params)
 
   end
 end
