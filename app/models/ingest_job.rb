@@ -209,7 +209,7 @@ class IngestJob
       self.study.reload # refresh cached instance of study
       self.study_file.reload # refresh cached instance of study_file
       subject = "#{self.study_file.file_type} file: '#{self.study_file.upload_file_name}' has completed parsing"
-      message = self.generate_success_email_array
+      message = self.get_email_and_log_to_mixpanel
       SingleCellMailer.notify_user_parse_complete(self.user.email, subject, message, self.study).deliver_now
       self.set_study_state_after_ingest
       self.study_file.invalidate_cache_by_file_type # clear visualization caches for file
@@ -383,23 +383,44 @@ class IngestJob
     end
   end
 
-  # generates parse completion email body
+  # generates parse completion email body, and logs analytics to Mixpanel
   #
   # * *returns*
   #   - (Array) => List of message strings to print in a completion email
-  def generate_success_email_array
-    message = ["Total parse time: #{self.get_total_runtime}"]
-    case self.study_file.file_type
+  def get_email_and_log_to_mixpanel
+    total_runtime = self.get_total_runtime
+    file_type = self.study_file.file_type
+
+    message = ["Total parse time: #{total_runtime}"]
+
+    # Event properties to log to Mixpanel.  Mixpanel uses camelCase for props.
+    mixpanel_log_props = {
+      :latency => total_runtime, # Tracks performance
+      :fileType => file_type,
+      :fileSize => self.study_file.upload_file_size
+      :action => self.action
+    }
+
+     case file_type
     when /Matrix/
       genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
       message << "Gene-level entries created: #{genes}"
+      mixpanel_log_props.merge!({:numGenes => genes})
     when 'Metadata'
-      if self.study_file.use_metadata_convention
+      use_metadata_convention = self.study_file.use_metadata_convention
+      mixpanel_log_props.merge!({
+        :useMetadataConvention: use_metadata_convention,
+      })
+      if use_metadata_convention
         project_name = 'alexandria_convention' # hard-coded is fine for now, consider implications if we get more projects
         current_schema_version = get_latest_schema_version(project_name)
         schema_url = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention'
         message << "This metadata file was validated against the latest <a href='#{schema_url}'>Metadata Convention</a>"
         message << "Convention version: <strong>#{project_name}/#{current_schema_version}</strong>"
+        mixpanel_log_props.merge!({
+          :metadataConvention => project_name,
+          :schemaVersion => current_schema_version
+        })
       end
       cell_metadata = CellMetadatum.where(study_id: self.study.id, study_file_id: self.study_file.id)
       message << "Entries created:"
@@ -411,25 +432,41 @@ class IngestJob
     when 'Cluster'
       cluster = ClusterGroup.find_by(study_id: self.study.id, study_file_id: self.study_file.id)
       if self.action == :ingest_cluster
-        message << "Cluster created: #{cluster.name}, type: #{cluster.cluster_type}"
+        cluster_type = cluster.cluster_type
+        message << "Cluster created: #{cluster.name}, type: #{cluster_type}"
         if cluster.cell_annotations.any?
           message << "Annotations:"
           cluster.cell_annotations.each do |annot|
             message << self.get_annotation_message(annotation_source: cluster, cell_annotation: annot)
           end
         end
-        message << "Total points in cluster: #{cluster.points}"
+        cluster_points = cluster.points
+        message << "Total points in cluster: #{cluster_points}"
+
+        can_subsample = cluster.can_subsample
+        metadata_file_present = self.study.metadata_file.present
+
         # notify user that subsampling is about to run and inform them they can't delete cluster/metadata files
-        if cluster.can_subsample? && self.study.metadata_file.present?
+        if cluster.can_subsample? && metadata_file.present?
           message << "This cluster file will now be processed to compute representative subsamples for visualization."
           message << "You will receive an additional email once this has completed."
           message << "While subsamples are being computed, you will not be able to remove this cluster file or your metadata file."
         end
+
+        mixpanel_log_props.merge!({
+          :clusterType => cluster_type,
+          :numClusterPoints => cluster_points,
+          :canSubsample => can_subsample,
+          :metadataFilePresent => metadata_file_present
+        })
       else
         message << "Subsampling has completed for #{cluster.name}"
         message << "Subsamples generated: #{cluster.subsample_thresholds_required.join(', ')}"
       end
     end
+
+    MetricsService.log('ingest', mixpanel_log_props, user, cookies)
+
     message
   end
 
