@@ -15,14 +15,15 @@ class MetricsService
 
   EVENT_PATH = BARD_ROOT + '/api/event'
 
-  def self.post_to_bard(params)
+  def self.post_to_bard(params, user)
     params.merge!({
       :method => 'POST'
     })
     begin
+      Rails.logger.info "Posting to Mixpanel.  Params: #{params}"
       response = RestClient::Request.execute(params)
     rescue RestClient::ExceptionWithResponse => e
-      Rails.logger.error "Bard error in call to #{params.url}: #{e.message}"
+      Rails.logger.error "Bard error in call to #{params[:url]}: #{e.message}"
       # Rails.logger.error e.to_yaml
       ErrorTracker.report_exception(e, user, params)
     end
@@ -45,13 +46,13 @@ class MetricsService
   # This call links that anonId to the user's bearer token used by DSP's Sam
   # service.  That bearer token is in turn linked to a deidentified
   # "distinct ID" used to track users across auth states in Mixpanel.
-  def self.identify(user, cookies)
+  def self.identify(user)
 
     Rails.logger.info "Merging user identity in Mixpanel via Bard"
 
     headers = get_default_headers(user)
 
-    post_body = {'anonId': cookies['user_id']}.to_json
+    post_body = {'anonId': user.id}.to_json
 
     params = {
       url: BARD_ROOT + '/api/identify',
@@ -59,7 +60,7 @@ class MetricsService
       payload: post_body
     }
 
-    self.post_to_bard(params)
+    self.post_to_bard(params, user)
 
   end
 
@@ -70,15 +71,17 @@ class MetricsService
   #
   # @param {String} name Name of the event
   # @param {Hash} props Properties associated with the event
-  def log(name, props = {}, user, cookies)
+  def self.log(name, props = {}, user)
+    Rails.logger.info "Logging analytics to Mixpanel for event name: #{name}"
+
     props.merge!({
       :appId => 'single-cell-portal',
-      :timestamp => Time.now.in_milliseconds,
+      :timestamp => (Time.now.to_f * 1000).to_i, # Epoch time in milliseconds
       :env => Rails.env
     })
 
     access_token = user.access_token['access_token']
-    user_id = cookies['user_id']
+    user_id = user.id
 
     headers = get_default_headers(user)
 
@@ -91,7 +94,7 @@ class MetricsService
       props['authenticated'] = true
     end
 
-    post_body = {'event': name, 'props': props}.to_json
+    post_body = {'event': name, 'properties': props}.to_json
 
     params = {
       url: BARD_ROOT + '/api/event',
@@ -99,7 +102,7 @@ class MetricsService
       payload: post_body
     }
 
-    self.post_to_bard(params)
+    self.post_to_bard(params, user)
 
   end
 end

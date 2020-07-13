@@ -195,6 +195,17 @@ class IngestJob
     TimeDifference.between(start_time, completion_time).humanize
   end
 
+   # Get the total runtime of parsing from event timestamps, in milliseconds
+  #
+  # * *returns*
+  #   - (Integer) => Total elapsed time in milliseconds
+  def get_total_runtime_ms
+    events = self.events
+    start_time = DateTime.parse(events.first['timestamp'])
+    completion_time = DateTime.parse(events.last['timestamp'])
+    (TimeDifference.between(start_time, completion_time).in_seconds * 1000).to_i
+  end
+
   # Launch a background polling process.  Will check for completion, and if the pipeline has not completed
   # running, it will enqueue a new poller and exit to free up resources.  Defaults to checking every minute.
   # Job does not return anything, but will handle success/failure accordingly.
@@ -388,16 +399,15 @@ class IngestJob
   # * *returns*
   #   - (Array) => List of message strings to print in a completion email
   def get_email_and_log_to_mixpanel
-    total_runtime = self.get_total_runtime
     file_type = self.study_file.file_type
 
-    message = ["Total parse time: #{total_runtime}"]
+    message = ["Total parse time: #{self.get_total_runtime}"]
 
     # Event properties to log to Mixpanel.  Mixpanel uses camelCase for props.
     mixpanel_log_props = {
-      :latency => total_runtime, # Tracks performance
+      :latency => self.get_total_runtime_ms, # Tracks performance
       :fileType => file_type,
-      :fileSize => self.study_file.upload_file_size
+      :fileSize => self.study_file.upload_file_size,
       :action => self.action
     }
 
@@ -409,7 +419,7 @@ class IngestJob
     when 'Metadata'
       use_metadata_convention = self.study_file.use_metadata_convention
       mixpanel_log_props.merge!({
-        :useMetadataConvention: use_metadata_convention,
+        :useMetadataConvention => use_metadata_convention,
       })
       if use_metadata_convention
         project_name = 'alexandria_convention' # hard-coded is fine for now, consider implications if we get more projects
@@ -443,11 +453,11 @@ class IngestJob
         cluster_points = cluster.points
         message << "Total points in cluster: #{cluster_points}"
 
-        can_subsample = cluster.can_subsample
-        metadata_file_present = self.study.metadata_file.present
+        can_subsample = cluster.can_subsample?
+        metadata_file_present = self.study.metadata_file.present?
 
         # notify user that subsampling is about to run and inform them they can't delete cluster/metadata files
-        if cluster.can_subsample? && metadata_file.present?
+        if can_subsample && metadata_file_present
           message << "This cluster file will now be processed to compute representative subsamples for visualization."
           message << "You will receive an additional email once this has completed."
           message << "While subsamples are being computed, you will not be able to remove this cluster file or your metadata file."
@@ -465,7 +475,7 @@ class IngestJob
       end
     end
 
-    MetricsService.log('ingest', mixpanel_log_props, user, cookies)
+    MetricsService.log('ingest', mixpanel_log_props, user)
 
     message
   end
