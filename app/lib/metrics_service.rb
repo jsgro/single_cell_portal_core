@@ -72,9 +72,9 @@ class MetricsService
   # @param {Hash} props Properties associated with the event
   def log(name, props = {}, user, cookies)
     props.merge!({
-      appId: 'single-cell-portal',
-      timestamp: Time.now.in_milliseconds,
-      env: Rails.env
+      :appId => 'single-cell-portal',
+      :timestamp => Time.now.in_milliseconds,
+      :env => Rails.env
     })
 
     access_token = user.access_token['access_token']
@@ -82,14 +82,14 @@ class MetricsService
 
     headers = get_default_headers(user)
 
-    if (access_token === '') {
+    if access_token === ''
       # User is unauthenticated / unregistered / anonynmous
       props['distinct_id'] = userId
       headers.delete('Authorization')
       props['authenticated'] = false
-    } else {
+    else
       props['authenticated'] = true
-    }
+    end
 
     post_body = {'event': name, 'props': props}.to_json
 

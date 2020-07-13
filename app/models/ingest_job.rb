@@ -401,7 +401,7 @@ class IngestJob
       :action => self.action
     }
 
-     case file_type
+    case file_type
     when /Matrix/
       genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
       message << "Gene-level entries created: #{genes}"
