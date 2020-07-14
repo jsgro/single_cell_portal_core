@@ -7,18 +7,22 @@ class SingleCellMailer < ApplicationMailer
   ###
 
   default from: 'no-reply@broadinstitute.org'
+  BATCH_DELIVERY_SIZE = 500
+
+  # deliver an email to a batch users (from SingleCellMailer.batch_users_email)
+  def users_email(users, from, subject, message)
+    @message = message
+    mail(to: from, bcc: users, subject: "[Single Cell Portal Message] #{subject}", from: from) do |format|
+      format.html {@message.html_safe}
+    end
+  end
 
   # deliver an email to all users
-  def users_email(email_params, user)
-    @users = email_params[:preview] == "1" ? [user.email] : User.where(admin_email_delivery: true).map(&:email)
-    @subject = email_params[:subject]
-    @from = email_params[:from]
-    @message = email_params[:contents]
-    # send email in batches to reduce likelihood of errors
-    @users.each_slice(500) do |email_batch|
-      mail(to: @from, bcc: email_batch, subject: "[Single Cell Portal Message] #{@subject}", from: @from) do |format|
-        format.html {@message.html_safe}
-      end
+  def batch_users_email(email_params, user)
+    users = email_params[:preview] == "1" ? [user.email] : User.where(admin_email_delivery: true).map(&:email)
+    # send email in batches to sidestep Sendgrid API quotas
+    users.each_slice(BATCH_DELIVERY_SIZE) do |email_batch|
+      users_email(email_batch, email_params[:from], email_params[:subject], email_params[:contents]).deliver
     end
   end
 
