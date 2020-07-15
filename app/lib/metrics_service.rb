@@ -19,7 +19,7 @@ class MetricsService
     })
     begin
       Rails.logger.info "Posting to Mixpanel.  Params: #{params}"
-      response = RestClient::Request.execute(params)
+      return RestClient::Request.execute(params)
     rescue RestClient::ExceptionWithResponse => e
       Rails.logger.error "Bard error in call to #{params[:url]}: #{e.message}"
       # Rails.logger.error e.to_yaml
@@ -69,7 +69,7 @@ class MetricsService
   #
   # @param {String} name Name of the event
   # @param {Hash} props Properties associated with the event
-  def self.log(name, props = {}, user)
+  def self.log(name, props={}, user)
     Rails.logger.info "Logging analytics to Mixpanel for event name: #{name}"
 
     props.merge!({
@@ -77,7 +77,10 @@ class MetricsService
       env: Rails.env
     })
 
-    access_token = user.access_token['access_token']
+    puts 'user'
+    puts user
+
+    access_token = user.access_token['access_token'] || ''
     user_id = user.id
 
     headers = get_default_headers(user)
