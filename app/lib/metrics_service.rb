@@ -13,8 +13,6 @@ class MetricsService
 
   BARD_ROOT = Rails.application.config.bard_host_url
 
-  EVENT_PATH = BARD_ROOT + '/api/event'
-
   def self.post_to_bard(params, user)
     params.merge!({
       method: 'POST'
