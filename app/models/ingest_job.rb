@@ -405,10 +405,11 @@ class IngestJob
 
     # Event properties to log to Mixpanel.  Mixpanel uses camelCase for props.
     mixpanel_log_props = {
-      :latency => self.get_total_runtime_ms, # Tracks performance
-      :fileType => file_type,
-      :fileSize => self.study_file.upload_file_size,
-      :action => self.action
+      perfTime: self.get_total_runtime_ms, # Latency in milliseconds
+      fileType: file_type,
+      fileSize: self.study_file.upload_file_size,
+      action: self.action,
+      studyAccession: self.study.accession
     }
 
     case file_type
@@ -419,7 +420,7 @@ class IngestJob
     when 'Metadata'
       use_metadata_convention = self.study_file.use_metadata_convention
       mixpanel_log_props.merge!({
-        :useMetadataConvention => use_metadata_convention,
+        useMetadataConvention: use_metadata_convention,
       })
       if use_metadata_convention
         project_name = 'alexandria_convention' # hard-coded is fine for now, consider implications if we get more projects
@@ -428,8 +429,8 @@ class IngestJob
         message << "This metadata file was validated against the latest <a href='#{schema_url}'>Metadata Convention</a>"
         message << "Convention version: <strong>#{project_name}/#{current_schema_version}</strong>"
         mixpanel_log_props.merge!({
-          :metadataConvention => project_name,
-          :schemaVersion => current_schema_version
+          metadataConvention: project_name,
+          schemaVersion: current_schema_version
         })
       end
       cell_metadata = CellMetadatum.where(study_id: self.study.id, study_file_id: self.study_file.id)
@@ -464,10 +465,10 @@ class IngestJob
         end
 
         mixpanel_log_props.merge!({
-          :clusterType => cluster_type,
-          :numClusterPoints => cluster_points,
-          :canSubsample => can_subsample,
-          :metadataFilePresent => metadata_file_present
+          clusterType: cluster_type,
+          numClusterPoints: cluster_points,
+          canSubsample: can_subsample,
+          metadataFilePresent: metadata_file_present
         })
       else
         message << "Subsampling has completed for #{cluster.name}"

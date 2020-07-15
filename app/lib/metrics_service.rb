@@ -17,7 +17,7 @@ class MetricsService
 
   def self.post_to_bard(params, user)
     params.merge!({
-      :method => 'POST'
+      method: 'POST'
     })
     begin
       Rails.logger.info "Posting to Mixpanel.  Params: #{params}"
@@ -31,7 +31,7 @@ class MetricsService
 
   def self.get_default_headers(user)
     return {
-      'Authorization' => "Bearer #{user.access_token['access_token']}",
+      'Authorization': "Bearer #{user.access_token['access_token']}",
       'Content-Type': 'application/json'
     }
   end
@@ -75,9 +75,9 @@ class MetricsService
     Rails.logger.info "Logging analytics to Mixpanel for event name: #{name}"
 
     props.merge!({
-      :appId => 'single-cell-portal',
-      :timestamp => (Time.now.to_f * 1000).to_i, # Epoch time in milliseconds
-      :env => Rails.env
+      appId: 'single-cell-portal',
+      timestamp: (Time.now.to_f * 1000).to_i, # Epoch time in milliseconds
+      env: Rails.env
     })
 
     access_token = user.access_token['access_token']
