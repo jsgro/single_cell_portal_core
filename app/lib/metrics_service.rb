@@ -76,7 +76,6 @@ class MetricsService
 
     props.merge!({
       appId: 'single-cell-portal',
-      timestamp: (Time.now.to_f * 1000).to_i, # Epoch time in milliseconds
       env: Rails.env
     })
 
