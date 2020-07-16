@@ -6,7 +6,9 @@ class MetricsServiceTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     event = "ingest"
-    props = {
+
+    # As input into MetricsService.log from e.g. IngestJob.get_email_and_log_to_mixpanel
+    input_props = {
       perfTime: 276322,
       fileType: "Cluster",
       fileSize: 680,
@@ -15,22 +17,39 @@ class MetricsServiceTest < ActiveSupport::TestCase
       clusterType: "3d",
       numClusterPoints: 15,
       canSubsample: false,
-      metadataFilePresent: false,
-      appId: "single-cell-portal",
-      timestamp: 1594820819674,
-      env: "test",
-      authenticated: true
+      metadataFilePresent: false
     }
 
+    # As passed from MetricsService.log to MetricsService.post_to_bard
+    # Would be handy if we ever want to test that boundary.
+    expected_output_props = input_props.merge({
+      appId: "single-cell-portal",
+      env: "test",
+      authenticated: true
+    })
+
+    # As input into RestClient::Request.execute.
+    # These expected arguments are the main thing we are testing.
+    expected_args = {
+      :url=>"https://terra-bard-dev.appspot.com/api/event",
+      :headers=>{:Authorization=>"Bearer ", :"Content-Type"=>"application/json"},
+      :payload=>{event: event, properties: expected_output_props}.to_json,
+      :method=>"POST"
+    }
+
+    # A sort of high-fidelity mock
     user = User.new(access_token: {access_token: 'foo'})
 
-     # Mock response from Bard, the DSP service mediating access to Mixpanel
-     mock = Minitest::Mock.new
-     mock.expect :code, 200
+    # Mock response from Bard, the DSP service mediating access to Mixpanel
+    mock = Minitest::Mock.new
+    mock.expect :code, 200
+    mock.expect :call, mock, [expected_args]
 
      RestClient::Request.stub :execute, mock do
-      response = MetricsService.log(event, props, user)
+      response = MetricsService.log(event, input_props, user)
+
       assert response.code, 200
+
       mock.verify
      end
 

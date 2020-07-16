@@ -19,7 +19,9 @@ class MetricsService
     })
     begin
       Rails.logger.info "Posting to Mixpanel.  Params: #{params}"
-      return RestClient::Request.execute(params)
+      # Uncomment line below to get known-good test data
+      # puts "Posting to Mixpanel.  Params: #{params}"
+      RestClient::Request.execute(params)
     rescue RestClient::ExceptionWithResponse => e
       Rails.logger.error "Bard error in call to #{params[:url]}: #{e.message}"
       # Rails.logger.error e.to_yaml
