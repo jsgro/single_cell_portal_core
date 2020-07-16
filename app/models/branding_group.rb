@@ -2,6 +2,7 @@ class BrandingGroup
   include Mongoid::Document
   include Mongoid::Timestamps
   include Mongoid::Paperclip
+  include FeatureFlaggable
 
   field :name, type: String
   field :name_as_id, type: String
@@ -9,6 +10,7 @@ class BrandingGroup
   field :background_color, type: String
   field :font_family, type: String, default: 'Helvetica Neue, sans-serif'
   field :font_color, type: String, default: '#333333'
+  field :feature_flags, type: Hash, default: {}
 
   has_many :studies
   belongs_to :user

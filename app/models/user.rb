@@ -10,6 +10,7 @@ class User
 
   include Mongoid::Document
   include Mongoid::Timestamps
+  include FeatureFlaggable
   extend ErrorTracker
 
   ###
@@ -100,7 +101,7 @@ class User
   # feature_flags should be a hash of true/false values.  If unspecified for a given flag, the
   # default_value from the FeatureFlag should be used.  Accordingly, the helper method feature_flags_with_defaults
   # is provided
-  field :feature_flags, default: {}
+  field :feature_flags, type: Hash, default: {}
 
   ###
   #
@@ -322,29 +323,6 @@ class User
       Study.firecloud_client.add_user_to_group(group_name, 'member', self.email)
       Rails.logger.info "#{Time.zone.now}: user group registration complete"
     end
-  end
-
-  # merges the user flags with the defaults -- this should  always be used in place of feature_flags
-  # for determining whether to enable a feature for a given user.
-  def feature_flags_with_defaults
-    FeatureFlag.default_flag_hash.merge(feature_flags ? feature_flags : {})
-  end
-
-  # gets the feature flag value for a given user, and the default value if no user is given
-  def self.feature_flag_for_user(user, flag_key)
-    if user.present?
-      user.feature_flags_with_defaults[flag_key]
-    else
-      FeatureFlag.find_by(name: flag_key)&.default_value
-    end
-  end
-
-  # returns feature_flags_with_defaults for the user, or the default flags if no user is given
-  def self.feature_flags_for_user(user)
-    if user.nil?
-      return FeatureFlag.default_flag_hash
-    end
-    user.feature_flags_with_defaults
   end
 
   # helper method to migrate study ownership & shares from old email to new email
