@@ -1,9 +1,9 @@
 ##
-# Featurable: a module to add functionality for supporting "feature_flags" for a given model
-#             used to turn on/off special features in a sandboxed fashion
+# FeatureFlaggable: a module to add functionality for supporting "feature_flags" for a given model
+#                   used to turn on/off special features in a sandboxed fashion
 ##
 
-module Featureable
+module FeatureFlaggable
   extend ActiveSupport::Concern
 
   # merges the user flags with the defaults -- this should  always be used in place of feature_flags

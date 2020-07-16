@@ -2,7 +2,7 @@ class BrandingGroup
   include Mongoid::Document
   include Mongoid::Timestamps
   include Mongoid::Paperclip
-  include Featureable
+  include FeatureFlaggable
 
   field :name, type: String
   field :name_as_id, type: String
