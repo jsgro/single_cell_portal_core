@@ -77,13 +77,10 @@ class MetricsService
       env: Rails.env
     })
 
-    puts 'user'
-    puts user
-
-    access_token = user.access_token['access_token'] || ''
-    user_id = user.id
-
     headers = get_default_headers(user)
+
+    access_token = user.access_token['access_token']
+    user_id = user.id
 
     if access_token === ''
       # User is unauthenticated / unregistered / anonynmous
