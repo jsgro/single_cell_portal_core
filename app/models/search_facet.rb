@@ -25,6 +25,7 @@ class SearchFacet
   field :unit, type: String # unit represented by values in number-based facets
   field :min, type: Float # minimum allowed value for number-based facets
   field :max, type: Float # maximum allowed value for number-based facets
+  field :visible, type: Boolean, default: true # default visibility (false will not show in UI but can be queried via API)
 
   DATA_TYPES = %w(string number boolean)
   BQ_DATA_TYPES = %w(STRING FLOAT64 BOOL)
@@ -276,6 +277,11 @@ class SearchFacet
         Rails.logger.error "Update to #{facet.name} failed"
       end
     end
+  end
+
+  # return all "visible" facets
+  def self.visible
+    self.where(visible: true)
   end
 
   # helper to know if column is numeric
