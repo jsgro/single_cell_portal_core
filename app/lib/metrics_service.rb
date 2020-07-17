@@ -18,12 +18,12 @@ class MetricsService
       method: 'POST'
     })
     begin
-      Rails.logger.info "Posting to Mixpanel.  Params: #{params}"
+      Rails.logger.info "#{Time.zone.now}: Posting to Mixpanel.  Params: #{params}"
       # Uncomment line below to get known-good test data
       # puts "Posting to Mixpanel.  Params: #{params}"
       RestClient::Request.execute(params)
     rescue RestClient::ExceptionWithResponse => e
-      Rails.logger.error "Bard error in call to #{params[:url]}: #{e.message}"
+      Rails.logger.error "#{Time.zone.now}: Bard error in call to #{params[:url]}: #{e.message}"
       # Rails.logger.error e.to_yaml
       ErrorTracker.report_exception(e, user, params)
     end
@@ -48,7 +48,7 @@ class MetricsService
   # "distinct ID" used to track users across auth states in Mixpanel.
   def self.identify(user)
 
-    Rails.logger.info "Merging user identity in Mixpanel via Bard"
+    Rails.logger.info "#{Time.zone.now}: Merging user identity in Mixpanel via Bard"
 
     headers = get_default_headers(user)
 
@@ -73,7 +73,7 @@ class MetricsService
   # @param {Hash} props Properties associated with the event
   # @param {User} user User model object
   def self.log(name, props={}, user)
-    Rails.logger.info "Logging analytics to Mixpanel for event name: #{name}"
+    Rails.logger.info "#{Time.zone.now}: Logging analytics to Mixpanel for event name: #{name}"
 
     props.merge!({
       appId: 'single-cell-portal',
