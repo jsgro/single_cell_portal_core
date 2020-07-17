@@ -212,7 +212,6 @@ export function log(name, props={}) {
 
   props = Object.assign(props, {
     appId: 'single-cell-portal',
-    timestamp: Date.now(),
     appPath,
     env
   })
