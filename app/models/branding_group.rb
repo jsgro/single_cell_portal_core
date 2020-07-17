@@ -12,6 +12,9 @@ class BrandingGroup
   field :font_color, type: String, default: '#333333'
   field :feature_flags, type: Hash, default: {}
 
+  # list of facets to show for this branding group (will restrict to only provided identifiers, if present)
+  field :facet_list, type: Array, default: []
+
   has_many :studies
   belongs_to :user
 
@@ -54,6 +57,11 @@ class BrandingGroup
 
   before_validation :set_name_as_id
   before_destroy :remove_branding_association
+
+  # helper to return list of associated search facets
+  def facets
+    self.facet_list.any? ? SearchFacet.where(:identifier.in => self.facet_list) : SearchFacet.visible
+  end
 
   private
 
