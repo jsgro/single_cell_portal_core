@@ -71,6 +71,7 @@ class MetricsService
   #
   # @param {String} name Name of the event
   # @param {Hash} props Properties associated with the event
+  # @param {User} user User model object
   def self.log(name, props={}, user)
     Rails.logger.info "Logging analytics to Mixpanel for event name: #{name}"
 
