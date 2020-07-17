@@ -31,10 +31,10 @@ class MetricsServiceTest < ActiveSupport::TestCase
     # As input into RestClient::Request.execute.
     # These expected arguments are the main thing we are testing.
     expected_args = {
-      :url=>"https://terra-bard-dev.appspot.com/api/event",
-      :headers=>{:Authorization=>"Bearer ", :"Content-Type"=>"application/json"},
-      :payload=>{event: event, properties: expected_output_props}.to_json,
-      :method=>"POST"
+      url: "https://terra-bard-dev.appspot.com/api/event",
+      headers: {:Authorization=>"Bearer ", :"Content-Type"=>"application/json"},
+      payload: {event: event, properties: expected_output_props}.to_json,
+      method: "POST"
     }
 
     # A high-fidelity test double
