@@ -1,19 +1,21 @@
 
 # class to populate synthetic studies from files.
 # See db/seed/synthetic_studies for examples of the file formats
+# overwrite keyword parameter dictates whether to delete & recreate an existing study
 class SyntheticStudyPopulator
   DEFAULT_SYNTHETIC_STUDY_PATH = Rails.root.join('db', 'seed', 'synthetic_studies')
   # populates all studies defined in db/seed/synthetic_studies
-  def self.populate_all(user: User.first)
+  def self.populate_all(user: User.first, overwrite: true)
     study_names = Dir.glob(DEFAULT_SYNTHETIC_STUDY_PATH.join('*')).select {|f| File.directory? f}
     study_names.each do |study_name|
-      populate(study_name, user: user)
+      populate(study_name, user: user, overwrite: overwrite)
     end
   end
 
   # populates the synthetic study specified in the given folder (e.g. ./db/seed/synthetic_studies/blood)
   # destroys any existing studies and workspace data corresponding to that study
-  def self.populate(synthetic_study_folder, user: User.first)
+  # overwrite keyword parameter dictates whether to delete & recreate an existing study
+  def self.populate(synthetic_study_folder, user: User.first, overwrite: true)
     if (synthetic_study_folder.exclude?('/'))
       synthetic_study_folder = DEFAULT_SYNTHETIC_STUDY_PATH.join(synthetic_study_folder).to_s
     end
@@ -21,25 +23,29 @@ class SyntheticStudyPopulator
     study_config = JSON.parse(study_info_file)
 
     puts("Populating synthetic study from #{synthetic_study_folder}")
-    study = create_study(synthetic_study_folder, study_config, user)
+    study = create_study(study_config, user, overwrite: overwrite)
     add_files(study, study_config, synthetic_study_folder, user)
   end
 
   private
 
-  def self.create_study(synthetic_study_folder, study_config, user)
+  def self.create_study(study_config, user, overwrite: true)
     existing_study = Study.find_by(name: study_config['study']['name'])
-    if existing_study
+    if existing_study && overwrite
       puts("Destroying Study #{existing_study.name}, id #{existing_study.id}")
       existing_study.destroy_and_remove_workspace
     end
 
-    study = Study.new(study_config['study'])
-    study.user ||= user
-    study.firecloud_project ||= ENV['PORTAL_NAMESPACE']
-    puts("Saving Study #{study.name}")
-    study.save!
-    study
+    if existing_study.nil?
+      study = Study.new(study_config['study'])
+      study.user ||= user
+      study.firecloud_project ||= ENV['PORTAL_NAMESPACE']
+      puts("Saving Study #{study.name}")
+      study.save!
+      study
+    else
+      existing_study
+    end
   end
 
   def self.add_files(study, study_config, synthetic_study_folder, user)

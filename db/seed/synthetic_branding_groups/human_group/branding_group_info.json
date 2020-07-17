@@ -1,0 +1,10 @@
+{
+  "branding_group": {
+    "name" : "Human Research Group",
+    "tag_line": "Synthetic branding group containing only human synthetic studies",
+    "background_color": "lightgray"
+  },
+  "images": {
+    "splash_image": "SCP-logo-invert.png"
+  }
+}
