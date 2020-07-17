@@ -403,7 +403,8 @@ class IngestJob
 
     message = ["Total parse time: #{self.get_total_runtime}"]
 
-    # Event properties to log to Mixpanel.  Mixpanel uses camelCase for props.
+    # Event properties to log to Mixpanel.
+    # Mixpanel uses camelCase for props; snake_case would degrade Mixpanel UX.
     mixpanel_log_props = {
       perfTime: self.get_total_runtime_ms, # Latency in milliseconds
       fileType: file_type,

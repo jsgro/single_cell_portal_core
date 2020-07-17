@@ -22,7 +22,7 @@ class MetricsService
       # Uncomment line below to get known-good test data
       # puts "Posting to Mixpanel.  Params: #{params}"
       RestClient::Request.execute(params)
-    rescue RestClient::ExceptionWithResponse => e
+    rescue RestClient::Exception => e
       Rails.logger.error "#{Time.zone.now}: Bard error in call to #{params[:url]}: #{e.message}"
       # Rails.logger.error e.to_yaml
       ErrorTracker.report_exception(e, user, params)
@@ -30,8 +30,8 @@ class MetricsService
   end
 
   def self.get_default_headers(user)
-    return {
-      'Authorization': "Bearer #{user.access_token['access_token']}",
+    {
+      'Authorization': "Bearer #{user.valid_access_token['access_token']}",
       'Content-Type': 'application/json'
     }
   end
@@ -82,7 +82,7 @@ class MetricsService
 
     headers = get_default_headers(user)
 
-    access_token = user.access_token['access_token']
+    access_token = user.valid_access_token['access_token']
     user_id = user.id
 
     if access_token === ''

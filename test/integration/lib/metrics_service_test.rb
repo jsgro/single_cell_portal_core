@@ -38,18 +38,21 @@ class MetricsServiceTest < ActiveSupport::TestCase
     }
 
     # A high-fidelity test double
-    user = User.new(access_token: {access_token: 'foo'})
+    user = User.new(access_token: {
+      access_token: 'foo',
+      expires_at: DateTime.new(3000, 1, 1)
+    })
 
     # Mock network traffic to/from Bard, the DSP service proxying Mixpanel
     mock = Minitest::Mock.new
-    mock.expect :call, mock, [expected_args] # Mock request
+    mock.expect :call, mock, [expected_args] # Mock `execute` call (request)
     mock.expect :code, 200 # Mock response
 
-     RestClient::Request.stub :execute, mock do
+    RestClient::Request.stub :execute, mock do
       response = MetricsService.log(event, input_props, user)
       assert response.code, 200
       mock.verify
-     end
+    end
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
