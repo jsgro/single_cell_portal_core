@@ -37,19 +37,17 @@ class MetricsServiceTest < ActiveSupport::TestCase
       :method=>"POST"
     }
 
-    # A sort of high-fidelity mock
+    # A high-fidelity test double
     user = User.new(access_token: {access_token: 'foo'})
 
-    # Mock response from Bard, the DSP service mediating access to Mixpanel
+    # Mock network traffic to/from Bard, the DSP service proxying Mixpanel
     mock = Minitest::Mock.new
-    mock.expect :code, 200
-    mock.expect :call, mock, [expected_args]
+    mock.expect :call, mock, [expected_args] # Mock request
+    mock.expect :code, 200 # Mock response
 
      RestClient::Request.stub :execute, mock do
       response = MetricsService.log(event, input_props, user)
-
       assert response.code, 200
-
       mock.verify
      end
 
