@@ -220,7 +220,7 @@ class IngestJob
       self.study.reload # refresh cached instance of study
       self.study_file.reload # refresh cached instance of study_file
       subject = "#{self.study_file.file_type} file: '#{self.study_file.upload_file_name}' has completed parsing"
-      message = self.get_email_and_log_to_mixpanel
+      message = self.generate_success_email_array
       SingleCellMailer.notify_user_parse_complete(self.user.email, subject, message, self.study).deliver_now
       self.set_study_state_after_ingest
       self.study_file.invalidate_cache_by_file_type # clear visualization caches for file
@@ -398,7 +398,7 @@ class IngestJob
   #
   # * *returns*
   #   - (Array) => List of message strings to print in a completion email
-  def get_email_and_log_to_mixpanel
+  def generate_success_email_array
     file_type = self.study_file.file_type
 
     message = ["Total parse time: #{self.get_total_runtime}"]

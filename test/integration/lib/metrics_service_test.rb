@@ -46,11 +46,9 @@ class MetricsServiceTest < ActiveSupport::TestCase
     # Mock network traffic to/from Bard, the DSP service proxying Mixpanel
     mock = Minitest::Mock.new
     mock.expect :call, mock, [expected_args] # Mock `execute` call (request)
-    mock.expect :code, 200 # Mock response
 
     RestClient::Request.stub :execute, mock do
       response = MetricsService.log(event, input_props, user)
-      assert response.code, 200
       mock.verify
     end
 
