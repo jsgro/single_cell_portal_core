@@ -345,8 +345,8 @@ class AdminConfigurationsController < ApplicationController
   def deliver_users_email
     begin
       # send in background so operation doesn't time out with lots of users
-      SingleCellMailer.delay.users_email(users_email_params, current_user)
-      @notice = 'Your email has successfully been delivered.'
+      SingleCellMailer.delay.batch_users_email(users_email_params, current_user)
+      @notice = 'Your email has successfully been queued for delivery and should arrive shortly.'
     rescue => e
       ErrorTracker.report_exception(e, current_user, users_email_params.to_unsafe_hash)
       logger.error "#{Time.zone.now}: Error delivering users email: #{e.message}"

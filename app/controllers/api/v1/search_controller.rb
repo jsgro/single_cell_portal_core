@@ -10,7 +10,7 @@ module Api
       before_action :set_search_facet, only: :facet_filters
       before_action :set_search_facets_and_filters, only: :index
       before_action :set_preset_search, only: :index
-      before_action :set_branding_group, only: :index
+      before_action :set_branding_group, only: [:index, :facets]
 
       swagger_path '/search' do
         operation :get do
@@ -305,6 +305,13 @@ module Api
           key :summary, 'Get all available facets'
           key :description, 'Returns a list of all available search facets, including filter values'
           key :operationId, 'search_facets_path'
+          parameter do
+            key :name, :scpbr
+            key :in, :query
+            key :description, 'Requested branding group (to filter facets on)'
+            key :reqired, false
+            key :type, :string
+          end
           response 200 do
             key :description, 'Array of SearchFacets'
             schema do
@@ -323,7 +330,11 @@ module Api
       end
 
       def facets
-        @search_facets = SearchFacet.all
+        if @selected_branding_group.present?
+          @search_facets = @selected_branding_group.facets
+        else
+          @search_facets = SearchFacet.visible
+        end
       end
 
       swagger_path '/search/facet_filters' do

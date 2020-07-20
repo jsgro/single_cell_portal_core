@@ -581,8 +581,8 @@ function showMessageModal(notice=null, alert=null) {
         $("#message_modal").modal("show");
     }
 
-    // don't timeout alert messages
-    if (!alert) {
+    // don't timeout alert messages, but don't clear if nothing was shown
+    if (!alert && notice) {
         setTimeout(function() {
             $("#message_modal").modal("hide");
         }, 3000);
