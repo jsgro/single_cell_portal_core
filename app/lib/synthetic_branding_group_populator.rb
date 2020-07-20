@@ -29,6 +29,20 @@ class SyntheticBrandingGroupPopulator
     end
   end
 
+  # remove all synthetic branding groups, leaving studies in place
+  def self.remove_all
+    config_dirs = Dir.glob(BASE_BRANDING_GROUPS_CONFIG_PATH.join('*')).select {|f| File.directory? f}
+    config_dirs.each do |config_dir|
+      branding_group_config = self.parse_configuration_file(config_dir)
+      group_name = branding_group_config['branding_group']['name']
+      group = BrandingGroup.find_by(name: group_name)
+      if group.present?
+        puts "Removing branding group #{group_name}"
+        group.destroy
+      end
+    end
+  end
+
   # create a single branding group and associate designated studies
   #
   # @param config_dir (Pathname, String)  => Directory pathname containing configuration JSON for branding group
@@ -36,11 +50,9 @@ class SyntheticBrandingGroupPopulator
   # @param study_list (Mongoid::Criteria) => List of studies to associate with new branding group
   # @param overwrite (Boolean)            => T/F for destroying/recreating an existing group
   def self.populate(config_dir, user: User.first, study_list:, overwrite: true)
-    synthetic_group_folder = BASE_BRANDING_GROUPS_CONFIG_PATH.join(config_dir.chomp('/')).to_s
-    group_info_file = File.read(File.join(synthetic_group_folder, 'branding_group_info.json'))
-    branding_group_config = JSON.parse(group_info_file)
+    branding_group_config = self.parse_configuration_file(config_dir)
 
-    puts("Populating synthetic branding group from #{synthetic_group_folder}")
+    puts("Populating synthetic branding group from #{config_dir}")
     branding_group = create_branding_group(branding_group_config, user, overwrite: overwrite)
     # assign new branding group to all studies
     study_list.update_all(branding_group_id: branding_group.id)
@@ -85,5 +97,11 @@ class SyntheticBrandingGroupPopulator
       puts "Preserving existing branding group #{existing_group.name}"
       existing_group
     end
+  end
+
+  def self.parse_configuration_file(config_dir)
+    synthetic_group_folder = BASE_BRANDING_GROUPS_CONFIG_PATH.join(config_dir.chomp('/')).to_s
+    group_info_file = File.read(File.join(synthetic_group_folder, 'branding_group_info.json'))
+    JSON.parse(group_info_file)
   end
 end
