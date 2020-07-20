@@ -53,6 +53,7 @@ echo "export PROD_DATABASE_PASSWORD='$PROD_DATABASE_PASSWORD'" >| /home/app/.cro
 echo "export SENDGRID_USERNAME='$SENDGRID_USERNAME'" >> /home/app/.cron_env
 echo "export SENDGRID_PASSWORD='$SENDGRID_PASSWORD'" >> /home/app/.cron_env
 echo "export MONGO_LOCALHOST='$MONGO_LOCALHOST'" >> /home/app/.cron_env
+echo "export MONGO_INTERNAL_IP='$MONGO_INTERNAL_IP'" >> /home/app/.cron_env
 echo "export SECRET_KEY_BASE='$SECRET_KEY_BASE'" >> /home/app/.cron_env
 echo "export GOOGLE_CLOUD_PROJECT='$GOOGLE_CLOUD_PROJECT'" >> /home/app/.cron_env
 
