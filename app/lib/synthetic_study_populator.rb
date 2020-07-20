@@ -22,9 +22,12 @@ class SyntheticStudyPopulator
     study_info_file = File.read(synthetic_study_folder + '/study_info.json')
     study_config = JSON.parse(study_info_file)
 
-    puts("Populating synthetic study from #{synthetic_study_folder}")
-    study = create_study(study_config, user, overwrite: overwrite)
-    add_files(study, study_config, synthetic_study_folder, user)
+    existing_study = Study.find_by(name: study_config['study']['name'])
+    if overwrite || existing_study.nil?
+      puts("Populating synthetic study from #{synthetic_study_folder}")
+      study = create_study(study_config, user, overwrite: overwrite)
+      add_files(study, study_config, synthetic_study_folder, user)
+    end
   end
 
   private
