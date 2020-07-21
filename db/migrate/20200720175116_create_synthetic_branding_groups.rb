@@ -1,9 +1,13 @@
 class CreateSyntheticBrandingGroups < Mongoid::Migration
   def self.up
-    SyntheticBrandingGroupPopulator.populate_all
+    unless Rails.env == 'production'
+      SyntheticBrandingGroupPopulator.populate_all
+    end
   end
 
   def self.down
-    SyntheticBrandingGroupPopulator.remove_all
+    unless Rails.env == 'production'
+      SyntheticBrandingGroupPopulator.remove_all
+    end
   end
 end
