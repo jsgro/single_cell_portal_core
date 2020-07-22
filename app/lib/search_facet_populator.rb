@@ -37,22 +37,36 @@ class SearchFacetPopulator
     updated_facet.big_query_id_column = facet_name
     updated_facet.big_query_name_column = is_ontology_based ? ontology_label_field_name : facet_name
     updated_facet.convention_name = schema_object['title']
-    updated_facet.convention_version = alexandria_convention_config[:version]
+    updated_facet.convention_version = schema_object['$id'].match('alexandria_convention/(.*)/json')[1]
+
     if is_ontology_based
-      url = field_def['ontology']
-      ontology = fetch_json_from_url(url)
-      # check if response has expected keys; if not, default to URL for name value
-      ontology_name = ontology.dig('config', 'title') ? ontology['config']['title'] : url
-      updated_facet.ontology_urls = [{name: ontology_name, url: url}]
+      updated_facet.ontology_urls = []
+      urls = field_def['ontology'].split(',')
+      browser_urls = []
+      # ontology_browser_urls are stored in different places in the schema for array properties
+      if field_def['ontology_browser_url']
+        browser_urls = field_def['ontology_browser_url'].split(',')
+      elsif field_def['items']['ontology_browser_url']
+        browser_urls = field_def['items']['ontology_browser_url'].split(',')
+      end
+      # for each url/browser_url combo, fetch the title and add it to the facet ontology_urls array
+      # use of .zip means browser_url will be nil if not provided in the schema
+      urls.zip(browser_urls).each do |url, browser_url|
+        ontology = fetch_json_from_url(url)
+        # check if response has expected keys; if not, default to URL for name value
+        ontology_name = ontology.dig('config', 'title') ? ontology['config']['title'] : url
+        ontology_obj = {name: ontology_name, url: url, browser_url: browser_url}
+        updated_facet.ontology_urls.push(ontology_obj)
+      end
     end
     updated_facet.save!
     updated_facet
   end
 
+
   def self.alexandria_convention_config
     {
-      url: 'https://storage.googleapis.com/broad-singlecellportal-public/AMC_v1.1.3.json',
-      version: '1.1.3' # hardcoded here since the version is not part of the schema file
+      url: 'https://github.com/broadinstitute/scp-ingest-pipeline/raw/master/schema/alexandria_convention/alexandria_convention_schema.json',
     }
   end
 
