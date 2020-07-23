@@ -14,7 +14,7 @@ class SyntheticBrandingGroupPopulator
     SyntheticStudyPopulator.populate_all if create_studies
     configurations = self.load_all_config_files
     configurations.each do |configuration|
-      self.populate(configuration, user: user, study_list: study_list)
+      self.populate(configuration, user: user)
     end
   end
 
