@@ -46,13 +46,15 @@ class MetricsService
   # This call links that anonId to the user's bearer token used by DSP's Sam
   # service.  That bearer token is in turn linked to a deidentified
   # "distinct ID" used to track users across auth states in Mixpanel.
-  def self.merge_identities_in_mixpanel(user)
+  def self.merge_identities_in_mixpanel(user, cookies)
 
     Rails.logger.info "#{Time.zone.now}: Merging user identity in Mixpanel via Bard"
 
     headers = get_default_headers(user)
 
-    post_body = {'anonId': user.id}.to_json
+    post_body = {
+      'anonId': cookies['user_id'] # Random UUIDv4 string
+    }.to_json
 
     params = {
       url: BARD_ROOT + '/api/identify',
