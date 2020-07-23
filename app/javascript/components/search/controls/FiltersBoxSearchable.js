@@ -113,7 +113,7 @@ export default function FiltersBoxSearchable({ facet, selection, setSelection, s
                       return (
                         <a
                           key={`link-${i}`}
-                          href={link.url}
+                          href={link.browser_url ? link.browser_url : link.url}
                           target='_blank'
                           rel='noopener noreferrer'
                         >
