@@ -20,10 +20,44 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should get all search facets' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    facet_count = SearchFacet.count
+    facet_count = SearchFacet.visible.count
     execute_http_request(:get, api_v1_search_facets_path)
     assert_response :success
     assert json.size == facet_count, "Did not find correct number of search facets, expected #{facet_count} but found #{json.size}"
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'should get visible search facets' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    # make one random facet not visible
+    invisible_facet = SearchFacet.all.sample
+    invisible_facet.update!(visible: false)
+    visible_count = SearchFacet.visible.count
+    execute_http_request(:get, api_v1_search_facets_path)
+    assert_response :success
+    assert json.size == visible_count,
+           "Did not find correct number of visible search facets, expected #{visible_count} but found #{json.size}"
+    assert visible_count == SearchFacet.count - 1,
+           "Did not return correct direct count of visible facets; #{visible_count} != #{SearchFacet.count - 1}"
+    invisible_facet.update!(visible: true)
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'should get search facets for branding group' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    branding_group = BrandingGroup.first
+    facet_list = SearchFacet.pluck(:identifier).take(2).sort
+    branding_group.update!(facet_list: facet_list)
+    execute_http_request(:get, api_v1_search_facets_path(scpbr: branding_group.name_as_id))
+    assert_response :success
+    response_facets = json.map {|entry| entry['id']}.sort
+    assert response_facets == facet_list,
+           "Did not find correct facets for #{branding_group.name_as_id}, expected #{facet_list} but found #{response_facets}"
+    branding_group.update!(facet_list: [])
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
