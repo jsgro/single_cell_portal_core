@@ -397,8 +397,8 @@ class SearchFacet
     else
       self.ontology_urls.each do |ontology_url|
         # check that entry is a Hash with :name and :url field
-        unless ontology_url.is_a?(Hash) && ontology_url.with_indifferent_access.keys.sort == %w(name url)
-          errors.add(:ontology_urls, "contains a misformed entry: #{ontology_url}. Must be a Hash with a :name and :url field")
+        unless ontology_url.is_a?(Hash) && ontology_url.with_indifferent_access.keys.sort == %w(browser_url name url)
+          errors.add(:ontology_urls, "contains a misformed entry: #{ontology_url}. Must be a Hash with a :name, :url, and :browser_url field")
         end
         santized_url = ontology_url.with_indifferent_access
         unless url_valid?(santized_url[:url])
