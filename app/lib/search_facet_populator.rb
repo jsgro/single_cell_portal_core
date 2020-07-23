@@ -5,7 +5,7 @@ class SearchFacetPopulator
   EXCLUDED_BQ_COLUMNS = %w(CellID donor_id biosample_id)
   # loads the alexandria convention schema and populates search facets from it
   def self.populate_from_schema
-    schema_object = fetch_json_from_url(alexandria_convention_config[:url])
+    schema_object = alexandria_convention_config
     required_fields = schema_object['required']
     required_fields.each do |field_name|
       if !EXCLUDED_BQ_COLUMNS.include?(field_name) && !field_name.include?('__ontology_label')
@@ -65,9 +65,8 @@ class SearchFacetPopulator
 
 
   def self.alexandria_convention_config
-    {
-      url: 'https://github.com/broadinstitute/scp-ingest-pipeline/raw/master/schema/alexandria_convention/alexandria_convention_schema.json',
-    }
+    convention_file_location = Rails.root.join('lib', 'assets', 'metadata_schemas', 'alexandria_convention', 'alexandria_convention_schema.json')
+    JSON.parse(File.read(convention_file_location))
   end
 
   # generic fetch of JSON from remote URL, for parsing convention schema or EBI OLS ontology entries
