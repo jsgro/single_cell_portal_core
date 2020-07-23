@@ -12,11 +12,8 @@ class SyntheticBrandingGroupPopulator
   def self.populate_all(user: User.first, create_studies: false)
     # populate all studies first to ensure they exist, if specified
     SyntheticStudyPopulator.populate_all if create_studies
-    synthetic_studies_ids = SyntheticStudyPopulator.collect_synthetic_studies.pluck(:id)
     configurations = self.load_all_config_files
     configurations.each do |configuration|
-      study_regex = /#{configuration.dig('study_title_regex')}/i
-      study_list = Study.where(name: study_regex, :id.in => synthetic_studies_ids)
       self.populate(configuration, user: user, study_list: study_list)
     end
   end
@@ -38,11 +35,13 @@ class SyntheticBrandingGroupPopulator
   #
   # @param branding_group_config (Hash)   => Configuration JSON for branding group
   # @param user (User)                    => User account to own branding group
-  # @param study_list (Mongoid::Criteria) => List of studies to associate with new branding group
-  def self.populate(branding_group_config, user: User.first, study_list:)
+  def self.populate(branding_group_config, user: User.first)
     puts("Populating synthetic branding group for #{branding_group_config.dig('branding_group', 'name')}")
     branding_group = self.create_branding_group(branding_group_config, user)
-    # assign new branding group to all studies
+    # assign new branding group to all studies matching criteria
+    synthetic_studies_ids = SyntheticStudyPopulator.collect_synthetic_studies.pluck(:id)
+    study_regex = /#{branding_group_config.dig('study_title_regex')}/i
+    study_list = Study.where(name: study_regex, :id.in => synthetic_studies_ids)
     study_list.update_all(branding_group_id: branding_group.id) if study_list.any?
   end
 
