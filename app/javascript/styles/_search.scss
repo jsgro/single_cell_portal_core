@@ -174,8 +174,10 @@ nav.search-links, #search-panel {
 
   .facet-ontology-links {
     text-align: right;
+    float: right;
     > a {
       margin-right: 1em;
+      display: block;
     }
   }
 
