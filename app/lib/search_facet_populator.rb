@@ -3,11 +3,13 @@
 class SearchFacetPopulator
 
   EXCLUDED_BQ_COLUMNS = %w(CellID donor_id biosample_id)
+  INCLUDED_OPTIONAL_COLUMNS = %w(cell_type organ_region)
   # loads the alexandria convention schema and populates search facets from it
   def self.populate_from_schema
     schema_object = alexandria_convention_config
     required_fields = schema_object['required']
-    required_fields.each do |field_name|
+
+    (required_fields + INCLUDED_OPTIONAL_COLUMNS).each do |field_name|
       if !EXCLUDED_BQ_COLUMNS.include?(field_name) && !field_name.include?('__ontology_label')
         populate_facet_by_name(field_name, schema_object)
       end
@@ -17,25 +19,25 @@ class SearchFacetPopulator
   # creates/updates a facet from a name, and returns the new SearchFacet.
   # To manually populate a new Alexandria convention facet from the rails console, run e.g.
   # SearchFacetPopulator.populate_facet_by_name('vaccination__route')
-  def self.populate_facet_by_name(facet_name, schema_object=nil)
+  def self.populate_facet_by_name(facet_identifier, schema_object=nil)
     if schema_object.nil?
       # default to alexandria convention
       schema_object = fetch_json_from_url(alexandria_convention_config[:url])
     end
-    field_def = schema_object['properties'][facet_name]
+    field_def = schema_object['properties'][facet_identifier]
     if !field_def
-      throw "Unrecognized field name '#{facet_name}' -- could not find definition in schema"
+      throw "Unrecognized field name '#{facet_identifier}' -- could not find definition in schema"
     end
     is_ontology_based = field_def['ontology'].present?
-    ontology_label_field_name = facet_name + '__ontology_label'
+    ontology_label_field_name = facet_identifier + '__ontology_label'
 
-    updated_facet = SearchFacet.find_or_initialize_by(name: facet_name)
-    updated_facet.identifier = facet_name
+    updated_facet = SearchFacet.find_or_initialize_by(identifier: facet_identifier)
+    updated_facet.name = facet_identifier.gsub(/_/, ' ')
     updated_facet.data_type = field_def['type'] == 'array' ? field_def['items']['type'] : field_def['type']
     updated_facet.is_ontology_based = is_ontology_based
     updated_facet.is_array_based = 'array'.casecmp(field_def['type']) == 0
-    updated_facet.big_query_id_column = facet_name
-    updated_facet.big_query_name_column = is_ontology_based ? ontology_label_field_name : facet_name
+    updated_facet.big_query_id_column = facet_identifier
+    updated_facet.big_query_name_column = is_ontology_based ? ontology_label_field_name : facet_identifier
     updated_facet.convention_name = schema_object['title']
     updated_facet.convention_version = schema_object['$id'].match('alexandria_convention/(.*)/json')[1]
 
