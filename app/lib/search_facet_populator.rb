@@ -9,17 +9,17 @@ class SearchFacetPopulator
     schema_object = alexandria_convention_config
     required_fields = schema_object['required']
 
-    (required_fields + INCLUDED_OPTIONAL_COLUMNS).each do |field_name|
-      if !EXCLUDED_BQ_COLUMNS.include?(field_name) && !field_name.include?('__ontology_label')
-        populate_facet_by_name(field_name, schema_object)
+    (required_fields + INCLUDED_OPTIONAL_COLUMNS).each do |field_identifier|
+      if !EXCLUDED_BQ_COLUMNS.include?(field_identifier) && !field_identifier.include?('__ontology_label')
+        populate_facet(field_identifier, schema_object)
       end
     end
   end
 
   # creates/updates a facet from a name, and returns the new SearchFacet.
   # To manually populate a new Alexandria convention facet from the rails console, run e.g.
-  # SearchFacetPopulator.populate_facet_by_name('vaccination__route')
-  def self.populate_facet_by_name(facet_identifier, schema_object=nil)
+  # SearchFacetPopulator.populate_facet('vaccination__route')
+  def self.populate_facet(facet_identifier, schema_object=nil)
     if schema_object.nil?
       # default to alexandria convention
       schema_object = fetch_json_from_url(alexandria_convention_config[:url])
@@ -65,7 +65,6 @@ class SearchFacetPopulator
     updated_facet
   end
 
-
   def self.alexandria_convention_config
     convention_file_location = Rails.root.join('lib', 'assets', 'metadata_schemas', 'alexandria_convention', 'alexandria_convention_schema.json')
     JSON.parse(File.read(convention_file_location))
@@ -82,62 +81,4 @@ class SearchFacetPopulator
       Rails.logger.error "Unable to parse response from #{url}: #{e.class.name}: #{e.message}"
     end
   end
-
-  # quick method to get a few key facets into the database.
-  # May be removed once we have auto-populate from schema, or it may be useful for testing purposes to keep constant
-  def self.populate_sample_facets
-    SearchFacet.find_or_create_by!(name: "species") do |facet|
-      facet.identifier = "species"
-      facet.is_ontology_based = true
-      facet.is_array_based = false
-      facet.big_query_id_column = 'species'
-      facet.big_query_name_column = 'species__ontology_label'
-      facet.convention_name = 'Alexandria Metadata Convention'
-      facet.convention_version = '1.1.3'
-      facet.ontology_urls = [{name: 'NCBI organismal classification', url: 'https://www.ebi.ac.uk/ols/api/ontologies/ncbitaxon'}]
-    end
-    SearchFacet.find_or_create_by!(name: "sex") do |facet|
-      facet.identifier = "sex"
-      facet.is_ontology_based = false
-      facet.is_array_based = false
-      facet.big_query_id_column = 'sex'
-      facet.big_query_name_column = 'sex'
-      facet.convention_name = 'Alexandria Metadata Convention'
-      facet.convention_version = '1.1.3'
-    end
-
-    SearchFacet.find_or_create_by!(name: "organ") do |facet|
-      facet.identifier = "organ"
-      facet.is_ontology_based = true
-      facet.is_array_based = false
-      facet.big_query_id_column = 'organ'
-      facet.big_query_name_column = 'organ__ontology_label'
-      facet.convention_name = 'Alexandria Metadata Convention'
-      facet.convention_version = '1.1.3'
-      facet.ontology_urls = [{name: 'Uber-anatomy ontology', url: 'https://www.ebi.ac.uk/ols/api/ontologies/uberon'}]
-    end
-
-    SearchFacet.find_or_create_by!(name: "disease") do |facet|
-      facet.identifier = "disease"
-      facet.is_ontology_based = true
-      facet.is_array_based = true
-      facet.big_query_id_column = 'disease'
-      facet.big_query_name_column = 'disease__ontology_label'
-      facet.convention_name = 'Alexandria Metadata Convention'
-      facet.convention_version = '1.1.3'
-      facet.ontology_urls = [{name: 'MONDO: Monarch Disease Ontology', url: 'https://www.ebi.ac.uk/ols/api/ontologies/mondo'}]
-    end
-
-    SearchFacet.find_or_create_by!(name: "library_preparation_protocol") do |facet|
-      facet.identifier = "library_preparation_protocol"
-      facet.is_ontology_based = true
-      facet.is_array_based = false
-      facet.big_query_id_column = 'library_preparation_protocol'
-      facet.big_query_name_column = 'library_preparation_protocol__ontology_label'
-      facet.convention_name = 'Alexandria Metadata Convention'
-      facet.convention_version = '1.1.3'
-      facet.ontology_urls = [{name: 'Experimental Factor Ontology', url: 'https://www.ebi.ac.uk/ols/api/ontologies/efo'}]
-    end
-  end
-
 end
