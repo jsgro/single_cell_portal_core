@@ -113,6 +113,7 @@ else
                     test/integration/lib/summary_stats_utils_test.rb
                     test/integration/lib/user_asset_service_test.rb
                     test/models/big_query_client_test.rb
+                    test/models/delete_queue_job_test.rb
   )
   for test_name in ${tests[*]}; do
       bundle exec ruby -I test $test_name
