@@ -36,6 +36,8 @@ class SingleCellMailer < ApplicationMailer
     end
   end
 
+  # notify user of a failed upload that never parsed/pushed to bucket
+  # will bcc dev team if configured
   def notify_user_upload_fail(study_file, study, user)
     @study_file = study_file
     @study = study

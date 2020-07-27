@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class DeleteQueueJobTest < ActiveSupport::TestCase
+class UploadCleanupJobTest < ActiveSupport::TestCase
 
   def setup
     @study = Study.first
@@ -13,7 +13,7 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
     beginning_file_count = StudyFile.where(queued_for_deletion: false).count
     existing_deletes = StudyFile.where(queued_for_deletion: true).pluck(:id)
     # run without any failed uploads to ensure good files aren't removed
-    DeleteQueueJob.find_and_remove_failed_uploads
+    UploadCleanupJob.find_and_remove_failed_uploads
     failed_uploads = StudyFile.where(queued_for_deletion: true, :id.nin => existing_deletes).count
     assert failed_uploads == 0, "Should not have found any failed uploads but found #{failed_uploads}"
 
@@ -22,7 +22,7 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
     file = File.open(Rails.root.join('test', 'test_data', filename))
     bad_upload = StudyFile.create(name: filename, study: @study, file_type: 'Expression Matrix', upload: file,
                                   status: 'uploading', created_at: 1.week.ago.in_time_zone)
-    DeleteQueueJob.find_and_remove_failed_uploads
+    UploadCleanupJob.find_and_remove_failed_uploads
     failed_uploads = StudyFile.where(queued_for_deletion: true, :id.nin => existing_deletes).count
     assert failed_uploads == 1, "Should have found 1 failed upload but found #{failed_uploads}"
     bad_upload.reload
