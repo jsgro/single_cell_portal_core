@@ -36,6 +36,17 @@ class SingleCellMailer < ApplicationMailer
     end
   end
 
+  # notify user of a failed upload that never parsed/pushed to bucket
+  # will bcc dev team if configured
+  def notify_user_upload_fail(study_file, study, user)
+    @study_file = study_file
+    @study = study
+    dev_email_config = AdminConfiguration.find_by(config_type: 'QA Dev Email')
+    dev_email = dev_email_config.present? ? dev_email_config.value : nil
+    title = "#{study_file.upload_file_name} did not finish uploading"
+    mail(to: user.email, bcc: dev_email, subject: '[Single Cell Portal Notifier] ' + title)
+  end
+
   def notify_user_parse_complete(email, title, message, study)
     @message = message
     @study = study
