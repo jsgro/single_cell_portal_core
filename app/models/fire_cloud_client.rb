@@ -1329,6 +1329,44 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
     end
   end
 
+  ##
+  # PET SERVICE ACCOUNT METHODS
+  # these methods reference the SAM API directly for issuing pet service account tokens/json keyfiles
+  # NOTE: the FireCloudClient instance calling these methods must be initialized using a User object
+  # for authentication purposes, otherwise downstream calls will return 403
+  ##
+
+  # issue an access_token for a user's pet service account in the requested project
+  #
+  # * *params*
+  #   - +project_name+ (String) => Name of a FireCloud billing project in which pet service account resides
+  #
+  # * *returns*
+  #   - +String+ pet service account OAuth2 access_token
+  def get_pet_service_account_token(project_name)
+    path = "https://sam.dsde-prod.broadinstitute.org/api/google/v1/user/petServiceAccount/#{project_name}/token"
+    # normal scopes, plus RO access for storage objects (removes unnecessary billing scope from GOOGLE_SCOPES)
+    scopes = %w(https://www.googleapis.com/auth/userinfo.email
+                https://www.googleapis.com/auth/userinfo.profile
+                https://www.googleapis.com/auth/devstorage.read_only).to_json
+    token = process_firecloud_request(:post, path, scopes)
+    token.gsub(/\"/, '') # gotcha for removing escaped quotes in response body
+  end
+
+  # get JSON keyfile contents for a user's pet service account in the requested project
+  # response from this API call can be passed to FireCloudClient.new(user, project_name, service_account_contents)
+  # to create an instance of FireCloudClient that is able to call GCS methods as the user in the request project
+  #
+  # * *params*
+  #   - +project_name+ (String) => Name of a FireCloud billing project in which pet service account resides
+  #
+  # * *returns*
+  #   - +Hash+ parsed contents of pet service account JSON keyfile
+  def get_pet_service_account_key(project_name)
+    path = "https://sam.dsde-prod.broadinstitute.org/api/google/v1/user/petServiceAccount/#{project_name}/key"
+    process_firecloud_request(:get, path)
+  end
+
   #######
   ##
   ## GOOGLE CLOUD STORAGE METHODS
