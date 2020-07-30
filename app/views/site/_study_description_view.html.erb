@@ -1,7 +1,7 @@
 <div id="study-external-resources">
   <%= render partial: '/layouts/external_resources_view', locals: {instance: @study} %>
 </div>
-<div id="study-description-content">
+<div id="study-description-content" class="ck-content">
   <%= @study.description.html_safe %>
 </div>
 <% if user_signed_in? && @study.can_edit?(current_user) %>
