@@ -32,6 +32,7 @@
 //= require scp-igv
 //= require scp-ideogram
 //= require scp-dot-plot
+//= require ckeditor
 
 var fileUploading = false;
 var PAGE_RENDERED = false;
@@ -128,6 +129,25 @@ var paginationOpts = {
     hwaccel: false, // Whether to use hardware acceleration
     position: 'relative' // Element positioning
 };
+
+// global config for CKEditor instances when editing study descriptions
+var studyCKEditorConfig = {
+    alignment: {
+        options: [ 'left', 'center', 'right' ]
+    },
+    image: {
+        // Configure the available styles.
+        styles: [
+            'alignLeft', 'alignCenter', 'alignRight'
+        ],
+        toolbar: [
+            'imageStyle:alignLeft', 'imageStyle:alignCenter', 'imageStyle:alignRight'
+        ]
+    },
+    toolbar: ['heading', '|', 'removeFormat', '|',  'bold', 'italic', 'underline', 'link', 'bulletedList', 'numberedList',
+        'blockQuote', '|', 'alignment', 'outdent', 'indent', '|', 'ImageUpload', '|', 'insertTable', 'tableColumn',
+        'tableRow', 'mergeTableCells', '|', 'undo', 'redo']
+}
 
 $(document).on('shown.bs.modal', function(e) {
     console.log("modal " + $(e.target).attr('id') + ' opened');

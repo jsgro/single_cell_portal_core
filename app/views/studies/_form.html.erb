@@ -119,9 +119,7 @@
 
     ClassicEditor
       .create( document.querySelector( '#study_description' ),
-          {
-              toolbar: ["heading", '|',  "bold", "italic", "link", "bulletedList", "numberedList", "blockQuote", '|', "undo", "redo"]
-          }
+          studyCKEditorConfig
       )
       .then( function(editor) {
           console.log(Array.from( editor.ui.componentFactory.names() ));
