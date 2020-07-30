@@ -621,6 +621,18 @@ h6,
   min-width: 100%;
 }
 
+.ck-editor__editable figcaption {
+  min-height: 0;
+}
+
+figcaption {
+  font-size: x-small;
+}
+
+.ck-content .image {
+  margin: 1em !important;
+}
+
 .bottom-pad {
   margin-bottom: 10px;
 }

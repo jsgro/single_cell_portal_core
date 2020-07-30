@@ -138,10 +138,10 @@ var studyCKEditorConfig = {
     image: {
         // Configure the available styles.
         styles: [
-            'alignLeft', 'alignCenter', 'alignRight'
+            'full', 'alignLeft', 'alignCenter', 'alignRight'
         ],
         toolbar: [
-            'imageStyle:alignLeft', 'imageStyle:alignCenter', 'imageStyle:alignRight'
+            'imageStyle:full', 'imageStyle:alignLeft', 'imageStyle:alignCenter', 'imageStyle:alignRight'
         ]
     },
     toolbar: ['heading', '|', 'removeFormat', '|',  'bold', 'italic', 'underline', 'link', 'bulletedList', 'numberedList',
