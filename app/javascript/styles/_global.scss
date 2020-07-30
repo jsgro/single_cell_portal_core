@@ -695,3 +695,13 @@ h6,
     transform: rotateY(-360deg);
   }
 }
+
+.ck-editor__main {
+  min-height: 300px;
+  max-height: 700px;
+  min-width: 100%;
+}
+
+figcaption.ck-editor__editable {
+  min-height: 0;
+}
