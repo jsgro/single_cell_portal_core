@@ -17,7 +17,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       @user.delay.update_firecloud_status
       sign_in(@user)
       if TosAcceptance.accepted?(@user)
-        MetricsService.merge_identities_in_mixpanel(@user, cookies)
+        # MetricsService.merge_identities_in_mixpanel(@user, cookies)
         redirect_to request.env['omniauth.origin'] || site_path
       else
         redirect_to accept_tos_path(@user.id)

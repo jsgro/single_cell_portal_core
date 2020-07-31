@@ -603,3 +603,4 @@ dispruption when doing updates during that window (or hot fixes any other time) 
 that will return a 503 and redirect all incoming traffic to a static maintenance HTML page.
 
 To use this feature, run the `bin/enable_maintenance.sh [on/off]` script accordingly.
+https://username@example.com
