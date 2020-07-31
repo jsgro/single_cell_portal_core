@@ -696,6 +696,8 @@ h6,
   }
 }
 
+// Overridding some default CKEditor styles to allow for larger editor windows by default
+
 .ck-editor__editable {
   min-height: 300px;
   max-height: 700px;

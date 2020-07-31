@@ -132,21 +132,20 @@ var paginationOpts = {
 
 // global config for CKEditor instances
 var fullCKEditorConfig = {
-    alignment: {
-        options: [ 'left', 'center', 'right' ]
-    },
-    image: {
-        // Configure the available styles.
-        styles: [
-            'full', 'alignLeft', 'alignCenter', 'alignRight'
-        ],
-        toolbar: [
-            'imageStyle:full', 'imageStyle:alignLeft', 'imageStyle:alignCenter', 'imageStyle:alignRight'
-        ]
-    },
-    toolbar: ['heading', '|', 'removeFormat', '|',  'bold', 'italic', 'underline', 'link', 'bulletedList', 'numberedList',
-        'blockQuote', '|', 'alignment', 'outdent', 'indent', '|', 'ImageUpload', '|', 'insertTable', 'tableColumn',
-        'tableRow', 'mergeTableCells', '|', 'undo', 'redo']
+  alignment: {
+    options: [ 'left', 'center', 'right' ]
+  },
+  image: {
+    styles: [
+      'full', 'alignLeft', 'alignCenter', 'alignRight'
+    ],
+    toolbar: [
+      'imageStyle:full', 'imageStyle:alignLeft', 'imageStyle:alignCenter', 'imageStyle:alignRight'
+    ]
+  },
+  toolbar: ['heading', '|', 'removeFormat', '|',  'bold', 'italic', 'underline', 'link', 'bulletedList', 'numberedList',
+      'blockQuote', '|', 'alignment', 'outdent', 'indent', '|', 'ImageUpload', '|', 'insertTable', 'tableColumn',
+      'tableRow', 'mergeTableCells', '|', 'undo', 'redo']
 }
 
 $(document).on('shown.bs.modal', function(e) {
