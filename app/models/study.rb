@@ -215,6 +215,9 @@ class Study
   # External Resource links
   has_many :external_resources, as: :resource_links
 
+  # Study Detail (full html description)
+  has_one :study_detail, dependent: :delete
+
   # field definitions
   field :name, type: String
   field :embargo, type: Date
@@ -239,6 +242,7 @@ class Study
   accepts_nested_attributes_for :study_files, allow_destroy: true
   accepts_nested_attributes_for :study_shares, allow_destroy: true, reject_if: proc { |attributes| attributes['email'].blank? }
   accepts_nested_attributes_for :external_resources, allow_destroy: true
+  accepts_nested_attributes_for :study_detail, allow_destroy: true
 
   ##
   #
@@ -263,7 +267,11 @@ class Study
     end
     property :description do
       key :type, :string
-      key :description, 'HTML description blob for Study'
+      key :description, 'Plain text description blob for Study'
+    end
+    property :full_description do
+      key :type, :string
+      key :description, 'HTML description blob for Study (optional)'
     end
     property :url_safe_name do
       key :type, :string
@@ -376,7 +384,14 @@ class Study
           end
           property :description do
             key :type, :string
-            key :description, 'HTML description blob for Study'
+            key :description, 'Plain text description blob for Study'
+          end
+          property :study_detail_attributes do
+            key :type, :object
+            property :full_description do
+              key :type, :string
+              key :description, 'HTML description blob for Study (optional)'
+            end
           end
           property :firecloud_project do
             key :type, :string
@@ -490,6 +505,10 @@ class Study
       key :description, 'Name of Study'
     end
     property :description do
+      key :type, :string
+      key :description, 'Plain text description blob for Study'
+    end
+    property :full_description do
       key :type, :string
       key :description, 'HTML description blob for Study'
     end
@@ -1126,6 +1145,11 @@ class Study
   # count the number of cluster-based annotations in a study
   def cluster_annotation_count
     self.cluster_groups.map {|c| c.cell_annotations.size}.reduce(0, :+)
+  end
+
+  # retrieve the full HTML description for this study
+  def full_description
+    self.study_detail.try(:full_description)
   end
 
   ###

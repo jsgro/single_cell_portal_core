@@ -1,7 +1,7 @@
 $('#study-description-content').html('<%= escape_javascript(render partial: 'study_description_edit') %>');
 
 ClassicEditor
-    .create( document.querySelector( '#study_description' ),
+    .create( document.querySelector( '#study_study_detail_attributes_full_description' ),
         fullCKEditorConfig
     )
     .then( function(editor) {

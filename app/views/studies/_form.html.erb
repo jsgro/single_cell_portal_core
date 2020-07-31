@@ -68,8 +68,10 @@
     </div>
   <% end %>
   <div class="form-group">
-		<%= f.label :description %>
-		<%= f.text_area :description %>
+    <%= f.fields_for :study_detail do |detail_field| %>
+      <%= detail_field.label :full_description, 'Description' %>
+      <%= detail_field.text_area :full_description %>
+    <% end %>
 	</div>
 	<div class="form-group">
 		<h3>Sharing</h3>
@@ -118,7 +120,7 @@
     });
 
     ClassicEditor
-      .create( document.querySelector( '#study_description' ),
+      .create( document.querySelector( '#study_study_detail_attributes_full_description' ),
           fullCKEditorConfig
       )
       .then( function(editor) {

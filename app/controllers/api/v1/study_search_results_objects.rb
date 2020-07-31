@@ -29,7 +29,7 @@ module Api
         study_obj = {
           accession: study.accession,
           name: study.name,
-          description: ::ActionController::Base.helpers.strip_tags(study.description),
+          description: study.description,
           public: study.public,
           detached: study.detached,
           cell_count: study.cell_count,
