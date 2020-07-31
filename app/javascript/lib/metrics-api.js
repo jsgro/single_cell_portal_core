@@ -51,7 +51,7 @@ export function setMetricsApiMockFlag(flag) {
  * Log page view, i.e. page load
  */
 export function logPageView() {
-  log('page:view')
+  log(`page:view:${getAppPath()}`)
 }
 
 /** Log click on page.  Delegates to more element-specific loggers. */
@@ -199,6 +199,14 @@ function trimStudyName(appPath) {
 }
 
 /**
+ * gets the app path in a string suitable for logging
+ * e.g. trims the study name out of window location
+ */
+function getAppPath() {
+  return trimStudyName(window.location.pathname)
+}
+
+/**
  * Log metrics to Mixpanel via Bard web service
  *
  * Bard docs:
@@ -208,11 +216,9 @@ function trimStudyName(appPath) {
  * @param {Object} props
  */
 export function log(name, props={}) {
-  const appPath = trimStudyName(window.location.pathname)
-
-  props = Object.assign(props, {
+   props = Object.assign(props, {
     appId: 'single-cell-portal',
-    appPath,
+    appPath: getAppPath(),
     env
   })
 
