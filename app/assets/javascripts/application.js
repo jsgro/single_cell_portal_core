@@ -130,8 +130,8 @@ var paginationOpts = {
     position: 'relative' // Element positioning
 };
 
-// global config for CKEditor instances when editing study descriptions
-var studyCKEditorConfig = {
+// global config for CKEditor instances
+var fullCKEditorConfig = {
     alignment: {
         options: [ 'left', 'center', 'right' ]
     },

@@ -2,7 +2,7 @@ $('#study-description-content').html('<%= escape_javascript(render partial: 'stu
 
 ClassicEditor
     .create( document.querySelector( '#study_description' ),
-        studyCKEditorConfig
+        fullCKEditorConfig
     )
     .then( function(editor) {
         console.log('Editor inserted');

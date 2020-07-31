@@ -119,10 +119,10 @@
 
     ClassicEditor
       .create( document.querySelector( '#study_description' ),
-          studyCKEditorConfig
+          fullCKEditorConfig
       )
       .then( function(editor) {
-          console.log(Array.from( editor.ui.componentFactory.names() ));
+          console.log('Editor inserted');
       } )
       .catch( function(error) {
           console.error( error );
