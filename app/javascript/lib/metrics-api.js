@@ -51,7 +51,7 @@ export function setMetricsApiMockFlag(flag) {
  * Log page view, i.e. page load
  */
 export function logPageView() {
-  log(`page:view:${getAppPath()}`)
+  log(`page:view:${getAnalyticsPageName()}`)
 }
 
 /** Log click on page.  Delegates to more element-specific loggers. */
@@ -202,8 +202,17 @@ function trimStudyName(appPath) {
  * gets the app path in a string suitable for logging
  * e.g. trims the study name out of window location
  */
-function getAppPath() {
+function getAppFullPath() {
   return trimStudyName(window.location.pathname)
+}
+
+/**
+ * gets the page name suitable for analytics
+ * should be the url but with any dynamic segments
+ * replaced by the variable name, e.g. /single_cell/study/:accession/:study_name
+ */
+function getAnalyticsPageName() {
+  return window.SCP.analyticsPageName
 }
 
 /**
@@ -218,7 +227,8 @@ function getAppPath() {
 export function log(name, props={}) {
    props = Object.assign(props, {
     appId: 'single-cell-portal',
-    appPath: getAppPath(),
+    appPath: getAnalyticsPageName(),
+    appFullPath: getAppFullPath(),
     env
   })
 

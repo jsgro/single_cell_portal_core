@@ -364,4 +364,17 @@ module ApplicationHelper
   def pluralize_without_count(count, noun, text=nil)
     count.to_i == 1 ? "#{noun}#{text}" : "#{noun.pluralize}#{text}"
   end
+
+  # get the rails route specification in a format suitable
+  # for use in analytics or logging
+  # e.g. /single_cell/study/:accession/:study_name
+  def get_route_spec_string
+    spec_name = 'undefined'
+    Rails.application.routes.router.recognize(request) do |route, match|
+      spec_name = route.path.spec.to_s
+      # remove trailing term that gets auto-added by actionDispatch
+      spec_name = spec_name.sub('(.:format)', '')
+    end
+    spec_name
+  end
 end
