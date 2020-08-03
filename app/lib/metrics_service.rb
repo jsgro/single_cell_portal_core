@@ -25,7 +25,12 @@ class MetricsService
     rescue RestClient::Exception => e
       Rails.logger.error "#{Time.zone.now}: Bard error in call to #{params[:url]}: #{e.message}"
       # Rails.logger.error e.to_yaml
-      ErrorTracker.report_exception(e, user, params)
+      if e.http_code != 503
+        # Ignore "503 Service Unavailable" errors thrown from Bard, until
+        # https://broadworkbench.atlassian.net/browse/SATURN-1779
+        # is resolved.
+        ErrorTracker.report_exception(e, user, params)
+      end
     end
   end
 
