@@ -15,7 +15,12 @@ class StudyDetail
   private
 
   # sets plain-text study description on saves
+  # study.reload must be called to refresh the state of the association as it may have changed during
+  # the course of the callback, otherwise validation failures or infinite recursion can occur
   def set_study_description_text
-    self.study.update(description: self.plain_text_description)
+    study_object = self.study
+    study_object.reload
+    study_object.description = self.plain_text_description
+    study_object.save!
   end
 end

@@ -65,7 +65,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     }
     execute_http_request(:patch, api_v1_study_path(id: study_id), update_attributes)
     assert_response :success
-    plain_text_description = ActionController::Base.helpers.strip_tags update_attributes[:study][:description]
+    plain_text_description = ActionController::Base.helpers.strip_tags update_attributes[:study][:study_detail_attributes][:full_description]
     assert json['description'] == plain_text_description, "Did not set description correctly, expected #{plain_text_description} but found #{json['description']}"
     # delete study, passing ?workspace=persist to skip FireCloud workspace deletion
     execute_http_request(:delete, api_v1_study_path(id: study_id))

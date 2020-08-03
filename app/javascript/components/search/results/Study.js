@@ -8,7 +8,8 @@ import { getDisplayNameForFacet } from 'providers/SearchFacetProvider'
 const lengthOfHighlightTag = 21
 
 /* converts description into text snippet */
-export function formatDescription(textDescription, term) {
+export function formatDescription(rawDescription, term) {
+  const textDescription = stripTags(rawDescription)
   return shortenDescription(textDescription, term)
 }
 
@@ -29,7 +30,7 @@ export function highlightText(text, termMatches) {
 // returns the first 140 characters of the description in plain text
 export function getByline(rawDescription) {
   const bylineCharLimit = 140
-  const plainText = rawDescription.trim()
+  const plainText = stripTags(rawDescription).trim()
   let bylineText = plainText.substring(0, bylineCharLimit)
   if (plainText.length > bylineCharLimit) {
     bylineText = `${bylineText}...`

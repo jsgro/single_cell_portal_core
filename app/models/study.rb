@@ -447,6 +447,13 @@ class Study
             key :default, 100.0
             key :description, 'Number used to control sort order in which Studies are returned when searching/browsing'
           end
+          property :study_detail_attributes do
+            key :type, :object
+            property :full_description do
+              key :type, :string
+              key :description, 'HTML description blob for Study (optional)'
+            end
+          end
           property :default_options do
             key :type, :object
             key :default, {}
