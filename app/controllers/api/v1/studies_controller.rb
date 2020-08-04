@@ -556,7 +556,11 @@ module Api
       # study params whitelist
       def study_params
         params.require(:study).permit(:name, :description, :public, :embargo, :use_existing_workspace, :firecloud_workspace,
-                                      :firecloud_project, :branding_group_id, study_shares_attributes: [:id, :_destroy, :email, :permission])
+                                      :firecloud_project, :branding_group_id, :cell_count, :gene_count, :view_order,
+                                      study_shares_attributes: [:id, :_destroy, :email, :permission],
+                                      study_detail_attributes: [:id, :full_description],
+                                      :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails,
+                                                           :cluster_point_size, :cluster_point_alpha, :cluster_point_border])
       end
 
       # sub-method to iterate through list of GCP bucket files and build up necessary sync list objects
