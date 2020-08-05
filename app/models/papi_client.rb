@@ -316,13 +316,6 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
         taxon = study_file.taxon
         opts += ["--taxon-name", "#{taxon.scientific_name}", "--taxon-common-name", "#{taxon.common_name}",
                  "--ncbi-taxid", "#{taxon.ncbi_taxid}"]
-        if taxon.current_assembly.present?
-          assembly = taxon.current_assembly
-          opts += ["--genome-assembly-accession", "#{assembly.accession}"]
-          if assembly.current_annotation.present?
-            opts += ["--genome-annotation", "#{assembly.current_annotation.name}"]
-          end
-        end
       end
     when 'Cluster'
       # the name of Cluster files is the same as the name of the cluster object itself
