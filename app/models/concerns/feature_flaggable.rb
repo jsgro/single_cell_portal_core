@@ -13,7 +13,7 @@ module FeatureFlaggable
   end
 
   class_methods do
-    # gets the feature flag value for a given user, and the default value if no user is given
+    # gets the feature flag value for a given instance, and the default value if no user is given
     def feature_flag_for_instance(instance, flag_key)
       if instance.present?
         instance.feature_flags_with_defaults[flag_key]
@@ -22,12 +22,24 @@ module FeatureFlaggable
       end
     end
 
-    # returns feature_flags_with_defaults for the user, or the default flags if no user is given
+    # returns feature_flags_with_defaults for the instance, or the default flags if no user is given
     def feature_flags_for_instance(instance)
       if instance.nil?
         return FeatureFlag.default_flag_hash
       end
       instance.feature_flags_with_defaults
     end
+  end
+
+  # merges feature flags of the passed-in instances from left to right,
+  # using the default flag has if none of the instances is present or suplies a value
+  def self.feature_flags_for_instances(*instances)
+    flag_hash = FeatureFlag.default_flag_hash
+    instances.each do |instance|
+      if instance.present?
+        flag_hash = flag_hash.merge(instance.feature_flags)
+      end
+    end
+    flag_hash.with_indifferent_access
   end
 end
