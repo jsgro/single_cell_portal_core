@@ -52,18 +52,18 @@ class FeatureFlagTest < ActiveSupport::TestCase
 
   test 'feature flaggable merges instance flags correctly' do
     flag_name = :my_feature_flag
-    @feature_flag.update(default_value: true)
+    @feature_flag.update!(default_value: true)
 
     assert FeatureFlaggable.feature_flags_for_instances(nil, nil)[flag_name]
     assert FeatureFlaggable.feature_flags_for_instances(@branding_group, @user)[flag_name]
 
     @branding_group.feature_flags[flag_name] = false
-    @branding_group.save
+    @branding_group.save!
     refute FeatureFlaggable.feature_flags_for_instances(@branding_group, nil)[flag_name]
     refute FeatureFlaggable.feature_flags_for_instances(@branding_group, @user)[flag_name]
 
     @user.feature_flags[flag_name] = true
-    @user.save
+    @user.save!
     assert FeatureFlaggable.feature_flags_for_instances(@branding_group, @user)[flag_name]
     # check the merge is order-sensitive
     refute FeatureFlaggable.feature_flags_for_instances(@user, @branding_group)[flag_name]
