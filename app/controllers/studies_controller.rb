@@ -936,7 +936,9 @@ class StudiesController < ApplicationController
         when 'Coordinate Labels'
           @study.delay.initialize_coordinate_label_data_arrays(@study_file, current_user, {local: false})
         when 'Expression Matrix'
-          @study.delay.initialize_gene_expression_data(@study_file, current_user, {local: false})
+          @study_file.update(parse_status: 'parsing')
+          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_expression)
+          job.delay.push_remote_and_launch_ingest
         when 'MM Coordinate Matrix'
           # we have to cast the study_file ID to a string, otherwise it is a BSON::ObjectID and will not match
           barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => @study_file.id.to_s)
@@ -947,7 +949,9 @@ class StudiesController < ApplicationController
             @study_file.update(parse_status: 'parsing')
             genes.update(parse_status: 'parsing')
             barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, @study_file, genes, barcodes, {sync: true})
+            @study_file.update(parse_status: 'parsing')
+            job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_expression)
+            job.delay.push_remote_and_launch_ingest
           end
         when '10X Genes File'
           matrix_id = @study_file.options[:matrix_id]
@@ -960,7 +964,8 @@ class StudiesController < ApplicationController
             @study_file.update(parse_status: 'parsing')
             matrix.update(parse_status: 'parsing')
             barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, @study_file, barcodes, {sync: true})
+            job = IngestJob.new(study: @study, study_file: matrix, user: current_user, action: :ingest_expression)
+            job.delay.push_remote_and_launch_ingest
           end
         when '10X Barcodes File'
           matrix_id = @study_file.options[:matrix_id]
@@ -973,7 +978,8 @@ class StudiesController < ApplicationController
             @study_file.update(parse_status: 'parsing')
             genes.update(parse_status: 'parsing')
             matrix.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, genes, @study_file, {sync: true})
+            job = IngestJob.new(study: @study, study_file: matrix, user: current_user, action: :ingest_expression)
+            job.delay.push_remote_and_launch_ingest
           end
         when 'Gene List'
           @study.delay.initialize_precomputed_scores(@study_file, current_user, {local: false})
@@ -1048,7 +1054,8 @@ class StudiesController < ApplicationController
         when 'Coordinate Labels'
           @study.delay.initialize_coordinate_label_data_arrays(@study_file, current_user, {local: false, reparse: true})
         when 'Expression Matrix'
-          @study.delay.initialize_gene_expression_data(@study_file, current_user, {local: false, reparse: true})
+          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_expression, reparse: true)
+          job.delay.push_remote_and_launch_ingest
         when 'MM Coordinate Matrix'
           # we have to cast the study_file ID to a string, otherwise it is a BSON::ObjectID and will not match
           barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => @study_file.id.to_s)
@@ -1059,7 +1066,8 @@ class StudiesController < ApplicationController
             @study_file.update(parse_status: 'parsing')
             genes.update(parse_status: 'parsing')
             barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, @study_file, genes, barcodes, {reparse: true, sync: true})
+            job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_expression, reparse: true)
+            job.delay.push_remote_and_launch_ingest
           end
         when '10X Genes File'
           matrix_id = @study_file.options[:matrix_id]
@@ -1071,7 +1079,8 @@ class StudiesController < ApplicationController
             @study_file.update(parse_status: 'parsing')
             matrix.update(parse_status: 'parsing')
             barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, @study_file, barcodes, {reparse: true, sync: true})
+            job = IngestJob.new(study: @study, study_file: matrix, user: current_user, action: :ingest_expression, reparse: true)
+            job.delay.push_remote_and_launch_ingest
           end
         when '10X Barcodes File'
           matrix_id = @study_file.options[:matrix_id]
@@ -1084,7 +1093,8 @@ class StudiesController < ApplicationController
             @study_file.update(parse_status: 'parsing')
             genes.update(parse_status: 'parsing')
             matrix.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, genes, @study_file, {reparse: true, sync: true})
+            job = IngestJob.new(study: @study, study_file: matrix, user: current_user, action: :ingest_expression, reparse: true)
+            job.delay.push_remote_and_launch_ingest
           end
         when 'Gene List'
           @study.delay.initialize_precomputed_scores(@study_file, current_user, {local: false, reparse: true})
