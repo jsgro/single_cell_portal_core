@@ -55,6 +55,7 @@ class StudiesController < ApplicationController
   # GET /studies/new
   def new
     @study = Study.new
+    @study.build_study_detail
 
     # load the given user's available FireCloud billing projects
     set_user_projects
@@ -77,6 +78,7 @@ class StudiesController < ApplicationController
                                   notice: "Your study '#{@study.name}' was successfully created." }
         format.json { render :show, status: :ok, location: @study }
       else
+        @study.build_study_detail
         set_user_projects
         format.html { render :new }
         format.json { render json: @study.errors, status: :unprocessable_entity }
@@ -1252,7 +1254,8 @@ class StudiesController < ApplicationController
   def study_params
     params.require(:study).permit(:name, :description, :public, :user_id, :embargo, :use_existing_workspace, :firecloud_workspace,
                                   :firecloud_project, :branding_group_id, study_shares_attributes: [:id, :_destroy, :email, :permission],
-                                  external_resources_attributes: [:id, :_destroy, :title, :description, :url, :publication_url])
+                                  external_resources_attributes: [:id, :_destroy, :title, :description, :url, :publication_url],
+                                  study_detail_attributes: [:id, :full_description])
   end
 
   # study file params whitelist

@@ -15,8 +15,9 @@ user_2 = User.create!(email: 'sharing.user@gmail.com', password: 'password', uid
                     api_access_token: user_access_token, access_token: user_access_token)
 # manually accept Terms of Service for sharing user to avoid breaking tests
 TosAcceptance.create(email: user_2.email)
-study = Study.create!(name: "Testing Study #{@random_seed}", description: '<p>This is the test study.</p>',
-                      firecloud_project: ENV['PORTAL_NAMESPACE'], data_dir: 'test', user_id: user.id)
+study = Study.create!(name: "Testing Study #{@random_seed}", firecloud_project: ENV['PORTAL_NAMESPACE'], data_dir: 'test', user_id: user.id)
+detail = study.build_study_detail
+detail.update(full_description: "<p>This is the test study.</p>")
 StudyShare.create!(email: 'my-user-group@firecloud.org', permission: 'Reviewer', study_id: study.id,
                    firecloud_project: study.firecloud_project, firecloud_workspace: study.firecloud_workspace)
 expression_file = StudyFile.create!(name: 'expression_matrix.txt', upload_file_name: 'expression_matrix.txt', study_id: study.id,

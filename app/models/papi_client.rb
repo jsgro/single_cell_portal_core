@@ -19,7 +19,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   # GCP Compute project to run pipelines in
   COMPUTE_PROJECT = ENV['GOOGLE_CLOUD_PROJECT'].blank? ? '' : ENV['GOOGLE_CLOUD_PROJECT']
   # Docker image in GCP project to pull for running ingest jobs
-  INGEST_DOCKER_IMAGE = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.3.10'
+  INGEST_DOCKER_IMAGE = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.4.0'
   # Network and sub-network names, if needed
   GCP_NETWORK_NAME = ENV['GCP_NETWORK_NAME']
   GCP_SUB_NETWORK_NAME = ENV['GCP_SUB_NETWORK_NAME']
@@ -200,6 +200,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - +MONGODB_PASSWORD+: Password for above MongoDB user
   #   - +DATABASE_NAME+: Name of current MongoDB schema as defined by Rails environment
   #   - +GOOGLE_PROJECT_ID+: Name of the GCP project this pipeline is running in
+  #   - +SENTRY_DSN+: Sentry Data Source Name (DSN); URL to send Sentry logs to
   #
   # * *returns*
   #   - (Hash) => Hash of required environment variables
@@ -209,7 +210,8 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
         'MONGODB_USERNAME' => 'single_cell',
         'MONGODB_PASSWORD' => ENV['PROD_DATABASE_PASSWORD'],
         'DATABASE_NAME' => Mongoid::Config.clients["default"]["database"],
-        'GOOGLE_PROJECT_ID' => COMPUTE_PROJECT
+        'GOOGLE_PROJECT_ID' => COMPUTE_PROJECT,
+        'SENTRY_DSN' => ENV['SENTRY_DSN']
     }
   end
 

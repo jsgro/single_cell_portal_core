@@ -189,6 +189,9 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
             name: "Reviewer Share #{@random_seed}",
             user_id: @test_user.id,
             public: false,
+            study_detail_attributes: {
+                full_description: ""
+            },
             study_shares_attributes: {
                 "0" => {
                     email: @sharing_user.email,

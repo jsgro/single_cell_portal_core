@@ -107,11 +107,13 @@ else
                     test/models/user_test.rb
                     test/models/feature_flag_test.rb
                     test/models/branding_group_test.rb
+                    test/models/synthetic_branding_group_populator_test.rb
                     test/models/admin_configuration_test.rb
                     test/integration/lib/search_facet_populator_test.rb
                     test/integration/lib/summary_stats_utils_test.rb
                     test/integration/lib/user_asset_service_test.rb
                     test/models/big_query_client_test.rb
+                    test/models/upload_cleanup_job_test.rb
   )
   for test_name in ${tests[*]}; do
       bundle exec ruby -I test $test_name

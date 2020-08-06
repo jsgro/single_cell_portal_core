@@ -6,7 +6,7 @@ class SearchFacetPopulatorTest < ActionDispatch::IntegrationTest
   test 'populate facets from alexandria convention data' do
     SearchFacet.destroy_all
     SearchFacetPopulator.populate_from_schema
-    assert_equal 6, SearchFacet.count
+    assert_equal 8, SearchFacet.count
 
     # spot-check a couple of facets
     disease_facet = SearchFacet.find_by(name: 'disease')
@@ -39,7 +39,7 @@ class SearchFacetPopulatorTest < ActionDispatch::IntegrationTest
                           browser_url: nil
                         }])
     SearchFacetPopulator.populate_from_schema
-    assert_equal 6, SearchFacet.count
+    assert_equal 8, SearchFacet.count
 
     # spot-check a couple of facets
     disease_facet = SearchFacet.find_by(name: 'disease')

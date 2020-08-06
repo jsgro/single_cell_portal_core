@@ -18,7 +18,6 @@ module.exports = {
         '$': 'readonly',
         'jQuery': 'readonly',
         'd3': 'readonly',
-        'ClassicEditor': 'readonly',
         'Spinner': 'readonly',
         'morpheus': 'readonly',
         'igv': 'readonly',

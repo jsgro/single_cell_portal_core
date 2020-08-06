@@ -23,8 +23,6 @@ import 'jquery-ui/ui/effects/effect-highlight'
 import igv from '@single-cell-portal/igv'
 import morpheus from 'morpheus-app'
 import Ideogram from 'ideogram'
-// Per https://ckeditor.com/docs/ckeditor5/latest/builds/guides/integration/advanced-setup.html#scenario-1-integrating-existing-builds
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 
 
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
@@ -62,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // If adding a new variable here, also add it to .eslintrc.js
 window.$ = $
 window.jQuery = $
-window.ClassicEditor = ClassicEditor
 window.Spinner = Spinner
 window.morpheus = morpheus
 window.igv = igv
