@@ -371,9 +371,27 @@ module ApplicationHelper
   def get_route_spec_string
     spec_name = 'undefined'
     Rails.application.routes.router.recognize(request) do |route, match|
-      spec_name = route.path.spec.to_s
-      # remove trailing term that gets auto-added by actionDispatch
-      spec_name = spec_name.sub('(.:format)', '')
+      spec_string = route.path.spec.to_s
+      spec_name = ApplicationHelper.route_spec_to_name(spec_string)
+    end
+    spec_name
+  end
+
+  def self.route_spec_to_name(route_spec)
+    # remove trailing term that gets auto-added by actionDispatch
+    spec_name = route_spec.sub('(.:format)', '')
+    # remove study_name as it is superfluous to the accession
+    spec_name = spec_name.sub(':accession/:study_name', ':accession')
+    # replace variable names with 'item'
+    spec_name = spec_name.gsub(/(:[^\/]*)/, 'view')
+    # remove leading single_cell
+    spec_name = spec_name.sub('/single_cell', '')
+    # remove leading slash
+    spec_name = spec_name.delete_prefix('/')
+    spec_name = spec_name.gsub(/[_\/]/, '-')
+    # to match Terra, call home page 'root'
+    if spec_name == ''
+      spec_name = 'root'
     end
     spec_name
   end
