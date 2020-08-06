@@ -32,7 +32,7 @@ module FeatureFlaggable
   end
 
   # merges feature flags of the passed-in instances from left to right,
-  # using the default flag has if none of the instances is present or suplies a value
+  # using the default flag has if none of the instances is present or supplies a value
   def self.feature_flags_for_instances(*instances)
     flag_hash = FeatureFlag.default_flag_hash
     instances.each do |instance|
