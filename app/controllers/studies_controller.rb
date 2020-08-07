@@ -950,8 +950,7 @@ class StudiesController < ApplicationController
             genes.update(parse_status: 'parsing')
             barcodes.update(parse_status: 'parsing')
             @study_file.update(parse_status: 'parsing')
-            job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_expression)
-            job.delay.push_remote_and_launch_ingest
+            ParseUtils.delay.cell_ranger_expression_parse(study, user, study_file, genes, barcodes)
           end
         when '10X Genes File'
           matrix_id = @study_file.options[:matrix_id]
@@ -964,8 +963,7 @@ class StudiesController < ApplicationController
             @study_file.update(parse_status: 'parsing')
             matrix.update(parse_status: 'parsing')
             barcodes.update(parse_status: 'parsing')
-            job = IngestJob.new(study: @study, study_file: matrix, user: current_user, action: :ingest_expression)
-            job.delay.push_remote_and_launch_ingest
+            ParseUtils.delay.cell_ranger_expression_parse(study, user, matrix, study_file, barcodes)
           end
         when '10X Barcodes File'
           matrix_id = @study_file.options[:matrix_id]
@@ -978,8 +976,7 @@ class StudiesController < ApplicationController
             @study_file.update(parse_status: 'parsing')
             genes.update(parse_status: 'parsing')
             matrix.update(parse_status: 'parsing')
-            job = IngestJob.new(study: @study, study_file: matrix, user: current_user, action: :ingest_expression)
-            job.delay.push_remote_and_launch_ingest
+            ParseUtils.delay.cell_ranger_expression_parse(study, user, matrix, genes, study_file)
           end
         when 'Gene List'
           @study.delay.initialize_precomputed_scores(@study_file, current_user, {local: false})
@@ -1066,8 +1063,7 @@ class StudiesController < ApplicationController
             @study_file.update(parse_status: 'parsing')
             genes.update(parse_status: 'parsing')
             barcodes.update(parse_status: 'parsing')
-            job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_expression, reparse: true)
-            job.delay.push_remote_and_launch_ingest
+            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, @study_file, genes, barcodes, {reparse: true, sync: true})
           end
         when '10X Genes File'
           matrix_id = @study_file.options[:matrix_id]
@@ -1079,8 +1075,7 @@ class StudiesController < ApplicationController
             @study_file.update(parse_status: 'parsing')
             matrix.update(parse_status: 'parsing')
             barcodes.update(parse_status: 'parsing')
-            job = IngestJob.new(study: @study, study_file: matrix, user: current_user, action: :ingest_expression, reparse: true)
-            job.delay.push_remote_and_launch_ingest
+            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, @study_file, barcodes, {reparse: true, sync: true})
           end
         when '10X Barcodes File'
           matrix_id = @study_file.options[:matrix_id]
@@ -1093,8 +1088,7 @@ class StudiesController < ApplicationController
             @study_file.update(parse_status: 'parsing')
             genes.update(parse_status: 'parsing')
             matrix.update(parse_status: 'parsing')
-            job = IngestJob.new(study: @study, study_file: matrix, user: current_user, action: :ingest_expression, reparse: true)
-            job.delay.push_remote_and_launch_ingest
+            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, genes, @study_file, {reparse: true, sync: true})
           end
         when 'Gene List'
           @study.delay.initialize_precomputed_scores(@study_file, current_user, {local: false, reparse: true})

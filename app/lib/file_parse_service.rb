@@ -29,8 +29,7 @@ class FileParseService
         study_file.update(parse_status: 'parsing')
         genes.update(parse_status: 'parsing')
         barcodes.update(parse_status: 'parsing')
-        job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_expression)
-        job.delay.push_remote_and_launch_ingest
+        ParseUtils.delay.cell_ranger_expression_parse(study, user, study_file, genes, barcodes)
       else
         logger.info "#{Time.zone.now}: Parse for #{study_file.name} as #{study_file.file_type} in study #{study.name} aborted; missing required files"
       end
@@ -43,8 +42,7 @@ class FileParseService
         study_file.update(parse_status: 'parsing')
         matrix.update(parse_status: 'parsing')
         barcodes.update(parse_status: 'parsing')
-        job = IngestJob.new(study: study, study_file: matrix, user: user, action: :ingest_expression)
-        job.delay.push_remote_and_launch_ingest
+        ParseUtils.delay.cell_ranger_expression_parse(study, user, matrix, study_file, barcodes)
       else
         # we can only get here if we have a matrix and no barcodes, which means the barcodes form is already rendered
         logger.info "#{Time.zone.now}: Parse for #{study_file.name} as #{study_file.file_type} in study #{study.name} aborted; missing required files"
@@ -59,8 +57,7 @@ class FileParseService
         study_file.update(parse_status: 'parsing')
         genes.update(parse_status: 'parsing')
         matrix.update(parse_status: 'parsing')
-        job = IngestJob.new(study: study, study_file: matrix, user: user, action: :ingest_expression)
-        job.delay.push_remote_and_launch_ingest
+        ParseUtils.delay.cell_ranger_expression_parse(study, user, matrix, genes, study_file)
       else
         # we can only get here if we have a matrix and no genes, which means the genes form is already rendered
         logger.info "#{Time.zone.now}: Parse for #{study_file.name} as #{study_file.file_type} in study #{study.name} aborted; missing required files"
@@ -74,6 +71,15 @@ class FileParseService
       study.send_to_firecloud(study_file)
       job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_cell_metadata)
       job.delay.push_remote_and_launch_ingest
+    when 'Analysis Output'
+      case study_file.options[:analysis_name]
+      when 'infercnv'
+        if study_file.options[:visualization_name] == 'ideogram.js'
+          ParseUtils.delay.extract_analysis_output_files(study, user, study_file, study_file.options[:analysis_name])
+        end
+      else
+        Rails.logger.info "Aborting parse of #{study_file.name} as #{study_file.file_type} in study #{study.name}; not applicable"
+      end
     end
     changes = ["Study file added: #{study_file.upload_file_name}"]
     if study.study_shares.any?
