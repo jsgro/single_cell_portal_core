@@ -365,6 +365,14 @@ module ApplicationHelper
     count.to_i == 1 ? "#{noun}#{text}" : "#{noun.pluralize}#{text}"
   end
 
+  def get_page_name
+    page_name = "#{controller_name}-#{action_name}".gsub('_', '-')
+    if page_name == 'site-index'
+      page_name = 'root'
+    end
+    page_name
+  end
+
   # get the rails route specification in a format suitable
   # for use in analytics or logging
   # e.g. /single_cell/study/:accession/:study_name
@@ -382,13 +390,9 @@ module ApplicationHelper
     spec_name = route_spec.sub('(.:format)', '')
     # remove study_name as it is superfluous to the accession
     spec_name = spec_name.sub(':accession/:study_name', ':accession')
-    # replace variable names with 'item'
-    spec_name = spec_name.gsub(/(:[^\/]*)/, 'view')
-    # remove leading single_cell
     spec_name = spec_name.sub('/single_cell', '')
     # remove leading slash
     spec_name = spec_name.delete_prefix('/')
-    spec_name = spec_name.gsub(/[_\/]/, '-')
     # to match Terra, call home page 'root'
     if spec_name == ''
       spec_name = 'root'

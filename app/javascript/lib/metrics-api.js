@@ -200,6 +200,7 @@ function trimStudyName(appPath) {
 
 /**
  * gets the app path in a string suitable for logging
+ * this includes the values of ids in the url
  * e.g. trims the study name out of window location
  */
 function getAppFullPath() {
@@ -207,9 +208,17 @@ function getAppFullPath() {
 }
 
 /**
- * gets the page name suitable for analytics
+ * gets the app path in a way suitable for analytics
  * should be the url but with any dynamic segments
- * replaced by the variable name, e.g. /single_cell/study/:accession/:study_name
+ * replaced by the variable name, e.g. study/:accession/:study_name
+ */
+function getAppPath() {
+  return window.SCP.analyticsAppPath
+}
+
+/**
+ * gets the page name suitable for analytics
+ * currently the rails controller + action name
  */
 function getAnalyticsPageName() {
   return window.SCP.analyticsPageName

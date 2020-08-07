@@ -6,10 +6,10 @@ class AnalysisConfigurationTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     name_spec_pairs = [
-      ['study-view', 'study/:accession/:study_name'],
-      ['study-view', '/single_cell/study/:accession/:study_name'],
-      ['study-view-edit-study-description', 'study/:accession/:study_name/edit_study_description'],
-      ['study-view-submissions-view-outputs', 'study/:accession/:study_name/submissions/:submission_id/outputs']
+      ['study/:accession', 'study/:accession/:study_name'],
+      ['study/:accession', '/single_cell/study/:accession/:study_name'],
+      ['study/:accession/edit_study_description', 'study/:accession/:study_name/edit_study_description'],
+      ['study/:accession/submissions/:submission_id/outputs', 'study/:accession/:study_name/submissions/:submission_id/outputs']
       ['root', '/'],
       ['root', '/single_cell']
     ]

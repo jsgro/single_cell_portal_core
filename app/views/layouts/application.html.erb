@@ -22,7 +22,8 @@
       window.uniqueGenes = <%= @unique_genes.present? ? raw(@unique_genes) : [] %>;
 
       window.SCP.gaTrackingId = '<%= ENV['GA_TRACKING_ID'] %>';
-      window.SCP.analyticsPageName = '<%= get_route_spec_string %>';
+      window.SCP.analyticsPageName = '<%= get_page_name %>';
+      window.SCP.analyticsAppPath = '<%= get_route_spec_string %>';
 
       // if we had search forms to preserve, recall and resubmit
       if ( localStorage.getItem('previous-search-url') ) {
