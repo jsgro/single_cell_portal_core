@@ -7,6 +7,7 @@
 
 import { accessToken } from 'providers/UserProvider'
 import { getBrandingGroup } from 'lib/scp-api'
+import getSCPContext from 'providers/SCPContextProvider'
 
 let metricsApiMock = false
 
@@ -24,12 +25,11 @@ const bardDomainsByEnv = {
   production: 'https://terra-bard-prod.appspot.com'
 }
 let bardDomain = ''
-let env = ''
+let env = getSCPContext().environment
 let userId = ''
 
 // TODO (SCP-2237): Use Node environment to get React execution context
-if ('SCP' in window) {
-  env = window.SCP.environment
+if (env != 'test') {
   bardDomain = bardDomainsByEnv[env]
   // To consider: Replace SCP-specific userId with DSP-wide userId
   userId = window.SCP.userId
@@ -51,7 +51,7 @@ export function setMetricsApiMockFlag(flag) {
  * Log page view, i.e. page load
  */
 export function logPageView() {
-  log('page:view')
+  log(`page:view:${getAnalyticsPageName()}`)
 }
 
 /** Log click on page.  Delegates to more element-specific loggers. */
@@ -199,6 +199,23 @@ function trimStudyName(appPath) {
 }
 
 /**
+ * gets the app path in a string suitable for logging
+ * this includes the values of ids in the url
+ * e.g. trims the study name out of window location
+ */
+function getAppFullPath() {
+  return trimStudyName(window.location.pathname)
+}
+
+/**
+ * gets the page name suitable for analytics
+ * currently the rails controller + action name
+ */
+function getAnalyticsPageName() {
+  return getSCPContext().analyticsPageName
+}
+
+/**
  * Log metrics to Mixpanel via Bard web service
  *
  * Bard docs:
@@ -208,11 +225,10 @@ function trimStudyName(appPath) {
  * @param {Object} props
  */
 export function log(name, props={}) {
-  const appPath = trimStudyName(window.location.pathname)
-
-  props = Object.assign(props, {
+   props = Object.assign(props, {
     appId: 'single-cell-portal',
-    appPath,
+    appPath: getAnalyticsPageName(),
+    appFullPath: getAppFullPath(),
     env
   })
 
