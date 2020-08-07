@@ -7,6 +7,7 @@
 
 import { accessToken } from 'providers/UserProvider'
 import { getBrandingGroup } from 'lib/scp-api'
+import getSCPContext from 'providers/SCPContextProvider'
 
 let metricsApiMock = false
 
@@ -24,12 +25,11 @@ const bardDomainsByEnv = {
   production: 'https://terra-bard-prod.appspot.com'
 }
 let bardDomain = ''
-let env = ''
+let env = getSCPContext().environment
 let userId = ''
 
 // TODO (SCP-2237): Use Node environment to get React execution context
-if ('SCP' in window) {
-  env = window.SCP.environment
+if (env != 'test') {
   bardDomain = bardDomainsByEnv[env]
   // To consider: Replace SCP-specific userId with DSP-wide userId
   userId = window.SCP.userId
@@ -208,20 +208,11 @@ function getAppFullPath() {
 }
 
 /**
- * gets the app path in a way suitable for analytics
- * should be the url but with any dynamic segments
- * replaced by the variable name, e.g. study/:accession/:study_name
- */
-function getAppPath() {
-  return window.SCP.analyticsAppPath
-}
-
-/**
  * gets the page name suitable for analytics
  * currently the rails controller + action name
  */
 function getAnalyticsPageName() {
-  return window.SCP.analyticsPageName
+  return getSCPContext().analyticsPageName
 }
 
 /**

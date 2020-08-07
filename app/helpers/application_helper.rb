@@ -372,31 +372,4 @@ module ApplicationHelper
     end
     page_name
   end
-
-  # get the rails route specification in a format suitable
-  # for use in analytics or logging
-  # e.g. /single_cell/study/:accession/:study_name
-  def get_route_spec_string
-    spec_name = 'undefined'
-    Rails.application.routes.router.recognize(request) do |route, match|
-      spec_string = route.path.spec.to_s
-      spec_name = ApplicationHelper.route_spec_to_name(spec_string)
-    end
-    spec_name
-  end
-
-  def self.route_spec_to_name(route_spec)
-    # remove trailing term that gets auto-added by actionDispatch
-    spec_name = route_spec.sub('(.:format)', '')
-    # remove study_name as it is superfluous to the accession
-    spec_name = spec_name.sub(':accession/:study_name', ':accession')
-    spec_name = spec_name.sub('/single_cell', '')
-    # remove leading slash
-    spec_name = spec_name.delete_prefix('/')
-    # to match Terra, call home page 'root'
-    if spec_name == ''
-      spec_name = 'root'
-    end
-    spec_name
-  end
 end
