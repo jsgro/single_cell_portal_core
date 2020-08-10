@@ -71,15 +71,6 @@ class FileParseService
       study.send_to_firecloud(study_file)
       job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_cell_metadata)
       job.delay.push_remote_and_launch_ingest
-    when 'Analysis Output'
-      case study_file.options[:analysis_name]
-      when 'infercnv'
-        if study_file.options[:visualization_name] == 'ideogram.js'
-          ParseUtils.delay.extract_analysis_output_files(study, user, study_file, study_file.options[:analysis_name])
-        end
-      else
-        Rails.logger.info "Aborting parse of #{study_file.name} as #{study_file.file_type} in study #{study.name}; not applicable"
-      end
     end
     changes = ["Study file added: #{study_file.upload_file_name}"]
     if study.study_shares.any?
