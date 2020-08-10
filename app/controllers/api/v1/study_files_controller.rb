@@ -479,7 +479,6 @@ module Api
               @study_file.update(parse_status: 'parsing')
               genes.update(parse_status: 'parsing')
               barcodes.update(parse_status: 'parsing')
-              @study_file.update(parse_status: 'parsing')
               ParseUtils.delay.cell_ranger_expression_parse(@study, current_api_user, @study_file, genes, barcodes)
               head 204
             else
