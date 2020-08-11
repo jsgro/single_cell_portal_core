@@ -1121,7 +1121,7 @@ class Study
 
   # helper method to set the number of unique genes in this study
   def set_gene_count
-    gene_count = self.unique_genes
+    gene_count = self.unique_genes.size
     Rails.logger.info "Setting gene count in #{self.name} to #{gene_count}"
     self.update(gene_count: gene_count)
     Rails.logger.info "Gene count set for #{self.name}"

@@ -469,7 +469,8 @@ module Api
             end
           when 'Expression Matrix'
             @study_file.update(parse_status: 'parsing')
-            @study.delay.initialize_gene_expression_data(@study_file, current_api_user)
+            job = IngestJob.new(study: @study, study_file: @study_file, user: current_api_user, action: :ingest_expression)
+            job.delay.push_remote_and_launch_ingest
             head 204
           when 'MM Coordinate Matrix'
             barcodes = @study_file.bundled_files.detect {|f| f.file_type == '10X Barcodes File'}
