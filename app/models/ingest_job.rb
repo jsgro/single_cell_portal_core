@@ -234,7 +234,7 @@ class IngestJob
       self.log_error_messages
       self.study_file.update(parse_status: 'failed')
       DeleteQueueJob.new(self.study_file).delay.perform
-      Study.firecloud_client.delete_workspace_file(self.study.bucket_id, self.study_file.bucket_location) unless self.persist_on_fail?
+      Study.firecloud_client.delete_workspace_file(self.study.bucket_id, self.study_file.bucket_location) unless self.persist_on_fail
       subject = "Error: #{self.study_file.file_type} file: '#{self.study_file.upload_file_name}' parse has failed"
       email_content = self.generate_error_email_body
       SingleCellMailer.notify_user_parse_fail(self.user.email, subject, email_content, self.study).deliver_now
@@ -247,8 +247,7 @@ class IngestJob
   # Set study state depending on what kind of file was just ingested
   # Does not return anything, but will set state and launch other jobs as needed
   #
-  # * *yields
-  # *
+  # * *yields*
   #   - Study#set_cell_count, :set_study_default_options, Study#set_gene_count, and :set_study_initialized
   def set_study_state_after_ingest
     case self.study_file.file_type
