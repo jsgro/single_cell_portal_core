@@ -756,61 +756,7 @@ class StudiesController < ApplicationController
 
       # only reparse if user requests
       if @study_file.parseable? && params[:reparse] == 'Yes'
-        logger.info "#{Time.zone.now}: Parsing #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} as remote file"
-        @message += " You will receive an email at #{current_user.email} when the parse has completed."
-        case @study_file.file_type
-        when 'Cluster'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cluster)
-          job.delay.push_remote_and_launch_ingest(reparse: true)
-        when 'Coordinate Labels'
-          @study.delay.initialize_coordinate_label_data_arrays(@study_file, current_user, {local: false, reparse: true})
-        when 'Expression Matrix'
-          @study.delay.initialize_gene_expression_data(@study_file, current_user, {local: false, reparse: true})
-        when 'MM Coordinate Matrix'
-          barcodes = @study_file.bundled_files.detect {|f| f.file_type == '10X Barcodes File'}
-          genes = @study_file.bundled_files.detect {|f| f.file_type == '10X Genes File'}
-          if barcodes.present? && genes.present?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, @study_file, genes, barcodes, {sync: true, reparse: true})
-          else
-            logger.info "#{Time.zone.now}: Parse for #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} aborted; missing required files"
-          end
-        when '10X Genes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = @study_file.bundle_parent
-          barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => matrix_id)
-          if barcodes.present? && matrix.present?
-            @study_file.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, @study_file, barcodes, {sync: true, reparse: true})
-          else
-            # we can only get here if we have a matrix and no barcodes, which means the barcodes form is already rendered
-            logger.info "#{Time.zone.now}: Parse for #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} aborted; missing required files"
-          end
-        when '10X Barcodes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = @study_file.bundle_parent
-          genes = @study.study_files.find_by(file_type: '10X Genes File', 'options.matrix_id' => matrix_id)
-          if genes.present? && matrix.present?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, genes, @study_file, {sync: true, reparse: true})
-          else
-            # we can only get here if we have a matrix and no genes, which means the genes form is already rendered
-            logger.info "#{Time.zone.now}: Parse for #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} aborted; missing required files"
-          end
-        when 'Gene List'
-          @study.delay.initialize_precomputed_scores(@study_file, current_user, {local: false, reparse: true})
-        when 'Metadata'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cell_metadata)
-          job.delay.push_remote_and_launch_ingest(reparse: true)
-        end
+        FileParseService.run_parse_job(@study_file, @study, current_user, reparse: true, persist_on_fail: true)
       end
 
       # notify users of updated file
@@ -925,75 +871,7 @@ class StudiesController < ApplicationController
       @form = "#study-file-#{@study_file.id}"
       @target = "#synced-study-files"
       if @study_file.parseable?
-        logger.info "#{Time.zone.now}: Parsing #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} as remote file"
-        @message += " You will receive an email at #{current_user.email} when the parse has completed."
-        # parse file as appropriate type
-        case @study_file.file_type
-        when 'Cluster'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cluster)
-          job.delay.push_remote_and_launch_ingest
-        when 'Coordinate Labels'
-          @study.delay.initialize_coordinate_label_data_arrays(@study_file, current_user, {local: false})
-        when 'Expression Matrix'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_expression)
-          job.delay.push_remote_and_launch_ingest
-        when 'MM Coordinate Matrix'
-          # we have to cast the study_file ID to a string, otherwise it is a BSON::ObjectID and will not match
-          barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => @study_file.id.to_s)
-          genes = @study.study_files.find_by(file_type: '10X Genes File', 'options.matrix_id' => @study_file.id.to_s)
-          # create a study_file_bundle if it doesn't already exist
-          @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, @study_file)
-          if barcodes.present? && genes.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            @study_file.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(study, user, study_file, genes, barcodes)
-          end
-        when '10X Genes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = StudyFile.find(matrix_id)
-          barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => matrix_id)
-          @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, matrix)
-          @target = "##{matrix.form_container_id}"
-          @study_file_bundle.add_files(@study_file)
-          if barcodes.present? && matrix.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(study, user, matrix, study_file, barcodes)
-          end
-        when '10X Barcodes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = StudyFile.find(matrix_id)
-          genes = @study.study_files.find_by(file_type: '10X Genes File', 'options.matrix_id' => matrix_id)
-          @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, matrix)
-          @study_file_bundle.add_files(@study_file)
-          @target = "##{matrix.form_container_id}"
-          if genes.present? && matrix.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(study, user, matrix, genes, study_file)
-          end
-        when 'Gene List'
-          @study.delay.initialize_precomputed_scores(@study_file, current_user, {local: false})
-        when 'Metadata'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cell_metadata)
-          job.delay.push_remote_and_launch_ingest
-        when 'Analysis Output'
-          case @study_file.options[:analysis_name]
-          when 'infercnv'
-            if @study_file.options[:visualization_name] == 'ideogram.js'
-              ParseUtils.delay.extract_analysis_output_files(@study, current_user, @study_file, @study_file.options[:analysis_name])
-            end
-          else
-            Rails.logger.info "Aborting parse of #{@study_file.name} as #{@study_file.file_type} in study #{@study.name}; not applicable"
-          end
-        end
+        FileParseService.run_parse_job(@study_file, @study, current_user, reparse: false, persist_on_fail: true)
       elsif @study_file.file_type == 'BAM'
         # we need to check if we have a study_file_bundle here
         @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, @study_file)
@@ -1041,62 +919,7 @@ class StudiesController < ApplicationController
       @message = "New Study File '#{@study_file.name}' successfully synced."
       # only reparse if user requests
       if @study_file.parseable? && params[:reparse] == 'Yes'
-        logger.info "#{Time.zone.now}: Parsing #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} as remote file"
-        @message += " You will receive an email at #{current_user.email} when the parse has completed."
-        case @study_file.file_type
-        when 'Cluster'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cluster)
-          job.delay.push_remote_and_launch_ingest(reparse: true)
-        when 'Coordinate Labels'
-          @study.delay.initialize_coordinate_label_data_arrays(@study_file, current_user, {local: false, reparse: true})
-        when 'Expression Matrix'
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_expression, reparse: true)
-          job.delay.push_remote_and_launch_ingest
-        when 'MM Coordinate Matrix'
-          # we have to cast the study_file ID to a string, otherwise it is a BSON::ObjectID and will not match
-          barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => @study_file.id.to_s)
-          genes = @study.study_files.find_by(file_type: '10X Genes File', 'options.matrix_id' => @study_file.id.to_s)
-          # create a study_file_bundle if it doesn't already exist
-          @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, @study_file)
-          if barcodes.present? && genes.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, @study_file, genes, barcodes, {reparse: true, sync: true})
-          end
-        when '10X Genes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = StudyFile.find(matrix_id)
-          barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => matrix_id)
-          @target = "##{matrix.form_container_id}"
-          @study_file_bundle.add_files(@study_file)
-          if barcodes.present? && matrix.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, @study_file, barcodes, {reparse: true, sync: true})
-          end
-        when '10X Barcodes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = StudyFile.find(matrix_id)
-          genes = @study.study_files.find_by(file_type: '10X Genes File', 'options.matrix_id' => matrix_id)
-          @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, matrix)
-          @study_file_bundle.add_files(@study_file)
-          @target = "##{matrix.form_container_id}"
-          if genes.present? && matrix.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, genes, @study_file, {reparse: true, sync: true})
-          end
-        when 'Gene List'
-          @study.delay.initialize_precomputed_scores(@study_file, current_user, {local: false, reparse: true})
-        when 'Metadata'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cell_metadata)
-          job.delay.push_remote_and_launch_ingest(reparse: true)
-        end
+        FileParseService.run_parse_job(@study_file, @study, current_user, reparse: true, persist_on_fail: true)
       elsif @study_file.file_type == 'BAM'
         # we need to check if we have a study_file_bundle here
         @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, @study_file)

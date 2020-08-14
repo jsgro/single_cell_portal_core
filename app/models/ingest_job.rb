@@ -19,6 +19,10 @@ class IngestJob
   attr_accessor :user
   # Action being performed by Ingest (e.g. ingest_expression, ingest_cluster)
   attr_accessor :action
+  # Boolean indication of whether or not to delete old data
+  attr_accessor :reparse
+  # Boolean indication of whether or not to delete file from bucket on parse failure
+  attr_accessor :persist_on_fail
 
   extend ErrorTracker
 
@@ -36,19 +40,16 @@ class IngestJob
   # Push a file to a workspace bucket in the background and then launch an ingest run and queue polling
   # Can also clear out existing data if necessary (in case of a re-parse)
   #
-  # * *params*
-  #   - +reparse+ (Boolean) => Indication of whether or not a file is being re-ingested, will delete existing documents
-  #
   # * *yields*
   #   - (Google::Apis::GenomicsV2alpha1::Operation) => Will submit an ingest job in PAPI
   #   - (IngestJob.new(attributes).poll_for_completion) => Will queue a Delayed::Job to poll for completion
   #
   # * *raises*
   #   - (RuntimeError) => If file cannot be pushed to remote bucket
-  def push_remote_and_launch_ingest(reparse: false)
+  def push_remote_and_launch_ingest
     begin
       file_identifier = "#{self.study_file.bucket_location}:#{self.study_file.id}"
-      if reparse
+      if self.reparse
         Rails.logger.info "Deleting existing data for #{file_identifier}"
         rails_model = MODELS_BY_ACTION[action]
         rails_model.where(study_id: self.study.id, study_file_id: self.study_file.id).delete_all
@@ -70,8 +71,10 @@ class IngestJob
             run_at = interval.seconds.from_now
             Rails.logger.error "Failed to push #{file_identifier} to #{self.study.bucket_id}; retrying at #{run_at}"
             attempts += 1
-            self.delay(run_at: run_at).push_remote_and_launch_ingest(study: self.study, study_file: self.study_file,
-                                                                     user: self.user, action: self.action, reparse: reparse)
+            new_job = IngestJob.new(pipeline_name: submission.name, study: self.study, study_file: self.study_file,
+                                    user: self.user, action: self.action, reparse: self.reparse,
+                                    persist_on_fail: self.persist_on_fail)
+            new_job.delay(run_at: run_at).push_remote_and_launch_ingest
           end
         end
       else
@@ -87,7 +90,8 @@ class IngestJob
         submission = ApplicationController.papi_client.run_pipeline(study_file: self.study_file, user: self.user, action: self.action)
         Rails.logger.info "Ingest run initiated: #{submission.name}, queueing Ingest poller"
         IngestJob.new(pipeline_name: submission.name, study: self.study, study_file: self.study_file,
-                      user: self.user, action: self.action).poll_for_completion
+                      user: self.user, action: self.action, reparse: self.reparse,
+                      persist_on_fail: self.persist_on_fail).poll_for_completion
       end
     rescue => e
       Rails.logger.error "Error in launching ingest of #{file_identifier}: #{e.class.name}:#{e.message}"
@@ -230,7 +234,7 @@ class IngestJob
       self.log_error_messages
       self.study_file.update(parse_status: 'failed')
       DeleteQueueJob.new(self.study_file).delay.perform
-      Study.firecloud_client.delete_workspace_file(self.study.bucket_id, self.study_file.bucket_location)
+      Study.firecloud_client.delete_workspace_file(self.study.bucket_id, self.study_file.bucket_location) unless self.persist_on_fail?
       subject = "Error: #{self.study_file.file_type} file: '#{self.study_file.upload_file_name}' parse has failed"
       email_content = self.generate_error_email_body
       SingleCellMailer.notify_user_parse_fail(self.user.email, subject, email_content, self.study).deliver_now
@@ -327,7 +331,8 @@ class IngestJob
                                                                     action: :ingest_subsample)
         Rails.logger.info "Subsampling run initiated: #{submission.name}, queueing Ingest poller"
         IngestJob.new(pipeline_name: submission.name, study: self.study, study_file: self.study_file,
-                      user: self.user, action: :ingest_subsample).poll_for_completion
+                      user: self.user, action: :ingest_subsample, reparse: false,
+                      persist_on_fail: self.persist_on_fail).poll_for_completion
       end
     when 'Metadata'
       # subsample all cluster files that have already finished parsing.  any in-process cluster parses, or new submissions
@@ -344,7 +349,8 @@ class IngestJob
                                                                       action: :ingest_subsample)
           Rails.logger.info "Subsampling run initiated: #{submission.name}, queueing Ingest poller"
           IngestJob.new(pipeline_name: submission.name, study: self.study, study_file: cluster_file,
-                        user: self.user, action: :ingest_subsample).poll_for_completion
+                        user: self.user, action: :ingest_subsample, reparse: self.reparse,
+                        persist_on_fail: self.persist_on_fail).poll_for_completion
         end
       end
     end
