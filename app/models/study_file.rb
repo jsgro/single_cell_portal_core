@@ -1187,7 +1187,7 @@ class StudyFile
 
   # ensure that a user can only add one metadata file per study
   def ensure_metadata_singleton
-    if StudyFile.where(file_type: 'Metadata', study_id: self.study_id, queued_for_deletion: false).exists?
+    if StudyFile.where(file_type: 'Metadata', study_id: self.study_id, queued_for_deletion: false, :id.ne => self.id).exists?
       errors.add(:file_type, 'You may only add one metadata file per study')
     end
   end
