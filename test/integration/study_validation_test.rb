@@ -290,7 +290,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   end
 
   # validates that additional expression matrices with unique cells can be ingested to a study that already has a
-  # metadata file and at least one other expresison matrix
+  # metadata file and at least one other expression matrix
   test 'should validate unique cells for expression matrices' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
@@ -326,4 +326,3 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end
-
