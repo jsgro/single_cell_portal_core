@@ -288,5 +288,42 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
+
+  # validates that additional expression matrices with unique cells can be ingested to a study that already has a
+  # metadata file and at least one other expresison matrix
+  test 'should validate unique cells for expression matrices' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study = Study.find_by(name: "Test Study #{@random_seed}")
+    new_matrix = 'expression_matrix_example_2.txt'
+    file_params = {study_file: {file_type: 'Expression Matrix', study_id: study.id.to_s}}
+    perform_study_file_upload(new_matrix, file_params, study.id)
+    assert_response 200, "Expression matrix upload failed: #{@response.code}"
+    uploaded_matrix = study.expression_matrix_files.detect {|file| file.upload_file_name == new_matrix}
+    assert uploaded_matrix.present?, "Did not find newly uploaded matrix #{new_matrix}"
+    puts "Requesting parse for file \"#{uploaded_matrix.upload_file_name}\"."
+    assert_equal 'unparsed', uploaded_matrix.parse_status, "Incorrect parse_status for #{new_matrix}"
+    initiate_study_file_parse(uploaded_matrix.upload_file_name, study.id)
+    assert_response 200, "#{new_matrix} parse job failed to start: #{@response.code}"
+
+    seconds_slept = 60
+    puts "Parse initiated for #{new_matrix}, polling for completion"
+    sleep seconds_slept
+    sleep_increment = 15
+    max_seconds_to_sleep = 300
+    until  ['parsed', 'failed'].include? uploaded_matrix.parse_status  do
+      puts "After #{seconds_slept} seconds, #{new_matrix} is #{uploaded_matrix.parse_status}."
+      if seconds_slept >= max_seconds_to_sleep
+        raise "Sleep timeout after #{seconds_slept} seconds when waiting for parse of #{new_matrix}."
+      end
+      sleep(sleep_increment)
+      seconds_slept += sleep_increment
+      assert_not uploaded_matrix.queued_for_deletion, "parsing #{new_matrix} failed, and is queued for deletion"
+      uploaded_matrix.reload
+    end
+    puts "After #{seconds_slept} seconds, #{new_matrix} is #{uploaded_matrix.parse_status}."
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
 end
 
