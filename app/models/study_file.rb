@@ -518,7 +518,7 @@ class StudyFile
 
   validate :check_taxon, on: :create
   validate :check_assembly, on: :create
-  validate :ensure_metadata_singleton
+  validate :ensure_metadata_singleton, if: proc {|f| f.file_type == 'Metadata'}
 
   ###
   #
