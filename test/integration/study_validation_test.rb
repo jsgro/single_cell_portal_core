@@ -325,4 +325,16 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
+
+  test 'should ensure one metadata file per study' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study = Study.find_by(name: "Test Study #{@random_seed}")
+    new_metadata = 'metadata_example2.txt'
+    file_params = {study_file: {file_type: 'Metadata', study_id: study.id.to_s}}
+    perform_study_file_upload(new_metadata, file_params, study.id)
+    assert_response 422, "Did not fail validation for duplicate metadata file; #{@response.code} != 422"
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
 end
