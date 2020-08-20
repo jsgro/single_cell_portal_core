@@ -569,7 +569,9 @@ module Api
         files_to_remove = []
         files.each do |file|
           # first, check if file is in a submission directory, and if so mark it for removal from list of files to sync
-          if @submission_ids.include?(file.name.split('/').first) || file.name.end_with?('/')
+          # also ignore any files in the parse_logs folder
+          base_dir = file.name.split('/').first
+          if @submission_ids.include?(base_dir) || base_dir == 'parse_logs' || file.name.end_with?('/')
             files_to_remove << file.generation
           else
             directory_name = DirectoryListing.get_folder_name(file.name)
