@@ -528,9 +528,13 @@ class StudiesController < ApplicationController
 
   # update a study_file's upload status to 'uploaded'
   def update_status
-    study_file = StudyFile.where(study_id: params[:id], upload_file_name: params[:file]).first
-    study_file.update!(status: params[:status])
-    head :ok
+    study_file = StudyFile.find_by(study_id: params[:id], upload_file_name: params[:file])
+    if study_file.present?
+      study_file.update!(status: params[:status])
+      head :ok
+    else
+      head :not_found
+    end
   end
 
   # retrieve study file by filename during initializer wizard

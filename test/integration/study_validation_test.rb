@@ -27,9 +27,6 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     assert study.present?, "Study did not successfully save"
 
     example_files = {
-      metadata: {
-        name: 'metadata_bad.txt'
-      },
       metadata_breaking_convention: {
         name: 'metadata_example2.txt'
       },
@@ -43,19 +40,17 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
 
     ## upload files
 
-    # bad metadata file
-    file_params = {study_file: {file_type: 'Metadata', study_id: study.id.to_s}}
-    perform_study_file_upload('metadata_bad.txt', file_params, study.id)
-    assert_response 200, "Metadata upload failed: #{@response.code}"
-    example_files[:metadata][:object] = study.metadata_file
-    assert example_files[:metadata][:object].present?, "Metadata failed to associate, found no file: #{example_files[:metadata][:object].present?}"
-
     # good metadata file, but falsely claiming to use the metadata_convention
     file_params = {study_file: {file_type: 'Metadata', study_id: study.id.to_s, use_metadata_convention: true}}
     perform_study_file_upload('metadata_example2.txt', file_params, study.id)
     assert_response 200, "Metadata upload failed: #{@response.code}"
     example_files[:metadata_breaking_convention][:object] = study.metadata_file
     assert example_files[:metadata_breaking_convention][:object].present?, "Metadata failed to associate, found no file: #{example_files[:metadata_breaking_convention][:object].present?}"
+
+    # metadata file that should fail validation because we already have one
+    file_params = {study_file: {file_type: 'Metadata', study_id: study.id.to_s}}
+    perform_study_file_upload('metadata_bad.txt', file_params, study.id)
+    assert_response 422, "Metadata did not fail validation: #{@response.code}"
 
     # bad cluster
     file_params = {study_file: {name: 'Bad Test Cluster 1', file_type: 'Cluster', study_id: study.id.to_s}}
