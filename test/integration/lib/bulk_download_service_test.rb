@@ -66,6 +66,8 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     study_file = @study.metadata_file
+    bucket_map = BulkDownloadService.generate_study_bucket_map([@study.accession])
+    path_map = BulkDownloadService.generate_output_path_map([study_file])
     signed_url = "https://storage.googleapis.com/#{@study.bucket_id}/#{study_file.upload_file_name}"
     output_path = study_file.bulk_download_pathname
 
@@ -74,7 +76,9 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     mock.expect :execute_gcloud_method, signed_url, [:generate_signed_url, Integer, String, String, Hash]
 
     FireCloudClient.stub :new, mock do
-      configuration = BulkDownloadService.generate_curl_configuration(study_files: [study_file], user: @user)
+      configuration = BulkDownloadService.generate_curl_configuration(study_files: [study_file], user: @user,
+                                                                      study_bucket_map: bucket_map,
+                                                                      output_pathname_map: path_map)
       mock.verify
       assert configuration.include?(signed_url), "Configuration does not include expected signed URL (#{signed_url}): #{configuration}"
       assert configuration.include?(output_path), "Configuration does not include expected output path (#{output_path}): #{configuration}"
