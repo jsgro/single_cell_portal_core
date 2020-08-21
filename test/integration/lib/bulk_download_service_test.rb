@@ -83,4 +83,33 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  # validate each study ID and bucket_id from bucket_map
+  test 'should generate map of study ids to bucket names' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    bucket_map = BulkDownloadService.generate_study_bucket_map(Study.pluck(:accession))
+    bucket_map.each do |study_id, bucket_id|
+      study = Study.find(study_id)
+      assert study.present?, "Invalid study id: #{study_id}"
+      assert_equal study.bucket_id, bucket_id, "Invalid bucket id for #{study_id}: #{study.bucket_id} != #{bucket_id}"
+    end
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  # validate each study_file_id and bulk_download_pathname from output_map
+  test 'should generate map of study file ids to output pathnames' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    output_map = BulkDownloadService.generate_output_path_map(StudyFile.all)
+    output_map.each do |study_file_id, output_path|
+      study_file = StudyFile.find(study_file_id)
+      assert study_file.present?, "Invalid study_file_id: #{study_file_id}"
+      assert_equal study_file.bulk_download_pathname, output_path,
+                   "Invalid bulk_download_pathname for #{study_file_id}: #{study_file.bulk_download_pathname} != #{output_path}"
+    end
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
 end
