@@ -2187,14 +2187,14 @@ class Study
 
   # parse a coordinate labels file and create necessary data_array objects
   # coordinate labels are specific to a cluster_group
-  def initialize_coordinate_label_data_arrays(coordinate_file, user, opts={local: true})
+  def initialize_coordinate_label_data_arrays(coordinate_file, user, opts={})
     begin
       error_context = ErrorTracker.format_extra_context(self, coordinate_file, {opts: opts})
       # remove study description as it's not useful
       error_context['study'].delete('description')
       @file_location = coordinate_file.upload.path
       # before anything starts, check if file has been uploaded locally or needs to be pulled down from FireCloud first
-      if !opts[:local] || !coordinate_file.is_local?
+      if !coordinate_file.is_local?
         # make sure data dir exists first
         self.make_data_dir
         Study.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, coordinate_file.bucket_location,
@@ -2705,14 +2705,14 @@ class Study
   end
 
   # parse precomputed marker gene files and create documents to render in Morpheus
-  def initialize_precomputed_scores(marker_file, user, opts={local: true})
+  def initialize_precomputed_scores(marker_file, user, opts={})
     begin
       error_context = ErrorTracker.format_extra_context(self, marker_file, {opts: opts})
       # remove study description as it's not useful
       error_context['study'].delete('description')
       @file_location = marker_file.upload.path
       # before anything starts, check if file has been uploaded locally or needs to be pulled down from FireCloud first
-      if !opts[:local] || !marker_file.is_local?
+      if !marker_file.is_local?
         # make sure data dir exists first
         self.make_data_dir
         Study.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, marker_file.bucket_location,
