@@ -33,8 +33,9 @@ class MetricsService
   end
 
   def self.get_default_headers(user)
+    access_token = user.token_for_api_call
     {
-      'Authorization': "Bearer #{user.valid_access_token['access_token']}",
+      'Authorization': "Bearer #{access_token.present? ? access_token.dig('access_token') : nil }",
       'Content-Type': 'application/json'
     }
   end
@@ -87,12 +88,12 @@ class MetricsService
 
     headers = get_default_headers(user)
 
-    access_token = user.valid_access_token['access_token']
+    access_token = user.token_for_api_call
     user_id = user.id
 
-    if access_token === ''
+    if access_token.nil?
       # User is unauthenticated / unregistered / anonynmous
-      props['distinct_id'] = userId
+      props['distinct_id'] = user_id
       headers.delete('Authorization')
       props['authenticated'] = false
     else

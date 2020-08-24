@@ -665,7 +665,8 @@ class StudyFile
   # Map of StudyFile#file_type to ::BULK_DOWNLOAD_TYPES, maintaining relationship for bundled files to parent
   def bulk_download_type
     # put bundled files in a sub-directory named after the bundle parent's ID so relationship is maintained
-    if self.is_bundled?
+    # make sure bundle_parent is a StudyFile (can be ClusterGroup for coordinate label files)
+    if self.is_bundled? && self.bundle_parent.is_a?(StudyFile)
       bp = self.bundle_parent
       "#{bp.simplified_file_type}/#{bp.id}"
     else

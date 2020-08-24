@@ -12,19 +12,23 @@ class BulkDownloadService
   # * *params*
   #   - +study_files+ (Array<StudyFile>) => Array of StudyFiles to be downloaded
   #   - +user+ (User) => User requesting download
+  #   - +study_bucket_map+ => Map of study IDs to bucket names
+  #   - +output_pathname_map+ => Map of study file IDs to output pathnames
   #
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
-  def self.generate_curl_configuration(study_files:, user:)
+  def self.generate_curl_configuration(study_files:, user:, study_bucket_map:, output_pathname_map:)
     curl_configs = ['--create-dirs', '--compressed']
     # Get signed URLs for all files in the requested download objects, and update user quota
     Parallel.map(study_files, in_threads: 100) do |study_file|
       client = FireCloudClient.new
-      curl_configs << self.get_single_curl_command(file: study_file, fc_client: client, user: user)
+      curl_configs << self.get_single_curl_command(file: study_file, fc_client: client, user: user,
+                                                   study_bucket_map: study_bucket_map, output_pathname_map: output_pathname_map)
       # send along any bundled files along with the parent
       if study_file.is_bundle_parent?
         study_file.bundled_files.each do |bundled_file|
-          curl_configs << self.get_single_curl_command(file: bundled_file, fc_client: client, user: user)
+          curl_configs << self.get_single_curl_command(file: bundled_file, fc_client: client, user: user,
+                                                       study_bucket_map: study_bucket_map, output_pathname_map: output_pathname_map)
         end
       end
     end
@@ -101,25 +105,27 @@ class BulkDownloadService
   #   - +file+ (StudyFile) => StudyFiles to be downloaded
   #   - +fc_client+ (FireCloudClient) => Client to call GCS and generate signed_url
   #   - +user+ (User) => User requesting download
+  #   - +study_bucket_map+ => Map of study IDs to bucket names
+  #   - +output_pathname_map+ => Map of study file IDs to output pathnames
   #
   # * *return*
   #   - (String) => String representation of single signed URL and output filepath to pass to curl
-  def self.get_single_curl_command(file:, fc_client:, user:)
+  def self.get_single_curl_command(file:, fc_client:, user:, study_bucket_map:, output_pathname_map:)
     fc_client ||= Study.firecloud_client
     # if a file is a StudyFile, use bucket_location, otherwise the :name key will contain its location (if DirectoryListing)
     file_location = file.bucket_location
-    study = file.study
-    output_path = file.bulk_download_pathname
+    bucket_name = study_bucket_map[file.study_id.to_s]
+    output_path = output_pathname_map[file.id.to_s]
 
     begin
-      signed_url = fc_client.execute_gcloud_method(:generate_signed_url, 0, study.bucket_id, file_location,
+      signed_url = fc_client.execute_gcloud_method(:generate_signed_url, 0, bucket_name, file_location,
                                                    expires: 1.day.to_i) # 1 day in seconds, 86400
       curl_config = [
           'url="' + signed_url + '"',
           'output="' + output_path + '"'
       ]
     rescue => e
-      error_context = ErrorTracker.format_extra_context(study, file)
+      error_context = ErrorTracker.format_extra_context(file, {storage_bucket: bucket_name})
       ErrorTracker.report_exception(e, user, error_context)
       Rails.logger.error "Error generating signed url for #{output_path}; #{e.message}"
       curl_config = [
@@ -128,5 +134,36 @@ class BulkDownloadService
       ]
     end
     curl_config.join("\n")
+  end
+
+  # generate a map of study ids => GCS bucket names to avoid Mongo query timeouts when parallelizing curl command generation
+  #
+  # * *params*
+  #   - +study_accessions+ (Array<String>) => Array of StudyAccession values from which to pull ids/bucket names
+  #
+  # * *returns*
+  #   - (Hash<String, String>) => Map of study IDs to bucket names
+  def self.generate_study_bucket_map(study_accessions)
+    Hash[Study.where(:accession.in => study_accessions).map {|study| [study.id.to_s, study.bucket_id]}]
+  end
+
+  # generate a map of study file ids => output pathnames to avoid Mongo query timeouts when parallelizing curl command generation
+  #
+  # * *params*
+  #   - +study_files+ (Array<StudyFile>) => Array of StudyFiles to be downloaded
+  #
+  # * *returns*
+  #   - (Hash<String, String>) => Map of study file IDs to output pathnames
+  def self.generate_output_path_map(study_files)
+    output_map = {}
+    study_files.each do |study_file|
+      output_map[study_file.id.to_s] = study_file.bulk_download_pathname
+      if study_file.is_bundle_parent?
+        study_file.bundled_files.each do |bundled_file|
+          output_map[bundled_file.id.to_s] = bundled_file.bulk_download_pathname
+        end
+      end
+    end
+    output_map
   end
 end
