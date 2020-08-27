@@ -54,7 +54,7 @@ var exploreMenusToggleState = {
 // allowed file extension for upload forms
 var ALLOWED_FILE_TYPES = {
     expression: /(\.|\/)(txt|text|mm|mtx|tsv|csv)(\.gz)?$/i,
-    plainText: /(\.|\/)(txt|text|tsv|csv)$/i,
+    plainText: /(\.|\/)(txt|text|tsv|csv)(\.gz)?$/i,
     primaryData: /((\.(fq|fastq)(\.tar)?\.gz$)|\.bam)/i,
     bundled: /(\.|\/)(txt|text|tsv|csv|bam\.bai)(\.gz)?$/i,
     miscellaneous: /(\.|\/)(txt|text|tsv|csv|jpg|jpeg|png|pdf|doc|docx|xls|xlsx|ppt|pptx|zip|loom|h5|h5ad|h5an)(\.gz)?$/i
