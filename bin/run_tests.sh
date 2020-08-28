@@ -97,7 +97,6 @@ else
                     test/models/user_annotation_test.rb
                     test/models/study_test.rb
                     test/models/study_file_test.rb
-                    test/models/parse_utils_test.rb
                     test/models/cell_metadatum_test.rb
                     test/models/analysis_configuration_test.rb
                     test/models/analysis_parameter_test.rb
