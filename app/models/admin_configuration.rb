@@ -308,18 +308,19 @@ class AdminConfiguration
   end
 
   # ensure docker image is present before allowing config to be created
-  # this will prevent giving bad images and breaking parses
+  # this will prevent using bad Docker image names and breaking parses
   def ensure_docker_image_present
     begin
       image = AdminConfiguration.get_ingest_docker_image_attributes(image_name: self.value)
       image_manifest_url = "https://#{image[:registry]}/v2/#{image[:project]}/#{image[:image_name]}/manifests/#{image[:tag]}"
       response = RestClient.get image_manifest_url
-      manifest = JSON.parse response.body
       # ensure this is a Docker image manifest
-      if manifest['mediaType'] =~ /docker/
-        true
+      manifest_matcher = /docker.*manifest/
+      manifest_content_type = response.headers[:content_type]
+      if manifest_content_type !~ manifest_matcher
+        errors.add(:value, "does not appear to be a valid Docker image manifest: #{manifest_content_type} does not match #{manifest_matcher}")
       else
-        errors.add(:value, "does not appear to be a valid Docker image manifest: #{manifest}")
+        true # pass validation
       end
     rescue RestClient::Exception => e
       errors.add(:value, "is invalid (#{e.message}) - please specify a valid image URI")
