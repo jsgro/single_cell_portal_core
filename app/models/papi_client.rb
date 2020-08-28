@@ -18,8 +18,6 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   GOOGLE_SCOPES = %w(https://www.googleapis.com/auth/cloud-platform)
   # GCP Compute project to run pipelines in
   COMPUTE_PROJECT = ENV['GOOGLE_CLOUD_PROJECT'].blank? ? '' : ENV['GOOGLE_CLOUD_PROJECT']
-  # Docker image in GCP project to pull for running ingest jobs
-  INGEST_DOCKER_IMAGE = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.5.7'
   # Network and sub-network names, if needed
   GCP_NETWORK_NAME = ENV['GCP_NETWORK_NAME']
   GCP_SUB_NETWORK_NAME = ENV['GCP_SUB_NETWORK_NAME']
@@ -108,7 +106,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
         user_id: user.id.to_s,
         file_id: study_file.id.to_s,
         action: action,
-        docker_image: INGEST_DOCKER_IMAGE
+        docker_image: AdminConfiguration.get_ingest_docker_image
     }
     environment = self.set_environment_variables
     action = self.create_actions_object(commands: command_line, environment: environment)
@@ -171,13 +169,15 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
 
   # Instantiate actions for pipeline, which holds command line actions, docker information,
   # and information that is passed to run_pipeline.  The Docker image that is pulled for this
-  # is hard-coded to PapiClient::INGEST_DOCKER_IMAGE
+  # is referenced from AdminConfiguration.get_ingest_docker_image, which will pull either from
+  # and existing configuration object (for non-production environments) or fall back to
+  # Rails.application.config.ingest_docker_image
   #
   # * *params*
   #   - +commands+: (Array<String>) => An array of commands to run inside the container
   #   - +environment+: (Hash) => Hash of key/value pairs to set as the container env
   #   - +flags+: (Array<String>) => An array of flags to apply to the action
-  #   - +image_uri+: (String) => GCR Docker image to pull, defaults to PapiClient::INGEST_DOCKER_IMAGE
+  #   - +image_uri+: (String) => GCR Docker image to pull, defaults to AdminConfiguration.get_ingest_docker_image
   #   - +labels+: (Hash) => Hash of labels to associate with the action
   #   - +timeout+: (String) => Maximum runtime of action
   #
@@ -188,7 +188,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
         commands: commands,
         environment: environment,
         flags: flags,
-        image_uri: INGEST_DOCKER_IMAGE,
+        image_uri: AdminConfiguration.get_ingest_docker_image,
         labels: labels,
         timeout: timeout
     )
