@@ -236,8 +236,10 @@ class IngestJob
       DeleteQueueJob.new(self.study_file).delay.perform
       Study.firecloud_client.delete_workspace_file(self.study.bucket_id, self.study_file.bucket_location) unless self.persist_on_fail
       subject = "Error: #{self.study_file.file_type} file: '#{self.study_file.upload_file_name}' parse has failed"
-      email_content = self.generate_error_email_body
-      SingleCellMailer.notify_user_parse_fail(self.user.email, subject, email_content, self.study).deliver_now
+      user_email_content = self.generate_error_email_body
+      SingleCellMailer.notify_user_parse_fail(self.user.email, subject, user_email_content, self.study).deliver_now
+      admin_email_content = self.generate_error_email_body(email_type: :detailed)
+      SingleCellMailer.notify_admin_parse_fail(self.user.email, subject, admin_email_content).deliver_now
     else
       Rails.logger.info "IngestJob poller: #{self.pipeline_name} is not done; queuing check for #{run_at}"
       self.delay(run_at: run_at).poll_for_completion
@@ -367,20 +369,20 @@ class IngestJob
     end
   end
 
-  # path to potential error file in study bucket
+  # path to detailed error file in study bucket, containing debug messages and stack traces
   #
   # * *returns*
-  #   - (String) => String representation of path to parse error file
-  def error_filepath
-    "parse_logs/#{self.study_file.id}/errors.txt"
+  #   - (String) => String representation of path to detailed log file
+  def detailed_error_filepath
+    "parse_logs/#{self.study_file.id}/log.txt"
   end
 
-  # path to potential warnings file in study bucket
+  # path to user-level error log file in study bucket
   #
   # * *returns*
-  #   - (String) => String representation of path to parse warnings file
-  def warning_filepath
-    "parse_logs/#{self.study_file.id}/warnings.txt"
+  #   - (String) => String representation of path to log file
+  def user_error_filepath
+    "parse_logs/#{self.study_file.id}/user_log.txt"
   end
 
   # in case of an error, retrieve the contents of the warning or error file to email to the user
@@ -388,13 +390,14 @@ class IngestJob
   #
   # * *params*
   #   - +filepath+ (String) => relative path of file to read in bucket
+  #   - +delete_on_read+ (Boolean) => T/F to remove logfile from bucket after reading, defaults to true
   #
   # * *returns*
   #   - (String) => Contents of file
-  def read_parse_logfile(filepath)
+  def read_parse_logfile(filepath, delete_on_read: true)
     if Study.firecloud_client.workspace_file_exists?(self.study.bucket_id, filepath)
       file_contents = Study.firecloud_client.execute_gcloud_method(:read_workspace_file, 0, self.study.bucket_id, filepath)
-      Study.firecloud_client.execute_gcloud_method(:delete_workspace_file, 0, self.study.bucket_id, filepath)
+      Study.firecloud_client.execute_gcloud_method(:delete_workspace_file, 0, self.study.bucket_id, filepath) if delete_on_read
       file_contents.read
     end
   end
@@ -487,21 +490,38 @@ class IngestJob
     message
   end
 
-  # format an error email message body
+  # format an error email message body for users
+  #
+  # * *params*
+  #  - +email_type+ (Symbol) => Type of error email
+  #                 :user => High-level error message intended for users, contains only messages and no stack traces
+  #                 :detailed => Debug-level error messages w/ stack traces intended for SCP team
   #
   # * *returns*
   #  - (String) => Contents of error messages for parse failure email
-  def generate_error_email_body
-    error_contents = self.read_parse_logfile(self.error_filepath)
-    warning_contents = self.read_parse_logfile(self.warning_filepath)
-    message_body = "<p>'#{self.study_file.upload_file_name}' has failed during parsing.</p>"
+  def generate_error_email_body(email_type: :user)
+    case email_type
+    when :user
+      error_contents = self.read_parse_logfile(self.user_error_filepath)
+      message_body = "<p>'#{self.study_file.upload_file_name}' has failed during parsing.</p>"
+    when :detailed
+      error_contents = self.read_parse_logfile(self.detailed_error_filepath, delete_on_read: false)
+      message_body = "<p>The file '#{self.study_file.upload_file_name}' uploaded by #{self.user.email} to #{self.study.accession} failed to ingest.</p>"
+      message_body += "<p>Detailed logs and PAPI events as follows:"
+    else
+      error_contents = self.read_parse_logfile(self.user_error_filepath)
+      message_body = "<p>'#{self.study_file.upload_file_name}' has failed during parsing.</p>"
+    end
+
     if error_contents.present?
       message_body += "<h3>Errors</h3>"
       error_contents.each_line do |line|
         message_body += "#{line}<br />"
       end
-    else
-      message_body += "<h3>Event Messages (since no errors were shown)</h3>"
+    end
+
+    if error_contents.empty? || email_type == :detailed
+      message_body += "<h3>Event Messages</h3>"
       message_body += "<ul>"
       self.event_messages.each do |e|
         message_body += "<li><pre>#{ERB::Util.html_escape(e)}</pre></li>"
@@ -509,13 +529,7 @@ class IngestJob
       message_body += "</ul>"
     end
 
-    if warning_contents.present?
-      message_body += "<h3>Warnings</h3>"
-      warning_contents.each_line do |line|
-        message_body += "#{line}<br />"
-      end
-    end
-    message_body += "<h3>Details</h3>"
+    message_body += "<h3>Job Details</h3>"
     message_body += "<p>Study Accession: <strong>#{self.study.accession}</strong></p>"
     message_body += "<p>Study File ID: <strong>#{self.study_file.id}</strong></p>"
     message_body += "<p>Ingest Run ID: <strong>#{self.pipeline_name}</strong></p>"
