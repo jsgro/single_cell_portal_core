@@ -96,11 +96,6 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     example_files.values.each do |e|
       assert_equal 'failed', e[:object].parse_status, "Incorrect parse_status for #{e[:name]}"
       assert e[:object].queued_for_deletion
-      # check for logfiles in bucket by using IngestJob class
-      job_handler = IngestJob.new(study: study, study_file: e[:object])
-      error_logpath = job_handler.detailed_error_filepath
-      error_contents = job_handler.read_parse_logfile(error_logpath)
-      refute error_contents.blank?, "Did not retrieve content from error log at: #{error_logpath}"
     end
 
     assert_equal 0, study.cell_metadata.size
