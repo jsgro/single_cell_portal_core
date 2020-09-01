@@ -341,13 +341,13 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
 
     # upload files and initiate parse
     file_params = {study_file: {file_type: 'MM Coordinate Matrix', study_id: study.id.to_s}}
-    perform_study_file_upload(matrix.upload_file_name, file_params, study.id)
+    perform_study_file_upload(matrix.name, file_params, study.id)
     matrix.reload
     matrix_bundle = matrix.study_file_bundle
     genes_params = {study_file: {file_type: '10X Genes File', study_id: study.id.to_s, study_file_bundle_id: matrix_bundle.id.to_s}}
-    perform_study_file_upload(genes_file.upload_file_name, genes_params, study.id)
+    perform_study_file_upload(genes_file.name, genes_params, study.id)
     barcodes_params = {study_file: {file_type: '10X Barcodes File', study_id: study.id.to_s, study_file_bundle_id: matrix_bundle.id.to_s}}
-    perform_study_file_upload(barcodes_file.upload_file_name, barcodes_params, study.id)
+    perform_study_file_upload(barcodes_file.name, barcodes_params, study.id)
     initiate_study_file_parse(matrix.upload_file_name, study.id)
     seconds_slept = 60
     sleep seconds_slept
