@@ -37,7 +37,7 @@ class ApiBaseControllerTest < ActionDispatch::IntegrationTest
     bad_header = {"User-Agent" => "scp-ingest-pipeline/#{bad_version}"}
     get api_v1_site_studies_path, headers: bad_header
     assert_response :bad_request, "Did not respond correctly; 400 != #{response.code}"
-    assert json['error'].include?(@configured_version), "Did not find configured tag of #{@configured_version} in #{json['error']}"
+    assert json['error'].include?('--upgrade'), "Did not find --upgrade message in #{json['error']}"
     assert json['error'].include?(bad_version), "Did not find request version tag of #{bad_version} in #{json['error']}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
