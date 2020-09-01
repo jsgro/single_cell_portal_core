@@ -35,9 +35,12 @@ module Api
               ingest_pipeline_version = ingest_pipeline_version.split('.').first.try(:to_i)
               request_ingest_version = request_ingest_version.split('.').first.try(:to_i)
             end
-            render json: {error: "scp-ingest-pipeline: #{scp_package_headers[INGEST_IMAGE_NAME]} incompatible with host, " + \
-                                 "please use #{ingest_image_attributes[:tag]}"},
-                   status: 400 and return if ingest_pipeline_version != request_ingest_version
+            if ingest_pipeline_version != request_ingest_version
+              install_msg = format_pip_command(ingest_pipeline_version, request_ingest_version)
+              render json: {error: "scp-ingest-pipeline: #{scp_package_headers[INGEST_IMAGE_NAME]} incompatible with host, " + \
+                                 "please update via #{install_msg}"},
+                     status: 400 and return
+            end
           end
         end
 
@@ -51,6 +54,27 @@ module Api
             end
           end
           scp_ua_headers
+        end
+
+        private
+
+        # format a pip install command for users to install the correct version of the single-cell-portal package
+        def format_pip_command(server_version, request_version)
+          installed_version = AdminConfiguration.get_ingest_docker_image_attributes[:tag]
+          pip_command = "\"pip install "
+          if !installed_version.include?('.')
+            # we are running against a development build, so no pip command will work
+            # notify user of commit SHA and instruct them to point at this locally
+            # this will only ever happen to SCP team members, never on production
+            pip_command = "pointing your local installation of #{INGEST_IMAGE_NAME} at commit SHA '#{installed_version}'"
+          else
+            if server_version > request_version
+              pip_command += "#{INGEST_IMAGE_NAME} --upgrade\""
+            else
+              pip_command += "'#{INGEST_IMAGE_NAME}==#{installed_version}' --force-reinstall\""
+            end
+          end
+          pip_command
         end
       end
     end
