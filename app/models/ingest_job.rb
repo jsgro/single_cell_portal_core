@@ -90,7 +90,7 @@ class IngestJob
   #   - +skip_push+ (Boolean) => skip call to study.send_to_firecloud(study_file) (may be in process in different thread)
   #
   # * *returns*
-  #   - (Boolean) => Indication of whether or not file has reach bucket
+  #   - (Boolean) => Indication of whether or not file has reached bucket
   def poll_for_remote(skip_push: false)
     attempts = 1
     is_pushed = false
