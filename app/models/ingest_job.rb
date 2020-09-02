@@ -238,7 +238,7 @@ class IngestJob
       subject = "Error: #{self.study_file.file_type} file: '#{self.study_file.upload_file_name}' parse has failed"
       user_email_content = self.generate_error_email_body
       SingleCellMailer.notify_user_parse_fail(self.user.email, subject, user_email_content, self.study).deliver_now
-      admin_email_content = self.generate_error_email_body(email_type: :detailed)
+      admin_email_content = self.generate_error_email_body(email_type: :dev)
       SingleCellMailer.notify_admin_parse_fail(self.user.email, subject, admin_email_content).deliver_now
     else
       Rails.logger.info "IngestJob poller: #{self.pipeline_name} is not done; queuing check for #{run_at}"
@@ -369,11 +369,11 @@ class IngestJob
     end
   end
 
-  # path to detailed error file in study bucket, containing debug messages and stack traces
+  # path to dev error file in study bucket, containing debug messages and stack traces
   #
   # * *returns*
   #   - (String) => String representation of path to detailed log file
-  def detailed_error_filepath
+  def dev_error_filepath
     "parse_logs/#{self.study_file.id}/log.txt"
   end
 
@@ -495,7 +495,7 @@ class IngestJob
   # * *params*
   #  - +email_type+ (Symbol) => Type of error email
   #                 :user => High-level error message intended for users, contains only messages and no stack traces
-  #                 :detailed => Debug-level error messages w/ stack traces intended for SCP team
+  #                 :dev => Debug-level error messages w/ stack traces intended for SCP team
   #
   # * *returns*
   #  - (String) => Contents of error messages for parse failure email
@@ -504,8 +504,8 @@ class IngestJob
     when :user
       error_contents = self.read_parse_logfile(self.user_error_filepath)
       message_body = "<p>'#{self.study_file.upload_file_name}' has failed during parsing.</p>"
-    when :detailed
-      error_contents = self.read_parse_logfile(self.detailed_error_filepath, delete_on_read: false)
+    when :dev
+      error_contents = self.read_parse_logfile(self.dev_error_filepath, delete_on_read: false)
       message_body = "<p>The file '#{self.study_file.upload_file_name}' uploaded by #{self.user.email} to #{self.study.accession} failed to ingest.</p>"
       message_body += "<p>Detailed logs and PAPI events as follows:"
     else
@@ -520,7 +520,7 @@ class IngestJob
       end
     end
 
-    if error_contents.empty? || email_type == :detailed
+    if error_contents.empty? || email_type == :dev
       message_body += "<h3>Event Messages</h3>"
       message_body += "<ul>"
       self.event_messages.each do |e|
