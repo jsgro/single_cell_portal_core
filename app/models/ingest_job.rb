@@ -40,13 +40,15 @@ class IngestJob
   # Push a file to a workspace bucket in the background and then launch an ingest run and queue polling
   # Can also clear out existing data if necessary (in case of a re-parse)
   #
+  # * *params*
+  #   - +skip_push+ (Boolean) => skip call to study.send_to_firecloud(study_file) (may be in process in different thread)
   # * *yields*
   #   - (Google::Apis::GenomicsV2alpha1::Operation) => Will submit an ingest job in PAPI
   #   - (IngestJob.new(attributes).poll_for_completion) => Will queue a Delayed::Job to poll for completion
   #
   # * *raises*
   #   - (RuntimeError) => If file cannot be pushed to remote bucket
-  def push_remote_and_launch_ingest
+  def push_remote_and_launch_ingest(skip_push: false)
     begin
       file_identifier = "#{self.study_file.bucket_location}:#{self.study_file.id}"
       if self.reparse
@@ -58,25 +60,7 @@ class IngestJob
       # first check if file is already in bucket (in case user is syncing)
       remote = Study.firecloud_client.get_workspace_file(self.study.bucket_id, self.study_file.bucket_location)
       if remote.nil?
-        Rails.logger.info "Preparing to push #{file_identifier} to #{self.study.bucket_id}"
-        study.send_to_firecloud(study_file)
-        is_pushed = false
-        attempts = 1
-        while !is_pushed && attempts <= MAX_ATTEMPTS
-          remote = Study.firecloud_client.get_workspace_file(self.study.bucket_id, self.study_file.bucket_location)
-          if remote.present?
-            is_pushed = true
-          else
-            interval = 30 * attempts
-            run_at = interval.seconds.from_now
-            Rails.logger.error "Failed to push #{file_identifier} to #{self.study.bucket_id}; retrying at #{run_at}"
-            attempts += 1
-            new_job = IngestJob.new(pipeline_name: submission.name, study: self.study, study_file: self.study_file,
-                                    user: self.user, action: self.action, reparse: self.reparse,
-                                    persist_on_fail: self.persist_on_fail)
-            new_job.delay(run_at: run_at).push_remote_and_launch_ingest
-          end
-        end
+        is_pushed = self.poll_for_remote(skip_push: skip_push)
       else
         is_pushed = true # file is already in bucket
       end
@@ -98,6 +82,35 @@ class IngestJob
       error_context = ErrorTracker.format_extra_context(self.study, self.study_file, {action: self.action})
       ErrorTracker.report_exception(e, self.user, error_context)
     end
+  end
+
+  # helper method to push & poll for remote file
+  #
+  # * *params*
+  #   - +skip_push+ (Boolean) => skip call to study.send_to_firecloud(study_file) (may be in process in different thread)
+  #
+  # * *returns*
+  #   - (Boolean) => Indication of whether or not file has reached bucket
+  def poll_for_remote(skip_push: false)
+    attempts = 1
+    is_pushed = false
+    file_identifier = "#{self.study_file.bucket_location}:#{self.study_file.id}"
+    while !is_pushed && attempts <= MAX_ATTEMPTS
+      unless skip_push
+        Rails.logger.info "Preparing to push #{file_identifier} to #{self.study.bucket_id}"
+        self.study.send_to_firecloud(study_file)
+      end
+      Rails.logger.info "Polling for upload of #{file_identifier}, attempt #{attempts}"
+      remote = Study.firecloud_client.get_workspace_file(self.study.bucket_id, self.study_file.bucket_location)
+      if remote.present?
+        is_pushed = true
+      else
+        interval = 30 * attempts
+        sleep interval
+        attempts += 1
+      end
+    end
+    is_pushed
   end
 
   # Patch for using with Delayed::Job.  Returns true to mimic an ActiveRecord instance

@@ -52,34 +52,41 @@ class FileParseService
         if barcodes.present? && genes.present? && bundle.completed?
           genes.update(parse_status: 'parsing')
           barcodes.update(parse_status: 'parsing')
-          ParseUtils.delay.cell_ranger_expression_parse(study, user, study_file, genes, barcodes, {reparse: reparse})
+          job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_expression, reparse: reparse,
+                              persist_on_fail: persist_on_fail)
+          job.delay.push_remote_and_launch_ingest
         else
-          logger.info "#{Time.zone.now}: Parse for #{study_file.name} as #{study_file.file_type} in study #{study.name} aborted; missing required files"
           study.delay.send_to_firecloud(study_file)
           return self.missing_bundled_file(study_file)
         end
       when '10X Genes File'
+        # push immediately to avoid race condition when initiating parse
+        study.delay.send_to_firecloud(study_file)
         bundle = study_file.study_file_bundle
         matrix = bundle.parent
         barcodes = bundle.bundled_files.detect {|f| f.file_type == '10X Barcodes File' }
         if barcodes.present? && matrix.present? && bundle.completed?
           matrix.update(parse_status: 'parsing')
           barcodes.update(parse_status: 'parsing')
-          ParseUtils.delay.cell_ranger_expression_parse(study, user, matrix, study_file, barcodes, {reparse: reparse})
+          job = IngestJob.new(study: study, study_file: matrix, user: user, action: :ingest_expression, reparse: reparse,
+                              persist_on_fail: persist_on_fail)
+          job.delay.push_remote_and_launch_ingest(skip_push: true)
         else
-          study.delay.send_to_firecloud(study_file)
           return self.missing_bundled_file(study_file)
         end
       when '10X Barcodes File'
+        # push immediately to avoid race condition when initiating parse
+        study.delay.send_to_firecloud(study_file)
         bundle = study_file.study_file_bundle
         matrix = bundle.parent
         genes = bundle.bundled_files.detect {|f| f.file_type == '10X Genes File' }
         if genes.present? && matrix.present? && bundle.completed?
           genes.update(parse_status: 'parsing')
           matrix.update(parse_status: 'parsing')
-          ParseUtils.delay.cell_ranger_expression_parse(study, user, matrix, genes, study_file, {reparse: reparse})
+          job = IngestJob.new(study: study, study_file: matrix, user: user, action: :ingest_expression, reparse: reparse,
+                              persist_on_fail: persist_on_fail)
+          job.delay.push_remote_and_launch_ingest(skip_push: true)
         else
-          study.delay.send_to_firecloud(study_file)
           return self.missing_bundled_file(study_file)
         end
       when 'Gene List'

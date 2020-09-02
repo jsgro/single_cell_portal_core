@@ -25,11 +25,15 @@ expression_file = StudyFile.create!(name: 'expression_matrix.txt', upload_file_n
 cluster_file = StudyFile.create!(name: 'Test Cluster', upload_file_name: 'coordinates.txt', study_id: study.id,
                                  file_type: 'Cluster', x_axis_label: 'X', y_axis_label: 'Y', z_axis_label: 'Z')
 mm_coord_file = StudyFile.create!(name: 'GRCh38/test_matrix.mtx', upload: File.open(Rails.root.join('test', 'test_data', 'GRCh38', 'test_matrix.mtx')),
-                                  file_type: 'MM Coordinate Matrix', study_id: study.id)
+                                  file_type: 'MM Coordinate Matrix', status: 'uploaded', study_id: study.id)
 genes_file = StudyFile.create!(name: 'GRCh38/test_genes.tsv', upload: File.open(Rails.root.join('test', 'test_data', 'GRCh38', 'test_genes.tsv')),
-                               file_type: '10X Genes File', study_id: study.id, options: {matrix_id: mm_coord_file.id.to_s})
+                               file_type: '10X Genes File', study_id: study.id, status: 'uploaded', options: {matrix_id: mm_coord_file.id.to_s})
 barcodes = StudyFile.create!(name: 'GRCh38/barcodes.tsv', upload: File.open(Rails.root.join('test', 'test_data', 'GRCh38', 'barcodes.tsv')),
-                               file_type: '10X Barcodes File', study_id: study.id, options: {matrix_id: mm_coord_file.id.to_s})
+                               file_type: '10X Barcodes File', study_id: study.id, status: 'uploaded', options: {matrix_id: mm_coord_file.id.to_s})
+matrix_bundle = study.study_file_bundles.build(bundle_type: mm_coord_file.file_type)
+bundle_payload = StudyFileBundle.generate_file_list(mm_coord_file, genes_file, barcodes)
+matrix_bundle.original_file_list = bundle_payload
+matrix_bundle.save!
 metadata_file = StudyFile.create!(name: 'metadata.txt', upload_file_name: 'metadata.txt', study_id: study.id,
                                   file_type: 'Metadata')
 cluster = ClusterGroup.create!(name: 'Test Cluster', study_id: study.id, study_file_id: cluster_file.id, cluster_type: '3d', cell_annotations: [
