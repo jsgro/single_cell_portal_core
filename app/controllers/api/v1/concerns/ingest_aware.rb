@@ -26,6 +26,12 @@ module Api
         def validate_scp_user_agent!
           scp_package_headers = extract_scp_user_agent_headers(request)
           if scp_package_headers.any?
+            # log usage to Mixpanel
+            mixpanel_log_props = {
+                user_agent: request.headers['User-Agent'],
+                appFullPath: request.fullpath
+            }
+            MetricsService.log('manage-study', mixpanel_log_props, current_api_user) if api_user_signed_in?
             ingest_image_attributes = AdminConfiguration.get_ingest_docker_image_attributes
             ingest_pipeline_version = ingest_image_attributes[:tag]
             request_ingest_version = scp_package_headers[INGEST_IMAGE_NAME]
