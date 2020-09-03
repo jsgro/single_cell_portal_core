@@ -2,8 +2,8 @@
 /* eslint-disable*/
 
 const fetch = require('node-fetch')
-
-import {logClick, logMenuChange, setMetricsApiMockFlag} from 'lib/metrics-api'
+import React from 'react'
+import {logClick, logClickLink, logMenuChange, setMetricsApiMockFlag} from 'lib/metrics-api'
 import * as UserProvider from 'providers/UserProvider'
 
 describe('Library for client-side usage analytics', () => {
@@ -14,7 +14,7 @@ describe('Library for client-side usage analytics', () => {
   // Note: tests that mock global.fetch must be cleared after every test
   afterEach(() => {
     // Restores all mocks back to their original value
-    jest.restoreAllMocks()
+    jest.clearAllMocks();
   })
 
   it('includes `authenticated: true` when signed in', done => {
@@ -96,6 +96,49 @@ describe('Library for client-side usage analytics', () => {
       expect.objectContaining({
         body: expect.stringContaining(
           '\"text\":\"No\"'
+        )
+      })
+    )
+    process.nextTick(() => {
+      global.fetch.mockClear();
+      done()
+    })
+  })
+  it('logs classList and id when link is clicked', done => {
+    // Spy on `fetch()` and its contingent methods like `json()`,
+    // because we want to intercept the outgoing request
+    const mockSuccessResponse = {}
+    const mockJsonPromise = Promise.resolve(mockSuccessResponse)
+    const mockFetchPromise = Promise.resolve({
+      json: () => {
+        mockJsonPromise
+      }
+    })
+    jest.spyOn(global, 'fetch').mockImplementation(() => {
+      mockFetchPromise
+    })
+
+    // Mock the user context, to mimic auth'd state
+    const userContext = { accessToken: 'test' }
+    jest.spyOn(UserProvider, 'useContextUser')
+      .mockImplementation(() => {
+        return userContext
+      })
+    // const event = <a href="#" className='class-name-1 class-name-2' id="link-id"> 'Text that is linked' </a>
+    const target = {
+        classList:['class-name-1', 'class-name-2'],
+        text: 'dif Text that is linked',
+        id: "link-id"
+    }
+    logClickLink(target)
+    console.log(global.fetch.mock.calls)
+
+    let expected = '\"text\":\"dif Text that is linked\",\"classList\":[\"class-name-1\",\"class-name-2\"],\"id\":\"link-id\"'
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.anything(), // URL
+      expect.objectContaining({
+        body: expect.stringContaining(
+          expected
         )
       })
     )
