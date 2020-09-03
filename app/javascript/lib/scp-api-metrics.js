@@ -71,6 +71,11 @@ function getFriendlyFilterListByFacet(facets) {
   return filterListByFacet
 }
 
+/** Converts raw searched terms to an array suitable for Mixpanel */
+function formatTerms(terms) {
+ return terms.split(/[, ]/).filter(term => term.length > 0);
+}
+
 /**
  * Log study search metrics.  Might support gene, cell search in future.
  */
@@ -90,21 +95,23 @@ export function logSearch(type, searchParams) {
     return
   }
 
-  const terms = searchParams.terms ? searchParams.terms.split(' ') : ''
+  const terms = formatTerms(searchParams.terms)
   const facets = searchParams.facets
   const page = searchParams.page
-  const genes = searchParams.genes
+  const genes = formatTerms(searchParams.genes)
   const preset = searchParams.preset
 
-  const numTerms = getNumberOfTerms(terms)
+  const loggedTerms = (type === 'gene') ? genes : terms;
+
+  const numTerms = getNumberOfTerms(loggedTerms)
   const [numFacets, numFilters] = getNumFacetsAndFilters(facets)
   const facetList = facets ? Object.keys(facets) : []
 
   const filterListByFacet = getFriendlyFilterListByFacet(facets)
 
   const simpleProps = {
-    type, terms, page, preset,
-    numTerms, numFacets, numFilters, facetList, genes,
+    type, loggedTerms, page, preset,
+    numTerms, numFacets, numFilters, facetList,
     context: 'global'
   }
   const props = Object.assign(simpleProps, filterListByFacet)
