@@ -205,7 +205,9 @@ export async function fetchExpressionHeatmap(
   const apiUrl = `/studies/${studyAccession}/expression_heatmaps${params}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  return await scpApi(apiUrl, defaultInit(), mock, false)
+  const [heatmap, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return heatmap
 }
 
 /**
@@ -236,7 +238,7 @@ export async function fetchFacetFilters(facet, query, mock=false) {
 
   const pathAndQueryString = `/search/facet_filters${queryString}`
 
-  const filters = await scpApi(pathAndQueryString, defaultInit(), mock)
+  const [filters, perfTime] = await scpApi(pathAndQueryString, defaultInit(), mock)
   mapFiltersForLogging(filters)
 
   return filters
@@ -262,7 +264,8 @@ export async function fetchDownloadSize(accessions, fileTypes, mock=false) {
   const fileTypesString = fileTypes.join(',')
   const queryString = `?accessions=${accessions}&file_types=${fileTypesString}`
   const pathAndQueryString = `/search/bulk_download_size/${queryString}`
-  return await scpApi(pathAndQueryString, defaultInit(), mock)
+  const [size, perfTime] = await scpApi(pathAndQueryString, defaultInit(), mock)
+  return size
 }
 
 /**

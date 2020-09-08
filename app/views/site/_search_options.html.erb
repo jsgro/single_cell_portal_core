@@ -109,6 +109,7 @@
                         $(window).off('resizeEnd');
                         if (event.type == 'click') {
                             launchModalSpinner('#spinner_target', '#loading-modal', function() {
+                                window.SCP.perfTimeStartGeneSearch = performance.now();
                                 var form = $('#search-genes-form');
                                 $.ajax({
                                     type: 'POST',
