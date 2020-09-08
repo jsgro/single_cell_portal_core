@@ -21,7 +21,7 @@ let globalMock = false
 const defaultBasePath = '/single_cell/api/v1'
 
 /** Get default `init` object for SCP API fetches */
-function defaultInit() {
+export function defaultInit() {
   const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
