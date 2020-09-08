@@ -149,7 +149,8 @@ export function logFilterSearch(facet, terms) {
  * Log when a download is authorized.
  * This is our best web-client-side methodology for measuring downloads.
  */
-export function logDownloadAuthorization() {
-  log('download-authorization')
+export function logDownloadAuthorization(perfTime) {
+  const props = {perfTime}
+  log('download-authorization', props)
   ga('send', 'event', 'advanced-search', 'download-authorization') // eslint-disable-line no-undef, max-len
 }

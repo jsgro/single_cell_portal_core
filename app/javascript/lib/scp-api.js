@@ -64,8 +64,12 @@ export async function fetchAuthCode(mock=false) {
       method: 'POST'
     })
   }
-  logDownloadAuthorization()
-  return await scpApi('/search/auth_code', init, mock)
+
+  const [authCode, perfTime] = await scpApi('/search/auth_code', init, mock)
+
+  logDownloadAuthorization(perfTime)
+
+  return authCode;
 }
 
 /**
@@ -83,7 +87,7 @@ export async function fetchFacets(mock=false) {
     path = `${path}?scpbr=${brandingGroup}`
   }
 
-  const facets = await scpApi(path, defaultInit(), mock)
+  const [facets, perfTime] = await scpApi(path, defaultInit(), mock)
 
   mapFiltersForLogging(facets, true)
 
@@ -142,7 +146,9 @@ export async function fetchExpressionViolin(
   const apiUrl = `/studies/${studyAccession}/expression_data/violin${params}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  return await scpApi(apiUrl, defaultInit(), mock, false)
+  const [violin, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return violin;
 }
 
 /**
@@ -168,7 +174,8 @@ export async function fetchExpressionViolin(
  */
 export async function fetchAnnotationValues(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/expression_data/annotations`
-  return await scpApi(apiUrl, defaultInit(), mock, false)
+  const [values, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+  return values;
 }
 
 /**
@@ -227,12 +234,9 @@ export async function fetchFacetFilters(facet, query, mock=false) {
     queryString = `_${facet}_${query}`
   }
 
-  logFilterSearch(facet, query)
-
   const pathAndQueryString = `/search/facet_filters${queryString}`
 
   const filters = await scpApi(pathAndQueryString, defaultInit(), mock)
-
   mapFiltersForLogging(filters)
 
   return filters
@@ -283,10 +287,7 @@ export async function fetchDownloadSize(accessions, fileTypes, mock=false) {
 export async function fetchSearch(type, searchParams, mock=false) {
   const path = `/search?${buildSearchQueryString(type, searchParams)}`
 
-  const timeStart = performance.now()
-  const searchResults = await scpApi(path, defaultInit(), mock)
-
-  const perfTime = parseInt(performance.now() - timeStart, 10);
+  const [searchResults, perfTime] = await scpApi(path, defaultInit(), mock)
 
   logSearch(type, searchParams, perfTime)
 
@@ -357,13 +358,19 @@ export function getBrandingGroup() {
 export default async function scpApi(
   path, init, mock=false, camelCase=true, toJson=true
 ) {
+
+  const perfTimeStart = performance.now();
+
   if (globalMock) mock = true
   const basePath =
     (mock || globalMock) ? `${mockOrigin}/mock_data` : defaultBasePath
   let fullPath = basePath + path
   if (mock) fullPath += '.json' // e.g. /mock_data/search/auth_code.json
 
-  const response = await fetch(fullPath, init).catch(error => error)
+  const response = await fetch(fullPath, init).catch(error => error);
+
+  // Milliseconds taken to fetch data from API
+  const perfTime = Math.round(performance.now() - perfTimeStart)
 
   if (response.ok) {
     if (toJson) {
@@ -371,13 +378,13 @@ export default async function scpApi(
       // Converts API's snake_case to JS-preferrable camelCase,
       // for easy destructuring assignment.
       if (camelCase) {
-        return camelcaseKeys(json)
+        return [camelcaseKeys(json), perfTime]
       } else {
-        return json
+        return [json, perfTime]
       }
     } else {
-      return response
+      return [response, perfTime]
     }
   }
-  return response
+  return [response, perfTime]
 }
