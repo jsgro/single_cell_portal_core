@@ -73,7 +73,8 @@ function getFriendlyFilterListByFacet(facets) {
 
 /** Converts raw searched terms to an array suitable for Mixpanel */
 function formatTerms(terms) {
- return terms.split(/[, ]/).filter(term => term.length > 0);
+  if (typeof terms === 'undefined') return [];
+  return terms.split(/[, ]/).filter(term => term.length > 0);
 }
 
 /**
