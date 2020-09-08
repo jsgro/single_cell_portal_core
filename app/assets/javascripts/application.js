@@ -158,6 +158,25 @@ $(document).on('hidden.bs.modal', function(e) {
     OPEN_MODAL = '';
 });
 
+// Logs properties about rendered plots to Mixpanel via Bard
+function logRenderPlots() {
+
+  var startTime = window.SCP.perfTimeStartPlotsRender;
+  var perfTime = Math.round(performance.now() - startTime);
+
+  var logProps = {
+    perfTime,
+    currentTab: $('#view-tabs .study-nav.active').text().trim().toLowerCase(),
+    genes: $('#search_genes').val().split(' '),
+    cluster: $("#search_cluster").val(),
+    annotation: $("#search_annotation").val(),
+    subsample: $('#search_subsample').val()
+  }
+
+  log('renderPlots', logProps)
+  delete window.SCP.perfTimeStartPlotsRender;
+}
+
 // scpPlotsDidRender fires after the view-specific data has been retrieved and plotted.
 // This event means that the page is ready for user interaction.
 $(document).on('scpPlotsDidRender', function() {
@@ -165,6 +184,8 @@ $(document).on('scpPlotsDidRender', function() {
   // Ensures that plot scrolls and doesn't get truncated at right when viewport is very horizontally narrow.
   // Not declared in static CSS because "overflow-x: visible" is needed for proper display of loading icon.
   $('#render-target .tab-content > div > div').css('overflow-x', 'auto');
+
+  logRenderPlots();
 });
 
 function restoreExploreMenusState() {

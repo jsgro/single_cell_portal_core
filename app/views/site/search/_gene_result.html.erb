@@ -45,6 +45,7 @@
     // no need to store spinners in data attribute as entire plot div will be re-rendered
     new Spinner(opts).spin(spinTarget);
 
+    window.SCP.perfTimeStartGeneSearch = performance.now();
     // make call to load distribution plot
     $.ajax({
         url: renderUrl,
