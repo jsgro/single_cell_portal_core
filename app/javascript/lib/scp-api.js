@@ -283,9 +283,12 @@ export async function fetchDownloadSize(accessions, fileTypes, mock=false) {
 export async function fetchSearch(type, searchParams, mock=false) {
   const path = `/search?${buildSearchQueryString(type, searchParams)}`
 
+  const timeStart = performance.now()
   const searchResults = await scpApi(path, defaultInit(), mock)
 
-  logSearch(type, searchParams)
+  const perfTime = parseInt(performance.now() - timeStart, 10);
+
+  logSearch(type, searchParams, perfTime)
 
   return searchResults
 }

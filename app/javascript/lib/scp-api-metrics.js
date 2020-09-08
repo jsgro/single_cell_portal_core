@@ -74,7 +74,7 @@ function getFriendlyFilterListByFacet(facets) {
 /**
  * Log study search metrics.  Might support gene, cell search in future.
  */
-export function logSearch(type, searchParams) {
+export function logSearch(type, searchParams, perfTime) {
   searchNumber += 1
   if (searchNumber < 3) {
     // This prevents over-reporting searches.
@@ -105,6 +105,7 @@ export function logSearch(type, searchParams) {
   const simpleProps = {
     type, terms, page, preset,
     numTerms, numFacets, numFilters, facetList, genes,
+    perfTime,
     context: 'global'
   }
   const props = Object.assign(simpleProps, filterListByFacet)
