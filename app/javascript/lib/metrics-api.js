@@ -62,7 +62,6 @@ export function logClick(event) {
 
   const target = event.target
   const tag = target.localName.toLowerCase() // local tag name
-  console.log(event)
   if (tag === 'a') {
     logClickLink(target)
   } else if (tag === 'button') {
