@@ -80,7 +80,7 @@ export function logClick(event) {
 export function logClickLink(target) {
   const props = {
     text: target.text,
-    classList: 'classList' in target? [...target.classList] : '',
+    classList: 'classList' in target? Array.from(target.classList) : [],
     id: target.id
   }
   log('click:link', props)
