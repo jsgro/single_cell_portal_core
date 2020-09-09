@@ -115,7 +115,18 @@
                                     type: 'POST',
                                     url: form.attr('action'),
                                     data: form.serialize(),
-                                    dataType: 'script'
+                                    dataType: 'script',
+                                    complete: function() {
+                                      var genes = $('#search_genes').val().trim().split(' ');
+                                      var perfTime = Math.round(performance.now() - window.SCP.perfTimeStartGeneSearch);
+                                      log('search', {
+                                        type: 'gene',
+                                        context: 'study',
+                                        genes: genes,
+                                        numGenes: genes.length,
+                                        perfTime: perfTime
+                                      });
+                                    }
                                 });
                             });
                         } else if (event.type == 'submit') {
