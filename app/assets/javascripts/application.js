@@ -163,14 +163,16 @@ function logPlot(plotType) {
 
   var endTime = performance.now();
   var startTime = window.SCP.perfTimeStartSearch;
-  var startTimeNarrow = window.SCP.perfTimeStartPlotsRender;
+  var startTimeFrontend = window.SCP.perfTimeStartPlotsRender;
 
   var perfTime = Math.round(endTime - startTime);
-  var perfTimeFrontEnd = Math.round(endTime - startTimeNarrow);
+  var perfTimeFrontend = Math.round(endTime - startTimeFrontend);
+  var perfTimeBackend = perfTime - perfTimeFrontend; // Simplistic, but useful
 
   var logProps = {
     perfTime,
-    'perfTime:frontend': perfTimeFrontEnd,
+    'perfTime:frontend': perfTimeFrontend,
+    'perfTime:backend': perfTimeBackend,
     currentTab: $('#view-tabs .study-nav.active').text().trim().toLowerCase(),
     genes: $('#search_genes').val().split(' '),
     cluster: $("#search_cluster").val(),
