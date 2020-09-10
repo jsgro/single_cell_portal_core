@@ -63,7 +63,6 @@ export function logClick(event) {
 
   const target = event.target
   const tag = target.localName.toLowerCase() // local tag name
-
   if (tag === 'a') {
     logClickLink(target)
   } else if (tag === 'button') {
@@ -79,8 +78,12 @@ export function logClick(event) {
 /**
  * Log click on link, i.e. anchor (<a ...) tag
  */
-function logClickLink(target) {
-  const props = { text: target.text }
+export function logClickLink(target) {
+  const props = {
+    text: target.text,
+    classList: 'classList' in target? Array.from(target.classList) : [],
+    id: target.id
+  }
   log('click:link', props)
 }
 
