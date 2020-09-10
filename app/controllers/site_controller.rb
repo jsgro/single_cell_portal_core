@@ -404,6 +404,7 @@ class SiteController < ApplicationController
 
   # render box and scatter plots for parent clusters or a particular sub cluster
   def view_gene_expression
+    Rails.logger.info "in site_controller.rb, view_gene_expression"
     @options = load_cluster_group_options
     @cluster_annotations = load_cluster_group_annotations
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
@@ -488,6 +489,7 @@ class SiteController < ApplicationController
   def view_gene_set_expression
     # first check if there is a user-supplied gene list to view as consensus
     # call search_expression_scores to return values not found
+    Rails.logger.info "In site_controller.rb, in view_gene_set_expression"
 
     terms = params[:gene_set].blank? && !params[:consensus].blank? ? parse_search_terms(:genes) : @study.precomputed_scores.by_name(params[:gene_set]).gene_list
     @genes, @not_found = search_expression_scores(terms, @study.id)
@@ -2067,7 +2069,7 @@ class SiteController < ApplicationController
     end
     aspect
   end
-  
+
   ###
   #
   # SEARCH SUB METHODS

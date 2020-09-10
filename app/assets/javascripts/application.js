@@ -158,14 +158,19 @@ $(document).on('hidden.bs.modal', function(e) {
     OPEN_MODAL = '';
 });
 
-// Logs properties about rendered plots to Mixpanel via Bard
-function logRenderPlots() {
+// Logs properties about rendered plot to Mixpanel via Bard
+function logRenderPlot() {
 
-  var startTime = window.SCP.perfTimeStartPlotsRender;
-  var perfTime = Math.round(performance.now() - startTime);
+  var endTime = performance.now();
+  var startTime = window.SCP.perfTimeStartSearch;
+  var startTimeNarrow = window.SCP.perfTimeStartPlotsRender;
+
+  var perfTime = Math.round(endTime - startTime);
+  var perfTimeFrontEnd = Math.round(endTime - startTimeNarrow);
 
   var logProps = {
     perfTime,
+    'perfTime:frontend': perfTimeFrontEnd,
     currentTab: $('#view-tabs .study-nav.active').text().trim().toLowerCase(),
     genes: $('#search_genes').val().split(' '),
     cluster: $("#search_cluster").val(),
@@ -173,7 +178,7 @@ function logRenderPlots() {
     subsample: $('#search_subsample').val()
   }
 
-  log('renderPlots', logProps)
+  log('renderPlot', logProps);
   delete window.SCP.perfTimeStartPlotsRender;
 }
 
@@ -184,8 +189,6 @@ $(document).on('scpPlotsDidRender', function() {
   // Ensures that plot scrolls and doesn't get truncated at right when viewport is very horizontally narrow.
   // Not declared in static CSS because "overflow-x: visible" is needed for proper display of loading icon.
   $('#render-target .tab-content > div > div').css('overflow-x', 'auto');
-
-  logRenderPlots();
 });
 
 function restoreExploreMenusState() {
