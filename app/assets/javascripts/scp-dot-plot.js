@@ -118,6 +118,8 @@ function renderMorpheusDotPlot(
   dataPath, annotPath, selectedAnnot, selectedAnnotType,
   target, annotations, fitType, dotHeight, legendTarget
 ) {
+  window.SCP.perfTimeStartPlotsRender = performance.now();
+
   console.log(`
     render status of ${target} at start: ${$(target).data('rendered')}
   `)
@@ -208,8 +210,6 @@ function renderMorpheusDotPlot(
     log('dot-plot:initialize')
   }
 
-  logPlot('dot');
-
   // Instantiate dot plot and embed in DOM element
   window.dotPlot = new morpheus.HeatMap(config)
   window.dotPlot.tabManager.setOptions({ autohideTabBar: true })
@@ -238,6 +238,8 @@ function renderMorpheusDotPlot(
   console.log(`
     render status of ${target} at end: ${$(target).data('rendered')}
   `)
+
+  logPlot('dot');
 }
 
 /** High-level function called from _expression_plots_view.html.erb */
