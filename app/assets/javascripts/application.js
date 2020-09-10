@@ -159,7 +159,7 @@ $(document).on('hidden.bs.modal', function(e) {
 });
 
 // Logs properties about rendered plot to Mixpanel via Bard
-function logRenderPlot() {
+function logPlot(plotType) {
 
   var endTime = performance.now();
   var startTime = window.SCP.perfTimeStartSearch;
@@ -178,7 +178,7 @@ function logRenderPlot() {
     subsample: $('#search_subsample').val()
   }
 
-  log('renderPlot', logProps);
+  log(`plot:${plotType}`, logProps);
   delete window.SCP.perfTimeStartPlotsRender;
 }
 

@@ -208,6 +208,8 @@ function renderMorpheusDotPlot(
     log('dot-plot:initialize')
   }
 
+  logPlot('dot');
+
   // Instantiate dot plot and embed in DOM element
   window.dotPlot = new morpheus.HeatMap(config)
   window.dotPlot.tabManager.setOptions({ autohideTabBar: true })

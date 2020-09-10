@@ -86,7 +86,8 @@ console.log('render status of scatter plot at end: ' + $('#expression-plots').da
 console.log('render status of reference plot at end: ' + $('#expression-plots').data('reference-rendered'));
 
 console.log('in render_gene_expression_plots.js.erb')
-logRenderPlot();
+var distributionPlotType = '<%= @values_box_type %>';
+logPlot(distributionPlotType);
 
 var requestUrl = '<%= javascript_safe_url(request.fullpath) %>';
 gaTrack(requestUrl, 'Single Cell Portal');
