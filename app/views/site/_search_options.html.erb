@@ -126,7 +126,7 @@
                 // handler to catch ENTER keypress and open modal
                 $('#search-genes-form').on('submit', function(submitEvent) {
                     submitGeneSearch(submitEvent);
-                    return false;
+                    return false; // Prevents double search-and-render
                 });
             </script>
           </div>
