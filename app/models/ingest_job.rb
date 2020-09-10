@@ -40,13 +40,15 @@ class IngestJob
   # Push a file to a workspace bucket in the background and then launch an ingest run and queue polling
   # Can also clear out existing data if necessary (in case of a re-parse)
   #
+  # * *params*
+  #   - +skip_push+ (Boolean) => skip call to study.send_to_firecloud(study_file) (may be in process in different thread)
   # * *yields*
   #   - (Google::Apis::GenomicsV2alpha1::Operation) => Will submit an ingest job in PAPI
   #   - (IngestJob.new(attributes).poll_for_completion) => Will queue a Delayed::Job to poll for completion
   #
   # * *raises*
   #   - (RuntimeError) => If file cannot be pushed to remote bucket
-  def push_remote_and_launch_ingest
+  def push_remote_and_launch_ingest(skip_push: false)
     begin
       file_identifier = "#{self.study_file.bucket_location}:#{self.study_file.id}"
       if self.reparse
@@ -58,25 +60,7 @@ class IngestJob
       # first check if file is already in bucket (in case user is syncing)
       remote = Study.firecloud_client.get_workspace_file(self.study.bucket_id, self.study_file.bucket_location)
       if remote.nil?
-        Rails.logger.info "Preparing to push #{file_identifier} to #{self.study.bucket_id}"
-        study.send_to_firecloud(study_file)
-        is_pushed = false
-        attempts = 1
-        while !is_pushed && attempts <= MAX_ATTEMPTS
-          remote = Study.firecloud_client.get_workspace_file(self.study.bucket_id, self.study_file.bucket_location)
-          if remote.present?
-            is_pushed = true
-          else
-            interval = 30 * attempts
-            run_at = interval.seconds.from_now
-            Rails.logger.error "Failed to push #{file_identifier} to #{self.study.bucket_id}; retrying at #{run_at}"
-            attempts += 1
-            new_job = IngestJob.new(pipeline_name: submission.name, study: self.study, study_file: self.study_file,
-                                    user: self.user, action: self.action, reparse: self.reparse,
-                                    persist_on_fail: self.persist_on_fail)
-            new_job.delay(run_at: run_at).push_remote_and_launch_ingest
-          end
-        end
+        is_pushed = self.poll_for_remote(skip_push: skip_push)
       else
         is_pushed = true # file is already in bucket
       end
@@ -98,6 +82,35 @@ class IngestJob
       error_context = ErrorTracker.format_extra_context(self.study, self.study_file, {action: self.action})
       ErrorTracker.report_exception(e, self.user, error_context)
     end
+  end
+
+  # helper method to push & poll for remote file
+  #
+  # * *params*
+  #   - +skip_push+ (Boolean) => skip call to study.send_to_firecloud(study_file) (may be in process in different thread)
+  #
+  # * *returns*
+  #   - (Boolean) => Indication of whether or not file has reached bucket
+  def poll_for_remote(skip_push: false)
+    attempts = 1
+    is_pushed = false
+    file_identifier = "#{self.study_file.bucket_location}:#{self.study_file.id}"
+    while !is_pushed && attempts <= MAX_ATTEMPTS
+      unless skip_push
+        Rails.logger.info "Preparing to push #{file_identifier} to #{self.study.bucket_id}"
+        self.study.send_to_firecloud(study_file)
+      end
+      Rails.logger.info "Polling for upload of #{file_identifier}, attempt #{attempts}"
+      remote = Study.firecloud_client.get_workspace_file(self.study.bucket_id, self.study_file.bucket_location)
+      if remote.present?
+        is_pushed = true
+      else
+        interval = 30 * attempts
+        sleep interval
+        attempts += 1
+      end
+    end
+    is_pushed
   end
 
   # Patch for using with Delayed::Job.  Returns true to mimic an ActiveRecord instance
@@ -236,8 +249,10 @@ class IngestJob
       DeleteQueueJob.new(self.study_file).delay.perform
       Study.firecloud_client.delete_workspace_file(self.study.bucket_id, self.study_file.bucket_location) unless self.persist_on_fail
       subject = "Error: #{self.study_file.file_type} file: '#{self.study_file.upload_file_name}' parse has failed"
-      email_content = self.generate_error_email_body
-      SingleCellMailer.notify_user_parse_fail(self.user.email, subject, email_content, self.study).deliver_now
+      user_email_content = self.generate_error_email_body
+      SingleCellMailer.notify_user_parse_fail(self.user.email, subject, user_email_content, self.study).deliver_now
+      admin_email_content = self.generate_error_email_body(email_type: :dev)
+      SingleCellMailer.notify_admin_parse_fail(self.user.email, subject, admin_email_content).deliver_now
     else
       Rails.logger.info "IngestJob poller: #{self.pipeline_name} is not done; queuing check for #{run_at}"
       self.delay(run_at: run_at).poll_for_completion
@@ -367,20 +382,20 @@ class IngestJob
     end
   end
 
-  # path to potential error file in study bucket
+  # path to dev error file in study bucket, containing debug messages and stack traces
   #
   # * *returns*
-  #   - (String) => String representation of path to parse error file
-  def error_filepath
-    "parse_logs/#{self.study_file.id}/errors.txt"
+  #   - (String) => String representation of path to detailed log file
+  def dev_error_filepath
+    "parse_logs/#{self.study_file.id}/log.txt"
   end
 
-  # path to potential warnings file in study bucket
+  # path to user-level error log file in study bucket
   #
   # * *returns*
-  #   - (String) => String representation of path to parse warnings file
-  def warning_filepath
-    "parse_logs/#{self.study_file.id}/warnings.txt"
+  #   - (String) => String representation of path to log file
+  def user_error_filepath
+    "parse_logs/#{self.study_file.id}/user_log.txt"
   end
 
   # in case of an error, retrieve the contents of the warning or error file to email to the user
@@ -388,13 +403,14 @@ class IngestJob
   #
   # * *params*
   #   - +filepath+ (String) => relative path of file to read in bucket
+  #   - +delete_on_read+ (Boolean) => T/F to remove logfile from bucket after reading, defaults to true
   #
   # * *returns*
   #   - (String) => Contents of file
-  def read_parse_logfile(filepath)
+  def read_parse_logfile(filepath, delete_on_read: true)
     if Study.firecloud_client.workspace_file_exists?(self.study.bucket_id, filepath)
       file_contents = Study.firecloud_client.execute_gcloud_method(:read_workspace_file, 0, self.study.bucket_id, filepath)
-      Study.firecloud_client.execute_gcloud_method(:delete_workspace_file, 0, self.study.bucket_id, filepath)
+      Study.firecloud_client.execute_gcloud_method(:delete_workspace_file, 0, self.study.bucket_id, filepath) if delete_on_read
       file_contents.read
     end
   end
@@ -487,21 +503,38 @@ class IngestJob
     message
   end
 
-  # format an error email message body
+  # format an error email message body for users
+  #
+  # * *params*
+  #  - +email_type+ (Symbol) => Type of error email
+  #                 :user => High-level error message intended for users, contains only messages and no stack traces
+  #                 :dev => Debug-level error messages w/ stack traces intended for SCP team
   #
   # * *returns*
   #  - (String) => Contents of error messages for parse failure email
-  def generate_error_email_body
-    error_contents = self.read_parse_logfile(self.error_filepath)
-    warning_contents = self.read_parse_logfile(self.warning_filepath)
-    message_body = "<p>'#{self.study_file.upload_file_name}' has failed during parsing.</p>"
+  def generate_error_email_body(email_type: :user)
+    case email_type
+    when :user
+      error_contents = self.read_parse_logfile(self.user_error_filepath)
+      message_body = "<p>'#{self.study_file.upload_file_name}' has failed during parsing.</p>"
+    when :dev
+      error_contents = self.read_parse_logfile(self.dev_error_filepath, delete_on_read: false)
+      message_body = "<p>The file '#{self.study_file.upload_file_name}' uploaded by #{self.user.email} to #{self.study.accession} failed to ingest.</p>"
+      message_body += "<p>Detailed logs and PAPI events as follows:"
+    else
+      error_contents = self.read_parse_logfile(self.user_error_filepath)
+      message_body = "<p>'#{self.study_file.upload_file_name}' has failed during parsing.</p>"
+    end
+
     if error_contents.present?
       message_body += "<h3>Errors</h3>"
       error_contents.each_line do |line|
         message_body += "#{line}<br />"
       end
-    else
-      message_body += "<h3>Event Messages (since no errors were shown)</h3>"
+    end
+
+    if error_contents.empty? || email_type == :dev
+      message_body += "<h3>Event Messages</h3>"
       message_body += "<ul>"
       self.event_messages.each do |e|
         message_body += "<li><pre>#{ERB::Util.html_escape(e)}</pre></li>"
@@ -509,13 +542,7 @@ class IngestJob
       message_body += "</ul>"
     end
 
-    if warning_contents.present?
-      message_body += "<h3>Warnings</h3>"
-      warning_contents.each_line do |line|
-        message_body += "#{line}<br />"
-      end
-    end
-    message_body += "<h3>Details</h3>"
+    message_body += "<h3>Job Details</h3>"
     message_body += "<p>Study Accession: <strong>#{self.study.accession}</strong></p>"
     message_body += "<p>Study File ID: <strong>#{self.study_file.id}</strong></p>"
     message_body += "<p>Ingest Run ID: <strong>#{self.pipeline_name}</strong></p>"

@@ -8,6 +8,7 @@
 import { accessToken } from 'providers/UserProvider'
 import { getBrandingGroup } from 'lib/scp-api'
 import getSCPContext from 'providers/SCPContextProvider'
+import { getDefaultProperties } from '@databiosphere/bard-client'
 
 let metricsApiMock = false
 
@@ -25,7 +26,7 @@ const bardDomainsByEnv = {
   production: 'https://terra-bard-prod.appspot.com'
 }
 let bardDomain = ''
-let env = getSCPContext().environment
+const env = getSCPContext().environment
 let userId = ''
 
 // TODO (SCP-2237): Use Node environment to get React execution context
@@ -225,12 +226,12 @@ function getAnalyticsPageName() {
  * @param {Object} props
  */
 export function log(name, props={}) {
-   props = Object.assign(props, {
+  props = Object.assign(props, {
     appId: 'single-cell-portal',
     appPath: getAnalyticsPageName(),
     appFullPath: getAppFullPath(),
     env
-  })
+  }, getDefaultProperties())
 
   if ('SCP' in window && 'featuredSpace' in window.SCP) {
     // For e.g. COVID-19 featured space

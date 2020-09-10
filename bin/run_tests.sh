@@ -85,6 +85,7 @@ else
                     test/controllers/analysis_configurations_controller_test.rb
                     test/controllers/site_controller_test.rb
                     test/controllers/preset_searches_controller_test.rb
+                    test/api/api_base_controller_test.rb
                     test/api/site_controller_test.rb
                     test/api/studies_controller_test.rb
                     test/api/study_files_controller_test.rb
@@ -97,7 +98,6 @@ else
                     test/models/user_annotation_test.rb
                     test/models/study_test.rb
                     test/models/study_file_test.rb
-                    test/models/parse_utils_test.rb
                     test/models/cell_metadatum_test.rb
                     test/models/analysis_configuration_test.rb
                     test/models/analysis_parameter_test.rb
