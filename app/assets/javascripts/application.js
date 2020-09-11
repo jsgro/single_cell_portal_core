@@ -202,7 +202,7 @@ function logPlot(plotType) {
   var perfTimeBackend = perfTimeJourney - perfTime;
 
   var logProps = {
-    'perfTime': perfTimeFrontend,
+    'perfTime': perfTime,
     perfTimeJourney,
     'perfTime:backend': perfTimeBackend,
     currentTab: $('#view-tabs .study-nav.active').text().trim().toLowerCase(),
