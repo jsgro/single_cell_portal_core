@@ -158,20 +158,52 @@ $(document).on('hidden.bs.modal', function(e) {
     OPEN_MODAL = '';
 });
 
-// Logs properties about rendered plot to Mixpanel via Bard
+/**
+ * Logs properties about rendered plot to Mixpanel via Bard.
+ *
+ * See overview diagram at:
+ * https://app.lucidchart.com/invitations/accept/3b086049-89bc-4db2-96c3-815ccc438bd5
+ *
+ * @param {String} plotType Type of plot, e.g. scatter, violin, box, dot
+ */
 function logPlot(plotType) {
 
   var endTime = performance.now();
-  var startTime = window.SCP.perfTimeStartSearch;
-  var startTimeFrontend = window.SCP.perfTimeStartPlotsRender;
+  var startTimeFrontend = window.SCP.perfTimeStartPlotRender;
 
-  var perfTime = Math.round(endTime - startTime);
-  var perfTimeFrontend = Math.round(endTime - startTimeFrontend);
-  var perfTimeBackend = perfTime - perfTimeFrontend; // Simplistic, but useful
+  var startTime;
+  if (typeof window.SCP.perfTimeStartPlotTrigger === 'undefined') {
+    // Plot trigger is page navigation, e.g. for "Clusters" scatter plot
+    // startTime = window.performance.timing.navigationStart;
+    //
+    // In other words, for plots that are triggered by merely loading the page,
+    // we consider the "start time" to be the "navigation start" -- e.g.
+    // when they clicked the link to get to this page.  Clicking the link
+    // (or otherwise starting navigation) from that previous page was the
+    // *user action* that triggered this plot.  It most accurately reflects
+    // how long the user waits between doing something and seeing something
+    // they can meaningfully interact with.
+    const perfData = window.performance.timing;
+    const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+
+    endTime += pageLoadTime;
+    startTimeFrontend += pageLoadTime;
+    startTime = pageLoadTime;
+
+  } else {
+    startTime = window.SCP.perfTimeStartPlotTrigger;
+  }
+
+  // TODO (SCP-2736):
+  // * Better delineate backend time w.r.t. time to first byte vs. time-to-last-byte
+  // * Apply concept from legacy Rails plot:* timings to comparable React components
+  var perfTimeJourney = Math.round(endTime - startTime);
+  var perfTime = Math.round(endTime - startTimeFrontend);
+  var perfTimeBackend = perfTimeJourney - perfTime;
 
   var logProps = {
-    perfTime,
-    'perfTime:frontend': perfTimeFrontend,
+    'perfTime': perfTimeFrontend,
+    perfTimeJourney,
     'perfTime:backend': perfTimeBackend,
     currentTab: $('#view-tabs .study-nav.active').text().trim().toLowerCase(),
     genes: $('#search_genes').val().split(' '),
@@ -181,7 +213,7 @@ function logPlot(plotType) {
   }
 
   log(`plot:${plotType}`, logProps);
-  delete window.SCP.perfTimeStartPlotsRender;
+  delete window.SCP.perfTimeStartPlotTrigger;
 }
 
 // scpPlotsDidRender fires after the view-specific data has been retrieved and plotted.

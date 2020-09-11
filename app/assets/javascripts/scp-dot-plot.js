@@ -118,7 +118,7 @@ function renderMorpheusDotPlot(
   dataPath, annotPath, selectedAnnot, selectedAnnotType,
   target, annotations, fitType, dotHeight, legendTarget
 ) {
-  window.SCP.perfTimeStartPlotsRender = performance.now();
+  window.SCP.perfTimeStartPlotRender = performance.now();
 
   console.log(`
     render status of ${target} at start: ${$(target).data('rendered')}

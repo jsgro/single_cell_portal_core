@@ -109,6 +109,7 @@
                         if (event.type == 'click') {
                             launchModalSpinner('#spinner_target', '#loading-modal', function() {
                                 window.SCP.perfTimeStartSearch = performance.now();
+                                window.SCP.perfTimeStartPlotTrigger = performance.now();
                                 var form = $('#search-genes-form');
                                 $.ajax({
                                     type: 'POST',
@@ -118,6 +119,7 @@
                                     complete: function() {
                                       var genes = $('#search_genes').val().trim().split(' ');
                                       var perfTime = Math.round(performance.now() - window.SCP.perfTimeStartSearch);
+                                      delete window.SCP.perfTimeStartSearch;
                                       log('search', {
                                         type: 'gene',
                                         context: 'study',
