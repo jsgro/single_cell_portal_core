@@ -59,4 +59,17 @@ class UserTest < ActiveSupport::TestCase
 
     puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
+
+  test 'should assign and use metrics_uuid' do
+    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
+
+    uuid = @user.get_metrics_uuid
+    @user.reload # gotcha for refreshing in-memory user object
+    assert_equal uuid, @user.metrics_uuid, "Metrics UUID was not assigned correctly; #{uuid} != #{@user.metrics_uuid}"
+    assigned_uuid = @user.get_metrics_uuid
+    @user.reload
+    assert_equal assigned_uuid, @user.metrics_uuid, "Metrics UUID has changed; #{assigned_uuid} != #{@user.metrics_uuid}"
+
+    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
+  end
 end

@@ -31,7 +31,10 @@ module Api
                 user_agent: request.headers['User-Agent'],
                 appFullPath: request.fullpath
             }
-            MetricsService.log('manage-study', mixpanel_log_props, current_api_user) if api_user_signed_in?
+            if api_user_signed_in?
+              MetricsService.merge_identities_in_mixpanel(current_api_user) if !@user.registered_for_firecloud
+              MetricsService.log('manage-study', mixpanel_log_props, current_api_user)
+            end
             ingest_image_attributes = AdminConfiguration.get_ingest_docker_image_attributes
             ingest_pipeline_version = ingest_image_attributes[:tag]
             request_ingest_version = scp_package_headers[INGEST_IMAGE_NAME]

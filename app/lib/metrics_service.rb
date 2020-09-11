@@ -50,14 +50,26 @@ class MetricsService
   # This call links that anonId to the user's bearer token used by DSP's Sam
   # service.  That bearer token is in turn linked to a deidentified
   # "distinct ID" used to track users across auth states in Mixpanel.
-  def self.merge_identities_in_mixpanel(user, cookies)
+  def self.merge_identities_in_mixpanel(user, cookies={})
 
     Rails.logger.info "#{Time.zone.now}: Merging user identity in Mixpanel via Bard"
 
     headers = get_default_headers(user)
 
+    # store random UUIDv4 string from client in user model to allow tracking API calls
+    if cookies.dig('user_id')
+      user_id = cookies['user_id']
+    else
+      user_id = user.get_metrics_uuid
+    end
+
+    # update metrics UUID if it has changed
+    # this unifies browser cookie value with metrics_uuid to avoid double-counting users
+    user.update(metrics_uuid: user_id) if user_id != user.metrics_uuid
+
     post_body = {
-      'anonId': cookies['user_id'] # Random UUIDv4 string
+      'anonId': user_id,
+      'registeredForTerra': false # mark that user is not registered for Terra
     }.to_json
 
     params = {
@@ -89,13 +101,14 @@ class MetricsService
     headers = get_default_headers(user)
 
     access_token = user.token_for_api_call
-    user_id = user.id
+    user_id = user.get_metrics_uuid
 
-    if access_token.nil?
+    if access_token.nil? || !user.registered_for_firecloud
       # User is unauthenticated / unregistered / anonynmous
       props['distinct_id'] = user_id
       headers.delete('Authorization')
       props['authenticated'] = false
+      props['registeredForTerra'] = false
     else
       props['authenticated'] = true
     end

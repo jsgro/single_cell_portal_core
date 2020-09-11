@@ -28,12 +28,14 @@ const bardDomainsByEnv = {
 let bardDomain = ''
 const env = getSCPContext().environment
 let userId = ''
+let registeredForTerra = false
 
 // TODO (SCP-2237): Use Node environment to get React execution context
 if (env != 'test') {
   bardDomain = bardDomainsByEnv[env]
   // To consider: Replace SCP-specific userId with DSP-wide userId
   userId = window.SCP.userId
+  registeredForTerra = window.SCP.registeredForTerra
 }
 
 /**
@@ -243,11 +245,14 @@ export function log(name, props={}) {
 
   let init = Object.assign({}, defaultInit)
 
-  if (accessToken === '') {
-    // User is unauthenticated / unregistered / anonynmous
+  // only report 'authenticated' users if signed in and also registered for Terra
+  // reporting non-Terra users to Bard results in 503 errors
+  if (accessToken === '' || !registeredForTerra) {
+    // User is unauthenticated / unregistered / anonynmous / not registered for Terra
     props['distinct_id'] = userId
     delete init['headers']['Authorization']
     props['authenticated'] = false
+    props['registeredForTerra'] = registeredForTerra
   } else {
     props['authenticated'] = true
   }
