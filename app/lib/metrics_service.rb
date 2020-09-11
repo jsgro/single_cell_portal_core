@@ -57,7 +57,7 @@ class MetricsService
     headers = get_default_headers(user)
 
     # store random UUIDv4 string from client in user model to allow tracking API calls
-    if cookies.dig('user_id')
+    if cookies.key?('user_id')
       user_id = cookies['user_id']
     else
       user_id = user.get_metrics_uuid
