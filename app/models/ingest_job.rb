@@ -55,6 +55,7 @@ class IngestJob
         Rails.logger.info "Deleting existing data for #{file_identifier}"
         rails_model = MODELS_BY_ACTION[action]
         rails_model.where(study_id: self.study.id, study_file_id: self.study_file.id).delete_all
+        DataArray.where(study_id: self.study.id, study_file_id: self.study_file.id).delete_all
         Rails.logger.info "Data cleanup for #{file_identifier} complete, now beginning Ingest"
       end
       # first check if file is already in bucket (in case user is syncing)
@@ -234,6 +235,7 @@ class IngestJob
       Rails.logger.info "IngestJob poller: #{self.pipeline_name} is done!"
       Rails.logger.info "IngestJob poller: #{self.pipeline_name} status: #{self.current_status}"
       self.study_file.update(parse_status: 'parsed')
+      self.study_file.bundled_files.each { |sf| sf.update(parse_status: 'parsed') }
       self.study.reload # refresh cached instance of study
       self.study_file.reload # refresh cached instance of study_file
       subject = "#{self.study_file.file_type} file: '#{self.study_file.upload_file_name}' has completed parsing"
