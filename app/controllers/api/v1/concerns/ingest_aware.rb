@@ -32,7 +32,7 @@ module Api
                 appFullPath: request.fullpath
             }
             if api_user_signed_in?
-              MetricsService.merge_identities_in_mixpanel(current_api_user) if @user.registered_for_firecloud
+              MetricsService.merge_identities_in_mixpanel(current_api_user)
               MetricsService.log('manage-study', mixpanel_log_props, current_api_user)
             end
             ingest_image_attributes = AdminConfiguration.get_ingest_docker_image_attributes

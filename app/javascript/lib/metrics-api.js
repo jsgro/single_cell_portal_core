@@ -242,6 +242,7 @@ export function log(name, props={}) {
 
   const brandingGroup = getBrandingGroup()
   props['brand'] = brandingGroup ? brandingGroup : ''
+  props['registeredForTerra'] = registeredForTerra
 
   let init = Object.assign({}, defaultInit)
 
@@ -252,7 +253,6 @@ export function log(name, props={}) {
     props['distinct_id'] = userId
     delete init['headers']['Authorization']
     props['authenticated'] = false
-    props['registeredForTerra'] = registeredForTerra
   } else {
     props['authenticated'] = true
   }

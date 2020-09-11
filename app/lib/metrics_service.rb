@@ -57,7 +57,7 @@ class MetricsService
     headers = get_default_headers(user)
 
     # store random UUIDv4 string from client in user model to allow tracking API calls
-    if cookies.dig('user_id')
+    if cookies.key?('user_id')
       user_id = cookies['user_id']
     else
       user_id = user.get_metrics_uuid
@@ -68,14 +68,8 @@ class MetricsService
     user.update(metrics_uuid: user_id) if user_id != user.metrics_uuid
 
     post_body = {
-      'anonId': user_id,
-      'registeredForTerra': user.registered_for_firecloud
+      'anonId': user_id
     }.to_json
-
-    if !user.registered_for_firecloud
-      headers.delete('Authorization')
-      post_body['authenticated'] = false
-    end
 
     params = {
       url: BARD_ROOT + '/api/identify',
@@ -83,7 +77,8 @@ class MetricsService
       payload: post_body
     }
 
-    self.post_to_bard(params, user)
+    # only post to /identify if user is registered, otherwise Bard responds 503 due to upstream errors in SAM
+    self.post_to_bard(params, user) if user.registered_for_firecloud
 
   end
 
@@ -100,7 +95,8 @@ class MetricsService
 
     props.merge!({
       appId: 'single-cell-portal',
-      env: Rails.env
+      env: Rails.env,
+      registeredForTerra: user.registered_for_firecloud
     })
 
     headers = get_default_headers(user)
@@ -113,7 +109,6 @@ class MetricsService
       props['distinct_id'] = user_id
       headers.delete('Authorization')
       props['authenticated'] = false
-      props['registeredForTerra'] = false
     else
       props['authenticated'] = true
     end
