@@ -17,7 +17,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       @user.delay.update_firecloud_status
       sign_in(@user)
       if TosAcceptance.accepted?(@user)
-        MetricsService.merge_identities_in_mixpanel(@user, cookies) if !@user.registered_for_firecloud
+        MetricsService.merge_identities_in_mixpanel(@user, cookies) if @user.registered_for_firecloud
         if cookies.key?('user_id')
           # unify browser-based cookie with model-based UUID unless already assigned
           @user.update(metrics_uuid: cookies['user_id']) if @user.metrics_uuid.nil?

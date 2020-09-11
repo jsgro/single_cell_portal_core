@@ -57,7 +57,7 @@ class MetricsService
     headers = get_default_headers(user)
 
     # store random UUIDv4 string from client in user model to allow tracking API calls
-    if cookies.key?('user_id')
+    if cookies.dig('user_id')
       user_id = cookies['user_id']
     else
       user_id = user.get_metrics_uuid
@@ -69,8 +69,13 @@ class MetricsService
 
     post_body = {
       'anonId': user_id,
-      'registeredForTerra': false # mark that user is not registered for Terra
+      'registeredForTerra': user.registered_for_firecloud
     }.to_json
+
+    if !user.registered_for_firecloud
+      headers.delete('Authorization')
+      post_body['authenticated'] = false
+    end
 
     params = {
       url: BARD_ROOT + '/api/identify',
@@ -104,7 +109,7 @@ class MetricsService
     user_id = user.get_metrics_uuid
 
     if access_token.nil? || !user.registered_for_firecloud
-      # User is unauthenticated / unregistered / anonynmous
+      # User is unauthenticated / unregistered / anonymous
       props['distinct_id'] = user_id
       headers.delete('Authorization')
       props['authenticated'] = false
