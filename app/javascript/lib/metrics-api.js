@@ -248,11 +248,13 @@ export function log(name, props={}) {
 
   // only report 'authenticated' users if signed in and also registered for Terra
   // reporting non-Terra users to Bard results in 503 errors
-  if (accessToken === '' || !registeredForTerra) {
-    // User is unauthenticated / unregistered / anonynmous / not registered for Terra
-    props['distinct_id'] = userId
-    delete init['headers']['Authorization']
+  if (accessToken === '') {
+    // User is unauthenticated / unregistered / anonymous / not registered for Terra
     props['authenticated'] = false
+    if (registeredForTerra) {
+      props['distinct_id'] = userId
+      delete init['headers']['Authorization']
+    }
   } else {
     props['authenticated'] = true
   }
