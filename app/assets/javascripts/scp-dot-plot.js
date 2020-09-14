@@ -118,6 +118,8 @@ function renderMorpheusDotPlot(
   dataPath, annotPath, selectedAnnot, selectedAnnotType,
   target, annotations, fitType, dotHeight, legendTarget
 ) {
+  window.SCP.perfTimeStartPlotRender = performance.now();
+
   console.log(`
     render status of ${target} at start: ${$(target).data('rendered')}
   `)
@@ -236,6 +238,8 @@ function renderMorpheusDotPlot(
   console.log(`
     render status of ${target} at end: ${$(target).data('rendered')}
   `)
+
+  logPlot('dot');
 }
 
 /** High-level function called from _expression_plots_view.html.erb */

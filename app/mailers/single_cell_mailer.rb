@@ -56,12 +56,16 @@ class SingleCellMailer < ApplicationMailer
   def notify_user_parse_fail(email, title, error, study)
     @error = error
     @study = study
+    mail(to: email, subject: '[Single Cell Portal Notifier] ' + title)
+  end
+
+  def notify_admin_parse_fail(user_email, title, contents)
     dev_email_config = AdminConfiguration.find_by(config_type: 'QA Dev Email')
     if dev_email_config.present?
       dev_email = dev_email_config.value
-      mail(to: email, bcc: dev_email, subject: '[Single Cell Portal Notifier] ' + title)
-    else
-      mail(to: email, subject: '[Single Cell Portal Notifier] ' + title)
+      @contents = contents
+      @user_email = user_email
+      mail(to: dev_email, subject: '[Single Cell Portal Admin Notification] ' + title)
     end
   end
 

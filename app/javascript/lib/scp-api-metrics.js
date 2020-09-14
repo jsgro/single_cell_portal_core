@@ -3,7 +3,7 @@
  */
 
 import {
-  getNumberOfTerms, getNumFacetsAndFilters
+  formatTerms, getNumFacetsAndFilters
 } from 'providers/StudySearchProvider'
 import { log } from './metrics-api'
 
@@ -71,16 +71,10 @@ function getFriendlyFilterListByFacet(facets) {
   return filterListByFacet
 }
 
-/** Converts raw searched terms to an array suitable for Mixpanel */
-function formatTerms(terms) {
-  if (typeof terms === 'undefined') return [];
-  return terms.split(/[, ]/).filter(term => term.length > 0);
-}
-
 /**
  * Log study search metrics.  Might support gene, cell search in future.
  */
-export function logSearch(type, searchParams) {
+export function logSearch(type, searchParams, perfTime) {
   searchNumber += 1
   if (searchNumber < 3) {
     // This prevents over-reporting searches.
@@ -97,23 +91,23 @@ export function logSearch(type, searchParams) {
   }
 
   const terms = formatTerms(searchParams.terms)
+  const numTerms = terms.length
+  const genes = formatTerms(searchParams.genes)
+  const numGenes = genes.length
   const facets = searchParams.facets
   const page = searchParams.page
-  const genes = formatTerms(searchParams.genes)
   const preset = searchParams.preset
 
-  const loggedTerms = (type === 'gene') ? genes : terms;
-
-  const numTerms = getNumberOfTerms(loggedTerms)
   const [numFacets, numFilters] = getNumFacetsAndFilters(facets)
   const facetList = facets ? Object.keys(facets) : []
 
   const filterListByFacet = getFriendlyFilterListByFacet(facets)
 
   const simpleProps = {
-    type, loggedTerms, page, preset,
-    numTerms, numFacets, numFilters, facetList,
-    context: 'global'
+    terms, numTerms, genes, numGenes, page, preset,
+    facetList, numFacets, numFilters,
+    perfTime,
+    type, context: 'global'
   }
   const props = Object.assign(simpleProps, filterListByFacet)
 
@@ -139,7 +133,7 @@ export function logSearch(type, searchParams) {
  * Log filter search metrics
  */
 export function logFilterSearch(facet, terms) {
-  const numTerms = getNumberOfTerms(terms)
+  const numTerms = formatTerms(terms).length
 
   const defaultProps = { facet, terms }
   const props = Object.assign(defaultProps, { numTerms })
@@ -153,10 +147,37 @@ export function logFilterSearch(facet, terms) {
 }
 
 /**
+ * Logs time between user action and its last interactive effect.
+ *
+ * This provides a higher-level view of timing information also available
+ * in more granular events, but in manner that's easier to find and less
+ * implementation-specific.  See also: logPlot in javascripts/application.js.
+ */
+export function logUserAction(lastEvent, perfTime) {
+  var isScatter = lastEvent === 'plot:scatter';
+  var pageName = window.SCP.analyticsPageName;
+  var isStudyOverview = pageName === 'site-study';
+
+  // Consider using this construct more widely
+  var isFullyInteractive = typeof window.SCP.fullyInteractive !== 'undefined';
+
+  if (isScatter && !isFullyInteractive && isStudyOverview) {
+    log(`user-action:page:view:${pageName}`, {perfTime});
+    window.SCP.fullyInteractive = true;
+  }
+
+  var isGeneSearchEffect = lastEvent.includes('plot') && !isScatter;
+  if (isGeneSearchEffect && isStudyOverview) {
+    log(`user-action:search:${pageName}`, {perfTime});
+  }
+}
+
+/**
  * Log when a download is authorized.
  * This is our best web-client-side methodology for measuring downloads.
  */
-export function logDownloadAuthorization() {
-  log('download-authorization')
+export function logDownloadAuthorization(perfTime) {
+  const props = {perfTime}
+  log('download-authorization', props)
   ga('send', 'event', 'advanced-search', 'download-authorization') // eslint-disable-line no-undef, max-len
 }
