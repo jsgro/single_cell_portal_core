@@ -203,7 +203,7 @@ function logPlot(plotType) {
 
   var logProps = {
     'perfTime': perfTime,
-    perfTimeJourney,
+    'perfTime:journey': perfTimeJourney,
     'perfTime:backend': perfTimeBackend,
     currentTab: $('#view-tabs .study-nav.active').text().trim().toLowerCase(),
     genes: $('#search_genes').val().split(' '),
