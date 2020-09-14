@@ -146,6 +146,32 @@ export function logFilterSearch(facet, terms) {
 }
 
 /**
+ * Logs time between user action and its last interactive effect.
+ *
+ * This provides a higher-level view of timing information also available
+ * in more granular events, but in manner that's easier to find and less
+ * implementation-specific.  See also: logPlot in javascripts/application.js.
+ */
+export function logUserAction(lastEvent, perfTime) {
+  var isScatter = lastEvent === 'plot:scatter';
+  var pageName = window.SCP.analyticsPageName;
+  var isStudyOverview = pageName === 'site-study';
+
+  // Consider using this construct more widely
+  var isFullyInteractive = typeof window.SCP.fullyInteractive !== 'undefined';
+
+  if (isScatter && !isFullyInteractive && isStudyOverview) {
+    log(`user-action:page:view:${pageName}`, {perfTime});
+    window.SCP.fullyInteractive = true;
+  }
+
+  var isGeneSearchEffect = lastEvent.includes('plot') && !isScatter;
+  if (isGeneSearchEffect && isStudyOverview) {
+    log(`user-action:search:${pageName}`, {perfTime});
+  }
+}
+
+/**
  * Log when a download is authorized.
  * This is our best web-client-side methodology for measuring downloads.
  */

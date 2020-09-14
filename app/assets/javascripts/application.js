@@ -159,7 +159,7 @@ $(document).on('hidden.bs.modal', function(e) {
 });
 
 /**
- * Logs properties about rendered plot to Mixpanel via Bard.
+ * Logs properties about rendered Study Overview plot to Mixpanel via Bard.
  *
  * See overview diagram at:
  * https://app.lucidchart.com/invitations/accept/3b086049-89bc-4db2-96c3-815ccc438bd5
@@ -212,7 +212,11 @@ function logPlot(plotType) {
     subsample: $('#search_subsample').val()
   }
 
-  log(`plot:${plotType}`, logProps);
+  var eventName = `plot:${plotType}`
+  log(eventName, logProps);
+
+  logUserAction(eventName, perfTimeJourney);
+
   delete window.SCP.perfTimeStartPlotTrigger;
 }
 

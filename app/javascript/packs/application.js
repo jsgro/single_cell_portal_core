@@ -29,6 +29,7 @@ import Ideogram from 'ideogram'
 import HomePageContent from 'components/HomePageContent'
 import Covid19PageContent from 'components/covid19/Covid19PageContent'
 import { logPageView, logClick, logMenuChange, log } from 'lib/metrics-api'
+import { logUserAction } from 'lib/scp-api-metrics'
 import createTracesAndLayout from 'lib/kernel-functions'
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -66,6 +67,7 @@ window.igv = igv
 window.Ideogram = Ideogram
 window.createTracesAndLayout = createTracesAndLayout
 window.log = log
+window.logUserAction = logUserAction
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code
