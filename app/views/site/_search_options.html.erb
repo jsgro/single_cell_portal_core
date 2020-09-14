@@ -117,15 +117,15 @@
                                     data: form.serialize(),
                                     dataType: 'script',
                                     complete: function() {
-                                      var genes = $('#search_genes').val().trim().split(' ');
+                                      var genes = formatTerms($('#search_genes').val())
                                       var perfTime = Math.round(performance.now() - window.SCP.perfTimeStartSearch);
                                       delete window.SCP.perfTimeStartSearch;
                                       log('search', {
                                         type: 'gene',
                                         context: 'study',
-                                        genes: genes,
+                                        genes,
                                         numGenes: genes.length,
-                                        perfTime: perfTime
+                                        perfTime
                                       });
                                     }
                                 });
