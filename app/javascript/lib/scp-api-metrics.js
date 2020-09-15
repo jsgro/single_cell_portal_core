@@ -3,7 +3,7 @@
  */
 
 import {
-  getNumberOfTerms, getNumFacetsAndFilters
+  formatTerms, getNumFacetsAndFilters
 } from 'providers/StudySearchProvider'
 import { log } from './metrics-api'
 
@@ -90,23 +90,24 @@ export function logSearch(type, searchParams, perfTime) {
     return
   }
 
-  const terms = searchParams.terms ? searchParams.terms.split(' ') : ''
+  const terms = formatTerms(searchParams.terms)
+  const numTerms = terms.length
+  const genes = formatTerms(searchParams.genes)
+  const numGenes = genes.length
   const facets = searchParams.facets
   const page = searchParams.page
-  const genes = searchParams.genes
   const preset = searchParams.preset
 
-  const numTerms = getNumberOfTerms(terms)
   const [numFacets, numFilters] = getNumFacetsAndFilters(facets)
   const facetList = facets ? Object.keys(facets) : []
 
   const filterListByFacet = getFriendlyFilterListByFacet(facets)
 
   const simpleProps = {
-    type, terms, page, preset,
-    numTerms, numFacets, numFilters, facetList, genes,
+    terms, numTerms, genes, numGenes, page, preset,
+    facetList, numFacets, numFilters,
     perfTime,
-    context: 'global'
+    type, context: 'global'
   }
   const props = Object.assign(simpleProps, filterListByFacet)
 
@@ -132,7 +133,7 @@ export function logSearch(type, searchParams, perfTime) {
  * Log filter search metrics
  */
 export function logFilterSearch(facet, terms) {
-  const numTerms = getNumberOfTerms(terms)
+  const numTerms = formatTerms(terms).length
 
   const defaultProps = { facet, terms }
   const props = Object.assign(defaultProps, { numTerms })
