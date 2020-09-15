@@ -173,16 +173,18 @@ function logPlot(plotType) {
 
   var startTime;
   if (typeof window.SCP.perfTimeStartPlotTrigger === 'undefined') {
-    // Plot trigger is page navigation, e.g. for "Clusters" scatter plot
-    // startTime = window.performance.timing.navigationStart;
-    //
-    // In other words, for plots that are triggered by merely loading the page,
-    // we consider the "start time" to be the "navigation start" -- e.g.
-    // when they clicked the link to get to this page.  Clicking the link
-    // (or otherwise starting navigation) from that previous page was the
-    // *user action* that triggered this plot.  It most accurately reflects
-    // how long the user waits between doing something and seeing something
-    // they can meaningfully interact with.
+    /*
+    Plot trigger is page navigation, e.g. for "Clusters" scatter plot
+    startTime = window.performance.timing.navigationStart;
+
+    In other words, for plots that are triggered by merely loading the page,
+    we consider the "start time" to be the "navigation start" -- e.g.
+    when they clicked the link to get to this page.  Clicking the link
+    (or otherwise starting navigation) from that previous page was the
+    *user action* that triggered this plot.  It most accurately reflects
+    how long the user waits between doing something and seeing something
+    they can meaningfully interact with.
+    */
     const perfData = window.performance.timing;
     const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
 
@@ -201,12 +203,18 @@ function logPlot(plotType) {
   var perfTime = Math.round(endTime - startTimeFrontend);
   var perfTimeBackend = perfTimeJourney - perfTime;
 
+  const genes = formatTerms($('#search_genes').val());
+
   var logProps = {
-    'perfTime': perfTime,
+    perfTime,
     'perfTime:journey': perfTimeJourney,
     'perfTime:backend': perfTimeBackend,
     currentTab: $('#view-tabs .study-nav.active').text().trim().toLowerCase(),
-    genes: $('#search_genes').val().split(' '),
+
+    // TODO (SCP-2736):
+    // * Generalize getting this extra props
+    genes,
+    numGenes: genes.length,
     cluster: $("#search_cluster").val(),
     annotation: $("#search_annotation").val(),
     subsample: $('#search_subsample').val()

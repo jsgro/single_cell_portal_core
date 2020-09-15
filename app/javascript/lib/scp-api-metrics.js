@@ -158,6 +158,7 @@ export function logUserAction(lastEvent, perfTime) {
   var pageName = window.SCP.analyticsPageName;
   var isStudyOverview = pageName === 'site-study';
 
+  // Reports if action's main effects areas are shown and ready for input.
   // Consider using this construct more widely
   var isFullyInteractive = typeof window.SCP.fullyInteractive !== 'undefined';
 
