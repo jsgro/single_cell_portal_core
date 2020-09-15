@@ -175,7 +175,7 @@ function logPlot(plotType) {
   if (typeof window.SCP.perfTimeStartPlotTrigger === 'undefined') {
     /*
     Plot trigger is page navigation, e.g. for "Clusters" scatter plot
-    startTime = window.performance.timing.navigationStart;
+    startTime = performance.timing.navigationStart;
 
     In other words, for plots that are triggered by merely loading the page,
     we consider the "start time" to be the "navigation start" -- e.g.
@@ -185,7 +185,7 @@ function logPlot(plotType) {
     how long the user waits between doing something and seeing something
     they can meaningfully interact with.
     */
-    const perfData = window.performance.timing;
+    const perfData = performance.timing;
     const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
 
     endTime += pageLoadTime;
