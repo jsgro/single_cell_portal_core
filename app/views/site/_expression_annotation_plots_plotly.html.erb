@@ -1,4 +1,4 @@
-window.SCP.perfTimeStartPlotRender = performance.now();
+var plotEvent = window.SCP.startPendingEvent('plot:scatter', window.SCP.logPlotProps());
 
 $('#distribution-link').html('Annotated Scatter');
 
@@ -107,3 +107,4 @@ $("#colorscale").change(function() {
 <%= render partial: 'expression_scatter_camera' %>
 
 $(document).trigger('scpPlotsDidRender');
+plotEvent.complete();

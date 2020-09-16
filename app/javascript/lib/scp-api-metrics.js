@@ -147,31 +147,24 @@ export function logFilterSearch(facet, terms) {
 }
 
 /**
- * Logs time between user action and its last interactive effect.
- *
- * This provides a higher-level view of timing information also available
- * in more granular events, but in manner that's easier to find and less
- * implementation-specific.  See also: logPlot in javascripts/application.js.
+ * Get common plot log event properties
  */
-export function logUserAction(lastEvent, perfTime) {
-  var isScatter = lastEvent === 'plot:scatter';
-  var pageName = window.SCP.analyticsPageName;
-  var isStudyOverview = pageName === 'site-study';
-
-  // Reports if action's main effects areas are shown and ready for input.
-  // Consider using this construct more widely
-  var isFullyInteractive = typeof window.SCP.fullyInteractive !== 'undefined';
-
-  if (isScatter && !isFullyInteractive && isStudyOverview) {
-    log(`user-action:page:view:${pageName}`, {perfTime});
-    window.SCP.fullyInteractive = true;
+export function logPlotProps() {
+  const genes = formatTerms($('#search_genes').val());
+  var logProps = {
+    currentTab: $('#view-tabs .study-nav.active').text().trim().toLowerCase(),
+    // TODO (SCP-2736):
+    // * Generalize getting this extra props
+    genes,
+    numGenes: genes.length,
+    cluster: $("#search_cluster").val(),
+    annotation: $("#search_annotation").val(),
+    subsample: $('#search_subsample').val()
   }
-
-  var isGeneSearchEffect = lastEvent.includes('plot') && !isScatter;
-  if (isGeneSearchEffect && isStudyOverview) {
-    log(`user-action:search:${pageName}`, {perfTime});
-  }
+  return logProps
 }
+
+
 
 /**
  * Log when a download is authorized.

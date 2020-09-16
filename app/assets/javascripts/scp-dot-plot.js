@@ -118,7 +118,7 @@ function renderMorpheusDotPlot(
   dataPath, annotPath, selectedAnnot, selectedAnnotType,
   target, annotations, fitType, dotHeight, legendTarget
 ) {
-  window.SCP.perfTimeStartPlotRender = performance.now();
+  const plotEvent = window.SCP.startPendingEvent('plot:dot', window.SCP.logPlotProps())
 
   console.log(`
     render status of ${target} at start: ${$(target).data('rendered')}
@@ -207,7 +207,7 @@ function renderMorpheusDotPlot(
   if (typeof window.dotPlot === 'undefined') {
     // Consistent with e.g. IGV, Ideogram
     ga('send', 'event', 'dot-plot', 'initialize')
-    log('dot-plot:initialize')
+    window.SCP.log('dot-plot:initialize')
   }
 
   // Instantiate dot plot and embed in DOM element
@@ -239,7 +239,7 @@ function renderMorpheusDotPlot(
     render status of ${target} at end: ${$(target).data('rendered')}
   `)
 
-  logPlot('dot');
+  plotEvent.complete()
 }
 
 /** High-level function called from _expression_plots_view.html.erb */
