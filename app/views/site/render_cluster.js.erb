@@ -2,7 +2,7 @@
 This code renders the "Cluster" tab plot shown by default on Study Overview
 %>
 
-window.SCP.perfTimeStartPlotRender = performance.now();
+var plotEvent = window.SCP.startPendingEvent('plot:scatter', window.SCP.getLogPlotProps());
 
 // check render status
 console.log('render status at start: ' + $('#cluster-plot').data('rendered'));

@@ -25,6 +25,9 @@ const bardDomainsByEnv = {
   staging: 'https://terra-bard-alpha.appspot.com',
   production: 'https://terra-bard-prod.appspot.com'
 }
+
+const pendingEvents = []
+
 let bardDomain = ''
 const env = getSCPContext().environment
 let userId = ''
@@ -264,5 +267,63 @@ export function log(name, props={}) {
   if ('SCP' in window || metricsApiMock) {
     // Skips fetch during test, unless explicitly testing Metrics API
     fetch(`${bardDomain}/api/event`, init)
+  }
+}
+
+/**
+ Initializes an event to log later (usually on completion of an async process)
+ Handles measuring duration of the event.
+ @param {String} name: the name of the event
+ @param {} props: the props to pass along with the event.  This function
+  automatically handles computing and adding 'perfTime' properties to the
+  event props
+ @param {String} completionTriggerPrefix: The prefix of an event on whose
+  occurence this event should be automatically completed
+  e.g. 'plot:' to complete the event automatically once a plot is finished
+  rendering
+ @param {Double} startTime: if specified, the time the event should be measured
+  from (useful if the event should be measured from page load, rather than the
+  event initialization)
+
+ @return {Object} Pending event, which has a complete() function for manually
+  firing the log event
+*/
+export function startPendingEvent(
+  name, props={}, completionTriggerPrefix, startTime
+) {
+  startTime = startTime ? startTime : performance.now()
+  startTime = Math.round(startTime)
+  const pendingEvent = {
+    name,
+    props,
+    completionTriggerPrefix,
+    startTime,
+    complete: triggerEventProps => {
+      const perfTime = performance.now() - startTime
+      props.perfTime = perfTime
+      if (triggerEventProps && triggerEventProps.perfTime) {
+        // For now we just assume that triggered events always have a backend
+        // and frontend component and naively measure the backend time as
+        // (totalTime - frontendTime)
+        const frontendTime = Math.round(triggerEventProps.perfTime)
+        const backendTime = Math.round(perfTime - triggerEventProps.perfTime)
+        props['perfTime:frontend'] = frontendTime
+        props['perfTime:backend'] = backendTime
+      }
+      log(name, props)
+      _remove(pendingEvents, { name })
+    }
+  }
+  pendingEvents.push(pendingEvent)
+  return pendingEvent
+}
+
+/** Checks for events that are awaiting to be logged */
+function checkForTriggeredPendingEvent(name, props) {
+  const matchedPendingEvent = _find(pendingEvents, ce => {
+    name.startsWith(ce.completionTriggerPrefix)
+  })
+  if (matchedPendingEvent) {
+    matchedPendingEvent.complete(props)
   }
 }

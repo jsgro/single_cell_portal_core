@@ -28,8 +28,8 @@ import Ideogram from 'ideogram'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
 import HomePageContent from 'components/HomePageContent'
 import Covid19PageContent from 'components/covid19/Covid19PageContent'
-import { logPageView, logClick, logMenuChange, log } from 'lib/metrics-api'
-import { logUserAction } from 'lib/scp-api-metrics'
+import { logPageView, logClick, logMenuChange, startPendingEvent, log } from 'lib/metrics-api'
+import { getLogPlotProps } from 'lib/scp-api-metrics'
 import { formatTerms } from 'providers/StudySearchProvider'
 import createTracesAndLayout from 'lib/kernel-functions'
 
@@ -67,9 +67,10 @@ window.morpheus = morpheus
 window.igv = igv
 window.Ideogram = Ideogram
 window.createTracesAndLayout = createTracesAndLayout
-window.log = log
-window.logUserAction = logUserAction
-window.formatTerms = formatTerms
+window.SCP.log = log
+window.SCP.startPendingEvent = startPendingEvent
+window.SCP.getLogPlotProps = getLogPlotProps
+window.SCP.formatTerms = formatTerms
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code

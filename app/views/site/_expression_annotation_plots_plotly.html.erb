@@ -1,4 +1,4 @@
-window.SCP.perfTimeStartPlotRender = performance.now();
+var plotEvent = window.SCP.startPendingEvent('plot:scatter', window.SCP.getLogPlotProps());
 
 $('#distribution-link').html('Annotated Scatter');
 
