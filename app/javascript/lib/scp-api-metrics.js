@@ -167,7 +167,6 @@ export function getLogPlotProps() {
   return logProps
 }
 
-
 /**
  * Log when a download is authorized.
  * This is our best web-client-side methodology for measuring downloads.

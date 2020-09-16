@@ -67,7 +67,7 @@ var requestUrl = '<%= javascript_safe_url(request.fullpath) %>';
 gaTrack(requestUrl, 'Single Cell Portal');
 
 $(document).trigger('scpPlotsDidRender');
-logPlot('scatter');
+plotEvent.complete();
 
 <% if @analysis_outputs.key?('ideogram.js') %>
 window.ideogramInferCnvSettings = <%= raw @study.get_ideogram_infercnv_settings(params[:cluster], params[:annotation]).to_json %>;

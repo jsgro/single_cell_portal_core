@@ -9,6 +9,8 @@ import { accessToken } from 'providers/UserProvider'
 import { getBrandingGroup } from 'lib/scp-api'
 import getSCPContext from 'providers/SCPContextProvider'
 import { getDefaultProperties } from '@databiosphere/bard-client'
+import _find from 'lodash/find'
+import _remove from 'lodash/remove'
 
 let metricsApiMock = false
 
@@ -235,6 +237,8 @@ export function log(name, props={}) {
     appFullPath: getAppFullPath(),
     env
   }, getDefaultProperties())
+
+  checkForTriggeredPendingEvent(name, props)
 
   if ('SCP' in window && 'featuredSpace' in window.SCP) {
     // For e.g. COVID-19 featured space

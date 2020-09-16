@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 })
 
+window.SCP = window.SCP ? window.SCP : {}
 // SCP expects these variables to be global.
 //
 // If adding a new variable here, also add it to .eslintrc.js

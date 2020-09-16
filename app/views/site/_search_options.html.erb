@@ -127,18 +127,7 @@
                                     url: form.attr('action'),
                                     data: form.serialize(),
                                     dataType: 'script',
-                                    complete: function() {
-                                      var genes = formatTerms($('#search_genes').val())
-                                      var perfTime = Math.round(performance.now() - window.SCP.perfTimeStartSearch);
-                                      delete window.SCP.perfTimeStartSearch;
-                                      log('search', {
-                                        type: 'gene',
-                                        context: 'study',
-                                        genes,
-                                        numGenes: genes.length,
-                                        perfTime
-                                      });
-                                    }
+                                    complete: searchEvent.complete
                                 });
                             });
                         } else if (event.type == 'submit') {
