@@ -321,9 +321,9 @@ export function startPendingEvent(
           const perfData = performance.timing
           const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart
           backendStart = pageLoadTime
-          props.perfTime += pageLoadTime
+          props.perfTime = performance.now() - perfData.navigationStart
         }
-        const backendTime = Math.round(perfTime + backendStart)
+        const backendTime = Math.round(props.perfTime - backendStart)
         props['perfTime:frontend'] = frontendTime
         props['perfTime:backend'] = backendTime
       }
