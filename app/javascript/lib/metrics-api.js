@@ -252,6 +252,9 @@ export function log(name, props={}) {
 
   let init = Object.assign({}, defaultInit)
 
+  props['timeSincePageLoad'] = Math.round(performance.now())
+
+
   if (accessToken === '') {
     // User is unauthenticated / unregistered / anonynmous
     props['distinct_id'] = userId
