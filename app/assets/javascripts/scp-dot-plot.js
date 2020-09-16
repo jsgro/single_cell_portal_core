@@ -118,7 +118,7 @@ function renderMorpheusDotPlot(
   dataPath, annotPath, selectedAnnot, selectedAnnotType,
   target, annotations, fitType, dotHeight, legendTarget
 ) {
-  const plotEvent = window.SCP.startPendingEvent('plot:dot', window.SCP.logPlotProps())
+  const plotEvent = window.SCP.startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
 
   console.log(`
     render status of ${target} at start: ${$(target).data('rendered')}

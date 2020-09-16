@@ -28,7 +28,9 @@ const bardDomainsByEnv = {
   production: 'https://terra-bard-prod.appspot.com'
 }
 
-const pendingEvents = []
+// Disable ESLint for this assignment to ensure
+// `pendingEvents` uses `let`, not `const`
+let pendingEvents = [] // eslint-disable-line
 
 let bardDomain = ''
 const env = getSCPContext().environment
@@ -285,18 +287,17 @@ export function log(name, props={}) {
   occurence this event should be automatically completed
   e.g. 'plot:' to complete the event automatically once a plot is finished
   rendering
- @param {Double} startTime: if specified, the time the event should be measured
-  from (useful if the event should be measured from page load, rather than the
-  event initialization)
+ @param {Boolean} fromPageLoad: whether to use page view navigation -- instead
+  of immediate trigger -- as start time.  Use if this pending event was
+  triggered by a page load.
 
  @return {Object} Pending event, which has a complete() function for manually
   firing the log event
 */
 export function startPendingEvent(
-  name, props={}, completionTriggerPrefix, startTime
+  name, props={}, completionTriggerPrefix, fromPageLoad
 ) {
-  startTime = startTime ? startTime : performance.now()
-  startTime = Math.round(startTime)
+  const startTime = performance.now()
   const pendingEvent = {
     name,
     props,
@@ -304,13 +305,25 @@ export function startPendingEvent(
     startTime,
     complete: triggerEventProps => {
       const perfTime = performance.now() - startTime
-      props.perfTime = perfTime
+      props.perfTime = Math.round(perfTime)
       if (triggerEventProps && triggerEventProps.perfTime) {
         // For now we just assume that triggered events always have a backend
         // and frontend component and naively measure the backend time as
         // (totalTime - frontendTime)
         const frontendTime = Math.round(triggerEventProps.perfTime)
-        const backendTime = Math.round(perfTime - triggerEventProps.perfTime)
+
+        let backendStart = triggerEventProps.perfTime
+        if (fromPageLoad === true) {
+          // Consider moving away from `performance.timing`, as this API is
+          // deprecated.  As of 2020-09-16, Chrome notes no intent to deprecate
+          // and Safari only supports this API, so a refactor should include
+          // a `performance.timing` shim for Safari.
+          const perfData = performance.timing
+          const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart
+          backendStart = pageLoadTime
+          props.perfTime += pageLoadTime
+        }
+        const backendTime = Math.round(perfTime + backendStart)
         props['perfTime:frontend'] = frontendTime
         props['perfTime:backend'] = backendTime
       }
@@ -325,7 +338,7 @@ export function startPendingEvent(
 /** Checks for events that are awaiting to be logged */
 function checkForTriggeredPendingEvent(name, props) {
   const matchedPendingEvent = _find(pendingEvents, ce => {
-    name.startsWith(ce.completionTriggerPrefix)
+    return name.startsWith(ce.completionTriggerPrefix)
   })
   if (matchedPendingEvent) {
     matchedPendingEvent.complete(props)

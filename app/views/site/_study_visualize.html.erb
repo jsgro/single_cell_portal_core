@@ -56,11 +56,13 @@
 </div>
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   <% if @study.can_visualize_clusters? %>
-
-    window.SCP.startPendingEvent('user-action:page:view:site-study',
+    if (typeof window.SCP.pageIsFullyInteractive === 'undefined') {
+      window.SCP.startPendingEvent('user-action:page:view:site-study',
                                  {},
                                  'plot:',
-                                 0);
+                                 true);
+    }
+    window.SCP.pageIsFullyInteractive = true;
 
     $('#cluster-plot').data('rendered', false);
 
