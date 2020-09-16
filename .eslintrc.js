@@ -24,7 +24,6 @@ module.exports = {
         'Ideogram': 'readonly',
         'createTracesAndLayout': 'readonly',
         'ga': 'readonly',
-        'log': 'readonly',
         'bamAndBaiFiles': 'readonly'
     },
     'parser': 'babel-eslint',

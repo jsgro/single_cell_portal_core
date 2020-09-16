@@ -108,26 +108,28 @@
                         $(window).off('resizeEnd');
                         if (event.type == 'click') {
                             launchModalSpinner('#spinner_target', '#loading-modal', function() {
-                                window.SCP.perfTimeStartSearch = performance.now();
-                                window.SCP.perfTimeStartPlotTrigger = performance.now();
+                                var genes = window.SCP.formatTerms($('#search_genes').val())
+                                var searchEvent = window.SCP.startPendingEvent('search', {
+                                  type: 'gene',
+                                  context: 'study',
+                                  genes,
+                                  numGenes: genes.length,
+                                });
+                                // also start measuring the end-to-end user experience event
+                                // this will complete when the plot is rendered
+                                window.SCP.startPendingEvent('user-action:search:site-study', {
+                                  type: 'gene',
+                                  context: 'study',
+                                  genes,
+                                  numGenes: genes.length,
+                                }, 'plot:');
                                 var form = $('#search-genes-form');
                                 $.ajax({
                                     type: 'POST',
                                     url: form.attr('action'),
                                     data: form.serialize(),
                                     dataType: 'script',
-                                    complete: function() {
-                                      var genes = formatTerms($('#search_genes').val())
-                                      var perfTime = Math.round(performance.now() - window.SCP.perfTimeStartSearch);
-                                      delete window.SCP.perfTimeStartSearch;
-                                      log('search', {
-                                        type: 'gene',
-                                        context: 'study',
-                                        genes,
-                                        numGenes: genes.length,
-                                        perfTime
-                                      });
-                                    }
+                                    complete: searchEvent.complete
                                 });
                             });
                         } else if (event.type == 'submit') {

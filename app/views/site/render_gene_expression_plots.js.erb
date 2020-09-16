@@ -5,8 +5,8 @@ This code renders:
 See also: _expression_plots_plotly.js.erb, which renders the "Scatter" tab that is
 hidden by default.
 %>
-
-window.SCP.perfTimeStartPlotRender = performance.now();
+var distributionPlotType = '<%= @values_box_type %>';
+var plotEvent = window.SCP.startPendingEvent(`plot:${distributionPlotType}`, window.SCP.logPlotProps());
 
 // check render status
 console.log('render status of box plot at start: ' + $('#expression-plots').data('box-rendered'));
@@ -82,7 +82,7 @@ console.log('render status of scatter plot at end: ' + $('#expression-plots').da
 console.log('render status of reference plot at end: ' + $('#expression-plots').data('reference-rendered'));
 
 var distributionPlotType = '<%= @values_box_type %>';
-logPlot(distributionPlotType);
+plotEvent.complete();
 
 var requestUrl = '<%= javascript_safe_url(request.fullpath) %>';
 gaTrack(requestUrl, 'Single Cell Portal');
