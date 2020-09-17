@@ -5,6 +5,9 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   include Requests::JsonHelpers
   include Requests::HttpHelpers
 
+  HOMO_SAPIENS_FILTER = { id: 'NCBITaxon_9606', name: 'Homo sapiens' }
+  NO_DISEASE_FILTER = { id: 'MONDO_0000001', name: 'disease or disorder' }
+
   setup do
     @user = User.find_by(email: 'testing.user.2@gmail.com')
     OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
@@ -105,14 +108,9 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
     study = Study.find_by(name: "Test Study #{@random_seed}")
     facets = SearchFacet.where(data_type: 'string')
-    # format facet query string; this will be done by the search UI in production
-    facet_queries = []
-    facets.each do |facet|
-      if facet.filters.any?
-        facet_queries << [facet.identifier, facet.filters.map {|f| f[:id]}.join(',')]
-      end
-    end
-    facet_query = facet_queries.map {|query| query.join(':')}.join('+')
+
+    # find all human studies from metadata
+    facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
     expected_accessions = [study.accession]
@@ -341,8 +339,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     convention_study = Study.find_by(name: "Test Study #{@random_seed}")
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
-    species_facet = SearchFacet.find_by(identifier: 'species')
-    facet_query = "#{species_facet.identifier}:#{species_facet.filters.first[:id]}"
+    facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
     expected_accessions = [convention_study.accession]
@@ -351,8 +348,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
     # now update non-convention study to include a filter display value in its description
     # this should be picked up by the "inferred" search
-    filter_name = species_facet.filters.first[:name]
-    other_study.update(description: filter_name)
+    other_study.update(description: HOMO_SAPIENS_FILTER[:name])
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
     inferred_accessions = [convention_study.accession, other_study.accession]
@@ -375,9 +371,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
     species_facet = SearchFacet.find_by(identifier: 'species')
-    facet_query = "#{species_facet.identifier}:#{species_facet.filters.first[:id]}"
-    filter_name = species_facet.filters.first[:name]
-    other_study.update(description: filter_name)
+    facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
+    other_study.update(description: HOMO_SAPIENS_FILTER[:name])
     search_phrase = "Study #{@random_seed}"
     expected_accessions = [convention_study.accession, other_study.accession]
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query, terms: "\"#{search_phrase}\""))
@@ -410,10 +405,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     convention_study = Study.find_by(name: "Test Study #{@random_seed}")
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
-    facets = SearchFacet.where(:identifier.in => %w(species disease))
-    facet_query = facets.map {|facet| "#{facet.identifier}:#{facet.filters.first[:id]}"}.join('+')
-    single_facet_name = facets.sample.filters.first[:name]
-    other_study.update(description: single_facet_name)
+    facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}+disease:#{NO_DISEASE_FILTER[:id]}"
+    other_study.update(description: HOMO_SAPIENS_FILTER[:name])
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
     expected_accessions = [convention_study.accession]
@@ -421,7 +414,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
                  "Did not find expected accessions before inferred search, expected #{expected_accessions} but found #{json['matching_accessions']}"
 
     # update to match both filters; should be inferred
-    double_facet_name = facets.map {|facet| facet.filters.first[:name]}.join(' ')
+    double_facet_name = "#{HOMO_SAPIENS_FILTER[:name]} #{NO_DISEASE_FILTER[:name]}"
     other_study.update(description: double_facet_name)
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
