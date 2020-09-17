@@ -265,7 +265,7 @@ export function log(name, props={}) {
   if (accessToken === '') {
     // User is unauthenticated, anonymous, or not registered for Terra
     props['authenticated'] = false
-    if (registeredForTerra) {
+    if (!registeredForTerra) {
       props['distinct_id'] = userId
       delete init['headers']['Authorization']
     }
