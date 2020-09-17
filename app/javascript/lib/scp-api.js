@@ -69,7 +69,7 @@ export async function fetchAuthCode(mock=false) {
 
   logDownloadAuthorization(perfTime)
 
-  return authCode;
+  return authCode
 }
 
 /**
@@ -148,7 +148,7 @@ export async function fetchExpressionViolin(
   // so send false for the 4th argument
   const [violin, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
 
-  return violin;
+  return violin
 }
 
 /**
@@ -175,7 +175,7 @@ export async function fetchExpressionViolin(
 export async function fetchAnnotationValues(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/expression_data/annotations`
   const [values, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
-  return values;
+  return values
 }
 
 /**
@@ -361,8 +361,7 @@ export function getBrandingGroup() {
 export default async function scpApi(
   path, init, mock=false, camelCase=true, toJson=true
 ) {
-
-  const perfTimeStart = performance.now();
+  const perfTimeStart = performance.now()
 
   if (globalMock) mock = true
   const basePath =
@@ -370,7 +369,7 @@ export default async function scpApi(
   let fullPath = basePath + path
   if (mock) fullPath += '.json' // e.g. /mock_data/search/auth_code.json
 
-  const response = await fetch(fullPath, init).catch(error => error);
+  const response = await fetch(fullPath, init).catch(error => error)
 
   // Milliseconds taken to fetch data from API
   const perfTime = Math.round(performance.now() - perfTimeStart)
