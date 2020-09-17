@@ -42,4 +42,13 @@ module FeatureFlaggable
     end
     flag_hash.with_indifferent_access
   end
+
+  # updates each instance of the given model to clear the given flag
+  # useful for obsoleting a given flag
+  def self.remove_flag_from_model(model, flag_name)
+    model.where(:"feature_flags.#{flag_name}".exists => true).each do |instance|
+      instance.feature_flags.delete(flag_name)
+      instance.save
+    end
+  end
 end
