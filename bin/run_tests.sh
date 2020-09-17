@@ -30,15 +30,22 @@ function clean_up {
 }
 
 clean_up
-if [[ ! -d /home/app/webapp/tmp/pids ]]
+
+TMP_PIDS_DIR="/home/app/webapp/tmp/pids"
+if [ "$NOT_DOCKERIZED" = "true" ]
+then
+    TMP_PIDS_DIR="./tmp/pids"
+fi
+
+if [[ ! -d "$TMP_PIDS_DIR" ]]
 then
     echo "*** MAKING tmp/pids DIR ***"
-    mkdir -p /home/app/webapp/tmp/pids || { echo "FAILED to create ./tmp/pids/" >&2; exit 1; }
+    mkdir -p "$TMP_PIDS_DIR" || { echo "FAILED to create $TMP_PIDS_DIR" >&2; exit 1; }
     echo "*** COMPLETED ***"
 fi
 export PASSENGER_APP_ENV=test
 echo "*** STARTING DELAYED_JOB for $PASSENGER_APP_ENV env ***"
-rm -f tmp/pids/delayed_job.*.pid
+rm -f "$TMP_PIDS_DIR/delayed_job.*.pid"
 bin/delayed_job restart $PASSENGER_APP_ENV -n 6 || { echo "FAILED to start DELAYED_JOB" >&2; exit 1; } # WARNING: using "restart" with environment of test is a HACK that will prevent delayed_job from running in development mode, for example
 
 echo "Precompiling assets, yarn and webpacker..."
