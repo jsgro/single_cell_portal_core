@@ -35,12 +35,14 @@ let pendingEvents = [] // eslint-disable-line
 let bardDomain = ''
 const env = getSCPContext().environment
 let userId = ''
+let registeredForTerra = false
 
 // TODO (SCP-2237): Use Node environment to get React execution context
 if (env != 'test') {
   bardDomain = bardDomainsByEnv[env]
   // To consider: Replace SCP-specific userId with DSP-wide userId
   userId = window.SCP.userId
+  registeredForTerra = window.SCP.registeredForTerra
 }
 
 /**
@@ -70,7 +72,6 @@ export function logClick(event) {
 
   const target = event.target
   const tag = target.localName.toLowerCase() // local tag name
-
   if (tag === 'a') {
     logClickLink(target)
   } else if (tag === 'button') {
@@ -86,8 +87,12 @@ export function logClick(event) {
 /**
  * Log click on link, i.e. anchor (<a ...) tag
  */
-function logClickLink(target) {
-  const props = { text: target.text }
+export function logClickLink(target) {
+  const props = {
+    text: target.text,
+    classList: 'classList' in target? Array.from(target.classList) : [],
+    id: target.id
+  }
   log('click:link', props)
 }
 
@@ -249,17 +254,21 @@ export function log(name, props={}) {
 
   const brandingGroup = getBrandingGroup()
   props['brand'] = brandingGroup ? brandingGroup : ''
+  props['registeredForTerra'] = registeredForTerra
 
   let init = Object.assign({}, defaultInit)
 
   props['timeSincePageLoad'] = Math.round(performance.now())
 
-
+  // Only report 'authenticated' users if signed in and registered for Terra
+  // reporting non-Terra users to Bard results in 503 errors
   if (accessToken === '') {
-    // User is unauthenticated / unregistered / anonynmous
-    props['distinct_id'] = userId
-    delete init['headers']['Authorization']
+    // User is unauthenticated, anonymous, or not registered for Terra
     props['authenticated'] = false
+    if (registeredForTerra) {
+      props['distinct_id'] = userId
+      delete init['headers']['Authorization']
+    }
   } else {
     props['authenticated'] = true
   }
