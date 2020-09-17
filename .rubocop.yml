@@ -1,0 +1,8 @@
+require: rubocop-rails
+
+AllCops:
+  Exclude:
+    - 'node_modules/**/*'
+    - 'vendor/**/*'
+    - Gemfile.lock
+    - yarn.lock

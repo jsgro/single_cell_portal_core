@@ -46,6 +46,7 @@ group :development, :test do
   gem 'byebug'
   gem 'puma'
   gem 'rubocop', require: false
+  gem 'rubocop-rails', require: false
 end
 
 gem 'devise'
