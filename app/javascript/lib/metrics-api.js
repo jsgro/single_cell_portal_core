@@ -309,7 +309,7 @@ export function log(name, props={}) {
 export function startPendingEvent(
   name, props={}, completionTriggerPrefix, fromPageLoad
 ) {
-  const startTime = performance.now()
+  const startTime = fromPageLoad ? 0 : performance.now()
   const pendingEvent = {
     name,
     props,
@@ -319,15 +319,6 @@ export function startPendingEvent(
       const perfTime = performance.now() - startTime
       props.perfTime = Math.round(perfTime)
       if (triggerEventProps && triggerEventProps.perfTime) {
-        if (fromPageLoad === true) {
-          // Consider moving away from `performance.timing`, as this API is
-          // deprecated.  As of 2020-09-16, Chrome notes no intent to deprecate
-          // and Safari only supports this API, so a refactor should include
-          // a `performance.timing` shim for Safari.
-          const perfData = performance.timing
-          const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart
-          props.perfTime += pageLoadTime
-        }
         // For now we just assume that triggered events always have a backend
         // and frontend component and naively measure the backend time as
         // (totalTime - frontendTime)
