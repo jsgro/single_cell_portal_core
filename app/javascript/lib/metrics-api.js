@@ -260,15 +260,12 @@ export function log(name, props={}) {
 
   props['timeSincePageLoad'] = Math.round(performance.now())
 
-  // Only report 'authenticated' users if signed in and registered for Terra
-  // reporting non-Terra users to Bard results in 503 errors
-  if (accessToken === '') {
-    // User is unauthenticated, anonymous, or not registered for Terra
-    props['authenticated'] = false
-    if (!registeredForTerra) {
-      props['distinct_id'] = userId
-      delete init['headers']['Authorization']
-    }
+  if (accessToken === '' || !registeredForTerra) {
+    // User is unauthenticated, unregistered, anonymous,
+    // or authenticated in SCP but not registered for Terra
+    props['authenticated'] = (accessToken !== '')
+    props['distinct_id'] = userId
+    delete init['headers']['Authorization']
   } else {
     props['authenticated'] = true
   }
