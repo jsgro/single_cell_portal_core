@@ -82,6 +82,7 @@ else
                     test/integration/lib/bulk_download_service_test.rb
                     test/integration/study_validation_test.rb
                     test/integration/taxons_controller_test.rb
+                    test/integration/synthetic_study_populator_test.rb
                     test/controllers/analysis_configurations_controller_test.rb
                     test/controllers/site_controller_test.rb
                     test/controllers/preset_searches_controller_test.rb
