@@ -319,12 +319,6 @@ export function startPendingEvent(
       const perfTime = performance.now() - startTime
       props.perfTime = Math.round(perfTime)
       if (triggerEventProps && triggerEventProps.perfTime) {
-        // For now we just assume that triggered events always have a backend
-        // and frontend component and naively measure the backend time as
-        // (totalTime - frontendTime)
-        const frontendTime = Math.round(triggerEventProps.perfTime)
-
-        let backendStart = triggerEventProps.perfTime
         if (fromPageLoad === true) {
           // Consider moving away from `performance.timing`, as this API is
           // deprecated.  As of 2020-09-16, Chrome notes no intent to deprecate
@@ -332,10 +326,13 @@ export function startPendingEvent(
           // a `performance.timing` shim for Safari.
           const perfData = performance.timing
           const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart
-          backendStart = pageLoadTime
-          props.perfTime = performance.now() - perfData.navigationStart
+          props.perfTime += pageLoadTime
         }
-        const backendTime = Math.round(props.perfTime - backendStart)
+        // For now we just assume that triggered events always have a backend
+        // and frontend component and naively measure the backend time as
+        // (totalTime - frontendTime)
+        const frontendTime = Math.round(triggerEventProps.perfTime)
+        const backendTime = Math.round(props.perfTime - frontendTime)
         props['perfTime:frontend'] = frontendTime
         props['perfTime:backend'] = backendTime
       }
