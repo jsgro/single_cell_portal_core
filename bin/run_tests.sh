@@ -25,20 +25,28 @@ FAILED_COUNT=0
 function clean_up {
   echo "Cleaning up..."
   bundle exec bin/rails runner -e test "Study.delete_all_and_remove_workspaces" || { echo "FAILED to delete studies and workspaces" >&2; exit 1; } # destroy all studies/workspaces to clean up any files
+  bundle exec bin/rails runner -e test "BigQueryClient.clear_bq_table" || { echo "FAILED to clear BigQuery table" >&2; exit 1; } # make sure BQ table is cleared
   bundle exec rake RAILS_ENV=test db:purge
   echo "...cleanup complete."
 }
 
 clean_up
-if [[ ! -d /home/app/webapp/tmp/pids ]]
+
+TMP_PIDS_DIR="/home/app/webapp/tmp/pids"
+if [ "$NOT_DOCKERIZED" = "true" ]
+then
+    TMP_PIDS_DIR="./tmp/pids"
+fi
+
+if [[ ! -d "$TMP_PIDS_DIR" ]]
 then
     echo "*** MAKING tmp/pids DIR ***"
-    mkdir -p /home/app/webapp/tmp/pids || { echo "FAILED to create ./tmp/pids/" >&2; exit 1; }
+    mkdir -p "$TMP_PIDS_DIR" || { echo "FAILED to create $TMP_PIDS_DIR" >&2; exit 1; }
     echo "*** COMPLETED ***"
 fi
 export PASSENGER_APP_ENV=test
 echo "*** STARTING DELAYED_JOB for $PASSENGER_APP_ENV env ***"
-rm -f tmp/pids/delayed_job.*.pid
+rm -f "$TMP_PIDS_DIR/delayed_job.*.pid"
 bin/delayed_job restart $PASSENGER_APP_ENV -n 6 || { echo "FAILED to start DELAYED_JOB" >&2; exit 1; } # WARNING: using "restart" with environment of test is a HACK that will prevent delayed_job from running in development mode, for example
 
 echo "Precompiling assets, yarn and webpacker..."

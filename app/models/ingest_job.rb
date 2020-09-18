@@ -535,7 +535,7 @@ class IngestJob
       end
     end
 
-    if error_contents.empty? || email_type == :dev
+    if !error_contents.present? || email_type == :dev
       message_body += "<h3>Event Messages</h3>"
       message_body += "<ul>"
       self.event_messages.each do |e|

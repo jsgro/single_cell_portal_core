@@ -243,7 +243,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     bqc = ApplicationController.big_query_client
     bq_dataset = bqc.datasets.detect {|dataset| dataset.dataset_id == CellMetadatum::BIGQUERY_DATASET}
     initial_bq_row_count = get_bq_row_count(bq_dataset, study)
-
+    assert initial_bq_row_count == 30, "wrong number of BQ rows found to test deletion capability"
     # request delete
     puts "Requesting delete for alexandria_convention/metadata.v2-0-0.txt"
     delete api_v1_study_study_file_path(study_id: study.id, id: metadata_file.id), as: :json, headers: {authorization: "Bearer #{@test_user.api_access_token[:access_token]}" }
@@ -251,7 +251,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     seconds_slept = 0
     sleep_increment = 10
     max_seconds_to_sleep = 60
-    until ( (bq_row_count = get_bq_row_count(bq_dataset, study)) <= initial_bq_row_count) do
+    until ( (bq_row_count = get_bq_row_count(bq_dataset, study)) == 0 ) do
       puts "#{seconds_slept} seconds after requesting file deletion, bq_row_count is #{bq_row_count}."
       if seconds_slept >= max_seconds_to_sleep
         raise "Even #{seconds_slept} seconds after requesting file deletion, not all records have been deleted from bigquery."
@@ -260,7 +260,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
       seconds_slept += sleep_increment
     end
     puts "#{seconds_slept} seconds after requesting file deletion, bq_row_count is #{bq_row_count}."
-    assert get_bq_row_count(bq_dataset, study) <= initial_bq_row_count # using "<=" instead of "==" in case there were rows from a previous aborted test to clean up
+    assert get_bq_row_count(bq_dataset, study) == 0
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
