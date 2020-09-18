@@ -110,7 +110,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     facets = SearchFacet.where(data_type: 'string')
 
     # find all human studies from metadata
-    facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
+    facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}+disease:#{NO_DISEASE_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
     expected_accessions = [study.accession]
