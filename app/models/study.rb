@@ -1105,6 +1105,14 @@ class Study
     end
   end
 
+  def default_dot_plot_collapse_method
+    if self.default_options[:dot_plot_collapse_method].blank?
+      'Mean'
+    else
+      'Median'
+    end
+  end
+
   ###
   #
   # INSTANCE VALUE SETTERS & GETTERS

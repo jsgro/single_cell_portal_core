@@ -125,16 +125,20 @@ function renderMorpheusDotPlot(
   `)
   $(target).empty()
 
+  const collapseMethod = dotPlotCollapseMethod
+  const percentile = (collapseMethod === 'Median') ? '50' : '100'
+
   // Collapse by median
   const tools = [{
     name: 'Collapse',
     params: {
+      collapse_method: collapseMethod,
       shape: 'circle',
       collapse: ['Columns'],
       collapse_to_fields: [selectedAnnot],
       pass_expression: '>',
       pass_value: '0',
-      percentile: '100',
+      percentile,
       compute_percent: true
     }
   }]
