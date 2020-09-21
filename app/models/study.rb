@@ -1109,7 +1109,7 @@ class Study
     if self.default_options[:dot_plot_collapse_method].blank?
       'Mean'
     else
-      'Median'
+      self.default_options[:dot_plot_collapse_method]
     end
   end
 
