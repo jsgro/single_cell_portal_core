@@ -43,12 +43,8 @@ function getLegendSvg(rects) {
   // The very particular values for cx, x, etc. are manually polished and work
   // for these particular contents, but won't work once we enable users to
   // change the default size max. and min. values.
-  //
-  // Note: the width style is inlined here because it is intentionally
-  // tightly coupled to the content.  If we change the legend color text,
-  // then the width will also need to change to avoid truncation.
   return (
-    `<svg id="dot-plot-container" style="width: 300px">
+    `<svg id="dot-plot-legend-container">
       <g id="dp-legend-size">
         <circle cx="20" cy="8" r="1"/>
         <circle cx="57.5" cy="8" r="3"/>
