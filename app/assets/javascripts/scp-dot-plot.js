@@ -125,8 +125,12 @@ function renderMorpheusDotPlot(
   `)
   $(target).empty()
 
-  const collapseMethod = dotPlotCollapseMethod
-  const percentile = (collapseMethod === 'Median') ? '50' : '100'
+  // TODO (SCP-2748): Restore or refine "Study Default View Option" for dot plot collapse method
+  // const collapseMethod = dotPlotCollapseMethod
+  // const percentile = (collapseMethod === 'Median') ? '50' : '100'
+
+  const collapseMethod = 'Mean'
+  const percentile = '100'
 
   // Collapse by median
   const tools = [{

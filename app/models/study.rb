@@ -1105,13 +1105,14 @@ class Study
     end
   end
 
-  def default_dot_plot_collapse_method
-    if self.default_options[:dot_plot_collapse_method].blank?
-      'Mean'
-    else
-      self.default_options[:dot_plot_collapse_method]
-    end
-  end
+  # TODO (SCP-2748): Restore or refine "Study Default View Option" for dot plot collapse method
+  # def default_dot_plot_collapse_method
+  #   if self.default_options[:dot_plot_collapse_method].blank?
+  #     'Mean'
+  #   else
+  #     self.default_options[:dot_plot_collapse_method]
+  #   end
+  # end
 
   ###
   #

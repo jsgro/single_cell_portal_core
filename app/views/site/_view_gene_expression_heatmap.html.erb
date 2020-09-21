@@ -55,7 +55,8 @@
 
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
 
-    var dotPlotCollapseMethod = '<%= @study.default_dot_plot_collapse_method %>';
+    // TODO (SCP-2748): Restore or refine "Study Default View Option" for dot plot collapse method
+    // var dotPlotCollapseMethod = '<%= @study.default_dot_plot_collapse_method %>';
 
     // monitor status of rendering plots for tests
     $('#heatmap-plot').data('rendered', false);

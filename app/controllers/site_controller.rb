@@ -1458,6 +1458,7 @@ class SiteController < ApplicationController
     params.require(:study).permit(:name, :description, :public, :embargo, :cell_count,
                                   :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails,
                                                        :cluster_point_size, :cluster_point_alpha, :cluster_point_border,
+                                                       # TODO (SCP-2748): Restore or refine "Study Default View Option" for dot plot collapse method
                                                        :dot_plot_collapse_method],
                                   study_shares_attributes: [:id, :_destroy, :email, :permission],
                                   study_detail_attributes: [:id, :full_description])
