@@ -125,24 +125,17 @@ function renderMorpheusDotPlot(
   `)
   $(target).empty()
 
-  // TODO (SCP-2748): Restore or refine "Study Default View Option" for dot plot collapse method
-  // const collapseMethod = dotPlotCollapseMethod
-  // const percentile = (collapseMethod === 'Median') ? '50' : '100'
-
-  const collapseMethod = 'Mean'
-  const percentile = '100'
-
-  // Collapse by median
+  // Collapse by mean
   const tools = [{
     name: 'Collapse',
     params: {
-      collapse_method: collapseMethod,
+      collapse_method: 'Mean',
       shape: 'circle',
       collapse: ['Columns'],
       collapse_to_fields: [selectedAnnot],
       pass_expression: '>',
       pass_value: '0',
-      percentile,
+      percentile: '100',
       compute_percent: true
     }
   }]

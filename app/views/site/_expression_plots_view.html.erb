@@ -50,9 +50,6 @@
     var dotPlotAnnotValuesPath = '<%= annotation_values_path(study_name: @study.url_safe_name) %>';
     var dotPlotNewAnnotsPath = '<%= get_new_annotations_path(study: params[:study])%>';
 
-    // TODO (SCP-2748): Restore or refine "Study Default View Option" for dot plot collapse method
-    // var dotPlotCollapseMethod = '<%= @study.default_dot_plot_collapse_method %>';
-
     // monitor status of rendering plots for tests
     $('#dot-plot').data('rendered', false);
 

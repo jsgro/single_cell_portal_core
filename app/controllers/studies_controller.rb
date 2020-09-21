@@ -1105,9 +1105,7 @@ class StudiesController < ApplicationController
 
   def default_options_params
     params.require(:study_default_options).permit(:cluster, :annotation, :color_profile, :expression_label, :cluster_point_size,
-                                                  :cluster_point_alpha, :cluster_point_border,
-                                                  # TODO (SCP-2748): Restore or refine "Study Default View Option" for dot plot collapse method
-                                                  :dot_plot_collapse_method)
+                                                  :cluster_point_alpha, :cluster_point_border)
   end
 
   def set_file_types
