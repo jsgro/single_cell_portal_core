@@ -310,7 +310,7 @@ class SiteController < ApplicationController
     @directories = @study.directory_listings.are_synced
     @primary_data = @study.directory_listings.primary_data
     @other_data = @study.directory_listings.non_primary_data
-    @unique_genes = @study.genes.unique_genes
+    @unique_genes = @study.unique_genes
 
     # double check on download availability: first, check if administrator has disabled downloads
     # then check individual statuses to see what to enable/disable
@@ -1466,12 +1466,17 @@ class SiteController < ApplicationController
 
   # whitelist parameters for updating studies on study settings tab (smaller list than in studies controller)
   def study_params
-    params.require(:study).permit(:name, :description, :public, :embargo, :cell_count, :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails, :cluster_point_size, :cluster_point_alpha, :cluster_point_border], study_shares_attributes: [:id, :_destroy, :email, :permission])
+    params.require(:study).permit(:name, :description, :public, :embargo, :cell_count,
+                                  :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails,
+                                                       :cluster_point_size, :cluster_point_alpha, :cluster_point_border],
+                                  study_shares_attributes: [:id, :_destroy, :email, :permission],
+                                  study_detail_attributes: [:id, :full_description])
   end
 
   # whitelist parameters for creating custom user annotation
   def user_annotation_params
-    params.require(:user_annotation).permit(:_id, :name, :study_id, :user_id, :cluster_group_id, :subsample_threshold, :loaded_annotation, :subsample_annotation, user_data_arrays_attributes: [:name, :values])
+    params.require(:user_annotation).permit(:_id, :name, :study_id, :user_id, :cluster_group_id, :subsample_threshold,
+                                            :loaded_annotation, :subsample_annotation, user_data_arrays_attributes: [:name, :values])
   end
 
   # make sure user has view permissions for selected study
@@ -2073,7 +2078,7 @@ class SiteController < ApplicationController
     end
     aspect
   end
-  
+
   ###
   #
   # SEARCH SUB METHODS
@@ -2162,12 +2167,7 @@ class SiteController < ApplicationController
 
   # sanitize search values
   def sanitize_search_values(terms)
-    if terms.is_a?(Array)
-      sanitized = terms.map {|t| view_context.sanitize(t)}
-      sanitized.join(',')
-    else
-      view_context.sanitize(terms)
-    end
+    RequestUtils.sanitize_search_terms(terms)
   end
 
   ###

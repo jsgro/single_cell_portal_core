@@ -10,6 +10,7 @@ import {
   buildFacetsFromQueryString
 } from 'lib/scp-api'
 import SearchSelectionProvider from './SearchSelectionProvider'
+import { buildParamsFromQuery as buildGeneParamsFromQuery } from './GeneSearchProvider'
 
 const emptySearch = {
   params: {
@@ -39,20 +40,6 @@ const emptySearch = {
 
 export const StudySearchContext = React.createContext(emptySearch)
 
-/**
- * Count terms, i.e. space-delimited strings, and consider [""] to have 0 terms
- */
-export function getNumberOfTerms(terms) {
-  let numTerms = 0
-  if (!terms) {
-    return numTerms
-  }
-  const splitTerms = terms.split(' ')
-  if (splitTerms.length > 0 && splitTerms[0] !== '') {
-    numTerms = splitTerms.length
-  }
-  return numTerms
-}
 
 /**
  * Counts facets (e.g. species, disease) and filters (e.g. human, COVID-19)
@@ -72,11 +59,26 @@ export function getNumFacetsAndFilters(facets) {
   return [numFacets, numFilters]
 }
 
+/** Converts raw searched terms to an array */
+export function formatTerms(terms) {
+  if (typeof terms === 'undefined') return [];
+  return terms.trim().split(/[, ]/).filter(term => term.length > 0);
+}
+
 /** Determine if search has any parameters, i.e. terms or filters */
 export function hasSearchParams(params) {
-  const numTerms = getNumberOfTerms(params.terms)
+  const numTerms = formatTerms(params.terms).length
   const [numFacets, numFilters] = getNumFacetsAndFilters(params.facets)
   return numTerms + numFacets + numFilters > 0
+}
+
+/** returns the applied (i.e. sent to server for search) params for the given facet object */
+export function getAppliedParamsForFacet(facet, searchContext) {
+  let appliedParams = []
+  if (searchContext.params.facets[facet.id]) {
+    appliedParams = searchContext.params.facets[facet.id]
+  }
+  return appliedParams
 }
 
 /** Wrapper for deep mocking via Jest / Enzyme */
@@ -107,7 +109,8 @@ export function PropsStudySearchProvider(props) {
     // reset the page to 1 for new searches, unless otherwise specified
     search.page = newParams.page ? newParams.page : 1
     search.preset = undefined // for now, exclude preset from the page URL--it's in the component props instead
-    const queryString = buildSearchQueryString('study', search)
+    const mergedParams = Object.assign(buildGeneParamsFromQuery(window.location.search), search)
+    const queryString = buildSearchQueryString('study', mergedParams)
     navigate(`?${queryString}`)
   }
 
@@ -146,6 +149,17 @@ export function PropsStudySearchProvider(props) {
   )
 }
 
+/** returns an object with the query params and defaults applied */
+export function buildParamsFromQuery(query, preset) {
+  const queryParams = queryString.parse(query)
+  return {
+    page: queryParams.page ? parseInt(queryParams.page) : 1,
+    terms: queryParams.terms ? queryParams.terms : '',
+    facets: buildFacetsFromQueryString(queryParams.facets),
+    preset: preset ? preset : queryString.preset_search,
+    order: queryParams.order
+  }
+}
 
 /**
  * Self-contained component for providing a url-routable
@@ -154,14 +168,7 @@ export function PropsStudySearchProvider(props) {
  */
 export default function StudySearchProvider(props) {
   const location = useLocation()
-  const queryParams = queryString.parse(location.search)
-  const searchParams = {
-    page: queryParams.page ? parseInt(queryParams.page) : 1,
-    terms: queryParams.terms ? queryParams.terms : '',
-    facets: buildFacetsFromQueryString(queryParams.facets),
-    preset: props.preset ? props.preset : queryString.preset_search,
-    order: queryParams.order
-  }
+  const searchParams = buildParamsFromQuery(location.search, props.preset)
 
   return (
     <PropsStudySearchProvider searchParams={searchParams}>

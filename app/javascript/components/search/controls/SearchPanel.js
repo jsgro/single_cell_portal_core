@@ -15,10 +15,10 @@ function CommonSearchButtons() {
   return (
     <>
       <span className="facet">
-        <a onClick={ () => handleClick('popular') }>Most Popular</a>
+        <a onClick={() => handleClick('popular')}>Most Popular</a>
       </span>
       <span className="facet">
-        <a onClick={ () => handleClick('recent') }>Most Recent</a>
+        <a onClick={() => handleClick('recent')}>Most Recent</a>
       </span>
     </>
   )
@@ -26,12 +26,11 @@ function CommonSearchButtons() {
 
 /**
  * Component for SCP faceted search UI
- * showCommonButtons and showDownloadButton both default to true
+ * showCommonButtons defaults to true
  */
 export default function SearchPanel({
   showCommonButtons,
   keywordPrompt,
-  showDownloadButton,
   searchOnLoad
 }) {
   // Note: This might become  a Higher-Order Component (HOC).
@@ -40,14 +39,12 @@ export default function SearchPanel({
   const featureFlagState = useContext(FeatureFlagContext)
   const searchState = useContext(StudySearchContext)
   let searchButtons = <></>
+  let downloadButtons = <></>
   if (showCommonButtons !== false) {
     searchButtons = <CommonSearchButtons/>
   }
   if (featureFlagState.faceted_search) {
     searchButtons = <FacetsPanel/>
-  }
-  let downloadButtons = <></>
-  if (showDownloadButton !== false) {
     downloadButtons = <DownloadProvider><DownloadButton /></DownloadProvider>
   }
 

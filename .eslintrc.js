@@ -14,7 +14,17 @@ module.exports = {
     ],
     'globals': {
         'Atomics': 'readonly',
-        'SharedArrayBuffer': 'readonly'
+        'SharedArrayBuffer': 'readonly',
+        '$': 'readonly',
+        'jQuery': 'readonly',
+        'd3': 'readonly',
+        'Spinner': 'readonly',
+        'morpheus': 'readonly',
+        'igv': 'readonly',
+        'Ideogram': 'readonly',
+        'createTracesAndLayout': 'readonly',
+        'ga': 'readonly',
+        'bamAndBaiFiles': 'readonly'
     },
     'parser': 'babel-eslint',
     'parserOptions': {
@@ -84,6 +94,7 @@ module.exports = {
         // React
         'react/prop-types': 'off',
         'react/jsx-key': 'off',
+        'react/jsx-curly-spacing': ['error', {'when': 'never'}],
          //Jest
          "jest/no-disabled-tests": "warn",
          // remove .only from your tests whenever you are using the exclusivity feature

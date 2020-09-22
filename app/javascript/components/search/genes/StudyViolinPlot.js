@@ -52,7 +52,11 @@ export default function StudyViolinPlot({ study, gene }) {
     const expressionData = [].concat.apply([], traceData[0])
     const expressionLayout = traceData[1]
     const graphElementId = getGraphElementId(study, gene)
-    plot(graphElementId, expressionData, expressionLayout)
+    // Check that the ID exists on the page to avoid errors in corner cases where users update search terms quickly
+    // or are toggling between study and gene view.
+    if (document.getElementById(graphElementId)) {
+      plot(graphElementId, expressionData, expressionLayout)
+    }
   }
 
   /** gets expression data from the server */
@@ -96,15 +100,15 @@ export default function StudyViolinPlot({ study, gene }) {
       <div className="col-md-10">
         <div
           className="expression-graph"
-          id={ getGraphElementId(study, gene) }
-          data-testid={ getGraphElementId(study, gene) }
+          id={getGraphElementId(study, gene)}
+          data-testid={getGraphElementId(study, gene)}
         >
         </div>
         {
           isLoading &&
           <FontAwesomeIcon
             icon={faDna}
-            data-testid={ `${getGraphElementId(study, gene)}-loading-icon` }
+            data-testid={`${getGraphElementId(study, gene)}-loading-icon`}
             className="gene-load-spinner"
           />
         }
