@@ -2067,7 +2067,7 @@ class SiteController < ApplicationController
     end
     aspect
   end
-  
+
   ###
   #
   # SEARCH SUB METHODS

@@ -24,13 +24,6 @@ class BulkDownloadService
       client = FireCloudClient.new
       curl_configs << self.get_single_curl_command(file: study_file, fc_client: client, user: user,
                                                    study_bucket_map: study_bucket_map, output_pathname_map: output_pathname_map)
-      # send along any bundled files along with the parent
-      if study_file.is_bundle_parent?
-        study_file.bundled_files.each do |bundled_file|
-          curl_configs << self.get_single_curl_command(file: bundled_file, fc_client: client, user: user,
-                                                       study_bucket_map: study_bucket_map, output_pathname_map: output_pathname_map)
-        end
-      end
     end
     curl_configs.join("\n\n")
   end
@@ -67,9 +60,10 @@ class BulkDownloadService
   #   - (Array<StudyFile>) => Array of StudyFiles to pass to #generate_curl_config
   def self.get_requested_files(file_types: [], study_accessions:)
     # replace 'Expression' with both dense & sparse matrix file types
+    # include bundled 10X files as well to avoid MongoDB timeout issues when trying to load bundles
     if file_types.include?('Expression')
       file_types.delete_if {|file_type| file_type == 'Expression'}
-      file_types += ['Expression Matrix', 'MM Coordinate Matrix']
+      file_types += ['Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File']
     end
 
     studies = Study.where(:accession.in => study_accessions)
@@ -158,11 +152,6 @@ class BulkDownloadService
     output_map = {}
     study_files.each do |study_file|
       output_map[study_file.id.to_s] = study_file.bulk_download_pathname
-      if study_file.is_bundle_parent?
-        study_file.bundled_files.each do |bundled_file|
-          output_map[bundled_file.id.to_s] = bundled_file.bulk_download_pathname
-        end
-      end
     end
     output_map
   end

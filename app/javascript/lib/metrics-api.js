@@ -9,6 +9,8 @@ import { accessToken } from 'providers/UserProvider'
 import { getBrandingGroup } from 'lib/scp-api'
 import getSCPContext from 'providers/SCPContextProvider'
 import { getDefaultProperties } from '@databiosphere/bard-client'
+import _find from 'lodash/find'
+import _remove from 'lodash/remove'
 
 let metricsApiMock = false
 
@@ -25,15 +27,22 @@ const bardDomainsByEnv = {
   staging: 'https://terra-bard-alpha.appspot.com',
   production: 'https://terra-bard-prod.appspot.com'
 }
+
+// Disable ESLint for this assignment to ensure
+// `pendingEvents` uses `let`, not `const`
+let pendingEvents = [] // eslint-disable-line
+
 let bardDomain = ''
 const env = getSCPContext().environment
 let userId = ''
+let registeredForTerra = false
 
 // TODO (SCP-2237): Use Node environment to get React execution context
 if (env != 'test') {
   bardDomain = bardDomainsByEnv[env]
   // To consider: Replace SCP-specific userId with DSP-wide userId
   userId = window.SCP.userId
+  registeredForTerra = window.SCP.registeredForTerra
 }
 
 /**
@@ -236,6 +245,8 @@ export function log(name, props={}) {
     env
   }, getDefaultProperties())
 
+  checkForTriggeredPendingEvent(name, props)
+
   if ('SCP' in window && 'featuredSpace' in window.SCP) {
     // For e.g. COVID-19 featured space
     props['featuredSpace'] = window.SCP.featuredSpace
@@ -243,14 +254,18 @@ export function log(name, props={}) {
 
   const brandingGroup = getBrandingGroup()
   props['brand'] = brandingGroup ? brandingGroup : ''
+  props['registeredForTerra'] = registeredForTerra
 
   let init = Object.assign({}, defaultInit)
 
-  if (accessToken === '') {
-    // User is unauthenticated / unregistered / anonynmous
+  props['timeSincePageLoad'] = Math.round(performance.now())
+
+  if (accessToken === '' || !registeredForTerra) {
+    // User is unauthenticated, unregistered, anonymous,
+    // or authenticated in SCP but not registered for Terra
+    props['authenticated'] = (accessToken !== '')
     props['distinct_id'] = userId
     delete init['headers']['Authorization']
-    props['authenticated'] = false
   } else {
     props['authenticated'] = true
   }
@@ -267,5 +282,62 @@ export function log(name, props={}) {
   if ('SCP' in window || metricsApiMock) {
     // Skips fetch during test, unless explicitly testing Metrics API
     fetch(`${bardDomain}/api/event`, init)
+  }
+}
+
+/**
+ Initializes an event to log later (usually on completion of an async process)
+ Handles measuring duration of the event.
+ @param {String} name: the name of the event
+ @param {} props: the props to pass along with the event.  This function
+  automatically handles computing and adding 'perfTime' properties to the
+  event props
+ @param {String} completionTriggerPrefix: The prefix of an event on whose
+  occurence this event should be automatically completed
+  e.g. 'plot:' to complete the event automatically once a plot is finished
+  rendering
+ @param {Boolean} fromPageLoad: whether to use page view navigation -- instead
+  of immediate trigger -- as start time.  Use if this pending event was
+  triggered by a page load.
+
+ @return {Object} Pending event, which has a complete() function for manually
+  firing the log event
+*/
+export function startPendingEvent(
+  name, props={}, completionTriggerPrefix, fromPageLoad
+) {
+  const startTime = fromPageLoad ? 0 : performance.now()
+  const pendingEvent = {
+    name,
+    props,
+    completionTriggerPrefix,
+    startTime,
+    complete: triggerEventProps => {
+      const perfTime = performance.now() - startTime
+      props.perfTime = Math.round(perfTime)
+      if (triggerEventProps && triggerEventProps.perfTime) {
+        // For now we just assume that triggered events always have a backend
+        // and frontend component and naively measure the backend time as
+        // (totalTime - frontendTime)
+        const frontendTime = Math.round(triggerEventProps.perfTime)
+        const backendTime = Math.round(props.perfTime - frontendTime)
+        props['perfTime:frontend'] = frontendTime
+        props['perfTime:backend'] = backendTime
+      }
+      log(name, props)
+      _remove(pendingEvents, { name })
+    }
+  }
+  pendingEvents.push(pendingEvent)
+  return pendingEvent
+}
+
+/** Checks for events that are awaiting to be logged */
+function checkForTriggeredPendingEvent(name, props) {
+  const matchedPendingEvent = _find(pendingEvents, ce => {
+    return name.startsWith(ce.completionTriggerPrefix)
+  })
+  if (matchedPendingEvent) {
+    matchedPendingEvent.complete(props)
   }
 }

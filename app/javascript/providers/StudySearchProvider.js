@@ -40,16 +40,6 @@ const emptySearch = {
 
 export const StudySearchContext = React.createContext(emptySearch)
 
-/**
- * Count terms, i.e. space-delimited strings, and consider [""] to have 0 terms
- */
-export function getNumberOfTerms(splitTerms) {
-  let numTerms = 0
-  if (splitTerms && splitTerms.length > 0 && splitTerms[0] !== '') {
-    numTerms = splitTerms.length
-  }
-  return numTerms
-}
 
 /**
  * Counts facets (e.g. species, disease) and filters (e.g. human, COVID-19)
@@ -69,9 +59,15 @@ export function getNumFacetsAndFilters(facets) {
   return [numFacets, numFilters]
 }
 
+/** Converts raw searched terms to an array */
+export function formatTerms(terms) {
+  if (typeof terms === 'undefined') return [];
+  return terms.trim().split(/[, ]/).filter(term => term.length > 0);
+}
+
 /** Determine if search has any parameters, i.e. terms or filters */
 export function hasSearchParams(params) {
-  const numTerms = getNumberOfTerms(params.terms)
+  const numTerms = formatTerms(params.terms).length
   const [numFacets, numFilters] = getNumFacetsAndFilters(params.facets)
   return numTerms + numFacets + numFilters > 0
 }

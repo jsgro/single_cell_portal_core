@@ -97,6 +97,7 @@ class User
   #   last_access_at: DateTime last usage of token
   # }
   field :api_access_token, type: Hash
+  field :metrics_uuid, type: String
 
   # feature_flags should be a hash of true/false values.  If unspecified for a given flag, the
   # default_value from the FeatureFlag should be used.  Accordingly, the helper method feature_flags_with_defaults
@@ -112,8 +113,7 @@ class User
   def self.from_omniauth(access_token)
     data = access_token.info
     provider = access_token.provider
-    uid =
-     access_token.uid
+    uid = access_token.uid
     # create bogus password, Devise will never use it to authenticate
     password = Devise.friendly_token[0,20]
     user = User.find_by(email: data['email'])
@@ -257,6 +257,13 @@ class User
     else
       return false
     end
+  end
+
+  def get_metrics_uuid
+    if self.metrics_uuid.nil?
+      self.update(metrics_uuid: SecureRandom.uuid)
+    end
+    self.metrics_uuid
   end
 
   ###
