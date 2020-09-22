@@ -350,14 +350,14 @@ module ApplicationHelper
     if study.public? && Study.read_only_firecloud_client.present?
       Study.read_only_firecloud_client.valid_access_token["access_token"]
     elsif user.present?
-      user.valid_access_token[:access_token]
+      user.valid_access_token.try(:[], :access_token)
     end
   end
 
   # Return the user's access token for bulk download of faceted search results
   def get_user_access_token(user)
     if user.present?
-      user.valid_access_token[:access_token]
+      user.valid_access_token.try(:[], :access_token)
     end
   end
 
