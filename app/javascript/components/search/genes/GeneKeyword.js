@@ -1,6 +1,6 @@
 import React, { useContext, useState, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons'
+import { faTimes, faSearch, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 import _clone from 'lodash/clone'
 import Button from 'react-bootstrap/lib/Button'
 import Modal from 'react-bootstrap/lib/Modal'
@@ -13,11 +13,12 @@ import { StudySearchContext } from 'providers/StudySearchProvider'
   * having it inlined in GeneSearchView led to a mysterious infinite-repaint bug in StudyResults
   * this shares a lot of UI/functionality with KeywordSearch.js, so it's a candidate for future refactoring
   */
-export default function GeneKeyword({ placeholder }) {
+export default function GeneKeyword({ placeholder, helpTextContent }) {
   const geneSearchState = useContext(GeneSearchContext)
   const studySearchState = useContext(StudySearchContext)
   const [genes, setGenes] = useState(_clone(geneSearchState.params.genes))
   const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
+  const [showHelpTextModal, setShowHelpTextModal] = useState(false)
 
   const showClear = genes && genes.length
   const inputField = useRef()
@@ -61,6 +62,10 @@ export default function GeneKeyword({ placeholder }) {
             <FontAwesomeIcon icon={faTimes} />
           </Button> }
       </div>
+      <div style={{marginLeft: '480px', color: '#888', fontSize: '16px', marginTop: '-30px'} }>
+          <FontAwesomeIcon icon={faQuestionCircle} onClick={() => setShowHelpTextModal(true)}/>
+        </div>
+
       <Modal
         show={showEmptySearchModal}
         onHide={() => {setShowEmptySearchModal(false)}}
@@ -68,6 +73,15 @@ export default function GeneKeyword({ placeholder }) {
         bsSize='small'>
         <Modal.Body className="text-center">
           You must enter at least one gene to search
+        </Modal.Body>
+      </Modal>
+      <Modal
+        show={showHelpTextModal}
+        onHide={() => {setShowHelpTextModal(false)}}
+        animation={false}
+        bsSize='small'>
+        <Modal.Body>
+          {helpTextContent}
         </Modal.Body>
       </Modal>
     </form>

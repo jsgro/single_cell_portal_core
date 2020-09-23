@@ -27,7 +27,7 @@ export default function GeneSearchView() {
                                  !geneSearchState.isLoading &&
                                  !geneSearchState.isError
 
-  let geneSearchPlaceholder = 'Search for genes across all studies'
+  let geneSearchPlaceholder = 'gene names to search (e.g. "agpat pten")'
   if (hasSearchParams(studySearchState.params) && featureFlagState.gene_study_filter) {
     geneSearchPlaceholder = 'Search for genes in the filtered studies'
   }
@@ -41,11 +41,35 @@ export default function GeneSearchView() {
     }
   })
 
+  let helpTextContent = (
+    <div>
+      <br/>
+      For gene search, provide a list of one or more genes, separated by spaces, and do not include non-genes in your terms.
+      <br/>
+      Search is case-insensitive.
+      <br/>
+      <br/>
+      Example searches:
+      <ul>
+        <li>farsa</li>
+        <li>pten actn1</li>
+        <li>brca1 brca2 pten actn1</li>
+      </ul>
+    </div>
+  )
+
+  let noResultsContent = (
+    <div>
+      No results found
+      { helpTextContent }
+    </div>
+  )
+
   return (
     <div>
       <div className="row">
         <div className="col-md-12 col-sm-12 col-xs-12">
-          <GeneKeyword placeholder={geneSearchPlaceholder}/>
+          <GeneKeyword placeholder={geneSearchPlaceholder} helpTextContent={helpTextContent} />
         </div>
       </div>
       { featureFlagState.gene_study_filter &&
@@ -69,7 +93,8 @@ export default function GeneSearchView() {
         <div className="col-md-12">
           <ResultsPanel
             studySearchState={geneSearchState}
-            studyComponent={StudyGeneExpressions}/>
+            studyComponent={StudyGeneExpressions}
+            noResultsDisplay={noResultsContent} />
         </div>
         <div className="col-md-12">
           <div id="load-more-genes-target"></div>
