@@ -33,6 +33,8 @@ function createSearchResultsIdeogram() {
     height: 0;
     float: right`;
 
+
+  console.log('***** foo')
   ideoConfig = {
     container: '#ideogramSearchResultsContainer',
     organism: window.SCP.organism.toLowerCase().replace(/ /g, '-'),
@@ -40,7 +42,7 @@ function createSearchResultsIdeogram() {
     chrHeight: 80,
     chrLabelSize: 11,
     annotationHeight: 5,
-    dataDir: 'https://unpkg.com/ideogram@1.20.0/dist/data/bands/native/',
+    dataDir: 'https://unpkg.com/ideogram@1.23.0/dist/data/bands/native/',
     onClickAnnot: onClickAnnot,
     onLoad: function() {
       let left = document.querySelector('#_ideogramInnerWrap').style['max-width'];
@@ -52,9 +54,10 @@ function createSearchResultsIdeogram() {
       // Handles "BRCA1,BRCA2", "BRCA1 BRCA2", and "BRCA1, BRCA2"
       let geneSymbols = searchInput.split(/[, ]/).filter(d => d !== '')
       // plotGeneAndParalogs(geneSymbols);
+      console.log('***** bar')
       this.plotRelatedGenes(geneSymbols);
     }
   }
 
-  let ideogram = Ideogram.initRelatedGenes(ideoConfig)
+  window.ideogram = Ideogram.initRelatedGenes(ideoConfig)
 }
