@@ -197,7 +197,7 @@
 
     // error handling for auth errors when getting user access tokens
     if (window.SCP.userAccessToken === '' && <%= user_signed_in? %>) {
-        var errorText = '<p>There was an issue retrieving the access token associated with your account - ' +
+        var errorText = '<p>There was a problem retrieving some credentials associated with your account - ' +
             'please sign out and back in again to address the issue.</p>'
         var signOutBtn = "<p><a class='btn btn-primary' data-method='delete' href='/single_cell/users/sign_out'>" +
             "<span class='fas fa-sign-out-alt fa-fw'></span> Sign Out</a></p>"
