@@ -197,7 +197,7 @@
 
     // error handling for auth errors when getting user access tokens
     if (window.SCP.userAccessToken === '' && <%= user_signed_in? %>) {
-        var errorTitle = 'Please refresh your login';
+        var errorTitle = 'Please sign in again';
         var errorText = '<p class="text-danger">There appears to be an issue with you session - ' +
             'please sign out and back in again to continue using Single Cell Portal. </p>';
         var signOutBtn = "<span class='pull-right'><a class='btn btn-primary' data-method='delete' href='/single_cell/users/sign_out'>" +
