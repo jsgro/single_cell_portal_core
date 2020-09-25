@@ -4,6 +4,8 @@ import { faTimes, faSearch, faQuestionCircle } from '@fortawesome/free-solid-svg
 import _clone from 'lodash/clone'
 import Button from 'react-bootstrap/lib/Button'
 import Modal from 'react-bootstrap/lib/Modal'
+import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger'
+import Tooltip from 'react-bootstrap/lib/Tooltip'
 
 import { GeneSearchContext } from 'providers/GeneSearchProvider'
 import { StudySearchContext } from 'providers/StudySearchProvider'
@@ -18,7 +20,7 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
   const studySearchState = useContext(StudySearchContext)
   const [genes, setGenes] = useState(_clone(geneSearchState.params.genes))
   const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
-  const [showHelpTextModal, setShowHelpTextModal] = useState(false)
+  const [showTooltip, setShowTooltip] = useState(false)
 
   const showClear = genes && genes.length
   const inputField = useRef()
@@ -42,14 +44,19 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
   return (
     <form className="gene-keyword-search form-horizontal" onSubmit={handleSubmit}>
       <div className="input-group">
-        <input type="text"
-          ref={inputField}
-          className="form-control"
-          value={genes}
-          size="50"
-          onChange={e => setGenes(e.target.value)}
-          placeholder={placeholder}
-          name="genes-text-input"/>
+        <OverlayTrigger placement="top" overlay={
+            <Tooltip id="gene-keyword-search-tooltip">{helpTextContent}</Tooltip>
+          }>
+          <input type="text"
+            ref={inputField}
+            className="form-control"
+            value={genes}
+            size="50"
+            onChange={e => setGenes(e.target.value)}
+            onClick={() => setShowTooltip(!showTooltip)}
+            placeholder={placeholder}
+            name="genes-text-input"/>
+        </OverlayTrigger>
         <div className="input-group-append">
           <Button type="submit">
             <FontAwesomeIcon icon={faSearch} />
@@ -62,9 +69,6 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
             <FontAwesomeIcon icon={faTimes} />
           </Button> }
       </div>
-      <div style={{marginLeft: '480px', color: '#888', fontSize: '16px', marginTop: '-30px'} }>
-          <FontAwesomeIcon icon={faQuestionCircle} onClick={() => setShowHelpTextModal(true)}/>
-        </div>
 
       <Modal
         show={showEmptySearchModal}
@@ -73,15 +77,6 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
         bsSize='small'>
         <Modal.Body className="text-center">
           You must enter at least one gene to search
-        </Modal.Body>
-      </Modal>
-      <Modal
-        show={showHelpTextModal}
-        onHide={() => {setShowHelpTextModal(false)}}
-        animation={false}
-        bsSize='small'>
-        <Modal.Body>
-          {helpTextContent}
         </Modal.Body>
       </Modal>
     </form>

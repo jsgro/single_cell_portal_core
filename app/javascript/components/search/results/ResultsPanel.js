@@ -55,7 +55,7 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
       </>
     )
   } else {
-    noResultsDisplay = noResultsDisplay ? noResultsDisplay : <p> No results found </p>
+    noResultsDisplay = noResultsDisplay ? noResultsDisplay : <div> No results found. </div>
     panelContent = (
       <>
         <SearchQueryDisplay terms={results.termList} facets={results.facets} />
