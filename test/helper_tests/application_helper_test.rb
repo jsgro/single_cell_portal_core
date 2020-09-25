@@ -14,13 +14,13 @@ class ApplicationHelperTest < ActionView::TestCase
     refute client_access_token.nil?, "Should have retrieved a value for access token"
 
     # simulate issue with access token retrieval by clearing values
-    user.update(access_token: nil)
+    user.update!(access_token: nil)
     user.reload
     new_token = get_user_access_token(user)
     assert new_token.nil?, "Access token should be nil, but found #{new_token}"
 
     # clean up and ensure consistency
-    user.update(access_token: access_token_hash)
+    user.update!(access_token: access_token_hash)
     user.reload
     assert_equal user.access_token, access_token_hash,
                  "Restore did not complete successfully; #{user.access_token} != #{access_token_hash}"
