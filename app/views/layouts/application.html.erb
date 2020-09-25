@@ -168,7 +168,7 @@
       <div class="modal-body">
         <div class="spinner-target" id="generic-modal-spinner"></div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" id="generic-modal-footer">
         <button class="close" data-dismiss="modal">×</button>
       </div>
     </div>
@@ -197,13 +197,18 @@
 
     // error handling for auth errors when getting user access tokens
     if (window.SCP.userAccessToken === '' && <%= user_signed_in? %>) {
-        var errorText = '<p>There was a problem retrieving some credentials associated with your account - ' +
-            'please sign out and back in again to address the issue.</p>'
-        var signOutBtn = "<p><a class='btn btn-primary' data-method='delete' href='/single_cell/users/sign_out'>" +
-            "<span class='fas fa-sign-out-alt fa-fw'></span> Sign Out</a></p>"
-        var errorMsg = errorText + signOutBtn
-        // open modal as an alert type to persist message until user clears or signs out
-        showMessageModal(null, errorMsg)
+        var errorTitle = 'Re-sign in again';
+        var errorText = '<p class="text-danger">There was a problem retrieving some credentials associated with your account - ' +
+            'please sign out and back in again to address the issue.</p>';
+        var signOutBtn = "<span class='pull-right'><a class='btn btn-primary' data-method='delete' href='/single_cell/users/sign_out'>" +
+            "<span class='fas fa-sign-out-alt fa-fw'></span> Sign Out</a></span>";
+        var errorMsg = errorText + signOutBtn; // add empty paragraph for padding
+        $('#generic-modal-spinner').html(errorMsg + "<p>&nbsp;</p>");
+        $('#generic-modal-spinner').removeClass('spinner-target');
+        $('#generic-modal-title').html(errorTitle);
+        $('#generic-modal-title').removeClass('text-center');
+        $('#generic-modal-footer').remove();
+        $('#generic-modal').modal('show');
     }
 
     // variable used mostly for testing
