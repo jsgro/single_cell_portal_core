@@ -68,6 +68,7 @@ $('#toggle-traces').click(function() {
     togglePlotlyTraces('box-plot');
 });
 
+
 // monitor rendering for tests
 $('#expression-plots').data('box-rendered', true);
 $('#expression-plots').data('scatter-rendered', true);
@@ -80,6 +81,22 @@ closeUserAnnotationsForm();
 console.log('render status of box plot at end: ' + $('#expression-plots').data('box-rendered'));
 console.log('render status of scatter plot at end: ' + $('#expression-plots').data('scatter-rendered'));
 console.log('render status of reference plot at end: ' + $('#expression-plots').data('reference-rendered'));
+
+console.log('### in render_gene_expression_plots.js.erb, before ideoDom')
+var ideoDom = document.getElementById('ideogramSearchResultsContainer');
+var renderTargetTabContent = document.querySelector('#render-target .tab-content');
+var distTabDom = document.querySelector('#box-or-violin-tab');
+distTabDom.style.position = 'relative';
+distTabDom.style.top = '100px';
+renderTargetTabContent.prepend(ideoDom);
+ideoDom.style.display = '';
+ideoDom.style.position = 'absolute';
+ideoDom.style.zIndex = '1000';
+ideoDom.style.height = '100px';
+var ideoWidth = parseInt(document.querySelector('#_ideogram').style.minWidth.slice(0, -2));
+var ideoLegend = document.querySelector('#_ideogramLegend');
+ideoLegend.style.left = (ideoWidth + 15) + 'px';
+document.querySelector('#gear').style.right = 0;
 
 var distributionPlotType = '<%= @values_box_type %>';
 plotEvent.complete();

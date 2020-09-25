@@ -27,27 +27,28 @@ function createSearchResultsIdeogram() {
 
   $('#ideogramWarning, #ideogramTitle').remove();
 
-  document.querySelector('#ideogramSearchResultsContainer').style =
-    `position: relative;
-    top: -60px;
-    height: 0;
-    float: right`;
+  // document.querySelector('#ideogramSearchResultsContainer').style =
+  //   `position: relative;
+  //   top: -60px;
+  //   height: 0;
+  //   float: right`;
 
 
   console.log('***** foo')
   ideoConfig = {
     container: '#ideogramSearchResultsContainer',
     organism: window.SCP.organism.toLowerCase().replace(/ /g, '-'),
-    chrWidth: 8,
-    chrHeight: 80,
-    chrLabelSize: 11,
-    annotationHeight: 5,
+    chrWidth: 9,
+    chrHeight: 100,
+    chrLabelSize: 12,
+    annotationHeight: 7,
     dataDir: 'https://unpkg.com/ideogram@1.23.0/dist/data/bands/native/',
+    showTools: true,
     onClickAnnot: onClickAnnot,
     onLoad: function() {
-      let left = document.querySelector('#_ideogramInnerWrap').style['max-width'];
-      left = (parseInt(left.slice(0, -2)) + 90);
-      document.querySelector('#ideogramSearchResultsContainer').style.width = left + 'px';
+      // let left = document.querySelector('#_ideogramInnerWrap').style['max-width'];
+      // left = (parseInt(left.slice(0, -2)) + 90);
+      // document.querySelector('#ideogramSearchResultsContainer').style.width = left + 'px';
 
       var searchInput = document.querySelector('#search_genes').value.trim();
 
