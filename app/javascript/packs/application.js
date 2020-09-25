@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <Covid19PageContent />, document.getElementById('covid19-page-content')
     )
   }
-  checkMissingAuthToken(window.SCP.userAccessToken, window.SCP.userSignedIn)
+  checkMissingAuthToken()
 })
 
 window.SCP = window.SCP ? window.SCP : {}
