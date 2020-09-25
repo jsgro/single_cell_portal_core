@@ -23,7 +23,7 @@ import 'jquery-ui/ui/effects/effect-highlight'
 import igv from '@single-cell-portal/igv'
 import morpheus from 'morpheus-app'
 import Ideogram from 'ideogram'
-
+import checkMissingAuthToken from 'lib/user-auth-tokens'
 
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
 import HomePageContent from 'components/HomePageContent'
@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <Covid19PageContent />, document.getElementById('covid19-page-content')
     )
   }
+  checkMissingAuthToken(window.SCP.userAccessToken, window.SCP.userSignedIn)
 })
 
 window.SCP = window.SCP ? window.SCP : {}
