@@ -18,6 +18,34 @@ function handleSearch(event) {
   plotRelatedGenes(geneSymbols);
 }
 
+function showSearchIdeogram() {
+  var ideoDom = document.getElementById('ideogramSearchResultsContainer');
+  var ideoInnerDom = document.getElementById('_ideogramInnerWrap');
+  var renderTargetTabContent = document.querySelector('#render-target .tab-content');
+  var distTabDom = document.querySelector('#box-or-violin-tab');
+
+  // Move plot down to make space for Ideogram
+  distTabDom.style.position = 'relative';
+  distTabDom.style.top = '100px';
+
+  // Move Ideogram to its final location
+  renderTargetTabContent.prepend(ideoDom);
+
+  // Show Ideogram, and horizontally center it
+  ideoDom.style.display = '';
+  ideoDom.style.position = 'absolute';
+  ideoDom.style.zIndex = '1000';
+  ideoDom.style.height = '100px';
+  ideoInnerDom.style.position = 'relative';
+  ideoInnerDom.style.marginLeft = 'auto';
+  ideoInnerDom.style.marginRight = 'auto';
+
+  // Refine location of Ideogram chrome
+  var ideoLeft = ideoInnerDom.getBoundingClientRect().left
+  var ideoLegend = document.querySelector('#_ideogramLegend');
+  ideoLegend.style.left = (ideoLeft - 180) + 'px';
+  document.querySelector('#gear').style.right = 0;
+}
 
 function createSearchResultsIdeogram() {
   if (typeof window.ideogram !== 'undefined') {
@@ -26,13 +54,6 @@ function createSearchResultsIdeogram() {
   }
 
   $('#ideogramWarning, #ideogramTitle').remove();
-
-  // document.querySelector('#ideogramSearchResultsContainer').style =
-  //   `position: relative;
-  //   top: -60px;
-  //   height: 0;
-  //   float: right`;
-
 
   console.log('***** foo')
   ideoConfig = {
@@ -62,3 +83,4 @@ function createSearchResultsIdeogram() {
 
   window.ideogram = Ideogram.initRelatedGenes(ideoConfig)
 }
+
