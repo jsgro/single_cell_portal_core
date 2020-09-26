@@ -41,7 +41,7 @@ export default function GeneSearchView() {
     }
   })
 
-  let helpTextContent = (
+  const helpTextContent = (
     <div>
       Enter a list of one or more genes, separated by spaces.
       <br/>
@@ -58,7 +58,7 @@ export default function GeneSearchView() {
     </div>
   )
 
-  let noResultsContent = (
+  const noResultsContent = (
     <div>
       No results found.
       <br/>

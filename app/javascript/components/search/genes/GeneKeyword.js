@@ -1,10 +1,9 @@
-import React, { useContext, useState, useRef } from 'react'
+import React, { useContext, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons'
-import _clone from 'lodash/clone'
+import { faSearch } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
 import Modal from 'react-bootstrap/lib/Modal'
-import CreatableSelect from 'react-select/creatable';
+import CreatableSelect from 'react-select/creatable'
 
 import { GeneSearchContext } from 'providers/GeneSearchProvider'
 import { StudySearchContext } from 'providers/StudySearchProvider'
@@ -18,9 +17,9 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
   const studySearchState = useContext(StudySearchContext)
   let geneParamAsArray = []
   if (geneSearchState.params.genes) {
-    geneParamAsArray = geneSearchState.params.genes.split(' ').map((geneName) => ({
-        label: geneName,
-        value: geneName
+    geneParamAsArray = geneSearchState.params.genes.split(' ').map(geneName => ({
+      label: geneName,
+      value: geneName
     }))
   }
 
@@ -32,8 +31,6 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
 
   const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
 
-  const inputField = useRef()
-
   /** handles a user submitting a gene search */
   function handleSubmit(event) {
     event.preventDefault()
@@ -41,7 +38,7 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
     if (newGeneArray && newGeneArray.length) {
       geneSearchState.updateSearch(
         // flatten the gene array back to a space-delimited string
-        { genes: newGeneArray.map((g) => g.value).join(' ') },
+        { genes: newGeneArray.map(g => g.value).join(' ') },
         studySearchState
       )
     } else {
@@ -49,39 +46,41 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
     }
   }
 
-  // Converts any current typed free text to a gene array entry
+  /** Converts any current typed free text to a gene array entry */
   function syncGeneArrayToInputText() {
     if (!inputText) {
-      return geneArray;
+      return geneArray
     }
-    const newGeneArray = [...geneArray, {label: inputText, value: inputText}]
+    const newGeneArray = [...geneArray, { label: inputText, value: inputText }]
     setInputText('')
     setGeneArray(newGeneArray)
     return newGeneArray
   }
 
-  // detects presses of the space bar to create a new gene chunk
+  /** detects presses of the space bar to create a new gene chunk */
   function handleKeyDown(event) {
-    if (!inputText) return;
+    if (!inputText) {
+      return
+    }
     switch (event.key) {
       case ' ':
-        newGeneArray = syncGeneArrayToInputText()
+        syncGeneArrayToInputText()
     }
-  };
+  }
 
   return (
     <form className="gene-keyword-search form-horizontal" onSubmit={handleSubmit}>
       <div className="input-group">
         <CreatableSelect
-          components={{DropdownIndicator: null}}
+          components={{ DropdownIndicator: null }}
           inputValue={inputText}
           value={geneArray}
           className="gene-keyword-search-input"
           isClearable
           isMulti
           menuIsOpen={false}
-          onChange={(value) => setGeneArray(value ? value : [])}
-          onInputChange={(inputValue) => setInputText(inputValue)}
+          onChange={value => setGeneArray(value ? value : [])}
+          onInputChange={inputValue => setInputText(inputValue)}
           onKeyDown={handleKeyDown}
           // the default blur behavior removes any entered free text,
           // we want to instead auto-convert entered free text to a gene tag
