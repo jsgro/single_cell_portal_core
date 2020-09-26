@@ -27,7 +27,7 @@ export default function GeneSearchView() {
                                  !geneSearchState.isLoading &&
                                  !geneSearchState.isError
 
-  let geneSearchPlaceholder = 'Type gene names to search (e.g. "agpat pten")'
+  let geneSearchPlaceholder = 'genes (e.g. "agpat pten")'
   if (hasSearchParams(studySearchState.params) && featureFlagState.gene_study_filter) {
     geneSearchPlaceholder = 'Search for genes in the filtered studies'
   }
@@ -48,6 +48,7 @@ export default function GeneSearchView() {
       Do not include non-genes.
       <br/>
       Search is case-sensitive.
+      <br/>
       <br/>
       Examples:
       <ul>

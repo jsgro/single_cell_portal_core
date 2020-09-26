@@ -8,11 +8,11 @@
 .study-keyword-search, .gene-keyword-search {
   box-sizing: border-box;
   display: inline-block;
-  height: 37px;
+  height: 38px;
   width: 340px;
   white-space: nowrap;
 
-  input.form-control {
+  input.form-control, .gene-keyword-search-input > div {
     background-color: white;
     border: 1px solid $action-color;
     border-radius: 15px 0px 0px 15px;
@@ -20,7 +20,10 @@
     width:100%;
     color: $action-color;
     font-weight: 500;
-    height: 37px;
+    height: 38px;
+  }
+
+  .input.form-control {
     line-height: 100%;
     padding: 0 30px 0 16px;
     width: 90%;
@@ -28,7 +31,7 @@
 
   button {
     width: 40px;
-    height: 37px;
+    height: 38px;
     background-color: $action-color;
     border: none;
     border-radius: 0px 15px 15px  0px;
@@ -53,13 +56,11 @@
   }
 }
 
-.gene-keyword-search {
+.gene-keyword-search .input-group {
+  display: flex;
   width: 600px;
-  button.keyword-clear {
-    right: 55px;
-  }
 }
 
-#gene-keyword-search-tooltip .tooltip-inner  {
-  text-align: left;
+.gene-keyword-search-input {
+  flex: 1;
 }
