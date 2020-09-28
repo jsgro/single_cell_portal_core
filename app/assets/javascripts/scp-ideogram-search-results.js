@@ -1,62 +1,85 @@
-/* eslint-disable */
-
+/** Handle clicks on Ideogram annotations */
 function onClickAnnot(annot) {
-  document.querySelector('#search_genes').value = annot.name;
-  document.querySelector('#perform-gene-search').click();
-  plotRelatedGenes([annot.name]);
+  document.querySelector('#search_genes').value = annot.name
+  document.querySelector('#perform-gene-search').click()
+  window.ideogram.plotRelatedGenes([annot.name])
 }
 
-// Process text input for the "Search" field.
-function handleSearch(event) {
-  // Ignore non-"Enter" keyups
-  if (event.type === 'keyup' && event.keyCode !== 13) return;
-
-  var searchInput = event.target.value.trim();
-
-  // Handles "BRCA1,BRCA2", "BRCA1 BRCA2", and "BRCA1, BRCA2"
-  let geneSymbols = searchInput.split(/[, ]/).filter(d => d !== '')
-  plotRelatedGenes(geneSymbols);
-}
-
+/**
+ * Displays Ideogram after getting gene search results in Study Overview
+ * Called from render_gene_expression_plots.js.erb
+ */
 function showSearchIdeogram() {
-  var ideoDom = document.getElementById('ideogramSearchResultsContainer');
-  var ideoInnerDom = document.getElementById('_ideogramInnerWrap');
-  var renderTargetTabContent = document.querySelector('#render-target .tab-content');
-  var distTabDom = document.querySelector('#box-or-violin-tab');
+  const ideoDom = document.getElementById('ideogramSearchResultsContainer')
+  const ideoInnerDom = document.getElementById('_ideogramInnerWrap')
+  const ideoMiddleDom = document.getElementById('_ideogramMiddleWrap')
+  const renderTargetTabContent =
+    document.querySelector('#render-target .tab-content')
+  const distTabDoms = document.querySelectorAll('.expression-plot')
 
   // Move plot down to make space for Ideogram
-  distTabDom.style.position = 'relative';
-  distTabDom.style.top = '100px';
+  distTabDoms.forEach(distTabDom => {
+    distTabDom.style.position = 'relative'
+    distTabDom.style.top = '100px'
+  })
 
   // Move Ideogram to its final location
-  renderTargetTabContent.prepend(ideoDom);
+  renderTargetTabContent.prepend(ideoDom)
 
   // Show Ideogram, and horizontally center it
-  ideoDom.style.display = '';
-  ideoDom.style.position = 'absolute';
-  ideoDom.style.zIndex = '1000';
-  ideoDom.style.height = '100px';
-  ideoInnerDom.style.position = 'relative';
-  ideoInnerDom.style.marginLeft = 'auto';
-  ideoInnerDom.style.marginRight = 'auto';
+  ideoDom.style.display = ''
+  ideoDom.style.position = 'absolute'
+  ideoDom.style.zIndex = '1000'
+  ideoDom.style.height = '100px'
+  ideoInnerDom.style.position = 'relative'
+  ideoInnerDom.style.marginLeft = 'auto'
+  ideoInnerDom.style.marginRight = 'auto'
+  ideoMiddleDom.style.borderBottom = '1px solid #EEE'
 
   // Refine location of Ideogram chrome
-  var ideoLeft = ideoInnerDom.getBoundingClientRect().left
-  var ideoLegend = document.querySelector('#_ideogramLegend');
-  ideoLegend.style.left = (ideoLeft - 180) + 'px';
-  document.querySelector('#gear').style.right = 0;
+  const ideoLeft = ideoInnerDom.getBoundingClientRect().left
+  const ideoLegend = document.querySelector('#_ideogramLegend')
+  ideoLegend.style.left = `${ideoLeft - 150}px`
 }
 
+/** TODO: Remove this */
+function moveLegend() {
+  console.log('%%% in moveLegend')
+  const ideoInnerDom = document.getElementById('_ideogramInnerWrap')
+
+  // Refine location of Ideogram chrome
+  const ideoLeft = ideoInnerDom.getBoundingClientRect().left
+  const ideoLegend = document.querySelector('#_ideogramLegend')
+  ideoLegend.style.left = `${ideoLeft - 150}px`
+
+
+  // Hide related genes that aren't this study
+  const filteredAnnots = []
+  window.ideogram.annots.forEach(chrAnnot => {
+    chrAnnot.annots.forEach(annot => {
+      if (window.uniqueGenes.includes(annot.name)) {
+        filteredAnnots.push(annot)
+      }
+    })
+  })
+
+  window.ideogram.drawAnnots(filteredAnnots)
+}
+
+/**
+ * Initiates "Ideogram for related genes"
+ * Called from _view_gene_expression_title_bar.html.erb
+ */
 function createSearchResultsIdeogram() {
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
     $('#_ideogramOuterWrap').html('')
   }
 
-  $('#ideogramWarning, #ideogramTitle').remove();
+  $('#ideogramWarning, #ideogramTitle').remove()
 
-  console.log('***** foo')
-  ideoConfig = {
+  console.log('***** starting createSearchResultsIdeogram')
+  const ideoConfig = {
     container: '#ideogramSearchResultsContainer',
     organism: window.SCP.organism.toLowerCase().replace(/ /g, '-'),
     chrWidth: 9,
@@ -65,19 +88,16 @@ function createSearchResultsIdeogram() {
     annotationHeight: 7,
     dataDir: 'https://unpkg.com/ideogram@1.23.0/dist/data/bands/native/',
     showTools: true,
-    onClickAnnot: onClickAnnot,
-    onLoad: function() {
-      // let left = document.querySelector('#_ideogramInnerWrap').style['max-width'];
-      // left = (parseInt(left.slice(0, -2)) + 90);
-      // document.querySelector('#ideogramSearchResultsContainer').style.width = left + 'px';
-
-      var searchInput = document.querySelector('#search_genes').value.trim();
+    onClickAnnot,
+    onLoadAnnots: moveLegend,
+    onLoad() {
+      const searchInput = document.querySelector('#search_genes').value.trim()
 
       // Handles "BRCA1,BRCA2", "BRCA1 BRCA2", and "BRCA1, BRCA2"
-      let geneSymbols = searchInput.split(/[, ]/).filter(d => d !== '')
+      const geneSymbols = searchInput.split(/[, ]/).filter(d => d !== '')
       // plotGeneAndParalogs(geneSymbols);
-      console.log('***** bar')
-      this.plotRelatedGenes(geneSymbols);
+      console.log('***** in Ideogram onLoad')
+      this.plotRelatedGenes(geneSymbols)
     }
   }
 

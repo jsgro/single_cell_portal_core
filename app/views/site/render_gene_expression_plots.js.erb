@@ -5,6 +5,9 @@ This code renders:
 See also: _expression_plots_plotly.js.erb, which renders the "Scatter" tab that is
 hidden by default.
 %>
+
+console.log('starting render of Distribution plot');
+
 var distributionPlotType = '<%= @values_box_type %>';
 var plotEvent = window.SCP.startPendingEvent(`plot:${distributionPlotType}`, window.SCP.getLogPlotProps());
 
