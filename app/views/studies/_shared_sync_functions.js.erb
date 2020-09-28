@@ -42,12 +42,7 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', function() {
         } else {
             extraInfo.html("<%= j(render partial: 'mm_coordinate_association_fields', locals: {f: f.dup}) %>");
             var matrixDropdown = $('#study-file-<%= study_file.id %> .matrix-file-select');
-            $(mtx).each(function (index, matrix) {
-                matrixDropdown.append($('<option />', {
-                    value: matrix[1],
-                    text: matrix[0]
-                }));
-            });
+            appendOptionsToDropdown(mtx, matrixDropdown);
         }
         // disable sync button until user has selected a matrix pair
         console.log('disabling sync button on ' + submitBtn.attr('id'));
@@ -73,12 +68,23 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', function() {
         } else {
             extraInfo.html("<%= j(render partial: 'bam_association_fields', locals: {f: f.dup}) %>");
             var bamDropdown = $('#study-file-<%= study_file.id %> .bam-file-select');
-            $(bams).each(function (index, bam) {
-                bamDropdown.append($('<option />', {
-                    value: bam[1],
-                    text: bam[0]
-                }));
-            });
+            appendOptionsToDropdown(bams, bamDropdown);
+        }
+        // disable sync button until user has selected a BAM file
+        submitBtn.attr('disabled', 'disabled');
+    } else if (fileType === 'Coordinate Labels') {
+        extraInfo.empty();
+        nameField.val(fileName);
+        nameField.attr('readonly', 'readonly');
+        var clusters = gatherFilesByType('Cluster');
+        if (clusters.length === 0) {
+            alert("You must first specify at least one file of type 'Cluster' (Coordinate Labels files " +
+                "must pair with a Cluster before being saved).");
+            $(this).val('');
+        } else {
+            extraInfo.html("<%= j(render partial: 'coord_labels_association_fields', locals: {f: f.dup}) %>");
+            var clusterDropdown = $('#study-file-<%= study_file.id %> .cluster-file-select');
+            appendOptionsToDropdown(clusters, clusterDropdown);
         }
         // disable sync button until user has selected a BAM file
         submitBtn.attr('disabled', 'disabled');

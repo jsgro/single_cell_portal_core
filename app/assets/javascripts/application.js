@@ -1131,3 +1131,12 @@ function extractIdentifierFromId(domId) {
     idParts.pop();
     return idParts.join('-');
 }
+
+function appendOptionsToDropdown(options, dropdown) {
+    $(options).each(function(index, element) {
+        dropdown.append($('<option />', {
+            value: element[1],
+            text: element[0]
+        }));
+    });
+}
