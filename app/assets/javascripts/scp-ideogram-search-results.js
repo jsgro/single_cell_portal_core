@@ -26,7 +26,7 @@ function showSearchIdeogram() {
   renderTargetTabContent.prepend(ideoDom)
 
   // Show Ideogram
-  ideoDom.style.display = ''
+  ideoDom.style.visibility = ''
   ideoDom.style.height = '100px'
   ideoMiddleDom.style.borderBottom = '1px solid #EEE'
 }
@@ -53,12 +53,11 @@ function moveLegend() {
 function createSearchResultsIdeogram() {
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
-    $('#_ideogramOuterWrap').html('')
+    $('#ideogramSearchResultsContainer').html('')
   }
 
   $('#ideogramWarning, #ideogramTitle').remove()
 
-  console.log('***** starting createSearchResultsIdeogram')
   const ideoConfig = {
     container: '#ideogramSearchResultsContainer',
     organism: window.SCP.organism.toLowerCase().replace(/ /g, '-'),
@@ -74,13 +73,12 @@ function createSearchResultsIdeogram() {
       const searchInput = document.querySelector('#search_genes').value.trim()
 
       // Handles "BRCA1,BRCA2", "BRCA1 BRCA2", and "BRCA1, BRCA2"
-      const geneSymbols = searchInput.split(/[, ]/).filter(d => d !== '')
-      // plotGeneAndParalogs(geneSymbols);
-      console.log('***** in Ideogram onLoad')
-      this.plotRelatedGenes(geneSymbols)
+      const geneSymbol = searchInput.split(/[, ]/).filter(d => d !== '')[0]
+
+      this.plotRelatedGenes(geneSymbol)
     }
   }
 
-  window.ideogram = Ideogram.initRelatedGenes(ideoConfig)
+  window.ideogram = Ideogram.initRelatedGenes(ideoConfig, window.uniqueGenes)
 }
 

@@ -1132,6 +1132,22 @@ class Study
     Gene.where(study_id: self.id, :study_file_id.in => self.expression_matrix_files.map(&:id)).pluck(:name).uniq
   end
 
+  # Get species scientific name given a searched gene.  E.g. PTEN -> Homo sapiens.
+  def infer_species(searched_gene)
+    # Get gene record for searched gene string
+    gene = self.genes.by_name_or_id(searched_gene, self.expression_matrix_files.map(&:id))
+
+    # Get matrices containing this gene.  (Same gene name can be in multiple matrices.)
+    study_file_ids = Gene.where(study_id: self.id, name: gene['name']).pluck(:study_file_id)
+
+    # Get species for each matrix.
+    # TODO (): Handle when a searched gene maps to multiple species
+    taxon_ids = StudyFile.where(:_id.in => study_file_ids).pluck(:taxon_id)
+    scientific_name = Taxon.where(:_id.in => taxon_ids).pluck(:scientific_name)[0]
+
+    return scientific_name
+  end
+
   # return a count of the number of fastq files both uploaded and referenced via directory_listings for a study
   def primary_data_file_count
     study_file_count = self.study_files.primary_data.size

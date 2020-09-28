@@ -8,12 +8,14 @@
 </div>
 
 <script>
+  // Initializes "Ideogram for related genes"
 
   document.querySelector('.study-lead').parentElement.innerHTML +=
-    '<div id="ideogramSearchResultsContainer" style="display: none; position: absolute; z-index: 1000; width: 100%; background: #FFF;"></div>';
-  window.SCP.taxid = '<%= @taxid %>';
+    '<div id="ideogramSearchResultsContainer" style="visibility: hidden; position: absolute; z-index: 1000; width: 100%; background: #FFF;"></div>';
+
   window.SCP.organism = '<%= @organism %>';
-  console.log('before createSearchResultsIdeogram')
+
+  // Called from scp-ideogram-search-results.rb
   createSearchResultsIdeogram();
 
 </script>

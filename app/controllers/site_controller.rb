@@ -409,9 +409,10 @@ class SiteController < ApplicationController
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
     @y_axis_title = load_expression_axis_title
     matrix = @study.expression_matrix_files.first
-    @taxid = matrix.taxon.ncbi_taxid
-    @organism = matrix.taxon.scientific_name
 
+    @organism = @study.infer_species(params[:gene])
+
+    # byebug
     # Scratch code to get taxon data, given gene record
     # study.genes.first
     # study_file_id = gene.study_file_id
