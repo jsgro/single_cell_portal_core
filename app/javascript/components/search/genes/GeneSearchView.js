@@ -27,7 +27,7 @@ export default function GeneSearchView() {
                                  !geneSearchState.isLoading &&
                                  !geneSearchState.isError
 
-  let geneSearchPlaceholder = 'genes (e.g. "agpat pten")'
+  let geneSearchPlaceholder = 'Genes (e.g. "PTEN NF2")'
   if (hasSearchParams(studySearchState.params) && featureFlagState.gene_study_filter) {
     geneSearchPlaceholder = 'Search for genes in the filtered studies'
   }
