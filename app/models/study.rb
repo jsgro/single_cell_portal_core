@@ -2192,7 +2192,7 @@ class Study
       error_context = ErrorTracker.format_extra_context(self, coordinate_file, {opts: opts})
       # remove study description as it's not useful
       error_context['study'].delete('description')
-      @file_location = coordinate_file.upload.path
+      @file_location = coordinate_file.local_location
       # before anything starts, check if file has been uploaded locally or needs to be pulled down from FireCloud first
       if !coordinate_file.is_local?
         # make sure data dir exists first
@@ -2264,7 +2264,20 @@ class Study
     @message = []
     begin
       # load target cluster
-      cluster = coordinate_file.bundle_parent
+      cluster_file = coordinate_file.bundle_parent
+      cluster = ClusterGroup.find_by(study_file_id: cluster_file.id, study_id: self.id)
+
+      # check if ClusterGroup object is present before continuing, or if cluster file is still parsing
+      # raise error if cluster file does not exist, or hasn't started parsing yet
+      if cluster_file.nil? || cluster_file.parse_status == 'unparsed'
+        raise StandardError.new('You must have uploaded a cluster file and associated it with this coordinate label file first before continuing.')
+      elsif cluster_file.parsing? && cluster.nil?
+        # if cluster file is parsing, re-run this job in 2 minutes
+        Rails.logger.info "Aborting parse of #{coordinate_file.upload_file_name}:#{coordinate_file.id}; cluster file #{cluster_file.upload_file_name}:#{cluster_file.id} is still parsing"
+        run_at = 2.minutes.from_now
+        self.delay(run_at: run_at).initialize_coordinate_label_data_arrays(coordinate_file, user, opts)
+        exit
+      end
 
       Rails.logger.info "#{Time.zone.now}: Beginning coordinate label initialization using #{coordinate_file.upload_file_name}:#{coordinate_file.id} for cluster: #{cluster.name} in #{self.name}"
       coordinate_file.update(parse_status: 'parsing')

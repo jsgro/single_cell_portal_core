@@ -107,12 +107,10 @@ class ClusterGroup
 
   # retrieve font options for coordinate labels
   def coordinate_labels_options
-    # must retrieve study file where options have been set, so search options hash for string value of cluster_group id
-    study_file = StudyFile.find_by('options.cluster_group_id' => self.id.to_s)
     {
-        font_family: study_file.coordinate_labels_font_family,
-        font_size: study_file.coordinate_labels_font_size,
-        font_color: study_file.coordinate_labels_font_color
+        font_family: self.study_file.coordinate_labels_font_family,
+        font_size: self.study_file.coordinate_labels_font_size,
+        font_color: self.study_file.coordinate_labels_font_color
     }
   end
 

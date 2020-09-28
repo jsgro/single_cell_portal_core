@@ -45,6 +45,13 @@ class StudyFile
       'taxon_id' => Taxon.all.map {|t| [t.common_name, t.id.to_s]}
   }
 
+  # map of 'options.[key]' for handling study file bundles, via upload/sync pages
+  BUNDLE_KEY_OPTS = {
+      'MM Coordinate Matrix' => 'matrix_id',
+      'BAM' => 'bam_id',
+      'Cluster' => 'cluster_file_id'
+  }
+
   # associations
   belongs_to :study, index: true
   has_many :cluster_groups, dependent: :destroy
@@ -724,9 +731,8 @@ class StudyFile
   # inverse of study_file.bundled_files.  In the case of Coordinate Labels, this returns the cluster, not the file
   def bundle_parent
     if self.study_file_bundle.present?
-      self.study_file_bundle.bundle_target
+      self.study_file_bundle.parent
     else
-      model = StudyFile
       case self.file_type
       when /10X/
         selector = :matrix_id
@@ -734,10 +740,9 @@ class StudyFile
         selector = :bam_id
       when 'Coordinate Labels'
         selector = :cluster_group_id
-        model = ClusterGroup
       end
       # call find_by(id: ) to avoid Mongoid::Errors::InvalidFind
-      model.find_by(id: self.options[selector])
+      StudyFile.find_by(id: self.options[selector])
     end
   end
 

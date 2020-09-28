@@ -125,15 +125,6 @@ class StudyFileBundle
     self.study_files.where(:id.ne => self.parent.id)
   end
 
-  # return the target of this bundle (StudyFile for MM matrices & BAMs, ClusterGroup for Clusters)
-  def bundle_target
-    if self.bundle_type == 'Cluster'
-      ClusterGroup.find_by(study_file_id: self.parent.id)
-    else
-      self.parent
-    end
-  end
-
   def file_types
     self.study_files.map(&:file_type)
   end
