@@ -11,13 +11,12 @@ function onClickAnnot(annot) {
  */
 function showSearchIdeogram() {
   const ideoDom = document.getElementById('ideogramSearchResultsContainer')
-  const ideoInnerDom = document.getElementById('_ideogramInnerWrap')
   const ideoMiddleDom = document.getElementById('_ideogramMiddleWrap')
   const renderTargetTabContent =
     document.querySelector('#render-target .tab-content')
   const distTabDoms = document.querySelectorAll('.expression-plot')
 
-  // Move plot down to make space for Ideogram
+  // Move plots down to make space for Ideogram, per UX recommendation
   distTabDoms.forEach(distTabDom => {
     distTabDom.style.position = 'relative'
     distTabDom.style.top = '100px'
@@ -26,33 +25,14 @@ function showSearchIdeogram() {
   // Move Ideogram to its final location
   renderTargetTabContent.prepend(ideoDom)
 
-  // Show Ideogram, and horizontally center it
+  // Show Ideogram
   ideoDom.style.display = ''
-  ideoDom.style.position = 'absolute'
-  ideoDom.style.zIndex = '1000'
   ideoDom.style.height = '100px'
-  ideoInnerDom.style.position = 'relative'
-  ideoInnerDom.style.marginLeft = 'auto'
-  ideoInnerDom.style.marginRight = 'auto'
   ideoMiddleDom.style.borderBottom = '1px solid #EEE'
-
-  // Refine location of Ideogram chrome
-  const ideoLeft = ideoInnerDom.getBoundingClientRect().left
-  const ideoLegend = document.querySelector('#_ideogramLegend')
-  ideoLegend.style.left = `${ideoLeft - 150}px`
 }
 
 /** TODO: Remove this */
 function moveLegend() {
-  console.log('%%% in moveLegend')
-  const ideoInnerDom = document.getElementById('_ideogramInnerWrap')
-
-  // Refine location of Ideogram chrome
-  const ideoLeft = ideoInnerDom.getBoundingClientRect().left
-  const ideoLegend = document.querySelector('#_ideogramLegend')
-  ideoLegend.style.left = `${ideoLeft - 150}px`
-
-
   // Hide related genes that aren't this study
   const filteredAnnots = []
   window.ideogram.annots.forEach(chrAnnot => {

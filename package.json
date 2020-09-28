@@ -23,7 +23,7 @@
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
     "camelcase-keys": "^6.1.2",
     "core-js": "^3.6.4",
-    "ideogram": "git+https://github.com/eweitz/ideogram.git#d4fe1cafe6a34c4a520457c09ece018eb01e4eba",
+    "ideogram": "git+https://github.com/eweitz/ideogram.git#ebf381d4d45d5a917c5317e70050a9cf9c8657f5",
     "jquery": "3.5.1",
     "jquery-ui": "1.12.1",
     "morpheus-app": "1.0.18",
