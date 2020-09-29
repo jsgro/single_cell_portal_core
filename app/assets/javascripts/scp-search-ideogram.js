@@ -11,7 +11,7 @@ function onClickAnnot(annot) {
  */
 function showSearchIdeogram() {
   const ideoContainer =
-    document.getElementById('ideogramSearchResultsContainer')
+    document.getElementById('searchIdeogramContainer')
   const ideoMiddle = document.getElementById('_ideogramMiddleWrap')
   const renderTargetTabContent =
     document.querySelector('#render-target .tab-content')
@@ -44,16 +44,16 @@ function showSearchIdeogram() {
  * Initiates "Ideogram for related genes"
  * Called from _view_gene_expression_title_bar.html.erb
  */
-function createSearchResultsIdeogram() {
+function createSearchIdeogram() {
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
-    $('#ideogramSearchResultsContainer').html('')
+    $('#searchIdeogramContainer').html('')
   }
 
   $('#ideogramWarning, #ideogramTitle').remove()
 
   const ideoConfig = {
-    container: '#ideogramSearchResultsContainer',
+    container: '#searchIdeogramContainer',
     organism: window.SCP.organism.toLowerCase().replace(/ /g, '-'),
     chrWidth: 9,
     chrHeight: 100,

@@ -11,11 +11,11 @@
   // Initializes "Ideogram for related genes"
 
   document.querySelector('.study-lead').parentElement.innerHTML +=
-    '<div id="ideogramSearchResultsContainer" style="visibility: hidden; position: absolute; z-index: 1000; width: 100%; background: #FFF;"></div>';
+    '<div id="searchIdeogramContainer" style="visibility: hidden; position: absolute; z-index: 1000; width: 100%; background: #FFF;"></div>';
 
   window.SCP.organism = '<%= @organism %>';
 
-  // Called from scp-ideogram-search-results.rb
-  createSearchResultsIdeogram();
+  // Called from scp-search-ideogram.rb
+  createSearchIdeogram();
 
 </script>

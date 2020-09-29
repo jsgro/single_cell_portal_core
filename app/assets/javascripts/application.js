@@ -30,8 +30,8 @@
 //= require jquery.stickyPanel
 //= require clipboard.min
 //= require scp-igv
-//= require scp-ideogram-infercnv
-//= require scp-ideogram-search-results
+//= require scp-infercnv-ideogram
+//= require scp-search-ideogram
 //= require scp-dot-plot
 //= require ckeditor
 
