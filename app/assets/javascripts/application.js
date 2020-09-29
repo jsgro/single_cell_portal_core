@@ -1132,11 +1132,14 @@ function extractIdentifierFromId(domId) {
     return idParts.join('-');
 }
 
+// append a list of options to a dropdown menu dynamically
 function appendOptionsToDropdown(options, dropdown) {
+    var optionsArray = []
     $(options).each(function(index, element) {
-        dropdown.append($('<option />', {
+        optionsArray.push($('<option />', {
             value: element[1],
             text: element[0]
         }));
     });
+    dropdown.append(optionsArray);
 }
