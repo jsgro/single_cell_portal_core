@@ -13,8 +13,6 @@ require "action_view/railtie"
 require "sprockets/railtie"
 require "rails/test_unit/railtie"
 
-require "net/https"
-
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
@@ -35,9 +33,6 @@ module SingleCellPortal
 
     # Docker image for file parsing via scp-ingest-pipeline
     config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.6.2'
-
-    https.ca_file = ENV['SSL_CERT_FILE']
-    puts "application.rb: https.ca_file = #{https.ca_file}"
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers
