@@ -95,13 +95,11 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
     showTools: true,
     onClickAnnot,
     onLoad() {
-      const searchInput = document.querySelector('#search_genes').value.trim()
-
-      // Handles "BRCA1,BRCA2", "BRCA1 BRCA2", and "BRCA1, BRCA2"
-      const geneSymbol = searchInput.split(/[, ]/).filter(d => d !== '')[0]
-
       // Handles edge case: when organism lacks chromosome-level assembly
       if (window.ideogram.chromosomesArray.length === 0) return
+
+      const searchInput = document.querySelector('#search_genes').value.trim()
+      const geneSymbol = searchInput.split(/[, ]/).filter(d => d !== '')[0]
 
       this.plotRelatedGenes(geneSymbol)
     }
