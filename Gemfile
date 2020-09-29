@@ -47,6 +47,7 @@ group :development, :test do
   gem 'puma'
   gem 'rubocop', require: false
   gem 'rubocop-rails', require: false
+  gem 'certified'
 end
 
 gem 'devise'

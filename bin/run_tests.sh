@@ -22,6 +22,15 @@ start=$(date +%s)
 RETURN_CODE=0
 FAILED_COUNT=0
 
+function setup_burp_cert {
+  if [ "$BURP_ENABLE" = "y" ]; then
+    local CERT="/usr/local/share/ca-certificates/burp.crt"
+    yarn config set cafile "$CERT" -g
+    # export SSL_CERT_FILE="$CERT"
+    # export SSL_CERT_DIR="$(dirname $CERT)"
+  fi
+}
+
 function clean_up {
   echo "Cleaning up..."
   bundle exec bin/rails runner -e test "Study.delete_all_and_remove_workspaces" || { echo "FAILED to delete studies and workspaces" >&2; exit 1; } # destroy all studies/workspaces to clean up any files
@@ -30,7 +39,11 @@ function clean_up {
   echo "...cleanup complete."
 }
 
+setup_burp_cert
 clean_up
+
+# echo SSL_CERT_FILE=$SSL_CERT_FILE
+# echo SSL_CERT_DIR=$SSL_CERT_DIR
 
 TMP_PIDS_DIR="/home/app/webapp/tmp/pids"
 if [ "$NOT_DOCKERIZED" = "true" ]

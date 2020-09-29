@@ -7,8 +7,11 @@ branches:
   only:
     - master
     - development
+    - burp2
 services:
   - docker
+env:
+  - BURP_ENABLE=y
 before_install:
   - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
   - gem install bundler -v '< 2'
@@ -16,5 +19,8 @@ before_install:
   - sudo curl -O https://releases.hashicorp.com/vault/1.0.1/vault_1.0.1_linux_amd64.zip
   - sudo unzip vault_1.0.1_linux_amd64.zip
   - sudo mv vault /usr/local/bin
+  - bin/burp_start.sh "${BURP_DOCKER_IMAGE}" "${BURP_DOCKER_KEY}"
 script:
   - bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json -s secret/kdux/scp/staging/scp_service_account.json -r secret/kdux/scp/staging/read_only_service_account.json -e test -n single-cell-portal-staging
+after_success:
+  - bin/burp_scan.sh "${BURP_DOCKER_IMAGE}"
