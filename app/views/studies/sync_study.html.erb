@@ -183,11 +183,19 @@
 
     // pre-select all MM coordinate matrix & BAM associations, if present
     $(document).ready(function() {
-        var allMatrices = gatherFilesByType('MM Coordinate Matrix');
-        var allBams = gatherFilesByType('BAM');
         var disabledCss = {
             'pointer-events' : 'none'
         };
+
+        function appendOptionsAndSetDisabled(optionsArray, targetSelect, targetId, parentSelect) {
+            appendOptionsToDropdown(optionsArray, targetSelect);
+            targetSelect.val(targetId);
+            targetSelect.css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
+            parentSelect.css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
+            var parentForm = $('#study-file-' + targetId);
+            parentForm.find('.file-type').css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
+        }
+
         $('.file-type').each(function(index, fileType) {
             if ($(fileType).val() === '10X Genes File' || $(fileType).val() === '10X Barcodes File') {
                 var assocId = '#study_file_options_matrix_id'
@@ -199,6 +207,10 @@
                 var assocId = '#study_file_options_cluster_file_id'
                 var targetFileType = 'Cluster'
             }
+            var assocForm = $(fileType).closest('form');
+            var fileSelect = $(assocForm).find('.bundle-select');
+            var fileId = $(fileSelect).find(assocId).val();
+            appendOptionsAndSetDisabled(gatherFilesByType(targetFileType), fileSelect, fileId, fileType)
         });
     });
 
