@@ -33,14 +33,15 @@ class FileParseService
         # check if there is a coordinate label file waiting to be parsed
         # must reload study_file object as associations have possibly been updated
         study_file.reload
-        if study_file.study_file_bundle.try(:completed?)
+        if study_file.has_completed_bundle?
           study_file.bundled_files.each do |coordinate_file|
-            run_at = 1.minutes.from_now # give cluster parse job time to initiate
-            study.delay(run_at: run_at).initialize_coordinate_label_data_arrays(coordinate_file, user, {reparse: reparse})
+            # pre-emptively set parse_status to prevent initialize_coordinate_label_data_arrays from failing due to race condition
+            study_file.update(parse_status: 'parsing')
+            study.delay.initialize_coordinate_label_data_arrays(coordinate_file, user, {reparse: reparse})
           end
         end
       when 'Coordinate Labels'
-        if study_file.study_file_bundle.try(:completed?) # use :try as bundle may or may not exist at this point
+        if study_file.has_completed_bundle?
           study.delay.initialize_coordinate_label_data_arrays(study_file, user, {reparse: reparse})
         else
           return self.missing_bundled_file(study_file)
@@ -51,10 +52,8 @@ class FileParseService
         job.delay.push_remote_and_launch_ingest
       when 'MM Coordinate Matrix'
         study_file.reload
-        if study_file.study_file_bundle.try(:completed?)
-          study_file.bundled_files.each do |file|
-            file.update(parse_status: 'parsing')
-          end
+        if study_file.has_completed_bundle?
+          study_file.bundled_files.update_all(parse_status: 'parsing')
           job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_expression, reparse: reparse,
                               persist_on_fail: persist_on_fail)
           job.delay.push_remote_and_launch_ingest
@@ -62,32 +61,14 @@ class FileParseService
           study.delay.send_to_firecloud(study_file)
           return self.missing_bundled_file(study_file)
         end
-      when '10X Genes File'
+      when /10X/
         # push immediately to avoid race condition when initiating parse
         study.delay.send_to_firecloud(study_file) if study_file.is_local?
         study_file.reload
-        if study_file.study_file_bundle.try(:completed?)
+        if study_file.has_completed_bundle?
           bundle = study_file.study_file_bundle
           matrix = bundle.parent
-          barcodes = bundle.bundled_files.detect {|f| f.file_type == '10X Barcodes File' }
-          matrix.update(parse_status: 'parsing')
-          barcodes.update(parse_status: 'parsing')
-          job = IngestJob.new(study: study, study_file: matrix, user: user, action: :ingest_expression, reparse: reparse,
-                              persist_on_fail: persist_on_fail)
-          job.delay.push_remote_and_launch_ingest(skip_push: true)
-        else
-          return self.missing_bundled_file(study_file)
-        end
-      when '10X Barcodes File'
-        # push immediately to avoid race condition when initiating parse
-        study.delay.send_to_firecloud(study_file) if study_file.is_local?
-        study_file.reload
-        if study_file.study_file_bundle.try(:completed?)
-          bundle = study_file.study_file_bundle
-          matrix = bundle.parent
-          genes = bundle.bundled_files.detect {|f| f.file_type == '10X Genes File' }
-          genes.update(parse_status: 'parsing')
-          matrix.update(parse_status: 'parsing')
+          bundle.study_files.update_all(parse_status: 'parsing')
           job = IngestJob.new(study: study, study_file: matrix, user: user, action: :ingest_expression, reparse: reparse,
                               persist_on_fail: persist_on_fail)
           job.delay.push_remote_and_launch_ingest(skip_push: true)
@@ -126,7 +107,7 @@ class FileParseService
     study_file_bundle = study_file.study_file_bundle
     if study_file_bundle.nil?
       StudyFileBundle::BUNDLE_REQUIREMENTS.each do |parent_type, bundled_types|
-        options_key = StudyFile::BUNDLE_KEY_OPTS[parent_type]
+        options_key = StudyFileBundle::PARENT_FILE_OPTIONS_KEYNAMES[parent_type]
         if study_file.file_type == parent_type
           # check if any files have been staged for bundling - this can happen from the sync page by setting the
           # study_file.options[options_key] value with the parent file id

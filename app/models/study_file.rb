@@ -45,13 +45,6 @@ class StudyFile
       'taxon_id' => Taxon.all.map {|t| [t.common_name, t.id.to_s]}
   }
 
-  # map of 'options.[key]' for handling study file bundles, via upload/sync pages
-  BUNDLE_KEY_OPTS = {
-      'MM Coordinate Matrix' => 'matrix_id',
-      'BAM' => 'bam_id',
-      'Cluster' => 'cluster_file_id'
-  }
-
   # associations
   belongs_to :study, index: true
   has_many :cluster_groups, dependent: :destroy
@@ -704,6 +697,11 @@ class StudyFile
 
   def is_bundled?
     self.study_file_bundle.present?
+  end
+
+  # gracefully check if study_file_bundle is both present and completed
+  def has_completed_bundle?
+    self.study_file_bundle.try(:completed?)
   end
 
   # get any 'bundled' files that correspond to this file

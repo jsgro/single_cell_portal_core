@@ -26,6 +26,12 @@ class StudyFileBundle
       }
   }
   REQUIRED_ATTRIBUTES = %w(bundle_type original_file_list)
+  # map of 'study_file.options[key_name]' for accessing parent study_file ID values, via upload/sync pages
+  PARENT_FILE_OPTIONS_KEYNAMES = {
+      'MM Coordinate Matrix' => 'matrix_id',
+      'BAM' => 'bam_id',
+      'Cluster' => 'cluster_file_id'
+  }
 
   swagger_schema :StudyFileBundle do
     key :required, [:bundle_type, :original_file_list]
