@@ -18,7 +18,7 @@ module Net
       self.verify_mode = OpenSSL::SSL::VERIFY_PEER
       self.original_use_ssl = flag
 
-      # puts "application.rb: old https.ca_file = #{https.ca_file}"
+      puts "ssl.rb: added #{ENV['SSL_CERT_FILE']}"
       # https.ca_file = ENV['SSL_CERT_FILE']
       # puts "application.rb: new https.ca_file = #{https.ca_file}"
     end
