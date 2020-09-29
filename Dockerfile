@@ -28,7 +28,7 @@ RUN passenger-config build-native-support
 
 # Set up Burp certificate
 ARG BURP_ENABLE=n
-ARG BURP_CERT="/usr/local/share/ca-certificates/burp.crt"
+ENV BURP_CERT="/usr/local/share/ca-certificates/burp.crt"
 
 # ENV SSL_CERT_DIR="/usr/local/share/ca-certificates"
 # COPY burp-env.conf /etc/nginx/main.d/
