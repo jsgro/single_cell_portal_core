@@ -1132,7 +1132,7 @@ class Study
     Gene.where(study_id: self.id, :study_file_id.in => self.expression_matrix_files.map(&:id)).pluck(:name).uniq
   end
 
-  # Get species scientific name given a searched gene.  E.g. PTEN -> Homo sapiens.
+  # Get species scientific name for a searched gene.  E.g. PTEN -> Homo sapiens.
   def infer_species(searched_gene)
     # Get gene record for searched gene string
     gene = self.genes.by_name_or_id(searched_gene, self.expression_matrix_files.map(&:id))

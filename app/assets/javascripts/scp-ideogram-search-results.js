@@ -29,6 +29,7 @@ function showSearchIdeogram() {
   ideoDom.style.visibility = ''
   ideoDom.style.height = '100px'
   ideoMiddleDom.style.borderBottom = '1px solid #EEE'
+  ideoMiddleDom.style.overflowY = 'hidden'
 }
 
 /** TODO: Remove this */
