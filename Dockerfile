@@ -28,8 +28,12 @@ RUN passenger-config build-native-support
 
 # Set up Burp certificate
 ARG BURP_ENABLE=n
+ARG BURP_CERT="/usr/local/share/ca-certificates/burp.crt"
+ENV SSL_CERT_FILE="${BURP_CERT}"
+
 RUN [ "$BURP_ENABLE" != "y" ] || \
       curl -s --proxy localhost:8080 burp/cert \
-      | openssl x509 -inform DER -out /usr/local/share/ca-certificates/burp.crt && \
+      | openssl x509 -inform DER -out "${BURP_CERT}" && \
       update-ca-certificates && \
-      ln -sf /usr/local/share/ca-certificates/burp.crt /usr/local/rvm/gems/default/gems/certified-1.0.0/certs/ca-bundle.crt
+      ln -sf "${BURP_CERT}" /usr/local/rvm/gems/default/gems/certified-1.0.0/certs/ca-bundle.crt && \
+      echo 'env SSL_CERT_FILE;' > /etc/nginx/main.d/burp-env.conf
