@@ -7,9 +7,10 @@ function onClickAnnot(annot) {
 
 /**
  * Displays Ideogram after getting gene search results in Study Overview
+ *
  * Called from render_gene_expression_plots.js.erb
  */
-function showRelatedGenesIdeogram() {
+function showRelatedGenesIdeogram() { // eslint-disable-line
   const ideoContainer =
     document.getElementById('related-genes-ideogram-container')
   const ideoMiddle = document.getElementById('_ideogramMiddleWrap')
@@ -33,18 +34,25 @@ function showRelatedGenesIdeogram() {
   ideoMiddle.style.borderLeft = '1px solid #DDD'
   ideoMiddle.style.borderRight = '1px solid #DDD'
   ideoMiddle.style.overflowY = 'hidden'
+}
 
-  // To upstream: Patch minor Ideogram bug with partially-clickable annotations
-  const ideoInner = document.getElementById('_ideogramInnerWrap')
-  ideoInner.style.position = 'relative'
-  ideoInner.style.left = '10px'
+/**
+ * Resize ideogram (specifically, the legend) after resizing the viewport
+ *
+ * Called from render_gene_expression_plots.js.erb
+*/
+function resizeRelatedGenesIdeogram() { // eslint-disable-line
+  const ideoLegend = document.getElementById('_ideogramLegend')
+  const ideoRect = document.getElementById('_ideogram').getBoundingClientRect()
+  ideoLegend.style.left = `${ideoRect.x - 160}px`
 }
 
 /**
  * Initiates Ideogram for related genes
+ *
  * Called from _view_gene_expression_title_bar.html.erb
  */
-function createRelatedGenesIdeogram() {
+function createRelatedGenesIdeogram() { // eslint-disable-line
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
     $('#related-genes-ideogram-container').html('')
