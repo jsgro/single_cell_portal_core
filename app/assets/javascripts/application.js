@@ -31,7 +31,7 @@
 //= require clipboard.min
 //= require scp-igv
 //= require scp-infercnv-ideogram
-//= require scp-search-ideogram
+//= require scp-related-genes-ideogram
 //= require scp-dot-plot
 //= require ckeditor
 

@@ -62,7 +62,7 @@ $(window).on('resizeEnd', function() {
       Plotly.relayout('scatter-plot', scatterLayout);
       Plotly.relayout('reference-plot', staticLayout);
 
-      resizeSearchIdeogram();
+      resizeRelatedGenesIdeogram();
     } catch (e) {
       console.log('Abort resizeEnd')
     }
@@ -89,7 +89,7 @@ console.log('render status of reference plot at end: ' + $('#expression-plots').
 
 console.log('### in render_gene_expression_plots.js.erb, before ideoDom')
 
-showSearchIdeogram();
+showRelatedGenesIdeogram();
 
 var distributionPlotType = '<%= @values_box_type %>';
 plotEvent.complete();

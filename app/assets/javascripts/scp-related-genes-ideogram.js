@@ -9,9 +9,9 @@ function onClickAnnot(annot) {
  * Displays Ideogram after getting gene search results in Study Overview
  * Called from render_gene_expression_plots.js.erb
  */
-function showSearchIdeogram() {
+function showRelatedGenesIdeogram() {
   const ideoContainer =
-    document.getElementById('searchIdeogramContainer')
+    document.getElementById('related-genes-ideogram-container')
   const ideoMiddle = document.getElementById('_ideogramMiddleWrap')
   const renderTargetTabContent =
     document.querySelector('#render-target .tab-content')
@@ -41,25 +41,23 @@ function showSearchIdeogram() {
 }
 
 /**
- * Initiates "Ideogram for related genes"
+ * Initiates Ideogram for related genes
  * Called from _view_gene_expression_title_bar.html.erb
  */
-function createSearchIdeogram() {
+function createRelatedGenesIdeogram() {
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
-    $('#searchIdeogramContainer').html('')
+    $('#related-genes-ideogram-container').html('')
   }
 
-  $('#ideogramWarning, #ideogramTitle').remove()
-
   const ideoConfig = {
-    container: '#searchIdeogramContainer',
+    container: '#related-genes-ideogram-container',
     organism: window.SCP.organism.toLowerCase().replace(/ /g, '-'),
     chrWidth: 9,
     chrHeight: 100,
     chrLabelSize: 12,
     annotationHeight: 7,
-    dataDir: 'https://unpkg.com/ideogram@1.23.0/dist/data/bands/native/',
+    dataDir: 'https://unpkg.com/ideogram@1.24.0/dist/data/bands/native/',
     showTools: true,
     onClickAnnot,
     onLoad() {
