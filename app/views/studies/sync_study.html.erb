@@ -181,36 +181,19 @@
         }
     });
 
-    // pre-select all MM coordinate matrix & BAM associations, if present
+    // traverse synced files and disable changing the file type
     $(document).ready(function() {
         var disabledCss = {
             'pointer-events' : 'none'
         };
+        var cursorCss = {
+            'cursor' : 'not-allowed'
+        };
 
-        function appendOptionsAndSetDisabled(optionsArray, targetSelect, targetId, parentSelect) {
-            appendOptionsToDropdown(optionsArray, targetSelect);
-            targetSelect.val(targetId);
-            targetSelect.css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
-            parentSelect.css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
-            var parentForm = $('#study-file-' + targetId);
-            parentForm.find('.file-type').css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
-        }
-
-        $('.file-type').each(function(index, fileType) {
-            if ($(fileType).val() === '10X Genes File' || $(fileType).val() === '10X Barcodes File') {
-                var assocId = '#study_file_options_matrix_id'
-                var targetFileType = 'MM Coordinate Matrix'
-            } else if ( $(fileType).val() === 'BAM Index') {
-                var assocId = '#study_file_options_bam_id'
-                var targetFileType = 'BAM'
-            } else if ( $(fileType).val() === 'Coordinate Labels') {
-                var assocId = '#study_file_options_cluster_file_id'
-                var targetFileType = 'Cluster'
+        $('.synced-study-file .file-type').each(function(index, fileType) {
+            if ($(fileType).val() !== '') {
+                $(fileType).css(disabledCss).attr('readonly', 'readonly').parent().css(cursorCss);
             }
-            var assocForm = $(fileType).closest('form');
-            var fileSelect = $(assocForm).find('.bundle-select');
-            var fileId = $(fileSelect).find(assocId).val();
-            appendOptionsAndSetDisabled(gatherFilesByType(targetFileType), fileSelect, fileId, fileType)
         });
     });
 
