@@ -25,6 +25,10 @@ class BigQueryClient < Struct.new(:project, :service_account_credentials, :clien
     if Rails.env.production?
       return
     end
+
+    puts "SSL_CERT_FILE = #{ENV['SSL_CERT_FILE']}"
+    puts "SSL_CERT_DIR = #{ENV['SSL_CERT_DIR']}"
+
     client = BigQueryClient.new.client
     query = "DELETE FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE 1 = 1"
     client.dataset(CellMetadatum::BIGQUERY_DATASET).query(query)
