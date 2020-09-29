@@ -31,6 +31,7 @@ ARG BURP_ENABLE=n
 ARG BURP_CERT="/usr/local/share/ca-certificates/burp.crt"
 ENV SSL_CERT_FILE="/usr/local/share/ca-certificates/burp.crt"
 ENV SSL_CERT_DIR="/usr/local/share/ca-certificates"
+COPY burp-env.conf /etc/nginx/main.d/
 
 RUN [ "${BURP_ENABLE}" != "y" ] || \
       curl -s --proxy localhost:8080 burp/cert \
