@@ -20,7 +20,6 @@ class BigQueryClient < Struct.new(:project, :service_account_credentials, :clien
     self.service_account_credentials = SERVICE_ACCOUNT_KEY
     self.client = Google::Cloud::Bigquery.new
 
-    https.ca_file = ENV['SSL_CERT_FILE']
     puts "BigQueryClient: https.ca_file = #{https.ca_file}"
   end
 
