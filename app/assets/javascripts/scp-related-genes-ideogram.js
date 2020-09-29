@@ -18,6 +18,20 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
     document.querySelector('#render-target .tab-content')
   const distTabs = document.querySelectorAll('.expression-plot')
 
+  if (window.ideogram.chromosomesArray.length === 0) {
+    // Handles rare edge case: gene is from a matrix that has
+    // an associated organism, but the organism has no chromosome-level
+    // genome assembly.  Example: axolotl study SCP499.
+    ideoContainer.style.display = 'none'
+    $('#related-genes-ideogram-container').html('')
+    return
+  } else {
+    // Handles theoretical edge case: multi-species study when only one
+    // organism lacks a chromosome-level genome assembly (say, a study on
+    // mouse and axolotl)
+    ideoContainer.style.display = ''
+  }
+
   // Move plots down to make space for Ideogram, per UX recommendation
   distTabs.forEach(distTab => {
     distTab.style.position = 'relative'
@@ -73,6 +87,9 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
 
       // Handles "BRCA1,BRCA2", "BRCA1 BRCA2", and "BRCA1, BRCA2"
       const geneSymbol = searchInput.split(/[, ]/).filter(d => d !== '')[0]
+
+      // Handles edge case: when organism lacks chromosome-level assembly
+      if (window.ideogram.chromosomesArray.length === 0) return
 
       this.plotRelatedGenes(geneSymbol)
     }
