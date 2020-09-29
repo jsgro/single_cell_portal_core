@@ -27,7 +27,7 @@ function setup_burp_cert {
     local CERT="/usr/local/share/ca-certificates/burp.crt"
     yarn config set cafile "$CERT" -g
     export SSL_CERT_FILE="$CERT"
-    export SSL_CERT_DIR="$(dirname $CERT)"
+    # export SSL_CERT_DIR="$(dirname $CERT)"
   fi
 }
 
