@@ -11,6 +11,10 @@ function onClickAnnot(annot) {
  * Called from render_gene_expression_plots.js.erb
  */
 function showRelatedGenesIdeogram() { // eslint-disable-line
+
+  // Handles old studies, where matrices lack species
+  if (window.SCP.organism === '') return
+
   const ideoContainer =
     document.getElementById('related-genes-ideogram-container')
   const ideoMiddle = document.getElementById('_ideogramMiddleWrap')
@@ -56,6 +60,10 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
  * Called from render_gene_expression_plots.js.erb
 */
 function resizeRelatedGenesIdeogram() { // eslint-disable-line
+
+  // Handles old studies, where matrices lack species
+  if (window.SCP.organism === '') return
+
   const ideoLegend = document.getElementById('_ideogramLegend')
   const ideoRect = document.getElementById('_ideogram').getBoundingClientRect()
   ideoLegend.style.left = `${ideoRect.x - 160}px`
@@ -67,6 +75,10 @@ function resizeRelatedGenesIdeogram() { // eslint-disable-line
  * Called from _view_gene_expression_title_bar.html.erb
  */
 function createRelatedGenesIdeogram() { // eslint-disable-line
+
+  // Handles old studies, where matrices lack species
+  if (window.SCP.organism === '') return
+
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
     $('#related-genes-ideogram-container').html('')
