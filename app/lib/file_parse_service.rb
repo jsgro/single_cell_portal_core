@@ -24,7 +24,7 @@ class FileParseService
           error: "File: #{study_file.upload_file_name} is already parsing"
       }
     else
-      self.create_or_update_bundle_from_file(study_file, study)
+      self.create_bundle_from_file_options(study_file, study)
       case study_file.file_type
       when 'Cluster'
         job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_cluster, reparse: reparse,
@@ -122,7 +122,7 @@ class FileParseService
   end
 
   # helper for handling study file bundles when initiating parses
-  def self.create_or_update_bundle_from_file(study_file, study)
+  def self.create_bundle_from_file_options(study_file, study)
     study_file_bundle = study_file.study_file_bundle
     if study_file_bundle.nil?
       StudyFileBundle::BUNDLE_REQUIREMENTS.each do |parent_type, bundled_types|
@@ -137,7 +137,7 @@ class FileParseService
             study_file_bundle.add_files(*bundled_files)
           end
         elsif bundled_types.include?(study_file.file_type)
-          parent_file_id = study_file.options[options_key]
+          parent_file_id = study_file.options.with_indifferent_access[options_key]
           parent_file = StudyFile.find_by(id: parent_file_id)
           # parent file may or may not be present, so check first
           if parent_file.present?
