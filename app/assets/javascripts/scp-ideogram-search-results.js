@@ -10,41 +10,34 @@ function onClickAnnot(annot) {
  * Called from render_gene_expression_plots.js.erb
  */
 function showSearchIdeogram() {
-  const ideoDom = document.getElementById('ideogramSearchResultsContainer')
-  const ideoMiddleDom = document.getElementById('_ideogramMiddleWrap')
+  const ideoContainer =
+    document.getElementById('ideogramSearchResultsContainer')
+  const ideoMiddle = document.getElementById('_ideogramMiddleWrap')
   const renderTargetTabContent =
     document.querySelector('#render-target .tab-content')
-  const distTabDoms = document.querySelectorAll('.expression-plot')
+  const distTabs = document.querySelectorAll('.expression-plot')
 
   // Move plots down to make space for Ideogram, per UX recommendation
-  distTabDoms.forEach(distTabDom => {
-    distTabDom.style.position = 'relative'
-    distTabDom.style.top = '100px'
+  distTabs.forEach(distTab => {
+    distTab.style.position = 'relative'
+    distTab.style.top = '100px'
   })
 
   // Move Ideogram to its final location
-  renderTargetTabContent.prepend(ideoDom)
+  renderTargetTabContent.prepend(ideoContainer)
 
   // Show Ideogram
-  ideoDom.style.visibility = ''
-  ideoDom.style.height = '100px'
-  ideoMiddleDom.style.borderBottom = '1px solid #EEE'
-  ideoMiddleDom.style.overflowY = 'hidden'
-}
+  ideoContainer.style.visibility = ''
+  ideoContainer.style.height = '100px'
+  ideoMiddle.style.borderBottom = '1px solid #EEE'
+  ideoMiddle.style.borderLeft = '1px solid #DDD'
+  ideoMiddle.style.borderRight = '1px solid #DDD'
+  ideoMiddle.style.overflowY = 'hidden'
 
-/** TODO: Remove this */
-function moveLegend() {
-  // Hide related genes that aren't this study
-  const filteredAnnots = []
-  window.ideogram.annots.forEach(chrAnnot => {
-    chrAnnot.annots.forEach(annot => {
-      if (window.uniqueGenes.includes(annot.name)) {
-        filteredAnnots.push(annot)
-      }
-    })
-  })
-
-  window.ideogram.drawAnnots(filteredAnnots)
+  // To upstream: Patch minor Ideogram bug with partially-clickable annotations
+  const ideoInner = document.getElementById('_ideogramInnerWrap')
+  ideoInner.style.position = 'relative'
+  ideoInner.style.left = '10px'
 }
 
 /**
@@ -69,7 +62,6 @@ function createSearchResultsIdeogram() {
     dataDir: 'https://unpkg.com/ideogram@1.23.0/dist/data/bands/native/',
     showTools: true,
     onClickAnnot,
-    onLoadAnnots: moveLegend,
     onLoad() {
       const searchInput = document.querySelector('#search_genes').value.trim()
 
