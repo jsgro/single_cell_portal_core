@@ -1138,7 +1138,7 @@ class Study
     gene = self.genes.by_name_or_id(searched_gene, self.expression_matrix_files.map(&:id))
 
     # Get matrices containing this gene.  (Same gene name can be in multiple matrices.)
-    study_file_ids = Gene.where(study_id: self.id, name: gene['name']).pluck(:study_file_id)
+    study_file_ids = genes.where(name: gene['name']).pluck(:study_file_id)
 
     # Get species for each matrix.
     # TODO (): Handle when a searched gene maps to multiple species
