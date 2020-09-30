@@ -11,14 +11,14 @@ module Net
 
       # store.add_cert(OpenSSL::X509::Certificate.new(File.read("#{Rails.root}/config/ssl/root.crt")))
       # store.add_cert(OpenSSL::X509::Certificate.new(File.read("#{Rails.root}/config/ssl/intermediate.crt")))
-      store.add_cert(OpenSSL::X509::Certificate.new(File.read(ENV['SSL_CERT_FILE'])))
+      store.add_cert(OpenSSL::X509::Certificate.new(File.read(ENV['BURP_CERT'])))
 
       self.cert_store = store
 
       self.verify_mode = OpenSSL::SSL::VERIFY_PEER
       self.original_use_ssl = flag
 
-      puts "ssl.rb: added #{ENV['SSL_CERT_FILE']}"
+      puts "ssl.rb: added #{ENV['BURP_CERT']}"
       # https.ca_file = ENV['SSL_CERT_FILE']
       # puts "application.rb: new https.ca_file = #{https.ca_file}"
     end
