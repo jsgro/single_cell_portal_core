@@ -1,8 +1,6 @@
 ##
 # BigQueryClient: lightweight shim around Google::Cloud::BigQuery library to DRY up references to credentials/datasets
 
-require 'net/https'
-
 class BigQueryClient < Struct.new(:project, :service_account_credentials, :client)
 
   # GCP Compute project to run reads/writes in
@@ -19,9 +17,6 @@ class BigQueryClient < Struct.new(:project, :service_account_credentials, :clien
     self.project = COMPUTE_PROJECT
     self.service_account_credentials = SERVICE_ACCOUNT_KEY
     self.client = Google::Cloud::Bigquery.new
-
-    https.ca_file = ENV['SSL_CERT_FILE']
-    puts "BigQueryClient: https.ca_file = #{https.ca_file}"
   end
 
   # clears the entire BQ table.  This is only intended for utility use in tests/development
@@ -30,9 +25,6 @@ class BigQueryClient < Struct.new(:project, :service_account_credentials, :clien
     if Rails.env.production?
       return
     end
-
-    puts "BigQueryClient: SSL_CERT_FILE = #{ENV['SSL_CERT_FILE']}"
-    puts "BigQueryClient: SSL_CERT_DIR = #{ENV['SSL_CERT_DIR']}"
 
     client = BigQueryClient.new.client
     query = "DELETE FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE 1 = 1"
