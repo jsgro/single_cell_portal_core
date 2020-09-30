@@ -1,6 +1,6 @@
 # require 'open-uri'
 # require 'net/https'
-require 'httpclient'
+# require 'httpclient'
 
 # module Net
 #   class HTTP
@@ -26,9 +26,9 @@ require 'httpclient'
 #   end
 # end
 
-class HTTPClient
-  def initialize(*args, &block)
-    self.ssl_config.set_trust_ca(ENV['BURP_CERT'])
-    super
-  end
-end
+# class HTTPClient
+#   def initialize(*args, &block)
+#     self.ssl_config.set_trust_ca(ENV['BURP_CERT'])
+#     super
+#   end
+# end

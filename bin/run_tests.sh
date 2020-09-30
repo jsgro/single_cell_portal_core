@@ -33,6 +33,11 @@ function setup_burp_cert {
     # local CERT="/usr/local/share/ca-certificates/burp.crt"
     # yarn config set cafile "$SSL_CERT_FILE" -g
 
+    # curl -s --proxy localhost:8080 burp/cert \
+    # | openssl x509 -inform DER -out /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
+
+    cp "$BURP_CERT" /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
+
     export http_proxy="http://$DOCKER_HOSTNAME:8080"
     export https_proxy="http://$DOCKER_HOSTNAME:8080"
 
