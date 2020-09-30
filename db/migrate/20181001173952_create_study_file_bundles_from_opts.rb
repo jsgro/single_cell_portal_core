@@ -31,7 +31,7 @@ class CreateStudyFileBundlesFromOpts < Mongoid::Migration
         when 'BAM Index'
           study_file.options.merge!({bam_id: bundle.parent.id.to_s})
         when 'Coordinate Labels'
-          study_file.options.merge!({cluster_group_id: bundle.bundle_target.id.to_s})
+          study_file.options.merge!({cluster_file_id: bundle.parent.id.to_s})
         end
         study_file.study_file_bundle_id = nil
         study_file.save

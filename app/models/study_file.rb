@@ -699,6 +699,11 @@ class StudyFile
     self.study_file_bundle.present?
   end
 
+  # gracefully check if study_file_bundle is both present and completed
+  def has_completed_bundle?
+    self.study_file_bundle.try(:completed?)
+  end
+
   # get any 'bundled' files that correspond to this file
   def bundled_files
     if self.study_file_bundle.present?
@@ -724,9 +729,8 @@ class StudyFile
   # inverse of study_file.bundled_files.  In the case of Coordinate Labels, this returns the cluster, not the file
   def bundle_parent
     if self.study_file_bundle.present?
-      self.study_file_bundle.bundle_target
+      self.study_file_bundle.parent
     else
-      model = StudyFile
       case self.file_type
       when /10X/
         selector = :matrix_id
@@ -734,10 +738,9 @@ class StudyFile
         selector = :bam_id
       when 'Coordinate Labels'
         selector = :cluster_group_id
-        model = ClusterGroup
       end
       # call find_by(id: ) to avoid Mongoid::Errors::InvalidFind
-      model.find_by(id: self.options[selector])
+      StudyFile.find_by(id: self.options[selector])
     end
   end
 

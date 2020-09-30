@@ -181,46 +181,18 @@
         }
     });
 
-    // pre-select all MM coordinate matrix & BAM associations, if present
+    // traverse synced files and disable changing the file type
     $(document).ready(function() {
-        var allMatrices = gatherFilesByType('MM Coordinate Matrix');
-        var allBams = gatherFilesByType('BAM');
         var disabledCss = {
             'pointer-events' : 'none'
         };
-        $('.file-type').each(function(index, fileType) {
-            if ($(fileType).val() === '10X Genes File' || $(fileType).val() === '10X Barcodes File') {
-                var assocForm = $(fileType).closest('form');
-                var matrixSelect = $(assocForm).find('.matrix-file-select');
-                var matrixId = $(assocForm).find('#study_file_options_matrix_id').val();
-                $(allMatrices).each(function(index, matrix) {
-                    matrixSelect.append($('<option />', {
-                        value: matrix[1],
-                        text: matrix[0]
-                    }));
-                });
-                // set correct value and disable necessary selects to prevent user error
-                matrixSelect.val(matrixId);
-                matrixSelect.css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
-                $(fileType).css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
-                var matrixForm = $('#study-file-' + matrixId);
-                matrixForm.find('.file-type').css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
-            } else if ( $(fileType).val() === 'BAM Index') {
-                var bamIdxForm = $(fileType).closest('form');
-                var bamSelect = $(bamIdxForm).find('.bam-file-select');
-                var bamId = $(bamIdxForm).find('#study_file_options_bam_id').val();
-                $(allBams).each(function(index, bam) {
-                    bamSelect.append($('<option />', {
-                        value: bam[1],
-                        text: bam[0]
-                    }));
-                });
-                // set correct value and disable necessary selects to prevent user error
-                bamSelect.val(bamId);
-                bamSelect.css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
-                $(fileType).css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
-                var bamForm = $('#study-file-' + bamId);
-                bamForm.find('.file-type').css(disabledCss).attr('readonly', 'readonly').parent().css('cursor', 'not-allowed');
+        var cursorCss = {
+            'cursor' : 'not-allowed'
+        };
+
+        $('.synced-study-file .file-type').each(function(index, fileType) {
+            if ($(fileType).val() !== '') {
+                $(fileType).css(disabledCss).attr('readonly', 'readonly').parent().css(cursorCss);
             }
         });
     });
