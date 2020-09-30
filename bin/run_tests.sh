@@ -24,14 +24,14 @@ FAILED_COUNT=0
 
 function setup_burp_cert {
   if [ "$BURP_ENABLE" = "y" ]; then
-    export SSL_CERT_FILE="$BURP_CERT"
+    # export SSL_CERT_FILE="$BURP_CERT"
     # curl -s --proxy localhost:8080 burp/cert | openssl x509 -inform DER -out "$SSL_CERT_FILE"
     # ls -al /usr/local/share/ca-certificates/
     # update-ca-certificates
-    ls -al /usr/local/share/ca-certificates/
-    cat "$SSL_CERT_FILE"
+    # ls -al /usr/local/share/ca-certificates/
+    # cat "$SSL_CERT_FILE"
     # local CERT="/usr/local/share/ca-certificates/burp.crt"
-    yarn config set cafile "$SSL_CERT_FILE" -g
+    # yarn config set cafile "$SSL_CERT_FILE" -g
 
     export http_proxy="http://$DOCKER_HOSTNAME:8080"
     export https_proxy="http://$DOCKER_HOSTNAME:8080"
