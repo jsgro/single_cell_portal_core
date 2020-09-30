@@ -23,10 +23,10 @@ RETURN_CODE=0
 FAILED_COUNT=0
 
 function setup_burp_cert {
-  if [ -n "$BURP_HOST" ]; then
-    curl -s --proxy $BURP_HOST burp/cert |
+  if [ -n "$BURP_PROXY" ]; then
+    curl -s --proxy $BURP_PROXY burp/cert |
       openssl x509 -inform DER -out /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
-    export http_proxy="$BURP_HOST"
+    export http_proxy="$BURP_PROXY"
   fi
 }
 
