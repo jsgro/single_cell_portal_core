@@ -44,7 +44,9 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     file_params = {study_file: {file_type: 'Metadata', study_id: study.id.to_s, use_metadata_convention: true}}
     perform_study_file_upload('metadata_example2.txt', file_params, study.id)
     assert_response 200, "Metadata upload failed: #{@response.code}"
-    example_files[:metadata_breaking_convention][:object] = study.metadata_file
+    metadata_file = study.metadata_file
+    example_files[:metadata_breaking_convention][:object] = metadata_file
+    example_files[:metadata_breaking_convention][:cache_location] = metadata_file.parse_fail_bucket_location
     assert example_files[:metadata_breaking_convention][:object].present?, "Metadata failed to associate, found no file: #{example_files[:metadata_breaking_convention][:object].present?}"
 
     # metadata file that should fail validation because we already have one
@@ -57,14 +59,20 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     perform_study_file_upload('cluster_bad.txt', file_params, study.id)
     assert_response 200, "Cluster 1 upload failed: #{@response.code}"
     assert_equal 1, study.cluster_ordinations_files.size, "Cluster 1 failed to associate, found #{study.cluster_ordinations_files.size} files"
-    example_files[:cluster][:object] = study.cluster_ordinations_files.first
+    cluster_file = study.cluster_ordinations_files.first
+    example_files[:cluster][:object] = cluster_file
+    example_files[:cluster][:cache_location] = cluster_file.parse_fail_bucket_location
+
 
     # bad expression matrix (duplicate gene)
     file_params = {study_file: {file_type: 'Expression Matrix', study_id: study.id.to_s}}
     perform_study_file_upload('expression_matrix_example_bad.txt', file_params, study.id)
     assert_response 200, "Expression matrix upload failed: #{@response.code}"
     assert_equal 1, study.expression_matrix_files.size, "Expression matrix failed to associate, found #{study.expression_matrix_files.size} files"
-    example_files[:expression][:object] = study.expression_matrix_files.first
+    expression_matrix = study.expression_matrix_files.first
+    example_files[:expression][:object] = expression_matrix
+    example_files[:expression][:cache_location] = expression_matrix.parse_fail_bucket_location
+
 
     ## request parse
     example_files.each do |file_type,file|
@@ -96,12 +104,16 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     example_files.values.each do |e|
       assert_equal 'failed', e[:object].parse_status, "Incorrect parse_status for #{e[:name]}"
       assert e[:object].queued_for_deletion
+      # check that file is cached in parse_logs/:id folder in the study bucket
+      cached_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, e[:cache_location])
+      assert cached_file.present?, "Did not find cached file at #{e[:cache_location]} in #{study.bucket_id}"
     end
 
     assert_equal 0, study.cell_metadata.size
     assert_equal 0, study.genes.size
     assert_equal 0, study.cluster_groups.size
     assert_equal 0, study.cluster_ordinations_files.size
+
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
