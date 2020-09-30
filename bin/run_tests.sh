@@ -33,8 +33,8 @@ function setup_burp_cert {
     # local CERT="/usr/local/share/ca-certificates/burp.crt"
     yarn config set cafile "$SSL_CERT_FILE" -g
 
-    export HTTP_PROXY="http://$DOCKER_HOSTNAME:8080"
-    export HTTPS_PROXY="http://$DOCKER_HOSTNAME:8080"
+    export http_proxy="http://$DOCKER_HOSTNAME:8080"
+    export https_proxy="http://$DOCKER_HOSTNAME:8080"
 
     # export SSL_CERT_FILE="$BURP_CERT"
     # export SSL_CERT_DIR="$(dirname $CERT)"
@@ -51,8 +51,8 @@ function clean_up {
 
 setup_burp_cert
 
-echo HTTP_PROXY=$HTTP_PROXY
-echo HTTPS_PROXY=$HTTPS_PROXY
+echo http_proxy=$http_proxy
+echo https_proxy=$https_proxy
 echo SSL_CERT_FILE=$SSL_CERT_FILE
 echo SSL_CERT_DIR=$SSL_CERT_DIR
 
