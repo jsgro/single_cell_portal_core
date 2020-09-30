@@ -15,6 +15,3 @@ docker run --rm -d --net host --name "${CONTAINER}" "${IMAGE}"
 
 # Wait until startup
 ( docker logs "${CONTAINER}" -f & ) | grep -q "Started BurpApplication"
-
-# Update iptables so all "under test" container traffic is proxied through the Burp container
-# sudo iptables -t nat -A PREROUTING -p tcp -m multiport --dport 80,443 -j REDIRECT --to-ports 8080

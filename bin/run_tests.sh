@@ -24,25 +24,9 @@ FAILED_COUNT=0
 
 function setup_burp_cert {
   if [ -n "$BURP_HOST" ]; then
-    # export SSL_CERT_FILE="$BURP_CERT"
-    # curl -s --proxy localhost:8080 burp/cert | openssl x509 -inform DER -out "$SSL_CERT_FILE"
-    # ls -al /usr/local/share/ca-certificates/
-    # update-ca-certificates
-    # ls -al /usr/local/share/ca-certificates/
-    # cat "$SSL_CERT_FILE"
-    # local CERT="/usr/local/share/ca-certificates/burp.crt"
-    # yarn config set cafile "$SSL_CERT_FILE" -g
-
-    curl -s --proxy $BURP_HOST burp/cert \
-    | openssl x509 -inform DER -out /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
-
-    # cp "$BURP_CERT" /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
-
+    curl -s --proxy $BURP_HOST burp/cert |
+      openssl x509 -inform DER -out /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
     export http_proxy="$BURP_HOST"
-    # export https_proxy="http://$BURP_HOST"
-
-    # export SSL_CERT_FILE="$BURP_CERT"
-    # export SSL_CERT_DIR="$(dirname $CERT)"
   fi
 }
 
@@ -55,12 +39,6 @@ function clean_up {
 }
 
 setup_burp_cert
-
-echo http_proxy=$http_proxy
-echo https_proxy=$https_proxy
-echo SSL_CERT_FILE=$SSL_CERT_FILE
-echo SSL_CERT_DIR=$SSL_CERT_DIR
-
 clean_up
 
 TMP_PIDS_DIR="/home/app/webapp/tmp/pids"
