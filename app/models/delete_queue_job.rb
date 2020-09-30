@@ -138,9 +138,11 @@ class DeleteQueueJob < Struct.new(:object)
   # remove a study_file from a study_file_bundle, and clean original_file_list up as necessary
   def remove_file_from_bundle
     bundle = object.study_file_bundle
-    bundle.original_file_list.delete_if {|file| file['file_type'] == object.file_type} # this edits the list in place, but is not saved
-    object.update(study_file_bundle_id: nil)
-    bundle.save
+    if bundle.present?
+      bundle.original_file_list.delete_if {|file| file['file_type'] == object.file_type} # this edits the list in place, but is not saved
+      object.update(study_file_bundle_id: nil)
+      bundle.save
+    end
   end
 
   # removed all parsed data from provided list of models

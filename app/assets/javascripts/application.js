@@ -1051,15 +1051,15 @@ function validateEmail(email) {
     return re.test(email);
 }
 
-// gather all MM Coordinate Matrix instances from a page
+// gather all instances of a given file type from a page
 function gatherFilesByType(fileType) {
     var matchingfiles = [];
     $('.file-type').each(function(index, type) {
         if ($(type).val() == fileType) {
-            var mForm = $(type).closest('form');
-            var mId = $(mForm).find('#study_file__id').val();
-            var mName = $(mForm).find('.filename').val();
-            matchingfiles.push([mName, mId]);
+            var form = $(type).closest('form');
+            var id = $(form).find('#study_file__id').val();
+            var name = $(form).find('.filename').val();
+            matchingfiles.push({text: name, value: id});
         }
     });
     return matchingfiles;
@@ -1130,4 +1130,17 @@ function extractIdentifierFromId(domId) {
     var idParts = domId.split('-');
     idParts.pop();
     return idParts.join('-');
+}
+
+// append a list of options to a select menu dynamically when file_type is changed on sync_study view
+// options sourced from gatherFilesByType()
+function appendOptionsToDropdown(options, selectElement) {
+    var optionsArray = []
+    $(options).each(function(index, element) {
+        optionsArray.push($('<option />', {
+            value: element.value,
+            text: element.text
+        }));
+    });
+    selectElement.append(optionsArray);
 }

@@ -129,6 +129,7 @@ else
                     test/integration/lib/search_facet_populator_test.rb
                     test/integration/lib/summary_stats_utils_test.rb
                     test/integration/lib/user_asset_service_test.rb
+                    test/integration/lib/file_parse_service_test.rb
                     test/models/big_query_client_test.rb
                     test/models/upload_cleanup_job_test.rb
                     test/helper_tests/application_helper_test.rb
