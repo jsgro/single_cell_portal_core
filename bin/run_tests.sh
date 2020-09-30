@@ -27,7 +27,7 @@ function setup_burp_cert {
     local BURP_CERT="/usr/local/share/ca-certificates/burp.crt"
     curl -s --proxy $BURP_PROXY burp/cert | openssl x509 -inform DER -out "${BURP_CERT}"
     yarn config set cafile "${BURP_CERT}" -g
-    cp "${BURP_CERT}" /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
+    ln -sf "${BURP_CERT}" /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
     export http_proxy="$BURP_PROXY"
     update-ca-certificates
   fi
