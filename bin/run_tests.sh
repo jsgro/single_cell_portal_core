@@ -27,6 +27,7 @@ function setup_burp_cert {
     curl -s --proxy $BURP_PROXY burp/cert |
       openssl x509 -inform DER -out /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
     export http_proxy="$BURP_PROXY"
+    cat /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
   fi
 }
 
