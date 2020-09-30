@@ -25,11 +25,10 @@ FAILED_COUNT=0
 function setup_burp_cert {
   if [ -n "$BURP_PROXY" ]; then
     local BURP_CERT="/usr/local/share/ca-certificates/burp.crt"
-    curl -s --proxy $BURP_PROXY burp/cert |
-      openssl x509 -inform DER -out "${BURP_CERT}"
-    update-ca-certificates
+    curl -s --proxy $BURP_PROXY burp/cert | openssl x509 -inform DER -out "${BURP_CERT}"
     cp "${BURP_CERT}" /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
     export http_proxy="$BURP_PROXY"
+    update-ca-certificates
   fi
 }
 
