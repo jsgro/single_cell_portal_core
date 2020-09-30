@@ -23,7 +23,7 @@ RETURN_CODE=0
 FAILED_COUNT=0
 
 function setup_burp_cert {
-  if [ "$BURP_ENABLE" = "y" ]; then
+  if [ -n "$BURP_HOST" ]; then
     # export SSL_CERT_FILE="$BURP_CERT"
     # curl -s --proxy localhost:8080 burp/cert | openssl x509 -inform DER -out "$SSL_CERT_FILE"
     # ls -al /usr/local/share/ca-certificates/
@@ -33,13 +33,13 @@ function setup_burp_cert {
     # local CERT="/usr/local/share/ca-certificates/burp.crt"
     # yarn config set cafile "$SSL_CERT_FILE" -g
 
-    # curl -s --proxy localhost:8080 burp/cert \
-    # | openssl x509 -inform DER -out /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
+    curl -s --proxy $BURP_HOST burp/cert \
+    | openssl x509 -inform DER -out /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
 
-    cp "$BURP_CERT" /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
+    # cp "$BURP_CERT" /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
 
-    export http_proxy="http://$DOCKER_HOSTNAME:8080"
-    export https_proxy="http://$DOCKER_HOSTNAME:8080"
+    export http_proxy="$BURP_HOST"
+    # export https_proxy="http://$BURP_HOST"
 
     # export SSL_CERT_FILE="$BURP_CERT"
     # export SSL_CERT_DIR="$(dirname $CERT)"
