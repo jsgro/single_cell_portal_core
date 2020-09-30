@@ -1143,7 +1143,7 @@ class Study
     # Get species for each matrix.
     # TODO (): Handle when a searched gene maps to multiple species
     taxon_ids = StudyFile.where(:_id.in => study_file_ids).pluck(:taxon_id)
-    scientific_name = Taxon.where(:_id.in => taxon_ids).pluck(:scientific_name)[0]
+    scientific_name = Taxon.where(:_id.in => taxon_ids).pluck(:scientific_name).first
 
     return scientific_name
   end
