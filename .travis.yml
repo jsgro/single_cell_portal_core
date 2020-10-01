@@ -16,9 +16,15 @@ before_install:
   - sudo curl -O https://releases.hashicorp.com/vault/1.0.1/vault_1.0.1_linux_amd64.zip
   - sudo unzip vault_1.0.1_linux_amd64.zip
   - sudo mv vault /usr/local/bin
-  - bin/burp_start.sh "${BURP_DOCKER_IMAGE}" "${BURP_DOCKER_KEY}"
+  - |
+    if [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
+      bin/burp_start.sh "${BURP_DOCKER_IMAGE}" "${BURP_DOCKER_KEY}"
+      export BURP_PROXY=http://$(hostname):8080'
+    fi
 script:
-  - BURP_PROXY=http://$(hostname):8080
-    bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json -s secret/kdux/scp/staging/scp_service_account.json -r secret/kdux/scp/staging/read_only_service_account.json -e test -n single-cell-portal-staging
+  - bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json -s secret/kdux/scp/staging/scp_service_account.json -r secret/kdux/scp/staging/read_only_service_account.json -e test -n single-cell-portal-staging
 after_success:
-  - bin/burp_scan.sh "${BURP_DOCKER_IMAGE}"
+  - |
+    if [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
+      bin/burp_scan.sh "${BURP_DOCKER_IMAGE}"'
+    fi
