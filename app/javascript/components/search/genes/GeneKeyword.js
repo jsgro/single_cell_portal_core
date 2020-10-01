@@ -48,11 +48,13 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
 
   /** Converts any current typed free text to a gene array entry */
   function syncGeneArrayToInputText() {
-    if (!inputText) {
+    const inputTextTrimmed = inputText.trim().replace(/,/g, '')
+    if (!inputTextTrimmed) {
       return geneArray
     }
-    const newGeneArray = [...geneArray, { label: inputText, value: inputText }]
-    setInputText('')
+    const newGeneArray = [...geneArray, { label: inputTextTrimmed, value: inputTextTrimmed }]
+
+    setInputText(' ')
     setGeneArray(newGeneArray)
     return newGeneArray
   }
@@ -64,7 +66,9 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
     }
     switch (event.key) {
       case ' ':
+      case ',':
         syncGeneArrayToInputText()
+        setTimeout(() => { setInputText(' ') }, 0)
     }
   }
 
