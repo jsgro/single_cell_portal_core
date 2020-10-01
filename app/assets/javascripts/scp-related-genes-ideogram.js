@@ -106,6 +106,7 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
     }
   }
 
-  window.ideogram = Ideogram.initRelatedGenes(ideoConfig, window.uniqueGenes)
+  window.ideogram =
+    Ideogram.initRelatedGenes(ideoConfig, window.SCP.uniqueGenes)
 }
 

@@ -270,7 +270,7 @@ function initializeAutocomplete(selector) {
             source: function(request, response) {
                 // delegate back to autocomplete, but extract the last term
                 response(
-                    $.ui.autocomplete.filter(window.uniqueGenes, extractLast(request.term))
+                    $.ui.autocomplete.filter(window.SCP.uniqueGenes, extractLast(request.term))
                 );
             },
             minLength: 2,
