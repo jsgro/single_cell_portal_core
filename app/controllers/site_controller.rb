@@ -410,7 +410,7 @@ class SiteController < ApplicationController
     @y_axis_title = load_expression_axis_title
     matrix = @study.expression_matrix_files.first
 
-    @organisms = @study.infer_species(params[:gene])
+    @taxons = @study.infer_taxons(params[:gene])
 
     if request.format == 'text/html'
       # only set this check on full page loads (happens if user was not signed in but then clicked the 'genome' tab)

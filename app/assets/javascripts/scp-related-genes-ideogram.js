@@ -6,12 +6,20 @@ function onClickAnnot(annot) {
 }
 
 /**
+ * Reports if current gene lacks associated taxon (aka species, organism)
+ *
+ * Accounts for old SCP studies, where matrices lack taxons
+ */
+function geneHasNoTaxon() {
+  return window.SCP.taxon !== ''
+}
+
+/**
  * Displays Ideogram after getting gene search results in Study Overview
  */
 function showRelatedGenesIdeogram() { // eslint-disable-line
 
-  // Handles old studies, where matrices lack species
-  if (window.SCP.organism === '') return
+  if (geneHasNoTaxon()) return
 
   const ideoContainer =
     document.getElementById('related-genes-ideogram-container')
@@ -56,18 +64,21 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
 function resizeRelatedGenesIdeogram() { // eslint-disable-line
 
   // Handles old studies, where matrices lack species
-  if (window.SCP.organism === '') return
+  if (geneHasNoTaxon()) return
 
   const ideoLegend = document.getElementById('_ideogramLegend')
   const ideoRect = document.getElementById('_ideogram').getBoundingClientRect()
   ideoLegend.style.left = `${ideoRect.x - 160}px`
 }
 
-/** Initiates Ideogram for related genes */
+/**
+ * Initiates Ideogram for related genes
+ *
+ * This is only done in the context of single-gene search in Study Overview
+ */
 function createRelatedGenesIdeogram() { // eslint-disable-line
 
-  // Handles old studies, where matrices lack species
-  if (window.SCP.organism === '') return
+  if (geneHasNoTaxon()) return
 
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
@@ -76,7 +87,7 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
 
   const ideoConfig = {
     container: '#related-genes-ideogram-container',
-    organism: window.SCP.organism.toLowerCase().replace(/ /g, '-'),
+    organism: window.SCP.taxon.toLowerCase().replace(/ /g, '-'),
     chrWidth: 9,
     chrHeight: 100,
     chrLabelSize: 12,

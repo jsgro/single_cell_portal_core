@@ -1132,9 +1132,11 @@ class Study
     Gene.where(study_id: self.id, :study_file_id.in => self.expression_matrix_files.map(&:id)).pluck(:name).uniq
   end
 
-  # Get species scientific name for a gene name.  E.g. PTEN -> Homo sapiens.
+  # For a gene name in this study, get scientific name of species / organism
+  # For example: "PTEN" -> ["Homo sapiens"].
+  #
   # TODO (SCP-2769): Handle when a searched gene maps to multiple species
-  def infer_species(gene_name)
+  def infer_taxons(gene_name)
     Gene
       .where(study_id: self.id, :study_file_id.in => self.expression_matrix_files.pluck(:id), name: gene_name)
       .map {|gene| gene.taxon.try(:scientific_name)}
