@@ -7,8 +7,8 @@ set -eu
 IMAGE="$1"
 
 # Burp proxy URL
-PROXY="$2"
+PROXY_URL="$2"
 
 # Scan collected traffic and report results (optional)
 docker run --rm -it --entrypoint /automation/BroadBurpScanner.py "${IMAGE}" \
-  "${PROXY}" --action scan
+  "${PROXY_URL}" --action scan
