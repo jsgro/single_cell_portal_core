@@ -656,6 +656,11 @@ class StudyFile
     end
   end
 
+  # possible bucket location of file after an ingest failure (will only persist for 30 days after failure)
+  def parse_fail_bucket_location
+    "parse_logs/#{self.id}/#{self.upload_file_name}"
+  end
+
   # generate a download path to use with bulk_download
   # takes the form of :study_accession/:output_directory_name/:filename
   def bulk_download_pathname
