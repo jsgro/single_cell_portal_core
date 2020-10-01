@@ -15,6 +15,6 @@ print(u"\033[31;1m High")
 
 
 for color in (30, 31, 32, 33, 34, 35, 36, 37):
-    print(f"\u001b[{color};1m {color}")
+    print(u"\u001b[" + str(color) + ";1m " + str(color))
 
 sys.exit(1)
