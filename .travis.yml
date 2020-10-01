@@ -9,6 +9,8 @@ branches:
     - development
 services:
   - docker
+env:
+  - BURP_PORT=8080
 before_install:
   - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
   - gem install bundler -v '< 2'
@@ -18,13 +20,13 @@ before_install:
   - sudo mv vault /usr/local/bin
   - |
     if [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
-      bin/burp_start.sh "${BURP_DOCKER_IMAGE}" "${BURP_DOCKER_KEY}"
-      export BURP_PROXY=http://$(hostname):8080
+      bin/burp_start.sh "${BURP_DOCKER_IMAGE}" "${BURP_DOCKER_KEY}" "${BURP_PORT}"
+      export BURP_PROXY="http://$(hostname):${BURP_PORT}"
     fi
 script:
   - bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json -s secret/kdux/scp/staging/scp_service_account.json -r secret/kdux/scp/staging/read_only_service_account.json -e test -n single-cell-portal-staging
 after_success:
   - |
     if [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
-      bin/burp_scan.sh "${BURP_DOCKER_IMAGE}"
+      bin/burp_scan.sh "${BURP_DOCKER_IMAGE}" "${BURP_PROXY}"
     fi

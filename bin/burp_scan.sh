@@ -6,6 +6,9 @@ set -eu
 # authenticated with container registry using burp_start.sh)
 IMAGE="$1"
 
+# Burp proxy URL
+PROXY="$2"
+
 # Scan collected traffic and report results (optional)
-docker run --rm -it --net host --entrypoint /automation/BroadBurpScanner.py "${IMAGE}" \
-  http://localhost --action scan
+docker run --rm -it --entrypoint /automation/BroadBurpScanner.py "${IMAGE}" \
+  "${PROXY}" --action scan
