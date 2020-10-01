@@ -656,6 +656,11 @@ class StudyFile
     end
   end
 
+  # possible bucket location of file after an ingest failure (will only persist for 30 days after failure)
+  def parse_fail_bucket_location
+    "parse_logs/#{self.id}/#{self.upload_file_name}"
+  end
+
   # generate a download path to use with bulk_download
   # takes the form of :study_accession/:output_directory_name/:filename
   def bulk_download_pathname
@@ -699,6 +704,11 @@ class StudyFile
     self.study_file_bundle.present?
   end
 
+  # gracefully check if study_file_bundle is both present and completed
+  def has_completed_bundle?
+    self.study_file_bundle.try(:completed?)
+  end
+
   # get any 'bundled' files that correspond to this file
   def bundled_files
     if self.study_file_bundle.present?
@@ -724,9 +734,8 @@ class StudyFile
   # inverse of study_file.bundled_files.  In the case of Coordinate Labels, this returns the cluster, not the file
   def bundle_parent
     if self.study_file_bundle.present?
-      self.study_file_bundle.bundle_target
+      self.study_file_bundle.parent
     else
-      model = StudyFile
       case self.file_type
       when /10X/
         selector = :matrix_id
@@ -734,10 +743,9 @@ class StudyFile
         selector = :bam_id
       when 'Coordinate Labels'
         selector = :cluster_group_id
-        model = ClusterGroup
       end
       # call find_by(id: ) to avoid Mongoid::Errors::InvalidFind
-      model.find_by(id: self.options[selector])
+      StudyFile.find_by(id: self.options[selector])
     end
   end
 

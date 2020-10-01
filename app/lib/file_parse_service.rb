@@ -24,19 +24,24 @@ class FileParseService
           error: "File: #{study_file.upload_file_name} is already parsing"
       }
     else
+      self.create_bundle_from_file_options(study_file, study)
       case study_file.file_type
       when 'Cluster'
         job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_cluster, reparse: reparse,
                             persist_on_fail: persist_on_fail)
         job.delay.push_remote_and_launch_ingest
+        # check if there is a coordinate label file waiting to be parsed
+        # must reload study_file object as associations have possibly been updated
+        study_file.reload
+        if study_file.has_completed_bundle?
+          study_file.bundled_files.each do |coordinate_file|
+            # pre-emptively set parse_status to prevent initialize_coordinate_label_data_arrays from failing due to race condition
+            study_file.update(parse_status: 'parsing')
+            study.delay.initialize_coordinate_label_data_arrays(coordinate_file, user, {reparse: reparse})
+          end
+        end
       when 'Coordinate Labels'
-        # we need to create the bundle here as it doesn't exist yet
-        parent_cluster = ClusterGroup.find_by(id: study_file.options[:cluster_group_id])
-        if parent_cluster.present?
-          parent_cluster_file = parent_cluster.study_file
-          file_list = StudyFileBundle.generate_file_list(parent_cluster_file, study_file)
-          StudyFileBundle.find_or_create_by(study_id: study.id, bundle_type: parent_cluster_file.file_type,
-                                            original_file_list: file_list)
+        if study_file.has_completed_bundle?
           study.delay.initialize_coordinate_label_data_arrays(study_file, user, {reparse: reparse})
         else
           return self.missing_bundled_file(study_file)
@@ -46,12 +51,9 @@ class FileParseService
                             persist_on_fail: persist_on_fail)
         job.delay.push_remote_and_launch_ingest
       when 'MM Coordinate Matrix'
-        bundle = study_file.study_file_bundle
-        barcodes = study_file.bundled_files.detect {|f| f.file_type == '10X Barcodes File'}
-        genes = study_file.bundled_files.detect {|f| f.file_type == '10X Genes File'}
-        if barcodes.present? && genes.present? && bundle.completed?
-          genes.update(parse_status: 'parsing')
-          barcodes.update(parse_status: 'parsing')
+        study_file.reload
+        if study_file.has_completed_bundle?
+          study_file.bundled_files.update_all(parse_status: 'parsing')
           job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_expression, reparse: reparse,
                               persist_on_fail: persist_on_fail)
           job.delay.push_remote_and_launch_ingest
@@ -59,30 +61,14 @@ class FileParseService
           study.delay.send_to_firecloud(study_file)
           return self.missing_bundled_file(study_file)
         end
-      when '10X Genes File'
+      when /10X/
         # push immediately to avoid race condition when initiating parse
-        study.delay.send_to_firecloud(study_file)
-        bundle = study_file.study_file_bundle
-        matrix = bundle.parent
-        barcodes = bundle.bundled_files.detect {|f| f.file_type == '10X Barcodes File' }
-        if barcodes.present? && matrix.present? && bundle.completed?
-          matrix.update(parse_status: 'parsing')
-          barcodes.update(parse_status: 'parsing')
-          job = IngestJob.new(study: study, study_file: matrix, user: user, action: :ingest_expression, reparse: reparse,
-                              persist_on_fail: persist_on_fail)
-          job.delay.push_remote_and_launch_ingest(skip_push: true)
-        else
-          return self.missing_bundled_file(study_file)
-        end
-      when '10X Barcodes File'
-        # push immediately to avoid race condition when initiating parse
-        study.delay.send_to_firecloud(study_file)
-        bundle = study_file.study_file_bundle
-        matrix = bundle.parent
-        genes = bundle.bundled_files.detect {|f| f.file_type == '10X Genes File' }
-        if genes.present? && matrix.present? && bundle.completed?
-          genes.update(parse_status: 'parsing')
-          matrix.update(parse_status: 'parsing')
+        study.delay.send_to_firecloud(study_file) if study_file.is_local?
+        study_file.reload
+        if study_file.has_completed_bundle?
+          bundle = study_file.study_file_bundle
+          matrix = bundle.parent
+          bundle.study_files.update_all(parse_status: 'parsing')
           job = IngestJob.new(study: study, study_file: matrix, user: user, action: :ingest_expression, reparse: reparse,
                               persist_on_fail: persist_on_fail)
           job.delay.push_remote_and_launch_ingest(skip_push: true)
@@ -111,8 +97,36 @@ class FileParseService
         SingleCellMailer.share_update_notification(study, changes, user).deliver_now
       end
       return {
-          status_code: 204,
+          status_code: 204
       }
+    end
+  end
+
+  # helper for handling study file bundles when initiating parses
+  def self.create_bundle_from_file_options(study_file, study)
+    study_file_bundle = study_file.study_file_bundle
+    if study_file_bundle.nil?
+      StudyFileBundle::BUNDLE_REQUIREMENTS.each do |parent_type, bundled_types|
+        options_key = StudyFileBundle::PARENT_FILE_OPTIONS_KEYNAMES[parent_type]
+        if study_file.file_type == parent_type
+          # check if any files have been staged for bundling - this can happen from the sync page by setting the
+          # study_file.options[options_key] value with the parent file id
+          bundled_files = StudyFile.where(:file_type.in => bundled_types, study_id: study.id,
+                                          "options.#{options_key}" => study_file.id.to_s)
+          if bundled_files.any?
+            study_file_bundle = StudyFileBundle.initialize_from_parent(study, study_file)
+            study_file_bundle.add_files(*bundled_files)
+          end
+        elsif bundled_types.include?(study_file.file_type)
+          parent_file_id = study_file.options.with_indifferent_access[options_key]
+          parent_file = StudyFile.find_by(id: parent_file_id)
+          # parent file may or may not be present, so check first
+          if parent_file.present?
+            study_file_bundle = StudyFileBundle.initialize_from_parent(study, parent_file)
+            study_file_bundle.add_files(study_file)
+          end
+        end
+      end
     end
   end
 

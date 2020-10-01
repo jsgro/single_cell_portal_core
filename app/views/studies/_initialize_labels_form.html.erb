@@ -18,8 +18,8 @@
   <div class="form-group row">
     <%= f.fields_for :options do |opts| %>
       <div class="col-sm-4">
-        <%= opts.label :cluster_group_id, 'Select the cluster to apply labels to' %><br />
-        <%= opts.select :cluster_group_id, options_for_select(@study.cluster_groups.map {|cluster_group| [cluster_group.name, cluster_group.id]}, f.object.new_record? ? nil : f.object.bundle_parent.id), {}, class: 'form-control' %>
+        <%= opts.label :cluster_file_id, 'Select the cluster to apply labels to' %><br />
+        <%= opts.select :cluster_file_id, options_for_select(@study.cluster_ordinations_files.map {|cluster_file| [cluster_file.name, cluster_file.id]}, f.object.new_record? ? nil : f.object.bundle_parent.id), {}, class: 'form-control' %>
       </div>
       <div class="col-sm-3">
         <%= opts.label :font_family, 'Display font for labels' %><br />
