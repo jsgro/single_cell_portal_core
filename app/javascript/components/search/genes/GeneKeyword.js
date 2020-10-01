@@ -48,7 +48,7 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
 
   /** Converts any current typed free text to a gene array entry */
   function syncGeneArrayToInputText() {
-    const inputTextTrimmed = inputText.trim().replace(',', '')
+    const inputTextTrimmed = inputText.trim().replace(/,/g, '')
     if (!inputTextTrimmed) {
       return geneArray
     }
