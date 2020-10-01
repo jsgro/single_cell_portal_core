@@ -13,9 +13,9 @@
   document.querySelector('.study-lead').parentElement.innerHTML +=
     '<div id="related-genes-ideogram-container" style="visibility: hidden; position: absolute; z-index: 1000; width: 100%; background: #FFF;"></div>';
 
-  window.SCP.organism = '<%= @organism %>';
+  // TODO (SCP-2769): Handle when a searched gene maps to multiple species
+  window.SCP.organism = '<%= @organisms.first %>';
 
-  // Called from scp-related-genes-ideogram.js
   createRelatedGenesIdeogram();
 
 </script>

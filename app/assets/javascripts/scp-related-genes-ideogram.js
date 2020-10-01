@@ -7,8 +7,6 @@ function onClickAnnot(annot) {
 
 /**
  * Displays Ideogram after getting gene search results in Study Overview
- *
- * Called from render_gene_expression_plots.js.erb
  */
 function showRelatedGenesIdeogram() { // eslint-disable-line
 
@@ -54,11 +52,7 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
   ideoMiddle.style.overflowY = 'hidden'
 }
 
-/**
- * Resize ideogram (specifically, the legend) after resizing the viewport
- *
- * Called from render_gene_expression_plots.js.erb
-*/
+/** Resize ideogram (specifically, the legend) after resizing the viewport */
 function resizeRelatedGenesIdeogram() { // eslint-disable-line
 
   // Handles old studies, where matrices lack species
@@ -69,11 +63,7 @@ function resizeRelatedGenesIdeogram() { // eslint-disable-line
   ideoLegend.style.left = `${ideoRect.x - 160}px`
 }
 
-/**
- * Initiates Ideogram for related genes
- *
- * Called from _view_gene_expression_title_bar.html.erb
- */
+/** Initiates Ideogram for related genes */
 function createRelatedGenesIdeogram() { // eslint-disable-line
 
   // Handles old studies, where matrices lack species
