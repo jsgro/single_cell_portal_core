@@ -24,12 +24,23 @@ FAILED_COUNT=0
 
 function setup_burp_cert {
   if [ -n "$BURP_PROXY" ]; then
+    # we will store Burp certificate here
     local BURP_CERT="/usr/local/share/ca-certificates/burp.crt"
-    curl -s --proxy $BURP_PROXY burp/cert | openssl x509 -inform DER -out "${BURP_CERT}"
-    ln -sf "${BURP_CERT}" /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
-    yarn config set cafile "${BURP_CERT}" -g
-    export http_proxy="$BURP_PROXY"
+
+    # fetch Burp certificate from Burp proxy localhost endpoint and store it into $BURP_CERT
+    curl -s --proxy "$BURP_PROXY" burp/cert | openssl x509 -inform DER -out "$BURP_CERT"
+
+    # update system-wide certificate store
     update-ca-certificates
+
+    # override cacert store for httpclient package (used by Google libraries)
+    ln -sf "$BURP_CERT" /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
+
+    # override cafile for Yarn (used during package fetching)
+    yarn config set cafile "$BURP_CERT" -g
+
+    # set http_proxy variable, which will make HTTP connections go through the Burp proxy
+    export http_proxy="$BURP_PROXY"
   fi
 }
 
