@@ -27,31 +27,6 @@ class Study
   ASSOCIATED_MODEL_DISPLAY_METHOD = %w(name url_safe_name bucket_id firecloud_project firecloud_workspace workspace_url google_bucket_url gs_url)
   OUTPUT_ASSOCIATION_ATTRIBUTE = %w(id)
 
-  # instantiate one FireCloudClient to avoid creating too many tokens
-  @@firecloud_client = FireCloudClient.new
-  @@read_only_client = ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'].present? ? FireCloudClient.new(nil, FireCloudClient::PORTAL_NAMESPACE, File.absolute_path(ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'])) : nil
-
-  # getter for FireCloudClient instance
-  def self.firecloud_client
-    @@firecloud_client
-  end
-
-  def self.read_only_firecloud_client
-    @@read_only_client
-  end
-
-  # method to renew firecloud client (forces new access token for API and reinitializes storage driver)
-  def self.refresh_firecloud_client
-    begin
-      @@firecloud_client = FireCloudClient.new
-      true
-    rescue => e
-      ErrorTracker.report_exception(e, nil, self.firecloud_client.attributes)
-      Rails.logger.error "#{Time.zone.now}: unable to refresh FireCloud client: #{e.message}"
-      e.message
-    end
-  end
-
   ###
   #
   # SETTINGS, ASSOCIATIONS AND SCOPES
@@ -150,8 +125,9 @@ class Study
     end
 
     def visible
-      if Study.read_only_firecloud_client.present?
-        where(:email.not => /Study.read_only_firecloud_client.issuer/).map(&:email)
+      if ApplicationController.read_only_firecloud_client.present?
+        readonly_issuer = ApplicationController.read_only_firecloud_client.issuer
+        where(:email.not => /#{readonly_issuer}/).map(&:email)
       else
         all.to_a.map(&:email)
       end
@@ -815,9 +791,9 @@ class Study
       false
     else
       # don't check permissions if API is not 'ok'
-      if Study.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE, FireCloudClient::AGORA_SERVICE)
+      if ApplicationController.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE, FireCloudClient::AGORA_SERVICE)
         begin
-          workspace_acl = Study.firecloud_client.get_workspace_acl(self.firecloud_project, self.firecloud_workspace)
+          workspace_acl = ApplicationController.firecloud_client.get_workspace_acl(self.firecloud_project, self.firecloud_workspace)
           if workspace_acl['acl'][user.email].nil?
             # check if user has project-level permissions
             user.is_billing_project_owner?(self.firecloud_project)
@@ -838,7 +814,7 @@ class Study
   # check if a user has access to a study via a user group
   def user_in_group_share?(user, *permissions)
     # check if api status is ok, otherwise exit without checking to prevent UI hanging on repeated calls
-    if user.registered_for_firecloud && Study.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE, FireCloudClient::THURLOE_SERVICE)
+    if user.registered_for_firecloud && ApplicationController.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE, FireCloudClient::THURLOE_SERVICE)
       group_shares = self.study_shares.keep_if {|share| share.is_group_share?}.select {|share| permissions.include?(share.permission)}.map(&:email)
       # get user's FC groups
       if user.access_token.present?
@@ -1409,7 +1385,7 @@ class Study
     directories = self.directory_listings.are_synced
     all_locations = files.map(&:bucket_location)
     all_locations += directories.map {|dir| dir.files.map {|file| file['name']}}.flatten
-    remotes = Study.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, self.bucket_id)
+    remotes = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, self.bucket_id)
     if remotes.next?
       remotes = [] # don't use bucket list of files, instead verify each file individually
     end
@@ -1425,7 +1401,7 @@ class Study
   # quick check to see if a single file is still in the study's bucket
   # can use cached list of bucket files, or check bucket directly
   def verify_remote_file(remotes:, file_location:)
-    remotes.any? ? remotes.detect {|remote| remote.name == file_location} : Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, file_location)
+    remotes.any? ? remotes.detect {|remote| remote.name == file_location} : ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, file_location)
   end
 
   ###
@@ -1465,7 +1441,7 @@ class Study
       if !opts[:local] || !expression_file.is_local?
         # make sure data dir exists first
         self.make_data_dir
-        Study.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, expression_file.bucket_location,
+        ApplicationController.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, expression_file.bucket_location,
                                                      self.data_store_path, verify: :none)
         @file_location = File.join(self.data_store_path, expression_file.bucket_location)
       end
@@ -1689,7 +1665,7 @@ class Study
       # rather than relying on opts[:local], actually check if the file is already in the GCS bucket
       destination = expression_file.bucket_location
       begin
-        remote = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, destination)
+        remote = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, destination)
       rescue => e
         ErrorTracker.report_exception(e, user, error_context)
         Rails.logger.error "Error retrieving remote: #{e.message}"
@@ -1746,7 +1722,7 @@ class Study
         # make sure data dir exists first
         Rails.logger.info "Localizing file: #{ordinations_file.upload_file_name} in #{self.data_store_path}"
         self.make_data_dir
-        Study.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, ordinations_file.bucket_location,
+        ApplicationController.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, ordinations_file.bucket_location,
                                                      self.data_store_path, verify: :none)
         @file_location = File.join(self.data_store_path, ordinations_file.bucket_location)
       end
@@ -2047,7 +2023,7 @@ class Study
       # now that parsing is complete, we can move file into storage bucket and delete local (unless we downloaded from FireCloud to begin with)
       destination = ordinations_file.bucket_location
       begin
-        remote = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, destination)
+        remote = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, destination)
       rescue => e
         ErrorTracker.report_exception(e, user, error_context)
         Rails.logger.error "Error retrieving remote: #{e.message}"
@@ -2102,7 +2078,7 @@ class Study
       if !coordinate_file.is_local?
         # make sure data dir exists first
         self.make_data_dir
-        Study.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, coordinate_file.bucket_location,
+        ApplicationController.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, coordinate_file.bucket_location,
                                                      self.data_store_path, verify: :none)
         @file_location = File.join(self.data_store_path, coordinate_file.bucket_location)
       end
@@ -2293,7 +2269,7 @@ class Study
       # now that parsing is complete, we can move file into storage bucket and delete local (unless we downloaded from FireCloud to begin with)
       destination = coordinate_file.bucket_location
       begin
-        remote = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, destination)
+        remote = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, destination)
       rescue => e
         ErrorTracker.report_exception(e, user, error_context)
         Rails.logger.error "Error retrieving remote: #{e.message}"
@@ -2346,7 +2322,7 @@ class Study
       if !opts[:local] || !metadata_file.is_local?
         # make sure data dir exists first
         self.make_data_dir
-        Study.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, metadata_file.bucket_location,
+        ApplicationController.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, metadata_file.bucket_location,
                                                      self.data_store_path, verify: :none)
         @file_location = File.join(self.data_store_path, metadata_file.bucket_location)
       end
@@ -2579,7 +2555,7 @@ class Study
       # now that parsing is complete, we can move file into storage bucket and delete local (unless we downloaded from FireCloud to begin with)
       destination = metadata_file.bucket_location
       begin
-        remote = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, destination)
+        remote = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, destination)
       rescue => e
         ErrorTracker.report_exception(e, user, error_context)
         Rails.logger.error "Error retrieving remote: #{e.message}"
@@ -2633,7 +2609,7 @@ class Study
       if !marker_file.is_local?
         # make sure data dir exists first
         self.make_data_dir
-        Study.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, marker_file.bucket_location,
+        ApplicationController.firecloud_client.execute_gcloud_method(:download_workspace_file, 0, self.bucket_id, marker_file.bucket_location,
                                                      self.data_store_path, verify: :none)
         @file_location = File.join(self.data_store_path, marker_file.bucket_location)
       end
@@ -2765,7 +2741,7 @@ class Study
       # now that parsing is complete, we can move file into storage bucket and delete local (unless we downloaded from FireCloud to begin with)
       destination = marker_file.bucket_location
       begin
-        remote = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, destination)
+        remote = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, destination)
       rescue => e
         ErrorTracker.report_exception(e, user, error_context)
         Rails.logger.error "Error retrieving remote: #{e.message}"
@@ -2841,7 +2817,7 @@ class Study
         File.rename gzip_filepath, file_location
         opts.merge!(content_encoding: 'gzip')
       end
-      remote_file = Study.firecloud_client.execute_gcloud_method(:create_workspace_file, 0, self.bucket_id, file.upload.path,
+      remote_file = ApplicationController.firecloud_client.execute_gcloud_method(:create_workspace_file, 0, self.bucket_id, file.upload.path,
                                                                  file.bucket_location, opts)
       # store generation tag to know whether a file has been updated in GCP
       Rails.logger.info "#{Time.zone.now}: Updating #{file.bucket_location}:#{file.id} with generation tag: #{remote_file.generation} after successful upload"
@@ -2884,7 +2860,7 @@ class Study
       entity_file.write "entity:participant_id\ndefault_participant"
       entity_file.close
       upload = File.open(entity_file.path)
-      Study.firecloud_client.import_workspace_entities_file(self.firecloud_project, self.firecloud_workspace, upload)
+      ApplicationController.firecloud_client.import_workspace_entities_file(self.firecloud_project, self.firecloud_workspace, upload)
       Rails.logger.info "#{Time.zone.now}: created default_participant for #{self.firecloud_workspace}"
       File.delete(path)
     rescue => e
@@ -2909,14 +2885,14 @@ class Study
   def set_readonly_access(grant_access=true, manual_set=false)
     unless Rails.env == 'test' || self.queued_for_deletion
       if manual_set || self.public_changed? || self.new_record?
-        if self.firecloud_workspace.present? && self.firecloud_project.present? && Study.read_only_firecloud_client.present?
+        if self.firecloud_workspace.present? && self.firecloud_project.present? && ApplicationController.read_only_firecloud_client.present?
           access_level = self.public? ? 'READER' : 'NO ACCESS'
           if !grant_access # revoke all access
             access_level = 'NO ACCESS'
           end
           Rails.logger.info "#{Time.zone.now}: setting readonly access on #{self.name} to #{access_level}"
-          readonly_acl = Study.firecloud_client.create_workspace_acl(Study.read_only_firecloud_client.issuer, access_level, false, false)
-          Study.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, readonly_acl)
+          readonly_acl = ApplicationController.firecloud_client.create_workspace_acl(ApplicationController.read_only_firecloud_client.issuer, access_level, false, false)
+          ApplicationController.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, readonly_acl)
         end
       end
     end
@@ -2935,7 +2911,7 @@ class Study
     else
       # check if workspace is still available, otherwise mark detached
       begin
-        Study.firecloud_client.get_workspace(self.firecloud_project, self.firecloud_workspace)
+        ApplicationController.firecloud_client.get_workspace(self.firecloud_project, self.firecloud_workspace)
       rescue RuntimeError => e
         Rails.logger.error "Marking #{self.name} as 'detached' due to missing workspace: #{self.firecloud_project}/#{self.firecloud_workspace}"
         self.update(detached: true)
@@ -2950,7 +2926,7 @@ class Study
     end
     Rails.logger.info "Removing workspace #{firecloud_project}/#{firecloud_workspace} in #{Rails.env} environment"
     begin
-      Study.firecloud_client.delete_workspace(firecloud_project, firecloud_workspace)
+      ApplicationController.firecloud_client.delete_workspace(firecloud_project, firecloud_workspace)
       DeleteQueueJob.new(metadata_file).perform
       destroy
     rescue => e
@@ -3029,7 +3005,7 @@ class Study
       begin
         # create workspace
         if self.firecloud_project == FireCloudClient::PORTAL_NAMESPACE
-          workspace = Study.firecloud_client.create_workspace(self.firecloud_project, self.firecloud_workspace)
+          workspace = ApplicationController.firecloud_client.create_workspace(self.firecloud_project, self.firecloud_workspace)
         else
           workspace = client.create_workspace(self.firecloud_project, self.firecloud_workspace)
         end
@@ -3048,7 +3024,7 @@ class Study
         # validate creation
         unless ws_name == self.firecloud_workspace
           # delete workspace on validation fail
-          Study.firecloud_client.delete_workspace(self.firecloud_project, self.firecloud_workspace)
+          ApplicationController.firecloud_client.delete_workspace(self.firecloud_project, self.firecloud_workspace)
           errors.add(:firecloud_workspace, ' was not created properly (workspace name did not match or was not created).  Please try again later.')
           return false
         end
@@ -3058,7 +3034,7 @@ class Study
         self.bucket_id = bucket
         if self.bucket_id.nil?
           # delete workspace on validation fail
-          Study.firecloud_client.delete_workspace(self.firecloud_project, self.firecloud_workspace)
+          ApplicationController.firecloud_client.delete_workspace(self.firecloud_project, self.firecloud_workspace)
           errors.add(:firecloud_workspace, ' was not created properly (storage bucket was not set).  Please try again later.')
           return false
         end
@@ -3074,13 +3050,13 @@ class Study
           if Rails.env == 'production' && FireCloudClient::COMPUTE_BLACKLIST.include?(self.firecloud_project)
             can_compute = false
           end
-          acl = Study.firecloud_client.create_workspace_acl(study_owner, workspace_permission, true, can_compute)
-          Study.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, acl)
+          acl = ApplicationController.firecloud_client.create_workspace_acl(study_owner, workspace_permission, true, can_compute)
+          ApplicationController.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, acl)
           # validate acl
-          ws_acl = Study.firecloud_client.get_workspace_acl(self.firecloud_project, ws_name)
+          ws_acl = ApplicationController.firecloud_client.get_workspace_acl(self.firecloud_project, ws_name)
           unless ws_acl['acl'][study_owner]['accessLevel'] == workspace_permission && ws_acl['acl'][study_owner]['canCompute'] == can_compute
             # delete workspace on validation fail
-            Study.firecloud_client.delete_workspace(self.firecloud_project, self.firecloud_workspace)
+            ApplicationController.firecloud_client.delete_workspace(self.firecloud_project, self.firecloud_workspace)
             errors.add(:firecloud_workspace, ' was not created properly (permissions do not match).  Please try again later.')
             return false
           end
@@ -3090,8 +3066,8 @@ class Study
           Rails.logger.info "#{Time.zone.now}: Study: #{self.name} FireCloud workspace acl assignment for shares starting"
           self.study_shares.each do |share|
             begin
-              acl = Study.firecloud_client.create_workspace_acl(share.email, StudyShare::FIRECLOUD_ACL_MAP[share.permission], true, false)
-              Study.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, acl)
+              acl = ApplicationController.firecloud_client.create_workspace_acl(share.email, StudyShare::FIRECLOUD_ACL_MAP[share.permission], true, false)
+              ApplicationController.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, acl)
               Rails.logger.info "#{Time.zone.now}: Study: #{self.name} FireCloud workspace acl assignment for shares #{share.email} successful"
             rescue RuntimeError => e
               error_context = ErrorTracker.format_extra_context(self, acl)
@@ -3117,7 +3093,7 @@ class Study
           errors.add(:name, ' - you must choose a different name for your study.')
           self.firecloud_workspace = nil
         else
-          Study.firecloud_client.delete_workspace(self.firecloud_project, self.firecloud_workspace)
+          ApplicationController.firecloud_client.delete_workspace(self.firecloud_project, self.firecloud_workspace)
           errors.add(:firecloud_workspace, " creation failed: #{e.message}; Please try again.")
         end
         return false
@@ -3153,7 +3129,7 @@ class Study
     end
     unless self.errors.any?
       begin
-        workspace = Study.firecloud_client.get_workspace(self.firecloud_project, self.firecloud_workspace)
+        workspace = ApplicationController.firecloud_client.get_workspace(self.firecloud_project, self.firecloud_workspace)
         study_owner = self.user.email
         # set acls if using default project
         if self.firecloud_project == FireCloudClient::PORTAL_NAMESPACE
@@ -3163,10 +3139,10 @@ class Study
           if Rails.env == 'production' && FireCloudClient::COMPUTE_BLACKLIST.include?(self.firecloud_project)
             can_compute = false
             Rails.logger.info "#{Time.zone.now}: Study: #{self.name} removing compute permissions"
-            compute_acl = Study.firecloud_client.create_workspace_acl(self.user.email, workspace_permission, true, can_compute)
-            Study.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, compute_acl)
+            compute_acl = ApplicationController.firecloud_client.create_workspace_acl(self.user.email, workspace_permission, true, can_compute)
+            ApplicationController.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, compute_acl)
           end
-          acl = Study.firecloud_client.get_workspace_acl(self.firecloud_project, self.firecloud_workspace)
+          acl = ApplicationController.firecloud_client.get_workspace_acl(self.firecloud_project, self.firecloud_workspace)
           # first check workspace authorization domain
           auth_domain = workspace['workspace']['authorizationDomain']
           unless auth_domain.empty?
@@ -3205,8 +3181,8 @@ class Study
           Rails.logger.info "#{Time.zone.now}: Study: #{self.name} FireCloud workspace acl assignment for shares starting"
           self.study_shares.each do |share|
             begin
-              acl = Study.firecloud_client.create_workspace_acl(share.email, StudyShare::FIRECLOUD_ACL_MAP[share.permission], true, false)
-              Study.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, acl)
+              acl = ApplicationController.firecloud_client.create_workspace_acl(share.email, StudyShare::FIRECLOUD_ACL_MAP[share.permission], true, false)
+              ApplicationController.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, acl)
               Rails.logger.info "#{Time.zone.now}: Study: #{self.name} FireCloud workspace acl assignment for shares #{share.email} successful"
             rescue RuntimeError => e
               error_context = ErrorTracker.format_extra_context(self, acl)
@@ -3262,7 +3238,7 @@ class Study
   # TODO: should this be used anywhere? it's private and unused.
   def delete_firecloud_workspace
     begin
-      Study.firecloud_client.delete_workspace(self.firecloud_project, self.firecloud_workspace)
+      ApplicationController.firecloud_client.delete_workspace(self.firecloud_project, self.firecloud_workspace)
     rescue RuntimeError => e
       ErrorTracker.report_exception(e, nil, {firecloud_project: self.firecloud_project, firecloud_workspace: self.firecloud_workspace})
       # workspace was not found, most likely deleted already

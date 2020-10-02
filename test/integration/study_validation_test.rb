@@ -105,7 +105,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
       assert_equal 'failed', e[:object].parse_status, "Incorrect parse_status for #{e[:name]}"
       assert e[:object].queued_for_deletion
       # check that file is cached in parse_logs/:id folder in the study bucket
-      cached_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, e[:cache_location])
+      cached_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, e[:cache_location])
       assert cached_file.present?, "Did not find cached file at #{e[:cache_location]} in #{study.bucket_id}"
     end
 

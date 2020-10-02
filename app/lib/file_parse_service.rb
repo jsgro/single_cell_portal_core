@@ -155,7 +155,7 @@ class FileParseService
   def self.delete_ingest_artifacts(study, file_age_cutoff)
     begin
       # get all remote files under the 'parse_logs' folder
-      remotes = Study.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, study.bucket_id, prefix: 'parse_logs')
+      remotes = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, study.bucket_id, prefix: 'parse_logs')
       remotes.each do |remote|
         creation_date = remote.created_at.in_time_zone
         if remote.size > 0 && creation_date < file_age_cutoff
