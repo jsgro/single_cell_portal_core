@@ -1,3 +1,16 @@
+/**
+ * @fileoverview Ideogram for related genes
+ *
+ * This code enhances single-gene search in the Study Overview page.  It is
+ * called upon searching for a gene, invoking functionality in Ideogram.js to
+ * retrieve and plot related genes across the genome.  Users can then click a
+ * related gene to trigger a search on that gene.  The intent is to improve
+ * discoverability for genes of biological interest.
+ *
+ * More context, a screenshot, and architecture diagram are available at:
+ * https://github.com/broadinstitute/single_cell_portal_core/pull/735
+ */
+
 /** Handle clicks on Ideogram annotations */
 function onClickAnnot(annot) {
   document.querySelector('#search_genes').value = annot.name
