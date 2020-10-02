@@ -44,7 +44,7 @@ class FileParseService
         end
       when 'Coordinate Labels'
         if study_file.has_completed_bundle?
-          study.delay.initialize_coordinate_label_data_arrays(study_file, user, {reparse: reparse})
+          ParseUtils.delay.initialize_coordinate_label_data_arrays(study, study_file, user, {reparse: reparse})
         else
           return self.missing_bundled_file(study_file)
         end
@@ -78,7 +78,7 @@ class FileParseService
           return self.missing_bundled_file(study_file)
         end
       when 'Gene List'
-        study.delay.initialize_precomputed_scores(study_file, user)
+        ParseUtils.delay.initialize_precomputed_scores(study, study_file, user)
       when 'Metadata'
         job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_cell_metadata, reparse: reparse,
                             persist_on_fail: persist_on_fail)
