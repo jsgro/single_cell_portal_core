@@ -1401,101 +1401,6 @@ class Study
   #
   ###
 
-  # transform expression data from db into mtx format
-  def expression_to_matrix_market(expression_file)
-    puts "Generating Matrix Market coordinate (mm) file for #{self.name} expression data"
-    puts 'Reading source data...'
-    genes = Gene.where(study_id: self.id, study_file_id: expression_file.id)
-    puts 'Assembling counts...'
-    score_count = genes.size
-    all_cells = self.all_cells_array
-    cell_count = all_cells.size
-    significant_values = score_count + cell_count + 1 # extra value is for GENE header
-    score_file = File.new(self.data_store_path.to_s + "/#{expression_file.name}.tmp", 'w+')
-    counter = 0
-    puts 'Writing gene-level scores...'
-    genes.each_with_index do |gene, gene_index|
-      gene_name = gene.name
-      score_file.write "#{gene_index + 2}\t1\t#{gene_name}\n"
-      gene.scores.each do |cell, score|
-        cell_index = all_cells.index(cell)
-        score_file.write "#{gene_index + 2}\t#{cell_index + 2}\t#{score}\n"
-        significant_values += 1
-      end
-      counter += 1
-      if counter % 1000 == 0
-        puts "#{counter} genes written out of #{score_count}"
-      end
-    end
-    puts 'Finished writing scores, updating significant score count...'
-    score_file.close
-    output_file = File.new(self.data_store_path.to_s + "/#{expression_file.name}.mm", 'w+')
-    reopened_file = File.open(self.data_store_path.to_s + "/#{expression_file.name}.tmp", 'r')
-    puts 'Creating final output file and writing headers...'
-    output_file.write "%%MatrixMarket matrix coordinate double symmetric\n"
-    output_file.write "#{score_count + 1}\t#{cell_count + 1}\t#{significant_values}\n"
-    puts 'Headers successfully written!'
-    puts 'Writing cell list...'
-    output_file.write "1\t1\tGENE\n"
-    all_cells.each_with_index do |cell, index|
-      output_file.write "1\t#{index + 2}\t#{cell}\n"
-    end
-    puts 'Cell list successfully written!'
-    puts 'Concatenating files...'
-    while !reopened_file.eof?
-      output_file.write reopened_file.readline
-    end
-    puts 'Finished!'
-    puts "Output file: #{File.absolute_path(output_file)}"
-    reopened_file.close
-    File.delete(reopened_file.path)
-    output_file.close
-  end
-
-  # regenerate an expression matrix from database records
-  def generate_dense_matrix(expression_study_file)
-    puts "generating #{expression_study_file.upload_file_name} as dense expression matrix"
-
-    # load cell arrays to create headers
-    expression_file_cells = DataArray.where(study_id: self.id, linear_data_type: 'Study', linear_data_id: self.id,
-                                            array_type: 'cells', study_file_id: expression_study_file.id).order(:array_index => 'asc')
-    all_cells = expression_file_cells.map(&:values).flatten
-
-    # create new file and write headers
-    current_name = expression_study_file.upload_file_name
-    if current_name.include?('/')
-      current_name = current_name.split('/').last
-    end
-    new_file_name = current_name.end_with?('.txt') ? current_name : current_name + '.txt'
-    if expression_study_file.upload_content_type == 'application/gzip'
-      @new_expression_file = Zlib::GzipWriter.open(File.join(self.data_store_path, new_file_name))
-    else
-      @new_expression_file = File.new(File.join(self.data_store_path, new_file_name), 'w+')
-    end
-    headers = ['GENE', all_cells].flatten.join("\t")
-    @new_expression_file.write headers + "\n"
-
-    # load expression scores for requested file and write
-    puts "loading expression data from #{self.name}"
-    genes = Gene.where(study_id: self.id, study_file_id: expression_study_file.id)
-    genes.each do |gene|
-      puts "writing #{gene.name} expression values"
-      @new_expression_file.write "#{gene.name}\t"
-      vals = []
-      scores = gene.scores
-      all_cells.each do |cell|
-        vals << scores[cell].to_f
-      end
-      @new_expression_file.write vals.join("\t") + "\n"
-    end
-    puts "all scores complete"
-
-    # return filepath
-    filepath = @new_expression_file.path
-    @new_expression_file.close
-    filepath
-  end
-
   # check if all files for this study are still present in the bucket
   # does not check generation tags for consistency - this is just a presence check
   def verify_all_remotes
@@ -1521,34 +1426,6 @@ class Study
   # can use cached list of bucket files, or check bucket directly
   def verify_remote_file(remotes:, file_location:)
     remotes.any? ? remotes.detect {|remote| remote.name == file_location} : Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, self.bucket_id, file_location)
-  end
-
-  # clean up any cached ingest pipeline run files older than 30 days
-  def self.clean_up_ingest_artifacts
-    cutoff_date = 30.days.ago
-    Rails.logger.info "Cleaning up all ingest pipeline artifacts older than #{cutoff_date}"
-    self.where(queued_for_deletion: false, detached: false).each do |study|
-      Rails.logger.info "Checking #{self.accession}:#{self.bucket_id}"
-      study.delete_ingest_artifacts(cutoff_date)
-    end
-  end
-
-  # clean up any cached study file copies that failed to ingest, including log files older than provided age limit
-  def delete_ingest_artifacts(file_age_cutoff)
-    begin
-      # get all remote files under the 'parse_logs' folder
-      remotes = Study.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, self.bucket_id, prefix: 'parse_logs')
-      remotes.each do |remote|
-        creation_date = remote.created_at.in_time_zone
-        if remote.size > 0 && creation_date < file_age_cutoff
-          Rails.logger.info "Deleting #{remote.name} from #{self.bucket_id}"
-          remote.delete
-        end
-      end
-    rescue => e
-      error_context = ErrorTracker.format_extra_context(self)
-      ErrorTracker.report_exception(e, nil, error_context)
-    end
   end
 
   ###
