@@ -34,7 +34,23 @@ function geneHasTaxon() {
  * Example edge case: axolotl study SCP499.
  */
 function genomeHasChromosomes() {
-  return window.ideogram.chromosomesArray.length === 0
+  return window.ideogram.chromosomesArray.length > 0
+}
+
+/**
+ * Move Ideogram within expresion plot tabs, per UX recommendation
+*/
+function putIdeogramInPlotTabs(ideoContainer) {
+  const tabContent = document.querySelector('#render-target .tab-content')
+  const ideoOuter = document.querySelector('#_ideogramOuterWrap')
+  const distTabs = document.querySelectorAll('.expression-plot')
+  const chrHeight = `${window.ideogram.config.chrHeight}px`
+
+  // Ideogram has `position: absolute`, so manual top offsets are needed
+  distTabs.forEach(distTab => distTab.style.top = chrHeight)
+  ideoOuter.style.height = chrHeight
+
+  tabContent.prepend(ideoContainer)
 }
 
 /**
@@ -45,39 +61,23 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
   if (!geneHasTaxon()) return
 
   const ideoContainer =
-    document.getElementById('related-genes-ideogram-container')
-  const ideoMiddle = document.getElementById('_ideogramMiddleWrap')
-  const renderTargetTabContent =
-    document.querySelector('#render-target .tab-content')
-  const distTabs = document.querySelectorAll('.expression-plot')
+    document.querySelector('#related-genes-ideogram-container')
 
   if (!genomeHasChromosomes()) {
-    ideoContainer.style.display = 'none'
-    $('#related-genes-ideogram-container').html('')
+    ideoContainer.classList = ''
+    ideoContainer.innerHTML = ''
     return
   } else {
     // Handles theoretical edge case: multi-species study when only one
     // organism lacks a chromosome-level genome assembly (say, a study on
     // mouse and axolotl)
-    ideoContainer.style.display = ''
+    ideoContainer.classList = ''
   }
 
-  // Move plots down to make space for Ideogram, per UX recommendation
-  distTabs.forEach(distTab => {
-    distTab.style.position = 'relative'
-    distTab.style.top = '100px'
-  })
+  putIdeogramInPlotTabs(ideoContainer)
 
-  // Move Ideogram to its final location
-  renderTargetTabContent.prepend(ideoContainer)
-
-  // Show Ideogram
-  ideoContainer.style.visibility = ''
-  ideoContainer.style.height = '100px'
-  ideoMiddle.style.borderBottom = '1px solid #EEE'
-  ideoMiddle.style.borderLeft = '1px solid #DDD'
-  ideoMiddle.style.borderRight = '1px solid #DDD'
-  ideoMiddle.style.overflowY = 'hidden'
+  // Make Ideogram visible
+  ideoContainer.classList = 'show-related-genes-ideogram'
 }
 
 /** Resize ideogram (specifically, the legend) after resizing the viewport */
@@ -100,14 +100,15 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
 
   if (!geneHasTaxon()) return
 
+  // Clear any prior ideogram
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
-    $('#related-genes-ideogram-container').html('')
+    document.querySelector('#related-genes-ideogram-container').innerHTML = ''
   }
 
   const ideoConfig = {
     container: '#related-genes-ideogram-container',
-    organism: window.SCP.taxon.toLowerCase().replace(/ /g, '-'),
+    organism: window.SCP.taxon,
     chrWidth: 9,
     chrHeight: 100,
     chrLabelSize: 12,
