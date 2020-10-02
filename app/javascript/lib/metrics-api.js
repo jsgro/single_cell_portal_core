@@ -89,11 +89,17 @@ export function logClick(event) {
  */
 export function logClickLink(target) {
   const props = {
-    text: target.text,
+    text: target.text.trim(),
     classList: 'classList' in target? Array.from(target.classList) : [],
     id: target.id
   }
-  log('click:link', props)
+  // Check if target is a tab that's not apart of a menu
+  const isTab = 'data-tablist-name' in target.parentElement.attributes
+  if (isTab) {
+    log('click:tab', props)
+  } else {
+    log('click:link', props)
+  }
 }
 
 /**

@@ -12,6 +12,7 @@ import SearchFacetProvider from 'providers/SearchFacetProvider'
 import UserProvider from 'providers/UserProvider'
 import FeatureFlagProvider from 'providers/FeatureFlagProvider'
 import ErrorBoundary from 'lib/ErrorBoundary'
+import { logClick } from 'lib/metrics-api'
 
 /** include search controls and results */
 export function StudySearchView() {
@@ -29,9 +30,9 @@ const LinkableSearchTabs = function(props) {
   const showGenesTab = location.pathname.startsWith('/single_cell/app/genes')
   return (
     <div>
-      <nav className="nav search-links">
+      <nav className="nav search-links" data-tablist-name={'Search tabs'} role="tablist">
         <Link to={`/single_cell/app/studies${location.search}`}
-          className={showGenesTab ? '' : 'active'}>
+          className={showGenesTab ? '' : 'active'} onClick = {logClick}>
           <span className="fas fa-book"></span> Search Studies
         </Link>
         <Link to={`/single_cell/app/genes${location.search}`}
