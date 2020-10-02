@@ -38,16 +38,14 @@ function genomeHasChromosomes() {
 }
 
 /**
- * Move Ideogram within expresion plot tabs, per UX recommendation
+* Move Ideogram within expresion plot tabs, per UX recommendation
 */
 function putIdeogramInPlotTabs(ideoContainer) {
   const tabContent = document.querySelector('#render-target .tab-content')
   const ideoOuter = document.querySelector('#_ideogramOuterWrap')
-  const distTabs = document.querySelectorAll('.expression-plot')
   const chrHeight = `${window.ideogram.config.chrHeight}px`
 
   // Ideogram has `position: absolute`, so manual top offsets are needed
-  distTabs.forEach(distTab => distTab.style.top = chrHeight)
   ideoOuter.style.height = chrHeight
 
   tabContent.prepend(ideoContainer)
@@ -130,4 +128,3 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
   window.ideogram =
     Ideogram.initRelatedGenes(ideoConfig, window.SCP.uniqueGenes)
 }
-
