@@ -26,5 +26,5 @@ script:
 after_success:
   - |
     if [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
-      bin/burp_scan.sh "${BURP_DOCKER_IMAGE}" "http://$(hostname)"
+      bin/burp_scan.sh "${BURP_DOCKER_IMAGE}"
     fi

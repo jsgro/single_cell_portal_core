@@ -11,7 +11,7 @@ echo "${BASE64_KEY}" | docker login -u _json_key_base64 --password-stdin "https:
 
 # Start Burp container in the background
 CONTAINER="burp"
-docker run --rm -d -p 8080:8080 -p 8081:8081 --name "${CONTAINER}" "${IMAGE}"
+docker run --rm -d --net host --name "${CONTAINER}" "${IMAGE}"
 
 # Wait until startup
 ( docker logs "${CONTAINER}" -f & ) | grep -q "Started BurpApplication"
