@@ -26,6 +26,12 @@ class StudyFileBundle
       }
   }
   REQUIRED_ATTRIBUTES = %w(bundle_type original_file_list)
+  # map of 'study_file.options[key_name]' for accessing parent study_file ID values, via upload/sync pages
+  PARENT_FILE_OPTIONS_KEYNAMES = {
+      'MM Coordinate Matrix' => 'matrix_id',
+      'BAM' => 'bam_id',
+      'Cluster' => 'cluster_file_id'
+  }
 
   swagger_schema :StudyFileBundle do
     key :required, [:bundle_type, :original_file_list]
@@ -123,15 +129,6 @@ class StudyFileBundle
   # child/dependent files in this bundle
   def bundled_files
     self.study_files.where(:id.ne => self.parent.id)
-  end
-
-  # return the target of this bundle (StudyFile for MM matrices & BAMs, ClusterGroup for Clusters)
-  def bundle_target
-    if self.bundle_type == 'Cluster'
-      ClusterGroup.find_by(study_file_id: self.parent.id)
-    else
-      self.parent
-    end
   end
 
   def file_types

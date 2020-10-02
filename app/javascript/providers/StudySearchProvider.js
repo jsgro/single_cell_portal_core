@@ -61,8 +61,8 @@ export function getNumFacetsAndFilters(facets) {
 
 /** Converts raw searched terms to an array */
 export function formatTerms(terms) {
-  if (typeof terms === 'undefined') return [];
-  return terms.trim().split(/[, ]/).filter(term => term.length > 0);
+  if (typeof terms === 'undefined') return []
+  return terms.trim().split(/[, ]/).filter(term => term.length > 0)
 }
 
 /** Determine if search has any parameters, i.e. terms or filters */

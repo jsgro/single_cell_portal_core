@@ -247,6 +247,7 @@ class IngestJob
       Rails.logger.error "IngestJob poller: #{self.pipeline_name} has failed."
       # log errors to application log for inspection
       self.log_error_messages
+      self.create_study_file_copy
       self.study_file.update(parse_status: 'failed')
       DeleteQueueJob.new(self.study_file).delay.perform
       Study.firecloud_client.delete_workspace_file(self.study.bucket_id, self.study_file.bucket_location) unless self.persist_on_fail
@@ -384,6 +385,23 @@ class IngestJob
     end
   end
 
+  # store a copy of a study file when an ingest job fails in the parse_logs/:id directory for QA purposes
+  #
+  # * *returns*
+  #   - (Boolean) => True/False on success of file copy action
+  def create_study_file_copy
+    begin
+      Study.firecloud_client.execute_gcloud_method(:copy_workspace_file, 0, self.study.bucket_id,
+                                                   self.study_file.bucket_location,
+                                                   self.study_file.parse_fail_bucket_location)
+      true
+    rescue => e
+      error_context = ErrorTracker.format_extra_context(self.study_file, {action: :create_study_file_copy})
+      ErrorTracker.report_exception(e, self.user, error_context)
+      false
+    end
+  end
+
   # path to dev error file in study bucket, containing debug messages and stack traces
   #
   # * *returns*
@@ -505,6 +523,16 @@ class IngestJob
     message
   end
 
+  # generate a link to to the location of the cached copy of a file that failed to ingest
+  # for use in admin error email contents
+  #
+  # * *returns*
+  #   - (String) => HTML anchor tag with link to file directory that can be opened in the browser after authenticating
+  def generate_bucket_browser_tag
+    link = "#{self.study.google_bucket_url}/parse_logs/#{self.study_file.id}"
+    '<a href="' + link + '">' + link + '</a>'
+  end
+
   # format an error email message body for users
   #
   # * *params*
@@ -522,6 +550,7 @@ class IngestJob
     when :dev
       error_contents = self.read_parse_logfile(self.dev_error_filepath, delete_on_read: false)
       message_body = "<p>The file '#{self.study_file.upload_file_name}' uploaded by #{self.user.email} to #{self.study.accession} failed to ingest.</p>"
+      message_body += "<p>A copy of this file can be found at #{self.generate_bucket_browser_tag}</p>"
       message_body += "<p>Detailed logs and PAPI events as follows:"
     else
       error_contents = self.read_parse_logfile(self.user_error_filepath)

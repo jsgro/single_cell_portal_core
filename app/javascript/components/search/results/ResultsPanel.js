@@ -13,9 +13,10 @@ import { FeatureFlagContext } from 'providers/FeatureFlagProvider'
  * @studyComponent - the component to use to render individual studies.  If not specified, results/Study.js
  * will be used
  */
-const ResultsPanel = ({ studySearchState, studyComponent }) => {
+const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) => {
   const featureFlagState = useContext(FeatureFlagContext)
   const results = studySearchState.results
+
   let panelContent
   if (studySearchState.isError) {
     panelContent = (
@@ -54,10 +55,11 @@ const ResultsPanel = ({ studySearchState, studyComponent }) => {
       </>
     )
   } else {
+    noResultsDisplay = noResultsDisplay ? noResultsDisplay : <div> No results found. </div>
     panelContent = (
       <>
         <SearchQueryDisplay terms={results.termList} facets={results.facets} />
-        <p>No results</p>
+        {noResultsDisplay}
       </>
     )
   }
