@@ -84,7 +84,7 @@ class StudyTest < ActiveSupport::TestCase
     status_mock = Minitest::Mock.new
     status_mock.expect :services_available?, false, @services_args
     status_mock.expect :services_available?, false, @services_args
-    Study.stub :firecloud_client, status_mock do
+    ApplicationController.stub :firecloud_client, status_mock do
       compute_in_outage = @study.can_compute?(user)
       group_share_in_outage = @study.user_in_group_share?(user, 'Reviewer')
 

@@ -140,7 +140,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
            "Gene list failed to associate, found #{study.study_files.where(file_type: 'Gene List').size} files"
     gene_list_file = study.study_files.where(file_type: 'Gene List').first
     # this parse has a duplicate gene, which will not throw an error - it is caught internally
-    study.initialize_precomputed_scores(gene_list_file, @test_user)
+    ParseUtils.initialize_precomputed_scores(study, gene_list_file, @test_user)
     # we have to reload the study because it will have a cached reference to the precomputed_score due to the nature of the parse
     study = Study.find_by(name: "Local Parse Failure Study #{@random_seed}")
     assert study.study_files.where(file_type: 'Gene List').size == 0,
