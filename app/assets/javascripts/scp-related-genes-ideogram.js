@@ -6,18 +6,18 @@ function onClickAnnot(annot) {
 }
 
 /**
- * Reports if current gene lacks associated taxon (aka species, organism)
+ * Reports if current gene has associated taxon (aka species, organism)
  *
- * Accounts for old SCP studies, where matrices lack taxons
+ * Enables handling for old SCP studies, where matrices lack taxons
  */
 function geneHasTaxon() {
   return window.SCP.taxon !== ''
 }
 
 /**
- * Reports if current genome assembly lacks chromosome length data
+ * Reports if current genome assembly has chromosome length data
  *
- * Accounts for taxons that cannot be visualized in an ideogram.
+ * Enables handling for taxons that cannot be visualized in an ideogram.
  * Example edge case: axolotl study SCP499.
  */
 function genomeHasChromosomes() {
