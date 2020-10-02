@@ -22,7 +22,7 @@ before_install:
       export BURP_PROXY="http://$(hostname):8080"
     fi
 script:
-  - bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json -s secret/kdux/scp/staging/scp_service_account.json -r secret/kdux/scp/staging/read_only_service_account.json -e test -n single-cell-portal-staging
+  - bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json -s secret/kdux/scp/staging/scp_service_account.json -r secret/kdux/scp/staging/read_only_service_account.json -e test -n single-cell-portal-test
 after_success:
   - |
     if [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
