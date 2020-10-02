@@ -10,7 +10,7 @@ function onClickAnnot(annot) {
  *
  * Accounts for old SCP studies, where matrices lack taxons
  */
-function geneHasNoTaxon() {
+function geneHasTaxon() {
   return window.SCP.taxon !== ''
 }
 
@@ -20,7 +20,7 @@ function geneHasNoTaxon() {
  * Accounts for taxons that cannot be visualized in an ideogram.
  * Example edge case: axolotl study SCP499.
  */
-function genomeHasNoChromosomes() {
+function genomeHasChromosomes() {
   return window.ideogram.chromosomesArray.length === 0
 }
 
@@ -29,7 +29,7 @@ function genomeHasNoChromosomes() {
  */
 function showRelatedGenesIdeogram() { // eslint-disable-line
 
-  if (geneHasNoTaxon()) return
+  if (!geneHasTaxon()) return
 
   const ideoContainer =
     document.getElementById('related-genes-ideogram-container')
@@ -38,7 +38,7 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
     document.querySelector('#render-target .tab-content')
   const distTabs = document.querySelectorAll('.expression-plot')
 
-  if (genomeHasNoChromosomes()) {
+  if (!genomeHasChromosomes()) {
     ideoContainer.style.display = 'none'
     $('#related-genes-ideogram-container').html('')
     return
@@ -71,7 +71,7 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
 function resizeRelatedGenesIdeogram() { // eslint-disable-line
 
   // Handles old studies, where matrices lack species
-  if (geneHasNoTaxon()) return
+  if (!geneHasTaxon()) return
 
   const ideoLegend = document.getElementById('_ideogramLegend')
   const ideoRect = document.getElementById('_ideogram').getBoundingClientRect()
@@ -85,7 +85,7 @@ function resizeRelatedGenesIdeogram() { // eslint-disable-line
  */
 function createRelatedGenesIdeogram() { // eslint-disable-line
 
-  if (geneHasNoTaxon()) return
+  if (!geneHasTaxon()) return
 
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
@@ -104,7 +104,7 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
     onClickAnnot,
     onLoad() {
       // Handles edge case: when organism lacks chromosome-level assembly
-      if (genomeHasNoChromosomes()) return
+      if (!genomeHasChromosomes()) return
 
       const searchInput = document.querySelector('#search_genes').value.trim()
       const geneSymbol = searchInput.split(/[, ]/).filter(d => d !== '')[0]
