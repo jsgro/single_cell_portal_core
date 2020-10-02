@@ -2,12 +2,16 @@
   visibility: hidden;
   z-index: 1000;
   background: #FFF;
-  padding-bottom: 40px;
+  padding-bottom: 45px;
 
   &.show-related-genes-ideogram {
 
     visibility: visible;
     position: static !important;
+
+    ~ .expression-plot {
+      position: relative;
+    }
 
     #_ideogramMiddleWrap {
       border-bottom: 1px solid #EEE;
@@ -16,8 +20,8 @@
       overflow-y: hidden
     }
 
-    ~ .expression-plot {
-      position: relative;
+    #_ideogramLegend {
+      overflow-y: hidden;
     }
   }
 }
