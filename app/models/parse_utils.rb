@@ -552,7 +552,7 @@ class ParseUtils
   end
 
   # parse precomputed marker gene files and create documents to render in Morpheus
-  def initialize_precomputed_scores(study, marker_file, user, opts={})
+  def self.initialize_precomputed_scores(study, marker_file, user, opts={})
     begin
       error_context = ErrorTracker.format_extra_context(study, marker_file, {opts: opts})
       # remove study description as it's not useful
