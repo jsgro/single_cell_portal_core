@@ -96,8 +96,9 @@ export function logClickLink(target) {
   }
   // Check if target is a tab that's not apart of a menu
   const parentTabList = $(target).closest('[data-tablist-name]')
-  // const isTab = 'data-tablist-name' in target.parentElement.attributes
   if (parentTabList.length > 0) {
+    // Grab name of tab list and add to props
+    props.tabListName = parentTabList[0].attributes['data-tablist-name'].value
     log('click:tab', props)
   } else {
     log('click:link', props)
