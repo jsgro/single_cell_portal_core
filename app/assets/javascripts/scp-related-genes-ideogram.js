@@ -15,6 +15,16 @@ function geneHasNoTaxon() {
 }
 
 /**
+ * Reports if current genome assembly lacks chromosome length data
+ *
+ * Accounts for taxons that cannot be visualized in an ideogram.
+ * Example edge case: axolotl study SCP499.
+ */
+function genomeHasNoChromosomes() {
+  return window.ideogram.chromosomesArray.length === 0
+}
+
+/**
  * Displays Ideogram after getting gene search results in Study Overview
  */
 function showRelatedGenesIdeogram() { // eslint-disable-line
@@ -28,10 +38,7 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
     document.querySelector('#render-target .tab-content')
   const distTabs = document.querySelectorAll('.expression-plot')
 
-  if (window.ideogram.chromosomesArray.length === 0) {
-    // Handles rare edge case: gene is from a matrix that has
-    // an associated organism, but the organism has no chromosome-level
-    // genome assembly.  Example: axolotl study SCP499.
+  if (genomeHasNoChromosomes()) {
     ideoContainer.style.display = 'none'
     $('#related-genes-ideogram-container').html('')
     return
@@ -97,7 +104,7 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
     onClickAnnot,
     onLoad() {
       // Handles edge case: when organism lacks chromosome-level assembly
-      if (window.ideogram.chromosomesArray.length === 0) return
+      if (genomeHasNoChromosomes()) return
 
       const searchInput = document.querySelector('#search_genes').value.trim()
       const geneSymbol = searchInput.split(/[, ]/).filter(d => d !== '')[0]
