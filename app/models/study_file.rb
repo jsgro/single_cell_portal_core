@@ -57,6 +57,7 @@ class StudyFile
 
   # field definitions
   field :name, type: String
+  field :_type, type: String
   field :description, type: String
   field :file_type, type: String
   field :status, type: String
