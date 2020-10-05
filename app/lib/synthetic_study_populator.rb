@@ -83,12 +83,15 @@ class SyntheticStudyPopulator
         if taxon_id.nil?
           throw "You must specify a species in the study_info.json for Expression Matrix files"
         end
-        exp_file_data = ExpressionFileInfo.new(
-          is_raw_counts: finfo['is_raw_counts'] ? true : false,
-          units: finfo['units'],
-          library_construction_protocol: finfo['library_construction_protocol']
-        )
-        study_file_params['expression_file_info'] = exp_file_data
+        exp_finfo_params = finfo['expression_file_info']
+        if exp_finfo_params.present?
+          exp_file_info = ExpressionFileInfo.new(
+            is_raw_counts: exp_finfo_params['is_raw_counts'] ? true : false,
+            units: exp_finfo_params['units'],
+            library_construction_protocol: exp_finfo_params['library_construction_protocol']
+          )
+          study_file_params['expression_file_info'] = exp_file_info
+        end
       end
 
       study_file = StudyFile.create!(study_file_params)
