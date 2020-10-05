@@ -883,6 +883,14 @@ class Study
     self.embargo.nil? || self.embargo.blank? ? false : Date.today <= self.embargo
   end
 
+  def download_agreement
+    DownloadAgreement.find_by(study_id: self.id)
+  end
+
+  def has_download_agreement?
+    self.download_agreement.present? ? self.download_agreement.expired? : false
+  end
+
   # label for study visibility
   def visibility
     self.public? ? "<span class='sc-badge bg-success text-success'>Public</span>".html_safe : "<span class='sc-badge bg-danger text-danger'>Private</span>".html_safe

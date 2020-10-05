@@ -30,7 +30,7 @@ class SiteController < ApplicationController
   before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :search_all_genes, :render_global_gene_expression_plots, :privacy_policy,
                                                   :terms_of_service, :search, :precomputed_results, :expression_query, :annotation_query, :view_workflow_wdl,
                                                   :log_action, :get_workspace_samples, :update_workspace_samples, :create_totat,
-                                                  :get_workflow_options, :get_taxon, :get_taxon_assemblies, :covid19]
+                                                  :get_workflow_options, :get_taxon, :get_taxon_assemblies, :covid19, :record_download_acceptance]
   before_action :check_compute_permissions, only: [:get_fastq_files, :get_workspace_samples, :update_workspace_samples,
                                                    :delete_workspace_samples, :get_workspace_submissions, :create_workspace_submission,
                                                    :get_submission_workflow, :abort_submission_workflow, :get_submission_errors,
@@ -326,6 +326,11 @@ class SiteController < ApplicationController
       set_selected_annotation
     end
 
+    if @study.has_download_agreement?
+      @download_agreement = @study.download_agreement
+      @user_accepted_agreement = @download_agreement.user_accepted?(current_user)
+    end
+
     # only populate if study has ideogram results & is not 'detached'
     if @study.has_analysis_outputs?('infercnv', 'ideogram.js') && !@study.detached?
       @ideogram_files = {}
@@ -358,6 +363,15 @@ class SiteController < ApplicationController
 
       # load list of available workflows
       @workflows_list = load_available_workflows
+    end
+  end
+
+  def record_download_acceptance
+    @download_acceptance = DownloadAcceptance.new(download_acceptance_params)
+    if @download_acceptance.save
+      respond_to do |format|
+        format.js
+      end
     end
   end
 
@@ -734,6 +748,8 @@ class SiteController < ApplicationController
     elsif !@study.can_download?(current_user)
       redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
                   alert: 'You do not have permission to perform that action.' and return
+    elsif @study.has_download_agreement? && !@study.download_agreement.user_accepted?(current_user)
+      head 403 and return
     end
 
     # next check if downloads have been disabled by administrator, this will abort the download
@@ -1436,6 +1452,7 @@ class SiteController < ApplicationController
     @user_can_compute = false
     @user_can_download = false
     @user_embargoed = false
+
     return if study_detached || !@allow_firecloud_access
     begin
       @user_can_edit = @study.can_edit?(current_user)
@@ -1466,6 +1483,10 @@ class SiteController < ApplicationController
   def user_annotation_params
     params.require(:user_annotation).permit(:_id, :name, :study_id, :user_id, :cluster_group_id, :subsample_threshold,
                                             :loaded_annotation, :subsample_annotation, user_data_arrays_attributes: [:name, :values])
+  end
+
+  def download_acceptance_params
+    params.require(:download_acceptance).permit(:email, :download_agreement_id)
   end
 
   # make sure user has view permissions for selected study

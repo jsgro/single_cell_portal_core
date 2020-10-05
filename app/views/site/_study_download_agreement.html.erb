@@ -1,0 +1,19 @@
+<div class="row" id="study-download-agreement">
+  <div class="col-xs-12">
+    <%= form_for :download_acceptance,
+                 url: record_download_acceptance_path(accession: @study.accession),
+                 html: {class: 'form', id: 'record-download-agreement', data: {remote: true}} do |f| %>
+
+      <%= f.hidden_field :email, value: current_user.email %>
+      <%= f.hidden_field :download_agreement_id, value: @download_agreement.id %>
+
+      <h2>Before Downloading Data...</h2>
+      <%= @study.download_agreement.content.html_safe %>
+      <div class="form-group text-center">
+        <%= f.submit "I Accept", class: 'btn btn-lg btn-success', id: 'download-agreement-submit' %>
+      </div>
+
+
+    <% end %>
+  </div>
+</div>

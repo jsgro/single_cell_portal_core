@@ -604,6 +604,8 @@ class StudiesController < ApplicationController
     elsif !@study.can_download?(current_user)
       redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
                   alert: 'You do not have permission to perform that action.' and return
+    elsif @study.has_download_agreement? && !@study.download_agreement.user_accepted?(current_user)
+      head 403 and return
     end
 
     # next check if downloads have been disabled by administrator, this will abort the download
