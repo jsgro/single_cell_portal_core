@@ -67,17 +67,31 @@ class SyntheticStudyPopulator
           throw "You must populate the species #{finfo['species_scientific_name']} to ingest the file #{finfo['filename']}. Stopping populate"
         end
         taxon_id = taxon.id
-      elsif finfo['type'] == 'Expression Matrix'
-        throw "You must specify a species in the study_info.json for Expression Matrix files"
       end
 
-      study_file = StudyFile.create!(file_type: finfo['type'],
-                        name: finfo['name'] ? finfo['name'] : finfo['filename'],
-                        upload: infile,
-                        use_metadata_convention: finfo['use_metadata_convention'] ? true : false,
-                        status: 'uploading',
-                        study: study,
-                        taxon_id: taxon_id)
+      study_file_params = {
+        file_type: finfo['type'],
+        name: finfo['name'] ? finfo['name'] : finfo['filename'],
+        upload: infile,
+        use_metadata_convention: finfo['use_metadata_convention'] ? true : false,
+        status: 'uploading',
+        study: study,
+        taxon_id: taxon_id
+      }
+
+      if study_file_params[:file_type] == 'Expression Matrix'
+        if taxon_id.nil?
+          throw "You must specify a species in the study_info.json for Expression Matrix files"
+        end
+        exp_file_data = ExpressionFileInfo.new(
+          is_raw_counts: finfo['is_raw_counts'] ? true : false,
+          units: finfo['units'],
+          library_construction_protocol: finfo['library_construction_protocol']
+        )
+        study_file_params['expression_file_info'] = exp_file_data
+      end
+
+      study_file = StudyFile.create!(study_file_params)
       FileParseService.run_parse_job(study_file, study, user)
     end
   end

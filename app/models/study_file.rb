@@ -54,10 +54,10 @@ class StudyFile
   belongs_to :taxon, optional: true
   belongs_to :genome_assembly, optional: true
   belongs_to :study_file_bundle, optional: true
+  embeds_one :expression_file_info
 
   # field definitions
   field :name, type: String
-  field :_type, type: String
   field :description, type: String
   field :file_type, type: String
   field :status, type: String
