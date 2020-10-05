@@ -1,5 +1,3 @@
-extend ErrorTracker
-
 # collection of methods involved in parsing files
 # also includes option return status object when being called from Api::V1::StudyFilesController
 class FileParseService
