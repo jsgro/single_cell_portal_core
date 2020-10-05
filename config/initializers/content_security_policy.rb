@@ -16,7 +16,7 @@ SecureHeaders::Configuration.default do |config|
   config.x_permitted_cross_domain_policies = "none"
   config.x_download_options = "noopen"
   config.referrer_policy = %w(origin-when-cross-origin strict-origin-when-cross-origin)
-  allowed_connect_sources = ['\'self\'', "https://#{ENV['HOSTNAME']}", 'https://www.google-analytics.com', 'https://unpkg.com', 'https://igv.org',
+  allowed_connect_sources = ['\'self\'', "https://#{ENV['HOSTNAME']}", 'https://www.google-analytics.com', 'https://cdn.jsdelivr.net', 'https://igv.org',
                     'https://www.googleapis.com', 'https://s3.amazonaws.com', 'https://data.broadinstitute.org', 'https://portals.broadinstitute.org',
                     'https://us.input.tcell.insight.rapid7.com', 'https://api.tcell.io', 'https://us.browser.tcell.insight.rapid7.com',
                     'https://us.agent.tcell.insight.rapid7.com', 'https://us.jsagent.tcell.insight.rapid7.com', 'https://accounts.google.com',
