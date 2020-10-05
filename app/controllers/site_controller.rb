@@ -815,6 +815,11 @@ class SiteController < ApplicationController
       return
     end
 
+    if @study.has_download_agreement? && !@study.download_agreement.user_accepted?(current_user)
+      render plain: "Forbidden: Download agreement not accepted for #{@study.accession}" , status: 403
+      return
+    end
+
     # 'all' or the name of a directory, e.g. 'csvs'
     download_object = params[:download_object]
 
