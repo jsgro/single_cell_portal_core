@@ -32,7 +32,7 @@ const LinkableSearchTabs = function(props) {
     <div>
       <nav className="nav search-links" data-tablist-name={'Search'} role="tablist">
         <Link to={`/single_cell/app/studies${location.search}`}
-          className={showGenesTab ? '' : 'active'} onClick = {logClick}>
+          className={showGenesTab ? '' : 'active'}>
           <span className="fas fa-book"></span> Search Studies
         </Link>
         <Link to={`/single_cell/app/genes${location.search}`}
