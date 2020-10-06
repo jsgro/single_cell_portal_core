@@ -282,7 +282,7 @@ class SiteController < ApplicationController
 
           # double check on download availability: first, check if administrator has disabled downloads
           # then check if FireCloud is available and disable download links if either is true
-          @allow_downloads = Study.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
+          @allow_downloads = ApplicationController.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
         else
           set_study_default_options
         end
@@ -344,8 +344,8 @@ class SiteController < ApplicationController
 
     if @allow_firecloud_access && @user_can_compute
       # load list of previous submissions
-      workspace = Study.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
-      @submissions = Study.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
+      workspace = ApplicationController.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
+      @submissions = ApplicationController.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
 
       @submissions.each do |submission|
         update_analysis_submission(submission)
@@ -739,19 +739,19 @@ class SiteController < ApplicationController
     # next check if downloads have been disabled by administrator, this will abort the download
     # download links shouldn't be rendered in any case, this just catches someone doing a straight GET on a file
     # also check if workspace google buckets are available
-    if !AdminConfiguration.firecloud_access_enabled? || !Study.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
+    if !AdminConfiguration.firecloud_access_enabled? || !ApplicationController.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
       head 503 and return
     end
 
     begin
       # get filesize and make sure the user is under their quota
-      requested_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, params[:filename])
+      requested_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, params[:filename])
       if requested_file.present?
         filesize = requested_file.size
         user_quota = current_user.daily_download_quota + filesize
         # check against download quota that is loaded in ApplicationController.get_download_quota
         if user_quota <= @download_quota
-          @signed_url = Study.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, @study.bucket_id, params[:filename], expires: 15)
+          @signed_url = ApplicationController.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, @study.bucket_id, params[:filename], expires: 15)
           current_user.update(daily_download_quota: user_quota)
         else
           redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]), alert: 'You have exceeded your current daily download quota.  You must wait until tomorrow to download this file.' and return
@@ -1028,7 +1028,7 @@ class SiteController < ApplicationController
     begin
       requested_samples = params[:samples].split(',')
       # get all samples
-      all_samples = Study.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
+      all_samples = ApplicationController.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
       # since we can't query the API (easily) for matching samples, just get all and then filter based on requested samples
       matching_samples = all_samples.keep_if {|sample| requested_samples.include?(sample['name']) }
       @samples = []
@@ -1081,10 +1081,10 @@ class SiteController < ApplicationController
 
       # now reopen and import into FireCloud
       upload = File.open(temp_tsv.path)
-      Study.firecloud_client.import_workspace_entities_file(@study.firecloud_project, @study.firecloud_workspace, upload)
+      ApplicationController.firecloud_client.import_workspace_entities_file(@study.firecloud_project, @study.firecloud_workspace, upload)
 
       # upon success, load the newly imported samples from the workspace and update the form
-      new_samples = Study.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
+      new_samples = ApplicationController.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
       @samples = Naturally.sort(new_samples.map {|s| s['name']})
 
       # clean up tempfile
@@ -1107,11 +1107,11 @@ class SiteController < ApplicationController
     samples = params[:samples]
     begin
       # create a mapping of samples to delete
-      delete_payload = Study.firecloud_client.create_entity_map(samples, 'sample')
-      Study.firecloud_client.delete_workspace_entities(@study.firecloud_project, @study.firecloud_workspace, delete_payload)
+      delete_payload = ApplicationController.firecloud_client.create_entity_map(samples, 'sample')
+      ApplicationController.firecloud_client.delete_workspace_entities(@study.firecloud_project, @study.firecloud_workspace, delete_payload)
 
       # upon success, load the newly imported samples from the workspace and update the form
-      new_samples = Study.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
+      new_samples = ApplicationController.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
       @samples = Naturally.sort(new_samples.map {|s| s['name']})
 
       # render update notice
@@ -1131,8 +1131,8 @@ class SiteController < ApplicationController
 
   # get all submissions for a study workspace
   def get_workspace_submissions
-    workspace = Study.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
-    @submissions = Study.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
+    workspace = ApplicationController.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
+    @submissions = ApplicationController.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
     # update any AnalysisSubmission records with new statuses
     @submissions.each do |submission|
       update_analysis_submission(submission)
@@ -1163,7 +1163,7 @@ class SiteController < ApplicationController
       logger.info "Updating configuration for #{@analysis_configuration.configuration_identifier} to run #{@analysis_configuration.identifier} in #{@study.firecloud_project}/#{@study.firecloud_workspace}"
       submission_config = @analysis_configuration.apply_user_inputs(params[:workflow][:inputs])
       # save configuration in workspace
-      Study.firecloud_client.create_workspace_configuration(@study.firecloud_project, @study.firecloud_workspace, submission_config)
+      ApplicationController.firecloud_client.create_workspace_configuration(@study.firecloud_project, @study.firecloud_workspace, submission_config)
 
       # submission must be done as user, so create a client with current_user and submit
       client = FireCloudClient.new(current_user, @study.firecloud_project)
@@ -1186,7 +1186,7 @@ class SiteController < ApplicationController
   # get a submission workflow object as JSON
   def get_submission_workflow
     begin
-      submission = Study.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
+      submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
       render json: submission.to_json
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
@@ -1200,7 +1200,7 @@ class SiteController < ApplicationController
   def abort_submission_workflow
     @submission_id = params[:submission_id]
     begin
-      Study.firecloud_client.abort_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, @submission_id)
+      ApplicationController.firecloud_client.abort_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, @submission_id)
       @notice = "Submission #{@submission_id} was successfully aborted."
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
@@ -1216,7 +1216,7 @@ class SiteController < ApplicationController
       workflow_ids = params[:workflow_ids].split(',')
       errors = []
       # first check workflow messages - if there was an issue with inputs, errors could be here
-      submission = Study.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
+      submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
       submission['workflows'].each do |workflow|
         if workflow['messages'].any?
           workflow['messages'].each {|message| errors << message}
@@ -1224,7 +1224,7 @@ class SiteController < ApplicationController
       end
       # now look at each individual workflow object
       workflow_ids.each do |workflow_id|
-        workflow = Study.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id], workflow_id)
+        workflow = ApplicationController.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id], workflow_id)
         # failure messages are buried deeply within the workflow object, so we need to go through each to find them
         workflow['failures'].each do |workflow_failure|
           errors << workflow_failure['message']
@@ -1249,9 +1249,9 @@ class SiteController < ApplicationController
   def get_submission_outputs
     begin
       @outputs = []
-      submission = Study.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
+      submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
       submission['workflows'].each do |workflow|
-        workflow = Study.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id], workflow['workflowId'])
+        workflow = ApplicationController.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id], workflow['workflowId'])
         workflow['outputs'].each do |output, file_url|
           display_name = file_url.split('/').last
           file_location = file_url.gsub(/gs\:\/\/#{@study.bucket_id}\//, '')
@@ -1270,7 +1270,7 @@ class SiteController < ApplicationController
   # retrieve a submission analysis metadata file
   def get_submission_metadata
     begin
-      submission = Study.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
+      submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
       if submission.present?
         # check to see if we already have an analysis_metadatum object
         @metadata = AnalysisMetadatum.find_by(study_id: @study.id, submission_id: params[:submission_id])
@@ -1309,7 +1309,7 @@ class SiteController < ApplicationController
   def delete_submission_files
     begin
       # first, add submission to list of 'deleted_submissions' in workspace attributes (will hide submission in list)
-      workspace = Study.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
+      workspace = ApplicationController.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
       ws_attributes = workspace['workspace']['attributes']
       if ws_attributes['deleted_submissions'].blank?
         ws_attributes['deleted_submissions'] = [params[:submission_id]]
@@ -1317,11 +1317,11 @@ class SiteController < ApplicationController
         ws_attributes['deleted_submissions']['items'] << params[:submission_id]
       end
       logger.info "Adding #{params[:submission_id]} to workspace delete_submissions attribute in #{@study.firecloud_workspace}"
-      Study.firecloud_client.set_workspace_attributes(@study.firecloud_project, @study.firecloud_workspace, ws_attributes)
+      ApplicationController.firecloud_client.set_workspace_attributes(@study.firecloud_project, @study.firecloud_workspace, ws_attributes)
       logger.info "Deleting analysis metadata for #{params[:submission_id]} in #{@study.url_safe_name}"
       AnalysisMetadatum.where(submission_id: params[:submission_id]).delete
       logger.info "Queueing submission #{params[:submission]} deletion in #{@study.firecloud_workspace}"
-      submission_files = Study.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, @study.bucket_id, prefix: params[:submission_id])
+      submission_files = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, @study.bucket_id, prefix: params[:submission_id])
       DeleteQueueJob.new(submission_files).perform
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
@@ -1391,7 +1391,7 @@ class SiteController < ApplicationController
   end
 
   def set_workspace_samples
-    all_samples = Study.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
+    all_samples = ApplicationController.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
     @samples = Naturally.sort(all_samples.map {|s| s['name']})
     # load locations of primary data (for new sample selection)
     @primary_data_locations = []
@@ -1410,7 +1410,7 @@ class SiteController < ApplicationController
     return if study_detached
     begin
       @allow_firecloud_access = AdminConfiguration.firecloud_access_enabled?
-      api_status = Study.firecloud_client.api_status
+      api_status = ApplicationController.firecloud_client.api_status
       # reuse status object because firecloud_client.services_available? each makes a separate status call
       # calling Hash#dig will gracefully handle any key lookup errors in case of a larger outage
       if api_status.is_a?(Hash)
@@ -1485,7 +1485,7 @@ class SiteController < ApplicationController
 
   # check compute permissions for study
   def check_compute_permissions
-    if Study.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE)
+    if ApplicationController.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE)
       if !user_signed_in? || !@study.can_compute?(current_user)
         @alert ='You do not have permission to perform that action.'
         respond_to do |format|
@@ -2242,7 +2242,7 @@ class SiteController < ApplicationController
     is_study_file = file.is_a? StudyFile
 
     if fc_client == nil
-      fc_client = Study.firecloud_client
+      fc_client = ApplicationController.firecloud_client
     end
 
     filename = (is_study_file ? file.upload_file_name : file[:name])
