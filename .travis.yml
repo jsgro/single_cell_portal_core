@@ -16,7 +16,7 @@ before_install:
   - sudo curl -O https://releases.hashicorp.com/vault/1.0.1/vault_1.0.1_linux_amd64.zip
   - sudo unzip vault_1.0.1_linux_amd64.zip
   - sudo mv vault /usr/local/bin
-  - export BURP_ENABLE=$([ "${TRAVIS_PULL_REQUEST}" = "false" ] || [ "${TRAVIS_COMMIT_MESSAGE}" == *"[burp-run]"* ])
+  - export BURP_ENABLE=$([ "${TRAVIS_COMMIT_MESSAGE}" == *"[burp-run]"* ] || [ "${TRAVIS_PULL_REQUEST}" = "false" ])
   - |
     if (( ${BURP_ENABLE} )); then
       bin/burp_start.sh "${BURP_DOCKER_IMAGE}" "${BURP_SA_KEY}"
