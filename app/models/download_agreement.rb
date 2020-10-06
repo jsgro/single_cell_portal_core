@@ -23,4 +23,12 @@ class DownloadAgreement
   def user_accepted?(user)
     user.present? ? self.user_emails.include?(user.email) : false
   end
+
+  def expiration_date
+    self.expires_at || "N/A"
+  end
+
+  def accepted_count
+    self.download_acceptances.count
+  end
 end
