@@ -408,6 +408,9 @@ class SiteController < ApplicationController
     @cluster_annotations = load_cluster_group_annotations
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
     @y_axis_title = load_expression_axis_title
+
+    @taxons = @study.infer_taxons(params[:gene])
+
     if request.format == 'text/html'
       # only set this check on full page loads (happens if user was not signed in but then clicked the 'genome' tab)
       set_firecloud_permissions(@study.detached?)

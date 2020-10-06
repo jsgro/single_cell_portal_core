@@ -1108,6 +1108,17 @@ class Study
     Gene.where(study_id: self.id, :study_file_id.in => self.expression_matrix_files.map(&:id)).pluck(:name).uniq
   end
 
+  # For a gene name in this study, get scientific name of species / organism
+  # For example: "PTEN" -> ["Homo sapiens"].
+  #
+  # TODO (SCP-2769): Handle when a searched gene maps to multiple species
+  def infer_taxons(gene_name)
+    Gene
+      .where(study_id: self.id, :study_file_id.in => self.expression_matrix_files.pluck(:id), name: gene_name)
+      .map {|gene| gene.taxon.try(:scientific_name)}
+      .uniq
+  end
+
   # return a count of the number of fastq files both uploaded and referenced via directory_listings for a study
   def primary_data_file_count
     study_file_count = self.study_files.primary_data.size
