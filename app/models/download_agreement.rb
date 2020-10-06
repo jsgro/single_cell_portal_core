@@ -13,7 +13,7 @@ class DownloadAgreement
 
   # Check if an agreement has expired.  If no expiration date is present, agreement is still enforced
   def expired?
-    self.expires_at.present? ? self.expires_at < Date.today : true
+    self.expires_at.present? ? self.expires_at < Date.today : false
   end
 
   def user_emails
