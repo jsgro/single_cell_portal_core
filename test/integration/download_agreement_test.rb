@@ -15,7 +15,7 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
 
     # ensure normal download works
-    file = @study.study_files.sample
+    file = @study.expression_matrix_files.first
     get download_file_path(accession: @study.accession, study_name: @study.url_safe_name, filename: file.upload_file_name)
     # since this is an external redirect, we cannot call follow_redirect! but instead have to get the location header
     assert_response 302, "Did not initiate file download as expected; response code: #{response.code}"
