@@ -37,6 +37,6 @@ class ExpressionFileInfo
                                  'SCRB-seq',
                                  'ATAC-seq',
                                  'ChIP-seq',
-                                 'muthylomics']
+                                 'methylomics']
   validates :library_construction_protocol, inclusion: {in: LIBRARY_CONSTRUCTION_VALUES}
 end
