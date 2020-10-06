@@ -12,7 +12,6 @@ import SearchFacetProvider from 'providers/SearchFacetProvider'
 import UserProvider from 'providers/UserProvider'
 import FeatureFlagProvider from 'providers/FeatureFlagProvider'
 import ErrorBoundary from 'lib/ErrorBoundary'
-import { logClick } from 'lib/metrics-api'
 
 /** include search controls and results */
 export function StudySearchView() {
