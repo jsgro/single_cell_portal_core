@@ -2,8 +2,11 @@
 
 set -eu
 
-IMAGE="$1" # Burp private Docker image URL
-BASE64_KEY="$2" # base64-encoded Service Account Key JSON to pull the image from container registry
+# Burp private Docker image URL
+IMAGE="$1"
+
+# Base64-encoded Service Account Key JSON to pull the image from container registry
+BASE64_KEY="$2"
 
 # Authenticate with container registry
 REGISTRY=$(echo "${IMAGE}" | awk -F/ '{print $1}')
