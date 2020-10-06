@@ -19,7 +19,7 @@ before_install:
   - |
     export BURP_ENABLE=$(
       [[ "${TRAVIS_COMMIT_MESSAGE}" = *[burp-run]* ]] ||
-      [ "${TRAVIS_PULL_REQUEST}" = "false" ] ;
+      [[ "${TRAVIS_PULL_REQUEST}"   = "false" ]] ;
       echo $?
     )
     if [ "${BURP_ENABLE}" = "0" ]; then
