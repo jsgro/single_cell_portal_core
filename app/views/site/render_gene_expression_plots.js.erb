@@ -59,8 +59,6 @@ $(window).on('resizeEnd', function() {
       Plotly.relayout('box-plot', {width: newBoxWidth});
       Plotly.relayout('scatter-plot', scatterLayout);
       Plotly.relayout('reference-plot', staticLayout);
-
-      resizeRelatedGenesIdeogram();
     } catch (e) {
       console.log('Abort resizeEnd')
     }

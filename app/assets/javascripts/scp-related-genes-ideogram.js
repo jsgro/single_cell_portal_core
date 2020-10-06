@@ -15,7 +15,6 @@
 function onClickAnnot(annot) {
   document.querySelector('#search_genes').value = annot.name
   document.querySelector('#perform-gene-search').click()
-  window.ideogram.plotRelatedGenes([annot.name])
 }
 
 /**
@@ -62,31 +61,15 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
     document.querySelector('#related-genes-ideogram-container')
 
   if (!genomeHasChromosomes()) {
-    ideoContainer.classList = ''
+    ideoContainer.classList = 'hidden-related-genes-ideogram'
     ideoContainer.innerHTML = ''
     return
-  } else {
-    // Handles theoretical edge case: multi-species study when only one
-    // organism lacks a chromosome-level genome assembly (say, a study on
-    // mouse and axolotl)
-    ideoContainer.classList = ''
   }
 
   putIdeogramInPlotTabs(ideoContainer)
 
   // Make Ideogram visible
   ideoContainer.classList = 'show-related-genes-ideogram'
-}
-
-/** Resize ideogram (specifically, the legend) after resizing the viewport */
-function resizeRelatedGenesIdeogram() { // eslint-disable-line
-
-  // Handles old studies, where matrices lack species
-  if (!geneHasTaxon()) return
-
-  const ideoLegend = document.getElementById('_ideogramLegend')
-  const ideoRect = document.getElementById('_ideogram').getBoundingClientRect()
-  ideoLegend.style.left = `${ideoRect.x - 160}px`
 }
 
 /**
@@ -111,7 +94,6 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
     chrHeight: 100,
     chrLabelSize: 12,
     annotationHeight: 7,
-    dataDir: 'https://unpkg.com/ideogram@1.24.0/dist/data/bands/native/',
     showTools: true,
     onClickAnnot,
     onLoad() {
