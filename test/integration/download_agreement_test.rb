@@ -22,20 +22,21 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
     signed_url = response.headers['Location']
     assert signed_url.include?(file.upload_file_name), "Redirect url does not point at requested file"
 
-    # test bulk download
+    # test bulk download, first by generating and saving user totat.
+    totat = @test_user.create_totat
     get download_bulk_files_path(accession: @study.accession, study_name: @study.url_safe_name,
-                                 download_object: 'all', totat: @test_user.create_totat)
+                                 download_object: 'all', totat: totat['totat'])
     assert_response :success, "Did not get curl config for bulk download"
 
     # enable download agreement, assert 403
     download_agreement = DownloadAgreement.new(study_id: @study.id, content: 'This is the agreement content')
     download_agreement.save!
 
-    file = @study.study_files.sample
     get download_file_path(accession: @study.accession, study_name: @study.url_safe_name, filename: file.upload_file_name)
     assert_response :forbidden, "Did not correctly respond 403 when download agreement is in place: #{response.code}"
+    totat = @test_user.create_totat
     get download_bulk_files_path(accession: @study.accession, study_name: @study.url_safe_name,
-                                 download_object: 'all', totat: @test_user.create_totat)
+                                 download_object: 'all', totat: totat['totat'])
     assert_response :forbidden, "Did not correctly respond 403 for bulk download: #{response.code}"
     assert response.body.include?('Download agreement'), "Error response did not reference download agreement: #{response.body}"
 
@@ -47,8 +48,9 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
     assert_response 302, "Did not re-enable file download as expected; response code: #{response.code}"
     signed_url = response.headers['Location']
     assert signed_url.include?(file.upload_file_name), "Redirect url does not point at requested file"
+    totat = @test_user.create_totat
     get download_bulk_files_path(accession: @study.accession, study_name: @study.url_safe_name,
-                                 download_object: 'all', totat: @test_user.create_totat)
+                                 download_object: 'all', totat: totat['totat'])
     assert_response :success, "Did not get curl config for bulk download after accepting download agreement"
 
     # clean up
