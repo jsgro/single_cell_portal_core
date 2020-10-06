@@ -94,7 +94,7 @@ export function logClickLink(target) {
     classList: 'classList' in target? Array.from(target.classList) : [],
     id: target.id
   }
-  // Check if target is a tab that's not apart of a menu
+  // Check if target is a tab that's not a part of a menu
   const parentTabList = $(target).closest('[data-tablist-name]')
   if (parentTabList.length > 0) {
     // Grab name of tab list and add to props
