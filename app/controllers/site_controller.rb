@@ -408,7 +408,6 @@ class SiteController < ApplicationController
     @cluster_annotations = load_cluster_group_annotations
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
     @y_axis_title = load_expression_axis_title
-    matrix = @study.expression_matrix_files.first
 
     @taxons = @study.infer_taxons(params[:gene])
 
