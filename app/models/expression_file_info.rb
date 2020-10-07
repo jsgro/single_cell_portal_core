@@ -22,7 +22,7 @@ class ExpressionFileInfo
 
   LIBRARY_CONSTRUCTION_VALUES = [nil,
                                  'Smart-seq2/Fluidigm C1',
-                                 'Mars-seq',
+                                 'MARS-seq',
                                  'Seq-Well v1',
                                  'Seq-Well S^3',
                                  'inDrop',
