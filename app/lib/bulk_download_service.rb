@@ -50,6 +50,35 @@ class BulkDownloadService
     end
   end
 
+  # Get an array of permitted study accessions based off of the query & a user's view permissions
+  # Takes into account DownloadAgreement restrictions as well
+  #
+  # * *params*
+  #   - +study_accessions+ (Array<String>) => Array of requested study accessions
+  #   - +user+ (User) => User requesting download
+  #
+  # * *returns*
+  #   - (Array<String>) Array of permitted accessions to use in bulk download request
+  def self.get_permitted_accessions(study_accessions:, user:)
+    viewable_accessions = Study.viewable(user).pluck(:accession)
+    permitted_accessions = study_accessions & viewable_accessions
+
+    # collect array of study accession requiring acceptance of download agreement (checking for expiration)
+    agreement_accessions = []
+    DownloadAgreement.all.each do |agreement|
+      agreement_accessions << agreement.study.accession unless agreement.expired?
+    end
+    requires_agreement = permitted_accessions & agreement_accessions
+    if requires_agreement.any?
+      user_lacks_acceptance = []
+      requires_agreement.each do |accession|
+        user_lacks_acceptance << accession unless DownloadAcceptance.where(study_accession: accession, email: user.email).exists?
+      end
+      permitted_accessions -= user_lacks_acceptance
+    end
+    permitted_accessions
+  end
+
   # Get an array of StudyFiles from matching StudyAccessions and file_types
   #
   # * *params*
