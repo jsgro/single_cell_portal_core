@@ -1,3 +1,5 @@
 enableElements($('.dl-link'));
 enableElements($('#download-help'));
-$('#study-download-agreement').remove();
+// $('#study-download-agreement').remove();
+$('#download-agreement-submit').replaceWith("<%= j(button_tag "Accepted", type: 'button', class: 'btn btn-lg btn-default', disabled: true) %>")
+showMessageModal("Thank you for accepting - you may now download data from this study.")

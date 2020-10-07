@@ -1,6 +1,4 @@
-<% if @download_agreement && !@user_accepted_agreement  %>
-  <%= render partial: 'study_download_agreement' %>
-<% end %>
+<%= render partial: 'study_download_agreement' if @download_agreement.present? %>
 
 <div class="row">
   <div class="col-xs-12">
