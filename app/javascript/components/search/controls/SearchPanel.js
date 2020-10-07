@@ -1,4 +1,7 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
+import { faPlusSquare, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import Modal from 'react-bootstrap/lib/Modal'
 
 import KeywordSearch from './KeywordSearch'
 import FacetsPanel from './FacetsPanel'
@@ -38,14 +41,32 @@ export default function SearchPanel({
   // could possibly also enable search for "Genes" and "Cells" tabs.
   const featureFlagState = useContext(FeatureFlagContext)
   const searchState = useContext(StudySearchContext)
+  const [advancedSearchSelected, setAdvancedSearchSelected] = useState(featureFlagState.faceted_search)
+  const [showSearchHelpModal, setShowSearchHelpModal] = useState(false)
+  const [showSearchOptInModal, setShowSearchOptInModal] = useState(false)
+  const [isNewToUser, setIsNewToUser] = useState(true)
+
   let searchButtons = <></>
   let downloadButtons = <></>
   if (showCommonButtons !== false) {
     searchButtons = <CommonSearchButtons/>
   }
-  if (featureFlagState.faceted_search) {
+
+  function handleMoreFiltersClick() {
+    if (isNewToUser) {
+      setShowSearchOptInModal(true)
+    } else {
+      setAdvancedSearchSelected(true)
+    }
+  }
+
+  let advancedOptsLink = <a className="action advanced-opts" onClick={ handleMoreFiltersClick }>
+    Advanced search<sup className="newFeature">BETA</sup>
+  </a>
+  if (advancedSearchSelected) {
     searchButtons = <FacetsPanel/>
     downloadButtons = <DownloadProvider><DownloadButton /></DownloadProvider>
+    advancedOptsLink = <a className="action advanced-opts" onClick={() => setShowSearchHelpModal(true)}><FontAwesomeIcon icon={ faQuestionCircle} /></a>
   }
 
   useEffect(() => {
@@ -55,11 +76,61 @@ export default function SearchPanel({
     }
   })
 
+  function closeModal(modalShowFunc) {
+    modalShowFunc(false)
+    setIsNewToUser(false)
+    // for unknown reasons, clikcing the bootstrap modal auto-scrolls the page down
+    // we need to undo that
+    setTimeout(() => {scrollTo(0, 0)}, 0)
+  }
+
   return (
     <div id='search-panel'>
       <KeywordSearch keywordPrompt={keywordPrompt}/>
       { searchButtons }
+      { advancedOptsLink }
       { downloadButtons }
+      <Modal
+        show={showSearchOptInModal}
+        onHide={() => closeModal(setShowSearchOptInModal)}
+        animation={false}
+        bsSize='large'>
+        <Modal.Body className="">
+        <h4 className="text-center">Advanced Search</h4><br/>
+          Single Cell Portal now supports searching on specific facets of studies by ontology classifications.
+          <br/><br/>
+           For example, you can search on studies that
+          have <b>species</b> of <b>'Homo sapiens'</b> or have an <b>organ</b> of <b>'brain'</b>. <br/> However, this search functionality is limited to only those studies that provided
+          such specific metadata when they were created.<br/>  Currently <b>55 out of the 287</b> SCP public studies provide that metadata.  Keyword searches will still search all available studies.
+          <br/><br/>
+          For more detailed information, visit our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank">wiki</a>
+          <br/>If you are a study creator and would like to provide that metadata for your study to be searchable, see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention">metadata guide</a>
+        </Modal.Body>
+        <Modal.Footer>
+          <button className="btn btn-md btn-primary" onClick={() => { setAdvancedSearchSelected(true); closeModal(setShowSearchOptInModal) }}>Yes, show advanced search</button>
+          <button className="btn btn-md" onClick={() => { setAdvancedSearchSelected(false); closeModal(setShowSearchOptInModal); }}>Cancel</button>
+        </Modal.Footer>
+      </Modal>
+      <Modal
+        show={showSearchHelpModal}
+        onHide={() => closeModal(setShowSearchHelpModal)}
+        animation={false}
+        bsSize='large'>
+        <Modal.Body className="">
+          <h4 className="text-center">Advanced Search</h4><br/>
+          Single Cell Portal supports searching on specific facets of studies by ontology classifications.
+          <br/><br/>
+           For example, you can search on studies that
+          have <b>species</b> of <b>'Homo sapiens'</b> or have an <b>organ</b> of <b>'brain'</b>. <br/> However, this search functionality is limited to only those studies that provided
+          such specific metadata when they were created.<br/> Currently <b>55 out of the 287</b> SCP public studies provide that metadata.
+          <br/><br/>
+          For more detailed information, visit our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank">wiki</a>
+        </Modal.Body>
+        <Modal.Footer>
+          <button className="btn btn-md btn-primary" onClick={() => { setAdvancedSearchSelected(true); closeModal(setShowSearchHelpModal) }}>Yes, use advanced search</button>
+          <button className="btn btn-md" onClick={() => { setAdvancedSearchSelected(false); closeModal(setShowSearchHelpModal) }}>Go back to legacy search</button>
+        </Modal.Footer>
+      </Modal>
     </div>
   )
 }
