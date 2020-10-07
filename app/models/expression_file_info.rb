@@ -14,7 +14,7 @@ class ExpressionFileInfo
   UNITS_VALUES = [nil, 'UMI-corrected raw counts', 'raw counts']
   validates :units, inclusion: {in: UNITS_VALUES}
 
-  BIOSAMPLE_INPUT_TYPE_VALUES = [nil, 'Whole cell', 'single nuclei', 'bulk']
+  BIOSAMPLE_INPUT_TYPE_VALUES = [nil, 'whole cell', 'single nuclei', 'bulk']
   validates :biosample_input_type, inclusion: {in: BIOSAMPLE_INPUT_TYPE_VALUES}
 
   MULTIMODALITY_VALUES = [nil, 'CITE-seq', 'Patch-seq']
