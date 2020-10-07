@@ -54,7 +54,7 @@ class StudyFileTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
 
     invalid_study_file = StudyFile.new(
-      study: Study.new.id,
+      study: Study.new,
       file_type: 'Expression Matrix',
       name: 'test_exp_validate',
       taxon_id: Taxon.new.id,
@@ -68,13 +68,13 @@ class StudyFileTest < ActiveSupport::TestCase
     assert_equal({expression_file_info: ["is invalid"]}, invalid_study_file.errors.messages)
 
     valid_study_file = StudyFile.new(
-      study: Study.new.id,
+      study: Study.new,
       file_type: 'Expression Matrix',
       name: 'test_exp_validate',
       taxon_id: Taxon.new.id,
       expression_file_info: ExpressionFileInfo.new(
         units: 'raw counts',
-        library_construction_protocol: 'Mars-seq',
+        library_construction_protocol: 'MARS-seq',
         is_raw_counts: true
       )
     )
