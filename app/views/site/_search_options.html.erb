@@ -113,7 +113,8 @@
                               type: 'gene',
                               context: 'study',
                               genes,
-                              numGenes: genes.length
+                              numGenes: genes.length,
+                              trigger: event.type // "submit" or "click"
                             }
 
                             var searchEvent = window.SCP.startPendingEvent('search', searchLogProps);
