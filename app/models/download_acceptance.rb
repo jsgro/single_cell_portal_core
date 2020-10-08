@@ -1,3 +1,7 @@
+##
+# DownloadAcceptance: tracks acceptance of DownloadAgreement for individual user & study.
+# records the email & study_accession directly rather than relying on :belongs_to in case associated record is deleted
+##
 class DownloadAcceptance
   include Mongoid::Document
   include Mongoid::Timestamps

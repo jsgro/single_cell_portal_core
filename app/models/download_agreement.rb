@@ -1,3 +1,7 @@
+##
+# DownloadAgreement: study-scope policy terms that users must accept in order to gain access to download data
+# individual records of users accepting policies are tracked in DownloadAcceptance
+##
 class DownloadAgreement
   include Mongoid::Document
   include Mongoid::Timestamps
