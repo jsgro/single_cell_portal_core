@@ -1,4 +1,4 @@
-<%= render partial: 'study_download_agreement' if @download_agreement.present? %>
+<%= render partial: 'study_download_agreement' if @study.has_download_agreement? %>
 
 <div class="row">
   <div class="col-xs-12">
@@ -286,8 +286,8 @@
     var hasAgreement = <%= @study.has_download_agreement? %>;
     var userHasAccepted = <%= @user_accepted_agreement %>;
     if (hasAgreement && !userHasAccepted) {
-        disableElements($('.dl-link'))
-        disableElements($('#download-help'))
+        setElementsEnabled($('.dl-link'), false)
+        setElementsEnabled($('#download-help'), false)
     }
 
     $('#fastq-table').dataTable({

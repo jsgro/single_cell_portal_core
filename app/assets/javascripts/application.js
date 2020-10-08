@@ -1146,31 +1146,16 @@ function appendOptionsToDropdown(options, selectElement) {
 }
 
 /**
- * dynamically disable click events on DOM elements using jQuery selector
+ * dynamically enable/disable click events on DOM elements using jQuery selector
  * will not allow pointer events on mouse, and will grey out element (50% opacity)
  */
-function disableElements(selector) {
-    var disabledCss = {
-        'pointer-events': 'none',
-        'opacity': '0.5'
+function setElementsEnabled(selector, enabled= true) {
+    var elementCss = {
+        'pointer-events': enabled ? 'auto' : 'none',
+        'opacity': enabled ? '1.0' : '0.5'
     };
-    var cursorCss = {
-        'cursor': 'not-allowed'
+    var parentCss = {
+        'cursor': enabled ? 'auto' : 'not-allowed'
     };
-    selector.css(disabledCss).parent().css(cursorCss);
-}
-
-/**
- * dynamically re-enable click events on DOM elements using jQuery selector
- * restores pointer events and resets opacity to 100%
- */
-function enableElements(selector) {
-    var enalbedCss = {
-        'pointer-events': 'auto',
-        'opacity': '1.0'
-    }
-    var cursorCss = {
-        'cursor': 'auto'
-    };
-    selector.css(enalbedCss).parent().css(cursorCss);
+    selector.css(elementCss).parent().css(parentCss);
 }
