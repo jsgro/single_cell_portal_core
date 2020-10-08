@@ -176,9 +176,11 @@ class ApplicationController < ActionController::Base
     elsif study.embargoed?(current_user)
       redirect_parameters[:url] = view_study_path(accession: study.accession, study_name: study.url_safe_name)
       redirect_parameters[:message_key] = :embargoed
-    elsif !study.can_download?(current_user) || (study.has_download_agreement? && !study.download_agreement.user_accepted?(current_user))
+    elsif !study.can_download?(current_user)
       redirect_parameters[:url] = view_study_path(accession: study.accession, study_name: study.url_safe_name)
       redirect_parameters[:message_key] = :invalid_permission
+    elsif study.has_download_agreement? && !study.download_agreement.user_accepted?(current_user)
+      head 403 and return
     end
 
     if redirect_parameters.any?
