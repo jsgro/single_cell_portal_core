@@ -1,0 +1,29 @@
+{
+  "study": {
+    "name": "raw_1",
+    "description": "<p>Synthetic raw counts v1. Jean Chang, Eric Weitz, Jon Bistline, Eno-Abasi Augustine-Akpan, Devon Bush, Vicky Horst.  Journal of SCP Synthetic Studies.  Volume 1, p10, October 2020.  Assesing the benefits of raw count data for single cell transcriptomics analysis.</p>",
+    "data_dir": "test"
+  },
+  "files": [
+    {
+      "type": "Metadata",
+      "filename": "AB_toy_data_raw_1.metadata.tsv",
+      "use_metadata_convention": false,
+    },
+    {
+      "type": "Expression Matrix",
+      "filename": "AB_toy_data_raw_1.txt",
+      "species_scientific_name": "Homo sapiens",
+      "expression_file_info": {
+        "is_raw_counts": true,
+        "library_construction_protocol": "10x 3' v2",
+        "units": "UMI-corrected raw counts",
+        "biosample_input_type": "whole cell",
+      }
+    },
+    {
+      "type": "Cluster",
+      "filename": "AB_toy_data_raw_1.cluster_2D.tsv"
+    }
+  ]
+}
