@@ -106,41 +106,37 @@
                         setErrorOnBlank($('.search-genes-input'));
                     } else {
                         $(window).off('resizeEnd');
-                        if (event.type == 'click') {
-                            launchModalSpinner('#spinner_target', '#loading-modal', function() {
-                                var genes = window.SCP.formatTerms($('#search_genes').val())
-                                var searchLogProps = {
-                                  type: 'gene',
-                                  context: 'study',
-                                  genes,
-                                  numGenes: genes.length,
-                                }
 
-                                var searchEvent = window.SCP.startPendingEvent('search', searchLogProps);
-                                // also start measuring the end-to-end user experience event
-                                // this will complete when the plot is rendered
-                                window.SCP.startPendingEvent(
-                                  'user-action:search:site-study', searchLogProps, 'plot:'
-                                );
-                                var form = $('#search-genes-form');
-                                $.ajax({
-                                    type: 'POST',
-                                    url: form.attr('action'),
-                                    data: form.serialize(),
-                                    dataType: 'script',
-                                    complete: searchEvent.complete
-                                });
+                        launchModalSpinner('#spinner_target', '#loading-modal', function() {
+                            var genes = window.SCP.formatTerms($('#search_genes').val())
+                            var searchLogProps = {
+                              type: 'gene',
+                              context: 'study',
+                              genes,
+                              numGenes: genes.length
+                            }
+
+                            var searchEvent = window.SCP.startPendingEvent('search', searchLogProps);
+                            // also start measuring the end-to-end user experience event
+                            // this will complete when the plot is rendered
+                            window.SCP.startPendingEvent(
+                              'user-action:search:site-study', searchLogProps, 'plot:'
+                            );
+                            var form = $('#search-genes-form');
+                            $.ajax({
+                                type: 'POST',
+                                url: form.attr('action'),
+                                data: form.serialize(),
+                                dataType: 'script',
+                                complete: searchEvent.complete
                             });
-                        } else if (event.type == 'submit') {
-                            launchModalSpinner('#spinner_target', '#loading-modal', function() {
-                                return true; // just return as submit event has fired
-                            });
-                        }
+                        });
+
                     }
                 }
                 // handler to catch ENTER keypress and open modal
-                $('#search-genes-form').on('submit', function(submitEvent) {
-                    submitGeneSearch(submitEvent);
+                $('#search-genes-form').on('submit', function(event) {
+                    submitGeneSearch(event);
                     return false; // Prevents double search-and-render
                 });
             </script>
