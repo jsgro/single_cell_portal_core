@@ -588,12 +588,10 @@ class StudiesController < ApplicationController
   # method to download files if study is private, will create temporary signed_url after checking user quota
   def download_private_file
     @study = Study.find_by(accession: params[:accession])
-
     # verify user can download file
     verify_file_download_permissions(@study); return if performed?
     # initiate file download action
     execute_file_download(@study); return if performed?
-
   end
 
   # for files that don't need parsing, send directly to firecloud on upload completion
