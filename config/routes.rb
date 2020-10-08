@@ -39,6 +39,7 @@ Rails.application.routes.draw do
           end
           resources :expression_data, only: [:show], param: :data_type
         end
+        resources :current_user, only: [:update]
 
         get 'status', to: 'status#index'
         scope :site do

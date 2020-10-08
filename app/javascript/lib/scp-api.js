@@ -210,6 +210,14 @@ export async function fetchExpressionHeatmap(
   return heatmap
 }
 
+export async function updateUserFeatureFlags(updatedFlags, mock=false) {
+  const init = Object.assign({}, defaultInit(), {
+    method: 'PATCH',
+    body: JSON.stringify({ feature_flags: updatedFlags })
+  })
+  await scpApi('/current_user/1', init, mock, true)
+}
+
 /**
  * Returns a list of matching filters for a given facet
  *
