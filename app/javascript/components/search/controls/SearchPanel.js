@@ -10,6 +10,7 @@ import DownloadButton from './DownloadButton'
 import DownloadProvider from 'providers/DownloadProvider'
 import { StudySearchContext } from 'providers/StudySearchProvider'
 import { FeatureFlagContext } from 'providers/FeatureFlagProvider'
+import { UserContext } from 'providers/UserProvider'
 
 function CommonSearchButtons() {
   const searchState = useContext(StudySearchContext)
@@ -65,6 +66,7 @@ export default function SearchPanel({
   // could possibly also enable search for "Genes" and "Cells" tabs.
   const featureFlagState = useContext(FeatureFlagContext)
   const searchState = useContext(StudySearchContext)
+  const userState = useContext(UserContext)
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(featureFlagState.faceted_search)
   const [showSearchHelpModal, setShowSearchHelpModal] = useState(false)
   const [showSearchOptInModal, setShowSearchOptInModal] = useState(false)
@@ -108,7 +110,9 @@ export default function SearchPanel({
   }
 
   function setAdvancedSearchEnabled(enabled, modalShowFunc) {
-    updateUserFeatureFlags({faceted_search: enabled})
+    if (!userState.isAnonymous) {
+      updateUserFeatureFlags({faceted_search: enabled})
+    }
     setShowAdvancedSearch(enabled)
     setIsNewToUser(false)
     if (modalShowFunc) {

@@ -5,7 +5,8 @@ import React, { useContext } from 'react'
 export const accessToken = ('SCP' in window) ? window.SCP.userAccessToken : 'test' // eslint-disable-line max-len
 
 const user = {
-  accessToken
+  accessToken,
+  isAnonymous: !accessToken
 }
 
 export const UserContext = React.createContext(user)
