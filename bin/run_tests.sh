@@ -117,7 +117,6 @@ else
                     test/models/branding_group_test.rb
                     test/models/synthetic_branding_group_populator_test.rb
                     test/models/admin_configuration_test.rb
-                    test/integration/synthetic_study_populator_test.rb
                     test/integration/lib/search_facet_populator_test.rb
                     test/integration/lib/summary_stats_utils_test.rb
                     test/integration/lib/user_asset_service_test.rb
