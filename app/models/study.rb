@@ -776,7 +776,7 @@ class Study
       elsif self.can_edit?(user)
         return true
       else
-        self.user_in_group_share?(user, 'View', 'Reviewer')
+        return self.user_in_group_share?(user, 'View', 'Reviewer')
       end
     end
     false
