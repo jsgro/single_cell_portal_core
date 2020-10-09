@@ -30,7 +30,7 @@ class SiteController < ApplicationController
   before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :search_all_genes, :render_global_gene_expression_plots, :privacy_policy,
                                                   :terms_of_service, :search, :precomputed_results, :expression_query, :annotation_query, :view_workflow_wdl,
                                                   :log_action, :get_workspace_samples, :update_workspace_samples, :create_totat,
-                                                  :get_workflow_options, :get_taxon, :get_taxon_assemblies, :covid19]
+                                                  :get_workflow_options, :get_taxon, :get_taxon_assemblies, :covid19, :record_download_acceptance]
   before_action :check_compute_permissions, only: [:get_fastq_files, :get_workspace_samples, :update_workspace_samples,
                                                    :delete_workspace_samples, :get_workspace_submissions, :create_workspace_submission,
                                                    :get_submission_workflow, :abort_submission_workflow, :get_submission_errors,
@@ -326,6 +326,11 @@ class SiteController < ApplicationController
       set_selected_annotation
     end
 
+    if @study.has_download_agreement?
+      @download_agreement = @study.download_agreement
+      @user_accepted_agreement = @download_agreement.user_accepted?(current_user)
+    end
+
     # only populate if study has ideogram results & is not 'detached'
     if @study.has_analysis_outputs?('infercnv', 'ideogram.js') && !@study.detached?
       @ideogram_files = {}
@@ -358,6 +363,15 @@ class SiteController < ApplicationController
 
       # load list of available workflows
       @workflows_list = load_available_workflows
+    end
+  end
+
+  def record_download_acceptance
+    @download_acceptance = DownloadAcceptance.new(download_acceptance_params)
+    if @download_acceptance.save
+      respond_to do |format|
+        format.js
+      end
     end
   end
 
@@ -724,58 +738,10 @@ class SiteController < ApplicationController
 
   # method to download files if study is public
   def download_file
-    # make sure user is signed in
-    if !user_signed_in?
-      redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                  alert: 'You must be signed in to download data.' and return
-    elsif @study.embargoed?(current_user)
-      redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                  alert: "You may not download any data from this study until #{@study.embargo.to_s(:long)}." and return
-    elsif !@study.can_download?(current_user)
-      redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                  alert: 'You do not have permission to perform that action.' and return
-    end
-
-    # next check if downloads have been disabled by administrator, this will abort the download
-    # download links shouldn't be rendered in any case, this just catches someone doing a straight GET on a file
-    # also check if workspace google buckets are available
-    if !AdminConfiguration.firecloud_access_enabled? || !Study.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
-      head 503 and return
-    end
-
-    begin
-      # get filesize and make sure the user is under their quota
-      requested_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, params[:filename])
-      if requested_file.present?
-        filesize = requested_file.size
-        user_quota = current_user.daily_download_quota + filesize
-        # check against download quota that is loaded in ApplicationController.get_download_quota
-        if user_quota <= @download_quota
-          @signed_url = Study.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, @study.bucket_id, params[:filename], expires: 15)
-          current_user.update(daily_download_quota: user_quota)
-        else
-          redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]), alert: 'You have exceeded your current daily download quota.  You must wait until tomorrow to download this file.' and return
-        end
-        # redirect directly to file to trigger download
-        # validate that the signed_url is in fact the correct URL - it must be a GCS link
-        if is_valid_signed_url?(@signed_url)
-          redirect_to @signed_url
-        else
-          redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                      alert: 'We are unable to process your download.  Please try again later.' and return
-        end
-      else
-        # send notification to the study owner that file is missing (if notifications turned on)
-        SingleCellMailer.user_download_fail_notification(@study, params[:filename]).deliver_now
-        redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]), alert: 'The file you requested is currently not available.  Please contact the study owner if you require access to this file.' and return
-      end
-    rescue RuntimeError => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
-      logger.error "Error generating signed url for #{params[:filename]}; #{e.message}"
-      redirect_to merge_default_redirect_params(accession: @study.accession, study_name: view_study_path(@study.url_safe_name), scpbr: params[:scpbr]),
-                  alert: "We were unable to download the file #{params[:filename]} do to an error: #{view_context.simple_format(e.message)}" and return
-    end
+    # verify user can download file
+    verify_file_download_permissions(@study); return if performed?
+    # initiate file download action
+    execute_file_download(@study); return if performed?
   end
 
   def create_totat
@@ -796,6 +762,11 @@ class SiteController < ApplicationController
     if !@study.public?
       message = 'Only public studies can be downloaded via curl.'
       render plain: "Forbidden: " + message, status: 403
+      return
+    end
+
+    if @study.has_download_agreement? && !@study.download_agreement.user_accepted?(current_user)
+      render plain: "Forbidden: Download agreement not accepted for #{@study.accession}" , status: 403
       return
     end
 
@@ -1436,6 +1407,7 @@ class SiteController < ApplicationController
     @user_can_compute = false
     @user_can_download = false
     @user_embargoed = false
+
     return if study_detached || !@allow_firecloud_access
     begin
       @user_can_edit = @study.can_edit?(current_user)
@@ -1466,6 +1438,10 @@ class SiteController < ApplicationController
   def user_annotation_params
     params.require(:user_annotation).permit(:_id, :name, :study_id, :user_id, :cluster_group_id, :subsample_threshold,
                                             :loaded_annotation, :subsample_annotation, user_data_arrays_attributes: [:name, :values])
+  end
+
+  def download_acceptance_params
+    params.require(:download_acceptance).permit(:email, :download_agreement_id)
   end
 
   # make sure user has view permissions for selected study

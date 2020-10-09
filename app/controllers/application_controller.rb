@@ -147,6 +147,95 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  # helper method to check all conditions before allowing a user to download file
+  # verifies user permissions, study availability, and download agreements, as well as external services
+  def verify_file_download_permissions(study)
+    # default alert messages for redirect
+    redirect_messages = {
+        invalid_permission: 'You do not have permission to perform that action.',
+        not_authenticated: 'You must be signed in to download data.',
+        study_not_found: 'The study you requested was not found.',
+        detached: 'We were unable to complete your request as the study is question is detached from the workspace (maybe the workspace was deleted?)',
+        embargoed: "You may not download any data from this study until #{study.embargo.try(:to_s, :long)}."
+    }
+    # store redirect_url and message for later
+    redirect_parameters = {}
+
+    if study.nil?
+      redirect_parameters[:url] = site_path
+      redirect_parameters[:message_key] = :study_not_found
+    elsif !user_signed_in?
+      redirect_parameters[:url] = site_path
+      redirect_parameters[:message_key] = :not_authenticated
+    elsif !study.public? && !study.can_view?(current_user)
+      redirect_parameters[:url] = site_path
+      redirect_parameters[:message_key] = :invalid_permission
+    elsif study.detached?
+      redirect_parameters[:url] = site_path
+      redirect_parameters[:message_key] = :detached
+    elsif study.embargoed?(current_user)
+      redirect_parameters[:url] = view_study_path(accession: study.accession, study_name: study.url_safe_name)
+      redirect_parameters[:message_key] = :embargoed
+    elsif !study.can_download?(current_user)
+      redirect_parameters[:url] = view_study_path(accession: study.accession, study_name: study.url_safe_name)
+      redirect_parameters[:message_key] = :invalid_permission
+    elsif study.has_download_agreement? && !study.download_agreement.user_accepted?(current_user)
+      head 403 and return
+    end
+
+    if redirect_parameters.any?
+      redirect_to merge_default_redirect_params(redirect_parameters[:url], scpbr: params[:scpbr]),
+                  alert: redirect_messages.dig(redirect_parameters[:message_key]) and return
+    end
+
+    # next check if downloads have been disabled by administrator, this will abort the download
+    # download links shouldn't be rendered in any case, this just catches someone doing a straight GET on a file
+    # also check if workspace google buckets are available
+    if !AdminConfiguration.firecloud_access_enabled? || !Study.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
+      head 503 and return
+    end
+  end
+
+  # generate a signed URL for a file and redirect to object in GCS
+  # will account for @download_quota and redirect as necessary
+  def execute_file_download(study)
+    begin
+      # get filesize and make sure the user is under their quota
+      requested_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, params[:filename])
+      if requested_file.present?
+        filesize = requested_file.size
+        user_quota = current_user.daily_download_quota + filesize
+        # check against download quota that is loaded in ApplicationController.get_download_quota
+        if user_quota <= @download_quota
+          @signed_url = Study.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, study.bucket_id, params[:filename], expires: 15)
+          current_user.update(daily_download_quota: user_quota)
+        else
+          redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
+                      alert: 'You have exceeded your current daily download quota.  You must wait until tomorrow to download this file.' and return
+        end
+        # redirect directly to file to trigger download
+        # validate that the signed_url is in fact the correct URL - it must be a GCS lin
+        if is_valid_signed_url?(@signed_url)
+          redirect_to @signed_url
+        else
+          redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
+                      alert: 'We are unable to process your download.  Please try again later.' and return
+        end
+      else
+        # send notification to the study owner that file is missing (if notifications turned on)
+        SingleCellMailer.user_download_fail_notification(study, params[:filename]).deliver_now
+        redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
+                    alert: 'The file you requested is currently not available.  Please contact the study owner if you require access to this file.' and return
+      end
+    rescue => e
+      error_context = ErrorTracker.format_extra_context(@study, {params: params})
+      ErrorTracker.report_exception(e, current_user, error_context)
+      logger.error "#{Time.zone.now}: error generating signed url for #{params[:filename]}; #{e.message}"
+      redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
+                  alert: "We were unable to download the file #{params[:filename]} do to an error: #{view_context.simple_format(e.message)}" and return
+    end
+  end
+
   protected
 
   # patch to supply CSRF token on all ajax requests if it is not present

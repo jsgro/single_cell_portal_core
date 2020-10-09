@@ -116,4 +116,32 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  test 'should get list of permitted accessions' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+    accessions = Study.pluck(:accession)
+    permitted = BulkDownloadService.get_permitted_accessions(study_accessions: accessions, user: @user)
+    assert_equal accessions.sort, permitted.sort,
+                 "Did not return expected list of accessions; #{permitted} != #{accessions}"
+
+    # add download agreement to remove study from list
+    download_agreement = DownloadAgreement.new(study_id: @study.id, content: 'This is the agreement content')
+    download_agreement.save!
+    with_agreement = BulkDownloadService.get_permitted_accessions(study_accessions: accessions, user: @user)
+    refute with_agreement.include?(@study.accession),
+           "Should not have found #{@study.accession} in updated list: #{with_agreement}"
+
+    # accept terms to restore access
+    download_acceptance = DownloadAcceptance.new(email: @user.email, download_agreement: download_agreement)
+    download_acceptance.save!
+
+    final_accessions = BulkDownloadService.get_permitted_accessions(study_accessions: accessions, user: @user)
+    assert_equal accessions.sort, final_accessions.sort,
+                 "Did not return expected list of accessions; #{final_accessions} != #{accessions}"
+
+    # clean up
+    download_acceptance.destroy
+    download_agreement.destroy
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
 end

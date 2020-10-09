@@ -1144,3 +1144,18 @@ function appendOptionsToDropdown(options, selectElement) {
     });
     selectElement.append(optionsArray);
 }
+
+/**
+ * dynamically enable/disable click events on DOM elements using jQuery selector
+ * will not allow pointer events on mouse, and will grey out element (50% opacity)
+ */
+function setElementsEnabled(selector, enabled= true) {
+    var elementCss = {
+        'pointer-events': enabled ? 'auto' : 'none',
+        'opacity': enabled ? '1.0' : '0.5'
+    };
+    var parentCss = {
+        'cursor': enabled ? 'auto' : 'not-allowed'
+    };
+    selector.css(elementCss).parent().css(parentCss);
+}

@@ -570,11 +570,8 @@ module Api
         # load the user from the auth token
         requested_user = valid_totat
 
-        # final auth check - ensure user has permission to download from requested studies
-        # rather than fail entire request, allow subset if user can view some but not others
-        viewable_accessions = Study.viewable(requested_user).pluck(:accession)
-        permitted_accessions = valid_accessions & viewable_accessions
-
+        permitted_accessions = ::BulkDownloadService.get_permitted_accessions(study_accessions: valid_accessions,
+                                                                             user: current_api_user)
         if permitted_accessions.empty?
           render json: {error: "Forbidden: cannot access requested accessions"},
                  status: 403 and return
