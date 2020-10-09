@@ -451,7 +451,9 @@ class FireCloudClientTest < ActiveSupport::TestCase
     assert projects.any?, 'Did not find any billing projects'
 
     # select a project (only valid projects, not in the compute blacklist)
-    project_name = projects.select {|p| p['creationStatus'] == 'Ready' && !FireCloudClient::COMPUTE_BLACKLIST.include?(p['projectName'])}.sample['projectName']
+    project_name = projects.select {|p| p['creationStatus'] == 'Ready' &&
+        !FireCloudClient::COMPUTE_BLACKLIST.include?(p['projectName']) &&
+        p['role'] == 'Owner'}.sample['projectName']
     assert project_name.present?, 'Did not select a billing project'
 
     # get users
@@ -479,9 +481,18 @@ class FireCloudClientTest < ActiveSupport::TestCase
     assert user_deleted == 'OK', "Did not delete user from project: #{user_deleted}"
 
     puts 'confirming user delete...'
-    updated_users = @fire_cloud_client.get_billing_project_members(project_name)
-    emails = updated_users.map {|user| user['email']}
-    assert !emails.include?(@test_email), "Did not successfully remove #{@test_email} from list of billing project members: #{emails.join(', ')}"
+    final_users = @fire_cloud_client.get_billing_project_members(project_name)
+    final_emails = final_users.map {|user| user['email']}
+
+    # handle possible upstream latency with user list propagating back to Google
+    if emails.sort == final_emails.sort
+      puts 'user list has not updated, retrying in 1 second'
+      sleep 1
+      final_users = @fire_cloud_client.get_billing_project_members(project_name)
+      final_emails = final_users.map {|user| user['email']}
+    end
+
+    assert !final_emails.include?(@test_email), "Did not successfully remove #{@test_email} from list of billing project members: #{emails.join(', ')}"
 
     puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
