@@ -18,7 +18,7 @@ describe('Download components for faceted search', () => {
   beforeAll(() => {
     global.fetch = fetch
 
-    const userContext = { accessToken: 'test' }
+
     const studySearchContext = {
       results: { matchingAccessions: ['SCP1', 'SCP2'] },
       params: {
@@ -40,11 +40,6 @@ describe('Download components for faceted search', () => {
       }
     }
 
-    jest.spyOn(UserProvider, 'useContextUser')
-      .mockImplementation(() => {
-        return userContext
-      })
-
     jest.spyOn(StudySearchProvider, 'useContextStudySearch')
       .mockImplementation(() => {
         return studySearchContext
@@ -57,19 +52,24 @@ describe('Download components for faceted search', () => {
   })
 
   it('shows Download button', async () => {
-    const wrapper = mount((< DownloadButton />))
+    const userState = { accessToken: 'test' }
+    const wrapper = mount((
+      <UserContextProvider user={userState}>
+        <DownloadButton />
+      </UserContextProvider>
+    ))
     expect(wrapper.find('DownloadButton')).toHaveLength(1)
   })
 
   it('shows expected tooltip for unauthenticated users', async () => {
 
-    const userContext = { accessToken: '' } // as when unauthenticated
-    jest.spyOn(UserProvider, 'useContextUser')
-      .mockImplementation(() => {
-        return userContext
-      })
+    const userState = { accessToken: '' } // as when unauthenticated
 
-    const wrapper = mount((< DownloadButton />))
+    const wrapper = mount((
+      <UserContextProvider user={userState}>
+        <DownloadButton />
+      </UserContextProvider>
+    ))
     wrapper.find('#download-button > span').simulate('mouseenter')
 
     const tooltipHint =

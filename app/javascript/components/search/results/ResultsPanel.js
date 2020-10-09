@@ -5,7 +5,7 @@ import { faDna, faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import StudyResults from './StudyResults'
 import Study from './Study'
 import SearchQueryDisplay from './SearchQueryDisplay'
-import { FeatureFlagContext } from 'providers/FeatureFlagProvider'
+import { UserContext } from 'providers/UserProvider'
 
 /**
  * handles display of loading, error and results for a list of studies
@@ -14,7 +14,7 @@ import { FeatureFlagContext } from 'providers/FeatureFlagProvider'
  * will be used
  */
 const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) => {
-  const featureFlagState = useContext(FeatureFlagContext)
+  const featureFlagState = useContext(UserContext).featureFlagsWithDefaults
   const results = studySearchState.results
 
   let panelContent

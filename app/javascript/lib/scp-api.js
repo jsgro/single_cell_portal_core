@@ -210,10 +210,10 @@ export async function fetchExpressionHeatmap(
   return heatmap
 }
 
-export async function updateUserFeatureFlags(updatedFlags, mock=false) {
+export async function updateCurrentUser(updatedUser, mock=false) {
   const init = Object.assign({}, defaultInit(), {
     method: 'PATCH',
-    body: JSON.stringify({ feature_flags: updatedFlags })
+    body: JSON.stringify(updatedUser)
   })
   await scpApi('/current_user/1', init, mock, true)
 }

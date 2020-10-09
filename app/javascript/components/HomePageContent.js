@@ -10,7 +10,6 @@ import StudyDetails from 'components/search/results/Study'
 import StudySearchProvider, { StudySearchContext } from 'providers/StudySearchProvider'
 import SearchFacetProvider from 'providers/SearchFacetProvider'
 import UserProvider from 'providers/UserProvider'
-import FeatureFlagProvider from 'providers/FeatureFlagProvider'
 import ErrorBoundary from 'lib/ErrorBoundary'
 
 /** include search controls and results */
@@ -53,15 +52,13 @@ const LinkableSearchTabs = function(props) {
 function ProviderStack(props) {
   return (
     <UserProvider>
-      <FeatureFlagProvider>
-        <SearchFacetProvider>
-          <StudySearchProvider>
-            <GeneSearchProvider>
-              { props.children }
-            </GeneSearchProvider>
-          </StudySearchProvider>
-        </SearchFacetProvider>
-      </FeatureFlagProvider>
+      <SearchFacetProvider>
+        <StudySearchProvider>
+          <GeneSearchProvider>
+            { props.children }
+          </GeneSearchProvider>
+        </StudySearchProvider>
+      </SearchFacetProvider>
     </UserProvider>
   )
 }

@@ -9,7 +9,6 @@ import FacetsPanel from './FacetsPanel'
 import DownloadButton from './DownloadButton'
 import DownloadProvider from 'providers/DownloadProvider'
 import { StudySearchContext } from 'providers/StudySearchProvider'
-import { FeatureFlagContext } from 'providers/FeatureFlagProvider'
 import { UserContext } from 'providers/UserProvider'
 
 function CommonSearchButtons() {
@@ -64,9 +63,10 @@ export default function SearchPanel({
   // Note: This might become  a Higher-Order Component (HOC).
   // This search component is currently specific to the "Studies" tab, but
   // could possibly also enable search for "Genes" and "Cells" tabs.
-  const featureFlagState = useContext(FeatureFlagContext)
+
   const searchState = useContext(StudySearchContext)
   const userState = useContext(UserContext)
+  const featureFlagState = userState.featureFlagsWithDefaults
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(featureFlagState.faceted_search)
   const [showSearchHelpModal, setShowSearchHelpModal] = useState(false)
   const [showSearchOptInModal, setShowSearchOptInModal] = useState(false)
@@ -92,7 +92,11 @@ export default function SearchPanel({
   if (showAdvancedSearch) {
     searchButtons = <FacetsPanel/>
     downloadButtons = <DownloadProvider><DownloadButton /></DownloadProvider>
-    advancedOptsLink = <a className="action advanced-opts" onClick={() => setShowSearchHelpModal(true)}><FontAwesomeIcon icon={ faQuestionCircle} /></a>
+    advancedOptsLink = <a className="action advanced-opts"
+                         onClick={() => setShowSearchHelpModal(true) }
+                         data-analytics-name="search-help">
+                         <FontAwesomeIcon icon={ faQuestionCircle} />
+                       </a>
   }
 
   useEffect(() => {
@@ -111,7 +115,7 @@ export default function SearchPanel({
 
   function setAdvancedSearchEnabled(enabled, modalShowFunc) {
     if (!userState.isAnonymous) {
-      updateUserFeatureFlags({faceted_search: enabled})
+      userState.updateFeatureFlags({faceted_search: enabled})
     }
     setShowAdvancedSearch(enabled)
     setIsNewToUser(false)
