@@ -11,6 +11,7 @@ import getSCPContext from 'providers/SCPContextProvider'
 import { getDefaultProperties } from '@databiosphere/bard-client'
 import _find from 'lodash/find'
 import _remove from 'lodash/remove'
+import $ from 'jquery'
 
 let metricsApiMock = false
 
@@ -89,11 +90,19 @@ export function logClick(event) {
  */
 export function logClickLink(target) {
   const props = {
-    text: target.text,
+    text: target.text.trim(),
     classList: 'classList' in target? Array.from(target.classList) : [],
     id: target.id
   }
-  log('click:link', props)
+  // Check if target is a tab that's not a part of a menu
+  const parentTabList = $(target).closest('[data-tablist-name]')
+  if (parentTabList.length > 0) {
+    // Grab name of tab list and add to props
+    props.tabListName = parentTabList[0].attributes['data-tablist-name'].value
+    log('click:tab', props)
+  } else {
+    log('click:link', props)
+  }
 }
 
 /**
