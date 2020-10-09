@@ -313,7 +313,6 @@ class User
         end
       end
     end
-    Rails.logger.info "projects: #{projects}"
     projects
   end
 

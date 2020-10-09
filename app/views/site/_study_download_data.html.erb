@@ -1,3 +1,5 @@
+<%= render partial: 'study_download_agreement' if @study.has_download_agreement? %>
+
 <div class="row">
   <div class="col-xs-12">
     <h2>Study Files <span class="badge"><%= @study_files.count %></span>  <%= link_to "<i class='fas fa-question-circle'></i> Bulk Download".html_safe, '#/', class: "btn btn-default pull-right #{!@allow_downloads ? 'disabled' : nil}", id: 'download-help' %></h2>
@@ -281,6 +283,12 @@
 
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
 
+    var hasAgreement = <%= @study.has_download_agreement? %>;
+    var userHasAccepted = <%= @user_accepted_agreement %>;
+    if (hasAgreement && !userHasAccepted) {
+        setElementsEnabled($('.dl-link'), false)
+        setElementsEnabled($('#download-help'), false)
+    }
 
     $('#fastq-table').dataTable({
         pagingType: 'full',

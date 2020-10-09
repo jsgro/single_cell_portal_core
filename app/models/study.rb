@@ -194,6 +194,9 @@ class Study
   # Study Detail (full html description)
   has_one :study_detail, dependent: :delete
 
+  # DownloadAgreement (extra user terms for downloading data)
+  has_one :download_agreement, dependent: :delete
+
   # field definitions
   field :name, type: String
   field :embargo, type: Date
@@ -219,6 +222,7 @@ class Study
   accepts_nested_attributes_for :study_shares, allow_destroy: true, reject_if: proc { |attributes| attributes['email'].blank? }
   accepts_nested_attributes_for :external_resources, allow_destroy: true
   accepts_nested_attributes_for :study_detail, allow_destroy: true
+  accepts_nested_attributes_for :download_agreement, allow_destroy: true
 
   ##
   #
@@ -748,7 +752,7 @@ class Study
       elsif self.can_edit?(user)
         return true
       else
-        self.user_in_group_share?(user, 'View', 'Reviewer')
+        return self.user_in_group_share?(user, 'View', 'Reviewer')
       end
     end
     false
@@ -857,6 +861,10 @@ class Study
   # helper method to check embargo status
   def check_embargo?
     self.embargo.nil? || self.embargo.blank? ? false : Date.today <= self.embargo
+  end
+
+  def has_download_agreement?
+    self.download_agreement.present? ? !self.download_agreement.expired? : false
   end
 
   # label for study visibility

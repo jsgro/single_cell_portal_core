@@ -19,6 +19,7 @@ module Api
                            :get_study_submission, :sync_submission_outputs]
       before_action :check_study_edit_permission, only: [:sync_submission_outputs]
       before_action :set_study_file, only: [:download_data, :stream_data]
+      before_action :check_download_agreement, only: [:download_data, :stream_data]
       before_action :get_download_quota, only: [:download_data, :stream_data]
 
       swagger_path '/site/studies' do
@@ -979,6 +980,12 @@ module Api
       def check_study_detached
         if @study.detached?
           head 410 and return
+        end
+      end
+
+      def check_download_agreement
+        if @study.has_download_agreement? && !@study.download_agreement.user_accepted?(current_api_user)
+          head 403 and return
         end
       end
 

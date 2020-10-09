@@ -247,6 +247,9 @@ Rails.application.routes.draw do
     get 'genome_assemblies', to: 'site#get_taxon_assemblies', as: :get_taxon_assemblies
     get 'taxon', to: 'site#get_taxon', as: :get_taxon
 
+    # download agreement actions
+    post 'study/:accession/:study_name/download_acceptance', to: 'site#record_download_acceptance', as: :record_download_acceptance
+
     # base actions
     get 'search', to: 'site#search', as: :search
     post 'get_viewable_studies', to: 'site#get_viewable_studies', as: :get_viewable_studies
