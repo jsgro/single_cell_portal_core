@@ -214,7 +214,7 @@ class ApplicationController < ActionController::Base
     # next check if downloads have been disabled by administrator, this will abort the download
     # download links shouldn't be rendered in any case, this just catches someone doing a straight GET on a file
     # also check if workspace google buckets are available
-    if !AdminConfiguration.firecloud_access_enabled? || !Study.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
+    if !AdminConfiguration.firecloud_access_enabled? || !ApplicationController.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
       head 503 and return
     end
   end
@@ -224,13 +224,13 @@ class ApplicationController < ActionController::Base
   def execute_file_download(study)
     begin
       # get filesize and make sure the user is under their quota
-      requested_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, params[:filename])
+      requested_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, params[:filename])
       if requested_file.present?
         filesize = requested_file.size
         user_quota = current_user.daily_download_quota + filesize
         # check against download quota that is loaded in ApplicationController.get_download_quota
         if user_quota <= @download_quota
-          @signed_url = Study.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, study.bucket_id, params[:filename], expires: 15)
+          @signed_url = ApplicationController.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, study.bucket_id, params[:filename], expires: 15)
           current_user.update(daily_download_quota: user_quota)
         else
           redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
