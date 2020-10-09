@@ -12,6 +12,42 @@ module FeatureFlaggable
     FeatureFlag.default_flag_hash.merge(self.feature_flags ? self.feature_flags : {}).with_indifferent_access
   end
 
+  # updates the feature_flags on the instance to the updated_flag_hash,
+  # with saftey checks to ensure values are valid and allowed
+  # suitable for updating flags from user input.
+  # throws an error if the update fails
+  # returns the value from the update! operation
+  def update_feature_flags_safe!(updated_flag_hash, allowed_flag_names)
+    current_flags = feature_flags || {}
+
+    if !updated_flag_hash
+      return current_flags
+    end
+
+    if !updated_flag_hash.respond_to?(:each)
+      raise 'Invalid feature flags input - should be an iterable key-value object'
+    end
+
+    updated_flag_hash.each do |key, value|
+      flag = FeatureFlag.find_by(name: key)
+      if !flag || !allowed_flag_names.include?(flag.name)
+        raise 'Invalid feature flag input - invalid flag name'
+      end
+      if !value && value != false
+        current_flags.delete(key)
+      else
+        # confirm value is a boolean
+        if !!value == value
+          current_flags[key] = value
+        else
+          raise 'Invalid feature flag input - value must be boolean'
+        end
+      end
+    end
+
+    update!(feature_flags: current_flags)
+  end
+
   class_methods do
     # gets the feature flag value for a given instance, and the default value if no user is given
     def feature_flag_for_instance(instance, flag_key)
@@ -51,4 +87,6 @@ module FeatureFlaggable
       instance.save
     end
   end
+
+
 end
