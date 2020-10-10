@@ -10,7 +10,7 @@ import camelcaseKeys from 'camelcase-keys'
 import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
 
-import { accessToken } from 'providers/UserProvider'
+import { getAccessToken } from 'providers/UserProvider'
 import {
   logFilterSearch, logSearch, logDownloadAuthorization, mapFiltersForLogging
 } from './scp-api-metrics'
@@ -27,8 +27,8 @@ export function defaultInit() {
     'Accept': 'application/json'
   }
   // accessToken is a blank string when not signed in
-  if (accessToken !== '') {
-    headers['Authorization'] = `Bearer ${accessToken}`
+  if (getAccessToken() !== '') {
+    headers['Authorization'] = `Bearer ${getAccessToken()}`
   }
   return {
     method: 'GET',

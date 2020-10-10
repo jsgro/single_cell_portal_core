@@ -43,7 +43,7 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
   } else if (results.studies && results.studies.length > 0) {
     panelContent = (
       <>
-        { featureFlagState.faceted_search &&
+        { featureFlagState && featureFlagState.faceted_search &&
           <SearchQueryDisplay terms={results.termList} facets={results.facets}/> }
         <StudyResults
           results={results}

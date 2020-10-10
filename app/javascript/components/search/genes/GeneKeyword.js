@@ -68,7 +68,7 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
       case ' ':
       case ',':
         syncGeneArrayToInputText()
-        setTimeout(() => { setInputText(' ') }, 0)
+        setTimeout(() => {setInputText(' ')}, 0)
     }
   }
 

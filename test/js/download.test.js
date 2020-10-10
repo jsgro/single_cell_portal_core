@@ -8,7 +8,7 @@ import { mount } from 'enzyme'
 const fetch = require('node-fetch')
 
 import DownloadButton from 'components/search/controls/DownloadButton'
-import * as UserProvider from 'providers/UserProvider'
+import { UserContext } from 'providers/UserProvider'
 import * as StudySearchProvider
   from 'providers/StudySearchProvider'
 import * as DownloadProvider
@@ -54,9 +54,9 @@ describe('Download components for faceted search', () => {
   it('shows Download button', async () => {
     const userState = { accessToken: 'test' }
     const wrapper = mount((
-      <UserContextProvider user={userState}>
+      <UserContext.Provider value={userState}>
         <DownloadButton />
-      </UserContextProvider>
+      </UserContext.Provider>
     ))
     expect(wrapper.find('DownloadButton')).toHaveLength(1)
   })
@@ -66,9 +66,9 @@ describe('Download components for faceted search', () => {
     const userState = { accessToken: '' } // as when unauthenticated
 
     const wrapper = mount((
-      <UserContextProvider user={userState}>
+      <UserContext.Provider value={ userState }>
         <DownloadButton />
-      </UserContextProvider>
+      </UserContext.Provider>
     ))
     wrapper.find('#download-button > span').simulate('mouseenter')
 

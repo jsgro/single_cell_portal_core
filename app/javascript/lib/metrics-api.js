@@ -5,7 +5,7 @@
  * as well as generic a logging function that integrates with Bard / Mixpanel.
  */
 
-import { accessToken } from 'providers/UserProvider'
+import { getAccessToken } from 'providers/UserProvider'
 import { getBrandingGroup } from 'lib/scp-api'
 import getSCPContext from 'providers/SCPContextProvider'
 import { getDefaultProperties } from '@databiosphere/bard-client'
@@ -18,7 +18,7 @@ let metricsApiMock = false
 const defaultInit = {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${accessToken}`,
+    'Authorization': `Bearer ${getAccessToken()}`,
     'Content-Type': 'application/json'
   }
 }
@@ -89,7 +89,7 @@ export function logClick(event) {
 
 function getNameForClickTarget(target) {
   let targetName = target.dataset.analyticsName
-  if (!targetName) {
+  if (!targetName && target.innerText) {
     // if there's no built-in analytics name just use the element text
     targetName = target.innerText.trim()
   }
@@ -120,7 +120,6 @@ export function logClickLink(target) {
  * Log click on button, e.g. for pagination, "Apply", etc.
  */
 function logClickButton(target) {
-
   const props = { text: getNameForClickTarget(target) }
   log('click:button', props)
 
@@ -281,10 +280,10 @@ export function log(name, props={}) {
 
   props['timeSincePageLoad'] = Math.round(performance.now())
 
-  if (accessToken === '' || !registeredForTerra) {
+  if (getAccessToken() === '' || !registeredForTerra) {
     // User is unauthenticated, unregistered, anonymous,
     // or authenticated in SCP but not registered for Terra
-    props['authenticated'] = (accessToken !== '')
+    props['authenticated'] = (getAccessToken() !== '')
     props['distinct_id'] = userId
     delete init['headers']['Authorization']
   } else {

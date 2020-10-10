@@ -9,7 +9,7 @@ import GeneSearchView from 'components/search/genes/GeneSearchView';
 import SearchPanel from 'components/search/controls/SearchPanel';
 import { PropsStudySearchProvider } from 'providers/StudySearchProvider';
 import { PropsGeneSearchProvider, GeneSearchContext, emptySearch } from 'providers/GeneSearchProvider';
-import { FeatureFlagContext } from 'providers/FeatureFlagProvider'
+import { UserContext } from 'providers/UserProvider'
 import StudyResultsPanel from 'components/search/results/ResultsPanel'
 import Study from 'components/search/results/Study'
 import StudyViolinPlot from 'components/search/genes/StudyViolinPlot'
@@ -21,13 +21,13 @@ describe('Gene search page landing', () => {
     searchState.isLoaded = true
     searchState.results = {studies: [{name: 'foo', description: 'bar'}]}
     const wrapper = mount((
-      <FeatureFlagContext.Provider value={{gene_study_filter: false}}>
+      <UserContext.Provider value={{featureFlagsWithDefaults: {gene_study_filter: false}}}>
         <PropsStudySearchProvider searchParams={{terms: '', facets:{}, page: 1}}>
           <GeneSearchContext.Provider value={searchState}>
             <GeneSearchView/>
           </GeneSearchContext.Provider>
         </PropsStudySearchProvider>
-      </FeatureFlagContext.Provider>
+      </UserContext.Provider>
     ))
     expect(wrapper.find(Study)).toHaveLength(1)
   })
@@ -37,13 +37,13 @@ describe('Gene search page landing', () => {
     searchState.isLoaded = true
     searchState.results = {studies: [{name: 'foo', description: 'bar', gene_matches: ['agpat2']}]}
     const wrapper = mount((
-      <FeatureFlagContext.Provider value={{gene_study_filter: false}}>
+      <UserContext.Provider value={{featureFlagsWithDefaults: {gene_study_filter: false}}}>
         <PropsStudySearchProvider searchParams={{terms: '', facets:{}, page: 1}}>
           <GeneSearchContext.Provider  value={searchState}>
             <GeneSearchView/>
           </GeneSearchContext.Provider>
         </PropsStudySearchProvider>
-      </FeatureFlagContext.Provider>
+      </UserContext.Provider>
     ))
 
     expect(wrapper.find(Study)).toHaveLength(0)

@@ -1,9 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { faPlusSquare, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Modal from 'react-bootstrap/lib/Modal'
 
-import { updateUserFeatureFlags } from 'lib/scp-api'
 import KeywordSearch from './KeywordSearch'
 import FacetsPanel from './FacetsPanel'
 import DownloadButton from './DownloadButton'
@@ -11,8 +10,10 @@ import DownloadProvider from 'providers/DownloadProvider'
 import { StudySearchContext } from 'providers/StudySearchProvider'
 import { UserContext } from 'providers/UserProvider'
 
+/** render the legacy 'popular' and 'recent' search buttons */
 function CommonSearchButtons() {
   const searchState = useContext(StudySearchContext)
+  /** update the search params */
   function handleClick(ordering) {
     searchState.updateSearch({ order: ordering })
   }
@@ -33,11 +34,15 @@ const optInModalContent = (<div>
   Single Cell Portal now supports searching on specific facets of studies by ontology classifications.
   <br/><br/>
   For example, you can search on studies that
-  have <b>species</b> of <b>'Homo sapiens'</b> or have an <b>organ</b> of <b>'brain'</b>. <br/> However, this search functionality is limited to only those studies that provided
-  such specific metadata when they were created.<br/>  Currently <b>55 out of the 287</b> SCP public studies provide that metadata.  Keyword searches will still search all available studies.
+  have <b>species</b> of <b>&quot;Homo sapiens&quot;</b> or have an <b>organ</b> of <b>&quot;brain&quot;</b>.
+  <br/> However, this search functionality is limited to only those studies that provided
+  such specific metadata when they were created.<br/>  Currently <b>55 out of the 287</b>
+  SCP public studies provide that metadata.  Keyword searches will still search all available studies.
   <br/><br/>
-  For more detailed information, visit our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank">wiki</a>
-  <br/>If you are a study creator and would like to provide that metadata for your study to be searchable, see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention">metadata guide</a>
+  For more detailed information, visit our
+  <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>
+  <br/>If you are a study creator and would like to provide that metadata for your study to be searchable,
+  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention">metadata guide</a>
 </div>)
 
 const helpModalContent = (<div>
@@ -45,10 +50,14 @@ const helpModalContent = (<div>
   Single Cell Portal supports searching on specific facets of studies by ontology classifications.
   <br/><br/>
    For example, you can search on studies that
-  have <b>species</b> of <b>'Homo sapiens'</b> or have an <b>organ</b> of <b>'brain'</b>. <br/> However, this search functionality is limited to only those studies that provided
+  have <b>species</b> of <b>&quot;Homo sapiens&quot;</b> or have an <b>organ</b> of <b>&quot;brain&quot;</b>.
+  <br/> However, this search functionality is limited to only those studies that provided
   such specific metadata when they were created.<br/> Currently <b>55 out of the 287</b> SCP public studies provide that metadata.
   <br/><br/>
-  For more detailed information, visit our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank">wiki</a>
+  For more detailed information, visit our
+  <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>
+  <br/>If you are a study creator and would like to provide that metadata for your study to be searchable,
+  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention">metadata guide</a>
 </div>)
 
 /**
@@ -67,6 +76,11 @@ export default function SearchPanel({
   const searchState = useContext(StudySearchContext)
   const userState = useContext(UserContext)
   const featureFlagState = userState.featureFlagsWithDefaults
+  if (userState.isAnonymous) {
+    if (localStorage.getItem('faceted-search-flag') === 'true') {
+      featureFlagState.faceted_search = true
+    }
+  }
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(featureFlagState.faceted_search)
   const [showSearchHelpModal, setShowSearchHelpModal] = useState(false)
   const [showSearchOptInModal, setShowSearchOptInModal] = useState(false)
@@ -78,6 +92,7 @@ export default function SearchPanel({
     searchButtons = <CommonSearchButtons/>
   }
 
+  /** pop a modal if first-time click, otherwise just enable the extra filters */
   function handleMoreFiltersClick() {
     if (isNewToUser) {
       setShowSearchOptInModal(true)
@@ -86,17 +101,17 @@ export default function SearchPanel({
     }
   }
 
-  let advancedOptsLink = <a className="action advanced-opts" onClick={ handleMoreFiltersClick }>
+  let advancedOptsLink = <a className="action advanced-opts" onClick={handleMoreFiltersClick}>
     Advanced search<sup className="newFeature">BETA</sup>
   </a>
   if (showAdvancedSearch) {
     searchButtons = <FacetsPanel/>
     downloadButtons = <DownloadProvider><DownloadButton /></DownloadProvider>
     advancedOptsLink = <a className="action advanced-opts"
-                         onClick={() => setShowSearchHelpModal(true) }
-                         data-analytics-name="search-help">
-                         <FontAwesomeIcon icon={ faQuestionCircle} />
-                       </a>
+      onClick={() => setShowSearchHelpModal(true)}
+      data-analytics-name="search-help">
+      <FontAwesomeIcon icon={faQuestionCircle} />
+    </a>
   }
 
   useEffect(() => {
@@ -106,16 +121,19 @@ export default function SearchPanel({
     }
   })
 
+  /** helper method as, for unknown reasons, clicking the bootstrap modal auto-scrolls the page down */
   function closeModal(modalShowFunc) {
     modalShowFunc(false)
-    // for unknown reasons, clikcing the bootstrap modal auto-scrolls the page down
-    // we need to undo that
     setTimeout(() => {scrollTo(0, 0)}, 0)
   }
 
+  /** handle enabling/disabling advanced search on the page and syncing the user's feature flags */
   function setAdvancedSearchEnabled(enabled, modalShowFunc) {
+    // for signed-in users, update their feature flag, for anonymous, save in localStorage
     if (!userState.isAnonymous) {
-      userState.updateFeatureFlags({faceted_search: enabled})
+      userState.updateFeatureFlags({ faceted_search: enabled })
+    } else {
+      localStorage.setItem('faceted-search-flag', enabled.toString())
     }
     setShowAdvancedSearch(enabled)
     setIsNewToUser(false)
@@ -143,7 +161,7 @@ export default function SearchPanel({
             setAdvancedSearchEnabled(true, setShowSearchOptInModal)
           }}>Yes, show advanced search</button>
           <button className="btn btn-md" onClick={() => {
-            setAdvancedSearchEnabled(false, setShowSearchOptInModal);
+            setAdvancedSearchEnabled(false, setShowSearchOptInModal)
           }}>Cancel</button>
         </Modal.Footer>
       </Modal>
