@@ -7,23 +7,23 @@
   "files": [
     {
       "type": "Metadata",
-      "filename": "AB_toy_data_raw_1.metadata.tsv",
-      "use_metadata_convention": false,
+      "filename": "raw1_human_5k_cells_80_genes.metadata.txt",
+      "use_metadata_convention": false
     },
     {
       "type": "Expression Matrix",
-      "filename": "AB_toy_data_raw_1.txt",
+      "filename": "raw1_human_5k_cells_80_genes.dense.txt",
       "species_scientific_name": "Homo sapiens",
       "expression_file_info": {
         "is_raw_counts": true,
         "library_construction_protocol": "10x 3' v2",
         "units": "UMI-corrected raw counts",
-        "biosample_input_type": "whole cell",
+        "biosample_input_type": "whole cell"
       }
     },
     {
       "type": "Cluster",
-      "filename": "AB_toy_data_raw_1.cluster_2D.tsv"
+      "filename": "raw1_human_5k_cells_80_genes.cluster_2D.txt"
     }
   ]
 }
