@@ -261,9 +261,6 @@ function initializeAutocomplete(selector) {
         if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete("instance").menu.active) {
             // allow user to select terms with TAB key
             event.preventDefault();
-        } else if (event.keyCode === $.ui.keyCode.ENTER && keydownIsFromAutocomplete === false) {
-            // only perform search if user has selected items and is pressing ENTER on focused search box
-            $('#perform-gene-search').click();
         }
     }).autocomplete(
         {
