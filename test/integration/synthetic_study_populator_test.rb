@@ -23,6 +23,7 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
     assert_not_nil populated_study
     assert_equal 1, populated_study.study_files.count
     assert_equal 'Metadata', populated_study.study_files.first.file_type
+    assert_not_nil populated_study.study_detail.full_description
 
     # note that we're not testing the ingest process yet due to timing concerns
     Study.find_by(name: SYNTH_STUDY_INFO[:name]).destroy_and_remove_workspace
