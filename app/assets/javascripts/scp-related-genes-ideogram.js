@@ -13,8 +13,21 @@
 
 /** Handle clicks on Ideogram annotations */
 function onClickAnnot(annot) {
+  const ideo = this // eslint-disable-line
   document.querySelector('#search_genes').value = annot.name
-  document.querySelector('#perform-gene-search').click()
+
+  // Enable merge of related-genes log props into search log props
+  // This helps profile the numerator of click-through-rate
+  const namespacedProps = {}
+  const props = getRelatedGenesAnalytics(ideo)
+  Object.entries(props).forEach(([key, value]) => {
+    namespacedProps[`relatedGenes:${key}`] = value
+  })
+
+  const event = Object.assign(
+    { type: 'click-related-genes' }, namespacedProps
+  )
+  window.submitGeneSearch(event)
 }
 
 /**
@@ -73,6 +86,31 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
 }
 
 /**
+ * Get summary of related-genes ideogram that was just loaded or clicked
+ */
+function getRelatedGenesAnalytics(ideo) {
+  const props = Object.assign({}, ideo.relatedGenesAnalytics)
+
+  // Use DSP-conventional name
+  props['perfTime'] = props.time
+  delete props['time']
+
+  props['species'] = window.SCP.taxon
+  return Object.assign({}, props)
+}
+
+/**
+ * Callback to report analytics to Mixpanel.
+ * Helps profile denominator of click-through-rate
+ */
+function onPlotRelatedGenes() {
+  const ideo = this // eslint-disable-line
+  const props = getRelatedGenesAnalytics(ideo)
+
+  window.SCP.log('plot:related-genes-ideogram', props)
+}
+
+/**
  * Initiates Ideogram for related genes
  *
  * This is only done in the context of single-gene search in Study Overview
@@ -102,10 +140,10 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
     chrLabelSize: 12,
     annotationHeight: 7,
     onClickAnnot,
+    onPlotRelatedGenes,
     onLoad() {
       // Handles edge case: when organism lacks chromosome-level assembly
       if (!genomeHasChromosomes()) return
-
       this.plotRelatedGenes(gene)
     }
   }

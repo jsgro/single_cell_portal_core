@@ -114,8 +114,14 @@
                               context: 'study',
                               genes,
                               numGenes: genes.length,
-                              trigger: event.type // "submit" or "click"
+                              trigger: event.type // "submit", "click", or "click-related-genes"
                             }
+
+                            // Merge log props from custom event
+                            if (event.type === 'click-related-genes') {
+                              searchLogProps = Object.assign(event, searchLogProps)
+                            }
+
 
                             var searchEvent = window.SCP.startPendingEvent('search', searchLogProps);
                             // also start measuring the end-to-end user experience event
