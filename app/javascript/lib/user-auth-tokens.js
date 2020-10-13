@@ -4,8 +4,8 @@ export default function checkMissingAuthToken() {
     const errorTitle = 'Please sign in again'
     const errorText = '<p class="text-danger">There appears to be an issue with your session - ' +
       'please sign out and back in again to continue using Single Cell Portal. </p>'
-    const signOutBtn = '<span class=\'pull-right\'><a class=\'btn btn-primary\' data-method=\'delete\' href=\'/single_cell/users/sign_out\'>' +
-      '<span class=\'fas fa-sign-out-alt fa-fw\'></span> Sign Out</a></span>'
+    const signOutBtn = '<span class="pull-right"><a class="btn btn-primary" data-method="delete" href="/single_cell/users/sign_out">' +
+      '<span class="fas fa-sign-out-alt fa-fw"></span> Sign Out</a></span>'
     const errorMsg = errorText + signOutBtn
     $('#generic-modal-spinner').html(`${errorMsg}<p>&nbsp;</p>`)
     $('#generic-modal-spinner').removeClass('spinner-target')

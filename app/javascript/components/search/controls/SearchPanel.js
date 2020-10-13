@@ -40,9 +40,9 @@ const optInModalContent = (<div>
   SCP public studies provide that metadata.  Keyword searches will still search all available studies.
   <br/><br/>
   For more detailed information, visit our
-  <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>
+  <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>.
   <br/>If you are a study creator and would like to provide that metadata for your study to be searchable,
-  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention">metadata guide</a>
+  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention">metadata guide</a>.
 </div>)
 
 const helpModalContent = (<div>
@@ -102,7 +102,7 @@ export default function SearchPanel({
   }
 
   let advancedOptsLink = <a className="action advanced-opts" onClick={handleMoreFiltersClick}>
-    Advanced search<sup className="newFeature">BETA</sup>
+    Advanced search<sup className="new-feature">BETA</sup>
   </a>
   if (showAdvancedSearch) {
     searchButtons = <FacetsPanel/>
@@ -185,4 +185,3 @@ export default function SearchPanel({
     </div>
   )
 }
-
