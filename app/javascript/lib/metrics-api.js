@@ -87,6 +87,10 @@ export function logClick(event) {
   }
 }
 
+/**
+  * If the element itself has a data-analytics-name, use that as the name
+  * this allows names to be specified for elements that do not have text (e.g. icon buttons)
+  */
 function getNameForClickTarget(target) {
   let targetName = target.dataset.analyticsName
   if (!targetName && target.innerText) {

@@ -215,7 +215,7 @@ export async function updateCurrentUser(updatedUser, mock=false) {
     method: 'PATCH',
     body: JSON.stringify(updatedUser)
   })
-  await scpApi('/current_user/1', init, mock, true)
+  await scpApi('/current_user', init, mock, true)
 }
 
 /**

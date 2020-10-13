@@ -29,22 +29,6 @@ function CommonSearchButtons() {
   )
 }
 
-const optInModalContent = (<div>
-  <h4 className="text-center">Advanced Search</h4><br/>
-  Single Cell Portal now supports searching on specific facets of studies by ontology classifications.
-  <br/><br/>
-  For example, you can search on studies that
-  have <b>species</b> of <b>&quot;Homo sapiens&quot;</b> or have an <b>organ</b> of <b>&quot;brain&quot;</b>.
-  <br/> However, this search functionality is limited to only those studies that provided
-  such specific metadata when they were created.<br/>  Currently <b>55 out of the 287</b>
-  SCP public studies provide that metadata.  Keyword searches will still search all available studies.
-  <br/><br/>
-  For more detailed information, visit our
-  <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>.
-  <br/>If you are a study creator and would like to provide that metadata for your study to be searchable,
-  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention">metadata guide</a>.
-</div>)
-
 const helpModalContent = (<div>
   <h4 className="text-center">Advanced Search</h4><br/>
   Single Cell Portal supports searching on specific facets of studies by ontology classifications.
@@ -52,7 +36,7 @@ const helpModalContent = (<div>
    For example, you can search on studies that
   have <b>species</b> of <b>&quot;Homo sapiens&quot;</b> or have an <b>organ</b> of <b>&quot;brain&quot;</b>.
   <br/> However, this search functionality is limited to only those studies that provided
-  such specific metadata when they were created.<br/> Currently <b>55 out of the 287</b> SCP public studies provide that metadata.
+  such specific metadata when they were created.<br/> Many SCP public studies currently do not provide that metadata.
   <br/><br/>
   For more detailed information, visit our
   <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>
@@ -154,7 +138,7 @@ export default function SearchPanel({
         animation={false}
         bsSize='large'>
         <Modal.Body className="">
-          { optInModalContent }
+          { helpModalContent }
         </Modal.Body>
         <Modal.Footer>
           <button className="btn btn-md btn-primary" onClick={() => {

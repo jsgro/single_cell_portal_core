@@ -69,32 +69,13 @@ class FeatureFlagTest < ActiveSupport::TestCase
     refute FeatureFlaggable.feature_flags_for_instances(@user, @branding_group)[flag_name]
   end
 
-  test 'feature flaggable updates flags safely from user input' do
-    @user.update!(feature_flags: {my_feature_flag: true})
-
-    prior_flags = @user.feature_flags.clone
-    # nil results in no changes
-    @user.update_feature_flags_safe!(nil, [])
-    assert_equal prior_flags, @user.reload.feature_flags
-
+  test 'feature flaggable validates model on save' do
     # nonexistent flag name throws error
-    exception = assert_raise(Exception) { @user.update_feature_flags_safe!({'foobar': false}, ['foobar']) }
-    assert_equal 'Invalid feature flag input - invalid flag name', exception.message
-
-    # flag not in allowed values throws error
-    exception = assert_raise(Exception) { @user.update_feature_flags_safe!({'my_feature_flag': false}, ['foobar']) }
+    exception = assert_raise(Exception) { @user.update!(feature_flags: {'foobar': false}) }
     assert_equal 'Invalid feature flag input - invalid flag name', exception.message
 
     # non-boolean value throws error
-    exception = assert_raise(Exception) { @user.update_feature_flags_safe!({'my_feature_flag': 3}, ['my_feature_flag']) }
+    exception = assert_raise(Exception) { @user.update!(feature_flags: {'my_feature_flag': 3}) }
     assert_equal 'Invalid feature flag input - value must be boolean', exception.message
-
-    # valid update passes through
-    @user.update_feature_flags_safe!({'my_feature_flag': false}, ['my_feature_flag'])
-    assert_equal false, @user.reload.feature_flags['my_feature_flag']
-
-    # valid delete of flag passes through
-    @user.update_feature_flags_safe!({'my_feature_flag': nil}, ['my_feature_flag'])
-    assert_nil @user.reload.feature_flags['my_feature_flag']
   end
 end
