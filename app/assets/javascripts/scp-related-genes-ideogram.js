@@ -92,7 +92,7 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
   // Create scaffolding for Ideogram for related genes
   const ideoContainer =
     '<div id="related-genes-ideogram-container" class="hidden-related-genes-ideogram"></div>' // eslint-disable-line
-  $('body').append(ideoContainer)
+  document.querySelector('body').insertAdjacentHTML('beforeEnd', ideoContainer)
 
   const ideoConfig = {
     container: '#related-genes-ideogram-container',
