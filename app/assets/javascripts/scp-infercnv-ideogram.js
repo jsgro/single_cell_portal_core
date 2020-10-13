@@ -75,7 +75,7 @@ function addMarginControl() {
 function updateThreshold(event) {
   let newThreshold
 
-  const expressionThreshold = parseInt(event.target.value)
+  window.expressionThreshold = parseInt(event.target.value)
 
   adjustedExpressionThreshold = Math.round(expressionThreshold/10 - 4)
   const thresholds = window.originalHeatmapThresholds
@@ -99,7 +99,7 @@ function updateThreshold(event) {
 
 /** Create slider to adjust expression threshold for "gain" or "loss" calls */
 function addThresholdControl() {
-  if (typeof(expressionThreshold) === 'undefined') {
+  if (typeof window.expressionThreshold === 'undefined') {
     window.expressionThreshold = 50
     window.originalHeatmapThresholds =
       ideogram.rawAnnots.metadata.heatmapThresholds
