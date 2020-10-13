@@ -18,15 +18,6 @@ function onClickAnnot(annot) {
 }
 
 /**
- * Reports if current gene has associated taxon (aka species, organism)
- *
- * Enables handling for old SCP studies, where matrices lack taxons
- */
-function geneHasTaxon() {
-  return window.SCP.taxon !== ''
-}
-
-/**
  * Reports if current genome assembly has chromosome length data
  *
  * Enables handling for taxons that cannot be visualized in an ideogram.
@@ -55,7 +46,8 @@ function putIdeogramInPlotTabs(ideoContainer) {
  */
 function showRelatedGenesIdeogram() { // eslint-disable-line
 
-  if (!geneHasTaxon()) return
+  // Enables handling for old SCP studies, where matrices lack taxons
+  if (window.SCP.taxons.length === 0) return
 
   const ideoContainer =
     document.querySelector('#related-genes-ideogram-container')
@@ -77,9 +69,7 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
  *
  * This is only done in the context of single-gene search in Study Overview
  */
-function createRelatedGenesIdeogram() { // eslint-disable-line
-
-  if (!geneHasTaxon()) return
+function createRelatedGenesIdeogram(taxon) { // eslint-disable-line
 
   // Clear any prior ideogram
   if (typeof window.ideogram !== 'undefined') {
@@ -96,7 +86,7 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
 
   const ideoConfig = {
     container: '#related-genes-ideogram-container',
-    organism: window.SCP.taxon,
+    organism: taxon,
     chrWidth: 9,
     chrHeight: 100,
     chrLabelSize: 12,

@@ -127,8 +127,8 @@
                             var form = $('#search-genes-form');
 
                             if (window.SCP.taxons.length === 1 && numGenes === 1) {
-                              window.SCP.taxon = window.SCP.taxons[0];
-                              createRelatedGenesIdeogram();
+                              const currentTaxon = window.SCP.taxons[0]
+                              createRelatedGenesIdeogram(currentTaxon);
                             }
 
                             $.ajax({

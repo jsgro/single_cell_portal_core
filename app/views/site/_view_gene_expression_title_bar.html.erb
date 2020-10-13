@@ -13,8 +13,8 @@
   // started for the current searched gene.
   if (window.SCP.taxons.length > 1) {
     // TODO (SCP-2769): Handle when a searched gene maps to multiple species
-    window.SCP.taxon = '<%= @gene_taxons.first %>';
-    createRelatedGenesIdeogram();
+    const currentTaxon = '<%= @gene_taxons.first %>';
+    createRelatedGenesIdeogram(currentTaxon);
   }
 
 </script>
