@@ -84,8 +84,15 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
   // Clear any prior ideogram
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
-    document.querySelector('#related-genes-ideogram-container').innerHTML = ''
+    document.querySelector('#related-genes-ideogram-container').remove()
   }
+
+  const gene = document.querySelector('#search_genes').value.trim()
+
+  // Create scaffolding for Ideogram for related genes
+  const ideoContainer =
+    '<div id="related-genes-ideogram-container" class="hidden-related-genes-ideogram"></div>' // eslint-disable-line
+  $('body').append(ideoContainer)
 
   const ideoConfig = {
     container: '#related-genes-ideogram-container',
@@ -94,16 +101,12 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
     chrHeight: 100,
     chrLabelSize: 12,
     annotationHeight: 7,
-    showTools: true,
     onClickAnnot,
     onLoad() {
       // Handles edge case: when organism lacks chromosome-level assembly
       if (!genomeHasChromosomes()) return
 
-      const searchInput = document.querySelector('#search_genes').value.trim()
-      const geneSymbol = searchInput.split(/[, ]/).filter(d => d !== '')[0]
-
-      this.plotRelatedGenes(geneSymbol)
+      this.plotRelatedGenes(gene)
     }
   }
 

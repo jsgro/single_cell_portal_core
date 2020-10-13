@@ -124,6 +124,12 @@
                               'user-action:search:site-study', searchLogProps, 'plot:'
                             );
                             var form = $('#search-genes-form');
+
+                            if (window.SCP.taxons.length === 1) {
+                              window.SCP.taxon = window.SCP.taxons[0];
+                              createRelatedGenesIdeogram();
+                            }
+
                             $.ajax({
                                 type: 'POST',
                                 url: form.attr('action'),

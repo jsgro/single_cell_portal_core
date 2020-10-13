@@ -311,6 +311,7 @@ class SiteController < ApplicationController
     @primary_data = @study.directory_listings.primary_data
     @other_data = @study.directory_listings.non_primary_data
     @unique_genes = @study.unique_genes
+    @taxons = @study.expressed_taxon_names
 
     # double check on download availability: first, check if administrator has disabled downloads
     # then check individual statuses to see what to enable/disable
@@ -416,14 +417,18 @@ class SiteController < ApplicationController
 
   ## GENE-BASED
 
-  # render box and scatter plots for parent clusters or a particular sub cluster
+  # render violin and scatter plots for parent clusters or a particular sub cluster
   def view_gene_expression
     @options = load_cluster_group_options
     @cluster_annotations = load_cluster_group_annotations
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
     @y_axis_title = load_expression_axis_title
 
-    @taxons = @study.infer_taxons(params[:gene])
+    if @study.expressed_taxon_names.length > 1
+      @gene_taxons = @study.infer_taxons(params[:gene])
+    else
+      @gene_taxons = @study.expressed_taxon_names
+    end
 
     if request.format == 'text/html'
       # only set this check on full page loads (happens if user was not signed in but then clicked the 'genome' tab)
