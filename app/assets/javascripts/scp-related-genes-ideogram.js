@@ -46,8 +46,7 @@ function putIdeogramInPlotTabs(ideoContainer) {
  */
 function showRelatedGenesIdeogram() { // eslint-disable-line
 
-  // Enables handling for old SCP studies, where matrices lack taxons
-  if (window.SCP.taxons.length === 0) return
+  if (!window.ideogram) return
 
   const ideoContainer =
     document.querySelector('#related-genes-ideogram-container')
@@ -70,6 +69,8 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
  * This is only done in the context of single-gene search in Study Overview
  */
 function createRelatedGenesIdeogram(taxon) { // eslint-disable-line
+
+  if (taxon === null) return
 
   // Clear any prior ideogram
   if (typeof window.ideogram !== 'undefined') {
