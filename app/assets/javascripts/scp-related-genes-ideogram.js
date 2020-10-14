@@ -13,20 +13,20 @@
 
 /** Handle clicks on Ideogram annotations */
 function onClickAnnot(annot) {
-  const ideo = this // eslint-disable-line
+  // Ideogram object; used to inspect ideogram state
+  const ideogram = this // eslint-disable-line
   document.querySelector('#search_genes').value = annot.name
 
   // Enable merge of related-genes log props into search log props
   // This helps profile the numerator of click-through-rate
-  const namespacedProps = {}
-  const props = getRelatedGenesAnalytics(ideo)
+  const event = {}
+  const props = getRelatedGenesAnalytics(ideogram)
   Object.entries(props).forEach(([key, value]) => {
-    namespacedProps[`relatedGenes:${key}`] = value
+    event[`relatedGenes:${key}`] = value
   })
 
-  const event = Object.assign(
-    { type: 'click-related-genes' }, namespacedProps
-  )
+  event['type'] = 'click-related-genes'
+
   window.submitGeneSearch(event)
 }
 
@@ -50,7 +50,7 @@ function genomeHasChromosomes() {
 }
 
 /**
-* Move Ideogram within expresion plot tabs, per UX recommendation
+* Move Ideogram within expression plot tabs, per UX recommendation
 */
 function putIdeogramInPlotTabs(ideoContainer) {
   const tabContent = document.querySelector('#render-target .tab-content')
@@ -88,15 +88,15 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
 /**
  * Get summary of related-genes ideogram that was just loaded or clicked
  */
-function getRelatedGenesAnalytics(ideo) {
-  const props = Object.assign({}, ideo.relatedGenesAnalytics)
+function getRelatedGenesAnalytics(ideogram) {
+  const props = Object.assign({}, ideogram.relatedGenesAnalytics)
 
   // Use DSP-conventional name
   props['perfTime'] = props.time
   delete props['time']
 
   props['species'] = window.SCP.taxon
-  return Object.assign({}, props)
+  return props
 }
 
 /**
@@ -104,10 +104,15 @@ function getRelatedGenesAnalytics(ideo) {
  * Helps profile denominator of click-through-rate
  */
 function onPlotRelatedGenes() {
-  const ideo = this // eslint-disable-line
-  const props = getRelatedGenesAnalytics(ideo)
+  // Ideogram object; used to inspect ideogram state
+  const ideogram = this // eslint-disable-line
+  const props = getRelatedGenesAnalytics(ideogram)
 
-  window.SCP.log('plot:related-genes-ideogram', props)
+  // Don't use `plot:`, because that signals end of `user-action:search`.
+  // Hiding the search loading modal (i.e. "completing search") does not
+  // depend on related genes ideogram completing, so prefix this event
+  // name with `plot-async:`.
+  window.SCP.log('plot-async:related-genes-ideogram', props)
 }
 
 /**
