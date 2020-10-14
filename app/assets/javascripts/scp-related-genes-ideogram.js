@@ -31,15 +31,6 @@ function onClickAnnot(annot) {
 }
 
 /**
- * Reports if current gene has associated taxon (aka species, organism)
- *
- * Enables handling for old SCP studies, where matrices lack taxons
- */
-function geneHasTaxon() {
-  return window.SCP.taxon !== ''
-}
-
-/**
  * Reports if current genome assembly has chromosome length data
  *
  * Enables handling for taxons that cannot be visualized in an ideogram.
@@ -68,7 +59,7 @@ function putIdeogramInPlotTabs(ideoContainer) {
  */
 function showRelatedGenesIdeogram() { // eslint-disable-line
 
-  if (!geneHasTaxon()) return
+  if (!window.ideogram) return
 
   const ideoContainer =
     document.querySelector('#related-genes-ideogram-container')
@@ -120,14 +111,16 @@ function onPlotRelatedGenes() {
  *
  * This is only done in the context of single-gene search in Study Overview
  */
-function createRelatedGenesIdeogram() { // eslint-disable-line
+function createRelatedGenesIdeogram(taxon) { // eslint-disable-line
 
-  if (!geneHasTaxon()) return
+  if (taxon === null) return
 
   // Clear any prior ideogram
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
-    document.querySelector('#related-genes-ideogram-container').remove()
+    const ideoContainer =
+      document.querySelector('#related-genes-ideogram-container')
+    if (ideoContainer) ideoContainer.remove()
   }
 
   const gene = document.querySelector('#search_genes').value.trim()
@@ -139,7 +132,7 @@ function createRelatedGenesIdeogram() { // eslint-disable-line
 
   const ideoConfig = {
     container: '#related-genes-ideogram-container',
-    organism: window.SCP.taxon,
+    organism: taxon,
     chrWidth: 9,
     chrHeight: 100,
     chrLabelSize: 12,
