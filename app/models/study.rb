@@ -1116,6 +1116,13 @@ class Study
     Gene.where(study_id: self.id, :study_file_id.in => self.expression_matrix_files.map(&:id)).pluck(:name).uniq
   end
 
+  # List unique scientific names of species for all expression matrices in study
+  def expressed_taxon_names
+    self.expression_matrix_files
+      .map {|f| f.taxon.try(:scientific_name) }
+      .uniq
+  end
+
   # For a gene name in this study, get scientific name of species / organism
   # For example: "PTEN" -> ["Homo sapiens"].
   #
@@ -1262,7 +1269,7 @@ class Study
     self.study_files.by_type(['Expression Matrix', 'MM Coordinate Matrix'])
   end
 
-  # helper method to directly access expression matrix file file by name
+  # helper method to directly access expression matrix file by name
   def expression_matrix_file(name)
     self.study_files.find_by(:file_type.in => ['Expression Matrix', 'MM Coordinate Matrix'], name: name)
   end

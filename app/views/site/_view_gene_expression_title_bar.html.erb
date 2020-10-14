@@ -8,14 +8,13 @@
 </div>
 
 <script>
-  // Initializes Ideogram for related genes
 
-  document.querySelector('.study-lead').parentElement.innerHTML +=
-    '<div id="related-genes-ideogram-container" class="hidden-related-genes-ideogram"></div>';
-
-  // TODO (SCP-2769): Handle when a searched gene maps to multiple species
-  window.SCP.taxon = '<%= @taxons.first %>';
-
-  createRelatedGenesIdeogram();
+  // Initializes Ideogram for related genes, if it hasn't already been
+  // started for the current searched gene.
+  if (window.SCP.taxons.length > 1) {
+    // TODO (SCP-2769): Handle when a searched gene maps to multiple species
+    const currentTaxon = '<%= @gene_taxons.first %>';
+    createRelatedGenesIdeogram(currentTaxon);
+  }
 
 </script>

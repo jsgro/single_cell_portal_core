@@ -109,11 +109,12 @@
 
                         launchModalSpinner('#spinner_target', '#loading-modal', function() {
                             var genes = window.SCP.formatTerms($('#search_genes').val())
+                            var numGenes = genes.length
                             var searchLogProps = {
                               type: 'gene',
                               context: 'study',
                               genes,
-                              numGenes: genes.length,
+                              numGenes,
                               trigger: event.type // "submit" or "click"
                             }
 
@@ -124,6 +125,12 @@
                               'user-action:search:site-study', searchLogProps, 'plot:'
                             );
                             var form = $('#search-genes-form');
+
+                            if (window.SCP.taxons.length === 1 && numGenes === 1) {
+                              const currentTaxon = window.SCP.taxons[0]
+                              createRelatedGenesIdeogram(currentTaxon);
+                            }
+
                             $.ajax({
                                 type: 'POST',
                                 url: form.attr('action'),
