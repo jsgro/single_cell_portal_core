@@ -86,7 +86,8 @@ function getRelatedGenesAnalytics(ideogram) {
   props['perfTime'] = props.time
   delete props['time']
 
-  props['species'] = window.SCP.taxon
+  props['species'] = ideogram.getScientificName(ideogram.config.taxid)
+
   return props
 }
 
