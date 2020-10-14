@@ -115,7 +115,13 @@
                               context: 'study',
                               genes,
                               numGenes,
-                              trigger: event.type // "submit" or "click"
+                              trigger: event.type, // "submit", "click", or "click-related-genes"
+                              speciesList: window.SCP.taxons
+                            }
+
+                            // Merge log props from custom event
+                            if (event.type === 'click-related-genes') {
+                              searchLogProps = Object.assign(event, searchLogProps)
                             }
 
                             var searchEvent = window.SCP.startPendingEvent('search', searchLogProps);

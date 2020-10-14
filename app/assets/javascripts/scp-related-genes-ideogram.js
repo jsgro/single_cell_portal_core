@@ -13,8 +13,21 @@
 
 /** Handle clicks on Ideogram annotations */
 function onClickAnnot(annot) {
+  // Ideogram object; used to inspect ideogram state
+  const ideogram = this // eslint-disable-line
   document.querySelector('#search_genes').value = annot.name
-  document.querySelector('#perform-gene-search').click()
+
+  // Enable merge of related-genes log props into search log props
+  // This helps profile the numerator of click-through-rate
+  const event = {}
+  const props = getRelatedGenesAnalytics(ideogram)
+  Object.entries(props).forEach(([key, value]) => {
+    event[`relatedGenes:${key}`] = value
+  })
+
+  event['type'] = 'click-related-genes'
+
+  window.submitGeneSearch(event)
 }
 
 /**
@@ -28,7 +41,7 @@ function genomeHasChromosomes() {
 }
 
 /**
-* Move Ideogram within expresion plot tabs, per UX recommendation
+* Move Ideogram within expression plot tabs, per UX recommendation
 */
 function putIdeogramInPlotTabs(ideoContainer) {
   const tabContent = document.querySelector('#render-target .tab-content')
@@ -64,6 +77,33 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
 }
 
 /**
+ * Get summary of related-genes ideogram that was just loaded or clicked
+ */
+function getRelatedGenesAnalytics(ideogram) {
+  const props = Object.assign({}, ideogram.relatedGenesAnalytics)
+
+  // Use DSP-conventional name
+  props['perfTime'] = props.time
+  delete props['time']
+
+  props['species'] = ideogram.getScientificName(ideogram.config.taxid)
+
+  return props
+}
+
+/**
+ * Callback to report analytics to Mixpanel.
+ * Helps profile denominator of click-through-rate
+ */
+function onPlotRelatedGenes() {
+  // Ideogram object; used to inspect ideogram state
+  const ideogram = this // eslint-disable-line
+  const props = getRelatedGenesAnalytics(ideogram)
+
+  window.SCP.log('ideogram:related-genes', props)
+}
+
+/**
  * Initiates Ideogram for related genes
  *
  * This is only done in the context of single-gene search in Study Overview
@@ -95,10 +135,10 @@ function createRelatedGenesIdeogram(taxon) { // eslint-disable-line
     chrLabelSize: 12,
     annotationHeight: 7,
     onClickAnnot,
+    onPlotRelatedGenes,
     onLoad() {
       // Handles edge case: when organism lacks chromosome-level assembly
       if (!genomeHasChromosomes()) return
-
       this.plotRelatedGenes(gene)
     }
   }
