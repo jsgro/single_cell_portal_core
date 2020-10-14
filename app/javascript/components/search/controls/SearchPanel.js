@@ -38,10 +38,10 @@ const helpModalContent = (<div>
   <br/> However, this search functionality is limited to only those studies that provided
   such specific metadata when they were created.<br/> Many SCP public studies currently do not provide that metadata.
   <br/><br/>
-  For more detailed information, visit our
-  <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>
+  For more detailed information, visit
+  our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>
   <br/>If you are a study creator and would like to provide that metadata for your study to be searchable,
-  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention">metadata guide</a>
+  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention" target="_blank" rel="noreferrer">metadata guide</a>
 </div>)
 
 /**
