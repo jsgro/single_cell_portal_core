@@ -100,11 +100,7 @@ function onPlotRelatedGenes() {
   const ideogram = this // eslint-disable-line
   const props = getRelatedGenesAnalytics(ideogram)
 
-  // Don't use `plot:`, because that signals end of `user-action:search`.
-  // Hiding the search loading modal (i.e. "completing search") does not
-  // depend on related genes ideogram completing, so prefix this event
-  // name with `plot-async:`.
-  window.SCP.log('plot-async:related-genes-ideogram', props)
+  window.SCP.log('ideogram:related-genes', props)
 }
 
 /**
