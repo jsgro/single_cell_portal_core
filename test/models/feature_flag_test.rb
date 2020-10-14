@@ -6,7 +6,8 @@ class FeatureFlagTest < ActiveSupport::TestCase
     @user.update!(feature_flags: {})
     @branding_group = BrandingGroup.first
     @branding_group.update!(feature_flags: {})
-    @feature_flag = FeatureFlag.find_or_create_by!(name: 'my_feature_flag', default_value: false)
+    @feature_flag = FeatureFlag.find_or_create_by!(name: 'my_feature_flag')
+    @feature_flag.update!(default_value: false)
     @featurable_map = {
         @user.class.name => @user,
         @branding_group.class.name => @branding_group
