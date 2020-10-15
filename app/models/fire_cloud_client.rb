@@ -443,7 +443,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   # * *params*
   #   - +workspace_namespace+ (String) => namespace of workspace
   #   - +workspace_name+ (String) => name of workspace
-  #   - +no_workspace_owner+ (Boolean) => T/F to assign workspace owner to user making request (default: false)
+  #   - +no_workspace_owner+ (Boolean) => T/F to skip assigning workspace owner to user making request (default: false)
   #   - +authorization_domains+ (Array<String>) => list of authorization domains to add to workspace
   #
   # * *return*
