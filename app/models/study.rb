@@ -1652,7 +1652,7 @@ class Study
       begin
         # create workspace
         if self.firecloud_project == FireCloudClient::PORTAL_NAMESPACE
-          workspace = ApplicationController.firecloud_client.create_workspace(self.firecloud_project, self.firecloud_workspace)
+          workspace = ApplicationController.firecloud_client.create_workspace(self.firecloud_project, self.firecloud_workspace, true)
         else
           workspace = client.create_workspace(self.firecloud_project, self.firecloud_workspace)
         end
@@ -1881,25 +1881,25 @@ class Study
     end
   end
 
-  # set permissions on workspaces outside the portal namespace to allow users to use projects they own or are a member of
+  # set permissions on workspaces to workspace owner Google group for service account
+  # this reduces the number of groups the SA is a member of to lower burden on quota (2000 direct memberships)
   def set_service_account_permissions
-    # only perform check if this is not the default portal project
-    if self.firecloud_project != FireCloudClient::PORTAL_NAMESPACE
-      begin
-        sa_owner_group = AdminConfiguration.find_or_create_ws_user_group!
+    begin
+      sa_owner_group = AdminConfiguration.find_or_create_ws_user_group!
+      if self.firecloud_project == FireCloudClient::PORTAL_NAMESPACE
+        client = ApplicationController.firecloud_client
+      else
         client = FireCloudClient.new(self.user, self.firecloud_project)
-        group_email = sa_owner_group['groupEmail']
-        acl = client.create_workspace_acl(group_email, 'OWNER', true, false)
-        client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, acl)
-        updated = client.get_workspace_acl(self.firecloud_project, self.firecloud_workspace)
-        return updated['acl'][group_email]['accessLevel'] == 'OWNER'
-      rescue RuntimeError => e
-        ErrorTracker.report_exception(e, self.user, {firecloud_project: self.firecloud_workspace})
-        Rails.logger.error "#{Time.zone.now}: unable to add portal service account to #{self.firecloud_workspace}: #{e.message}"
-        false
       end
-    else
-      true
+      group_email = sa_owner_group['groupEmail']
+      acl = client.create_workspace_acl(group_email, 'OWNER', true, false)
+      client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, acl)
+      updated = client.get_workspace_acl(self.firecloud_project, self.firecloud_workspace)
+      return updated['acl'][group_email]['accessLevel'] == 'OWNER'
+    rescue RuntimeError => e
+      ErrorTracker.report_exception(e, self.user, {firecloud_project: self.firecloud_workspace})
+      Rails.logger.error "#{Time.zone.now}: unable to add portal service account to #{self.firecloud_workspace}: #{e.message}"
+      false
     end
   end
 
