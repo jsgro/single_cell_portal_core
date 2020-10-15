@@ -443,16 +443,19 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   # * *params*
   #   - +workspace_namespace+ (String) => namespace of workspace
   #   - +workspace_name+ (String) => name of workspace
+  #   - +no_workspace_owner+ (Boolean) => T/F to assign workspace owner to user making request (default: false)
+  #   - +authorization_domains+ (Array<String>) => list of authorization domains to add to workspace
   #
   # * *return*
   #   - +Hash+ object of workspace instance
-  def create_workspace(workspace_namespace, workspace_name, *authorization_domains)
+  def create_workspace(workspace_namespace, workspace_name, no_workspace_owner=false, *authorization_domains)
     path = self.api_root + '/api/workspaces'
     # construct payload for POST
     payload = {
         namespace: workspace_namespace,
         name: workspace_name,
         attributes: {},
+        noWorkspaceOwner: no_workspace_owner,
         authorizationDomain: []
     }
     # add authorization domains to new workspace
