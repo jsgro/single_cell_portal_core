@@ -154,7 +154,7 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     assert study.present?, "Study did not successfully save"
     sa_owner_group = AdminConfiguration.find_or_create_ws_user_group!
     group_email = sa_owner_group['groupEmail']
-    workspace_acl = ApplicationController.firecloud_client.get_worksace_acl(study.firecloud_project, study.firecloud_workspace)
+    workspace_acl = ApplicationController.firecloud_client.get_workspace_acl(study.firecloud_project, study.firecloud_workspace)
     group_acl = workspace_acl['acl'][group_email]
     assert group_acl['accessLevel']  == 'OWNER', "Did not correctly set #{group_email} to 'OWNER'; #{group_acl}"
 
