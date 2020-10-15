@@ -35,13 +35,13 @@ const helpModalContent = (<div>
   <br/><br/>
    For example, you can search on studies that
   have <b>species</b> of <b>&quot;Homo sapiens&quot;</b> or have an <b>organ</b> of <b>&quot;brain&quot;</b>.
-  <br/> However, this search functionality is limited to only those studies that provided
-  such specific metadata when they were created.<br/> Many SCP public studies currently do not provide that metadata.
+  <br/>
+    Currently, about <b>70 out of ~300</b> public studies in SCP provide this metadata information.
   <br/><br/>
   For more detailed information, visit
-  our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>
+  our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>.
   <br/>If you are a study creator and would like to provide that metadata for your study to be searchable,
-  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention" target="_blank" rel="noreferrer">metadata guide</a>
+  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention" target="_blank" rel="noreferrer">metadata guide</a>.
 </div>)
 
 /**
