@@ -284,7 +284,7 @@
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
 
     var hasAgreement = <%= @study.has_download_agreement? %>;
-    var userHasAccepted = <%= @user_accepted_agreement %>;
+    var userHasAccepted = <%= @study.has_download_agreement? ? @user_accepted_agreement : false %>;
     if (hasAgreement && !userHasAccepted) {
         setElementsEnabled($('.dl-link'), false)
         setElementsEnabled($('#download-help'), false)
