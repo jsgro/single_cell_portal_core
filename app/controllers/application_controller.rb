@@ -31,6 +31,29 @@ class ApplicationController < ActionController::Base
     @@big_query_client ||= BigQueryClient.new.client
   end
 
+  # getter for FireCloudClient instance
+  def self.firecloud_client
+    @@firecloud_client ||= FireCloudClient.new
+  end
+
+  def self.read_only_firecloud_client
+    if ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'].present?
+      @@read_only_client ||= FireCloudClient.new(nil, FireCloudClient::PORTAL_NAMESPACE, File.absolute_path(ENV['READ_ONLY_SERVICE_ACCOUNT_KEY']))
+    end
+  end
+
+  # method to renew firecloud client (forces new access token for API and reinitializes storage driver)
+  def self.refresh_firecloud_client
+    begin
+      @@firecloud_client = FireCloudClient.new
+      true
+    rescue => e
+      ErrorTracker.report_exception(e, nil, self.firecloud_client.attributes)
+      Rails.logger.error "#{Time.zone.now}: unable to refresh FireCloud client: #{e.message}"
+      e.message
+    end
+  end
+
   # set current_user for use outside of controllers
   # from https://stackoverflow.com/questions/2513383/access-current-user-in-model
   around_action :set_current_user
@@ -191,7 +214,7 @@ class ApplicationController < ActionController::Base
     # next check if downloads have been disabled by administrator, this will abort the download
     # download links shouldn't be rendered in any case, this just catches someone doing a straight GET on a file
     # also check if workspace google buckets are available
-    if !AdminConfiguration.firecloud_access_enabled? || !Study.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
+    if !AdminConfiguration.firecloud_access_enabled? || !ApplicationController.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
       head 503 and return
     end
   end
@@ -201,13 +224,13 @@ class ApplicationController < ActionController::Base
   def execute_file_download(study)
     begin
       # get filesize and make sure the user is under their quota
-      requested_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, params[:filename])
+      requested_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, params[:filename])
       if requested_file.present?
         filesize = requested_file.size
         user_quota = current_user.daily_download_quota + filesize
         # check against download quota that is loaded in ApplicationController.get_download_quota
         if user_quota <= @download_quota
-          @signed_url = Study.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, study.bucket_id, params[:filename], expires: 15)
+          @signed_url = ApplicationController.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, study.bucket_id, params[:filename], expires: 15)
           current_user.update(daily_download_quota: user_quota)
         else
           redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),

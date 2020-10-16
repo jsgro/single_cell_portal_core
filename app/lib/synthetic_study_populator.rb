@@ -49,6 +49,7 @@ class SyntheticStudyPopulator
     end
 
     study = Study.new(study_config['study'])
+    study.study_detail = StudyDetail.new(full_description: study_config['study']['description'])
     study.user ||= user
     study.firecloud_project ||= ENV['PORTAL_NAMESPACE']
     puts("Saving Study #{study.name}")
@@ -67,17 +68,34 @@ class SyntheticStudyPopulator
           throw "You must populate the species #{finfo['species_scientific_name']} to ingest the file #{finfo['filename']}. Stopping populate"
         end
         taxon_id = taxon.id
-      elsif finfo['type'] == 'Expression Matrix'
-        throw "You must specify a species in the study_info.json for Expression Matrix files"
       end
 
-      study_file = StudyFile.create!(file_type: finfo['type'],
-                        name: finfo['name'] ? finfo['name'] : finfo['filename'],
-                        upload: infile,
-                        use_metadata_convention: finfo['use_metadata_convention'] ? true : false,
-                        status: 'uploading',
-                        study: study,
-                        taxon_id: taxon_id)
+      study_file_params = {
+        file_type: finfo['type'],
+        name: finfo['name'] ? finfo['name'] : finfo['filename'],
+        upload: infile,
+        use_metadata_convention: finfo['use_metadata_convention'] ? true : false,
+        status: 'uploading',
+        study: study,
+        taxon_id: taxon_id
+      }
+
+      if study_file_params[:file_type] == 'Expression Matrix'
+        if taxon_id.nil?
+          throw "You must specify a species in the study_info.json for Expression Matrix files"
+        end
+        exp_finfo_params = finfo['expression_file_info']
+        if exp_finfo_params.present?
+          exp_file_info = ExpressionFileInfo.new(
+            is_raw_counts: exp_finfo_params['is_raw_counts'] ? true : false,
+            units: exp_finfo_params['units'],
+            library_construction_protocol: exp_finfo_params['library_construction_protocol']
+          )
+          study_file_params['expression_file_info'] = exp_file_info
+        end
+      end
+
+      study_file = StudyFile.create!(study_file_params)
       FileParseService.run_parse_job(study_file, study, user)
     end
   end

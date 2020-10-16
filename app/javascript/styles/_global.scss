@@ -418,6 +418,14 @@ label {
   z-index: 500;
 }
 
+/*
+* Ensures autocomplete is never hidden behind other elements,
+* except loading model (z-index 1050, per Bootstrap default)
+*/
+.ui-autocomplete.ui-front {
+  z-index: 1040;
+}
+
 .gene-panel {
   margin-bottom: 25px !important;
 }

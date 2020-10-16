@@ -30,7 +30,8 @@
 //= require jquery.stickyPanel
 //= require clipboard.min
 //= require scp-igv
-//= require scp-ideogram
+//= require scp-infercnv-ideogram
+//= require scp-related-genes-ideogram
 //= require scp-dot-plot
 //= require ckeditor
 
@@ -260,16 +261,13 @@ function initializeAutocomplete(selector) {
         if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete("instance").menu.active) {
             // allow user to select terms with TAB key
             event.preventDefault();
-        } else if (event.keyCode === $.ui.keyCode.ENTER && keydownIsFromAutocomplete === false) {
-            // only perform search if user has selected items and is pressing ENTER on focused search box
-            $('#perform-gene-search').click();
         }
     }).autocomplete(
         {
             source: function(request, response) {
                 // delegate back to autocomplete, but extract the last term
                 response(
-                    $.ui.autocomplete.filter(window.uniqueGenes, extractLast(request.term))
+                    $.ui.autocomplete.filter(window.SCP.uniqueGenes, extractLast(request.term))
                 );
             },
             minLength: 2,

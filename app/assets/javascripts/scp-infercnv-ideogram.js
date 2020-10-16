@@ -5,6 +5,7 @@ let checkboxes
 let ideoConfig
 let adjustedExpressionThreshold
 let chrMargin
+let expressionThreshold
 
 const legend = [{
   name: 'Expression level',
@@ -75,7 +76,7 @@ function addMarginControl() {
 function updateThreshold(event) {
   let newThreshold
 
-  const expressionThreshold = parseInt(event.target.value)
+  expressionThreshold = parseInt(event.target.value)
 
   adjustedExpressionThreshold = Math.round(expressionThreshold/10 - 4)
   const thresholds = window.originalHeatmapThresholds
@@ -99,8 +100,8 @@ function updateThreshold(event) {
 
 /** Create slider to adjust expression threshold for "gain" or "loss" calls */
 function addThresholdControl() {
-  if (typeof(expressionThreshold) === 'undefined') {
-    window.expressionThreshold = 50
+  if (typeof expressionThreshold === 'undefined') {
+    expressionThreshold = 50
     window.originalHeatmapThresholds =
       ideogram.rawAnnots.metadata.heatmapThresholds
   }
@@ -119,7 +120,7 @@ function addThresholdControl() {
         type="range"
         id="expressionThreshold"
         list="expressionThresholdList"
-        value="${window.expressionThreshold}"
+        value="${expressionThreshold}"
       >
       <datalist id="expressionThresholdList">
         <option value="0" label="0.">
@@ -225,7 +226,6 @@ function initializeIdeogram(url) {
     container: '#ideogram-container',
     organism: window.ideogramInferCnvSettings.organism.toLowerCase(),
     assembly: window.ideogramInferCnvSettings.assembly,
-    dataDir: 'https://unpkg.com/ideogram@1.20.0/dist/data/bands/native/',
     annotationsPath: url,
     annotationsLayout: 'heatmap',
     legend,
