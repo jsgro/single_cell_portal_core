@@ -73,12 +73,9 @@
 
 	<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
       $('#expression_form_<%= study_file._id %>').find('.file-type').on('change', function() {
-          if ($(this).val() === 'MM Coordinate Matrix') {
-              $('#expression_form_<%= study_file._id %>').append("<%= j render partial: 'sort_warning' %>")
-          } else {
-              $('#expression_form_<%= study_file._id %>').find($('.sort-warning')).remove();
-              $('#expression_form_<%= study_file._id %>').find('.initialize-bundle-target').empty();
-          }
+        if ($(this).val() === 'Expression Matrix') {
+          $('#expression_form_<%= study_file._id %>').find('.initialize-bundle-target').empty();
+        }
       });
 
 		$(function() {
