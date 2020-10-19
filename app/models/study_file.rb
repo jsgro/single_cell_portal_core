@@ -53,6 +53,7 @@ class StudyFile
   has_many :cell_metadata, dependent: :destroy
   belongs_to :taxon, optional: true
   belongs_to :genome_assembly, optional: true
+  belongs_to :genome_annotation, optional: true
   belongs_to :study_file_bundle, optional: true
   embeds_one :expression_file_info
 

@@ -61,14 +61,6 @@ class SyntheticStudyPopulator
     file_infos = study_config['files']
     file_infos.each do |finfo|
       infile = File.open("#{synthetic_study_folder}/#{finfo['filename']}")
-      taxon_id = nil
-      if finfo['species_scientific_name'].present?
-        taxon = Taxon.find_by(scientific_name: finfo['species_scientific_name'])
-        if taxon.nil?
-          throw "You must populate the species #{finfo['species_scientific_name']} to ingest the file #{finfo['filename']}. Stopping populate"
-        end
-        taxon_id = taxon.id
-      end
 
       study_file_params = {
         file_type: finfo['type'],
@@ -76,20 +68,18 @@ class SyntheticStudyPopulator
         upload: infile,
         use_metadata_convention: finfo['use_metadata_convention'] ? true : false,
         status: 'uploading',
-        study: study,
-        taxon_id: taxon_id
+        study: study
       }
 
+      study_file_params = study_file_params.merge(process_genomic_file_params(finfo))
+
       if study_file_params[:file_type] == 'Expression Matrix'
-        if taxon_id.nil?
-          throw "You must specify a species in the study_info.json for Expression Matrix files"
-        end
         exp_finfo_params = finfo['expression_file_info']
         if exp_finfo_params.present?
           exp_file_info = ExpressionFileInfo.new(
             is_raw_counts: exp_finfo_params['is_raw_counts'] ? true : false,
             units: exp_finfo_params['units'],
-            library_construction_protocol: exp_finfo_params['library_construction_protocol']
+            library_construction_protocol: exp_finfo_params['library_construction_protocol'],
           )
           study_file_params['expression_file_info'] = exp_file_info
         end
@@ -98,6 +88,40 @@ class SyntheticStudyPopulator
       study_file = StudyFile.create!(study_file_params)
       FileParseService.run_parse_job(study_file, study, user)
     end
+  end
+
+  # process species/annotation arguments, return a hash of params suitable for passing to a StudyFile constructor
+  def self.process_genomic_file_params(file_info)
+    params = {}
+    taxon_id = nil
+    if file_info['species_scientific_name'].present?
+      taxon = Taxon.find_by(scientific_name: file_info['species_scientific_name'])
+      if taxon.nil?
+        throw "You must populate the species #{file_info['species_scientific_name']} to ingest the file #{file_info['filename']}. Stopping populate"
+      end
+      params[:taxon_id] = taxon.id
+    end
+    if file_info['genome_assembly_name'].present?
+      if  params[:taxon_id].nil?
+        throw "You must specify species_scientific_name to specify genome_assembly in #{file_info['filename']}. Stopping populate"
+      end
+      assembly = GenomeAssembly.find_by(name: file_info['genome_assembly_name'], taxon_id: params[:taxon_id])
+      if assembly.nil?
+        throw "You must populate the assembly #{file_info['genome_assembly_name']} to ingest the file #{file_info['filename']}. Stopping populate"
+      end
+      params[:genome_assembly_id] = assembly.id
+    end
+    if file_info['genome_annotation_name'].present?
+      if params[:genome_assembly_id].nil?
+        throw "You must specify genome_annotation_name to specify genome_annotation in #{file_info['filename']}. Stopping populate"
+      end
+      annotation = GenomeAnnotation.find_by(name: file_info['genome_annotation_name'], genome_assembly_id: params[:genome_assembly_id])
+      if assembly.nil?
+        throw "You must populate the GenomeAnnotation #{file_info['genome_annotation_name']} to ingest the file #{file_info['filename']}. Stopping populate"
+      end
+      params[:genome_annotation_id] = annotation.id
+    end
+    params
   end
 
   # utility method to generate a study_info.json file string from an existing study
