@@ -241,8 +241,9 @@ export default function DownloadButton(props) {
         overlay={<Tooltip id='download-tooltip'>{hint}</Tooltip>}>
         <button
           id='download-button'
-          className={`btn btn-primary ${active ? 'active' : 'disabled'}`}>
-          <span onClick={() => {setShow(true)}}>
+          className={`btn btn-primary ${active ? 'active' : 'disabled'}`}
+          onClick={() => {setShow(true)}}>
+          <span>
             <FontAwesomeIcon className="icon-left" icon={faDownload}/>
           Download
           </span>
