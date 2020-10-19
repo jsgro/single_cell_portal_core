@@ -26,7 +26,6 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', function() {
         extraInfo.empty();
         nameField.attr('readonly', false);
     } else if (fileType === 'MM Coordinate Matrix') {
-        form.append("<%= j render partial: 'sort_warning' %>")
         extraInfo.html("<%= j(render partial: 'expression_file_fields', locals: {f: f.dup}) %>");
         taxonTarget.html("<%= j(render partial: 'taxon_fields', locals: {f: f.dup}) %>");
         nameField.val(fileName);
@@ -100,11 +99,6 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', function() {
         if (submitBtn.attr('disabled') === 'disabled' && $('#study-file-<%= study_file.id %> .bundle-select').val() !== '') {
             submitBtn.attr('disabled', false);
         }
-    }
-
-    // hide sort warning if no longer needed
-    if ( fileType !== 'MM Coordinate Matrix') {
-        form.find($('.sort-warning')).remove();
     }
 });
 

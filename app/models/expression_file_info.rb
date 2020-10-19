@@ -11,17 +11,16 @@ class ExpressionFileInfo
 
   # note that species and reference genome/annotation live at the study_file level, not here
 
-  UNITS_VALUES = [nil, 'UMI-corrected raw counts', 'raw counts']
-  validates :units, inclusion: {in: UNITS_VALUES}
+  UNITS_VALUES = ['UMI-corrected raw counts', 'raw counts']
+  validates :units, inclusion: {in: UNITS_VALUES}, allow_blank: true
 
-  BIOSAMPLE_INPUT_TYPE_VALUES = [nil, 'whole cell', 'single nuclei', 'bulk']
-  validates :biosample_input_type, inclusion: {in: BIOSAMPLE_INPUT_TYPE_VALUES}
+  BIOSAMPLE_INPUT_TYPE_VALUES = ['whole cell', 'single nuclei', 'bulk']
+  validates :biosample_input_type, inclusion: {in: BIOSAMPLE_INPUT_TYPE_VALUES}, allow_blank: true
 
-  MULTIMODALITY_VALUES = [nil, 'CITE-seq', 'Patch-seq']
-  validates :multimodality, inclusion: {in: MULTIMODALITY_VALUES}
+  MULTIMODALITY_VALUES = ['CITE-seq', 'Patch-seq']
+  validates :multimodality, inclusion: {in: MULTIMODALITY_VALUES}, allow_blank: true
 
-  LIBRARY_CONSTRUCTION_VALUES = [nil,
-                                 'Smart-seq2/Fluidigm C1',
+  LIBRARY_CONSTRUCTION_VALUES = ['Smart-seq2/Fluidigm C1',
                                  'MARS-seq',
                                  'Seq-Well v1',
                                  'Seq-Well S^3',
@@ -38,5 +37,5 @@ class ExpressionFileInfo
                                  'ATAC-seq',
                                  'ChIP-seq',
                                  'methylomics']
-  validates :library_construction_protocol, inclusion: {in: LIBRARY_CONSTRUCTION_VALUES}
+  validates :library_construction_protocol, inclusion: {in: LIBRARY_CONSTRUCTION_VALUES}, allow_blank: true
 end

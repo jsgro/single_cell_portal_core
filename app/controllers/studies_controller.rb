@@ -1043,7 +1043,9 @@ class StudiesController < ApplicationController
                                        :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :taxon_id, :genome_assembly_id, :study_file_bundle_id,
                                        options: [:cluster_group_id, :cluster_file_id, :font_family, :font_size, :font_color,
                                                  :matrix_id, :submission_id, :bam_id, :analysis_name, :visualization_name,
-                                                 :cluster_name, :annotation_name])
+                                                 :cluster_name, :annotation_name],
+                                       expression_file_info_attributes: [:id, :library_construction_protocol, :units,
+                                                                         :biosample_input_type, :multimodality, :is_raw_counts])
   end
 
   def directory_listing_params

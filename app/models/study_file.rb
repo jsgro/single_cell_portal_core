@@ -56,6 +56,8 @@ class StudyFile
   belongs_to :study_file_bundle, optional: true
   embeds_one :expression_file_info
 
+  accepts_nested_attributes_for :expression_file_info
+
   # field definitions
   field :name, type: String
   field :description, type: String
