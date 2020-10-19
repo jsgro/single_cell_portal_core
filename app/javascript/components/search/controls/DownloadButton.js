@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useContext, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDownload } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
@@ -9,7 +9,7 @@ import {
   useContextStudySearch, hasSearchParams
 } from 'providers/StudySearchProvider'
 import { useContextUser } from 'providers/UserProvider'
-import { useContextDownload } from 'providers/DownloadProvider'
+import { DownloadContext } from 'providers/DownloadProvider'
 import { fetchAuthCode } from 'lib/scp-api'
 
 /**
@@ -203,7 +203,7 @@ function getLeadText(downloadSize) {
 export default function DownloadButton(props) {
   const searchContext = useContextStudySearch()
   const userContext = useContextUser()
-  const downloadContext = useContextDownload({ results: searchContext.results })
+  const downloadContext = useContext(DownloadContext)
 
   const [show, setShow] = useState(false)
 
