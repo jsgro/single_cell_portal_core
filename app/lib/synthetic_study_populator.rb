@@ -71,7 +71,7 @@ class SyntheticStudyPopulator
         study: study
       }
 
-      study_file_params = study_file_params.merge(process_genomic_file_params(finfo))
+      study_file_params.merge!(process_genomic_file_params(finfo))
 
       if study_file_params[:file_type] == 'Expression Matrix'
         exp_finfo_params = finfo['expression_file_info']
@@ -79,7 +79,7 @@ class SyntheticStudyPopulator
           exp_file_info = ExpressionFileInfo.new(
             is_raw_counts: exp_finfo_params['is_raw_counts'] ? true : false,
             units: exp_finfo_params['units'],
-            library_construction_protocol: exp_finfo_params['library_construction_protocol'],
+            library_construction_protocol: exp_finfo_params['library_construction_protocol']
           )
           study_file_params['expression_file_info'] = exp_file_info
         end
