@@ -1,6 +1,5 @@
 attribute	required	type	array	class	ontology	ontology_browser_url	ontology_root	controlled_list_entries	dependency	dependency_condition	dependent	attribute_description
 biosample_id	Yes	string										Biosample ID
-biosample_type	Yes	string		enum				"[""CellLine"",""DerivedType_Organoid"",""DerivedType_InVitroDifferentiated"",""DerivedType_InducedPluripotentStemCell"",""PrimaryBioSample"",""PrimaryBioSample_BodyFluid"",""PrimaryBioSample_CellFreeDNA"",""PrimaryBioSample_PrimaryCell"",""PrimaryBioSample_PrimaryCulture"",""PrimaryBioSample_Stool"",""PrimaryBioSample_Tissue""]"				Type of Biosample
 CellID	Yes	string										Cell ID
 disease	Yes	string	TRUE	ontology	https://www.ebi.ac.uk/ols/api/ontologies/mondo,https://www.ebi.ac.uk/ols/api/ontologies/pato	https://www.ebi.ac.uk/ols/ontologies/mondo,https://www.ebi.ac.uk/ols/ontologies/pato	MONDO_0000001					The disease state(s) of the individual donating the sample at the time of donation
 disease__ontology_label	Yes	string	TRUE	ontology_label					disease			disease__ontology_label
@@ -12,6 +11,7 @@ organ__ontology_label	Yes	string		ontology_label					organ			organ__ontology_lab
 sex	Yes	string		enum				"[""male"", ""female"", ""mixed"", ""unknown""]"				Biological sex
 species	Yes	string		ontology	https://www.ebi.ac.uk/ols/api/ontologies/ncbitaxon	https://www.ebi.ac.uk/ols/ontologies/ncbitaxon	NCBITaxon_2759					The scientific binomial name for the species of the organism.
 species__ontology_label	Yes	string		ontology_label					species			species__ontology_label
+biosample_type		string		enum				"[""CellLine"",""DerivedType_Organoid"",""DerivedType_InVitroDifferentiated"",""DerivedType_InducedPluripotentStemCell"",""PrimaryBioSample"",""PrimaryBioSample_BodyFluid"",""PrimaryBioSample_CellFreeDNA"",""PrimaryBioSample_PrimaryCell"",""PrimaryBioSample_PrimaryCulture"",""PrimaryBioSample_Stool"",""PrimaryBioSample_Tissue""]"				Type of Biosample
 bmi		number										BMI of organism
 cell_type		string		ontology	https://www.ebi.ac.uk/ols/api/ontologies/cl	https://www.ebi.ac.uk/ols/ontologies/cl	CL_0000548					Cell type name determined via unsupervised clustering and marker genes
 cell_type__ontology_label		string		ontology_label					cell_type			cell_type__ontology_label
