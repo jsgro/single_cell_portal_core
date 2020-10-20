@@ -600,7 +600,8 @@ module Api
         @configuration = ::BulkDownloadService.generate_curl_configuration(study_files: files_requested,
                                                                            user: requested_user,
                                                                            study_bucket_map: bucket_map,
-                                                                           output_pathname_map: pathname_map)
+                                                                           output_pathname_map: pathname_map,
+                                                                           root_url: root_url)
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
         logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size} total files"

@@ -17,13 +17,23 @@ class BulkDownloadService
   #
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
-  def self.generate_curl_configuration(study_files:, user:, study_bucket_map:, output_pathname_map:)
+  def self.generate_curl_configuration(study_files:, user:, study_bucket_map:, output_pathname_map:, root_url:)
     curl_configs = ['--create-dirs', '--compressed']
     # Get signed URLs for all files in the requested download objects, and update user quota
     Parallel.map(study_files, in_threads: 100) do |study_file|
       client = FireCloudClient.new
       curl_configs << self.get_single_curl_command(file: study_file, fc_client: client, user: user,
                                                    study_bucket_map: study_bucket_map, output_pathname_map: output_pathname_map)
+    end
+    study_files.map(&:study).uniq.map do |study|
+      manifest_config = ""
+      if Rails.env.development?
+        # if we're in development, allow not checking the cert
+        manifest_config += "-k\n"
+      end
+      manifest_config += "url=#{root_url}/api/v1/studies/#{study.id}/manifest\n"
+      manifest_config += "output=#{study.accession}/manifest.json"
+      curl_configs << manifest_config
     end
     curl_configs.join("\n\n")
   end
@@ -183,5 +193,48 @@ class BulkDownloadService
       output_map[study_file.id.to_s] = study_file.bulk_download_pathname
     end
     output_map
+  end
+
+  # generate a study_info.json object from an existing study
+  def self.generate_study_manifest(study)
+    info = {}
+    info['study'] = {
+      name: study.name,
+      description: study.description.truncate(150),
+      accession: study.accession,
+      cell_count: study.cell_count
+    }
+    info['files'] = study.study_files.map{|f| generate_study_file_manifest(f)}
+    info
+  end
+
+  # generate a study_info.json object from an existing study_file
+  def self.generate_study_file_manifest(study_file)
+    output = {
+      filename: study_file.name,
+      file_type: study_file.file_type
+    }
+
+    if study_file.expression_file_info
+      # explicitly list properties to copy to avoid accidentally exposing internal fields
+      props_to_copy =  [
+        :library_construction_protocol,
+        :units,
+        :biosample_input_type,
+        :multimodality,
+        :is_raw_counts
+      ]
+      props_to_copy.each { |prop| output[prop] = study_file.expression_file_info[prop] }
+    end
+    if study_file.taxon
+      output[:species_scientific_name] = study_file.taxon.scientific_name
+    end
+    if study_file.genome_assembly
+      output[:genome_assembly_accession] = study_file.genome_assembly.accession
+    end
+    if study_file.genome_annotation
+      output[:genome_annotation_name] = study_file.genome_annotation.name
+    end
+    output
   end
 end
