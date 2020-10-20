@@ -38,4 +38,15 @@ class ExpressionFileInfo
                                  'ChIP-seq',
                                  'methylomics']
   validates :library_construction_protocol, inclusion: {in: LIBRARY_CONSTRUCTION_VALUES}, allow_blank: true
+  validate :unset_units_unless_raw_counts
+
+  private
+
+  # unset the value for :units unless :is_raw_counts is true
+  # this has to be invoked as a validation as callbacks only fire on parent document (StudyFile)
+  def unset_units_unless_raw_counts
+    unless self.is_raw_counts
+      self.units = nil
+    end
+  end
 end

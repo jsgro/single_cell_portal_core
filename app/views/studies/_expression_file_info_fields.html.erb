@@ -1,11 +1,13 @@
-<div class="row">
+<div class="row expression-file-info-fields">
   <div class="col-sm-2">
     <%= f.label :is_raw_counts, 'Raw Count Matrix?' %><br />
-    <%= f.select :is_raw_counts, options_for_select([['No', 0],['Yes', 1]], f.object.is_raw_counts), {}, class: 'form-control' %>
+    <%= f.select :is_raw_counts, options_for_select([['No', 0],['Yes', 1]], f.object.is_raw_counts ? 1 : 0), {}, class: 'form-control raw-counts-select is-raw-counts-dropdown' %>
   </div>
   <div class="col-sm-2">
     <%= f.label :units %><br />
-    <%= f.select :units, options_for_select(ExpressionFileInfo::UNITS_VALUES, f.object.units), {include_blank: true}, class: 'form-control' %>
+    <%= f.select :units, options_for_select(ExpressionFileInfo::UNITS_VALUES, f.object.units),
+                 {include_blank: true},
+                 class: 'form-control raw-counts-select counts-unit-dropdown', disabled: !f.object.is_raw_counts %>
   </div>
   <div class="col-sm-2">
     <%= f.label :multimodality %><br />
@@ -26,3 +28,4 @@
 
   </div>
 </div>
+

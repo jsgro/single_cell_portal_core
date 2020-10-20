@@ -477,6 +477,19 @@ function enableDefaultActions() {
         $(this).off('mousewheel.disableScroll')
     });
 
+    // reset units dropdown based on is_raw_counts?
+    $('body').on('change', '.raw-counts-select', function() {
+        var expFileInfoForm = $(this).closest('.expression-file-info-fields')
+        var countSelect = expFileInfoForm.find('.is-raw-counts-dropdown');
+        var unitSelect = expFileInfoForm.find('.counts-unit-dropdown');
+        if ( countSelect.val() == '0' ) {
+            unitSelect.val('');
+            setElementsEnabled(unitSelect, false);
+        } else {
+            setElementsEnabled(unitSelect, true);
+        }
+    });
+
     // when clicking the main study view page tabs, update the current URL so that when you refresh the tab stays open
     $('#study-tabs').on('shown.bs.tab', function(event) {
         var anchor = $(event.target).attr('href');
@@ -1156,4 +1169,5 @@ function setElementsEnabled(selector, enabled= true) {
         'cursor': enabled ? 'auto' : 'not-allowed'
     };
     selector.css(elementCss).parent().css(parentCss);
+    selector.attr('disabled', enabled ? false : 'disabled')
 }
