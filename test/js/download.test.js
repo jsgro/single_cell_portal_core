@@ -8,68 +8,44 @@ import { mount } from 'enzyme'
 const fetch = require('node-fetch')
 
 import DownloadButton from 'components/search/controls/DownloadButton'
-import * as UserProvider from 'providers/UserProvider'
-import * as StudySearchProvider
-  from 'providers/StudySearchProvider'
-import * as DownloadProvider
-  from 'providers/DownloadProvider'
+import { UserContext } from 'providers/UserProvider'
+import { DownloadContext } from 'providers/DownloadProvider'
+import { StudySearchContext } from 'providers/StudySearchProvider'
+
+const studyContext = {
+  params: { terms: 'foo' },
+  results: { matchingAccessions: ['SCP1', 'SCP2'] }
+}
 
 describe('Download components for faceted search', () => {
   beforeAll(() => {
     global.fetch = fetch
-
-    const userContext = { accessToken: 'test' }
-    const studySearchContext = {
-      results: { matchingAccessions: ['SCP1', 'SCP2'] },
-      params: {
-        terms: 'test',
-        facets: {},
-        page: 1
-      }
-    }
-    const downloadContext = {
-      downloadSize: {
-        metadata: { total_bytes: 200, total_files: 2 },
-        expression: { total_bytes: 201, total_files: 3 },
-        isLoaded: true
-      },
-      params: {
-        terms: 'test',
-        facets: {},
-        page: 1
-      }
-    }
-
-    jest.spyOn(UserProvider, 'useContextUser')
-      .mockImplementation(() => {
-        return userContext
-      })
-
-    jest.spyOn(StudySearchProvider, 'useContextStudySearch')
-      .mockImplementation(() => {
-        return studySearchContext
-      })
-
-    jest.spyOn(DownloadProvider, 'useContextDownload')
-      .mockImplementation(() => {
-        return downloadContext
-      })
   })
 
   it('shows Download button', async () => {
-    const wrapper = mount((< DownloadButton />))
+    const wrapper = mount((
+      <UserContext.Provider value={{ accessToken: 'test'}}>
+        <StudySearchContext.Provider value={ studyContext }>
+          <DownloadContext.Provider value={{downloadSize: 40, isLoaded: true}}>
+            <DownloadButton/>
+          </DownloadContext.Provider>
+        </StudySearchContext.Provider>
+      </UserContext.Provider>
+    ))
     expect(wrapper.find('DownloadButton')).toHaveLength(1)
   })
 
   it('shows expected tooltip for unauthenticated users', async () => {
+    const wrapper = mount((
+      <UserContext.Provider value={{ accessToken: ''}}>
+        <StudySearchContext.Provider value={ studyContext }>
+          <DownloadContext.Provider value={{downloadSize: 40, isLoaded: true}}>
+            <DownloadButton/>
+          </DownloadContext.Provider>
+        </StudySearchContext.Provider>
+      </UserContext.Provider>
+    ))
 
-    const userContext = { accessToken: '' } // as when unauthenticated
-    jest.spyOn(UserProvider, 'useContextUser')
-      .mockImplementation(() => {
-        return userContext
-      })
-
-    const wrapper = mount((< DownloadButton />))
     wrapper.find('#download-button > span').simulate('mouseenter')
 
     const tooltipHint =
