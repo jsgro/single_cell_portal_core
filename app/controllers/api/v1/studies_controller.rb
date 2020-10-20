@@ -592,6 +592,7 @@ module Api
       def generate_manifest
         manifest_obj = BulkDownloadService.generate_study_manifest(@study)
         # prettify the string so it's more human-readable after download
+        response.headers['Content-Disposition'] = 'attachment; filename=manifest.json'
         render json: JSON.pretty_generate(manifest_obj)
       end
 

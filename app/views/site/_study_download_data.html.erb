@@ -192,6 +192,14 @@
         </td>
       </tr>
     <% end %>
+      <tr>
+        <td>Manifest</td>
+        <td>Listing of all study files, and any supplementary information (units, protocols, etc...)</td>
+        <td></td>
+        <td></td>
+        <td><%= link_to "<span class='fas fa-download'></span> 1 KB".html_safe, "#{api_v1_study_path(@study)}/manifest", class: "btn btn-primary dl-link" %>
+        </td>
+      </tr>
     </tbody>
   </table>
   <% if @primary_study_files.any? || @primary_data.any? %>
