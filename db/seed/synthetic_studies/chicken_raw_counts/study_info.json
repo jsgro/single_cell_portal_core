@@ -7,12 +7,12 @@
   "files": [
     {
       "type": "Metadata",
-      "filename": "raw2_chicken_40cells_4_genes.metadata.txt",
+      "filename": "raw2_chicken_40_cells_4_genes.metadata.txt",
       "use_metadata_convention": false
     },
     {
       "type": "Expression Matrix",
-      "filename": "raw2_chicken_40cells_4_genes.dense.txt",
+      "filename": "raw2_chicken_40_cells_4_genes.dense.txt",
       "species_scientific_name": "Gallus gallus",
       "expression_file_info": {
         "is_raw_counts": true,
@@ -23,12 +23,12 @@
     },
     {
       "type": "Cluster",
-      "filename": "raw2_chicken_40cells_4_genes.cluster.txt",
+      "filename": "raw2_chicken_40_cells_4_genes.cluster.txt",
       "name": "cluster"
     },
     {
       "type": "Cluster",
-      "filename": "raw2_chicken_40cells_4_genes.spatial.txt",
+      "filename": "raw2_chicken_40_cells_4_genes.spatial.txt",
       "name": "spatial"
     }
   ]
