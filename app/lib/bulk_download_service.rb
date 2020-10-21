@@ -17,7 +17,11 @@ class BulkDownloadService
   #
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
-  def self.generate_curl_configuration(study_files:, user:, study_bucket_map:, output_pathname_map:, root_url:)
+  def self.generate_curl_configuration(study_files:,
+                                       user:,
+                                       study_bucket_map:,
+                                       output_pathname_map:,
+                                       host:)
     curl_configs = ['--create-dirs', '--compressed']
     # Get signed URLs for all files in the requested download objects, and update user quota
     Parallel.map(study_files, in_threads: 100) do |study_file|
@@ -25,13 +29,16 @@ class BulkDownloadService
       curl_configs << self.get_single_curl_command(file: study_file, fc_client: client, user: user,
                                                    study_bucket_map: study_bucket_map, output_pathname_map: output_pathname_map)
     end
-    study_files.map(&:study).uniq.map do |study|
+    studies = study_files.map(&:study).uniq
+    totat = user.create_totat(1800, studies.map{|s| "#{s.accession}-view"})
+    studies.map do |study|
       manifest_config = ""
       if Rails.env.development?
         # if we're in development, allow not checking the cert
         manifest_config += "-k\n"
       end
-      manifest_config += "url=#{root_url}/api/v1/studies/#{study.id}/manifest\n"
+      manifest_path = host + Rails.application.routes.url_helpers.api_v1_study_path(study)
+      manifest_config += "url=#{manifest_path}/manifest?auth_code=#{totat[:totat]}\n"
       manifest_config += "output=#{study.accession}/manifest.json"
       curl_configs << manifest_config
     end

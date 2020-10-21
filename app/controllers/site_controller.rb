@@ -15,7 +15,7 @@ class SiteController < ApplicationController
   respond_to :html, :js, :json
 
   before_action :set_study, except: [:index, :search, :legacy_study, :get_viewable_studies, :search_all_genes, :privacy_policy, :terms_of_service,
-                                     :view_workflow_wdl, :create_totat, :log_action, :get_taxon, :get_taxon_assemblies, :covid19]
+                                     :view_workflow_wdl, :log_action, :get_taxon, :get_taxon_assemblies, :covid19]
   before_action :set_cluster_group, only: [:study, :render_cluster, :render_gene_expression_plots, :render_global_gene_expression_plots,
                                            :render_gene_set_expression_plots, :view_gene_expression, :view_gene_set_expression,
                                            :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap, :expression_query,
@@ -29,7 +29,7 @@ class SiteController < ApplicationController
                                                   :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap]
   before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :search_all_genes, :render_global_gene_expression_plots, :privacy_policy,
                                                   :terms_of_service, :search, :precomputed_results, :expression_query, :annotation_query, :view_workflow_wdl,
-                                                  :log_action, :get_workspace_samples, :update_workspace_samples, :create_totat,
+                                                  :log_action, :get_workspace_samples, :update_workspace_samples,
                                                   :get_workflow_options, :get_taxon, :get_taxon_assemblies, :covid19, :record_download_acceptance]
   before_action :check_compute_permissions, only: [:get_fastq_files, :get_workspace_samples, :update_workspace_samples,
                                                    :delete_workspace_samples, :get_workspace_submissions, :create_workspace_submission,
@@ -752,16 +752,6 @@ class SiteController < ApplicationController
     execute_file_download(@study); return if performed?
   end
 
-  def create_totat
-    if !user_signed_in?
-      error = {'message': "Forbidden: You must be signed in to do this"}
-      render json:  + error, status: 403
-    end
-    half_hour = 1800 # seconds
-    totat_and_ti = current_user.create_totat(time_interval=half_hour)
-    render json: totat_and_ti
-  end
-
   # Returns text file listing signed URLs, etc. of files for download via curl.
   # That is, this return 'cfg.txt' used as config (K) argument in 'curl -K cfg.txt'
   def download_bulk_files
@@ -784,9 +774,9 @@ class SiteController < ApplicationController
     totat = params[:totat]
 
     # Time-based one-time access token (totat) is used to track user's download quota
-    valid_totat = User.verify_totat(totat)
+    valid_totat = User.verify_totat(totat, 'bulk_download')
 
-    if valid_totat == false
+    if valid_totat.nil?
       render plain: "Forbidden: Invalid access token " + totat, status: 403
       return
     else

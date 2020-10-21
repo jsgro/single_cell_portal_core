@@ -181,7 +181,6 @@ Rails.application.routes.draw do
     get 'data/public/:accession/:study_name', to: 'site#download_file', as: :download_file
     get 'data/private/:accession/:study_name', to: 'studies#download_private_file', as: :download_private_file
 
-    post 'totat', to: 'site#create_totat', as: :create_totat
     get 'bulk_data/:accession/:study_name/:download_object/:totat', to: 'site#download_bulk_files', as: :download_bulk_files,
         constraints: {filename: /.*/}
 

@@ -414,8 +414,8 @@ module Api
 
       def create_auth_code
         half_hour = 1800 # seconds
-        otac_and_ti = current_api_user.create_totat(half_hour)
-        auth_code_response = {auth_code: otac_and_ti[:totat], time_interval: otac_and_ti[:time_interval]}
+        totat = current_api_user.create_totat(half_hour, ["bulk_download"])
+        auth_code_response = {auth_code: totat[:totat], time_interval: totat[:totat_info][:valid_seconds]}
         render json: auth_code_response
       end
 
@@ -554,7 +554,7 @@ module Api
 
       def bulk_download
         totat = params[:auth_code]
-        valid_totat = User.verify_totat(totat)
+        valid_totat = User.verify_totat(totat, "bulk_download")
 
         # sanitize study accessions and file types
         valid_accessions = self.class.find_matching_accessions(params[:accessions])
@@ -601,7 +601,7 @@ module Api
                                                                            user: requested_user,
                                                                            study_bucket_map: bucket_map,
                                                                            output_pathname_map: pathname_map,
-                                                                           root_url: root_url)
+                                                                           host: "#{request.protocol}#{request.host_with_port}")
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
         logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size} total files"
