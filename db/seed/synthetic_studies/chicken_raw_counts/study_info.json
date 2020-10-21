@@ -23,11 +23,13 @@
     },
     {
       "type": "Cluster",
-      "filename": "raw2_chicken_40cells_4_genes.cluster.txt"
+      "filename": "raw2_chicken_40cells_4_genes.cluster.txt",
+      "name": "cluster"
     },
     {
       "type": "Cluster",
-      "filename": "raw2_chicken_40cells_4_genes.spatial.txt"
+      "filename": "raw2_chicken_40cells_4_genes.spatial.txt",
+      "name": "spatial"
     }
   ]
 }
