@@ -70,18 +70,23 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     path_map = BulkDownloadService.generate_output_path_map([study_file])
     signed_url = "https://storage.googleapis.com/#{@study.bucket_id}/#{study_file.upload_file_name}"
     output_path = study_file.bulk_download_pathname
+    fake_hostname = "https://localhost"
+    manifest_path = "#{fake_hostname}/single_cell/api/v1/studies/#{@study.id}/manifest"
 
     # mock call to GCS
     mock = Minitest::Mock.new
     mock.expect :execute_gcloud_method, signed_url, [:generate_signed_url, Integer, String, String, Hash]
-
+    byebug
     FireCloudClient.stub :new, mock do
       configuration = BulkDownloadService.generate_curl_configuration(study_files: [study_file], user: @user,
                                                                       study_bucket_map: bucket_map,
-                                                                      output_pathname_map: path_map)
+                                                                      output_pathname_map: path_map,
+                                                                      hostname: fake_hostname)
+      byebug
       mock.verify
       assert configuration.include?(signed_url), "Configuration does not include expected signed URL (#{signed_url}): #{configuration}"
       assert configuration.include?(output_path), "Configuration does not include expected output path (#{output_path}): #{configuration}"
+      assert configuration.include?(manifest_path), "Configuration does not include manifest link (#{manifest_path}): #{configuration}"
     end
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
@@ -144,4 +149,30 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  test 'should generate study manifest file' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study = Study.new(name: 'test manifest', description: 'stuff')
+    study.assign_accession # need an accession for study link to be generated
+    raw_counts_file = StudyFile.new(
+      study: study,
+      file_type: 'Expression Matrix',
+      name: 'test_exp_validate',
+      taxon_id: Taxon.new.id,
+      expression_file_info: ExpressionFileInfo.new(
+        units: 'raw counts',
+        library_construction_protocol: 'MARS-seq',
+        is_raw_counts: true
+      )
+    )
+    study.study_files << raw_counts_file
+    manifest_obj = BulkDownloadService.generate_study_manifest(study, 'localhost')
+    # just test basic properties for now, we can add more once the format is finalized
+    assert_equal study.name, manifest_obj[:study][:name]
+    assert_equal 1, manifest_obj[:files].count
+    byebug
+    assert_equal raw_counts_file.expression_file_info.units,
+                 manifest_obj[:files][0][:units]
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
 end

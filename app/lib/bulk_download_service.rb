@@ -205,17 +205,17 @@ class BulkDownloadService
 
   # generate a study_info.json object from an existing study
   def self.generate_study_manifest(study, hostname)
-    info = {}
-    info['study'] = {
+    info = HashWithIndifferentAccess.new
+    info[:study] = {
       name: study.name,
-      description: study.description.truncate(150),
+      description: study.description.try(:truncate, 150),
       accession: study.accession,
       cell_count: study.cell_count,
       link: hostname + Rails.application.routes.url_helpers.view_study_path(accession: study.accession, study_name: study.name)
     }
-    info['files'] = study.study_files
-                         .where(queued_for_deletion: false)
-                         .map{|f| generate_study_file_manifest(f)}
+    info[:files] = study.study_files
+                        .select{|sf| !sf.queued_for_deletion }
+                        .map{|f| generate_study_file_manifest(f)}
     info
   end
 
