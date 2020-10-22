@@ -9,9 +9,9 @@
                  {include_blank: true},
                  class: 'form-control raw-counts-select counts-unit-dropdown', disabled: !f.object.is_raw_counts %>
   </div>
-  <div class="col-sm-2">
-    <%= f.label :multimodality %><br />
-    <%= f.select :multimodality, options_for_select(ExpressionFileInfo::MULTIMODALITY_VALUES, f.object.multimodality),
+  <div class="col-sm-3">
+    <%= f.label :biosample_input_type %><br />
+    <%= f.select :biosample_input_type, options_for_select(ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES, f.object.biosample_input_type),
                  {include_blank: true}, class: 'form-control' %>
 
   </div>
@@ -21,9 +21,9 @@
                  options_for_select(ExpressionFileInfo::LIBRARY_CONSTRUCTION_VALUES, f.object.library_construction_protocol),
                  {include_blank: true}, class: 'form-control' %>
   </div>
-  <div class="col-sm-3">
-    <%= f.label :biosample_input_type %><br />
-    <%= f.select :biosample_input_type, options_for_select(ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES, f.object.biosample_input_type),
+  <div class="col-sm-2">
+    <%= f.label :multimodality %><br />
+    <%= f.select :multimodality, options_for_select(ExpressionFileInfo::MULTIMODALITY_VALUES, f.object.multimodality),
                  {include_blank: true}, class: 'form-control' %>
 
   </div>
