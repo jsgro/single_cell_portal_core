@@ -32,6 +32,7 @@ import { logPageView, logClick, logMenuChange, startPendingEvent, log } from 'li
 import { getLogPlotProps } from 'lib/scp-api-metrics'
 import { formatTerms } from 'providers/StudySearchProvider'
 import createTracesAndLayout from 'lib/kernel-functions'
+import * as ScpApi from 'lib/scp-api'
 
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI
@@ -73,6 +74,7 @@ window.SCP.log = log
 window.SCP.startPendingEvent = startPendingEvent
 window.SCP.getLogPlotProps = getLogPlotProps
 window.SCP.formatTerms = formatTerms
+window.SCP.ScpApi = ScpApi
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code

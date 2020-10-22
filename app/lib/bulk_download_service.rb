@@ -14,6 +14,7 @@ class BulkDownloadService
   #   - +user+ (User) => User requesting download
   #   - +study_bucket_map+ => Map of study IDs to bucket names
   #   - +output_pathname_map+ => Map of study file IDs to output pathnames
+  #   - +host+ => hostname of the server instance, used to generate manifest links
   #
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
@@ -21,7 +22,7 @@ class BulkDownloadService
                                        user:,
                                        study_bucket_map:,
                                        output_pathname_map:,
-                                       host:)
+                                       hostname:)
     curl_configs = ['--create-dirs', '--compressed']
     # Get signed URLs for all files in the requested download objects, and update user quota
     Parallel.map(study_files, in_threads: 100) do |study_file|
@@ -37,7 +38,7 @@ class BulkDownloadService
         # if we're in development, allow not checking the cert
         manifest_config += "-k\n"
       end
-      manifest_path = host + Rails.application.routes.url_helpers.api_v1_study_path(study)
+      manifest_path = hostname + Rails.application.routes.url_helpers.api_v1_study_path(study)
       manifest_config += "url=#{manifest_path}/manifest?auth_code=#{totat[:totat]}\n"
       manifest_config += "output=#{study.accession}/manifest.json"
       curl_configs << manifest_config
@@ -203,15 +204,18 @@ class BulkDownloadService
   end
 
   # generate a study_info.json object from an existing study
-  def self.generate_study_manifest(study)
+  def self.generate_study_manifest(study, hostname)
     info = {}
     info['study'] = {
       name: study.name,
       description: study.description.truncate(150),
       accession: study.accession,
-      cell_count: study.cell_count
+      cell_count: study.cell_count,
+      link: hostname + Rails.application.routes.url_helpers.view_study_path(accession: study.accession, study_name: study.name)
     }
-    info['files'] = study.study_files.map{|f| generate_study_file_manifest(f)}
+    info['files'] = study.study_files
+                         .where(queued_for_deletion: false)
+                         .map{|f| generate_study_file_manifest(f)}
     info
   end
 

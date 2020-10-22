@@ -32,7 +32,7 @@ async function generateDownloadConfig(matchingAccessions) {
 
   // "-k" === "--insecure"
   let curlSecureFlag = ''
-  if (('SCP' in window) && window.location.host === 'localhost') {
+  if (('SCP' in window) && window.location.hostname === 'localhost') {
     curlSecureFlag = 'k'
   }
 
