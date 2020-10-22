@@ -37,12 +37,12 @@ var bootstrapWizardCreate = function(element, options) {
 		}
 
 		// See if we're currently in the first/last then disable the previous and last buttons
-		$($settings.previousSelector, element).toggleClass('disabled', (obj.firstIndex() >= obj.currentIndex()));
-		$($settings.nextSelector, element).toggleClass('disabled', (obj.currentIndex() >= obj.navigationLength()));
+		$($settings.previousSelector, element).toggleClass('disabled dimmed', (obj.firstIndex() >= obj.currentIndex()));
+		$($settings.nextSelector, element).toggleClass('disabled dimmed', (obj.currentIndex() >= obj.navigationLength()));
 		$($settings.nextSelector, element).toggleClass('hidden', (obj.currentIndex() >= obj.navigationLength() && $($settings.finishSelector, element).length > 0));
 		$($settings.lastSelector, element).toggleClass('hidden', (obj.currentIndex() >= obj.navigationLength() && $($settings.finishSelector, element).length > 0));
 		$($settings.finishSelector, element).toggleClass('hidden', (obj.currentIndex() < obj.navigationLength()));
-		$($settings.backSelector, element).toggleClass('disabled', (historyStack.length == 0));
+		$($settings.backSelector, element).toggleClass('disabled dimmed', (historyStack.length == 0));
 		$($settings.backSelector, element).toggleClass('hidden', (obj.currentIndex() >= obj.navigationLength() && $($settings.finishSelector, element).length > 0));
 
 		// We are unbinding and rebinding to ensure single firing and no double-click errors
