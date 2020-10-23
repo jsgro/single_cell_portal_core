@@ -601,7 +601,7 @@ module Api
                                                                            user: requested_user,
                                                                            study_bucket_map: bucket_map,
                                                                            output_pathname_map: pathname_map,
-                                                                           host: "#{request.protocol}#{request.host_with_port}")
+                                                                           hostname: "#{request.protocol}#{request.host_with_port}")
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
         logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size} total files"
