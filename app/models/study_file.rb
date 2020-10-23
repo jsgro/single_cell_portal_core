@@ -244,6 +244,35 @@ class StudyFile
       key :default, {}
       key :description, 'Key/Value storage of extra file options'
     end
+    property :expression_file_info do
+      key :title, :ExpressionFileInfo
+      key :type, :object
+      key :description, 'Expression matrix-specific file information'
+      property :is_raw_counts do
+        key :type, :boolean
+        key :description, 'Indication of whether matrix contains raw counts data'
+      end
+      property :units do
+        key :type, :string
+        key :description, 'Type of units for raw counts file'
+        key :enum, ExpressionFileInfo::UNITS_VALUES
+      end
+      property :biosample_input_type do
+        key :type, :string
+        key :description, 'Type of biosample input'
+        key :enum, ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
+      end
+      property :library_construction_protocol do
+        key :type, :string
+        key :description, 'Protocol used to generate expression matrix'
+        key :enum, ExpressionFileInfo::LIBRARY_CONSTRUCTION_VALUES
+      end
+      property :multimodality do
+        key :type, :string
+        key :description, 'Multimodality type'
+        key :enum, ExpressionFileInfo::MULTIMODALITY_VALUES
+      end
+    end
     property :created_at do
       key :type, :string
       key :format, :date_time
@@ -361,6 +390,34 @@ class StudyFile
           key :default, {}
           key :description, 'Key/Value storage of extra file options'
         end
+        property :expression_file_info do
+          key :type, :object
+          key :description, 'Expression matrix-specific file information'
+          property :is_raw_counts do
+            key :type, :boolean
+            key :description, 'Indication of whether matrix contains raw counts data'
+          end
+          property :units do
+            key :type, :string
+            key :description, 'Type of units for raw counts file'
+            key :enum, ExpressionFileInfo::UNITS_VALUES
+          end
+          property :biosample_input_type do
+            key :type, :string
+            key :description, 'Type of biosample input'
+            key :enum, ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
+          end
+          property :library_construction_protocol do
+            key :type, :string
+            key :description, 'Protocol used to generate expression matrix'
+            key :enum, ExpressionFileInfo::LIBRARY_CONSTRUCTION_VALUES
+          end
+          property :multimodality do
+            key :type, :string
+            key :description, 'Multimodality type'
+            key :enum, ExpressionFileInfo::MULTIMODALITY_VALUES
+          end
+        end
       end
     end
   end
@@ -419,6 +476,34 @@ class StudyFile
           key :type, :object
           key :default, {}
           key :description, 'Key/Value storage of extra file options'
+        end
+        property :expression_file_info do
+          key :type, :object
+          key :description, 'Expression matrix-specific file information'
+          property :is_raw_counts do
+            key :type, :boolean
+            key :description, 'Indication of whether matrix contains raw counts data'
+          end
+          property :units do
+            key :type, :string
+            key :description, 'Type of units for raw counts file'
+            key :enum, ExpressionFileInfo::UNITS_VALUES
+          end
+          property :biosample_input_type do
+            key :type, :string
+            key :description, 'Type of biosample input'
+            key :enum, ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
+          end
+          property :library_construction_protocol do
+            key :type, :string
+            key :description, 'Protocol used to generate expression matrix'
+            key :enum, ExpressionFileInfo::LIBRARY_CONSTRUCTION_VALUES
+          end
+          property :multimodality do
+            key :type, :string
+            key :description, 'Multimodality type'
+            key :enum, ExpressionFileInfo::MULTIMODALITY_VALUES
+          end
         end
       end
     end
