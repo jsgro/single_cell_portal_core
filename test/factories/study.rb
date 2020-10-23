@@ -3,7 +3,6 @@ FactoryBot.define do
   # in the description of the study, to aid in test DB uniqueness and cleanup efforts
   factory :study do
     transient do
-      test_name { 'test' }
       auto_suffixes { true }
     end
     data_dir { '/tmp' }

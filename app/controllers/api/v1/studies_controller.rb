@@ -554,13 +554,6 @@ module Api
             key :required, true
             key :type, :string
           end
-          parameter do
-            key :name, :file_types
-            key :in, :query
-            key :description, 'File types to include in the manifest (default is all)'
-            key :required, false
-            key :type, :array
-          end
           response 200 do
             key :description, 'Manifest file'
             schema do
@@ -572,7 +565,7 @@ module Api
             key :description, ApiBaseController.unauthorized
           end
           response 403 do
-            key :description, ApiBaseController.forbidden('edit Study')
+            key :description, ApiBaseController.forbidden('View Study')
           end
           response 404 do
             key :description, ApiBaseController.not_found(Study)
