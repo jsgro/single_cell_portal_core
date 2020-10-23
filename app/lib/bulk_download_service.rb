@@ -214,7 +214,7 @@ class BulkDownloadService
       link: hostname + Rails.application.routes.url_helpers.view_study_path(accession: study.accession, study_name: study.name)
     }
     info[:files] = study.study_files
-                        .select{|sf| !sf.queued_for_deletion }
+                        .where(queued_for_deletion: false)
                         .map{|f| generate_study_file_manifest(f)}
     info
   end

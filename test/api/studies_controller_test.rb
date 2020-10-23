@@ -73,6 +73,16 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  # get the study manifest for a study
+  test 'should get study manifest' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    execute_http_request(:get, "#{api_v1_studies_path(id: @study.id)}/manifest")
+    assert_response :success
+    assert_json['study']['name'] == @study.name
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
   # test sync function by manually creating a new study using FireCloudClient methods, adding shares and files to the bucket,
   # then call sync_study API method
   test 'should create and then sync study' do
