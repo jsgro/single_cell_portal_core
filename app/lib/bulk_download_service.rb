@@ -31,7 +31,10 @@ class BulkDownloadService
                                                    study_bucket_map: study_bucket_map, output_pathname_map: output_pathname_map)
     end
     studies = study_files.map(&:study).uniq
-    totat = user.create_totat(1800, studies.map{|s| "#{s.accession}-view"})
+    study_manifest_paths = studies.map do |study|
+      "#{Rails.application.routes.url_helpers.api_v1_study_path(study)}/manifest"
+    end
+    totat = user.create_totat(1800, study_manifest_paths)
     studies.map do |study|
       manifest_config = ""
       if Rails.env.development?

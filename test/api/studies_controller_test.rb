@@ -79,7 +79,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
 
     execute_http_request(:get, "#{api_v1_studies_path(id: @study.id)}/manifest")
     assert_response :success
-    assert_json['study']['name'] == @study.name
+    assert json['study']['name'] == @study.name
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 

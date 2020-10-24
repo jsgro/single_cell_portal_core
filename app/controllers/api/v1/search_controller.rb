@@ -414,7 +414,7 @@ module Api
 
       def create_auth_code
         half_hour = 1800 # seconds
-        totat = current_api_user.create_totat(half_hour, ["bulk_download"])
+        totat = current_api_user.create_totat(half_hour, "#{api_v1_search_path}/bulk_download")
         auth_code_response = {auth_code: totat[:totat], time_interval: totat[:totat_info][:valid_seconds]}
         render json: auth_code_response
       end
@@ -553,22 +553,13 @@ module Api
       end
 
       def bulk_download
-        totat = params[:auth_code]
-        valid_totat = User.verify_totat(totat, "bulk_download")
-
         # sanitize study accessions and file types
         valid_accessions = self.class.find_matching_accessions(params[:accessions])
         sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
 
-        # validate request parameters
-        if totat.blank? || valid_totat == false
-          render json: {error: 'Invalid authorization token'}, status: 401 and return
-        elsif valid_accessions.blank?
+        if valid_accessions.blank?
           render json: {error: 'Invalid request parameters; study accessions not found'}, status: 400 and return
         end
-
-        # load the user from the auth token
-        requested_user = valid_totat
 
         permitted_accessions = ::BulkDownloadService.get_permitted_accessions(study_accessions: valid_accessions,
                                                                              user: current_api_user)
@@ -585,7 +576,7 @@ module Api
         # determine quota impact & update user's download quota
         # will throw a RuntimeError if the download exceeds the user's daily quota
         begin
-          ::BulkDownloadService.update_user_download_quota(user: requested_user, files: files_requested)
+          ::BulkDownloadService.update_user_download_quota(user: current_api_user, files: files_requested)
         rescue RuntimeError => e
           render json: {error: e.message}, status: 403 and return
         end
@@ -595,10 +586,10 @@ module Api
         pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested)
 
         # generate curl config file
-        logger.info "Beginning creation of curl configuration for user_id, auth token: #{requested_user.id}, #{totat}"
+        logger.info "Beginning creation of curl configuration for user_id, auth token: #{current_api_user.id}"
         start_time = Time.zone.now
         @configuration = ::BulkDownloadService.generate_curl_configuration(study_files: files_requested,
-                                                                           user: requested_user,
+                                                                           user: current_api_user,
                                                                            study_bucket_map: bucket_map,
                                                                            output_pathname_map: pathname_map,
                                                                            hostname: "#{request.protocol}#{request.host_with_port}")

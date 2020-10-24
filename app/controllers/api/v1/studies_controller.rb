@@ -6,7 +6,7 @@ module Api
       include Concerns::FireCloudStatus
       include Swagger::Blocks
 
-      before_action :authenticate_api_user!, except: [:generate_manifest]
+      before_action :authenticate_api_user!
       before_action :set_study, except: [:index, :create]
       before_action :check_study_permission, except: [:index, :create, :generate_manifest]
       before_action :check_study_view_permission, only: [:generate_manifest]
@@ -606,16 +606,7 @@ module Api
 
       # checks the view permissions, either for the current_api_user or a totat, if given
       def check_study_view_permission
-        user = current_api_user
-        totat = params[:auth_code]
-        if totat
-          user = User.verify_totat(totat, "#{@study.accession}-view")
-          # if a bad totat is given, fail the request even if there is a valid API user
-          if !user
-            head 403
-          end
-        end
-        head 403 unless (@study.public || @study.can_view?(user))
+        head 403 unless (@study.public || @study.can_view?(current_api_user))
       end
 
       # study params whitelist

@@ -20,8 +20,12 @@ module Api
           current_api_user.present?
         end
 
-        # method to authenticate a user via Authorization Bearer tokens
         def current_api_user
+          @current_api_user ||= get_current_api_user
+        end
+
+        # method to authenticate a user via Authorization Bearer tokens or Totat
+        def get_current_api_user
           user = nil
           api_access_token = extract_bearer_token(request)
           if api_access_token.present?
@@ -49,7 +53,7 @@ module Api
               return nil
             end
             Rails.logger.info "Authenticating user via auth_token: #{params[:auth_code]}"
-            user = User.find_by(totat: params[:auth_code])
+            user = User.verify_totat(params[:auth_code], request.path)
             user.try(:update_last_access_at!)
             return user
           end
