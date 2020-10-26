@@ -97,7 +97,7 @@
 
           // Get a time-based one time authentication token (totat),
           // then show the download command
-          window.SCP.ScpApi.fetchAuthCode().then(
+          window.SCP.API.fetchAuthCode().then(
             function (response) {
               var authCode = response.authCode;
               var timeInterval = response.timeInterval; // token expires after this many seconds

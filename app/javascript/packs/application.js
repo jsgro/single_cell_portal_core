@@ -74,7 +74,7 @@ window.SCP.log = log
 window.SCP.startPendingEvent = startPendingEvent
 window.SCP.getLogPlotProps = getLogPlotProps
 window.SCP.formatTerms = formatTerms
-window.SCP.ScpApi = ScpApi
+window.SCP.API = ScpApi
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code
