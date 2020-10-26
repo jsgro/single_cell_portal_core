@@ -560,13 +560,20 @@ module Api
         if valid_accessions.blank?
           render json: {error: 'Invalid request parameters; study accessions not found'}, status: 400 and return
         end
-
-        permitted_accessions = ::BulkDownloadService.get_permitted_accessions(study_accessions: valid_accessions,
-                                                                             user: current_api_user)
-        if permitted_accessions.empty?
-          render json: {error: "Forbidden: cannot access requested accessions"},
+        accessions_by_permission = ::BulkDownloadService.get_permitted_accessions(study_accessions: valid_accessions,
+                                                                                  user: current_api_user)
+        if accessions_by_permission[:forbidden].any? || accessions_by_permission[:lacks_acceptance].any?
+          error_msg = "Forbidden: cannot access requested accessions. "
+          if accessions_by_permission[:forbidden].any?
+            error_msg += "You do not have permission to view #{accessions_by_permission[:forbidden].join(', ')}"
+          end
+          if accessions_by_permission[:lacks_acceptance].any?
+            error_msg += "#{accessions_by_permission[:lacks_acceptance].join(', ')} require accepting a download agreement that can be found by viewing that study and going to the 'download' tab"
+          end
+          render json: {error: error_msg},
                  status: 403 and return
         end
+        permitted_accessions = accessions_by_permission[:permitted]
 
         # get requested files
         # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference

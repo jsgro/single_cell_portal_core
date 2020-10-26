@@ -31,7 +31,7 @@
                   </thead>
                 </table>
               <% end %>
-              Then <%= link_to "click here".html_safe, "#{api_v1_study_path(@study)}/manifest" %> for the manifest.json containing file supplementary information (units, protocols, etc...)
+              Then <%= link_to "click here".html_safe, "#{generate_manifest_study_url(@study)}" %> for the manifest.json containing file supplementary information (units, protocols, etc...)
             <% elsif @study.public? && !@user_embargoed || current_user.admin? %>
               <p class="lead">To download all files using <code>curl</code>, click the button below to get the download command:</p>
               <p class="lead command-container" id="command-container-all"><%= link_to "<i class='fas fa-download'></i> Get download command for all study data".html_safe, '#/', class: 'btn btn-default get-download-command', id: 'get-download-command_all' %></p>
@@ -117,7 +117,7 @@
               // This is what the user will run in their terminal to download the data.
               var downloadCommand = (
                   'curl &quot;' + url + '&quot; ' + curlSecureFlag + ' -o cfg.txt; ' +
-                  'curl -K cfg.txt; rm cfg.txt'
+                  'curl -K cfg.txt && rm cfg.txt'
               );
 
               var commandID = 'command-' + authCode;
@@ -191,7 +191,7 @@
         <td>Listing of all study files, and any supplementary information (units, protocols, etc...)</td>
         <td></td>
         <td></td>
-        <td><%= link_to "<span class='fas fa-download'></span> 1 KB".html_safe, "#{study_path(@study)}/manifest", class: "btn btn-primary dl-link" %>
+        <td><%= link_to "<span class='fas fa-download'></span> 1 KB".html_safe, "#{generate_manifest_study_url(@study)}", class: "btn btn-primary dl-link" %>
         </td>
       </tr>
     </tbody>

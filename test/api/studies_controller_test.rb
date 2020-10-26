@@ -76,10 +76,22 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
   # get the study manifest for a study
   test 'should get study manifest' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
-    execute_http_request(:get, "#{api_v1_studies_path(id: @study.id)}/manifest")
+    totat = @user.create_totat(30, manifest_api_v1_study_path(@study))
+    get manifest_api_v1_study_path(@study), params: { auth_code: totat[:totat] }
     assert_response :success
-    assert json['study']['name'] == @study.name
+    assert_equal @study.name, json['study']['name']
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+
+    # should fail with bad totat
+    totat = @user.create_totat(30, manifest_api_v1_study_path(@study))
+    get manifest_api_v1_study_path(@study), params: { auth_code: 'haxxor' }
+    assert_response 401
+
+    # should fail if totat for a different purpose
+    totat = @user.create_totat(30, "/api/v1/some/other/thing")
+    get manifest_api_v1_study_path(@study), params: { auth_code: totat[:totat] }
+    assert_response 401
+
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 

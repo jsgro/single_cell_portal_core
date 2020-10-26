@@ -41,7 +41,7 @@ async function generateDownloadConfig(matchingAccessions) {
   // instead of the hostname
   const downloadCommand = (
     `curl "${url}" -${curlSecureFlag}o cfg.txt; ` +
-    `curl -K cfg.txt; rm cfg.txt`
+    `curl -K cfg.txt && rm cfg.txt`
   )
 
   return {

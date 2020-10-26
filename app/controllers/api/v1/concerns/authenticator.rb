@@ -25,10 +25,20 @@ module Api
         end
 
         # method to authenticate a user via Authorization Bearer tokens or Totat
+        # the method first checks for an auth_code argument -- if that is present any bearer token will be ignored
         def get_current_api_user
           user = nil
           api_access_token = extract_bearer_token(request)
-          if api_access_token.present?
+          if params[:auth_code].present?
+            # check for a valid totat/action
+            if !TOTAT_ALLOWED_ACTIONS.include?({controller: controller_name, action: action_name})
+              return nil
+            end
+            Rails.logger.info "Authenticating user via auth_token: #{params[:auth_code]}"
+            user = User.verify_totat(params[:auth_code], request.path)
+            user.try(:update_last_access_at!)
+            return user
+          elsif api_access_token.present?
             user = User.find_by('api_access_token.access_token' => api_access_token)
             if user.nil?
               # extract user info from access_token
@@ -47,15 +57,6 @@ module Api
               user.update_last_access_at!
               return user
             end
-          elsif params[:auth_code].present?
-            # check for a valid totat/action
-            if !TOTAT_ALLOWED_ACTIONS.include?({controller: controller_name, action: action_name})
-              return nil
-            end
-            Rails.logger.info "Authenticating user via auth_token: #{params[:auth_code]}"
-            user = User.verify_totat(params[:auth_code], request.path)
-            user.try(:update_last_access_at!)
-            return user
           end
           nil
         end

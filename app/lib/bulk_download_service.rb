@@ -32,7 +32,7 @@ class BulkDownloadService
     end
     studies = study_files.map(&:study).uniq
     study_manifest_paths = studies.map do |study|
-      "#{Rails.application.routes.url_helpers.api_v1_study_path(study)}/manifest"
+      "#{Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)}"
     end
     totat = user.create_totat(1800, study_manifest_paths)
     studies.map do |study|
@@ -41,8 +41,8 @@ class BulkDownloadService
         # if we're in development, allow not checking the cert
         manifest_config += "-k\n"
       end
-      manifest_path = hostname + Rails.application.routes.url_helpers.api_v1_study_path(study)
-      manifest_config += "url=#{manifest_path}/manifest?auth_code=#{totat[:totat]}\n"
+      manifest_path = hostname + Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)
+      manifest_config += "url=#{manifest_path}?auth_code=#{totat[:totat]}\n"
       manifest_config += "output=#{study.accession}/manifest.json"
       curl_configs << manifest_config
     end
@@ -79,11 +79,12 @@ class BulkDownloadService
   #   - +user+ (User) => User requesting download
   #
   # * *returns*
-  #   - (Array<String>) Array of permitted accessions to use in bulk download request
+  #   - Hash( key=> Array<String>) Hash categorizing the requested accessions as
+  #       valid, lacks_acceptance, or forbidden
   def self.get_permitted_accessions(study_accessions:, user:)
     viewable_accessions = Study.viewable(user).pluck(:accession)
     permitted_accessions = study_accessions & viewable_accessions
-
+    user_lacks_acceptance = []
     # collect array of study accession requiring acceptance of download agreement (checking for expiration)
     agreement_accessions = []
     DownloadAgreement.all.each do |agreement|
@@ -91,13 +92,14 @@ class BulkDownloadService
     end
     requires_agreement = permitted_accessions & agreement_accessions
     if requires_agreement.any?
-      user_lacks_acceptance = []
       requires_agreement.each do |accession|
         user_lacks_acceptance << accession unless DownloadAcceptance.where(study_accession: accession, email: user.email).exists?
       end
       permitted_accessions -= user_lacks_acceptance
     end
-    permitted_accessions
+    { permitted: permitted_accessions,
+      lacks_acceptance: user_lacks_acceptance,
+      forbidden: study_accessions - viewable_accessions}
   end
 
   # Get an array of StudyFiles from matching StudyAccessions and file_types
