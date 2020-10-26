@@ -34,7 +34,8 @@ class BulkDownloadService
     study_manifest_paths = studies.map do |study|
       "#{Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)}"
     end
-    totat = user.create_totat(1800, study_manifest_paths)
+    half_hour = 1800
+    totat = user.create_totat(half_hour, study_manifest_paths)
     studies.map do |study|
       manifest_config = ""
       if Rails.env.development?
@@ -216,6 +217,7 @@ class BulkDownloadService
       description: study.description.try(:truncate, 150),
       accession: study.accession,
       cell_count: study.cell_count,
+      gene_count: study.gene_count,
       link: hostname + Rails.application.routes.url_helpers.view_study_path(accession: study.accession, study_name: study.name)
     }
     info[:files] = study.study_files
@@ -246,6 +248,7 @@ class BulkDownloadService
       output[:species_scientific_name] = study_file.taxon.scientific_name
     end
     if study_file.genome_assembly
+      output[:genome_assembly_name] = study_file.genome_assembly.name
       output[:genome_assembly_accession] = study_file.genome_assembly.accession
     end
     if study_file.genome_annotation

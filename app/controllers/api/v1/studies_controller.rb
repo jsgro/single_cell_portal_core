@@ -544,20 +544,20 @@ module Api
           key :tags, [
               'Studies'
           ]
-          key :summary, 'Get a Study Manifest file'
+          key :summary, 'Get a study manifest file'
           key :description, 'Return a file summarizing the study and each of the files within it'
           key :operationId, 'generate_manifest'
           parameter do
             key :name, :id
             key :in, :path
-            key :description, 'ID of Study to generate manifest'
+            key :description, 'ID of study to generate manifest'
             key :required, true
             key :type, :string
           end
           response 200 do
             key :description, 'Manifest file'
             schema do
-              key :title, 'JSON object of Study and study file'
+              key :title, 'JSON object of study and study file'
               # Once file format is finalized, complete this documentation
             end
           end
@@ -697,4 +697,3 @@ module Api
     end
   end
 end
-

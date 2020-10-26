@@ -568,7 +568,7 @@ module Api
             error_msg += "You do not have permission to view #{accessions_by_permission[:forbidden].join(', ')}"
           end
           if accessions_by_permission[:lacks_acceptance].any?
-            error_msg += "#{accessions_by_permission[:lacks_acceptance].join(', ')} require accepting a download agreement that can be found by viewing that study and going to the 'download' tab"
+            error_msg += "#{accessions_by_permission[:lacks_acceptance].join(', ')} require accepting a download agreement that can be found by viewing that study and going to the 'Download' tab"
           end
           render json: {error: error_msg},
                  status: 403 and return
