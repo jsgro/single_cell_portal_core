@@ -1,7 +1,10 @@
 <div class="row expression-file-info-fields">
   <div class="col-sm-2">
-    <%= f.label :is_raw_counts, 'Raw Counts Matrix?' %><br />
-    <%= f.select :is_raw_counts, options_for_select([['No', 0],['Yes', 1]], f.object.is_raw_counts ? 1 : 0), {}, class: 'form-control raw-counts-select is-raw-counts-dropdown' %>
+    <%= f.label :is_raw_counts, 'Is this a raw counts matrix?' %><br />
+    <%= f.radio_button :is_raw_counts, 1, checked: f.object.is_raw_counts, class: 'raw-counts-radio'  %>
+    <%= f.label :is_raw_counts, 'Yes', class: 'radio-pad' %>
+    <%= f.radio_button :is_raw_counts, 0, checked: !f.object.is_raw_counts, class: 'raw-counts-radio' %>
+    <%= f.label :is_raw_counts, 'No', class: 'radio-pad'  %>
   </div>
   <div class="col-sm-2">
     <%= f.label :units %><br />

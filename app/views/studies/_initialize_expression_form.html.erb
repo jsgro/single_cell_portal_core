@@ -32,14 +32,16 @@
     </div>
   </div>
   <div class="form-group">
-    <% study_file.build_expression_file_info if study_file.expression_file_info.nil? %>
     <%= f.fields_for :expression_file_info %>
   </div>
 	<div class="form-group row">
 		<div class="col-sm-4">
-			<%= f.label :file_type %><br />
-			<%= f.select :file_type, options_for_select(['Expression Matrix', 'MM Coordinate Matrix'], selected: study_file.file_type), {}, class: 'form-control file-type' %>
-		</div>
+      <%= f.label :file_type, 'Select a matrix file type' %><br />
+      <%= f.radio_button :file_type, 'Expression Matrix', class: 'file-type' %>&nbsp;
+      <%= f.label :file_type, 'Expression Matrix', value: 'Expression Matrix', class: 'radio-pad' %>
+      <%= f.radio_button :file_type, 'MM Coordinate Matrix', class: 'file-type' %>
+      <%= f.label :file_type, 'MM Coordinate Matrix', value: 'MM Coordinate Matrix', class: 'radio-pad' %>
+    </div>
 		<div class="col-sm-5 upload-field">
       <% if !study_file.upload_file_name.nil? %>
         <p><label>Link to file </label><br /><%= render partial: '/layouts/download_link', locals: {study: @study, study_file: study_file} %></p>
