@@ -16,7 +16,7 @@
       "species_scientific_name": "Homo sapiens",
       "expression_file_info": {
         "is_raw_counts": true,
-        "library_construction_protocol": "10x 3' v2",
+        "library_preparation_protocol": "10x 3' v2",
         "units": "UMI-corrected raw counts",
         "biosample_input_type": "whole cell"
       }

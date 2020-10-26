@@ -262,10 +262,10 @@ class StudyFile
         key :description, 'Type of biosample input'
         key :enum, ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
       end
-      property :library_construction_protocol do
+      property :library_preparation_protocol do
         key :type, :string
         key :description, 'Protocol used to generate expression matrix'
-        key :enum, ExpressionFileInfo::LIBRARY_CONSTRUCTION_VALUES
+        key :enum, ExpressionFileInfo::LIBRARY_PREPARATION_VALUES
       end
       property :multimodality do
         key :type, :string
@@ -407,10 +407,10 @@ class StudyFile
             key :description, 'Type of biosample input'
             key :enum, ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
           end
-          property :library_construction_protocol do
+          property :library_preparation_protocol do
             key :type, :string
             key :description, 'Protocol used to generate expression matrix'
-            key :enum, ExpressionFileInfo::LIBRARY_CONSTRUCTION_VALUES
+            key :enum, ExpressionFileInfo::LIBRARY_PREPARATION_VALUES
           end
           property :multimodality do
             key :type, :string
@@ -494,10 +494,10 @@ class StudyFile
             key :description, 'Type of biosample input'
             key :enum, ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
           end
-          property :library_construction_protocol do
+          property :library_preparation_protocol do
             key :type, :string
             key :description, 'Protocol used to generate expression matrix'
-            key :enum, ExpressionFileInfo::LIBRARY_CONSTRUCTION_VALUES
+            key :enum, ExpressionFileInfo::LIBRARY_PREPARATION_VALUES
           end
           property :multimodality do
             key :type, :string

@@ -1044,7 +1044,7 @@ class StudiesController < ApplicationController
                                        options: [:cluster_group_id, :cluster_file_id, :font_family, :font_size, :font_color,
                                                  :matrix_id, :submission_id, :bam_id, :analysis_name, :visualization_name,
                                                  :cluster_name, :annotation_name],
-                                       expression_file_info_attributes: [:id, :library_construction_protocol, :units,
+                                       expression_file_info_attributes: [:id, :library_preparation_protocol, :units,
                                                                          :biosample_input_type, :multimodality, :is_raw_counts])
   end
 

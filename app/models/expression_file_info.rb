@@ -3,7 +3,7 @@ class ExpressionFileInfo
 
   embedded_in :study_file
 
-  field :library_construction_protocol, type: String
+  field :library_preparation_protocol, type: String
   field :units, type: String
   field :biosample_input_type, type: String
   field :multimodality, type: String
@@ -20,7 +20,7 @@ class ExpressionFileInfo
   MULTIMODALITY_VALUES = ['CITE-seq', 'Patch-seq']
   validates :multimodality, inclusion: {in: MULTIMODALITY_VALUES}, allow_blank: true
 
-  LIBRARY_CONSTRUCTION_VALUES = ['Smart-seq2/Fluidigm C1',
+  LIBRARY_PREPARATION_VALUES = ['Smart-seq2/Fluidigm C1',
                                  'MARS-seq',
                                  'Seq-Well v1',
                                  'Seq-Well S^3',
@@ -37,7 +37,7 @@ class ExpressionFileInfo
                                  'ATAC-seq',
                                  'ChIP-seq',
                                  'methylomics']
-  validates :library_construction_protocol, inclusion: {in: LIBRARY_CONSTRUCTION_VALUES}, allow_blank: true
+  validates :library_preparation_protocol, inclusion: {in: LIBRARY_PREPARATION_VALUES}, allow_blank: true
   validate :unset_units_unless_raw_counts
 
   private

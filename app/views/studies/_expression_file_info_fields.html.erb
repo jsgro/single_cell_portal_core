@@ -16,9 +16,9 @@
 
   </div>
   <div class="col-sm-3">
-    <%= f.label :library_construction_protocol %><br />
-    <%= f.select :library_construction_protocol,
-                 options_for_select(ExpressionFileInfo::LIBRARY_CONSTRUCTION_VALUES, f.object.library_construction_protocol),
+    <%= f.label :library_preparation_protocol %><br />
+    <%= f.select :library_preparation_protocol,
+                 options_for_select(ExpressionFileInfo::LIBRARY_PREPARATION_VALUES, f.object.library_preparation_protocol),
                  {include_blank: true}, class: 'form-control' %>
   </div>
   <div class="col-sm-2">
@@ -28,4 +28,3 @@
 
   </div>
 </div>
-
