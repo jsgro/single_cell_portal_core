@@ -478,11 +478,11 @@ function enableDefaultActions() {
     });
 
     // reset units dropdown based on is_raw_counts?
-    $('body').on('change', '.raw-counts-select', function() {
+    $('body').on('click', '.raw-counts-radio', function() {
+        var isRawCount = $(this).val() == '1'
         var expFileInfoForm = $(this).closest('.expression-file-info-fields')
-        var countSelect = expFileInfoForm.find('.is-raw-counts-dropdown');
         var unitSelect = expFileInfoForm.find('.counts-unit-dropdown');
-        if ( countSelect.val() == '0' ) {
+        if ( !isRawCount ) {
             unitSelect.val('');
             setElementsEnabled(unitSelect, false);
         } else {
