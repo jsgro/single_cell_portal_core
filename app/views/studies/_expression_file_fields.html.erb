@@ -5,9 +5,6 @@
   </div>
 </div>
 <div class="form-group">
-  <% if ['Expression Matrix', 'MM Coordinate Matrix'].include? f.object.file_type %>
-    <% f.object.build_expression_file_info if f.object.expression_file_info.nil? %>
-    <%= f.fields_for :expression_file_info %>
-  <% end %>
+  <%= f.fields_for :expression_file_info %>
 </div>
 
