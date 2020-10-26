@@ -654,6 +654,10 @@ h6,
   font-size: 18px;
 }
 
+ul.pager li.dimmed {
+  opacity: 0.5;
+}
+
 #deployment_notification_message {
   width: 100%;
 }

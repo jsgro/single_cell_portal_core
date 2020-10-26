@@ -1,6 +1,6 @@
 <div class="row expression-file-info-fields">
   <div class="col-sm-2">
-    <%= f.label :is_raw_counts, 'Raw Count Matrix?' %><br />
+    <%= f.label :is_raw_counts, 'Raw Counts Matrix?' %><br />
     <%= f.select :is_raw_counts, options_for_select([['No', 0],['Yes', 1]], f.object.is_raw_counts ? 1 : 0), {}, class: 'form-control raw-counts-select is-raw-counts-dropdown' %>
   </div>
   <div class="col-sm-2">
