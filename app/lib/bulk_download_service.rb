@@ -209,7 +209,7 @@ class BulkDownloadService
     output_map
   end
 
-  # generate a study_info.json object from an existing study
+  # generate a study_info object from an existing study
   def self.generate_study_manifest(study, hostname)
     info = HashWithIndifferentAccess.new
     info[:study] = {
