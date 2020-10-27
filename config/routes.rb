@@ -36,8 +36,6 @@ Rails.application.routes.draw do
           resources :external_resources, only: [:index, :show, :create, :update, :destroy]
           member do
             post 'sync', to: 'studies#sync_study'
-          end
-          member do
             get 'manifest', to: 'studies#generate_manifest'
           end
           resources :expression_data, only: [:show], param: :data_type

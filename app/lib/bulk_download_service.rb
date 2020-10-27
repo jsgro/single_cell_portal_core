@@ -3,7 +3,7 @@
 # keyword and faceted search
 
 class BulkDownloadService
-
+  include Rails.application.routes.url_helpers
   extend ErrorTracker
 
   # Generate a String representation of a configuration file containing URLs and output paths to pass to
@@ -14,15 +14,13 @@ class BulkDownloadService
   #   - +user+ (User) => User requesting download
   #   - +study_bucket_map+ => Map of study IDs to bucket names
   #   - +output_pathname_map+ => Map of study file IDs to output pathnames
-  #   - +host+ => hostname of the server instance, used to generate manifest links
   #
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
   def self.generate_curl_configuration(study_files:,
                                        user:,
                                        study_bucket_map:,
-                                       output_pathname_map:,
-                                       hostname:)
+                                       output_pathname_map:)
     curl_configs = ['--create-dirs', '--compressed']
     # Get signed URLs for all files in the requested download objects, and update user quota
     Parallel.map(study_files, in_threads: 100) do |study_file|
@@ -42,7 +40,7 @@ class BulkDownloadService
         # if we're in development, allow not checking the cert
         manifest_config += "-k\n"
       end
-      manifest_path = hostname + Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)
+      manifest_path = RequestUtils.get_base_url + manifest_api_v1_study_path(study)
       manifest_config += "url=#{manifest_path}?auth_code=#{totat[:totat]}\n"
       manifest_config += "output=#{study.accession}/file_supplemental_info.tsv"
       curl_configs << manifest_config
@@ -210,7 +208,7 @@ class BulkDownloadService
   end
 
   # generate a study_info object from an existing study
-  def self.generate_study_manifest(study, hostname)
+  def self.generate_study_manifest(study)
     info = HashWithIndifferentAccess.new
     info[:study] = {
       name: study.name,
@@ -218,7 +216,7 @@ class BulkDownloadService
       accession: study.accession,
       cell_count: study.cell_count,
       gene_count: study.gene_count,
-      link: hostname + Rails.application.routes.url_helpers.view_study_path(accession: study.accession, study_name: study.name)
+      link: RequestUtils.get_base_url + view_study_path(accession: study.accession, study_name: study.name)
     }
     info[:files] = study.study_files
                         .where(queued_for_deletion: false)
@@ -234,16 +232,10 @@ class BulkDownloadService
     }
 
     if study_file.expression_file_info
-      # explicitly list properties to copy to avoid accidentally exposing internal fields
-      props_to_copy =  [
-        :library_construction_protocol,
-        :units,
-        :biosample_input_type,
-        :multimodality,
-        :is_raw_counts
-      ]
       output[:expression_file_info] = {}
-      props_to_copy.each { |prop| output[:expression_file_info][prop] = study_file.expression_file_info[prop] }
+      study_file.expression_file_info.attributes.each  do |key, value|
+        output[:expression_file_info][key] = value
+      end
     end
     if study_file.taxon
       output[:species_scientific_name] = study_file.taxon.scientific_name
@@ -262,8 +254,8 @@ class BulkDownloadService
   # Once the tsv format stabilizes for a couple of months, it will probably be best
   # to update the synthetic studies seed file format to the tsv format (if possible)
   # and consolidate this and the above methods.
-  def self.generate_study_files_tsv(study, hostname)
-    study_manifest = generate_study_manifest(study, hostname)
+  def self.generate_study_files_tsv(study)
+    study_manifest = generate_study_manifest(study)
     col_names_and_paths = [
       {filename: 'filename'},
       {file_type: 'file_type'},

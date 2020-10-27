@@ -176,7 +176,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     assert_equal study.name, manifest_obj[:study][:name]
     assert_equal 2, manifest_obj[:files].count
 
-    tsv_string = BulkDownloadService.generate_study_files_tsv(study, 'localhost')
+    tsv_string = BulkDownloadService.generate_study_files_tsv(study)
     tsv = ::CSV.new(tsv_string, col_sep: "\t", headers: true)
     rows = tsv.read
     assert_equal 2, rows.count

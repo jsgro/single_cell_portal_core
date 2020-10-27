@@ -583,7 +583,7 @@ module Api
       end
 
       def generate_manifest
-        manifest_obj = BulkDownloadService.generate_study_files_tsv(@study, "#{request.protocol}#{request.host_with_port}")
+        manifest_obj = BulkDownloadService.generate_study_files_tsv(@study)
         response.headers['Content-Disposition'] = 'attachment; filename=file_supplemental_info.tsv'
         render plain: manifest_obj
       end
