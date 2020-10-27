@@ -253,8 +253,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
 
     execute_http_request(:get, api_v1_search_bulk_download_path(accessions: study.accession, file_types: file_types))
-    # response should be successful with no auth_code, since bearer token is valid
-    assert_response :success
+    # response should fail with no auth_code, since auth code is required
+    assert_response :unauthorized
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

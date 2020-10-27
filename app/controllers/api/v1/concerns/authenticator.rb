@@ -4,7 +4,7 @@ module Api
       module Authenticator
         extend ActiveSupport::Concern
         OAUTH_V3_TOKEN_INFO = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
-        TOTAT_ALLOWED_ACTIONS = [
+        TOTAT_REQUIRED_ACTIONS = [
           {controller: 'search', action: 'bulk_download'},
           {controller: 'studies', action: 'generate_manifest'}
         ]
@@ -28,34 +28,35 @@ module Api
         # the method first checks for an auth_code argument -- if that is present any bearer token will be ignored
         def get_current_api_user
           user = nil
-          api_access_token = extract_bearer_token(request)
-          if params[:auth_code].present?
+          if TOTAT_REQUIRED_ACTIONS.include?({controller: controller_name, action: action_name})
             # check for a valid totat/action
-            if !TOTAT_ALLOWED_ACTIONS.include?({controller: controller_name, action: action_name})
+            if !params[:auth_code].present?
               return nil
             end
             Rails.logger.info "Authenticating user via auth_token: #{params[:auth_code]}"
             user = User.verify_totat(params[:auth_code], request.path)
             user.try(:update_last_access_at!)
             return user
-          elsif api_access_token.present?
-            user = User.find_by('api_access_token.access_token' => api_access_token)
-            if user.nil?
-              # extract user info from access_token
-              user = find_user_from_token(api_access_token)
+          else
+            if api_access_token.present?
+              user = User.find_by('api_access_token.access_token' => api_access_token)
               if user.nil?
-                return nil
+                # extract user info from access_token
+                user = find_user_from_token(api_access_token)
+                if user.nil?
+                  return nil
+                end
               end
-            end
-            # check for token expiry and unset user && api_access_token if expired/timed out
-            # unsetting token prevents downstream FireCloud API calls from using an expired/invalid token
-            if user.api_access_token_expired? || user.api_access_token_timed_out?
-              user.update(api_access_token: nil)
-              return nil
-            else
-              # update last_access_at
-              user.update_last_access_at!
-              return user
+              # check for token expiry and unset user && api_access_token if expired/timed out
+              # unsetting token prevents downstream FireCloud API calls from using an expired/invalid token
+              if user.api_access_token_expired? || user.api_access_token_timed_out?
+                user.update(api_access_token: nil)
+                return nil
+              else
+                # update last_access_at
+                user.update_last_access_at!
+                return user
+              end
             end
           end
           nil
