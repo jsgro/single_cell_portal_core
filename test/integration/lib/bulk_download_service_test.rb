@@ -1,4 +1,5 @@
 require "test_helper"
+require 'csv'
 
 class BulkDownloadServiceTest < ActiveSupport::TestCase
 
@@ -155,7 +156,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     raw_counts_file =  FactoryBot.create(:study_file,
       study: study,
       file_type: 'Expression Matrix',
-      name: 'test_exp_validate',
+      name: 'test_exp_validate.tsv',
       taxon_id: Taxon.new.id,
       expression_file_info: ExpressionFileInfo.new(
         units: 'raw counts',
@@ -163,13 +164,24 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
         is_raw_counts: true
       )
     )
-    study.study_files << raw_counts_file
+
+    metadata_file =  FactoryBot.create(:study_file,
+      study: study,
+      file_type: 'Metadata',
+      name: 'metadata2.tsv'
+    )
+
     manifest_obj = BulkDownloadService.generate_study_manifest(study, 'localhost')
     # just test basic properties for now, we can add more once the format is finalized
     assert_equal study.name, manifest_obj[:study][:name]
-    assert_equal 1, manifest_obj[:files].count
-    assert_equal raw_counts_file.expression_file_info.units,
-                 manifest_obj[:files][0][:units]
+    assert_equal 2, manifest_obj[:files].count
+
+    tsv_string = BulkDownloadService.generate_study_files_tsv(study, 'localhost')
+    tsv = ::CSV.new(tsv_string, col_sep: "\t", headers: true)
+    rows = tsv.read
+    assert_equal 2, rows.count
+    raw_count_row = rows.find {|r| r['filename'] == 'test_exp_validate.tsv'}
+    assert_equal "true", raw_count_row['is_raw_counts']
 
     study.destroy!
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"

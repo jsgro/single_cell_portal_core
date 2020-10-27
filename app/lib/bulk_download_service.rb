@@ -44,7 +44,7 @@ class BulkDownloadService
       end
       manifest_path = hostname + Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)
       manifest_config += "url=#{manifest_path}?auth_code=#{totat[:totat]}\n"
-      manifest_config += "output=#{study.accession}/manifest.json"
+      manifest_config += "output=#{study.accession}/file_supplemental_info.tsv"
       curl_configs << manifest_config
     end
     curl_configs.join("\n\n")
@@ -242,7 +242,8 @@ class BulkDownloadService
         :multimodality,
         :is_raw_counts
       ]
-      props_to_copy.each { |prop| output[prop] = study_file.expression_file_info[prop] }
+      output[:expression_file_info] = {}
+      props_to_copy.each { |prop| output[:expression_file_info][prop] = study_file.expression_file_info[prop] }
     end
     if study_file.taxon
       output[:species_scientific_name] = study_file.taxon.scientific_name
@@ -255,5 +256,39 @@ class BulkDownloadService
       output[:genome_annotation_name] = study_file.genome_annotation.name
     end
     output
+  end
+
+  # takes a study manifest file (from generate_study_manifest) and makes a tsv.
+  # Once the tsv format stabilizes for a couple of months, it will probably be best
+  # to update the synthetic studies seed file format to the tsv format (if possible)
+  # and consolidate this and the above methods.
+  def self.generate_study_files_tsv(study, hostname)
+    study_manifest = generate_study_manifest(study, hostname)
+    col_names_and_paths = [
+      {filename: 'filename'},
+      {file_type: 'file_type'},
+      {species_scientific_name: 'species_scientific_name'},
+      {genome_assembly_name: 'genome_assembly_name'},
+      {genome_assembly_accession: 'genome_assembly_accession'},
+      {genome_annotation_name: 'genome_annotation_name'},
+      {is_raw_counts: 'expression_file_info.is_raw_counts'},
+      {library_construction_protocol: 'expression_file_info.library_construction_protocol'},
+      {units: 'expression_file_info.units'},
+      {biosample_input_type: 'expression_file_info.biosample_input_type'},
+      {multimodality: 'expression_file_info.multimodality'}
+    ]
+
+    col_names = col_names_and_paths.map { |np| np.keys[0] }
+    tsv_string = col_names.join("\t") + "\n"
+
+    study_manifest[:files].each do |file_info|
+      file_row = col_names_and_paths.map do |name_and_path|
+        path = name_and_path.values[0]
+        file_value = file_info.dig(*(path.split('.')))
+        file_value ? file_value : ""
+      end
+      tsv_string += (file_row.join("\t") + "\n")
+    end
+    tsv_string
   end
 end
