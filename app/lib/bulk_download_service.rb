@@ -3,7 +3,6 @@
 # keyword and faceted search
 
 class BulkDownloadService
-  include Rails.application.routes.url_helpers
   extend ErrorTracker
 
   # Generate a String representation of a configuration file containing URLs and output paths to pass to
@@ -40,7 +39,7 @@ class BulkDownloadService
         # if we're in development, allow not checking the cert
         manifest_config += "-k\n"
       end
-      manifest_path = RequestUtils.get_base_url + manifest_api_v1_study_path(study)
+      manifest_path = RequestUtils.get_base_url + Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)
       manifest_config += "url=#{manifest_path}?auth_code=#{totat[:totat]}\n"
       manifest_config += "output=#{study.accession}/file_supplemental_info.tsv"
       curl_configs << manifest_config
