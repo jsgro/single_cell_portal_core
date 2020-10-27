@@ -920,6 +920,17 @@ class StudyFile
     end
   end
 
+  # quick check if file is expression-based
+  def is_expression?
+    ['Expression Matrix', 'MM Coordinate Matrix'].include? self.file_type
+  end
+
+  # helper to identify if matrix is a raw counts file
+  def is_raw_counts_file?
+    self.expression_file_info.present? ? self.expression_file_info.is_raw_counts : false
+  end
+
+
   ###
   #
   # CACHING METHODS

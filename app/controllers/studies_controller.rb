@@ -443,7 +443,11 @@ class StudiesController < ApplicationController
   def new_study_file
     file_type = params[:file_type] ? params[:file_type] : 'Cluster'
     @study_file = @study.build_study_file({file_type: file_type})
-    @study_file.build_expression_file_info if ['Expression Matrix', 'MM Coordinate Matrix'].include?(file_type)
+    @study_file.build_expression_file_info if @study_file.is_expression?
+    if params[:is_raw_counts]
+      raw_counts_val = params[:is_raw_counts] == 'true'
+      @study_file.expression_file_info.is_raw_counts = raw_counts_val
+    end
   end
 
   # method to perform chunked uploading of data
@@ -795,6 +799,7 @@ class StudiesController < ApplicationController
     @color = is_required ? 'danger' : 'info'
     @status = is_required ? 'Required' : 'Optional'
     @study_file = @study.build_study_file({file_type: @file_type})
+    @study_file.build_expression_file_info
 
     unless @file_type.nil?
       @reset_status = @study.study_files.valid.select {|sf| sf.file_type == @file_type && !sf.new_record?}.count == 0
