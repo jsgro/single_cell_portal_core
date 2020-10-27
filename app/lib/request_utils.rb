@@ -82,7 +82,7 @@ class RequestUtils
   # helper method for getting the base url with protocol, hostname, and port
   # e.g. "https://localhost"
   def self.get_base_url
-    url_opts =  Rails.application.config.action_controller.default_url_options
+    url_opts = ApplicationController.default_url_options
     base_url = "#{url_opts[:protocol]}://#{url_opts[:host]}"
     port = Rails::Server::Options.new.parse!(ARGV)[:Port]
     if port
