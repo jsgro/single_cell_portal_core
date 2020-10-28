@@ -50,8 +50,8 @@ rm -f "$TMP_PIDS_DIR/delayed_job.*.pid"
 bin/delayed_job restart $PASSENGER_APP_ENV -n 6 || { echo "FAILED to start DELAYED_JOB" >&2; exit 1; } # WARNING: using "restart" with environment of test is a HACK that will prevent delayed_job from running in development mode, for example
 
 echo "Precompiling assets, yarn and webpacker..."
-#RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:clean
-#RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:precompile
+RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:clean
+RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:precompile
 echo "Generating random seed, seeding test database..."
 RANDOM_SEED=$(openssl rand -hex 16)
 echo $RANDOM_SEED > /home/app/webapp/.random_seed
@@ -74,13 +74,13 @@ then
   fi
 else
   echo "Running all unit & integration tests..."
-#  yarn ui-test
-#  code=$? # immediately capture exit code to prevent this from getting clobbered
-#  if [[ $code -ne 0 ]]; then
-#    RETURN_CODE=$code
-#    first_test_to_fail=${first_test_to_fail-"yarn ui-test"}
-#    ((FAILED_COUNT++))
-#  fi
+  yarn ui-test
+  code=$? # immediately capture exit code to prevent this from getting clobbered
+  if [[ $code -ne 0 ]]; then
+    RETURN_CODE=$code
+    first_test_to_fail=${first_test_to_fail-"yarn ui-test"}
+    ((FAILED_COUNT++))
+  fi
   RAILS_ENV=test bundle exec bin/rake test:run_test_suite
   code=$?
   if [[ $code -ne 0 ]]; then
