@@ -148,3 +148,4 @@ BrandingGroup.create(name: 'Test Brand', user_id: api_user.id, font_family: 'Hel
 # Preset search seeds
 PresetSearch.create!(name: 'Test Search', search_terms: ["Test Study"],
                      facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'], accession_whitelist: %w(SCP1))
+FeatureFlag.create(name: 'faceted_search')

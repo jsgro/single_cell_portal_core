@@ -14,6 +14,7 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
                                                                        })
     sign_in @user
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+    @user.update_last_access_at!
   end
 
   test 'should get all studies' do
@@ -30,9 +31,10 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     @study = Study.find_by(name: "API Test Study #{@random_seed}")
+    expected_files = @study.study_files.count
     execute_http_request(:get, api_v1_site_study_view_path(accession: @study.accession))
     assert_response :success
-    assert json['study_files'].size == 4, "Did not find correct number of files, expected 4 but found #{json['study_files'].size}"
+    assert json['study_files'].size == expected_files, "Did not find correct number of files, expected #{expected_files} but found #{json['study_files'].size}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
