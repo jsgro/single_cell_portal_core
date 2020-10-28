@@ -51,6 +51,7 @@ end
 
 group :test do
   gem 'simplecov', require: false
+  gem 'codecov', require: false
 end
 
 gem 'devise'
