@@ -13,7 +13,8 @@ user = User.create!(email:'testing.user@gmail.com', password:'password', admin: 
                     authentication_token: Devise.friendly_token(32))
 user_2 = User.create!(email: 'sharing.user@gmail.com', password: 'password', uid: '67890',
                     api_access_token: user_access_token, access_token: user_access_token)
-# manually accept Terms of Service for sharing user to avoid breaking tests
+
+TosAcceptance.create(email: user.email)
 TosAcceptance.create(email: user_2.email)
 study = Study.create!(name: "Testing Study #{@random_seed}", firecloud_project: ENV['PORTAL_NAMESPACE'], data_dir: 'test', user_id: user.id)
 detail = study.build_study_detail
