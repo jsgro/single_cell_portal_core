@@ -247,7 +247,7 @@ function renderMorpheusDotPlot(
 function drawDotplot(dataPath,
                      requestToken,
                      annotPathBase,
-                     annotValuesPath) { // eslint-disable-line no-unused-vars
+                     annotValuesPath) {
   $(window).off('resizeEnd')
 
   // Clear out previous stored dotplot object
