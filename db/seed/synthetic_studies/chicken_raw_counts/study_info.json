@@ -18,7 +18,7 @@
         "is_raw_counts": true,
         "library_construction_protocol": "Smart-seq2/Fluidigm C1",
         "units": "raw counts",
-        "biosample_input_type": "single nuclei"
+        "biosample_input_type": "Single nuclei"
       }
     },
     {

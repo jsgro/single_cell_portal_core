@@ -29,14 +29,15 @@ class ExpressionFileInfo
                                  'CEL-seq2',
                                  'Drop-seq',
                                  'inDrop',
-                                 'Mars-seq',
+                                 'MARS-seq',
                                  'sci-RNA-seq',
                                  'Seq-Well S^3',
                                  'Seq-Well v1',
                                  'Smart-like',
                                  'Smart-seq2/Fluidigm C1',
+                                 'Smart-seq2/plate-based',
                                  # non-scRNAseq Assays
-                                 # scATACseq
+                                 # single cell ATAC-seq assays
                                  'dsc-ATAC-seq',
                                  'dsci-ATAC-seq',
                                  'scATAC-seq/10x',
@@ -44,13 +45,14 @@ class ExpressionFileInfo
                                  'sci-ATAC-seq',
                                  'scTHS-seq',
                                  'snATAC-seq',
-                                 # spatial transcriptomics
+                                 # spatial transcriptomics assays
                                  '10x Visium',
                                  'MERFISH',
                                  'osmFISH',
                                  'SeqFISH+',
                                  'Slide-seq',
                                  'smFISH',
+                                 # single cell ChIP-seq assays
                                  'Drop-ChIP']
   validates :library_construction_protocol, inclusion: {in: LIBRARY_CONSTRUCTION_VALUES}
 end
