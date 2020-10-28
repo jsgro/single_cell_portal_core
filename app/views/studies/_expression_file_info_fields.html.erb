@@ -13,16 +13,16 @@
                  class: 'form-control raw-counts-select counts-unit-dropdown', disabled: !f.object.is_raw_counts %>
   </div>
   <div class="col-sm-3">
-    <%= f.label :biosample_input_type %><br />
+    <%= f.label :biosample_input_type, "Biosample Input Type <i class='text-danger'>*</i>".html_safe %><br />
     <%= f.select :biosample_input_type, options_for_select(ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES, f.object.biosample_input_type),
-                 {include_blank: true}, class: 'form-control' %>
+                 {}, class: 'form-control' %>
 
   </div>
   <div class="col-sm-3">
-    <%= f.label :library_preparation_protocol %><br />
+    <%= f.label :library_preparation_protocol, "Library Preparation Protocol <i class='text-danger'>*</i>".html_safe %><br />
     <%= f.select :library_preparation_protocol,
                  options_for_select(ExpressionFileInfo::LIBRARY_PREPARATION_VALUES, f.object.library_preparation_protocol),
-                 {include_blank: true}, class: 'form-control' %>
+                 {}, class: 'form-control' %>
   </div>
   <div class="col-sm-2">
     <%= f.label :multimodality %><br />

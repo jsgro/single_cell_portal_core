@@ -14,7 +14,35 @@
           <p class="text-danger">This file type requires other associated files in order to be utilized in the portal.  Please use the new forms below to add the necessary files.</p>
         <% end %>
         <% if study_file.is_expression? %>
-          <%= render partial: 'raw_counts_modal', locals: {is_raw_counts: study_file.is_raw_counts_file?, study_id: study_file.study_id} %>
+          <% if study_file.is_raw_counts_file? && !@study.has_visualization_matrices? %>
+            <hr />
+            <h4 class="text-center text-success">Thank you for adding your raw counts</h4>
+            <p>
+              Raw counts matrices will not be used for visualization.  Please upload a processed expression matrix to enable
+              gene-expression based visualizations.
+            </p>
+          <% elsif !study_file.is_raw_counts_file? && !@study.has_raw_counts_matrices? %>
+            <hr />
+            <h4 class="text-center text-success">Do you have raw counts?</h4>
+            <p>
+              In addition to uploading your expression matrix for visualization, it is useful to provide raw counts expression
+              data.  This is helpful for other users who would like to incorporate your data into new analyses.
+            </p>
+          <% end %>
+          <% unless @study.has_raw_counts_matrices? && @study.has_visualization_matrices? %>
+            <div class="row">
+              <div class="col-xs-8">
+                <%= link_to "<span class='fas fa-plus'></span> Upload a #{study_file.is_raw_counts_file? ? 'processed' : 'raw counts'} expression matrix".html_safe,
+                            new_study_file_study_path(study_file.study_id, file_type: 'Expression Matrix', is_raw_counts: !study_file.is_raw_counts_file?,
+                                                      taxon_id: study_file.taxon_id, target: '#expressions-target',
+                                                      form: 'initialize_expression_form'),
+                            class: 'btn btn-sm btn-success', data: {remote: true, dismiss: 'modal'} %>
+              </div>
+              <div class="col-xs-4">
+                <%= link_to 'Skip this time', '#', data: {dismiss: 'modal'} %>
+              </div>
+            </div>
+          <% end %>
         <% end %>
       </div>
       <div class="modal-footer">

@@ -444,6 +444,10 @@ class StudiesController < ApplicationController
     file_type = params[:file_type] ? params[:file_type] : 'Cluster'
     @study_file = @study.build_study_file({file_type: file_type})
     @study_file.build_expression_file_info if @study_file.is_expression?
+    if params[:taxon_id]
+      taxon = Taxon.find(params[:taxon_id])
+      @study_file.taxon_id = taxon.id if taxon.present?
+    end
     if params[:is_raw_counts]
       raw_counts_val = params[:is_raw_counts] == 'true'
       @study_file.expression_file_info.is_raw_counts = raw_counts_val

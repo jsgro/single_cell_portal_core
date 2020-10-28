@@ -15,7 +15,7 @@ class ExpressionFileInfo
   validates :units, inclusion: {in: UNITS_VALUES}, allow_blank: true
 
   BIOSAMPLE_INPUT_TYPE_VALUES = ['whole cell', 'single nuclei', 'bulk']
-  validates :biosample_input_type, inclusion: {in: BIOSAMPLE_INPUT_TYPE_VALUES}, allow_blank: true
+  validates :biosample_input_type, inclusion: {in: BIOSAMPLE_INPUT_TYPE_VALUES}
 
   MULTIMODALITY_VALUES = ['CITE-seq', 'Patch-seq']
   validates :multimodality, inclusion: {in: MULTIMODALITY_VALUES}, allow_blank: true
@@ -37,8 +37,9 @@ class ExpressionFileInfo
                                  'ATAC-seq',
                                  'ChIP-seq',
                                  'methylomics']
-  validates :library_preparation_protocol, inclusion: {in: LIBRARY_PREPARATION_VALUES}, allow_blank: true
+  validates :library_preparation_protocol, inclusion: {in: LIBRARY_PREPARATION_VALUES}
   validate :unset_units_unless_raw_counts
+  validate :enforce_units_on_raw_counts
 
   private
 
@@ -47,6 +48,13 @@ class ExpressionFileInfo
   def unset_units_unless_raw_counts
     unless self.is_raw_counts
       self.units = nil
+    end
+  end
+
+  # enforce selecting units on raw counts matrices
+  def enforce_units_on_raw_counts
+    if self.is_raw_counts && self.units.blank?
+      errors.add(:units, ' must have a value for raw counts matrices')
     end
   end
 end

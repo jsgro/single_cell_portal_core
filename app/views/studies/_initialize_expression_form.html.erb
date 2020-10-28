@@ -23,7 +23,7 @@
 	</div>
   <div class="form-group row">
     <div class="col-sm-4">
-      <%= f.label :taxon_id, 'Species' %> <%= render partial: 'taxon_help_popover', locals: {id: study_file.id.to_s} %><br />
+      <%= f.label :taxon_id, "Species <i class='text-danger'>*</i>".html_safe %> <%= render partial: 'taxon_help_popover', locals: {id: study_file.id.to_s} %><br />
       <%= f.select :taxon_id, options_from_collection_for_select(Taxon.sorted, :id, :display_name, study_file.taxon_id), {prompt: 'Please select a species for this file'}, {class: 'form-control'} %>
     </div>
     <div class="col-sm-8">
@@ -66,8 +66,9 @@
 				</div>
 			</div>
 		</div>
-	</div>
 
+	</div>
+  <p class="text-danger">* Required</p>
 	<div class="form-group upload-progress">
 		<table class="table table-condensed">
 			<tbody class="files"></tbody>
@@ -104,7 +105,7 @@
               $('#expression_form_<%= study_file._id %> .file-type').val('MM Coordinate Matrix');
           }
           $('#expression_form_<%= study_file._id %> .filename').val(fileName);
-          canUpload = validateCandidateUpload("#expression_form_<%= study_file._id %>", fileName, $('.initialize_expression_form .filename'));
+          var canUpload = validateCandidateUpload("#expression_form_<%= study_file._id %>", fileName, $('.initialize_expression_form .filename'));
           if ( canUpload ) {
               $.getJSON("<%= resume_upload_study_path %>", { file: fileName }, function (result) {
                   var file = result.file;
