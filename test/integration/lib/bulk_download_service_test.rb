@@ -71,8 +71,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     path_map = BulkDownloadService.generate_output_path_map([study_file])
     signed_url = "https://storage.googleapis.com/#{@study.bucket_id}/#{study_file.upload_file_name}"
     output_path = study_file.bulk_download_pathname
-    fake_hostname = "https://localhost"
-    manifest_path = "#{fake_hostname}/single_cell/api/v1/studies/#{@study.id}/manifest"
+    manifest_path = "#{RequestUtils.get_base_url}/single_cell/api/v1/studies/#{@study.id}/manifest"
 
     # mock call to GCS
     mock = Minitest::Mock.new
@@ -80,8 +79,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     FireCloudClient.stub :new, mock do
       configuration = BulkDownloadService.generate_curl_configuration(study_files: [study_file], user: @user,
                                                                       study_bucket_map: bucket_map,
-                                                                      output_pathname_map: path_map,
-                                                                      hostname: fake_hostname)
+                                                                      output_pathname_map: path_map)
       mock.verify
       assert configuration.include?(signed_url), "Configuration does not include expected signed URL (#{signed_url}): #{configuration}"
       assert configuration.include?(output_path), "Configuration does not include expected output path (#{output_path}): #{configuration}"
@@ -171,7 +169,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
       name: 'metadata2.tsv'
     )
 
-    manifest_obj = BulkDownloadService.generate_study_manifest(study, 'localhost')
+    manifest_obj = BulkDownloadService.generate_study_manifest(study)
     # just test basic properties for now, we can add more once the format is finalized
     assert_equal study.name, manifest_obj[:study][:name]
     assert_equal 2, manifest_obj[:files].count

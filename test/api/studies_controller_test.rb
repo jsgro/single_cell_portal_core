@@ -79,8 +79,6 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     totat = @user.create_totat(30, manifest_api_v1_study_path(@study))
     get manifest_api_v1_study_path(@study), params: { auth_code: totat[:totat] }
     assert_response :success
-    assert_equal @study.name, json['study']['name']
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
 
     # should fail with bad totat
     totat = @user.create_totat(30, manifest_api_v1_study_path(@study))

@@ -215,7 +215,7 @@ class BulkDownloadService
       accession: study.accession,
       cell_count: study.cell_count,
       gene_count: study.gene_count,
-      link: RequestUtils.get_base_url + view_study_path(accession: study.accession, study_name: study.name)
+      link: RequestUtils.get_base_url + Rails.application.routes.url_helpers.view_study_path(accession: study.accession, study_name: study.name)
     }
     info[:files] = study.study_files
                         .where(queued_for_deletion: false)
