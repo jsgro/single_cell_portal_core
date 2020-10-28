@@ -95,7 +95,7 @@ function onWillShowAnnotTooltip(annot) {
 
   // `props` is null if it is merely analytics noise.
   // Accounts for quick moves from label to annot, or away then immediately
-  // back to same annot.  Such action flicker tooltip and represents a
+  // back to same annot.  Such action flickers tooltip and represents a
   // technical artifact that is not worth analyzing.
   if (props) {
     props = conformAnalytics(props, ideogram)
