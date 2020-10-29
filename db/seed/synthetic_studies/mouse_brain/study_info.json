@@ -22,6 +22,7 @@
       "expression_file_info": {
         "is_raw_counts": true,
         "units": "raw counts",
+        "biosample_input_type": "whole cell",
         "library_preparation_protocol": "MARS-seq"
       }
     },
