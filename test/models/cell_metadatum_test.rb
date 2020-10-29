@@ -7,7 +7,7 @@ class CellMetadatumTest < ActiveSupport::TestCase
 
     # setup
     annotation_values = []
-    200.times { annotation_values << SecureRandom.uuid }
+    300.times { annotation_values << SecureRandom.uuid }
     @cell_metadatum = CellMetadatum.new(name: 'Group Count Test', annotation_type: 'group', values: annotation_values)
 
     # assert unique group annotations > 100 cannot visualize
