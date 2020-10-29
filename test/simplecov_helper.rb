@@ -1,7 +1,7 @@
 require 'simplecov'
 SimpleCov.start 'rails'
 
-if ENV['CI'] || ENV['CI'] == 'true'
+if ENV['CODECOV_TOKEN']
   require 'codecov'
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
 end
