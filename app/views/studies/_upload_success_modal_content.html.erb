@@ -36,10 +36,10 @@
                             new_study_file_study_path(study_file.study_id, file_type: 'Expression Matrix', is_raw_counts: !study_file.is_raw_counts_file?,
                                                       taxon_id: study_file.taxon_id, target: '#expressions-target',
                                                       form: 'initialize_expression_form'),
-                            class: 'btn btn-sm btn-success', data: {remote: true, dismiss: 'modal'} %>
+                            class: 'btn btn-lg btn-success', data: {remote: true, dismiss: 'modal'} %>
               </div>
               <div class="col-xs-4">
-                <%= link_to 'Skip this time', '#', data: {dismiss: 'modal'} %>
+                <%= link_to 'Skip this time', '#', class: 'btn btn-lg', style: 'vertical-align: center;', data: {dismiss: 'modal'} %>
               </div>
             </div>
           <% end %>
