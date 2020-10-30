@@ -106,7 +106,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should return search results using facets' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    study = Study.find_by(name: "Test Study #{@random_seed}")
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
     facets = SearchFacet.where(data_type: 'string')
 
     # find all human studies from metadata
@@ -132,7 +132,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should return search results using numeric facets' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    study = Study.find_by(name: "Test Study #{@random_seed}")
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
     facet = SearchFacet.find_by(identifier: 'organism_age')
     facet.update_filter_values! # in case there is a race condition with parsing & facet updates
     # loop through 3 different units (days, months, years) to run a numeric-based facet query with conversion
@@ -225,7 +225,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should generate curl config for bulk download' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    study = Study.find_by(name: "Test Study #{@random_seed}")
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
     file_types = %w(Expression Metadata).join(',')
     execute_http_request(:post, api_v1_create_auth_code_path)
     assert_response :success
@@ -264,7 +264,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should return preview of bulk download files and total bytes' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    study = Study.find_by(name: "Test Study #{@random_seed}")
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
     file_types = %w(Expression Metadata)
     execute_http_request(:get, api_v1_search_bulk_download_size_path(
         accessions: study.accession, file_types: file_types.join(','))
@@ -311,7 +311,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     # add study to branding group and search - should get 1 result
-    study = Study.find_by(name: "Test Study #{@random_seed}")
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
     branding_group = BrandingGroup.first
     study.update(branding_group_id: branding_group.id)
 
@@ -336,7 +336,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should run inferred search using facets' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    convention_study = Study.find_by(name: "Test Study #{@random_seed}")
+    convention_study = Study.find_by(name: "Testing Study #{@random_seed}")
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
@@ -367,7 +367,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should run inferred search using facets and phrase' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    convention_study = Study.find_by(name: "Test Study #{@random_seed}")
+    convention_study = Study.find_by(name: "Testing Study #{@random_seed}")
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
     species_facet = SearchFacet.find_by(identifier: 'species')
@@ -402,7 +402,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     # update other_study to match one filter from facets; should not be inferred since it doesn't meet both criteria
-    convention_study = Study.find_by(name: "Test Study #{@random_seed}")
+    convention_study = Study.find_by(name: "Testing Study #{@random_seed}")
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}+disease:#{NO_DISEASE_FILTER[:id]}"

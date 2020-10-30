@@ -178,3 +178,9 @@ BrandingGroup.create(name: 'Test Brand', user_id: api_user.id, font_family: 'Hel
 PresetSearch.create!(name: 'Test Search', search_terms: ["Test Study"],
                      facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'], accession_whitelist: %w(SCP1))
 FeatureFlag.create(name: 'faceted_search')
+
+# seed BQ with sample data
+bq_seeds = File.open(Rails.root.join('db', 'seed', 'bq_seeds.json'))
+bq_data = JSON.parse bq_seeds.read
+table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
+table.insert bq_data
