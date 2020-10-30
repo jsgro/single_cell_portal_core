@@ -301,7 +301,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   test 'should validate unique cells for expression matrices' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    study = Study.find_by(name: "Test Study #{@random_seed}")
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
     new_matrix = 'expression_matrix_example_2.txt'
     file_params = {study_file: {file_type: 'Expression Matrix', study_id: study.id.to_s}}
     perform_study_file_upload(new_matrix, file_params, study.id)

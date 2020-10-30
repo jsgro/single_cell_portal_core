@@ -14,7 +14,6 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
                                                                        })
     sign_in @user
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-    @user.update_last_access_at!
   end
 
   test 'should get all studies' do

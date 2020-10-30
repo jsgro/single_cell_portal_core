@@ -5,7 +5,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
   def setup
     @user = User.find_by(email: 'testing.user.2@gmail.com')
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-    @study = Study.find_by(name: "Test Study #{@random_seed}")
+    @study = Study.find_by(name: "Testing Study #{@random_seed}")
   end
 
   test 'should update user download quota' do
