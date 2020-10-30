@@ -13,8 +13,8 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
     study = Study.find_by(name: "Testing Study #{@random_seed}")
     cluster = study.cluster_groups.first
     cluster_file = study.cluster_ordinations_files.first
-    expression_file = study.expression_matrix_file('expression_matrix.txt')
-    genes = study.genes.pluck(&:name)
+    expression_file = study.expression_matrix_file('expression_matrix_example.txt')
+    genes = study.genes.map(&:name)
     gene = genes.sample
     genes_hash = Digest::SHA256.hexdigest genes.sort.join
     cluster.cell_annotations.each do |cell_annotation|

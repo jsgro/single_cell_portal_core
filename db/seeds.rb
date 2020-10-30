@@ -16,17 +16,46 @@ user_2 = User.create!(email: 'sharing.user@gmail.com', password: 'password', uid
 
 TosAcceptance.create(email: user.email)
 TosAcceptance.create(email: user_2.email)
-study = Study.create!(name: "Testing Study #{@random_seed}", firecloud_project: ENV['PORTAL_NAMESPACE'], data_dir: 'test', user_id: user.id)
+study = Study.create!(name: "Testing Study #{@random_seed}", firecloud_project: ENV['PORTAL_NAMESPACE'], user_id: user.id)
 detail = study.build_study_detail
 detail.update(full_description: "<p>This is the test study.</p>")
 StudyShare.create!(email: 'my-user-group@firecloud.org', permission: 'Reviewer', study_id: study.id,
                    firecloud_project: study.firecloud_project, firecloud_workspace: study.firecloud_workspace)
-expression_file = StudyFile.create!(name: 'expression_matrix.txt', upload_file_name: 'expression_matrix.txt', study_id: study.id,
-                                    file_type: 'Expression Matrix', y_axis_label: 'Expression Scores')
-cluster_file = StudyFile.create!(name: 'Test Cluster', upload_file_name: 'coordinates.txt', study_id: study.id,
-                                 file_type: 'Cluster', x_axis_label: 'X', y_axis_label: 'Y', z_axis_label: 'Z')
-metadata_file = StudyFile.create!(name: 'metadata.txt', upload_file_name: 'metadata.txt', study_id: study.id,
-                                  file_type: 'Metadata')
+example_files = {
+    expression: {
+        name: 'expression_matrix_example.txt',
+        path: 'test/test_data/expression_matrix_example.txt',
+        file_type: 'Expression Matrix',
+        y_axis_label: 'Expression Scores',
+        study_id: study.id
+    },
+    metadata: {
+        name: 'metadata_example.txt',
+        path: 'test/test_data/metadata_example.txt',
+        file_type: 'Metadata',
+        study_id: study.id
+    },
+    cluster: {
+        name: 'cluster_example.txt',
+        path: 'test/test_data/cluster_example.txt',
+        file_type: 'Cluster',
+        study_id: study.id,
+        x_axis_label: 'X',
+        y_axis_label: 'Y',
+        z_axis_label: 'Z'
+    }
+}
+example_files.values.each do |file_attributes|
+  upload = File.open(File.join(file_attributes[:path]))
+  file_attributes.delete(:path)
+  file_attributes[:upload] = upload
+  study_file = StudyFile.create!(file_attributes)
+  study.send_to_firecloud(study_file)
+end
+study.reload
+expression_file = study.expression_matrix_files.first
+cluster_file = study.cluster_ordinations_files.first
+metadata_file = study.metadata_file
 cluster = ClusterGroup.create!(name: 'Test Cluster', study_id: study.id, study_file_id: cluster_file.id, cluster_type: '3d', cell_annotations: [
     {
         name: 'Category',
