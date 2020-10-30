@@ -42,6 +42,7 @@ group :development, :test do
   gem 'debase'
   gem 'test-unit'
   gem 'brakeman', :require => false
+  gem 'factory_bot_rails'
   gem 'listen'
   gem 'byebug'
   gem 'puma'
