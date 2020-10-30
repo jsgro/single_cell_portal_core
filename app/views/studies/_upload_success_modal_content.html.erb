@@ -32,7 +32,7 @@
           <% unless @study.has_raw_counts_matrices? && @study.has_visualization_matrices? %>
             <div class="row">
               <div class="col-xs-8">
-                <%= link_to "Upload a #{study_file.is_raw_counts_file? ? 'processed' : 'raw counts'} expression matrix".html_safe,
+                <%= link_to "Upload a #{study_file.is_raw_counts_file? ? 'processed' : 'raw counts'} matrix".html_safe,
                             new_study_file_study_path(study_file.study_id, file_type: 'Expression Matrix', is_raw_counts: !study_file.is_raw_counts_file?,
                                                       taxon_id: study_file.taxon_id, target: '#expressions-target',
                                                       form: 'initialize_expression_form'),
