@@ -10,7 +10,7 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
   def test_manage_cache_entries
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    study = Study.find_by(name: name: "Testing Study #{@random_seed}")
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
     cluster = study.cluster_groups.first
     cluster_file = study.cluster_ordinations_files.first
     expression_file = study.expression_matrix_file('expression_matrix.txt')
