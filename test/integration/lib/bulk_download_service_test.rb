@@ -118,7 +118,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
   test 'should get list of permitted accessions' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
-    accessions = Study.pluck(:accession)
+    accessions = Study.viewable(@user).pluck(:accession)
     permitted = BulkDownloadService.get_permitted_accessions(study_accessions: accessions, user: @user)
     assert_equal accessions.sort, permitted.sort,
                  "Did not return expected list of accessions; #{permitted} != #{accessions}"

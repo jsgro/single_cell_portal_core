@@ -4,16 +4,17 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
 
   def setup
     host! 'localhost'
+    @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
   end
 
   def test_manage_cache_entries
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    study = Study.first
-    cluster = ClusterGroup.first
+    study = Study.find_by(name: name: "Testing Study #{@random_seed}")
+    cluster = study.cluster_groups.first
     cluster_file = study.cluster_ordinations_files.first
     expression_file = study.expression_matrix_file('expression_matrix.txt')
-    genes = Gene.all.map(&:name)
+    genes = study.genes.pluck(&:name)
     gene = genes.sample
     genes_hash = Digest::SHA256.hexdigest genes.sort.join
     cluster.cell_annotations.each do |cell_annotation|
