@@ -85,10 +85,10 @@ const FacetResultsFooter = ({studySearchState}) => {
           <FontAwesomeIcon icon={faInfoCircle} className="fa-lg fa-fw icon-left"/>
         </div>
         <div className="">
-          Our advanced search is metadata powered.  By selecting specific facet values, your search is <b>targeted only to studies
-          that asserted those ontology terms in a metadata file. </b>
-          Currently, about 40% of studies supply that metadata.<br/> Learn more about our search capability and how study
-          authors can make their studies more accessible <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies">here</a>
+          <p>Our advanced search is metadata-powered.  By selecting filters, your search <b>targets only studies that use ontology terms</b> in their metadata file.
+          Currently, about 20% of public studies supply that metadata.</p>
+          Learn more about our search capability and how study
+          authors can make their studies more accessible at our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies">search wiki</a>.
         </div>
       </div>
     )
