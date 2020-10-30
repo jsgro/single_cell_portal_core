@@ -250,14 +250,15 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   test 'should delete data from bigquery' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    study = Study.find_by(name: "Test Study #{@random_seed}")
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
     metadata_file = study.metadata_file
     bqc = ApplicationController.big_query_client
-    bq_dataset = bqc.datasets.detect {|dataset| dataset.dataset_id == CellMetadatum::BIGQUERY_DATASET}
+    bq_dataset = bqc.dataset CellMetadatum::BIGQUERY_DATASET
+    ensure_bq_seeds(bq_dataset, study)
     initial_bq_row_count = get_bq_row_count(bq_dataset, study)
-    assert initial_bq_row_count == 30, "wrong number of BQ rows found to test deletion capability"
+    assert initial_bq_row_count > 0, "wrong number of BQ rows found to test deletion capability"
     # request delete
-    puts "Requesting delete for alexandria_convention/metadata.v2-0-0.txt"
+    puts "Requesting delete for metadata file"
     delete api_v1_study_study_file_path(study_id: study.id, id: metadata_file.id), as: :json, headers: {authorization: "Bearer #{@test_user.api_access_token[:access_token]}" }
 
     seconds_slept = 0

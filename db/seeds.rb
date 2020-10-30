@@ -156,7 +156,7 @@ SearchFacet.create(name: 'Species', identifier: 'species', filters: [{id: 'NCBIT
                                     browser_url: nil}],
                    data_type: 'string', is_ontology_based: true, is_array_based: false, big_query_id_column: 'species',
                    big_query_name_column: 'species__ontology_label', convention_name: 'Alexandria Metadata Convention',
-                   convention_version: '1.1.3')
+                   convention_version: '2.2.0')
 SearchFacet.create(name: 'Disease', identifier: 'disease', filters: [{id: 'MONDO_0000001', name: 'disease or disorder'}],
                    ontology_urls: [{name: 'Monarch Disease Ontology',
                                     url: 'https://www.ebi.ac.uk/ols/api/ontologies/mondo',
@@ -166,10 +166,10 @@ SearchFacet.create(name: 'Disease', identifier: 'disease', filters: [{id: 'MONDO
                                     browser_url: nil}],
                    data_type: 'string', is_ontology_based: true, is_array_based: true, big_query_id_column: 'disease',
                    big_query_name_column: 'disease__ontology_label', convention_name: 'Alexandria Metadata Convention',
-                   convention_version: '1.1.3')
+                   convention_version: '2.2.0')
 SearchFacet.create(name: 'Organism Age', identifier: 'organism_age', big_query_id_column: 'organism_age', big_query_name_column: 'organism_age',
                    big_query_conversion_column: 'organism_age__seconds', is_ontology_based: false, data_type: 'number',
-                   is_array_based: false, convention_name: 'Alexandria Metadata Convention', convention_version: '1.1.3',
+                   is_array_based: false, convention_name: 'Alexandria Metadata Convention', convention_version: '2.2.0',
                    unit: 'years')
 
 BrandingGroup.create(name: 'Test Brand', user_id: api_user.id, font_family: 'Helvetica Neue, sans-serif', background_color: '#FFFFFF')
@@ -178,9 +178,3 @@ BrandingGroup.create(name: 'Test Brand', user_id: api_user.id, font_family: 'Hel
 PresetSearch.create!(name: 'Test Search', search_terms: ["Test Study"],
                      facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'], accession_whitelist: %w(SCP1))
 FeatureFlag.create(name: 'faceted_search')
-
-# seed BQ with sample data
-bq_seeds = File.open(Rails.root.join('db', 'seed', 'bq_seeds.json'))
-bq_data = JSON.parse bq_seeds.read
-table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
-table.insert bq_data

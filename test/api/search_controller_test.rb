@@ -1,4 +1,5 @@
 require 'api_test_helper'
+require 'integration_test_helper'
 
 class SearchControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -16,6 +17,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
                                                                            :email => 'testing.user@gmail.com'
                                                                        })
     sign_in @user
+    @user.update_last_access_at!
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
   end
 
@@ -108,6 +110,9 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     study = Study.find_by(name: "Testing Study #{@random_seed}")
     facets = SearchFacet.where(data_type: 'string')
 
+    bq_dataset = ApplicationController.big_query_client.dataset CellMetadatum::BIGQUERY_DATASET
+    ensure_bq_seeds(bq_dataset, study)
+
     # find all human studies from metadata
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}+disease:#{NO_DISEASE_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
@@ -132,6 +137,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     study = Study.find_by(name: "Testing Study #{@random_seed}")
+    bq_dataset = ApplicationController.big_query_client.dataset CellMetadatum::BIGQUERY_DATASET
+    ensure_bq_seeds(bq_dataset, study)
     facet = SearchFacet.find_by(identifier: 'organism_age')
     facet.update_filter_values! # in case there is a race condition with parsing & facet updates
     # loop through 3 different units (days, months, years) to run a numeric-based facet query with conversion

@@ -12,8 +12,8 @@
     "organism_age__unit": "UO_0000036",
     "organism_age__unit_label": "year",
     "CellID": "CELL_0001",
-    "study_accession": "SCP1",
-    "file_id": "5e6b77b77b2f155840b94630",
+    "study_accession": "",
+    "file_id": "",
     "organism_age__seconds": "31557600.0"
   },
     {
@@ -29,8 +29,8 @@
     "organism_age__unit": "UO_0000036",
     "organism_age__unit_label": "year",
     "CellID": "CELL_0001",
-    "study_accession": "SCP1",
-    "file_id": "5e6b77b77b2f155840b94630",
+    "study_accession": "",
+    "file_id": "",
     "organism_age__seconds": "31557600"
   },
     {
@@ -46,8 +46,8 @@
     "organism_age__unit": "UO_0000036",
     "organism_age__unit_label": "year",
     "CellID": "CELL_0001",
-    "study_accession": "SCP1",
-    "file_id": "5e6b77b77b2f155840b94630",
+    "study_accession": "",
+    "file_id": "",
     "organism_age__seconds": "347133600.0"
   },
     {
@@ -63,8 +63,8 @@
     "organism_age__unit": "UO_0000036",
     "organism_age__unit_label": "year",
     "CellID": "CELL_0001",
-    "study_accession": "SCP1",
-    "file_id": "5e6b77b77b2f155840b94630",
+    "study_accession": "",
+    "file_id": "",
     "organism_age__seconds": "978285600.0"
   },
     {
@@ -80,8 +80,8 @@
     "organism_age__unit": "UO_0000036",
     "organism_age__unit_label": "year",
     "CellID": "CELL_0001",
-    "study_accession": "SCP1",
-    "file_id": "5e6b77b77b2f155840b94630",
+    "study_accession": "",
+    "file_id": "",
     "organism_age__seconds": "3187317600.0"
   }
 ]

@@ -13,6 +13,7 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
                                                                            :email => 'testing.user@gmail.com'
                                                                        })
     sign_in @user
+    @user.update_last_access_at!
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
   end
 

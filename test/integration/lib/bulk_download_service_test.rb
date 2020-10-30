@@ -50,8 +50,8 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
             total_bytes: @study.metadata_file.upload_file_size
         },
         Expression: {
-            total_files: 1,
-            total_bytes: @study.expression_matrix_files.first.upload_file_size
+            total_files: @study.expression_matrix_files.size,
+            total_bytes: @study.expression_matrix_files.map(&:upload_file_size).reduce(&:+)
         }
     }.with_indifferent_access
     assert_equal expected_response, files_by_size.with_indifferent_access,

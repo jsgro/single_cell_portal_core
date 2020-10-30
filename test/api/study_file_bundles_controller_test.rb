@@ -16,6 +16,7 @@ class StudyFileBundlesControllerTest < ActionDispatch::IntegrationTest
                                                                            :email => 'testing.user@gmail.com'
                                                                        })
     sign_in @user
+    @user.update_last_access_at!
   end
 
   test 'should get index' do
