@@ -1,11 +1,13 @@
 import React, { useContext } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna, faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
+import { faDna, faExclamationCircle, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StudyResults from './StudyResults'
 import Study from './Study'
 import SearchQueryDisplay from './SearchQueryDisplay'
 import { UserContext } from 'providers/UserProvider'
+import { getNumFacetsAndFilters } from 'providers/StudySearchProvider'
+
 
 /**
  * handles display of loading, error and results for a list of studies
@@ -63,11 +65,36 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
       </>
     )
   }
+
   return (
     <div className="results-panel">
-      <div className="results-content">{panelContent}</div>
+      <div className="results-content">
+        { panelContent }
+        <FacetResultsFooter studySearchState={studySearchState}/>
+      </div>
     </div>
   )
 }
+
+const FacetResultsFooter = ({studySearchState}) => {
+  let resultsFooter = <div></div>
+  if (Object.keys(studySearchState.params.facets).length > 0 && studySearchState.isLoaded) {
+    resultsFooter = (
+      <div className="flexbox alert alert-info">
+        <div className="">
+          <FontAwesomeIcon icon={faInfoCircle} className="fa-lg fa-fw icon-left"/>
+        </div>
+        <div className="">
+          Our advanced search is metadata powered.  By selecting specific facet values, your search is <b>targeted only to studies
+          that asserted those ontology terms in a metadata file. </b>
+          Currently, about 40% of studies supply that metadata.<br/> Learn more about our search capability and how study
+          authors can make their studies more accessible <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies">here</a>
+        </div>
+      </div>
+    )
+  }
+  return resultsFooter;
+}
+
 
 export default ResultsPanel
