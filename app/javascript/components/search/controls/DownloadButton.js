@@ -32,7 +32,7 @@ async function generateDownloadConfig(matchingAccessions) {
 
   // "-k" === "--insecure"
   let curlSecureFlag = ''
-  if (('SCP' in window) && window.location.host === 'localhost') {
+  if (('SCP' in window) && window.location.hostname === 'localhost') {
     curlSecureFlag = 'k'
   }
 
@@ -41,7 +41,7 @@ async function generateDownloadConfig(matchingAccessions) {
   // instead of the hostname
   const downloadCommand = (
     `curl "${url}" -${curlSecureFlag}o cfg.txt; ` +
-    `curl -K cfg.txt; rm cfg.txt`
+    `curl -K cfg.txt && rm cfg.txt` // Removes only if curl succeeds
   )
 
   return {
