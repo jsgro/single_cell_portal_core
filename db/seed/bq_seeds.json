@@ -11,12 +11,19 @@
     "organism_age": "1.0",
     "organism_age__unit": "UO_0000036",
     "organism_age__unit_label": "year",
-    "CellID": "CELL_0001",
+    "CellID": "",
     "study_accession": "",
     "file_id": "",
-    "organism_age__seconds": "31557600.0"
+    "organism_age__seconds": "31557600",
+    "biosample_id": "BM01_16dpp_r3",
+    "donor_id": "BM01",
+    "library_preparation_protocol": "EFO_0008919",
+    "library_preparation_protocol__ontology_label": "Seq-Well",
+    "organ": "UBERON_0001913",
+    "organ__ontology_label": "milk",
+    "sex": "female"
   },
-    {
+  {
     "species": "NCBITaxon_9606",
     "species__ontology_label": "Homo sapiens",
     "disease": [
@@ -28,12 +35,19 @@
     "organism_age": "1.0",
     "organism_age__unit": "UO_0000036",
     "organism_age__unit_label": "year",
-    "CellID": "CELL_0001",
+    "CellID": "",
     "study_accession": "",
     "file_id": "",
-    "organism_age__seconds": "31557600"
+    "organism_age__seconds": "31557600",
+    "biosample_id": "BM01_16dpp_r3",
+    "donor_id": "BM01",
+    "library_preparation_protocol": "EFO_0008919",
+    "library_preparation_protocol__ontology_label": "Seq-Well",
+    "organ": "UBERON_0001913",
+    "organ__ontology_label": "milk",
+    "sex": "female"
   },
-    {
+  {
     "species": "NCBITaxon_9606",
     "species__ontology_label": "Homo sapiens",
     "disease": [
@@ -45,12 +59,19 @@
     "organism_age": "11.0",
     "organism_age__unit": "UO_0000036",
     "organism_age__unit_label": "year",
-    "CellID": "CELL_0001",
+    "CellID": "",
     "study_accession": "",
     "file_id": "",
-    "organism_age__seconds": "347133600.0"
+    "organism_age__seconds": "347133600",
+    "biosample_id": "BM01_16dpp_r3",
+    "donor_id": "BM01",
+    "library_preparation_protocol": "EFO_0008919",
+    "library_preparation_protocol__ontology_label": "Seq-Well",
+    "organ": "UBERON_0001913",
+    "organ__ontology_label": "milk",
+    "sex": "female"
   },
-    {
+  {
     "species": "NCBITaxon_9606",
     "species__ontology_label": "Homo sapiens",
     "disease": [
@@ -62,12 +83,19 @@
     "organism_age": "31.0",
     "organism_age__unit": "UO_0000036",
     "organism_age__unit_label": "year",
-    "CellID": "CELL_0001",
+    "CellID": "",
     "study_accession": "",
     "file_id": "",
-    "organism_age__seconds": "978285600.0"
+    "organism_age__seconds": "978285600",
+    "biosample_id": "BM01_16dpp_r3",
+    "donor_id": "BM01",
+    "library_preparation_protocol": "EFO_0008919",
+    "library_preparation_protocol__ontology_label": "Seq-Well",
+    "organ": "UBERON_0001913",
+    "organ__ontology_label": "milk",
+    "sex": "female"
   },
-    {
+  {
     "species": "NCBITaxon_9606",
     "species__ontology_label": "Homo sapiens",
     "disease": [
@@ -79,9 +107,16 @@
     "organism_age": "101.0",
     "organism_age__unit": "UO_0000036",
     "organism_age__unit_label": "year",
-    "CellID": "CELL_0001",
+    "CellID": "",
     "study_accession": "",
     "file_id": "",
-    "organism_age__seconds": "3187317600.0"
+    "organism_age__seconds": "3187317600",
+    "biosample_id": "BM01_16dpp_r3",
+    "donor_id": "BM01",
+    "library_preparation_protocol": "EFO_0008919",
+    "library_preparation_protocol__ontology_label": "Seq-Well",
+    "organ": "UBERON_0001913",
+    "organ__ontology_label": "milk",
+    "sex": "female"
   }
 ]
