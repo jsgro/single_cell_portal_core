@@ -144,20 +144,20 @@ api_user = User.create!(email:'testing.user.2@gmail.com', password:'someotherpas
              api_access_token: {access_token: 'test-api-token-2', expires_in: 3600, expires_at: Time.zone.now + 1.hour})
 
 # Analysis Configuration seeds
-AnalysisConfiguration.create(namespace: 'single-cell-portal', name: 'split-cluster', snapshot: 1, user_id: user.id,
+AnalysisConfiguration.create!(namespace: 'single-cell-portal', name: 'split-cluster', snapshot: 1, user_id: user.id,
                              configuration_namespace: 'single-cell-portal', configuration_name: 'split-cluster',
                              configuration_snapshot: 2, description: 'This is a test description.')
 
 # SearchFacet seeds
 # These facets represent 3 of the main types: String-based (both for array- and non-array columns), and numeric
-SearchFacet.create(name: 'Species', identifier: 'species', filters: [{id: 'NCBITaxon_9606', name: 'Homo sapiens'}],
+SearchFacet.create!(name: 'Species', identifier: 'species', filters: [{id: 'NCBITaxon_9606', name: 'Homo sapiens'}],
                    ontology_urls: [{name: 'NCBI organismal classification',
                                     url: 'https://www.ebi.ac.uk/ols/api/ontologies/ncbitaxon',
                                     browser_url: nil}],
                    data_type: 'string', is_ontology_based: true, is_array_based: false, big_query_id_column: 'species',
                    big_query_name_column: 'species__ontology_label', convention_name: 'Alexandria Metadata Convention',
                    convention_version: '2.2.0')
-SearchFacet.create(name: 'Disease', identifier: 'disease', filters: [{id: 'MONDO_0000001', name: 'disease or disorder'}],
+SearchFacet.create!(name: 'Disease', identifier: 'disease', filters: [{id: 'MONDO_0000001', name: 'disease or disorder'}],
                    ontology_urls: [{name: 'Monarch Disease Ontology',
                                     url: 'https://www.ebi.ac.uk/ols/api/ontologies/mondo',
                                     browser_url: nil},
@@ -167,14 +167,14 @@ SearchFacet.create(name: 'Disease', identifier: 'disease', filters: [{id: 'MONDO
                    data_type: 'string', is_ontology_based: true, is_array_based: true, big_query_id_column: 'disease',
                    big_query_name_column: 'disease__ontology_label', convention_name: 'Alexandria Metadata Convention',
                    convention_version: '2.2.0')
-SearchFacet.create(name: 'Organism Age', identifier: 'organism_age', big_query_id_column: 'organism_age', big_query_name_column: 'organism_age',
+SearchFacet.create!(name: 'Organism Age', identifier: 'organism_age', big_query_id_column: 'organism_age', big_query_name_column: 'organism_age',
                    big_query_conversion_column: 'organism_age__seconds', is_ontology_based: false, data_type: 'number',
                    is_array_based: false, convention_name: 'Alexandria Metadata Convention', convention_version: '2.2.0',
                    unit: 'years')
 
-BrandingGroup.create(name: 'Test Brand', user_id: api_user.id, font_family: 'Helvetica Neue, sans-serif', background_color: '#FFFFFF')
+BrandingGroup.create!(name: 'Test Brand', user_id: api_user.id, font_family: 'Helvetica Neue, sans-serif', background_color: '#FFFFFF')
 
 # Preset search seeds
 PresetSearch.create!(name: 'Test Search', search_terms: ["Test Study"],
                      facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'], accession_whitelist: %w(SCP1))
-FeatureFlag.create(name: 'faceted_search')
+FeatureFlag.create!(name: 'faceted_search')
