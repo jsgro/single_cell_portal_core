@@ -16,6 +16,7 @@ FactoryBot.define do
           study.description = ""
         end
         study.description << description_suffix
+        study.save
       end
     end
     # create a study but mark as detached, so a Terra workspace is not created
