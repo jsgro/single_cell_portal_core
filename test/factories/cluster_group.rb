@@ -25,7 +25,6 @@ FactoryBot.define do
           {name: :z, type: 'coordinates'},
           {name: :text, type: 'cells'}
         ].each do |input_type|
-          byebug
           if evaluator.cell_data[input_type[:name]]
             FactoryBot.create(:data_array,
                               cluster_group: cluster,
