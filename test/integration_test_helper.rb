@@ -49,11 +49,12 @@ def seed_bq_table(bq_dataset, study_accession, file_id)
   bq_seeds = File.open(Rails.root.join('db', 'seed', 'bq_seeds.json'))
   bq_data = JSON.parse bq_seeds.read
   bq_data.each do |entry|
-    entry['CellID'] = SecureRandom.uuid
-    entry['study_accession'] = study_accession
-    entry['file_id'] = file_id
+    row = entry.with_indifferent_access
+    row['CellID'] = SecureRandom.uuid
+    row['study_accession'] = study_accession
+    row['file_id'] = file_id.to_s
   end
-  tmp_file = File.new(Rails.root.join('tmp', 'bq_seeds.json'), 'w+')
+  tmp_file = File.new(Rails.root.join('db', 'seeds', 'tmp_bq_seeds.json'), 'w+')
   tmp_file.write bq_data.map(&:to_json).join("\n")
   table = bq_dataset.table(CellMetadatum::BIGQUERY_TABLE)
   table.load tmp_file, write: 'append'
