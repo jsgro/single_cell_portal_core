@@ -68,10 +68,10 @@ class User
   field :access_token, type: Hash # from Google OAuth callback
 
   # Used for time-based one-time access token (TOTAT)
-  field :totat, type: Integer
+  field :totat, type: String
 
 # Time (t) and time interval (ti) for the TOTAT
-  field :totat_t_ti, type: String
+  field :totat_info, type: Hash
 
   ## Confirmable
   # field :confirmation_token,   type: String
@@ -224,6 +224,7 @@ class User
   end
 
   # Creates and returns a time-based one-time access token (TOTAT).
+  # Invalidates any existing totats for the user
   #
   # This isn't a password, because, after creation, it is intended for later
   # use without a username.  Instead it is an access token. For security, we
@@ -231,31 +232,55 @@ class User
   # time interval from the creation of the token.
   #
   # Note that this TOTAT implementation is not yet intended for sensitive data.
-  def create_totat(time_interval=30)
-    totat = rand(999999)
-    t = User.milliseconds_since_epoch()
-    ti = time_interval
-    t_ti = t.to_s + '_' + ti.to_s
+  def create_totat(time_interval=30, operations=[])
+    totat = SecureRandom.alphanumeric(8)
+    creation_time = User.milliseconds_since_epoch()
+    totat_info = {
+      created: creation_time,
+      valid_seconds: time_interval,
+      operations: operations
+    }
     self.update(totat: totat)
-    self.update(totat_t_ti: t_ti)
-    return {'totat': totat, 'time_interval': ti}
+    self.update(totat_info: totat_info)
+    return {totat: totat, totat_info: totat_info}
   end
 
-  def self.verify_totat(totat)
+  def expire_totat
+    self.update!(totat: nil)
+    self.update!(totat_info: nil)
+  end
+
+  # attempts to find a user by the given totat and operation
+  # returns nil if the totat is expired or does not match the operation
+  # If valid, removes the given operation from the permitted list, then deletes the totat if
+  # no operations are left
+  def self.verify_totat(totat, operation)
     user = User.find_by(totat: totat)
     if user == nil
-      return false
+      return nil
     end
-    totat_t, time_interval = user.totat_t_ti.split('_')
+    ti = user.totat_info
+
     current_t = User.milliseconds_since_epoch()
-    # Expires TOTAT
-    user.update(totat: 0)
-    user.update(totat_t_ti: '')
-    totat_is_fresh = current_t - totat_t.to_i <= time_interval.to_i*1000
+    totat_is_fresh = current_t - ti[:created] <= ti[:valid_seconds] * 1000
+    # Expires TOTAT for the operation
+
     if totat_is_fresh
+      if ti[:operations].exclude?(operation)
+        return nil
+      end
+
+      # remove the first occurence of the given operation
+      # (to allow for cases where a totat allows repeat actions)
+      ti[:operations].slice!(ti[:operations].index(operation))
+      if ti[:operations].empty?
+        user.expire_totat
+      else
+        user.update!(totat_info: ti)
+      end
       return user
     else
-      return false
+      return nil
     end
   end
 

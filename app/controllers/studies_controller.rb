@@ -17,7 +17,7 @@ class StudiesController < ApplicationController
   before_action :set_study, except: [:index, :new, :create, :download_private_file]
   before_action :set_file_types, only: [:sync_study, :sync_submission_outputs, :sync_study_file, :sync_orphaned_study_file,
                                         :update_study_file_from_sync]
-  before_action :check_edit_permissions, except: [:index, :new, :create, :download_private_file]
+  before_action :check_edit_permissions, except: [:index, :new, :create, :download_private_file, :generate_manifest]
   before_action do
     authenticate_user!
     check_access_settings
@@ -810,6 +810,11 @@ class StudiesController < ApplicationController
     else
       @reset_status = false
     end
+  end
+
+  def generate_manifest
+    manifest_obj = BulkDownloadService.generate_study_files_tsv(@study)
+    render plain: manifest_obj
   end
 
   # adding new study_file entries based on remote files in GCP

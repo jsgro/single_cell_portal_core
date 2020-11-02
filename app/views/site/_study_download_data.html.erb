@@ -31,6 +31,7 @@
                   </thead>
                 </table>
               <% end %>
+              Then <%= link_to "click here".html_safe, "#{generate_manifest_study_url(@study)}" %> for the manifest.json containing file supplementary information (units, protocols, etc...)
             <% elsif @study.public? && !@user_embargoed || current_user.admin? %>
               <p class="lead">To download all files using <code>curl</code>, click the button below to get the download command:</p>
               <p class="lead command-container" id="command-container-all"><%= link_to "<i class='fas fa-download'></i> Get download command for all study data".html_safe, '#/', class: 'btn btn-default get-download-command', id: 'get-download-command_all' %></p>
@@ -96,55 +97,48 @@
 
           // Get a time-based one time authentication token (totat),
           // then show the download command
-          $.ajax({
-              url: '/single_cell/totat',
-              type: 'post',
-              dataType: 'json',
-              success: function (response) {
-                  var totat = response.totat;
-                  var timeInterval = response.time_interval; // token expires after this many seconds
+          window.SCP.API.fetchAuthCode().then(
+            function (response) {
+              var authCode = response.authCode;
+              var timeInterval = response.timeInterval; // token expires after this many seconds
+              debugger;
+              var expiresMinutes = timeInterval / 60;
+              const accession = "<%= @study.accession %>"
+              const curlSecureFlag = "<%= Rails.env.development? ? '-k' : '' %>"
+              // Gets a curl configuration ("cfg.txt") containing signed
+              // URLs and output names for all files in the download object.
+              var url = (
+                window.location.origin +
+                '/single_cell/api/v1/search/bulk_download?' +
+                `accessions=${accession}` +
+                `&auth_code=${authCode}`
+              );
 
-                  var expiresMinutes = timeInterval / 60;
+              // This is what the user will run in their terminal to download the data.
+              var downloadCommand = (
+                  'curl &quot;' + url + '&quot; ' + curlSecureFlag + ' -o cfg.txt; ' +
+                  'curl -K cfg.txt && rm cfg.txt'
+              );
 
-                  // Gets a curl configuration ("cfg.txt") containing signed
-                  // URLs and output names for all files in the download object.
-                  var url = (
-                      window.location.origin +
-                      '/single_cell/bulk_data' +
-                      '/<%= @study.accession %>' +
-                      '/<%= @study.url_safe_name %>' +
-                      '/' + downloadObject +
-                      '/' + totat
-                  );
+              var commandID = 'command-' + authCode;
+              var commandContainer = $('#command-container-' + downloadObject);
+              var countdownValue = '<span class="countdown" id="countdown-' + authCode + '">' + expiresMinutes + '</span>';
 
-                  var curlSecureFlag = (window.location.host === 'localhost') ? 'k' : ''; // "-k" === "--insecure"
-
-                  // This is what the user will run in their terminal to download the data.
-                  // TODO: Consider checking the node environment (either at compile or runtime) instead of the hostname
-                  var downloadCommand = (
-                      'curl &quot;' + url + '&quot; -' + curlSecureFlag + 'o cfg.txt; ' +
-                      'curl -K cfg.txt; rm cfg.txt'
-                  );
-
-                  var commandID = 'command-' + totat;
-                  var commandContainer = $('#command-container-' + downloadObject);
-                  var countdownValue = '<span class="countdown" id="countdown-' + totat + '">' + expiresMinutes + '</span>';
-
-                  commandContainer.html(
-                      '<div class="input-group">' +
-                      '<input id="' + commandID + '" class="form-control curl-download-command" value="' + downloadCommand + '" readonly/>' +
-                      '<span class="input-group-btn">' +
-                      '<button id="copy-button-' + totat + '" class="btn btn-default btn-copy" data-clipboard-target="#' + commandID + '" data-toggle="tooltip" title="Copy to clipboard">' +
-                      '<i class="far fa-copy"></i>' +
-                      '</button>' +
-                      '<button id="refresh-button-' + totat + '" class="btn btn-default btn-refresh glyphicon glyphicon-refresh" data-toggle="tooltip" style="top: -0.5px;" title="Refresh download command">' +
-                      '</button>' +
-                      '</span>' +
-                      '</div>' +
-                      '<div style="font-size: 12px">Valid for one use within ' + countdownValue + ' minutes.  Paste into Mac/Linux/Unix terminal and execute to download.</div>'
-                  );
-              }
-          });
+              commandContainer.html(
+                  '<div class="input-group">' +
+                  '<input id="' + commandID + '" class="form-control curl-download-command" value="' + downloadCommand + '" readonly/>' +
+                  '<span class="input-group-btn">' +
+                  '<button id="copy-button-' + authCode + '" class="btn btn-default btn-copy" data-clipboard-target="#' + commandID + '" data-toggle="tooltip" title="Copy to clipboard">' +
+                  '<i class="far fa-copy"></i>' +
+                  '</button>' +
+                  '<button id="refresh-button-' + authCode + '" class="btn btn-default btn-refresh glyphicon glyphicon-refresh" data-toggle="tooltip" style="top: -0.5px;" title="Refresh download command">' +
+                  '</button>' +
+                  '</span>' +
+                  '</div>' +
+                  '<div style="font-size: 12px">Valid for one use within ' + countdownValue + ' minutes.  Paste into Mac/Linux/Unix terminal and execute to download.</div>'
+              );
+            }
+          );
         }
 
         // Show the download command upon clicking the "Get download command" button
@@ -192,6 +186,14 @@
         </td>
       </tr>
     <% end %>
+      <tr>
+        <td>manifest.json <i>(auto-generated)</i></td>
+        <td>Listing of all study files, and any supplementary information (units, protocols, etc...)</td>
+        <td></td>
+        <td></td>
+        <td><%= link_to "<span class='fas fa-download'></span> 1 KB".html_safe, "#{generate_manifest_study_url(@study)}", class: "btn btn-primary dl-link" %>
+        </td>
+      </tr>
     </tbody>
   </table>
   <% if @primary_study_files.any? || @primary_data.any? %>
