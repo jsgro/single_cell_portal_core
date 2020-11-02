@@ -263,7 +263,7 @@ class BulkDownloadService
       {genome_assembly_accession: 'genome_assembly_accession'},
       {genome_annotation_name: 'genome_annotation_name'},
       {is_raw_counts: 'expression_file_info.is_raw_counts'},
-      {library_construction_protocol: 'expression_file_info.library_construction_protocol'},
+      {library_preparation_protocol: 'expression_file_info.library_preparation_protocol'},
       {units: 'expression_file_info.units'},
       {biosample_input_type: 'expression_file_info.biosample_input_type'},
       {multimodality: 'expression_file_info.multimodality'}

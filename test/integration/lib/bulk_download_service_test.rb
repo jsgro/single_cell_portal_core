@@ -158,7 +158,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
       taxon_id: Taxon.new.id,
       expression_file_info: ExpressionFileInfo.new(
         units: 'raw counts',
-        library_construction_protocol: 'MARS-seq',
+        library_preparation_protocol: 'MARS-seq',
         is_raw_counts: true
       )
     )
