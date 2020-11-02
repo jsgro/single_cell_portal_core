@@ -1,12 +1,9 @@
 require 'api_test_helper'
 
-class SearchControllerTest < ActionDispatch::IntegrationTest
+class ExploreControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include Requests::JsonHelpers
   include Requests::HttpHelpers
-
-  HOMO_SAPIENS_FILTER = { id: 'NCBITaxon_9606', name: 'Homo sapiens' }
-  NO_DISEASE_FILTER = { id: 'MONDO_0000001', name: 'disease or disorder' }
 
   setup do
     @user = User.find_by(email: 'testing.user.2@gmail.com')

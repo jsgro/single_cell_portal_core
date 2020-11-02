@@ -1,4 +1,4 @@
-# factory for study_file test objects.
+# factory for data_array test objects. For now, hardcoded to cluster group arrays
 FactoryBot.define do
   factory :data_array do
     transient do

@@ -1,12 +1,12 @@
 FactoryBot.define do
-  # gets a study object, defaulting to the first user found.  Auto-appends a unique number to the name, and a note
-  # in the description of the study, to aid in test DB uniqueness and cleanup efforts
+  # gets a ClusterGroup object, defaulting to the first user found.
   factory :cluster_group do
     cluster_type { '2d' }
     cell_annotations { [] }
     name { study_file.name }
     study { study_file.study }
-    # create a study but mark as detached, so a Terra workspace is not created
+
+    # create a cluster group with data arrays populated according to a passed-in cell_data object
     factory :cluster_group_with_cells do
       transient do
         # cell_data is a hash of three (or 4) arrays: cells, x and y and z
