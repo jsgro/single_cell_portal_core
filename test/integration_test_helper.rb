@@ -55,7 +55,7 @@ def seed_big_query_table(bq_dataset, study_accession, file_id)
 end
 
 def ensure_bq_seeds(bq_dataset, study)
-  if get_bq_row_count(bq_dataset, study.accession) == 0
+  if get_bq_row_count(bq_dataset, study) == 0
     seed_big_query_table(bq_dataset, study.accession, study.metadata_file.id)
   end
 end

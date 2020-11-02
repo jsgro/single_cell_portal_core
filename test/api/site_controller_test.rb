@@ -20,9 +20,10 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
   test 'should get all studies' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
+    viewable = Study.viewable(@user)
     execute_http_request(:get, api_v1_site_studies_path)
     assert_response :success
-    assert json.size >= 3, "Did not find correct number of studies, expected 3 or more but found #{json.size}"
+    assert_equal json.size, viewable.size, "Did not find correct number of studies, expected #{viewable.size} or more but found #{json.size}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

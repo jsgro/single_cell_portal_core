@@ -19,6 +19,10 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
     @user.update_last_access_at!
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+
+    bq_dataset = ApplicationController.big_query_client.dataset CellMetadatum::BIGQUERY_DATASET
+    test_study = Study.find_by(name: "Testing Study #{@random_seed}")
+    ensure_bq_seeds(bq_dataset, test_study)
   end
 
   test 'should get all search facets' do
@@ -110,8 +114,6 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     study = Study.find_by(name: "Testing Study #{@random_seed}")
     facets = SearchFacet.where(data_type: 'string')
 
-    bq_dataset = ApplicationController.big_query_client.dataset CellMetadatum::BIGQUERY_DATASET
-    ensure_bq_seeds(bq_dataset, study)
 
     # find all human studies from metadata
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}+disease:#{NO_DISEASE_FILTER[:id]}"
@@ -137,8 +139,6 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     study = Study.find_by(name: "Testing Study #{@random_seed}")
-    bq_dataset = ApplicationController.big_query_client.dataset CellMetadatum::BIGQUERY_DATASET
-    ensure_bq_seeds(bq_dataset, study)
     facet = SearchFacet.find_by(identifier: 'organism_age')
     facet.update_filter_values! # in case there is a race condition with parsing & facet updates
     # loop through 3 different units (days, months, years) to run a numeric-based facet query with conversion
@@ -162,7 +162,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     # test single keyword first
     execute_http_request(:get, api_v1_search_path(type: 'study', terms: @random_seed))
     assert_response :success
-    expected_accessions = Study.pluck(:accession)
+    expected_accessions = Study.where(name: /#{@random_seed}/).pluck(:accession)
     matching_accessions = json['matching_accessions'].sort # need to sort results since they are returned in weighted order
     assert_equal expected_accessions, matching_accessions,
                  "Did not return correct array of matching accessions, expected #{expected_accessions} but found #{matching_accessions}"
@@ -185,7 +185,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:get, api_v1_search_path(type: 'study', terms: search_phrase))
     assert_response :success
     mixed_accessions = Study.any_of({name: "API Test Study #{@random_seed}"},
-                                       {name: "Testing Study #{@random_seed}"}).pluck(:accession).sort
+                                       {name: /testing/}).pluck(:accession).sort
     found_mixed_accessions = json['matching_accessions'].sort
     assert_equal mixed_accessions, found_mixed_accessions,
                  "Did not return correct array of matching accessions, expected #{found_mixed_accessions} but found #{mixed_accessions}"
@@ -376,7 +376,6 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     convention_study = Study.find_by(name: "Testing Study #{@random_seed}")
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
-    species_facet = SearchFacet.find_by(identifier: 'species')
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
     other_study.update(description: HOMO_SAPIENS_FILTER[:name])
     search_phrase = "Study #{@random_seed}"
@@ -473,6 +472,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     @user = User.first
+    # save access token to prevent breaking downstream tests
+    valid_token = @user.api_access_token.dup
     # mark study as false to show if a user is signed in or not
     api_test_study = Study.find_by(name: /API Test Study/)
     api_test_study.update(public: false)
@@ -494,6 +495,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_empty accessions, "Did not successfully time out session, accessions were found: #{accessions}"
     # clean up
     api_test_study.update(public: true)
+    @user.update(api_access_token: valid_token)
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

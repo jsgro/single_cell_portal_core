@@ -49,7 +49,7 @@ class FileParseServiceTest < ActiveSupport::TestCase
     study = Study.first
 
     test_data_basepath = Rails.root.join('test', 'test_data')
-    cluster_filename = 'cluster_example.txt'
+    cluster_filename = 'cluster_2_example_2.txt'
     cluster_file = File.open(File.join(test_data_basepath, cluster_filename))
     cluster = study.study_files.build(file_type: 'Cluster', upload: cluster_file, name: cluster_filename,
                                       status: 'uploaded')
