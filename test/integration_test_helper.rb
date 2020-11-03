@@ -54,7 +54,7 @@ def seed_bq_table(bq_dataset, study_accession, file_id)
     row['study_accession'] = study_accession
     row['file_id'] = file_id.to_s
   end
-  tmp_file = File.new(Rails.root.join('db', 'seeds', 'tmp_bq_seeds.json'), 'w+')
+  tmp_file = File.new(Rails.root.join('db', 'seed', 'tmp_bq_seeds.json'), 'w+')
   tmp_file.write bq_data.map(&:to_json).join("\n")
   table = bq_dataset.table(CellMetadatum::BIGQUERY_TABLE)
   table.load tmp_file, write: 'append'
