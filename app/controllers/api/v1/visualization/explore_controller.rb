@@ -40,11 +40,11 @@ module Api
           default_cluster = @study.default_cluster
           default_annotation =
           explore_props = {
-            is_cluster_viewable: default_cluster.nil?
+            is_cluster_viewable: default_cluster.nil?,
             taxon_names: [],
             hasIdeogramInferCnvFiles: false,
             uniqueGenes: [],
-            clusterGroupOptions: [],
+            clusterGroupOptions: []
           }
 
           render json: explore_props

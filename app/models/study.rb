@@ -1043,11 +1043,11 @@ class Study
     else
       annot_params = {
         name: default_annotation_name,
-        type: default_annotation_type
+        type: default_annotation_type,
         scope: default_annotation_scope
       }
     end
-    default_annot
+    annot_params
   end
 
   # helper to return default annotation type (group or numeric)

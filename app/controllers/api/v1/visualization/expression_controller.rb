@@ -33,20 +33,30 @@ module Api
         end
 
         def render_violin
-          cluster = RequestUtils.get_cluster_group(params, @study)
-          selected_annotation = RequestUtils.get_selected_annotation(params, @study, cluster)
+          cluster = ClusterRenderingService.get_cluster_group(params, @study)
+          annot_params = ExpressionRenderingService.parse_annotation_legacy_params(params, @study, cluster)
+          annotation = ExpressionRenderingService.get_selected_annotation(@study,
+                                                                       cluster,
+                                                                       annot_params[:name],
+                                                                       annot_params[:type],
+                                                                       annot_params[:scope])
           subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
           gene = @study.genes.by_name_or_id(params[:gene], @study.expression_matrix_files.map(&:id))
 
           render_data = ExpressionRenderingService.get_global_expression_render_data(
-            @study, subsample, gene, cluster, selected_annotation, params[:boxpoints], current_api_user
+            @study, subsample, gene, cluster, annotation, params[:boxpoints], current_api_user
           )
           render json: render_data, status: 200
         end
 
         def render_annotation_values
-          cluster = RequestUtils.get_cluster_group(params, @study)
-          annotation = RequestUtils.get_selected_annotation(params, @study, cluster)
+          cluster = ClusterRenderingService.get_cluster_group(params, @study)
+          annot_params = ExpressionRenderingService.parse_annotation_legacy_params(params, @study, cluster)
+          annotation = ExpressionRenderingService.get_selected_annotation(@study,
+                                                                       cluster,
+                                                                       annot_params[:name],
+                                                                       annot_params[:type],
+                                                                       annot_params[:scope])
           render json: annotation, status: 200
         end
       end
