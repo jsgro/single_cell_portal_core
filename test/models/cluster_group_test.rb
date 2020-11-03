@@ -9,7 +9,7 @@ class ClusterGroupTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     annotation_values = []
-    200.times { annotation_values << SecureRandom.uuid }
+    300.times { annotation_values << SecureRandom.uuid }
     cell_annotation = {name: 'Group Annotation', type: 'group', values: annotation_values}
     cluster = ClusterGroup.new(name: 'Group Count Test', cluster_type: '2d', cell_annotations: [cell_annotation])
     can_visualize = cluster.can_visualize_cell_annotation?(cell_annotation)

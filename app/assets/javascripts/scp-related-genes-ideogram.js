@@ -13,17 +13,21 @@
 
 /** Handle clicks on Ideogram annotations */
 function onClickAnnot(annot) {
+  // Ideogram object; used to inspect ideogram state
+  const ideogram = this // eslint-disable-line
   document.querySelector('#search_genes').value = annot.name
-  document.querySelector('#perform-gene-search').click()
-}
 
-/**
- * Reports if current gene has associated taxon (aka species, organism)
- *
- * Enables handling for old SCP studies, where matrices lack taxons
- */
-function geneHasTaxon() {
-  return window.SCP.taxon !== ''
+  // Enable merge of related-genes log props into search log props
+  // This helps profile the numerator of click-through-rate
+  const event = {}
+  const props = getRelatedGenesAnalytics(ideogram)
+  Object.entries(props).forEach(([key, value]) => {
+    event[`relatedGenes:${key}`] = value
+  })
+
+  event['type'] = 'click-related-genes'
+
+  window.submitGeneSearch(event)
 }
 
 /**
@@ -37,7 +41,7 @@ function genomeHasChromosomes() {
 }
 
 /**
-* Move Ideogram within expresion plot tabs, per UX recommendation
+* Move Ideogram within expression plot tabs, per UX recommendation
 */
 function putIdeogramInPlotTabs(ideoContainer) {
   const tabContent = document.querySelector('#render-target .tab-content')
@@ -55,7 +59,7 @@ function putIdeogramInPlotTabs(ideoContainer) {
  */
 function showRelatedGenesIdeogram() { // eslint-disable-line
 
-  if (!geneHasTaxon()) return
+  if (!window.ideogram) return
 
   const ideoContainer =
     document.querySelector('#related-genes-ideogram-container')
@@ -72,38 +76,93 @@ function showRelatedGenesIdeogram() { // eslint-disable-line
   ideoContainer.classList = 'show-related-genes-ideogram'
 }
 
+/** Refine analytics to use DSP-conventional names */
+function conformAnalytics(props, ideogram) {
+  // Use DSP-conventional name
+  props['perfTime'] = props.timeTotal
+  delete props.timeTotal
+
+  props['species'] = ideogram.organismScientificName
+
+  return props
+}
+
+/** Log hover over related genes ideogram tooltip */
+function onWillShowAnnotTooltip(annot) {
+  // Ideogram object; used to inspect ideogram state
+  const ideogram = this // eslint-disable-line
+  let props = ideogram.getTooltipAnalytics(annot)
+
+  // `props` is null if it is merely analytics noise.
+  // Accounts for quick moves from label to annot, or away then immediately
+  // back to same annot.  Such action flickers tooltip and represents a
+  // technical artifact that is not worth analyzing.
+  if (props) {
+    props = conformAnalytics(props, ideogram)
+    window.SCP.log('ideogram:related-genes:tooltip', props)
+  }
+
+  return annot
+}
+
+/** Get summary of related-genes ideogram that was just loaded or clicked */
+function getRelatedGenesAnalytics(ideogram) {
+  let props = Object.assign({}, ideogram.relatedGenesAnalytics)
+  props = conformAnalytics(props, ideogram)
+  return props
+}
+
+/**
+ * Callback to report analytics to Mixpanel.
+ * Helps profile denominator of click-through-rate
+ */
+function onPlotRelatedGenes() {
+  // Ideogram object; used to inspect ideogram state
+  const ideogram = this // eslint-disable-line
+  const props = getRelatedGenesAnalytics(ideogram)
+
+  window.SCP.log('ideogram:related-genes', props)
+}
+
 /**
  * Initiates Ideogram for related genes
  *
  * This is only done in the context of single-gene search in Study Overview
  */
-function createRelatedGenesIdeogram() { // eslint-disable-line
+function createRelatedGenesIdeogram(taxon) { // eslint-disable-line
 
-  if (!geneHasTaxon()) return
+  if (taxon === null) return
 
   // Clear any prior ideogram
   if (typeof window.ideogram !== 'undefined') {
     delete window.ideogram
-    document.querySelector('#related-genes-ideogram-container').innerHTML = ''
+    const ideoContainer =
+      document.querySelector('#related-genes-ideogram-container')
+    if (ideoContainer) ideoContainer.remove()
   }
+
+  const gene = document.querySelector('#search_genes').value.trim()
+
+  // Create scaffolding for Ideogram for related genes
+  const ideoContainer =
+    '<div id="related-genes-ideogram-container" class="hidden-related-genes-ideogram"></div>' // eslint-disable-line
+  document.querySelector('body').insertAdjacentHTML('beforeEnd', ideoContainer)
 
   const ideoConfig = {
     container: '#related-genes-ideogram-container',
-    organism: window.SCP.taxon,
+    organism: taxon,
     chrWidth: 9,
     chrHeight: 100,
     chrLabelSize: 12,
     annotationHeight: 7,
-    showTools: true,
+    showAnnotLabels: false,
     onClickAnnot,
+    onPlotRelatedGenes,
+    onWillShowAnnotTooltip,
     onLoad() {
       // Handles edge case: when organism lacks chromosome-level assembly
       if (!genomeHasChromosomes()) return
-
-      const searchInput = document.querySelector('#search_genes').value.trim()
-      const geneSymbol = searchInput.split(/[, ]/).filter(d => d !== '')[0]
-
-      this.plotRelatedGenes(geneSymbol)
+      this.plotRelatedGenes(gene)
     }
   }
 

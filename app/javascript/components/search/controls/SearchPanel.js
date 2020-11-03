@@ -113,12 +113,13 @@ export default function SearchPanel({
 
   /** handle enabling/disabling advanced search on the page and syncing the user's feature flags */
   function setAdvancedSearchEnabled(enabled, modalShowFunc) {
-    // for signed-in users, update their feature flag, for anonymous, save in localStorage
+    // for signed-in users, update their feature flag, for everyone, save in localStorage
+    // this means signed-in users will see advanced search even if they are not signed in, once they
+    // opt in
     if (!userState.isAnonymous) {
       userState.updateFeatureFlags({ faceted_search: enabled })
-    } else {
-      localStorage.setItem('faceted-search-flag', enabled.toString())
     }
+    localStorage.setItem('faceted-search-flag', enabled.toString())
     setShowAdvancedSearch(enabled)
     setIsNewToUser(false)
     if (modalShowFunc) {

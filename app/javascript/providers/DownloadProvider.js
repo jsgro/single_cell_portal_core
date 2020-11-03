@@ -1,5 +1,5 @@
-import React, { useContext, useState } from 'react'
-import { useContextStudySearch, hasSearchParams } from './StudySearchProvider'
+import React, { useContext, useState, useEffect } from 'react'
+import { StudySearchContext, hasSearchParams } from './StudySearchProvider'
 
 import { fetchDownloadSize } from 'lib/scp-api'
 
@@ -8,18 +8,12 @@ export const DownloadContext = React.createContext({
   downloadSize: {}
 })
 
-/** Wrapper for deep mocking via Jest / Enzyme */
-export function useContextDownload(props) {
-  DownloadContext.searchResults = props.results
-  return useContext(DownloadContext)
-}
 
 /** Provides loading status and fetched data for Bulk Download components */
-export default function DownloadProvider(props) {
-  const studyContext = useContextStudySearch()
+export default function DownloadProvider({ children }) {
+  const studyContext = useContext(StudySearchContext)
 
   const [downloadState, setDownloadState] = useState({
-    searchResults: props.results,
     downloadSize: {},
     isLoaded: false
   })
@@ -36,17 +30,20 @@ export default function DownloadProvider(props) {
     })
   }
 
-  if (
-    !studyContext.isLoading && studyContext.isLoaded &&
-    !downloadState.isLoaded &&
-    hasSearchParams(studyContext.params)
-  ) {
-    updateDownloadSize(studyContext.results)
+  // Update the size if results are loaded and the accession list has changed
+  let currentAccessions = []
+  if (studyContext.results && studyContext.results.matchingAccessions) {
+    currentAccessions = studyContext.results.matchingAccessions
   }
+  useEffect(() => {
+    if (!studyContext.isLoading && studyContext.isLoaded && hasSearchParams(studyContext.params)) {
+      updateDownloadSize(studyContext.results)
+    }
+  }, [currentAccessions])
 
   return (
     <DownloadContext.Provider value={downloadState}>
-      { props.children }
+      { children }
     </DownloadContext.Provider>
   )
 }

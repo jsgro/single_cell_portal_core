@@ -144,6 +144,9 @@
             }
         });
     });
+
+    // Used for Ideogram for related genes
+    window.SCP.taxons = <%= raw @taxons.to_json %>;
   <% end %>
     $('#ideogram_annotation').on('change', function() {
         var ideogramFiles = <%= raw @ideogram_files.to_json %>;

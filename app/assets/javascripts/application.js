@@ -261,9 +261,6 @@ function initializeAutocomplete(selector) {
         if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete("instance").menu.active) {
             // allow user to select terms with TAB key
             event.preventDefault();
-        } else if (event.keyCode === $.ui.keyCode.ENTER && keydownIsFromAutocomplete === false) {
-            // only perform search if user has selected items and is pressing ENTER on focused search box
-            $('#perform-gene-search').click();
         }
     }).autocomplete(
         {
@@ -482,12 +479,9 @@ function enableDefaultActions() {
 
     // when clicking the main study view page tabs, update the current URL so that when you refresh the tab stays open
     $('#study-tabs').on('shown.bs.tab', function(event) {
-        var anchor = $(event.target).attr('href');
-        var currentScroll = $(window).scrollTop();
-        window.location.hash = anchor;
+        var href = $(event.target).attr('href');
         // use HTML5 history API to update the url without reloading the DOM
-        history.pushState('', document.title, window.location.href);
-        window.scrollTo(0, currentScroll);
+        history.pushState('', document.title, href);
     });
 
   // Remove styling set in scpPlotsDidRender
