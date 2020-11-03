@@ -5,7 +5,7 @@
  * as well as generic a logging function that integrates with Bard / Mixpanel.
  */
 
-import { accessToken } from 'providers/UserProvider'
+import { getAccessToken } from 'providers/UserProvider'
 import { getBrandingGroup } from 'lib/scp-api'
 import getSCPContext from 'providers/SCPContextProvider'
 import { getDefaultProperties } from '@databiosphere/bard-client'
@@ -18,7 +18,7 @@ let metricsApiMock = false
 const defaultInit = {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${accessToken}`,
+    'Authorization': `Bearer ${getAccessToken()}`,
     'Content-Type': 'application/json'
   }
 }
@@ -69,16 +69,18 @@ export function logPageView() {
 export function logClick(event) {
   // Don't log programmatically-triggered events,
   // e.g. trigger('click') via jQuery
+
   if (typeof event.isTrigger !== 'undefined') return
 
-  const target = event.target
-  const tag = target.localName.toLowerCase() // local tag name
-  if (tag === 'a') {
-    logClickLink(target)
-  } else if (tag === 'button') {
-    logClickButton(target)
-  } else if (tag === 'input') {
-    logClickInput(target)
+  const target = $(event.target)
+  // we use closest() so we don't lose clicks on, e.g. icons within a link/button
+  // (and we have to use $.closest since IE still doesn't have built-in support for it)
+  if (target.closest('a').length) {
+    logClickLink(target.closest('a')[0])
+  } else if (target.closest('button').length) {
+    logClickButton(target.closest('button')[0])
+  } else if (target.closest('input').length) {
+    logClickInput(target.closest('input')[0])
   } else {
     // Perhaps uncomment when Mixpanel quota increases
     // logClickOther(target)
@@ -86,19 +88,32 @@ export function logClick(event) {
 }
 
 /**
+  * If the element itself has a data-analytics-name, use that as the name
+  * this allows names to be specified for elements that do not have text (e.g. icon buttons)
+  */
+function getNameForClickTarget(target) {
+  let targetName = target.dataset.analyticsName
+  if (!targetName && target.innerText) {
+    // if there's no built-in analytics name just use the element text
+    targetName = target.innerText.trim()
+  }
+  return targetName
+}
+
+/**
  * Log click on link, i.e. anchor (<a ...) tag
  */
 export function logClickLink(target) {
   const props = {
-    text: target.text.trim(),
+    text: getNameForClickTarget(target),
     classList: 'classList' in target? Array.from(target.classList) : [],
     id: target.id
   }
   // Check if target is a tab that's not a part of a menu
-  const parentTabList = $(target).closest('[data-tablist-name]')
+  const parentTabList = $(target).closest('[data-analytics-name]')
   if (parentTabList.length > 0) {
     // Grab name of tab list and add to props
-    props.tabListName = parentTabList[0].attributes['data-tablist-name'].value
+    props.tabListName = parentTabList[0].attributes['data-analytics-name'].value
     log('click:tab', props)
   } else {
     log('click:link', props)
@@ -109,7 +124,7 @@ export function logClickLink(target) {
  * Log click on button, e.g. for pagination, "Apply", etc.
  */
 function logClickButton(target) {
-  const props = { text: target.text }
+  const props = { text: getNameForClickTarget(target) }
   log('click:button', props)
 
   // Google Analytics fallback: remove once Bard and Mixpanel are ready for SCP
@@ -269,10 +284,10 @@ export function log(name, props={}) {
 
   props['timeSincePageLoad'] = Math.round(performance.now())
 
-  if (accessToken === '' || !registeredForTerra) {
+  if (getAccessToken() === '' || !registeredForTerra) {
     // User is unauthenticated, unregistered, anonymous,
     // or authenticated in SCP but not registered for Terra
-    props['authenticated'] = (accessToken !== '')
+    props['authenticated'] = (getAccessToken() !== '')
     props['distinct_id'] = userId
     delete init['headers']['Authorization']
   } else {
