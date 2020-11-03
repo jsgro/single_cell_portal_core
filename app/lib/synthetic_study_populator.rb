@@ -52,7 +52,6 @@ class SyntheticStudyPopulator
     study.study_detail = StudyDetail.new(full_description: study_config['study']['description'])
     study.user ||= user
     study.firecloud_project ||= ENV['PORTAL_NAMESPACE']
-    puts "study.firecloud_project: #{study.firecloud_project}"
     puts("Saving Study #{study.name}")
     study.save!
     study
