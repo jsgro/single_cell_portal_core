@@ -9,10 +9,13 @@ const fetch = require('node-fetch')
 
 import DownloadButton from 'components/search/controls/DownloadButton'
 import { UserContext } from 'providers/UserProvider'
-
 import { DownloadContext } from 'providers/DownloadProvider'
 import { StudySearchContext } from 'providers/StudySearchProvider'
 
+const studyContext = {
+  params: { terms: 'foo' },
+  results: { matchingAccessions: ['SCP1', 'SCP2'] }
+}
 
 describe('Download components for faceted search', () => {
   beforeAll(() => {

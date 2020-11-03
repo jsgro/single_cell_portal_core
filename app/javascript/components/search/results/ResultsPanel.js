@@ -78,7 +78,8 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
 
 const FacetResultsFooter = ({studySearchState}) => {
   let resultsFooter = <div></div>
-  if (Object.keys(studySearchState.params.facets).length > 0 && studySearchState.isLoaded) {
+  if (studySearchState.isLoaded && studySearchState.params &&
+      getNumFacetsAndFilters(studySearchState.params.facets)[0]  > 0) {
     resultsFooter = (
       <div className="flexbox alert alert-info">
         <div className="">
