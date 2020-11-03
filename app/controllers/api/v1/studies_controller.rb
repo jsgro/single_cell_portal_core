@@ -386,6 +386,7 @@ module Api
 
       def sync_study
         @study_files = @study.study_files.valid
+        @study_files.each {|study_file| study_file.build_expression_file_info if study_file.expression_file_info.nil?}
         @directories = @study.directory_listings.to_a
         # keep a list of what we expect to be
         @files_by_dir = {}

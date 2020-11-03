@@ -3,7 +3,7 @@ class ExpressionFileInfo
 
   embedded_in :study_file
 
-  field :library_construction_protocol, type: String
+  field :library_preparation_protocol, type: String
   field :units, type: String
   field :biosample_input_type, type: String
   field :multimodality, type: String
@@ -11,17 +11,16 @@ class ExpressionFileInfo
 
   # note that species and reference genome/annotation live at the study_file level, not here
 
-  UNITS_VALUES = [nil, 'UMI-corrected raw counts', 'raw counts']
-  validates :units, inclusion: {in: UNITS_VALUES}
+  UNITS_VALUES = ['UMI-corrected raw counts', 'raw counts']
+  validates :units, inclusion: {in: UNITS_VALUES}, allow_blank: true
 
-  BIOSAMPLE_INPUT_TYPE_VALUES = [nil, 'whole cell', 'single nuclei', 'bulk']
+  BIOSAMPLE_INPUT_TYPE_VALUES = ['whole cell', 'single nuclei', 'bulk']
   validates :biosample_input_type, inclusion: {in: BIOSAMPLE_INPUT_TYPE_VALUES}
 
-  MULTIMODALITY_VALUES = [nil, 'CITE-seq', 'Patch-seq']
-  validates :multimodality, inclusion: {in: MULTIMODALITY_VALUES}
+  MULTIMODALITY_VALUES = ['CITE-seq', 'Patch-seq']
+  validates :multimodality, inclusion: {in: MULTIMODALITY_VALUES}, allow_blank: true
 
-  LIBRARY_CONSTRUCTION_VALUES = [nil,
-                                 'Smart-seq2/Fluidigm C1',
+  LIBRARY_PREPARATION_VALUES = ['Smart-seq2/Fluidigm C1',
                                  'MARS-seq',
                                  'Seq-Well v1',
                                  'Seq-Well S^3',
@@ -38,5 +37,24 @@ class ExpressionFileInfo
                                  'ATAC-seq',
                                  'ChIP-seq',
                                  'methylomics']
-  validates :library_construction_protocol, inclusion: {in: LIBRARY_CONSTRUCTION_VALUES}
+  validates :library_preparation_protocol, inclusion: {in: LIBRARY_PREPARATION_VALUES}
+  validate :unset_units_unless_raw_counts
+  validate :enforce_units_on_raw_counts
+
+  private
+
+  # unset the value for :units unless :is_raw_counts is true
+  # this has to be invoked as a validation as callbacks only fire on parent document (StudyFile)
+  def unset_units_unless_raw_counts
+    unless self.is_raw_counts
+      self.units = nil
+    end
+  end
+
+  # enforce selecting units on raw counts matrices
+  def enforce_units_on_raw_counts
+    if self.is_raw_counts && self.units.blank?
+      errors.add(:units, ' must have a value for raw counts matrices')
+    end
+  end
 end
