@@ -82,7 +82,7 @@ if [[ -n $VAULT_SECRET_PATH ]] ; then
     echo "setting value for: $key"
     curr_val=$(echo $VALS | jq .data | jq --raw-output .$key)
     # honor PORTAL_NAMESPACE from the environment, if present
-    if [[ "$PORTAL_NAMESPACE" != "" && "$key" = "PORTAL_NAMESPACE"]]; then
+    if [[ "$PORTAL_NAMESPACE" != "" && "$key" = "PORTAL_NAMESPACE" ]] ; then
       echo "honoring current value of PORTAL_NAMESPACE: $PORTAL_NAMESPACE"
       export PORTAL_NAMESPACE=$PORTAL_NAMESPACE
     else
