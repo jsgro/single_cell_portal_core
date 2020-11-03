@@ -2028,13 +2028,15 @@ class SiteController < ApplicationController
       inputs.each do |input|
         domain_keys.each do |domain|
           domain_range = RequestUtils.get_minmax(input[domain])
+          # RequestUtils.get_minmax will discard NaN/nil values that were ingested
+          # only add domain range to list if we have a valid minmax
           raw_values << domain_range if domain_range.any?
         end
       end
       aggregate_range = raw_values.flatten.minmax
       # add 2% padding to range
-      scope = (aggregate_range.first - aggregate_range.last) * 0.02
-      absolute_range = [aggregate_range.first + scope, aggregate_range.last - scope]
+      padding = (aggregate_range.first - aggregate_range.last) * 0.02
+      absolute_range = [aggregate_range.first + padding, aggregate_range.last - padding]
       range[:x] = absolute_range
       range[:y] = absolute_range
       range[:z] = absolute_range
