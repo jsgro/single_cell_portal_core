@@ -160,4 +160,50 @@ class ExpressionRenderingService
       ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < cluster.points}
     end
   end
+
+    # helper method for parsing the legacy [name]--[type]--[scope] string format into an object
+  # finds the string from either params[:gene_set_annotation] or params[:annotation]
+  def self.parse_annotation_legacy_params(params, study, cluster)
+    selector = params[:annotation].nil? ? params[:gene_set_annotation] : params[:annotation]
+    annot_name, annot_type, annot_scope = selector.nil? ? study.default_annotation.split('--') : selector.split('--')
+    {
+      name: annot_name,
+      type: annot_type,
+      scope: annot_scope
+    }
+  end
+
+  def self.get_selected_annotation(study, cluster, annot_name, annot_type, annot_scope)
+    # construct object based on name, type & scope
+    case annot_scope
+    when 'cluster'
+      annotation_source = cluster.cell_annotations.find {|ca| ca[:name] == annot_name && ca[:type] == annot_type}
+    when 'user'
+      annotation_source = UserAnnotation.find(annot_name)
+    else
+      annotation_source = study.cell_metadata.by_name_and_type(annot_name, annot_type)
+    end
+    # rescue from an invalid annotation request by defaulting to the first cell metadatum present
+    if annotation_source.nil?
+      annotation_source = study.cell_metadata.first
+    end
+    populate_annotation_by_class(source: annotation_source, scope: annot_scope, type: annot_type)
+  end
+
+  # attempt to load an annotation based on instance class
+  def self.populate_annotation_by_class(source:, scope:, type:)
+    if source.is_a?(CellMetadatum)
+      annotation = {name: source.name, type: source.annotation_type,
+                    scope: 'study', values: source.values.to_a,
+                    identifier: "#{source.name}--#{type}--#{scope}"}
+    elsif source.is_a?(UserAnnotation)
+      annotation = {name: source.name, type: type, scope: scope, values: source.values.to_a,
+                    identifier: "#{source.id}--#{type}--#{scope}", id: source.id}
+    elsif source.is_a?(Hash)
+      annotation = {name: source[:name], type: type, scope: scope, values: source[:values].to_a,
+                    identifier: "#{source[:name]}--#{type}--#{scope}"}
+    end
+    annotation
+  end
+
 end
