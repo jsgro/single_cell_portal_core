@@ -81,7 +81,13 @@ if [[ -n $VAULT_SECRET_PATH ]] ; then
   do
     echo "setting value for: $key"
     curr_val=$(echo $VALS | jq .data | jq --raw-output .$key)
-    export $key=$curr_val
+    # honor PORTAL_NAMESPACE from the environment, if present
+    if [[ "$PORTAL_NAMESPACE" != "" && "$key" = "PORTAL_NAMESPACE" ]] ; then
+      echo "honoring current value of PORTAL_NAMESPACE: $PORTAL_NAMESPACE"
+      export PORTAL_NAMESPACE=$PORTAL_NAMESPACE
+    else
+      export $key=$curr_val
+    fi
   done
 fi
 # now load service account credentials
