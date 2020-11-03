@@ -33,9 +33,9 @@ module Api
         end
 
         def render_violin
-          cluster = ClusterRenderingService.get_cluster_group(params, @study)
-          annot_params = ExpressionRenderingService.parse_annotation_legacy_params(params, @study, cluster)
-          annotation = ExpressionRenderingService.get_selected_annotation(@study,
+          cluster = ClusterVizService.get_cluster_group(@study, params)
+          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, cluster, params)
+          annotation = ExpressionVizService.get_selected_annotation(@study,
                                                                        cluster,
                                                                        annot_params[:name],
                                                                        annot_params[:type],
@@ -43,16 +43,16 @@ module Api
           subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
           gene = @study.genes.by_name_or_id(params[:gene], @study.expression_matrix_files.map(&:id))
 
-          render_data = ExpressionRenderingService.get_global_expression_render_data(
+          render_data = ExpressionVizService.get_global_expression_render_data(
             @study, subsample, gene, cluster, annotation, params[:boxpoints], current_api_user
           )
           render json: render_data, status: 200
         end
 
         def render_annotation_values
-          cluster = ClusterRenderingService.get_cluster_group(params, @study)
-          annot_params = ExpressionRenderingService.parse_annotation_legacy_params(params, @study, cluster)
-          annotation = ExpressionRenderingService.get_selected_annotation(@study,
+          cluster = ClusterVizService.get_cluster_group(@study, params)
+          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, cluster, params)
+          annotation = ExpressionVizService.get_selected_annotation(@study,
                                                                        cluster,
                                                                        annot_params[:name],
                                                                        annot_params[:type],

@@ -8,9 +8,76 @@ module Api
         include Concerns::StudyAware
         include Swagger::Blocks
 
+        VALID_SCOPE_VALUES = ['study', 'cluster']
+        VALID_TYPE_VALUES = ['group', 'numeric']
+        VALID_CONSENSUS_VALUES = ['mean', 'median']
+
         before_action :set_current_api_user!
         before_action :set_study
         before_action :check_study_view_permission
+
+        # shared
+        cluster_param_docs = [{
+            name: :accession,
+            in: :path,
+            description: 'Accession of study',
+            required: true,
+            type: :string
+          },
+          {
+            name: :annotation_name,
+            in: :path,
+            description: 'Name of annotation, as defined in cluster file',
+            type: :string
+          },
+          {
+            name: :annotation_type,
+            in: :query,
+            description: 'Type of annotation.  One of “group” or “numeric”.',
+            type: :string,
+            enum: VALID_TYPE_VALUES
+          },
+          {
+            name: :annotation_scope,
+            in: :query,
+            description: 'Scope of annotation.   One of “study” or “cluster”.',
+            type: :string,
+            enum: VALID_SCOPE_VALUES
+          },
+          {
+            name: :subsample,
+            in: :query,
+            description: 'Number of cells to use as subsample threshold.  Omit parameter if not subsampling (i.e. if threshold is “all cells”).',
+            type: :string
+          },
+          {
+            name: :consensus,
+            in: :query,
+            description: 'Statistical parameter to use for consensus, e.g. “mean”.  Omit parameter if not applying consensus parameter.',
+            type: :string,
+            enum: VALID_CONSENSUS_VALUES
+          }]
+
+        cluster_response_docs = [
+          {code: 200, description: 'Cluster visualization json object'},
+          {code: 401, description: ApiBaseController.unauthorized},
+          {code: 403, description: ApiBaseController.forbidden('view study')},
+          {code: 404, description: ApiBaseController.not_found(Study)},
+          {code: 406, description: ApiBaseController.not_acceptable},
+        ]
+
+        swagger_path '/studies/{accession}/clusters' do
+          operation :get do
+            key :tags, [
+                'Visualization'
+            ]
+            key :summary, 'Get the default cluster and its sub-clusters for a study'
+            key :description, 'Get the default cluster group and its constituent cluster annotations'
+            key :operationId, 'study_clusters_path'
+            cluster_param_docs.each { |doc| parameter(doc) }
+            cluster_response_docs.each { |doc| response doc[:code], doc }
+          end
+        end
 
         # note that 'index' returns the default cluster, rather than a list of all clusters
         # see the 'show' method for documentation of the return type
@@ -22,80 +89,23 @@ module Api
           render json: self.class.get_cluster_viz_data(@study, cluster, params)
         end
 
-        swagger_path '/api/v1/studies/{accession}/cluster' do
+        swagger_path '/studies/{accession}/clusters/{cluster_name}' do
           operation :get do
             key :tags, [
-                'Site'
+                'Visualization'
             ]
-            key :summary, 'Get a cluster and its sub-clusters'
-            key :description, 'Get a cluster group and its constituent cluster annotations'
-            key :operationId, 'site_study_cluster_path'
-            parameter do
-              key :name, :accession
-              key :in, :path
-              key :description, 'Accession of study'
-              key :required, true
-              key :type, :string
-            end
-            parameter do
-              # Can't have in path, because cluster name often ends in file
-              # extension (e.g. "foo.txt") that gets truncated (to e.g. "foo")
-              key :name, :name
-              key :in, :query
-              key :description, 'Name of cluster group'
-              key :required, true
-              key :type, :string
-            end
-            parameter do
-              key :name, :annotation_name
-              key :in, :query
-              key :description, 'Name of annotation, as defined in cluster file'
-              key :required, true
-              key :type, :string
-            end
-            parameter do
-              key :name, :annotation_type
-              key :in, :query
-              key :description, 'Type of annotation.  One of “group” or “numeric”.' # TODO: Use enum
-              key :required, true
-              key :type, :string
-            end
-            parameter do
-              key :name, :annotation_scope
-              key :in, :query
-              key :description, 'Scope of annotation.   One of “study” or “cluster”.'  # TODO: Use enum
-              key :required, true
-              key :type, :string
-            end
-            parameter do
-              key :name, :subsample
-              key :in, :query
-              key :description, 'Number of cells to use as subsample threshold.  Omit parameter if not subsampling (i.e. if threshold is “all cells”).' # TODO: Use enum
-              key :required, false
-              key :type, :integer
-            end
-            parameter do
-              key :name, :consensus
-              key :in, :query
-              key :description, 'Statistical parameter to use for consensus, e.g. “mean”.  Omit parameter if not applying consensus parameter.'  # TODO: Use enum
-              key :required, false
-              key :type, :string
-            end
-            response 200 do
-
-            end
-            response 401 do
-              key :description, ApiBaseController.unauthorized
-            end
-            response 403 do
-              key :description, ApiBaseController.forbidden('view study')
-            end
-            response 404 do
-              key :description, ApiBaseController.not_found(Study)
-            end
-            response 406 do
-              key :description, ApiBaseController.not_acceptable
-            end
+            key :summary, 'Get a cluster and its sub-clusters for a study'
+            key :description, 'Get the cluster group and its constituent cluster annotations'
+            key :operationId, 'study_cluster_path'
+            parameter({
+              name: :cluster_name,
+              in: :path,
+              description: 'Name of cluster group',
+              required: true,
+              type: :string
+            })
+            cluster_param_docs.each { |doc| parameter(doc) }
+            cluster_response_docs.each { |doc| response doc[:code], doc }
           end
         end
 
@@ -115,7 +125,7 @@ module Api
             type: url_params[:annotation_type].blank? ? nil : url_params[:annotation_type],
             scope: url_params[:annotation_scope].blank? ? nil : url_params[:annotation_scope]
           }
-          annotation = ExpressionRenderingService.get_selected_annotation(study,
+          annotation = ExpressionVizService.get_selected_annotation(study,
                                                                           cluster,
                                                                           annot_params[:name],
                                                                           annot_params[:type],
@@ -123,17 +133,17 @@ module Api
           subsample = url_params[:subsample].blank? ? nil : url_params[:subsample]
 
 
-          coordinates = ClusterRenderingService.load_cluster_group_data_array_points(study, cluster, annotation, subsample)
-          plot_data = ClusterRenderingService.transform_coordinates(coordinates, study, cluster, annotation)
+          coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample)
+          plot_data = ClusterVizService.transform_coordinates(coordinates, study, cluster, annotation)
 
           if cluster.is_3d?
-            range = ClusterRenderingService.set_range(cluster, coordinates.values)
+            range = ClusterVizService.set_range(cluster, coordinates.values)
             if cluster.has_range?
-              aspect = ClusterRenderingService.compute_aspect_ratios(range)
+              aspect = ClusterVizService.compute_aspect_ratios(range)
             end
           end
 
-          titles = ClusterRenderingService.load_axis_labels(cluster)
+          titles = ClusterVizService.load_axis_labels(cluster)
 
           axes_full = {
             :titles => titles,
@@ -141,7 +151,7 @@ module Api
             :aspects => aspect
           }
 
-          coordinate_labels = ClusterRenderingService.load_cluster_group_coordinate_labels(cluster)
+          coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(cluster)
           {
             "data": plot_data,
             "description": cluster.study_file.description,

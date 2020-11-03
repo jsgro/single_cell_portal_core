@@ -1,7 +1,7 @@
-class ClusterRenderingService
+class ClusterVizService
   # set of utility methods used for visualizing cluster data
 
-  def self.get_cluster_group(params, study)
+  def self.get_cluster_group(study, params)
     # determine which URL param to use for selection
     selector = params[:cluster].nil? ? params[:gene_set_cluster] : params[:cluster]
     if selector.nil? || selector.empty?
@@ -58,11 +58,11 @@ class ClusterRenderingService
     annotations = []
     # iterate through list of data objects to construct necessary annotations
     x_array.each_with_index do |point, index|
-      annotations << {
+      annot = {
         showarrow: false,
         x: point,
         y: y_array[index],
-        z: z_array[index],
+
         text: text_array[index],
         font: {
           family: cluster.coordinate_labels_options[:font_family],
@@ -70,6 +70,10 @@ class ClusterRenderingService
           color: cluster.coordinate_labels_options[:font_color]
         }
       }
+      if cluster.is_3d?
+        annot[:z] = z_array[index]
+      end
+      annotations << annot
     end
     annotations
   end
