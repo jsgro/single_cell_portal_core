@@ -254,7 +254,6 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     metadata_file = study.metadata_file
     bqc = ApplicationController.big_query_client
     bq_dataset = bqc.dataset CellMetadatum::BIGQUERY_DATASET
-    ensure_bq_seeds(bq_dataset, study)
     initial_bq_row_count = get_bq_row_count(bq_dataset, study)
     assert initial_bq_row_count > 0, "wrong number of BQ rows found to test deletion capability"
     # request delete

@@ -43,29 +43,3 @@ end
 def get_bq_row_count(bq_dataset, study)
   bq_dataset.query("SELECT COUNT(*) count FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE study_accession = '#{study.accession}'", cache: false)[0][:count]
 end
-
-# helper to seed some sample rows into BQ for testing purposes
-def seed_bq_table(bq_dataset, study_accession, file_id)
-  bq_seeds = File.open(Rails.root.join('db', 'seed', 'bq_seeds.json'))
-  bq_data = JSON.parse bq_seeds.read
-  bq_data.each do |entry|
-    row = entry.with_indifferent_access
-    row['CellID'] = SecureRandom.uuid
-    row['study_accession'] = study_accession
-    row['file_id'] = file_id.to_s
-  end
-  tmp_file = File.new(Rails.root.join('db', 'seed', 'tmp_bq_seeds.json'), 'w+')
-  tmp_file.write bq_data.map(&:to_json).join("\n")
-  table = bq_dataset.table(CellMetadatum::BIGQUERY_TABLE)
-  table.load tmp_file, write: 'append'
-  tmp_file.close
-  File.delete(tmp_file.path)
-end
-
-# helper to ensure there is data present in BQ
-def ensure_bq_seeds(bq_dataset, study)
-  if get_bq_row_count(bq_dataset, study) == 0
-    seed_bq_table(bq_dataset, study.accession, study.metadata_file.id)
-  end
-end
-

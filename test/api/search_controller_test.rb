@@ -19,10 +19,6 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
     @user.update_last_access_at!
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-
-    bq_dataset = ApplicationController.big_query_client.dataset CellMetadatum::BIGQUERY_DATASET
-    test_study = Study.find_by(name: "Testing Study #{@random_seed}")
-    ensure_bq_seeds(bq_dataset, test_study)
   end
 
   test 'should get all search facets' do
