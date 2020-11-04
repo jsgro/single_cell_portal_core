@@ -39,7 +39,6 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
     end
 
     assert_nil Study.find_by(name: SYNTH_STUDY_INFO[:name])
-    byebug
     SyntheticStudyPopulator.populate(SYNTH_STUDY_INFO[:folder])
     populated_study = Study.find_by(name: SYNTH_STUDY_INFO[:name])
 
