@@ -25,6 +25,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     if get_bq_row_count(testing_study) == 0
       seed_bigquery(testing_study.accession, testing_study.metadata_file.id.to_s)
     end
+
+    @convention_accessions = StudyFile.where(file_type: 'Metadata', use_metadata_convention: true).map {|f| f.study.accession}.flatten
   end
 
   # reset known commonly used objects to initial states to prevent failures breaking other tests
@@ -149,7 +151,6 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should return search results using numeric facets' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    study = Study.find_by(name: "Testing Study #{@random_seed}")
     facet = SearchFacet.find_by(identifier: 'organism_age')
     facet.update_filter_values! # in case there is a race condition with parsing & facet updates
     # loop through 3 different units (days, months, years) to run a numeric-based facet query with conversion
@@ -158,7 +159,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
       facet_query = "#{facet.identifier}:#{facet.min + 1},#{facet.max - 1},#{unit}"
       execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
       assert_response :success
-      expected_accessions = unit == 'days' ? [] : [study.accession]
+      expected_accessions = unit == 'days' ? [] : @convention_accessions
       matching_accessions = json['matching_accessions']
       assert_equal expected_accessions, matching_accessions,
                    "Facet query: #{facet_query} returned incorrect matches; expected #{expected_accessions} but found #{matching_accessions}"
@@ -288,31 +289,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     )
     assert_response :success
 
-    expected_response = {
-        Metadata: {
-            total_files: 1,
-            total_bytes: study.metadata_file.upload_file_size
-        },
-        Expression: {
-            total_files: study.expression_matrix_files.size,
-            total_bytes: study.expression_matrix_files.map(&:upload_file_size).reduce(&:+)
-        }
-    }.with_indifferent_access
-
-    genes_and_barcodes = study.study_files.where(file_type: /10X/)
-    if genes_and_barcodes.any?
-      genes_and_barcodes.each do |study_file|
-        expected_response.merge!(
-            {
-                "#{study_file.file_type}" => {
-                    total_files: 1,
-                    total_bytes: study_file.upload_file_size
-                }
-            }
-        )
-      end
-    end
-
+    expected_files = study.study_files.where(:file_type.in => ['Metadata', /Matrix/, /10X/])
+    expected_response = bulk_download_response(expected_files)
     assert_equal expected_response, json.with_indifferent_access,
                  "Did not correctly return bulk download sizes, expected #{expected_response} but found #{json}"
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
@@ -367,14 +345,13 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should run inferred search using facets' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    convention_studies = StudyFile.where(file_type: 'Metadata', use_metadata_convention: true).map {|f| f.study.accession}.flatten
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
     other_study.update(description: '')
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    expected_accessions = convention_studies
+    expected_accessions = @convention_accessions
     assert_equal expected_accessions, json['matching_accessions'],
                  "Did not find expected accessions before inferred search, expected #{expected_accessions} but found #{json['matching_accessions']}"
 
@@ -383,7 +360,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     other_study.update(description: HOMO_SAPIENS_FILTER[:name])
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    inferred_accessions = convention_studies + [other_study.accession]
+    inferred_accessions = @convention_accessions + [other_study.accession]
     assert_equal inferred_accessions, json['matching_accessions'],
                  "Did not find expected accessions after inferred search, expected #{inferred_accessions} but found #{json['matching_accessions']}"
     inferred_study = json['studies'].last # inferred matches should be at the end
@@ -399,13 +376,12 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should run inferred search using facets and phrase' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    convention_studies = StudyFile.where(file_type: 'Metadata', use_metadata_convention: true).map {|f| f.study.accession}.flatten
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
     other_study.update(description: HOMO_SAPIENS_FILTER[:name])
     search_phrase = "Study #{@random_seed}"
-    expected_accessions = convention_studies + [other_study.accession]
+    expected_accessions = @convention_accessions + [other_study.accession]
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query, terms: "\"#{search_phrase}\""))
     assert_response :success
     found_accessions = json['matching_accessions']
@@ -433,22 +409,21 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     # update other_study to match one filter from facets; should not be inferred since it doesn't meet both criteria
-    convention_studies = StudyFile.where(file_type: 'Metadata', use_metadata_convention: true).map {|f| f.study.accession}.flatten
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}+disease:#{NO_DISEASE_FILTER[:id]}"
     other_study.update(description: HOMO_SAPIENS_FILTER[:name])
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    assert_equal convention_studies, json['matching_accessions'],
-                 "Did not find expected accessions before inferred search, expected #{convention_studies} but found #{json['matching_accessions']}"
+    assert_equal @convention_accessions, json['matching_accessions'],
+                 "Did not find expected accessions before inferred search, expected #{@convention_accessions} but found #{json['matching_accessions']}"
 
     # update to match both filters; should be inferred
     double_facet_name = "#{HOMO_SAPIENS_FILTER[:name]} #{NO_DISEASE_FILTER[:name]}"
     other_study.update(description: double_facet_name)
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    inferred_accessions = convention_studies + [other_study.accession]
+    inferred_accessions = @convention_accessions + [other_study.accession]
     assert_equal inferred_accessions, json['matching_accessions'],
                  "Did not find expected accessions after inferred search, expected #{inferred_accessions} but found #{json['matching_accessions']}"
     inferred_study = json['studies'].last

@@ -1,4 +1,5 @@
 require "test_helper"
+require "bulk_download_helper"
 
 class BulkDownloadServiceTest < ActiveSupport::TestCase
 
@@ -29,7 +30,14 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
     requested_file_types = %w(Metadata Expression)
     files = BulkDownloadService.get_requested_files(file_types: requested_file_types, study_accessions: [@study.accession])
-    assert_equal 2, files.size, "Did not find correct number of files, expected 2 but found #{files.size}"
+    expected_files = @study.study_files.where(:file_type.in => requested_file_types)
+    expected_count = expected_files.size
+    expected_files.each do |file|
+      if file.is_bundled?
+        expected_count += file.bundled_files.size
+      end
+    end
+    assert_equal expected_count, files.size, "Did not find correct number of files, expected #{expected_count} but found #{files.size}"
     expected_files = @study.study_files.by_type(['Metadata', 'Expression Matrix']).map(&:name).sort
     found_files = files.map(&:name).sort
     assert_equal expected_files, found_files, "Did not find the correct files, expected: #{expected_files} but found #{found_files}"
@@ -42,33 +50,10 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
     requested_file_types = %w(Metadata Expression)
     files_by_size = BulkDownloadService.get_requested_file_sizes_by_type(file_types: requested_file_types, study_accessions: [@study.accession])
-    assert_equal 2, files_by_size.keys.size,
-                 "Did not find correct number of file classes, expected 2 but found #{files_by_size.keys.size}"
-    expected_response = {
-        Metadata: {
-            total_files: 1,
-            total_bytes: @study.metadata_file.upload_file_size
-        },
-        Expression: {
-            total_files: @study.expression_matrix_files.size,
-            total_bytes: @study.expression_matrix_files.map(&:upload_file_size).reduce(&:+)
-        }
-    }.with_indifferent_access
-
-    genes_and_barcodes = @study.study_files.where(file_type: /10X/)
-    if genes_and_barcodes.any?
-      genes_and_barcodes.each do |study_file|
-        expected_response.merge!(
-            {
-                "#{study_file.file_type}" => {
-                    total_files: 1,
-                    total_bytes: study_file.upload_file_size
-                }
-            }
-        )
-      end
-    end
-
+    expected_files = @study.study_files.where(:file_type.in => ['Metadata', /Matrix/, /10X/])
+    assert_equal expected_files.size, files_by_size.keys.size,
+                 "Did not find correct number of file classes, expected #{expected_files.size} but found #{files_by_size.keys.size}"
+    expected_response = bulk_download_response(expected_files)
     assert_equal expected_response, files_by_size.with_indifferent_access,
                  "Did not return correct response, expected: #{expected_response} but found #{files_by_size}"
 
