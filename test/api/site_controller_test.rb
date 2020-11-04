@@ -1,4 +1,5 @@
 require 'api_test_helper'
+require 'integration_test_helper'
 
 class SiteControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -15,6 +16,11 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
     @user.update_last_access_at!
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+  end
+
+  teardown do
+    user = User.first
+    reset_user_tokens(user)
   end
 
   test 'should get all studies' do

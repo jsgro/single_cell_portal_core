@@ -11,6 +11,13 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
   end
 
+  teardown do
+    user = User.find_by(email: 'testing.user@gmail.com')
+    sharing_user = User.find_by(email: 'sharing.user@gmail.com')
+    reset_user_tokens(user)
+    reset_user_tokens(sharing_user)
+  end
+
   # check that file header/format checks still function properly
   test 'should fail all ingest pipeline parse jobs' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"

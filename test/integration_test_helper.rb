@@ -43,3 +43,9 @@ end
 def get_bq_row_count(bq_dataset, study)
   bq_dataset.query("SELECT COUNT(*) count FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE study_accession = '#{study.accession}'", cache: false)[0][:count]
 end
+
+# helper to restore user access tokens on test teardown to prevent successive downstream failures
+def reset_user_tokens(user)
+  token = {access_token: 'test-token-vale', expires_in: 3600, expires_at: Time.zone.now + 1.hour}
+  user.update(access_token: token, api_acces_token: token)
+end

@@ -10,6 +10,11 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     @study = Study.first
   end
 
+  teardown do
+    user = User.find_by(email: 'testing.user@gmail.com')
+    reset_user_tokens(user)
+  end
+
   test 'should redirect to home page from bare domain' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
     get '/'

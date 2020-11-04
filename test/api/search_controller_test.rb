@@ -21,6 +21,11 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
   end
 
+  teardown do
+    user = User.find_by(email: 'testing.user.2@gmail.com')
+    reset_user_tokens(user)
+  end
+
   test 'should get all search facets' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 

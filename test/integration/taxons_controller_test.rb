@@ -5,10 +5,14 @@ class TaxonsControllerTest < ActionDispatch::IntegrationTest
 
   setup do
     @test_user = User.find_by(email: 'testing.user@gmail.com')
-    @sharing_user = User.find_by(email: 'sharing.user@gmail.com')
     auth_as_user(@test_user)
     sign_in @test_user
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+  end
+
+  teardown do
+    user = User.find_by(email: 'testing.user@gmail.com')
+    reset_user_tokens(user)
   end
 
   test 'should create new taxon then update and delete' do

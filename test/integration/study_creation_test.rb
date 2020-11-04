@@ -11,6 +11,13 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
   end
 
+  teardown do
+    user = User.find_by(email: 'testing.user@gmail.com')
+    sharing_user = User.find_by(email: 'sharing.user@gmail.com')
+    reset_user_tokens(user)
+    reset_user_tokens(sharing_user)
+  end
+
   test 'create default testing study' do
 
     puts "#{File.basename(__FILE__)}: #{self.method_name}"

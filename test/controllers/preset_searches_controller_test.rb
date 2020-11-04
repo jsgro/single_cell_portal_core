@@ -10,6 +10,11 @@ class PresetSearchesControllerTest < ActionDispatch::IntegrationTest
     @search = PresetSearch.first
   end
 
+  teardown do
+    user = User.first
+    reset_user_tokens(user)
+  end
+
   test "gets index" do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 

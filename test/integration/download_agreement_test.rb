@@ -19,6 +19,8 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
     @study = Study.find_by(name: "Download Agreement #{@random_seed}")
     @study.study_files.map(&:destroy)
     @study.destroy_and_remove_workspace
+    user = User.find_by(email: 'testing.user@gmail.com')
+    reset_user_tokens(user)
   end
 
   test 'should enforce download agreement' do

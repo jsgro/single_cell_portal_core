@@ -1,4 +1,5 @@
 require 'api_test_helper'
+require 'integration_test_helper'
 
 class StudiesControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -16,6 +17,11 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
                                                                        })
     sign_in @user
     @user.update_last_access_at!
+  end
+
+  teardown do
+    user = User.first
+    reset_user_tokens(user)
   end
 
   test 'should get index' do

@@ -10,6 +10,11 @@ class AnalysisConfigurationsControllerTest < ActionDispatch::IntegrationTest
     sign_in @test_user
   end
 
+  teardown do
+    user =  User.find_by(email: 'testing.user@gmail.com')
+    reset_user_tokens(user)
+  end
+
   test 'should get index page' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
