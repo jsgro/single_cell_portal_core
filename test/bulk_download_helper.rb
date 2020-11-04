@@ -1,6 +1,5 @@
-# helper to construct a bulk download response object based off of a collection of files
+# helper to construct a bulk download response objects based off of a collection of files
 # used for validating API responses
-
 def bulk_download_response(study_files)
   response = {}
   study_files.each do |study_file|
@@ -12,6 +11,11 @@ def bulk_download_response(study_files)
     end
   end
   response.with_indifferent_access
+end
+
+# take response from bulk_download_response or API response and return total file count
+def get_file_count_from_response(response)
+  response.values.map {|entry| entry[:total_files]}.reduce(&:+)
 end
 
 private

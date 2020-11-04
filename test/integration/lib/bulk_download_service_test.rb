@@ -32,11 +32,6 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     files = BulkDownloadService.get_requested_files(file_types: requested_file_types, study_accessions: [@study.accession])
     expected_files = @study.study_files.where(:file_type.in => ['Metadata', /Matrix/, /10X/])
     expected_count = expected_files.size
-    expected_files.each do |file|
-      if file.is_bundled?
-        expected_count += file.bundled_files.size
-      end
-    end
     assert_equal expected_count, files.size, "Did not find correct number of files, expected #{expected_count} but found #{files.size}"
     expected_files = @study.study_files.by_type(['Metadata', 'Expression Matrix']).map(&:name).sort
     found_files = files.map(&:name).sort
@@ -51,7 +46,8 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     requested_file_types = %w(Metadata Expression)
     files_by_size = BulkDownloadService.get_requested_file_sizes_by_type(file_types: requested_file_types, study_accessions: [@study.accession])
     expected_files = @study.study_files.where(:file_type.in => ['Metadata', /Matrix/, /10X/])
-    assert_equal expected_files.size, files_by_size.keys.size,
+    returned_files = get_file_count_from_response(files_by_size)
+    assert_equal expected_files.size, returned_files,
                  "Did not find correct number of file classes, expected #{expected_files.size} but found #{files_by_size.keys.size}"
     expected_response = bulk_download_response(expected_files)
     assert_equal expected_response, files_by_size.with_indifferent_access,

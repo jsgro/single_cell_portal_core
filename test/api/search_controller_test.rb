@@ -140,7 +140,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_equal result_accession, study.accession, "Did not find correct study; expected #{study.accession} but found #{result_accession}"
     matched_facets = json['studies'].first['facet_matches'].keys.sort
     matched_facets.delete_if {|facet| facet == 'facet_search_weight'} # remove search weight as it is not relevant
-    source_facets = facets.map(&:identifier).sort
+
+    source_facets = %w(disease species)
     assert_equal source_facets, matched_facets, "Did not match on correct facets; expected #{source_facets} but found #{matched_facets}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
