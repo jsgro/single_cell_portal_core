@@ -14,7 +14,7 @@ FactoryBot.define do
           {
             x: [1, 2, 3],
             y: [1, 2, 3],
-            text: ['cellA', 'cellB', 'cellC']
+            cells: ['cellA', 'cellB', 'cellC']
           }
         }
       end
@@ -23,7 +23,7 @@ FactoryBot.define do
           {name: :x, type: 'coordinates'},
           {name: :y, type: 'coordinates'},
           {name: :z, type: 'coordinates'},
-          {name: :text, type: 'cells'}
+          {name: :cells, type: 'cells'}
         ].each do |input_type|
           if evaluator.cell_data[input_type[:name]]
             FactoryBot.create(:data_array,

@@ -1362,7 +1362,7 @@ class SiteController < ApplicationController
   end
 
   def set_cluster_group
-    @cluster = RequestUtils.get_cluster_group(params, @study)
+    @cluster = ClusterVizService.get_cluster_group(@study, params)
   end
 
   def set_selected_annotation

@@ -1052,7 +1052,7 @@ class Study
 
   # helper to return default annotation type (group or numeric)
   def default_annotation_type
-    if self.default_options[:annotation].nil?
+    if self.default_options[:annotation].blank?
       nil
     else
       # middle part of the annotation string is the type, e.g. Label--group--study
@@ -1062,7 +1062,7 @@ class Study
 
   # helper to return default annotation name
   def default_annotation_name
-    if self.default_options[:annotation].nil?
+    if self.default_options[:annotation].blank?
       nil
     else
       # first part of the annotation string
@@ -1072,7 +1072,7 @@ class Study
 
   # helper to return default annotation scope
   def default_annotation_scope
-    if self.default_options[:annotation].nil?
+    if self.default_options[:annotation].blank?
       nil
     else
       # last part of the annotation string

@@ -11,6 +11,39 @@ module Api
         before_action :set_study
         before_action :check_study_view_permission
 
+        swagger_path '/studies/{study_id}/explore' do
+          operation :get do
+            key :tags, [
+                'Visualization'
+            ]
+            key :summary, 'Basic study visualization information'
+            key :description, 'Returns overview of visualization properties for the given study'
+            key :operationId, 'api_v1_studies_explore_path'
+            parameter do
+              key :name, :study_id
+              key :in, :path
+              key :description, 'ID of Study'
+              key :required, true
+              key :type, :string
+            end
+            response 200 do
+              key :description, 'Json of study visualization properties'
+            end
+            response 401 do
+              key :description, ApiBaseController.unauthorized
+            end
+            response 403 do
+              key :description, ApiBaseController.forbidden('edit Study')
+            end
+            response 404 do
+              key :description, ApiBaseController.not_found(Study)
+            end
+            response 406 do
+              key :description, ApiBaseController.not_acceptable
+            end
+          end
+        end
+
 =begin
         isClusterViewable {Boolean}: Whether clusters can be visualized
 
@@ -38,7 +71,6 @@ module Api
 
         def show
           default_cluster = @study.default_cluster
-          default_annotation =
           explore_props = {
             is_cluster_viewable: default_cluster.nil?,
             taxon_names: [],

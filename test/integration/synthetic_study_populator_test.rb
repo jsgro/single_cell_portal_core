@@ -4,17 +4,17 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
 
   setup do
-    @taxon = Taxon.create!(common_name: 'mouse',
+    @taxon = Taxon.find_or_create_by!(common_name: 'mouse',
                            scientific_name: 'Mus musculus',
                            user: User.first,
                            ncbi_taxid: 10090,
                            notes: 'fake mouse taxon for testing')
-    @genome_assembly = GenomeAssembly.create!(name: "GRCm38",
+    @genome_assembly = GenomeAssembly.find_or_create_by!(name: "GRCm38",
                                               alias: nil,
                                               release_date: '2012-01-09',
                                               accession: "GCA_000001635.2",
                                               taxon: @taxon)
-    @genome_annotation = GenomeAnnotation.create!(name: 'Ensembl 94',
+    @genome_annotation = GenomeAnnotation.find_or_create_by!(name: 'Ensembl 94',
                                                   link: 'http://google.com/search?q=mouse',
                                                   index_link: 'http://google.com/search?q=mouse_index',
                                                   release_date: '2020-10-19',
@@ -39,7 +39,7 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
     end
 
     assert_nil Study.find_by(name: SYNTH_STUDY_INFO[:name])
-
+    byebug
     SyntheticStudyPopulator.populate(SYNTH_STUDY_INFO[:folder])
     populated_study = Study.find_by(name: SYNTH_STUDY_INFO[:name])
 

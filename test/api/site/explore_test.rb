@@ -25,7 +25,7 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
                                        cell_data: {
                                          x: [1, 4 ,6],
                                          y: [7, 5, 3],
-                                         text: ['A', 'B', 'C']
+                                         cells: ['A', 'B', 'C']
                                        })
   end
 
