@@ -54,6 +54,21 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
             total_bytes: @study.expression_matrix_files.map(&:upload_file_size).reduce(&:+)
         }
     }.with_indifferent_access
+
+    genes_and_barcodes = @study.study_files.where(file_type: /10X/)
+    if genes_and_barcodes.any?
+      genes_and_barcodes.each do |study_file|
+        expected_response.merge!(
+            {
+                "#{study_file.file_type}" => {
+                    total_files: 1,
+                    total_bytes: study_file.upload_file_size
+                }
+            }
+        )
+      end
+    end
+
     assert_equal expected_response, files_by_size.with_indifferent_access,
                  "Did not return correct response, expected: #{expected_response} but found #{files_by_size}"
 

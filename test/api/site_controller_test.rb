@@ -19,8 +19,7 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    user = User.first
-    reset_user_tokens(user)
+    reset_user_tokens
   end
 
   test 'should get all studies' do

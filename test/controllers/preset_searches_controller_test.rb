@@ -11,8 +11,7 @@ class PresetSearchesControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    user = User.first
-    reset_user_tokens(user)
+    reset_user_tokens
   end
 
   test "gets index" do

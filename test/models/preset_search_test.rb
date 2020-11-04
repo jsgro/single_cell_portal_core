@@ -16,7 +16,7 @@ class PresetSearchTest < ActiveSupport::TestCase
   test 'should return correct keyword query string' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    expected_query = "\"Test Study\""
+    expected_query = "\"Testing Study\""
     assert expected_query == @preset_search.keyword_query_string
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"

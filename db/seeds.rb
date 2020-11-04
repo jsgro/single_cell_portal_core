@@ -31,8 +31,9 @@ example_files = {
     },
     metadata: {
         name: 'metadata_example.txt',
-        path: 'test/test_data/metadata_example.txt',
+        path: 'test/test_data/alexandria_convention/metadata.v2-0-0.txt',
         file_type: 'Metadata',
+        use_metadata_convention: true,
         study_id: study.id
     },
     cluster: {

@@ -12,10 +12,7 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    user = User.find_by(email: 'testing.user@gmail.com')
-    sharing_user = User.find_by(email: 'sharing.user@gmail.com')
-    reset_user_tokens(user)
-    reset_user_tokens(sharing_user)
+    reset_user_tokens
   end
 
   test 'create default testing study' do

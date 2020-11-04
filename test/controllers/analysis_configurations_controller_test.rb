@@ -11,8 +11,7 @@ class AnalysisConfigurationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    user =  User.find_by(email: 'testing.user@gmail.com')
-    reset_user_tokens(user)
+    reset_user_tokens
   end
 
   test 'should get index page' do
