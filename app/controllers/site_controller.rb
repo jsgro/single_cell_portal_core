@@ -1362,11 +1362,11 @@ class SiteController < ApplicationController
   end
 
   def set_cluster_group
-    @cluster = ClusterVizService.get_cluster_group(params, @study)
+    @cluster = ClusterVizService.get_cluster_group(@study, params)
   end
 
   def set_selected_annotation
-    @selected_annotation = ClusterVizService.get_selected_annotation(params, @study, @cluster)
+    @selected_annotation = ClusterVizService.get_selected_annotation(@study, @cluster, params)
   end
 
   def set_workspace_samples
