@@ -40,10 +40,10 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal 3, @basic_study.default_cluster.data_arrays.count
 
-    execute_http_request(:get, api_v1_study_explore_path(@basic_study.accession))
+    execute_http_request(:get, api_v1_study_explore_path(@basic_study))
     assert_response :success
 
-    # controller not yet implemented
+    assert json['is_cluster_viewable']
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

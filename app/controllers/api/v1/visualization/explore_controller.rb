@@ -72,7 +72,7 @@ module Api
         def show
           default_cluster = @study.default_cluster
           explore_props = {
-            is_cluster_viewable: default_cluster.nil?,
+            is_cluster_viewable: default_cluster.present?,
             taxon_names: [],
             hasIdeogramInferCnvFiles: false,
             uniqueGenes: [],
