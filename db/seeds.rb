@@ -183,10 +183,9 @@ FeatureFlag.create!(name: 'faceted_search')
 bq_seeds = File.open(Rails.root.join('db', 'seed', 'bq_seeds.json'))
 bq_data = JSON.parse bq_seeds.read
 bq_data.each do |entry|
-  row = entry.with_indifferent_access
-  row[:CellID] = SecureRandom.uuid
-  row[:study_accession] = study.accession
-  row[:file_id] = metadata_file.id.to_s
+  entry['CellID'] = SecureRandom.uuid
+  entry['study_accession'] = study.accession
+  entry['file_id'] = metadata_file.id.to_s
 end
 tmp_file = File.new(Rails.root.join('db', 'seed', 'tmp_bq_seeds.json'), 'w+')
 tmp_file.write bq_data.map(&:to_json).join("\n")
