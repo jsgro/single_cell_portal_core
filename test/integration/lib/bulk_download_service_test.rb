@@ -30,7 +30,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
     requested_file_types = %w(Metadata Expression)
     files = BulkDownloadService.get_requested_files(file_types: requested_file_types, study_accessions: [@study.accession])
-    expected_files = @study.study_files.where(:file_type.in => requested_file_types)
+    expected_files = @study.study_files.where(:file_type.in => ['Metadata', /Matrix/, /10X/])
     expected_count = expected_files.size
     expected_files.each do |file|
       if file.is_bundled?

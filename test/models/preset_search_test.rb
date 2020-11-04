@@ -39,7 +39,7 @@ class PresetSearchTest < ActiveSupport::TestCase
     @preset_search_facet_filters = @preset_search.matching_facets_and_filters.sort_by {|facet| facet[:id]}
     assert @sorted_facets == @preset_search_facet_filters,
            "Did not correctly match facets/filters; #{@sorted_facets} != #{@preset_search_facet_filters}"
-    associated_facet = @preset_search.search_facets.first
+    associated_facet = @preset_search.search_facets.detect {|facet| facet.identifier == 'species'}
     assert @species_facet == associated_facet
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"

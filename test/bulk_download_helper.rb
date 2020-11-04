@@ -10,8 +10,8 @@ def bulk_download_response(study_files)
         format_file_for_response(response, bundled_file)
       end
     end
-    response.with_indifferent_access
   end
+  response.with_indifferent_access
 end
 
 private

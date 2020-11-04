@@ -125,13 +125,11 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     study = Study.find_by(name: "Testing Study #{@random_seed}")
     other_matches = Study.any_of({description: /#{HOMO_SAPIENS_FILTER[:name]}/},
                                  {description: /#{NO_DISEASE_FILTER[:name]}/}).pluck(:accession)
-    facets = SearchFacet.where(data_type: 'string')
-
     # find all human studies from metadata
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}+disease:#{NO_DISEASE_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    expected_accessions = ([study.accession] + other_matches).uniq
+    expected_accessions = (@convention_accessions + other_matches).uniq
     matching_accessions = json['matching_accessions']
     assert_equal expected_accessions, matching_accessions,
                  "Did not return correct array of matching accessions, expected #{expected_accessions} but found #{matching_accessions}"
