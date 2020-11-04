@@ -6,7 +6,7 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
   include Requests::HttpHelpers
 
   setup do
-    @user = User.find_by(email: 'testing.user.2@gmail.com')
+    @user = FactoryBot.create(:api_user)
     OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
                                                                            :provider => 'google_oauth2',
                                                                            :uid => '123545',
@@ -31,6 +31,7 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
 
   teardown do
     @basic_study.destroy
+    @user.destroy
   end
 
   test 'should get basic study visualization data' do
@@ -38,6 +39,9 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
 
 
     assert_equal 3, @basic_study.default_cluster.data_arrays.count
+
+    execute_http_request(:get, api_v1_study_explore_path(@basic_study.accession))
+    assert_response :success
 
     # controller not yet implemented
 
