@@ -179,18 +179,3 @@ BrandingGroup.create!(name: 'Test Brand', user_id: api_user.id, font_family: 'He
 PresetSearch.create!(name: 'Test Search', search_terms: ["Test Study"],
                      facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'], accession_whitelist: %w(SCP1))
 FeatureFlag.create!(name: 'faceted_search')
-
-# seed data into BQ
-bq_seeds = File.open(Rails.root.join('db', 'seed', 'bq_seeds.json'))
-bq_data = JSON.parse bq_seeds.read
-bq_data.each do |entry|
-  entry['CellID'] = SecureRandom.uuid
-  entry['study_accession'] = study.accession
-  entry['file_id'] = metadata_file.id.to_s
-end
-tmp_file = File.new(Rails.root.join('db', 'seed', 'tmp_bq_seeds.json'), 'w+')
-tmp_file.write bq_data.map(&:to_json).join("\n")
-table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
-table.load tmp_file, write: 'append'
-tmp_file.close
-File.delete(tmp_file.path)

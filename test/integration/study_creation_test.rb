@@ -42,7 +42,7 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     assert_not_nil bq_dataset, "Did not find #{CellMetadatum::BIGQUERY_DATASET} dataset in BigQuery"
     bq_table = bq_dataset.tables.detect {|table| table.table_id == CellMetadatum::BIGQUERY_TABLE}
     assert_not_nil bq_table, "Did not find #{CellMetadatum::BIGQUERY_TABLE} table in #{CellMetadatum::BIGQUERY_DATASET}"
-    initial_bq_row_count = get_bq_row_count(bq_dataset, study)
+    initial_bq_row_count = get_bq_row_count(study)
 
     example_files = {
       expression: {
@@ -136,7 +136,7 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     assert_equal 3, study_file_count, "did not find correct number of study files"
     assert_equal 1, share_count, "did not find correct number of study shares"
 
-    assert_equal initial_bq_row_count + 30, get_bq_row_count(bq_dataset, study)
+    assert_equal initial_bq_row_count + 30, get_bq_row_count(study)
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

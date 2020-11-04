@@ -17,7 +17,8 @@ class PresetSearchTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     expected_query = "\"Testing Study\""
-    assert expected_query == @preset_search.keyword_query_string
+    assert expected_query == @preset_search.keyword_query_string,
+           "Query string did not match: #{expected_query} != #{@preset_search.keyword_query_string}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

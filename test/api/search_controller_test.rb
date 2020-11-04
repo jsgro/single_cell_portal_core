@@ -19,6 +19,12 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
     @user.update_last_access_at!
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+
+    # ensure BQ has seed data
+    testing_study = Study.first
+    if get_bq_row_count(testing_study) == 0
+      seed_bigquery(testing_study.accession, testing_study.metadata_file.id.to_s)
+    end
   end
 
   teardown do
