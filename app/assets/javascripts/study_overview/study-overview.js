@@ -152,6 +152,35 @@ function renderScatterPlot(target, rawPlot, box, labelFont) {
   window.SCP.scatterPlotLayout = layout
 }
 
+// Gets URL parameters needed for each "render" call, e.g. no-gene, single-gene, multi-gene
+function getRenderApiUrl() {
+
+  // Get values from control elements in View Options sidebar
+  var cluster = $('#cluster').val();
+  var annotation = $('#annotation').val();
+  var consensus = $('#search_consensus').val();
+  var subsample = $('#subsample').val();
+  var plot_type = $('#plot_type').val() === undefined ? 'violin' : $('#plot_type').val();
+  var boxpoints = $('#boxpoints_select').val() === undefined ? 'all' : $('#boxpoints_select').val();
+  var heatmap_row_centering = $('#heatmap_row_centering').val();
+  var heatmap_size = parseInt($('#heatmap_size').val());
+  var color_profile = $('#colorscale').val();
+
+  var urlParams =
+    'cluster=' + cluster +
+    '&annotation=' + annotation +
+    '&boxpoints=' + boxpoints +
+    '&consensus=' + consensus +
+    '&subsample=' + subsample +
+    '&plot_type=' + plot_type +
+    '&heatmap_row_centering=' + heatmap_row_centering +
+    '&heatmap_size=' + heatmap_size +
+    '&colorscale=' + color_profile;
+
+  urlParams = urlParams.replace('%', '%25');
+
+  return urlParams;
+}
 
 /**
  * End render cluster code
@@ -159,6 +188,7 @@ function renderScatterPlot(target, rawPlot, box, labelFont) {
 
 /** Draws the scatter plot for the default Explore tab view */
 function renderScatter() {
+  console.log('in renderScatter')
   // detach listener as it will be re-attached in response;
   // this helps reduce spurious errors
   $(window).off('resizeEnd')
@@ -167,13 +197,30 @@ function renderScatter() {
   const spinner = new Spinner(window.opts).spin(target)
   $('#cluster-plot').data('spinner', spinner)
 
-  const urlParams = window.getRenderUrlParams()
-  const url = `${study.renderClusterPath}?${urlParams}`
+  // const urlParams = window.getRenderUrlParams()
+  // const url = `${study.renderClusterPath}?${urlParams}`
 
-  $.ajax({
+  var annotation = $('#annotation').val();
+  const annotName, annotType, annotScope = annotation.split('--')
+
+  // Example:
+  // https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
+  const url =
+    'https://localhost:3000/single_cell/api/v1/studies/' +
+    study.accession + '/clusters/' + $('#cluster').val() +
+    '?annotation_name=' + annotName +
+    '&annotation_type=' + annotType +
+    '&annotation_scope=' + annotScope
+
+  console.log('url')
+  console.log(url)
+
+  $.json({
     url,
-    method: 'GET',
-    dataType: 'script'
+    success: function(data) {
+      console.log('data: ')
+      console.log(data)
+    }
   })
 }
 
