@@ -27,8 +27,10 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # reset known commonly used objects to initial states to prevent failures breaking other tests
   teardown do
     reset_user_tokens
+    Study.find_by(name: /API Test Study/).update(description: '')
   end
 
   test 'should get all search facets' do
@@ -80,6 +82,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     @search_facet = SearchFacet.first
+    @search_facet.update_filter_values!
     filter = @search_facet.filters.first
     valid_query = filter[:name]
     execute_http_request(:get, api_v1_search_facet_filters_path(facet: @search_facet.identifier, query: valid_query))
@@ -118,19 +121,21 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     study = Study.find_by(name: "Testing Study #{@random_seed}")
+    other_matches = Study.any_of({description: /#{HOMO_SAPIENS_FILTER[:name]}/},
+                                 {description: /#{NO_DISEASE_FILTER[:name]}/}).pluck(:accession)
     facets = SearchFacet.where(data_type: 'string')
-
 
     # find all human studies from metadata
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}+disease:#{NO_DISEASE_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    expected_accessions = [study.accession]
+    expected_accessions = ([study.accession] + other_matches).uniq
     matching_accessions = json['matching_accessions']
     assert_equal expected_accessions, matching_accessions,
                  "Did not return correct array of matching accessions, expected #{expected_accessions} but found #{matching_accessions}"
     study_count = json['studies'].size
-    assert_equal study_count, 1, "Did not find correct number of studies, expected 1 but found #{study_count}"
+    assert_equal study_count, expected_accessions.size,
+                 "Did not find correct number of studies, expected #{expected_accessions.size} but found #{study_count}"
     result_accession = json['studies'].first['accession']
     assert_equal result_accession, study.accession, "Did not find correct study; expected #{study.accession} but found #{result_accession}"
     matched_facets = json['studies'].first['facet_matches'].keys.sort
@@ -289,8 +294,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
             total_bytes: study.metadata_file.upload_file_size
         },
         Expression: {
-            total_files: 1,
-            total_bytes: study.expression_matrix_files.first.upload_file_size
+            total_files: study.expression_matrix_files.size,
+            total_bytes: study.expression_matrix_files.map(&:upload_file_size).reduce(&:+)
         }
     }.with_indifferent_access
 

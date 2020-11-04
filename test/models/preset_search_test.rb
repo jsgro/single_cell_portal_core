@@ -35,7 +35,8 @@ class PresetSearchTest < ActiveSupport::TestCase
   test 'should return correct matching facets' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    assert @matching_facets == @preset_search.matching_facets_and_filters
+    assert @matching_facets == @preset_search.matching_facets_and_filters,
+           "Did not correctly match facets/filters; #{@matching_facets} != #{@preset_search.matching_facets_and_filters}"
     associated_facet = @preset_search.search_facets.first
     assert @species_facet == associated_facet
 

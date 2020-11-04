@@ -176,6 +176,6 @@ SearchFacet.create!(name: 'Organism Age', identifier: 'organism_age', big_query_
 BrandingGroup.create!(name: 'Test Brand', user_id: api_user.id, font_family: 'Helvetica Neue, sans-serif', background_color: '#FFFFFF')
 
 # Preset search seeds
-PresetSearch.create!(name: 'Test Search', search_terms: ["Test Study"],
+PresetSearch.create!(name: 'Test Search', search_terms: ["Testing Study"],
                      facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'], accession_whitelist: %w(SCP1))
 FeatureFlag.create!(name: 'faceted_search')
