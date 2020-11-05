@@ -82,7 +82,8 @@ else
     ((FAILED_COUNT++))
   fi
   if [[ "$CODECOV_TOKEN" -ne "" ]]; then
-    curl -s https://codecov.io/bash -cF javascript
+    echo "uploading JS coverage to codecov"
+    bash <(curl -s https://codecov.io/bash) -cF javascript -t $CODECOV_TOKEN
   fi
   RAILS_ENV=test bundle exec bin/rake test:run_test_suite
   code=$?
