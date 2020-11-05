@@ -148,7 +148,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     # this parse has a duplicate gene, which will not throw an error - it is caught internally
     ParseUtils.initialize_precomputed_scores(study, gene_list_file, @test_user)
     # we have to reload the study because it will have a cached reference to the precomputed_score due to the nature of the parse
-    study = Study.find_by(name: "Local Parse Failure Study #{@random_seed}")
+    study.reload
     assert study.study_files.where(file_type: 'Gene List').size == 0,
            "Found #{study.study_files.where(file_type: 'Gene List').size} gene list files when should have found 0"
     assert study.precomputed_scores.size == 0, "Found #{study.precomputed_scores.size} precomputed scores when should have found 0"
@@ -182,7 +182,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     assert_select 'li#study_error_firecloud_project', 'Firecloud project cannot be changed once initialized.'
     assert_select 'li#study_error_firecloud_workspace', 'Firecloud workspace cannot be changed once initialized.'
     # reload study and assert values are unchange
-    study = Study.find_by(name: "FireCloud Attribute Test #{@random_seed}")
+    study.reload
     assert_equal FireCloudClient::PORTAL_NAMESPACE, study.firecloud_project,
                  "FireCloud project was not correct, expected #{FireCloudClient::PORTAL_NAMESPACE} but found #{study.firecloud_project}"
     assert_equal "firecloud-attribute-test-#{@random_seed}", study.firecloud_workspace,

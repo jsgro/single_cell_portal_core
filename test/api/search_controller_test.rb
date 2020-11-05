@@ -350,7 +350,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    expected_accessions = (@convention_accessions + [other_study.accession]).uniq
+    expected_accessions = @convention_accessions
     assert_equal expected_accessions, json['matching_accessions'],
                  "Did not find expected accessions before inferred search, expected #{expected_accessions} but found #{json['matching_accessions']}"
 

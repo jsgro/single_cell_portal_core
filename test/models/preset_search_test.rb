@@ -7,11 +7,12 @@ class PresetSearchTest < ActiveSupport::TestCase
     @preset_search = PresetSearch.first
     @species_facet = SearchFacet.find_by(identifier: 'species')
     @disease_facet = SearchFacet.find_by(identifier: 'disease')
+    # ensure facet filters are up to date as upstream tests may have changed their state
     @species_facet.update_filter_values!
     @disease_facet.update_filter_values!
     @matching_facets = [
-        {:id=>"species", :filters=>[{"id"=>"NCBITaxon_9606", "name"=>"Homo sapiens"}], :object_id=>@species_facet.id},
-        {:id=>"disease", :filters=>[{"id"=>"MONDO_0000001", "name"=>"disease or disorder"}], :object_id=>@disease_facet.id}
+        {id: @species_facet.identifier, filters: @species_facet.filters, object_id: @species_facet.id},
+        {id: @disease_facet.identifier, filters: @disease_facet.filters, object_id: @disease_facet.id}
     ]
   end
 
