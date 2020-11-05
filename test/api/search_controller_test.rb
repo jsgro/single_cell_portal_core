@@ -32,7 +32,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   # reset known commonly used objects to initial states to prevent failures breaking other tests
   teardown do
     reset_user_tokens
-    Study.find_by(name: /API/).update!(description: '')
+    api_study = Study.find_by(name: /API/)
+    api_study.update!(description: '', public: true)
   end
 
   test 'should get all search facets' do
