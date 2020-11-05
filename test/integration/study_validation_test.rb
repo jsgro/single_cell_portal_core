@@ -185,8 +185,8 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     study.reload
     assert_equal FireCloudClient::PORTAL_NAMESPACE, study.firecloud_project,
                  "FireCloud project was not correct, expected #{FireCloudClient::PORTAL_NAMESPACE} but found #{study.firecloud_project}"
-    assert_equal "firecloud-attribute-test-#{@random_seed}", study.firecloud_workspace,
-                 "FireCloud workspace was not correct, expected test-firecloud-attribute-test-#{@random_seed} but found #{study.firecloud_workspace}"
+    assert_equal "validation-firecloud-attribute-test-#{@random_seed}", study.firecloud_workspace,
+                 "FireCloud workspace was not correct, expected validation-test-firecloud-attribute-test-#{@random_seed} but found #{study.firecloud_workspace}"
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
