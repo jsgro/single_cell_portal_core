@@ -41,7 +41,7 @@ const helpModalContent = (<div>
   For more detailed information, visit
   our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>.
   <br/>If you are a study creator and would like to provide that metadata for your study to be searchable,
-  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention" target="_blank" rel="noreferrer">metadata guide</a>.
+  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search" target="_blank" rel="noreferrer">metadata guide</a>.
 </div>)
 
 /**
