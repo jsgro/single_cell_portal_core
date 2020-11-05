@@ -173,7 +173,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     # test single keyword first
     execute_http_request(:get, api_v1_search_path(type: 'study', terms: @random_seed))
     assert_response :success
-    expected_accessions = Study.visible(@user).where(name: /#{@random_seed}/).pluck(:accession).sort
+    expected_accessions = Study.viewable(@user).where(name: /#{@random_seed}/).pluck(:accession).sort
     matching_accessions = json['matching_accessions'].sort # need to sort results since they are returned in weighted order
     assert_equal expected_accessions, matching_accessions,
                  "Did not return correct array of matching accessions, expected #{expected_accessions} but found #{matching_accessions}"
@@ -347,10 +347,11 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
     other_study.update(description: '')
+    other_accessions = Study.viewable(@user).where(description: /#{HOMO_SAPIENS_FILTER[:name]}/).pluck(:accession).sort
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    expected_accessions = @convention_accessions
+    expected_accessions = (@convention_accessions + other_accessions).uniq
     assert_equal expected_accessions, json['matching_accessions'],
                  "Did not find expected accessions before inferred search, expected #{expected_accessions} but found #{json['matching_accessions']}"
 
@@ -359,7 +360,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     other_study.update(description: HOMO_SAPIENS_FILTER[:name])
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    inferred_accessions = @convention_accessions + [other_study.accession]
+    inferred_accessions = expected_accessions + [other_study.accession]
     assert_equal inferred_accessions, json['matching_accessions'],
                  "Did not find expected accessions after inferred search, expected #{inferred_accessions} but found #{json['matching_accessions']}"
     inferred_study = json['studies'].last # inferred matches should be at the end
@@ -380,7 +381,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
     other_study.update(description: HOMO_SAPIENS_FILTER[:name])
     search_phrase = "Study #{@random_seed}"
-    expected_accessions = @convention_accessions + [other_study.accession]
+    other_accessions = Study.viewable(@user).where(name: /#{search_phrase}/).pluck(:accession).sort
+    expected_accessions = (@convention_accessions + other_accessions).uniq
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query, terms: "\"#{search_phrase}\""))
     assert_response :success
     found_accessions = json['matching_accessions']

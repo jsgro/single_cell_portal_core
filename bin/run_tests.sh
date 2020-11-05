@@ -81,6 +81,9 @@ else
     first_test_to_fail=${first_test_to_fail-"yarn ui-test"}
     ((FAILED_COUNT++))
   fi
+  if [[ "$CODECOV_TOKEN" -ne "" ]]; then
+    bash <(curl -s https://codecov.io/bash) -cF javascript
+  fi
   RAILS_ENV=test bundle exec bin/rake test:run_test_suite
   code=$?
   if [[ $code -ne 0 ]]; then
