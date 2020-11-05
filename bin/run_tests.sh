@@ -81,7 +81,7 @@ else
     first_test_to_fail=${first_test_to_fail-"yarn ui-test"}
     ((FAILED_COUNT++))
   fi
-  if [[ "$CODECOV_TOKEN" != "" ]]; then
+  if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
     echo "uploading JS coverage to codecov"
     bash <(curl -s https://codecov.io/bash) -cF javascript -t $CODECOV_TOKEN
   fi
@@ -92,7 +92,7 @@ else
     first_test_to_fail=${first_test_to_fail-"rake test:run_test_suite"}
     ((FAILED_COUNT++))
   fi
-  if [[ "$CODECOV_TOKEN" != "" ]]; then
+  if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
     echo "uploading ruby coverage to codecov"
     bash <(curl -s https://codecov.io/bash) -cF ruby -t $CODECOV_TOKEN
   fi
