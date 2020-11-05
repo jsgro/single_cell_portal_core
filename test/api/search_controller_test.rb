@@ -347,11 +347,10 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
     other_study.update(description: '')
-    other_accessions = Study.viewable(@user).where(description: /#{HOMO_SAPIENS_FILTER[:name]}/).pluck(:accession).sort
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    expected_accessions = (@convention_accessions + other_accessions).uniq
+    expected_accessions = (@convention_accessions + [other_study.accession]).uniq
     assert_equal expected_accessions, json['matching_accessions'],
                  "Did not find expected accessions before inferred search, expected #{expected_accessions} but found #{json['matching_accessions']}"
 
@@ -381,8 +380,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
     other_study.update(description: HOMO_SAPIENS_FILTER[:name])
     search_phrase = "Study #{@random_seed}"
-    other_accessions = Study.viewable(@user).where(name: /#{search_phrase}/).pluck(:accession).sort
-    expected_accessions = (@convention_accessions + other_accessions).uniq
+    expected_accessions = (@convention_accessions + [other_study.accession]).uniq
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query, terms: "\"#{search_phrase}\""))
     assert_response :success
     found_accessions = json['matching_accessions']

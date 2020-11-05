@@ -13,21 +13,24 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
 
   teardown do
     reset_user_tokens
+    # remove all validation studies
+    Study.where(name: /Validation/).map {|study| study.destroy_and_remove_workspace}
   end
 
   # check that file header/format checks still function properly
   test 'should fail all ingest pipeline parse jobs' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
+    study_name = "Validation Ingest Pipeline Parse Failure Study #{@random_seed}"
     study_params = {
         study: {
-            name: "Ingest Pipeline Parse Failure Study #{@random_seed}",
+            name: study_name,
             user_id: @test_user.id
         }
     }
     post studies_path, params: study_params
     follow_redirect!
     assert_response 200, "Did not redirect to upload successfully"
-    study = Study.find_by(name: "Ingest Pipeline Parse Failure Study #{@random_seed}")
+    study = Study.find_by(name: study_name)
     assert study.present?, "Study did not successfully save"
 
     example_files = {
@@ -66,7 +69,6 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     cluster_file = study.cluster_ordinations_files.first
     example_files[:cluster][:object] = cluster_file
     example_files[:cluster][:cache_location] = cluster_file.parse_fail_bucket_location
-
 
     # bad expression matrix (duplicate gene)
     file_params = {study_file: {file_type: 'Expression Matrix', study_id: study.id.to_s}}
@@ -118,22 +120,22 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     assert_equal 0, study.cluster_groups.size
     assert_equal 0, study.cluster_ordinations_files.size
 
-
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should fail all local parse jobs' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
+    study_name = "Validation Local Parse Failure Study #{@random_seed}"
     study_params = {
         study: {
-            name: "Local Parse Failure Study #{@random_seed}",
+            name: study_name,
             user_id: @test_user.id
         }
     }
     post studies_path, params: study_params
     follow_redirect!
     assert_response 200, "Did not redirect to upload successfully"
-    study = Study.find_by(name: "Local Parse Failure Study #{@random_seed}")
+    study = Study.find_by(name: study_name)
     assert study.present?, "Study did not successfully save"
 
     # bad marker gene list
@@ -156,16 +158,17 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
 
   test 'should prevent changing firecloud attributes' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
+    study_name = "Validation FireCloud Attribute Test #{@random_seed}"
     study_params = {
         study: {
-            name: "FireCloud Attribute Test #{@random_seed}",
+            name: study_name,
             user_id: @test_user.id
         }
     }
     post studies_path, params: study_params
     follow_redirect!
     assert_response 200, "Did not redirect to upload successfully"
-    study = Study.find_by(name: "FireCloud Attribute Test #{@random_seed}")
+    study = Study.find_by(name: study_name)
     assert study.present?, "Study did not successfully save"
 
     # test update and expected error messages
@@ -188,10 +191,11 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   end
 
   test 'should disable downloads for reviewers' do
+    study_name = "Validation Reviewer Share #{@random_seed}"
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
     study_params = {
         study: {
-            name: "Reviewer Share #{@random_seed}",
+            name: study_name,
             user_id: @test_user.id,
             public: false,
             study_detail_attributes: {
@@ -208,7 +212,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     post studies_path, params: study_params
     follow_redirect!
     assert_response 200, "Did not complete request successfully, expected redirect and response 200 but found #{@response.code}"
-    study = Study.find_by(name: "Reviewer Share #{@random_seed}")
+    study = Study.find_by(name: study_name)
     assert study.study_shares.size == 1, "Did not successfully create study_share, found #{study.study_shares.size} shares"
     reviewer_email = study.study_shares.reviewers.first
     assert reviewer_email == @sharing_user.email, "Did not grant reviewer permission to #{@sharing_user.email}, reviewers: #{reviewer_email}"
@@ -256,7 +260,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   test 'should delete data from bigquery' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    study_name = "BQ Delete Study #{@random_seed}"
+    study_name = "Validation BQ Delete Study #{@random_seed}"
     study = Study.create!(name: study_name, firecloud_project: ENV['PORTAL_NAMESPACE'], description: 'Test BQ Delete',
                           user_id: @test_user.id)
     assert study.present?, "Study did not successfully save"

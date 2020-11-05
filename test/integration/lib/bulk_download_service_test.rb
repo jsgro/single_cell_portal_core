@@ -33,9 +33,9 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     expected_files = @study.study_files.where(:file_type.in => ['Metadata', /Matrix/, /10X/])
     expected_count = expected_files.size
     assert_equal expected_count, files.size, "Did not find correct number of files, expected #{expected_count} but found #{files.size}"
-    expected_files = @study.study_files.by_type(['Metadata', 'Expression Matrix']).map(&:name).sort
+    expected_filenames = expected_files.map(&:name).sort
     found_files = files.map(&:name).sort
-    assert_equal expected_files, found_files, "Did not find the correct files, expected: #{expected_files} but found #{found_files}"
+    assert_equal expected_filenames, found_files, "Did not find the correct files, expected: #{expected_files} but found #{found_files}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
