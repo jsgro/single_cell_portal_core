@@ -32,7 +32,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   # reset known commonly used objects to initial states to prevent failures breaking other tests
   teardown do
     reset_user_tokens
-    Study.find_by(name: /API Test Study/).update(description: '')
+    Study.find_by(name: /API/).update!(description: '')
   end
 
   test 'should get all search facets' do
@@ -123,7 +123,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     study = Study.find_by(name: "Testing Study #{@random_seed}")
-    other_matches = Study.any_of({description: /#{HOMO_SAPIENS_FILTER[:name]}/},
+    other_matches = Study.viewable(@user).any_of({description: /#{HOMO_SAPIENS_FILTER[:name]}/},
                                  {description: /#{NO_DISEASE_FILTER[:name]}/}).pluck(:accession)
     # find all human studies from metadata
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}+disease:#{NO_DISEASE_FILTER[:id]}"

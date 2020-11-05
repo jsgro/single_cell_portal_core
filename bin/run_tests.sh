@@ -83,7 +83,7 @@ else
   fi
   if [[ "$CODECOV_TOKEN" != "" ]]; then
     echo "uploading JS coverage to codecov"
-    bash <(curl -s https://codecov.io/bash) -cF javascript -t $CODECOV_TOKEN -N $TRAVIS_COMMIT
+    bash <(curl -s https://codecov.io/bash) -cF javascript -t $CODECOV_TOKEN
   fi
   RAILS_ENV=test bundle exec bin/rake test:run_test_suite
   code=$?
@@ -94,7 +94,7 @@ else
   fi
   if [[ "$CODECOV_TOKEN" != "" ]]; then
     echo "uploading ruby coverage to codecov"
-    bash <(curl -s https://codecov.io/bash) -cF ruby -t $CODECOV_TOKEN -N $TRAVIS_COMMIT
+    bash <(curl -s https://codecov.io/bash) -cF ruby -t $CODECOV_TOKEN
   fi
 fi
 clean_up
