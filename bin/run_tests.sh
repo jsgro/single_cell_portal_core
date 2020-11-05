@@ -81,10 +81,6 @@ else
     first_test_to_fail=${first_test_to_fail-"yarn ui-test"}
     ((FAILED_COUNT++))
   fi
-  if [[ "$CODECOV_TOKEN" != "" ]]; then
-    echo "Uploading coverage for yarn ui-test to codecov"
-    node_modules/.bin/codecov
-  fi
   RAILS_ENV=test bundle exec bin/rake test:run_test_suite
   code=$?
   if [[ $code -ne 0 ]]; then

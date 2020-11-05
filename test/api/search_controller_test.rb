@@ -173,7 +173,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     # test single keyword first
     execute_http_request(:get, api_v1_search_path(type: 'study', terms: @random_seed))
     assert_response :success
-    expected_accessions = Study.where(name: /#{@random_seed}/).pluck(:accession)
+    expected_accessions = Study.where(name: /#{@random_seed}/).pluck(:accession).sort
     matching_accessions = json['matching_accessions'].sort # need to sort results since they are returned in weighted order
     assert_equal expected_accessions, matching_accessions,
                  "Did not return correct array of matching accessions, expected #{expected_accessions} but found #{matching_accessions}"
