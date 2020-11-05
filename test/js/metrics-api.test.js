@@ -3,7 +3,8 @@
 
 const fetch = require('node-fetch')
 import {logClick, logClickLink, logMenuChange, setMetricsApiMockFlag} from 'lib/metrics-api'
-import * as UserProvider from 'providers/UserProvider'
+import { mount } from 'enzyme';
+import React from 'react';
 
 describe('Library for client-side usage analytics', () => {
   beforeAll(() => {
@@ -29,21 +30,10 @@ describe('Library for client-side usage analytics', () => {
     jest.spyOn(global, 'fetch').mockImplementation(() => {
       mockFetchPromise
     })
-
-    // Mock the user context, to mimic auth'd state
-    const userContext = { accessToken: 'test' }
-    jest.spyOn(UserProvider, 'useContextUser')
-      .mockImplementation(() => {
-        return userContext
-      })
-
-    const event = {
-      target: {
-        localName: 'a',
-        text: 'Text that is linked'
-      }
-    }
-    logClick(event)
+    const targetWrapper = mount(
+      <a href="#" onClick={(e) => logClick(e)}>Text that is linked</a>
+    )
+    targetWrapper.find('a').simulate('click')
 
     expect(global.fetch).toHaveBeenCalledWith(
       expect.anything(), // URL
@@ -71,13 +61,6 @@ describe('Library for client-side usage analytics', () => {
     jest.spyOn(global, 'fetch').mockImplementation(() => {
       mockFetchPromise
     })
-
-    // Mock the user context, to mimic auth'd state
-    const userContext = { accessToken: 'test' }
-    jest.spyOn(UserProvider, 'useContextUser')
-      .mockImplementation(() => {
-        return userContext
-      })
 
     const event = {
       target: {
@@ -119,8 +102,9 @@ describe('Library for client-side usage analytics', () => {
 
     const target = {
         classList: ['class-name-1', 'class-name-2'],
-        text: 'dif Text that is linked',
-        id: "link-id"
+        innerText: 'dif Text that is linked',
+        id: "link-id",
+        dataset: {},
     }
     logClickLink(target)
 
