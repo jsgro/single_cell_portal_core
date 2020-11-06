@@ -191,7 +191,7 @@ function toggleViewOptionsPanel() {
     .toggleClass('contracted-for-sidebar');
 
   // Re-render Plotly to use available space
-  $(window).trigger('resize');
+  $(window).trigger('resizeEnd');
 }
 
 

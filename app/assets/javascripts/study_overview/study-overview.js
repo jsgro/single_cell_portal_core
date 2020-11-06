@@ -98,11 +98,27 @@ function get2DScatterProps(cluster) {
 /** Get height and width for a to-be-rendered cluster plot */
 function calculatePlotRect() {
   const numPlots = window.SCP.numPlots
-  const windowDom = $(window)
-  const height = windowDom.height() - 250
-  const width = (windowDom.width() - 80) / numPlots
+
+  const height = $(window).height() - 250
+  const width = ($('#plots-tab').width() - 80) / numPlots
+
   return { height, width }
 }
+
+
+/** Resize Plotly scatter plots -- done on window resize  */
+function resizePlots() {
+  const numPlots = window.SCP.numPlots
+
+  for (let i = 0; i < numPlots; i++) {
+    const rawPlot = window.SCP.plots[i]
+    const layout = getScatterPlotLayout(rawPlot)
+    const target = `cluster-plot-${i + 1}`
+
+    window.Plotly.relayout(target, layout)
+  }
+}
+
 
 /** Renders Plotly scatter plot for "Clusters" tab */
 function renderScatterPlot(target, rawPlot) {
@@ -252,25 +268,6 @@ $('#ideogram_annotation').on('change', function() {
   }
 })
 
-/** Resize Plotly scatter plots -- done on window resize  */
-function resizePlots() {
-  const numPlots = window.SCP.numPlots
-  const height = calculatePlotRect().height
-
-  for (let i = 0; i < numPlots; i++) {
-    const oldHeight = window.SCP.plotRects[i]
-    const rawPlot = window.SCP.plots[i]
-    const layout = getScatterPlotLayout(rawPlot)
-    const target = `cluster-plot-${i + 1}`
-
-    if (height === oldHeight) {
-      window.Plotly.newPlot(target, rawPlot, layout)
-    } else {
-      window.Plotly.relayout(target, layout)
-    }
-  }
-}
-
 if (study.canVisualizeClusters) {
   $('#cluster-plot').data('rendered', false)
 
@@ -338,7 +335,7 @@ if (study.canVisualizeClusters) {
       method: 'GET',
       dataType: 'script',
       complete(jqXHR, textStatus) {
-        window.renderWithNewCluster(textStatus, renderScatter)
+        window.renderWithNewCluster(textStatus, renderScatterPlot)
       }
     })
   })
