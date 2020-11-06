@@ -155,13 +155,9 @@ function renderScatterPlot(target, rawPlot, box, labelFont) {
 /**
  * End render cluster code
  */
+
 /** Fetch and draw scatter plot for default Explore tab view */
 async function drawScatterPlot() {
-  console.log('in renderScatter')
-  // detach listener as it will be re-attached in response;
-  // this helps reduce spurious errors
-  // $(window).off('resizeEnd')
-
   const spinnerTarget = $('#cluster-plot')[0]
   const spinner = new Spinner(window.opts).spin(spinnerTarget)
   $('#cluster-plot').data('spinner', spinner)
@@ -170,9 +166,6 @@ async function drawScatterPlot() {
   const annotation = $('#annotation').val()
   const rawScatter =
     await window.SCP.API.fetchScatter(study.accession, cluster, annotation)
-
-  console.log('rawScatter')
-  console.log(rawScatter)
 
   window.SCP.cluster = rawScatter
 
