@@ -697,6 +697,7 @@ var plotlyLabelFont = {
     size: 12,
     color: '#333'
 };
+window.plotlyLabelFont = plotlyLabelFont;
 
 var plotlyDefaultLineColor = 'rgb(40, 40, 40)';
 
@@ -1104,19 +1105,6 @@ function reopenUiTab(navTarget) {
     var tab = window.location.hash;
     if (tab !== '') {
         $(navTarget + ' a[href="' + tab + '"]').tab('show');
-    }
-}
-
-// re-render a plot after a user selects a new cluster from the dropdown menu, usually called from a complete() callback
-// in an $.ajax() function
-function renderWithNewCluster(updateStatusText, renderCallback, setAnnotation=true) {
-    if (updateStatusText === 'success') {
-        if (setAnnotation) {
-            var an = $('#annotation').val();
-            $('#search_annotation').val(an);
-            $('#gene_set_annotation').val(an);
-        }
-        renderCallback();
     }
 }
 

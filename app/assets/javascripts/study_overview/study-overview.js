@@ -18,7 +18,9 @@ window.SCP.startPendingEvent('user-action:page:view:site-study',
  */
 
 /** Get Plotly layout object for scatter plot */
-function getBaseLayout(height, width, font) {
+function getBaseLayout(height, width) {
+  const font = window.SCP.plotlyLabelFont
+
   const layout = {
     hovermode: 'closest',
     margin: {
@@ -94,17 +96,17 @@ function get2DScatterProps(cluster) {
 }
 
 /** Get height and width for a to-be-rendered cluster plot */
-function calculatePlotRect(numPlots) {
+function calculatePlotRect() {
+  const numPlots = window.SCP.numPlots
   const windowDom = $(window)
-  const plotHeight = windowDom.height() - 250
-  const plotWidth = (windowDom.width() - 80) / numPlots
-  return { plotHeight, plotWidth }
+  const height = windowDom.height() - 250
+  const width = (windowDom.width() - 80) / numPlots
+  return { height, width }
 }
 
 /** Renders Plotly scatter plot for "Clusters" tab */
-function renderScatterPlot(target, rawPlot, box, labelFont) {
-  const { data, is3D } = rawPlot
-  const { height, width } = box
+function renderScatterPlot(target, rawPlot) {
+  const { data } = rawPlot
 
   window.SCP.scatterCount += 1
   const scatterCount = window.SCP.scatterCount
@@ -117,10 +119,9 @@ function renderScatterPlot(target, rawPlot, box, labelFont) {
       <div id="cluster-figure-legend"></div>
     </div>`)
 
-  const layout =
-    getScatterPlotLayout(is3D, height, width, labelFont)
+  const layout = getScatterPlotLayout(rawPlot)
 
-  Plotly.newPlot(plotId, data, layout)
+  window.Plotly.newPlot(plotId, data, layout)
 
   // listener to redraw expression scatter with new color profile
   $('#colorscale').off('change')
@@ -130,7 +131,7 @@ function renderScatterPlot(target, rawPlot, box, labelFont) {
     console.log(`setting colorscale to ${theme}`)
 
     $('#search_colorscale').val(theme)
-    Plotly.update(plotId, data, layout)
+    window.Plotly.update(plotId, data, layout)
   })
 
   const description =
@@ -174,7 +175,7 @@ async function drawScatterPlot() {
 
   // TODO (SCP-2857): Remove hard-coding when UI for selecting n-many cluster
   // + spatial plots is something we can develop against.
-  const numPlots = 2
+  window.SCP.numPlots = 1
 
   // Incremented upon drawing scatter plot; enables unique plot IDs
   window.SCP.scatterCount = 0
@@ -196,22 +197,21 @@ async function drawScatterPlot() {
   }
 
   const target = '#plots .panel-body'
-  const rect = calculatePlotRect(numPlots)
 
   // Duplicate calls are merely for proof-of-concept, showing we can
   // render plots side-by-side
-  renderScatterPlot(target, rawScatter, rect, plotlyLabelFont)
-  renderScatterPlot(target, rawScatter, rect, plotlyLabelFont)
+  renderScatterPlot(target, rawScatter)
 
   $('#cluster-plot').data('spinner').stop()
 }
 
 /** Get layout object with various Plotly scatter plot display parameters */
-function getScatterPlotLayout(is3D, height, width, labelFont) {
-  let layout = getBaseLayout(height, width, labelFont)
+function getScatterPlotLayout(rawPlot) {
+  const { height, width } = calculatePlotRect()
+  let layout = getBaseLayout(height, width)
 
   let dimensionProps
-  if (is3D) {
+  if (rawPlot.is3D) {
     const camera = $('#cluster-plot').data('camera')
     dimensionProps = get3DScatterProps(camera, window.SCP.cluster)
   } else {
@@ -221,6 +221,21 @@ function getScatterPlotLayout(is3D, height, width, labelFont) {
   layout = Object.assign(layout, dimensionProps)
 
   return layout
+}
+
+/**
+ * Re-render a plot after a user selects a new cluster from the dropdown menu,
+ * usually called from a complete() callback in an $.ajax() function
+ */
+function renderWithNewCluster(updateStatusText, renderCallback, setAnnotation=true) {
+  if (updateStatusText === 'success') {
+    if (setAnnotation) {
+      const an = $('#annotation').val()
+      $('#search_annotation').val(an)
+      $('#gene_set_annotation').val(an)
+    }
+    renderCallback()
+  }
 }
 
 // For inferCNV ideogram
@@ -236,6 +251,25 @@ $('#ideogram_annotation').on('change', function() {
     $('#ideogramTitle').remove()
   }
 })
+
+/** Resize Plotly scatter plots -- done on window resize  */
+function resizePlots() {
+  const numPlots = window.SCP.numPlots
+  const height = calculatePlotRect().height
+
+  for (let i = 0; i < numPlots; i++) {
+    const oldHeight = window.SCP.plotRects[i]
+    const rawPlot = window.SCP.plots[i]
+    const layout = getScatterPlotLayout(rawPlot)
+    const target = `cluster-plot-${i + 1}`
+
+    if (height === oldHeight) {
+      window.Plotly.newPlot(target, rawPlot, layout)
+    } else {
+      window.Plotly.relayout(target, layout)
+    }
+  }
+}
 
 if (study.canVisualizeClusters) {
   $('#cluster-plot').data('rendered', false)
@@ -261,6 +295,9 @@ if (study.canVisualizeClusters) {
 
     drawScatterPlot()
   })
+
+  // resize listener
+  $(window).on('resizeEnd', () => {resizePlots()})
 
   // listener for cluster nav, specific to study page
   $('#annotation').change(function() {
