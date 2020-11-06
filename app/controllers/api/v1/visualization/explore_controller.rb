@@ -61,7 +61,7 @@ module Api
 
         clusterPointAlpha {Float}: opacity of cluster points in this study
 
-        clusterGroupOptions {Object}: all possible cluster groups for a study
+        clusterGroupNames {Array}: all possible cluster groups for a study
 
         Legacy response props that are omitted in this proposal, as they are better handled client-side:
 
@@ -71,12 +71,16 @@ module Api
 
         def show
           default_cluster = @study.default_cluster
+          ideogram_study_file_names = StudyFile.where(study: @study, file_type: 'Ideogram Annotations').pluck(:name)
+
           explore_props = {
-            is_cluster_viewable: default_cluster.present?,
-            taxon_names: [],
-            hasIdeogramInferCnvFiles: false,
-            uniqueGenes: [],
-            clusterGroupOptions: []
+            isClusterViewable: default_cluster.present?,
+            taxonNames: @study.expressed_taxon_names,
+            hasIdeogramInferCnvFiles: ideogram_study_file_names.any?,
+            ideogramInferCNVFiles: ideogram_study_file_names,
+            uniqueGenes: @study.unique_genes,
+            clusterGroupNames: @study.cluster_groups.pluck(:name),
+            clusterPointAlpha: @study.default_cluster_point_alpha
           }
 
           render json: explore_props
