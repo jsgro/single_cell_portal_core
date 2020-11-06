@@ -77,6 +77,7 @@ class StudyFile
   field :y_axis_max, type: Integer
   field :z_axis_min, type: Integer
   field :z_axis_max, type: Integer
+  field :is_spatial, type: Boolean, default: false
   field :queued_for_deletion, type: Boolean, default: false
   field :remote_location, type: String, default: ''
   field :options, type: Hash, default: {}

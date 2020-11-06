@@ -72,6 +72,7 @@ class SyntheticStudyPopulator
       }
 
       study_file_params.merge!(process_genomic_file_params(finfo))
+      study_file_params.merge!(process_coordinate_file_params(finfo))
 
       if study_file_params[:file_type] == 'Expression Matrix'
         exp_finfo_params = finfo['expression_file_info']
@@ -86,8 +87,19 @@ class SyntheticStudyPopulator
       end
 
       study_file = StudyFile.create!(study_file_params)
-      FileParseService.run_parse_job(study_file, study, user)
+      if !study.detached
+        FileParseService.run_parse_job(study_file, study, user)
+      end
     end
+  end
+
+  # process coordinate/cluster arguments, return a hash of params suitable for passing to a StudyFile constructor
+  def self.process_coordinate_file_params(file_info)
+    params = {}
+    if !file_info['is_spatial'].nil?
+      params[:is_spatial] = file_info['is_spatial']
+    end
+    params
   end
 
   # process species/annotation arguments, return a hash of params suitable for passing to a StudyFile constructor
