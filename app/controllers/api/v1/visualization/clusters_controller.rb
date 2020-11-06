@@ -146,9 +146,9 @@ module Api
           titles = ClusterVizService.load_axis_labels(cluster)
 
           axes_full = {
-            :titles => titles,
-            :ranges => range,
-            :aspects => aspect
+            titles: titles,
+            ranges: range,
+            aspects: aspect
           }
 
           coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(cluster)
