@@ -53,7 +53,7 @@ module Api
           {
             name: :consensus,
             in: :query,
-            description: 'Statistical parameter to use for consensus, e.g. “mean”.  Omit parameter if not applying consensus parameter.',
+            description: 'Statistic to use for consensus, e.g. "mean".  Omit parameter if not applying consensus.',
             type: :string,
             enum: VALID_CONSENSUS_VALUES
           }]
@@ -159,7 +159,8 @@ module Api
             "domainRanges": cluster.domain_ranges,
             "axes": axes_full,
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
-            "coordinateLabels": coordinate_labels
+            "coordinateLabels": coordinate_labels,
+            "annotParams": annot_params
           }
         end
       end

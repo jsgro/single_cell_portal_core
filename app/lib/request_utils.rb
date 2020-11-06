@@ -4,26 +4,6 @@ class RequestUtils
   # using FullSanitizer as it is the most strict
   SANITIZER ||= Rails::Html::FullSanitizer.new
 
-  # sanitizes a page param into an integer.  Will default to 1 if the value
-  # is nil or otherwise can't be read
-  def self.sanitize_page_param(page_param)
-    page_num = 1
-    parsed_num = page_param.to_i
-    if (parsed_num > 0)
-      page_num = parsed_num
-    end
-    page_num
-  end
-
-  # safely determine min/max bounds of an array, accounting for NaN value
-  def self.get_minmax(values_array)
-    begin
-      values_array.minmax
-    rescue TypeError, ArgumentError
-      values_array.dup.reject!(&:nan?).minmax
-    end
-  end
-
   def self.get_selected_annotation(params, study, cluster)
     selector = params[:annotation].nil? ? params[:gene_set_annotation] : params[:annotation]
     annot_name, annot_type, annot_scope = selector.nil? ? study.default_annotation.split('--') : selector.split('--')
@@ -58,6 +38,36 @@ class RequestUtils
                     identifier: "#{source[:name]}--#{type}--#{scope}"}
     end
     annotation
+  end
+
+  def self.get_cluster_group(params, study)
+    # determine which URL param to use for selection
+    selector = params[:cluster].nil? ? params[:gene_set_cluster] : params[:cluster]
+    if selector.nil? || selector.empty?
+      study.default_cluster
+    else
+      study.cluster_groups.by_name(selector)
+    end
+  end
+
+  # sanitizes a page param into an integer.  Will default to 1 if the value
+  # is nil or otherwise can't be read
+  def self.sanitize_page_param(page_param)
+    page_num = 1
+    parsed_num = page_param.to_i
+    if (parsed_num > 0)
+      page_num = parsed_num
+    end
+    page_num
+  end
+
+  # safely determine min/max bounds of an array, accounting for NaN value
+  def self.get_minmax(values_array)
+    begin
+      values_array.minmax
+    rescue TypeError, ArgumentError
+      values_array.dup.reject! {|value| value.nil? || value.nan? }.minmax
+    end
   end
 
   # safely strip unsafe characters and encode search parameters for query/rendering

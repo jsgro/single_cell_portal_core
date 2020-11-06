@@ -10,7 +10,7 @@ import camelcaseKeys from 'camelcase-keys'
 import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
 
-import { accessToken } from 'providers/UserProvider'
+import { getAccessToken } from 'providers/UserProvider'
 import {
   logFilterSearch, logSearch, logDownloadAuthorization, mapFiltersForLogging
 } from './scp-api-metrics'
@@ -27,8 +27,8 @@ export function defaultInit() {
     'Accept': 'application/json'
   }
   // accessToken is a blank string when not signed in
-  if (accessToken !== '') {
-    headers['Authorization'] = `Bearer ${accessToken}`
+  if (getAccessToken() !== '') {
+    headers['Authorization'] = `Bearer ${getAccessToken()}`
   }
   return {
     method: 'GET',
@@ -139,6 +139,8 @@ function encodeParam(param, value, isFirst=false) {
  * @param {String} subsample Subsampling threshold, e.g. 100000 or "All"
  * @param {String} consensus Statistic to use for consensus, e.g. "mean"
  *
+ * Example:
+ * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
  */
 export async function fetchScatter(
   studyAccession, cluster, annotation, subsample, consensus, mock=false
@@ -216,6 +218,46 @@ export async function fetchAnnotationValues(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/expression/annotations`
   const [values, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
   return values
+}
+
+/**
+ * Returns an object with heatmap expression data for genes in a study
+ *
+ * This endpoint is intentionally not documented in Swagger.
+ *
+ * In lieu of docs, see definition at:
+ * app/controllers/api/v1/expression_data_controller.rb
+ *
+ * @param {String} studyAccession study accession
+ * @param {Array} genes List of gene names to get expression data for
+ *
+ */
+export async function fetchExpressionHeatmap(
+  studyAccession, genes, cluster, annotation, subsample, mock=false
+) {
+  const clusterParam =
+    cluster ? `&cluster=${encodeURIComponent(cluster)}` : ''
+  const annotationParam =
+    annotation ? `&annotation=${encodeURIComponent(annotation)}` : ''
+  const subsampleParam =
+    subsample ? `&annotation=${encodeURIComponent(subsample)}` : ''
+  const genesParam = encodeURIComponent(genes.join(','))
+  const params =
+    `?genes=${genesParam}${clusterParam}${annotationParam}${subsampleParam}`
+  const apiUrl = `/studies/${studyAccession}/expression_heatmaps${params}`
+  // don't camelcase the keys since those can be cluster names,
+  // so send false for the 4th argument
+  const [heatmap, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return heatmap
+}
+
+export async function updateCurrentUser(updatedUser, mock=false) {
+  const init = Object.assign({}, defaultInit(), {
+    method: 'PATCH',
+    body: JSON.stringify(updatedUser)
+  })
+  await scpApi('/current_user', init, mock, true)
 }
 
 /**

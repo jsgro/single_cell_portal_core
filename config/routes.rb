@@ -44,6 +44,7 @@ Rails.application.routes.draw do
                                param: :cluster_name,
                                constraints: { cluster_name: /[^\/]+/ } # needed to allow '.' in cluster names
         end
+        resource :current_user, only: [:update], controller: 'current_user'
 
         get 'status', to: 'status#index'
         scope :site do

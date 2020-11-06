@@ -103,8 +103,8 @@ function calculatePlotRect(numPlots) {
 
 /** Renders Plotly scatter plot for "Clusters" tab */
 function renderScatterPlot(target, rawPlot, box, labelFont) {
-  const {data, is3D} = rawPlot;
-  const {height, width} = box;
+  const { data, is3D } = rawPlot
+  const { height, width } = box
 
   window.SCP.scatterCount += 1
   const scatterCount = window.SCP.scatterCount
@@ -152,36 +152,6 @@ function renderScatterPlot(target, rawPlot, box, labelFont) {
   window.SCP.scatterPlotLayout = layout
 }
 
-// Gets URL parameters needed for each "render" call, e.g. no-gene, single-gene, multi-gene
-function getRenderApiUrl() {
-
-  // Get values from control elements in View Options sidebar
-  var cluster = $('#cluster').val();
-  var annotation = $('#annotation').val();
-  var consensus = $('#search_consensus').val();
-  var subsample = $('#subsample').val();
-  var plot_type = $('#plot_type').val() === undefined ? 'violin' : $('#plot_type').val();
-  var boxpoints = $('#boxpoints_select').val() === undefined ? 'all' : $('#boxpoints_select').val();
-  var heatmap_row_centering = $('#heatmap_row_centering').val();
-  var heatmap_size = parseInt($('#heatmap_size').val());
-  var color_profile = $('#colorscale').val();
-
-  var urlParams =
-    'cluster=' + cluster +
-    '&annotation=' + annotation +
-    '&boxpoints=' + boxpoints +
-    '&consensus=' + consensus +
-    '&subsample=' + subsample +
-    '&plot_type=' + plot_type +
-    '&heatmap_row_centering=' + heatmap_row_centering +
-    '&heatmap_size=' + heatmap_size +
-    '&colorscale=' + color_profile;
-
-  urlParams = urlParams.replace('%', '%25');
-
-  return urlParams;
-}
-
 /**
  * End render cluster code
  */
@@ -192,66 +162,55 @@ async function drawScatterPlot() {
   // this helps reduce spurious errors
   // $(window).off('resizeEnd')
 
-  const target = $('#cluster-plot')[0]
-  const spinner = new Spinner(window.opts).spin(target)
+  const spinnerTarget = $('#cluster-plot')[0]
+  const spinner = new Spinner(window.opts).spin(spinnerTarget)
   $('#cluster-plot').data('spinner', spinner)
 
-  const cluster = $('cluster').val();
-  const annotation = $('#annotation').val();
+  const cluster = $('#cluster').val()
+  const annotation = $('#annotation').val()
   const rawScatter =
-    await window.SCP.API.fetchScatter(cluster, annotation)
+    await window.SCP.API.fetchScatter(study.accession, cluster, annotation)
 
+  console.log('rawScatter')
   console.log(rawScatter)
 
-  // Example:
-  // https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
-  const url =
-    'https://localhost:3000/single_cell/api/v1/studies/' +
-    study.accession + '/clusters/' + $('#cluster').val() +
-    '?annotation_name=' + annotName +
-    '&annotation_type=' + annotType +
-    '&annotation_scope=' + annotScope
+  window.SCP.cluster = rawScatter
 
-  $.ajax({
-    url,
-    dataType: 'json',
-    success: function(rawPlot) {
-      window.SCP.cluster = rawPlot;
+  // Consider putting into a dictionary instead of a list
+  window.SCP.plots.push(rawScatter)
 
-      // Consider putting into a dictionary instead of a list
-      window.SCP.plots.push(rawPlot);
+  // TODO (SCP-2857): Remove hard-coding when UI for selecting n-many cluster
+  // + spatial plots is something we can develop against.
+  const numPlots = 2
 
-      // TODO (SCP-2857): Remove hard-coding when UI for selecting n-many cluster + spatial
-      // plots is something we can develop against.
-      numPlots = 2
+  // Incremented upon drawing scatter plot; enables unique plot IDs
+  window.SCP.scatterCount = 0
 
-      // Incremented upon drawing scatter plot; enables unique plot IDs
-      window.SCP.scatterCount = 0;
+  // render colorscale picker if needed
+  if (rawScatter.annotParams.type == 'numeric') {
+    $('#toggle-plots').html('')
+  } else {
+    $('#toggle-plots').html(
+      '<a href="#" class="btn btn-default btn-sm" id="toggle-traces" ' +
+          'data-toggle="tooltip" data-placement="left" data-trigger="hover" ' +
+          'title="Click to toggle all annotations, or toggle individual ' +
+            'annotations by clicking the legend entry"' +
+        '>Toggle Annotations <i class="fas fa-toggle-on"></i></a>'
+    )
+    $('#toggle-traces').tooltip({
+      container: 'body', placement: 'left', trigger: 'hover'
+    })
+  }
 
-      // render colorscale picker if needed
-      if (annotType == 'numeric') {
-          $('#toggle-plots').html('');
-      } else {
-          $('#toggle-plots').html(
-            '<a href="#" class="btn btn-default btn-sm" id="toggle-traces" ' +
-              'data-toggle="tooltip" data-placement="left" data-trigger="hover" ' +
-              'title="Click to toggle all annotations, or toggle individual annotations by clicking the legend entry"' +
-            '>Toggle Annotations <i class="fas fa-toggle-on"></i></a>'
-          );
-          $('#toggle-traces').tooltip({container: 'body', placement: 'left', trigger: 'hover'});
-      }
+  const target = '#plots .panel-body'
+  const rect = calculatePlotRect(numPlots)
 
-      const target = '#plots .panel-body'
-      const rect = calculatePlotRect(numPlots)
+  // Duplicate calls are merely for proof-of-concept, showing we can
+  // render plots side-by-side
+  renderScatterPlot(target, rawScatter, rect, plotlyLabelFont)
+  renderScatterPlot(target, rawScatter, rect, plotlyLabelFont)
 
-      // Duplicate calls are merely for proof-of-concept, showing we can
-      // render plots side-by-side
-      renderScatterPlot(target, rawPlot, rect, plotlyLabelFont)
-      renderScatterPlot(target, rawPlot, rect, plotlyLabelFont)
-
-      $('#cluster-plot').data('spinner').stop()
-    }
-  })
+  $('#cluster-plot').data('spinner').stop()
 }
 
 /** Get layout object with various Plotly scatter plot display parameters */

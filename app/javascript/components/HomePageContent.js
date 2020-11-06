@@ -10,7 +10,6 @@ import StudyDetails from 'components/search/results/Study'
 import StudySearchProvider, { StudySearchContext } from 'providers/StudySearchProvider'
 import SearchFacetProvider from 'providers/SearchFacetProvider'
 import UserProvider from 'providers/UserProvider'
-import FeatureFlagProvider from 'providers/FeatureFlagProvider'
 import ErrorBoundary from 'lib/ErrorBoundary'
 
 /** include search controls and results */
@@ -29,7 +28,7 @@ const LinkableSearchTabs = function(props) {
   const showGenesTab = location.pathname.startsWith('/single_cell/app/genes')
   return (
     <div>
-      <nav className="nav search-links" data-tablist-name="search" role="tablist">
+      <nav className="nav search-links" data-analytics-name="search" role="tablist">
         <Link to={`/single_cell/app/studies${location.search}`}
           className={showGenesTab ? '' : 'active'}>
           <span className="fas fa-book"></span> Search Studies
@@ -53,15 +52,13 @@ const LinkableSearchTabs = function(props) {
 function ProviderStack(props) {
   return (
     <UserProvider>
-      <FeatureFlagProvider>
-        <SearchFacetProvider>
-          <StudySearchProvider>
-            <GeneSearchProvider>
-              { props.children }
-            </GeneSearchProvider>
-          </StudySearchProvider>
-        </SearchFacetProvider>
-      </FeatureFlagProvider>
+      <SearchFacetProvider>
+        <StudySearchProvider>
+          <GeneSearchProvider>
+            { props.children }
+          </GeneSearchProvider>
+        </StudySearchProvider>
+      </SearchFacetProvider>
     </UserProvider>
   )
 }
