@@ -8,15 +8,15 @@ import { hasSearchParams, StudySearchContext } from 'providers/StudySearchProvid
 import SearchPanel from 'components/search/controls/SearchPanel'
 import ResultsPanel from 'components/search/results/ResultsPanel'
 import StudyGeneExpressions from './StudyGeneExpressions'
-import { FeatureFlagContext } from 'providers/FeatureFlagProvider'
-
+import { UserContext } from 'providers/UserProvider'
 
 /**
   * Renders a gene search control panel and the associated results
   * can also show study filter controls if the feature flag gene_study_filter is true
   */
 export default function GeneSearchView() {
-  const featureFlagState = useContext(FeatureFlagContext)
+  const userState = useContext(UserContext)
+  const featureFlagState = userState.featureFlagsWithDefaults
   const geneSearchState = useContext(GeneSearchContext)
   const studySearchState = useContext(StudySearchContext)
 

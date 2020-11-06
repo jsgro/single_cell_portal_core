@@ -68,7 +68,7 @@ class RequestUtils
     begin
       values_array.minmax
     rescue TypeError, ArgumentError
-      values_array.dup.reject!(&:nan?).minmax
+      values_array.dup.reject! {|value| value.nil? || value.nan? }.minmax
     end
   end
 

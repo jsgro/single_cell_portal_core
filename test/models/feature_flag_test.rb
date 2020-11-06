@@ -6,7 +6,8 @@ class FeatureFlagTest < ActiveSupport::TestCase
     @user.update!(feature_flags: {})
     @branding_group = BrandingGroup.first
     @branding_group.update!(feature_flags: {})
-    @feature_flag = FeatureFlag.find_or_create_by!(name: 'my_feature_flag', default_value: false)
+    @feature_flag = FeatureFlag.find_or_create_by!(name: 'my_feature_flag')
+    @feature_flag.update!(default_value: false)
     @featurable_map = {
         @user.class.name => @user,
         @branding_group.class.name => @branding_group
@@ -67,5 +68,15 @@ class FeatureFlagTest < ActiveSupport::TestCase
     assert FeatureFlaggable.feature_flags_for_instances(@branding_group, @user)[flag_name]
     # check the merge is order-sensitive
     refute FeatureFlaggable.feature_flags_for_instances(@user, @branding_group)[flag_name]
+  end
+
+  test 'feature flaggable validates model on save' do
+    # nonexistent flag name throws error
+    exception = assert_raise(Exception) { @user.update!(feature_flags: {'foobar': false}) }
+    assert_equal 'Invalid feature flag input - invalid flag name', exception.message
+
+    # non-boolean value throws error
+    exception = assert_raise(Exception) { @user.update!(feature_flags: {'my_feature_flag': 3}) }
+    assert_equal 'Invalid feature flag input - value must be boolean', exception.message
   end
 end
