@@ -73,6 +73,26 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  # get the study manifest for a study
+  test 'should get study manifest' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+    totat = @user.create_totat(30, manifest_api_v1_study_path(@study))
+    get manifest_api_v1_study_path(@study), params: { auth_code: totat[:totat] }
+    assert_response :success
+
+    # should fail with bad totat
+    totat = @user.create_totat(30, manifest_api_v1_study_path(@study))
+    get manifest_api_v1_study_path(@study), params: { auth_code: 'haxxor' }
+    assert_response 401
+
+    # should fail if totat for a different purpose
+    totat = @user.create_totat(30, "/api/v1/some/other/thing")
+    get manifest_api_v1_study_path(@study), params: { auth_code: totat[:totat] }
+    assert_response 401
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
   # test sync function by manually creating a new study using FireCloudClient methods, adding shares and files to the bucket,
   # then call sync_study API method
   test 'should create and then sync study' do

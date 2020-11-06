@@ -15,7 +15,7 @@ class SiteController < ApplicationController
   respond_to :html, :js, :json
 
   before_action :set_study, except: [:index, :search, :legacy_study, :get_viewable_studies, :search_all_genes, :privacy_policy, :terms_of_service,
-                                     :view_workflow_wdl, :create_totat, :log_action, :get_taxon, :get_taxon_assemblies, :covid19]
+                                     :view_workflow_wdl, :log_action, :get_taxon, :get_taxon_assemblies, :covid19]
   before_action :set_cluster_group, only: [:study, :render_cluster, :render_gene_expression_plots, :render_global_gene_expression_plots,
                                            :render_gene_set_expression_plots, :view_gene_expression, :view_gene_set_expression,
                                            :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap, :expression_query,
@@ -29,13 +29,13 @@ class SiteController < ApplicationController
                                                   :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap]
   before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :search_all_genes, :render_global_gene_expression_plots, :privacy_policy,
                                                   :terms_of_service, :search, :precomputed_results, :expression_query, :annotation_query, :view_workflow_wdl,
-                                                  :log_action, :get_workspace_samples, :update_workspace_samples, :create_totat,
+                                                  :log_action, :get_workspace_samples, :update_workspace_samples,
                                                   :get_workflow_options, :get_taxon, :get_taxon_assemblies, :covid19, :record_download_acceptance]
   before_action :check_compute_permissions, only: [:get_fastq_files, :get_workspace_samples, :update_workspace_samples,
                                                    :delete_workspace_samples, :get_workspace_submissions, :create_workspace_submission,
                                                    :get_submission_workflow, :abort_submission_workflow, :get_submission_errors,
                                                    :get_submission_outputs, :delete_submission_files, :get_submission_metadata]
-  before_action :check_study_detached, only: [:download_file, :update_study_settings, :download_bulk_files,
+  before_action :check_study_detached, only: [:download_file, :update_study_settings,
                                               :get_fastq_files, :get_workspace_samples, :update_workspace_samples,
                                               :delete_workspace_samples, :get_workspace_submissions, :create_workspace_submission,
                                               :get_submission_workflow, :abort_submission_workflow, :get_submission_errors,
@@ -752,106 +752,6 @@ class SiteController < ApplicationController
     execute_file_download(@study); return if performed?
   end
 
-  def create_totat
-    if !user_signed_in?
-      error = {'message': "Forbidden: You must be signed in to do this"}
-      render json:  + error, status: 403
-    end
-    half_hour = 1800 # seconds
-    totat_and_ti = current_user.create_totat(time_interval=half_hour)
-    render json: totat_and_ti
-  end
-
-  # Returns text file listing signed URLs, etc. of files for download via curl.
-  # That is, this return 'cfg.txt' used as config (K) argument in 'curl -K cfg.txt'
-  def download_bulk_files
-
-    # Ensure study is public
-    if !@study.public?
-      message = 'Only public studies can be downloaded via curl.'
-      render plain: "Forbidden: " + message, status: 403
-      return
-    end
-
-    if @study.has_download_agreement? && !@study.download_agreement.user_accepted?(current_user)
-      render plain: "Forbidden: Download agreement not accepted for #{@study.accession}" , status: 403
-      return
-    end
-
-    # 'all' or the name of a directory, e.g. 'csvs'
-    download_object = params[:download_object]
-
-    totat = params[:totat]
-
-    # Time-based one-time access token (totat) is used to track user's download quota
-    valid_totat = User.verify_totat(totat)
-
-    if valid_totat == false
-      render plain: "Forbidden: Invalid access token " + totat, status: 403
-      return
-    else
-      user = valid_totat
-    end
-
-    user_quota = user.daily_download_quota
-
-    # Only check quota at beginning of download, not per file.
-    # Studies might be massive, and we want user to be able to download at least
-    # one requested download object per day.
-    if user_quota >= @download_quota
-      message = 'You have exceeded your current daily download quota.  You must wait until tomorrow to download this object.'
-      render plain: "Forbidden: " + message, status: 403
-      return
-    end
-
-    curl_configs = ['--create-dirs', '--compressed']
-
-    curl_files = []
-
-    # Gather all study files, if we're downloading whole study ('all')
-    if download_object == 'all'
-      files = @study.study_files.valid
-      files.each do |study_file|
-        unless study_file.human_data?
-          curl_files.push(study_file)
-        end
-      end
-    end
-
-    # Gather all files in requested directory listings
-    synced_dirs = @study.directory_listings.are_synced
-    synced_dirs.each do |synced_dir|
-      if download_object != 'all' and synced_dir[:name] != download_object
-        next
-      end
-      synced_dir.files.each do |file|
-        curl_files.push(file)
-      end
-    end
-
-    start_time = Time.zone.now
-
-    # Get signed URLs for all files in the requested download objects, and update user quota
-    Parallel.map(curl_files, in_threads: 100) do |file|
-      fc_client = FireCloudClient.new
-      curl_config, file_size = get_curl_config(file, fc_client)
-      curl_configs.push(curl_config)
-      user_quota += file_size
-    end
-
-    end_time = Time.zone.now
-    time = (end_time - start_time).divmod 60.0
-    @log_message = ["#{@study.url_safe_name} curl configs generated!"]
-    @log_message << "Signed URLs generated: #{curl_configs.size}"
-    @log_message << "Total time in get_curl_config: #{time.first} minutes, #{time.last} seconds"
-    logger.info @log_message.join("\n")
-
-    curl_configs = curl_configs.join("\n\n")
-
-    user.update(daily_download_quota: user_quota)
-
-    send_data curl_configs, type: 'text/plain', filename: 'cfg.txt'
-  end
 
   ###
   #
@@ -2226,41 +2126,6 @@ class SiteController < ApplicationController
       analysis_submission.update(status: workflow_status)
       analysis_submission.delay.set_completed_on # run in background to avoid UI blocking
     end
-  end
-
-  # Helper method for download_bulk_files.  Returns file's curl config, size.
-  def get_curl_config(file, fc_client=nil)
-
-    # Is this a study file, or a file from a directory listing?
-    is_study_file = file.is_a? StudyFile
-
-    if fc_client == nil
-      fc_client = ApplicationController.firecloud_client
-    end
-
-    filename = (is_study_file ? file.upload_file_name : file[:name])
-
-    begin
-      signed_url = fc_client.execute_gcloud_method(:generate_signed_url, 0, @study.bucket_id, filename,
-                                                   expires: 1.day.to_i) # 1 day in seconds, 86400
-      curl_config = [
-          'url="' + signed_url + '"',
-          'output="' + filename + '"'
-      ]
-    rescue => e
-      error_context = ErrorTracker.format_extra_context(@study)
-      ErrorTracker.report_exception(e, current_user, error_context)
-      logger.error "Error generating signed url for #{filename}; #{e.message}"
-      curl_config = [
-          '# Error downloading ' + filename + '.  ' +
-          'Did you delete the file in the bucket and not sync it in Single Cell Portal?'
-      ]
-    end
-
-    curl_config = curl_config.join("\n")
-    file_size = (is_study_file ? file.upload_file_size : file[:size])
-
-    return curl_config, file_size
   end
 
   protected

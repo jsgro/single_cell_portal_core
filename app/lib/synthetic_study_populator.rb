@@ -79,7 +79,8 @@ class SyntheticStudyPopulator
           exp_file_info = ExpressionFileInfo.new(
             is_raw_counts: exp_finfo_params['is_raw_counts'] ? true : false,
             units: exp_finfo_params['units'],
-            library_construction_protocol: exp_finfo_params['library_construction_protocol']
+            biosample_input_type: exp_finfo_params['biosample_input_type'],
+            library_preparation_protocol: exp_finfo_params['library_preparation_protocol']
           )
           study_file_params['expression_file_info'] = exp_file_info
         end
@@ -124,13 +125,4 @@ class SyntheticStudyPopulator
     params
   end
 
-  # utility method to generate a study_info.json file string from an existing study
-  # useful for, e.g., downloading all the files from a production study to your local machine,
-  # and then using SyntheticStudyPopulator to ingest it
-  def self.generate_study_info_json(study)
-    info = {}
-    info['study'] = {name: study.name, description: study.description, data_dir: 'test'}
-    info['files'] = study.study_files.map{|f| { filename: f.name, type: f.file_type}}
-    puts JSON.pretty_generate(info)
-  end
 end

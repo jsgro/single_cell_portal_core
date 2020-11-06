@@ -936,6 +936,14 @@ class Study
     self.can_visualize_clusters? || self.can_visualize_genome_data?
   end
 
+  def has_raw_counts_matrices?
+    self.expression_matrices.where('expression_file_info.is_raw_counts' => true).exists?
+  end
+
+  def has_visualization_matrices?
+    self.expression_matrices.any_of({'expression_file_info.is_raw_counts' => false}, {expression_file_info: nil}).exists?
+  end
+
   # quick getter to return any cell metadata that can_visualize?
   def viewable_metadata
     viewable = []
@@ -1269,9 +1277,14 @@ class Study
     self.study_files.by_type(['Expression Matrix', 'MM Coordinate Matrix'])
   end
 
+  # Mongoid criteria for expression files (rather than array of StudyFiles)
+  def expression_matrices
+    self.study_files.where(:file_type.in => ['Expression Matrix', 'MM Coordinate Matrix'])
+  end
+
   # helper method to directly access expression matrix file by name
   def expression_matrix_file(name)
-    self.study_files.find_by(:file_type.in => ['Expression Matrix', 'MM Coordinate Matrix'], name: name)
+    self.expression_matrices.find_by(name: name)
   end
   # helper method to directly access metadata file
   def metadata_file

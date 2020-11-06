@@ -57,6 +57,8 @@ class StudyFile
   belongs_to :study_file_bundle, optional: true
   embeds_one :expression_file_info
 
+  accepts_nested_attributes_for :expression_file_info
+
   # field definitions
   field :name, type: String
   field :description, type: String
@@ -80,6 +82,8 @@ class StudyFile
   field :queued_for_deletion, type: Boolean, default: false
   field :remote_location, type: String, default: ''
   field :options, type: Hash, default: {}
+
+  accepts_nested_attributes_for :expression_file_info
 
   Paperclip.interpolates :data_dir do |attachment, style|
     attachment.instance.data_dir
@@ -243,6 +247,35 @@ class StudyFile
       key :default, {}
       key :description, 'Key/Value storage of extra file options'
     end
+    property :expression_file_info do
+      key :title, :ExpressionFileInfo
+      key :type, :object
+      key :description, 'Expression matrix-specific file information'
+      property :is_raw_counts do
+        key :type, :boolean
+        key :description, 'Indication of whether matrix contains raw counts data'
+      end
+      property :units do
+        key :type, :string
+        key :description, 'Type of units for raw counts file'
+        key :enum, ExpressionFileInfo::UNITS_VALUES
+      end
+      property :biosample_input_type do
+        key :type, :string
+        key :description, 'Type of biosample input'
+        key :enum, ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
+      end
+      property :library_preparation_protocol do
+        key :type, :string
+        key :description, 'Protocol used to generate expression matrix'
+        key :enum, ExpressionFileInfo::LIBRARY_PREPARATION_VALUES
+      end
+      property :multimodality do
+        key :type, :string
+        key :description, 'Multimodality type'
+        key :enum, ExpressionFileInfo::MULTIMODALITY_VALUES
+      end
+    end
     property :created_at do
       key :type, :string
       key :format, :date_time
@@ -360,6 +393,34 @@ class StudyFile
           key :default, {}
           key :description, 'Key/Value storage of extra file options'
         end
+        property :expression_file_info do
+          key :type, :object
+          key :description, 'Expression matrix-specific file information'
+          property :is_raw_counts do
+            key :type, :boolean
+            key :description, 'Indication of whether matrix contains raw counts data'
+          end
+          property :units do
+            key :type, :string
+            key :description, 'Type of units for raw counts file'
+            key :enum, ExpressionFileInfo::UNITS_VALUES
+          end
+          property :biosample_input_type do
+            key :type, :string
+            key :description, 'Type of biosample input'
+            key :enum, ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
+          end
+          property :library_preparation_protocol do
+            key :type, :string
+            key :description, 'Protocol used to generate expression matrix'
+            key :enum, ExpressionFileInfo::LIBRARY_PREPARATION_VALUES
+          end
+          property :multimodality do
+            key :type, :string
+            key :description, 'Multimodality type'
+            key :enum, ExpressionFileInfo::MULTIMODALITY_VALUES
+          end
+        end
       end
     end
   end
@@ -418,6 +479,34 @@ class StudyFile
           key :type, :object
           key :default, {}
           key :description, 'Key/Value storage of extra file options'
+        end
+        property :expression_file_info do
+          key :type, :object
+          key :description, 'Expression matrix-specific file information'
+          property :is_raw_counts do
+            key :type, :boolean
+            key :description, 'Indication of whether matrix contains raw counts data'
+          end
+          property :units do
+            key :type, :string
+            key :description, 'Type of units for raw counts file'
+            key :enum, ExpressionFileInfo::UNITS_VALUES
+          end
+          property :biosample_input_type do
+            key :type, :string
+            key :description, 'Type of biosample input'
+            key :enum, ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
+          end
+          property :library_preparation_protocol do
+            key :type, :string
+            key :description, 'Protocol used to generate expression matrix'
+            key :enum, ExpressionFileInfo::LIBRARY_PREPARATION_VALUES
+          end
+          property :multimodality do
+            key :type, :string
+            key :description, 'Multimodality type'
+            key :enum, ExpressionFileInfo::MULTIMODALITY_VALUES
+          end
         end
       end
     end
@@ -833,6 +922,17 @@ class StudyFile
       nil
     end
   end
+
+  # quick check if file is expression-based
+  def is_expression?
+    ['Expression Matrix', 'MM Coordinate Matrix'].include? self.file_type
+  end
+
+  # helper to identify if matrix is a raw counts file
+  def is_raw_counts_file?
+    self.expression_file_info.present? ? self.expression_file_info.is_raw_counts : false
+  end
+
 
   ###
   #

@@ -16,7 +16,7 @@
       "species_scientific_name": "Gallus gallus",
       "expression_file_info": {
         "is_raw_counts": true,
-        "library_construction_protocol": "Smart-seq2/Fluidigm C1",
+        "library_preparation_protocol": "Smart-seq2/Fluidigm C1",
         "units": "raw counts",
         "biosample_input_type": "Single nuclei"
       }

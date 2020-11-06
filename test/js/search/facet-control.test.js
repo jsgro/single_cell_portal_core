@@ -34,6 +34,7 @@ describe('Facet control handles selections appropriately', () => {
     }
     const wrapper = mount((
       <PropsStudySearchProvider searchParams={{terms: '', facets:{}, page: 1}}>
+
         <FacetControl facet={speciesFacet}/>
       </PropsStudySearchProvider>
     ))
