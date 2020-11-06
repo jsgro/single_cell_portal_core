@@ -54,7 +54,7 @@ class ExpressionFileInfo
                                 'smFISH',
                                 # single cell ChIP-seq assays
                                 'Drop-ChIP']
-  validates :library_construction_protocol, inclusion: {in: LIBRARY_CONSTRUCTION_VALUES}, allow_blank: true
+  validates :library_preparation_protocol, inclusion: {in: LIBRARY_PREPARATION_VALUES}, allow_blank: true
 
   validate :unset_units_unless_raw_counts
   validate :enforce_units_on_raw_counts
