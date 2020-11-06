@@ -159,7 +159,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
       expression_file_info: ExpressionFileInfo.new(
         units: 'raw counts',
         library_preparation_protocol: 'MARS-seq',
-        biosample_input_type: 'whole cell',
+        biosample_input_type: 'Whole cell',
         is_raw_counts: true
       )
     )
