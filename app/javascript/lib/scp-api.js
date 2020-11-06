@@ -120,6 +120,48 @@ export function setMockOrigin(origin) {
   mockOrigin = origin
 }
 
+/** Constructs and encodes a URL parameter, if it has a value */
+function encodeParam(param, value, isFirst=false) {
+  const delimiter = isFirst ? '?' : '&'
+  return value ? `${delimiter}${param}=${encodeURIComponent(value)}` : ''
+}
+
+/**
+ * Returns an object with scatter plot data for a cluster in a study
+ *
+ * This endpoint is volatile, so intentionally not documented in Swagger.
+ *
+ * see definition at: app/controllers/api/v1/visualization/clusters_controller.rb
+ *
+ * @param {String} studyAccession Study accession
+ * @param {String} cluster Name of cluster, as defined at upload
+ * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
+ * @param {String} subsample Subsampling threshold, e.g. 100000 or "All"
+ * @param {String} consensus Statistic to use for consensus, e.g. "mean"
+ *
+ */
+export async function fetchScatter(
+  studyAccession, cluster, annotation, subsample, consensus, mock=false
+) {
+  // Digest full annotation name to enable easy validation in API
+  const [annotName, annotType, annotScope] = annotation.split('--')
+  const annotNameParam = encodeParam('annotation_name', annotName, true)
+  const annotTypeParam = encodeParam('annotation_type', annotType)
+  const annotScopeParam = encodeParam('annotation_scope', annotScope)
+  const annotationParams = annotNameParam + annotTypeParam + annotScopeParam
+
+  const subsampleParam = encodeParam('subsample', subsample)
+  const consensusParam = encodeParam('consensus', consensus)
+
+  const params = annotationParams + subsampleParam + consensusParam
+  const apiUrl = `/studies/${studyAccession}/clusters/${cluster}${params}`
+  // don't camelcase the keys since those can be cluster names,
+  // so send false for the 4th argument
+  const [scatter, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return scatter
+}
+
 /**
  * Returns an object with violin plot expression data for a gene in a study
  *

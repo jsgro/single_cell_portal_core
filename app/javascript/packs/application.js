@@ -28,7 +28,10 @@ import checkMissingAuthToken from 'lib/user-auth-tokens'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
 import HomePageContent from 'components/HomePageContent'
 import Covid19PageContent from 'components/covid19/Covid19PageContent'
-import { logPageView, logClick, logMenuChange, startPendingEvent, log } from 'lib/metrics-api'
+import {
+  logPageView, logClick, logMenuChange, startPendingEvent, log
+} from 'lib/metrics-api'
+import * as ScpApi from 'lib/scp-api'
 import { getLogPlotProps } from 'lib/scp-api-metrics'
 import { formatTerms } from 'providers/StudySearchProvider'
 import createTracesAndLayout from 'lib/kernel-functions'
@@ -73,6 +76,10 @@ window.SCP.log = log
 window.SCP.startPendingEvent = startPendingEvent
 window.SCP.getLogPlotProps = getLogPlotProps
 window.SCP.formatTerms = formatTerms
+window.SCP.API = ScpApi
+
+console.log('*** in packs/application.js, ScpApi:')
+console.log(ScpApi)
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code

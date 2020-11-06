@@ -185,23 +185,23 @@ function getRenderApiUrl() {
 /**
  * End render cluster code
  */
-
-/** Draws the scatter plot for the default Explore tab view */
-function renderScatter() {
+/** Fetch and draw scatter plot for default Explore tab view */
+async function drawScatterPlot() {
   console.log('in renderScatter')
   // detach listener as it will be re-attached in response;
   // this helps reduce spurious errors
-  $(window).off('resizeEnd')
+  // $(window).off('resizeEnd')
 
   const target = $('#cluster-plot')[0]
   const spinner = new Spinner(window.opts).spin(target)
   $('#cluster-plot').data('spinner', spinner)
 
-  // const urlParams = window.getRenderUrlParams()
-  // const url = `${study.renderClusterPath}?${urlParams}`
+  const cluster = $('cluster').val();
+  const annotation = $('#annotation').val();
+  const rawScatter =
+    await window.SCP.API.fetchScatter(cluster, annotation)
 
-  var annotation = $('#annotation').val();
-  const annotName, annotType, annotScope = annotation.split('--')
+  console.log(rawScatter)
 
   // Example:
   // https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
@@ -212,14 +212,44 @@ function renderScatter() {
     '&annotation_type=' + annotType +
     '&annotation_scope=' + annotScope
 
-  console.log('url')
-  console.log(url)
-
-  $.json({
+  $.ajax({
     url,
-    success: function(data) {
-      console.log('data: ')
-      console.log(data)
+    dataType: 'json',
+    success: function(rawPlot) {
+      window.SCP.cluster = rawPlot;
+
+      // Consider putting into a dictionary instead of a list
+      window.SCP.plots.push(rawPlot);
+
+      // TODO (SCP-2857): Remove hard-coding when UI for selecting n-many cluster + spatial
+      // plots is something we can develop against.
+      numPlots = 2
+
+      // Incremented upon drawing scatter plot; enables unique plot IDs
+      window.SCP.scatterCount = 0;
+
+      // render colorscale picker if needed
+      if (annotType == 'numeric') {
+          $('#toggle-plots').html('');
+      } else {
+          $('#toggle-plots').html(
+            '<a href="#" class="btn btn-default btn-sm" id="toggle-traces" ' +
+              'data-toggle="tooltip" data-placement="left" data-trigger="hover" ' +
+              'title="Click to toggle all annotations, or toggle individual annotations by clicking the legend entry"' +
+            '>Toggle Annotations <i class="fas fa-toggle-on"></i></a>'
+          );
+          $('#toggle-traces').tooltip({container: 'body', placement: 'left', trigger: 'hover'});
+      }
+
+      const target = '#plots .panel-body'
+      const rect = calculatePlotRect(numPlots)
+
+      // Duplicate calls are merely for proof-of-concept, showing we can
+      // render plots side-by-side
+      renderScatterPlot(target, rawPlot, rect, plotlyLabelFont)
+      renderScatterPlot(target, rawPlot, rect, plotlyLabelFont)
+
+      $('#cluster-plot').data('spinner').stop()
     }
   })
 }
@@ -277,7 +307,7 @@ if (study.canVisualizeClusters) {
       $('#search_subsample').val(10000)
     }
 
-    renderScatter()
+    drawScatterPlot()
   })
 
   // listener for cluster nav, specific to study page
@@ -287,7 +317,7 @@ if (study.canVisualizeClusters) {
     // keep track for search purposes
     $('#search_annotation').val(an)
     $('#gene_set_annotation').val(an)
-    renderScatter()
+    drawScatterPlot()
   })
 
   $('#subsample').change(function() {
@@ -295,7 +325,7 @@ if (study.canVisualizeClusters) {
     const sample = $(this).val() // eslint-disable-line
     $('#search_subsample').val(sample)
     $('#gene_set_subsample').val(sample)
-    renderScatter()
+    drawScatterPlot()
   })
 
   $('#cluster').change(function() {
