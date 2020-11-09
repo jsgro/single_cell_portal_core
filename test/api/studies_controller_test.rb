@@ -7,7 +7,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
 
   setup do
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-    @user = User.first
+    @user = User.find_by(email: 'testing.user.2@gmail.com')
     @study = Study.find_by(name: "API Test Study #{@random_seed}")
     OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
                                                                            :provider => 'google_oauth2',
