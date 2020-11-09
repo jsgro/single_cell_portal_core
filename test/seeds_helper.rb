@@ -27,10 +27,9 @@ def seed_bigquery(study_accession, file_id)
     entry['study_accession'] = study_accession
     entry['file_id'] = file_id
   end
-  tmp_file = File.new(Rails.root.join('db', 'seed', 'tmp_bq_seeds.json'), 'w+')
-  tmp_file.write bq_data.map(&:to_json).join("\n")
-  table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
-  table.load tmp_file, write: 'append'
-  tmp_file.close
-  File.delete(tmp_file.path)
+  File.new('tmp_bq_seeds.json', 'w+') do |tmp_file|
+    tmp_file.write bq_data.map(&:to_json).join("\n")
+    table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
+    table.load tmp_file, write: 'append'
+  end
 end
