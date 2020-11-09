@@ -1,4 +1,5 @@
 require 'api_test_helper'
+require 'seeds_helper'
 
 class StudySharesControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers

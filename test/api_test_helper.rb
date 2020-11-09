@@ -1,5 +1,4 @@
 require 'simplecov_helper'
-require 'seeds_helper'
 
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'

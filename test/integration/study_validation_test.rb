@@ -1,4 +1,5 @@
 require "integration_test_helper"
+require 'seeds_helper'
 
 class StudyValidationTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers

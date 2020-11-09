@@ -85,11 +85,11 @@ else
     echo "uploading JS coverage to codecov"
     bash <(curl -s https://codecov.io/bash) -cF javascript -t $CODECOV_TOKEN
   fi
-  RAILS_ENV=test bundle exec bin/rake test:run_test_suite
+  RAILS_ENV=test bundle exec bin/rake test
   code=$?
   if [[ $code -ne 0 ]]; then
     RETURN_CODE=$code
-    first_test_to_fail=${first_test_to_fail-"rake test:run_test_suite"}
+    first_test_to_fail=${first_test_to_fail-"rake test"}
     ((FAILED_COUNT++))
   fi
   if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then

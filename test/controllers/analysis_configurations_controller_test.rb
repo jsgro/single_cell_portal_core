@@ -1,4 +1,5 @@
 require "integration_test_helper"
+require 'seeds_helper'
 
 class AnalysisConfigurationsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
