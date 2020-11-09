@@ -55,21 +55,7 @@
   </div>
 </div>
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-  window.SCP.study = {
-    accession: '<%= @study.accession %>',
-    canVisualizeClusters: <%= @study.can_visualize_clusters? %>,
-    taxons: <%= raw @taxons.to_json %>,
-    numPointsCluster: <%= @cluster.points %>,
-    isClusterSubsampled: <%= @cluster.subsampled %>,
-    ideogramInferCnvFiles: <%= raw @ideogram_files.to_json %>,
-    hasIdeogramInferCnvFiles: <%= @ideogram_files.present? %>,
-    renderClusterPath: '<%= render_cluster_path(accession: @study.accession, study_name: @study.url_safe_name) %>',
-    getNewAnnotationsPath:'<%= get_new_annotations_path(accession: @study.accession, study_name: @study.url_safe_name)%>'
-  }
+  window.SCP.studyAccession = '<%= @study.accession %>';
 
-  window.SCP.plots = [];
-  window.SCP.plotRects = [];
-
-  window.SCP.taxons = window.SCP.study.taxons;
 </script>
 <%= nonced_javascript_include_tag 'study_overview/study-overview' %>

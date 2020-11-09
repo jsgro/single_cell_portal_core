@@ -131,6 +131,15 @@ function encodeParam(param, value, isFirst=false) {
   }
 }
 
+/** Returns initial content for the "Explore" tab in Study Overview */
+export async function fetchExploreInitialization(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/explore`
+  const [exploreInit, perfTime] =
+    await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return exploreInit
+}
+
 /**
  * Returns an object with scatter plot data for a cluster in a study
  *
