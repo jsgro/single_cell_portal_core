@@ -11,10 +11,6 @@ class TaxonsControllerTest < ActionDispatch::IntegrationTest
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
   end
 
-  teardown do
-    reset_user_tokens
-  end
-
   test 'should create new taxon then update and delete' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
     get taxons_path

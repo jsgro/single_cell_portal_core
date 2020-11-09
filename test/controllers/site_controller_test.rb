@@ -1,5 +1,4 @@
 require "integration_test_helper"
-require 'seeds_helper'
 
 class SiteControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -9,10 +8,6 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     auth_as_user(@test_user)
     sign_in @test_user
     @study = Study.first
-  end
-
-  teardown do
-    reset_user_tokens
   end
 
   test 'should redirect to home page from bare domain' do

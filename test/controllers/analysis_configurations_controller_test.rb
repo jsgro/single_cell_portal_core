@@ -1,5 +1,4 @@
 require "integration_test_helper"
-require 'seeds_helper'
 
 class AnalysisConfigurationsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -9,10 +8,6 @@ class AnalysisConfigurationsControllerTest < ActionDispatch::IntegrationTest
     @analysis_configuration = AnalysisConfiguration.first
     auth_as_user(@test_user)
     sign_in @test_user
-  end
-
-  teardown do
-    reset_user_tokens
   end
 
   test 'should get index page' do

@@ -12,10 +12,6 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
   end
 
-  teardown do
-    reset_user_tokens
-  end
-
   test 'create default testing study' do
 
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
