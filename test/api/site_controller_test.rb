@@ -1,5 +1,4 @@
 require 'api_test_helper'
-require 'integration_test_helper'
 
 class SiteControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
