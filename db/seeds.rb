@@ -8,11 +8,12 @@
 #
 @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
 user_access_token = {access_token: 'test-api-token', expires_in: 3600, expires_at: Time.zone.now + 1.hour}
+user_2_access_token = {access_token: 'test-api-token-2', expires_in: 3600, expires_at: Time.zone.now + 1.hour}
 user = User.create!(email:'testing.user@gmail.com', password:'password', admin: true, uid: '12345',
                     api_access_token: user_access_token, access_token: user_access_token, registered_for_firecloud: true,
                     authentication_token: Devise.friendly_token(32))
 user_2 = User.create!(email: 'sharing.user@gmail.com', password: 'password', uid: '67890',
-                    api_access_token: user_access_token, access_token: user_access_token)
+                    api_access_token: user_2_access_token, access_token: user_2_access_token)
 
 TosAcceptance.create(email: user.email)
 TosAcceptance.create(email: user_2.email)

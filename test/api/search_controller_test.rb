@@ -1,4 +1,5 @@
 require 'api_test_helper'
+require 'user_tokens_helper'
 require 'seeds_helper'
 
 class SearchControllerTest < ActionDispatch::IntegrationTest

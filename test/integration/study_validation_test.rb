@@ -1,4 +1,5 @@
 require "integration_test_helper"
+require 'user_tokens_helper'
 require 'seeds_helper'
 
 class StudyValidationTest < ActionDispatch::IntegrationTest
@@ -277,7 +278,8 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
 
     # request delete
     puts "Requesting delete for metadata file"
-    delete api_v1_study_study_file_path(study_id: study.id, id: metadata_file.id), as: :json, headers: {authorization: "Bearer #{@test_user.api_access_token[:access_token]}" }
+    delete api_v1_study_study_file_path(study_id: study.id, id: metadata_file.id), as: :json, headers: {Authorization: "Bearer #{@test_user.api_access_token['access_token']}" }
+    assert_response 204, "Did not correctly respond 204 to delete request"
 
     seconds_slept = 0
     sleep_increment = 10
