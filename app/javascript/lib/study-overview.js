@@ -4,22 +4,13 @@
 * Shows "Clusters" and sometimes "Genomes", etc.
 */
 
-window.SCP.study = {}
-window.SCP.plots = []
-window.SCP.plotRects = []
-
-const study = window.SCP.study
-
-window.SCP.startPendingEvent('user-action:page:view:site-study',
-  { speciesList: window.SCP.taxons },
-  'plot:',
-  true)
-
 /**
  * Render cluster code
  *
  * TODO: Move this to render-cluster.js, or some such
  */
+
+import { fetchExploreInitialization, fetchScatter } from 'lib/scp-api'
 
 /** Get Plotly layout object for scatter plot */
 function getBaseLayout(height, width) {
@@ -146,7 +137,7 @@ function renderScatterPlot(target, rawPlot) {
   // listener to redraw expression scatter with new color profile
   $('#colorscale').off('change')
   $('#colorscale').change(function() {
-    const theme = $(this).val()
+    const theme = $(this).val() // eslint-disable-line
     data[0].marker.colorscale = theme
     console.log(`setting colorscale to ${theme}`)
 
@@ -162,11 +153,8 @@ function renderScatterPlot(target, rawPlot) {
   const clusterPlotDiv = document.getElementById(plotId)
   clusterPlotDiv.on('plotly_relayout', cameraData => {
     if (typeof cameraData['scene.camera'] !== 'undefined') {
-      const oldScene = $('#expression-plots').data('scatter-camera')
       const newCamera = cameraData['scene.camera']
-      console.log(`Updating camera information; was ${JSON.stringify(oldScene)}`)
       $(`#${plotId}`).data('camera', newCamera)
-      console.log(`Update complete, camera data now ${JSON.stringify($(`#${plotId}`).data('camera'))}`)
     }
   })
 
@@ -187,8 +175,8 @@ async function drawScatterPlot() {
   const annotation = $('#annotation').val()
   const subsample = $('#subsample').val()
 
-  const rawScatter = await window.SCP.API.fetchScatter(
-    study.accession, cluster, annotation, subsample
+  const rawScatter = await fetchScatter(
+    window.SCP.study.accession, cluster, annotation, subsample
   )
 
   window.SCP.cluster = rawScatter
@@ -249,90 +237,101 @@ function getScatterPlotLayout(rawPlot) {
   return layout
 }
 
-// For inferCNV ideogram
-$('#ideogram_annotation').on('change', function() {
-  const ideogramFiles = study.ideogramFiles
-  const fileId = $(this).val() // eslint-disable-line
-  if (fileId !== '') {
-    const ideogramAnnot = ideogramFiles[fileId]
-    window.ideogramInferCnvSettings = ideogramAnnot.ideogram_settings
-    window.initializeIdeogram(ideogramAnnot.ideogram_settings.annotationsPath)
-  } else {
-    $('#tracks-to-display, #_ideogramOuterWrap').html('')
-    $('#ideogramTitle').remove()
-  }
-})
+/** Initialize the "Explore" tab in Study Overview */
+export default function initializeExplore() {
+  window.SCP.study = {}
+  window.SCP.plots = []
+  window.SCP.plotRects = []
 
+  window.SCP.startPendingEvent('user-action:page:view:site-study',
+    { speciesList: window.SCP.taxons },
+    'plot:',
+    true)
 
-$('#cluster-plot').data('rendered', false)
-
-const baseCamera = {
-  'up': { 'x': 0, 'y': 0, 'z': 1 },
-  'center': { 'x': 0, 'y': 0, 'z': 0 },
-  'eye': { 'x': 1.25, 'y': 1.25, 'z': 1.25 }
-}
-
-$(document).ready(async () => {
-  // if tab position was specified in url, show the current tab
-  if (window.location.href.split('#')[1] !== '') {
-    const tab = window.location.href.split('#')[1]
-    $(`#study-tabs a[href="#${tab}"]`).tab('show')
-  }
-  $('#cluster-plot').data('camera', baseCamera)
-  // set default subsample option of 10K (if subsampled) or all cells
-  if (window.SCP.numPointsCluster > 10000 && window.SCP.clusterIsSampled) {
-    $('#subsample').val(10000)
-    $('#search_subsample').val(10000)
-  }
-
-  const accession = window.SCP.studyAccession
-  window.SCP.study.accession = accession
-  window.SCP.study =
-    await window.SCP.API.fetchExploreInitialization(accession)
-
-  window.SCP.taxons = window.SCP.study.taxons
-
-  drawScatterPlot()
-})
-
-// resize listener
-$(window).on('resizeEnd', () => {resizePlots()})
-
-// listener for cluster nav, specific to study page
-$('#annotation').change(function() {
-  $('#cluster-plot').data('rendered', false)
-  const an = $(this).val() // eslint-disable-line
-  // keep track for search purposes
-  $('#search_annotation').val(an)
-  $('#gene_set_annotation').val(an)
-  drawScatterPlot()
-})
-
-$('#subsample').change(function() {
-  $('#cluster-plot').data('rendered', false)
-  const subsample = $(this).val() // eslint-disable-line
-  $('#search_subsample').val(subsample)
-  $('#gene_set_subsample').val(subsample)
-  drawScatterPlot()
-})
-
-$('#cluster').change(function() {
-  $('#cluster-plot').data('rendered', false)
-  const newCluster = $(this).val() // eslint-disable-line
-  // keep track for search purposes
-  $('#search_cluster').val(newCluster)
-  $('#gene_set_cluster').val(newCluster)
-  drawScatterPlot()
-})
-
-if (window.SCP.hasIdeogramInferCnvFiles) {
-  // user has no clusters, but does have ideogram annotations
-  $(document).ready(() => {
-    const ideogramSelect = $('#ideogram_annotation')
-    const firstIdeogram = $('#ideogram_annotation option')[1].value
-
-    // manually trigger change to cause ideogram to render
-    ideogramSelect.val(firstIdeogram).trigger('change')
+  // For inferCNV ideogram
+  $('#ideogram_annotation').on('change', function() {
+    const ideogramFiles = window.SCP.study.ideogramFiles
+    const fileId = $(this).val() // eslint-disable-line
+    if (fileId !== '') {
+      const ideogramAnnot = ideogramFiles[fileId]
+      window.ideogramInferCnvSettings = ideogramAnnot.ideogram_settings
+      window.initializeIdeogram(ideogramAnnot.ideogram_settings.annotationsPath)
+    } else {
+      $('#tracks-to-display, #_ideogramOuterWrap').html('')
+      $('#ideogramTitle').remove()
+    }
   })
+
+  $('#cluster-plot').data('rendered', false)
+
+  const baseCamera = {
+    'up': { 'x': 0, 'y': 0, 'z': 1 },
+    'center': { 'x': 0, 'y': 0, 'z': 0 },
+    'eye': { 'x': 1.25, 'y': 1.25, 'z': 1.25 }
+  }
+
+  $(document).ready(async () => {
+    // if tab position was specified in url, show the current tab
+    if (window.location.href.split('#')[1] !== '') {
+      const tab = window.location.href.split('#')[1]
+      $(`#study-tabs a[href="#${tab}"]`).tab('show')
+    }
+    $('#cluster-plot').data('camera', baseCamera)
+    // set default subsample option of 10K (if subsampled) or all cells
+    if (window.SCP.numPointsCluster > 10000 && window.SCP.clusterIsSampled) {
+      $('#subsample').val(10000)
+      $('#search_subsample').val(10000)
+    }
+
+    const accession = window.SCP.studyAccession
+    window.SCP.study = await fetchExploreInitialization(accession)
+    window.SCP.study.accession = accession
+
+    window.SCP.taxons = window.SCP.study.taxons
+
+    drawScatterPlot()
+  })
+
+  // resize listener
+  $(window).on('resizeEnd', () => {resizePlots()})
+
+  // listener for cluster nav, specific to study page
+  $('#annotation').change(function() {
+    $('#cluster-plot').data('rendered', false)
+    const an = $(this).val() // eslint-disable-line
+    // keep track for search purposes
+    $('#search_annotation').val(an)
+    $('#gene_set_annotation').val(an)
+    drawScatterPlot()
+  })
+
+  $('#subsample').change(function() {
+    $('#cluster-plot').data('rendered', false)
+    const subsample = $(this).val() // eslint-disable-line
+    $('#search_subsample').val(subsample)
+    $('#gene_set_subsample').val(subsample)
+    drawScatterPlot()
+  })
+
+  $('#cluster').change(function() {
+    $('#cluster-plot').data('rendered', false)
+    const newCluster = $(this).val() // eslint-disable-line
+    // keep track for search purposes
+    $('#search_cluster').val(newCluster)
+    $('#gene_set_cluster').val(newCluster)
+    drawScatterPlot()
+  })
+
+  if (window.SCP.hasIdeogramInferCnvFiles) {
+    // user has no clusters, but does have ideogram annotations
+    $(document).ready(() => {
+      const ideogramSelect = $('#ideogram_annotation')
+      const firstIdeogram = $('#ideogram_annotation option')[1].value
+
+      // manually trigger change to cause ideogram to render
+      ideogramSelect.val(firstIdeogram).trigger('change')
+    })
+  }
 }
+
 
