@@ -697,7 +697,7 @@ var plotlyLabelFont = {
     size: 12,
     color: '#333'
 };
-window.plotlyLabelFont = plotlyLabelFont;
+window.SCP.plotlyLabelFont = plotlyLabelFont;
 
 var plotlyDefaultLineColor = 'rgb(40, 40, 40)';
 

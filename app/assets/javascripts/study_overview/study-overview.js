@@ -175,14 +175,17 @@ function renderScatterPlot(target, rawPlot) {
 
 /** Fetch and draw scatter plot for default Explore tab view */
 async function drawScatterPlot() {
-  const spinnerTarget = $('#cluster-plot')[0]
+  const spinnerTarget = $('#plots')[0]
   const spinner = new Spinner(window.opts).spin(spinnerTarget)
-  $('#cluster-plot').data('spinner', spinner)
+  $('#plots').data('spinner', spinner)
 
   const cluster = $('#cluster').val()
   const annotation = $('#annotation').val()
-  const rawScatter =
-    await window.SCP.API.fetchScatter(study.accession, cluster, annotation)
+  const subsample = $('#subsample').val()
+
+  const rawScatter = await window.SCP.API.fetchScatter(
+    study.accession, cluster, annotation, subsample
+  )
 
   window.SCP.cluster = rawScatter
 
@@ -218,7 +221,10 @@ async function drawScatterPlot() {
   // render plots side-by-side
   renderScatterPlot(target, rawScatter)
 
-  $('#cluster-plot').data('spinner').stop()
+  $('#plots').data('spinner').stop()
+
+  $('#search_annotation').val(annotation)
+  $('#gene_set_annotation').val(annotation)
 }
 
 /** Get layout object with various Plotly scatter plot display parameters */
@@ -237,21 +243,6 @@ function getScatterPlotLayout(rawPlot) {
   layout = Object.assign(layout, dimensionProps)
 
   return layout
-}
-
-/**
- * Re-render a plot after a user selects a new cluster from the dropdown menu,
- * usually called from a complete() callback in an $.ajax() function
- */
-function renderWithNewCluster(updateStatusText, renderCallback, setAnnotation=true) {
-  if (updateStatusText === 'success') {
-    if (setAnnotation) {
-      const an = $('#annotation').val()
-      $('#search_annotation').val(an)
-      $('#gene_set_annotation').val(an)
-    }
-    renderCallback()
-  }
 }
 
 // For inferCNV ideogram
@@ -308,9 +299,9 @@ if (study.canVisualizeClusters) {
 
   $('#subsample').change(function() {
     $('#cluster-plot').data('rendered', false)
-    const sample = $(this).val() // eslint-disable-line
-    $('#search_subsample').val(sample)
-    $('#gene_set_subsample').val(sample)
+    const subsample = $(this).val() // eslint-disable-line
+    $('#search_subsample').val(subsample)
+    $('#gene_set_subsample').val(subsample)
     drawScatterPlot()
   })
 
@@ -320,24 +311,7 @@ if (study.canVisualizeClusters) {
     // keep track for search purposes
     $('#search_cluster').val(newCluster)
     $('#gene_set_cluster').val(newCluster)
-    // grab currently selected annotation
-    const currSubsample = $('#subsample').val()
-
-    const params = [
-      'cluster=', encodeURIComponent(newCluster),
-      '&subsample=', encodeURIComponent(currSubsample)
-    ].join('')
-    const url = `${window.SCP.getNewAnnotationsPath}?${params}`
-
-    // get new annotation options and re-render
-    $.ajax({
-      url,
-      method: 'GET',
-      dataType: 'script',
-      complete(jqXHR, textStatus) {
-        window.renderWithNewCluster(textStatus, renderScatterPlot)
-      }
-    })
+    drawScatterPlot()
   })
 
   if (window.SCP.hasIdeogramInferCnvFiles) {

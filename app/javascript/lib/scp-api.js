@@ -123,7 +123,12 @@ export function setMockOrigin(origin) {
 /** Constructs and encodes a URL parameter, if it has a value */
 function encodeParam(param, value, isFirst=false) {
   const delimiter = isFirst ? '?' : '&'
-  return value ? `${delimiter}${param}=${encodeURIComponent(value)}` : ''
+  if (!value || value === '') {
+    // Omit empty parameters in API request
+    return ''
+  } else {
+    return `${delimiter}${param}=${encodeURIComponent(value)}`
+  }
 }
 
 /**
@@ -136,7 +141,7 @@ function encodeParam(param, value, isFirst=false) {
  * @param {String} studyAccession Study accession
  * @param {String} cluster Name of cluster, as defined at upload
  * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
- * @param {String} subsample Subsampling threshold, e.g. 100000 or "All"
+ * @param {String} subsample Subsampling threshold, e.g. 100000
  * @param {String} consensus Statistic to use for consensus, e.g. "mean"
  *
  * Example:
