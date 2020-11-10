@@ -84,7 +84,7 @@ module Api
         def index
           cluster = @study.default_cluster
           if cluster.nil?
-            render json: {error: 'No default cluster exists'}, status: 422 and return
+            render json: {error: 'No default cluster exists'}, status: 404 and return
           end
           render json: self.class.get_cluster_viz_data(@study, cluster, params)
         end
