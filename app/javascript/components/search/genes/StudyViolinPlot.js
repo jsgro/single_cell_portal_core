@@ -4,7 +4,7 @@ import { faDna } from '@fortawesome/free-solid-svg-icons'
 
 import { fetchExpressionViolin } from 'lib/scp-api'
 import createTracesAndLayout from 'lib/kernel-functions'
-import { Plotly } from 'lib/plot'
+import { plot } from 'lib/plot'
 
 /** gets a unique id for a study gene graph to be rendered at */
 function getGraphElementId(study, gene) {
@@ -55,7 +55,7 @@ export default function StudyViolinPlot({ study, gene }) {
     // Check that the ID exists on the page to avoid errors in corner cases where users update search terms quickly
     // or are toggling between study and gene view.
     if (document.getElementById(graphElementId)) {
-      Plotly.newPlot(graphElementId, expressionData, expressionLayout)
+      plot(graphElementId, expressionData, expressionLayout)
     }
   }
 

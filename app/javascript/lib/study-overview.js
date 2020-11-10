@@ -10,8 +10,8 @@
  * TODO: Move this to render-cluster.js, or some such
  */
 import $ from 'jquery'
-
-import { Plotly, labelFont } from 'lib/plot'
+import Plotly from 'plotly.js-dist'
+import { labelFont } from 'lib/plot'
 import { fetchExploreInitialization, fetchScatter } from 'lib/scp-api'
 
 /** Get Plotly layout object for scatter plot */
@@ -135,7 +135,7 @@ function renderScatterPlot(target, rawPlot) {
 
   const layout = getScatterPlotLayout(rawPlot)
 
-  Plotly.plot(plotId, data, layout)
+  Plotly.newPlot(plotId, data, layout)
 
   // listener to redraw expression scatter with new color profile
   $('#colorscale').off('change')
@@ -326,7 +326,7 @@ export default async function initializeExplore() {
   window.SCP.study = await fetchExploreInitialization(accession)
   window.SCP.study.accession = accession
 
-  window.SCP.taxons = window.SCP.study.taxons
+  window.SCP.taxons = window.SCP.study.taxonNames
 
   drawScatterPlot()
 
