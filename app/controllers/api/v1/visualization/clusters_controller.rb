@@ -86,7 +86,12 @@ module Api
           if cluster.nil?
             render json: {error: 'No default cluster exists'}, status: 404 and return
           end
-          render json: self.class.get_cluster_viz_data(@study, cluster, params)
+          viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
+
+          if viz_data.nil?
+            render json: {error: 'Annotation could not be found'}, status: 404 and return
+          end
+          render json: viz_data
         end
 
         swagger_path '/studies/{accession}/clusters/{cluster_name}' do
@@ -115,7 +120,11 @@ module Api
           if cluster.nil?
             render json: {error: "No cluster named #{params[:cluster_name]} could be found"}, status: 404 and return
           end
-          render json: self.class.get_cluster_viz_data(@study, cluster, params)
+          viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
+          if viz_data.nil?
+            render json: {error: 'Annotation could not be found'}, status: 404 and return
+          end
+          render json: viz_data
         end
 
         # packages up a bunch of calls to rendering service endpoints for a response object
@@ -126,10 +135,14 @@ module Api
             scope: url_params[:annotation_scope].blank? ? nil : url_params[:annotation_scope]
           }
           annotation = ExpressionVizService.get_selected_annotation(study,
-                                                                          cluster,
-                                                                          annot_params[:name],
-                                                                          annot_params[:type],
-                                                                          annot_params[:scope])
+                                                                    cluster,
+                                                                    annot_params[:name],
+                                                                    annot_params[:type],
+                                                                    annot_params[:scope])
+          if !annotation
+            return nil
+          end
+
           subsample = url_params[:subsample].blank? ? nil : url_params[:subsample]
 
 
