@@ -9,13 +9,15 @@
  *
  * TODO: Move this to render-cluster.js, or some such
  */
-import Plotly from 'plotly.js-dist'
+import $ from 'jquery'
 
+import { Plotly, labelFont } from 'lib/plot'
 import { fetchExploreInitialization, fetchScatter } from 'lib/scp-api'
 
 /** Get Plotly layout object for scatter plot */
-function getBaseLayout(height, width) {
-  const font = window.SCP.plotlyLabelFont
+export function getBaseLayout(height, width) {
+  console.log(height, width)
+  const font = labelFont
 
   const layout = {
     hovermode: 'closest',
@@ -33,7 +35,7 @@ function getBaseLayout(height, width) {
 }
 
 /** Gets Plotly layout scene props for 3D scatter plot */
-function get3DScatterProps(camera, cluster) {
+export function get3DScatterProps(camera, cluster) {
   const { clusterHasRange, axes } = cluster
   const { titles, ranges, aspects } = axes
 
@@ -64,7 +66,7 @@ function get3DScatterProps(camera, cluster) {
 }
 
 /** Gets Plotly layout props for 2D scatter plot */
-function get2DScatterProps(cluster) {
+export function get2DScatterProps(cluster) {
   const {
     axes, clusterHasRange, domainRanges, hasCoordinateLabels, coordinateLabels
   } = cluster
@@ -133,7 +135,7 @@ function renderScatterPlot(target, rawPlot) {
 
   const layout = getScatterPlotLayout(rawPlot)
 
-  Plotly.newPlot(plotId, data, layout)
+  Plotly.plot(plotId, data, layout)
 
   // listener to redraw expression scatter with new color profile
   $('#colorscale').off('change')
@@ -224,13 +226,16 @@ async function drawScatterPlot() {
 function getScatterPlotLayout(rawPlot) {
   const { height, width } = calculatePlotRect()
   let layout = getBaseLayout(height, width)
+  console.log(JSON.stringify(layout))
 
   let dimensionProps
   if (rawPlot.is3D) {
     const camera = $('#cluster-plot').data('camera')
     dimensionProps = get3DScatterProps(camera, window.SCP.cluster)
   } else {
+    console.log(JSON.stringify())
     dimensionProps = get2DScatterProps(window.SCP.cluster)
+    console.log(JSON.stringify(dimensionProps))
   }
 
   layout = Object.assign(layout, dimensionProps)
@@ -238,17 +243,7 @@ function getScatterPlotLayout(rawPlot) {
   return layout
 }
 
-/** Initialize the "Explore" tab in Study Overview */
-export default function initializeExplore() {
-  window.SCP.study = {}
-  window.SCP.plots = []
-  window.SCP.plotRects = []
-
-  window.SCP.startPendingEvent('user-action:page:view:site-study',
-    { speciesList: window.SCP.taxons },
-    'plot:',
-    true)
-
+function attachEventHandlers() {
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
     const ideogramFiles = window.SCP.study.ideogramFiles
@@ -261,36 +256,6 @@ export default function initializeExplore() {
       $('#tracks-to-display, #_ideogramOuterWrap').html('')
       $('#ideogramTitle').remove()
     }
-  })
-
-  $('#cluster-plot').data('rendered', false)
-
-  const baseCamera = {
-    'up': { 'x': 0, 'y': 0, 'z': 1 },
-    'center': { 'x': 0, 'y': 0, 'z': 0 },
-    'eye': { 'x': 1.25, 'y': 1.25, 'z': 1.25 }
-  }
-
-  $(document).ready(async () => {
-    // if tab position was specified in url, show the current tab
-    if (window.location.href.split('#')[1] !== '') {
-      const tab = window.location.href.split('#')[1]
-      $(`#study-tabs a[href="#${tab}"]`).tab('show')
-    }
-    $('#cluster-plot').data('camera', baseCamera)
-    // set default subsample option of 10K (if subsampled) or all cells
-    if (window.SCP.numPointsCluster > 10000 && window.SCP.clusterIsSampled) {
-      $('#subsample').val(10000)
-      $('#search_subsample').val(10000)
-    }
-
-    const accession = window.SCP.studyAccession
-    window.SCP.study = await fetchExploreInitialization(accession)
-    window.SCP.study.accession = accession
-
-    window.SCP.taxons = window.SCP.study.taxons
-
-    drawScatterPlot()
   })
 
   // resize listener
@@ -322,17 +287,56 @@ export default function initializeExplore() {
     $('#gene_set_cluster').val(newCluster)
     drawScatterPlot()
   })
+}
+
+/** Initialize the "Explore" tab in Study Overview */
+export default async function initializeExplore() {
+  window.SCP.study = {}
+  window.SCP.plots = []
+  window.SCP.plotRects = []
+
+  window.SCP.startPendingEvent('user-action:page:view:site-study',
+    { speciesList: window.SCP.taxons },
+    'plot:',
+    true)
+
+  $('#cluster-plot').data('rendered', false)
+
+  const baseCamera = {
+    'up': { 'x': 0, 'y': 0, 'z': 1 },
+    'center': { 'x': 0, 'y': 0, 'z': 0 },
+    'eye': { 'x': 1.25, 'y': 1.25, 'z': 1.25 }
+  }
+
+  // if tab position was specified in url, show the current tab
+  if (window.location.href.split('#')[1] !== '') {
+    const tab = window.location.href.split('#')[1]
+    $(`#study-tabs a[href="#${tab}"]`).tab('show')
+  }
+  $('#cluster-plot').data('camera', baseCamera)
+  // set default subsample option of 10K (if subsampled) or all cells
+  if (window.SCP.numPointsCluster > 10000 && window.SCP.clusterIsSampled) {
+    $('#subsample').val(10000)
+    $('#search_subsample').val(10000)
+  }
+
+  attachEventHandlers();
+
+  const accession = window.SCP.studyAccession
+  window.SCP.study = await fetchExploreInitialization(accession)
+  window.SCP.study.accession = accession
+
+  window.SCP.taxons = window.SCP.study.taxons
+
+  drawScatterPlot()
 
   if (window.SCP.hasIdeogramInferCnvFiles) {
     // user has no clusters, but does have ideogram annotations
-    $(document).ready(() => {
-      const ideogramSelect = $('#ideogram_annotation')
-      const firstIdeogram = $('#ideogram_annotation option')[1].value
 
-      // manually trigger change to cause ideogram to render
-      ideogramSelect.val(firstIdeogram).trigger('change')
-    })
+    const ideogramSelect = $('#ideogram_annotation')
+    const firstIdeogram = $('#ideogram_annotation option')[1].value
+
+    // manually trigger change to cause ideogram to render
+    ideogramSelect.val(firstIdeogram).trigger('change')
   }
 }
-
-
