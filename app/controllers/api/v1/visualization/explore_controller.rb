@@ -62,11 +62,6 @@ module Api
         clusterPointAlpha {Float}: opacity of cluster points in this study
 
         clusterGroupNames {Array}: all possible cluster groups for a study
-
-        Legacy response props that are omitted in this proposal, as they are better handled client-side:
-
-
-        renderClusterPath, getNewAnnotationsPath
 =end
 
         def show

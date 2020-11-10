@@ -6,6 +6,23 @@
   <%= hidden_field_tag :partial, 'initialize_ordinations_form' %>
   <%= hidden_field_tag :filename_to_upload, '', class: 'filename-to-upload' %>
   <%= f.hidden_field :study_file_bundle_id %>
+  <% if User.feature_flag_for_instance(current_user, 'spatial_transcriptomics') %>
+    <div class="form-group row">
+      <div class="col-sm-12">
+        <%= f.label :is_spatial, 'Coordinate data type: ' %><br/>
+        <%= f.label :is_spatial_false do %>
+          <%= f.radio_button :is_spatial, false %>
+          Clustering
+        <% end %>
+        &nbsp;
+        <%= f.label :is_spatial_true do %>
+          <%= f.radio_button :is_spatial, true %>
+          Spatial transcriptomics positions
+        <% end %>
+
+      </div>
+    </div>
+  <% end %>
   <div class="form-group row">
 		<div class="col-sm-4">
 			<%= f.label :name %><br />

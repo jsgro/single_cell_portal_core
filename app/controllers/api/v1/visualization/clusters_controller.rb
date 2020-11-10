@@ -84,7 +84,7 @@ module Api
         def index
           cluster = @study.default_cluster
           if cluster.nil?
-            render json: {error: 'No default cluster exists'}, status: 422 and return
+            render json: {error: 'No default cluster exists'}, status: 404 and return
           end
           render json: self.class.get_cluster_viz_data(@study, cluster, params)
         end
@@ -113,7 +113,7 @@ module Api
           # this endpoint requires a cluster to be specified -- index is used to fetch the default
           cluster = @study.cluster_groups.find_by(name: params[:cluster_name])
           if cluster.nil?
-            render json: {error: "No cluster named #{params[:cluster_name]} could be found"}, status: 422 and return
+            render json: {error: "No cluster named #{params[:cluster_name]} could be found"}, status: 404 and return
           end
           render json: self.class.get_cluster_viz_data(@study, cluster, params)
         end

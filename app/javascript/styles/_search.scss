@@ -325,7 +325,8 @@ nav.search-links, #search-panel {
 .advanced-opts {
   vertical-align: top;
   display: inline-block;
-  padding-top: 0.65em;
+  padding: 0.65em 0.25em;
+  border-radius: 1em;
 }
 
 .new-feature {
