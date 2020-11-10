@@ -42,8 +42,7 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
 
     execute_http_request(:get, api_v1_study_explore_path(@basic_study))
     assert_response :success
-
-    assert json['is_cluster_viewable']
+    assert json['isClusterViewable']
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

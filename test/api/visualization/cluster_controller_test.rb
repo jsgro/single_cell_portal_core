@@ -34,14 +34,16 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     @user.destroy
   end
 
-  test 'should get basic study visualization data' do
+  test 'should get basic study visualization cluster data' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
 
     assert_equal 3, @basic_study.default_cluster.data_arrays.count
 
     execute_http_request(:get, api_v1_study_clusters_path(@basic_study))
-    assert_response :success
+    # should 404 since there is no annotation
+    assert_response 404
+    assert_equal({"error"=>"Annotation could not be found"}, json)
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
