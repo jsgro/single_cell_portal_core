@@ -1,6 +1,7 @@
 require 'api_test_helper'
 require 'user_tokens_helper'
 require 'seeds_helper'
+require 'bulk_download_helper'
 
 class SearchControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
