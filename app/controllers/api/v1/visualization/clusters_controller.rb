@@ -82,15 +82,11 @@ module Api
         # note that 'index' returns the default cluster, rather than a list of all clusters
         # see the 'show' method for documentation of the return type
         def index
-          begin
-            cluster = @study.default_cluster
-            if cluster.nil?
-              render json: {error: 'No default cluster exists'}, status: 422 and return
-            end
-            render json: self.class.get_cluster_viz_data(@study, cluster, params)
-          rescue => e
-            byebug
+          cluster = @study.default_cluster
+          if cluster.nil?
+            render json: {error: 'No default cluster exists'}, status: 422 and return
           end
+          render json: self.class.get_cluster_viz_data(@study, cluster, params)
         end
 
         swagger_path '/studies/{accession}/clusters/{cluster_name}' do
@@ -117,7 +113,7 @@ module Api
           # this endpoint requires a cluster to be specified -- index is used to fetch the default
           cluster = @study.cluster_groups.find_by(name: params[:cluster_name])
           if cluster.nil?
-            render json: {error: "No cluster named #{params[:cluster_name]} could be found"}, status: 422 and return
+            render json: {error: "No cluster named #{params[:cluster_name]} could be found"}, status: 404 and return
           end
           render json: self.class.get_cluster_viz_data(@study, cluster, params)
         end
