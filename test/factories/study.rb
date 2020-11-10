@@ -5,6 +5,7 @@ FactoryBot.define do
     transient do
       auto_suffixes { true }
     end
+    public { true }
     data_dir { '/tmp' }
     user { User.first }
     after(:create) do |study, evaluator|

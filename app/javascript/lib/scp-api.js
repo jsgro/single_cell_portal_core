@@ -125,8 +125,7 @@ export function setMockOrigin(origin) {
  *
  * This endpoint is volatile, so intentionally not documented in Swagger.
  *
- * In lieu of docs, see definition at:
- * app/controllers/api/v1/expression_data_controller.rb
+ * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
  *
  * @param {String} studyAccession Study accession
  * @param {String} gene Gene names to get expression data for
@@ -143,7 +142,7 @@ export async function fetchExpressionViolin(
     subsample ? `&subsample=${encodeURIComponent(subsample)}` : ''
   const params =
   `?gene=${gene}${clusterParam}${annotationParam}${subsampleParam}`
-  const apiUrl = `/studies/${studyAccession}/expression_data/violin${params}`
+  const apiUrl = `/studies/${studyAccession}/expression/violin${params}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
   const [violin, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
@@ -154,13 +153,12 @@ export async function fetchExpressionViolin(
 /**
  * Get all study-wide and cluster annotations for a study
  *
- * This endpoint is intentionally not documented in Swagger.
+ * This endpoint is volatile and intentionally not documented in Swagger.
  *
- * In lieu of docs, see definition at:
- * app/controllers/api/v1/expression_data_controller.rb
+ * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
  *
  * Example:
- * https://singlecell.broadinstitute.org/single_cell/api/v1/studies/SCP1/expression_data/annotations
+ * https://singlecell.broadinstitute.org/single_cell/api/v1/studies/SCP1/expression/annotations
  *
  * Returns
  * {
@@ -173,7 +171,7 @@ export async function fetchExpressionViolin(
  * @param {Boolean} mock
  */
 export async function fetchAnnotationValues(studyAccession, mock=false) {
-  const apiUrl = `/studies/${studyAccession}/expression_data/annotations`
+  const apiUrl = `/studies/${studyAccession}/expression/annotations`
   const [values, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
   return values
 }
@@ -183,8 +181,7 @@ export async function fetchAnnotationValues(studyAccession, mock=false) {
  *
  * This endpoint is intentionally not documented in Swagger.
  *
- * In lieu of docs, see definition at:
- * app/controllers/api/v1/expression_data_controller.rb
+ * see definition at: app/controllers/api/v1/expression_data_controller.rb
  *
  * @param {String} studyAccession study accession
  * @param {Array} genes List of gene names to get expression data for
