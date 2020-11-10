@@ -1,5 +1,5 @@
 require "integration_test_helper"
-require 'seeds_helper'
+require 'big_query_helper'
 
 class StudyCreationTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -33,12 +33,6 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     sleep 1
     study = Study.find_by(name: "Test Study #{@random_seed}")
     assert study.present?, "Study did not successfully save"
-
-    bqc = ApplicationController.big_query_client
-    bq_dataset = bqc.datasets.detect {|dataset| dataset.dataset_id == CellMetadatum::BIGQUERY_DATASET}
-    assert_not_nil bq_dataset, "Did not find #{CellMetadatum::BIGQUERY_DATASET} dataset in BigQuery"
-    bq_table = bq_dataset.tables.detect {|table| table.table_id == CellMetadatum::BIGQUERY_TABLE}
-    assert_not_nil bq_table, "Did not find #{CellMetadatum::BIGQUERY_TABLE} table in #{CellMetadatum::BIGQUERY_DATASET}"
     initial_bq_row_count = get_bq_row_count(study)
 
     example_files = {

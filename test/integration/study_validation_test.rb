@@ -1,6 +1,6 @@
 require "integration_test_helper"
 require 'user_tokens_helper'
-require 'seeds_helper'
+require 'big_query_helper'
 
 class StudyValidationTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -259,7 +259,6 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   end
 
   # ensure data removal from BQ on metadata delete
-  # creates new study and adds data directly to BQ in order to make test self-contained
   test 'should delete data from bigquery' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
@@ -269,11 +268,30 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     assert study.present?, "Study did not successfully save"
 
     metadata_upload = File.open(Rails.root.join('test', 'test_data', 'alexandria_convention', 'metadata.v2-0-0.txt'))
-    metadata_file = study.study_files.build(file_type: 'Metadata', use_metadata_convention: true, upload: metadata_upload)
+    metadata_file = study.study_files.build(file_type: 'Metadata', use_metadata_convention: true, upload: metadata_upload,
+                                            name: 'metadata.v2-0-0.txt', parse_status: 'unparsed', status: 'uploaded')
     metadata_file.save!
+    study.send_to_firecloud(metadata_file)
 
-    # seed data directly into BQ
-    seed_bigquery(study.accession, metadata_file.id.to_s)
+    # directly seed BQ with synthetic data
+    # this is done directly to make test self-contained
+    puts "Directly seeding BigQuery w/ synthetic data"
+    File.open(Rails.root.join('db', 'seed', 'bq_seeds.json')) do |bq_seeds|
+      bq_data = JSON.parse bq_seeds.read
+      bq_data.each do |entry|
+        entry['CellID'] = SecureRandom.uuid
+        entry['study_accession'] = study.accession
+        entry['file_id'] = metadata_file.id.to_s
+      end
+      Tempfile.open(['tmp_bq_seeds', '.json']) do |tmp_file|
+        tmp_file.write bq_data.map(&:to_json).join("\n")
+        table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
+        table.load tmp_file, write: 'append'
+      end
+    end
+    puts "BigQuery seeding completed"
+
+    # ensure data is in BQ
     initial_bq_row_count = get_bq_row_count(study)
     assert initial_bq_row_count > 0, "wrong number of BQ rows found to test deletion capability"
 

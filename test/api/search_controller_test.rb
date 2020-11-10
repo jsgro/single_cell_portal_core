@@ -1,6 +1,5 @@
 require 'api_test_helper'
 require 'user_tokens_helper'
-require 'seeds_helper'
 require 'bulk_download_helper'
 
 class SearchControllerTest < ActionDispatch::IntegrationTest
@@ -21,12 +20,6 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
     @user.update_last_access_at!
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-
-    # ensure BQ has seed data
-    testing_study = Study.first
-    if get_bq_row_count(testing_study) == 0
-      seed_bigquery(testing_study.accession, testing_study.metadata_file.id.to_s)
-    end
 
     @convention_accessions = StudyFile.where(file_type: 'Metadata', use_metadata_convention: true).map {|f| f.study.accession}.flatten
   end
