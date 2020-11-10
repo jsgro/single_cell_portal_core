@@ -16,7 +16,6 @@ import { fetchExploreInitialization, fetchScatter } from 'lib/scp-api'
 
 /** Get Plotly layout object for scatter plot */
 export function getBaseLayout(height, width) {
-  console.log(height, width)
   const font = labelFont
 
   const layout = {
@@ -226,16 +225,13 @@ async function drawScatterPlot() {
 function getScatterPlotLayout(rawPlot) {
   const { height, width } = calculatePlotRect()
   let layout = getBaseLayout(height, width)
-  console.log(JSON.stringify(layout))
 
   let dimensionProps
   if (rawPlot.is3D) {
     const camera = $('#cluster-plot').data('camera')
     dimensionProps = get3DScatterProps(camera, window.SCP.cluster)
   } else {
-    console.log(JSON.stringify())
     dimensionProps = get2DScatterProps(window.SCP.cluster)
-    console.log(JSON.stringify(dimensionProps))
   }
 
   layout = Object.assign(layout, dimensionProps)
