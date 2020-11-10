@@ -120,22 +120,18 @@ export function setMockOrigin(origin) {
   mockOrigin = origin
 }
 
-/** Constructs and encodes a URL parameter, if it has a value */
-function encodeParam(param, value, isFirst=false) {
-  const delimiter = isFirst ? '?' : '&'
-  if (!value || value === '') {
-    // Omit empty parameters in API request
-    return ''
-  } else {
-    return `${delimiter}${param}=${encodeURIComponent(value)}`
-  }
+/** Constructs and encodes URL parameters; omits those with no value */
+function stringifyQuery(paramObj) {
+  const stringified = queryString.stringify(paramObj, {skipEmptyString: true})
+  return `?${stringified}`;
 }
 
 /**
 * Returns initial content for the "Explore" tab in Study Overview
+*
 * @param {String} studyAccession Study accession
 */
-export async function fetchExploreInitialization(studyAccession, mock=false) {
+export async function fetchExplore(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/explore`
   const [exploreInit, perfTime] =
     await scpApi(apiUrl, defaultInit(), mock, false)
@@ -145,8 +141,6 @@ export async function fetchExploreInitialization(studyAccession, mock=false) {
 
 /**
  * Returns an object with scatter plot data for a cluster in a study
- *
- * This endpoint is volatile, so intentionally not documented in Swagger.
  *
  * see definition at: app/controllers/api/v1/visualization/clusters_controller.rb
  *
@@ -159,20 +153,20 @@ export async function fetchExploreInitialization(studyAccession, mock=false) {
  * Example:
  * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
  */
-export async function fetchScatter(
+export async function fetchCluster(
   studyAccession, cluster, annotation, subsample, consensus, mock=false
 ) {
   // Digest full annotation name to enable easy validation in API
   const [annotName, annotType, annotScope] = annotation.split('--')
-  const annotNameParam = encodeParam('annotation_name', annotName, true)
-  const annotTypeParam = encodeParam('annotation_type', annotType)
-  const annotScopeParam = encodeParam('annotation_scope', annotScope)
-  const annotationParams = annotNameParam + annotTypeParam + annotScopeParam
+  const paramObj = {
+    annotation_name: annotName,
+    annotation_type: annotType,
+    annotation_scope: annotScope,
+    subsample,
+    consensus
+  }
 
-  const subsampleParam = encodeParam('subsample', subsample)
-  const consensusParam = encodeParam('consensus', consensus)
-
-  const params = annotationParams + subsampleParam + consensusParam
+  const params = stringifyQuery(paramObj)
   const apiUrl = `/studies/${studyAccession}/clusters/${cluster}${params}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument

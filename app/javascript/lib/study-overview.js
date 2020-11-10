@@ -1,18 +1,19 @@
 /**
-* @fileoverview Default view of Explore tab in Study Overview
+* @fileoverview Study Overview user interface
 *
-* Shows "Clusters" and sometimes "Genomes", etc.
+* The Explore tab in Study Overview has three main views:
+*   - Default: Shows "Clusters" and sometimes "Genomes", etc.
+*   - Single-gene: Shows distribution (violin or box) plot and others
+*   - Multiple-gene: Shows dot plot and heatmap
 */
 
 /**
- * Render cluster code
- *
- * TODO: Move this to render-cluster.js, or some such
+ * TODO (SCP-2884): Move code specific to default Explore view into separate module
  */
 import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
 import { labelFont } from 'lib/plot'
-import { fetchExploreInitialization, fetchScatter } from 'lib/scp-api'
+import { fetchExplore, fetchCluster } from 'lib/scp-api'
 
 /** Get Plotly layout object for scatter plot */
 export function getBaseLayout(height, width) {
@@ -163,10 +164,6 @@ function renderScatterPlot(target, rawPlot) {
   window.SCP.scatterPlotLayout = layout
 }
 
-/**
- * End render cluster code
- */
-
 /** Fetch and draw scatter plot for default Explore tab view */
 async function drawScatterPlot() {
   const spinnerTarget = $('#plots')[0]
@@ -177,7 +174,7 @@ async function drawScatterPlot() {
   const annotation = $('#annotation').val()
   const subsample = $('#subsample').val()
 
-  const rawScatter = await fetchScatter(
+  const rawScatter = await fetchCluster(
     window.SCP.study.accession, cluster, annotation, subsample
   )
 
@@ -239,6 +236,10 @@ function getScatterPlotLayout(rawPlot) {
   return layout
 }
 
+/**
+ * End default Explore view code
+ */
+
 function attachEventHandlers() {
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
@@ -298,6 +299,7 @@ export default async function initializeExplore() {
 
   $('#cluster-plot').data('rendered', false)
 
+  // TODO (SCP-2884): Declare this outside the function, if reasonable
   const baseCamera = {
     'up': { 'x': 0, 'y': 0, 'z': 1 },
     'center': { 'x': 0, 'y': 0, 'z': 0 },
@@ -319,7 +321,7 @@ export default async function initializeExplore() {
   attachEventHandlers();
 
   const accession = window.SCP.studyAccession
-  window.SCP.study = await fetchExploreInitialization(accession)
+  window.SCP.study = await fetchExplore(accession)
   window.SCP.study.accession = accession
 
   window.SCP.taxons = window.SCP.study.taxonNames
