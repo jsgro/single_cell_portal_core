@@ -242,7 +242,7 @@ export async function fetchAnnotationValues(studyAccession, mock=false) {
  *
  * This endpoint is intentionally not documented in Swagger.
  *
- * see definition at: app/controllers/api/v1/expression_data_controller.rb
+ * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
  *
  * @param {String} studyAccession study accession
  * @param {Array} genes List of gene names to get expression data for
