@@ -50,6 +50,7 @@ const helpModalContent = (<div>
  */
 export default function SearchPanel({
   showCommonButtons,
+  advancedSearchDefault,
   keywordPrompt,
   searchOnLoad
 }) {
@@ -65,7 +66,8 @@ export default function SearchPanel({
       featureFlagState.faceted_search = true
     }
   }
-  const [showAdvancedSearch, setShowAdvancedSearch] = useState(featureFlagState.faceted_search)
+
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(advancedSearchDefault || featureFlagState.faceted_search)
   const [showSearchHelpModal, setShowSearchHelpModal] = useState(false)
   const [showSearchOptInModal, setShowSearchOptInModal] = useState(false)
   const [isNewToUser, setIsNewToUser] = useState(true)
@@ -86,7 +88,7 @@ export default function SearchPanel({
   }
 
   let advancedOptsLink = <a className="action advanced-opts" onClick={handleMoreFiltersClick}>
-    Advanced search<sup className="new-feature">BETA</sup>
+    Advanced Search <sup className="new-feature">BETA</sup>
   </a>
   if (showAdvancedSearch) {
     searchButtons = <FacetsPanel/>
