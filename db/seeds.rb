@@ -193,7 +193,7 @@ File.open(Rails.root.join('db', 'seed', 'bq_seeds.json')) do |bq_seeds|
   Tempfile.open(['tmp_bq_seeds', '.json']) do |tmp_file|
     tmp_file.write bq_data.map(&:to_json).join("\n")
     table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
-    table.load tmp_file, write: 'append'
+    job = table.load tmp_file, write: 'append'
   end
 end
 puts "BigQuery seeding completed"

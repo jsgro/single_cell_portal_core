@@ -267,29 +267,36 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
                           user_id: @test_user.id)
     assert study.present?, "Study did not successfully save"
 
+    # add metadata file and parse to load data into BQ
+    # this test uses ingest rather than direct BQ seed as this has been shown to cause large-scale random downstream
+    # failures if direct BQ seeding is called multiple times
     metadata_upload = File.open(Rails.root.join('test', 'test_data', 'alexandria_convention', 'metadata.v2-0-0.txt'))
     metadata_file = study.study_files.build(file_type: 'Metadata', use_metadata_convention: true, upload: metadata_upload,
                                             name: 'metadata.v2-0-0.txt', parse_status: 'unparsed', status: 'uploaded')
     metadata_file.save!
+    metadata_file.reload
     study.send_to_firecloud(metadata_file)
 
-    # directly seed BQ with synthetic data
-    # this is done directly to make test self-contained
-    puts "Directly seeding BigQuery w/ synthetic data"
-    File.open(Rails.root.join('db', 'seed', 'bq_seeds.json')) do |bq_seeds|
-      bq_data = JSON.parse bq_seeds.read
-      bq_data.each do |entry|
-        entry['CellID'] = SecureRandom.uuid
-        entry['study_accession'] = study.accession
-        entry['file_id'] = metadata_file.id.to_s
+    puts "Requesting parse for file \"#{metadata_file.name}\"."
+    initiate_study_file_parse(metadata_file.name, study.id)
+    assert_response 200, "Metadata parse job failed to start: #{@response.code}"
+
+    seconds_slept = 60
+    sleep seconds_slept
+    metadata_file.reload
+    sleep_increment = 15
+    max_seconds_to_sleep = 300
+    until ['parsed', 'failed'].include? metadata_file.parse_status do
+      puts "After #{seconds_slept} seconds, #{metadata_file.name} is #{metadata_file.parse_status}"
+      if seconds_slept >= max_seconds_to_sleep
+        raise "Even after #{seconds_slept} seconds, not all files have been parsed."
       end
-      Tempfile.open(['tmp_bq_seeds', '.json']) do |tmp_file|
-        tmp_file.write bq_data.map(&:to_json).join("\n")
-        table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
-        table.load tmp_file, write: 'append'
-      end
+      sleep(sleep_increment)
+      seconds_slept += sleep_increment
+      metadata_file.reload
     end
-    puts "BigQuery seeding completed"
+    puts "After #{seconds_slept} seconds, #{metadata_file.name} is #{metadata_file.parse_status}"
+    assert_equal 'parsed', metadata_file.parse_status, "Metadata file did not successfully parse"
 
     # ensure data is in BQ
     initial_bq_row_count = get_bq_row_count(study)
