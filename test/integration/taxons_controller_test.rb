@@ -1,5 +1,4 @@
 require "integration_test_helper"
-require 'seeds_helper'
 
 class TaxonsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
