@@ -11,6 +11,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     auth_as_user(@test_user)
     sign_in @test_user
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+    @test_user.update_last_access_at!
   end
 
   teardown do
