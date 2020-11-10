@@ -13,7 +13,7 @@ class SyntheticStudyPopulator
 
   # populates the synthetic study specified in the given folder (e.g. ./db/seed/synthetic_studies/blood)
   # destroys any existing studies and workspace data corresponding to that study
-  def self.populate(synthetic_study_folder, user: User.first)
+  def self.populate(synthetic_study_folder, user: User.first, detached: false)
     if (synthetic_study_folder.exclude?('/'))
       synthetic_study_folder = DEFAULT_SYNTHETIC_STUDY_PATH.join(synthetic_study_folder).to_s
     end
@@ -21,7 +21,7 @@ class SyntheticStudyPopulator
     study_config = JSON.parse(study_info_file)
 
     puts("Populating synthetic study from #{synthetic_study_folder}")
-    study = create_study(study_config, user)
+    study = create_study(study_config, user, detached)
     add_files(study, study_config, synthetic_study_folder, user)
   end
 
@@ -41,17 +41,24 @@ class SyntheticStudyPopulator
 
   private
 
-  def self.create_study(study_config, user)
+  def self.create_study(study_config, user, detached)
     existing_study = Study.find_by(name: study_config['study']['name'])
     if existing_study
       puts("Destroying Study #{existing_study.name}, id #{existing_study.id}")
-      existing_study.destroy_and_remove_workspace
+      if !existing_study.detached
+        existing_study.destroy_and_remove_workspace
+      else
+        existing_study.destroy
+      end
     end
 
     study = Study.new(study_config['study'])
+    study.detached = detached
     study.study_detail = StudyDetail.new(full_description: study_config['study']['description'])
     study.user ||= user
-    study.firecloud_project ||= ENV['PORTAL_NAMESPACE']
+    if !study.detached
+      study.firecloud_project ||= ENV['PORTAL_NAMESPACE']
+    end
     puts("Saving Study #{study.name}")
     study.save!
     study
@@ -67,11 +74,12 @@ class SyntheticStudyPopulator
         name: finfo['name'] ? finfo['name'] : finfo['filename'],
         upload: infile,
         use_metadata_convention: finfo['use_metadata_convention'] ? true : false,
-        status: 'uploading',
+        status: study.detached ? 'new' : 'uploading',
         study: study
       }
 
       study_file_params.merge!(process_genomic_file_params(finfo))
+      study_file_params.merge!(process_coordinate_file_params(finfo))
 
       if study_file_params[:file_type] == 'Expression Matrix'
         exp_finfo_params = finfo['expression_file_info']
@@ -86,8 +94,19 @@ class SyntheticStudyPopulator
       end
 
       study_file = StudyFile.create!(study_file_params)
-      FileParseService.run_parse_job(study_file, study, user)
+      if !study.detached
+        FileParseService.run_parse_job(study_file, study, user)
+      end
     end
+  end
+
+  # process coordinate/cluster arguments, return a hash of params suitable for passing to a StudyFile constructor
+  def self.process_coordinate_file_params(file_info)
+    params = {}
+    if !file_info['is_spatial'].nil?
+      params[:is_spatial] = file_info['is_spatial']
+    end
+    params
   end
 
   # process species/annotation arguments, return a hash of params suitable for passing to a StudyFile constructor

@@ -22,6 +22,28 @@ start=$(date +%s)
 RETURN_CODE=0
 FAILED_COUNT=0
 
+function setup_burp_cert {
+  if [ -n "$BURP_PROXY" ]; then
+    # we will store Burp certificate here
+    local BURP_CERT="/usr/local/share/ca-certificates/burp.crt"
+
+    # fetch Burp certificate from Burp proxy localhost endpoint and store it into $BURP_CERT
+    curl -s --proxy "$BURP_PROXY" burp/cert | openssl x509 -inform DER -out "$BURP_CERT"
+
+    # update system-wide certificate store
+    update-ca-certificates
+
+    # override cacert store for httpclient package (used by Google libraries)
+    ln -sf "$BURP_CERT" /usr/local/rvm/gems/default/gems/httpclient-*/lib/httpclient/cacert.pem
+
+    # override cafile for Yarn (used during package fetching)
+    yarn config set cafile "$BURP_CERT" -g
+
+    # set http_proxy variable, which will make HTTP connections go through the Burp proxy
+    export http_proxy="$BURP_PROXY"
+  fi
+}
+
 function clean_up {
   echo "Cleaning up..."
   bundle exec bin/rails runner -e test "Study.delete_all_and_remove_workspaces" || { echo "FAILED to delete studies and workspaces" >&2; exit 1; } # destroy all studies/workspaces to clean up any files
@@ -30,6 +52,7 @@ function clean_up {
   echo "...cleanup complete."
 }
 
+setup_burp_cert
 clean_up
 
 TMP_PIDS_DIR="/home/app/webapp/tmp/pids"
