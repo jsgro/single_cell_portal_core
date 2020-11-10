@@ -9,6 +9,7 @@
  *
  * TODO: Move this to render-cluster.js, or some such
  */
+import Plotly from 'plotly.js-dist'
 
 import { fetchExploreInitialization, fetchScatter } from 'lib/scp-api'
 
@@ -110,7 +111,7 @@ function resizePlots() {
     const layout = getScatterPlotLayout(rawPlot)
     const target = `cluster-plot-${i + 1}`
 
-    window.Plotly.relayout(target, layout)
+    Plotly.relayout(target, layout)
   }
 }
 
@@ -132,7 +133,7 @@ function renderScatterPlot(target, rawPlot) {
 
   const layout = getScatterPlotLayout(rawPlot)
 
-  window.Plotly.newPlot(plotId, data, layout)
+  Plotly.newPlot(plotId, data, layout)
 
   // listener to redraw expression scatter with new color profile
   $('#colorscale').off('change')
@@ -142,7 +143,7 @@ function renderScatterPlot(target, rawPlot) {
     console.log(`setting colorscale to ${theme}`)
 
     $('#search_colorscale').val(theme)
-    window.Plotly.update(plotId, data, layout)
+    Plotly.update(plotId, data, layout)
   })
 
   const description =

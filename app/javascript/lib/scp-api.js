@@ -131,7 +131,10 @@ function encodeParam(param, value, isFirst=false) {
   }
 }
 
-/** Returns initial content for the "Explore" tab in Study Overview */
+/**
+* Returns initial content for the "Explore" tab in Study Overview
+* @param {String} studyAccession Study accession
+*/
 export async function fetchExploreInitialization(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/explore`
   const [exploreInit, perfTime] =
