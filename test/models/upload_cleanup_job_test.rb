@@ -18,20 +18,13 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
     assert failed_uploads == 0, "Should not have found any failed uploads but found #{failed_uploads}"
 
     # now simulate a failed upload and prove they are detected
-    filename = 'expression_matrix_example_2.txt'
+    filename = 'README.txt'
     file = File.open(Rails.root.join('test', 'test_data', filename))
-    bad_upload = StudyFile.create!(name: filename, study: @study, file_type: 'Expression Matrix', upload: file,
-                                   status: 'uploading', created_at: 1.week.ago.in_time_zone, parse_status: 'unparsed',
-                                   generation: nil, human_fastq_url: nil)
+    bad_upload = StudyFile.create!(name: filename, study: @study, file_type: 'Other', upload: file, status: 'uploading',
+                                   created_at: 1.week.ago.in_time_zone, parse_status: 'unparsed', generation: nil)
     file.close
     UploadCleanupJob.find_and_remove_failed_uploads
     failed_uploads = StudyFile.where(queued_for_deletion: true, :id.nin => existing_deletes).count
-    retry_count = 0
-    # avoid race condition where DeleteQueueJob has not run yet
-    while retry_count < 3 && failed_uploads == 0
-      failed_uploads = StudyFile.where(queued_for_deletion: true, :id.nin => existing_deletes).count
-      sleep(1)
-    end
     assert failed_uploads == 1, "Should have found 1 failed upload but found #{failed_uploads}"
     bad_upload.reload
     assert bad_upload.queued_for_deletion, "Did not correctly mark #{bad_upload.name} as failed upload"
