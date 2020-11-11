@@ -629,7 +629,7 @@ class Study
   ###
 
   # custom validator since we need everything to pass in a specific order (otherwise we get orphaned FireCloud workspaces)
-  validate :initialize_with_new_workspace, on: :create, if: Proc.new {|study| !study.use_existing_workspace}
+  validate :initialize_with_new_workspace, on: :create, if: Proc.new {|study| !study.use_existing_workspace && !study.detached}
   validate :initialize_with_existing_workspace, on: :create, if: Proc.new {|study| study.use_existing_workspace}
 
   # populate specific errors for study shares since they share the same form
@@ -1008,34 +1008,75 @@ class Study
     default
   end
 
+  # Returns default_annotation_params in string form [[name]]--[[type]]--[[scope]]
+  # to match the UI and how they're stored in default_options
+  def default_annotation(cluster=self.default_cluster)
+    params = default_annotation_params
+    "#{params[:name]}--#{params[:type]}--#{params[:scope]}"
+  end
+
   # helper to return default annotation to load, will fall back to first available annotation if no preference has been set
-  # or default annotation cannot be loaded
-  def default_annotation
-    default_cluster = self.default_cluster
+  # or default annotation cannot be loaded.  returns a hash of {name: ,type:, scope: }
+  def default_annotation_params(cluster=self.default_cluster)
     default_annot = self.default_options[:annotation]
+    annot_params = nil
     # in case default has not been set
     if default_annot.nil?
-      if !default_cluster.nil? && default_cluster.cell_annotations.any?
-        annot = default_cluster.cell_annotations.first
-        default_annot = "#{annot[:name]}--#{annot[:type]}--cluster"
+      if !cluster.nil? && cluster.cell_annotations.any?
+        annot = cluster.cell_annotations.first
+        annot_params = {
+          name: annot[:name],
+          type: annot[:type],
+          scope: 'cluster'
+        }
       elsif self.cell_metadata.any?
         metadatum = self.cell_metadata.first
-        default_annot = "#{metadatum.name}--#{metadatum.annotation_type}--study"
+        annot_params = {
+          name: metadatum.name,
+          type: metadatum.annotation_type,
+          scope: 'study'
+        }
       else
         # annotation won't be set yet if a user is parsing metadata without clusters, or vice versa
-        default_annot = nil
+        annot_params = nil
       end
+    else
+      annot_params = {
+        name: default_annotation_name,
+        type: default_annotation_type,
+        scope: default_annotation_scope
+      }
     end
-    default_annot
+    annot_params
   end
 
   # helper to return default annotation type (group or numeric)
   def default_annotation_type
-    if self.default_options[:annotation].nil?
+    if self.default_options[:annotation].blank?
       nil
     else
       # middle part of the annotation string is the type, e.g. Label--group--study
       self.default_options[:annotation].split('--')[1]
+    end
+  end
+
+  # helper to return default annotation name
+  def default_annotation_name
+    if self.default_options[:annotation].blank?
+      nil
+    else
+      # first part of the annotation string
+      self.default_options[:annotation].split('--')[0]
+    end
+  end
+
+  # helper to return default annotation scope
+  def default_annotation_scope
+    if self.default_options[:annotation].blank?
+      nil
+    else
+      # last part of the annotation string
+      self.default_options[:annotation].split('--')[2]
     end
   end
 
@@ -1530,7 +1571,7 @@ class Study
 
   # set access for the readonly service account if a study is public
   def set_readonly_access(grant_access=true, manual_set=false)
-    unless Rails.env == 'test' || self.queued_for_deletion
+    unless Rails.env == 'test' || self.queued_for_deletion || self.detached
       if manual_set || self.public_changed? || self.new_record?
         if self.firecloud_workspace.present? && self.firecloud_project.present? && ApplicationController.read_only_firecloud_client.present?
           access_level = self.public? ? 'READER' : 'NO ACCESS'

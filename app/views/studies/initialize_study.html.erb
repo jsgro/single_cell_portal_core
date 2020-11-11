@@ -15,7 +15,11 @@
   <ul class="nav wizard">
     <li role="presentation" class="wizard-nav" id="initialize_expression_form_nav"><a href="#expression" data-toggle="tab">1. Expression Matrix <span id="initialize_expression_form_nav_completed"></span></a></li>
     <li role="presentation" class="wizard-nav" id="initialize_metadata_form_nav"><a href="#metadata" data-toggle="tab">2. Metadata <span id="initialize_metadata_form_nav_completed"></span></a></li>
-    <li role="presentation" class="wizard-nav" id="initialize_ordinations_form_nav"><a href="#ordinations" data-toggle="tab">3. Clusters <span id="initialize_ordinations_form_nav_completed"></span></a></li>
+    <% if User.feature_flag_for_instance(current_user, 'spatial_transcriptomics') %>
+      <li role="presentation" class="wizard-nav" id="initialize_ordinations_form_nav"><a href="#ordinations" data-toggle="tab">3. Clusters / Spatial <span id="initialize_ordinations_form_nav_completed"></span></a></li>
+    <% else %>
+      <li role="presentation" class="wizard-nav" id="initialize_ordinations_form_nav"><a href="#ordinations" data-toggle="tab">3. Clusters <span id="initialize_ordinations_form_nav_completed"></span></a></li>
+    <% end %>
     <li role="presentation" class="wizard-nav" id="initialize_labels_form_nav"><a href="#labels" data-toggle="tab">4. Coordinate Labels <span id="initialize_labels_form_nav_completed"></span></a></li>
     <li role="presentation" class="wizard-nav" id="initialize_primary_data_form_nav"><a href="#primary-data" data-toggle="tab">5. Sequence Data <span id="initialize_primary_data_form_nav_completed"></span></a></li>
     <li role="presentation" class="wizard-nav" id="initialize_marker_genes_form_nav"><a href="#marker-genes" data-toggle="tab">6. Gene Lists <span id="initialize_marker_genes_form_nav_completed"></span></a></li>
@@ -120,7 +124,11 @@
       <div id="ordinations-target">
         <div class="well well-sm upload-wizard">
           <div class="row">
-          <h2 class="col-sm-12">Step 3. Upload Cluster File <small class="initialize-label" id="initialize_ordinations_form_completed"></small></h2>
+          <% if User.feature_flag_for_instance(current_user, 'spatial_transcriptomics') %>
+            <h2 class="col-sm-12">Step 3. Upload Cluster / Spatial Files <small class="initialize-label" id="initialize_ordinations_form_completed"></small></h2>
+          <% else %>
+            <h2 class="col-sm-12">Step 3. Upload ClusterFiles <small class="initialize-label" id="initialize_ordinations_form_completed"></small></h2>
+          <% end %>
           <p class="text-center"><%= link_to 'Cluster File', 'https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt', target: :_blank %></p>
           </div>
           <div class="row">
@@ -146,6 +154,11 @@
               </ul>
             </ul>
           </div>
+          <% if User.feature_flag_for_instance(current_user, 'spatial_transcriptomics') %>
+            <div class="row">
+              <p class="col-sm-12"><a href="https://en.wikipedia.org/wiki/Spatial_transcriptomics" target="_blank" rel="noreferrer">Spatial transcriptomics</a> data can also be uploaded with this file format.  The x, y, and z coordinates then represent actual spatial coordinates, as opposed to clustering output.</p>
+            </div>
+          <% end %>
           <div class="row">
             <p class="col-sm-12">* Group values are treated as literal strings, and numerics as floating-point numbers.</p>
           </div>

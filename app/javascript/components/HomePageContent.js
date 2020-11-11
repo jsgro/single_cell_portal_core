@@ -10,14 +10,14 @@ import StudyDetails from 'components/search/results/Study'
 import StudySearchProvider, { StudySearchContext } from 'providers/StudySearchProvider'
 import SearchFacetProvider from 'providers/SearchFacetProvider'
 import UserProvider from 'providers/UserProvider'
-import FeatureFlagProvider from 'providers/FeatureFlagProvider'
 import ErrorBoundary from 'lib/ErrorBoundary'
+import * as queryString from 'query-string'
 
 /** include search controls and results */
-export function StudySearchView() {
+export function StudySearchView({advancedSearchDefault}) {
   const studySearchState = useContext(StudySearchContext)
   return <>
-    <SearchPanel searchOnLoad={true}/>
+    <SearchPanel advancedSearchDefault={advancedSearchDefault} searchOnLoad={true}/>
     <ResultsPanel studySearchState={studySearchState} studyComponent={StudyDetails} />
   </>
 }
@@ -27,9 +27,12 @@ const LinkableSearchTabs = function(props) {
   // since the Reach router doesn't own the home path
   const location = useLocation()
   const showGenesTab = location.pathname.startsWith('/single_cell/app/genes')
+  const queryParams = queryString.parse(location.search)
+  // the queryParams object does not support the more typical hasOwnProperty test
+  const advancedSearchDefault = ('advancedSearch' in queryParams)
   return (
     <div>
-      <nav className="nav search-links" data-tablist-name="search" role="tablist">
+      <nav className="nav search-links" data-analytics-name="search" role="tablist">
         <Link to={`/single_cell/app/studies${location.search}`}
           className={showGenesTab ? '' : 'active'}>
           <span className="fas fa-book"></span> Search Studies
@@ -42,7 +45,7 @@ const LinkableSearchTabs = function(props) {
       <div className="tab-content top-pad">
         <Router basepath="/single_cell">
           <GeneSearchView path="app/genes"/>
-          <StudySearchView default/>
+          <StudySearchView advancedSearchDefault={advancedSearchDefault} default/>
         </Router>
       </div>
     </div>
@@ -53,15 +56,13 @@ const LinkableSearchTabs = function(props) {
 function ProviderStack(props) {
   return (
     <UserProvider>
-      <FeatureFlagProvider>
-        <SearchFacetProvider>
-          <StudySearchProvider>
-            <GeneSearchProvider>
-              { props.children }
-            </GeneSearchProvider>
-          </StudySearchProvider>
-        </SearchFacetProvider>
-      </FeatureFlagProvider>
+      <SearchFacetProvider>
+        <StudySearchProvider>
+          <GeneSearchProvider>
+            { props.children }
+          </GeneSearchProvider>
+        </StudySearchProvider>
+      </SearchFacetProvider>
     </UserProvider>
   )
 }

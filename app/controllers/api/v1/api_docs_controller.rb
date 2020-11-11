@@ -65,6 +65,10 @@ module Api
           key :name, 'Taxons'
           key :description, 'List of available species, genome assemblies & annotations'
         end
+        tag do
+          key :name, 'Visualization'
+          key :description, 'Visualization data (warning: these change frequently)'
+        end
         key :host, "#{ENV['HOSTNAME']}#{ENV['NOT_DOCKERIZED'] ? ':3000' : nil}"
         key :basePath, '/single_cell/api/v1'
         key :consumes, ['application/json']
@@ -105,7 +109,9 @@ module Api
           Api::V1::TaxonsController,
           Api::V1::StatusController,
           Api::V1::SiteController,
-          Api::V1::SearchController
+          Api::V1::SearchController,
+          Api::V1::Visualization::ClustersController,
+          Api::V1::Visualization::ExploreController
       ].freeze
 
       def index

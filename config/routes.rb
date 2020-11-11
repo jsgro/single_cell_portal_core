@@ -37,8 +37,14 @@ Rails.application.routes.draw do
           member do
             post 'sync', to: 'studies#sync_study'
           end
-          resources :expression_data, only: [:show], param: :data_type
+          get 'explore', to: 'visualization/explore#show'
+          resources :expression, controller: 'visualization/expression', only: [:show], param: :data_type
+          resources :clusters, controller: 'visualization/clusters',
+                               only: [:show, :index],
+                               param: :cluster_name,
+                               constraints: { cluster_name: /[^\/]+/ } # needed to allow '.' in cluster names
         end
+        resource :current_user, only: [:update], controller: 'current_user'
 
         get 'status', to: 'status#index'
         scope :site do

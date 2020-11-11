@@ -1,11 +1,13 @@
 import React, { useContext } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna, faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
+import { faDna, faExclamationCircle, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StudyResults from './StudyResults'
 import Study from './Study'
 import SearchQueryDisplay from './SearchQueryDisplay'
-import { FeatureFlagContext } from 'providers/FeatureFlagProvider'
+import { UserContext } from 'providers/UserProvider'
+import { getNumFacetsAndFilters } from 'providers/StudySearchProvider'
+
 
 /**
  * handles display of loading, error and results for a list of studies
@@ -14,7 +16,7 @@ import { FeatureFlagContext } from 'providers/FeatureFlagProvider'
  * will be used
  */
 const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) => {
-  const featureFlagState = useContext(FeatureFlagContext)
+  const featureFlagState = useContext(UserContext).featureFlagsWithDefaults
   const results = studySearchState.results
 
   let panelContent
@@ -43,7 +45,7 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
   } else if (results.studies && results.studies.length > 0) {
     panelContent = (
       <>
-        { featureFlagState.faceted_search &&
+        { featureFlagState && featureFlagState.faceted_search &&
           <SearchQueryDisplay terms={results.termList} facets={results.facets}/> }
         <StudyResults
           results={results}
@@ -63,11 +65,37 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
       </>
     )
   }
+
   return (
     <div className="results-panel">
-      <div className="results-content">{panelContent}</div>
+      <div className="results-content">
+        { panelContent }
+        <FacetResultsFooter studySearchState={studySearchState}/>
+      </div>
     </div>
   )
 }
+
+const FacetResultsFooter = ({studySearchState}) => {
+  let resultsFooter = <div></div>
+  if (studySearchState.isLoaded && studySearchState.params &&
+      getNumFacetsAndFilters(studySearchState.params.facets)[0]  > 0) {
+    resultsFooter = (
+      <div className="flexbox alert alert-info">
+        <div className="">
+          <FontAwesomeIcon icon={faInfoCircle} className="fa-lg fa-fw icon-left"/>
+        </div>
+        <div className="">
+          <p>Our advanced search is metadata-powered.  By selecting filters, your search <b>targets only studies that use ontology terms</b> in their metadata file.
+          Currently, about 20% of public studies supply that metadata.</p>
+          Learn more about our search capability on our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>.<br/>
+          Study authors looking to make their studies more accessible can read our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search" target="_blank" rel="noreferrer">metadata guide</a>.
+        </div>
+      </div>
+    )
+  }
+  return resultsFooter;
+}
+
 
 export default ResultsPanel
