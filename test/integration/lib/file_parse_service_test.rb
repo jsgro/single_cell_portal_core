@@ -26,6 +26,9 @@ class FileParseServiceTest < ActiveSupport::TestCase
     genes.save!
     barcodes.save!
     FileParseService.create_bundle_from_file_options(matrix, study)
+    matrix_file.close
+    genes_file.close
+    barcodes_file.close
     matrix.reload
     parent_bundle = matrix.study_file_bundle
     assert parent_bundle.present?, "Did not create study file bundle for matrix file"

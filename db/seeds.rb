@@ -183,17 +183,18 @@ FeatureFlag.create!(name: 'faceted_search')
 
 # seed BQ for search controller test
 puts "Directly seeding BigQuery w/ synthetic data"
-File.open(Rails.root.join('db', 'seed', 'bq_seeds.json')) do |bq_seeds|
-  bq_data = JSON.parse bq_seeds.read
-  bq_data.each do |entry|
-    entry['CellID'] = SecureRandom.uuid
-    entry['study_accession'] = study.accession
-    entry['file_id'] = metadata_file.id.to_s
-  end
-  Tempfile.open(['tmp_bq_seeds', '.json']) do |tmp_file|
-    tmp_file.write bq_data.map(&:to_json).join("\n")
-    table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
-    job = table.load tmp_file, write: 'append'
-  end
+bq_seeds = File.open(Rails.root.join('db', 'seed', 'bq_seeds.json'))
+bq_data = JSON.parse bq_seeds.read
+bq_data.each do |entry|
+  entry['CellID'] = SecureRandom.uuid
+  entry['study_accession'] = study.accession
+  entry['file_id'] = metadata_file.id.to_s
 end
-puts "BigQuery seeding completed"
+tmp_file = File.new('tmp_bq_seeds.json', 'w+')
+tmp_file.write bq_data.map(&:to_json).join("\n")
+table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
+job = table.load(tmp_file, write: 'append', format: :json)
+bq_seeds.close
+tmp_file.close
+File.delete tmp_file.path
+puts "BigQuery seeding completed: #{job}"

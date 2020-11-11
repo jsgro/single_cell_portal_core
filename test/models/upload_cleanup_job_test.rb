@@ -22,6 +22,7 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
     file = File.open(Rails.root.join('test', 'test_data', filename))
     bad_upload = StudyFile.create(name: filename, study: @study, file_type: 'Expression Matrix', upload: file,
                                   status: 'uploading', created_at: 1.week.ago.in_time_zone)
+    file.close
     UploadCleanupJob.find_and_remove_failed_uploads
     failed_uploads = StudyFile.where(queued_for_deletion: true, :id.nin => existing_deletes).count
     assert failed_uploads == 1, "Should have found 1 failed upload but found #{failed_uploads}"

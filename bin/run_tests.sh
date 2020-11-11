@@ -37,7 +37,7 @@ if [ "$NOT_DOCKERIZED" = "true" ]
 then
     TMP_PIDS_DIR="./tmp/pids"
 fi
-
+rm ./log/test.log
 if [[ ! -d "$TMP_PIDS_DIR" ]]
 then
     echo "*** MAKING tmp/pids DIR ***"

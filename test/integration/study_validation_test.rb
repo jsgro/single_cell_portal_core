@@ -126,38 +126,38 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
-  test 'should fail all local parse jobs' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-    study_name = "Validation Local Parse Failure Study #{@random_seed}"
-    study_params = {
-        study: {
-            name: study_name,
-            user_id: @test_user.id
-        }
-    }
-    post studies_path, params: study_params
-    follow_redirect!
-    assert_response 200, "Did not redirect to upload successfully"
-    study = Study.find_by(name: study_name)
-    assert study.present?, "Study did not successfully save"
-
-    # bad marker gene list
-    file_params = {study_file: {name: 'Bad Test Gene List', file_type: 'Gene List', study_id: study.id.to_s}}
-    perform_study_file_upload('marker_1_gene_list_bad.txt', file_params, study.id)
-    assert_response 200, "Gene list upload failed: #{@response.code}"
-    assert study.study_files.where(file_type: 'Gene List').size == 1,
-           "Gene list failed to associate, found #{study.study_files.where(file_type: 'Gene List').size} files"
-    gene_list_file = study.study_files.where(file_type: 'Gene List').first
-    # this parse has a duplicate gene, which will not throw an error - it is caught internally
-    ParseUtils.initialize_precomputed_scores(study, gene_list_file, @test_user)
-    # we have to reload the study because it will have a cached reference to the precomputed_score due to the nature of the parse
-    study.reload
-    assert study.study_files.where(file_type: 'Gene List').size == 0,
-           "Found #{study.study_files.where(file_type: 'Gene List').size} gene list files when should have found 0"
-    assert study.precomputed_scores.size == 0, "Found #{study.precomputed_scores.size} precomputed scores when should have found 0"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
-  end
+  # test 'should fail all local parse jobs' do
+  #   puts "#{File.basename(__FILE__)}: #{self.method_name}"
+  #   study_name = "Validation Local Parse Failure Study #{@random_seed}"
+  #   study_params = {
+  #       study: {
+  #           name: study_name,
+  #           user_id: @test_user.id
+  #       }
+  #   }
+  #   post studies_path, params: study_params
+  #   follow_redirect!
+  #   assert_response 200, "Did not redirect to upload successfully"
+  #   study = Study.find_by(name: study_name)
+  #   assert study.present?, "Study did not successfully save"
+  #
+  #   # bad marker gene list
+  #   file_params = {study_file: {name: 'Bad Test Gene List', file_type: 'Gene List', study_id: study.id.to_s}}
+  #   perform_study_file_upload('marker_1_gene_list_bad.txt', file_params, study.id)
+  #   assert_response 200, "Gene list upload failed: #{@response.code}"
+  #   assert study.study_files.where(file_type: 'Gene List').size == 1,
+  #          "Gene list failed to associate, found #{study.study_files.where(file_type: 'Gene List').size} files"
+  #   gene_list_file = study.study_files.where(file_type: 'Gene List').first
+  #   # this parse has a duplicate gene, which will not throw an error - it is caught internally
+  #   ParseUtils.initialize_precomputed_scores(study, gene_list_file, @test_user)
+  #   # we have to reload the study because it will have a cached reference to the precomputed_score due to the nature of the parse
+  #   study.reload
+  #   assert study.study_files.where(file_type: 'Gene List').size == 0,
+  #          "Found #{study.study_files.where(file_type: 'Gene List').size} gene list files when should have found 0"
+  #   assert study.precomputed_scores.size == 0, "Found #{study.precomputed_scores.size} precomputed scores when should have found 0"
+  #
+  #   puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  # end
 
   test 'should prevent changing firecloud attributes' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
@@ -274,29 +274,25 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     metadata_file = study.study_files.build(file_type: 'Metadata', use_metadata_convention: true, upload: metadata_upload,
                                             name: 'metadata.v2-0-0.txt', parse_status: 'unparsed', status: 'uploaded')
     metadata_file.save!
+    metadata_upload.close
     metadata_file.reload
     study.send_to_firecloud(metadata_file)
 
-    puts "Requesting parse for file \"#{metadata_file.name}\"."
-    initiate_study_file_parse(metadata_file.name, study.id)
-    assert_response 200, "Metadata parse job failed to start: #{@response.code}"
-
-    seconds_slept = 60
-    sleep seconds_slept
-    metadata_file.reload
-    sleep_increment = 15
-    max_seconds_to_sleep = 300
-    until ['parsed', 'failed'].include? metadata_file.parse_status do
-      puts "After #{seconds_slept} seconds, #{metadata_file.name} is #{metadata_file.parse_status}"
-      if seconds_slept >= max_seconds_to_sleep
-        raise "Even after #{seconds_slept} seconds, not all files have been parsed."
-      end
-      sleep(sleep_increment)
-      seconds_slept += sleep_increment
-      metadata_file.reload
+    puts "Directly seeding BigQuery w/ synthetic data"
+    bq_seeds = File.open(Rails.root.join('db', 'seed', 'bq_seeds.json'))
+    bq_data = JSON.parse bq_seeds.read
+    bq_data.each do |entry|
+      entry['CellID'] = SecureRandom.uuid
+      entry['study_accession'] = study.accession
+      entry['file_id'] = metadata_file.id.to_s
     end
-    puts "After #{seconds_slept} seconds, #{metadata_file.name} is #{metadata_file.parse_status}"
-    assert_equal 'parsed', metadata_file.parse_status, "Metadata file did not successfully parse"
+    tmp_file = File.new(Rails.root.join('tmp_bq_seeds.json'), 'w+')
+    tmp_file.write bq_data.map(&:to_json).join("\n")
+    table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
+    job = table.load(tmp_file, write: 'append', format: :json)
+    bq_seeds.close
+    tmp_file.close
+    puts "BigQuery seeding completed: #{job}"
 
     # ensure data is in BQ
     initial_bq_row_count = get_bq_row_count(study)
@@ -342,6 +338,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     assert_equal exp_matrix.size, study_file.upload_file_size, "File sizes do not match; #{exp_matrix.size} != #{study_file.upload_file_size}"
 
     # clean up
+    exp_matrix.close
     study_file.destroy
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"

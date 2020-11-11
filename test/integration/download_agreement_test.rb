@@ -9,8 +9,12 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
     @study = Study.create(name: "Download Agreement #{@random_seed}", user_id: @test_user.id, firecloud_project: ENV['PORTAL_NAMESPACE'])
     upload = File.open(Rails.root.join('test', 'test_data', 'expression_matrix_example.txt'))
     @exp_matrix = @study.study_files.build(file_type: 'Expression Matrix', upload: upload)
+    if Taxon.count > 0
+      @exp_matrix.taxon_id = Taxon.first.id
+    end
     @exp_matrix.save!
     @study.send_to_firecloud(@exp_matrix)
+    upload.close
     auth_as_user(@test_user)
     sign_in @test_user
   end

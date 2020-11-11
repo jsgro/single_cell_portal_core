@@ -14,6 +14,7 @@ def perform_chunked_study_file_upload(filename, study_file_params, study_id)
     study_file_params[:study_file].merge!(upload: file_upload)
     upload_response = patch "/single_cell/studies/#{study_id}/upload", params: study_file_params, headers: {'Content-Type' => 'multipart/form-data'}
   end
+  source_file.close
   upload_response
 end
 
