@@ -22,6 +22,7 @@ before_install:
       [[ "${TRAVIS_PULL_REQUEST}"   = "false" ]] ;
       echo $?
     )
+    export BURP_ENABLE=-1
     if [ "${BURP_ENABLE}" = "0" ]; then
       bin/burp_start.sh "${BURP_DOCKER_IMAGE}" "${BURP_SA_KEY}"
       export BURP_PROXY="http://$(hostname):8080"
