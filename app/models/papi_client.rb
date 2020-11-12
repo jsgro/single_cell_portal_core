@@ -201,6 +201,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - +DATABASE_NAME+: Name of current MongoDB schema as defined by Rails environment
   #   - +GOOGLE_PROJECT_ID+: Name of the GCP project this pipeline is running in
   #   - +SENTRY_DSN+: Sentry Data Source Name (DSN); URL to send Sentry logs to
+  #   - +BARD_HOST_URL+: URL for Bard host that proxies Mixpanel
   #
   # * *returns*
   #   - (Hash) => Hash of required environment variables
@@ -211,7 +212,8 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
         'MONGODB_PASSWORD' => ENV['PROD_DATABASE_PASSWORD'],
         'DATABASE_NAME' => Mongoid::Config.clients["default"]["database"],
         'GOOGLE_PROJECT_ID' => COMPUTE_PROJECT,
-        'SENTRY_DSN' => ENV['SENTRY_DSN']
+        'SENTRY_DSN' => ENV['SENTRY_DSN'],
+        'BARD_HOST_URL' => Rails.application.config.bard_host_url
     }
   end
 
