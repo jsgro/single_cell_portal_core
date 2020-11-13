@@ -88,8 +88,11 @@
     <div class="tab-pane" id="metadata">
       <div class="well well-sm container-fluid upload-wizard">
         <div class="row">
-        <h2 class="col-sm-12">Step 2. Upload Metadata File <small class="initialize-label" id="initialize_metadata_form_completed"></small></h2>
-        <%= image_tag "metadata-convention-explainer.jpg", id: 'metadata-convention-explainer' %>
+          <h2 class="col-sm-12">Step 2. Upload Metadata File <small class="initialize-label" id="initialize_metadata_form_completed"></small></h2>
+          <div class="col-sm-12" id="metadata-convention-explainer">
+            <%= image_tag "metadata-convention-explainer.jpg" %>
+          </div>
+        </div>
       </div>
 
       <div id="container-<%= @metadata_file.id %>">
