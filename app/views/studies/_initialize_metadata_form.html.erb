@@ -21,8 +21,16 @@
 		</div>
 		<div class="col-sm-5 upload-field">
       <div class="col-sm-5">
-        <%= f.label :use_metadata_convention, "Use Metadata Convention?" %> <%= render partial: 'metadata_convention_help_popover', locals: {id: f.object.id.to_s} %><br />
-        <%= f.select :use_metadata_convention, options_for_select([['Yes', true],['No', false]], study_file.use_metadata_convention), {}, class: 'form-control use-metadata-convention', disabled: !study_file.new_record? %>
+        <%= f.label :use_metadata_convention, "Do you use SCP conventional names for required metadata column headers?" %> <%= render partial: 'metadata_convention_help_popover', locals: {id: f.object.id.to_s} %><br />
+        <%= f.label :use_metadata_convention_true do %>
+          <%= f.radio_button :use_metadata_convention, true, disabled: !study_file.new_record?%>
+          Yes
+        <% end %>
+        &nbsp;
+        <%= f.label :use_metadata_convention_false do %>
+          <%= f.radio_button :use_metadata_convention, false, disabled: !study_file.new_record? %>
+          No
+        <% end %>
       </div>
       <% if !study_file.upload_file_name.nil? %>
         <p><label>Link to file </label><br /><%= render partial: '/layouts/download_link', locals: {study: @study, study_file: study_file} %></p>
