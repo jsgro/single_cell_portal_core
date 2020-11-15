@@ -127,8 +127,15 @@ function renderScatterPlot(target, rawPlot) {
 
   const plotId = `cluster-plot-${scatterCount}`
 
+  // TODO (SCP-2881): Ensure margin when floating left for side-by-side plots
+  // $(target).append(`
+  //   <div class="row" style="float: left">
+  //     <div id="${plotId}"></div>
+  //     <div id="cluster-figure-legend"></div>
+  //   </div>`)
+
   $(target).append(`
-    <div class="row" style="float: left">
+    <div class="row">
       <div id="${plotId}"></div>
       <div id="cluster-figure-legend"></div>
     </div>`)
@@ -318,7 +325,7 @@ export default async function initializeExplore() {
     $('#search_subsample').val(10000)
   }
 
-  attachEventHandlers();
+  attachEventHandlers()
 
   const accession = window.SCP.studyAccession
   window.SCP.study = await fetchExplore(accession)
