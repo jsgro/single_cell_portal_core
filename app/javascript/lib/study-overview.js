@@ -156,7 +156,7 @@ function renderScatterPlot(target, rawPlot) {
   })
 
   const description =
-    `<p class="text-center help-block">${window.SCP.cluster.description}</p>`
+    `<p class="text-center help-block">${rawPlot.description}</p>`
   $('#cluster-figure-legend').html(description)
 
   // access actual target div, not jQuery object wrapper for relayout event
@@ -181,14 +181,14 @@ async function drawScatterPlot() {
   const annotation = $('#annotation').val()
   const subsample = $('#subsample').val()
 
-  const rawScatter = await fetchCluster(
+  const rawPlot = await fetchCluster(
     window.SCP.study.accession, cluster, annotation, subsample
   )
 
-  window.SCP.cluster = rawScatter
+  window.SCP.cluster = rawPlot
 
   // Consider putting into a dictionary instead of a list
-  window.SCP.plots.push(rawScatter)
+  window.SCP.plots.push(rawPlot)
 
   // TODO (SCP-2857): Remove hard-coding when UI for selecting n-many cluster
   // + spatial plots is something we can develop against.
@@ -198,7 +198,7 @@ async function drawScatterPlot() {
   window.SCP.scatterCount = 0
 
   // render colorscale picker if needed
-  if (rawScatter.annotParams.type == 'numeric') {
+  if (rawPlot.annotParams.type == 'numeric') {
     $('#toggle-plots').html('')
   } else {
     $('#toggle-plots').html(
@@ -217,7 +217,7 @@ async function drawScatterPlot() {
 
   // Duplicate calls are merely for proof-of-concept, showing we can
   // render plots side-by-side
-  renderScatterPlot(target, rawScatter)
+  renderScatterPlot(target, rawPlot)
 
   $('#plots').data('spinner').stop()
 
@@ -233,9 +233,9 @@ function getScatterPlotLayout(rawPlot) {
   let dimensionProps
   if (rawPlot.is3D) {
     const camera = $('#cluster-plot').data('camera')
-    dimensionProps = get3DScatterProps(camera, window.SCP.cluster)
+    dimensionProps = get3DScatterProps(camera, rawPlot)
   } else {
-    dimensionProps = get2DScatterProps(window.SCP.cluster)
+    dimensionProps = get2DScatterProps(rawPlot)
   }
 
   layout = Object.assign(layout, dimensionProps)
