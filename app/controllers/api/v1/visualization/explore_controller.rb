@@ -27,7 +27,7 @@ module Api
               key :type, :string
             end
             response 200 do
-              key :description, 'Json of study visualization properties'
+              key :description, 'JSON of study visualization properties'
             end
             response 401 do
               key :description, ApiBaseController.unauthorized
@@ -69,6 +69,10 @@ module Api
           ideogram_study_file_names = StudyFile.where(study: @study, file_type: 'Ideogram Annotations').pluck(:name)
 
           explore_props = {
+            cluster: {
+              numPoints: default_cluster.points,
+              isSubsampled: default_cluster.subsampled?
+            },
             isClusterViewable: default_cluster.present?,
             taxonNames: @study.expressed_taxon_names,
             hasIdeogramInferCnvFiles: ideogram_study_file_names.any?,
