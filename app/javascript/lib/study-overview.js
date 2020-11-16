@@ -36,7 +36,7 @@ export function getBaseLayout(height, width) {
 
 /** Gets Plotly layout scene props for 3D scatter plot */
 export function get3DScatterProps(camera, cluster) {
-  const { clusterHasRange, axes } = cluster
+  const { domainRanges, axes } = cluster
   const { titles, ranges, aspects } = axes
 
   const scene = {
@@ -47,7 +47,7 @@ export function get3DScatterProps(camera, cluster) {
     zaxis: { title: titles.z, autorange: true, showticklabels: false }
   }
 
-  if (clusterHasRange) {
+  if (domainRanges) {
     scene.xaxis.autorange = false
     scene.xaxis.range = ranges.x
     scene.yaxis.autorange = false
@@ -68,7 +68,7 @@ export function get3DScatterProps(camera, cluster) {
 /** Gets Plotly layout props for 2D scatter plot */
 export function get2DScatterProps(cluster) {
   const {
-    axes, clusterHasRange, domainRanges, hasCoordinateLabels, coordinateLabels
+    axes, domainRanges, hasCoordinateLabels, coordinateLabels
   } = cluster
   const { titles } = axes
 
@@ -78,7 +78,7 @@ export function get2DScatterProps(cluster) {
   }
 
   // if user has supplied a range, set that, otherwise let Plotly autorange
-  if (clusterHasRange) {
+  if (domainRanges) {
     layout.xaxis.range = domainRanges.x
     layout.yaxis.range = domainRanges.y
   } else {
@@ -247,6 +247,7 @@ function getScatterPlotLayout(rawPlot) {
  * End default Explore view code
  */
 
+/** Listen for events, and update view accordingly */
 function attachEventHandlers() {
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
@@ -319,19 +320,21 @@ export default async function initializeExplore() {
     $(`#study-tabs a[href="#${tab}"]`).tab('show')
   }
   $('#cluster-plot').data('camera', baseCamera)
-  // set default subsample option of 10K (if subsampled) or all cells
-  if (window.SCP.numPointsCluster > 10000 && window.SCP.clusterIsSampled) {
-    $('#subsample').val(10000)
-    $('#search_subsample').val(10000)
-  }
 
   attachEventHandlers()
 
   const accession = window.SCP.studyAccession
-  window.SCP.study = await fetchExplore(accession)
+  const study = await fetchExplore(accession)
+  window.SCP.study = study
   window.SCP.study.accession = accession
 
   window.SCP.taxons = window.SCP.study.taxonNames
+
+  // set default subsample option of 10K (if subsampled) or all cells
+  if (study.cluster.numPoints > 10000 && study.cluster.isSubsampled) {
+    $('#subsample').val(10000)
+    $('#search_subsample').val(10000)
+  }
 
   drawScatterPlot()
 

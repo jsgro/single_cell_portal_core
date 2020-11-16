@@ -156,6 +156,8 @@ module Api
             "data": plot_data,
             "description": cluster.study_file.description,
             "is3D": cluster.is_3d?,
+            "isSubsampled": cluster.subsampled?,
+            "numPoints": cluster.points,
             "domainRanges": cluster.domain_ranges,
             "axes": axes_full,
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
