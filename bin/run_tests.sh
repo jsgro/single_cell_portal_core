@@ -126,7 +126,7 @@ else
                     test/api/external_resources_controller_test.rb
                     test/api/metadata_schemas_controller_test.rb
                     test/api/visualization/cluster_controller_test.rb
-                    test/api/visualization/explore_test.rb
+                    test/api/visualization/explore_controller_test.rb
                     test/models/cluster_group_test.rb # deprecated, but needed to set up for user_annotation_test
                     test/models/user_annotation_test.rb
                     test/models/study_test.rb
@@ -147,6 +147,7 @@ else
                     test/integration/lib/summary_stats_utils_test.rb
                     test/integration/lib/user_asset_service_test.rb
                     test/integration/lib/file_parse_service_test.rb
+                    test/integration/lib/expression_viz_service_test.rb
                     test/integration/download_agreement_test.rb
                     test/models/big_query_client_test.rb
                     test/models/upload_cleanup_job_test.rb

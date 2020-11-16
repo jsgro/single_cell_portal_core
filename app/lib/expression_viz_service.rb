@@ -16,6 +16,7 @@ class ExpressionVizService
       render_data[:values] = load_annotation_based_data_array_scatter(study, gene, cluster, selected_annotation, subsample, render_data[:y_axis_title])
     end
     render_data[:options] = load_cluster_group_options(study)
+    render_data[:sptial_options] = load_spatial_options(study)
     render_data[:cluster_annotations] = load_cluster_group_annotations(study, cluster, current_user)
     render_data[:subsampling_options] = subsampling_options(cluster)
 
@@ -30,9 +31,16 @@ class ExpressionVizService
     study.default_expression_label
   end
 
-   # helper method to load all possible cluster groups for a study
+   # helper method to load all possible cluster group names for a study
   def self.load_cluster_group_options(study)
-    study.cluster_groups.map(&:name)
+    non_spatial_file_ids = StudyFile.where(study: study, :is_spatial.ne => true).pluck(:id)
+    ClusterGroup.where(study: study, :study_file_id.in => non_spatial_file_ids).pluck(:name)
+  end
+
+  # helper method to load spatial coordinate group names
+  def self.load_spatial_options(study)
+    spatial_file_ids = StudyFile.where(study: study, is_spatial: true).pluck(:id)
+    ClusterGroup.where(study: study, :study_file_id.in => spatial_file_ids).pluck(:name)
   end
 
   # helper method to load all available cluster_group-specific annotations
