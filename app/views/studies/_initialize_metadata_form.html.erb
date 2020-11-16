@@ -9,21 +9,34 @@
 			<%= f.label :name %><br />
 			<%= f.text_field :name, class: 'form-control filename', readonly: true, placeholder: 'Filename is taken from uploaded file...', autocomplete: 'off' %>
 		</div>
-		<div class="col-sm-8">
-			<%= f.label :description %><br />
-			<%= f.text_field :description, class: 'form-control' %>
-		</div>
-	</div>
-	<div class="form-group row">
-		<div class="col-sm-4">
+    <div class="col-sm-4">
 			<%= f.label :file_type %><br />
 			<%= f.text_field :file_type, readonly: true, class: 'form-control file-type' %>
 		</div>
-		<div class="col-sm-5 upload-field">
-      <div class="col-sm-5">
-        <%= f.label :use_metadata_convention, "Use Metadata Convention?" %> <%= render partial: 'metadata_convention_help_popover', locals: {id: f.object.id.to_s} %><br />
-        <%= f.select :use_metadata_convention, options_for_select([['Yes', true],['No', false]], study_file.use_metadata_convention), {}, class: 'form-control use-metadata-convention', disabled: !study_file.new_record? %>
-      </div>
+	</div>
+	<div class="form-group row">
+    <div class="col-sm-8">
+			<%= f.label :description %><br />
+			<%= f.text_field :description, class: 'form-control' %>
+		</div>
+  </div>
+  <div class="form-group row">
+		<div class="col-sm-5">
+      <%= f.label :use_metadata_convention, "Do you use SCP conventional names for required metadata column headers?" %> <%= render partial: 'metadata_convention_help_popover', locals: {id: f.object.id.to_s} %><br />
+      <%= f.label :use_metadata_convention_true do %>
+        <%= f.radio_button :use_metadata_convention, true, checked: true, disabled: !study_file.new_record?%>
+        Yes
+      <% end %>
+      &nbsp;
+      <%= f.label :use_metadata_convention_false do %>
+        <%= f.radio_button :use_metadata_convention, false, checked: false, disabled: !study_file.new_record? %>
+        No
+      <% end %>
+      <div id="use-metadata-convention-message"></div>
+    </div>
+  </div>
+  <div class="form-group row">
+    <div class="col-sm-5 upload-field">
       <% if !study_file.upload_file_name.nil? %>
         <p><label>Link to file </label><br /><%= render partial: '/layouts/download_link', locals: {study: @study, study_file: study_file} %></p>
       <% else %>
@@ -56,13 +69,38 @@
 
 	<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
 
+    function setMetadataConventionMessage(useMetadataConvention) {
+        var message;
+        if (useMetadataConvention === true) {
+          message =
+            `This makes your data discoverable in advanced search.<br/>` +
+            `If the file fails metadata convention validation, you will be emailed messages to help correct it.`
+        } else {
+          const url = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+          message =
+            `Use the SCP metadata convention ("Yes") to make your data discoverable in advanced search.<br/>` +
+            `Learn <a href="${url}" target="_blank" rel="noreferrer">how to convert your file</a>.`
+        }
+        console.log(useMetadataConvention)
+        console.log(message)
+        $('#use-metadata-convention-message').html(message + '<br/>')
+    }
+
 		$(function() {
 			if (<%= !study_file.upload_file_name.nil? %>) {
 				completeWizardStep('initialize_metadata_form_nav');
 				console.log('incrementing status for metadata upload');
 				$('#initialize_metadata_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_metadata_form_completed'}) %>");
 				$('#initialize_metadata_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
-			}
+      }
+
+      $(document).on('change', '[name="study_file[use_metadata_convention]"]', (event) => {
+        const useMetadataConvention = (event.target.value === 'true')
+        setMetadataConventionMessage(useMetadataConvention)
+      });
+
+      // Default to use the convention
+      setMetadataConventionMessage(true)
 
 			$('#metadata_form').fileupload({
 				url: "<%= upload_study_path(@study._id) %>",
