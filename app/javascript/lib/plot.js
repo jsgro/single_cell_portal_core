@@ -1,7 +1,23 @@
 import Plotly from 'plotly.js-dist'
 
+// default title font settings for axis titles in plotly
+export const titleFont = {
+    family: 'Helvetica Neue',
+    size: 16,
+    color: '#333'
+};
+
+// default label font settings for colorbar titles in plotly
+export const labelFont = {
+    family: 'Helvetica Neue',
+    size: 12,
+    color: '#333'
+};
+
+export const lineColor = 'rgb(40, 40, 40)';
+
 /**
- * Plots expression data
+ * Wrapper for Plotly.newPlot, to enable tests
  *
  * Having this function in a separate module is needed for mocking in related
  * test (study-violin-plot.test.js), due to (1) and buggy workaround (2).
@@ -12,10 +28,10 @@ import Plotly from 'plotly.js-dist'
  * 2) jest.mock() does not work when module name has ".js" in it
  *    Details: https://github.com/facebook/jest/issues/6420
  */
-export function plot(graphElementId, expressionData, expressionLayout) {
+export function plot(graphElementId, data, layout) {
   Plotly.newPlot(
     graphElementId,
-    expressionData,
-    expressionLayout
+    data,
+    layout
   )
 }

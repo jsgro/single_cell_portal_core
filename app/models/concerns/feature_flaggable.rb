@@ -6,6 +6,23 @@
 module FeatureFlaggable
   extend ActiveSupport::Concern
 
+  included do
+    validate :validate_feature_flags
+  end
+
+  def validate_feature_flags
+    feature_flags.each do |key, value|
+      flag = FeatureFlag.find_by(name: key)
+      if !flag
+        raise 'Invalid feature flag input - invalid flag name'
+      end
+      # confirm value is a boolean
+      if !!value != value
+        raise 'Invalid feature flag input - value must be boolean'
+      end
+    end
+  end
+
   # merges the user flags with the defaults -- this should  always be used in place of feature_flags
   # for determining whether to enable a feature for a given user.
   def feature_flags_with_defaults
@@ -51,4 +68,6 @@ module FeatureFlaggable
       instance.save
     end
   end
+
+
 end

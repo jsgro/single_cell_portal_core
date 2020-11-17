@@ -10,7 +10,7 @@ import camelcaseKeys from 'camelcase-keys'
 import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
 
-import { accessToken } from 'providers/UserProvider'
+import { getAccessToken } from 'providers/UserProvider'
 import {
   logFilterSearch, logSearch, logDownloadAuthorization, mapFiltersForLogging
 } from './scp-api-metrics'
@@ -27,8 +27,8 @@ export function defaultInit() {
     'Accept': 'application/json'
   }
   // accessToken is a blank string when not signed in
-  if (accessToken !== '') {
-    headers['Authorization'] = `Bearer ${accessToken}`
+  if (getAccessToken() !== '') {
+    headers['Authorization'] = `Bearer ${getAccessToken()}`
   }
   return {
     method: 'GET',
@@ -120,13 +120,67 @@ export function setMockOrigin(origin) {
   mockOrigin = origin
 }
 
+/** Constructs and encodes URL parameters; omits those with no value */
+function stringifyQuery(paramObj) {
+  const stringified = queryString.stringify(paramObj, {skipEmptyString: true})
+  return `?${stringified}`;
+}
+
+/**
+* Returns initial content for the "Explore" tab in Study Overview
+*
+* @param {String} studyAccession Study accession
+*/
+export async function fetchExplore(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/explore`
+  const [exploreInit, perfTime] =
+    await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return exploreInit
+}
+
+/**
+ * Returns an object with scatter plot data for a cluster in a study
+ *
+ * see definition at: app/controllers/api/v1/visualization/clusters_controller.rb
+ *
+ * @param {String} studyAccession Study accession
+ * @param {String} cluster Name of cluster, as defined at upload
+ * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
+ * @param {String} subsample Subsampling threshold, e.g. 100000
+ * @param {String} consensus Statistic to use for consensus, e.g. "mean"
+ *
+ * Example:
+ * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
+ */
+export async function fetchCluster(
+  studyAccession, cluster, annotation, subsample, consensus, mock=false
+) {
+  // Digest full annotation name to enable easy validation in API
+  const [annotName, annotType, annotScope] = annotation.split('--')
+  const paramObj = {
+    annotation_name: annotName,
+    annotation_type: annotType,
+    annotation_scope: annotScope,
+    subsample,
+    consensus
+  }
+
+  const params = stringifyQuery(paramObj)
+  const apiUrl = `/studies/${studyAccession}/clusters/${cluster}${params}`
+  // don't camelcase the keys since those can be cluster names,
+  // so send false for the 4th argument
+  const [scatter, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return scatter
+}
+
 /**
  * Returns an object with violin plot expression data for a gene in a study
  *
  * This endpoint is volatile, so intentionally not documented in Swagger.
  *
- * In lieu of docs, see definition at:
- * app/controllers/api/v1/expression_data_controller.rb
+ * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
  *
  * @param {String} studyAccession Study accession
  * @param {String} gene Gene names to get expression data for
@@ -143,7 +197,7 @@ export async function fetchExpressionViolin(
     subsample ? `&subsample=${encodeURIComponent(subsample)}` : ''
   const params =
   `?gene=${gene}${clusterParam}${annotationParam}${subsampleParam}`
-  const apiUrl = `/studies/${studyAccession}/expression_data/violin${params}`
+  const apiUrl = `/studies/${studyAccession}/expression/violin${params}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
   const [violin, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
@@ -154,13 +208,12 @@ export async function fetchExpressionViolin(
 /**
  * Get all study-wide and cluster annotations for a study
  *
- * This endpoint is intentionally not documented in Swagger.
+ * This endpoint is volatile and intentionally not documented in Swagger.
  *
- * In lieu of docs, see definition at:
- * app/controllers/api/v1/expression_data_controller.rb
+ * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
  *
  * Example:
- * https://singlecell.broadinstitute.org/single_cell/api/v1/studies/SCP1/expression_data/annotations
+ * https://singlecell.broadinstitute.org/single_cell/api/v1/studies/SCP1/expression/annotations
  *
  * Returns
  * {
@@ -173,7 +226,7 @@ export async function fetchExpressionViolin(
  * @param {Boolean} mock
  */
 export async function fetchAnnotationValues(studyAccession, mock=false) {
-  const apiUrl = `/studies/${studyAccession}/expression_data/annotations`
+  const apiUrl = `/studies/${studyAccession}/expression/annotations`
   const [values, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
   return values
 }
@@ -183,8 +236,7 @@ export async function fetchAnnotationValues(studyAccession, mock=false) {
  *
  * This endpoint is intentionally not documented in Swagger.
  *
- * In lieu of docs, see definition at:
- * app/controllers/api/v1/expression_data_controller.rb
+ * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
  *
  * @param {String} studyAccession study accession
  * @param {Array} genes List of gene names to get expression data for
@@ -208,6 +260,14 @@ export async function fetchExpressionHeatmap(
   const [heatmap, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
 
   return heatmap
+}
+
+export async function updateCurrentUser(updatedUser, mock=false) {
+  const init = Object.assign({}, defaultInit(), {
+    method: 'PATCH',
+    body: JSON.stringify(updatedUser)
+  })
+  await scpApi('/current_user', init, mock, true)
 }
 
 /**

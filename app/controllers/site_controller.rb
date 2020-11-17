@@ -1362,11 +1362,12 @@ class SiteController < ApplicationController
   end
 
   def set_cluster_group
-    @cluster = RequestUtils.get_cluster_group(params, @study)
+    @cluster = ClusterVizService.get_cluster_group(@study, params)
   end
 
   def set_selected_annotation
-    @selected_annotation = RequestUtils.get_selected_annotation(params, @study, @cluster)
+    annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, @cluster, params)
+    @selected_annotation = ExpressionVizService.get_selected_annotation(@study, @cluster, annot_params[:name], annot_params[:type], annot_params[:scope])
   end
 
   def set_workspace_samples
@@ -2024,13 +2025,22 @@ class SiteController < ApplicationController
       range = @cluster.domain_ranges
     else
       # take the minmax of each domain across all groups, then the global minmax
-      @vals = inputs.map {|v| domain_keys.map {|k| RequestUtils.get_minmax(v[k])}}.flatten.minmax
+      raw_values = []
+      inputs.each do |input|
+        domain_keys.each do |domain|
+          domain_range = RequestUtils.get_minmax(input[domain])
+          # RequestUtils.get_minmax will discard NaN/nil values that were ingested
+          # only add domain range to list if we have a valid minmax
+          raw_values << domain_range if domain_range.any?
+        end
+      end
+      aggregate_range = raw_values.flatten.minmax
       # add 2% padding to range
-      scope = (@vals.first - @vals.last) * 0.02
-      raw_range = [@vals.first + scope, @vals.last - scope]
-      range[:x] = raw_range
-      range[:y] = raw_range
-      range[:z] = raw_range
+      padding = (aggregate_range.first - aggregate_range.last) * 0.02
+      absolute_range = [aggregate_range.first + padding, aggregate_range.last - padding]
+      range[:x] = absolute_range
+      range[:y] = absolute_range
+      range[:z] = absolute_range
     end
     range
   end
