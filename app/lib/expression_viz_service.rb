@@ -33,13 +33,13 @@ class ExpressionVizService
 
    # helper method to load all possible cluster group names for a study
   def self.load_cluster_group_options(study)
-    non_spatial_file_ids = StudyFile.where(study: study, :is_spatial.ne => true).pluck(:id)
+    non_spatial_file_ids = StudyFile.where(study: study, :is_spatial.ne => true, file_type: 'Cluster').pluck(:id)
     ClusterGroup.where(study: study, :study_file_id.in => non_spatial_file_ids).pluck(:name)
   end
 
   # helper method to load spatial coordinate group names
   def self.load_spatial_options(study)
-    spatial_file_ids = StudyFile.where(study: study, is_spatial: true).pluck(:id)
+    spatial_file_ids = StudyFile.where(study: study, is_spatial: true, file_type: 'Cluster').pluck(:id)
     ClusterGroup.where(study: study, :study_file_id.in => spatial_file_ids).pluck(:name)
   end
 
