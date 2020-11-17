@@ -145,8 +145,9 @@ module Api
 
           subsample = url_params[:subsample].blank? ? nil : url_params[:subsample]
 
+          colorscale = url_params[:colorscale].blank? ? 'Reds' : url_params[:colorscale]
 
-          coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample)
+          coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
           plot_data = ClusterVizService.transform_coordinates(coordinates, study, cluster, annotation)
 
           if cluster.is_3d?

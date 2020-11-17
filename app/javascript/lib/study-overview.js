@@ -251,7 +251,7 @@ function getScatterPlotLayout(rawPlot) {
 function attachEventHandlers() {
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
-    const ideogramFiles = window.SCP.study.ideogramFiles
+    const ideogramFiles = window.SCP.study.inferCNVIdeogramFiles
     const fileId = $(this).val() // eslint-disable-line
     if (fileId !== '') {
       const ideogramAnnot = ideogramFiles[fileId]
@@ -330,15 +330,17 @@ export default async function initializeExplore() {
 
   window.SCP.taxons = window.SCP.study.taxonNames
 
-  // set default subsample option of 10K (if subsampled) or all cells
-  if (study.cluster.numPoints > 10000 && study.cluster.isSubsampled) {
-    $('#subsample').val(10000)
-    $('#search_subsample').val(10000)
+  if (study.cluster) {
+    // set default subsample option of 10K (if subsampled) or all cells
+    if (study.cluster.numPoints > 10000 && study.cluster.isSubsampled) {
+      $('#subsample').val(10000)
+      $('#search_subsample').val(10000)
+    }
+
+    drawScatterPlot()
   }
 
-  drawScatterPlot()
-
-  if (window.SCP.hasIdeogramInferCnvFiles) {
+  if (study.inferCNVIdeogramFiles) {
     // user has no clusters, but does have ideogram annotations
 
     const ideogramSelect = $('#ideogram_annotation')

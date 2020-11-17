@@ -139,7 +139,7 @@ class ClusterVizService
   # generic method to populate data structure to render a cluster scatter plot
   # uses cluster_group model and loads annotation for both group & numeric plots
   # data values are pulled from associated data_array entries for each axis and annotation/text value
-  def self.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil)
+  def self.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, colorscale=nil)
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     x_array = cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
@@ -198,7 +198,7 @@ class ClusterVizService
               color: color_array,
               size: study.default_cluster_point_size,
               line: { color: 'rgb(40,40,40)', width: study.show_cluster_point_borders? ? 0.5 : 0},
-              colorscale: params[:colorscale].blank? ? 'Reds' : params[:colorscale],
+              colorscale: colorscale.nil? ? 'Reds' : colorscale,
               showscale: true,
               colorbar: {
                   title: annotation[:name] ,
