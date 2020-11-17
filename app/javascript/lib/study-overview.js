@@ -118,7 +118,7 @@ function resizePlots() {
 }
 
 /** Set colors for group-based annotations */
-function setMarkerColors(data) {
+export function setMarkerColors(data) {
   return data.map((trace, i) => {
     trace.marker.color = getColorBrewerColor(i)
     return trace
