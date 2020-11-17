@@ -26,6 +26,7 @@ class ExpressionVizService
   end
 
 
+  # Get a hash of inferCNV ideogram file objects, keyed by file ID
   def self.get_infercnv_ideogram_files(study)
     ideogram_files = nil
 
