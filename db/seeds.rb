@@ -193,7 +193,7 @@ end
 tmp_file = File.new('tmp_bq_seeds.json', 'w+')
 tmp_file.write bq_data.map(&:to_json).join("\n")
 table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
-job = table.load(tmp_file, write: 'append', format: :json)
+job = table.load(tmp_file, write: 'empty', format: :json)
 bq_seeds.close
 tmp_file.close
 File.delete tmp_file.path
