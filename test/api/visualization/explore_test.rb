@@ -37,12 +37,11 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
   test 'should get basic study visualization data' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-
     assert_equal 3, @basic_study.default_cluster.data_arrays.count
 
     execute_http_request(:get, api_v1_study_explore_path(@basic_study))
     assert_response :success
-    assert json['isClusterViewable']
+    assert json['cluster']
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
