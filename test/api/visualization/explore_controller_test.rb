@@ -54,7 +54,6 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:get, api_v1_study_explore_path(@basic_study))
     assert_response :success
 
-    assert json['isClusterViewable']
     assert_equal ['clusterA.txt'], json['clusterGroupNames']
     assert_equal ['spatialA.txt'], json['spatialGroupNames']
 
