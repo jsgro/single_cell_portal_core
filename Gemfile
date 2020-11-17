@@ -50,6 +50,11 @@ group :development, :test do
   gem 'rubocop-rails', require: false
 end
 
+group :test do
+  gem 'simplecov', require: false
+  gem 'simplecov-lcov', require: false
+end
+
 gem 'devise'
 gem 'omniauth-google-oauth2'
 gem 'omniauth-rails_csrf_protection'

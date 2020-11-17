@@ -27,7 +27,7 @@ module Api
               key :type, :string
             end
             response 200 do
-              key :description, 'Json of study visualization properties'
+              key :description, 'JSON of study visualization properties'
             end
             response 401 do
               key :description, ApiBaseController.unauthorized
@@ -45,17 +45,13 @@ module Api
         end
 
 =begin
-        isClusterViewable {Boolean}: Whether clusters can be visualized
+        cluster {Object}: Cluster properties for visualization, if present
 
         taxonNames {Array} List of species scientific names
 
-        hasIdeogramInferCnvFiles {Boolean}: Whether ideogram files are present
-
-        ideogramInferCNVFiles {Array}: List of ideogram annotation files for inferCNV
-
+        inferCNVIdeogramFiles {Object}: inferCNV ideogram files, by file ID
 
         uniqueGenes (Array): List of unique gene names, for e.g. autocomplete
-
 
         ---
 
@@ -66,13 +62,21 @@ module Api
 
         def show
           default_cluster = @study.default_cluster
-          ideogram_study_file_names = StudyFile.where(study: @study, file_type: 'Ideogram Annotations').pluck(:name)
+          ideogram_files = ExpressionVizService.get_infercnv_ideogram_files(@study)
+
+          if default_cluster.present?
+            cluster = {
+              numPoints: default_cluster.points,
+              isSubsampled: default_cluster.subsampled?
+            }
+          else
+            cluster = nil
+          end
 
           explore_props = {
-            isClusterViewable: default_cluster.present?,
+            cluster: cluster,
             taxonNames: @study.expressed_taxon_names,
-            hasIdeogramInferCnvFiles: ideogram_study_file_names.any?,
-            ideogramInferCNVFiles: ideogram_study_file_names,
+            inferCNVIdeogramFiles: ideogram_files,
             uniqueGenes: @study.unique_genes,
             clusterGroupNames: ExpressionVizService.load_cluster_group_options(@study),
             spatialGroupNames: ExpressionVizService.load_spatial_options(@study),

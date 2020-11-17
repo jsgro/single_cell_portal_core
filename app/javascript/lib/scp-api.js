@@ -120,6 +120,61 @@ export function setMockOrigin(origin) {
   mockOrigin = origin
 }
 
+/** Constructs and encodes URL parameters; omits those with no value */
+function stringifyQuery(paramObj) {
+  const stringified = queryString.stringify(paramObj, {skipEmptyString: true})
+  return `?${stringified}`;
+}
+
+/**
+* Returns initial content for the "Explore" tab in Study Overview
+*
+* @param {String} studyAccession Study accession
+*/
+export async function fetchExplore(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/explore`
+  const [exploreInit, perfTime] =
+    await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return exploreInit
+}
+
+/**
+ * Returns an object with scatter plot data for a cluster in a study
+ *
+ * see definition at: app/controllers/api/v1/visualization/clusters_controller.rb
+ *
+ * @param {String} studyAccession Study accession
+ * @param {String} cluster Name of cluster, as defined at upload
+ * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
+ * @param {String} subsample Subsampling threshold, e.g. 100000
+ * @param {String} consensus Statistic to use for consensus, e.g. "mean"
+ *
+ * Example:
+ * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
+ */
+export async function fetchCluster(
+  studyAccession, cluster, annotation, subsample, consensus, mock=false
+) {
+  // Digest full annotation name to enable easy validation in API
+  const [annotName, annotType, annotScope] = annotation.split('--')
+  const paramObj = {
+    annotation_name: annotName,
+    annotation_type: annotType,
+    annotation_scope: annotScope,
+    subsample,
+    consensus
+  }
+
+  const params = stringifyQuery(paramObj)
+  const apiUrl = `/studies/${studyAccession}/clusters/${cluster}${params}`
+  // don't camelcase the keys since those can be cluster names,
+  // so send false for the 4th argument
+  const [scatter, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return scatter
+}
+
 /**
  * Returns an object with violin plot expression data for a gene in a study
  *
@@ -181,7 +236,7 @@ export async function fetchAnnotationValues(studyAccession, mock=false) {
  *
  * This endpoint is intentionally not documented in Swagger.
  *
- * see definition at: app/controllers/api/v1/expression_data_controller.rb
+ * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
  *
  * @param {String} studyAccession study accession
  * @param {Array} genes List of gene names to get expression data for

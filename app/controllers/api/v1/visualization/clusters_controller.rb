@@ -53,7 +53,7 @@ module Api
           {
             name: :consensus,
             in: :query,
-            description: 'Statistical parameter to use for consensus, e.g. “mean”.  Omit parameter if not applying consensus parameter.',
+            description: 'Statistic to use for consensus, e.g. "mean".  Omit parameter if not applying consensus.',
             type: :string,
             enum: VALID_CONSENSUS_VALUES
           }]
@@ -145,8 +145,9 @@ module Api
 
           subsample = url_params[:subsample].blank? ? nil : url_params[:subsample]
 
+          colorscale = url_params[:colorscale].blank? ? 'Reds' : url_params[:colorscale]
 
-          coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample)
+          coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
           plot_data = ClusterVizService.transform_coordinates(coordinates, study, cluster, annotation)
 
           if cluster.is_3d?
@@ -169,10 +170,13 @@ module Api
             "data": plot_data,
             "description": cluster.study_file.description,
             "is3D": cluster.is_3d?,
+            "isSubsampled": cluster.subsampled?,
+            "numPoints": cluster.points,
             "domainRanges": cluster.domain_ranges,
             "axes": axes_full,
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
-            "coordinateLabels": coordinate_labels
+            "coordinateLabels": coordinate_labels,
+            "annotParams": annot_params
           }
         end
       end

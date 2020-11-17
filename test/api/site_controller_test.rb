@@ -1,4 +1,5 @@
 require 'api_test_helper'
+require 'user_tokens_helper'
 
 class SiteControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -13,15 +14,21 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
                                                                            :email => 'testing.user@gmail.com'
                                                                        })
     sign_in @user
+    @user.update_last_access_at!
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+  end
+
+  teardown do
+    reset_user_tokens
   end
 
   test 'should get all studies' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
+    viewable = Study.viewable(@user)
     execute_http_request(:get, api_v1_site_studies_path)
     assert_response :success
-    assert json.size >= 3, "Did not find correct number of studies, expected 3 or more but found #{json.size}"
+    assert_equal json.size, viewable.size, "Did not find correct number of studies, expected #{viewable.size} or more but found #{json.size}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
@@ -30,9 +37,10 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     @study = Study.find_by(name: "API Test Study #{@random_seed}")
+    expected_files = @study.study_files.count
     execute_http_request(:get, api_v1_site_study_view_path(accession: @study.accession))
     assert_response :success
-    assert json['study_files'].size == 4, "Did not find correct number of files, expected 4 but found #{json['study_files'].size}"
+    assert json['study_files'].size == expected_files, "Did not find correct number of files, expected #{expected_files} but found #{json['study_files'].size}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

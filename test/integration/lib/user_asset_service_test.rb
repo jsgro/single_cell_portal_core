@@ -21,6 +21,7 @@ class UserAssetServiceTest < ActiveSupport::TestCase
           new_path = upload_dir.join(test_file)
           source_file = TEST_DATA_DIR.join(test_file)
           FileUtils.copy_file(source_file, new_path, preserve: true)
+          FileUtils.chmod 'a+r', new_path
         end
       end
     end
@@ -79,6 +80,10 @@ class UserAssetServiceTest < ActiveSupport::TestCase
     new_local_assets = UserAssetService.localize_assets_from_remote
     assert_equal local_assets.sort, new_local_assets.sort,
                  "Did not successfully localize remotes, #{new_local_assets.sort} != #{local_assets.sort}"
+
+    # clean up
+    FileUtils.rm_rf Rails.root.join('public', 'single_cell', 'branding_groups')
+    FileUtils.rm_rf Rails.root.join('public', 'single_cell', 'ckeditor_assets')
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
