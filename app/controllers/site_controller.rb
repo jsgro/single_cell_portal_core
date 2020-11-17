@@ -16,15 +16,15 @@ class SiteController < ApplicationController
 
   before_action :set_study, except: [:index, :search, :legacy_study, :get_viewable_studies, :search_all_genes, :privacy_policy, :terms_of_service,
                                      :view_workflow_wdl, :create_totat, :log_action, :get_taxon, :get_taxon_assemblies, :covid19]
-  before_action :set_cluster_group, only: [:study, :render_cluster, :render_gene_expression_plots, :render_global_gene_expression_plots,
+  before_action :set_cluster_group, only: [:study, :render_gene_expression_plots, :render_global_gene_expression_plots,
                                            :render_gene_set_expression_plots, :view_gene_expression, :view_gene_set_expression,
                                            :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap, :expression_query,
                                            :annotation_query, :get_new_annotations, :annotation_values, :show_user_annotations_form]
-  before_action :set_selected_annotation, only: [:render_cluster, :render_gene_expression_plots, :render_global_gene_expression_plots,
+  before_action :set_selected_annotation, only: [:render_gene_expression_plots, :render_global_gene_expression_plots,
                                                  :render_gene_set_expression_plots, :view_gene_expression, :view_gene_set_expression,
                                                  :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap, :annotation_query,
                                                  :annotation_values, :show_user_annotations_form]
-  before_action :load_precomputed_options, only: [:study, :update_study_settings, :render_cluster, :render_gene_expression_plots,
+  before_action :load_precomputed_options, only: [:study, :update_study_settings, :render_gene_expression_plots,
                                                   :render_gene_set_expression_plots, :view_gene_expression, :view_gene_set_expression,
                                                   :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap]
   before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :search_all_genes, :render_global_gene_expression_plots, :privacy_policy,
@@ -42,7 +42,7 @@ class SiteController < ApplicationController
                                               :get_submission_outputs, :delete_submission_files, :get_submission_metadata]
 
   # caching
-  caches_action :render_cluster, :render_gene_expression_plots, :render_gene_set_expression_plots, :render_global_gene_expression_plots,
+  caches_action :render_gene_expression_plots, :render_gene_set_expression_plots, :render_global_gene_expression_plots,
                 :expression_query, :annotation_query, :precomputed_results,
                 cache_path: :set_cache_path
   COLORSCALE_THEMES = %w(Greys YlGnBu Greens YlOrRd Bluered RdBu Reds Blues Picnic Rainbow Portland Jet Hot Blackbody Earth Electric Viridis Cividis)
@@ -269,8 +269,8 @@ class SiteController < ApplicationController
           set_study_default_options
           if @study.initialized?
             @cluster = @study.default_cluster
-            @options = load_cluster_group_options
-            @cluster_annotations = load_cluster_group_annotations
+            @options = ClusterVizService.load_cluster_group_options(@study)
+            @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
             set_selected_annotation
           end
 
@@ -321,8 +321,8 @@ class SiteController < ApplicationController
     set_study_default_options
     # load options and annotations
     if @study.can_visualize_clusters?
-      @options = load_cluster_group_options
-      @cluster_annotations = load_cluster_group_annotations
+      @options = ClusterVizService.load_cluster_group_options(@study)
+      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
       # call set_selected_annotation manually
       set_selected_annotation
     end
@@ -376,51 +376,12 @@ class SiteController < ApplicationController
     end
   end
 
-  # render a single cluster and its constituent sub-clusters
-  def render_cluster
-    subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
-    @coordinates = load_cluster_group_data_array_points(@selected_annotation, subsample)
-    @plot_type = @cluster.is_3d? ? 'scatter3d' : 'scattergl'
-    @options = load_cluster_group_options
-    @cluster_annotations = load_cluster_group_annotations
-    if @cluster.has_coordinate_labels?
-      @coordinate_labels = load_cluster_group_coordinate_labels
-    end
-
-    if @cluster.is_3d?
-      @range = set_range(@coordinates.values)
-      if @cluster.has_range?
-        @aspect = compute_aspect_ratios(@range)
-      end
-    end
-    @axes = load_axis_labels
-
-    cluster_name = @cluster.name
-    annot_name = params[:annotation]
-
-    # load data for visualization, if present
-    @analysis_outputs = {}
-    if @selected_annotation[:type] == 'group' && @study.has_analysis_outputs?('infercnv', 'ideogram.js', cluster_name, annot_name)
-      ideogram_annotations = @study.get_analysis_outputs('infercnv', 'ideogram.js', cluster_name, annot_name).first
-      @analysis_outputs['ideogram.js'] = ideogram_annotations.api_url
-    end
-
-    # load default color profile if necessary
-    if params[:annotation] == @study.default_annotation && @study.default_annotation_type == 'numeric' && !@study.default_color_profile.nil?
-      @coordinates[:all][:marker][:colorscale] = @study.default_color_profile
-    end
-
-    respond_to do |format|
-      format.js
-    end
-  end
-
   ## GENE-BASED
 
   # render violin and scatter plots for parent clusters or a particular sub cluster
   def view_gene_expression
-    @options = load_cluster_group_options
-    @cluster_annotations = load_cluster_group_annotations
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
     @y_axis_title = load_expression_axis_title
 
@@ -443,10 +404,11 @@ class SiteController < ApplicationController
   def render_gene_expression_plots
     subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
     @gene = @study.genes.by_name_or_id(params[:gene], @study.expression_matrix_files.map(&:id))
-    @y_axis_title = load_expression_axis_title
+    @y_axis_title = ExpressionVizService.load_expression_axis_title(@study)
     # depending on annotation type selection, set up necessary partial names to use in rendering
     if @selected_annotation[:type] == 'group'
-      @values = load_expression_boxplot_data_array_scores(@selected_annotation, subsample)
+      @values = ExpressionVizService.load_expression_boxplot_data_array_scores(@study, @gene, @cluster,
+                                                                               @selected_annotation, subsample)
       if params[:plot_type] == 'box'
         @values_box_type = 'box'
       else
@@ -457,25 +419,27 @@ class SiteController < ApplicationController
       @top_plot_plotly = 'expression_plots_plotly'
       @top_plot_layout = 'expression_box_layout'
     else
-      @values = load_annotation_based_data_array_scatter(@selected_annotation, subsample)
+      @values = ExpressionVizService.load_annotation_based_data_array_scatter(@study, @gene, @cluster, @selected_annotation,
+                                                                              subsample, @y_axis_title)
       @top_plot_partial = 'expression_annotation_plots_view'
       @top_plot_plotly = 'expression_annotation_plots_plotly'
       @top_plot_layout = 'expression_annotation_scatter_layout'
-      @annotation_scatter_range = set_range(@values.values)
+      @annotation_scatter_range = ClusterVizService.set_range(@study, @values.values)
     end
-    @expression = load_expression_data_array_points(@selected_annotation, subsample)
-    @options = load_cluster_group_options
-    @range = set_range([@expression[:all]])
-    @coordinates = load_cluster_group_data_array_points(@selected_annotation, subsample)
+    @expression = ExpressionVizService.load_expression_data_array_points(@study, @gene, @cluster, @selected_annotation,
+                                                                         subsample, @y_axis_title)
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @range = ClusterVizService.set_range(@study,[@expression[:all]])
+    @coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, @cluster, @selected_annotation, subsample)
     if @cluster.has_coordinate_labels?
-      @coordinate_labels = load_cluster_group_coordinate_labels
+      @coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(@cluster)
     end
-    @static_range = set_range(@coordinates.values)
+    @static_range = ClusterVizService.set_range(@study, @coordinates.values)
     if @cluster.is_3d? && @cluster.has_range?
-      @expression_aspect = compute_aspect_ratios(@range)
-      @static_aspect = compute_aspect_ratios(@static_range)
+      @expression_aspect = ClusterVizService.compute_aspect_ratios(@range)
+      @static_aspect = ClusterVizService.compute_aspect_ratios(@static_range)
     end
-    @cluster_annotations = load_cluster_group_annotations
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
 
     # load default color profile if necessary
     if params[:annotation] == @study.default_annotation && @study.default_annotation_type == 'numeric' && !@study.default_color_profile.nil?
@@ -493,13 +457,15 @@ class SiteController < ApplicationController
       @target = 'study-' + @study.id + '-gene-' + @identifier
       @y_axis_title = load_expression_axis_title
       if @selected_annotation[:type] == 'group'
-        @values = load_expression_boxplot_data_array_scores(@selected_annotation, subsample)
+        @values = ExpressionVizService.load_expression_boxplot_data_array_scores(@study, @gene, @cluster,
+                                                                                 @selected_annotation, subsample)
         @values_jitter = params[:boxpoints]
       else
-        @values = load_annotation_based_data_array_scatter(@selected_annotation, subsample)
+        @values = ExpressionVizService.load_annotation_based_data_array_scatter(@study, @gene, @cluster, @selected_annotation,
+                                                                                subsample, @y_axis_title)
       end
-      @options = load_cluster_group_options
-      @cluster_annotations = load_cluster_group_annotations
+      @options = ClusterVizService.load_cluster_group_options(@study)
+      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
     else
       head 403
     end
@@ -518,8 +484,8 @@ class SiteController < ApplicationController
     @gene_list = @genes.map{|gene| gene['name']}.join(' ')
     @y_axis_title = consensus + ' ' + load_expression_axis_title
     # depending on annotation type selection, set up necessary partial names to use in rendering
-    @options = load_cluster_group_options
-    @cluster_annotations = load_cluster_group_annotations
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
 
     if @genes.size > 5
@@ -548,7 +514,8 @@ class SiteController < ApplicationController
     @y_axis_title = consensus + ' ' + load_expression_axis_title
     # depending on annotation type selection, set up necessary partial names to use in rendering
     if @selected_annotation[:type] == 'group'
-      @values = load_gene_set_expression_boxplot_scores(@selected_annotation, params[:consensus], subsample)
+      @values = ExpressionVizService.load_gene_set_expression_boxplot_scores(@study, @genes, @cluster, @selected_annotation,
+                                                                             params[:consensus], subsample)
       if params[:plot_type] == 'box'
         @values_box_type = 'box'
       else
@@ -559,29 +526,31 @@ class SiteController < ApplicationController
       @top_plot_plotly = 'expression_plots_plotly'
       @top_plot_layout = 'expression_box_layout'
     else
-      @values = load_gene_set_annotation_based_scatter(@selected_annotation, params[:consensus], subsample)
+      @values = ExpressionVizService.load_gene_set_annotation_based_scatter(@study, @genes, @cluster, @selected_annotation,
+                                                                            params[:consensus], subsample, @y_axis_title)
       @top_plot_partial = 'expression_annotation_plots_view'
       @top_plot_plotly = 'expression_annotation_plots_plotly'
       @top_plot_layout = 'expression_annotation_scatter_layout'
-      @annotation_scatter_range = set_range(@values.values)
+      @annotation_scatter_range = ClusterVizService.set_range(@study, @values.values)
     end
     # load expression scatter using main gene expression values
-    @expression = load_gene_set_expression_data_arrays(@selected_annotation, params[:consensus], subsample)
+    @expression = ExpressionVizService.load_gene_set_expression_data_arrays(@study, @genes, @cluster, @selected_annotation,
+                                                                            params[:consensus], subsample, @y_axis_title)
     @expression[:all][:marker][:cmin], @expression[:all][:marker][:cmax] = RequestUtils.get_minmax(@expression[:all][:marker][:color])
 
     # load static cluster reference plot
-    @coordinates = load_cluster_group_data_array_points(@selected_annotation, subsample)
+    @coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, @cluster, @selected_annotation, subsample)
     # set up options, annotations and ranges
-    @options = load_cluster_group_options
-    @range = set_range([@expression[:all]])
-    @static_range = set_range(@coordinates.values)
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @range = ClusterVizService.set_range(@study,[@expression[:all]])
+    @static_range = ClusterVizService.set_range(@study, @coordinates.values)
 
     if @cluster.is_3d? && @cluster.has_range?
-      @expression_aspect = compute_aspect_ratios(@range)
-      @static_aspect = compute_aspect_ratios(@static_range)
+      @expression_aspect = ClusterVizService.compute_aspect_ratios(@range)
+      @static_aspect = ClusterVizService.compute_aspect_ratios(@static_range)
     end
 
-    @cluster_annotations = load_cluster_group_annotations
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
 
     if @genes.size > 5
       @main_genes, @other_genes = divide_genes_for_header
@@ -603,8 +572,8 @@ class SiteController < ApplicationController
     @genes, @not_found = search_expression_scores(terms, @study.id)
     @gene_list = @genes.map{|gene| gene['name']}.join(' ')
     # load dropdown options
-    @options = load_cluster_group_options
-    @cluster_annotations = load_cluster_group_annotations
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
     if @genes.size > 5
       @main_genes, @other_genes = divide_genes_for_header
     end
@@ -679,7 +648,7 @@ class SiteController < ApplicationController
 
   # dynamically reload cluster-based annotations list when changing clusters
   def get_new_annotations
-    @cluster_annotations = load_cluster_group_annotations
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
     @target = params[:target].blank? ? nil : params[:target] + '-'
     # used to match value of previous annotation with new values
     @flattened_annotations = @cluster_annotations.values.map {|coll| coll.map(&:last)}.flatten
@@ -734,8 +703,8 @@ class SiteController < ApplicationController
   # view all genes as heatmap in morpheus, will pull from pre-computed gct file
   def view_precomputed_gene_expression_heatmap
     @precomputed_score = @study.precomputed_scores.by_name(params[:precomputed])
-    @options = load_cluster_group_options
-    @cluster_annotations = load_cluster_group_annotations
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
   end
 
   ###
@@ -893,8 +862,8 @@ class SiteController < ApplicationController
         @user_annotation.initialize_user_data_arrays(user_annotation_params[:user_data_arrays_attributes], user_annotation_params[:subsample_annotation],user_annotation_params[:subsample_threshold], user_annotation_params[:loaded_annotation])
 
         # Reset the annotations in the dropdowns to include this new annotation
-        @cluster_annotations = load_cluster_group_annotations
-        @options = load_cluster_group_options
+        @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
+        @options = ClusterVizService.load_cluster_group_options(@study)
 
         # No need for an alert, only a message saying successfully created
         @alert = nil
@@ -904,8 +873,8 @@ class SiteController < ApplicationController
         render 'update_user_annotations'
       else
         # If there was an error saving, reload and alert the use something broke
-        @cluster_annotations = load_cluster_group_annotations
-        @options = load_cluster_group_options
+        @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
+        @options = ClusterVizService.load_cluster_group_options(@study)
         @notice = nil
         @alert = 'The following errors prevented the annotation from being saved: ' + @user_annotation.errors.full_messages.join(',')
         logger.error "Creating user annotation of params: #{user_annotation_params}, unable to save user annotation with errors #{@user_annotation.errors.full_messages.join(', ')}"
@@ -918,8 +887,8 @@ class SiteController < ApplicationController
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
       ErrorTracker.report_exception(e, current_user, error_context)
       # If an invalid value was somehow passed through the form, and couldn't save the annotation
-      @cluster_annotations = load_cluster_group_annotations
-      @options = load_cluster_group_options
+      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
+      @options = ClusterVizService.load_cluster_group_options(@study)
       @notice = nil
       @alert = 'The following errors prevented the annotation from being saved: ' + 'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
       logger.error "Creating user annotation of params: #{user_annotation_params}, invalid value of #{e.message}"
@@ -931,8 +900,8 @@ class SiteController < ApplicationController
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
       ErrorTracker.report_exception(e, current_user, error_context)
       # If something is nil and can't have a method called on it, respond with an alert
-      @cluster_annotations = load_cluster_group_annotations
-      @options = load_cluster_group_options
+      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
+      @options = ClusterVizService.load_cluster_group_options(@study)
       @notice = nil
       @alert = 'The following errors prevented the annotation from being saved: ' + e.message
       logger.error "Creating user annotation of params: #{user_annotation_params}, no method error #{e.message}"
@@ -944,8 +913,8 @@ class SiteController < ApplicationController
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
       ErrorTracker.report_exception(e, current_user, error_context)
       # If a generic unexpected error occurred and couldn't save the annotation
-      @cluster_annotations = load_cluster_group_annotations
-      @options = load_cluster_group_options
+      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
+      @options = ClusterVizService.load_cluster_group_options(@study)
       @notice = nil
       @alert = 'An unexpected error prevented the annotation from being saved: ' + e.message
       logger.error "Creating user annotation of params: #{user_annotation_params}, unexpected error #{e.message}"
@@ -1521,549 +1490,6 @@ class SiteController < ApplicationController
 
   ###
   #
-  # DATA FORMATTING SUB METHODS
-  #
-  ###
-
-  # generic method to populate data structure to render a cluster scatter plot
-  # uses cluster_group model and loads annotation for both group & numeric plots
-  # data values are pulled from associated data_array entries for each axis and annotation/text value
-  def load_cluster_group_data_array_points(annotation, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    x_array = @cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-    y_array = @cluster.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-    z_array = @cluster.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = []
-    annotation_hash = {}
-    # Construct the arrays based on scope
-    if annotation[:scope] == 'cluster'
-      annotation_array = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      x_array = user_annotation.concatenate_user_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-      y_array = user_annotation.concatenate_user_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-      z_array = user_annotation.concatenate_user_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    else
-      # for study-wide annotations, load from study_metadata values instead of cluster-specific annotations
-      metadata_obj = @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-      annotation[:values] = annotation_hash.values
-    end
-    coordinates = {}
-    if annotation[:type] == 'numeric'
-      text_array = []
-      color_array = []
-      # load text & color value from correct object depending on annotation scope
-      cells.each_with_index do |cell, index|
-        if annotation[:scope] == 'cluster'
-          val = annotation_array[index]
-          text_array << "#{cell}: (#{val})"
-        else
-          val = annotation_hash[cell]
-          text_array <<  "#{cell}: (#{val})"
-          color_array << val
-        end
-      end
-      # if we didn't assign anything to the color array, we know the annotation_array is good to use
-      color_array.empty? ? color_array = annotation_array : nil
-      # account for NaN when computing min/max
-      min, max = RequestUtils.get_minmax(annotation_array)
-      coordinates[:all] = {
-          x: x_array,
-          y: y_array,
-          annotations: annotation[:scope] == 'cluster' ? annotation_array : annotation_hash[:values],
-          text: text_array,
-          cells: cells,
-          name: annotation[:name],
-          marker: {
-              cmax: max,
-              cmin: min,
-              color: color_array,
-              size: @study.default_cluster_point_size,
-              line: { color: 'rgb(40,40,40)', width: @study.show_cluster_point_borders? ? 0.5 : 0},
-              colorscale: params[:colorscale].blank? ? 'Reds' : params[:colorscale],
-              showscale: true,
-              colorbar: {
-                  title: annotation[:name] ,
-                  titleside: 'right'
-              }
-          }
-      }
-      if @cluster.is_3d?
-        coordinates[:all][:z] = z_array
-      end
-    else
-      # assemble containers for each trace
-      annotation[:values].each do |value|
-        coordinates[value] = {x: [], y: [], text: [], cells: [], annotations: [], name: value,
-                              marker: {size: @study.default_cluster_point_size, line: { color: 'rgb(40,40,40)', width: @study.show_cluster_point_borders? ? 0.5 : 0}}}
-        if @cluster.is_3d?
-          coordinates[value][:z] = []
-        end
-      end
-
-      if annotation[:scope] == 'cluster' || annotation[:scope] == 'user'
-        annotation_array.each_with_index do |annotation_value, index|
-          coordinates[annotation_value][:text] << "<b>#{cells[index]}</b><br>#{annotation_value}"
-          coordinates[annotation_value][:annotations] << annotation_value
-          coordinates[annotation_value][:cells] << cells[index]
-          coordinates[annotation_value][:x] << x_array[index]
-          coordinates[annotation_value][:y] << y_array[index]
-          if @cluster.is_3d?
-            coordinates[annotation_value][:z] << z_array[index]
-          end
-        end
-        coordinates.each do |key, data|
-          data[:name] << " (#{data[:x].size} points)"
-        end
-      else
-        cells.each_with_index do |cell, index|
-          if annotation_hash.has_key?(cell)
-            annotation_value = annotation_hash[cell]
-            coordinates[annotation_value][:text] << "<b>#{cell}</b><br>#{annotation_value}"
-            coordinates[annotation_value][:annotations] << annotation_value
-            coordinates[annotation_value][:x] << x_array[index]
-            coordinates[annotation_value][:y] << y_array[index]
-            coordinates[annotation_value][:cells] << cell
-            if @cluster.is_3d?
-              coordinates[annotation_value][:z] << z_array[index]
-            end
-          end
-        end
-        coordinates.each do |key, data|
-          data[:name] << " (#{data[:x].size} points)"
-        end
-
-      end
-
-    end
-    # gotcha to remove entries in case a particular annotation value comes up blank since this is study-wide
-    coordinates.delete_if {|key, data| data[:x].empty?}
-    coordinates
-  end
-
-  # method to load a 2-d scatter of selected numeric annotation vs. gene expression
-  def load_annotation_based_data_array_scatter(annotation, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = []
-    annotation_hash = {}
-    if annotation[:scope] == 'cluster'
-      annotation_array = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    else
-      # for study-wide annotations, load from study_metadata values instead of cluster-specific annotations
-      metadata_obj = @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-    end
-    values = {}
-    values[:all] = {x: [], y: [], cells: [], annotations: [], text: [], marker: {size: @study.default_cluster_point_size,
-                                                                                 line: { color: 'rgb(40,40,40)', width: @study.show_cluster_point_borders? ? 0.5 : 0}}}
-    if annotation[:scope] == 'cluster' || annotation[:scope] == 'user'
-      annotation_array.each_with_index do |annot, index|
-        annotation_value = annot
-        cell_name = cells[index]
-        expression_value = @gene['scores'][cell_name].to_f.round(4)
-
-        values[:all][:text] << "<b>#{cell_name}</b><br>#{annotation_value}<br>#{@y_axis_title}: #{expression_value}"
-        values[:all][:annotations] << annotation_value
-        values[:all][:x] << annotation_value
-        values[:all][:y] << expression_value
-        values[:all][:cells] << cell_name
-      end
-    else
-      cells.each do |cell|
-        if annotation_hash.has_key?(cell)
-          annotation_value = annotation_hash[cell]
-          expression_value = @gene['scores'][cell].to_f.round(4)
-          values[:all][:text] << "<b>#{cell}</b><br>#{annotation_value}<br>#{@y_axis_title}: #{expression_value}"
-          values[:all][:annotations] << annotation_value
-          values[:all][:x] << annotation_value
-          values[:all][:y] << expression_value
-          values[:all][:cells] << cell
-        end
-      end
-    end
-    values
-  end
-
-  # method to load a 2-d scatter of selected numeric annotation vs. gene set expression
-  # will support a variety of consensus modes (default is mean)
-  def load_gene_set_annotation_based_scatter(annotation, consensus, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    values = {}
-    values[:all] = {x: [], y: [], cells: [], annotations: [], text: [], marker: {size: @study.default_cluster_point_size,
-                                                                                 line: { color: 'rgb(40,40,40)', width: @study.show_cluster_point_borders? ? 0.5 : 0}}}
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = []
-    annotation_hash = {}
-    if annotation[:scope] == 'cluster'
-      annotation_array = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    else
-      metadata_obj = @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-    end
-    cells.each_with_index do |cell, index|
-      annotation_value = annotation[:scope] == 'cluster' ? annotation_array[index] : annotation_hash[cell]
-      if !annotation_value.nil?
-        case consensus
-          when 'mean'
-            expression_value = calculate_mean(@genes, cell)
-          when 'median'
-            expression_value = calculate_median(@genes, cell)
-          else
-            expression_value = calculate_mean(@genes, cell)
-        end
-        values[:all][:text] << "<b>#{cell}</b><br>#{annotation_value}<br>#{@y_axis_title}: #{expression_value}"
-        values[:all][:annotations] << annotation_value
-        values[:all][:x] << annotation_value
-        values[:all][:y] << expression_value
-        values[:all][:cells] << cell
-        end
-    end
-    values
-  end
-
-  # load box plot scores from gene expression values using data array of cell names for given cluster
-  def load_expression_boxplot_data_array_scores(annotation, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    values = initialize_plotly_objects_by_annotation(annotation)
-
-    # grab all cells present in the cluster, and use as keys to load expression scores
-    # if a cell is not present for the gene, score gets set as 0.0
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    if annotation[:scope] == 'cluster'
-      # we can take a subsample of the same size for the annotations since the sort order is non-stochastic (i.e. the indices chosen are the same every time for all arrays)
-      annotations = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:y] << @gene['scores'][cell].to_f.round(4)
-      end
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotations = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:y] << @gene['scores'][cell].to_f.round(4)
-      end
-    else
-      # since annotations are in a hash format, subsampling isn't necessary as we're going to retrieve values by key lookup
-      annotations =  @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type]).cell_annotations
-      cells.each do |cell|
-        val = annotations[cell]
-        # must check if key exists
-        if values.has_key?(val)
-          values[annotations[cell]][:y] << @gene['scores'][cell].to_f.round(4)
-          values[annotations[cell]][:cells] << cell
-        end
-      end
-    end
-    # remove any empty values as annotations may have created keys that don't exist in cluster
-    values.delete_if {|key, data| data[:y].empty?}
-    values
-  end
-
-  # load cluster_group data_array values, but use expression scores to set numerical color array
-  def load_expression_data_array_points(annotation, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    x_array = @cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-    y_array = @cluster.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-    z_array = @cluster.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = []
-    annotation_hash = {}
-    if annotation[:scope] == 'cluster'
-      annotation_array = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      x_array = user_annotation.concatenate_user_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-      y_array = user_annotation.concatenate_user_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-      z_array = user_annotation.concatenate_user_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    else
-      # for study-wide annotations, load from cell_metadata values instead of cluster-specific annotations
-      metadata_obj = @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-    end
-    expression = {}
-    expression[:all] = {
-        x: x_array,
-        y: y_array,
-        annotations: [],
-        text: [],
-        cells: cells,
-        marker: {cmax: 0, cmin: 0, color: [], size: @study.default_cluster_point_size, showscale: true, colorbar: {title: @y_axis_title , titleside: 'right'}}
-    }
-    if @cluster.is_3d?
-      expression[:all][:z] = z_array
-    end
-    cells.each_with_index do |cell, index|
-      expression_score = @gene['scores'][cell].to_f.round(4)
-      # load correct annotation value based on scope
-      annotation_value = annotation[:scope] == 'cluster' ? annotation_array[index] : annotation_hash[cell]
-      text_value = "#{cell} (#{annotation_value})<br />#{@y_axis_title}: #{expression_score}"
-      expression[:all][:annotations] << annotation_value
-      expression[:all][:text] << text_value
-      expression[:all][:marker][:color] << expression_score
-    end
-    expression[:all][:marker][:line] = { color: 'rgb(255,255,255)', width: @study.show_cluster_point_borders? ? 0.5 : 0}
-    expression[:all][:marker][:cmin], expression[:all][:marker][:cmax] = RequestUtils.get_minmax(expression[:all][:marker][:color])
-    expression[:all][:marker][:colorscale] = params[:colorscale].blank? ? 'Reds' : params[:colorscale]
-    expression
-  end
-
-  # load boxplot expression scores vs. scores across each gene for all cells
-  # will support a variety of consensus modes (default is mean)
-  def load_gene_set_expression_boxplot_scores(annotation, consensus, subsample_threshold=nil)
-    values = initialize_plotly_objects_by_annotation(annotation)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    # grab all cells present in the cluster, and use as keys to load expression scores
-    # if a cell is not present for the gene, score gets set as 0.0
-    # will check if there are more than SUBSAMPLE_THRESHOLD cells present in the cluster, and subsample accordingly
-    # values hash will be assembled differently depending on annotation scope (cluster-based is array, study-based is a hash)
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    if annotation[:scope] == 'cluster'
-      annotations = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:annotations] << annotations[index]
-        case consensus
-          when 'mean'
-            values[annotations[index]][:y] << calculate_mean(@genes, cell)
-          when 'median'
-            values[annotations[index]][:y] << calculate_median(@genes, cell)
-          else
-            values[annotations[index]][:y] << calculate_mean(@genes, cell)
-        end
-      end
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotations = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:annotations] << annotations[index]
-        case consensus
-          when 'mean'
-            values[annotations[index]][:y] << calculate_mean(@genes, cell)
-          when 'median'
-            values[annotations[index]][:y] << calculate_median(@genes, cell)
-          else
-            values[annotations[index]][:y] << calculate_mean(@genes, cell)
-        end
-      end
-    else
-      # no need to subsample annotation since they are in hash format (lookup done by key)
-      annotations =  @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type]).cell_annotations
-      cells.each do |cell|
-        val = annotations[cell]
-        # must check if key exists
-        if values.has_key?(val)
-          values[annotations[cell]][:cells] << cell
-          case consensus
-            when 'mean'
-              values[annotations[cell]][:y] << calculate_mean(@genes, cell)
-            when 'median'
-              values[annotations[cell]][:y] << calculate_median(@genes, cell)
-            else
-              values[annotations[cell]][:y] << calculate_mean(@genes, cell)
-          end
-        end
-      end
-    end
-    # remove any empty values as annotations may have created keys that don't exist in cluster
-    values.delete_if {|key, data| data[:y].empty?}
-    values
-  end
-
-  # load scatter expression scores with average of scores across each gene for all cells
-  # uses data_array as source for each axis
-  # will support a variety of consensus modes (default is mean)
-  def load_gene_set_expression_data_arrays(annotation, consensus, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-
-    x_array = @cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-    y_array = @cluster.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-    z_array = @cluster.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = []
-    annotation_hash = {}
-    if annotation[:scope] == 'cluster'
-      annotation_array = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      x_array = user_annotation.concatenate_user_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-      y_array = user_annotation.concatenate_user_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-      z_array = user_annotation.concatenate_user_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    else
-      # for study-wide annotations, load from cell_metadata values instead of cluster-specific annotations
-      metadata_obj = @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-    end
-    expression = {}
-    expression[:all] = {
-        x: x_array,
-        y: y_array,
-        text: [],
-        annotations: [],
-        cells: cells,
-        marker: {cmax: 0, cmin: 0, color: [], size: @study.default_cluster_point_size, showscale: true, colorbar: {title: @y_axis_title , titleside: 'right'}}
-    }
-    if @cluster.is_3d?
-      expression[:all][:z] = z_array
-    end
-    cells.each_with_index do |cell, index|
-      case consensus
-        when 'mean'
-          expression_score = calculate_mean(@genes, cell)
-        when 'median'
-          expression_score = calculate_median(@genes, cell)
-        else
-          expression_score = calculate_mean(@genes, cell)
-      end
-
-      # load correct annotation value based on scope
-      annotation_value = annotation[:scope] == 'cluster' ? annotation_array[index] : annotation_hash[cell]
-      text_value = "#{cell} (#{annotation_value})<br />#{@y_axis_title}: #{expression_score}"
-      expression[:all][:annotations] << annotation_value
-      expression[:all][:text] << text_value
-      expression[:all][:marker][:color] << expression_score
-
-    end
-    expression[:all][:marker][:line] = { color: 'rgb(40,40,40)', width: @study.show_cluster_point_borders? ? 0.5 : 0}
-    expression[:all][:marker][:cmin], expression[:all][:marker][:cmax] = RequestUtils.get_minmax(expression[:all][:marker][:color])
-    expression[:all][:marker][:colorscale] = params[:colorscale].blank? ? 'Reds' : params[:colorscale]
-    expression
-  end
-
-  # method to initialize containers for plotly by annotation values
-  def initialize_plotly_objects_by_annotation(annotation)
-    values = {}
-    annotation[:values].each do |value|
-      values["#{value}"] = {y: [], cells: [], annotations: [], name: "#{value}" }
-    end
-    values
-  end
-
-  # load custom coordinate-based annotation labels for a given cluster
-  def load_cluster_group_coordinate_labels
-    # assemble source data
-    x_array = @cluster.concatenate_data_arrays('x', 'labels')
-    y_array = @cluster.concatenate_data_arrays('y', 'labels')
-    z_array = @cluster.concatenate_data_arrays('z', 'labels')
-    text_array = @cluster.concatenate_data_arrays('text', 'labels')
-    annotations = []
-    # iterate through list of data objects to construct necessary annotations
-    x_array.each_with_index do |point, index|
-      annotations << {
-          showarrow: false,
-          x: point,
-          y: y_array[index],
-          z: z_array[index],
-          text: text_array[index],
-          font: {
-              family: @cluster.coordinate_labels_options[:font_family],
-              size: @cluster.coordinate_labels_options[:font_size],
-              color: @cluster.coordinate_labels_options[:font_color]
-          }
-      }
-    end
-    annotations
-  end
-
-  # find mean of expression scores for a given cell & list of genes
-  def calculate_mean(genes, cell)
-    values = genes.map {|gene| gene['scores'][cell].to_f}
-    values.mean
-  end
-
-  # find median expression score for a given cell & list of genes
-  def calculate_median(genes, cell)
-    values = genes.map {|gene| gene['scores'][cell].to_f}
-    Gene.array_median(values)
-  end
-
-  # set the range for a plotly scatter, will default to data-defined if cluster hasn't defined its own ranges
-  # dynamically determines range based on inputs & available axes
-  def set_range(inputs)
-    # select coordinate axes from inputs
-    domain_keys = inputs.map(&:keys).flatten.uniq.select {|i| [:x, :y, :z].include?(i)}
-    range = Hash[domain_keys.zip]
-    if @cluster.has_range?
-      # use study-provided range if available
-      range = @cluster.domain_ranges
-    else
-      # take the minmax of each domain across all groups, then the global minmax
-      raw_values = []
-      inputs.each do |input|
-        domain_keys.each do |domain|
-          domain_range = RequestUtils.get_minmax(input[domain])
-          # RequestUtils.get_minmax will discard NaN/nil values that were ingested
-          # only add domain range to list if we have a valid minmax
-          raw_values << domain_range if domain_range.any?
-        end
-      end
-      aggregate_range = raw_values.flatten.minmax
-      # add 2% padding to range
-      padding = (aggregate_range.first - aggregate_range.last) * 0.02
-      absolute_range = [aggregate_range.first + padding, aggregate_range.last - padding]
-      range[:x] = absolute_range
-      range[:y] = absolute_range
-      range[:z] = absolute_range
-    end
-    range
-  end
-
-  # compute the aspect ratio between all ranges and use to enforce equal-aspect ranges on 3d plots
-  def compute_aspect_ratios(range)
-    # determine largest range for computing aspect ratio
-    extent = {}
-    range.each.map {|axis, domain| extent[axis] = domain.first.upto(domain.last).size - 1}
-    largest_range = extent.values.max
-
-    # now compute aspect mode and ratios
-    aspect = {
-        mode: extent.values.uniq.size == 1 ? 'cube' : 'manual'
-    }
-    range.each_key do |axis|
-      aspect[axis.to_sym] = extent[axis].to_f / largest_range
-    end
-    aspect
-  end
-
-  ###
-  #
   # SEARCH SUB METHODS
   #
   ###
@@ -2128,24 +1554,6 @@ class SiteController < ApplicationController
         return match
       end
     end
-  end
-
-  # helper method to load all possible cluster groups for a study
-  def load_cluster_group_options
-    @study.cluster_groups.map(&:name)
-  end
-
-  # helper method to load all available cluster_group-specific annotations
-  def load_cluster_group_annotations
-    grouped_options = @study.formatted_annotation_select(cluster: @cluster)
-    # load available user annotations (if any)
-    if user_signed_in?
-      user_annotations = UserAnnotation.viewable_by_cluster(current_user, @cluster)
-      unless user_annotations.empty?
-        grouped_options['User Annotations'] = user_annotations.map {|annot| ["#{annot.name}", "#{annot.id}--group--user"] }
-      end
-    end
-    grouped_options
   end
 
   # sanitize search values
@@ -2270,11 +1678,6 @@ class SiteController < ApplicationController
   def set_cache_path
     params_key = "_#{params[:cluster].to_s.split.join('-')}_#{params[:annotation]}"
     case action_name
-    when 'render_cluster'
-      unless params[:subsample].blank?
-        params_key += "_#{params[:subsample]}"
-      end
-      render_cluster_url(accession: params[:accession], study_name: params[:study_name]) + params_key
     when 'render_gene_expression_plots'
       unless params[:subsample].blank?
         params_key += "_#{params[:subsample]}"
