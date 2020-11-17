@@ -26,6 +26,30 @@ class ExpressionVizService
   end
 
 
+  # Get a hash of inferCNV ideogram file objects, keyed by file ID
+  def self.get_infercnv_ideogram_files(study)
+    ideogram_files = nil
+
+    # only populate if study has ideogram results & is not 'detached'
+    if study.has_analysis_outputs?('infercnv', 'ideogram.js') && !study.detached?
+      ideogram_files = {}
+      study.get_analysis_outputs('infercnv', 'ideogram.js').each do |file|
+        opts = file.options.with_indifferent_access # allow lookup by string or symbol
+        cluster_name = opts[:cluster_name]
+        annotation_name = opts[:annotation_name].split('--').first
+        ideogram_file_object = {
+          cluster: cluster_name,
+          annotation: opts[:annotation_name],
+          display: "#{cluster_name}: #{annotation_name}",
+          ideogram_settings: study.get_ideogram_infercnv_settings(cluster_name, opts[:annotation_name])
+        }
+        ideogram_files[file.id.to_s] = ideogram_file_object
+      end
+    end
+
+    return ideogram_files
+  end
+
   def self.load_expression_axis_title(study)
     study.default_expression_label
   end

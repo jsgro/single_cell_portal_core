@@ -197,20 +197,21 @@ async function drawScatterPlot() {
   // Incremented upon drawing scatter plot; enables unique plot IDs
   window.SCP.scatterCount = 0
 
-  // render colorscale picker if needed
+  // render annotation toggler picker if needed
   if (rawPlot.annotParams.type == 'numeric') {
     $('#toggle-plots').html('')
   } else {
-    $('#toggle-plots').html(
-      '<a href="#" class="btn btn-default btn-sm" id="toggle-traces" ' +
-          'data-toggle="tooltip" data-placement="left" data-trigger="hover" ' +
-          'title="Click to toggle all annotations, or toggle individual ' +
-            'annotations by clicking the legend entry"' +
-        '>Toggle Annotations <i class="fas fa-toggle-on"></i></a>'
-    )
-    $('#toggle-traces').tooltip({
-      container: 'body', placement: 'left', trigger: 'hover'
-    })
+    // Consider restoring this; it was missing on production before refactor
+    // $('#toggle-plots').html(
+    //   '<a href="#" class="btn btn-default btn-sm" id="toggle-traces" ' +
+    //     'data-toggle="tooltip" data-placement="left" data-trigger="hover" ' +
+    //     'title="Click to toggle all annotations, or toggle individual ' +
+    //       'annotations by clicking the legend entry"' +
+    //   '>Toggle Annotations <i class="fas fa-toggle-on"></i></a>'
+    // )
+    // $('#toggle-traces').tooltip({
+    //   container: 'body', placement: 'left', trigger: 'hover'
+    // })
   }
 
   const target = '#plots .panel-body'
@@ -234,11 +235,11 @@ function getScatterPlotLayout(rawPlot) {
   if (rawPlot.is3D) {
     const camera = $('#cluster-plot').data('camera')
     dimensionProps = get3DScatterProps(camera, rawPlot)
+    layout.scene = dimensionProps
   } else {
     dimensionProps = get2DScatterProps(rawPlot)
+    layout = Object.assign(layout, dimensionProps)
   }
-
-  layout = Object.assign(layout, dimensionProps)
 
   return layout
 }
@@ -251,7 +252,7 @@ function getScatterPlotLayout(rawPlot) {
 function attachEventHandlers() {
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
-    const ideogramFiles = window.SCP.study.ideogramFiles
+    const ideogramFiles = window.SCP.study.inferCNVIdeogramFiles
     const fileId = $(this).val() // eslint-disable-line
     if (fileId !== '') {
       const ideogramAnnot = ideogramFiles[fileId]
@@ -330,15 +331,17 @@ export default async function initializeExplore() {
 
   window.SCP.taxons = window.SCP.study.taxonNames
 
-  // set default subsample option of 10K (if subsampled) or all cells
-  if (study.cluster.numPoints > 10000 && study.cluster.isSubsampled) {
-    $('#subsample').val(10000)
-    $('#search_subsample').val(10000)
+  if (study.cluster) {
+    // set default subsample option of 10K (if subsampled) or all cells
+    if (study.cluster.numPoints > 10000 && study.cluster.isSubsampled) {
+      $('#subsample').val(10000)
+      $('#search_subsample').val(10000)
+    }
+
+    drawScatterPlot()
   }
 
-  drawScatterPlot()
-
-  if (window.SCP.hasIdeogramInferCnvFiles) {
+  if (study.inferCNVIdeogramFiles) {
     // user has no clusters, but does have ideogram annotations
 
     const ideogramSelect = $('#ideogram_annotation')

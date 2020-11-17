@@ -45,17 +45,13 @@ module Api
         end
 
 =begin
-        isClusterViewable {Boolean}: Whether clusters can be visualized
+        cluster {Object}: Cluster properties for visualization, if present
 
         taxonNames {Array} List of species scientific names
 
-        hasIdeogramInferCnvFiles {Boolean}: Whether ideogram files are present
-
-        ideogramInferCNVFiles {Array}: List of ideogram annotation files for inferCNV
-
+        inferCNVIdeogramFiles {Object}: inferCNV ideogram files, by file ID
 
         uniqueGenes (Array): List of unique gene names, for e.g. autocomplete
-
 
         ---
 
@@ -66,17 +62,21 @@ module Api
 
         def show
           default_cluster = @study.default_cluster
-          ideogram_study_file_names = StudyFile.where(study: @study, file_type: 'Ideogram Annotations').pluck(:name)
+          ideogram_files = ExpressionVizService.get_infercnv_ideogram_files(@study)
 
-          explore_props = {
-            cluster: {
+          if default_cluster.present?
+            cluster = {
               numPoints: default_cluster.points,
               isSubsampled: default_cluster.subsampled?
-            },
-            isClusterViewable: default_cluster.present?,
+            }
+          else
+            cluster = nil
+          end
+
+          explore_props = {
+            cluster: cluster,
             taxonNames: @study.expressed_taxon_names,
-            hasIdeogramInferCnvFiles: ideogram_study_file_names.any?,
-            ideogramInferCNVFiles: ideogram_study_file_names,
+            inferCNVIdeogramFiles: ideogram_files,
             uniqueGenes: @study.unique_genes,
             clusterGroupNames: @study.cluster_groups.pluck(:name),
             clusterPointAlpha: @study.default_cluster_point_alpha
