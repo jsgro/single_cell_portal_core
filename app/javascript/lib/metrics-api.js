@@ -166,7 +166,7 @@ function logClickInput(target) {
   const domLabels = getLabelsForElement(target)
 
   // User-facing label
-  const label = domLabels.length > 0 ? domLabels[0].innerText : ''
+  const label = domLabels.length > 0 ? getNameForClickTarget(domLabels[0]) : ''
 
   const props = { label }
 

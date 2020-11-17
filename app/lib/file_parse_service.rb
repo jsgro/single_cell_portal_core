@@ -78,6 +78,13 @@ class FileParseService
       when 'Gene List'
         ParseUtils.delay.initialize_precomputed_scores(study, study_file, user)
       when 'Metadata'
+        # log convention compliance -- see SCP-2890
+        if !study_file.use_metadata_convention
+          MetricsService.log('file-upload:metadata:non-compliant', {
+            studyAccession: study.accession,
+            studyFileName: study_file.name
+        }, user)
+        end
         job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_cell_metadata, reparse: reparse,
                             persist_on_fail: persist_on_fail)
         job.delay.push_remote_and_launch_ingest
