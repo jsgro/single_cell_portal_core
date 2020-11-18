@@ -16,6 +16,7 @@ class ExpressionVizService
       render_data[:values] = load_annotation_based_data_array_scatter(study, gene, cluster, selected_annotation, subsample, render_data[:y_axis_title])
     end
     render_data[:options] = ClusterVizService.load_cluster_group_options(study)
+    render_data[:sptial_options] = load_spatial_options(study)
     render_data[:cluster_annotations] = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
     render_data[:subsampling_options] = subsampling_options(cluster)
 

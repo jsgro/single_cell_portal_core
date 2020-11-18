@@ -104,6 +104,7 @@ else
     first_test_to_fail=${first_test_to_fail-"yarn ui-test"}
     ((FAILED_COUNT++))
   fi
+
   if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
     echo "uploading JS coverage to codecov"
     bash <(curl -s https://codecov.io/bash) -cF javascript -t $CODECOV_TOKEN
