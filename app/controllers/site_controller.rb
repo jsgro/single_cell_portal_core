@@ -424,7 +424,7 @@ class SiteController < ApplicationController
       @top_plot_partial = 'expression_annotation_plots_view'
       @top_plot_plotly = 'expression_annotation_plots_plotly'
       @top_plot_layout = 'expression_annotation_scatter_layout'
-      @annotation_scatter_range = ClusterVizService.set_range(@study, @values.values)
+      @annotation_scatter_range = ClusterVizService.set_range(@cluster, @values.values)
     end
     @expression = ExpressionVizService.load_expression_data_array_points(@study, @gene, @cluster, @selected_annotation,
                                                                          subsample, @y_axis_title, params[:colorscale])
