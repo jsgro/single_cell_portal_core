@@ -383,7 +383,7 @@ class SiteController < ApplicationController
     @options = ClusterVizService.load_cluster_group_options(@study)
     @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
-    @y_axis_title = load_expression_axis_title
+    @y_axis_title = ExpressionVizService.load_expression_axis_title(@study)
 
     if @study.expressed_taxon_names.length > 1
       @gene_taxons = @study.infer_taxons(params[:gene])
@@ -427,14 +427,14 @@ class SiteController < ApplicationController
       @annotation_scatter_range = ClusterVizService.set_range(@study, @values.values)
     end
     @expression = ExpressionVizService.load_expression_data_array_points(@study, @gene, @cluster, @selected_annotation,
-                                                                         subsample, @y_axis_title)
+                                                                         subsample, @y_axis_title, params[:colorscale])
     @options = ClusterVizService.load_cluster_group_options(@study)
-    @range = ClusterVizService.set_range(@study,[@expression[:all]])
+    @range = ClusterVizService.set_range(@cluster,[@expression[:all]])
     @coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, @cluster, @selected_annotation, subsample)
     if @cluster.has_coordinate_labels?
       @coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(@cluster)
     end
-    @static_range = ClusterVizService.set_range(@study, @coordinates.values)
+    @static_range = ClusterVizService.set_range(@cluster, @coordinates.values)
     if @cluster.is_3d? && @cluster.has_range?
       @expression_aspect = ClusterVizService.compute_aspect_ratios(@range)
       @static_aspect = ClusterVizService.compute_aspect_ratios(@static_range)
@@ -455,7 +455,7 @@ class SiteController < ApplicationController
       @gene = @study.genes.by_name_or_id(params[:gene], @study.expression_matrix_files.map(&:id))
       @identifier = params[:identifier] # unique identifer for each plot for namespacing JS variables/functions (@gene.id)
       @target = 'study-' + @study.id + '-gene-' + @identifier
-      @y_axis_title = load_expression_axis_title
+      @y_axis_title = ExpressionVizService.load_expression_axis_title(@study)
       if @selected_annotation[:type] == 'group'
         @values = ExpressionVizService.load_expression_boxplot_data_array_scores(@study, @gene, @cluster,
                                                                                  @selected_annotation, subsample)
@@ -482,7 +482,7 @@ class SiteController < ApplicationController
 
     consensus = params[:consensus].nil? ? 'Mean ' : params[:consensus].capitalize + ' '
     @gene_list = @genes.map{|gene| gene['name']}.join(' ')
-    @y_axis_title = consensus + ' ' + load_expression_axis_title
+    @y_axis_title = consensus + ' ' + ExpressionVizService.load_expression_axis_title(@study)
     # depending on annotation type selection, set up necessary partial names to use in rendering
     @options = ClusterVizService.load_cluster_group_options(@study)
     @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
@@ -511,7 +511,7 @@ class SiteController < ApplicationController
     @gene_list = @genes.map{|gene| gene['gene']}.join(' ')
     dotplot_genes, dotplot_not_found = search_expression_scores(terms, @study.id)
     @dotplot_gene_list = dotplot_genes.map{|gene| gene['name']}.join(' ')
-    @y_axis_title = consensus + ' ' + load_expression_axis_title
+    @y_axis_title = consensus + ' ' + ExpressionVizService.load_expression_axis_title(@study)
     # depending on annotation type selection, set up necessary partial names to use in rendering
     if @selected_annotation[:type] == 'group'
       @values = ExpressionVizService.load_gene_set_expression_boxplot_scores(@study, @genes, @cluster, @selected_annotation,
@@ -531,19 +531,20 @@ class SiteController < ApplicationController
       @top_plot_partial = 'expression_annotation_plots_view'
       @top_plot_plotly = 'expression_annotation_plots_plotly'
       @top_plot_layout = 'expression_annotation_scatter_layout'
-      @annotation_scatter_range = ClusterVizService.set_range(@study, @values.values)
+      @annotation_scatter_range = ClusterVizService.set_range(@cluster, @values.values)
     end
     # load expression scatter using main gene expression values
     @expression = ExpressionVizService.load_gene_set_expression_data_arrays(@study, @genes, @cluster, @selected_annotation,
-                                                                            params[:consensus], subsample, @y_axis_title)
+                                                                            params[:consensus], subsample, @y_axis_title,
+                                                                            params[:colorscale])
     @expression[:all][:marker][:cmin], @expression[:all][:marker][:cmax] = RequestUtils.get_minmax(@expression[:all][:marker][:color])
 
     # load static cluster reference plot
     @coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, @cluster, @selected_annotation, subsample)
     # set up options, annotations and ranges
     @options = ClusterVizService.load_cluster_group_options(@study)
-    @range = ClusterVizService.set_range(@study,[@expression[:all]])
-    @static_range = ClusterVizService.set_range(@study, @coordinates.values)
+    @range = ClusterVizService.set_range(@cluster,[@expression[:all]])
+    @static_range = ClusterVizService.set_range(@cluster, @coordinates.values)
 
     if @cluster.is_3d? && @cluster.has_range?
       @expression_aspect = ClusterVizService.compute_aspect_ratios(@range)

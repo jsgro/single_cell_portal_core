@@ -50,6 +50,10 @@ class ExpressionVizService
     return ideogram_files
   end
 
+  def self.load_expression_axis_title(study)
+    study.default_expression_label
+  end
+
   # load box plot scores from gene expression values using data array of cell names for given cluster
   def self.load_expression_boxplot_data_array_scores(study, gene, cluster, annotation, subsample_threshold=nil)
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
@@ -145,7 +149,7 @@ class ExpressionVizService
 
   # load cluster_group data_array values, but use expression scores to set numerical color array
   # this is the scatter plot shown in the "scatter" tab next to "distribution" on gene-based views
-  def self.load_expression_data_array_points(study, gene, cluster, annotation, subsample_threshold=nil, y_axis_title)
+  def self.load_expression_data_array_points(study, gene, cluster, annotation, subsample_threshold=nil, y_axis_title, colorscale)
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     x_array = cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
@@ -193,7 +197,7 @@ class ExpressionVizService
     end
     expression[:all][:marker][:line] = { color: 'rgb(255,255,255)', width: study.show_cluster_point_borders? ? 0.5 : 0}
     expression[:all][:marker][:cmin], expression[:all][:marker][:cmax] = RequestUtils.get_minmax(expression[:all][:marker][:color])
-    expression[:all][:marker][:colorscale] = params[:colorscale].blank? ? 'Reds' : params[:colorscale]
+    expression[:all][:marker][:colorscale] = colorscale.blank? ? 'Reds' : colorscale
     expression
   end
 
@@ -313,7 +317,7 @@ class ExpressionVizService
   # load scatter expression scores with average of scores across each gene for all cells
   # uses data_array as source for each axis
   # will support a variety of consensus modes (default is mean)
-  def self.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample_threshold=nil, y_axis_title)
+  def self.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample_threshold=nil, y_axis_title, colorscale)
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
 
@@ -371,7 +375,7 @@ class ExpressionVizService
     end
     expression[:all][:marker][:line] = { color: 'rgb(40,40,40)', width: study.show_cluster_point_borders? ? 0.5 : 0}
     expression[:all][:marker][:cmin], expression[:all][:marker][:cmax] = RequestUtils.get_minmax(expression[:all][:marker][:color])
-    expression[:all][:marker][:colorscale] = params[:colorscale].blank? ? 'Reds' : params[:colorscale]
+    expression[:all][:marker][:colorscale] = colorscale.blank? ? 'Reds' : colorscale
     expression
   end
 
