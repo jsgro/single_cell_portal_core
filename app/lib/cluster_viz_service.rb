@@ -29,6 +29,12 @@ class ClusterVizService
     grouped_options
   end
 
+  # helper method to load spatial coordinate group names
+  def self.load_spatial_options(study)
+    spatial_file_ids = StudyFile.where(study: study, is_spatial: true, file_type: 'Cluster').pluck(:id)
+    ClusterGroup.where(study: study, :study_file_id.in => spatial_file_ids).pluck(:name)
+  end
+
   # Convert cluster group data array points into JSON plot data for Plotly
   def self.transform_coordinates(coordinates, study, cluster_group, selected_annotation)
     plot_data = []

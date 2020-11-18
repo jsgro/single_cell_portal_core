@@ -14,5 +14,20 @@ FactoryBot.define do
                          }
                        }
     end
+    factory :admin_user do
+      admin { true }
+      access_token {
+        {
+            access_token: "test-admin-token-#{random_seed}",
+            expires_in: 3600, expires_at: Time.zone.now + 1.hour
+        }
+      }
+      api_access_token {
+        {
+            access_token: "test-admin-token-#{random_seed}",
+            expires_in: 3600, expires_at: Time.zone.now + 1.hour
+        }
+      }
+    end
   end
 end

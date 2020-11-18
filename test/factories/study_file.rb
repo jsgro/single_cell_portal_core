@@ -30,6 +30,16 @@ FactoryBot.define do
     end
     factory :cluster_file do
       file_type { 'Cluster' }
+      is_spatial { false }
+      x_axis_label { nil }
+      y_axis_label { nil }
+      z_axis_label { nil }
+      x_axis_min { nil }
+      x_axis_max { nil }
+      y_axis_min { nil }
+      y_axis_max { nil }
+      z_axis_min { nil }
+      z_axis_max { nil }
       transient do
         # cell_input is a hash of three (or 4) arrays: cells, x and y and z
         # {
@@ -40,6 +50,7 @@ FactoryBot.define do
         cell_input {
           {}
         }
+        cluster_type { '2d' }
         # annotation_input is an array of objects specifying name, type, and values for annotations
         # values should be an array in the same length and order as the 'cells' array above
         # e.g. [{ name: 'category', type: 'group', values: ['foo', 'foo', 'bar'] }]
@@ -49,6 +60,7 @@ FactoryBot.define do
         FactoryBot.create(:cluster_group_with_cells,
                           annotation_input: evaluator.annotation_input,
                           cell_input: evaluator.cell_input,
+                          cluster_type: evaluator.cluster_type,
                           study_file: file)
       end
     end
@@ -69,6 +81,27 @@ FactoryBot.define do
           FactoryBot.create(:gene_with_expression,
                             expression_input: expression,
                             study_file: file)
+        end
+      end
+    end
+    factory :coordinate_label_file do
+      file_type { 'Coordinate Labels' }
+      transient do
+        # label input is used for coordinate-based annotations
+        label_input {}
+        # cluster is for setting cluster_group_id on data_arrays
+        cluster {}
+      end
+      after(:create) do |file, evaluator|
+        evaluator.label_input.each do |axis, values|
+          FactoryBot.create(:data_array,
+                            array_type: 'labels',
+                            array_index: 0,
+                            name: axis,
+                            cluster_group: evaluator.cluster,
+                            values: values,
+                            study_file: file
+          )
         end
       end
     end

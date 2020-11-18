@@ -24,11 +24,20 @@ FactoryBot.define do
         annotation_input {
           []
         }
+        # range input is min/max values for each domain (e.g. total extent of plot area)
+        # populate raw values in from study_file, and then call compact/delete_if to remove nil values
+        range_input {
+          {
+              x: [study_file.x_axis_min, study_file.x_axis_max].compact,
+              y: [study_file.y_axis_min, study_file.y_axis_max].compact,
+              z: [study_file.z_axis_min, study_file.z_axis_max].compact
+          }.delete_if {|k, v| v.empty?}
+        }
       end
       cell_annotations {
         annotation_input.map { |a| { name: a[:name], type: a[:type], values: a[:values].uniq } }
       }
-
+      domain_ranges { range_input if range_input.any? }
       after(:create) do |cluster, evaluator|
         [
           {name: :x, type: 'coordinates', array_name: 'x'},
