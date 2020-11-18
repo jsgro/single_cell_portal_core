@@ -21,7 +21,7 @@
 		</div>
   </div>
   <div class="form-group row">
-		<div class="col-sm-5">
+		<div class="col-sm-6">
       <%= f.label :use_metadata_convention, "Do you use SCP conventional names for required metadata column headers?" %> <%= render partial: 'metadata_convention_help_popover', locals: {id: f.object.id.to_s} %><br />
       <%= f.label :use_metadata_convention_true do %>
         <%= f.radio_button :use_metadata_convention, true, checked: true, disabled: !study_file.new_record?%>
@@ -71,15 +71,20 @@
 
     function setMetadataConventionMessage(useMetadataConvention) {
         var message;
+        const advancedUrl = "https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#metadata-powered-advanced-search"
+        const advancedLink = `<a href="${advancedUrl}" target="_blank" rel="noreferrer">advanced search</a>`
         if (useMetadataConvention === true) {
           message =
-            `This makes your data discoverable in advanced search.<br/>` +
+            `This makes your data discoverable in ${advancedLink}.<br/>` +
             `If the file fails metadata convention validation, you will be emailed messages to help correct it.`
         } else {
-          const url = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+          const formatUrl = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+          const contactUsLink = '<a href="mailto:scp-support@broadinstitute.zendesk.com">scp-support@broadinstitute.zendesk.com</a>'
+          const contactUs = `If you need assistance, please contact us at ${contactUsLink}.`
+
           message =
-            `Use the SCP metadata convention ("Yes") to make your data discoverable in advanced search.<br/>` +
-            `Learn <a href="${url}" target="_blank" rel="noreferrer">how to convert your file</a>.`
+            `Use the SCP metadata convention ("Yes") to make your data discoverable in ${advancedLink}.<br/>` +
+            `Learn <a href="${formatUrl}" target="_blank" rel="noreferrer">how to convert your file</a>.  ${contactUs}`
         }
         console.log(useMetadataConvention)
         console.log(message)
