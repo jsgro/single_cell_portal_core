@@ -5,6 +5,7 @@ module Api
       include Concerns::CspHeaderBypass
       include ActionController::MimeResponds
       include Concerns::IngestAware
+      include Concerns::Authenticator
       extend ErrorTracker
 
       rescue_from ActionController::ParameterMissing do |exception|

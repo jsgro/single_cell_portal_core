@@ -4,20 +4,24 @@ class PresetSearchTest < ActiveSupport::TestCase
 
   def setup
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-    @preset_search = PresetSearch.first
     @species_facet = SearchFacet.find_by(identifier: 'species')
     @disease_facet = SearchFacet.find_by(identifier: 'disease')
+    # ensure facet filters are up to date as upstream tests may have changed their state
+    @species_facet.update_filter_values!
+    @disease_facet.update_filter_values!
     @matching_facets = [
-        {:id=>"species", :filters=>[{"id"=>"NCBITaxon_9606", "name"=>"Homo sapiens"}], :object_id=>@species_facet.id},
-        {:id=>"disease", :filters=>[{"id"=>"MONDO_0000001", "name"=>"disease or disorder"}], :object_id=>@disease_facet.id}
+        {id: 'species', filters: [{"id"=>"NCBITaxon_9606", "name"=>"Homo sapiens"}], object_id: @species_facet.id},
+        {id: 'disease', filters: [{"id"=>"MONDO_0000001", "name"=>"disease or disorder"}], object_id: @disease_facet.id}
     ]
+    @preset_search = PresetSearch.first
   end
 
   test 'should return correct keyword query string' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    expected_query = "\"Test Study\""
-    assert expected_query == @preset_search.keyword_query_string
+    expected_query = "\"Testing Study\""
+    assert expected_query == @preset_search.keyword_query_string,
+           "Query string did not match: #{expected_query} != #{@preset_search.keyword_query_string}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
@@ -34,8 +38,11 @@ class PresetSearchTest < ActiveSupport::TestCase
   test 'should return correct matching facets' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    assert @matching_facets == @preset_search.matching_facets_and_filters
-    associated_facet = @preset_search.search_facets.first
+    @sorted_facets = @matching_facets.sort_by {|facet| facet[:id]}
+    @preset_search_facet_filters = @preset_search.matching_facets_and_filters.sort_by {|facet| facet[:id]}
+    assert @sorted_facets == @preset_search_facet_filters,
+           "Did not correctly match facets/filters; #{@sorted_facets} != #{@preset_search_facet_filters}"
+    associated_facet = @preset_search.search_facets.detect {|facet| facet.identifier == 'species'}
     assert @species_facet == associated_facet
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"

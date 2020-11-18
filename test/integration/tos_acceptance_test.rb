@@ -4,8 +4,13 @@ class TosAcceptanceTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
 
   setup do
-    @test_user = User.find_by(email: 'testing.user@gmail.com')
+    @test_user = User.create(email: 'needs.acceptance@gmail.com', password:'password', uid: '54321',
+                             registered_for_firecloud: true, authentication_token: Devise.friendly_token(32))
     auth_as_user(@test_user)
+  end
+
+  teardown do
+    User.find_by(email: 'needs.acceptance@gmail.com').destroy
   end
 
   test 'should record user tos action' do
