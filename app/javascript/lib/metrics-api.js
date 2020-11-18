@@ -268,6 +268,9 @@ export function log(name, props={}) {
     appFullPath: getAppFullPath(),
     env
   }, getDefaultProperties())
+  if (window.SCP.currentStudyAccession) {
+    props['studyAccession'] = window.SCP.currentStudyAccession
+  }
 
   checkForTriggeredPendingEvent(name, props)
 

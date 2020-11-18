@@ -80,10 +80,13 @@ class FileParseService
       when 'Metadata'
         # log convention compliance -- see SCP-2890
         if !study_file.use_metadata_convention
+          if User.feature_flag_for_instance(user, 'convention_required')
+            raise 'Metadata files must comply with the SCP metadata convention'
+          end
           MetricsService.log('file-upload:metadata:non-compliant', {
             studyAccession: study.accession,
             studyFileName: study_file.name
-        }, user)
+          }, user)
         end
         job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_cell_metadata, reparse: reparse,
                             persist_on_fail: persist_on_fail)
