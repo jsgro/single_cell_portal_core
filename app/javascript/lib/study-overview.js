@@ -8,7 +8,7 @@
 */
 
 /**
- * TODO (SCP-2884): Move code specific to default Explore view into separate module
+ * TODO (SCP-2884): Move code for default Explore view into separate module
  */
 import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
@@ -119,26 +119,30 @@ function resizePlots() {
 
 
 /** Renders Plotly scatter plot for "Clusters" tab */
-function renderScatterPlot(target, rawPlot) {
+function renderScatterPlot(target, rawPlot, plotIndex) {
   const { data } = rawPlot
 
-  window.SCP.scatterCount += 1
-  const scatterCount = window.SCP.scatterCount
+  const plotId = `cluster-plot-${plotIndex}`
 
-  const plotId = `cluster-plot-${scatterCount}`
+  if (window.SCP.numPlots > 1) {
+    let marginLeft = ''
+    if (plotIndex !== 0) {
+      marginLeft = ' margin-left: 60px'
+    }
+    // TODO (SCP-2881): Ensure margin when floating left for side-by-side plots
+    $(target).append(`
+      <div class="row" style="float: left;${marginLeft}">
+        <div id="${plotId}"></div>
+        <div id="cluster-figure-legend"></div>
+      </div>`)
+  } else {
+    $(target).append(`
+      <div class="row">
+        <div id="${plotId}"></div>
+        <div id="cluster-figure-legend"></div>
+      </div>`)
+  }
 
-  // TODO (SCP-2881): Ensure margin when floating left for side-by-side plots
-  // $(target).append(`
-  //   <div class="row" style="float: left">
-  //     <div id="${plotId}"></div>
-  //     <div id="cluster-figure-legend"></div>
-  //   </div>`)
-
-  $(target).append(`
-    <div class="row">
-      <div id="${plotId}"></div>
-      <div id="cluster-figure-legend"></div>
-    </div>`)
 
   const layout = getScatterPlotLayout(rawPlot)
 
@@ -171,59 +175,76 @@ function renderScatterPlot(target, rawPlot) {
   window.SCP.scatterPlotLayout = layout
 }
 
+function setPlotCounts(study) {
+  if (study.spatialGroupNames.length > 0) {
+    // TODO (SCP-2857): Remove hard-coding when UI for selecting n-many cluster
+    // + spatial plots is something we can develop against.
+    window.SCP.numPlots = 1
+
+    // Incremented upon drawing scatter plot; enables unique plot IDs
+    window.SCP.scatterCount = 0
+  } else {
+    window.SCP.numPlots = 2
+  }
+}
+
 /** Fetch and draw scatter plot for default Explore tab view */
-async function drawScatterPlot() {
+async function drawScatterPlot(study) {
+  let cluster; let annotation; let subsample
+
   const spinnerTarget = $('#plots')[0]
   const spinner = new Spinner(window.opts).spin(spinnerTarget)
   $('#plots').data('spinner', spinner)
 
-  const cluster = $('#cluster').val()
-  const annotation = $('#annotation').val()
-  const subsample = $('#subsample').val()
+  window.SCP.numPlots = (study.spatialGroupNames.length > 0) ? 2 : 1
 
-  const rawPlot = await fetchCluster(
-    window.SCP.study.accession, cluster, annotation, subsample
-  )
+  for (let plotIndex = 0; plotIndex < window.SCP.numPlots; plotIndex++) {
+    if (plotIndex === 0) {
+      cluster = $('#cluster').val()
+    } else {
+      cluster = $('#spatial-group').val()
+    }
 
-  window.SCP.cluster = rawPlot
+    annotation = $('#annotation').val()
+    subsample = $('#subsample').val()
 
-  // Consider putting into a dictionary instead of a list
-  window.SCP.plots.push(rawPlot)
+    const rawPlot = await fetchCluster(
+      study.accession, cluster, annotation, subsample
+    )
 
-  // TODO (SCP-2857): Remove hard-coding when UI for selecting n-many cluster
-  // + spatial plots is something we can develop against.
-  window.SCP.numPlots = 1
+    window.SCP.cluster = rawPlot
 
-  // Incremented upon drawing scatter plot; enables unique plot IDs
-  window.SCP.scatterCount = 0
+    // Consider putting into a dictionary instead of a list
+    window.SCP.plots.push(rawPlot)
 
-  // render annotation toggler picker if needed
-  if (rawPlot.annotParams.type == 'numeric') {
-    $('#toggle-plots').html('')
-  } else {
-    // Consider restoring this; it was missing on production before refactor
-    // $('#toggle-plots').html(
-    //   '<a href="#" class="btn btn-default btn-sm" id="toggle-traces" ' +
-    //     'data-toggle="tooltip" data-placement="left" data-trigger="hover" ' +
-    //     'title="Click to toggle all annotations, or toggle individual ' +
-    //       'annotations by clicking the legend entry"' +
-    //   '>Toggle Annotations <i class="fas fa-toggle-on"></i></a>'
-    // )
-    // $('#toggle-traces').tooltip({
-    //   container: 'body', placement: 'left', trigger: 'hover'
-    // })
+    // render annotation toggler picker if needed
+    if (rawPlot.annotParams.type == 'numeric') {
+      $('#toggle-plots').html('')
+    } else {
+      // Consider restoring this; it was missing on production before refactor
+      // $('#toggle-plots').html(
+      //   '<a href="#" class="btn btn-default btn-sm" id="toggle-traces" ' +
+      //     'data-toggle="tooltip" data-placement="left" data-trigger="hover" ' +
+      //     'title="Click to toggle all annotations, or toggle individual ' +
+      //       'annotations by clicking the legend entry"' +
+      //   '>Toggle Annotations <i class="fas fa-toggle-on"></i></a>'
+      // )
+      // $('#toggle-traces').tooltip({
+      //   container: 'body', placement: 'left', trigger: 'hover'
+      // })
+    }
+
+    const target = '#plots .panel-body'
+
+    // Duplicate calls are merely for proof-of-concept, showing we can
+    // render plots side-by-side
+    renderScatterPlot(target, rawPlot, plotIndex)
+
+    $('#plots').data('spinner').stop()
+
+    $('#search_annotation').val(annotation)
+    $('#gene_set_annotation').val(annotation)
   }
-
-  const target = '#plots .panel-body'
-
-  // Duplicate calls are merely for proof-of-concept, showing we can
-  // render plots side-by-side
-  renderScatterPlot(target, rawPlot)
-
-  $('#plots').data('spinner').stop()
-
-  $('#search_annotation').val(annotation)
-  $('#gene_set_annotation').val(annotation)
 }
 
 /** Get layout object with various Plotly scatter plot display parameters */
@@ -249,7 +270,7 @@ function getScatterPlotLayout(rawPlot) {
  */
 
 /** Listen for events, and update view accordingly */
-function attachEventHandlers() {
+function attachEventHandlers(study) {
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
     const ideogramFiles = window.SCP.study.inferCNVIdeogramFiles
@@ -274,7 +295,7 @@ function attachEventHandlers() {
     // keep track for search purposes
     $('#search_annotation').val(an)
     $('#gene_set_annotation').val(an)
-    drawScatterPlot()
+    drawScatterPlot(study)
   })
 
   $('#subsample').change(function() {
@@ -282,7 +303,7 @@ function attachEventHandlers() {
     const subsample = $(this).val() // eslint-disable-line
     $('#search_subsample').val(subsample)
     $('#gene_set_subsample').val(subsample)
-    drawScatterPlot()
+    drawScatterPlot(study)
   })
 
   $('#cluster').change(function() {
@@ -291,13 +312,25 @@ function attachEventHandlers() {
     // keep track for search purposes
     $('#search_cluster').val(newCluster)
     $('#gene_set_cluster').val(newCluster)
-    drawScatterPlot()
+    drawScatterPlot(study)
   })
 }
 
 /** Get HTML for dropdown menu for spatial files */
 function getSpatialDropdown(study) {
-
+  const options = study.spatialGroupNames.map(name => {
+    return `<option value="${name}">${name}</option>`
+  })
+  const domId = 'spatial-group'
+  const select =
+    `<select name="${domId}" id="${domId}" class="form-control">${
+      options
+    }</select>`
+  return (
+    `<div class="form-group col-sm-4">` +
+    `<label for=${domId}>Spatial groups</label><br/>${select}` +
+    `</div>`
+  )
 }
 
 /** Add dropdown menu for spatial files */
@@ -333,14 +366,14 @@ export default async function initializeExplore() {
   }
   $('#cluster-plot').data('camera', baseCamera)
 
-  attachEventHandlers()
-
   const accession = window.SCP.studyAccession
   const study = await fetchExplore(accession)
+
   window.SCP.study = study
   window.SCP.study.accession = accession
-
   window.SCP.taxons = window.SCP.study.taxonNames
+
+  attachEventHandlers(study)
 
   if (study.cluster) {
     // set default subsample option of 10K (if subsampled) or all cells
@@ -349,7 +382,9 @@ export default async function initializeExplore() {
       $('#search_subsample').val(10000)
     }
 
-    drawScatterPlot()
+    addSpatialDropdown(study)
+
+    drawScatterPlot(study)
   }
 
   if (study.inferCNVIdeogramFiles) {
