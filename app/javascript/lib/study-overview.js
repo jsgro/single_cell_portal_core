@@ -328,15 +328,17 @@ function getSpatialDropdown(study) {
     }</select>`
   return (
     `<div class="form-group col-sm-4">` +
-    `<label for=${domId}>Spatial groups</label><br/>${select}` +
+    `<label for=${domId}>Spatial group</label><br/>${select}` +
     `</div>`
   )
 }
 
 /** Add dropdown menu for spatial files */
 function addSpatialDropdown(study) {
-  const dropdown = getSpatialDropdown(study)
-  $('#view-options #precomputed-panel #precomputed .row').append(dropdown)
+  if (study.spatialGroupNames.length > 0) {
+    const dropdown = getSpatialDropdown(study)
+    $('#view-options #precomputed-panel #precomputed .row').append(dropdown)
+  }
 }
 
 /** Initialize the "Explore" tab in Study Overview */
