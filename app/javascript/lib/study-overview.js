@@ -314,8 +314,10 @@ function getSpatialDropdown(study) {
 
 /** Add dropdown menu for spatial files */
 function addSpatialDropdown(study) {
-  const dropdown = getSpatialDropdown(study)
-  $('#view-options #precomputed-panel #precomputed .row').append(dropdown)
+  if (study.spatialGroupNames.length > 0) {
+    const dropdown = getSpatialDropdown(study)
+    $('#view-options #precomputed-panel #precomputed .row').append(dropdown)
+  }
 }
 
 /** Initialize the "Explore" tab in Study Overview */
