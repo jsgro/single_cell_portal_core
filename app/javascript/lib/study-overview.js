@@ -8,11 +8,11 @@
 */
 
 /**
- * TODO (SCP-2884): Move code specific to default Explore view into separate module
+ * TODO (SCP-2884): Move code for default Explore view into separate module
  */
 import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
-import { labelFont } from 'lib/plot'
+import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { fetchExplore, fetchCluster } from 'lib/scp-api'
 
 /** Get Plotly layout object for scatter plot */
@@ -117,10 +117,18 @@ function resizePlots() {
   }
 }
 
+/** Set colors for group-based annotations */
+export function setMarkerColors(data) {
+  return data.map((trace, i) => {
+    trace.marker.color = getColorBrewerColor(i)
+    return trace
+  })
+}
+
 
 /** Renders Plotly scatter plot for "Clusters" tab */
 function renderScatterPlot(target, rawPlot) {
-  const { data } = rawPlot
+  let { data } = rawPlot
 
   window.SCP.scatterCount += 1
   const scatterCount = window.SCP.scatterCount
@@ -141,6 +149,10 @@ function renderScatterPlot(target, rawPlot) {
     </div>`)
 
   const layout = getScatterPlotLayout(rawPlot)
+
+  if (rawPlot.annotParams.type === 'group') {
+    data = setMarkerColors(data)
+  }
 
   Plotly.newPlot(plotId, data, layout)
 
@@ -295,6 +307,31 @@ function attachEventHandlers() {
   })
 }
 
+/** Get HTML for dropdown menu for spatial files */
+function getSpatialDropdown(study) {
+  const options = study.spatialGroupNames.map(name => {
+    return `<option value="${name}">${name}</option>`
+  })
+  const domId = 'spatial-groups'
+  const select =
+    `<select name="${domId}" id="${domId}" class="form-control">${
+      options
+    }</select>`
+  return (
+    `<div class="form-group col-sm-4">` +
+    `<label for=${domId}>Spatial group</label><br/>${select}` +
+    `</div>`
+  )
+}
+
+/** Add dropdown menu for spatial files */
+function addSpatialDropdown(study) {
+  if (study.spatialGroupNames.length > 0) {
+    const dropdown = getSpatialDropdown(study)
+    $('#view-options #precomputed-panel #precomputed .row').append(dropdown)
+  }
+}
+
 /** Initialize the "Explore" tab in Study Overview */
 export default async function initializeExplore() {
   window.SCP.study = {}
@@ -326,9 +363,9 @@ export default async function initializeExplore() {
 
   const accession = window.SCP.studyAccession
   const study = await fetchExplore(accession)
+
   window.SCP.study = study
   window.SCP.study.accession = accession
-
   window.SCP.taxons = window.SCP.study.taxonNames
 
   if (study.cluster) {
@@ -337,6 +374,8 @@ export default async function initializeExplore() {
       $('#subsample').val(10000)
       $('#search_subsample').val(10000)
     }
+
+    addSpatialDropdown(study)
 
     drawScatterPlot()
   }

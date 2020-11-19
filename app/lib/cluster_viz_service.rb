@@ -72,11 +72,6 @@ class ClusterVizService
         cluster_props[:textposition] = 'bottom right'
       end
 
-      if selected_annotation[:type] == 'group'
-        # Set color index that will be interpreted by SCP front end
-        cluster_props[:marker][:scpColorIndex] = index
-      end
-
       plot_data.push(cluster_props)
     end
 
