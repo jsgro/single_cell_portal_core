@@ -111,6 +111,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     study.reload
 
     example_files.values.each do |e|
+      e[:object].reload # address potential race condition between parse_status setting to 'failed' and DeleteQueueJob executing
       assert_equal 'failed', e[:object].parse_status, "Incorrect parse_status for #{e[:name]}"
       assert e[:object].queued_for_deletion
       # check that file is cached in parse_logs/:id folder in the study bucket
