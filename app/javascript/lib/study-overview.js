@@ -12,7 +12,7 @@
  */
 import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
-import { labelFont } from 'lib/plot'
+import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { fetchExplore, fetchCluster } from 'lib/scp-api'
 
 /** Get Plotly layout object for scatter plot */
@@ -117,10 +117,18 @@ function resizePlots() {
   }
 }
 
+/** Set colors for group-based annotations */
+export function setMarkerColors(data) {
+  return data.map((trace, i) => {
+    trace.marker.color = getColorBrewerColor(i)
+    return trace
+  })
+}
+
 
 /** Renders Plotly scatter plot for "Clusters" tab */
 function renderScatterPlot(target, rawPlot) {
-  const { data } = rawPlot
+  let { data } = rawPlot
 
   window.SCP.scatterCount += 1
   const scatterCount = window.SCP.scatterCount
@@ -141,6 +149,10 @@ function renderScatterPlot(target, rawPlot) {
     </div>`)
 
   const layout = getScatterPlotLayout(rawPlot)
+
+  if (rawPlot.annotParams.type === 'group') {
+    data = setMarkerColors(data)
+  }
 
   Plotly.newPlot(plotId, data, layout)
 
