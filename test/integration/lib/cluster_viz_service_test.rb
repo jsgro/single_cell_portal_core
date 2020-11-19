@@ -69,7 +69,7 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     expected_cluster = @study.cluster_groups.by_name(cluster_name)
     other_cluster = ClusterVizService.get_cluster_group(@study, params)
     assert_equal expected_cluster, other_cluster,
-                 "Did not correctly load default cluster; #{expected_cluster.name} != #{other_cluster.name}"
+                 "Did not correctly load expected cluster; #{expected_cluster.name} != #{other_cluster.name}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
