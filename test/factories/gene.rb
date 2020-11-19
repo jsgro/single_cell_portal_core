@@ -8,13 +8,13 @@ FactoryBot.define do
     factory :gene_with_expression do
       transient do
         # convenience allowing specification expression data as an array of [cell_name, value] pairs
-        expression_data {
+        expression_input {
           [['cellA', 0.0],['cellB', 1.1], ['cellC', 0.5]]
         }
       end
       after(:create) do |gene, evaluator|
 
-        non_zero_exp_data = evaluator.expression_data.select { |cell_datum| cell_datum[1] > 0 }
+        non_zero_exp_data = evaluator.expression_input.select { |cell_datum| cell_datum[1] > 0 }
 
         FactoryBot.create(:data_array,
                           gene: gene,

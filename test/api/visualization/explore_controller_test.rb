@@ -16,29 +16,25 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     @user.update_last_access_at! # ensure user is marked as active
 
     @basic_study = FactoryBot.create(:detached_study, name: 'Basic Explore')
-    @basic_study_cluster_file = FactoryBot.create(:study_file,
+    @basic_study_cluster_file = FactoryBot.create(:cluster_file,
                                                   name: 'clusterA.txt',
                                                   file_type: 'Cluster',
-                                                  study: @basic_study)
-    @cluster_group = FactoryBot.create(:cluster_group_with_cells,
-                                       study_file: @basic_study_cluster_file,
-                                       cell_data: {
-                                         x: [1, 4 ,6],
-                                         y: [7, 5, 3],
-                                         cells: ['A', 'B', 'C']
-                                       })
-    @spatial_study_cluster_file = FactoryBot.create(:study_file,
-                                                  name: 'spatialA.txt',
-                                                  file_type: 'Cluster',
                                                   study: @basic_study,
-                                                  is_spatial: true)
-    @spatial_group = FactoryBot.create(:cluster_group_with_cells,
-                                       study_file: @spatial_study_cluster_file,
-                                       cell_data: {
-                                         x: [0, 1, 3],
-                                         y: [8, 6, 4],
-                                         cells: ['A', 'B', 'C']
-                                       })
+                                                  cell_input: {
+                                                    x: [1, 4 ,6],
+                                                    y: [7, 5, 3],
+                                                    cells: ['A', 'B', 'C']
+                                                  })
+    @spatial_study_cluster_file = FactoryBot.create(:cluster_file,
+                                                    name: 'spatialA.txt',
+                                                    file_type: 'Cluster',
+                                                    study: @basic_study,
+                                                    is_spatial: true,
+                                                    cell_input: {
+                                                      x: [0, 1, 3],
+                                                      y: [8, 6, 4],
+                                                      cells: ['A', 'B', 'C']
+                                                    })
   end
 
   teardown do
