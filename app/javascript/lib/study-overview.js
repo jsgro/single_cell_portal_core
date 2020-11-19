@@ -361,8 +361,6 @@ export default async function initializeExplore() {
       $('#search_subsample').val(10000)
     }
 
-    console.log('in study.cluster')
-
     addSpatialDropdown(study)
 
     drawScatterPlot()
