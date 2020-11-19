@@ -175,22 +175,52 @@ function renderScatterPlot(target, rawPlot, plotIndex) {
   window.SCP.scatterPlotLayout = layout
 }
 
-function setPlotCounts(study) {
-  if (study.spatialGroupNames.length > 0) {
-    // TODO (SCP-2857): Remove hard-coding when UI for selecting n-many cluster
-    // + spatial plots is something we can develop against.
-    window.SCP.numPlots = 1
+/** draws scatter plot */
+async function drawScatterPlot(accession, cluster, plotIndex) {
+  const annotation = $('#annotation').val()
+  const subsample = $('#subsample').val()
 
-    // Incremented upon drawing scatter plot; enables unique plot IDs
-    window.SCP.scatterCount = 0
+  const rawPlot = await fetchCluster(
+    accession, cluster, annotation, subsample
+  )
+
+  window.SCP.cluster = rawPlot
+
+  // Consider putting into a dictionary instead of a list
+  window.SCP.plots.push(rawPlot)
+
+  // render annotation toggler picker if needed
+  if (rawPlot.annotParams.type == 'numeric') {
+    $('#toggle-plots').html('')
   } else {
-    window.SCP.numPlots = 2
+    // Consider restoring this; it was missing on production before refactor
+    // $('#toggle-plots').html(
+    //   '<a href="#" class="btn btn-default btn-sm" id="toggle-traces" ' +
+    //     'data-toggle="tooltip" data-placement="left" data-trigger="hover" ' +
+    //     'title="Click to toggle all annotations, or toggle individual ' +
+    //       'annotations by clicking the legend entry"' +
+    //   '>Toggle Annotations <i class="fas fa-toggle-on"></i></a>'
+    // )
+    // $('#toggle-traces').tooltip({
+    //   container: 'body', placement: 'left', trigger: 'hover'
+    // })
   }
+
+  const target = '#plots .panel-body'
+
+  // Duplicate calls are merely for proof-of-concept, showing we can
+  // render plots side-by-side
+  renderScatterPlot(target, rawPlot, plotIndex)
+
+  $('#plots').data('spinner').stop()
+
+  $('#search_annotation').val(annotation)
+  $('#gene_set_annotation').val(annotation)
 }
 
 /** Fetch and draw scatter plot for default Explore tab view */
-async function drawScatterPlot(study) {
-  let cluster; let annotation; let subsample
+async function drawScatterPlots(study) {
+  let cluster
 
   const spinnerTarget = $('#plots')[0]
   const spinner = new Spinner(window.opts).spin(spinnerTarget)
@@ -205,45 +235,7 @@ async function drawScatterPlot(study) {
       cluster = $('#spatial-group').val()
     }
 
-    annotation = $('#annotation').val()
-    subsample = $('#subsample').val()
-
-    const rawPlot = await fetchCluster(
-      study.accession, cluster, annotation, subsample
-    )
-
-    window.SCP.cluster = rawPlot
-
-    // Consider putting into a dictionary instead of a list
-    window.SCP.plots.push(rawPlot)
-
-    // render annotation toggler picker if needed
-    if (rawPlot.annotParams.type == 'numeric') {
-      $('#toggle-plots').html('')
-    } else {
-      // Consider restoring this; it was missing on production before refactor
-      // $('#toggle-plots').html(
-      //   '<a href="#" class="btn btn-default btn-sm" id="toggle-traces" ' +
-      //     'data-toggle="tooltip" data-placement="left" data-trigger="hover" ' +
-      //     'title="Click to toggle all annotations, or toggle individual ' +
-      //       'annotations by clicking the legend entry"' +
-      //   '>Toggle Annotations <i class="fas fa-toggle-on"></i></a>'
-      // )
-      // $('#toggle-traces').tooltip({
-      //   container: 'body', placement: 'left', trigger: 'hover'
-      // })
-    }
-
-    const target = '#plots .panel-body'
-
-    // Duplicate calls are merely for proof-of-concept, showing we can
-    // render plots side-by-side
-    renderScatterPlot(target, rawPlot, plotIndex)
-
-    $('#plots').data('spinner').stop()
-
-    $('#search_annotation').val(annotation)
-    $('#gene_set_annotation').val(annotation)
+    drawScatterPlot(study.accession, cluster, plotIndex)
   }
 }
 
@@ -295,7 +287,7 @@ function attachEventHandlers(study) {
     // keep track for search purposes
     $('#search_annotation').val(an)
     $('#gene_set_annotation').val(an)
-    drawScatterPlot(study)
+    drawScatterPlots(study)
   })
 
   $('#subsample').change(function() {
@@ -303,7 +295,7 @@ function attachEventHandlers(study) {
     const subsample = $(this).val() // eslint-disable-line
     $('#search_subsample').val(subsample)
     $('#gene_set_subsample').val(subsample)
-    drawScatterPlot(study)
+    drawScatterPlots(study)
   })
 
   $('#cluster').change(function() {
@@ -312,7 +304,7 @@ function attachEventHandlers(study) {
     // keep track for search purposes
     $('#search_cluster').val(newCluster)
     $('#gene_set_cluster').val(newCluster)
-    drawScatterPlot(study)
+    drawScatterPlots(study)
   })
 }
 
@@ -386,7 +378,7 @@ export default async function initializeExplore() {
 
     addSpatialDropdown(study)
 
-    drawScatterPlot(study)
+    drawScatterPlots(study)
   }
 
   if (study.inferCNVIdeogramFiles) {
