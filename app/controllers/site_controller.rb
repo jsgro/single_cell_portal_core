@@ -2132,7 +2132,7 @@ class SiteController < ApplicationController
 
   # helper method to load all possible cluster groups for a study
   def load_cluster_group_options
-    @study.cluster_groups.map(&:name)
+    ExpressionVizService.load_cluster_group_options(@study)
   end
 
   # helper method to load all available cluster_group-specific annotations
