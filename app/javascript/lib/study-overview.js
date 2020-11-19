@@ -300,14 +300,14 @@ function getSpatialDropdown(study) {
   const options = study.spatialGroupNames.map(name => {
     return `<option value="${name}">${name}</option>`
   })
-  const domId = 'spatial-clusters'
+  const domId = 'spatial-groups'
   const select =
     `<select name="${domId}" id="${domId}" class="form-control">${
       options
     }</select>`
   return (
     `<div class="form-group col-sm-4">` +
-    `<label for=${domId}>Spatial groups</label><br/>${select}` +
+    `<label for=${domId}>Spatial group</label><br/>${select}` +
     `</div>`
   )
 }
