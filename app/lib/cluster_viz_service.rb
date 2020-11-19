@@ -35,6 +35,17 @@ class ClusterVizService
     ClusterGroup.where(study: study, :study_file_id.in => spatial_file_ids).pluck(:name)
   end
 
+  # return an array of values to use for subsampling dropdown scaled to number of cells in study
+  # only options allowed are 1000, 10000, 20000, and 100000
+  # will only provide options if subsampling has completed for a cluster
+  def self.subsampling_options(cluster)
+    if cluster.is_subsampling?
+      []
+    else
+      ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < cluster.points}
+    end
+  end
+
   # Convert cluster group data array points into JSON plot data for Plotly
   def self.transform_coordinates(coordinates, study, cluster_group, selected_annotation)
     plot_data = []

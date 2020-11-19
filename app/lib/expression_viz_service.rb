@@ -18,7 +18,7 @@ class ExpressionVizService
     render_data[:options] = ClusterVizService.load_cluster_group_options(study)
     render_data[:sptial_options] = ClusterVizService.load_spatial_options(study)
     render_data[:cluster_annotations] = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-    render_data[:subsampling_options] = subsampling_options(cluster)
+    render_data[:subsampling_options] = ClusterVizService.subsampling_options(cluster)
 
     render_data[:rendered_cluster] = cluster.name
     render_data[:rendered_annotation] = "#{selected_annotation[:name]}--#{selected_annotation[:type]}--#{selected_annotation[:scope]}"
@@ -387,17 +387,6 @@ class ExpressionVizService
       values["#{value}"] = {y: [], cells: [], annotations: [], name: "#{value}" }
     end
     values
-  end
-
-  # return an array of values to use for subsampling dropdown scaled to number of cells in study
-  # only options allowed are 1000, 10000, 20000, and 100000
-  # will only provide options if subsampling has completed for a cluster
-  def self.subsampling_options(cluster)
-    if cluster.is_subsampling?
-      []
-    else
-      ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < cluster.points}
-    end
   end
 
     # helper method for parsing the legacy [name]--[type]--[scope] string format into an object

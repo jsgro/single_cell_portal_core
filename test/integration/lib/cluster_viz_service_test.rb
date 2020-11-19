@@ -119,6 +119,27 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  test 'should load subsampling options' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    # create a cluster w/ 2K cells
+    coordinates = 1.upto(2000).to_a
+    cells = coordinates.map {|n| "cell_#{n}"}
+    cluster_name = 'cluster_subsample.txt'
+    FactoryBot.create(:cluster_file,
+                      name: cluster_name, study: @study,
+                      cell_input: {
+                          x: coordinates,
+                          y: coordinates,
+                          cells: cells
+                      })
+    cluster = @study.cluster_groups.by_name(cluster_name)
+    options = ClusterVizService.subsampling_options(cluster)
+    assert_equal [1000], options
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
   test 'should load cluster coordinates' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
