@@ -111,7 +111,7 @@ function resizePlots() {
   for (let i = 0; i < numPlots; i++) {
     const rawPlot = window.SCP.plots[i]
     const layout = getScatterPlotLayout(rawPlot)
-    const target = `cluster-plot-${i + 1}`
+    const target = `cluster-plot-${i}`
 
     Plotly.relayout(target, layout)
   }
