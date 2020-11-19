@@ -62,7 +62,7 @@ class ClusterControllerTest < ActionDispatch::IntegrationTest
 
     execute_http_request(:get, api_v1_study_clusters_path(@empty_study))
     assert_equal 404, response.status
-    assert_equal {"error"=>"No default cluster exists"}, json
+    assert_equal({"error"=>"No default cluster exists"}, json)
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
