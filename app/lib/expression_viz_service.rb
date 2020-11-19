@@ -402,7 +402,7 @@ class ExpressionVizService
 
     # helper method for parsing the legacy [name]--[type]--[scope] string format into an object
   # finds the string from either params[:gene_set_annotation] or params[:annotation]
-  def self.parse_annotation_legacy_params(study, cluster, params)
+  def self.parse_annotation_legacy_params(study, params)
     selector = params[:annotation].nil? ? params[:gene_set_annotation] : params[:annotation]
     annot_name, annot_type, annot_scope = selector.nil? ? study.default_annotation.split('--') : selector.split('--')
     {
