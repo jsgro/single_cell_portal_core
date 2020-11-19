@@ -445,5 +445,4 @@ class ExpressionVizService
     values = genes.map {|gene| gene['scores'][cell].to_f}
     Gene.array_median(values)
   end
-
 end

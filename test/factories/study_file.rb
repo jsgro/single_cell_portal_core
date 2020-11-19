@@ -105,5 +105,20 @@ FactoryBot.define do
         end
       end
     end
+    factory :ideogram_output do
+      file_type { 'Analysis Output'}
+      transient do
+        cluster {}
+        annotation {}
+      end
+      options {
+        {
+            analysis_name: 'infercnv',
+            visualization_name: 'ideogram.js',
+            cluster_name: cluster.try(:name),
+            annotation_name: annotation
+        }
+      }
+    end
   end
 end
