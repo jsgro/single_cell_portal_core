@@ -47,6 +47,9 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
   end
 
   teardown do
+    StudyFile.where(study_id: @study.id).destroy_all
+    DataArray.where(study_id: @study.id).destroy_all
+    ClusterGroup.where(study_id: @study.id).destroy_all
     @study.destroy
     @user.destroy
   end
