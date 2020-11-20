@@ -117,6 +117,21 @@ function resizePlots() {
   }
 }
 
+/** Change Plotly scatter plot color scales */
+function setColorScales(theme) {
+  const numPlots = window.SCP.numPlots
+
+  for (let i = 0; i < numPlots; i++) {
+    const rawPlot = window.SCP.plots.slice()[i]
+    const layout = getScatterPlotLayout(rawPlot)
+    const target = `cluster-plot-${i}`
+
+    rawPlot.data[0].marker.colorscale = theme
+    console.log('in setColorScales, updated rawPlot:')
+    console.log(rawPlot)
+    Plotly.update(target, rawPlot, layout)
+  }
+}
 
 /** Renders a Plotly scatter plot for "Clusters" tab */
 function renderScatterPlot(rawPlot, plotId, legendId) {
@@ -125,17 +140,6 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
   const layout = getScatterPlotLayout(rawPlot)
 
   Plotly.newPlot(plotId, data, layout)
-
-  // listener to redraw expression scatter with new color profile
-  $('#colorscale').off('change')
-  $('#colorscale').change(function() {
-    const theme = $(this).val() // eslint-disable-line
-    data[0].marker.colorscale = theme
-    console.log(`setting colorscale to ${theme}`)
-
-    $('#search_colorscale').val(theme)
-    Plotly.update(plotId, data, layout)
-  })
 
   $(`#${legendId}`).html(
     `<p class="text-center help-block">${rawPlot.description}</p>`
@@ -297,6 +301,14 @@ function attachEventHandlers(study) {
     $('#search_cluster').val(newCluster)
     $('#gene_set_cluster').val(newCluster)
     drawScatterPlots(study)
+  })
+
+  // listener to redraw expression scatter with new color profile
+  $('#colorscale').change(function() {
+    console.log('changing colorscale')
+    const theme = $(this).val() // eslint-disable-line
+    // $('#search_colorscale').val(theme)
+    setColorScales(theme)
   })
 }
 
