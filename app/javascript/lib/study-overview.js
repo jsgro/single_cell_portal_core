@@ -123,26 +123,21 @@ function renderScatterPlot(target, rawPlot, plotIndex) {
   const { data } = rawPlot
 
   const plotId = `cluster-plot-${plotIndex}`
+  const legendId = `cluster-legend-${plotIndex}`
 
+  let plotClass = '' // For only 1 plot (study without spatial data)
   if (window.SCP.numPlots > 1) {
-    let marginLeft = ''
+    plotClass = ' plot-left'
     if (plotIndex !== 0) {
-      marginLeft = ' margin-left: 60px'
+      plotClass = ' plot-right'
     }
-    // TODO (SCP-2881): Ensure margin when floating left for side-by-side plots
-    $(target).append(`
-      <div class="row" style="float: left;${marginLeft}">
-        <div id="${plotId}"></div>
-        <div id="cluster-figure-legend"></div>
-      </div>`)
-  } else {
-    $(target).append(`
-      <div class="row">
-        <div id="${plotId}"></div>
-        <div id="cluster-figure-legend"></div>
-      </div>`)
   }
 
+  $(target).append(`
+    <div class="row${plotClass}">
+      <div id="${plotId}"></div>
+      <div id="${legendId}"></div>
+    </div>`)
 
   const layout = getScatterPlotLayout(rawPlot)
 
