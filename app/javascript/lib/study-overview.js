@@ -118,26 +118,9 @@ function resizePlots() {
 }
 
 
-/** Renders Plotly scatter plot for "Clusters" tab */
-function renderScatterPlot(target, rawPlot, plotIndex) {
+/** Renders a Plotly scatter plot for "Clusters" tab */
+function renderScatterPlot(rawPlot, plotId, legendId) {
   const { data } = rawPlot
-
-  const plotId = `cluster-plot-${plotIndex}`
-  const legendId = `cluster-legend-${plotIndex}`
-
-  let plotClass = '' // For only 1 plot (study without spatial data)
-  if (window.SCP.numPlots > 1) {
-    plotClass = ' plot-left'
-    if (plotIndex !== 0) {
-      plotClass = ' plot-right'
-    }
-  }
-
-  $(target).append(`
-    <div class="row${plotClass}">
-      <div id="${plotId}"></div>
-      <div id="${legendId}"></div>
-    </div>`)
 
   const layout = getScatterPlotLayout(rawPlot)
 
@@ -154,9 +137,9 @@ function renderScatterPlot(target, rawPlot, plotIndex) {
     Plotly.update(plotId, data, layout)
   })
 
-  const description =
+  $(`#${legendId}`).html(
     `<p class="text-center help-block">${rawPlot.description}</p>`
-  $('#cluster-figure-legend').html(description)
+  )
 
   // access actual target div, not jQuery object wrapper for relayout event
   const clusterPlotDiv = document.getElementById(plotId)
@@ -166,14 +149,37 @@ function renderScatterPlot(target, rawPlot, plotIndex) {
       $(`#${plotId}`).data('camera', newCamera)
     }
   })
-
-  window.SCP.scatterPlotLayout = layout
 }
 
 /** draws scatter plot */
 async function drawScatterPlot(accession, cluster, plotIndex) {
+  const plotId = `cluster-plot-${plotIndex}`
+  const legendId = `cluster-legend-${plotIndex}`
+
+  let plotClass = '' // For only 1 plot (study without spatial data)
+  if (window.SCP.numPlots > 1) {
+    plotClass = ' plot-left'
+    if (plotIndex !== 0) {
+      plotClass = ' plot-right'
+    }
+  }
+
+  $('#plots .panel-body').append(`
+    <div class="row${plotClass}">
+      <div id="${plotId}"></div>
+      <div id="${legendId}"></div>
+    </div>`)
+
+  const plotJqDom = $(`#${plotId}`)
+  const spinnerTarget = plotJqDom[0]
+  const spinner = new Spinner(window.opts).spin(spinnerTarget)
+  plotJqDom.data('spinner', spinner)
+
   const annotation = $('#annotation').val()
   const subsample = $('#subsample').val()
+
+  $('#search_annotation').val(annotation)
+  $('#gene_set_annotation').val(annotation)
 
   const rawPlot = await fetchCluster(
     accession, cluster, annotation, subsample
@@ -201,25 +207,16 @@ async function drawScatterPlot(accession, cluster, plotIndex) {
     // })
   }
 
-  const target = '#plots .panel-body'
-
   // Duplicate calls are merely for proof-of-concept, showing we can
   // render plots side-by-side
-  renderScatterPlot(target, rawPlot, plotIndex)
+  renderScatterPlot(rawPlot, plotId, legendId)
 
-  $('#plots').data('spinner').stop()
-
-  $('#search_annotation').val(annotation)
-  $('#gene_set_annotation').val(annotation)
+  plotJqDom.data('spinner').stop()
 }
 
 /** Fetch and draw scatter plot for default Explore tab view */
 async function drawScatterPlots(study) {
   let cluster
-
-  const spinnerTarget = $('#plots')[0]
-  const spinner = new Spinner(window.opts).spin(spinnerTarget)
-  $('#plots').data('spinner', spinner)
 
   window.SCP.numPlots = (study.spatialGroupNames.length > 0) ? 2 : 1
 
