@@ -31,15 +31,6 @@ FactoryBot.define do
     factory :cluster_file do
       file_type { 'Cluster' }
       is_spatial { false }
-      x_axis_label { nil }
-      y_axis_label { nil }
-      z_axis_label { nil }
-      x_axis_min { nil }
-      x_axis_max { nil }
-      y_axis_min { nil }
-      y_axis_max { nil }
-      z_axis_min { nil }
-      z_axis_max { nil }
       transient do
         # cell_input is a hash of three (or 4) arrays: cells, x and y and z
         # {
