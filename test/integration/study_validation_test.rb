@@ -111,6 +111,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     study.reload
 
     example_files.values.each do |e|
+      e[:object].reload # address potential race condition between parse_status setting to 'failed' and DeleteQueueJob executing
       assert_equal 'failed', e[:object].parse_status, "Incorrect parse_status for #{e[:name]}"
       assert e[:object].queued_for_deletion
       # check that file is cached in parse_logs/:id folder in the study bucket
@@ -286,10 +287,14 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
       entry['study_accession'] = study.accession
       entry['file_id'] = metadata_file.id.to_s
     end
-    tmp_file = File.new(Rails.root.join('tmp_bq_seeds.json'), 'w+')
+    puts "Data read, writing to newline-delimited JSON"
+    tmp_filename = SecureRandom.uuid + '.json'
+    tmp_file = File.new(Rails.root.join(tmp_filename), 'w+')
     tmp_file.write bq_data.map(&:to_json).join("\n")
+    puts "Data assembled, writing to BigQuery"
     table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
     job = table.load(tmp_file, write: 'append', format: :json)
+    puts "Write complete, closing/removing files"
     bq_seeds.close
     tmp_file.close
     puts "BigQuery seeding completed: #{job}"

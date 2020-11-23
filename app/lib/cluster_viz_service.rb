@@ -11,6 +11,42 @@ class ClusterVizService
     end
   end
 
+  # helper method to load all possible cluster groups for a study
+  def self.load_cluster_group_options(study)
+    non_spatial_file_ids = StudyFile.where(study: study, :is_spatial.ne => true, file_type: 'Cluster').pluck(:id)
+    ClusterGroup.where(study: study, :study_file_id.in => non_spatial_file_ids).pluck(:name)
+  end
+
+  # helper method to load all available cluster_group-specific annotations
+  def self.load_cluster_group_annotations(study, cluster, current_user)
+    grouped_options = study.formatted_annotation_select(cluster: cluster)
+    # load available user annotations (if any)
+    if current_user.present?
+      user_annotations = UserAnnotation.viewable_by_cluster(current_user, cluster)
+      unless user_annotations.empty?
+        grouped_options['User Annotations'] = user_annotations.map {|annot| ["#{annot.name}", "#{annot.id}--group--user"] }
+      end
+    end
+    grouped_options
+  end
+
+  # helper method to load spatial coordinate group names
+  def self.load_spatial_options(study)
+    spatial_file_ids = StudyFile.where(study: study, is_spatial: true, file_type: 'Cluster').pluck(:id)
+    ClusterGroup.where(study: study, :study_file_id.in => spatial_file_ids).pluck(:name)
+  end
+
+  # return an array of values to use for subsampling dropdown scaled to number of cells in study
+  # only options allowed are 1000, 10000, 20000, and 100000
+  # will only provide options if subsampling has completed for a cluster
+  def self.subsampling_options(cluster)
+    if cluster.is_subsampling?
+      []
+    else
+      ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < cluster.points}
+    end
+  end
+
   # Convert cluster group data array points into JSON plot data for Plotly
   def self.transform_coordinates(coordinates, study, cluster_group, selected_annotation)
     plot_data = []

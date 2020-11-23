@@ -1,6 +1,6 @@
 # SINGLE CELL PORTAL README
 
-[![codecov](https://codecov.io/gh/broadinstitute/single_cell_portal_core/branch/development/graph/badge.svg?token=HMWE5BO2a4)](undefined)
+[![codecov](https://codecov.io/gh/broadinstitute/single_cell_portal_core/branch/development/graph/badge.svg?token=HMWE5BO2a4)](https://codecov.io/gh/broadinstitute/single_cell_portal_core)
 [![Build Status](https://travis-ci.com/broadinstitute/single_cell_portal_core.svg?branch=development)](https://travis-ci.com/broadinstitute/single_cell_portal_core)
 
 ## SETUP

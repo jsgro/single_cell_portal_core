@@ -34,7 +34,7 @@ module Api
 
         def render_violin
           cluster = ClusterVizService.get_cluster_group(@study, params)
-          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, cluster, params)
+          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
           annotation = ExpressionVizService.get_selected_annotation(@study,
                                                                        cluster,
                                                                        annot_params[:name],
@@ -51,7 +51,7 @@ module Api
 
         def render_annotation_values
           cluster = ClusterVizService.get_cluster_group(@study, params)
-          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, cluster, params)
+          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
           annotation = ExpressionVizService.get_selected_annotation(@study,
                                                                        cluster,
                                                                        annot_params[:name],

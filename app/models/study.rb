@@ -1348,7 +1348,7 @@ class Study
                                          cluster_name, annotation_name).first
     {
       'organism': exp_file.species_name,
-      'assembly': exp_file.genome_assembly['name'],
+      'assembly': exp_file.genome_assembly.try(:name),
       'annotationsPath': exp_file.api_url
     }
   end
