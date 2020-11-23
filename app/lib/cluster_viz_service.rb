@@ -13,7 +13,8 @@ class ClusterVizService
 
   # helper method to load all possible cluster groups for a study
   def self.load_cluster_group_options(study)
-    study.cluster_groups.map(&:name)
+    non_spatial_file_ids = StudyFile.where(study: study, :is_spatial.ne => true, file_type: 'Cluster').pluck(:id)
+    ClusterGroup.where(study: study, :study_file_id.in => non_spatial_file_ids).pluck(:name)
   end
 
   # helper method to load all available cluster_group-specific annotations
