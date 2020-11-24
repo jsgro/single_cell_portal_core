@@ -46,7 +46,7 @@ module Api
           # this simplifies base key into smaller value, e.g. _single_cell_api_v1_studies_SCP123_explore_
           params_key = params.to_unsafe_hash.reject {|name, value| CACHE_PATH_BLACKLIST.include?(name) || value.empty?}.
               map do |parameter_name, parameter_value|
-            "#{parameter_name}_#{parameter_value.split.join('-')}"
+            "#{parameter_name}_#{parameter_value.split.join('_')}"
           end
           [sanitized_path, params_key].join('_')
         end
