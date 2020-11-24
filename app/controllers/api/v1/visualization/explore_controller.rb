@@ -5,6 +5,7 @@ module Api
       class ExploreController < ApiBaseController
         include Concerns::Authenticator
         include Concerns::StudyAware
+        include Concerns::ApiCaching
         include Swagger::Blocks
 
         before_action :set_current_api_user!

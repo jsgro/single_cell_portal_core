@@ -845,8 +845,9 @@ class StudyFile
   def invalidate_cache_by_file_type
     cache_key = self.cache_removal_key
     unless cache_key.nil?
-      # clear matching caches in background
+      # clear matching caches in background, including API responses
       CacheRemovalJob.new(cache_key).delay(queue: :cache).perform
+      CacheRemovalJob.new(self.api_cache_removal_key).delay(queue: :cache).perform
     end
   end
 
@@ -876,6 +877,12 @@ class StudyFile
         @cache_key = nil
     end
     @cache_key
+  end
+
+  # cache key for API responses (Api::V1::ClustersController, etc.)
+  # for safety, all API caches are invalidated on delete
+  def api_cache_removal_key
+    "api_v1_studies_#{self.study.accession}"
   end
 
   ###
