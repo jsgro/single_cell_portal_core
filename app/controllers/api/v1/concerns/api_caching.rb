@@ -4,9 +4,12 @@ module Api
       module ApiCaching
         extend ActiveSupport::Concern
 
-        # list of parameters to reject from :get_cache_key as they will be represented by request.fullpath
+        # list of parameters to reject from :get_cache_key as they will be represented by request.path
         # format is always :json and therefore unnecessary
         CACHE_PATH_BLACKLIST = %w(controller action format study_id)
+
+        # character regex to convert into underscores (_) for cache path setting
+        PATH_REGEX =/(\/|%20|\?|&|=)/
 
         included do
           before_action :check_api_cache!
@@ -20,7 +23,7 @@ module Api
           if Rails.cache.exist?(cache_path)
             Rails.logger.info "Reading from API cache: #{cache_path}"
             json_response = Rails.cache.fetch(cache_path)
-            render json: json_response and return
+            render json: json_response
           end
         end
 
@@ -38,7 +41,7 @@ module Api
         # construct cache_key for accessing Rails cache
         def get_cache_key
           # transform / into _ to avoid encoding as %2f
-          sanitized_path = request.fullpath.gsub(/\//, '_')
+          sanitized_path = sanitize_path
           # remove unwanted parameters from cache_key, as well as empty values
           # this simplifies base key into smaller value, e.g. _single_cell_api_v1_studies_SCP123_explore_
           params_key = params.to_unsafe_hash.reject {|name, value| CACHE_PATH_BLACKLIST.include?(name) || value.empty?}.
@@ -46,6 +49,11 @@ module Api
             "#{parameter_name}_#{parameter_value.split.join('-')}"
           end
           [sanitized_path, params_key].join('_')
+        end
+
+        # convert url pathname into easily readable fragment
+        def sanitize_path
+          request.path.gsub(PATH_REGEX, '_')
         end
       end
     end
