@@ -6,6 +6,7 @@ module Api
       class ClustersController < ApiBaseController
         include Concerns::Authenticator
         include Concerns::StudyAware
+        include Concerns::ApiCaching
         include Swagger::Blocks
 
         VALID_SCOPE_VALUES = ['study', 'cluster']
