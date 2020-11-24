@@ -268,7 +268,7 @@ export function log(name, props={}) {
     appFullPath: getAppFullPath(),
     env
   }, getDefaultProperties())
-  if (window.SCP.currentStudyAccession) {
+  if (window.SCP && window.SCP.currentStudyAccession) {
     props['studyAccession'] = window.SCP.currentStudyAccession
   }
 
