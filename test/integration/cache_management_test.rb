@@ -42,7 +42,6 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
       b_set_expression_cache_key = "views/localhost/single_cell/study/#{study.accession}/#{study.url_safe_name}/render_gene_set_expression_plots_#{cluster_name}_#{annotation}_#{genes_hash}_box_all.js"
       exp_query_cache_key = "views/localhost/single_cell/study/#{study.accession}/#{study.url_safe_name}/expression_query_#{cluster_name}_#{annotation}__#{genes_hash}.js"
       annot_query_cache_key = "views/localhost/single_cell/study/#{study.accession}/#{study.url_safe_name}/annotation_query_#{cluster_name}_#{annotation}.js"
-      study_explore_key = "_single_cell_api_v1_studies_#{study.accession}_explore_"
       study_clusters_key = "_single_cell_api_v1_studies_#{study.accession}_clusters_"
       study_cluster_key = "#{study_clusters_key}#{cluster_underscore}_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}"
 
@@ -52,7 +51,6 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
       assert Rails.cache.exist?(b_set_expression_cache_key), "Did not find matching gene set expression cache entry at #{b_set_expression_cache_key}"
       assert Rails.cache.exist?(exp_query_cache_key), "Did not find matching expression query cache entry at #{exp_query_cache_key}"
       assert Rails.cache.exist?(annot_query_cache_key), "Did not find matching annotation query cache entry at #{annot_query_cache_key}"
-      assert Rails.cache.exist?(study_explore_key), "Did not find matching API explore cache entry at #{study_explore_key}"
       assert Rails.cache.exist?(study_clusters_key), "Did not find matching API clusters cache entry at #{study_clusters_key}"
       assert Rails.cache.exist?(study_cluster_key), "Did not find matching API single cluster cache entry at #{study_cluster_key}"
 
@@ -68,7 +66,6 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
       refute Rails.cache.exist?(b_set_expression_cache_key), "Did not delete matching gene set expression cache entry at #{b_set_expression_cache_key}"
       refute Rails.cache.exist?(exp_query_cache_key), "Did not delete matching expression query cache entry at #{exp_query_cache_key}"
       CacheRemovalJob.new(api_removal_key).perform
-      refute Rails.cache.exist?(study_explore_key), "Did not delete matching API explore cache entry at #{study_explore_key}"
       refute Rails.cache.exist?(study_clusters_key), "Did not delete matching API clusters cache entry at #{study_clusters_key}"
       refute Rails.cache.exist?(study_cluster_key), "Did not delete matching API single cluster cache entry at #{study_cluster_key}"
       CacheRemovalJob.new(study.url_safe_name).perform
