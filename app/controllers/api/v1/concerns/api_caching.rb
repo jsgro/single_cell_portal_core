@@ -11,11 +11,6 @@ module Api
         # character regex to convert into underscores (_) for cache path setting
         PATH_REGEX =/(\/|%20|\?|&|=)/
 
-        included do
-          before_action :check_api_cache!
-          after_action :write_api_cache!
-        end
-
         # check Rails cache for JSON response based off url/params
         # cache expiration is still handled by CacheRemovalJob
         def check_api_cache!
