@@ -122,14 +122,9 @@ function setColorScales(theme) {
   const numPlots = window.SCP.numPlots
 
   for (let i = 0; i < numPlots; i++) {
-    const rawPlot = window.SCP.plots.slice()[i]
-    const layout = getScatterPlotLayout(rawPlot)
     const target = `cluster-plot-${i}`
-
-    rawPlot.data[0].marker.colorscale = theme
-    console.log('in setColorScales, updated rawPlot:')
-    console.log(rawPlot)
-    Plotly.update(target, rawPlot, layout)
+    const dataUpdate = { 'marker.colorscale': theme }
+    Plotly.update(target, dataUpdate)
   }
 }
 
