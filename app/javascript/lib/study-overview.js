@@ -211,6 +211,7 @@ async function drawScatterPlot(accession, cluster, plotIndex) {
   renderScatterPlot(rawPlot, plotId, legendId)
 
   plotJqDom.data('spinner').stop()
+  plotJqDom.find('.spinner').remove()
 }
 
 /** Fetch and draw scatter plot for default Explore tab view */
@@ -298,9 +299,17 @@ function attachEventHandlers(study) {
     drawScatterPlots(study)
   })
 
+  $(document).on('change', '#spatial-group', function() {
+    $('#cluster-plot').data('rendered', false)
+    const newSpatial = $(this).val() // eslint-disable-line
+    // keep track for search purposes
+    $('#search_spatial-group').val(newSpatial)
+    $('#gene_set_spatial-group').val(newSpatial)
+    drawScatterPlots(study)
+  })
+
   // listener to redraw expression scatter with new color profile
   $('#colorscale').change(function() {
-    console.log('changing colorscale')
     const theme = $(this).val() // eslint-disable-line
     // $('#search_colorscale').val(theme)
     setColorScales(theme)
