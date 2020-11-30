@@ -1,4 +1,4 @@
-<% unless @study.default_cluster.nil? %>
+<% if @study.can_visualize_clusters? && @study.default_cluster.present? %>
 
   <%= form_for(:study_default_options, url: update_default_options_study_path, html: {class: 'form', id: 'default-study-options-form', data: {remote: true}}) do |f| %>
     <div class="well well-sm">

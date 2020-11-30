@@ -78,8 +78,8 @@ module Api
             taxonNames: @study.expressed_taxon_names,
             inferCNVIdeogramFiles: ideogram_files,
             uniqueGenes: @study.unique_genes,
-            clusterGroupNames: ExpressionVizService.load_cluster_group_options(@study),
-            spatialGroupNames: ExpressionVizService.load_spatial_options(@study),
+            clusterGroupNames: ClusterVizService.load_cluster_group_options(@study),
+            spatialGroupNames: ClusterVizService.load_spatial_options(@study),
             clusterPointAlpha: @study.default_cluster_point_alpha
           }
 

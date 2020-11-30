@@ -6,12 +6,14 @@ module Api
       class ExpressionController < ApiBaseController
         include Concerns::Authenticator
         include Concerns::StudyAware
+        include Concerns::ApiCaching
         include Swagger::Blocks
 
         before_action :set_current_api_user!
         before_action :set_study
         before_action :check_study_view_permission
-
+        before_action :check_api_cache!
+        after_action :write_api_cache!
 
         # Returns the specified expression data for the gene within the given study, optimized for rendering
         # by the SCP UI.
@@ -34,7 +36,7 @@ module Api
 
         def render_violin
           cluster = ClusterVizService.get_cluster_group(@study, params)
-          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, cluster, params)
+          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
           annotation = ExpressionVizService.get_selected_annotation(@study,
                                                                        cluster,
                                                                        annot_params[:name],
@@ -51,7 +53,7 @@ module Api
 
         def render_annotation_values
           cluster = ClusterVizService.get_cluster_group(@study, params)
-          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, cluster, params)
+          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
           annotation = ExpressionVizService.get_selected_annotation(@study,
                                                                        cluster,
                                                                        annot_params[:name],

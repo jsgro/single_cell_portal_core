@@ -1,14 +1,4 @@
-// default scatter plot colors, a combination of colorbrewer sets 1-3 with
-// tweaks to the yellow members
-//
-// To consider: dedup this copy with the one that exists in application.js.
-const colorBrewerSet = [
-  '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#a65628',
-  '#f781bf', '#999999', '#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3',
-  '#a6d854', '#ffd92f', '#e5c494', '#b3b3b3', '#8dd3c7', '#bebada',
-  '#fb8072', '#80b1d3', '#fdb462', '#b3de69', '#fccde5', '#d9d9d9',
-  '#bc80bd', '#ccebc5', '#ffed6f'
-]
+import { getColorBrewerColor } from 'lib/plot'
 
 // To consider: dedup this copy with the one that exists in application.js.
 const plotlyDefaultLineColor = 'rgb(40, 40, 40)'
@@ -88,7 +78,7 @@ export default function createTracesAndLayout(
           color: '#000000',
           opacity: 0.8
         },
-        'fillcolor': colorBrewerSet[x % 27],
+        'fillcolor': getColorBrewerColor(x),
         'line': {
           color: '#000000',
           width: 1.5
@@ -105,7 +95,7 @@ export default function createTracesAndLayout(
         y: dist,
         boxpoints: jitter,
         marker: {
-          color: colorBrewerSet[x % 27],
+          color: getColorBrewerColor(x),
           size: 2,
           line: {
             color: plotlyDefaultLineColor
