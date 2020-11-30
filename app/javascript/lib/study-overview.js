@@ -7,12 +7,14 @@
 *   - Multiple-gene: Shows dot plot and heatmap
 */
 
-/**
- * TODO (SCP-2884): Move code for default Explore view into separate module
- */
-
 import { fetchExplore } from 'lib/scp-api'
 import { drawScatterPlots, resizePlots, setColorScales } from 'lib/scatter-plot'
+
+const baseCamera = {
+  'up': { 'x': 0, 'y': 0, 'z': 1 },
+  'center': { 'x': 0, 'y': 0, 'z': 0 },
+  'eye': { 'x': 1.25, 'y': 1.25, 'z': 1.25 }
+}
 
 /** Listen for events, and update view accordingly */
 function attachEventHandlers(study) {
@@ -35,7 +37,6 @@ function attachEventHandlers(study) {
 
   // listener for cluster nav, specific to study page
   $('#annotation').change(function() {
-    $('#cluster-plot').data('rendered', false)
     const an = $(this).val() // eslint-disable-line
     // keep track for search purposes
     $('#search_annotation').val(an)
@@ -44,7 +45,6 @@ function attachEventHandlers(study) {
   })
 
   $('#subsample').change(function() {
-    $('#cluster-plot').data('rendered', false)
     const subsample = $(this).val() // eslint-disable-line
     $('#search_subsample').val(subsample)
     $('#gene_set_subsample').val(subsample)
@@ -52,7 +52,6 @@ function attachEventHandlers(study) {
   })
 
   $('#cluster').change(function() {
-    $('#cluster-plot').data('rendered', false)
     const newCluster = $(this).val() // eslint-disable-line
     // keep track for search purposes
     $('#search_cluster').val(newCluster)
@@ -61,7 +60,6 @@ function attachEventHandlers(study) {
   })
 
   $(document).on('change', '#spatial-group', function() {
-    $('#cluster-plot').data('rendered', false)
     const newSpatial = $(this).val() // eslint-disable-line
     // keep track for search purposes
     $('#search_spatial-group').val(newSpatial)
@@ -112,15 +110,6 @@ export default async function initializeExplore() {
     { speciesList: window.SCP.taxons },
     'plot:',
     true)
-
-  $('#cluster-plot').data('rendered', false)
-
-  // TODO (SCP-2884): Declare this outside the function, if reasonable
-  const baseCamera = {
-    'up': { 'x': 0, 'y': 0, 'z': 1 },
-    'center': { 'x': 0, 'y': 0, 'z': 0 },
-    'eye': { 'x': 1.25, 'y': 1.25, 'z': 1.25 }
-  }
 
   // if tab position was specified in url, show the current tab
   if (window.location.href.split('#')[1] !== '') {
