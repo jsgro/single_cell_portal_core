@@ -98,7 +98,14 @@ function calculatePlotRect() {
   const numPlots = window.SCP.numPlots
 
   const height = $(window).height() - 250
-  const width = ($('#plots-tab').width() - 80) / numPlots
+
+  // Accounts for expanding "View options" after page load
+  let baseWidth = $('#plots-tab').width()
+
+  // Accounts for when "Summary" tab is selected by default
+  if (baseWidth === 0) baseWidth = $(window).width()
+
+  const width = (baseWidth - 80) / numPlots
 
   return { height, width }
 }
