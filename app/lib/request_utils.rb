@@ -30,5 +30,4 @@ class RequestUtils
     inputs = terms.is_a?(Array) ? terms.join(',') : terms.to_s
     SANITIZER.sanitize(inputs).encode('ASCII-8BIT', invalid: :replace, undef: :replace)
   end
-
 end
