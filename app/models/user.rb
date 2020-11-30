@@ -10,6 +10,7 @@ class User
 
   include Mongoid::Document
   include Mongoid::Timestamps
+  include FeatureFlaggable
   extend ErrorTracker
 
   ###
@@ -96,11 +97,12 @@ class User
   #   last_access_at: DateTime last usage of token
   # }
   field :api_access_token, type: Hash
+  field :metrics_uuid, type: String
 
   # feature_flags should be a hash of true/false values.  If unspecified for a given flag, the
   # default_value from the FeatureFlag should be used.  Accordingly, the helper method feature_flags_with_defaults
   # is provided
-  field :feature_flags, default: {}
+  field :feature_flags, type: Hash, default: {}
 
   ###
   #
@@ -111,8 +113,7 @@ class User
   def self.from_omniauth(access_token)
     data = access_token.info
     provider = access_token.provider
-    uid =
-     access_token.uid
+    uid = access_token.uid
     # create bogus password, Devise will never use it to authenticate
     password = Devise.friendly_token[0,20]
     user = User.find_by(email: data['email'])
@@ -201,6 +202,16 @@ class User
     self.send(token_method)[:expires_at].zone
   end
 
+  # determine which access token is best to use for a FireCloud API request
+  # once an api_access_token expires/times out, it is unset, so checking .present? will ensure a valid token
+  def token_for_api_call
+    if self.refresh_token.nil? && self.api_access_token.present?
+      self.api_access_token
+    else
+      self.valid_access_token
+    end
+  end
+
   ###
   #
   # OTHER AUTHENTICATION METHODS
@@ -248,6 +259,13 @@ class User
     end
   end
 
+  def get_metrics_uuid
+    if self.metrics_uuid.nil?
+      self.update(metrics_uuid: SecureRandom.uuid)
+    end
+    self.metrics_uuid
+  end
+
   ###
   #
   # MISCELLANEOUS METHODS
@@ -283,37 +301,34 @@ class User
     end
   end
 
+  # retrieve billing projects for a given user (if registered for firecloud)
+  def get_billing_projects
+    projects = {User: [], Owner: []}
+    if self.registered_for_firecloud
+      client = FireCloudClient.new(self, FireCloudClient::PORTAL_NAMESPACE)
+      user_projects = client.get_billing_projects
+      user_projects.each do |project|
+        if project['creationStatus'] == 'Ready'
+          projects[project['role'].to_sym] << project['projectName']
+        end
+      end
+    end
+    projects
+  end
+
+  # return true/false if user is an owner of a given billing project
+  def is_billing_project_owner?(billing_project)
+    self.get_billing_projects[:Owner].include?(billing_project)
+  end
+
   def add_to_portal_user_group
     user_group_config = AdminConfiguration.find_by(config_type: 'Portal FireCloud User Group')
     if user_group_config.present?
       group_name = user_group_config.value
       Rails.logger.info "#{Time.zone.now}: adding #{self.email} to #{group_name} user group"
-      Study.firecloud_client.add_user_to_group(group_name, 'member', self.email)
+      ApplicationController.firecloud_client.add_user_to_group(group_name, 'member', self.email)
       Rails.logger.info "#{Time.zone.now}: user group registration complete"
     end
-  end
-
-  # merges the user flags with the defaults -- this should  always be used in place of feature_flags
-  # for determining whether to enable a feature for a given user.
-  def feature_flags_with_defaults
-    FeatureFlag.default_flag_hash.merge(feature_flags ? feature_flags : {})
-  end
-
-  # gets the feature flag value for a given user, and the default value if no user is given
-  def self.feature_flag_for_user(user, flag_key)
-    if user.present?
-      user.feature_flags_with_defaults[flag_key]
-    else
-      FeatureFlag.find_by(name: flag_key)&.default_value
-    end
-  end
-
-  # returns feature_flags_with_defaults for the user, or the default flags if no user is given
-  def self.feature_flags_for_user(user)
-    if user.nil?
-      return FeatureFlag.default_flag_hash
-    end
-    user.feature_flags_with_defaults
   end
 
   # helper method to migrate study ownership & shares from old email to new email

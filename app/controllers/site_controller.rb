@@ -16,21 +16,21 @@ class SiteController < ApplicationController
 
   before_action :set_study, except: [:index, :search, :legacy_study, :get_viewable_studies, :search_all_genes, :privacy_policy, :terms_of_service,
                                      :view_workflow_wdl, :create_totat, :log_action, :get_taxon, :get_taxon_assemblies, :covid19]
-  before_action :set_cluster_group, only: [:study, :render_cluster, :render_gene_expression_plots, :render_global_gene_expression_plots,
+  before_action :set_cluster_group, only: [:study, :render_gene_expression_plots, :render_global_gene_expression_plots,
                                            :render_gene_set_expression_plots, :view_gene_expression, :view_gene_set_expression,
                                            :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap, :expression_query,
                                            :annotation_query, :get_new_annotations, :annotation_values, :show_user_annotations_form]
-  before_action :set_selected_annotation, only: [:render_cluster, :render_gene_expression_plots, :render_global_gene_expression_plots,
+  before_action :set_selected_annotation, only: [:render_gene_expression_plots, :render_global_gene_expression_plots,
                                                  :render_gene_set_expression_plots, :view_gene_expression, :view_gene_set_expression,
                                                  :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap, :annotation_query,
                                                  :annotation_values, :show_user_annotations_form]
-  before_action :load_precomputed_options, only: [:study, :update_study_settings, :render_cluster, :render_gene_expression_plots,
+  before_action :load_precomputed_options, only: [:study, :update_study_settings, :render_gene_expression_plots,
                                                   :render_gene_set_expression_plots, :view_gene_expression, :view_gene_set_expression,
                                                   :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap]
   before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :search_all_genes, :render_global_gene_expression_plots, :privacy_policy,
                                                   :terms_of_service, :search, :precomputed_results, :expression_query, :annotation_query, :view_workflow_wdl,
                                                   :log_action, :get_workspace_samples, :update_workspace_samples, :create_totat,
-                                                  :get_workflow_options, :get_taxon, :get_taxon_assemblies, :covid19]
+                                                  :get_workflow_options, :get_taxon, :get_taxon_assemblies, :covid19, :record_download_acceptance]
   before_action :check_compute_permissions, only: [:get_fastq_files, :get_workspace_samples, :update_workspace_samples,
                                                    :delete_workspace_samples, :get_workspace_submissions, :create_workspace_submission,
                                                    :get_submission_workflow, :abort_submission_workflow, :get_submission_errors,
@@ -42,7 +42,7 @@ class SiteController < ApplicationController
                                               :get_submission_outputs, :delete_submission_files, :get_submission_metadata]
 
   # caching
-  caches_action :render_cluster, :render_gene_expression_plots, :render_gene_set_expression_plots, :render_global_gene_expression_plots,
+  caches_action :render_gene_expression_plots, :render_gene_set_expression_plots, :render_global_gene_expression_plots,
                 :expression_query, :annotation_query, :precomputed_results,
                 cache_path: :set_cache_path
   COLORSCALE_THEMES = %w(Greys YlGnBu Greens YlOrRd Bluered RdBu Reds Blues Picnic Rainbow Portland Jet Hot Blackbody Earth Electric Viridis Cividis)
@@ -264,22 +264,13 @@ class SiteController < ApplicationController
     else
       if @study.can_edit?(current_user)
         if @study.update(study_params)
-          # invalidate caches as needed
-          if @study.previous_changes.keys.include?('default_options')
-            # invalidate all cluster & expression caches as points sizes/borders may have changed globally
-            # start with default cluster then do everything else
-            @study.default_cluster.study_file.invalidate_cache_by_file_type
-            other_clusters = @study.cluster_groups.keep_if {|cluster_group| cluster_group.name != @study.default_cluster}
-            other_clusters.map {|cluster_group| cluster_group.study_file.invalidate_cache_by_file_type}
-            @study.expression_matrix_files.map {|matrix_file| matrix_file.invalidate_cache_by_file_type}
-          elsif @study.previous_changes.keys.include?('name')
-            CacheRemovalJob.new(@study.accession).delay.perform
-          end
+          # invalidate caches as a precaution
+          CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
           set_study_default_options
           if @study.initialized?
             @cluster = @study.default_cluster
-            @options = load_cluster_group_options
-            @cluster_annotations = load_cluster_group_annotations
+            @options = ClusterVizService.load_cluster_group_options(@study)
+            @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
             set_selected_annotation
           end
 
@@ -291,7 +282,7 @@ class SiteController < ApplicationController
 
           # double check on download availability: first, check if administrator has disabled downloads
           # then check if FireCloud is available and disable download links if either is true
-          @allow_downloads = Study.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
+          @allow_downloads = ApplicationController.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
         else
           set_study_default_options
         end
@@ -319,7 +310,8 @@ class SiteController < ApplicationController
     @directories = @study.directory_listings.are_synced
     @primary_data = @study.directory_listings.primary_data
     @other_data = @study.directory_listings.non_primary_data
-    @unique_genes = @study.genes.unique_genes
+    @unique_genes = @study.unique_genes
+    @taxons = @study.expressed_taxon_names
 
     # double check on download availability: first, check if administrator has disabled downloads
     # then check individual statuses to see what to enable/disable
@@ -329,10 +321,15 @@ class SiteController < ApplicationController
     set_study_default_options
     # load options and annotations
     if @study.can_visualize_clusters?
-      @options = load_cluster_group_options
-      @cluster_annotations = load_cluster_group_annotations
+      @options = ClusterVizService.load_cluster_group_options(@study)
+      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
       # call set_selected_annotation manually
       set_selected_annotation
+    end
+
+    if @study.has_download_agreement?
+      @download_agreement = @study.download_agreement
+      @user_accepted_agreement = @download_agreement.user_accepted?(current_user)
     end
 
     # only populate if study has ideogram results & is not 'detached'
@@ -353,8 +350,8 @@ class SiteController < ApplicationController
 
     if @allow_firecloud_access && @user_can_compute
       # load list of previous submissions
-      workspace = Study.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
-      @submissions = Study.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
+      workspace = ApplicationController.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
+      @submissions = ApplicationController.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
 
       @submissions.each do |submission|
         update_analysis_submission(submission)
@@ -370,53 +367,30 @@ class SiteController < ApplicationController
     end
   end
 
-  # render a single cluster and its constituent sub-clusters
-  def render_cluster
-    subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
-    @coordinates = load_cluster_group_data_array_points(@selected_annotation, subsample)
-    @plot_type = @cluster.is_3d? ? 'scatter3d' : 'scattergl'
-    @options = load_cluster_group_options
-    @cluster_annotations = load_cluster_group_annotations
-    if @cluster.has_coordinate_labels?
-      @coordinate_labels = load_cluster_group_coordinate_labels
-    end
-
-    if @cluster.is_3d?
-      @range = set_range(@coordinates.values)
-      if @cluster.has_range?
-        @aspect = compute_aspect_ratios(@range)
+  def record_download_acceptance
+    @download_acceptance = DownloadAcceptance.new(download_acceptance_params)
+    if @download_acceptance.save
+      respond_to do |format|
+        format.js
       end
-    end
-    @axes = load_axis_labels
-
-    cluster_name = @cluster.name
-    annot_name = params[:annotation]
-
-    # load data for visualization, if present
-    @analysis_outputs = {}
-    if @selected_annotation[:type] == 'group' && @study.has_analysis_outputs?('infercnv', 'ideogram.js', cluster_name, annot_name)
-      ideogram_annotations = @study.get_analysis_outputs('infercnv', 'ideogram.js', cluster_name, annot_name).first
-      @analysis_outputs['ideogram.js'] = ideogram_annotations.api_url
-    end
-
-    # load default color profile if necessary
-    if params[:annotation] == @study.default_annotation && @study.default_annotation_type == 'numeric' && !@study.default_color_profile.nil?
-      @coordinates[:all][:marker][:colorscale] = @study.default_color_profile
-    end
-
-    respond_to do |format|
-      format.js
     end
   end
 
   ## GENE-BASED
 
-  # render box and scatter plots for parent clusters or a particular sub cluster
+  # render violin and scatter plots for parent clusters or a particular sub cluster
   def view_gene_expression
-    @options = load_cluster_group_options
-    @cluster_annotations = load_cluster_group_annotations
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
-    @y_axis_title = load_expression_axis_title
+    @y_axis_title = ExpressionVizService.load_expression_axis_title(@study)
+
+    if @study.expressed_taxon_names.length > 1
+      @gene_taxons = @study.infer_taxons(params[:gene])
+    else
+      @gene_taxons = @study.expressed_taxon_names
+    end
+
     if request.format == 'text/html'
       # only set this check on full page loads (happens if user was not signed in but then clicked the 'genome' tab)
       set_firecloud_permissions(@study.detached?)
@@ -430,10 +404,11 @@ class SiteController < ApplicationController
   def render_gene_expression_plots
     subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
     @gene = @study.genes.by_name_or_id(params[:gene], @study.expression_matrix_files.map(&:id))
-    @y_axis_title = load_expression_axis_title
+    @y_axis_title = ExpressionVizService.load_expression_axis_title(@study)
     # depending on annotation type selection, set up necessary partial names to use in rendering
     if @selected_annotation[:type] == 'group'
-      @values = load_expression_boxplot_data_array_scores(@selected_annotation, subsample)
+      @values = ExpressionVizService.load_expression_boxplot_data_array_scores(@study, @gene, @cluster,
+                                                                               @selected_annotation, subsample)
       if params[:plot_type] == 'box'
         @values_box_type = 'box'
       else
@@ -444,25 +419,27 @@ class SiteController < ApplicationController
       @top_plot_plotly = 'expression_plots_plotly'
       @top_plot_layout = 'expression_box_layout'
     else
-      @values = load_annotation_based_data_array_scatter(@selected_annotation, subsample)
+      @values = ExpressionVizService.load_annotation_based_data_array_scatter(@study, @gene, @cluster, @selected_annotation,
+                                                                              subsample, @y_axis_title)
       @top_plot_partial = 'expression_annotation_plots_view'
       @top_plot_plotly = 'expression_annotation_plots_plotly'
       @top_plot_layout = 'expression_annotation_scatter_layout'
-      @annotation_scatter_range = set_range(@values.values)
+      @annotation_scatter_range = ClusterVizService.set_range(@cluster, @values.values)
     end
-    @expression = load_expression_data_array_points(@selected_annotation, subsample)
-    @options = load_cluster_group_options
-    @range = set_range([@expression[:all]])
-    @coordinates = load_cluster_group_data_array_points(@selected_annotation, subsample)
+    @expression = ExpressionVizService.load_expression_data_array_points(@study, @gene, @cluster, @selected_annotation,
+                                                                         subsample, @y_axis_title, params[:colorscale])
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @range = ClusterVizService.set_range(@cluster,[@expression[:all]])
+    @coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, @cluster, @selected_annotation, subsample)
     if @cluster.has_coordinate_labels?
-      @coordinate_labels = load_cluster_group_coordinate_labels
+      @coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(@cluster)
     end
-    @static_range = set_range(@coordinates.values)
+    @static_range = ClusterVizService.set_range(@cluster, @coordinates.values)
     if @cluster.is_3d? && @cluster.has_range?
-      @expression_aspect = compute_aspect_ratios(@range)
-      @static_aspect = compute_aspect_ratios(@static_range)
+      @expression_aspect = ClusterVizService.compute_aspect_ratios(@range)
+      @static_aspect = ClusterVizService.compute_aspect_ratios(@static_range)
     end
-    @cluster_annotations = load_cluster_group_annotations
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
 
     # load default color profile if necessary
     if params[:annotation] == @study.default_annotation && @study.default_annotation_type == 'numeric' && !@study.default_color_profile.nil?
@@ -478,15 +455,17 @@ class SiteController < ApplicationController
       @gene = @study.genes.by_name_or_id(params[:gene], @study.expression_matrix_files.map(&:id))
       @identifier = params[:identifier] # unique identifer for each plot for namespacing JS variables/functions (@gene.id)
       @target = 'study-' + @study.id + '-gene-' + @identifier
-      @y_axis_title = load_expression_axis_title
+      @y_axis_title = ExpressionVizService.load_expression_axis_title(@study)
       if @selected_annotation[:type] == 'group'
-        @values = load_expression_boxplot_data_array_scores(@selected_annotation, subsample)
+        @values = ExpressionVizService.load_expression_boxplot_data_array_scores(@study, @gene, @cluster,
+                                                                                 @selected_annotation, subsample)
         @values_jitter = params[:boxpoints]
       else
-        @values = load_annotation_based_data_array_scatter(@selected_annotation, subsample)
+        @values = ExpressionVizService.load_annotation_based_data_array_scatter(@study, @gene, @cluster, @selected_annotation,
+                                                                                subsample, @y_axis_title)
       end
-      @options = load_cluster_group_options
-      @cluster_annotations = load_cluster_group_annotations
+      @options = ClusterVizService.load_cluster_group_options(@study)
+      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
     else
       head 403
     end
@@ -503,10 +482,10 @@ class SiteController < ApplicationController
 
     consensus = params[:consensus].nil? ? 'Mean ' : params[:consensus].capitalize + ' '
     @gene_list = @genes.map{|gene| gene['name']}.join(' ')
-    @y_axis_title = consensus + ' ' + load_expression_axis_title
+    @y_axis_title = consensus + ' ' + ExpressionVizService.load_expression_axis_title(@study)
     # depending on annotation type selection, set up necessary partial names to use in rendering
-    @options = load_cluster_group_options
-    @cluster_annotations = load_cluster_group_annotations
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
 
     if @genes.size > 5
@@ -532,10 +511,11 @@ class SiteController < ApplicationController
     @gene_list = @genes.map{|gene| gene['gene']}.join(' ')
     dotplot_genes, dotplot_not_found = search_expression_scores(terms, @study.id)
     @dotplot_gene_list = dotplot_genes.map{|gene| gene['name']}.join(' ')
-    @y_axis_title = consensus + ' ' + load_expression_axis_title
+    @y_axis_title = consensus + ' ' + ExpressionVizService.load_expression_axis_title(@study)
     # depending on annotation type selection, set up necessary partial names to use in rendering
     if @selected_annotation[:type] == 'group'
-      @values = load_gene_set_expression_boxplot_scores(@selected_annotation, params[:consensus], subsample)
+      @values = ExpressionVizService.load_gene_set_expression_boxplot_scores(@study, @genes, @cluster, @selected_annotation,
+                                                                             params[:consensus], subsample)
       if params[:plot_type] == 'box'
         @values_box_type = 'box'
       else
@@ -546,30 +526,32 @@ class SiteController < ApplicationController
       @top_plot_plotly = 'expression_plots_plotly'
       @top_plot_layout = 'expression_box_layout'
     else
-      @values = load_gene_set_annotation_based_scatter(@selected_annotation, params[:consensus], subsample)
+      @values = ExpressionVizService.load_gene_set_annotation_based_scatter(@study, @genes, @cluster, @selected_annotation,
+                                                                            params[:consensus], subsample, @y_axis_title)
       @top_plot_partial = 'expression_annotation_plots_view'
       @top_plot_plotly = 'expression_annotation_plots_plotly'
       @top_plot_layout = 'expression_annotation_scatter_layout'
-      @annotation_scatter_range = set_range(@values.values)
+      @annotation_scatter_range = ClusterVizService.set_range(@cluster, @values.values)
     end
     # load expression scatter using main gene expression values
-    @expression = load_gene_set_expression_data_arrays(@selected_annotation, params[:consensus], subsample)
-    color_minmax =  @expression[:all][:marker][:color].minmax
-    @expression[:all][:marker][:cmin], @expression[:all][:marker][:cmax] = color_minmax
+    @expression = ExpressionVizService.load_gene_set_expression_data_arrays(@study, @genes, @cluster, @selected_annotation,
+                                                                            params[:consensus], subsample, @y_axis_title,
+                                                                            params[:colorscale])
+    @expression[:all][:marker][:cmin], @expression[:all][:marker][:cmax] = RequestUtils.get_minmax(@expression[:all][:marker][:color])
 
     # load static cluster reference plot
-    @coordinates = load_cluster_group_data_array_points(@selected_annotation, subsample)
+    @coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, @cluster, @selected_annotation, subsample)
     # set up options, annotations and ranges
-    @options = load_cluster_group_options
-    @range = set_range([@expression[:all]])
-    @static_range = set_range(@coordinates.values)
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @range = ClusterVizService.set_range(@cluster,[@expression[:all]])
+    @static_range = ClusterVizService.set_range(@cluster, @coordinates.values)
 
     if @cluster.is_3d? && @cluster.has_range?
-      @expression_aspect = compute_aspect_ratios(@range)
-      @static_aspect = compute_aspect_ratios(@static_range)
+      @expression_aspect = ClusterVizService.compute_aspect_ratios(@range)
+      @static_aspect = ClusterVizService.compute_aspect_ratios(@static_range)
     end
 
-    @cluster_annotations = load_cluster_group_annotations
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
 
     if @genes.size > 5
       @main_genes, @other_genes = divide_genes_for_header
@@ -591,8 +573,8 @@ class SiteController < ApplicationController
     @genes, @not_found = search_expression_scores(terms, @study.id)
     @gene_list = @genes.map{|gene| gene['name']}.join(' ')
     # load dropdown options
-    @options = load_cluster_group_options
-    @cluster_annotations = load_cluster_group_annotations
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
     if @genes.size > 5
       @main_genes, @other_genes = divide_genes_for_header
     end
@@ -667,7 +649,7 @@ class SiteController < ApplicationController
 
   # dynamically reload cluster-based annotations list when changing clusters
   def get_new_annotations
-    @cluster_annotations = load_cluster_group_annotations
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
     @target = params[:target].blank? ? nil : params[:target] + '-'
     # used to match value of previous annotation with new values
     @flattened_annotations = @cluster_annotations.values.map {|coll| coll.map(&:last)}.flatten
@@ -722,8 +704,8 @@ class SiteController < ApplicationController
   # view all genes as heatmap in morpheus, will pull from pre-computed gct file
   def view_precomputed_gene_expression_heatmap
     @precomputed_score = @study.precomputed_scores.by_name(params[:precomputed])
-    @options = load_cluster_group_options
-    @cluster_annotations = load_cluster_group_annotations
+    @options = ClusterVizService.load_cluster_group_options(@study)
+    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
   end
 
   ###
@@ -734,58 +716,10 @@ class SiteController < ApplicationController
 
   # method to download files if study is public
   def download_file
-    # make sure user is signed in
-    if !user_signed_in?
-      redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                  alert: 'You must be signed in to download data.' and return
-    elsif @study.embargoed?(current_user)
-      redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                  alert: "You may not download any data from this study until #{@study.embargo.to_s(:long)}." and return
-    elsif !@study.can_download?(current_user)
-      redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                  alert: 'You do not have permission to perform that action.' and return
-    end
-
-    # next check if downloads have been disabled by administrator, this will abort the download
-    # download links shouldn't be rendered in any case, this just catches someone doing a straight GET on a file
-    # also check if workspace google buckets are available
-    if !AdminConfiguration.firecloud_access_enabled? || !Study.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
-      head 503 and return
-    end
-
-    begin
-      # get filesize and make sure the user is under their quota
-      requested_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, params[:filename])
-      if requested_file.present?
-        filesize = requested_file.size
-        user_quota = current_user.daily_download_quota + filesize
-        # check against download quota that is loaded in ApplicationController.get_download_quota
-        if user_quota <= @download_quota
-          @signed_url = Study.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, @study.bucket_id, params[:filename], expires: 15)
-          current_user.update(daily_download_quota: user_quota)
-        else
-          redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]), alert: 'You have exceeded your current daily download quota.  You must wait until tomorrow to download this file.' and return
-        end
-        # redirect directly to file to trigger download
-        # validate that the signed_url is in fact the correct URL - it must be a GCS link
-        if is_valid_signed_url?(@signed_url)
-          redirect_to @signed_url
-        else
-          redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                      alert: 'We are unable to process your download.  Please try again later.' and return
-        end
-      else
-        # send notification to the study owner that file is missing (if notifications turned on)
-        SingleCellMailer.user_download_fail_notification(@study, params[:filename]).deliver_now
-        redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]), alert: 'The file you requested is currently not available.  Please contact the study owner if you require access to this file.' and return
-      end
-    rescue RuntimeError => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
-      logger.error "Error generating signed url for #{params[:filename]}; #{e.message}"
-      redirect_to merge_default_redirect_params(accession: @study.accession, study_name: view_study_path(@study.url_safe_name), scpbr: params[:scpbr]),
-                  alert: "We were unable to download the file #{params[:filename]} do to an error: #{view_context.simple_format(e.message)}" and return
-    end
+    # verify user can download file
+    verify_file_download_permissions(@study); return if performed?
+    # initiate file download action
+    execute_file_download(@study); return if performed?
   end
 
   def create_totat
@@ -806,6 +740,11 @@ class SiteController < ApplicationController
     if !@study.public?
       message = 'Only public studies can be downloaded via curl.'
       render plain: "Forbidden: " + message, status: 403
+      return
+    end
+
+    if @study.has_download_agreement? && !@study.download_agreement.user_accepted?(current_user)
+      render plain: "Forbidden: Download agreement not accepted for #{@study.accession}" , status: 403
       return
     end
 
@@ -924,8 +863,8 @@ class SiteController < ApplicationController
         @user_annotation.initialize_user_data_arrays(user_annotation_params[:user_data_arrays_attributes], user_annotation_params[:subsample_annotation],user_annotation_params[:subsample_threshold], user_annotation_params[:loaded_annotation])
 
         # Reset the annotations in the dropdowns to include this new annotation
-        @cluster_annotations = load_cluster_group_annotations
-        @options = load_cluster_group_options
+        @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
+        @options = ClusterVizService.load_cluster_group_options(@study)
 
         # No need for an alert, only a message saying successfully created
         @alert = nil
@@ -935,8 +874,8 @@ class SiteController < ApplicationController
         render 'update_user_annotations'
       else
         # If there was an error saving, reload and alert the use something broke
-        @cluster_annotations = load_cluster_group_annotations
-        @options = load_cluster_group_options
+        @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
+        @options = ClusterVizService.load_cluster_group_options(@study)
         @notice = nil
         @alert = 'The following errors prevented the annotation from being saved: ' + @user_annotation.errors.full_messages.join(',')
         logger.error "Creating user annotation of params: #{user_annotation_params}, unable to save user annotation with errors #{@user_annotation.errors.full_messages.join(', ')}"
@@ -949,8 +888,8 @@ class SiteController < ApplicationController
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
       ErrorTracker.report_exception(e, current_user, error_context)
       # If an invalid value was somehow passed through the form, and couldn't save the annotation
-      @cluster_annotations = load_cluster_group_annotations
-      @options = load_cluster_group_options
+      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
+      @options = ClusterVizService.load_cluster_group_options(@study)
       @notice = nil
       @alert = 'The following errors prevented the annotation from being saved: ' + 'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
       logger.error "Creating user annotation of params: #{user_annotation_params}, invalid value of #{e.message}"
@@ -962,8 +901,8 @@ class SiteController < ApplicationController
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
       ErrorTracker.report_exception(e, current_user, error_context)
       # If something is nil and can't have a method called on it, respond with an alert
-      @cluster_annotations = load_cluster_group_annotations
-      @options = load_cluster_group_options
+      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
+      @options = ClusterVizService.load_cluster_group_options(@study)
       @notice = nil
       @alert = 'The following errors prevented the annotation from being saved: ' + e.message
       logger.error "Creating user annotation of params: #{user_annotation_params}, no method error #{e.message}"
@@ -975,8 +914,8 @@ class SiteController < ApplicationController
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
       ErrorTracker.report_exception(e, current_user, error_context)
       # If a generic unexpected error occurred and couldn't save the annotation
-      @cluster_annotations = load_cluster_group_annotations
-      @options = load_cluster_group_options
+      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
+      @options = ClusterVizService.load_cluster_group_options(@study)
       @notice = nil
       @alert = 'An unexpected error prevented the annotation from being saved: ' + e.message
       logger.error "Creating user annotation of params: #{user_annotation_params}, unexpected error #{e.message}"
@@ -1038,7 +977,7 @@ class SiteController < ApplicationController
     begin
       requested_samples = params[:samples].split(',')
       # get all samples
-      all_samples = Study.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
+      all_samples = ApplicationController.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
       # since we can't query the API (easily) for matching samples, just get all and then filter based on requested samples
       matching_samples = all_samples.keep_if {|sample| requested_samples.include?(sample['name']) }
       @samples = []
@@ -1091,10 +1030,10 @@ class SiteController < ApplicationController
 
       # now reopen and import into FireCloud
       upload = File.open(temp_tsv.path)
-      Study.firecloud_client.import_workspace_entities_file(@study.firecloud_project, @study.firecloud_workspace, upload)
+      ApplicationController.firecloud_client.import_workspace_entities_file(@study.firecloud_project, @study.firecloud_workspace, upload)
 
       # upon success, load the newly imported samples from the workspace and update the form
-      new_samples = Study.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
+      new_samples = ApplicationController.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
       @samples = Naturally.sort(new_samples.map {|s| s['name']})
 
       # clean up tempfile
@@ -1117,11 +1056,11 @@ class SiteController < ApplicationController
     samples = params[:samples]
     begin
       # create a mapping of samples to delete
-      delete_payload = Study.firecloud_client.create_entity_map(samples, 'sample')
-      Study.firecloud_client.delete_workspace_entities(@study.firecloud_project, @study.firecloud_workspace, delete_payload)
+      delete_payload = ApplicationController.firecloud_client.create_entity_map(samples, 'sample')
+      ApplicationController.firecloud_client.delete_workspace_entities(@study.firecloud_project, @study.firecloud_workspace, delete_payload)
 
       # upon success, load the newly imported samples from the workspace and update the form
-      new_samples = Study.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
+      new_samples = ApplicationController.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
       @samples = Naturally.sort(new_samples.map {|s| s['name']})
 
       # render update notice
@@ -1141,8 +1080,8 @@ class SiteController < ApplicationController
 
   # get all submissions for a study workspace
   def get_workspace_submissions
-    workspace = Study.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
-    @submissions = Study.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
+    workspace = ApplicationController.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
+    @submissions = ApplicationController.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
     # update any AnalysisSubmission records with new statuses
     @submissions.each do |submission|
       update_analysis_submission(submission)
@@ -1173,7 +1112,7 @@ class SiteController < ApplicationController
       logger.info "Updating configuration for #{@analysis_configuration.configuration_identifier} to run #{@analysis_configuration.identifier} in #{@study.firecloud_project}/#{@study.firecloud_workspace}"
       submission_config = @analysis_configuration.apply_user_inputs(params[:workflow][:inputs])
       # save configuration in workspace
-      Study.firecloud_client.create_workspace_configuration(@study.firecloud_project, @study.firecloud_workspace, submission_config)
+      ApplicationController.firecloud_client.create_workspace_configuration(@study.firecloud_project, @study.firecloud_workspace, submission_config)
 
       # submission must be done as user, so create a client with current_user and submit
       client = FireCloudClient.new(current_user, @study.firecloud_project)
@@ -1196,7 +1135,7 @@ class SiteController < ApplicationController
   # get a submission workflow object as JSON
   def get_submission_workflow
     begin
-      submission = Study.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
+      submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
       render json: submission.to_json
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
@@ -1210,7 +1149,7 @@ class SiteController < ApplicationController
   def abort_submission_workflow
     @submission_id = params[:submission_id]
     begin
-      Study.firecloud_client.abort_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, @submission_id)
+      ApplicationController.firecloud_client.abort_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, @submission_id)
       @notice = "Submission #{@submission_id} was successfully aborted."
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
@@ -1226,7 +1165,7 @@ class SiteController < ApplicationController
       workflow_ids = params[:workflow_ids].split(',')
       errors = []
       # first check workflow messages - if there was an issue with inputs, errors could be here
-      submission = Study.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
+      submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
       submission['workflows'].each do |workflow|
         if workflow['messages'].any?
           workflow['messages'].each {|message| errors << message}
@@ -1234,7 +1173,7 @@ class SiteController < ApplicationController
       end
       # now look at each individual workflow object
       workflow_ids.each do |workflow_id|
-        workflow = Study.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id], workflow_id)
+        workflow = ApplicationController.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id], workflow_id)
         # failure messages are buried deeply within the workflow object, so we need to go through each to find them
         workflow['failures'].each do |workflow_failure|
           errors << workflow_failure['message']
@@ -1259,9 +1198,9 @@ class SiteController < ApplicationController
   def get_submission_outputs
     begin
       @outputs = []
-      submission = Study.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
+      submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
       submission['workflows'].each do |workflow|
-        workflow = Study.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id], workflow['workflowId'])
+        workflow = ApplicationController.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id], workflow['workflowId'])
         workflow['outputs'].each do |output, file_url|
           display_name = file_url.split('/').last
           file_location = file_url.gsub(/gs\:\/\/#{@study.bucket_id}\//, '')
@@ -1280,7 +1219,7 @@ class SiteController < ApplicationController
   # retrieve a submission analysis metadata file
   def get_submission_metadata
     begin
-      submission = Study.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
+      submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
       if submission.present?
         # check to see if we already have an analysis_metadatum object
         @metadata = AnalysisMetadatum.find_by(study_id: @study.id, submission_id: params[:submission_id])
@@ -1319,7 +1258,7 @@ class SiteController < ApplicationController
   def delete_submission_files
     begin
       # first, add submission to list of 'deleted_submissions' in workspace attributes (will hide submission in list)
-      workspace = Study.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
+      workspace = ApplicationController.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
       ws_attributes = workspace['workspace']['attributes']
       if ws_attributes['deleted_submissions'].blank?
         ws_attributes['deleted_submissions'] = [params[:submission_id]]
@@ -1327,11 +1266,11 @@ class SiteController < ApplicationController
         ws_attributes['deleted_submissions']['items'] << params[:submission_id]
       end
       logger.info "Adding #{params[:submission_id]} to workspace delete_submissions attribute in #{@study.firecloud_workspace}"
-      Study.firecloud_client.set_workspace_attributes(@study.firecloud_project, @study.firecloud_workspace, ws_attributes)
+      ApplicationController.firecloud_client.set_workspace_attributes(@study.firecloud_project, @study.firecloud_workspace, ws_attributes)
       logger.info "Deleting analysis metadata for #{params[:submission_id]} in #{@study.url_safe_name}"
       AnalysisMetadatum.where(submission_id: params[:submission_id]).delete
       logger.info "Queueing submission #{params[:submission]} deletion in #{@study.firecloud_workspace}"
-      submission_files = Study.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, @study.bucket_id, prefix: params[:submission_id])
+      submission_files = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, @study.bucket_id, prefix: params[:submission_id])
       DeleteQueueJob.new(submission_files).perform
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
@@ -1393,15 +1332,16 @@ class SiteController < ApplicationController
   end
 
   def set_cluster_group
-    @cluster = RequestUtils.get_cluster_group(params, @study)
+    @cluster = ClusterVizService.get_cluster_group(@study, params)
   end
 
   def set_selected_annotation
-    @selected_annotation = RequestUtils.get_selected_annotation(params, @study, @cluster)
+    annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
+    @selected_annotation = ExpressionVizService.get_selected_annotation(@study, @cluster, annot_params[:name], annot_params[:type], annot_params[:scope])
   end
 
   def set_workspace_samples
-    all_samples = Study.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
+    all_samples = ApplicationController.firecloud_client.get_workspace_entities_by_type(@study.firecloud_project, @study.firecloud_workspace, 'sample')
     @samples = Naturally.sort(all_samples.map {|s| s['name']})
     # load locations of primary data (for new sample selection)
     @primary_data_locations = []
@@ -1420,7 +1360,7 @@ class SiteController < ApplicationController
     return if study_detached
     begin
       @allow_firecloud_access = AdminConfiguration.firecloud_access_enabled?
-      api_status = Study.firecloud_client.api_status
+      api_status = ApplicationController.firecloud_client.api_status
       # reuse status object because firecloud_client.services_available? each makes a separate status call
       # calling Hash#dig will gracefully handle any key lookup errors in case of a larger outage
       if api_status.is_a?(Hash)
@@ -1446,6 +1386,7 @@ class SiteController < ApplicationController
     @user_can_compute = false
     @user_can_download = false
     @user_embargoed = false
+
     return if study_detached || !@allow_firecloud_access
     begin
       @user_can_edit = @study.can_edit?(current_user)
@@ -1465,17 +1406,25 @@ class SiteController < ApplicationController
 
   # whitelist parameters for updating studies on study settings tab (smaller list than in studies controller)
   def study_params
-    params.require(:study).permit(:name, :description, :public, :embargo, :cell_count, :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails, :cluster_point_size, :cluster_point_alpha, :cluster_point_border], study_shares_attributes: [:id, :_destroy, :email, :permission])
+    params.require(:study).permit(:name, :description, :public, :embargo, :cell_count,
+                                  :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails,
+                                                       :cluster_point_size, :cluster_point_alpha, :cluster_point_border],
+                                  study_shares_attributes: [:id, :_destroy, :email, :permission],
+                                  study_detail_attributes: [:id, :full_description])
   end
 
   # whitelist parameters for creating custom user annotation
   def user_annotation_params
-    params.require(:user_annotation).permit(:_id, :name, :study_id, :user_id, :cluster_group_id, :subsample_threshold, :loaded_annotation, :subsample_annotation, user_data_arrays_attributes: [:name, :values])
+    params.require(:user_annotation).permit(:_id, :name, :study_id, :user_id, :cluster_group_id, :subsample_threshold,
+                                            :loaded_annotation, :subsample_annotation, user_data_arrays_attributes: [:name, :values])
+  end
+
+  def download_acceptance_params
+    params.require(:download_acceptance).permit(:email, :download_agreement_id)
   end
 
   # make sure user has view permissions for selected study
   def check_view_permissions
-    Rails.logger.info "check_view_permissions"
     unless @study.public?
       if (!user_signed_in? && !@study.public?)
         authenticate_user!
@@ -1491,8 +1440,7 @@ class SiteController < ApplicationController
 
   # check compute permissions for study
   def check_compute_permissions
-    Rails.logger.info "check_compute_permissions"
-    if Study.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE)
+    if ApplicationController.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE)
       if !user_signed_in? || !@study.can_compute?(current_user)
         @alert ='You do not have permission to perform that action.'
         respond_to do |format|
@@ -1539,540 +1487,6 @@ class SiteController < ApplicationController
         format.json {render json: {error: @alert}, status: 410}
       end
     end
-  end
-
-  ###
-  #
-  # DATA FORMATTING SUB METHODS
-  #
-  ###
-
-  # generic method to populate data structure to render a cluster scatter plot
-  # uses cluster_group model and loads annotation for both group & numeric plots
-  # data values are pulled from associated data_array entries for each axis and annotation/text value
-  def load_cluster_group_data_array_points(annotation, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    x_array = @cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-    y_array = @cluster.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-    z_array = @cluster.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = []
-    annotation_hash = {}
-    # Construct the arrays based on scope
-    if annotation[:scope] == 'cluster'
-      annotation_array = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      x_array = user_annotation.concatenate_user_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-      y_array = user_annotation.concatenate_user_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-      z_array = user_annotation.concatenate_user_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    else
-      # for study-wide annotations, load from study_metadata values instead of cluster-specific annotations
-      metadata_obj = @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-      annotation[:values] = annotation_hash.values
-    end
-    coordinates = {}
-    if annotation[:type] == 'numeric'
-      text_array = []
-      color_array = []
-      # load text & color value from correct object depending on annotation scope
-      cells.each_with_index do |cell, index|
-        if annotation[:scope] == 'cluster'
-          val = annotation_array[index]
-          text_array << "#{cell}: (#{val})"
-        else
-          val = annotation_hash[cell]
-          text_array <<  "#{cell}: (#{val})"
-          color_array << val
-        end
-      end
-      # if we didn't assign anything to the color array, we know the annotation_array is good to use
-      color_array.empty? ? color_array = annotation_array : nil
-      coordinates[:all] = {
-          x: x_array,
-          y: y_array,
-          annotations: annotation[:scope] == 'cluster' ? annotation_array : annotation_hash[:values],
-          text: text_array,
-          cells: cells,
-          name: annotation[:name],
-          marker: {
-              cmax: annotation_array.max,
-              cmin: annotation_array.min,
-              color: color_array,
-              size: @study.default_cluster_point_size,
-              line: { color: 'rgb(40,40,40)', width: @study.show_cluster_point_borders? ? 0.5 : 0},
-              colorscale: params[:colorscale].blank? ? 'Reds' : params[:colorscale],
-              showscale: true,
-              colorbar: {
-                  title: annotation[:name] ,
-                  titleside: 'right'
-              }
-          }
-      }
-      if @cluster.is_3d?
-        coordinates[:all][:z] = z_array
-      end
-    else
-      # assemble containers for each trace
-      annotation[:values].each do |value|
-        coordinates[value] = {x: [], y: [], text: [], cells: [], annotations: [], name: "#{annotation[:name]}: #{value}",
-                              marker: {size: @study.default_cluster_point_size, line: { color: 'rgb(40,40,40)', width: @study.show_cluster_point_borders? ? 0.5 : 0}}}
-        if @cluster.is_3d?
-          coordinates[value][:z] = []
-        end
-      end
-
-      if annotation[:scope] == 'cluster' || annotation[:scope] == 'user'
-        annotation_array.each_with_index do |annotation_value, index|
-          coordinates[annotation_value][:text] << "<b>#{cells[index]}</b><br>#{annotation[:name]}: #{annotation_value}"
-          coordinates[annotation_value][:annotations] << "#{annotation[:name]}: #{annotation_value}"
-          coordinates[annotation_value][:cells] << cells[index]
-          coordinates[annotation_value][:x] << x_array[index]
-          coordinates[annotation_value][:y] << y_array[index]
-          if @cluster.is_3d?
-            coordinates[annotation_value][:z] << z_array[index]
-          end
-        end
-        coordinates.each do |key, data|
-          data[:name] << " (#{data[:x].size} points)"
-        end
-      else
-        cells.each_with_index do |cell, index|
-          if annotation_hash.has_key?(cell)
-            annotation_value = annotation_hash[cell]
-            coordinates[annotation_value][:text] << "<b>#{cell}</b><br>#{annotation[:name]}: #{annotation_value}"
-            coordinates[annotation_value][:annotations] << "#{annotation[:name]}: #{annotation_value}"
-            coordinates[annotation_value][:x] << x_array[index]
-            coordinates[annotation_value][:y] << y_array[index]
-            coordinates[annotation_value][:cells] << cell
-            if @cluster.is_3d?
-              coordinates[annotation_value][:z] << z_array[index]
-            end
-          end
-        end
-        coordinates.each do |key, data|
-          data[:name] << " (#{data[:x].size} points)"
-        end
-
-      end
-
-    end
-    # gotcha to remove entries in case a particular annotation value comes up blank since this is study-wide
-    coordinates.delete_if {|key, data| data[:x].empty?}
-    coordinates
-  end
-
-  # method to load a 2-d scatter of selected numeric annotation vs. gene expression
-  def load_annotation_based_data_array_scatter(annotation, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = []
-    annotation_hash = {}
-    if annotation[:scope] == 'cluster'
-      annotation_array = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    else
-      # for study-wide annotations, load from study_metadata values instead of cluster-specific annotations
-      metadata_obj = @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-    end
-    values = {}
-    values[:all] = {x: [], y: [], cells: [], annotations: [], text: [], marker: {size: @study.default_cluster_point_size,
-                                                                                 line: { color: 'rgb(40,40,40)', width: @study.show_cluster_point_borders? ? 0.5 : 0}}}
-    if annotation[:scope] == 'cluster' || annotation[:scope] == 'user'
-      annotation_array.each_with_index do |annot, index|
-        annotation_value = annot
-        cell_name = cells[index]
-        expression_value = @gene['scores'][cell_name].to_f.round(4)
-
-        values[:all][:text] << "<b>#{cell_name}</b><br>#{annotation[:name]}: #{annotation_value}<br>#{@y_axis_title}: #{expression_value}"
-        values[:all][:annotations] << "#{annotation[:name]}: #{annotation_value}"
-        values[:all][:x] << annotation_value
-        values[:all][:y] << expression_value
-        values[:all][:cells] << cell_name
-      end
-    else
-      cells.each do |cell|
-        if annotation_hash.has_key?(cell)
-          annotation_value = annotation_hash[cell]
-          expression_value = @gene['scores'][cell].to_f.round(4)
-          values[:all][:text] << "<b>#{cell}</b><br>#{annotation[:name]}: #{annotation_value}<br>#{@y_axis_title}: #{expression_value}"
-          values[:all][:annotations] << "#{annotation[:name]}: #{annotation_value}"
-          values[:all][:x] << annotation_value
-          values[:all][:y] << expression_value
-          values[:all][:cells] << cell
-        end
-      end
-    end
-    values
-  end
-
-  # method to load a 2-d scatter of selected numeric annotation vs. gene set expression
-  # will support a variety of consensus modes (default is mean)
-  def load_gene_set_annotation_based_scatter(annotation, consensus, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    values = {}
-    values[:all] = {x: [], y: [], cells: [], annotations: [], text: [], marker: {size: @study.default_cluster_point_size,
-                                                                                 line: { color: 'rgb(40,40,40)', width: @study.show_cluster_point_borders? ? 0.5 : 0}}}
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = []
-    annotation_hash = {}
-    if annotation[:scope] == 'cluster'
-      annotation_array = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    else
-      metadata_obj = @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-    end
-    cells.each_with_index do |cell, index|
-      annotation_value = annotation[:scope] == 'cluster' ? annotation_array[index] : annotation_hash[cell]
-      if !annotation_value.nil?
-        case consensus
-          when 'mean'
-            expression_value = calculate_mean(@genes, cell)
-          when 'median'
-            expression_value = calculate_median(@genes, cell)
-          else
-            expression_value = calculate_mean(@genes, cell)
-        end
-        values[:all][:text] << "<b>#{cell}</b><br>#{annotation[:name]}: #{annotation_value}<br>#{@y_axis_title}: #{expression_value}"
-        values[:all][:annotations] << "#{annotation[:name]}: #{annotation_value}"
-        values[:all][:x] << annotation_value
-        values[:all][:y] << expression_value
-        values[:all][:cells] << cell
-        end
-    end
-    values
-  end
-
-  # load box plot scores from gene expression values using data array of cell names for given cluster
-  def load_expression_boxplot_data_array_scores(annotation, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    values = initialize_plotly_objects_by_annotation(annotation)
-
-    # grab all cells present in the cluster, and use as keys to load expression scores
-    # if a cell is not present for the gene, score gets set as 0.0
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    if annotation[:scope] == 'cluster'
-      # we can take a subsample of the same size for the annotations since the sort order is non-stochastic (i.e. the indices chosen are the same every time for all arrays)
-      annotations = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:y] << @gene['scores'][cell].to_f.round(4)
-      end
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotations = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:y] << @gene['scores'][cell].to_f.round(4)
-      end
-    else
-      # since annotations are in a hash format, subsampling isn't necessary as we're going to retrieve values by key lookup
-      annotations =  @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type]).cell_annotations
-      cells.each do |cell|
-        val = annotations[cell]
-        # must check if key exists
-        if values.has_key?(val)
-          values[annotations[cell]][:y] << @gene['scores'][cell].to_f.round(4)
-          values[annotations[cell]][:cells] << cell
-        end
-      end
-    end
-    # remove any empty values as annotations may have created keys that don't exist in cluster
-    values.delete_if {|key, data| data[:y].empty?}
-    values
-  end
-
-  # load cluster_group data_array values, but use expression scores to set numerical color array
-  def load_expression_data_array_points(annotation, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    x_array = @cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-    y_array = @cluster.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-    z_array = @cluster.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = []
-    annotation_hash = {}
-    if annotation[:scope] == 'cluster'
-      annotation_array = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      x_array = user_annotation.concatenate_user_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-      y_array = user_annotation.concatenate_user_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-      z_array = user_annotation.concatenate_user_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    else
-      # for study-wide annotations, load from cell_metadata values instead of cluster-specific annotations
-      metadata_obj = @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-    end
-    expression = {}
-    expression[:all] = {
-        x: x_array,
-        y: y_array,
-        annotations: [],
-        text: [],
-        cells: cells,
-        marker: {cmax: 0, cmin: 0, color: [], size: @study.default_cluster_point_size, showscale: true, colorbar: {title: @y_axis_title , titleside: 'right'}}
-    }
-    if @cluster.is_3d?
-      expression[:all][:z] = z_array
-    end
-    cells.each_with_index do |cell, index|
-      expression_score = @gene['scores'][cell].to_f.round(4)
-      # load correct annotation value based on scope
-      annotation_value = annotation[:scope] == 'cluster' ? annotation_array[index] : annotation_hash[cell]
-      text_value = "#{cell} (#{annotation[:name]}: #{annotation_value})<br />#{@y_axis_title}: #{expression_score}"
-      expression[:all][:annotations] << "#{annotation[:name]}: #{annotation_value}"
-      expression[:all][:text] << text_value
-      expression[:all][:marker][:color] << expression_score
-    end
-    expression[:all][:marker][:line] = { color: 'rgb(255,255,255)', width: @study.show_cluster_point_borders? ? 0.5 : 0}
-    color_minmax =  expression[:all][:marker][:color].minmax
-    expression[:all][:marker][:cmin], expression[:all][:marker][:cmax] = color_minmax
-    expression[:all][:marker][:colorscale] = params[:colorscale].blank? ? 'Reds' : params[:colorscale]
-    expression
-  end
-
-  # load boxplot expression scores vs. scores across each gene for all cells
-  # will support a variety of consensus modes (default is mean)
-  def load_gene_set_expression_boxplot_scores(annotation, consensus, subsample_threshold=nil)
-    values = initialize_plotly_objects_by_annotation(annotation)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    # grab all cells present in the cluster, and use as keys to load expression scores
-    # if a cell is not present for the gene, score gets set as 0.0
-    # will check if there are more than SUBSAMPLE_THRESHOLD cells present in the cluster, and subsample accordingly
-    # values hash will be assembled differently depending on annotation scope (cluster-based is array, study-based is a hash)
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    if annotation[:scope] == 'cluster'
-      annotations = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:annotations] << annotations[index]
-        case consensus
-          when 'mean'
-            values[annotations[index]][:y] << calculate_mean(@genes, cell)
-          when 'median'
-            values[annotations[index]][:y] << calculate_median(@genes, cell)
-          else
-            values[annotations[index]][:y] << calculate_mean(@genes, cell)
-        end
-      end
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotations = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:annotations] << annotations[index]
-        case consensus
-          when 'mean'
-            values[annotations[index]][:y] << calculate_mean(@genes, cell)
-          when 'median'
-            values[annotations[index]][:y] << calculate_median(@genes, cell)
-          else
-            values[annotations[index]][:y] << calculate_mean(@genes, cell)
-        end
-      end
-    else
-      # no need to subsample annotation since they are in hash format (lookup done by key)
-      annotations =  @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type]).cell_annotations
-      cells.each do |cell|
-        val = annotations[cell]
-        # must check if key exists
-        if values.has_key?(val)
-          values[annotations[cell]][:cells] << cell
-          case consensus
-            when 'mean'
-              values[annotations[cell]][:y] << calculate_mean(@genes, cell)
-            when 'median'
-              values[annotations[cell]][:y] << calculate_median(@genes, cell)
-            else
-              values[annotations[cell]][:y] << calculate_mean(@genes, cell)
-          end
-        end
-      end
-    end
-    # remove any empty values as annotations may have created keys that don't exist in cluster
-    values.delete_if {|key, data| data[:y].empty?}
-    values
-  end
-
-  # load scatter expression scores with average of scores across each gene for all cells
-  # uses data_array as source for each axis
-  # will support a variety of consensus modes (default is mean)
-  def load_gene_set_expression_data_arrays(annotation, consensus, subsample_threshold=nil)
-    # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-
-    x_array = @cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-    y_array = @cluster.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-    z_array = @cluster.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-    cells = @cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = []
-    annotation_hash = {}
-    if annotation[:scope] == 'cluster'
-      annotation_array = @cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
-      user_annotation = UserAnnotation.find(annotation[:id])
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      x_array = user_annotation.concatenate_user_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-      y_array = user_annotation.concatenate_user_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-      z_array = user_annotation.concatenate_user_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    else
-      # for study-wide annotations, load from cell_metadata values instead of cluster-specific annotations
-      metadata_obj = @study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-    end
-    expression = {}
-    expression[:all] = {
-        x: x_array,
-        y: y_array,
-        text: [],
-        annotations: [],
-        cells: cells,
-        marker: {cmax: 0, cmin: 0, color: [], size: @study.default_cluster_point_size, showscale: true, colorbar: {title: @y_axis_title , titleside: 'right'}}
-    }
-    if @cluster.is_3d?
-      expression[:all][:z] = z_array
-    end
-    cells.each_with_index do |cell, index|
-      case consensus
-        when 'mean'
-          expression_score = calculate_mean(@genes, cell)
-        when 'median'
-          expression_score = calculate_median(@genes, cell)
-        else
-          expression_score = calculate_mean(@genes, cell)
-      end
-
-      # load correct annotation value based on scope
-      annotation_value = annotation[:scope] == 'cluster' ? annotation_array[index] : annotation_hash[cell]
-      text_value = "#{cell} (#{annotation[:name]}: #{annotation_value})<br />#{@y_axis_title}: #{expression_score}"
-      expression[:all][:annotations] << "#{annotation[:name]}: #{annotation_value}"
-      expression[:all][:text] << text_value
-      expression[:all][:marker][:color] << expression_score
-
-    end
-    expression[:all][:marker][:line] = { color: 'rgb(40,40,40)', width: @study.show_cluster_point_borders? ? 0.5 : 0}
-    color_minmax =  expression[:all][:marker][:color].minmax
-    expression[:all][:marker][:cmin], expression[:all][:marker][:cmax] = color_minmax
-    expression[:all][:marker][:colorscale] = params[:colorscale].blank? ? 'Reds' : params[:colorscale]
-    expression
-  end
-
-  # method to initialize containers for plotly by annotation values
-  def initialize_plotly_objects_by_annotation(annotation)
-    values = {}
-    annotation[:values].each do |value|
-      values["#{value}"] = {y: [], cells: [], annotations: [], name: "#{value}" }
-    end
-    values
-  end
-
-  # load custom coordinate-based annotation labels for a given cluster
-  def load_cluster_group_coordinate_labels
-    # assemble source data
-    x_array = @cluster.concatenate_data_arrays('x', 'labels')
-    y_array = @cluster.concatenate_data_arrays('y', 'labels')
-    z_array = @cluster.concatenate_data_arrays('z', 'labels')
-    text_array = @cluster.concatenate_data_arrays('text', 'labels')
-    annotations = []
-    # iterate through list of data objects to construct necessary annotations
-    x_array.each_with_index do |point, index|
-      annotations << {
-          showarrow: false,
-          x: point,
-          y: y_array[index],
-          z: z_array[index],
-          text: text_array[index],
-          font: {
-              family: @cluster.coordinate_labels_options[:font_family],
-              size: @cluster.coordinate_labels_options[:font_size],
-              color: @cluster.coordinate_labels_options[:font_color]
-          }
-      }
-    end
-    annotations
-  end
-
-  # find mean of expression scores for a given cell & list of genes
-  def calculate_mean(genes, cell)
-    values = genes.map {|gene| gene['scores'][cell].to_f}
-    values.mean
-  end
-
-  # find median expression score for a given cell & list of genes
-  def calculate_median(genes, cell)
-    values = genes.map {|gene| gene['scores'][cell].to_f}
-    Gene.array_median(values)
-  end
-
-  # set the range for a plotly scatter, will default to data-defined if cluster hasn't defined its own ranges
-  # dynamically determines range based on inputs & available axes
-  def set_range(inputs)
-    # select coordinate axes from inputs
-    domain_keys = inputs.map(&:keys).flatten.uniq.select {|i| [:x, :y, :z].include?(i)}
-    range = Hash[domain_keys.zip]
-    if @cluster.has_range?
-      # use study-provided range if available
-      range = @cluster.domain_ranges
-    else
-      # take the minmax of each domain across all groups, then the global minmax
-      @vals = inputs.map {|v| domain_keys.map {|k| v[k].minmax}}.flatten.minmax
-      # add 2% padding to range
-      scope = (@vals.first - @vals.last) * 0.02
-      raw_range = [@vals.first + scope, @vals.last - scope]
-      range[:x] = raw_range
-      range[:y] = raw_range
-      range[:z] = raw_range
-    end
-    range
-  end
-
-  # compute the aspect ratio between all ranges and use to enforce equal-aspect ranges on 3d plots
-  def compute_aspect_ratios(range)
-    # determine largest range for computing aspect ratio
-    extent = {}
-    range.each.map {|axis, domain| extent[axis] = domain.first.upto(domain.last).size - 1}
-    largest_range = extent.values.max
-
-    # now compute aspect mode and ratios
-    aspect = {
-        mode: extent.values.uniq.size == 1 ? 'cube' : 'manual'
-    }
-    range.each_key do |axis|
-      aspect[axis.to_sym] = extent[axis].to_f / largest_range
-    end
-    aspect
   end
 
   ###
@@ -2143,32 +1557,9 @@ class SiteController < ApplicationController
     end
   end
 
-  # helper method to load all possible cluster groups for a study
-  def load_cluster_group_options
-    @study.cluster_groups.map(&:name)
-  end
-
-  # helper method to load all available cluster_group-specific annotations
-  def load_cluster_group_annotations
-    grouped_options = @study.formatted_annotation_select(cluster: @cluster)
-    # load available user annotations (if any)
-    if user_signed_in?
-      user_annotations = UserAnnotation.viewable_by_cluster(current_user, @cluster)
-      unless user_annotations.empty?
-        grouped_options['User Annotations'] = user_annotations.map {|annot| ["#{annot.name}", "#{annot.id}--group--user"] }
-      end
-    end
-    grouped_options
-  end
-
   # sanitize search values
   def sanitize_search_values(terms)
-    if terms.is_a?(Array)
-      sanitized = terms.map {|t| view_context.sanitize(t)}
-      sanitized.join(',')
-    else
-      view_context.sanitize(terms)
-    end
+    RequestUtils.sanitize_search_terms(terms)
   end
 
   ###
@@ -2254,7 +1645,7 @@ class SiteController < ApplicationController
     is_study_file = file.is_a? StudyFile
 
     if fc_client == nil
-      fc_client = Study.firecloud_client
+      fc_client = ApplicationController.firecloud_client
     end
 
     filename = (is_study_file ? file.upload_file_name : file[:name])
@@ -2288,11 +1679,6 @@ class SiteController < ApplicationController
   def set_cache_path
     params_key = "_#{params[:cluster].to_s.split.join('-')}_#{params[:annotation]}"
     case action_name
-    when 'render_cluster'
-      unless params[:subsample].blank?
-        params_key += "_#{params[:subsample]}"
-      end
-      render_cluster_url(accession: params[:accession], study_name: params[:study_name]) + params_key
     when 'render_gene_expression_plots'
       unless params[:subsample].blank?
         params_key += "_#{params[:subsample]}"

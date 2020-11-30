@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { getByline } from 'components/search/results/Study'
+import Study, { getByline } from 'components/search/results/Study'
 import StudyGeneDotPlot from './StudyGeneDotPlot'
 import StudyViolinPlot from './StudyViolinPlot'
 
@@ -10,6 +10,9 @@ import StudyViolinPlot from './StudyViolinPlot'
   */
 export default function StudyGeneExpressions({ study }) {
   let studyRenderComponent
+  if (!study.gene_matches) {
+    return <Study study={study}/>
+  }
   if (!study.can_visualize_clusters) {
     studyRenderComponent = (
       <div className="text-center">
@@ -38,7 +41,7 @@ export default function StudyGeneExpressions({ study }) {
         </span>
         {
           study.gene_matches.map(geneName => {
-            return (<span key={ geneName } className='badge gene-match'>
+            return (<span key={geneName} className='badge gene-match'>
               { geneName }
             </span>)
           })

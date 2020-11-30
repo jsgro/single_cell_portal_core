@@ -18,15 +18,15 @@ class AdminConfiguration
 
   FIRECLOUD_ACCESS_NAME = 'FireCloud Access'
   API_NOTIFIER_NAME = 'API Health Check Notifier'
+  INGEST_DOCKER_NAME = 'Ingest Pipeline Docker Image'
   NUMERIC_VALS = %w(byte kilobyte megabyte terabyte petabyte exabyte)
-  CONFIG_TYPES = ['Daily User Download Quota', 'Workflow Name', 'Portal FireCloud User Group',
+  CONFIG_TYPES = [INGEST_DOCKER_NAME, 'Daily User Download Quota', 'Portal FireCloud User Group',
                   'Reference Data Workspace', 'Read-Only Access Control', 'QA Dev Email', API_NOTIFIER_NAME]
   ALL_CONFIG_TYPES = CONFIG_TYPES.dup << FIRECLOUD_ACCESS_NAME
   VALUE_TYPES = %w(Numeric Boolean String)
 
   validates_uniqueness_of :config_type,
-                          message: ": '%{value}' has already been set.  Please edit the corresponding entry to update.",
-                          unless: proc {|attributes| attributes['config_type'] == 'Workflow Name'}
+                          message: ": '%{value}' has already been set.  Please edit the corresponding entry to update."
 
   validates_presence_of :config_type, :value_type, :value
   validates_inclusion_of :config_type, in: ALL_CONFIG_TYPES
@@ -37,10 +37,46 @@ class AdminConfiguration
                       unless: proc {|attributes| attributes.config_type == 'QA Dev Email'} # allow '@' for this config
 
   validate :manage_readonly_access
+  validate :ensure_docker_image_present, if: proc {|attributes| attributes.config_type == INGEST_DOCKER_NAME}
+  before_validation :strip_whitespace, if: proc {|attributes| attributes.value_type == 'String'}
 
   # really only used for IDs in the table...
   def url_safe_name
     self.config_type.downcase.gsub(/[^a-zA-Z0-9]+/, '-').chomp('-')
+  end
+
+  # Ingest docker image configuration getter
+  def self.get_ingest_docker_image_config
+    AdminConfiguration.find_by(config_type: AdminConfiguration::INGEST_DOCKER_NAME)
+  end
+
+  # Ingest docker image getter
+  def self.get_ingest_docker_image
+    ingest_config = self.get_ingest_docker_image_config
+    if Rails.env != 'production' && ingest_config.present?
+      ingest_config.value
+    else
+      Rails.application.config.ingest_docker_image
+    end
+  end
+
+  # retrieve attributes from ingest docker image string
+  # example return: {registry: 'gcr.io', project: 'broad-singlecellportal-staging', image_name: 'scp-ingest-pipeline', tag: '1.5.7'}
+  def self.get_ingest_docker_image_attributes(image_name: self.get_ingest_docker_image)
+    image_attributes = image_name.split('/')
+    image_name, image_tag = image_attributes.last.split(':')
+    {
+        registry: "#{image_attributes[0]}",
+        project: "#{image_attributes[1]}",
+        image_name: "#{image_name}",
+        tag: "#{image_tag}",
+    }
+  end
+
+  # reset ingest docker image configuration to defaults on startup
+  def self.revert_ingest_docker_image
+    ingest_config = self.get_ingest_docker_image_config
+    ingest_config.destroy if ingest_config.present?
   end
 
   def self.current_firecloud_access
@@ -117,14 +153,14 @@ class AdminConfiguration
         shares = study.study_shares.non_reviewers
         shares.each do |user|
           Rails.logger.info "#{Time.zone.now}: revoking share access for #{user}"
-          revoke_share_acl = Study.firecloud_client.create_workspace_acl(user, @config_setting)
-          Study.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, revoke_share_acl)
+          revoke_share_acl = ApplicationController.firecloud_client.create_workspace_acl(user, @config_setting)
+          ApplicationController.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, revoke_share_acl)
         end
         # last, remove study owner access (unless project owner)
         owner = study.user.email
         Rails.logger.info "#{Time.zone.now}: revoking owner access for #{owner}"
-        revoke_owner_acl = Study.firecloud_client.create_workspace_acl(owner, @config_setting)
-        Study.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, revoke_owner_acl)
+        revoke_owner_acl = ApplicationController.firecloud_client.create_workspace_acl(owner, @config_setting)
+        ApplicationController.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, revoke_owner_acl)
         Rails.logger.info "#{Time.zone.now}: access revocation for #{study.name} complete"
       end
       Rails.logger.info "#{Time.zone.now}: all '#{FireCloudClient::COMPUTE_BLACKLIST.join(', ')}' study access set to #{@config_setting}"
@@ -148,15 +184,15 @@ class AdminConfiguration
         can_share = share_permission === 'WRITER' ? true : false
         can_compute = Rails.env == 'production' ? false : share_permission === 'WRITER' ? true : false
         Rails.logger.info "#{Time.zone.now}: restoring #{share_permission} permission for #{user}"
-        restore_share_acl = Study.firecloud_client.create_workspace_acl(user, share_permission, can_share, can_compute)
-        Study.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, restore_share_acl)
+        restore_share_acl = ApplicationController.firecloud_client.create_workspace_acl(user, share_permission, can_share, can_compute)
+        ApplicationController.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, restore_share_acl)
       end
       # last, restore study owner access (unless project is owned by user)
       owner = study.user.email
       Rails.logger.info "#{Time.zone.now}: restoring WRITER access for #{owner}"
       # restore permissions, setting compute acls correctly (disabled in production for COMPUTE_BLACKLIST projects)
-      restore_owner_acl = Study.firecloud_client.create_workspace_acl(owner, 'WRITER', true, Rails.env == 'production' ? false : true)
-      Study.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, restore_owner_acl)
+      restore_owner_acl = ApplicationController.firecloud_client.create_workspace_acl(owner, 'WRITER', true, Rails.env == 'production' ? false : true)
+      ApplicationController.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, restore_owner_acl)
       Rails.logger.info "#{Time.zone.now}: access restoration for #{study.name} complete"
     end
     Rails.logger.info "#{Time.zone.now}: all '#{FireCloudClient::COMPUTE_BLACKLIST.join(', ')}' study access restored"
@@ -198,10 +234,10 @@ class AdminConfiguration
   # This method no longer disables access as we now do realtime checks on routes that depend on certain services being up
   # 'local-off' mode can now be used to manually put the portal in read-only mode
   def self.check_api_health
-    api_ok = Study.firecloud_client.api_available?
+    api_ok = ApplicationController.firecloud_client.api_available?
 
     if !api_ok
-      current_status = Study.firecloud_client.api_status
+      current_status = ApplicationController.firecloud_client.api_status
       Rails.logger.error "#{Time.zone.now}: ALERT: FIRECLOUD API SERVICE INTERRUPTION -- current status: #{current_status}"
       SingleCellMailer.firecloud_api_notification(current_status).deliver_now
     end
@@ -209,7 +245,7 @@ class AdminConfiguration
 
   # set/revoke readonly access on public workspaces for READ_ONLY_SERVICE_ACCOUNT
   def self.set_readonly_service_account_permissions(grant_access)
-    if Study.read_only_firecloud_client.present? && Study.read_only_firecloud_client.registered?
+    if ApplicationController.read_only_firecloud_client.present? && ApplicationController.read_only_firecloud_client.registered?
       study_count = 0
       Study.where(queued_for_deletion: false).each do |study|
         study.set_readonly_access(grant_access, true) # pass true for 'manual_set' option to force change
@@ -218,6 +254,20 @@ class AdminConfiguration
       [true, "Permissions successfully set on #{study_count} studies."]
     else
       [false, 'You have not enabled the read-only service account yet.  You must create and register a read-only service account first before continuing.']
+    end
+  end
+
+  def self.find_or_create_ws_user_group!
+    groups = ApplicationController.firecloud_client.get_user_groups
+    ws_owner_group = groups.detect {|group| group['groupName'] == FireCloudClient::WS_OWNER_GROUP_NAME &&
+        group['role'] == 'Admin'}
+    # create group if not found
+    if ws_owner_group.present?
+      ws_owner_group
+    else
+      # create and return group
+      ApplicationController.firecloud_client.create_user_group(FireCloudClient::WS_OWNER_GROUP_NAME)
+      ApplicationController.firecloud_client.get_user_group(FireCloudClient::WS_OWNER_GROUP_NAME)
     end
   end
 
@@ -247,7 +297,7 @@ class AdminConfiguration
   # grant/revoke access on setting change, will raise error if readonly account is not instantiated
   def manage_readonly_access
     if self.config_type == 'Read-Only Access Control'
-      if Study.read_only_firecloud_client.present?
+      if ApplicationController.read_only_firecloud_client.present?
         if self.value_changed?
           AdminConfiguration.set_readonly_service_account_permissions(self.convert_value_by_type)
         end
@@ -255,6 +305,32 @@ class AdminConfiguration
         errors.add(:config_type, '- You have not enabled the read-only service account yet.  You must enable this account first before continuing.  Please see https://github.com/broadinstitute/single_cell_portal_core#running-the-container#read-only-service-account for more information.')
       end
     end
+  end
+
+  # ensure docker image is present before allowing config to be created
+  # this will prevent using bad Docker image names and breaking parses
+  def ensure_docker_image_present
+    begin
+      image = AdminConfiguration.get_ingest_docker_image_attributes(image_name: self.value)
+      image_manifest_url = "https://#{image[:registry]}/v2/#{image[:project]}/#{image[:image_name]}/manifests/#{image[:tag]}"
+      response = RestClient.get image_manifest_url
+      # ensure this is a Docker image manifest
+      manifest_matcher = /docker.*manifest/
+      manifest_content_type = response.headers[:content_type]
+      if manifest_content_type !~ manifest_matcher
+        errors.add(:value, "does not appear to be a valid Docker image manifest: #{manifest_content_type} does not match #{manifest_matcher}")
+      else
+        true # pass validation
+      end
+    rescue RestClient::Exception => e
+      errors.add(:value, "is invalid (#{e.message}) - please specify a valid image URI")
+    rescue => e
+      errors.add(:value, "was unable to validate due to an error: #{e.message}")
+    end
+  end
+
+  def strip_whitespace
+    self.value.strip! if self.value.present?
   end
 end
 

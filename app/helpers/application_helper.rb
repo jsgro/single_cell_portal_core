@@ -222,9 +222,10 @@ module ApplicationHelper
   end
 
   # return an array of values to use for subsampling dropdown scaled to number of cells in study
-  # only options allowed are 1000, 10000, 20000
-  def subsampling_options(max_cells)
-    ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < max_cells}
+  # only options allowed are 1000, 10000, 20000, and 100000
+  # will only provide options if subsampling has completed for a cluster
+  def subsampling_options(cluster)
+    ClusterVizService.subsampling_options(cluster)
   end
 
   # get a label for a workflow status code
@@ -346,21 +347,29 @@ module ApplicationHelper
 	# Return an access token for viewing GCS objects client side, depending on study privacy
 	# Context: https://github.com/broadinstitute/single_cell_portal_core/pull/239
   def get_read_access_token(study, user)
-    if study.public? && Study.read_only_firecloud_client.present?
-      Study.read_only_firecloud_client.valid_access_token["access_token"]
+    if study.public? && ApplicationController.read_only_firecloud_client.present?
+      ApplicationController.read_only_firecloud_client.valid_access_token["access_token"]
     elsif user.present?
-      user.valid_access_token[:access_token]
+      user.valid_access_token.try(:[], :access_token)
     end
   end
 
   # Return the user's access token for bulk download of faceted search results
   def get_user_access_token(user)
     if user.present?
-      user.valid_access_token[:access_token]
+      user.valid_access_token.try(:[], :access_token)
     end
   end
 
   def pluralize_without_count(count, noun, text=nil)
     count.to_i == 1 ? "#{noun}#{text}" : "#{noun.pluralize}#{text}"
+  end
+
+  def get_page_name
+    page_name = "#{controller_name}-#{action_name}".gsub('_', '-')
+    if page_name == 'site-index'
+      page_name = 'root'
+    end
+    page_name
   end
 end

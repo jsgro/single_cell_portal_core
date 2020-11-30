@@ -12,7 +12,11 @@ class ClusterGroup
   field :cluster_type, type: String
   field :cell_annotations, type: Array
   field :domain_ranges, type: Hash
+  # subsampling flags
+  # :subsampled => whether subsampling has completed
+  # :is_subsampling => whether subsampling has been initiated
   field :subsampled, type: Boolean, default: false
+  field :is_subsampling, type: Boolean, default: false
 
   validates_uniqueness_of :name, scope: :study_id
   validates_presence_of :name, :cluster_type
@@ -61,21 +65,22 @@ class ClusterGroup
   def concatenate_data_arrays(array_name, array_type, subsample_threshold=nil, subsample_annotation=nil)
     if subsample_threshold.nil?
       data_arrays = DataArray.where(name: array_name, array_type: array_type, linear_data_type: 'ClusterGroup',
-                                    cluster_name: self.name, linear_data_id: self.id, subsample_threshold: nil,
-                                    subsample_annotation: nil).order(:array_index => 'asc')
+                                    linear_data_id: self.id, subsample_threshold: nil, subsample_annotation: nil)
+                        .order(:array_index => 'asc')
       all_values = []
       data_arrays.each do |array|
         all_values += array.values
       end
-      return all_values
+      all_values
     else
       data_array = DataArray.find_by(name: array_name, array_type: array_type, linear_data_type: 'ClusterGroup',
-                                     cluster_name: self.name, linear_data_id: self.id, subsample_threshold: subsample_threshold,
+                                     linear_data_id: self.id, subsample_threshold: subsample_threshold,
                                      subsample_annotation: subsample_annotation)
       if data_array.nil?
-        return []
+        # rather than returning [], default to the full resolution array
+        self.concatenate_data_arrays(array_name, array_type)
       else
-        return data_array.values
+        data_array.values
       end
     end
   end
@@ -102,12 +107,10 @@ class ClusterGroup
 
   # retrieve font options for coordinate labels
   def coordinate_labels_options
-    # must retrieve study file where options have been set, so search options hash for string value of cluster_group id
-    study_file = StudyFile.find_by('options.cluster_group_id' => self.id.to_s)
     {
-        font_family: study_file.coordinate_labels_font_family,
-        font_size: study_file.coordinate_labels_font_size,
-        font_color: study_file.coordinate_labels_font_color
+        font_family: self.study_file.coordinate_labels_font_family,
+        font_size: self.study_file.coordinate_labels_font_size,
+        font_color: self.study_file.coordinate_labels_font_color
     }
   end
 
@@ -327,11 +330,14 @@ class ClusterGroup
     SUBSAMPLE_THRESHOLDS.select {|sample| sample < self.points}
   end
 
+  # getter method to return Mongoid::Criteria for all data arrays belonging to this cluster
+  def find_all_data_arrays
+    DataArray.where(study_id: self.study_id, study_file_id: self.study_file_id, linear_data_type: 'ClusterGroup', linear_data_id: self.id)
+  end
+
   # find all 'subsampled' data arrays
   def find_subsampled_data_arrays
-    DataArray.where(study_id: self.study_id, study_file_id: self.study_file_id, linear_data_type: 'ClusterGroup',
-                    linear_data_id: self.id, :subsample_threshold.nin => [nil],
-                    :subsample_annotation.nin => [nil])
+    self.find_all_data_arrays.where(:subsample_threshold.nin => [nil], :subsample_annotation.nin => [nil])
   end
 
   # control gate for invoking subsampling

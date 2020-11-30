@@ -1,4 +1,5 @@
 require "integration_test_helper"
+require 'big_query_helper'
 
 class StudyCreationTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -32,13 +33,7 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     sleep 1
     study = Study.find_by(name: "Test Study #{@random_seed}")
     assert study.present?, "Study did not successfully save"
-
-    bqc = ApplicationController.big_query_client
-    bq_dataset = bqc.datasets.detect {|dataset| dataset.dataset_id == CellMetadatum::BIGQUERY_DATASET}
-    assert_not_nil bq_dataset, "Did not find #{CellMetadatum::BIGQUERY_DATASET} dataset in BigQuery"
-    bq_table = bq_dataset.tables.detect {|table| table.table_id == CellMetadatum::BIGQUERY_TABLE}
-    assert_not_nil bq_table, "Did not find #{CellMetadatum::BIGQUERY_TABLE} table in #{CellMetadatum::BIGQUERY_DATASET}"
-    initial_bq_row_count = get_bq_row_count(bq_dataset, study)
+    initial_bq_row_count = get_bq_row_count(study)
 
     example_files = {
       expression: {
@@ -120,19 +115,48 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     # verify that counts are correct, this will ensure that everything uploaded & parsed correctly
     cluster_count = study.cluster_groups.size
     metadata_count = study.cell_metadata.size
+    gene_count = study.genes.size
     cluster_annot_count = study.cluster_annotation_count
     study_file_count = study.study_files.non_primary_data.size
     share_count = study.study_shares.size
 
     assert_equal 1, cluster_count, "did not find correct number of clusters"
     assert_equal 26, metadata_count, "did not find correct number of metadata objects"
+    assert_equal 19, gene_count, "did not find correct number of gene objects"
     assert_equal 2, cluster_annot_count, "did not find correct number of cluster annotations"
     assert_equal 3, study_file_count, "did not find correct number of study files"
     assert_equal 1, share_count, "did not find correct number of study shares"
 
-    assert_equal initial_bq_row_count + 30, get_bq_row_count(bq_dataset, study)
+    assert_equal initial_bq_row_count + 30, get_bq_row_count(study)
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
 
+  # new studies in PORTAL_NAMESPACE should have workspace owners set to SA owner group, not SA directly
+  test 'should assign service account owner group as workspace owner' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study_name = "Workspace Owner #{@random_seed}"
+    study_params = {
+        study: {
+            name: study_name,
+            user_id: @test_user.id
+        }
+    }
+    post studies_path, params: study_params
+    follow_redirect!
+    study = Study.find_by(name: study_name)
+    assert study.present?, "Study did not successfully save"
+    sa_owner_group = AdminConfiguration.find_or_create_ws_user_group!
+    group_email = sa_owner_group['groupEmail']
+    workspace_acl = ApplicationController.firecloud_client.get_workspace_acl(study.firecloud_project, study.firecloud_workspace)
+    group_acl = workspace_acl['acl'][group_email]
+    assert group_acl['accessLevel']  == 'OWNER', "Did not correctly set #{group_email} to 'OWNER'; #{group_acl}"
+
+    # clean up
+    ApplicationController.firecloud_client.delete_workspace(study.firecloud_project, study.firecloud_workspace)
+    study.destroy
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end

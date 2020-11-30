@@ -1,4 +1,6 @@
 require "integration_test_helper"
+require 'user_tokens_helper'
+require 'big_query_helper'
 
 class StudyValidationTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -9,57 +11,77 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     auth_as_user(@test_user)
     sign_in @test_user
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+    @test_user.update_last_access_at!
+  end
+
+  teardown do
+    reset_user_tokens
+    # remove all validation studies
+    Study.where(name: /Validation/).map {|study| study.destroy_and_remove_workspace}
   end
 
   # check that file header/format checks still function properly
   test 'should fail all ingest pipeline parse jobs' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
+    study_name = "Validation Ingest Pipeline Parse Failure Study #{@random_seed}"
     study_params = {
         study: {
-            name: "Ingest Pipeline Parse Failure Study #{@random_seed}",
+            name: study_name,
             user_id: @test_user.id
         }
     }
     post studies_path, params: study_params
     follow_redirect!
     assert_response 200, "Did not redirect to upload successfully"
-    study = Study.find_by(name: "Ingest Pipeline Parse Failure Study #{@random_seed}")
+    study = Study.find_by(name: study_name)
     assert study.present?, "Study did not successfully save"
 
     example_files = {
-      metadata: {
-        name: 'metadata_bad.txt'
-      },
       metadata_breaking_convention: {
         name: 'metadata_example2.txt'
       },
       cluster: {
         name: 'cluster_bad.txt'
+      },
+      expression: {
+        name: 'expression_matrix_example_bad.txt'
       }
     }
 
     ## upload files
 
-    # bad metadata file
-    file_params = {study_file: {file_type: 'Metadata', study_id: study.id.to_s}}
-    perform_study_file_upload('metadata_bad.txt', file_params, study.id)
-    assert_response 200, "Metadata upload failed: #{@response.code}"
-    example_files[:metadata][:object] = study.metadata_file
-    assert example_files[:metadata][:object].present?, "Metadata failed to associate, found no file: #{example_files[:metadata][:object].present?}"
-
     # good metadata file, but falsely claiming to use the metadata_convention
     file_params = {study_file: {file_type: 'Metadata', study_id: study.id.to_s, use_metadata_convention: true}}
     perform_study_file_upload('metadata_example2.txt', file_params, study.id)
     assert_response 200, "Metadata upload failed: #{@response.code}"
-    example_files[:metadata_breaking_convention][:object] = study.metadata_file
+    metadata_file = study.metadata_file
+    example_files[:metadata_breaking_convention][:object] = metadata_file
+    example_files[:metadata_breaking_convention][:cache_location] = metadata_file.parse_fail_bucket_location
     assert example_files[:metadata_breaking_convention][:object].present?, "Metadata failed to associate, found no file: #{example_files[:metadata_breaking_convention][:object].present?}"
+
+    # metadata file that should fail validation because we already have one
+    file_params = {study_file: {file_type: 'Metadata', study_id: study.id.to_s}}
+    perform_study_file_upload('metadata_bad.txt', file_params, study.id)
+    assert_response 422, "Metadata did not fail validation: #{@response.code}"
 
     # bad cluster
     file_params = {study_file: {name: 'Bad Test Cluster 1', file_type: 'Cluster', study_id: study.id.to_s}}
     perform_study_file_upload('cluster_bad.txt', file_params, study.id)
     assert_response 200, "Cluster 1 upload failed: #{@response.code}"
     assert_equal 1, study.cluster_ordinations_files.size, "Cluster 1 failed to associate, found #{study.cluster_ordinations_files.size} files"
-    example_files[:cluster][:object] = study.cluster_ordinations_files.first
+    cluster_file = study.cluster_ordinations_files.first
+    example_files[:cluster][:object] = cluster_file
+    example_files[:cluster][:cache_location] = cluster_file.parse_fail_bucket_location
+
+    # bad expression matrix (duplicate gene)
+    file_params = {study_file: {file_type: 'Expression Matrix', study_id: study.id.to_s}}
+    perform_study_file_upload('expression_matrix_example_bad.txt', file_params, study.id)
+    assert_response 200, "Expression matrix upload failed: #{@response.code}"
+    assert_equal 1, study.expression_matrix_files.size, "Expression matrix failed to associate, found #{study.expression_matrix_files.size} files"
+    expression_matrix = study.expression_matrix_files.first
+    example_files[:expression][:object] = expression_matrix
+    example_files[:expression][:cache_location] = expression_matrix.parse_fail_bucket_location
+
 
     ## request parse
     example_files.each do |file_type,file|
@@ -89,78 +111,68 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     study.reload
 
     example_files.values.each do |e|
+      e[:object].reload # address potential race condition between parse_status setting to 'failed' and DeleteQueueJob executing
       assert_equal 'failed', e[:object].parse_status, "Incorrect parse_status for #{e[:name]}"
       assert e[:object].queued_for_deletion
+      # check that file is cached in parse_logs/:id folder in the study bucket
+      cached_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, e[:cache_location])
+      assert cached_file.present?, "Did not find cached file at #{e[:cache_location]} in #{study.bucket_id}"
     end
 
     assert_equal 0, study.cell_metadata.size
+    assert_equal 0, study.genes.size
     assert_equal 0, study.cluster_groups.size
     assert_equal 0, study.cluster_ordinations_files.size
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
-  test 'should fail all local parse jobs' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-    study_params = {
-        study: {
-            name: "Local Parse Failure Study #{@random_seed}",
-            user_id: @test_user.id
-        }
-    }
-    post studies_path, params: study_params
-    follow_redirect!
-    assert_response 200, "Did not redirect to upload successfully"
-    study = Study.find_by(name: "Local Parse Failure Study #{@random_seed}")
-    assert study.present?, "Study did not successfully save"
-
-    # bad expression matrix
-    file_params = {study_file: {file_type: 'Expression Matrix', study_id: study.id.to_s}}
-    perform_study_file_upload('expression_matrix_example_bad.txt', file_params, study.id)
-    assert_response 200, "Expression matrix upload failed: #{@response.code}"
-    assert study.expression_matrix_files.size == 1, "Expression matrix failed to associate, found #{study.expression_matrix_files.size} files"
-    expression_matrix_1 = study.expression_matrix_files.first
-    # this parse has a duplicate gene, which will throw an error
-    begin
-      study.initialize_gene_expression_data(expression_matrix_1, @test_user)
-    rescue => e
-      assert e.is_a?(StandardError), "Caught unknown error during parse: #{e.class}:#{e.message}"
-    end
-
-    assert study.genes.size == 0, "Found #{study.genes.size} genes when should have found 0"
-    assert study.expression_matrix_files.size == 0,
-           "Found #{study.expression_matrix_files.size} expression matrices when should have found 0"
-
-    # bad marker gene list
-    file_params = {study_file: {name: 'Bad Test Gene List', file_type: 'Gene List', study_id: study.id.to_s}}
-    perform_study_file_upload('marker_1_gene_list_bad.txt', file_params, study.id)
-    assert_response 200, "Gene list upload failed: #{@response.code}"
-    assert study.study_files.where(file_type: 'Gene List').size == 1,
-           "Gene list failed to associate, found #{study.study_files.where(file_type: 'Gene List').size} files"
-    gene_list_file = study.study_files.where(file_type: 'Gene List').first
-    # this parse has a duplicate gene, which will not throw an error - it is caught internally
-    study.initialize_precomputed_scores(gene_list_file, @test_user)
-    # we have to reload the study because it will have a cached reference to the precomputed_score due to the nature of the parse
-    study = Study.find_by(name: "Local Parse Failure Study #{@random_seed}")
-    assert study.study_files.where(file_type: 'Gene List').size == 0,
-           "Found #{study.study_files.where(file_type: 'Gene List').size} gene list files when should have found 0"
-    assert study.precomputed_scores.size == 0, "Found #{study.precomputed_scores.size} precomputed scores when should have found 0"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
-  end
+  # test 'should fail all local parse jobs' do
+  #   puts "#{File.basename(__FILE__)}: #{self.method_name}"
+  #   study_name = "Validation Local Parse Failure Study #{@random_seed}"
+  #   study_params = {
+  #       study: {
+  #           name: study_name,
+  #           user_id: @test_user.id
+  #       }
+  #   }
+  #   post studies_path, params: study_params
+  #   follow_redirect!
+  #   assert_response 200, "Did not redirect to upload successfully"
+  #   study = Study.find_by(name: study_name)
+  #   assert study.present?, "Study did not successfully save"
+  #
+  #   # bad marker gene list
+  #   file_params = {study_file: {name: 'Bad Test Gene List', file_type: 'Gene List', study_id: study.id.to_s}}
+  #   perform_study_file_upload('marker_1_gene_list_bad.txt', file_params, study.id)
+  #   assert_response 200, "Gene list upload failed: #{@response.code}"
+  #   assert study.study_files.where(file_type: 'Gene List').size == 1,
+  #          "Gene list failed to associate, found #{study.study_files.where(file_type: 'Gene List').size} files"
+  #   gene_list_file = study.study_files.where(file_type: 'Gene List').first
+  #   # this parse has a duplicate gene, which will not throw an error - it is caught internally
+  #   ParseUtils.initialize_precomputed_scores(study, gene_list_file, @test_user)
+  #   # we have to reload the study because it will have a cached reference to the precomputed_score due to the nature of the parse
+  #   study.reload
+  #   assert study.study_files.where(file_type: 'Gene List').size == 0,
+  #          "Found #{study.study_files.where(file_type: 'Gene List').size} gene list files when should have found 0"
+  #   assert study.precomputed_scores.size == 0, "Found #{study.precomputed_scores.size} precomputed scores when should have found 0"
+  #
+  #   puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  # end
 
   test 'should prevent changing firecloud attributes' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
+    study_name = "Validation FireCloud Attribute Test #{@random_seed}"
     study_params = {
         study: {
-            name: "FireCloud Attribute Test #{@random_seed}",
+            name: study_name,
             user_id: @test_user.id
         }
     }
     post studies_path, params: study_params
     follow_redirect!
     assert_response 200, "Did not redirect to upload successfully"
-    study = Study.find_by(name: "FireCloud Attribute Test #{@random_seed}")
+    study = Study.find_by(name: study_name)
     assert study.present?, "Study did not successfully save"
 
     # test update and expected error messages
@@ -174,21 +186,25 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     assert_select 'li#study_error_firecloud_project', 'Firecloud project cannot be changed once initialized.'
     assert_select 'li#study_error_firecloud_workspace', 'Firecloud workspace cannot be changed once initialized.'
     # reload study and assert values are unchange
-    study = Study.find_by(name: "FireCloud Attribute Test #{@random_seed}")
+    study.reload
     assert_equal FireCloudClient::PORTAL_NAMESPACE, study.firecloud_project,
                  "FireCloud project was not correct, expected #{FireCloudClient::PORTAL_NAMESPACE} but found #{study.firecloud_project}"
-    assert_equal "firecloud-attribute-test-#{@random_seed}", study.firecloud_workspace,
-                 "FireCloud workspace was not correct, expected test-firecloud-attribute-test-#{@random_seed} but found #{study.firecloud_workspace}"
+    assert_equal "validation-firecloud-attribute-test-#{@random_seed}", study.firecloud_workspace,
+                 "FireCloud workspace was not correct, expected validation-test-firecloud-attribute-test-#{@random_seed} but found #{study.firecloud_workspace}"
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should disable downloads for reviewers' do
+    study_name = "Validation Reviewer Share #{@random_seed}"
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
     study_params = {
         study: {
-            name: "Reviewer Share #{@random_seed}",
+            name: study_name,
             user_id: @test_user.id,
             public: false,
+            study_detail_attributes: {
+                full_description: ""
+            },
             study_shares_attributes: {
                 "0" => {
                     email: @sharing_user.email,
@@ -200,7 +216,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     post studies_path, params: study_params
     follow_redirect!
     assert_response 200, "Did not complete request successfully, expected redirect and response 200 but found #{@response.code}"
-    study = Study.find_by(name: "Reviewer Share #{@random_seed}")
+    study = Study.find_by(name: study_name)
     assert study.study_shares.size == 1, "Did not successfully create study_share, found #{study.study_shares.size} shares"
     reviewer_email = study.study_shares.reviewers.first
     assert reviewer_email == @sharing_user.email, "Did not grant reviewer permission to #{@sharing_user.email}, reviewers: #{reviewer_email}"
@@ -243,23 +259,59 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  # ensure data removal from BQ on metadata delete
   test 'should delete data from bigquery' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    study = Study.find_by(name: "Test Study #{@random_seed}")
-    metadata_file = study.metadata_file
-    bqc = ApplicationController.big_query_client
-    bq_dataset = bqc.datasets.detect {|dataset| dataset.dataset_id == CellMetadatum::BIGQUERY_DATASET}
-    initial_bq_row_count = get_bq_row_count(bq_dataset, study)
+    study_name = "Validation BQ Delete Study #{@random_seed}"
+    study = Study.create!(name: study_name, firecloud_project: ENV['PORTAL_NAMESPACE'], description: 'Test BQ Delete',
+                          user_id: @test_user.id)
+    assert study.present?, "Study did not successfully save"
+
+    # add metadata file and parse to load data into BQ
+    # this test uses ingest rather than direct BQ seed as this has been shown to cause large-scale random downstream
+    # failures if direct BQ seeding is called multiple times
+    metadata_upload = File.open(Rails.root.join('test', 'test_data', 'alexandria_convention', 'metadata.v2-0-0.txt'))
+    metadata_file = study.study_files.build(file_type: 'Metadata', use_metadata_convention: true, upload: metadata_upload,
+                                            name: 'metadata.v2-0-0.txt', parse_status: 'unparsed', status: 'uploaded')
+    metadata_file.save!
+    metadata_upload.close
+    metadata_file.reload
+    study.send_to_firecloud(metadata_file)
+
+    puts "Directly seeding BigQuery w/ synthetic data"
+    bq_seeds = File.open(Rails.root.join('db', 'seed', 'bq_seeds.json'))
+    bq_data = JSON.parse bq_seeds.read
+    bq_data.each do |entry|
+      entry['CellID'] = SecureRandom.uuid
+      entry['study_accession'] = study.accession
+      entry['file_id'] = metadata_file.id.to_s
+    end
+    puts "Data read, writing to newline-delimited JSON"
+    tmp_filename = SecureRandom.uuid + '.json'
+    tmp_file = File.new(Rails.root.join(tmp_filename), 'w+')
+    tmp_file.write bq_data.map(&:to_json).join("\n")
+    puts "Data assembled, writing to BigQuery"
+    table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
+    job = table.load(tmp_file, write: 'append', format: :json)
+    puts "Write complete, closing/removing files"
+    bq_seeds.close
+    tmp_file.close
+    puts "BigQuery seeding completed: #{job}"
+
+    # ensure data is in BQ
+    initial_bq_row_count = get_bq_row_count(study)
+    assert initial_bq_row_count > 0, "wrong number of BQ rows found to test deletion capability"
 
     # request delete
-    puts "Requesting delete for alexandria_convention/metadata.v2-0-0.txt"
-    delete api_v1_study_study_file_path(study_id: study.id, id: metadata_file.id), as: :json, headers: {authorization: "Bearer #{@test_user.api_access_token[:access_token]}" }
+    puts "Requesting delete for metadata file"
+    delete api_v1_study_study_file_path(study_id: study.id, id: metadata_file.id), as: :json, headers: {Authorization: "Bearer #{@test_user.api_access_token['access_token']}" }
+    assert_response 204, "Did not correctly respond 204 to delete request"
 
     seconds_slept = 0
     sleep_increment = 10
     max_seconds_to_sleep = 60
-    until ( (bq_row_count = get_bq_row_count(bq_dataset, study)) <= initial_bq_row_count) do
+    until ( (bq_row_count = get_bq_row_count(study)) == 0 ) do
       puts "#{seconds_slept} seconds after requesting file deletion, bq_row_count is #{bq_row_count}."
       if seconds_slept >= max_seconds_to_sleep
         raise "Even #{seconds_slept} seconds after requesting file deletion, not all records have been deleted from bigquery."
@@ -268,8 +320,69 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
       seconds_slept += sleep_increment
     end
     puts "#{seconds_slept} seconds after requesting file deletion, bq_row_count is #{bq_row_count}."
-    assert get_bq_row_count(bq_dataset, study) <= initial_bq_row_count # using "<=" instead of "==" in case there were rows from a previous aborted test to clean up
+    assert get_bq_row_count(study) == 0
+
+    # clean up
+    study.destroy_and_remove_workspace
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'should allow files with spaces in names' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
+    filename = "12_MB_file_with_space_in_filename 2.txt"
+    sanitized_filename = filename.gsub(/\s/, '_')
+    file_params = {study_file: {file_type: 'Expression Matrix', study_id: study.id.to_s, name: sanitized_filename}}
+    exp_matrix = File.open(Rails.root.join('test', 'test_data', filename))
+    perform_chunked_study_file_upload(filename, file_params, study.id)
+    assert_response 200, "Expression upload failed: #{@response.code}"
+    study_file = study.study_files.detect {|file| file.upload_file_name == sanitized_filename}
+    refute study_file.nil?, 'Did not find newly uploaded expression matrix'
+    assert_equal exp_matrix.size, study_file.upload_file_size, "File sizes do not match; #{exp_matrix.size} != #{study_file.upload_file_size}"
+
+    # clean up
+    exp_matrix.close
+    study_file.destroy
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  # validates that additional expression matrices with unique cells can be ingested to a study that already has a
+  # metadata file and at least one other expression matrix
+  test 'should validate unique cells for expression matrices' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
+    new_matrix = 'expression_matrix_example_2.txt'
+    file_params = {study_file: {file_type: 'Expression Matrix', study_id: study.id.to_s}}
+    perform_study_file_upload(new_matrix, file_params, study.id)
+    assert_response 200, "Expression matrix upload failed: #{@response.code}"
+    uploaded_matrix = study.expression_matrix_files.detect {|file| file.upload_file_name == new_matrix}
+    assert uploaded_matrix.present?, "Did not find newly uploaded matrix #{new_matrix}"
+    puts "Requesting parse for file \"#{uploaded_matrix.upload_file_name}\"."
+    assert_equal 'unparsed', uploaded_matrix.parse_status, "Incorrect parse_status for #{new_matrix}"
+    initiate_study_file_parse(uploaded_matrix.upload_file_name, study.id)
+    assert_response 200, "#{new_matrix} parse job failed to start: #{@response.code}"
+
+    seconds_slept = 60
+    puts "Parse initiated for #{new_matrix}, polling for completion"
+    sleep seconds_slept
+    sleep_increment = 15
+    max_seconds_to_sleep = 300
+    until  ['parsed', 'failed'].include? uploaded_matrix.parse_status  do
+      puts "After #{seconds_slept} seconds, #{new_matrix} is #{uploaded_matrix.parse_status}."
+      if seconds_slept >= max_seconds_to_sleep
+        raise "Sleep timeout after #{seconds_slept} seconds when waiting for parse of #{new_matrix}."
+      end
+      sleep(sleep_increment)
+      seconds_slept += sleep_increment
+      assert_not uploaded_matrix.queued_for_deletion, "parsing #{new_matrix} failed, and is queued for deletion"
+      uploaded_matrix.reload
+    end
+    puts "After #{seconds_slept} seconds, #{new_matrix} is #{uploaded_matrix.parse_status}."
+
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end
-

@@ -26,7 +26,7 @@ class StudiesController < ApplicationController
   before_action :check_firecloud_status, except: [:index, :do_upload, :resume_upload, :update_status,
                                                   :retrieve_wizard_upload, :parse]
   before_action :check_study_detached, only: [:edit, :update, :initialize_study, :sync_study, :sync_submission_outputs]
-
+  helper_method :visible_unsynced_files, :hidden_unsynced_files
   ###
   #
   # STUDY OBJECT METHODS
@@ -46,7 +46,7 @@ class StudiesController < ApplicationController
     @directories = @study.directory_listings.are_synced
     @primary_data = @study.directory_listings.primary_data
     @other_data = @study.directory_listings.non_primary_data
-    @allow_downloads = Study.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE) && !@study.detached
+    @allow_downloads = ApplicationController.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE) && !@study.detached
     @analysis_metadata = @study.analysis_metadata.to_a
     # load study default options
     set_study_default_options
@@ -55,6 +55,7 @@ class StudiesController < ApplicationController
   # GET /studies/new
   def new
     @study = Study.new
+    @study.build_study_detail
 
     # load the given user's available FireCloud billing projects
     set_user_projects
@@ -77,6 +78,7 @@ class StudiesController < ApplicationController
                                   notice: "Your study '#{@study.name}' was successfully created." }
         format.json { render :show, status: :ok, location: @study }
       else
+        @study.build_study_detail
         set_user_projects
         format.html { render :new }
         format.json { render json: @study.errors, status: :unprocessable_entity }
@@ -107,16 +109,16 @@ class StudiesController < ApplicationController
     @permissions_changed = []
 
     # get a list of workspace submissions so we know what directories to ignore
-    @submission_ids = Study.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace).map {|s| s['submissionId']}
+    @submission_ids = ApplicationController.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace).map {|s| s['submissionId']}
 
     # first sync permissions if necessary
     begin
       portal_permissions = @study.local_acl
-      firecloud_permissions = Study.firecloud_client.get_workspace_acl(@study.firecloud_project, @study.firecloud_workspace)
+      firecloud_permissions = ApplicationController.firecloud_client.get_workspace_acl(@study.firecloud_project, @study.firecloud_workspace)
       firecloud_permissions['acl'].each do |user, permissions|
         # skip project owner permissions, they aren't relevant in this context
         # also skip the readonly service account
-        if permissions['accessLevel'] =~ /OWNER/i || (Study.read_only_firecloud_client.present? && user == Study.read_only_firecloud_client.issuer)
+        if permissions['accessLevel'] =~ /OWNER/i || (ApplicationController.read_only_firecloud_client.present? && user == ApplicationController.read_only_firecloud_client.issuer)
           next
         else
           # determine whether permissions are incorrect or missing completely
@@ -161,7 +163,7 @@ class StudiesController < ApplicationController
     begin
       # create a map of file extension to use for creating directory_listings of groups of 10+ files of the same type
       @file_extension_map = {}
-      workspace_files = Study.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, @study.bucket_id)
+      workspace_files = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, @study.bucket_id)
       # see process_workspace_bucket_files in private methods for more details on syncing
       process_workspace_bucket_files(workspace_files)
       while workspace_files.next?
@@ -276,9 +278,9 @@ class StudiesController < ApplicationController
     begin
       # indication of whether or not we have custom sync code to run, defaults to false
       @special_sync = false
-      configuration = Study.firecloud_client.get_workspace_configuration(@study.firecloud_project, @study.firecloud_workspace,
+      configuration = ApplicationController.firecloud_client.get_workspace_configuration(@study.firecloud_project, @study.firecloud_workspace,
                                                                          configuration_namespace, configuration_name)
-      submission = Study.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace,
+      submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace,
                                                                    params[:submission_id])
       # get method identifiers to load analysis_configuration object
       method_name = configuration['methodRepoMethod']['methodName']
@@ -289,7 +291,7 @@ class StudiesController < ApplicationController
         @special_sync = true
       end
       submission['workflows'].each do |workflow|
-        workflow = Study.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace,
+        workflow = ApplicationController.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace,
                                                                             params[:submission_id], workflow['workflowId'])
         workflow['outputs'].each do |output_name, outputs|
           # try to copy each 'output' to the special output path if the object is a file
@@ -298,7 +300,7 @@ class StudiesController < ApplicationController
             outputs.each do |output_file|
               file_location = output_file.gsub(/gs\:\/\/#{@study.bucket_id}\//, '')
               # get google instance of file
-              remote_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, file_location)
+              remote_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, file_location)
               if remote_file.present?
                 process_workflow_output(output_name, output_file, remote_file, workflow, params[:submission_id], configuration)
               end
@@ -306,7 +308,7 @@ class StudiesController < ApplicationController
           elsif outputs.is_a?(String)
             file_location = outputs.gsub(/gs\:\/\/#{@study.bucket_id}\//, '')
             # get google instance of file
-            remote_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, file_location)
+            remote_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, file_location)
             if remote_file.present?
               process_workflow_output(output_name, outputs, remote_file, workflow, params[:submission_id], configuration)
             end
@@ -365,7 +367,7 @@ class StudiesController < ApplicationController
         end
         if @study.previous_changes.keys.include?('name')
           # if user renames a study, invalidate all caches
-          CacheRemovalJob.new(@study.accession).delay.perform
+          CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
         end
         if @study.study_shares.any?
           SingleCellMailer.share_update_notification(@study, changes, current_user).deliver_now
@@ -401,7 +403,7 @@ class StudiesController < ApplicationController
         @study.update(firecloud_workspace: SecureRandom.uuid)
       else
         begin
-          Study.firecloud_client.delete_workspace(@study.firecloud_project, @study.firecloud_workspace)
+          ApplicationController.firecloud_client.delete_workspace(@study.firecloud_project, @study.firecloud_workspace)
         rescue => e
           error_context = ErrorTracker.format_extra_context(@study, {params: params})
           ErrorTracker.report_exception(e, current_user, error_context)
@@ -411,7 +413,7 @@ class StudiesController < ApplicationController
       end
 
       # queue jobs to delete study caches & study itself
-      CacheRemovalJob.new(@study.accession).delay.perform
+      CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
       DeleteQueueJob.new(@study).delay.perform
 
       # notify users of deletion before removing shares & owner
@@ -445,39 +447,47 @@ class StudiesController < ApplicationController
   # method to perform chunked uploading of data
   def do_upload
     upload = get_upload
-    filename = upload.original_filename
+    # remove spaces and + (encoded whitespace character) from filename since this converted client-side,
+    # but original_filename is unchanged in headers
+    filename = upload.original_filename.gsub(/[\s\+]/, '_')
     study_file = @study.study_files.detect {|sf| sf.upload_file_name == filename}
     # If no file has been uploaded or the uploaded file has a different filename,
     # do a new upload from scratch
     if study_file.nil?
       # don't use helper as we're about to mass-assign params
       study_file = @study.study_files.build
-      if study_file.update(study_file_params)
-        # determine if we need to create a study_file_bundle for the new study_file
-        if StudyFileBundle::BUNDLE_TYPES.include?(study_file.file_type) && study_file.file_type != 'Cluster'
-          matching_bundle = @study.study_file_bundles.detect {|bundle| bundle.bundle_type == study_file.file_type && bundle.parent == study_file}
-          if matching_bundle.nil?
-            study_file_bundle = @study.study_file_bundles.build(bundle_type: study_file.file_type)
-            bundle_payload = StudyFileBundle.generate_file_list(study_file)
-            study_file_bundle.original_file_list = bundle_payload
-            study_file_bundle.save! # saving the study_file_bundle will create new placeholder entries for the bundled study_files
-          end
-        end
-        # we need to add this file to a study_file_bundle if it was assigned
-        if study_file_params[:study_file_bundle_id].present?
-          # we're processing a bundled upload, which means there might be a placeholder file entry we need to find
-          study_file_bundle = StudyFileBundle.find_by(study_id: @study.id, id: study_file_params[:study_file_bundle_id])
-          file_type = study_file.file_type
-          # ignore if this is the parent file
-          unless file_type == study_file_bundle.bundle_type
-            study_file_bundle.add_files(study_file)
-          end
-        end
-        render json: { file: { name: study_file.upload_file_name,size: upload.size } } and return
-      else
+      begin
+        study_file.update!(study_file_params)
+      rescue => e
         logger.error "#{Time.zone.now} #{study_file.errors.full_messages.join(", ")}"
+        existing_file = StudyFile.find(study_file.id)
+        if existing_file
+          ErrorTracker.report_exception(e, current_user, params.to_unsafe_hash)
+          logger.error("do_upload Failed: Existing file for #{study_file.id} -- type:#{existing_file.file_type} name:#{existing_file.name}")
+        end
         render json: { file: { name: study_file.upload_file_name, errors: study_file.errors.full_messages.join(", ") } }, status: 422 and return
       end
+      # determine if we need to create a study_file_bundle for the new study_file
+      if StudyFileBundle::BUNDLE_TYPES.include?(study_file.file_type) && study_file.file_type != 'Cluster'
+        matching_bundle = @study.study_file_bundles.detect {|bundle| bundle.bundle_type == study_file.file_type && bundle.parent == study_file}
+        if matching_bundle.nil?
+          study_file_bundle = @study.study_file_bundles.build(bundle_type: study_file.file_type)
+          bundle_payload = StudyFileBundle.generate_file_list(study_file)
+          study_file_bundle.original_file_list = bundle_payload
+          study_file_bundle.save! # saving the study_file_bundle will create new placeholder entries for the bundled study_files
+        end
+      end
+      # we need to add this file to a study_file_bundle if it was assigned
+      if study_file_params[:study_file_bundle_id].present?
+        # we're processing a bundled upload, which means there might be a placeholder file entry we need to find
+        study_file_bundle = StudyFileBundle.find_by(study_id: @study.id, id: study_file_params[:study_file_bundle_id])
+        file_type = study_file.file_type
+        # ignore if this is the parent file
+        unless file_type == study_file_bundle.bundle_type
+          study_file_bundle.add_files(study_file)
+        end
+      end
+      render json: { file: { name: study_file.upload_file_name,size: upload.size } } and return
     else
       current_size = study_file.upload_file_size
       content_range = request.headers['CONTENT-RANGE']
@@ -518,9 +528,13 @@ class StudiesController < ApplicationController
 
   # update a study_file's upload status to 'uploaded'
   def update_status
-    study_file = StudyFile.where(study_id: params[:id], upload_file_name: params[:file]).first
-    study_file.update!(status: params[:status])
-    head :ok
+    study_file = StudyFile.find_by(study_id: params[:id], upload_file_name: params[:file])
+    if study_file.present?
+      study_file.update!(status: params[:status])
+      head :ok
+    else
+      head :not_found
+    end
   end
 
   # retrieve study file by filename during initializer wizard
@@ -573,63 +587,11 @@ class StudiesController < ApplicationController
 
   # method to download files if study is private, will create temporary signed_url after checking user quota
   def download_private_file
-    @study = Study.find_by(accession: params[:accession], url_safe_name: params[:study_name])
-    # make sure user is signed in
-    if !user_signed_in? || !@study.can_view?(current_user)
-      redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
-                  alert: 'You do not have permission to perform that action.' and return
-    elsif @study.detached?
-      redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
-                  alert: "We were unable to complete your request as the study is question is detached from the workspace (maybe the workspace was deleted?)" and return
-    elsif @study.embargoed?(current_user)
-      redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                  alert: "You may not download any data from this study until #{@study.embargo.to_s(:long)}." and return
-    elsif !@study.can_download?(current_user)
-      redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                  alert: 'You do not have permission to perform that action.' and return
-    end
-
-    # next check if downloads have been disabled by administrator, this will abort the download
-    # download links shouldn't be rendered in any case, this just catches someone doing a straight GET on a file
-    # also check if workspace google buckets are available
-    if !AdminConfiguration.firecloud_access_enabled? || !Study.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
-      head 503 and return
-    end
-    begin
-      # get filesize and make sure the user is under their quota
-      requested_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, params[:filename])
-      if requested_file.present?
-        filesize = requested_file.size
-        user_quota = current_user.daily_download_quota + filesize
-        # check against download quota that is loaded in ApplicationController.get_download_quota
-        if user_quota <= @download_quota
-          @signed_url = Study.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, @study.bucket_id, params[:filename], expires: 15)
-          current_user.update(daily_download_quota: user_quota)
-        else
-          redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                      alert: 'You have exceeded your current daily download quota.  You must wait until tomorrow to download this file.' and return
-        end
-        # redirect directly to file to trigger download
-        # validate that the signed_url is in fact the correct URL - it must be a GCS lin
-        if is_valid_signed_url?(@signed_url)
-          redirect_to @signed_url
-        else
-          redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                      alert: 'We are unable to process your download.  Please try again later.' and return
-        end
-      else
-        # send notification to the study owner that file is missing (if notifications turned on)
-        SingleCellMailer.user_download_fail_notification(@study, params[:filename]).deliver_now
-        redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]),
-                    alert: 'The file you requested is currently not available.  Please contact the study owner if you require access to this file.' and return
-      end
-    rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
-      logger.error "#{Time.zone.now}: error generating signed url for #{params[:filename]}; #{e.message}"
-      redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
-                  alert: "We were unable to download the file #{params[:filename]} do to an error: #{view_context.simple_format(e.message)}" and return
-    end
+    @study = Study.find_by(accession: params[:accession])
+    # verify user can download file
+    verify_file_download_permissions(@study); return if performed?
+    # initiate file download action
+    execute_file_download(@study); return if performed?
   end
 
   # for files that don't need parsing, send directly to firecloud on upload completion
@@ -678,9 +640,8 @@ class StudiesController < ApplicationController
           @study.default_options[:cluster] = @study_file.name
           @study.save
         end
+        old_name = @cluster.name.dup
         @cluster.update(name: @study_file.name)
-        # also update data_arrays
-        @cluster.data_arrays.update_all(cluster_name: @study_file.name)
       elsif ['Expression Matrix', 'MM Coordinate Matrix'].include?(study_file_params[:file_type]) && !study_file_params[:y_axis_label].blank?
         # if user is supplying an expression axis label, update default options hash
         @study.update(default_options: @study.default_options.merge(expression_label: study_file_params[:y_axis_label]))
@@ -744,61 +705,7 @@ class StudiesController < ApplicationController
 
       # only reparse if user requests
       if @study_file.parseable? && params[:reparse] == 'Yes'
-        logger.info "#{Time.zone.now}: Parsing #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} as remote file"
-        @message += " You will receive an email at #{current_user.email} when the parse has completed."
-        case @study_file.file_type
-        when 'Cluster'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cluster)
-          job.delay.push_remote_and_launch_ingest(reparse: true)
-        when 'Coordinate Labels'
-          @study.delay.initialize_coordinate_label_data_arrays(@study_file, current_user, {local: false, reparse: true})
-        when 'Expression Matrix'
-          @study.delay.initialize_gene_expression_data(@study_file, current_user, {local: false, reparse: true})
-        when 'MM Coordinate Matrix'
-          barcodes = @study_file.bundled_files.detect {|f| f.file_type == '10X Barcodes File'}
-          genes = @study_file.bundled_files.detect {|f| f.file_type == '10X Genes File'}
-          if barcodes.present? && genes.present?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, @study_file, genes, barcodes, {sync: true, reparse: true})
-          else
-            logger.info "#{Time.zone.now}: Parse for #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} aborted; missing required files"
-          end
-        when '10X Genes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = @study_file.bundle_parent
-          barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => matrix_id)
-          if barcodes.present? && matrix.present?
-            @study_file.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, @study_file, barcodes, {sync: true, reparse: true})
-          else
-            # we can only get here if we have a matrix and no barcodes, which means the barcodes form is already rendered
-            logger.info "#{Time.zone.now}: Parse for #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} aborted; missing required files"
-          end
-        when '10X Barcodes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = @study_file.bundle_parent
-          genes = @study.study_files.find_by(file_type: '10X Genes File', 'options.matrix_id' => matrix_id)
-          if genes.present? && matrix.present?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, genes, @study_file, {sync: true, reparse: true})
-          else
-            # we can only get here if we have a matrix and no genes, which means the genes form is already rendered
-            logger.info "#{Time.zone.now}: Parse for #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} aborted; missing required files"
-          end
-        when 'Gene List'
-          @study.delay.initialize_precomputed_scores(@study_file, current_user, {local: false, reparse: true})
-        when 'Metadata'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cell_metadata)
-          job.delay.push_remote_and_launch_ingest(reparse: true)
-        end
+        FileParseService.run_parse_job(@study_file, @study, current_user, reparse: true, persist_on_fail: true)
       end
 
       # notify users of updated file
@@ -819,7 +726,7 @@ class StudiesController < ApplicationController
     @study_file = StudyFile.find(params[:study_file_id])
     @message = ""
     unless @study_file.nil?
-      if @study_file.parsing?
+      if !@study_file.can_delete_safely?
         render action: 'abort_delete_study_file'
       else
         human_data = @study_file.human_data # store this reference for later
@@ -835,10 +742,10 @@ class StudiesController < ApplicationController
         begin
           # make sure file is in FireCloud first as user may be aborting the upload
           unless human_data
-            present = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id,
+            present = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id,
                                                                    @study_file.upload_file_name)
             if present
-              Study.firecloud_client.execute_gcloud_method(:delete_workspace_file, 0, @study.bucket_id,
+              ApplicationController.firecloud_client.execute_gcloud_method(:delete_workspace_file, 0, @study.bucket_id,
                                                            @study_file.upload_file_name)
             end
           end
@@ -912,73 +819,9 @@ class StudiesController < ApplicationController
       # only grab id after update as it will change on new entries
       @form = "#study-file-#{@study_file.id}"
       @target = "#synced-study-files"
+
       if @study_file.parseable?
-        logger.info "#{Time.zone.now}: Parsing #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} as remote file"
-        @message += " You will receive an email at #{current_user.email} when the parse has completed."
-        # parse file as appropriate type
-        case @study_file.file_type
-        when 'Cluster'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cluster)
-          job.delay.push_remote_and_launch_ingest
-        when 'Coordinate Labels'
-          @study.delay.initialize_coordinate_label_data_arrays(@study_file, current_user, {local: false})
-        when 'Expression Matrix'
-          @study.delay.initialize_gene_expression_data(@study_file, current_user, {local: false})
-        when 'MM Coordinate Matrix'
-          # we have to cast the study_file ID to a string, otherwise it is a BSON::ObjectID and will not match
-          barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => @study_file.id.to_s)
-          genes = @study.study_files.find_by(file_type: '10X Genes File', 'options.matrix_id' => @study_file.id.to_s)
-          # create a study_file_bundle if it doesn't already exist
-          @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, @study_file)
-          if barcodes.present? && genes.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, @study_file, genes, barcodes, {sync: true})
-          end
-        when '10X Genes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = StudyFile.find(matrix_id)
-          barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => matrix_id)
-          @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, matrix)
-          @target = "##{matrix.form_container_id}"
-          @study_file_bundle.add_files(@study_file)
-          if barcodes.present? && matrix.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, @study_file, barcodes, {sync: true})
-          end
-        when '10X Barcodes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = StudyFile.find(matrix_id)
-          genes = @study.study_files.find_by(file_type: '10X Genes File', 'options.matrix_id' => matrix_id)
-          @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, matrix)
-          @study_file_bundle.add_files(@study_file)
-          @target = "##{matrix.form_container_id}"
-          if genes.present? && matrix.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, genes, @study_file, {sync: true})
-          end
-        when 'Gene List'
-          @study.delay.initialize_precomputed_scores(@study_file, current_user, {local: false})
-        when 'Metadata'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cell_metadata)
-          job.delay.push_remote_and_launch_ingest
-        when 'Analysis Output'
-          case @study_file.options[:analysis_name]
-          when 'infercnv'
-            if @study_file.options[:visualization_name] == 'ideogram.js'
-              ParseUtils.delay.extract_analysis_output_files(@study, current_user, @study_file, @study_file.options[:analysis_name])
-            end
-          else
-            Rails.logger.info "Aborting parse of #{@study_file.name} as #{@study_file.file_type} in study #{@study.name}; not applicable"
-          end
-        end
+        FileParseService.run_parse_job(@study_file, @study, current_user, reparse: false, persist_on_fail: true)
       elsif @study_file.file_type == 'BAM'
         # we need to check if we have a study_file_bundle here
         @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, @study_file)
@@ -1026,61 +869,7 @@ class StudiesController < ApplicationController
       @message = "New Study File '#{@study_file.name}' successfully synced."
       # only reparse if user requests
       if @study_file.parseable? && params[:reparse] == 'Yes'
-        logger.info "#{Time.zone.now}: Parsing #{@study_file.name} as #{@study_file.file_type} in study #{@study.name} as remote file"
-        @message += " You will receive an email at #{current_user.email} when the parse has completed."
-        case @study_file.file_type
-        when 'Cluster'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cluster)
-          job.delay.push_remote_and_launch_ingest(reparse: true)
-        when 'Coordinate Labels'
-          @study.delay.initialize_coordinate_label_data_arrays(@study_file, current_user, {local: false, reparse: true})
-        when 'Expression Matrix'
-          @study.delay.initialize_gene_expression_data(@study_file, current_user, {local: false, reparse: true})
-        when 'MM Coordinate Matrix'
-          # we have to cast the study_file ID to a string, otherwise it is a BSON::ObjectID and will not match
-          barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => @study_file.id.to_s)
-          genes = @study.study_files.find_by(file_type: '10X Genes File', 'options.matrix_id' => @study_file.id.to_s)
-          # create a study_file_bundle if it doesn't already exist
-          @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, @study_file)
-          if barcodes.present? && genes.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, @study_file, genes, barcodes, {reparse: true, sync: true})
-          end
-        when '10X Genes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = StudyFile.find(matrix_id)
-          barcodes = @study.study_files.find_by(file_type: '10X Barcodes File', 'options.matrix_id' => matrix_id)
-          @target = "##{matrix.form_container_id}"
-          @study_file_bundle.add_files(@study_file)
-          if barcodes.present? && matrix.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            barcodes.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, @study_file, barcodes, {reparse: true, sync: true})
-          end
-        when '10X Barcodes File'
-          matrix_id = @study_file.options[:matrix_id]
-          matrix = StudyFile.find(matrix_id)
-          genes = @study.study_files.find_by(file_type: '10X Genes File', 'options.matrix_id' => matrix_id)
-          @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, matrix)
-          @study_file_bundle.add_files(@study_file)
-          @target = "##{matrix.form_container_id}"
-          if genes.present? && matrix.present? && @study_file_bundle.completed?
-            @study_file.update(parse_status: 'parsing')
-            genes.update(parse_status: 'parsing')
-            matrix.update(parse_status: 'parsing')
-            ParseUtils.delay.cell_ranger_expression_parse(@study, current_user, matrix, genes, @study_file, {reparse: true, sync: true})
-          end
-        when 'Gene List'
-          @study.delay.initialize_precomputed_scores(@study_file, current_user, {local: false, reparse: true})
-        when 'Metadata'
-          @study_file.update(parse_status: 'parsing')
-          job = IngestJob.new(study: @study, study_file: @study_file, user: current_user, action: :ingest_cell_metadata)
-          job.delay.push_remote_and_launch_ingest(reparse: true)
-        end
+        FileParseService.run_parse_job(@study_file, @study, current_user, reparse: true, persist_on_fail: true)
       elsif @study_file.file_type == 'BAM'
         # we need to check if we have a study_file_bundle here
         @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, @study_file)
@@ -1113,7 +902,7 @@ class StudiesController < ApplicationController
     @form = "#study-file-#{@study_file.id}"
     @message = ""
     unless @study_file.nil?
-      if @study_file.parsing?
+      if !@study_file.can_delete_safely?
         render action: 'abort_delete_study_file'
       else
         begin
@@ -1242,7 +1031,8 @@ class StudiesController < ApplicationController
   def study_params
     params.require(:study).permit(:name, :description, :public, :user_id, :embargo, :use_existing_workspace, :firecloud_workspace,
                                   :firecloud_project, :branding_group_id, study_shares_attributes: [:id, :_destroy, :email, :permission],
-                                  external_resources_attributes: [:id, :_destroy, :title, :description, :url, :publication_url])
+                                  external_resources_attributes: [:id, :_destroy, :title, :description, :url, :publication_url],
+                                  study_detail_attributes: [:id, :full_description])
   end
 
   # study file params whitelist
@@ -1250,9 +1040,10 @@ class StudiesController < ApplicationController
     params.require(:study_file).permit(:_id, :study_id, :name, :upload, :upload_file_name, :upload_content_type, :upload_file_size,
                                        :remote_location, :description, :file_type, :status, :human_fastq_url, :human_data, :use_metadata_convention,
                                        :cluster_type, :generation, :x_axis_label, :y_axis_label, :z_axis_label, :x_axis_min, :x_axis_max,
-                                       :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :taxon_id, :genome_assembly_id, :study_file_bundle_id,
-                                       options: [:cluster_group_id, :font_family, :font_size, :font_color, :matrix_id, :submission_id,
-                                                 :bam_id, :analysis_name, :visualization_name, :cluster_name, :annotation_name])
+                                       :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :is_spatial, :taxon_id, :genome_assembly_id, :study_file_bundle_id,
+                                       options: [:cluster_group_id, :cluster_file_id, :font_family, :font_size, :font_color,
+                                                 :matrix_id, :submission_id, :bam_id, :analysis_name, :visualization_name,
+                                                 :cluster_name, :annotation_name])
   end
 
   def directory_listing_params
@@ -1342,7 +1133,7 @@ class StudiesController < ApplicationController
 
   # check on FireCloud API status and respond accordingly
   def check_firecloud_status
-    unless Study.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE)
+    unless ApplicationController.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE)
       alert = 'Study workspaces are temporarily unavailable, so we cannot complete your request.  Please try again later.'
       respond_to do |format|
         format.js {render js: "$('.modal').modal('hide'); alert('#{alert}')" and return}
@@ -1374,7 +1165,9 @@ class StudiesController < ApplicationController
     files_to_remove = []
     files.each do |file|
       # first, check if file is in a submission directory, and if so mark it for removal from list of files to sync
-      if @submission_ids.include?(file.name.split('/').first) || file.name.end_with?('/')
+      # also ignore any files in the parse_logs folder
+      base_dir = file.name.split('/').first
+      if @submission_ids.include?(base_dir) || base_dir == 'parse_logs' || file.name.end_with?('/')
         files_to_remove << file.generation
       else
         directory_name = DirectoryListing.get_folder_name(file.name)
@@ -1448,7 +1241,7 @@ class StudiesController < ApplicationController
     new_location = "outputs_#{@study.id}_#{submission_id}/#{basename}"
     # check if file has already been synced first
     # we can only do this by md5 hash as the filename and generation will be different
-    existing_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, new_location)
+    existing_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, new_location)
     unless existing_file.present? && existing_file.md5 == remote_gs_file.md5 && StudyFile.where(study_id: @study.id, upload_file_name: new_location).exists?
       # now copy the file to a new location for syncing, marking as default type of 'Analysis Output'
       new_file = remote_gs_file.copy new_location
@@ -1474,4 +1267,15 @@ class StudiesController < ApplicationController
       @unsynced_files << unsynced_output
     end
   end
+
+  # match filenames that start with a . or have a /. in their path
+  HIDDEN_FILE_REGEX = /\/\.|^\./
+  def visible_unsynced_files
+    @unsynced_files.select { |f| HIDDEN_FILE_REGEX.match(f.upload_file_name).nil? }
+  end
+
+  def hidden_unsynced_files
+    @unsynced_files.select { |f| HIDDEN_FILE_REGEX.match(f.upload_file_name).present? }
+  end
+
 end

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
+
+import React, { useState, useContext, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDownload } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
@@ -8,8 +9,9 @@ import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger'
 import {
   useContextStudySearch, hasSearchParams
 } from 'providers/StudySearchProvider'
-import { useContextUser } from 'providers/UserProvider'
-import { useContextDownload } from 'providers/DownloadProvider'
+
+import { UserContext } from 'providers/UserProvider'
+import { DownloadContext } from 'providers/DownloadProvider'
 import { fetchAuthCode } from 'lib/scp-api'
 
 /**
@@ -202,8 +204,8 @@ function getLeadText(downloadSize) {
  */
 export default function DownloadButton(props) {
   const searchContext = useContextStudySearch()
-  const userContext = useContextUser()
-  const downloadContext = useContextDownload({ results: searchContext.results })
+  const userContext = useContext(UserContext)
+  const downloadContext = useContext(DownloadContext)
 
   const [show, setShow] = useState(false)
 
@@ -241,8 +243,9 @@ export default function DownloadButton(props) {
         overlay={<Tooltip id='download-tooltip'>{hint}</Tooltip>}>
         <button
           id='download-button'
-          className={`btn btn-primary ${active ? 'active' : 'disabled'}`}>
-          <span onClick={() => {setShow(true)}}>
+          className={`btn btn-primary ${active ? 'active' : 'disabled'}`}
+          onClick={() => {setShow(true)}}>
+          <span>
             <FontAwesomeIcon className="icon-left" icon={faDownload}/>
           Download
           </span>

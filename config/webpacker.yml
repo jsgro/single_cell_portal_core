@@ -38,7 +38,10 @@ development:
 
   # Reference: https://webpack.js.org/configuration/dev-server/
   dev_server:
-    https: false
+    https:
+      # use the cert/key from config/certs
+      cert: './config/certs/localhost.crt'
+      key: './config/certs/localhost.key'
     host: localhost
     port: 3035
     public: localhost:3035
@@ -71,7 +74,7 @@ staging:
   <<: *default
 
   # Production depends on precompilation of packs prior to booting for performance.
-  compile: true
+  compile: false
   extract_css: true
 
   public_output_path: single_cell/assets/packs
@@ -96,7 +99,7 @@ production:
   <<: *default
 
   # Production depends on precompilation of packs prior to booting for performance.
-  compile: true
+  compile: false
   extract_css: true
 
   public_output_path: single_cell/assets/packs

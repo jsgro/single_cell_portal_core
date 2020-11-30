@@ -5,6 +5,9 @@ module Api
       include Swagger::Blocks
 
       before_action :set_current_api_user!
+      before_action :authenticate_api_user!, only: [:download_data, :stream_data, :get_study_analysis_config,
+                                                    :submit_study_analysis, :get_study_submissions,
+                                                    :get_study_submission, :sync_submission_outputs]
       before_action :set_study, except: [:studies, :analyses, :get_analysis]
       before_action :set_analysis_configuration, only: [:get_analysis, :get_study_analysis_config]
       before_action :check_study_detached, only: [:download_data, :stream_data, :get_study_analysis_config,
@@ -16,6 +19,7 @@ module Api
                            :get_study_submission, :sync_submission_outputs]
       before_action :check_study_edit_permission, only: [:sync_submission_outputs]
       before_action :set_study_file, only: [:download_data, :stream_data]
+      before_action :check_download_agreement, only: [:download_data, :stream_data]
       before_action :get_download_quota, only: [:download_data, :stream_data]
 
       swagger_path '/site/studies' do
@@ -94,7 +98,9 @@ module Api
               'Site'
           ]
           key :summary, 'Download a StudyFile'
-          key :description, 'Download a single StudyFile (via signed URL)'
+          key :description, "Download a single StudyFile (via signed URL)<br/><br/><strong>NOTE</strong>: Due to CORS issues, files cannot be " + \
+                            "downloaded via Swagger.  To download a file, either use a client such as Postman, or copy/paste " + \
+                            "the CURL command into a terminal and add the '-L' flag immediately before the URL.".html_safe
           key :operationId, 'site_study_download_data_path'
           parameter do
             key :name, :accession
@@ -139,8 +145,8 @@ module Api
             user_quota = current_api_user.daily_download_quota + filesize
             # check against download quota that is loaded in ApplicationController.get_download_quota
             if user_quota <= @download_quota
-              @signed_url = Study.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, @study.bucket_id,
-                                                                         @study_file.bucket_location, expires: 15)
+              @signed_url = ApplicationController.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, @study.bucket_id,
+                                                                         @study_file.bucket_location, expires: 60)
               current_api_user.update(daily_download_quota: user_quota)
               redirect_to @signed_url
             else
@@ -228,7 +234,7 @@ module Api
               current_api_user.update(daily_download_quota: user_quota)
               # determine which token to return to use with the media url
               if @study.public?
-                token = Study.read_only_firecloud_client.valid_access_token['access_token']
+                token = ApplicationController.read_only_firecloud_client.valid_access_token['access_token']
               elsif @study.has_bucket_access?(current_api_user)
                 token = current_api_user.api_access_token
               else
@@ -535,7 +541,7 @@ module Api
           logger.info "Updating configuration for #{@analysis_configuration.configuration_identifier} to run #{@analysis_configuration.identifier} in #{@study.firecloud_project}/#{@study.firecloud_workspace}"
           submission_config = @analysis_configuration.apply_user_inputs(submission_inputs)
           # save configuration in workspace
-          Study.firecloud_client.create_workspace_configuration(@study.firecloud_project, @study.firecloud_workspace, submission_config)
+          ApplicationController.firecloud_client.create_workspace_configuration(@study.firecloud_project, @study.firecloud_workspace, submission_config)
 
           # submission must be done as user, so create a client with current_user and submit
           # TODO: figure out better way to assign access token based on API vs. MVC app, and figure out how to set submitter correctly
@@ -593,8 +599,8 @@ module Api
       end
 
       def get_study_submissions
-        workspace = Study.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
-        @submissions = Study.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
+        workspace = ApplicationController.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
+        @submissions = ApplicationController.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
         # update any AnalysisSubmission records with new statuses
         @submissions.each do |submission|
           update_analysis_submission(submission)
@@ -648,7 +654,7 @@ module Api
       end
 
       def get_study_submission
-        @submission = Study.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace,
+        @submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace,
                                                                       params[:submission_id])
         render json: @submission
       end
@@ -699,7 +705,7 @@ module Api
       def abort_study_submission
         if !submission_completed?(@study, params[:submission_id])
           begin
-            Study.firecloud_client.abort_workspace_submission(@study.firecloud_project, @study.firecloud_workspace,
+            ApplicationController.firecloud_client.abort_workspace_submission(@study.firecloud_project, @study.firecloud_workspace,
                                                               params[:submission_id])
             analysis_submission = AnalysisSubmission.find_by(submission_id: params[:submission_id])
             if analysis_submission.present?
@@ -764,7 +770,7 @@ module Api
         if submission_completed?(@study, params[:submission_id])
           begin
             # first, add submission to list of 'deleted_submissions' in workspace attributes (will hide submission in list)
-            workspace = Study.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
+            workspace = ApplicationController.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
             ws_attributes = workspace['workspace']['attributes']
             if ws_attributes['deleted_submissions'].blank?
               ws_attributes['deleted_submissions'] = [params[:submission_id]]
@@ -772,11 +778,11 @@ module Api
               ws_attributes['deleted_submissions']['items'] << params[:submission_id]
             end
             logger.info "Adding #{params[:submission_id]} to workspace delete_submissions attribute in #{@study.firecloud_workspace}"
-            Study.firecloud_client.set_workspace_attributes(@study.firecloud_project, @study.firecloud_workspace, ws_attributes)
+            ApplicationController.firecloud_client.set_workspace_attributes(@study.firecloud_project, @study.firecloud_workspace, ws_attributes)
             logger.info "Deleting analysis metadata for #{params[:submission_id]} in #{@study.url_safe_name}"
             AnalysisMetadatum.where(submission_id: params[:submission_id]).delete
             logger.info "Queueing submission #{params[:submission]} deletion in #{@study.firecloud_workspace}"
-            submission_files = Study.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, @study.firecloud_project, @study.firecloud_workspace, prefix: params[:submission_id])
+            submission_files = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, @study.firecloud_project, @study.firecloud_workspace, prefix: params[:submission_id])
             DeleteQueueJob.new(submission_files).perform
             head 204
           rescue => e
@@ -852,9 +858,9 @@ module Api
         begin
           # indication of whether or not we have custom sync code to run, defaults to false
           @special_sync = false
-          submission = Study.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace,
+          submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace,
                                                                        params[:submission_id])
-          configuration = Study.firecloud_client.get_workspace_configuration(@study.firecloud_project, @study.firecloud_workspace,
+          configuration = ApplicationController.firecloud_client.get_workspace_configuration(@study.firecloud_project, @study.firecloud_workspace,
                                                                              submission['methodConfigurationNamespace'],
                                                                              submission['methodConfigurationName'])
           # get method identifiers to load analysis_configuration object
@@ -866,14 +872,14 @@ module Api
             @special_sync = true
           end
           submission['workflows'].each do |workflow|
-            workflow = Study.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace,
+            workflow = ApplicationController.firecloud_client.get_workspace_submission_workflow(@study.firecloud_project, @study.firecloud_workspace,
                                                                                 params[:submission_id], workflow['workflowId'])
             workflow['outputs'].each do |output_name, outputs|
               if outputs.is_a?(Array)
                 outputs.each do |output_file|
                   file_location = output_file.gsub(/gs\:\/\/#{@study.bucket_id}\//, '')
                   # get google instance of file
-                  remote_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, file_location)
+                  remote_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, file_location)
                   if remote_file.present?
                     process_workflow_output(output_name, output_file, remote_file, workflow, params[:submission_id], configuration)
                   else
@@ -885,7 +891,7 @@ module Api
               else
                 file_location = outputs.gsub(/gs\:\/\/#{@study.bucket_id}\//, '')
                 # get google instance of file
-                remote_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, file_location)
+                remote_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, file_location)
                 if remote_file.present?
                   process_workflow_output(output_name, outputs, remote_file, workflow, params[:submission_id], configuration)
                 else
@@ -977,6 +983,12 @@ module Api
         end
       end
 
+      def check_download_agreement
+        if @study.has_download_agreement? && !@study.download_agreement.user_accepted?(current_api_user)
+          head 403 and return
+        end
+      end
+
       # retrieve the current download quota
       def get_download_quota
         config_entry = AdminConfiguration.find_by(config_type: 'Daily User Download Quota')
@@ -1001,7 +1013,7 @@ module Api
 
       # boolean check for submission completion
       def submission_completed?(study, submission_id)
-        submission = Study.firecloud_client.get_workspace_submission(study.firecloud_project, study.firecloud_workspace,
+        submission = ApplicationController.firecloud_client.get_workspace_submission(study.firecloud_project, study.firecloud_workspace,
                                                                      submission_id)
         last_workflow = submission['workflows'].sort_by {|w| w['statusLastChangedDate']}.last
         AnalysisSubmission::COMPLETION_STATUSES.include?(last_workflow['status'])
@@ -1014,7 +1026,7 @@ module Api
         new_location = "outputs_#{@study.id}_#{submission_id}/#{basename}"
         # check if file has already been synced first
         # we can only do this by md5 hash as the filename and generation will be different
-        existing_file = Study.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, new_location)
+        existing_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, @study.bucket_id, new_location)
         unless existing_file.present? && existing_file.md5 == remote_gs_file.md5 && StudyFile.where(study_id: @study.id, upload_file_name: new_location).exists?
           # now copy the file to a new location for syncing, marking as default type of 'Analysis Output'
           new_file = remote_gs_file.copy new_location

@@ -27,12 +27,13 @@
 //= require tsne
 //= require StackBlur
 //= require morpheus-external-r
-//= require kernel-functions
 //= require jquery.stickyPanel
 //= require clipboard.min
 //= require scp-igv
-//= require scp-ideogram
+//= require scp-infercnv-ideogram
+//= require scp-related-genes-ideogram
 //= require scp-dot-plot
+//= require ckeditor
 
 var fileUploading = false;
 var PAGE_RENDERED = false;
@@ -54,7 +55,7 @@ var exploreMenusToggleState = {
 // allowed file extension for upload forms
 var ALLOWED_FILE_TYPES = {
     expression: /(\.|\/)(txt|text|mm|mtx|tsv|csv)(\.gz)?$/i,
-    plainText: /(\.|\/)(txt|text|tsv|csv)$/i,
+    plainText: /(\.|\/)(txt|text|tsv|csv)(\.gz)?$/i,
     primaryData: /((\.(fq|fastq)(\.tar)?\.gz$)|\.bam)/i,
     bundled: /(\.|\/)(txt|text|tsv|csv|bam\.bai)(\.gz)?$/i,
     miscellaneous: /(\.|\/)(txt|text|tsv|csv|jpg|jpeg|png|pdf|doc|docx|xls|xlsx|ppt|pptx|zip|loom|h5|h5ad|h5an)(\.gz)?$/i
@@ -130,6 +131,24 @@ var paginationOpts = {
     position: 'relative' // Element positioning
 };
 
+// global config for CKEditor instances
+var fullCKEditorConfig = {
+  alignment: {
+    options: [ 'left', 'center', 'right' ]
+  },
+  image: {
+    styles: [
+      'full', 'alignLeft', 'alignCenter', 'alignRight'
+    ],
+    toolbar: [
+      'imageStyle:full', 'imageStyle:alignLeft', 'imageStyle:alignCenter', 'imageStyle:alignRight'
+    ]
+  },
+  toolbar: ['heading', '|', 'removeFormat', '|',  'bold', 'italic', 'underline', 'link', 'bulletedList', 'numberedList',
+      'blockQuote', '|', 'alignment', 'outdent', 'indent', '|', 'ImageUpload', '|', 'insertTable', 'tableColumn',
+      'tableRow', 'mergeTableCells', '|', 'undo', 'redo']
+}
+
 $(document).on('shown.bs.modal', function(e) {
     console.log("modal " + $(e.target).attr('id') + ' opened');
     OPEN_MODAL = $(e.target).attr('id');
@@ -172,7 +191,7 @@ function toggleViewOptionsPanel() {
     .toggleClass('contracted-for-sidebar');
 
   // Re-render Plotly to use available space
-  $(window).trigger('resize');
+  $(window).trigger('resizeEnd');
 }
 
 
@@ -242,16 +261,13 @@ function initializeAutocomplete(selector) {
         if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete("instance").menu.active) {
             // allow user to select terms with TAB key
             event.preventDefault();
-        } else if (event.keyCode === $.ui.keyCode.ENTER && keydownIsFromAutocomplete === false) {
-            // only perform search if user has selected items and is pressing ENTER on focused search box
-            $('#perform-gene-search').click();
         }
     }).autocomplete(
         {
             source: function(request, response) {
                 // delegate back to autocomplete, but extract the last term
                 response(
-                    $.ui.autocomplete.filter(window.uniqueGenes, extractLast(request.term))
+                    $.ui.autocomplete.filter(window.SCP.uniqueGenes, extractLast(request.term))
                 );
             },
             minLength: 2,
@@ -463,12 +479,9 @@ function enableDefaultActions() {
 
     // when clicking the main study view page tabs, update the current URL so that when you refresh the tab stays open
     $('#study-tabs').on('shown.bs.tab', function(event) {
-        var anchor = $(event.target).attr('href');
-        var currentScroll = $(window).scrollTop();
-        window.location.hash = anchor;
+        var href = $(event.target).attr('href');
         // use HTML5 history API to update the url without reloading the DOM
-        history.pushState('', document.title, window.location.href);
-        window.scrollTo(0, currentScroll);
+        history.pushState('', document.title, href);
     });
 
   // Remove styling set in scpPlotsDidRender
@@ -582,8 +595,8 @@ function showMessageModal(notice=null, alert=null) {
         $("#message_modal").modal("show");
     }
 
-    // don't timeout alert messages
-    if (!alert) {
+    // don't timeout alert messages, but don't clear if nothing was shown
+    if (!alert && notice) {
         setTimeout(function() {
             $("#message_modal").modal("hide");
         }, 3000);
@@ -688,6 +701,9 @@ var plotlyLabelFont = {
 var plotlyDefaultLineColor = 'rgb(40, 40, 40)';
 
 // default scatter plot colors, a combination of colorbrewer sets 1-3 with tweaks to the yellow members
+//
+// Only use this in legacy ERB templates.  For new JS, use
+// `getColorBrewerColor`a standard convenience method exported from lib/plot.js
 var colorBrewerSet = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#a65628", "#f781bf", "#999999",
     "#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854", "#ffd92f", "#e5c494", "#b3b3b3", "#8dd3c7",
     "#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f"];
@@ -1033,15 +1049,15 @@ function validateEmail(email) {
     return re.test(email);
 }
 
-// gather all MM Coordinate Matrix instances from a page
+// gather all instances of a given file type from a page
 function gatherFilesByType(fileType) {
     var matchingfiles = [];
     $('.file-type').each(function(index, type) {
         if ($(type).val() == fileType) {
-            var mForm = $(type).closest('form');
-            var mId = $(mForm).find('#study_file__id').val();
-            var mName = $(mForm).find('.filename').val();
-            matchingfiles.push([mName, mId]);
+            var form = $(type).closest('form');
+            var id = $(form).find('#study_file__id').val();
+            var name = $(form).find('.filename').val();
+            matchingfiles.push({text: name, value: id});
         }
     });
     return matchingfiles;
@@ -1112,4 +1128,32 @@ function extractIdentifierFromId(domId) {
     var idParts = domId.split('-');
     idParts.pop();
     return idParts.join('-');
+}
+
+// append a list of options to a select menu dynamically when file_type is changed on sync_study view
+// options sourced from gatherFilesByType()
+function appendOptionsToDropdown(options, selectElement) {
+    var optionsArray = []
+    $(options).each(function(index, element) {
+        optionsArray.push($('<option />', {
+            value: element.value,
+            text: element.text
+        }));
+    });
+    selectElement.append(optionsArray);
+}
+
+/**
+ * dynamically enable/disable click events on DOM elements using jQuery selector
+ * will not allow pointer events on mouse, and will grey out element (50% opacity)
+ */
+function setElementsEnabled(selector, enabled= true) {
+    var elementCss = {
+        'pointer-events': enabled ? 'auto' : 'none',
+        'opacity': enabled ? '1.0' : '0.5'
+    };
+    var parentCss = {
+        'cursor': enabled ? 'auto' : 'not-allowed'
+    };
+    selector.css(elementCss).parent().css(parentCss);
 }

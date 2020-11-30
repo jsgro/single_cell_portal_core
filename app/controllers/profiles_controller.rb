@@ -18,7 +18,7 @@ class ProfilesController < ApplicationController
     @studies = Study.where(user_id: @user.id)
     @fire_cloud_profile = FireCloudProfile.new
     # check if profile services are available
-    @profiles_available = Study.firecloud_client.services_available?(FireCloudClient::THURLOE_SERVICE)
+    @profiles_available = ApplicationController.firecloud_client.services_available?(FireCloudClient::THURLOE_SERVICE)
     if @profiles_available
       begin
         user_client = FireCloudClient.new(current_user, FireCloudClient::PORTAL_NAMESPACE)
@@ -33,7 +33,7 @@ class ProfilesController < ApplicationController
           @fire_cloud_profile.email = current_user.email
         end
       rescue => e
-        ErrorTracker.report_exception(e, current_user, params)
+        ErrorTracker.report_exception(e, current_user, params.to_unsafe_hash)
         logger.info "#{Time.zone.now}: unable to retrieve FireCloud profile for #{current_user.email}: #{e.message}"
       end
     end
@@ -88,7 +88,7 @@ class ProfilesController < ApplicationController
         end
       end
     rescue => e
-      ErrorTracker.report_exception(e, current_user, params)
+      ErrorTracker.report_exception(e, current_user, params.to_unsafe_hash)
       logger.info "#{Time.zone.now}: unable to update FireCloud profile for #{current_user.email}: #{e.message}"
       @alert = "An error occurred when trying to update your FireCloud profile: #{e.message}"
     end

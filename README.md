@@ -1,5 +1,8 @@
 # SINGLE CELL PORTAL README
 
+[![codecov](https://codecov.io/gh/broadinstitute/single_cell_portal_core/branch/development/graph/badge.svg?token=HMWE5BO2a4)](https://codecov.io/gh/broadinstitute/single_cell_portal_core)
+[![Build Status](https://travis-ci.com/broadinstitute/single_cell_portal_core.svg?branch=development)](https://travis-ci.com/broadinstitute/single_cell_portal_core)
+
 ## SETUP
 
 This application is built and deployed using [Docker](https://www.docker.com), specifically native
@@ -603,3 +606,26 @@ dispruption when doing updates during that window (or hot fixes any other time) 
 that will return a 503 and redirect all incoming traffic to a static maintenance HTML page.
 
 To use this feature, run the `bin/enable_maintenance.sh [on/off]` script accordingly.
+
+### RUBOCOP
+
+This project is configured to use [RuboCop](https://docs.rubocop.org/rubocop/index.html) for static code analysis.  There 
+is a [shell script](.bin/run_rubocop.sh) that allows for running RuboCop only on files that have been edited since the last 
+commit to Git.  Configuration for RuboCop can be found [here](.rubocop.yml), or referenced from RuboCop's 
+[default configuration](https://github.com/rubocop-hq/rubocop/blob/master/config/default.yml).
+
+#### USAGE
+
+To run RuboCop normally on all your local changes:
+
+    bin/run_rubocop.sh
+    
+Run in "lint-only" mode (does not enforce style checks):
+
+    bin/run_rubocop.sh -l
+    
+Run in "safe auto-correct" mode (will automatically correct any issues, where possible):
+
+    bin/run_rubocop.sh -a
+
+The `-a` and `-l` flags can be used together.  Usage text for the script can be printed with `-h`.

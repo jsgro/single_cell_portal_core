@@ -1,9 +1,9 @@
 source 'https://rubygems.org'
 
-ruby '2.5.7'
+ruby '2.6.5'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '5.2.4.2'
+gem 'rails', '5.2.4.4'
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 5.0', '>= 5.0.6'
 # Use Uglifier as compressor for JavaScript assets
@@ -42,8 +42,17 @@ group :development, :test do
   gem 'debase'
   gem 'test-unit'
   gem 'brakeman', :require => false
+  gem 'factory_bot_rails'
   gem 'listen'
   gem 'byebug'
+  gem 'puma'
+  gem 'rubocop', require: false
+  gem 'rubocop-rails', require: false
+end
+
+group :test do
+  gem 'simplecov', require: false
+  gem 'simplecov-lcov', require: false
 end
 
 gem 'devise'

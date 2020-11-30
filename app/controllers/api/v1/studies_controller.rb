@@ -200,7 +200,7 @@ module Api
         if @study.update(study_params)
           if @study.previous_changes.keys.include?('name')
             # if user renames a study, invalidate all caches
-            CacheRemovalJob.new(@study.accession).delay.perform
+            CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
           end
           render :show
         else
@@ -263,7 +263,7 @@ module Api
             @study.update(firecloud_workspace: nil)
           else
             begin
-              Study.firecloud_client.delete_workspace(@study.firecloud_project, @study.firecloud_workspace)
+              ApplicationController.firecloud_client.delete_workspace(@study.firecloud_project, @study.firecloud_workspace)
             rescue => e
               error_context = ErrorTracker.format_extra_context(@study, {params: params})
               ErrorTracker.report_exception(e, current_api_user, error_context)
@@ -273,7 +273,7 @@ module Api
           end
 
           # queue jobs to delete study caches & study itself
-          CacheRemovalJob.new(@study.accession).delay.perform
+          CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
           DeleteQueueJob.new(@study).delay.perform
 
           # revoke all study_shares
@@ -395,16 +395,16 @@ module Api
         @permissions_changed = []
 
         # get a list of workspace submissions so we know what directories to ignore
-        @submission_ids = Study.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace).map {|s| s['submissionId']}
+        @submission_ids = ApplicationController.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace).map {|s| s['submissionId']}
 
         # first sync permissions if necessary
         begin
           portal_permissions = @study.local_acl
-          firecloud_permissions = Study.firecloud_client.get_workspace_acl(@study.firecloud_project, @study.firecloud_workspace)
+          firecloud_permissions = ApplicationController.firecloud_client.get_workspace_acl(@study.firecloud_project, @study.firecloud_workspace)
           firecloud_permissions['acl'].each do |user, permissions|
             # skip project owner permissions, they aren't relevant in this context
             # also skip the readonly service account
-            if permissions['accessLevel'] =~ /OWNER/i || (Study.read_only_firecloud_client.present? && user == Study.read_only_firecloud_client.issuer)
+            if permissions['accessLevel'] =~ /OWNER/i || (ApplicationController.read_only_firecloud_client.present? && user == ApplicationController.read_only_firecloud_client.issuer)
               next
             else
               # determine whether permissions are incorrect or missing completely
@@ -447,7 +447,7 @@ module Api
         begin
           # create a map of file extension to use for creating directory_listings of groups of 10+ files of the same type
           @file_extension_map = {}
-          workspace_files = Study.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, @study.bucket_id)
+          workspace_files = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, @study.bucket_id)
           # see process_workspace_bucket_files in private methods for more details on syncing
           process_workspace_bucket_files(workspace_files)
           while workspace_files.next?
@@ -541,7 +541,8 @@ module Api
       private
 
       def set_study
-        @study = Study.find_by(id: params[:id])
+        # enable either id or accession as url param
+        @study = Study.any_of({accession: params[:id]},{id: params[:id]}).first
         if @study.nil? || @study.queued_for_deletion?
           head 404 and return
         elsif @study.detached?
@@ -556,7 +557,11 @@ module Api
       # study params whitelist
       def study_params
         params.require(:study).permit(:name, :description, :public, :embargo, :use_existing_workspace, :firecloud_workspace,
-                                      :firecloud_project, :branding_group_id, study_shares_attributes: [:id, :_destroy, :email, :permission])
+                                      :firecloud_project, :branding_group_id, :cell_count, :gene_count, :view_order,
+                                      study_shares_attributes: [:id, :_destroy, :email, :permission],
+                                      study_detail_attributes: [:id, :full_description],
+                                      :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails,
+                                                           :cluster_point_size, :cluster_point_alpha, :cluster_point_border])
       end
 
       # sub-method to iterate through list of GCP bucket files and build up necessary sync list objects
@@ -565,7 +570,9 @@ module Api
         files_to_remove = []
         files.each do |file|
           # first, check if file is in a submission directory, and if so mark it for removal from list of files to sync
-          if @submission_ids.include?(file.name.split('/').first) || file.name.end_with?('/')
+          # also ignore any files in the parse_logs folder
+          base_dir = file.name.split('/').first
+          if @submission_ids.include?(base_dir) || base_dir == 'parse_logs' || file.name.end_with?('/')
             files_to_remove << file.generation
           else
             directory_name = DirectoryListing.get_folder_name(file.name)
@@ -635,4 +642,3 @@ module Api
     end
   end
 end
-
