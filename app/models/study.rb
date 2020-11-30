@@ -1011,8 +1011,8 @@ class Study
   # Returns default_annotation_params in string form [[name]]--[[type]]--[[scope]]
   # to match the UI and how they're stored in default_options
   def default_annotation(cluster=self.default_cluster)
-    params = default_annotation_params
-    "#{params[:name]}--#{params[:type]}--#{params[:scope]}"
+    params = default_annotation_params(cluster)
+    params.present? ? "#{params[:name]}--#{params[:type]}--#{params[:scope]}" : nil
   end
 
   # helper to return default annotation to load, will fall back to first available annotation if no preference has been set
