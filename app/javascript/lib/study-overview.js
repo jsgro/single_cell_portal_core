@@ -18,20 +18,6 @@ const baseCamera = {
 
 /** Listen for events, and update view accordingly */
 function attachEventHandlers(study) {
-  // For inferCNV ideogram
-  $('#ideogram_annotation').on('change', function() {
-    const ideogramFiles = window.SCP.study.inferCNVIdeogramFiles
-    const fileId = $(this).val() // eslint-disable-line
-    if (fileId !== '') {
-      const ideogramAnnot = ideogramFiles[fileId]
-      window.ideogramInferCnvSettings = ideogramAnnot.ideogram_settings
-      window.initializeIdeogram(ideogramAnnot.ideogram_settings.annotationsPath)
-    } else {
-      $('#tracks-to-display, #_ideogramOuterWrap').html('')
-      $('#ideogramTitle').remove()
-    }
-  })
-
   // resize listener
   $(window).on('resizeEnd', () => {resizePlots()})
 
@@ -49,6 +35,20 @@ function attachEventHandlers(study) {
   $('#colorscale').change(function() {
     const theme = $(this).val() // eslint-disable-line
     setColorScales(theme)
+  })
+
+  // For inferCNV ideogram
+  $('#ideogram_annotation').on('change', function() {
+    const ideogramFiles = window.SCP.study.inferCNVIdeogramFiles
+      const fileId = $(this).val() // eslint-disable-line
+    if (fileId !== '') {
+      const ideogramAnnot = ideogramFiles[fileId]
+      window.ideogramInferCnvSettings = ideogramAnnot.ideogram_settings
+      window.initializeIdeogram(ideogramAnnot.ideogram_settings.annotationsPath)
+    } else {
+      $('#tracks-to-display, #_ideogramOuterWrap').html('')
+      $('#ideogramTitle').remove()
+    }
   })
 }
 
