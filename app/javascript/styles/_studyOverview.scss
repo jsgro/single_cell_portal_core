@@ -1,8 +1,8 @@
-.plot-left {
+.dual-plot {
   float: left;
+  margin-left: 0;
 }
-
-.plot-right {
+.dual-plot:last-of-type {
   float: right;
   margin-left: 60px;
 }

@@ -100,12 +100,10 @@ function calculatePlotRect() {
   const height = $(window).height() - 250
 
   // Accounts for expanding "View options" after page load
-  let baseWidth = $('#plots-tab').width()
+  const baseWidth = $('#plots-tab').actual('width')
 
-  // Accounts for when "Summary" tab is selected by default
-  if (baseWidth === 0) baseWidth = $(window).width()
-
-  const width = (baseWidth - 80) / numPlots
+  const gutterPad = 80 // Accounts for horizontal padding
+  const width = (baseWidth - gutterPad) / numPlots
 
   return { height, width }
 }
@@ -171,27 +169,20 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
 
 /** draws scatter plot */
 async function drawScatterPlot(accession, cluster, plotIndex) {
+  // Consider avoiding parallel indexes like this in React refactor
   const plotId = `cluster-plot-${plotIndex}`
   const legendId = `cluster-legend-${plotIndex}`
 
-  let plotClass = '' // For only 1 plot (study without spatial data)
-  if (window.SCP.numPlots > 1) {
-    plotClass = ' plot-left'
-    if (plotIndex !== 0) {
-      plotClass = ' plot-right'
-    }
-  }
-
   $('#plots .panel-body').append(`
-    <div class="row${plotClass}">
+    <div class="row dual-plot">
       <div id="${plotId}"></div>
       <div id="${legendId}"></div>
     </div>`)
 
-  const plotJqDom = $(`#${plotId}`)
-  const spinnerTarget = plotJqDom[0]
+  const $plotElement = $(`#${plotId}`)
+  const spinnerTarget = $plotElement[0]
   const spinner = new Spinner(window.opts).spin(spinnerTarget)
-  plotJqDom.data('spinner', spinner)
+  $plotElement.data('spinner', spinner)
 
   const annotation = $('#annotation').val()
   const subsample = $('#subsample').val()
@@ -229,8 +220,8 @@ async function drawScatterPlot(accession, cluster, plotIndex) {
   // render plots side-by-side
   renderScatterPlot(rawPlot, plotId, legendId)
 
-  plotJqDom.data('spinner').stop()
-  plotJqDom.find('.spinner').remove()
+  $plotElement.data('spinner').stop()
+  $plotElement.find('.spinner').remove()
 }
 
 /** Fetch and draw scatter plot for default Explore tab view */
