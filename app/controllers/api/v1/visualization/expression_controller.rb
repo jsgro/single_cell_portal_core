@@ -54,7 +54,7 @@ module Api
         end
 
         def render_heatmap
-          cluster = RequestUtils.get_cluster_group(params, @study)
+          cluster = ClusterVizService.get_cluster_group(params, @study)
           terms = RequestUtils.sanitize_search_terms(params[:genes])
           matrix_ids = @study.expression_matrix_files.map(&:id)
           collapse_by = params[:row_centered]
