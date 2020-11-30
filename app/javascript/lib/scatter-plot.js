@@ -230,8 +230,6 @@ async function drawScatterPlot(accession, cluster, plotIndex) {
     // })
   }
 
-  // Duplicate calls are merely for proof-of-concept, showing we can
-  // render plots side-by-side
   renderScatterPlot(rawPlot, plotId, legendId)
 
   plotJqDom.data('spinner').stop()

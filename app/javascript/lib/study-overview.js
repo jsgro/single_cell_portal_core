@@ -35,42 +35,19 @@ function attachEventHandlers(study) {
   // resize listener
   $(window).on('resizeEnd', () => {resizePlots()})
 
-  // listener for cluster nav, specific to study page
-  $('#annotation').change(function() {
-    const an = $(this).val() // eslint-disable-line
+  const menuSelectors = '#annotation, #subsample, #cluster, #spatial-group'
+  $(document).on('change', menuSelectors, function() {
+    const menu = $(this) // eslint-disable-line
+    const newValue = menu.val()
     // keep track for search purposes
-    $('#search_annotation').val(an)
-    $('#gene_set_annotation').val(an)
-    drawScatterPlots(study)
-  })
-
-  $('#subsample').change(function() {
-    const subsample = $(this).val() // eslint-disable-line
-    $('#search_subsample').val(subsample)
-    $('#gene_set_subsample').val(subsample)
-    drawScatterPlots(study)
-  })
-
-  $('#cluster').change(function() {
-    const newCluster = $(this).val() // eslint-disable-line
-    // keep track for search purposes
-    $('#search_cluster').val(newCluster)
-    $('#gene_set_cluster').val(newCluster)
-    drawScatterPlots(study)
-  })
-
-  $(document).on('change', '#spatial-group', function() {
-    const newSpatial = $(this).val() // eslint-disable-line
-    // keep track for search purposes
-    $('#search_spatial-group').val(newSpatial)
-    $('#gene_set_spatial-group').val(newSpatial)
+    $(`#search_${menu.id}`).val(newValue)
+    $(`#gene_set_${menu.id}`).val(newValue)
     drawScatterPlots(study)
   })
 
   // listener to redraw expression scatter with new color profile
   $('#colorscale').change(function() {
     const theme = $(this).val() // eslint-disable-line
-    // $('#search_colorscale').val(theme)
     setColorScales(theme)
   })
 }
