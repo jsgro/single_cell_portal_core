@@ -15,7 +15,6 @@ function getGraphElementId(study, gene) {
 export default function StudyViolinPlot({ study, gene }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [plotInfo, setPlotInfo] = useState({data: [],layout: {}})
   const [clusterOptions, setClusterOptions] = useState([])
   const [annotationOptions, setAnnotationOptions] =
     useState({ 'Study Wide': [], 'Cluster-Based': [] })
