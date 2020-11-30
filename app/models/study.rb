@@ -1011,8 +1011,8 @@ class Study
   # Returns default_annotation_params in string form [[name]]--[[type]]--[[scope]]
   # to match the UI and how they're stored in default_options
   def default_annotation(cluster=self.default_cluster)
-    params = default_annotation_params
-    "#{params[:name]}--#{params[:type]}--#{params[:scope]}"
+    params = default_annotation_params(cluster)
+    params.present? ? "#{params[:name]}--#{params[:type]}--#{params[:scope]}" : nil
   end
 
   # helper to return default annotation to load, will fall back to first available annotation if no preference has been set
@@ -1348,7 +1348,7 @@ class Study
                                          cluster_name, annotation_name).first
     {
       'organism': exp_file.species_name,
-      'assembly': exp_file.genome_assembly['name'],
+      'assembly': exp_file.genome_assembly.try(:name),
       'annotationsPath': exp_file.api_url
     }
   end
@@ -1615,7 +1615,7 @@ class Study
     Rails.logger.info "Removing workspace #{firecloud_project}/#{firecloud_workspace} in #{Rails.env} environment"
     begin
       ApplicationController.firecloud_client.delete_workspace(firecloud_project, firecloud_workspace)
-      DeleteQueueJob.new(metadata_file).perform
+      DeleteQueueJob.new(self.metadata_file).delay.perform if self.metadata_file.present?
       destroy
     rescue => e
       Rails.logger.error "Error in removing #{firecloud_project}/#{firecloud_workspace}"

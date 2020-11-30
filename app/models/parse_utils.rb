@@ -672,6 +672,7 @@ class ParseUtils
       precomputed_score.gene_scores = rows
       precomputed_score.save
       marker_file.update(parse_status: 'parsed')
+      marker_scores.close
 
       # assemble message
       end_time = Time.zone.now

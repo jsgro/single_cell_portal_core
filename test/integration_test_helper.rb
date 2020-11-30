@@ -1,3 +1,5 @@
+require 'simplecov_helper'
+
 ENV["RAILS_ENV"] = "test"
 require File.expand_path("../../config/environment", __FILE__)
 require "rails/test_help"
@@ -12,6 +14,7 @@ def perform_chunked_study_file_upload(filename, study_file_params, study_id)
     study_file_params[:study_file].merge!(upload: file_upload)
     upload_response = patch "/single_cell/studies/#{study_id}/upload", params: study_file_params, headers: {'Content-Type' => 'multipart/form-data'}
   end
+  source_file.close
   upload_response
 end
 
@@ -35,8 +38,4 @@ def auth_as_user(user)
                                                                          :uid => user.uid,
                                                                          :email => user.email
                                                                      })
-end
-
-def get_bq_row_count(bq_dataset, study)
-  bq_dataset.query("SELECT COUNT(*) count FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE study_accession = '#{study.accession}'", cache: false)[0][:count]
 end

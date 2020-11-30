@@ -31,7 +31,7 @@
       <%= f.text_field :cell_count, class: 'form-control' %>
     </div>
   </div>
-  <% unless @study.default_cluster.nil? %>
+  <% if @study.can_visualize_clusters? && @study.default_cluster.present? %>
     <h4>Study Default View Options</h4>
     <p class="help-block">Use this form to choose what the default expression axis label, cluster, annotation, color profile, and cluster point display properties are when someone views your study.</p>
     <div class="well well-sm" id="default-study-options-form">

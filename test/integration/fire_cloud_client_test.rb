@@ -161,12 +161,14 @@ class FireCloudClientTest < ActiveSupport::TestCase
     participant_upload = File.open(Rails.root.join('test', 'test_data', 'default_participant.tsv'))
     confirmation = @fire_cloud_client.import_workspace_entities_file(@fire_cloud_client.project, workspace_name, participant_upload)
     assert confirmation == 'participant', "Did not receive correct confirmation, expected 'participant' but found #{confirmation}"
+    participant_upload.close
 
     # create samples
     puts 'creating samples...'
     samples_upload = File.open(Rails.root.join('test', 'test_data', 'workspace_samples.tsv'))
     confirmation = @fire_cloud_client.import_workspace_entities_file(@fire_cloud_client.project, workspace_name, samples_upload)
     assert confirmation == 'sample', "Did not receive correct confirmation, expected 'sample' but found #{confirmation}"
+    samples_upload.close
 
     # get entity types
     puts 'getting entity types...'

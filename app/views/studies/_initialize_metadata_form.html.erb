@@ -4,6 +4,7 @@
   <%= f.hidden_field :_id, value: study_file._id %>
   <%= hidden_field_tag :selector, '#metadata_form' %>
   <%= hidden_field_tag :partial, 'initialize_metadata_form' %>
+  <% convention_required = User.feature_flag_for_instance(current_user, 'convention_required') %>
 	<div class="form-group row">
 		<div class="col-sm-4">
 			<%= f.label :name %><br />
@@ -21,17 +22,47 @@
 		</div>
   </div>
   <div class="form-group row">
-		<div class="col-sm-5">
-      <%= f.label :use_metadata_convention, "Do you use SCP conventional names for required metadata column headers?" %> <%= render partial: 'metadata_convention_help_popover', locals: {id: f.object.id.to_s} %><br />
-      <%= f.label :use_metadata_convention_true do %>
+		<div class="col-sm-6">
+      <%= f.label :use_metadata_convention do %>
+        Do you use SCP conventional names for required metadata column headers?
+        <%= render partial: 'metadata_convention_help_popover', locals: {id: f.object.id.to_s} %>
+      <% end %>
+      <br />
+      <%= f.label :use_metadata_convention_true, 'data-analytics-name': 'metadata-convention-optin' do %>
         <%= f.radio_button :use_metadata_convention, true, checked: true, disabled: !study_file.new_record?%>
         Yes
       <% end %>
       &nbsp;
-      <%= f.label :use_metadata_convention_false do %>
-        <%= f.radio_button :use_metadata_convention, false, checked: false, disabled: !study_file.new_record? %>
-        No
+      <%= f.label :use_metadata_convention_false, 'data-analytics-name': 'metadata-convention-optout' do %>
+        <% if convention_required %>
+          <a href="#/" style="color:#999" id="convention-decline-label-<%= f.object.id.to_s %>"
+             data-content="Using the convention is now required.  If this presents a particular issue for your study, please contact us at <a href='mailto:scp-support@broadinstitute.zendesk.com'>scp-support@broadinstitute.zendesk.com</a> so we can help or make any updates to the convention."
+             data-toggle="popover"
+             data-analytics-name="convention-decline-label">
+            <%= f.radio_button :use_metadata_convention, false, checked: false, disabled: true %>
+            No
+          </a>
+
+        <% else %>
+          <%= f.radio_button :use_metadata_convention, false, checked: false, disabled: !study_file.new_record? %>
+          No
+        <% end %>
       <% end %>
+      &nbsp; &nbsp; <a href="#/" id="convention-decline-helplink-<%= f.object.id.to_s %>"
+        data-toggle="popover"
+        data-content="Please contact us at <a href='mailto:scp-support@broadinstitute.zendesk.com'>scp-support@broadinstitute.zendesk.com</a> so we can help or make any needed updates to the convention."
+        data-analytics-name="convention-decline-helplink">
+        Using conventional names is an issue for my study
+      </a>
+      <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+        ['#convention-decline-label-', '#convention-decline-helplink-'].forEach(function(idString) {
+          var popoverTarget = idString + '<%= f.object.id.to_s %>'
+          $(popoverTarget).on('click', function() {
+            window.SCP.log('file-upload:metadata:optout-attempt', {studyAccession: '<%= @study.accession %>'})
+          })
+          enableHoverPopovers(popoverTarget);
+        })
+      </script>
       <div id="use-metadata-convention-message"></div>
     </div>
   </div>
@@ -71,18 +102,27 @@
 
     function setMetadataConventionMessage(useMetadataConvention) {
         var message;
-        if (useMetadataConvention === true) {
+        const advancedUrl = "https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#metadata-powered-advanced-search"
+        const advancedLink = `<a href="${advancedUrl}" target="_blank" rel="noreferrer">advanced search</a>`
+        const conventionRequired = <%= convention_required == true %>;
+        const helpUrl = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+        if (conventionRequired) {
           message =
-            `This makes your data discoverable in advanced search.<br/>` +
+            `Learn <a href="${helpUrl}" target="_blank" rel="noreferrer">how to convert your file</a>.<br/>` +
+            `If the file fails metadata convention validation, you will be emailed messages to help correct it.`
+        }
+        else if (useMetadataConvention === true) {
+          message =
+            `This makes your data discoverable in ${advancedLink}.<br/>` +
             `If the file fails metadata convention validation, you will be emailed messages to help correct it.`
         } else {
-          const url = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+          const formatUrl = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+          const contactUsLink = '<a href="mailto:scp-support@broadinstitute.zendesk.com">scp-support@broadinstitute.zendesk.com</a>'
+          const contactUs = `If you need assistance, please contact us at ${contactUsLink}.`
           message =
-            `Use the SCP metadata convention ("Yes") to make your data discoverable in advanced search.<br/>` +
-            `Learn <a href="${url}" target="_blank" rel="noreferrer">how to convert your file</a>.`
+            `Use the SCP metadata convention ("Yes") to make your data discoverable in ${advancedLink}.<br/>` +
+            `Learn <a href="${formatUrl}" target="_blank" rel="noreferrer">how to convert your file</a>.  ${contactUs}`
         }
-        console.log(useMetadataConvention)
-        console.log(message)
         $('#use-metadata-convention-message').html(message + '<br/>')
     }
 

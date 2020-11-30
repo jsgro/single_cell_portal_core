@@ -1,6 +1,5 @@
 require 'test_helper'
 
-
 class ApplicationHelperTest < ActionView::TestCase
 
   test 'should retrieve access token' do

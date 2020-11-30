@@ -1,6 +1,6 @@
 require 'api_test_helper'
 
-class ExploreControllerTest < ActionDispatch::IntegrationTest
+class ClusterControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include Requests::JsonHelpers
   include Requests::HttpHelpers
@@ -15,35 +15,54 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
     @user.update_last_access_at! # ensure user is marked as active
 
-    @basic_study = FactoryBot.create(:detached_study, name: 'Basic Explore')
-    @basic_study_cluster_file = FactoryBot.create(:study_file,
+    @basic_study = FactoryBot.create(:detached_study, name: 'Basic Cluster Study')
+    @basic_study_cluster_file = FactoryBot.create(:cluster_file,
                                                   name: 'clusterA.txt',
-                                                  file_type: 'Cluster',
-                                                  study: @basic_study)
-    @cluster_group = FactoryBot.create(:cluster_group_with_cells,
-                                       study_file: @basic_study_cluster_file,
-                                       cell_data: {
-                                         x: [1, 4 ,6],
-                                         y: [7, 5, 3],
-                                         cells: ['A', 'B', 'C']
-                                       })
+                                                  study: @basic_study,
+                                                  cell_input: {
+                                                     x: [1, 4 ,6],
+                                                     y: [7, 5, 3],
+                                                     cells: ['A', 'B', 'C']
+                                                  },
+                                                  annotation_input: [{name: 'foo', type: 'group', values: ['bar', 'bar', 'baz']}])
+
+    @basic_study_metadata_file = FactoryBot.create(:metadata_file,
+                                                   name: 'metadata.txt',
+                                                   study: @basic_study,
+                                                   cell_input: ['A', 'B', 'C'],
+                                                   annotation_input: [
+                                                     {name: 'species', type: 'group', values: ['dog', 'cat', 'dog']},
+                                                     {name: 'disease', type: 'group', values: ['none', 'none', 'measles']}
+                                                   ])
+
+     @empty_study = FactoryBot.create(:detached_study, name: 'Empty Cluster Study')
   end
 
   teardown do
     @basic_study.destroy
+    @empty_study.destroy
     @user.destroy
   end
 
-  test 'should get basic study visualization cluster data' do
+  test 'should get basic cluster, with metadata annotation by default' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
 
-    assert_equal 3, @basic_study.default_cluster.data_arrays.count
+    assert_equal 4, @basic_study.default_cluster.data_arrays.count
 
     execute_http_request(:get, api_v1_study_clusters_path(@basic_study))
-    # should 404 since there is no annotation
-    assert_response 404
-    assert_equal({"error"=>"Annotation could not be found"}, json)
+    assert_equal 3, json['numPoints']
+    assert_equal ["cat (1 points)", "dog (2 points)"], json['data'].map{|d| d['name']}
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'should 404 with no default cluster' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    execute_http_request(:get, api_v1_study_clusters_path(@empty_study))
+    assert_equal 404, response.status
+    assert_equal({"error"=>"No default cluster exists"}, json)
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

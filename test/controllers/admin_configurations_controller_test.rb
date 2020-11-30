@@ -4,7 +4,7 @@ class AdminConfigurationsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   # this test creates its own user since it needs to modify it as part of the test
   def setup
-    @test_user = User.create(email: 'test_flags_user@gmail.com',
+    @test_user = User.create!(email: 'test_flags_user@gmail.com',
                              password: 'password',
                              password_confirmation: 'password')
   end

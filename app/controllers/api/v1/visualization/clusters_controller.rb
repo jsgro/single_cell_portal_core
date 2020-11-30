@@ -6,6 +6,7 @@ module Api
       class ClustersController < ApiBaseController
         include Concerns::Authenticator
         include Concerns::StudyAware
+        include Concerns::ApiCaching
         include Swagger::Blocks
 
         VALID_SCOPE_VALUES = ['study', 'cluster']
@@ -15,6 +16,8 @@ module Api
         before_action :set_current_api_user!
         before_action :set_study
         before_action :check_study_view_permission
+        before_action :check_api_cache!
+        after_action :write_api_cache!
 
         # shared
         cluster_param_docs = [{

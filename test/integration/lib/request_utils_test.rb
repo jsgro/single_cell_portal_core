@@ -17,7 +17,7 @@ class RequestUtilsTest < ActiveSupport::TestCase
     numeric_array = 1000.times.map {source.sample}
     min, max = RequestUtils.get_minmax(numeric_array)
     assert_equal 1.0, min, "Did not get expected min of 1.0: #{min}"
-    assert_equal 100.0, min, "Did not get expected max of 100.0: #{max}"
+    assert_equal 100.0, max, "Did not get expected max of 100.0: #{max}"
   end
 
   test 'should sanitize search terms' do
