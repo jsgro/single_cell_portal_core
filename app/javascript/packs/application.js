@@ -36,7 +36,7 @@ import { formatTerms } from 'providers/StudySearchProvider'
 import getViolinProps from 'lib/violin-plot'
 import * as ScpApi from 'lib/scp-api'
 import exploreDefault from 'lib/study-overview/explore-default'
-// import exploreSingleGene from 'lib/study-overview/explore-single-gene'
+import exploreSingle from 'lib/study-overview/explore-single'
 
 // Stub, for later
 // import exploreMultipleGenes from 'lib/study-overview/explore-multiple-genes'
@@ -83,6 +83,7 @@ window.SCP.getLogPlotProps = getLogPlotProps
 window.SCP.formatTerms = formatTerms
 window.SCP.API = ScpApi
 window.SCP.exploreDefault = exploreDefault
+window.SCP.exploreSingle = exploreSingle
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code

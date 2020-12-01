@@ -1,7 +1,7 @@
 /**
-* @fileoverview UI for default view in "Explore" tab of Study Overview page
+* @fileoverview Single-gene view in "Explore" tab of Study Overview page
 *
-* The Explore tab in Study Overview has three views:
+* The Explore tab has three views:
 *   - Default: Shows "Clusters" and sometimes "Genomes", etc.
 *   - Single-gene: Shows distribution (violin or box) plot and others
 *   - Multiple-genes: Shows dot plot and heatmap

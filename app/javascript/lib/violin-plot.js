@@ -1,4 +1,4 @@
-import { getColorBrewerColor } from 'lib/plot'
+import { plot, getColorBrewerColor } from 'lib/plot'
 
 // To consider: dedup this copy with the one that exists in application.js.
 const plotlyDefaultLineColor = 'rgb(40, 40, 40)'
@@ -129,4 +129,30 @@ export default function getViolinProps(
   }
 
   return [data, layout]
+}
+
+/** copied from legacy application.js */
+function parseResultsToArray(results) {
+  const keys = Object.keys(results.values)
+  return keys.sort().map(key => {
+    return [key, results.values[key].y]
+  })
+}
+
+/** Formats expression data for Plotly, draws violin (or box) plot */
+export function drawViolinPlot(target, results) {
+  // The code below is heavily borrowed from legacy application.js
+  const dataArray = parseResultsToArray(results)
+  const jitter = results.values_jitter ? results.values_jitter : ''
+  const traceData = getViolinProps(
+    dataArray, results.rendered_cluster, jitter, results.y_axis_title
+  )
+  const expressionData = [].concat.apply([], traceData[0])
+  const expressionLayout = traceData[1]
+  // Check that the ID exists on the page to avoid errors in corner cases
+  // where users update search terms quickly or are toggling between study
+  // and gene view.
+  if (document.getElementById(target)) {
+    plot(target, expressionData, expressionLayout)
+  }
 }

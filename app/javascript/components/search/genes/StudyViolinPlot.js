@@ -3,13 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 
 import { fetchExpressionViolin } from 'lib/scp-api'
-import getViolinProps from 'lib/violin-plot'
-import { plot } from 'lib/plot'
-
-/** gets a unique id for a study gene graph to be rendered at */
-function getGraphElementId(study, gene) {
-  return `expGraph-${study.accession}-${gene}`
-}
+import { drawViolinPlot } from 'lib/violin-plot'
 
 /** displays a violin plot of expression data for the given gene and study */
 export default function StudyViolinPlot({ study, gene }) {
@@ -26,12 +20,9 @@ export default function StudyViolinPlot({ study, gene }) {
     subsample: ''
   })
 
-  /** copied from legacy application.js */
-  function parseResultsToArray(results) {
-    const keys = Object.keys(results.values)
-    return keys.sort().map(key => {
-      return [key, results.values[key].y]
-    })
+  /** gets a unique id for a study gene graph to be rendered at */
+  function getGraphElementId(study, gene) {
+    return `expGraph-${study.accession}-${gene}`
   }
 
   /** handles changes in select controls.  merges newParams into old params */
@@ -39,24 +30,6 @@ export default function StudyViolinPlot({ study, gene }) {
     const mergedParams = Object.assign({}, renderParams, newParams)
     mergedParams.userUpdated = true
     setRenderParams(mergedParams)
-  }
-
-  /** Formats expression data for Plotly, renders chart */
-  function parseAndPlot(results) {
-    // The code below is heavily borrowed from legacy application.js
-    const dataArray = parseResultsToArray(results)
-    const jitter = results.values_jitter ? results.values_jitter : ''
-    const traceData = getViolinProps(
-      dataArray, results.rendered_cluster, jitter, results.y_axis_title
-    )
-    const expressionData = [].concat.apply([], traceData[0])
-    const expressionLayout = traceData[1]
-    const graphElementId = getGraphElementId(study, gene)
-    // Check that the ID exists on the page to avoid errors in corner cases where users update search terms quickly
-    // or are toggling between study and gene view.
-    if (document.getElementById(graphElementId)) {
-      plot(graphElementId, expressionData, expressionLayout)
-    }
   }
 
   /** gets expression data from the server */
@@ -82,7 +55,9 @@ export default function StudyViolinPlot({ study, gene }) {
       subsample: results.rendered_subsample
     })
 
-    parseAndPlot(results)
+    const target = getGraphElementId(study, gene)
+
+    drawViolinPlot(target, results)
   }
 
   useEffect(() => {
