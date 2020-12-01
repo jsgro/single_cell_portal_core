@@ -7,21 +7,15 @@
 *   - Multiple-genes: Shows dot plot and heatmap
 */
 
-import { drawScatterPlots, resizePlots, setColorScales } from 'lib/scatter-plot'
+import { renderScatterPlots, resizePlots, setColorScales } from 'lib/scatter-plot'
 import { renderViolinPlot } from 'lib/violin-plot'
-
-const baseCamera = {
-  'up': { 'x': 0, 'y': 0, 'z': 1 },
-  'center': { 'x': 0, 'y': 0, 'z': 0 },
-  'eye': { 'x': 1.25, 'y': 1.25, 'z': 1.25 }
-}
 
 /** Render violin and scatter plots for the Explore tab's single-gene view */
 function renderSingleGenePlots(study, gene) {
   $(window).off('resizeEnd')
 
   renderViolinPlot('box-plot', study, gene)
-  drawScatterPlots(window.SCP.study)
+  renderScatterPlots(window.SCP.study)
   // var target3 = document.getElementById('reference-plot');
 
   // if error in any of above, show:
