@@ -89,12 +89,7 @@ module Api
           if cluster.nil?
             render json: {error: 'No default cluster exists'}, status: 404 and return
           end
-          viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
-
-          if viz_data.nil?
-            render json: {error: 'Annotation could not be found'}, status: 404 and return
-          end
-          render json: viz_data
+          self.class.render_cluster(@study, cluster, params)
         end
 
         swagger_path '/studies/{accession}/clusters/{cluster_name}' do
@@ -123,6 +118,10 @@ module Api
           if cluster.nil?
             render json: {error: "No cluster named #{params[:cluster_name]} could be found"}, status: 404 and return
           end
+          self.class.render_cluster(@study, cluster, params)
+        end
+
+        def render_cluster(study, cluster, params)
           viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
           if viz_data.nil?
             render json: {error: 'Annotation could not be found'}, status: 404 and return
@@ -130,18 +129,22 @@ module Api
           render json: viz_data
         end
 
-        # packages up a bunch of calls to rendering service endpoints for a response object
-        def self.get_cluster_viz_data(study, cluster, url_params)
+        def self.get_selected_annotation(study, cluster, url_params)
           annot_params = {
             name: url_params[:annotation_name].blank? ? nil : url_params[:annotation_name],
             type: url_params[:annotation_type].blank? ? nil : url_params[:annotation_type],
             scope: url_params[:annotation_scope].blank? ? nil : url_params[:annotation_scope]
           }
-          annotation = ExpressionVizService.get_selected_annotation(study,
-                                                                    cluster,
-                                                                    annot_params[:name],
-                                                                    annot_params[:type],
-                                                                    annot_params[:scope])
+          ExpressionVizService.get_selected_annotation(study,
+                                                       cluster,
+                                                       annot_params[:name],
+                                                       annot_params[:type],
+                                                       annot_params[:scope])
+        end
+
+        # packages up a bunch of calls to rendering service endpoints for a response object
+        def self.get_cluster_viz_data(study, cluster, url_params)
+          annotation = get_selected_annotation(study, cluster, url_params)
           if !annotation
             return nil
           end

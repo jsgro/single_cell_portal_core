@@ -53,9 +53,10 @@ module Api
           render json: render_data, status: 200
         end
 
+        # this is intended to provide morpheus compatibility, so it returns plain text, instead of json
         def render_heatmap
-          cluster = ClusterVizService.get_cluster_group(params, @study)
-          terms = RequestUtils.sanitize_search_terms(params[:genes])
+          cluster = ClusterVizService.get_cluster_group(@study, params)
+          terms = RequestUtils.sanitize_search_terms(params[:genes]).split(',')
           matrix_ids = @study.expression_matrix_files.map(&:id)
           collapse_by = params[:row_centered]
 
@@ -66,11 +67,11 @@ module Api
               genes << matches
             end
           end
-          expression_data = ExpressionRenderingService.get_morpheus_text_data(
+          expression_data = ExpressionVizService.get_morpheus_text_data(
               genes: genes, cluster: cluster, collapse_by: collapse_by, file_type: :gct
           )
 
-          render json: { morpheusData: expression_data }, status: 200
+          render plain: expression_data, status: 200
         end
 
 

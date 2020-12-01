@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 
-import { fetchAnnotationValues, fetchExpressionHeatmap } from 'lib/scp-api'
+import { fetchCluster, getAnnotationValuesURL, getExpressionHeatmapURL } from 'lib/scp-api'
 import { UserContext } from 'providers/UserProvider'
 
 /** This does NOT yet fully work!  It renders something dotplot like, but isn't handling annotations
@@ -14,13 +14,11 @@ export default function StudyGeneDotPlot({ study, genes }) {
   /** fetch the expression data from the server */
   async function loadData() {
     setIsLoading(true)
-    const annotations = await fetchAnnotationValues(study.accession)
-    const geneParam = encodeURIComponent(genes.join(','))
-    // const heatmapData = await fetchExpressionHeatmap(study.accession, genes)
-    // const annotationData = await fetchAnnotationValues(study.accession, 'text')
+    const annotations = await fetchCluster(study.accession, , , , , true)
+
     window.renderMorpheusDotPlot(
-      `/single_cell/api/v1/site/studies/${study.accession}/expression_data/heatmap?genes=${geneParam}&cluster=`,
-      `/single_cell/api/v1/site/studies/${study.accession}/annotations/text?cluster=&annotation=`,
+      getExpressionHeatmapURL(study.accession, genes),
+      getAnnotationValuesURL(study.accession),
       'CLUSTER',
       'group',
       `#expGraph${study.accession}`,
