@@ -42,7 +42,7 @@ function arrayMax(arr) {
  * and create the response plotly objects,
  * returning [plotly data object, plotly layout object]
 */
-export default function createTracesAndLayout(
+export default function getViolinProps(
   arr, title, jitter='all', expressionLabel
 ) {
   let data = []

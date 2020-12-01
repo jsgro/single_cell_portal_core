@@ -33,9 +33,13 @@ import {
 } from 'lib/metrics-api'
 import { getLogPlotProps } from 'lib/scp-api-metrics'
 import { formatTerms } from 'providers/StudySearchProvider'
-import createTracesAndLayout from 'lib/kernel-functions'
+import getViolinProps from 'lib/violin-plot'
 import * as ScpApi from 'lib/scp-api'
-import initializeExplore from 'lib/study-overview'
+import exploreDefault from 'lib/study-overview/explore-default'
+import exploreSingleGene from 'lib/study-overview/explore-single-gene'
+
+// Stub, for later
+// import exploreMultipleGenes from 'lib/study-overview/explore-multiple-genes'
 
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI
@@ -72,13 +76,13 @@ window.Spinner = Spinner
 window.morpheus = morpheus
 window.igv = igv
 window.Ideogram = Ideogram
-window.createTracesAndLayout = createTracesAndLayout
+window.getViolinProps = getViolinProps
 window.SCP.log = log
 window.SCP.startPendingEvent = startPendingEvent
 window.SCP.getLogPlotProps = getLogPlotProps
 window.SCP.formatTerms = formatTerms
 window.SCP.API = ScpApi
-window.SCP.initializeExplore = initializeExplore
+window.SCP.exploreDefault = exploreDefault
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code

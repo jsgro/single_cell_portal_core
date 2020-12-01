@@ -1,10 +1,10 @@
 /**
-* @fileoverview Study Overview user interface
+* @fileoverview UI for default view in "Explore" tab of Study Overview page
 *
-* The Explore tab in Study Overview has three main views:
+* The Explore tab in Study Overview has three views:
 *   - Default: Shows "Clusters" and sometimes "Genomes", etc.
 *   - Single-gene: Shows distribution (violin or box) plot and others
-*   - Multiple-gene: Shows dot plot and heatmap
+*   - Multiple-genes: Shows dot plot and heatmap
 */
 
 import { fetchExplore } from 'lib/scp-api'
@@ -78,10 +78,8 @@ function addSpatialDropdown(study) {
 }
 
 /** Initialize the "Explore" tab in Study Overview */
-export default async function initializeExplore() {
-  window.SCP.study = {}
+export default async function exploreDefault() {
   window.SCP.plots = []
-  window.SCP.plotRects = []
 
   window.SCP.startPendingEvent('user-action:page:view:site-study',
     { speciesList: window.SCP.taxons },

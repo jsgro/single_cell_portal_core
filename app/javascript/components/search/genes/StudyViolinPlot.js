@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 
 import { fetchExpressionViolin } from 'lib/scp-api'
-import createTracesAndLayout from 'lib/kernel-functions'
+import getViolinProps from 'lib/violin-plot'
 import { plot } from 'lib/plot'
 
 /** gets a unique id for a study gene graph to be rendered at */
@@ -46,7 +46,7 @@ export default function StudyViolinPlot({ study, gene }) {
     // The code below is heavily borrowed from legacy application.js
     const dataArray = parseResultsToArray(results)
     const jitter = results.values_jitter ? results.values_jitter : ''
-    const traceData = createTracesAndLayout(
+    const traceData = getViolinProps(
       dataArray, results.rendered_cluster, jitter, results.y_axis_title
     )
     const expressionData = [].concat.apply([], traceData[0])
