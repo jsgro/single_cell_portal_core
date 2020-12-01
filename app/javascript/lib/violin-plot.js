@@ -1,4 +1,6 @@
 import { plot, getColorBrewerColor } from 'lib/plot'
+import { getMainViewOptions } from 'lib/study-overview/view-options'
+import { fetchExpressionViolin } from 'lib/scp-api'
 
 // To consider: dedup this copy with the one that exists in application.js.
 const plotlyDefaultLineColor = 'rgb(40, 40, 40)'
@@ -155,4 +157,20 @@ export function drawViolinPlot(target, results) {
   if (document.getElementById(target)) {
     plot(target, expressionData, expressionLayout)
   }
+}
+
+/** Fetch expression data and draw violin (or box) plot */
+export async function renderViolinPlot(target, study, gene) {
+  const targetDom = document.getElementById(target)
+  const spinner = new Spinner(window.opts).spin(targetDom)
+
+  const { cluster, annotation, subsample } = getMainViewOptions()
+
+  const violinData = await fetchExpressionViolin(
+    study.accession, gene, cluster, annotation, subsample
+  )
+
+  drawViolinPlot(target, violinData)
+
+  spinner.stop()
 }

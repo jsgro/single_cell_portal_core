@@ -3,6 +3,7 @@ import Plotly from 'plotly.js-dist'
 
 import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { fetchCluster } from 'lib/scp-api'
+import { getMainViewOptions } from 'lib/study-overview/view-options'
 
 /** Resize Plotly scatter plots -- done on window resize  */
 export function resizePlots() {
@@ -129,7 +130,6 @@ function calculatePlotRect() {
   return { height, width }
 }
 
-
 /** Get layout object with various Plotly scatter plot display parameters */
 function getScatterPlotLayout(rawPlot) {
   const { height, width } = calculatePlotRect()
@@ -175,11 +175,10 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
 }
 
 /** Draws scatter plot; handles clusters and spatial groups */
-async function drawScatterPlot(accession, cluster, plotIndex) {
+async function drawScatterPlot(accession, plotIndex, options) {
   // Consider avoiding parallel indexes like this in React refactor
   const plotId = `cluster-plot-${plotIndex}`
   const legendId = `cluster-legend-${plotIndex}`
-
 
   $('#plots .panel-body').append(`
     <div class="row dual-plot">
@@ -192,8 +191,7 @@ async function drawScatterPlot(accession, cluster, plotIndex) {
   const spinner = new Spinner(window.opts).spin(spinnerTarget)
   $plotElement.data('spinner', spinner)
 
-  const annotation = $('#annotation').val()
-  const subsample = $('#subsample').val()
+  const { cluster, annotation, subsample } = options
 
   $('#search_annotation').val(annotation)
   $('#gene_set_annotation').val(annotation)
@@ -230,17 +228,10 @@ async function drawScatterPlot(accession, cluster, plotIndex) {
 
 /** Fetch and draw scatter plot for default Explore tab view */
 export async function drawScatterPlots(study) {
-  let cluster
-
   window.SCP.numPlots = (study.spatialGroupNames.length > 0) ? 2 : 1
 
   for (let plotIndex = 0; plotIndex < window.SCP.numPlots; plotIndex++) {
-    if (plotIndex === 0) {
-      cluster = $('#cluster').val()
-    } else {
-      cluster = $('#spatial-group').val()
-    }
-
-    drawScatterPlot(study.accession, cluster, plotIndex)
+    const options = getMainViewOptions(plotIndex)
+    drawScatterPlot(study.accession, plotIndex, options)
   }
 }

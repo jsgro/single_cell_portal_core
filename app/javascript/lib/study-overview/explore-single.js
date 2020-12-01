@@ -7,30 +7,13 @@
 *   - Multiple-genes: Shows dot plot and heatmap
 */
 
-import { fetchExpressionViolin } from 'lib/scp-api'
 import { drawScatterPlots, resizePlots, setColorScales } from 'lib/scatter-plot'
-import { drawViolinPlot } from 'lib/violin-plot'
+import { renderViolinPlot } from 'lib/violin-plot'
 
 const baseCamera = {
   'up': { 'x': 0, 'y': 0, 'z': 1 },
   'center': { 'x': 0, 'y': 0, 'z': 0 },
   'eye': { 'x': 1.25, 'y': 1.25, 'z': 1.25 }
-}
-
-/** Fetch expression data and draw violin (or box) plot */
-async function renderViolinPlot(target, study, gene) {
-  const targetDom = document.getElementById(target)
-  const spinner = new Spinner(window.opts).spin(targetDom)
-
-  const violinData = await fetchExpressionViolin(study.accession,
-    gene,
-    study.cluster,
-    study.annotation,
-    study.subsample)
-
-  drawViolinPlot(target, violinData)
-
-  spinner.stop()
 }
 
 /** Render violin and scatter plots for the Explore tab's single-gene view */
