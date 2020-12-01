@@ -180,16 +180,9 @@ async function drawScatterPlot(accession, cluster, plotIndex) {
   const plotId = `cluster-plot-${plotIndex}`
   const legendId = `cluster-legend-${plotIndex}`
 
-  let plotClass = '' // For only 1 plot (study without spatial data)
-  if (window.SCP.numPlots > 1) {
-    plotClass = ' plot-left'
-    if (plotIndex !== 0) {
-      plotClass = ' plot-right'
-    }
-  }
 
   $('#plots .panel-body').append(`
-    <div class="row${plotClass}">
+    <div class="row dual-plot">
       <div id="${plotId}"></div>
       <div id="${legendId}"></div>
     </div>`)
