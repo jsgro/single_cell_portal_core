@@ -146,11 +146,19 @@ module Api
             return nil
           end
 
-          subsample = url_params[:subsample].blank? ? nil : url_params[:subsample]
+          subsample = url_params[:subsample].blank? ? nil : url_params[:subsample].to_i
 
           colorscale = url_params[:colorscale].blank? ? 'Reds' : url_params[:colorscale]
 
-          coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
+          gene_name = url_params[:gene]
+          if gene_name.blank?
+            coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
+          else
+            gene = study.genes.by_name_or_id(gene_name, study.expression_matrix_files.map(&:id))
+            y_axis_title = ExpressionVizService.load_expression_axis_title(study)
+            coordinates = ExpressionVizService.load_expression_data_array_points(study, gene, cluster, annotation, subsample, y_axis_title, colorscale)
+          end
+
           plot_data = ClusterVizService.transform_coordinates(coordinates, study, cluster, annotation)
 
           if cluster.is_3d?

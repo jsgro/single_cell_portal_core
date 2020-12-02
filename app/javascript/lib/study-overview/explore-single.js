@@ -18,7 +18,7 @@ async function renderSingleGenePlots(study, gene) {
   $(window).off('resizeEnd')
 
   violinPlot('box-plot', study, gene)
-  scatterPlots(study, 'cluster')
+  scatterPlots(study, gene)
   // var target3 = document.getElementById('reference-plot');
 
   // if error in any of above, show:

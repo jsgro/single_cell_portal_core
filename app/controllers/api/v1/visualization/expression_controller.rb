@@ -61,6 +61,25 @@ module Api
                                                                        annot_params[:scope])
           render json: annotation, status: 200
         end
+
+        def render_gene_expression_scatter
+          cluster = ClusterVizService.get_cluster_group(@study, params)
+          annot_params =     {
+            name: params[:annotation_name],
+            type: params[:annotation_type],
+            scope: params[:annotation_scope]
+          }
+          expression = ExpressionVizService.load_expression_data_array_points(@study, params[:gene], cluster, annot_params,
+            params[:subsample], 'Foo', params[:colorscale])
+          cluster = ClusterVizService.get_cluster_group(@study, params)
+          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
+          annotation = ExpressionVizService.get_selected_annotation(@study,
+                                                                       cluster,
+                                                                       annot_params[:name],
+                                                                       annot_params[:type],
+                                                                       annot_params[:scope])
+          render json: annotation, status: 200
+        end
       end
     end
   end

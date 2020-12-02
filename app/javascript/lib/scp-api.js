@@ -122,8 +122,10 @@ export function setMockOrigin(origin) {
 
 /** Constructs and encodes URL parameters; omits those with no value */
 function stringifyQuery(paramObj) {
-  const stringified = queryString.stringify(paramObj, {skipEmptyString: true})
-  return `?${stringified}`;
+  // Usage and API: https://github.com/sindresorhus/query-string#usage
+  const options = { skipEmptyString: true, skipNull: true }
+  const stringified = queryString.stringify(paramObj, options)
+  return `?${stringified}`
 }
 
 /**
@@ -154,7 +156,7 @@ export async function fetchExplore(studyAccession, mock=false) {
  * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
  */
 export async function fetchCluster(
-  studyAccession, cluster, annotation, subsample, consensus, mock=false
+  studyAccession, cluster, annotation, subsample, consensus, gene=null, mock=false
 ) {
   // Digest full annotation name to enable easy validation in API
   const [annotName, annotType, annotScope] = annotation.split('--')
@@ -163,7 +165,8 @@ export async function fetchCluster(
     annotation_type: annotType,
     annotation_scope: annotScope,
     subsample,
-    consensus
+    consensus,
+    gene
   }
 
   const params = stringifyQuery(paramObj)
@@ -423,11 +426,11 @@ export default async function scpApi(
 ) {
   const perfTimeStart = performance.now()
 
-  if (globalMock) mock = true
+  if (globalMock) {mock = true}
   const basePath =
     (mock || globalMock) ? `${mockOrigin}/mock_data` : defaultBasePath
   let fullPath = basePath + path
-  if (mock) fullPath += '.json' // e.g. /mock_data/search/auth_code.json
+  if (mock) {fullPath += '.json'} // e.g. /mock_data/search/auth_code.json
 
   const response = await fetch(fullPath, init).catch(error => error)
 

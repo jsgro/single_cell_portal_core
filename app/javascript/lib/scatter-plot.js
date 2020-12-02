@@ -5,8 +5,9 @@ import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { fetchCluster } from 'lib/scp-api'
 import { getMainViewOptions } from 'lib/study-overview/view-options'
 
+/** Get DOM ID of scatter plot at given index */
 function getScatterPlotId(plotIndex) {
-  return `scatter-plot-${i}`
+  return `scatter-plot-${plotIndex}`
 }
 
 /** Resize Plotly scatter plots -- done on window resize  */
@@ -181,7 +182,9 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
 }
 
 /** Load and draw scatter plot; handles clusters and spatial groups */
-async function scatterPlot(accession, plotIndex, options, hasLegend=true) {
+async function scatterPlot(
+  accession, plotIndex, options, hasLegend=true, gene=null
+) {
   // Consider avoiding parallel indexes like this in React refactor
   const plotId = `scatter-plot-${plotIndex}`
 
@@ -205,7 +208,7 @@ async function scatterPlot(accession, plotIndex, options, hasLegend=true) {
   $('#gene_set_annotation').val(annotation)
 
   const rawPlot = await fetchCluster(
-    accession, cluster, annotation, subsample
+    accession, cluster, annotation, subsample, null, gene
   )
 
   // Consider putting into a dictionary instead of a list
@@ -235,11 +238,11 @@ async function scatterPlot(accession, plotIndex, options, hasLegend=true) {
 }
 
 /** Load and draw scatter plots for default Explore tab view */
-export async function scatterPlots(study) {
+export async function scatterPlots(study, gene=null) {
   window.SCP.numPlots = (study.spatialGroupNames.length > 0) ? 2 : 1
 
   for (let plotIndex = 0; plotIndex < window.SCP.numPlots; plotIndex++) {
     const options = getMainViewOptions(plotIndex)
-    scatterPlot(study.accession, plotIndex, options)
+    scatterPlot(study.accession, plotIndex, options, true, gene)
   }
 }
