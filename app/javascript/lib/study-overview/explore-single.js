@@ -11,6 +11,7 @@ import {
   scatterPlots, resizePlots, setColorScales
 } from 'lib/scatter-plot'
 import { violinPlot } from 'lib/violin-plot'
+import { addSpatialDropdown } from 'lib/study-overview/view-options'
 
 /** Render violin and scatter plots for the Explore tab's single-gene view */
 async function renderSingleGenePlots(study, gene) {
@@ -65,6 +66,8 @@ export default async function exploreSingle() {
   const gene = window.SCP.gene
 
   attachEventHandlers(study, gene)
+
+  addSpatialDropdown(study)
 
   renderSingleGenePlots(study, gene)
 }

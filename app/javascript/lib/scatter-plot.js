@@ -188,7 +188,7 @@ async function scatterPlot(accession, plotIndex, options, hasLegend=true) {
   const legendId = (hasLegend ? `scatter-legend-${plotIndex}` : null)
   const legendHtml = (hasLegend ? `<div id="${legendId}"></div>` : '')
 
-  $('#plots .panel-body').append(`
+  $('#scatter-plots .panel-body').append(`
     <div class="row dual-plot">
       <div id="${plotId}"></div>
       ${legendHtml}

@@ -9,6 +9,7 @@
 
 import { fetchExplore } from 'lib/scp-api'
 import { scatterPlots, resizePlots, setColorScales } from 'lib/scatter-plot'
+import { addSpatialDropdown } from 'lib/study-overview/view-options'
 
 const baseCamera = {
   'up': { 'x': 0, 'y': 0, 'z': 1 },
@@ -50,31 +51,6 @@ function attachEventHandlers(study) {
       $('#ideogramTitle').remove()
     }
   })
-}
-
-/** Get HTML for dropdown menu for spatial files */
-function getSpatialDropdown(study) {
-  const options = study.spatialGroupNames.map(name => {
-    return `<option value="${name}">${name}</option>`
-  })
-  const domId = 'spatial-group'
-  const select =
-    `<select name="${domId}" id="${domId}" class="form-control">${
-      options
-    }</select>`
-  return (
-    `<div class="form-group col-sm-4">` +
-    `<label for=${domId}>Spatial group</label><br/>${select}` +
-    `</div>`
-  )
-}
-
-/** Add dropdown menu for spatial files */
-function addSpatialDropdown(study) {
-  if (study.spatialGroupNames.length > 0) {
-    const dropdown = getSpatialDropdown(study)
-    $('#view-options #precomputed-panel #precomputed .row').append(dropdown)
-  }
 }
 
 /** Initialize the "Explore" tab in Study Overview */
