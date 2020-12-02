@@ -159,8 +159,8 @@ export function renderViolinPlot(target, results) {
   }
 }
 
-/** Fetch expression data and draw violin (or box) plot */
-export async function drawViolinPlot(target, study, gene) {
+/** Load expression data and draw violin (or box) plot */
+export async function violinPlot(target, study, gene) {
   const targetDom = document.getElementById(target)
   const spinner = new Spinner(window.opts).spin(targetDom)
 

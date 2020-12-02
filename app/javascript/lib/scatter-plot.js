@@ -5,6 +5,10 @@ import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { fetchCluster } from 'lib/scp-api'
 import { getMainViewOptions } from 'lib/study-overview/view-options'
 
+function getScatterPlotId(plotIndex) {
+  return `scatter-plot-${i}`
+}
+
 /** Resize Plotly scatter plots -- done on window resize  */
 export function resizePlots() {
   const numPlots = window.SCP.numPlots
@@ -12,7 +16,7 @@ export function resizePlots() {
   for (let i = 0; i < numPlots; i++) {
     const rawPlot = window.SCP.plots[i]
     const layout = getScatterPlotLayout(rawPlot)
-    const target = `cluster-plot-${i}`
+    const target = getScatterPlotId(i)
 
     Plotly.relayout(target, layout)
   }
@@ -23,7 +27,7 @@ export function setColorScales(theme) {
   const numPlots = window.SCP.numPlots
 
   for (let i = 0; i < numPlots; i++) {
-    const target = `cluster-plot-${i}`
+    const target = getScatterPlotId(i)
     const dataUpdate = { 'marker.colorscale': theme }
     Plotly.update(target, dataUpdate)
   }
@@ -160,9 +164,11 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
 
   Plotly.newPlot(plotId, data, layout)
 
-  $(`#${legendId}`).html(
-    `<p class="text-center help-block">${rawPlot.description}</p>`
-  )
+  if (legendId) {
+    $(`#${legendId}`).html(
+      `<p class="text-center help-block">${rawPlot.description}</p>`
+    )
+  }
 
   // access actual target div, not jQuery object wrapper for relayout event
   const clusterPlotDiv = document.getElementById(plotId)
@@ -175,15 +181,17 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
 }
 
 /** Load and draw scatter plot; handles clusters and spatial groups */
-async function scatterPlot(accession, plotIndex, options) {
+async function scatterPlot(accession, plotIndex, options, hasLegend=true) {
   // Consider avoiding parallel indexes like this in React refactor
-  const plotId = `cluster-plot-${plotIndex}`
-  const legendId = `cluster-legend-${plotIndex}`
+  const plotId = `scatter-plot-${plotIndex}`
+
+  const legendId = (hasLegend ? `scatter-legend-${plotIndex}` : null)
+  const legendHtml = (hasLegend ? `<div id="${legendId}"></div>` : '')
 
   $('#plots .panel-body').append(`
     <div class="row dual-plot">
       <div id="${plotId}"></div>
-      <div id="${legendId}"></div>
+      ${legendHtml}
     </div>`)
 
   const $plotElement = $(`#${plotId}`)

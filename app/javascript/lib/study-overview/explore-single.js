@@ -13,11 +13,11 @@ import {
 import { violinPlot } from 'lib/violin-plot'
 
 /** Render violin and scatter plots for the Explore tab's single-gene view */
-function renderSingleGenePlots(study, gene) {
+async function renderSingleGenePlots(study, gene) {
   $(window).off('resizeEnd')
 
   violinPlot('box-plot', study, gene)
-  scatterPlots(study)
+  scatterPlots(study, 'cluster')
   // var target3 = document.getElementById('reference-plot');
 
   // if error in any of above, show:
