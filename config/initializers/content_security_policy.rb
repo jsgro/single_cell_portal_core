@@ -20,9 +20,8 @@ SecureHeaders::Configuration.default do |config|
                     'https://www.googleapis.com', 'https://s3.amazonaws.com', 'https://data.broadinstitute.org', 'https://portals.broadinstitute.org',
                     'https://us.input.tcell.insight.rapid7.com', 'https://api.tcell.io', 'https://us.browser.tcell.insight.rapid7.com',
                     'https://us.agent.tcell.insight.rapid7.com', 'https://us.jsagent.tcell.insight.rapid7.com', 'https://accounts.google.com',
-                    'https://bam.nr-data.net', 'https://terra-bard-dev.appspot.com', 'https://terra-bard-alpha.appspot.com',
-                    'https://terra-bard-prod.appspot.com', 'https://rest.ensembl.org', 'https://eutils.ncbi.nlm.nih.gov', 'https://mygene.info',
-                    'https://webservice.wikipathways.org']
+                    'https://terra-bard-dev.appspot.com', 'https://terra-bard-alpha.appspot.com', 'https://terra-bard-prod.appspot.com',
+                    'https://rest.ensembl.org', 'https://eutils.ncbi.nlm.nih.gov', 'https://mygene.info', 'https://webservice.wikipathways.org']
   if ENV['NOT_DOCKERIZED']
     # enable connections to live reload server
     allowed_connect_sources.push('https://localhost:3035')
@@ -47,8 +46,7 @@ SecureHeaders::Configuration.default do |config|
       script_src: %w('self' blob: 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' https://cdn.plot.ly https://cdn.datatables.net
                      https://www.google-analytics.com https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com
                      https://use.fontawesome.com https://api.tcell.io https://us.browser.tcell.insight.rapid7.com
-                     https://us.jsagent.tcell.insight.rapid7.com https://us.agent.tcell.insight.rapid7.com https://js-agent.newrelic.com
-                     https://bam.nr-data.net),
+                     https://us.jsagent.tcell.insight.rapid7.com https://us.agent.tcell.insight.rapid7.com),
       style_src: %w('self' blob: https://maxcdn.bootstrapcdn.com 'unsafe-inline'),
       upgrade_insecure_requests: true, # see https://www.w3.org/TR/upgrade-insecure-requests/
   }
