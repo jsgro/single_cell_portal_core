@@ -8,7 +8,7 @@
 */
 
 import { fetchExplore } from 'lib/scp-api'
-import { drawScatterPlots, resizePlots, setColorScales } from 'lib/scatter-plot'
+import { scatterPlots, resizePlots, setColorScales } from 'lib/scatter-plot'
 
 const baseCamera = {
   'up': { 'x': 0, 'y': 0, 'z': 1 },
@@ -28,7 +28,7 @@ function attachEventHandlers(study) {
     // keep track for search purposes
     $(`#search_${menu.id}`).val(newValue)
     $(`#gene_set_${menu.id}`).val(newValue)
-    drawScatterPlots(study)
+    scatterPlots(study)
   })
 
   // listener to redraw expression scatter with new color profile
@@ -111,7 +111,7 @@ export default async function exploreDefault() {
 
     addSpatialDropdown(study)
 
-    drawScatterPlots(study)
+    scatterPlots(study)
   }
 
   if (study.inferCNVIdeogramFiles) {

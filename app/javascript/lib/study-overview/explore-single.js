@@ -8,16 +8,16 @@
 */
 
 import {
-  drawScatterPlots, resizePlots, setColorScales
+  scatterPlots, resizePlots, setColorScales
 } from 'lib/scatter-plot'
-import { drawViolinPlot } from 'lib/violin-plot'
+import { violinPlot } from 'lib/violin-plot'
 
 /** Render violin and scatter plots for the Explore tab's single-gene view */
 function renderSingleGenePlots(study, gene) {
   $(window).off('resizeEnd')
 
-  drawViolinPlot('box-plot', study, gene)
-  drawScatterPlots(study)
+  violinPlot('box-plot', study, gene)
+  scatterPlots(study)
   // var target3 = document.getElementById('reference-plot');
 
   // if error in any of above, show:

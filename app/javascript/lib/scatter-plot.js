@@ -174,8 +174,8 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
   })
 }
 
-/** Draws scatter plot; handles clusters and spatial groups */
-async function drawScatterPlot(accession, plotIndex, options) {
+/** Load and draw scatter plot; handles clusters and spatial groups */
+async function scatterPlot(accession, plotIndex, options) {
   // Consider avoiding parallel indexes like this in React refactor
   const plotId = `cluster-plot-${plotIndex}`
   const legendId = `cluster-legend-${plotIndex}`
@@ -226,12 +226,12 @@ async function drawScatterPlot(accession, plotIndex, options) {
   $plotElement.find('.spinner').remove()
 }
 
-/** Fetch and draw scatter plot for default Explore tab view */
-export async function drawScatterPlots(study) {
+/** Load and draw scatter plots for default Explore tab view */
+export async function scatterPlots(study) {
   window.SCP.numPlots = (study.spatialGroupNames.length > 0) ? 2 : 1
 
   for (let plotIndex = 0; plotIndex < window.SCP.numPlots; plotIndex++) {
     const options = getMainViewOptions(plotIndex)
-    drawScatterPlot(study.accession, plotIndex, options)
+    scatterPlot(study.accession, plotIndex, options)
   }
 }
