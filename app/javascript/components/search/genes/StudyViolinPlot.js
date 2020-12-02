@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 
 import { fetchExpressionViolin } from 'lib/scp-api'
-import { drawViolinPlot } from 'lib/violin-plot'
+import { renderViolinPlot } from 'lib/violin-plot'
 
 /** displays a violin plot of expression data for the given gene and study */
 export default function StudyViolinPlot({ study, gene }) {
@@ -57,7 +57,7 @@ export default function StudyViolinPlot({ study, gene }) {
 
     const target = getGraphElementId(study, gene)
 
-    drawViolinPlot(target, results)
+    renderViolinPlot(target, results)
   }
 
   useEffect(() => {

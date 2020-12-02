@@ -142,7 +142,7 @@ function parseResultsToArray(results) {
 }
 
 /** Formats expression data for Plotly, draws violin (or box) plot */
-export function drawViolinPlot(target, results) {
+export function renderViolinPlot(target, results) {
   // The code below is heavily borrowed from legacy application.js
   const dataArray = parseResultsToArray(results)
   const jitter = results.values_jitter ? results.values_jitter : ''
@@ -160,7 +160,7 @@ export function drawViolinPlot(target, results) {
 }
 
 /** Fetch expression data and draw violin (or box) plot */
-export async function renderViolinPlot(target, study, gene) {
+export async function drawViolinPlot(target, study, gene) {
   const targetDom = document.getElementById(target)
   const spinner = new Spinner(window.opts).spin(targetDom)
 
@@ -170,7 +170,7 @@ export async function renderViolinPlot(target, study, gene) {
     study.accession, gene, cluster, annotation, subsample
   )
 
-  drawViolinPlot(target, violinData)
+  renderViolinPlot(target, violinData)
 
   spinner.stop()
 }
