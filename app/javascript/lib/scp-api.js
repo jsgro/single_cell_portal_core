@@ -159,7 +159,7 @@ export async function fetchCluster(
   // Digest full annotation name to enable easy validation in API
   const [annotName, annotType, annotScope] = annotation.split('--')
   const paramObj = {
-    annotation_name: encodeURIComponent(annotName),
+    annotation_name: annotName,
     annotation_type: annotType,
     annotation_scope: annotScope,
     subsample,
