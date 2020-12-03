@@ -87,7 +87,8 @@ class ClusterControllerTest < ActionDispatch::IntegrationTest
     # slash must be URL encoded with %2F, and URL constructed manually as the path helper cannot resolve cluster_name param
     # with a slash due to the route constraint of {:cluster_name=>/[^\/]+/}; using route helper api_v1_study_cluster_path()
     # with the params of cluster_name: 'data/cluster_with_slash.txt' or cluster_name: 'data%2Fcluster_with_slash' does not work
-    basepath = "/single_cell/api/v1/studies/#{@basic_study.accession}/clusters/data%2Fcluster_with_slash.txt"
+    cluster_name = 'data%2Fcluster_with_slash.txt'
+    basepath = "/single_cell/api/v1/studies/#{@basic_study.accession}/clusters/#{cluster_name}"
     query_string = '?annotation_name=category&annotation_type=group&annotation_scope=cluster'
     url = basepath + query_string
     execute_http_request(:get, url)
@@ -96,6 +97,16 @@ class ClusterControllerTest < ActionDispatch::IntegrationTest
     expected_annotations = ["bar (3 points)", "baz (1 points)"]
     loaded_annotations = json['data'].map {|d| d['name'] }
     assert_equal expected_annotations, loaded_annotations
+
+    # assert that non-encoded cluster names do not load correct cluster
+    # using path helper here results in cluster_name not being decoded properly by clusters_controller.rb
+    # and is interpreted literally as data%2Fcluster_with_slash.txt, rather than data/cluster_with_slash.txt
+    execute_http_request(:get, api_v1_study_cluster_path(@basic_study.accession, cluster_name,
+                                                         annotation_name: 'category', annotation_type: 'group',
+                                                         annotation_scope: 'cluster'))
+    assert_response :not_found
+    expected_error = {"error"=>"No cluster named data%2Fcluster_with_slash.txt could be found"}
+    assert_equal expected_error, json
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
