@@ -203,28 +203,23 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
 
 /** Load and draw scatter plot; handles clusters and spatial groups */
 async function scatterPlot(
-  accession, plotId, options, hasLegend=true, gene=null
+  clusterParams, plotId, rowIndex, hasLegend=false
 ) {
-  const legendId = (hasLegend ? `${plotId}-legend` : null)
-  const legendHtml = (hasLegend ? `<div id="${legendId}"></div>` : '')
-
-  let position = ''
-  if ('position' in options && options.position === 'below') {
-    position = 'below'
-  }
-
-  $('#scatter-plots .panel-body').append(`
-    <div class="row dual-plot ${position}">
-      <div id="${plotId}"></div>
-      ${legendHtml}
-    </div>`)
-
   const $plotElement = $(`#${plotId}`)
   const spinnerTarget = $plotElement[0]
   const spinner = new Spinner(window.opts).spin(spinnerTarget)
   $plotElement.data('spinner', spinner)
 
-  const { cluster, annotation, subsample } = options
+  const legendId = (hasLegend ? `${plotId}-legend` : null)
+  const legendHtml = (hasLegend ? `<div id="${legendId}"></div>` : '')
+
+  $(`.multiplot:nth-child(${(rowIndex + 1)}`).append(
+    `<div id="${plotId}" class="plot"></div>
+      ${legendHtml}
+    </div>`
+  )
+
+  const { accession, cluster, annotation, subsample, gene } = clusterParams
 
   $('#search_annotation').val(annotation)
   $('#gene_set_annotation').val(annotation)
@@ -260,31 +255,34 @@ async function scatterPlot(
 }
 
 /**
- * Load and draw scatter plots for default Explore tab view
+ * Load and draw scatter plots for reference clusters, gene + ref clusters
  *
- * @param {Object} study Study object returned by clusters endpoint
- * @param {String} gene Searched gene name
+ * @param {Object} study Study object returned by clusters API endpoint
+ * @param {String} gene Searched gene name, e.g. "TP53"
+ * @param {Boolean} hasReference Whether each plot has a paired reference
  */
 export async function scatterPlots(study, gene=null, hasReference=false) {
   window.SCP.numBasePlots = (study.spatialGroupNames.length > 0) ? 2 : 1
   window.SCP.plotsHaveReference = (hasReference !== null)
 
+  const accession = study.accession
+
+  $('#scatter-plots .panel-body').append('<div class="row multiplot"></div>')
+  if (hasReference) {
+    $('#scatter-plots .panel-body').append('<div class="row multiplot"></div>')
+  }
+
   for (let plotIndex = 0; plotIndex < window.SCP.numBasePlots; plotIndex++) {
     const options = getMainViewOptions(plotIndex)
+    const clusterParams = Object.assign({ accession, gene }, options)
     const plotId = getPlotId(plotIndex)
 
-    if (!hasReference) {
-      // One plot per group, as in default view of Explore tab
-      scatterPlot(study.accession, plotId, options, true)
-    } else {
-      // Two plots per group -- one gene-specific, one reference -- as in
-      // single-gene view of Explore tab
+    scatterPlot(clusterParams, plotId, 0, true)
 
-      scatterPlot(study.accession, plotId, options, true, gene)
-
-      const refPlotOptions = Object.assign({ position: 'below' }, options)
+    if (hasReference) {
+      clusterParams.gene = null
       const refPlotId = getPlotId(plotIndex, true)
-      scatterPlot(study.accession, refPlotId, refPlotOptions, gene)
+      scatterPlot(clusterParams, refPlotId, 1)
     }
   }
 }
