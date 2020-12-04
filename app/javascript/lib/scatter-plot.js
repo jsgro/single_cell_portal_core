@@ -16,21 +16,26 @@ function getPlotId(plotIndex, isReference=false) {
 
 /** Resize Plotly scatter plots -- done on window resize  */
 export function resizePlots() {
+  console.log('in resizePlots')
   const numBasePlots = window.SCP.numBasePlots
 
   for (let i = 0; i < numBasePlots; i++) {
     const rawPlot = window.SCP.plots[i]
     const layout = getScatterPlotLayout(rawPlot)
     const target = getPlotId(i)
+    console.log('resizing base')
     Plotly.relayout(target, layout)
   }
 
   // Repeat above, but for reference plots
-  for (let i = 0; i < numBasePlots; i++) {
-    const target = getPlotId(i, true)
-    const rawPlot = window.SCP.plots[i]
-    const layout = getScatterPlotLayout(rawPlot)
-    Plotly.relayout(target, layout)
+  if (window.SCP.plotsHaveReference) {
+    for (let i = 0; i < numBasePlots; i++) {
+      const target = getPlotId(i, true)
+      const rawPlot = window.SCP.plots[i]
+      const layout = getScatterPlotLayout(rawPlot)
+      console.log('resizing ref')
+      Plotly.relayout(target, layout)
+    }
   }
 }
 
@@ -208,7 +213,7 @@ async function scatterPlot(
   const $plotElement = $(`#${plotId}`)
   const spinnerTarget = $plotElement[0]
   const spinner = new Spinner(window.opts).spin(spinnerTarget)
-  $plotElement.data('spinner', spinner)
+  // $plotElement.data('spinner', spinner)
 
   const legendId = (hasLegend ? `${plotId}-legend` : null)
   const legendHtml = (hasLegend ? `<div id="${legendId}"></div>` : '')
@@ -250,8 +255,7 @@ async function scatterPlot(
 
   renderScatterPlot(rawPlot, plotId, legendId)
 
-  $plotElement.data('spinner').stop()
-  $plotElement.find('.spinner').remove()
+  spinner.stop()
 }
 
 /**
@@ -263,14 +267,13 @@ async function scatterPlot(
  */
 export async function scatterPlots(study, gene=null, hasReference=false) {
   window.SCP.numBasePlots = (study.spatialGroupNames.length > 0) ? 2 : 1
-  window.SCP.plotsHaveReference = (hasReference !== null)
+  window.SCP.plotsHaveReference = hasReference
+
+  const $container = $('#scatter-plots .panel-body')
+  $container.html('<div class="row multiplot"></div>')
+  if (hasReference) {$container.append('<div class="row multiplot"></div>')}
 
   const accession = study.accession
-
-  $('#scatter-plots .panel-body').append('<div class="row multiplot"></div>')
-  if (hasReference) {
-    $('#scatter-plots .panel-body').append('<div class="row multiplot"></div>')
-  }
 
   for (let plotIndex = 0; plotIndex < window.SCP.numBasePlots; plotIndex++) {
     const options = getMainViewOptions(plotIndex)

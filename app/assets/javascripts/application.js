@@ -169,6 +169,7 @@ $(document).on('scpPlotsDidRender', function() {
 });
 
 function restoreExploreMenusState() {
+  console.log('in restoreExploreMenusState')
 
   var leftIsClosed = !$('#search-omnibar-menu-icon').hasClass('open'),
       rightIsClosed = !$('#view-options-nav').parent().hasClass('active');
@@ -189,6 +190,8 @@ function toggleViewOptionsPanel() {
   // Contract main content area to make room View Options menu
   $('.row-offcanvas > .nav-tabs, .row-offcanvas > .tab-content')
     .toggleClass('contracted-for-sidebar');
+
+  console.log('in toggleViewOptionsPanel')
 
   // Re-render Plotly to use available space
   $(window).trigger('resizeEnd');
@@ -216,6 +219,7 @@ function toggleSearchPanel() {
 
 // Toggle "View Options" menu panel in Explore tab
 $(document).on('click', '#view-option-link', function(e) {
+  console.log('in ViewOptionsClick')
   e.preventDefault();
   toggleViewOptionsPanel();
   exploreMenusToggleState.right *= -1;

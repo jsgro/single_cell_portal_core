@@ -19,9 +19,12 @@ const baseCamera = {
 
 /** Listen for events, and update view accordingly */
 function attachEventHandlers(study) {
+  console.log('in attachEventHandlers for explore-default')
   // resize listener
+  $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {resizePlots()})
 
+  $(document).off('change', menuSelectors)
   const menuSelectors = '#annotation, #subsample, #cluster, #spatial-group'
   $(document).on('change', menuSelectors, function() {
     const menu = $(this) // eslint-disable-line

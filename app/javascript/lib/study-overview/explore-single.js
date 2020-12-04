@@ -45,10 +45,13 @@ async function renderSingleGenePlots(study, gene) {
 
 /** Listen for events, and update view accordingly */
 function attachEventHandlers(study, gene) {
+  console.log('in attachEventHandlers in explore-single')
   // resize listener
+  $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {resizePlots()})
 
   const menuSelectors = '#annotation, #subsample, #cluster, #spatial-group'
+  $(document).off('change', menuSelectors)
   $(document).on('change', menuSelectors, function() {
     const menu = $(this) // eslint-disable-line
     const newValue = menu.val()
