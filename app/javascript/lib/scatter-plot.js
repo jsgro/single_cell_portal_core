@@ -5,32 +5,52 @@ import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { fetchCluster } from 'lib/scp-api'
 import { getMainViewOptions } from 'lib/study-overview/view-options'
 
-/** Get DOM ID of scatter plot at given index */
-function getScatterPlotId(plotIndex) {
-  return `scatter-plot-${plotIndex}`
+/**
+ * Get DOM ID of scatter plot at given index; and account for reference plots
+ */
+function getPlotId(plotIndex, isReference=false) {
+  let id = `scatter-plot-${plotIndex}`
+  if (isReference) {id += '-reference'}
+  return id
 }
 
 /** Resize Plotly scatter plots -- done on window resize  */
 export function resizePlots() {
-  const numPlots = window.SCP.numPlots
+  const numBasePlots = window.SCP.numBasePlots
 
-  for (let i = 0; i < numPlots; i++) {
+  for (let i = 0; i < numBasePlots; i++) {
     const rawPlot = window.SCP.plots[i]
     const layout = getScatterPlotLayout(rawPlot)
-    const target = getScatterPlotId(i)
+    const target = getPlotId(i)
+    Plotly.relayout(target, layout)
+  }
 
+  // Repeat above, but for reference plots
+  for (let i = 0; i < numBasePlots; i++) {
+    const target = getPlotId(i, true)
+    const rawPlot = window.SCP.plots[i]
+    const layout = getScatterPlotLayout(rawPlot)
     Plotly.relayout(target, layout)
   }
 }
 
 /** Change Plotly scatter plot color scales */
 export function setColorScales(theme) {
-  const numPlots = window.SCP.numPlots
+  const numBasePlots = window.SCP.numBasePlots
 
-  for (let i = 0; i < numPlots; i++) {
-    const target = getScatterPlotId(i)
+  for (let i = 0; i < numBasePlots; i++) {
+    const target = getPlotId(i)
     const dataUpdate = { 'marker.colorscale': theme }
     Plotly.update(target, dataUpdate)
+  }
+
+  // Repeat above, but for reference plots
+  if (window.SCP.plotsHaveReference) {
+    for (let i = 0; i < numBasePlots; i++) {
+      const target = getPlotId(i, true)
+      const dataUpdate = { 'marker.colorscale': theme }
+      Plotly.update(target, dataUpdate)
+    }
   }
 }
 
@@ -122,7 +142,7 @@ export function setMarkerColors(data) {
 
 /** Get height and width for a to-be-rendered cluster plot */
 function calculatePlotRect() {
-  const numPlots = window.SCP.numPlots
+  const numBasePlots = window.SCP.numBasePlots
 
   const height = $(window).height() - 250
 
@@ -130,7 +150,7 @@ function calculatePlotRect() {
   const baseWidth = $('#plots-tab').actual('width')
 
   const gutterPad = 80 // Accounts for horizontal padding
-  const width = (baseWidth - gutterPad) / numPlots
+  const width = (baseWidth - gutterPad) / numBasePlots
 
   return { height, width }
 }
@@ -183,16 +203,18 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
 
 /** Load and draw scatter plot; handles clusters and spatial groups */
 async function scatterPlot(
-  accession, plotIndex, options, hasLegend=true, gene=null
+  accession, plotId, options, hasLegend=true, gene=null
 ) {
-  // Consider avoiding parallel indexes like this in React refactor
-  const plotId = `scatter-plot-${plotIndex}`
-
-  const legendId = (hasLegend ? `scatter-legend-${plotIndex}` : null)
+  const legendId = (hasLegend ? `${plotId}-legend` : null)
   const legendHtml = (hasLegend ? `<div id="${legendId}"></div>` : '')
 
+  let position = ''
+  if ('position' in options && options.position === 'below') {
+    position = 'below'
+  }
+
   $('#scatter-plots .panel-body').append(`
-    <div class="row dual-plot">
+    <div class="row dual-plot ${position}">
       <div id="${plotId}"></div>
       ${legendHtml}
     </div>`)
@@ -237,12 +259,32 @@ async function scatterPlot(
   $plotElement.find('.spinner').remove()
 }
 
-/** Load and draw scatter plots for default Explore tab view */
-export async function scatterPlots(study, gene=null) {
-  window.SCP.numPlots = (study.spatialGroupNames.length > 0) ? 2 : 1
+/**
+ * Load and draw scatter plots for default Explore tab view
+ *
+ * @param {Object} study Study object returned by clusters endpoint
+ * @param {String} gene Searched gene name
+ */
+export async function scatterPlots(study, gene=null, hasReference=false) {
+  window.SCP.numBasePlots = (study.spatialGroupNames.length > 0) ? 2 : 1
+  window.SCP.plotsHaveReference = (hasReference !== null)
 
-  for (let plotIndex = 0; plotIndex < window.SCP.numPlots; plotIndex++) {
+  for (let plotIndex = 0; plotIndex < window.SCP.numBasePlots; plotIndex++) {
     const options = getMainViewOptions(plotIndex)
-    scatterPlot(study.accession, plotIndex, options, true, gene)
+    const plotId = getPlotId(plotIndex)
+
+    if (!hasReference) {
+      // One plot per group, as in default view of Explore tab
+      scatterPlot(study.accession, plotId, options, true)
+    } else {
+      // Two plots per group -- one gene-specific, one reference -- as in
+      // single-gene view of Explore tab
+
+      scatterPlot(study.accession, plotId, options, true, gene)
+
+      const refPlotOptions = Object.assign({ position: 'below' }, options)
+      const refPlotId = getPlotId(plotIndex, true)
+      scatterPlot(study.accession, refPlotId, refPlotOptions, gene)
+    }
   }
 }
