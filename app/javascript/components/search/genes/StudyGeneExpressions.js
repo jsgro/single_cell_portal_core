@@ -1,8 +1,8 @@
 import React from 'react'
 
 import Study, { getByline } from 'components/search/results/Study'
-import StudyGeneDotPlot from './StudyGeneDotPlot'
-import StudyViolinPlot from './StudyViolinPlot'
+import StudyGeneDotPlot from 'components/visualization/StudyGeneDotPlot'
+import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 
 
 /** Renders expression data for a study.  This assumes that the study has a 'gene_matches' property

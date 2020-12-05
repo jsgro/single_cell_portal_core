@@ -43,7 +43,13 @@ Rails.application.routes.draw do
           resources :clusters, controller: 'visualization/clusters',
                                only: [:show, :index],
                                param: :cluster_name,
-                               constraints: { cluster_name: /[^\/]+/ } # needed to allow '.' in cluster names
+                               constraints: { cluster_name: /[^\/]+/ } do
+          end # needed to allow '.' in cluster names
+          resources :annotations, controller: 'visualization/annotations',
+                               only: [:show, :index],
+                               param: :annotation_name,
+                               constraints: { annotation_name: /[^\/]+/ } # needed to allow '.' in annotation names
+
         end
         resource :current_user, only: [:update], controller: 'current_user'
 

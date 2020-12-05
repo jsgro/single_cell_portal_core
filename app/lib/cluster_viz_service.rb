@@ -30,6 +30,48 @@ class ClusterVizService
     grouped_options
   end
 
+  # returns a flat array of annotation objects, with name, scope, annotation_type, and values for each
+  def self.available_annotations(study, cluster, current_user, annotation_type=nil)
+    annotations = []
+    viewable = study.viewable_metadata
+    metadata = annotation_type.nil? ? viewable : viewable.select {|m| m.annotation_type == annotation_type}
+    metadata = metadata.map do |annot|
+      {
+        name: annot.name,
+        type: annot.annotation_type,
+        values: annot.values,
+        scope: 'study'
+      }
+    end
+    annotations.concat(metadata)
+    cluster_annots = []
+    if cluster.present?
+      cluster_annots = available_annotations_by_cluster(cluster, annotation_type)
+    else
+      study.cluster_groups.each do |cluster_group|
+        cluster_annots.concat(available_annotations_by_cluster(cluster_group, annotation_type))
+      end
+    end
+    annotations.concat(cluster_annots)
+    if current_user.present?
+      user_annotations = UserAnnotation.viewable_by_cluster(current_user, cluster)
+      annotations.concat(user_annotations)
+    end
+    annotations
+  end
+
+  def self.available_annotations_by_cluster(cluster, annotation_type=nil)
+    cluster.cell_annotations_by_type(annotation_type).map do |annot|
+      {
+        name: annot['name'],
+        type: annot['type'],
+        values: annot['values'],
+        scope: 'cluster',
+        cluster_name: cluster.name
+      }
+    end
+  end
+
   # helper method to load spatial coordinate group names
   def self.load_spatial_options(study)
     spatial_file_ids = StudyFile.where(study: study, is_spatial: true, file_type: 'Cluster').pluck(:id)
@@ -288,5 +330,25 @@ class ClusterVizService
     # gotcha to remove entries in case a particular annotation value comes up blank since this is study-wide
     coordinates.delete_if {|key, data| data[:x].empty?}
     coordinates
+  end
+
+  def self.annotation_cell_values_tsv(study, cluster, annotation)
+    cells = cluster.concatenate_data_arrays('text', 'cells')
+    if annotation[:scope] == 'cluster'
+      annotations = cluster.concatenate_data_arrays(annotation[:name], 'annotations')
+    else
+      study_annotations = study.cell_metadata_values(annotation[:name], annotation[:type])
+      annotations = []
+      cells.each do |cell|
+        annotations << study_annotations[cell]
+      end
+    end
+    # assemble rows of data
+    rows = []
+    cells.each_with_index do |cell, index|
+      rows << [cell, annotations[index]].join("\t")
+    end
+    headers = ['NAME', annotation[:name]]
+    [headers.join("\t"), rows.join("\n")].join("\n")
   end
 end

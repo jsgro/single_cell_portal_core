@@ -82,14 +82,9 @@ module Api
           end
         end
 
-        # note that 'index' returns the default cluster, rather than a list of all clusters
-        # see the 'show' method for documentation of the return type
+        # return a listing of all clusters
         def index
-          cluster = @study.default_cluster
-          if cluster.nil?
-            render json: {error: 'No default cluster exists'}, status: 404 and return
-          end
-          self.class.render_cluster(@study, cluster, params)
+          render json: ClusterVizService.load_cluster_group_options(@study)
         end
 
         swagger_path '/studies/{accession}/clusters/{cluster_name}' do
@@ -98,12 +93,12 @@ module Api
                 'Visualization'
             ]
             key :summary, 'Get a cluster and its sub-clusters for a study'
-            key :description, 'Get the cluster group and its constituent cluster annotations'
+            key :description, 'Get the cluster group and its constituent cluster annotations.'
             key :operationId, 'study_cluster_path'
             parameter({
               name: :cluster_name,
               in: :path,
-              description: 'Name of cluster group',
+              description: 'Name of cluster group.  Use "_default" to returnt he default cluster',
               required: true,
               type: :string
             })
@@ -113,15 +108,18 @@ module Api
         end
 
         def show
-          # this endpoint requires a cluster to be specified -- index is used to fetch the default
-          cluster = @study.cluster_groups.find_by(name: params[:cluster_name])
-          if cluster.nil?
-            render json: {error: "No cluster named #{params[:cluster_name]} could be found"}, status: 404 and return
+          cluster = nil
+          if params[:cluster_name] == '_default' || params[:cluster_name].empty?
+            cluster = @study.default_cluster
+            if cluster.nil?
+              render json: {error: 'No default cluster exists'}, status: 404 and return
+            end
+          else
+            cluster = @study.cluster_groups.find_by(name: params[:cluster_name])
+            if cluster.nil?
+              render json: {error: "No cluster named #{params[:cluster_name]} could be found"}, status: 404 and return
+            end
           end
-          self.class.render_cluster(@study, cluster, params)
-        end
-
-        def render_cluster(study, cluster, params)
           viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
           if viz_data.nil?
             render json: {error: 'Annotation could not be found'}, status: 404 and return
@@ -129,22 +127,30 @@ module Api
           render json: viz_data
         end
 
+        def annotations_list
+          cluster = @study.cluster_groups.find_by(name: params[:cluster_name])
+          if (!cluster)
+            cluster = @study.default_cluster
+          end
+          render json: ClusterVizService.load_cluster_group_annotations(study, cluster, current_api_user)
+        end
+
         def self.get_selected_annotation(study, cluster, url_params)
+
+        end
+
+        # packages up a bunch of calls to rendering service endpoints for a response object
+        def self.get_cluster_viz_data(study, cluster, url_params)
           annot_params = {
             name: url_params[:annotation_name].blank? ? nil : url_params[:annotation_name],
             type: url_params[:annotation_type].blank? ? nil : url_params[:annotation_type],
             scope: url_params[:annotation_scope].blank? ? nil : url_params[:annotation_scope]
           }
-          ExpressionVizService.get_selected_annotation(study,
+          annotation = ExpressionVizService.get_selected_annotation(study,
                                                        cluster,
                                                        annot_params[:name],
                                                        annot_params[:type],
                                                        annot_params[:scope])
-        end
-
-        # packages up a bunch of calls to rendering service endpoints for a response object
-        def self.get_cluster_viz_data(study, cluster, url_params)
-          annotation = get_selected_annotation(study, cluster, url_params)
           if !annotation
             return nil
           end

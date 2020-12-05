@@ -132,6 +132,12 @@ class ClusterGroup
     annotations.map {|annot| self.formatted_cell_annotation(annot, prepend_name)}
   end
 
+  def cell_annotations_by_type(annotation_type=nil)
+    annotations = annotation_type.nil? ? self.cell_annotations : self.cell_annotations.select {|annot| annot[:type] == annotation_type}
+    annotations = annotations.keep_if {|annot| self.can_visualize_cell_annotation?(annot)}
+    annotations
+  end
+
   # list of cell annotation header values by type (group or numeric)
   def cell_annotation_names_by_type(type)
     self.cell_annotations.select {|annotation| annotation['type'] == type}.map {|annotation| annotation['name']}

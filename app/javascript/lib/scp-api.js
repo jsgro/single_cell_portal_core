@@ -154,7 +154,7 @@ export async function fetchExplore(studyAccession, mock=false) {
  * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
  */
 export async function fetchCluster(
-  studyAccession, cluster, annotation, subsample, consensus, annotationOnly=false, mock=false
+  studyAccession, cluster, annotation, subsample, consensus, mock=false
 ) {
   // Digest full annotation name to enable easy validation in API
   const [annotName, annotType, annotScope] = annotation.split('--')
@@ -167,10 +167,11 @@ export async function fetchCluster(
   }
 
   const params = stringifyQuery(paramObj)
-  const apiUrl = `/studies/${studyAccession}/clusters/${cluster}${params}`
-  if (annotationOnly) {
-    apiUrl += '&annotation_only'
+  if (!cluster) {
+    cluster = '_default'
   }
+  const apiUrl = `/studies/${studyAccession}/clusters/${cluster}${params}`
+
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
   const [scatter, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
@@ -212,37 +213,48 @@ export async function fetchExpressionViolin(
 /**
  * Get all study-wide and cluster annotations for a study
  *
- * This endpoint is volatile and intentionally not documented in Swagger.
- *
- * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
- *
- * Example:
- * https://singlecell.broadinstitute.org/single_cell/api/v1/studies/SCP1/expression/annotations
- *
- * Returns
- * {
- *   "name":"CLUSTER","type":"group","scope":"study",
- *   "values":["DG","GABAergic","CA1","CA3","Glia","Ependymal","CA2","Non"],
- *   "identifier":"CLUSTER--group--study"
- * }
+ * see definition at: app/controllers/api/v1/visualization/annotations_controller.rb
  *
  * @param {String} studyAccession Study accession
  * @param {Boolean} mock
  */
-export async function fetchClusterInfo(studyAccession, clusterName, mock=false) {
-  const apiUrl = getAnnotationValuesPath(studyAccession)
+export async function fetchAnnotations(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/annotations`
   const [values, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
   return values
 }
 
-/** helper function for giving a static url to morpheus */
-export function getClusterInfoURL(studyAccession, clusterName) {
-  return getFullUrl(getAnnotationValuesPath(studyAccession))
+ /**
+ * Get a single annotation for a study
+ *
+ * see definition at: app/controllers/api/v1/visualization/annotations_controller.rb
+ *
+ * @param {String} studyAccession Study accession
+ * @param {String} annotationName
+ */
+export async function fetchAnnotation(studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false) {
+  const paramObj = {
+    cluster: clusterName,
+    annotation_scope: annotationScope,
+    annotation_type: annotationType
+  }
+  annotationName = annotationName ? annotationName : '_default'
+  const apiUrl = `/studies/${studyAccession}/annotations/${annotationName}${stringifyQuery(paramObj)}`
+  const [values, perfTime] = await scpApi(apiUrl, defaultInit(), mock)
+  return values
 }
 
-/** returns partial path for retrieiving annotation values for a study */
-function getClusterInfoPath(studyAccession, clusterName) {
-  return `/studies/${studyAccession}/cluster_info/${clusterName}`
+/** Get a url for retrieving a morpheus-suitable annotation values file */
+export function getAnnotationCellValuesURL(studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false) {
+  const paramObj = {
+    cluster: clusterName,
+    annotation_scope: annotationScope,
+    annotation_type: annotationType,
+    value_format: 'cellValues'
+  }
+  annotationName = annotationName ? annotationName : '_default'
+  const apiUrl = `/studies/${studyAccession}/annotations/${annotationName}${stringifyQuery(paramObj)}`
+  return getFullUrl(apiUrl)
 }
 
 
@@ -256,16 +268,13 @@ function getClusterInfoPath(studyAccession, clusterName) {
  *
  */
 export function getExpressionHeatmapURL(studyAccession, genes, cluster, annotation, subsample) {
-  const clusterParam =
-    cluster ? `&cluster=${encodeURIComponent(cluster)}` : ''
-  const annotationParam =
-    annotation ? `&annotation=${encodeURIComponent(annotation)}` : ''
-  const subsampleParam =
-    subsample ? `&annotation=${encodeURIComponent(subsample)}` : ''
-  const genesParam = encodeURIComponent(genes.join(','))
-  const params =
-    `?genes=${genesParam}${clusterParam}${annotationParam}${subsampleParam}`
-  const path = `/studies/${studyAccession}/expression/heatmap${params}`
+  const paramObj = {
+    cluster,
+    annotation,
+    subsample,
+    genes: genes.join(',')
+  }
+  const path = `/studies/${studyAccession}/expression/heatmap${stringifyQuery(paramObj)}`
   return getFullUrl(path)
 }
 
