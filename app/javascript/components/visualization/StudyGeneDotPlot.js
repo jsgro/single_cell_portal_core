@@ -3,9 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import Select from 'react-select'
 
-import { log, startPendingEvent } from 'lib/metrics-api'
 import DotPlot from './DotPlot'
-import DotPlotLegend from './DotPlotLegend'
 import { fetchAnnotations, getAnnotationCellValuesURL, getExpressionHeatmapURL } from 'lib/scp-api'
 import { UserContext } from 'providers/UserProvider'
 import _uniq from 'lodash/uniq'
@@ -70,13 +68,13 @@ export default function StudyGeneDotPlot({ study, genes }) {
           <DotPlot expressionValuesURL={getExpressionHeatmapURL(study.accession, genes)}
                    annotationCellValuesURL={
                      getAnnotationCellValuesURL(study.accession,
-                                 paramsToRender.cluster,
-                                 paramsToRender.annotation.name,
-                                 paramsToRender.annotation.scope,
-                                 paramsToRender.annotation.type)
+                                 renderParams.cluster,
+                                 renderParams.annotation.name,
+                                 renderParams.annotation.scope,
+                                 renderParams.annotation.type)
 
                    }
-                   annotation={annotation}/>
+                   annotation={renderParams.annotation}/>
         }
         { isLoading && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
       </div>

@@ -1,6 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 
+import { log, startPendingEvent } from 'lib/metrics-api'
+import DotPlotLegend from './DotPlotLegend'
+
 export const dotPlotColorScheme = {
   // Blue, purple, red.  These red and blue hues are accessible, per WCAG.
   colors: ['#0000BB', '#CC0088', '#FF0000'],
@@ -15,19 +18,18 @@ export default function DotPlot({expressionValuesURL, annotationCellValuesURL, a
     const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
     log('dot-plot:initialize')
     renderDotPlot(
-      graphId,
+      `#${graphId}`,
       expressionValuesURL,
       annotationCellValuesURL,
       annotation,
       '',
-      450,
-      `#expGraph${study.accession}-legend`
+      450
     )
     plotEvent.complete()
   }, [expressionValuesURL, annotationCellValuesURL, annotation.name, annotation.scope])
   return (
     <div>
-      <div id={graphId} class="dotplot-graph"></div>
+      <div id={graphId} className="dotplot-graph"></div>
       <DotPlotLegend/>
     </div>
   )
@@ -35,7 +37,7 @@ export default function DotPlot({expressionValuesURL, annotationCellValuesURL, a
 
 
 /** Render Morpheus dot plot */
-function renderDotPlot(target, dataPath, annotPath, annotation, dotHeight=450, fitType='') {
+function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotHeight=450) {
 
   $(target).empty()
 
@@ -91,13 +93,13 @@ function renderDotPlot(target, dataPath, annotPath, annotation, dotHeight=450, f
       file: annotPath,
       datasetField: 'id',
       fileField: 'NAME',
-      include: [selectedAnnot]
+      include: [annotation.name]
     }]
     config.columnSortBy = [
-      { field: selectedAnnot, order: 0 }
+      { field: annotation.name, order: 0 }
     ]
     config.columns = [
-      { field: selectedAnnot, display: 'text' }
+      { field: annotation.name, display: 'text' }
     ]
     config.rows = [
       { field: 'id', display: 'text' }
@@ -105,13 +107,13 @@ function renderDotPlot(target, dataPath, annotPath, annotation, dotHeight=450, f
 
     // Create mapping of selected annotations to colorBrewer colors
     const annotColorModel = {}
-    annotColorModel[selectedAnnot] = {}
+    annotColorModel[annotation.name] = {}
     const sortedAnnots = annotation['values'].sort()
 
     // Calling % 27 will always return to the beginning of colorBrewerSet
     // once we use all 27 values
     $(sortedAnnots).each((index, annot) => {
-      annotColorModel[selectedAnnot][annot] = colorBrewerSet[index % 27]
+      annotColorModel[annotation.name][annot] = colorBrewerSet[index % 27]
     })
     config.columnColorModel = annotColorModel
   }

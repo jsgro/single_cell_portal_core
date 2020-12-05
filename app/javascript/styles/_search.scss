@@ -313,11 +313,7 @@ nav.search-links, #search-panel {
     display: flex;
     align-items: center;
   }
-  .dot-plot-legend-container {
-    margin-top: 1em;
-    width: 400px;
-    height: 70px;
-  }
+
   .gene-title {
     position: absolute;
     font-size: 1.3em;
@@ -329,6 +325,15 @@ nav.search-links, #search-panel {
   /* hide morpheus toolbar */
   div[data-name="toolbar"] {
     display: none;
+  }
+
+  .dot-plot-legend-container {
+    margin-top: 1em;
+    width: 400px;
+    height: 70px;
+    text {
+      font-size: 0.9em;
+    }
   }
 }
 
