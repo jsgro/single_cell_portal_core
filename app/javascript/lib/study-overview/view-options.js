@@ -37,3 +37,18 @@ export function addSpatialDropdown(study) {
     $('#view-options #precomputed-panel #precomputed .row').append(dropdown)
   }
 }
+
+/**
+ * Re-render a plot after a user selects a new cluster from the dropdown menu,
+ * usually called from a complete() callback in an $.ajax() function
+ */
+export function updateCluster(
+  callback, callbackArgsArray, setAnnotation=true
+) {
+  if (setAnnotation) {
+    const an = $('#annotation').val()
+    $('#search_annotation').val(an)
+    $('#gene_set_annotation').val(an)
+  }
+  callback(...callbackArgsArray)
+}

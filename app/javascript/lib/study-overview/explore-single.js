@@ -11,7 +11,9 @@ import {
   scatterPlots, resizePlots, setColorScales
 } from 'lib/scatter-plot'
 import { violinPlot } from 'lib/violin-plot'
-import { addSpatialDropdown } from 'lib/study-overview/view-options'
+import {
+  addSpatialDropdown, updateCluster
+} from 'lib/study-overview/view-options'
 
 /** Render violin and scatter plots for the Explore tab's single-gene view */
 async function renderSingleGenePlots(study, gene) {
@@ -50,7 +52,27 @@ function attachEventHandlers(study, gene) {
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {resizePlots()})
 
-  const menuSelectors = '#annotation, #subsample, #cluster, #spatial-group'
+  $(document).off('change', '#cluster')
+  $(document).on('change', '#cluster', function() {
+    const cluster = $(this).val() // eslint-disable-line
+    const subsample = $('#subsample').val()
+    // keep track for search purposes
+    $('#search_cluster').val(cluster)
+    $('#gene_set_cluster').val(cluster)
+    const url =
+    `${window.location.pathname}/get_new_annotations` +
+    `?cluster=${encodeURIComponent(cluster)}&` +
+    `subsample=${encodeURIComponent(subsample)}`
+    $.ajax({
+      url,
+      dataType: 'script',
+      success() {
+        updateCluster(renderSingleGenePlots, [study, gene])
+      }
+    })
+  })
+
+  const menuSelectors = '#annotation, #subsample, #spatial-group'
   $(document).off('change', menuSelectors)
   $(document).on('change', menuSelectors, function() {
     const menu = $(this) // eslint-disable-line

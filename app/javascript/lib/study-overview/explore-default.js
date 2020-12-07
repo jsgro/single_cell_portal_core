@@ -9,7 +9,9 @@
 
 import { fetchExplore } from 'lib/scp-api'
 import { scatterPlots, resizePlots, setColorScales } from 'lib/scatter-plot'
-import { addSpatialDropdown } from 'lib/study-overview/view-options'
+import {
+  addSpatialDropdown, updateCluster
+} from 'lib/study-overview/view-options'
 
 const baseCamera = {
   'up': { 'x': 0, 'y': 0, 'z': 1 },
@@ -24,8 +26,29 @@ function attachEventHandlers(study) {
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {resizePlots()})
 
+
+  $(document).off('change', '#cluster')
+  $(document).on('change', '#cluster', function() {
+    const cluster = $(this).val() // eslint-disable-line
+    const subsample = $('#subsample').val()
+    // keep track for search purposes
+    $('#search_cluster').val(cluster)
+    $('#gene_set_cluster').val(cluster)
+    const url =
+    `${window.location.pathname}/get_new_annotations` +
+    `?cluster=${encodeURIComponent(cluster)}&` +
+    `subsample=${encodeURIComponent(subsample)}`
+    $.ajax({
+      url,
+      dataType: 'script',
+      success() {
+        updateCluster(scatterPlots, [study])
+      }
+    })
+  })
+
+  const menuSelectors = '#annotation, #subsample, #spatial-group'
   $(document).off('change', menuSelectors)
-  const menuSelectors = '#annotation, #subsample, #cluster, #spatial-group'
   $(document).on('change', menuSelectors, function() {
     const menu = $(this) // eslint-disable-line
     const newValue = menu.val()
