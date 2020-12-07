@@ -52,11 +52,13 @@ function attachEventHandlers(study, gene) {
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {resizePlots()})
 
-  handleMenuChange(scatterPlots, [study])
+  handleMenuChange(scatterPlots, [study, gene])
 }
 
 /** Initialize single-gene view for "Explore" tab in Study Overview */
 export default async function exploreSingle() {
+  window.SCP.plots = []
+
   // As set in exploreDefault
   const study = window.SCP.study
   const gene = window.SCP.gene
