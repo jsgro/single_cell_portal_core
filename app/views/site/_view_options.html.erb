@@ -22,11 +22,14 @@
                   &nbsp;
                   <i
                     class='fas fa-question-circle'
-                    title="Take a representative subsample of the current cluster.
+                    title="Subsampling"
+                    data-content="Take a representative subsample of the current cluster
+                    (<a href='https://github.com/broadinstitute/single_cell_portal/wiki/Subsampling-Cluster-Files' target='_blank'>learn more</a>).
                       <% if /view_gene_(set_)?expression$/.match(action_name) === false %>Choosing all cells may dramatically increase rendering time.  <% end %>
                       <% if @cluster.points < ClusterGroup::MAX_THRESHOLD %>
                       <% else %>Gene search results will be subsampled to <%= ClusterGroup::MAX_THRESHOLD %> cells.<% end %>"
-                    data-toggle="tooltip"></i>
+                    data-toggle="popover" data-html=true data-trigger='hover' data-placement="left" data-container="body">
+                    </i>
                   <br />
                   <% if /view_gene_(set_)?expression$/.match(action_name) %>
                   <%= select_tag :subsample, options_for_select(subsampling_options(@cluster), set_subsample_value(params) ), {include_blank: @cluster.points < ClusterGroup::MAX_THRESHOLD ? 'All Cells' : false, class: 'form-control'} %>

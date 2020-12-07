@@ -134,6 +134,13 @@
               </ul>
             </ul>
           </div>
+          <div class="row">
+            <p class="col-sm-12 text-center">Cluster files with more than 1000 individual points will be subsampled after
+              being successfully ingested. <%= link_to "Learn More <i class='fas fa-question-circle'></i>".html_safe,
+                          'https://github.com/broadinstitute/single_cell_portal/wiki/Subsampling-Cluster-Files', target: :_blank,
+                                                       class: 'btn btn-default'%>
+            </p>
+          </div>
           <% if User.feature_flag_for_instance(current_user, 'spatial_transcriptomics') %>
             <div class="row">
               <p class="col-sm-12"><a href="https://en.wikipedia.org/wiki/Spatial_transcriptomics" target="_blank" rel="noreferrer">Spatial transcriptomics</a> data can also be uploaded with this file format.  The x, y, and z coordinates then represent actual spatial coordinates, as opposed to clustering output.</p>
