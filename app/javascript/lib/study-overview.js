@@ -303,10 +303,21 @@ function attachEventHandlers(study) {
   $('#cluster').change(function() {
     $('#cluster-plot').data('rendered', false)
     const newCluster = $(this).val() // eslint-disable-line
+    const subsample = $('#subsample').val()
     // keep track for search purposes
     $('#search_cluster').val(newCluster)
     $('#gene_set_cluster').val(newCluster)
-    drawScatterPlots(study)
+    const url =
+    `${window.location.pathname}/get_new_annotations` +
+    `?cluster=${encodeURIComponent(newCluster)}&` +
+    `subsample=${encodeURIComponent(subsample)}`
+    $.ajax({
+      url,
+      dataType: 'script',
+      complete(jqXHR, textStatus) {
+        window.renderWithNewCluster(textStatus, drawScatterPlot)
+      }
+    })
   })
 
   $(document).on('change', '#spatial-group', function() {
