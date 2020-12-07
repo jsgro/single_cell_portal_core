@@ -187,6 +187,8 @@ module Api
             "axes": axes_full,
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
             "coordinateLabels": coordinate_labels,
+            "cluster": cluster.name,
+            "gene": gene_name,
             "annotParams": annot_params
           }
         end

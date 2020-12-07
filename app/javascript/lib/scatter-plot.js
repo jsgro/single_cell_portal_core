@@ -184,7 +184,7 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
 
   const layout = getScatterPlotLayout(rawPlot)
 
-  if (rawPlot.annotParams.type === 'group') {
+  if (rawPlot.annotParams.type === 'group' && !rawPlot.gene) {
     data = setMarkerColors(data)
   }
 
