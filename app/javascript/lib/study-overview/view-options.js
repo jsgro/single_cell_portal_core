@@ -43,12 +43,70 @@ export function addSpatialDropdown(study) {
  * usually called from a complete() callback in an $.ajax() function
  */
 export function updateCluster(
-  callback, callbackArgsArray, setAnnotation=true
+  callback, callbackArgs, setAnnotation=true
 ) {
   if (setAnnotation) {
     const an = $('#annotation').val()
     $('#search_annotation').val(an)
     $('#gene_set_annotation').val(an)
   }
-  callback(...callbackArgsArray)
+  callback(...callbackArgs)
+}
+
+/**
+ * Event handler for changes to "Load cluster" menu.  Fetch new annotations,
+ * then render dynamically-specified plots for selected cluster.
+ *
+ * @param {Function} callback Function to call after fetching new annots
+ * @param {Array} callbackArgs List of arguments for `callback` function
+ */
+function handleClusterMenuChange(callback, callbackArgs) {
+  $(document).off('change', '#cluster')
+  $(document).on('change', '#cluster', function() {
+      const cluster = $(this).val() // eslint-disable-line
+    const subsample = $('#subsample').val()
+    // keep track for search purposes
+    $('#search_cluster').val(cluster)
+    $('#gene_set_cluster').val(cluster)
+    const url =
+      `${window.location.pathname}/get_new_annotations` +
+      `?cluster=${encodeURIComponent(cluster)}&` +
+      `subsample=${encodeURIComponent(subsample)}`
+    $.ajax({
+      url,
+      dataType: 'script',
+      success() {
+        updateCluster(callback, callbackArgs)
+      }
+    })
+  })
+}
+
+/** Handle menu changes for annotations, subsampling, and spatial groups */
+function handleOtherMenuChange(callback, callbackArgs) {
+  const menuSelectors = '#annotation, #subsample, #spatial-group'
+  $(document).off('change', menuSelectors)
+  $(document).on('change', menuSelectors, function() {
+    const menu = $(this) // eslint-disable-line
+    const newValue = menu.val()
+    // keep track for search purposes
+    $(`#search_${menu.id}`).val(newValue)
+    $(`#gene_set_${menu.id}`).val(newValue)
+    callback(...callbackArgs)
+  })
+}
+
+/**
+ * Event handler for new selections in menus for:
+ *  - Load cluster
+ *  - Select annotation
+ *  - Subsampling threshold
+ *  - Spatial group
+ *
+ * @param {Function} callback Function to call after fetching new annots
+ * @param {Array} callbackArgs List of arguments for `callback` function
+ */
+export function handleMenuChange(callback, callbackArgs) {
+  handleClusterMenuChange(callback, callbackArgs)
+  handleOtherMenuChange(callback, callbackArgs)
 }
