@@ -30,6 +30,18 @@ class ClusterVizService
     grouped_options
   end
 
+  def self.get_study_annotation_options(study, user)
+    subsample_thresholds = Hash[
+      study.cluster_groups.map {|cluster| [cluster.name, ClusterVizService.subsampling_options(cluster)] }
+    ]
+    {
+      default_cluster: study.default_cluster.name,
+      default_annotation: ExpressionVizService.get_selected_annotation(study, nil, nil, nil, nil),
+      annotations: ClusterVizService.available_annotations(study, nil, user),
+      subsample_thresholds: subsample_thresholds
+    }
+  end
+
   # returns a flat array of annotation objects, with name, scope, annotation_type, and values for each
   def self.available_annotations(study, cluster, current_user, annotation_type=nil)
     annotations = []

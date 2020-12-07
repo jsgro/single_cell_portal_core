@@ -71,11 +71,8 @@ module Api
 
         # get all annotations for the study, listed by cluster/type
         def index
-          render json: {
-            default_cluster: @study.default_cluster.name,
-            default_annotation: ExpressionVizService.get_selected_annotation(@study, nil, nil, nil, nil),
-            annotations: ClusterVizService.available_annotations(@study, nil, current_api_user)
-          }
+          # create a hash of subsample options with cluster names as keys
+          render json: ClusterVizService.get_study_annotation_options(@study, current_api_user)
         end
 
         swagger_path '/studies/{accession}/annotations/{annotation_name}' do
@@ -121,10 +118,6 @@ module Api
           else
             render json: annotation
           end
-        end
-
-        def self.get_selected_annotation(study, url_params)
-
         end
       end
     end

@@ -182,8 +182,6 @@ export async function fetchCluster(
 /**
  * Returns an object with violin plot expression data for a gene in a study
  *
- * This endpoint is volatile, so intentionally not documented in Swagger.
- *
  * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
  *
  * @param {String} studyAccession Study accession
@@ -192,16 +190,24 @@ export async function fetchCluster(
  *
  */
 export async function fetchExpressionViolin(
-  studyAccession, gene, cluster, annotation, subsample, mock=false
+  studyAccession,
+  gene,
+  clusterName,
+  annotationName,
+  annotationScope,
+  annotationType,
+  subsample,
+  mock=false
 ) {
-  const clusterParam = cluster ? `&cluster=${encodeURIComponent(cluster)}` : ''
-  const annotationParam =
-    annotation ? `&annotation=${encodeURIComponent(annotation)}` : ''
-  const subsampleParam =
-    subsample ? `&subsample=${encodeURIComponent(subsample)}` : ''
-  const params =
-  `?gene=${gene}${clusterParam}${annotationParam}${subsampleParam}`
-  const apiUrl = `/studies/${studyAccession}/expression/violin${params}`
+  const paramObj = {
+    cluster: clusterName,
+    annotation_scope: annotationScope,
+    annotation_type: annotationType,
+    annotation_name: annotationName,
+    subsample: subsample,
+    gene: gene
+  }
+  const apiUrl = `/studies/${studyAccession}/expression/violin${stringifyQuery(paramObj)}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
   const [violin, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)

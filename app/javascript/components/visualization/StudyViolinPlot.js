@@ -1,167 +1,103 @@
 import React, { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
+import _uniqueId from 'lodash/uniqueId'
 
 import { fetchExpressionViolin } from 'lib/scp-api'
 import createTracesAndLayout from 'lib/kernel-functions'
 import { plot } from 'lib/plot'
+import ClusterControls from './ClusterControls'
 
-/** gets a unique id for a study gene graph to be rendered at */
-function getGraphElementId(study, gene) {
-  return `expGraph-${study.accession}-${gene}`
+/** copied from legacy application.js */
+function parseResultsToArray(results) {
+  const keys = Object.keys(results.values)
+  return keys.sort().map(key => {
+    return [key, results.values[key].y]
+  })
+}
+
+/** Formats expression data for Plotly, renders chart */
+function parseAndPlot(results, graphElementId) {
+  // The code below is heavily borrowed from legacy application.js
+  const dataArray = parseResultsToArray(results)
+  const jitter = results.values_jitter ? results.values_jitter : ''
+  const traceData = createTracesAndLayout(
+    dataArray, results.rendered_cluster, jitter, results.y_axis_title
+  )
+  const expressionData = [].concat.apply([], traceData[0])
+  const expressionLayout = traceData[1]
+  // Check that the ID exists on the page to avoid errors in corner cases where users update search terms quickly
+  // or are toggling between study and gene view.
+  if (document.getElementById(graphElementId)) {
+    plot(graphElementId, expressionData, expressionLayout)
+  }
 }
 
 /** displays a violin plot of expression data for the given gene and study */
 export default function StudyViolinPlot({ study, gene }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [clusterOptions, setClusterOptions] = useState([])
-  const [annotationOptions, setAnnotationOptions] =
-    useState({ 'Study Wide': [], 'Cluster-Based': [] })
-  const [subsamplingOptions, setSubsamplingOptions] = useState([])
-  const [renderParams, setRenderParams] = useState({
-    userUpdated: false,
-    cluster: '',
-    annotation: '',
-    subsample: ''
-  })
+  const [graphElementId, setGraphElementId] = useState(_uniqueId('study-violin-'))
+  const [annotationList, setAnnotationList] = useState(null)
 
-  /** copied from legacy application.js */
-  function parseResultsToArray(results) {
-    const keys = Object.keys(results.values)
-    return keys.sort().map(key => {
-      return [key, results.values[key].y]
-    })
-  }
-
-  /** handles changes in select controls.  merges newParams into old params */
-  function updateRenderParams(newParams) {
-    const mergedParams = Object.assign({}, renderParams, newParams)
-    mergedParams.userUpdated = true
-    setRenderParams(mergedParams)
-  }
-
-  /** Formats expression data for Plotly, renders chart */
-  function parseAndPlot(results) {
-    // The code below is heavily borrowed from legacy application.js
-    const dataArray = parseResultsToArray(results)
-    const jitter = results.values_jitter ? results.values_jitter : ''
-    const traceData = createTracesAndLayout(
-      dataArray, results.rendered_cluster, jitter, results.y_axis_title
-    )
-    const expressionData = [].concat.apply([], traceData[0])
-    const expressionLayout = traceData[1]
-    const graphElementId = getGraphElementId(study, gene)
-    // Check that the ID exists on the page to avoid errors in corner cases where users update search terms quickly
-    // or are toggling between study and gene view.
-    if (document.getElementById(graphElementId)) {
-      plot(graphElementId, expressionData, expressionLayout)
+  function handleControlUpdate(clusterParams) {
+    if (clusterParams.userUpdated) {
+      loadData(clusterParams)
     }
   }
 
   /** gets expression data from the server */
-  async function loadData(paramsToRender) {
+  async function loadData(clusterParams) {
     setIsLoading(true)
-
-    const results = await fetchExpressionViolin(study.accession,
-      gene,
-      paramsToRender.cluster,
-      paramsToRender.annotation,
-      paramsToRender.subsample)
-
+    let results
+    if (!clusterParams) {
+      // this is the initial load
+      results = await fetchExpressionViolin(study.accession, gene)
+      setAnnotationList(results.annotation_list)
+    } else {
+      results = await fetchExpressionViolin(study.accession,
+                                            gene,
+                                            clusterParams.cluster,
+                                            clusterParams.annotation.name,
+                                            clusterParams.annotation.scope,
+                                            clusterParams.annotation.type,
+                                            clusterParams.subsample)
+    }
     setIsLoaded(true)
     setIsLoading(false)
-    setClusterOptions(results.options)
-    setAnnotationOptions(results.cluster_annotations)
-    setSubsamplingOptions(results.subsampling_options)
-
-    setRenderParams({
-      userUpdated: false,
-      cluster: results.rendered_cluster,
-      annotation: results.rendered_annotation,
-      subsample: results.rendered_subsample
-    })
-    parseAndPlot(results)
+    parseAndPlot(results, graphElementId)
   }
 
   useEffect(() => {
-    // do a load from the server if this is the initial load or if parameters
-    // have been updated by the user.  Note we need the extra check because the
-    // renderParams will actually change after the first server load as the
-    // server sends back the option lists and selected defaults
-    if (!isLoading && !isLoaded || renderParams.userUpdated) {
-      loadData(renderParams)
+    // do a load from the server if this is the initial load
+    if (!isLoading && !isLoaded) {
+      loadData()
     }
-  }, [renderParams.cluster, renderParams.annotation, renderParams.subsample])
+  }, [study.accession, gene])
 
   return (
-    <div className="row">
+    <div className="row graph-container">
       <div className="col-md-10">
         <div
           className="expression-graph"
-          id={getGraphElementId(study, gene)}
-          data-testid={getGraphElementId(study, gene)}
+          id={graphElementId}
+          data-testid={graphElementId}
         >
         </div>
         {
           isLoading &&
           <FontAwesomeIcon
             icon={faDna}
-            data-testid={`${getGraphElementId(study, gene)}-loading-icon`}
+            data-testid={`${graphElementId}-loading-icon`}
             className="gene-load-spinner"
           />
         }
-        <span className="gene-title">{gene}</span>
       </div>
       <div className="col-md-2 graph-controls">
-        <div className="form-group">
-          <label>Load cluster</label>
-          <select className="form-control cluster-select global-gene-cluster"
-            value={renderParams.cluster}
-            onChange={event => {
-              updateRenderParams({ cluster: event.target.value })
-            }
-            }>
-            { clusterOptions.map((opt, index) => {
-              return <option key={index} value={opt}>{opt}</option>
-            })}
-          </select>
-        </div>
-        <div className="form-group">
-          <label>Select annotation</label>
-          <select
-            className="form-control annotation-select global-gene-annotation"
-            value={renderParams.annotation}
-            onChange={event => {
-              updateRenderParams({ annotation: event.target.value })
-            }}>
-            <optgroup label="Study Wide">
-              { annotationOptions['Study Wide'].map((opt, index) => {
-                return <option key={index} value={opt[1]}>{opt[0]}</option>
-              })}
-            </optgroup>
-            <optgroup label="Cluster-Based">
-              { annotationOptions['Cluster-Based'].map((opt, index) => {
-                return <option key={index} value={opt[1]}>{opt[0]}</option>
-              })}
-            </optgroup>
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Subsampling threshold</label>
-          <select
-            className="form-control subsample-select global-gene-subsample"
-            onChange={event => {
-              updateRenderParams({ subsample: event.target.value })
-            }
-            }>
-            <option key={999} value=''>All cells</option>
-            { subsamplingOptions.map((opt, index) => {
-              return <option key={index} value={opt}>{opt}</option>
-            })}
-          </select>
-        </div>
+        <ClusterControls studyAccession={study.accession}
+                         onChange={handleControlUpdate}
+                         fetchAnnotationList={false}
+                         preloadedAnnotationList={annotationList}/>
       </div>
     </div>
   )

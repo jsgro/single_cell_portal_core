@@ -28,22 +28,18 @@ module Api
             render_violin
           elsif (data_type == 'heatmap')
             render_heatmap
-          elsif (data_type == 'annotations')
-            render_annotation_values
           else
             render json: {error: "Unknown expression data type: #{data_type}"}, status: 400
           end
-
         end
 
         def render_violin
           cluster = ClusterVizService.get_cluster_group(@study, params)
-          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
           annotation = ExpressionVizService.get_selected_annotation(@study,
-                                                                       cluster,
-                                                                       annot_params[:name],
-                                                                       annot_params[:type],
-                                                                       annot_params[:scope])
+                                                                    cluster,
+                                                                    params[:annotation_name],
+                                                                    params[:annotation_type],
+                                                                    params[:annotation_scope])
           subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
           gene = @study.genes.by_name_or_id(params[:gene], @study.expression_matrix_files.map(&:id))
 
@@ -72,19 +68,6 @@ module Api
           )
 
           render plain: expression_data, status: 200
-        end
-
-
-
-        def render_annotation_values
-          cluster = ClusterVizService.get_cluster_group(@study, params)
-          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
-          annotation = ExpressionVizService.get_selected_annotation(@study,
-                                                                       cluster,
-                                                                       annot_params[:name],
-                                                                       annot_params[:type],
-                                                                       annot_params[:scope])
-          render json: annotation, status: 200
         end
       end
     end
