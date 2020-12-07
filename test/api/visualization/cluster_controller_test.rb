@@ -1,4 +1,5 @@
 require 'api_test_helper'
+require 'delete_helper'
 
 class ClusterControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -39,11 +40,7 @@ class ClusterControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    StudyFile.where(study_id: @basic_study.id).destroy_all
-    DataArray.where(study_id: @basic_study.id).destroy_all
-    ClusterGroup.where(study_id: @basic_study.id).destroy_all
-    CellMetadatum.where(study_id: @basic_study.id).destroy_all
-    @basic_study.destroy
+    delete_study_and_ensure_cascade(@basic_study)
     @empty_study.destroy
     @user.destroy
   end
