@@ -7,7 +7,7 @@
       <div id="view-options-nav"><a href="#view-options" id="view-option-link" data-toggle="offcanvas"><i class="fas fa-cog" aria-hidden="true"></i> View Options </a></div>
       <ul class="nav nav-tabs" role="tablist" id="view-tabs" data-analytics-name="explore-default">
         <% if @study.can_visualize_clusters? %>
-          <li role="presentation" class="study-nav active" id="plots-tab-nav"><a href="#plots-tab" data-toggle="tab">Clusters </a></li>
+          <li role="presentation" class="study-nav active" id="scatter-tab-nav"><a href="#scatter-tab" data-toggle="tab">Clusters </a></li>
         <% end %>
         <% if @study.can_visualize_genome_data? %>
           <li role="presentation" class="study-nav<%= !@study.can_visualize_clusters? ? ' active' : nil %>" id="genome-tab-nav">
@@ -18,7 +18,7 @@
       <%= render partial: 'view_options' %>
       <div class="tab-content">
         <% if @study.can_visualize_clusters? %>
-          <div class="tab-pane active" id="plots-tab" role="tabpanel">
+          <div class="tab-pane active" id="scatter-tab" role="tabpanel">
             <div class="panel panel-default no-top-border">
               <div id="scatter-plots" class="panel-collapse collapse in">
                 <div class="panel-body">

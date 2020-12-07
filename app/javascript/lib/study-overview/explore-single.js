@@ -17,8 +17,6 @@ import {
 
 /** Render violin and scatter plots for the Explore tab's single-gene view */
 async function renderSingleGenePlots(study, gene) {
-  $(window).off('resizeEnd')
-
   violinPlot('box-plot', study, gene)
   scatterPlots(study, gene, true)
   // var target3 = document.getElementById('reference-plot');
@@ -47,7 +45,6 @@ async function renderSingleGenePlots(study, gene) {
 
 /** Listen for events, and update view accordingly */
 function attachEventHandlers(study, gene) {
-  console.log('in attachEventHandlers in explore-single')
   // resize listener
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {resizePlots()})

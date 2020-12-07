@@ -16,14 +16,12 @@ function getPlotId(plotIndex, isReference=false) {
 
 /** Resize Plotly scatter plots -- done on window resize  */
 export function resizePlots() {
-  console.log('in resizePlots')
   const numBasePlots = window.SCP.numBasePlots
 
   for (let i = 0; i < numBasePlots; i++) {
     const rawPlot = window.SCP.plots[i]
     const layout = getScatterPlotLayout(rawPlot)
     const target = getPlotId(i)
-    console.log('resizing base')
     Plotly.relayout(target, layout)
   }
 
@@ -33,7 +31,6 @@ export function resizePlots() {
       const target = getPlotId(i, true)
       const rawPlot = window.SCP.plots[i]
       const layout = getScatterPlotLayout(rawPlot)
-      console.log('resizing ref')
       Plotly.relayout(target, layout)
     }
   }
@@ -149,10 +146,11 @@ export function setMarkerColors(data) {
 function calculatePlotRect() {
   const numBasePlots = window.SCP.numBasePlots
 
-  const height = $(window).height() - 250
+  let height = $(window).height() - 250
+  if (window.SCP.plotsHaveReference) {height = height/2 - 10}
 
   // Accounts for expanding "View options" after page load
-  const baseWidth = $('#plots-tab').actual('width')
+  const baseWidth = $('#render-target .tab-content').actual('width')
 
   const gutterPad = 80 // Accounts for horizontal padding
   const width = (baseWidth - gutterPad) / numBasePlots

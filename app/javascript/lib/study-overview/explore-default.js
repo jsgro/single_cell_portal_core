@@ -14,14 +14,13 @@ import {
 } from 'lib/study-overview/view-options'
 
 const baseCamera = {
-  'up': { 'x': 0, 'y': 0, 'z': 1 },
-  'center': { 'x': 0, 'y': 0, 'z': 0 },
-  'eye': { 'x': 1.25, 'y': 1.25, 'z': 1.25 }
+  up: { x: 0, y: 0, z: 1 },
+  center: { x: 0, y: 0, z: 0 },
+  eye: { x: 1.25, y: 1.25, z: 1.25 }
 }
 
 /** Listen for events, and update view accordingly */
 function attachEventHandlers(study) {
-  console.log('in attachEventHandlers for explore-default')
   // resize listener
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {resizePlots()})
