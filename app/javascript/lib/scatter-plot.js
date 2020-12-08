@@ -153,11 +153,14 @@ function calculatePlotRect() {
   let height = $(window).height() - verticalPad - ideogramHeight
   if (window.SCP.plotsHaveReference) {height = height/2 - 10}
 
-  // Accounts for expanding "View options" after page load
+  // Account for expanding "View options" after page load
   const baseWidth = $('#render-target .tab-content').actual('width')
-
   const horizontalPad = 80 // Accounts for empty space to left and right
-  const width = (baseWidth - horizontalPad) / numBasePlots
+  let width = (baseWidth - horizontalPad) / numBasePlots
+
+  // Ensure plots aren't too small
+  if (height < 100) {height = 100}
+  if (width < 100) {width = 100}
 
   return { height, width }
 }
