@@ -1,4 +1,5 @@
 require "integration_test_helper"
+require 'delete_helper'
 
 class DownloadAgreementTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -21,8 +22,7 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
 
   teardown do
     @study = Study.find_by(name: "Download Agreement #{@random_seed}")
-    @study.study_files.map(&:destroy)
-    @study.destroy_and_remove_workspace
+    delete_study_and_ensure_cascade(@study)
   end
 
   test 'should enforce download agreement' do

@@ -167,7 +167,7 @@ export async function fetchCluster(
   }
 
   const params = stringifyQuery(paramObj)
-  const apiUrl = `/studies/${studyAccession}/clusters/${cluster}${params}`
+  const apiUrl = `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
   const [scatter, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
