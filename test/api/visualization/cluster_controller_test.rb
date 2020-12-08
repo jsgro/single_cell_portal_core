@@ -1,5 +1,4 @@
 require 'api_test_helper'
-require 'delete_helper'
 
 class ClusterControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -40,7 +39,6 @@ class ClusterControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    delete_study_and_ensure_cascade(@basic_study)
     @empty_study.destroy
     @user.destroy
   end

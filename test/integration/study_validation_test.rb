@@ -1,7 +1,6 @@
 require "integration_test_helper"
 require 'user_tokens_helper'
 require 'big_query_helper'
-require 'delete_helper'
 
 class StudyValidationTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -18,9 +17,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   teardown do
     reset_user_tokens
     # remove all validation studies
-    Study.where(name: /Validation/).each do |study|
-      delete_study_and_ensure_cascade(study)
-    end
+    Study.where(name: /Validation/).destroy_all
   end
 
   # check that file header/format checks still function properly

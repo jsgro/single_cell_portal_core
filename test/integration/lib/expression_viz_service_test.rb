@@ -1,5 +1,4 @@
 require "test_helper"
-require 'delete_helper'
 
 class ExpressionVizServiceTest < ActiveSupport::TestCase
 
@@ -52,10 +51,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
   end
 
   teardown do
-    studies = Study.any_of({name: 'Basic Viz'},{name: 'Ideogram Study'})
-    studies.each do |study|
-      delete_study_and_ensure_cascade(study)
-    end
+    Study.any_of({name: 'Basic Viz'},{name: 'Ideogram Study'}).destroy_all
     @user.destroy
   end
 

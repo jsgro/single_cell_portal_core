@@ -1,5 +1,4 @@
 require 'test_helper'
-require 'delete_helper'
 
 class ClusterVizServiceTest < ActiveSupport::TestCase
 
@@ -48,7 +47,7 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
   end
 
   teardown do
-    delete_study_and_ensure_cascade(@study)
+    @study.destroy
     @user.destroy
   end
 
