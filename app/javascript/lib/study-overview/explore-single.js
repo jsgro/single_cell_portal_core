@@ -19,6 +19,9 @@ import {
 async function renderSingleGenePlots(study, gene) {
   violinPlot('box-plot', study, gene)
   scatterPlots(study, gene, true)
+
+  window.showRelatedGenesIdeogram()
+
   // var target3 = document.getElementById('reference-plot');
 
   // if error in any of above, show:

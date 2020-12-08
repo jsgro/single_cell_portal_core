@@ -146,14 +146,18 @@ export function setMarkerColors(data) {
 function calculatePlotRect() {
   const numBasePlots = window.SCP.numBasePlots
 
-  let height = $(window).height() - 250
+  const $ideo = $('#_ideogram')
+  const ideogramHeight = $ideo.length ? $ideo.height() : 0
+
+  const verticalPad = 225 // Accounts for page header, search area, nav tabs
+  let height = $(window).height() - verticalPad - ideogramHeight
   if (window.SCP.plotsHaveReference) {height = height/2 - 10}
 
   // Accounts for expanding "View options" after page load
   const baseWidth = $('#render-target .tab-content').actual('width')
 
-  const gutterPad = 80 // Accounts for horizontal padding
-  const width = (baseWidth - gutterPad) / numBasePlots
+  const horizontalPad = 80 // Accounts for empty space to left and right
+  const width = (baseWidth - horizontalPad) / numBasePlots
 
   return { height, width }
 }

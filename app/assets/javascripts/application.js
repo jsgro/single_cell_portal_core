@@ -169,7 +169,6 @@ $(document).on('scpPlotsDidRender', function() {
 });
 
 function restoreExploreMenusState() {
-  console.log('in restoreExploreMenusState')
 
   var leftIsClosed = !$('#search-omnibar-menu-icon').hasClass('open'),
       rightIsClosed = !$('#view-options-nav').parent().hasClass('active');
@@ -1065,12 +1064,6 @@ function gatherFilesByType(fileType) {
         }
     });
     return matchingfiles;
-}
-
-// calculate the current viewport to use for rendering cluster plots
-function calculatePlotViewport(target) {
-    var viewPort = $(window).height();
-    return viewPort - 250; //
 }
 
 // garbage collector to clear the search animation on global gene search (in case no results are found)
