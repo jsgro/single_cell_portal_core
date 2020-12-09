@@ -80,14 +80,14 @@ module Api
             parameter({
               name: :annotation_type,
               in: :query,
-              description: 'Type of annotation. One of “group” or “numeric”.',
+              description: 'Type of annotation. One of "group" or "numeric".',
               type: :string,
               enum: VALID_TYPE_VALUES
             })
             parameter({
               name: :annotation_scope,
               in: :query,
-              description: 'Scope of annotation.  One of “study” or “cluster”.',
+              description: 'Scope of annotation.  One of "study" or "cluster"',
               type: :string,
               enum: VALID_SCOPE_VALUES
             })
@@ -108,8 +108,8 @@ module Api
             key :tags, [
                 'Visualization'
             ]
-            key :summary, 'Get an annotation for a study'
-            key :description, 'Get a single annotation object'
+            key :summary, 'Get cell values for an annotation for a study'
+            key :description, 'Get cell values for an annotation object.  Useful for e.g. dot plots.'
             key :operationId, 'study_annotation_cell_values_path'
             parameter({
               name: :accession,
@@ -128,19 +128,19 @@ module Api
             parameter({
               name: :annotation_type,
               in: :query,
-              description: 'Type of annotation. One of “group” or “numeric”.',
+              description: 'Type of annotation. One of "group" or "numeric".',
               type: :string,
               enum: VALID_TYPE_VALUES
             })
             parameter({
               name: :annotation_scope,
               in: :query,
-              description: 'Scope of annotation.  One of “study” or “cluster”.',
+              description: 'Scope of annotation.  One of "study" or "cluster".',
               type: :string,
               enum: VALID_SCOPE_VALUES
             })
             response 200 do
-              key :description, '2-column tsv of cell names and their values for the requested annotation.  Column headers are NAME (the cell name) and the name of the returned annotation'
+              key :description, '2-column TSV of cell names and their values for the requested annotation.  Column headers are NAME (the cell name) and the name of the returned annotation'
             end
             extend SwaggerResponses::StudyControllerResponses
           end
@@ -164,7 +164,7 @@ module Api
           cluster = nil
           if annot_params[:scope] == 'cluster'
             if params[:cluster].blank?
-              render(json: {error: 'You must specify the cluster for cluster scoped annotations'}, status: 404) and return
+              render(json: {error: 'You must specify the cluster for cluster-scoped annotations'}, status: 404) and return
             end
             cluster = study.cluster_groups.by_name(params[:cluster])
           end

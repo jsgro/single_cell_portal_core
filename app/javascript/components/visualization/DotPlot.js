@@ -14,7 +14,7 @@ export const dotPlotColorScheme = {
 
 /** renders a morpheus powered dotPlot for the given URL paths and annotation */
 export default function DotPlot({ expressionValuesURL, annotationCellValuesURL, annotation }) {
-  const [graphId] = useState(_uniqueId('dotPlot-'))
+  const [graphId] = useState(_uniqueId('dotplot-'))
   useEffect(() => {
     const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
     log('dot-plot:initialize')

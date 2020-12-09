@@ -29,7 +29,12 @@ module Api
             key :description, 'Get the default cluster group and its constituent cluster annotations'
             key :operationId, 'study_clusters_path'
             response 200 do
+              key :type, :array
               key :description, 'Array of all cluster group names for this study'
+              items do
+                key :type, :string
+                key :description, 'Name of cluster'
+              end
             end
             extend SwaggerResponses::StudyControllerResponses
           end
@@ -58,12 +63,12 @@ module Api
             parameter({
               name: :cluster_name,
               in: :path,
-              description: 'Name of cluster group.  Use "_default" to returnt he default cluster',
+              description: 'Name of cluster group.  Use "_default" to return the default cluster',
               required: true,
               type: :string
             })
             response 200 do
-              key :description, 'Cluster visualization, suitable for rendering in plotly'
+              key :description, 'Cluster visualization, suitable for rendering in Plotly'
             end
             extend SwaggerResponses::StudyControllerResponses
           end
@@ -77,9 +82,10 @@ module Api
               render json: {error: 'No default cluster exists'}, status: 404 and return
             end
           else
-            cluster = @study.cluster_groups.find_by(name: params[:cluster_name])
+            cluster_name = params[:cluster_name]
+            cluster = @study.cluster_groups.find_by(name: cluster_name)
             if cluster.nil?
-              render json: {error: "No cluster named #{params[:cluster_name]} could be found"}, status: 404 and return
+              render json: {error: "No cluster named #{cluster_name} could be found"}, status: 404 and return
             end
           end
           viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
