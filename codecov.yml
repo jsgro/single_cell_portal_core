@@ -2,4 +2,4 @@ codecov:
   require_ci_to_pass: no
 comment:
   layout: "reach, diff, files"
-  behavior: new
+  behavior: default
