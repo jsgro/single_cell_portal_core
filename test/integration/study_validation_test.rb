@@ -279,25 +279,31 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     metadata_file.reload
     study.send_to_firecloud(metadata_file)
 
-    puts "Directly seeding BigQuery w/ synthetic data"
-    bq_seeds = File.open(Rails.root.join('db', 'seed', 'bq_seeds.json'))
-    bq_data = JSON.parse bq_seeds.read
-    bq_data.each do |entry|
-      entry['CellID'] = SecureRandom.uuid
-      entry['study_accession'] = study.accession
-      entry['file_id'] = metadata_file.id.to_s
+    begin
+      puts "Directly seeding BigQuery w/ synthetic data"
+      bq_seeds = File.open(Rails.root.join('db', 'seed', 'bq_seeds.json'))
+      bq_data = JSON.parse bq_seeds.read
+      bq_data.each do |entry|
+        entry['CellID'] = SecureRandom.uuid
+        entry['study_accession'] = study.accession
+        entry['file_id'] = metadata_file.id.to_s
+      end
+      puts "Data read, writing to newline-delimited JSON"
+      tmp_filename = SecureRandom.uuid + '.json'
+      tmp_file = File.new(Rails.root.join(tmp_filename), 'w+')
+      tmp_file.write bq_data.map(&:to_json).join("\n")
+      puts "Data assembled, writing to BigQuery"
+      bq_client = BigQueryClient.new.client
+      dataset = bq_client.dataset(CellMetadatum::BIGQUERY_DATASET)
+      table = dataset.table(CellMetadatum::BIGQUERY_TABLE)
+      job = table.load(tmp_file, write: 'append', format: :json)
+      puts "Write complete, closing/removing files"
+      bq_seeds.close
+      tmp_file.close
+      puts "BigQuery seeding completed: #{job}"
+    rescue => e
+      puts "Error encountered when seeding BigQuery: #{e.class.name} - #{e.message}"
     end
-    puts "Data read, writing to newline-delimited JSON"
-    tmp_filename = SecureRandom.uuid + '.json'
-    tmp_file = File.new(Rails.root.join(tmp_filename), 'w+')
-    tmp_file.write bq_data.map(&:to_json).join("\n")
-    puts "Data assembled, writing to BigQuery"
-    table = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).table(CellMetadatum::BIGQUERY_TABLE)
-    job = table.load(tmp_file, write: 'append', format: :json)
-    puts "Write complete, closing/removing files"
-    bq_seeds.close
-    tmp_file.close
-    puts "BigQuery seeding completed: #{job}"
 
     # ensure data is in BQ
     initial_bq_row_count = get_bq_row_count(study)
