@@ -73,7 +73,7 @@ class Study
     end
   end
 
-  has_many :genes, dependent: :delete do
+  has_many :genes do
     def by_name_or_id(term, study_file_ids)
       all_matches = any_of({name: term, :study_file_id.in => study_file_ids},
                             {searchable_name: term.downcase, :study_file_id.in => study_file_ids},
@@ -101,7 +101,7 @@ class Study
     end
   end
 
-  has_many :precomputed_scores, dependent: :delete do
+  has_many :precomputed_scores do
     def by_name(name)
       where(name: name).first
     end
@@ -134,25 +134,25 @@ class Study
     end
   end
 
-  has_many :cluster_groups, dependent: :delete do
+  has_many :cluster_groups do
     def by_name(name)
       find_by(name: name)
     end
   end
 
-  has_many :data_arrays, as: :linear_data, dependent: :delete do
+  has_many :data_arrays, as: :linear_data do
     def by_name_and_type(name, type)
       where(name: name, array_type: type).order_by(&:array_index)
     end
   end
 
-  has_many :cell_metadata, dependent: :delete do
+  has_many :cell_metadata do
     def by_name_and_type(name, type)
       where(name: name, annotation_type: type).first
     end
   end
 
-  has_many :directory_listings, dependent: :delete do
+  has_many :directory_listings do
     def unsynced
       where(sync_status: false).to_a
     end
@@ -179,8 +179,8 @@ class Study
   end
 
   # User annotations are per study
-  has_many :user_annotations, dependent: :delete
-  has_many :user_data_arrays, dependent: :delete
+  has_many :user_annotations
+  has_many :user_data_arrays
 
   # HCA metadata object
   has_many :analysis_metadata, dependent: :delete
@@ -189,7 +189,7 @@ class Study
   has_one :study_accession
 
   # External Resource links
-  has_many :external_resources, as: :resource_links
+  has_many :external_resources, as: :resource_links, dependent: :delete
 
   # Study Detail (full html description)
   has_one :study_detail, dependent: :delete
@@ -665,6 +665,7 @@ class Study
   after_validation  :assign_accession, on: :create
   # before_save       :verify_default_options
   after_create      :make_data_dir, :set_default_participant
+  before_destroy    :ensure_cascade_on_associations
   after_destroy     :remove_data_dir
   before_save       :set_readonly_access
 
@@ -1417,21 +1418,7 @@ class Study
     studies = self.where(queued_for_deletion: true)
     studies.each do |study|
       Rails.logger.info "#{Time.zone.now}: deleting queued study #{study.name}"
-      Gene.where(study_id: study.id).delete_all
-      study.study_files.each do |file|
-        DataArray.where(study_id: study.id, study_file_id: file.id).delete_all
-      end
-      CellMetadatum.where(study_id: study.id).delete_all
-      PrecomputedScore.where(study_id: study.id).delete_all
-      ClusterGroup.where(study_id: study.id).delete_all
-      StudyFile.where(study_id: study.id).delete_all
-      DirectoryListing.where(study_id: study.id).delete_all
-      UserAnnotation.where(study_id: study.id).delete_all
-      UserAnnotationShare.where(study_id: study.id).delete_all
-      UserDataArray.where(study_id: study.id).delete_all
-      AnalysisMetadatum.where(study_id: study.id).delete_all
-      StudyFileBundle.where(study_id: study.id).delete_all
-      # now destroy study to ensure everything is removed
+      # ensure_cascade_on_associations handles deleting parsed data
       study.destroy
       Rails.logger.info "#{Time.zone.now}: delete of #{study.name} completed"
     end
@@ -1632,6 +1619,18 @@ class Study
       self.all.each do |study|
         study.destroy_and_remove_workspace
       end
+    end
+  end
+
+  # helper method that mimics DeleteQueueJob.delete_convention_data
+  # referenced from ensure_cascade_on_associations to prevent orphaned rows in BQ on manual deletes
+  def delete_convention_data
+    if self.metadata_file.present? && self.metadata_file.use_metadata_convention
+      Rails.logger.info "Removing convention data for #{self.accession} from BQ"
+      bq_dataset = ApplicationController.big_query_client.dataset CellMetadatum::BIGQUERY_DATASET
+      bq_dataset.query "DELETE FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE study_accession = '#{self.accession}' AND file_id = '#{self.metadata_file.id}'"
+      Rails.logger.info "BQ cleanup for #{self.accession} completed"
+      SearchFacet.delay.update_all_facet_filters
     end
   end
 
@@ -1958,5 +1957,27 @@ class Study
         errors.add(:firecloud_workspace, 'cannot be changed once initialized.')
       end
     end
+  end
+
+  # delete all records that are associate with this study before invoking :destroy to speed up performance
+  # only pertains to "parsed" data as other records will be cleaned up via callbacks
+  # provides much better performance to study.destroy while ensuring cleanup consistency
+  def ensure_cascade_on_associations
+    # ensure all BQ data is cleaned up first
+    self.delete_convention_data
+    self.study_files.each do |file|
+      DataArray.where(study_id: self.id, study_file_id: file.id).delete_all
+    end
+    Gene.where(study_id: self.id).delete_all
+    CellMetadatum.where(study_id: self.id).delete_all
+    PrecomputedScore.where(study_id: self.id).delete_all
+    ClusterGroup.where(study_id: self.id).delete_all
+    StudyFile.where(study_id: self.id).delete_all
+    DirectoryListing.where(study_id: self.id).delete_all
+    UserAnnotation.where(study_id: self.id).delete_all
+    UserAnnotationShare.where(study_id: self.id).delete_all
+    UserDataArray.where(study_id: self.id).delete_all
+    AnalysisMetadatum.where(study_id: self.id).delete_all
+    StudyFileBundle.where(study_id: self.id).delete_all
   end
 end
