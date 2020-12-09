@@ -1,10 +1,24 @@
 /**
-* @fileoverview Single-gene view in "Explore" tab of Study Overview page
+* @fileoverview Default view in "Explore" tab of Study Overview page
 *
 * The Explore tab has three views:
-*   - Default: Shows "Clusters" and sometimes "Genomes", etc.
-*   - Single-gene: Shows distribution (violin or box) plot and others
-*   - Multiple-genes: Shows dot plot and heatmap
+*
+*   - Default view (this file) has tabs:
+*        1. "Clusters": scatter plots
+*        2. "Genomes": igv.js, if study has BAM files
+
+*   - Single-gene view (explore-single.js) has tabs:
+*        1a. "Distribution": violin (or box) plots if group annotation
+*        1b. "Annotated Scatter": scatter plots if numeric annotation
+*        2. "Scatter": scatter plots for gene-specific and reference expression
+
+*   - Multiple-genes view (in legacy ERB templates) has tabs:
+*       1.  "Dot Plot"
+*       2.  "Heatmap"
+*
+*   If the study has "Spatial groups" (cluster files with spatial positions for
+*   transcriptomics data), then the scatter plots show two sets of side-by-side
+*   plots.  HTML scaffolding for all views exists in legacy ERB templates.
 */
 
 import { fetchExplore } from 'lib/scp-api'
@@ -32,7 +46,8 @@ function attachEventHandlers(study) {
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
     const ideogramFiles = window.SCP.study.inferCNVIdeogramFiles
-      const fileId = $(this).val() // eslint-disable-line
+    const fileId = $(this).val() // eslint-disable-line
+
     if (fileId !== '') {
       const ideogramAnnot = ideogramFiles[fileId]
       window.ideogramInferCnvSettings = ideogramAnnot.ideogram_settings

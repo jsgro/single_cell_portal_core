@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Functions for refactored Study Overview "View Options"
+ *
+ * This module adds event handlers for the main ("precomputed") and other (e.g.
+ * "Distribution", "Scatter") panels of the "View Options" section for the
+ * refactored components of the Explore tab in the Study Overview page.
+ *
+ * When Study Overview migrates to React, we should consolidate this with
+ * functions used for global search in the Home page.
+ */
+
 import { setScatterPlotColorScales } from 'lib/scatter-plot'
 
 /** Get selections for top-level view options */
@@ -117,7 +128,6 @@ function handleOtherMenuChange(callback, callbackArgs) {
 export function handleMenuChange(callback, callbackArgs) {
   handleClusterMenuChange(callback, callbackArgs)
   handleOtherMenuChange(callback, callbackArgs)
-
 
   // listener to redraw expression scatter with new color profile
   $('#colorscale').change(function() {

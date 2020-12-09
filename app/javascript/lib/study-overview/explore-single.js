@@ -2,9 +2,23 @@
 * @fileoverview Single-gene view in "Explore" tab of Study Overview page
 *
 * The Explore tab has three views:
-*   - Default: Shows "Clusters" and sometimes "Genomes", etc.
-*   - Single-gene: Shows distribution (violin or box) plot and others
-*   - Multiple-genes: Shows dot plot and heatmap
+*
+*   - Default view (explore-default.js) has tabs:
+*        1. "Clusters": scatter plots
+*        2. "Genomes": igv.js, if study has BAM files
+
+*   - Single-gene view (this file) has tabs:
+*        1a. "Distribution": violin (or box) plots if group annotation
+*        1b. "Annotated Scatter": scatter plots if numeric annotation
+*        2. "Scatter": scatter plots for gene-specific and reference expression
+
+*   - Multiple-genes view (in legacy ERB templates) has tabs:
+*       1.  "Dot Plot"
+*       2.  "Heatmap"
+*
+*   If the study has "Spatial groups" (cluster files with spatial positions for
+*   transcriptomics data), then the scatter plots show two sets of side-by-side
+*   plots.  HTML scaffolding for all views exists in legacy ERB templates.
 */
 
 import {
@@ -41,29 +55,6 @@ async function renderSingleGenePlots(study, gene) {
   scatterPlots(study, gene, true)
 
   window.showRelatedGenesIdeogram()
-
-  // var target3 = document.getElementById('reference-plot');
-
-  // if error in any of above, show:
-  // showMessageModal(null, "An error has occurred loading the data.<br><br>If the error persists after reloading the page, please contact us at <br><a href='mailto:scp-support@broadinstitute.zendesk.com'>scp-support@broadinstitute.zendesk.com</a>");
-
-  // no need to store spinners in data attribute as entire plot div will be re-rendered
-  // var spin2 = new Spinner(opts).spin(target2);
-  // var spin3 = new Spinner(opts).spin(target3);
-
-  // var urlParams = getRenderUrlParams();
-
-  // var delimiter = "<%= params[:gene] ? "?".html_safe : "&".html_safe %>";
-  // url += delimiter + urlParams;
-  // $.ajax({
-  //     url: url,
-  //     method: 'GET',
-  //     dataType: 'script'
-  // }).fail(function() {
-  //     spin2.stop()
-  //     spin3.stop()
-
-  // });
 }
 
 /** Listen for events, and update view accordingly */

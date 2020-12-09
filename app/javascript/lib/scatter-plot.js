@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Basic functions for scatter plots
+ *
+ * This code is used for scatter plots in the Study Overview page.  Scatter
+ * plots are shown in a multiple of ways in the Explore tab of Study Overview,
+ * when viewing the tab by default, upon searching a single gene, and (soon)
+ * upon searching multiple genes.
+ *
+ * See file overview atop `explore-default.js` for higher-level notes.
+ */
+
 import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
 
@@ -5,7 +16,9 @@ import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { fetchCluster } from 'lib/scp-api'
 import { getMainViewOptions } from 'lib/study-overview/view-options'
 
-/** Resize Plotly scatter plots -- done on window resize  */
+/**
+ * Resize Plotly scatter plots, e.g. on window resize or "View Options" click
+ */
 export function resizeScatterPlots() {
   const plots = window.SCP.scatterPlots
 

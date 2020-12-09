@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Basic functions for violin (and box) plots
+ *
+ * This code is used for violin plots in the Study Overview page.  Violin
+ * plots are shown upon searching a single gene (e.g. "ACE2") in the Explore
+ * tab of Study Overview.
+ */
+
 import Plotly from 'plotly.js-dist'
 
 import { plot, getColorBrewerColor } from 'lib/plot'
