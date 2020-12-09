@@ -1622,8 +1622,9 @@ class Study
     end
   end
 
-  # helper method that mimics DeleteQueueJob.delete_convention_data
+  # helper method to delete all convention data from BQ for this study
   # referenced from ensure_cascade_on_associations to prevent orphaned rows in BQ on manual deletes
+  # as well as DeleteQueueJob
   def delete_convention_data
     if self.metadata_file.present? && self.metadata_file.use_metadata_convention
       Rails.logger.info "Removing convention data for #{self.accession} from BQ"
