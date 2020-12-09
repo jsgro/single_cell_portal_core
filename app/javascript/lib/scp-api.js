@@ -156,17 +156,21 @@ export async function fetchExplore(studyAccession, mock=false) {
  * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
  */
 export async function fetchCluster(
-  studyAccession, cluster, annotation, subsample, consensus, gene=null, mock=false
+  studyAccession, cluster, annotation, subsample, consensus, gene=null,
+  isAnnotatedScatter=null, mock=false
 ) {
   // Digest full annotation name to enable easy validation in API
   const [annotName, annotType, annotScope] = annotation.split('--')
+  // eslint-disable-next-line camelcase
+  const is_annotated_scatter = isAnnotatedScatter
   const paramObj = {
     annotation_name: annotName,
     annotation_type: annotType,
     annotation_scope: annotScope,
     subsample,
     consensus,
-    gene
+    gene,
+    is_annotated_scatter
   }
 
   const params = stringifyQuery(paramObj)

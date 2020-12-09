@@ -8,7 +8,7 @@
 */
 
 import { fetchExplore } from 'lib/scp-api'
-import { scatterPlots, resizePlots, setColorScales } from 'lib/scatter-plot'
+import { scatterPlots, resizeScatterPlots } from 'lib/scatter-plot'
 import {
   addSpatialDropdown, handleMenuChange
 } from 'lib/study-overview/view-options'
@@ -23,15 +23,11 @@ const baseCamera = {
 function attachEventHandlers(study) {
   // resize listener
   $(window).off('resizeEnd') // Clear any existing handler
-  $(window).on('resizeEnd', () => {resizePlots()})
+  $(window).on('resizeEnd', () => {
+    resizeScatterPlots()
+  })
 
   handleMenuChange(scatterPlots, [study])
-
-  // listener to redraw expression scatter with new color profile
-  $('#colorscale').change(function() {
-    const theme = $(this).val() // eslint-disable-line
-    setColorScales(theme)
-  })
 
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
@@ -50,7 +46,7 @@ function attachEventHandlers(study) {
 
 /** Initialize the "Explore" tab in Study Overview */
 export default async function exploreDefault() {
-  window.SCP.plots = []
+  window.SCP.scatterPlots = []
 
   window.SCP.startPendingEvent('user-action:page:view:site-study',
     { speciesList: window.SCP.taxons },

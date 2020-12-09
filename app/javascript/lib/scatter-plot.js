@@ -5,54 +5,27 @@ import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { fetchCluster } from 'lib/scp-api'
 import { getMainViewOptions } from 'lib/study-overview/view-options'
 
-/**
- * Get DOM ID of scatter plot at given index; and account for reference plots
- */
-function getPlotId(plotIndex, isReference=false) {
-  let id = `scatter-plot-${plotIndex}`
-  if (isReference) {id += '-reference'}
-  return id
-}
-
 /** Resize Plotly scatter plots -- done on window resize  */
-export function resizePlots() {
-  const numBasePlots = window.SCP.numBasePlots
+export function resizeScatterPlots() {
+  const plots = window.SCP.scatterPlots
 
-  for (let i = 0; i < numBasePlots; i++) {
-    const rawPlot = window.SCP.plots[i]
+  for (let i = 0; i < plots.length; i++) {
+    const rawPlot = plots[i]
     const layout = getScatterPlotLayout(rawPlot)
-    const target = getPlotId(i)
+    const target = rawPlot.plotId
     Plotly.relayout(target, layout)
-  }
-
-  // Repeat above, but for reference plots
-  if (window.SCP.plotsHaveReference) {
-    for (let i = 0; i < numBasePlots; i++) {
-      const target = getPlotId(i, true)
-      const rawPlot = window.SCP.plots[i]
-      const layout = getScatterPlotLayout(rawPlot)
-      Plotly.relayout(target, layout)
-    }
   }
 }
 
 /** Change Plotly scatter plot color scales */
-export function setColorScales(theme) {
-  const numBasePlots = window.SCP.numBasePlots
+export function setScatterPlotColorScales(theme) {
+  const plots = window.SCP.scatterPlots
 
-  for (let i = 0; i < numBasePlots; i++) {
-    const target = getPlotId(i)
+  for (let i = 0; i < plots.length; i++) {
+    const rawPlot = plots[i]
+    const target = rawPlot.plotId
     const dataUpdate = { 'marker.colorscale': theme }
     Plotly.update(target, dataUpdate)
-  }
-
-  // Repeat above, but for reference plots
-  if (window.SCP.plotsHaveReference) {
-    for (let i = 0; i < numBasePlots; i++) {
-      const target = getPlotId(i, true)
-      const dataUpdate = { 'marker.colorscale': theme }
-      Plotly.update(target, dataUpdate)
-    }
   }
 }
 
@@ -143,20 +116,22 @@ export function setMarkerColors(data) {
 }
 
 /** Get height and width for a to-be-rendered cluster plot */
-function calculatePlotRect() {
-  const numBasePlots = window.SCP.numBasePlots
-
+function calculatePlotRect(numRows, numColumns) {
+  // console.log('numRows')
+  // console.log(numRows)
+  // console.log('numColumns')
+  // console.log(numColumns)
+  // Get height
   const $ideo = $('#_ideogram')
   const ideogramHeight = $ideo.length ? $ideo.height() : 0
-
   const verticalPad = 225 // Accounts for page header, search area, nav tabs
   let height = $(window).height() - verticalPad - ideogramHeight
-  if (window.SCP.plotsHaveReference) {height = height/2 - 10}
+  if (numRows > 1) {height = height/numRows - 10}
 
-  // Account for expanding "View options" after page load
+  // Get width, and account for expanding "View options" after page load
   const baseWidth = $('#render-target .tab-content').actual('width')
   const horizontalPad = 80 // Accounts for empty space to left and right
-  let width = (baseWidth - horizontalPad) / numBasePlots
+  let width = (baseWidth - horizontalPad) / numColumns
 
   // Ensure plots aren't too small
   if (height < 100) {height = 100}
@@ -167,7 +142,8 @@ function calculatePlotRect() {
 
 /** Get layout object with various Plotly scatter plot display parameters */
 function getScatterPlotLayout(rawPlot) {
-  const { height, width } = calculatePlotRect()
+  const { numRows, numColumns } = rawPlot
+  const { height, width } = calculatePlotRect(numRows, numColumns)
   let layout = getBaseLayout(height, width)
 
   let dimensionProps
@@ -193,6 +169,8 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
     data = setMarkerColors(data)
   }
 
+  $(`#${plotId}`).html()
+
   Plotly.newPlot(plotId, data, layout)
 
   if (legendId) {
@@ -201,9 +179,10 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
     )
   }
 
+
   // access actual target div, not jQuery object wrapper for relayout event
-  const clusterPlotDiv = document.getElementById(plotId)
-  clusterPlotDiv.on('plotly_relayout', cameraData => {
+  const scatterPlotDiv = document.getElementById(plotId)
+  scatterPlotDiv.on('plotly_relayout', cameraData => {
     if (typeof cameraData['scene.camera'] !== 'undefined') {
       const newCamera = cameraData['scene.camera']
       $(`#${plotId}`).data('camera', newCamera)
@@ -212,34 +191,49 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
 }
 
 /** Load and draw scatter plot; handles clusters and spatial groups */
-async function scatterPlot(
-  clusterParams, plotId, rowIndex, hasLegend=false
-) {
-  const $plotElement = $(`#${plotId}`)
-  const spinnerTarget = $plotElement[0]
-  const spinner = new Spinner(window.opts).spin(spinnerTarget)
-  // $plotElement.data('spinner', spinner)
+export async function scatterPlot(clusterParams, frame) {
+  // Copy by value; preserves properties (e.g. plotId) across `await`
+  frame = Object.assign({}, frame)
+
+  const { plotId, hasLegend } = frame
+  console.log(plotId)
 
   const legendId = (hasLegend ? `${plotId}-legend` : null)
   const legendHtml = (hasLegend ? `<div id="${legendId}"></div>` : '')
 
-  $(`.multiplot:nth-child(${(rowIndex + 1)}`).append(
+  $(frame.selector).append(
     `<div id="${plotId}" class="plot"></div>
       ${legendHtml}
     </div>`
   )
 
+  // Set default number of rows and columns of plots
+  if (!frame.numRows) {frame.numRows = 1}
+  if (!frame.numColumns) {frame.numColumns = 1}
+
+  const $plotElement = $(`#${plotId}`)
+  const spinnerTarget = $plotElement[0]
+  const spinner = new Spinner(window.opts).spin(spinnerTarget)
+  // $plotElement.data('spinner', spinner)
+
   const { accession, cluster, annotation, subsample, gene } = clusterParams
+  let isAnnotatedScatter = null
+  if (
+    'isAnnotatedScatter' in clusterParams && clusterParams.isAnnotatedScatter
+  ) {
+    isAnnotatedScatter = true
+  }
 
   $('#search_annotation').val(annotation)
   $('#gene_set_annotation').val(annotation)
 
-  const rawPlot = await fetchCluster(
-    accession, cluster, annotation, subsample, null, gene
+  let rawPlot = await fetchCluster(
+    accession, cluster, annotation, subsample, null, gene, isAnnotatedScatter
   )
+  rawPlot = Object.assign(rawPlot, frame)
 
   // Consider putting into a dictionary instead of a list
-  window.SCP.plots.push(rawPlot)
+  window.SCP.scatterPlots.push(rawPlot)
 
   // render annotation toggler picker if needed
   if (rawPlot.annotParams.type == 'numeric') {
@@ -271,26 +265,34 @@ async function scatterPlot(
  * @param {Boolean} hasReference Whether each plot has a paired reference
  */
 export async function scatterPlots(study, gene=null, hasReference=false) {
-  window.SCP.numBasePlots = (study.spatialGroupNames.length > 0) ? 2 : 1
-  window.SCP.plotsHaveReference = hasReference
-
   const $container = $('#scatter-plots .panel-body')
   $container.html('<div class="row multiplot"></div>')
   if (hasReference) {$container.append('<div class="row multiplot"></div>')}
 
   const accession = study.accession
 
-  for (let plotIndex = 0; plotIndex < window.SCP.numBasePlots; plotIndex++) {
+  // Plot UI properties that are distinct from fetched scatter plot data
+  const frame = {
+    numRows: (hasReference ? 2 : 1),
+    numColumns: (study.spatialGroupNames.length > 0) ? 2 : 1
+  }
+
+  for (let plotIndex = 0; plotIndex < frame.numColumns; plotIndex++) {
     const options = getMainViewOptions(plotIndex)
     const clusterParams = Object.assign({ accession, gene }, options)
-    const plotId = getPlotId(plotIndex)
 
-    scatterPlot(clusterParams, plotId, 0, true)
+    frame.selector = `.multiplot:nth-child(1)`
+    frame.hasLegend = true
+    frame.plotId = `scatter-plot-${plotIndex}`
+
+    scatterPlot(clusterParams, frame)
 
     if (hasReference) {
       clusterParams.gene = null
-      const refPlotId = getPlotId(plotIndex, true)
-      scatterPlot(clusterParams, refPlotId, 1)
+      frame.selector = `.multiplot:nth-child(2)`
+      frame.hasLegend = false
+      frame.plotId += '-reference'
+      scatterPlot(clusterParams, frame)
     }
   }
 }

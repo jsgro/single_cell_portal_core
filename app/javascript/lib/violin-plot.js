@@ -1,3 +1,5 @@
+import Plotly from 'plotly.js-dist'
+
 import { plot, getColorBrewerColor } from 'lib/plot'
 import { getMainViewOptions } from 'lib/study-overview/view-options'
 import { fetchExpressionViolin } from 'lib/scp-api'
@@ -31,6 +33,31 @@ function arrayMax(arr) {
     }
   }
   return max
+}
+
+/** Get Plotly layout for violin plot */
+function getViolinLayout(title, expressionLabel) {
+  return {
+    title,
+    // Force axis labels, including number strings, to be treated as
+    // categories.  See Python docs (same generic API as JavaScript):
+    // https://plotly.com/python/axes/#forcing-an-axis-to-be-categorical
+    // Relevant Plotly JS example:
+    // https://plotly.com/javascript/axes/#categorical-axes
+    xaxis: {
+      type: 'category'
+    },
+    yaxis: {
+      zeroline: true,
+      showline: true,
+      title: expressionLabel
+    },
+    margin: {
+      pad: 10,
+      b: 100
+    },
+    autosize: true
+  }
 }
 
 /**
@@ -108,27 +135,7 @@ export default function getViolinProps(
     }
   }
 
-  const layout = {
-    title,
-    // Force axis labels, including number strings, to be treated as
-    // categories.  See Python docs (same generic API as JavaScript):
-    // https://plotly.com/python/axes/#forcing-an-axis-to-be-categorical
-    // Relevant Plotly JS example:
-    // https://plotly.com/javascript/axes/#categorical-axes
-    xaxis: {
-      type: 'category'
-    },
-    yaxis: {
-      zeroline: true,
-      showline: true,
-      title: expressionLabel
-    },
-    margin: {
-      pad: 10,
-      b: 100
-    },
-    autosize: true
-  }
+  const layout = getViolinLayout(title, expressionLabel)
 
   return [data, layout]
 }
@@ -159,18 +166,33 @@ export function renderViolinPlot(target, results) {
   }
 }
 
+/** Resize Plotly scatter plots -- done in Study Overview  */
+export function resizeViolinPlot() {
+  const plots = window.SCP.violinPlots
+  for (let i = 0; i < plots.length; i++) {
+    const plot = plots[i]
+    const title = plot.rendered_cluster
+    const expressionLabel = plot.y_axis_title
+    const layout = getViolinLayout(title, expressionLabel)
+    Plotly.relayout(plot.plotId, layout)
+  }
+}
+
 /** Load expression data and draw violin (or box) plot */
-export async function violinPlot(target, study, gene) {
-  const targetDom = document.getElementById(target)
-  const spinner = new Spinner(window.opts).spin(targetDom)
+export async function violinPlot(plotId, study, gene) {
+  const plotDom = document.getElementById(plotId)
+  const spinner = new Spinner(window.opts).spin(plotDom)
 
   const { cluster, annotation, subsample } = getMainViewOptions()
 
-  const violinData = await fetchExpressionViolin(
+  const rawPlot = await fetchExpressionViolin(
     study.accession, gene, cluster, annotation, subsample
   )
+  rawPlot.plotId = plotId
+  window.SCP.violinPlots.push(rawPlot)
 
-  renderViolinPlot(target, violinData)
+
+  renderViolinPlot(plotId, rawPlot)
 
   spinner.stop()
 }

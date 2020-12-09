@@ -59,6 +59,12 @@ module Api
             description: 'Statistic to use for consensus, e.g. "mean".  Omit parameter if not applying consensus.',
             type: :string,
             enum: VALID_CONSENSUS_VALUES
+          },
+          {
+            name: :is_annotated_scatter,
+            in: :query,
+            description: 'Whether plot is an "Annotated Scatter", i.e. an annotation-based data array scatter plot.',
+            type: :string
           }]
 
         cluster_response_docs = [
@@ -150,13 +156,23 @@ module Api
 
           colorscale = url_params[:colorscale].blank? ? 'Reds' : url_params[:colorscale]
 
+          is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
+
           gene_name = url_params[:gene]
           if gene_name.blank?
+            # For "Clusters" tab in default view of Explore tab
             coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
           else
+            # For single-gene view of Explore tab
             gene = study.genes.by_name_or_id(gene_name, study.expression_matrix_files.map(&:id))
-            y_axis_title = ExpressionVizService.load_expression_axis_title(study)
-            coordinates = ExpressionVizService.load_expression_data_array_points(study, gene, cluster, annotation, subsample, y_axis_title, colorscale)
+            title = ExpressionVizService.load_expression_axis_title(study)
+            if is_annotated_scatter
+              # For "Annotated scatter" tab, shown in first tab for numeric annotations
+              coordinates = ExpressionVizService.load_annotation_based_data_array_scatter(study, gene, cluster, annotation, subsample, title)
+            else
+              # For "Scatter" tab
+              coordinates = ExpressionVizService.load_expression_data_array_points(study, gene, cluster, annotation, subsample, title, colorscale)
+            end
           end
 
           plot_data = ClusterVizService.transform_coordinates(coordinates, study, cluster, annotation)

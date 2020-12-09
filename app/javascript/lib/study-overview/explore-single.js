@@ -8,16 +8,36 @@
 */
 
 import {
-  scatterPlots, resizePlots, setColorScales
+  scatterPlot, scatterPlots, resizeScatterPlots
 } from 'lib/scatter-plot'
-import { violinPlot } from 'lib/violin-plot'
+import { violinPlot, resizeViolinPlot } from 'lib/violin-plot'
 import {
-  addSpatialDropdown, handleMenuChange
+  addSpatialDropdown, getMainViewOptions, getAnnotParams, handleMenuChange
 } from 'lib/study-overview/view-options'
 
 /** Render violin and scatter plots for the Explore tab's single-gene view */
 async function renderSingleGenePlots(study, gene) {
-  violinPlot('box-plot', study, gene)
+  window.SCP.scatterPlots = []
+  window.SCP.violinPlots = []
+
+  $('#box-plot').html()
+  $('#scatter-plots .panel-body').html()
+
+  // Draw violin (or box) plot if showing group annotation, or
+  // draw scatter plot if showing numeric annotation
+  const annotType = getAnnotParams().type
+  if (annotType === 'group') {
+    violinPlot('box-plot', study, gene)
+  } else {
+    $('#distribution-link').html('Annotated Scatter')
+    const accession = study.accession
+    const options = getMainViewOptions(0)
+    const context = { accession, gene, isAnnotatedScatter: true }
+    const clusterParams = Object.assign(context, options)
+    const frame = { selector: '#box-plot', plotId: 'scatter-plot-annotated' }
+    scatterPlot(clusterParams, frame)
+  }
+
   scatterPlots(study, gene, true)
 
   window.showRelatedGenesIdeogram()
@@ -50,15 +70,16 @@ async function renderSingleGenePlots(study, gene) {
 function attachEventHandlers(study, gene) {
   // resize listener
   $(window).off('resizeEnd') // Clear any existing handler
-  $(window).on('resizeEnd', () => {resizePlots()})
+  $(window).on('resizeEnd', () => {
+    resizeScatterPlots()
+    resizeViolinPlot()
+  })
 
-  handleMenuChange(scatterPlots, [study, gene])
+  handleMenuChange(renderSingleGenePlots, [study, gene])
 }
 
 /** Initialize single-gene view for "Explore" tab in Study Overview */
 export default async function exploreSingle() {
-  window.SCP.plots = []
-
   // As set in exploreDefault
   const study = window.SCP.study
   const gene = window.SCP.gene

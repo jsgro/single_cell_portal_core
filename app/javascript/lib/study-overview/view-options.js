@@ -1,3 +1,5 @@
+import { setScatterPlotColorScales } from 'lib/scatter-plot'
+
 /** Get selections for top-level view options */
 export function getMainViewOptions(plotIndex) {
   let cluster
@@ -11,6 +13,13 @@ export function getMainViewOptions(plotIndex) {
   const subsample = $('#subsample').val()
 
   return { cluster, annotation, subsample }
+}
+
+/** Get name, type, and scope of currently-selected annotation */
+export function getAnnotParams() {
+  const [name, type, scope] = $('#annotation').val().split('--')
+  console.log(name, type, scope)
+  return { name, type, scope }
 }
 
 /** Get HTML for dropdown menu for spatial files */
@@ -63,7 +72,7 @@ export function updateCluster(
 function handleClusterMenuChange(callback, callbackArgs) {
   $(document).off('change', '#cluster')
   $(document).on('change', '#cluster', function() {
-      const cluster = $(this).val() // eslint-disable-line
+    const cluster = $(this).val() // eslint-disable-line
     const subsample = $('#subsample').val()
     // keep track for search purposes
     $('#search_cluster').val(cluster)
@@ -109,4 +118,11 @@ function handleOtherMenuChange(callback, callbackArgs) {
 export function handleMenuChange(callback, callbackArgs) {
   handleClusterMenuChange(callback, callbackArgs)
   handleOtherMenuChange(callback, callbackArgs)
+
+
+  // listener to redraw expression scatter with new color profile
+  $('#colorscale').change(function() {
+  const theme = $(this).val() // eslint-disable-line
+    setScatterPlotColorScales(theme)
+  })
 }
