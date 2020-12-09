@@ -385,10 +385,8 @@ class SiteController < ApplicationController
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
     @y_axis_title = ExpressionVizService.load_expression_axis_title(@study)
 
-    @gene = params[:gene]
-
     if @study.expressed_taxon_names.length > 1
-      @gene_taxons = @study.infer_taxons(@gene)
+      @gene_taxons = @study.infer_taxons(params[:gene])
     else
       @gene_taxons = @study.expressed_taxon_names
     end

@@ -18,7 +18,6 @@ export function getMainViewOptions(plotIndex) {
 /** Get name, type, and scope of currently-selected annotation */
 export function getAnnotParams() {
   const [name, type, scope] = $('#annotation').val().split('--')
-  console.log(name, type, scope)
   return { name, type, scope }
 }
 

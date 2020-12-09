@@ -190,8 +190,6 @@ function toggleViewOptionsPanel() {
   $('.row-offcanvas > .nav-tabs, .row-offcanvas > .tab-content')
     .toggleClass('contracted-for-sidebar');
 
-  console.log('in toggleViewOptionsPanel')
-
   // Re-render Plotly to use available space
   $(window).trigger('resizeEnd');
 }
@@ -218,7 +216,6 @@ function toggleSearchPanel() {
 
 // Toggle "View Options" menu panel in Explore tab
 $(document).on('click', '#view-option-link', function(e) {
-  console.log('in ViewOptionsClick')
   e.preventDefault();
   toggleViewOptionsPanel();
   exploreMenusToggleState.right *= -1;
@@ -732,7 +729,6 @@ $(window).resize(function() {
     if(this.resizeTO) clearTimeout(this.resizeTO);
     this.resizeTO = setTimeout(function() {
         $(this).trigger('resizeEnd');
-        console.log('resizeEnd');
     }, 100);
 });
 
