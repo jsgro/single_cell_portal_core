@@ -67,21 +67,11 @@ module Api
               key :'$ref', :Study
             end
           end
-          response 401 do
-            key :description, ApiBaseController.unauthorized
-          end
+
           response 403 do
             key :description, ApiBaseController.forbidden('edit Study')
           end
-          response 404 do
-            key :description, ApiBaseController.not_found(Study)
-          end
-          response 410 do
-            key :description, ApiBaseController.resource_gone
-          end
-          response 406 do
-            key :description, ApiBaseController.not_acceptable
-          end
+          extend SwaggerResponses::StudyControllerResponses
         end
       end
 
@@ -113,21 +103,10 @@ module Api
               key :'$ref', :Study
             end
           end
-          response 401 do
-            key :description, ApiBaseController.unauthorized
-          end
           response 403 do
             key :description, ApiBaseController.forbidden('edit Study')
           end
-          response 404 do
-            key :description, ApiBaseController.not_found(Study)
-          end
-          response 406 do
-            key :description, ApiBaseController.not_acceptable
-          end
-          response 410 do
-            key :description, ApiBaseController.resource_gone
-          end
+          extend SwaggerResponses::StudyControllerResponses
           extend SwaggerResponses::ValidationFailureResponse
         end
       end
@@ -176,21 +155,10 @@ module Api
               key :'$ref', :Study
             end
           end
-          response 401 do
-            key :description, ApiBaseController.unauthorized
-          end
           response 403 do
             key :description, ApiBaseController.forbidden('edit Study')
           end
-          response 404 do
-            key :description, ApiBaseController.not_found(Study)
-          end
-          response 410 do
-            key :description, ApiBaseController.resource_gone
-          end
-          response 406 do
-            key :description, ApiBaseController.not_acceptable
-          end
+          extend SwaggerResponses::StudyControllerResponses
           extend SwaggerResponses::ValidationFailureResponse
         end
       end
@@ -234,20 +202,9 @@ module Api
           response 204 do
             key :description, 'Successful Study deletion'
           end
-          response 401 do
-            key :description, ApiBaseController.unauthorized
-          end
+          extend SwaggerResponses::StudyControllerResponses
           response 403 do
             key :description, ApiBaseController.forbidden('delete Study')
-          end
-          response 404 do
-            key :description, ApiBaseController.not_found(Study)
-          end
-          response 410 do
-            key :description, ApiBaseController.resource_gone
-          end
-          response 406 do
-            key :description, ApiBaseController.not_acceptable
           end
         end
       end
@@ -362,21 +319,10 @@ module Api
               end
             end
           end
-          response 401 do
-            key :description, ApiBaseController.unauthorized
-          end
           response 403 do
             key :description, ApiBaseController.forbidden('edit Study')
           end
-          response 404 do
-            key :description, ApiBaseController.not_found(Study)
-          end
-          response 410 do
-            key :description, ApiBaseController.resource_gone
-          end
-          response 406 do
-            key :description, ApiBaseController.not_acceptable
-          end
+          extend SwaggerResponses::StudyControllerResponses
           response 500 do
             key :description, 'Server error when attempting to synchronize FireCloud workspace or access GCS objects'
           end

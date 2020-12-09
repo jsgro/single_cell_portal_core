@@ -19,55 +19,6 @@ module Api
         before_action :check_api_cache!
         after_action :write_api_cache!
 
-        # shared
-        cluster_param_docs = [{
-            name: :accession,
-            in: :path,
-            description: 'Accession of study',
-            required: true,
-            type: :string
-          },
-          {
-            name: :annotation_name,
-            in: :path,
-            description: 'Name of annotation, as defined in cluster file',
-            type: :string
-          },
-          {
-            name: :annotation_type,
-            in: :query,
-            description: 'Type of annotation.  One of “group” or “numeric”.',
-            type: :string,
-            enum: VALID_TYPE_VALUES
-          },
-          {
-            name: :annotation_scope,
-            in: :query,
-            description: 'Scope of annotation.   One of “study” or “cluster”.',
-            type: :string,
-            enum: VALID_SCOPE_VALUES
-          },
-          {
-            name: :subsample,
-            in: :query,
-            description: 'Number of cells to use as subsample threshold.  Omit parameter if not subsampling (i.e. if threshold is “all cells”).',
-            type: :string
-          },
-          {
-            name: :consensus,
-            in: :query,
-            description: 'Statistic to use for consensus, e.g. "mean".  Omit parameter if not applying consensus.',
-            type: :string,
-            enum: VALID_CONSENSUS_VALUES
-          }]
-
-        cluster_response_docs = [
-          {code: 200, description: 'Cluster visualization json object'},
-          {code: 401, description: ApiBaseController.unauthorized},
-          {code: 403, description: ApiBaseController.forbidden('view study')},
-          {code: 404, description: ApiBaseController.not_found(Study)},
-          {code: 406, description: ApiBaseController.not_acceptable},
-        ]
 
         swagger_path '/studies/{accession}/clusters' do
           operation :get do
@@ -77,8 +28,10 @@ module Api
             key :summary, 'Get the default cluster and its sub-clusters for a study'
             key :description, 'Get the default cluster group and its constituent cluster annotations'
             key :operationId, 'study_clusters_path'
-            cluster_param_docs.each { |doc| parameter(doc) }
-            cluster_response_docs.each { |doc| response doc[:code], doc }
+            response 200 do
+              key :description, 'Array of all cluster group names for this study'
+            end
+            extend SwaggerResponses::StudyControllerResponses
           end
         end
 
@@ -92,9 +45,16 @@ module Api
             key :tags, [
                 'Visualization'
             ]
-            key :summary, 'Get a cluster and its sub-clusters for a study'
+            key :summary, 'Get a cluster\'s visualization data for a study'
             key :description, 'Get the cluster group and its constituent cluster annotations.'
             key :operationId, 'study_cluster_path'
+            parameter({
+              name: :accession,
+              in: :path,
+              description: 'Accession of study',
+              required: true,
+              type: :string
+            })
             parameter({
               name: :cluster_name,
               in: :path,
@@ -102,8 +62,10 @@ module Api
               required: true,
               type: :string
             })
-            cluster_param_docs.each { |doc| parameter(doc) }
-            cluster_response_docs.each { |doc| response doc[:code], doc }
+            response 200 do
+              key :description, 'Cluster visualization, suitable for rendering in plotly'
+            end
+            extend SwaggerResponses::StudyControllerResponses
           end
         end
 
@@ -125,18 +87,6 @@ module Api
             render json: {error: 'Annotation could not be found'}, status: 404 and return
           end
           render json: viz_data
-        end
-
-        def annotations_list
-          cluster = @study.cluster_groups.find_by(name: params[:cluster_name])
-          if (!cluster)
-            cluster = @study.default_cluster
-          end
-          render json: ClusterVizService.load_cluster_group_annotations(study, cluster, current_api_user)
-        end
-
-        def self.get_selected_annotation(study, cluster, url_params)
-
         end
 
         # packages up a bunch of calls to rendering service endpoints for a response object

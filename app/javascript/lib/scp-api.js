@@ -12,7 +12,7 @@ import * as queryString from 'query-string'
 
 import { getAccessToken } from 'providers/UserProvider'
 import {
-  logFilterSearch, logSearch, logDownloadAuthorization, mapFiltersForLogging
+  logSearch, logDownloadAuthorization, mapFiltersForLogging
 } from './scp-api-metrics'
 
 // If true, returns mock data for all API responses.  Only for dev.
@@ -122,8 +122,8 @@ export function setMockOrigin(origin) {
 
 /** Constructs and encodes URL parameters; omits those with no value */
 function stringifyQuery(paramObj) {
-  const stringified = queryString.stringify(paramObj, {skipEmptyString: true})
-  return `?${stringified}`;
+  const stringified = queryString.stringify(paramObj, { skipEmptyString: true })
+  return `?${stringified}`
 }
 
 /**
@@ -133,10 +133,24 @@ function stringifyQuery(paramObj) {
 */
 export async function fetchExplore(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/explore`
-  const [exploreInit, perfTime] =
+  const [exploreInit] =
     await scpApi(apiUrl, defaultInit(), mock, false)
 
   return exploreInit
+}
+
+/**
+ * Get all study-wide and cluster annotations for a study
+ *
+ * see definition at: app/controllers/api/v1/visualization/explore_controller.rb
+ *
+ * @param {String} studyAccession Study accession
+ * @param {Boolean} mock
+ */
+export async function fetchClusterOptions(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/explore/cluster_options`
+  const [values] = await scpApi(apiUrl, defaultInit(), mock, false)
+  return values
 }
 
 /**
@@ -174,7 +188,7 @@ export async function fetchCluster(
 
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  const [scatter, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+  const [scatter] = await scpApi(apiUrl, defaultInit(), mock, false)
 
   return scatter
 }
@@ -204,13 +218,13 @@ export async function fetchExpressionViolin(
     annotation_scope: annotationScope,
     annotation_type: annotationType,
     annotation_name: annotationName,
-    subsample: subsample,
-    gene: gene
+    subsample,
+    gene
   }
   const apiUrl = `/studies/${studyAccession}/expression/violin${stringifyQuery(paramObj)}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  const [violin, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+  const [violin] = await scpApi(apiUrl, defaultInit(), mock, false)
 
   return violin
 }
@@ -226,11 +240,11 @@ export async function fetchExpressionViolin(
  */
 export async function fetchAnnotations(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/annotations`
-  const [values, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+  const [values] = await scpApi(apiUrl, defaultInit(), mock, false)
   return values
 }
 
- /**
+/**
  * Get a single annotation for a study
  *
  * see definition at: app/controllers/api/v1/visualization/annotations_controller.rb
@@ -246,7 +260,7 @@ export async function fetchAnnotation(studyAccession, clusterName, annotationNam
   }
   annotationName = annotationName ? annotationName : '_default'
   const apiUrl = `/studies/${studyAccession}/annotations/${annotationName}${stringifyQuery(paramObj)}`
-  const [values, perfTime] = await scpApi(apiUrl, defaultInit(), mock)
+  const [values] = await scpApi(apiUrl, defaultInit(), mock)
   return values
 }
 
@@ -255,11 +269,10 @@ export function getAnnotationCellValuesURL(studyAccession, clusterName, annotati
   const paramObj = {
     cluster: clusterName,
     annotation_scope: annotationScope,
-    annotation_type: annotationType,
-    value_format: 'cellValues'
+    annotation_type: annotationType
   }
   annotationName = annotationName ? annotationName : '_default'
-  const apiUrl = `/studies/${studyAccession}/annotations/${annotationName}${stringifyQuery(paramObj)}`
+  const apiUrl = `/studies/${studyAccession}/annotations/${annotationName}/cell_values${stringifyQuery(paramObj)}`
   return getFullUrl(apiUrl)
 }
 

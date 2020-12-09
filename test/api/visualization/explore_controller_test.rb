@@ -1,58 +1,87 @@
 require 'api_test_helper'
-
+require 'test_instrumentor'
 class ExploreControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include Requests::JsonHelpers
   include Requests::HttpHelpers
+  include Minitest::Hooks
+  include TestInstrumentor
 
-  setup do
+  before(:all) do
     @user = FactoryBot.create(:api_user)
     OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
                                                                            :provider => 'google_oauth2',
                                                                            :uid => '123545',
                                                                            :email => 'testing.user@gmail.com'
                                                                        })
-    sign_in @user
-    @user.update_last_access_at! # ensure user is marked as active
-
-    @basic_study = FactoryBot.create(:detached_study, name: 'Basic Explore')
+    @basic_study = FactoryBot.create(:detached_study,
+                                     name: 'Basic Explore',
+                                     public: false,
+                                     user: @user)
     @basic_study_cluster_file = FactoryBot.create(:cluster_file,
                                                   name: 'clusterA.txt',
                                                   file_type: 'Cluster',
                                                   study: @basic_study,
-                                                  cell_input: {
-                                                    x: [1, 4 ,6],
-                                                    y: [7, 5, 3],
-                                                    cells: ['A', 'B', 'C']
-                                                  })
+                                                  annotation_input: [{name: 'foo', type: 'group', values: ['bar', 'bar', 'baz']}])
+
     @spatial_study_cluster_file = FactoryBot.create(:cluster_file,
                                                     name: 'spatialA.txt',
                                                     file_type: 'Cluster',
                                                     study: @basic_study,
-                                                    is_spatial: true,
-                                                    cell_input: {
-                                                      x: [0, 1, 3],
-                                                      y: [8, 6, 4],
-                                                      cells: ['A', 'B', 'C']
-                                                    })
+                                                    is_spatial: true)
+
+    @empty_study = FactoryBot.create(:detached_study,
+                                     name: 'Empty study')
+    @user2 =  FactoryBot.create(:api_user)
+
   end
 
-  teardown do
+  after(:all) do
     @basic_study.destroy
+    @empty_study.destroy
     @user.destroy
+    @user2.destroy
+  end
+
+  test 'should enforce view permissions' do
+    sign_in_and_update @user2
+    execute_http_request(:get, api_v1_study_explore_path(@basic_study), user: @user2)
+    assert_equal 403, response.status
+
+    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study), user: @user2)
+    assert_equal 403, response.status
   end
 
   test 'should get basic study visualization data' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
-    assert_equal 3, @basic_study.default_cluster.data_arrays.count
-
+    sign_in_and_update @user
     execute_http_request(:get, api_v1_study_explore_path(@basic_study))
     assert_response :success
 
     assert_equal ['clusterA.txt'], json['clusterGroupNames']
     assert_equal ['spatialA.txt'], json['spatialGroupNames']
 
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+    execute_http_request(:get, api_v1_study_explore_path(@empty_study))
+    assert_equal [], json['clusterGroupNames']
+  end
+
+  test 'should get annotation listings' do
+    sign_in_and_update @user
+    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study))
+    assert_response :success
+
+    assert_equal 'clusterA.txt', json['default_cluster']
+    expected_annotations = [{"name"=>"foo", "type"=>"group", "values"=>["bar", "baz"], "scope"=>"cluster", "cluster_name"=>"clusterA.txt"}]
+    assert_equal expected_annotations, json['annotations']
+    assert_equal({"clusterA.txt"=>[], "spatialA.txt"=>[]}, json['subsample_thresholds'])
+
+    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@empty_study))
+    assert_equal [], json['annotations']
+  end
+
+
+  test 'should handle invalid study id' do
+    sign_in_and_update @user
+    execute_http_request(:get, api_v1_study_explore_cluster_options_path('SCP1234567'))
+    assert_equal 404, response.status
   end
 end

@@ -37,7 +37,7 @@ function parseAndPlot(results, graphElementId) {
 export default function StudyViolinPlot({ study, gene }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [graphElementId, setGraphElementId] = useState(_uniqueId('study-violin-'))
+  const [graphElementId] = useState(_uniqueId('study-violin-'))
   const [annotationList, setAnnotationList] = useState(null)
 
   function handleControlUpdate(clusterParams) {
@@ -56,12 +56,12 @@ export default function StudyViolinPlot({ study, gene }) {
       setAnnotationList(results.annotation_list)
     } else {
       results = await fetchExpressionViolin(study.accession,
-                                            gene,
-                                            clusterParams.cluster,
-                                            clusterParams.annotation.name,
-                                            clusterParams.annotation.scope,
-                                            clusterParams.annotation.type,
-                                            clusterParams.subsample)
+        gene,
+        clusterParams.cluster,
+        clusterParams.annotation.name,
+        clusterParams.annotation.scope,
+        clusterParams.annotation.type,
+        clusterParams.subsample)
     }
     setIsLoaded(true)
     setIsLoading(false)
@@ -95,9 +95,9 @@ export default function StudyViolinPlot({ study, gene }) {
       </div>
       <div className="col-md-2 graph-controls">
         <ClusterControls studyAccession={study.accession}
-                         onChange={handleControlUpdate}
-                         fetchAnnotationList={false}
-                         preloadedAnnotationList={annotationList}/>
+          onChange={handleControlUpdate}
+          fetchAnnotationList={false}
+          preloadedAnnotationList={annotationList}/>
       </div>
     </div>
   )

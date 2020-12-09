@@ -1,4 +1,6 @@
 # factory for users objects.
+# Rough performance timing in local (non-dockerized) development suggests that crating a user
+# using this factory takes ~0.1 seconds
 FactoryBot.define do
   factory :user do
     transient do

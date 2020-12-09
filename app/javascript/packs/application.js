@@ -81,6 +81,8 @@ window.SCP.formatTerms = formatTerms
 window.SCP.API = ScpApi
 window.SCP.initializeExplore = initializeExplore
 
+
+
 /*
  * For down the road, when we use ES6 imports in SCP JS app code
  * export {$, jQuery, ClassicEditor, Spinner, morpheus, igv, Ideogram};

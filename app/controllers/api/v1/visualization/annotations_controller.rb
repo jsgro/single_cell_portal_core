@@ -11,7 +11,6 @@ module Api
 
         VALID_SCOPE_VALUES = ['study', 'cluster']
         VALID_TYPE_VALUES = ['group', 'numeric']
-        VALID_CONSENSUS_VALUES = ['mean', 'median']
 
         before_action :set_current_api_user!
         before_action :set_study
@@ -19,60 +18,41 @@ module Api
         # before_action :check_api_cache!
         # after_action :write_api_cache!
 
-        # shared
-        annot_param_docs = [{
-            name: :accession,
-            in: :path,
-            description: 'Accession of study',
-            required: true,
-            type: :string
-          },
-          {
-            name: :annotation_name,
-            in: :path,
-            description: 'Name of annotation',
-            type: :string
-          },
-          {
-            name: :annotation_type,
-            in: :query,
-            description: 'Type of annotation.  One of “group” or “numeric”.',
-            type: :string,
-            enum: VALID_TYPE_VALUES
-          },
-          {
-            name: :annotation_scope,
-            in: :query,
-            description: 'Scope of annotation.   One of “study” or “cluster”.',
-            type: :string,
-            enum: VALID_SCOPE_VALUES
-          }]
-
-        annot_response_docs = [
-          {code: 200, description: 'Annotation json object'},
-          {code: 401, description: ApiBaseController.unauthorized},
-          {code: 403, description: ApiBaseController.forbidden('view study')},
-          {code: 404, description: ApiBaseController.not_found(Study)},
-          {code: 406, description: ApiBaseController.not_acceptable},
-        ]
+        annotation_description_doc = 'Object with name (String), values (Array or uique values), type (String), scope (String), and cluster_name (string, if applicable)'
 
         swagger_path '/studies/{accession}/annotations' do
           operation :get do
             key :tags, [
                 'Visualization'
             ]
-            key :summary, 'Get the default annotation for a study'
-            key :description, 'Get the default annotation'
+            key :summary, 'Get all annotations for the study'
+            key :description, 'Get all annotations for the study, with name, values, type, scope, and cluster_name if applicable'
             key :operationId, 'study_annotations_path'
-            annot_param_docs.each { |doc| parameter(doc) }
-            annot_response_docs.each { |doc| response doc[:code], doc }
+            parameter({
+              name: :accession,
+              in: :path,
+              description: 'Study accession number (e.g. SCPXXX)',
+              required: true,
+              type: :string
+            })
+            response 200 do
+              key :description, 'Array of Annotation objects'
+              schema do
+                key :type, :array
+                key :title, 'Array'
+                items do
+                  key :title, 'Annotation'
+                  key :description, annotation_description_doc
+                end
+              end
+            end
+            extend SwaggerResponses::StudyControllerResponses
           end
         end
 
-        # get all annotations for the study, listed by cluster/type
+        #
         def index
-          # create a hash of subsample options with cluster names as keys
-          render json: ClusterVizService.get_study_annotation_options(@study, current_api_user)
+          render json: ClusterVizService.available_annotations(@study, nil, current_api_user)
         end
 
         swagger_path '/studies/{accession}/annotations/{annotation_name}' do
@@ -81,8 +61,15 @@ module Api
                 'Visualization'
             ]
             key :summary, 'Get an annotation for a study'
-            key :description, 'Get the annotation s'
-            key :operationId, 'study_cluster_path'
+            key :description, 'Get a single annotation object'
+            key :operationId, 'study_annotation_path'
+            parameter({
+              name: :accession,
+              in: :path,
+              description: 'Study accession number (e.g. SCPXXX)',
+              required: true,
+              type: :string
+            })
             parameter({
               name: :annotation_name,
               in: :path,
@@ -90,34 +77,102 @@ module Api
               required: true,
               type: :string
             })
-            annot_param_docs.each { |doc| parameter(doc) }
-            annot_response_docs.each { |doc| response doc[:code], doc }
+            parameter({
+              name: :annotation_type,
+              in: :query,
+              description: 'Type of annotation. One of “group” or “numeric”.',
+              type: :string,
+              enum: VALID_TYPE_VALUES
+            })
+            parameter({
+              name: :annotation_scope,
+              in: :query,
+              description: 'Scope of annotation.  One of “study” or “cluster”.',
+              type: :string,
+              enum: VALID_SCOPE_VALUES
+            })
+            response 200 do
+              key :description, annotation_description_doc
+            end
+            extend SwaggerResponses::StudyControllerResponses
           end
         end
 
         def show
+          annotation = self.class.get_selected_annotation(@study, params)
+          render json: annotation
+        end
+
+        swagger_path '/studies/{accession}/annotations/{annotation_name}/cell_values' do
+          operation :get do
+            key :tags, [
+                'Visualization'
+            ]
+            key :summary, 'Get an annotation for a study'
+            key :description, 'Get a single annotation object'
+            key :operationId, 'study_annotation_cell_values_path'
+            parameter({
+              name: :accession,
+              in: :path,
+              description: 'Study accession number (e.g. SCPXXX)',
+              required: true,
+              type: :string
+            })
+            parameter({
+              name: :annotation_name,
+              in: :path,
+              description: 'Name of annotation',
+              required: true,
+              type: :string
+            })
+            parameter({
+              name: :annotation_type,
+              in: :query,
+              description: 'Type of annotation. One of “group” or “numeric”.',
+              type: :string,
+              enum: VALID_TYPE_VALUES
+            })
+            parameter({
+              name: :annotation_scope,
+              in: :query,
+              description: 'Scope of annotation.  One of “study” or “cluster”.',
+              type: :string,
+              enum: VALID_SCOPE_VALUES
+            })
+            response 200 do
+              key :description, '2-column tsv of cell names and their values for the requested annotation.  Column headers are NAME (the cell name) and the name of the returned annotation'
+            end
+            extend SwaggerResponses::StudyControllerResponses
+          end
+        end
+
+        def cell_values
+          annotation = self.class.get_selected_annotation(@study, params)
+          render plain: ClusterVizService.annotation_cell_values_tsv(@study, @study.default_cluster, annotation)
+        end
+
+        # parses the url params to identify the selected cluster
+        def self.get_selected_annotation(study, params)
           annot_params = {
             name: params[:annotation_name].blank? ? nil : params[:annotation_name],
             type: params[:annotation_type].blank? ? nil : params[:annotation_type],
             scope: params[:annotation_scope].blank? ? nil : params[:annotation_scope]
           }
+          if annot_params[:name] == '_default'
+            annot_params[:name] = nil
+          end
           cluster = nil
           if annot_params[:scope] == 'cluster'
-            if params[:cluster].empty?
-              render json: {error: 'You must specify the cluster for cluster scoped annotations'}, status: 404
+            if params[:cluster].blank?
+              render(json: {error: 'You must specify the cluster for cluster scoped annotations'}, status: 404) and return
             end
-            cluster = @study.cluster_groups.by_name(params[:cluster])
+            cluster = study.cluster_groups.by_name(params[:cluster])
           end
-          annotation = ExpressionVizService.get_selected_annotation(@study,
-                                                                    cluster,
-                                                                    annot_params[:name],
-                                                                    annot_params[:type],
-                                                                    annot_params[:scope])
-          if params[:value_format] == 'cellValues'
-            render plain: ClusterVizService.annotation_cell_values_tsv(@study, @study.default_cluster, annotation)
-          else
-            render json: annotation
-          end
+          ExpressionVizService.get_selected_annotation(study,
+                                                       cluster,
+                                                       annot_params[:name],
+                                                       annot_params[:type],
+                                                       annot_params[:scope])
         end
       end
     end

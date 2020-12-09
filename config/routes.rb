@@ -37,18 +37,22 @@ Rails.application.routes.draw do
           member do
             post 'sync', to: 'studies#sync_study'
           end
-
           get 'explore', to: 'visualization/explore#show'
+          get 'explore/cluster_options', to: 'visualization/explore#cluster_options'
+
           resources :expression, controller: 'visualization/expression', only: [:show], param: :data_type
           resources :clusters, controller: 'visualization/clusters',
                                only: [:show, :index],
                                param: :cluster_name,
-                               constraints: { cluster_name: /[^\/]+/ } do
-          end # needed to allow '.' in cluster names
+                               constraints: { cluster_name: /[^\/]+/ } # needed to allow '.' in cluster names
           resources :annotations, controller: 'visualization/annotations',
                                only: [:show, :index],
                                param: :annotation_name,
-                               constraints: { annotation_name: /[^\/]+/ } # needed to allow '.' in annotation names
+                               constraints: { annotation_name: /[^\/]+/ } do # needed to allow '.' in annotation names
+            member do
+              get 'cell_values', to: 'visualization/annotations#cell_values'
+            end
+          end
 
         end
         resource :current_user, only: [:update], controller: 'current_user'

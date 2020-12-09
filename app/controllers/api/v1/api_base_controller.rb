@@ -19,6 +19,7 @@ module Api
       # this is needed to get stack traces of view errors on the console in development
       # otherwise, e.g. errors in study_search_results_objects.rb would just be swallowed and returned as 500
       rescue_from StandardError do |exception|
+        byebug
         ErrorTracker.report_exception(exception, current_api_user, params.to_unsafe_hash)
         logger.error ([exception.message] + exception.backtrace).join($/)
         if Rails.env.production?
@@ -75,6 +76,24 @@ module Api
                   end
                 end
               end
+            end
+          end
+        end
+        # default responses for API endpoints that relate to a single study
+        # (e.g. those under the api/v1/studies/ path)
+        module StudyControllerResponses
+          def self.extended(base)
+            base.response 401 do
+              key :description, ApiBaseController.unauthorized
+            end
+            base.response 404 do
+              key :description, ApiBaseController.not_found(Study)
+            end
+            base.response 406 do
+              key :description, ApiBaseController.not_acceptable
+            end
+            base.response 410 do
+              key :description, ApiBaseController.resource_gone
             end
           end
         end

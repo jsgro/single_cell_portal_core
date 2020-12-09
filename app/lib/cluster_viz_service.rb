@@ -35,7 +35,7 @@ class ClusterVizService
       study.cluster_groups.map {|cluster| [cluster.name, ClusterVizService.subsampling_options(cluster)] }
     ]
     {
-      default_cluster: study.default_cluster.name,
+      default_cluster: study.default_cluster&.name,
       default_annotation: ExpressionVizService.get_selected_annotation(study, nil, nil, nil, nil),
       annotations: ClusterVizService.available_annotations(study, nil, user),
       subsample_thresholds: subsample_thresholds

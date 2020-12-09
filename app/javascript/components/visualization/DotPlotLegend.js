@@ -2,7 +2,7 @@ import React from 'react'
 import { dotPlotColorScheme } from './DotPlot'
 import _uniqueId from 'lodash/uniqueId'
 
-
+/** renders an svg legend for a dotplot with color and size indicators */
 export default function DotPlotLegend() {
   // Sarah N. asked for a note about non-zero in the legend, but it's unclear
   // if Morpheus supports non-zero.  It might, per the Collapse properties
@@ -44,7 +44,7 @@ export default function DotPlotLegend() {
             })
           }
         </linearGradient>
-        <rect fill={ `url(#${gradientId})` } width={colorBarWidth} height="14" rx="10"/>
+        <rect fill={`url(#${gradientId})`} width={colorBarWidth} height="14" rx="10"/>
         <text x="0" y={numberYPos}>min</text>
         <text x={ colorBarWidth - 25 } y={numberYPos}>max</text>
 

@@ -1,40 +1,44 @@
-import React, {useState, useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 import _uniq from 'lodash/uniq'
 import Select from 'react-select'
 
-import { fetchAnnotations } from 'lib/scp-api'
+import { fetchClusterOptions } from 'lib/scp-api'
 
-
+/** takes the server response and returns subsample options suitable for react-select */
 function getSubsampleOptions(annotationList, clusterName) {
-  let subsampleOptions = [{label: 'All Cells', value: ''}]
+  let subsampleOptions = [{ label: 'All Cells', value: '' }]
   if (clusterName) {
     let clusterSubsamples = annotationList.subsample_thresholds[clusterName]
     clusterSubsamples = clusterSubsamples ? clusterSubsamples : []
     subsampleOptions = subsampleOptions.concat(clusterSubsamples.map(num => {
-      return {label: `${num}`, value: num}
+      return { label: `${num}`, value: num }
     }))
   }
   return subsampleOptions
 }
 
+/** takes the server response and returns cluster options suitable for react-select */
 function getClusterOptions(annotationList) {
   return _uniq(annotationList.annotations
-           .map((annot) => annot.cluster_name)
-           .filter(name => !!name))
+    .map((annot) => annot.cluster_name)
+    .filter(name => !!name))
+    .map(name => {return { label: name, value: name}})
 }
 
+/** takes the server response and returns annotation options suitable for react-select */
 function getAnnotationOptions(annotationList, clusterName) {
   return [{
       label: 'Study Wide',
       options: annotationList.annotations
-                              .filter(annot => annot.scope == 'study')
+        .filter(annot => annot.scope == 'study')
     }, {
       label: 'Cluster-Based',
       options: annotationList.annotations
-                             .filter(annot => annot.cluster_name == clusterName)
+        .filter(annot => annot.cluster_name == clusterName)
   }]
 }
 
+/** takes the server response and returns subsample default subsample for the cluster */
 function getDefaultSubsampleForCluster(annotationList, clusterName) {
   const clusterSubsamples = annotationList.subsample_thresholds[clusterName]
   if (!clusterSubsamples || clusterSubsamples.length === 0) {
@@ -43,10 +47,11 @@ function getDefaultSubsampleForCluster(annotationList, clusterName) {
   return Math.min(clusterSubsamples)
 }
 
+/** renders cluster, annotation, and (optionally) subsample controls for a study */
 export default function ClusterControls({studyAccession, onChange, showSubsample, preloadedAnnotationList, fetchAnnotationList}) {
   fetchAnnotationList = fetchAnnotationList !== false
   const [annotationList, setAnnotationList] =
-    useState({default_cluster: null, default_annotation: null, annotations: []})
+    useState({ default_cluster: null, default_annotation: null, annotations: [] })
   const [renderParams, setRenderParams] = useState({
     userUpdated: false,
     cluster: '',
@@ -81,7 +86,7 @@ export default function ClusterControls({studyAccession, onChange, showSubsample
     // only update if this component is responsible for loading annotation data from the server
     // or if the preloadedList has been specified already
     if (fetchAnnotationList) {
-      fetchAnnotations(studyAccession).then(newAnnotationList => update(newAnnotationList))
+      fetchClusterOptions(studyAccession).then(newAnnotationList => update(newAnnotationList))
     } else {
       if (preloadedAnnotationList) {
         update(preloadedAnnotationList)
@@ -100,27 +105,25 @@ export default function ClusterControls({studyAccession, onChange, showSubsample
     <div>
       <div className="form-group">
         <label>Load cluster</label>
-        <Select
-          value={ {label: renderParams.cluster, value: renderParams.cluster} }
-          options={ clusterOptions.map(name => {return { label: name, value: name}}) }
+        <Select options={clusterOptions}
+          value={{ label: renderParams.cluster, value: renderParams.cluster }}
           onChange={ cluster => setRenderParams({
             userUpdated: true,
             annotation: annotationList.annotations
-                                      .filter(annot => annot.cluster_name == cluster.value)[0],
+              .filter(annot => annot.cluster_name == cluster.value)[0],
             cluster: cluster.value,
             subsample: getDefaultSubsampleForCluster(cluster.value)
           })}
-          styles={ customSelectStyle }
+          styles={customSelectStyle}
         />
       </div>
       <div className="form-group">
         <label>Select annotation</label>
-        <Select
-          value={ renderParams.annotation }
-          options={ annotationOptions }
-          getOptionLabel={ annotation => annotation.name }
-          getOptionValue={ annotation => annotation.scope + annotation.name + annotation.cluster_name }
-          onChange={ annotation => setRenderParams({
+        <Select options={annotationOptions}
+          value={renderParams.annotation}
+          getOptionLabel={annotation => annotation.name}
+          getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
+          onChange={annotation => setRenderParams({
             userUpdated: true,
             annotation: annotation,
             cluster: renderParams.cluster,
@@ -130,17 +133,16 @@ export default function ClusterControls({studyAccession, onChange, showSubsample
       </div>
       <div className="form-group">
         <label>Subsampling threshold</label>
-        <Select
-          value={ {label: renderParams.subsample == '' ? 'All Cells' : renderParams.subsample,
-                   value: renderParams.subsample} }
-          options={ subsampleOptions }
-          onChange={ subsample => setRenderParams({
+        <Select options={subsampleOptions}
+          value={{ label: renderParams.subsample == '' ? 'All Cells' : renderParams.subsample,
+                   value: renderParams.subsample }}
+          onChange={subsample => setRenderParams({
             userUpdated: true,
             annotation: renderParams.annotation,
             cluster: renderParams.cluster,
             subsample: subsample.value
           })}
-          styles={ customSelectStyle }/>
+          styles={customSelectStyle}/>
       </div>
     </div>
   )

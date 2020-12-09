@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 
 import { log, startPendingEvent } from 'lib/metrics-api'
@@ -12,8 +12,9 @@ export const dotPlotColorScheme = {
   values: [0, 0.5, 1]
 }
 
-export default function DotPlot({expressionValuesURL, annotationCellValuesURL, annotation}) {
-  const [graphId, setGraphId] = useState(_uniqueId('dotPlot-'))
+/** renders a morpheus powered dotPlot for the given URL paths and annotation */
+export default function DotPlot({ expressionValuesURL, annotationCellValuesURL, annotation }) {
+  const [graphId] = useState(_uniqueId('dotPlot-'))
   useEffect(() => {
     const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
     log('dot-plot:initialize')
@@ -34,7 +35,6 @@ export default function DotPlot({expressionValuesURL, annotationCellValuesURL, a
     </div>
   )
 }
-
 
 /** Render Morpheus dot plot */
 function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotHeight=450) {
@@ -63,6 +63,22 @@ function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotH
     menu: null,
     colorScheme: {
       scalingMode: 'relative'
+    },
+    focus: null,
+    // We implement our own trivial tab manager as it seems to be the only way
+    // (after 2+ hours of digging) to prevent morpheus auto-scrolling
+    // to the heatmap once it's rendered
+    tabManager: {
+      add: (options) => {
+        $(target).empty()
+        $(target).append(options.$el)
+        return {id: $(target).attr('id'), $panel: $(target)}
+      },
+      setTabTitle: () => {},
+      setActiveTab: () => {},
+      getWidth: () => $(target).width(),
+      getHeight: () => $(target).height(),
+      getTabCount: () => 1
     },
     tools
   }
@@ -113,7 +129,7 @@ function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotH
     // Calling % 27 will always return to the beginning of colorBrewerSet
     // once we use all 27 values
     $(sortedAnnots).each((index, annot) => {
-      annotColorModel[annotation.name][annot] = colorBrewerSet[index % 27]
+      annotColorModel[annotation.name][annot] = window.colorBrewerSet[index % 27]
     })
     config.columnColorModel = annotColorModel
   }
@@ -121,5 +137,5 @@ function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotH
   config.colorScheme = dotPlotColorScheme
 
   // Instantiate dot plot and embed in DOM element
-  let dotPlot = new window.morpheus.HeatMap(config)
+  new window.morpheus.HeatMap(config)
 }
