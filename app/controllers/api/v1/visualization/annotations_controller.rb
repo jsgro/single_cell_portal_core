@@ -18,7 +18,7 @@ module Api
         before_action :check_api_cache!
         after_action :write_api_cache!
 
-        annotation_description_doc = 'Object with name (String), values (Array or uique values), type (String), scope (String), and cluster_name (string, if applicable)'
+        annotation_description_doc = 'Object with name (String), values (Array of unique values), type (String), scope (String), and cluster_name (string, if applicable)'
 
         swagger_path '/studies/{accession}/annotations' do
           operation :get do
