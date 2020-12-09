@@ -1,5 +1,7 @@
 require 'api_test_helper'
 require 'test_instrumentor'
+require 'delete_helper'
+
 class ClustersControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include Requests::JsonHelpers
@@ -40,11 +42,15 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
 
     @empty_study = FactoryBot.create(:detached_study, name: 'Empty Cluster Study')
     @user2 =  FactoryBot.create(:api_user)
+    # even though this study is only used in one test, create it here so teardown
+    # can be properly managed
+    @slash_study = FactoryBot.create(:detached_study, name: 'Cluster Slash Study')
   end
 
   after(:all) do
-    @basic_study.destroy
-    @empty_study.destroy
+    delete_study_and_ensure_cascade(@basic_study)
+    delete_study_and_ensure_cascade(@empty_study)
+    delete_study_and_ensure_cascade(@slash_study)
     @user.destroy
     @user2.destroy
   end
@@ -75,5 +81,41 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
     assert_equal false, json['is3D']
     dog_data = json['data'].find{|d| d['name'] == 'dog (2 points)'}
     assert_equal [1, 6], dog_data['x']
+  end
+
+  test 'should load clusters with slashes in name' do
+    cluster_with_slash = FactoryBot.create(:cluster_file,
+                                           name: 'data/cluster_with_slash.txt',
+                                           study: @slash_study,
+                                           cell_input: {
+                                             x: [1, 2 , 3, 4],
+                                             y: [5, 6, 7, 8],
+                                             cells: %w(A B C D)
+                                           },
+                                           annotation_input: [{name: 'category', type: 'group', values: ['bar', 'bar', 'baz', 'bar']}])
+
+    # slash must be URL encoded with %2F, and URL constructed manually as the path helper cannot resolve cluster_name param
+    # with a slash due to the route constraint of {:cluster_name=>/[^\/]+/}; using route helper api_v1_study_cluster_path()
+    # with the params of cluster_name: 'data/cluster_with_slash.txt' or cluster_name: 'data%2Fcluster_with_slash' does not work
+    cluster_name = 'data%2Fcluster_with_slash.txt'
+    basepath = "/single_cell/api/v1/studies/#{@slash_study.accession}/clusters/#{cluster_name}"
+    query_string = '?annotation_name=category&annotation_type=group&annotation_scope=cluster'
+    url = basepath + query_string
+    execute_http_request(:get, url)
+    assert_response :success
+    assert_equal 4, json['numPoints']
+    expected_annotations = ["bar (3 points)", "baz (1 points)"]
+    loaded_annotations = json['data'].map {|d| d['name'] }
+    assert_equal expected_annotations, loaded_annotations
+
+    # assert that non-encoded cluster names do not load correct cluster
+    # using path helper here results in cluster_name not being decoded properly by clusters_controller.rb
+    # and is interpreted literally as data%2Fcluster_with_slash.txt, rather than data/cluster_with_slash.txt
+    execute_http_request(:get, api_v1_study_cluster_path(@slash_study.accession, cluster_name,
+                                                         annotation_name: 'category', annotation_type: 'group',
+                                                         annotation_scope: 'cluster'))
+    assert_response :not_found
+    expected_error = {"error"=>"No cluster named data%2Fcluster_with_slash.txt could be found"}
+    assert_equal expected_error, json
   end
 end

@@ -181,11 +181,11 @@ export async function fetchCluster(
   }
 
   const params = stringifyQuery(paramObj)
+
   if (!cluster) {
     cluster = '_default'
   }
-  const apiUrl = `/studies/${studyAccession}/clusters/${cluster}${params}`
-
+  const apiUrl = `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
   const [scatter] = await scpApi(apiUrl, defaultInit(), mock, false)
@@ -259,7 +259,7 @@ export async function fetchAnnotation(studyAccession, clusterName, annotationNam
     annotation_type: annotationType
   }
   annotationName = annotationName ? annotationName : '_default'
-  const apiUrl = `/studies/${studyAccession}/annotations/${annotationName}${stringifyQuery(paramObj)}`
+  const apiUrl = `/studies/${studyAccession}/annotations/${encodeURIComponent(annotationName)}${stringifyQuery(paramObj)}`
   const [values] = await scpApi(apiUrl, defaultInit(), mock)
   return values
 }
@@ -272,7 +272,7 @@ export function getAnnotationCellValuesURL(studyAccession, clusterName, annotati
     annotation_type: annotationType
   }
   annotationName = annotationName ? annotationName : '_default'
-  const apiUrl = `/studies/${studyAccession}/annotations/${annotationName}/cell_values${stringifyQuery(paramObj)}`
+  const apiUrl = `/studies/${studyAccession}/annotations/${encodeURIComponent(annotationName)}/cell_values${stringifyQuery(paramObj)}`
   return getFullUrl(apiUrl)
 }
 

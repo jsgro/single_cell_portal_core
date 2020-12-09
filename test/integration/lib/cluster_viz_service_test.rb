@@ -1,4 +1,5 @@
 require 'test_helper'
+require 'delete_helper'
 
 class ClusterVizServiceTest < ActiveSupport::TestCase
 
@@ -47,10 +48,7 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
   end
 
   teardown do
-    StudyFile.where(study_id: @study.id).destroy_all
-    DataArray.where(study_id: @study.id).destroy_all
-    ClusterGroup.where(study_id: @study.id).destroy_all
-    @study.destroy
+    delete_study_and_ensure_cascade(@study)
     @user.destroy
   end
 

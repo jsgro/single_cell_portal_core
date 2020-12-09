@@ -98,7 +98,12 @@ function calculatePlotRect() {
   const numPlots = window.SCP.numPlots
 
   const height = $(window).height() - 250
-  const width = ($('#plots-tab').width() - 80) / numPlots
+
+  // Accounts for expanding "View options" after page load
+  const baseWidth = $('#plots-tab').actual('width')
+
+  const gutterPad = 80 // Accounts for horizontal padding
+  const width = (baseWidth - gutterPad) / numPlots
 
   return { height, width }
 }
@@ -111,12 +116,22 @@ function resizePlots() {
   for (let i = 0; i < numPlots; i++) {
     const rawPlot = window.SCP.plots[i]
     const layout = getScatterPlotLayout(rawPlot)
-    const target = `cluster-plot-${i + 1}`
+    const target = `cluster-plot-${i}`
 
     Plotly.relayout(target, layout)
   }
 }
 
+/** Change Plotly scatter plot color scales */
+function setColorScales(theme) {
+  const numPlots = window.SCP.numPlots
+
+  for (let i = 0; i < numPlots; i++) {
+    const target = `cluster-plot-${i}`
+    const dataUpdate = { 'marker.colorscale': theme }
+    Plotly.update(target, dataUpdate)
+  }
+}
 /** Set colors for group-based annotations */
 export function setMarkerColors(data) {
   return data.map((trace, i) => {
@@ -126,27 +141,9 @@ export function setMarkerColors(data) {
 }
 
 
-/** Renders Plotly scatter plot for "Clusters" tab */
-function renderScatterPlot(target, rawPlot) {
+/** Renders a Plotly scatter plot for "Clusters" tab */
+function renderScatterPlot(rawPlot, plotId, legendId) {
   let { data } = rawPlot
-
-  window.SCP.scatterCount += 1
-  const scatterCount = window.SCP.scatterCount
-
-  const plotId = `cluster-plot-${scatterCount}`
-
-  // TODO (SCP-2881): Ensure margin when floating left for side-by-side plots
-  // $(target).append(`
-  //   <div class="row" style="float: left">
-  //     <div id="${plotId}"></div>
-  //     <div id="cluster-figure-legend"></div>
-  //   </div>`)
-
-  $(target).append(`
-    <div class="row">
-      <div id="${plotId}"></div>
-      <div id="cluster-figure-legend"></div>
-    </div>`)
 
   const layout = getScatterPlotLayout(rawPlot)
 
@@ -156,20 +153,9 @@ function renderScatterPlot(target, rawPlot) {
 
   Plotly.newPlot(plotId, data, layout)
 
-  // listener to redraw expression scatter with new color profile
-  $('#colorscale').off('change')
-  $('#colorscale').change(function() {
-    const theme = $(this).val() // eslint-disable-line
-    data[0].marker.colorscale = theme
-    console.log(`setting colorscale to ${theme}`)
-
-    $('#search_colorscale').val(theme)
-    Plotly.update(plotId, data, layout)
-  })
-
-  const description =
+  $(`#${legendId}`).html(
     `<p class="text-center help-block">${rawPlot.description}</p>`
-  $('#cluster-figure-legend').html(description)
+  )
 
   // access actual target div, not jQuery object wrapper for relayout event
   const clusterPlotDiv = document.getElementById(plotId)
@@ -179,35 +165,39 @@ function renderScatterPlot(target, rawPlot) {
       $(`#${plotId}`).data('camera', newCamera)
     }
   })
-
-  window.SCP.scatterPlotLayout = layout
 }
 
-/** Fetch and draw scatter plot for default Explore tab view */
-async function drawScatterPlot() {
-  const spinnerTarget = $('#plots')[0]
-  const spinner = new Spinner(window.opts).spin(spinnerTarget)
-  $('#plots').data('spinner', spinner)
+/** draws scatter plot */
+async function drawScatterPlot(accession, cluster, plotIndex) {
+  // Consider avoiding parallel indexes like this in React refactor
+  const plotId = `cluster-plot-${plotIndex}`
+  const legendId = `cluster-legend-${plotIndex}`
 
-  const cluster = $('#cluster').val()
+  $('#plots .panel-body').append(`
+    <div class="row dual-plot">
+      <div id="${plotId}"></div>
+      <div id="${legendId}"></div>
+    </div>`)
+
+  const $plotElement = $(`#${plotId}`)
+  const spinnerTarget = $plotElement[0]
+  const spinner = new Spinner(window.opts).spin(spinnerTarget)
+  $plotElement.data('spinner', spinner)
+
   const annotation = $('#annotation').val()
   const subsample = $('#subsample').val()
 
+  $('#search_annotation').val(annotation)
+  $('#gene_set_annotation').val(annotation)
+
   const rawPlot = await fetchCluster(
-    window.SCP.study.accession, cluster, annotation, subsample
+    accession, cluster, annotation, subsample
   )
 
   window.SCP.cluster = rawPlot
 
   // Consider putting into a dictionary instead of a list
   window.SCP.plots.push(rawPlot)
-
-  // TODO (SCP-2857): Remove hard-coding when UI for selecting n-many cluster
-  // + spatial plots is something we can develop against.
-  window.SCP.numPlots = 1
-
-  // Incremented upon drawing scatter plot; enables unique plot IDs
-  window.SCP.scatterCount = 0
 
   // render annotation toggler picker if needed
   if (rawPlot.annotParams.type == 'numeric') {
@@ -226,16 +216,29 @@ async function drawScatterPlot() {
     // })
   }
 
-  const target = '#plots .panel-body'
-
   // Duplicate calls are merely for proof-of-concept, showing we can
   // render plots side-by-side
-  renderScatterPlot(target, rawPlot)
+  renderScatterPlot(rawPlot, plotId, legendId)
 
-  $('#plots').data('spinner').stop()
+  $plotElement.data('spinner').stop()
+  $plotElement.find('.spinner').remove()
+}
 
-  $('#search_annotation').val(annotation)
-  $('#gene_set_annotation').val(annotation)
+/** Fetch and draw scatter plot for default Explore tab view */
+async function drawScatterPlots(study) {
+  let cluster
+
+  window.SCP.numPlots = (study.spatialGroupNames.length > 0) ? 2 : 1
+
+  for (let plotIndex = 0; plotIndex < window.SCP.numPlots; plotIndex++) {
+    if (plotIndex === 0) {
+      cluster = $('#cluster').val()
+    } else {
+      cluster = $('#spatial-group').val()
+    }
+
+    drawScatterPlot(study.accession, cluster, plotIndex)
+  }
 }
 
 /** Get layout object with various Plotly scatter plot display parameters */
@@ -261,7 +264,7 @@ function getScatterPlotLayout(rawPlot) {
  */
 
 /** Listen for events, and update view accordingly */
-function attachEventHandlers() {
+function attachEventHandlers(study) {
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
     const ideogramFiles = window.SCP.study.inferCNVIdeogramFiles
@@ -286,7 +289,7 @@ function attachEventHandlers() {
     // keep track for search purposes
     $('#search_annotation').val(an)
     $('#gene_set_annotation').val(an)
-    drawScatterPlot()
+    drawScatterPlots(study)
   })
 
   $('#subsample').change(function() {
@@ -294,16 +297,43 @@ function attachEventHandlers() {
     const subsample = $(this).val() // eslint-disable-line
     $('#search_subsample').val(subsample)
     $('#gene_set_subsample').val(subsample)
-    drawScatterPlot()
+    drawScatterPlots(study)
   })
 
   $('#cluster').change(function() {
     $('#cluster-plot').data('rendered', false)
     const newCluster = $(this).val() // eslint-disable-line
+    const subsample = $('#subsample').val()
     // keep track for search purposes
     $('#search_cluster').val(newCluster)
     $('#gene_set_cluster').val(newCluster)
-    drawScatterPlot()
+    const url =
+    `${window.location.pathname}/get_new_annotations` +
+    `?cluster=${encodeURIComponent(newCluster)}&` +
+    `subsample=${encodeURIComponent(subsample)}`
+    $.ajax({
+      url,
+      dataType: 'script',
+      complete(jqXHR, textStatus) {
+        window.renderWithNewCluster(textStatus, drawScatterPlot)
+      }
+    })
+  })
+
+  $(document).on('change', '#spatial-group', function() {
+    $('#cluster-plot').data('rendered', false)
+    const newSpatial = $(this).val() // eslint-disable-line
+    // keep track for search purposes
+    $('#search_spatial-group').val(newSpatial)
+    $('#gene_set_spatial-group').val(newSpatial)
+    drawScatterPlots(study)
+  })
+
+  // listener to redraw expression scatter with new color profile
+  $('#colorscale').change(function() {
+    const theme = $(this).val() // eslint-disable-line
+    // $('#search_colorscale').val(theme)
+    setColorScales(theme)
   })
 }
 
@@ -312,7 +342,7 @@ function getSpatialDropdown(study) {
   const options = study.spatialGroupNames.map(name => {
     return `<option value="${name}">${name}</option>`
   })
-  const domId = 'spatial-groups'
+  const domId = 'spatial-group'
   const select =
     `<select name="${domId}" id="${domId}" class="form-control">${
       options
@@ -359,14 +389,14 @@ export default async function initializeExplore() {
   }
   $('#cluster-plot').data('camera', baseCamera)
 
-  attachEventHandlers()
-
   const accession = window.SCP.studyAccession
   const study = await fetchExplore(accession)
 
   window.SCP.study = study
   window.SCP.study.accession = accession
   window.SCP.taxons = window.SCP.study.taxonNames
+
+  attachEventHandlers(study)
 
   if (study.cluster) {
     // set default subsample option of 10K (if subsampled) or all cells
@@ -377,7 +407,7 @@ export default async function initializeExplore() {
 
     addSpatialDropdown(study)
 
-    drawScatterPlot()
+    drawScatterPlots(study)
   }
 
   if (study.inferCNVIdeogramFiles) {
