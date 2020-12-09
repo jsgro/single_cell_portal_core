@@ -66,7 +66,7 @@ class DeleteQueueJob < Struct.new(:object)
         end
         remove_file_from_bundle
       when 'Metadata'
-        study.delete_convention_data
+        delete_convention_data(study: study, metadata_file: object)
 
         # clean up all subsampled data, as it is now invalid and will be regenerated
         # once a user adds another metadata file
@@ -157,5 +157,14 @@ class DeleteQueueJob < Struct.new(:object)
   def delete_subsampled_data(cluster)
     cluster.find_subsampled_data_arrays.delete_all
     cluster.update(subsampled: false)
+  end
+
+  # delete convention data from BQ if a user deletes a convention metadata file, or a study that contains convention data
+  def delete_convention_data(study:, metadata_file:)
+    bq_dataset = ApplicationController.big_query_client.dataset CellMetadatum::BIGQUERY_DATASET
+    if metadata_file.use_metadata_convention
+      bq_dataset.query "DELETE FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE study_accession = '#{study.accession}' AND file_id = '#{metadata_file.id}'"
+      SearchFacet.delay.update_all_facet_filters
+    end
   end
 end
