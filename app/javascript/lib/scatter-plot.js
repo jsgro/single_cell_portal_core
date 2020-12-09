@@ -179,7 +179,6 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
     )
   }
 
-
   // access actual target div, not jQuery object wrapper for relayout event
   const scatterPlotDiv = document.getElementById(plotId)
   scatterPlotDiv.on('plotly_relayout', cameraData => {
@@ -190,7 +189,13 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
   })
 }
 
-/** Load and draw scatter plot; handles clusters and spatial groups */
+/**
+ * Load and draw scatter plot.  Handles clusters and spatial groups, numeric
+ * and group annotations.
+ *
+ * @param {Object} clusterParams Parameters for `/clusters` plot API endpoint
+ * @param {Object} frame Plot UI properties not from plot API data
+ */
 export async function scatterPlot(clusterParams, frame) {
   // Copy by value; preserves properties (e.g. plotId) across `await`
   frame = Object.assign({}, frame)
