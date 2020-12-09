@@ -182,8 +182,6 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
     data = setMarkerColors(data)
   }
 
-  $(`#${plotId}`).html()
-
   Plotly.newPlot(plotId, data, layout)
 
   if (legendId) {

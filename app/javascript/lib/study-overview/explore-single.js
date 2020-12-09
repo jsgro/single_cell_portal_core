@@ -34,13 +34,14 @@ async function renderSingleGenePlots(study, gene) {
   window.SCP.scatterPlots = []
   window.SCP.violinPlots = []
 
-  $('#box-plot').html()
-  $('#scatter-plots .panel-body').html()
+  $('#box-plot').html('')
+  $('#scatter-plots .panel-body').html('')
 
   // Draw violin (or box) plot if showing group annotation, or
   // draw scatter plot if showing numeric annotation
   const annotType = getAnnotParams().type
   if (annotType === 'group') {
+    $('#distribution-link').html('Distribution')
     violinPlot('box-plot', study, gene)
   } else {
     $('#distribution-link').html('Annotated Scatter')
