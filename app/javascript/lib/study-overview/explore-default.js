@@ -13,8 +13,8 @@
 *        2. "Scatter": scatter plots for gene-specific and reference expression
 
 *   - Multiple-genes view (in legacy ERB templates) has tabs:
-*       1.  "Dot Plot"
-*       2.  "Heatmap"
+*       1. "Dot Plot"
+*       2. "Heatmap"
 *
 *   If the study has "Spatial groups" (cluster files with spatial positions for
 *   transcriptomics data), then the scatter plots show two sets of side-by-side

@@ -299,7 +299,7 @@ export async function scatterPlots(study, gene=null, hasReference=false) {
     const options = getMainViewOptions(plotIndex)
     const clusterParams = Object.assign({ accession, gene }, options)
 
-    frame.selector = `.multiplot:nth-child(1)`
+    frame.selector = '.multiplot:nth-child(1)'
     frame.hasLegend = true
     frame.plotId = `scatter-plot-${plotIndex}`
 
@@ -307,7 +307,7 @@ export async function scatterPlots(study, gene=null, hasReference=false) {
 
     if (hasReference) {
       clusterParams.gene = null
-      frame.selector = `.multiplot:nth-child(2)`
+      frame.selector = '.multiplot:nth-child(2)'
       frame.hasLegend = false
       frame.plotId += '-reference'
       scatterPlot(clusterParams, frame)
