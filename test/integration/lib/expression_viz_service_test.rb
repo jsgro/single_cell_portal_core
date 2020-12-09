@@ -51,7 +51,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
   end
 
   teardown do
-    Study.any_of({name: 'Basic Viz'},{name: 'Ideogram Study'}).destroy_all
+    Study.any_of({name: 'Basic Viz'},{name: /Ideogram Study/}).destroy_all
     @user.destroy
   end
 
@@ -120,7 +120,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     # we need a non-detached study, so create one
-    study = FactoryBot.create(:study, name: 'Ideogram Study')
+    study = FactoryBot.create(:study, name: "Ideogram Study #{SecureRandom.uuid}")
     cluster_file = FactoryBot.create(:cluster_file,
                                      name: 'cluster_1.txt', study: study,
                                      cell_input: {
