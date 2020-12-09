@@ -1,8 +1,8 @@
 module Api
   module V1
     module Visualization
-      # API methods for visualizing cluster data
-      # does NOT contain methods for editing clusters
+      # API methods for visualizing annotation-related data
+      # does NOT contain methods for editing annotations
       class AnnotationsController < ApiBaseController
         include Concerns::Authenticator
         include Concerns::StudyAware
@@ -15,8 +15,8 @@ module Api
         before_action :set_current_api_user!
         before_action :set_study
         before_action :check_study_view_permission
-        # before_action :check_api_cache!
-        # after_action :write_api_cache!
+        before_action :check_api_cache!
+        after_action :write_api_cache!
 
         annotation_description_doc = 'Object with name (String), values (Array or uique values), type (String), scope (String), and cluster_name (string, if applicable)'
 

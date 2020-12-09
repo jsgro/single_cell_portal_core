@@ -28,7 +28,6 @@ import checkMissingAuthToken from 'lib/user-auth-tokens'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
 import HomePageContent from 'components/HomePageContent'
 import Covid19PageContent from 'components/covid19/Covid19PageContent'
-
 import {
   logPageView, logClick, logMenuChange, startPendingEvent, log
 } from 'lib/metrics-api'
@@ -80,8 +79,6 @@ window.SCP.getLogPlotProps = getLogPlotProps
 window.SCP.formatTerms = formatTerms
 window.SCP.API = ScpApi
 window.SCP.initializeExplore = initializeExplore
-
-
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code

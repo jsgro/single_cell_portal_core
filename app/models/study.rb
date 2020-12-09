@@ -1283,7 +1283,6 @@ class Study
     options
   end
 
-
   ###
   #
   # STUDYFILE GETTERS
