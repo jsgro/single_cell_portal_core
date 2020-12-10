@@ -30,6 +30,11 @@
     {
       "type": "Cluster",
       "filename": "cluster.tsv"
+    },
+    {
+      "type": "Coordinate Labels",
+      "filename": "coordinate_labels.tsv",
+      "cluster_file_name": "cluster.tsv"
     }
   ]
 }

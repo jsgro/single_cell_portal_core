@@ -1051,7 +1051,7 @@ class StudyFile
             file = File.open(file_location, 'rb')
           end
           raw_cells = file.readline.rstrip.split(/[\t,]/).map(&:strip)
-          cells = self.study.sanitize_input_array(raw_cells)
+          cells = ParseUtils.sanitize_input_array(raw_cells)
           if shift_headers
             cells.shift
           end
