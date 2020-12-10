@@ -9,6 +9,7 @@ import DownloadButton from './DownloadButton'
 import DownloadProvider from 'providers/DownloadProvider'
 import { StudySearchContext } from 'providers/StudySearchProvider'
 import { UserContext } from 'providers/UserProvider'
+import { SearchSelectionContext } from 'providers/SearchSelectionProvider'
 
 /** render the legacy 'popular' and 'recent' search buttons */
 function CommonSearchButtons() {
@@ -57,7 +58,7 @@ export default function SearchPanel({
   // Note: This might become  a Higher-Order Component (HOC).
   // This search component is currently specific to the "Studies" tab, but
   // could possibly also enable search for "Genes" and "Cells" tabs.
-
+  const selectionContext = useContext(SearchSelectionContext)
   const searchState = useContext(StudySearchContext)
   const userState = useContext(UserContext)
   const featureFlagState = userState.featureFlagsWithDefaults
@@ -118,6 +119,7 @@ export default function SearchPanel({
     // for signed-in users, update their feature flag, for everyone, save in localStorage
     // this means signed-in users will see advanced search even if they are not signed in, once they
     // opt in
+
     if (!userState.isAnonymous) {
       userState.updateFeatureFlags({ faceted_search: enabled })
     }
@@ -126,6 +128,9 @@ export default function SearchPanel({
     setIsNewToUser(false)
     if (modalShowFunc) {
       closeModal(modalShowFunc)
+    }
+    if (enabled) {
+      selectionContext.updateSelection({ terms: '' }, true)
     }
   }
 
