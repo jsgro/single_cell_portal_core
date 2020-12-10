@@ -80,7 +80,7 @@ function getViolinLayout(title, expressionLabel) {
  * returning [plotly data object, plotly layout object]
 */
 export default function getViolinProps(
-  arr, title, jitter='all', expressionLabel
+  arr, title, jitter='all', expressionLabel, plotType='violin'
 ) {
   let data = []
   for (let x = 0; x < arr.length; x++) {
@@ -95,32 +95,32 @@ export default function getViolinProps(
     }
 
     // Check if there is a distribution before adding trace
-    if (arrayMax(dist) !== arrayMin(dist)) {
+    if (arrayMax(dist) !== arrayMin(dist) && plotType === 'violin') {
       // Make a violin plot if there is a distribution
       data = data.concat([{
-        'type': 'violin',
+        type: 'violin',
         name,
-        'y': dist,
-        'points': jitter,
-        'pointpos': 0,
-        'jitter': 0.85,
-        'spanmode': 'hard',
-        'box': {
+        y: dist,
+        points: jitter,
+        pointpos: 0,
+        jitter: 0.85,
+        spanmode: 'hard',
+        box: {
           visible: true,
           fillcolor: '#ffffff',
           width: .1
         },
-        'marker': {
+        marker: {
           size: 2,
           color: '#000000',
           opacity: 0.8
         },
-        'fillcolor': getColorBrewerColor(x),
-        'line': {
+        fillcolor: getColorBrewerColor(x),
+        line: {
           color: '#000000',
           width: 1.5
         },
-        'meanline': {
+        meanline: {
           visible: false
         }
       }])
@@ -161,8 +161,9 @@ function getViolinPropsWrapper(rawPlot) {
   // The code below is heavily borrowed from legacy application.js
   const dataArray = parseResultsToArray(rawPlot)
   const jitter = rawPlot.values_jitter ? rawPlot.values_jitter : ''
+  const plotType = rawPlot.plotType ? rawPlot.plotType : 'violin'
   const traceData = getViolinProps(
-    dataArray, rawPlot.rendered_cluster, jitter, rawPlot.y_axis_title
+    dataArray, rawPlot.rendered_cluster, jitter, rawPlot.y_axis_title, plotType
   )
   return traceData
 }
@@ -170,7 +171,7 @@ function getViolinPropsWrapper(rawPlot) {
 /** Formats expression data for Plotly, draws violin (or box) plot */
 export function renderViolinPlot(target, results) {
   const traceData = getViolinPropsWrapper(results)
-  const expressionData = [].concat.apply([], traceData[0])
+  const expressionData = [...traceData[0]]
   const expressionLayout = traceData[1]
   // Check that the ID exists on the page to avoid errors in corner cases
   // where users update search terms quickly or are toggling between study
@@ -180,7 +181,7 @@ export function renderViolinPlot(target, results) {
   }
 }
 
-/** Resize Plotly scatter plots -- done in Study Overview  */
+/** Resize Plotly violin -- e.g. upon resizing window or plot container  */
 export function resizeViolinPlot() {
   const plots = window.SCP.violinPlots
   for (let i = 0; i < plots.length; i++) {
@@ -190,6 +191,13 @@ export function resizeViolinPlot() {
     const layout = getViolinLayout(title, expressionLabel)
     Plotly.relayout(plot.plotId, layout)
   }
+}
+
+/** Set plot in "Distribution" tab to a violin plot or box plot */
+export function updateDistributionPlotType(type) {
+  const rawPlot = window.SCP.violinPlots[0]
+  rawPlot.plotType = type
+  renderViolinPlot(rawPlot.plotId, rawPlot)
 }
 
 /**
@@ -233,6 +241,7 @@ export async function violinPlot(plotId, study, gene) {
     study.accession, gene, cluster, annotation, subsample
   )
   rawPlot.plotId = plotId
+  rawPlot.plotType = $('#plot_type').val()
   window.SCP.violinPlots.push(rawPlot)
 
   renderViolinPlot(plotId, rawPlot)

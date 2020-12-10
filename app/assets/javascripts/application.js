@@ -661,21 +661,6 @@ function getRenderUrlParams() {
   return urlParams;
 }
 
-// Handle changes in View Options for 'Distribution' view
-$(document).on('change', '#plot_type, #jitter', function() {
-  $('#expression-plots').data('box-rendered', false);
-  $('#expression-plots').data('scatter-rendered', false);
-  $('#expression-plots').data('reference-rendered', false);
-
-  updateSearchGeneParams();
-
-  if (typeof renderGeneExpressionPlots !== 'undefined' && /numeric/.test($('#annotation').val()) === false) {
-    // Accounts for changing View Options when not in Distribution view,
-    // but does not apply if we're looking at an annotation like "Intensity" or "Average intensity".
-    renderGeneExpressionPlots();
-  }
-});
-
 // Handles changes in View Options for 'Heatmap' view
 $(document).on('change', '#heatmap_row_centering, #annotation', function() {
   updateSearchGeneParams();

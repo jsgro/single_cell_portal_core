@@ -10,7 +10,7 @@
  */
 
 import { setScatterPlotColorScales } from 'lib/scatter-plot'
-import { updateDataPoints } from 'lib/violin-plot'
+import { updateDataPoints, updateDistributionPlotType } from 'lib/violin-plot'
 
 /** Get selections for top-level view options */
 export function getMainViewOptions(plotIndex) {
@@ -136,10 +136,17 @@ export function handleMenuChange(callback, callbackArgs) {
     setScatterPlotColorScales(theme)
   })
 
-  $(document).off('change', '#boxpoints_select')
   // Listener to redraw violin or box plot with new data points
+  $(document).off('change', '#boxpoints_select')
   $(document).on('change', '#boxpoints_select', function() {
     const mode = $(this).val() // eslint-disable-line
     updateDataPoints(mode)
+  })
+
+  // Listener to change plot type from violin to box, or vice versa
+  $(document).off('change', '#plot_type')
+  $(document).on('change', '#plot_type', function() {
+    const type = $(this).val() // eslint-disable-line
+    updateDistributionPlotType(type)
   })
 }
