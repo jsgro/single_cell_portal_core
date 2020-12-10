@@ -59,8 +59,7 @@ function getDefaultSubsampleForCluster(annotationList, clusterName) {
 }
 
 /** renders cluster, annotation, and (optionally) subsample controls for a study */
-export default function ClusterControls({studyAccession, onChange, showSubsample, preloadedAnnotationList, fetchAnnotationList}) {
-  fetchAnnotationList = fetchAnnotationList !== false
+export default function ClusterControls({studyAccession, onChange, showSubsample, preloadedAnnotationList, fetchAnnotationList=true}) {
   const [annotationList, setAnnotationList] =
     useState({ default_cluster: null, default_annotation: null, annotations: [] })
   const [renderParams, setRenderParams] = useState({
@@ -107,7 +106,7 @@ export default function ClusterControls({studyAccession, onChange, showSubsample
 
   useEffect(() => {
     // don't fire the onchange on initial render
-    if (renderParams.cluster != '' && onChange) {
+    if (renderParams.cluster !== '' && onChange) {
       onChange(renderParams)
     }
   }, [renderParams.cluster, renderParams.annotation.name, renderParams.subsample])

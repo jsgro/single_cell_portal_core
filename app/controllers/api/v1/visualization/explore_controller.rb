@@ -104,7 +104,7 @@ module Api
               key :type, :string
             end
             response 200 do
-              key :description, 'JSON of annotation list, default_cluster, and subsampling thresholds'
+              key :description, 'Annotation list, default_cluster, and subsampling thresholds'
             end
             response 401 do
               key :description, ApiBaseController.unauthorized

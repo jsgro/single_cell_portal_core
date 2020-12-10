@@ -18,7 +18,7 @@ module Api
         before_action :check_api_cache!
         after_action :write_api_cache!
 
-        annotation_description_doc = 'Object with name (String), values (Array of uique values), type (String), scope (String), and cluster_name (string, if applicable)'
+        annotation_description_doc = 'Object with name (String), values (Array of unique values), type (String), scope (String), and cluster_name (string, if applicable)'
 
         swagger_path '/studies/{accession}/annotations' do
           operation :get do
@@ -63,6 +63,7 @@ module Api
             key :summary, 'Get an annotation for a study'
             key :description, 'Get a single annotation object'
             key :operationId, 'study_annotation_path'
+
             parameter do
               key :name, :accession
               key :in, :path
@@ -108,9 +109,10 @@ module Api
             key :tags, [
                 'Visualization'
             ]
-            key :summary, 'Get an annotation for a study'
-            key :description, 'Get a single annotation object'
+            key :summary, 'Get cell values for an annotation for a study'
+            key :description, 'Get cell values for an annotation object.  Useful for e.g. dot plots.'
             key :operationId, 'study_annotation_cell_values_path'
+<<<<<<< HEAD
             parameter do
               key :name, :accession
               key :in, :path
@@ -128,19 +130,19 @@ module Api
             parameter do
               key :name, :annotation_type
               key :in, :query
-              key :description, 'Type of annotation. One of “group” or “numeric”.'
+              key :description, 'Type of annotation. One of "group" or "numeric".'
               key :type, :string
               key :enum, VALID_TYPE_VALUES
             end
             parameter do
               key :name, :annotation_scope
               key :in, :query
-              key :description, 'Scope of annotation.  One of “study” or “cluster”.'
+              key :description, 'Scope of annotation.  One of "study" or "cluster".'
               key :type, :string
               key :enum, VALID_SCOPE_VALUES
             end
             response 200 do
-              key :description, '2-column tsv of cell names and their values for the requested annotation.  Column headers are NAME (the cell name) and the name of the returned annotation'
+              key :description, '2-column TSV of cell names and their values for the requested annotation.  Column headers are NAME (the cell name) and the name of the returned annotation'
             end
             extend SwaggerResponses::StudyControllerResponses
           end
@@ -160,7 +162,7 @@ module Api
           cluster = nil
           if annot_params[:scope] == 'cluster'
             if params[:cluster].blank?
-              render(json: {error: 'You must specify the cluster for cluster scoped annotations'}, status: 404) and return
+              render(json: {error: 'You must specify the cluster for cluster-scoped annotations'}, status: 404) and return
             end
             cluster = study.cluster_groups.by_name(params[:cluster])
           end
