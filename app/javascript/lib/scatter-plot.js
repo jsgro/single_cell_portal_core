@@ -198,38 +198,38 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
  * Load and draw scatter plot.  Handles clusters and spatial groups, numeric
  * and group annotations.
  *
- * @param {Object} clusterParams Parameters for `/clusters` plot API endpoint
- * @param {Object} frame Plot UI properties not from plot API data
+ * @param {Object} apiParams Parameters for `/clusters` plot API endpoint
+ * @param {Object} props Plot UI properties not from plot API data
  */
-export async function scatterPlot(clusterParams, frame) {
+export async function scatterPlot(apiParams, props) {
   // Copy by value; preserves properties (e.g. plotId) across `await`
-  frame = Object.assign({}, frame)
+  props = Object.assign({}, props)
 
-  const { plotId, hasLegend } = frame
+  const { plotId, hasLegend } = props
   console.log(plotId)
 
   const legendId = (hasLegend ? `${plotId}-legend` : null)
   const legendHtml = (hasLegend ? `<div id="${legendId}"></div>` : '')
 
-  $(frame.selector).append(
+  $(props.selector).append(
     `<div id="${plotId}" class="plot"></div>
       ${legendHtml}
     </div>`
   )
 
   // Set default number of rows and columns of plots
-  if (!frame.numRows) {frame.numRows = 1}
-  if (!frame.numColumns) {frame.numColumns = 1}
+  if (!props.numRows) {props.numRows = 1}
+  if (!props.numColumns) {props.numColumns = 1}
 
   const $plotElement = $(`#${plotId}`)
   const spinnerTarget = $plotElement[0]
   const spinner = new Spinner(window.opts).spin(spinnerTarget)
   // $plotElement.data('spinner', spinner)
 
-  const { accession, cluster, annotation, subsample, gene } = clusterParams
+  const { accession, cluster, annotation, subsample, gene } = apiParams
   let isAnnotatedScatter = null
   if (
-    'isAnnotatedScatter' in clusterParams && clusterParams.isAnnotatedScatter
+    'isAnnotatedScatter' in apiParams && apiParams.isAnnotatedScatter
   ) {
     isAnnotatedScatter = true
   }
@@ -237,10 +237,10 @@ export async function scatterPlot(clusterParams, frame) {
   $('#search_annotation').val(annotation)
   $('#gene_set_annotation').val(annotation)
 
-  let rawPlot = await fetchCluster(
+  const fetchedData = await fetchCluster(
     accession, cluster, annotation, subsample, null, gene, isAnnotatedScatter
   )
-  rawPlot = Object.assign(rawPlot, frame)
+  const rawPlot = Object.assign(fetchedData, props)
 
   // Consider putting into a dictionary instead of a list
   window.SCP.scatterPlots.push(rawPlot)
@@ -282,27 +282,27 @@ export async function scatterPlots(study, gene=null, hasReference=false) {
   const accession = study.accession
 
   // Plot UI properties that are distinct from fetched scatter plot data
-  const frame = {
+  const props = {
     numRows: (hasReference ? 2 : 1),
     numColumns: (study.spatialGroupNames.length > 0) ? 2 : 1
   }
 
-  for (let i = 0; i < frame.numColumns; i++) {
+  for (let i = 0; i < props.numColumns; i++) {
     const options = getMainViewOptions(i)
-    const clusterParams = Object.assign({ accession, gene }, options)
+    const apiParams = Object.assign({ accession, gene }, options)
 
-    frame.selector = '.multiplot:nth-child(1)'
-    frame.hasLegend = true
-    frame.plotId = `scatter-plot-${i}`
+    props.selector = '.multiplot:nth-child(1)'
+    props.hasLegend = true
+    props.plotId = `scatter-plot-${i}`
 
-    scatterPlot(clusterParams, frame)
+    scatterPlot(apiParams, props)
 
     if (hasReference) {
-      clusterParams.gene = null
-      frame.selector = '.multiplot:nth-child(2)'
-      frame.hasLegend = false
-      frame.plotId += '-reference'
-      scatterPlot(clusterParams, frame)
+      apiParams.gene = null
+      props.selector = '.multiplot:nth-child(2)'
+      props.hasLegend = false
+      props.plotId += '-reference'
+      scatterPlot(apiParams, props)
     }
   }
 }
