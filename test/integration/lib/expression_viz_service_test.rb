@@ -160,7 +160,6 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     gene = @basic_study.genes.by_name_or_id('PTEN', @basic_study.expression_matrix_files.pluck(:id))
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
-    byebug
     annot_name, annot_type, annot_scope = default_annot.split('--')
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
     violin_data = ExpressionVizService.load_expression_boxplot_data_array_scores(@basic_study, gene, cluster, annotation)
