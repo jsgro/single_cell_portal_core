@@ -8,7 +8,7 @@
 *        2. "Genomes": igv.js, if study has BAM files
 
 *   - Single-gene view (explore-single.js) has tabs:
-*        1a. "Distribution": violin (or box) plots if group annotation
+*        1a. "Distribution": violin plots if group annotation
 *        1b. "Annotated Scatter": scatter plots if numeric annotation
 *        2. "Scatter": scatter plots for gene-specific and reference expression
 
@@ -22,7 +22,8 @@
 */
 
 import { fetchExplore } from 'lib/scp-api'
-import { scatterPlots, resizeScatterPlots } from 'lib/scatter-plot'
+import { initScatterPlots, resizeScatterPlots } from 'lib/scatter-plot'
+import { clearPlots } from 'lib/plot'
 import {
   addSpatialDropdown, handleMenuChange
 } from 'lib/study-overview/view-options'
@@ -41,7 +42,7 @@ function attachEventHandlers(study) {
     resizeScatterPlots()
   })
 
-  handleMenuChange(scatterPlots, [study])
+  handleMenuChange(initScatterPlots, [study])
 
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
@@ -61,7 +62,7 @@ function attachEventHandlers(study) {
 
 /** Initialize the "Explore" tab in Study Overview */
 export default async function exploreDefault() {
-  window.SCP.scatterPlots = []
+  clearPlots()
 
   window.SCP.startPendingEvent('user-action:page:view:site-study',
     { speciesList: window.SCP.taxons },
@@ -93,7 +94,7 @@ export default async function exploreDefault() {
 
     addSpatialDropdown(study)
 
-    scatterPlots(study)
+    initScatterPlots(study)
   }
 
   if (study.inferCNVIdeogramFiles) {

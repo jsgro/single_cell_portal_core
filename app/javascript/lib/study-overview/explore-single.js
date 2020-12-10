@@ -8,7 +8,7 @@
 *        2. "Genomes": igv.js, if study has BAM files
 
 *   - Single-gene view (this file) has tabs:
-*        1a. "Distribution": violin (or box) plots if group annotation
+*        1a. "Distribution": violin plots if group annotation
 *        1b. "Annotated Scatter": scatter plots if numeric annotation
 *        2. "Scatter": scatter plots for gene-specific and reference expression
 
@@ -21,18 +21,16 @@
 *   plots.  HTML scaffolding for all views exists in legacy ERB templates.
 */
 
-import {
-  scatterPlot, scatterPlots, resizeScatterPlots
-} from 'lib/scatter-plot'
+import { scatterPlot, initScatterPlots, resizeScatterPlots } from 'lib/scatter-plot'
 import { violinPlot, resizeViolinPlot } from 'lib/violin-plot'
+import { clearPlots } from 'lib/plot'
 import {
   addSpatialDropdown, getMainViewOptions, getAnnotParams, handleMenuChange
 } from 'lib/study-overview/view-options'
 
 /** Render violin and scatter plots for the Explore tab's single-gene view */
 async function renderSingleGenePlots(study, gene) {
-  window.SCP.scatterPlots = []
-  window.SCP.violinPlots = []
+  clearPlots()
 
   $('#box-plot').html('')
   $('#scatter-plots .panel-body').html('')
@@ -53,7 +51,7 @@ async function renderSingleGenePlots(study, gene) {
     scatterPlot(clusterParams, frame)
   }
 
-  scatterPlots(study, gene, true)
+  initScatterPlots(study, gene, true)
 
   window.showRelatedGenesIdeogram()
 }

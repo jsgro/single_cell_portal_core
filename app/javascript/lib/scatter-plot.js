@@ -16,13 +16,19 @@ import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { fetchCluster } from 'lib/scp-api'
 import { getMainViewOptions } from 'lib/study-overview/view-options'
 
+// List of raw plots (API data + UI props, but not yet Plotly-processed)
+let scatterPlots = []
+
+/** Empty list of raw scatter plots */
+export function clearScatterPlots() {
+  scatterPlots = []
+}
+
 /**
  * Resize Plotly scatter plots, e.g. on window resize or "View Options" click
  */
 export function resizeScatterPlots() {
-  const plots = window.SCP.scatterPlots
-
-  plots.forEach(rawPlot => {
+  scatterPlots.forEach(rawPlot => {
     const target = rawPlot.plotId
     const layout = getScatterPlotLayout(rawPlot)
     Plotly.relayout(target, layout)
@@ -31,9 +37,7 @@ export function resizeScatterPlots() {
 
 /** Change Plotly scatter plot color scales */
 export function setScatterPlotColorScales(theme) {
-  const plots = window.SCP.scatterPlots
-
-  plots.forEach(rawPlot => {
+  scatterPlots.forEach(rawPlot => {
     const target = rawPlot.plotId
     const dataUpdate = { 'marker.colorscale': theme }
     Plotly.update(target, dataUpdate)
@@ -243,7 +247,7 @@ export async function scatterPlot(apiParams, props) {
   const rawPlot = Object.assign(fetchedData, props)
 
   // Consider putting into a dictionary instead of a list
-  window.SCP.scatterPlots.push(rawPlot)
+  scatterPlots.push(rawPlot)
 
   // render annotation toggler picker if needed
   if (rawPlot.annotParams.type == 'numeric') {
@@ -274,7 +278,7 @@ export async function scatterPlot(apiParams, props) {
  * @param {String} gene Searched gene name, e.g. "TP53"
  * @param {Boolean} hasReference Whether each plot has a paired reference
  */
-export async function scatterPlots(study, gene=null, hasReference=false) {
+export async function initScatterPlots(study, gene=null, hasReference=false) {
   const $container = $('#scatter-plots .panel-body')
   $container.html('<div class="row multiplot"></div>')
   if (hasReference) {$container.append('<div class="row multiplot"></div>')}

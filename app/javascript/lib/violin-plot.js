@@ -15,6 +15,14 @@ import { fetchExpressionViolin } from 'lib/scp-api'
 // To consider: dedup this copy with the one that exists in application.js.
 const plotlyDefaultLineColor = 'rgb(40, 40, 40)'
 
+// List of raw plots (API data + UI props, but not yet Plotly-processed)
+let violinPlots = []
+
+/** Empty list of raw violin plots */
+export function clearViolinPlots() {
+  violinPlots = []
+}
+
 /**
  * More memory- and time-efficient analog of Math.min
  * From https://stackoverflow.com/a/13440842/10564415.
@@ -183,7 +191,7 @@ export function renderViolinPlot(target, results) {
 
 /** Resize Plotly violin -- e.g. upon resizing window or plot container  */
 export function resizeViolinPlot() {
-  const rawPlot = window.SCP.violinPlots[0]
+  const rawPlot = violinPlots[0]
   const title = rawPlot.rendered_cluster
   const expressionLabel = rawPlot.y_axis_title
   const layout = getViolinLayout(title, expressionLabel)
@@ -192,7 +200,7 @@ export function resizeViolinPlot() {
 
 /** Set plot in "Distribution" tab to a violin plot or box plot */
 export function updateDistributionPlotType(type) {
-  const rawPlot = window.SCP.violinPlots[0]
+  const rawPlot = violinPlots[0]
   rawPlot.plotType = type
   renderViolinPlot(rawPlot.plotId, rawPlot)
 }
@@ -203,7 +211,7 @@ export function updateDistributionPlotType(type) {
 * Adapted from _boxpoints_picker.html.erb
 */
 export function updateDataPoints(mode) {
-  const rawPlot = window.SCP.violinPlots[0]
+  const rawPlot = violinPlots[0]
   const traceData = getViolinPropsWrapper(rawPlot)
   const expressionData = [...traceData[0]]
 
@@ -239,7 +247,7 @@ export async function violinPlot(plotId, study, gene) {
   )
   rawPlot.plotId = plotId
   rawPlot.plotType = $('#plot_type').val()
-  window.SCP.violinPlots.push(rawPlot)
+  violinPlots.push(rawPlot)
 
   renderViolinPlot(plotId, rawPlot)
 

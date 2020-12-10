@@ -1,4 +1,6 @@
 import Plotly from 'plotly.js-dist'
+import { clearScatterPlots } from 'lib/scatter-plot'
+import { clearViolinPlots } from 'lib/violin-plot'
 
 // Default plot colors, combining ColorBrewer sets 1-3 with tweaks to yellows.
 const colorBrewerList = [
@@ -32,6 +34,16 @@ export const labelFont = {
 }
 
 export const lineColor = 'rgb(40, 40, 40)'
+
+/**
+ * Clear all raw plot lists: scatter plots, violin plots, etc.
+ *
+ * Use when reinitializing views, e.g. in Explore tab
+ */
+export function clearPlots() {
+  clearScatterPlots()
+  clearViolinPlots()
+}
 
 /**
  * Wrapper for Plotly.newPlot, to enable tests
