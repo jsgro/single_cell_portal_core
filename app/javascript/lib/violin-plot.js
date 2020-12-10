@@ -183,14 +183,11 @@ export function renderViolinPlot(target, results) {
 
 /** Resize Plotly violin -- e.g. upon resizing window or plot container  */
 export function resizeViolinPlot() {
-  const plots = window.SCP.violinPlots
-  for (let i = 0; i < plots.length; i++) {
-    const plot = plots[i]
-    const title = plot.rendered_cluster
-    const expressionLabel = plot.y_axis_title
-    const layout = getViolinLayout(title, expressionLabel)
-    Plotly.relayout(plot.plotId, layout)
-  }
+  const rawPlot = window.SCP.violinPlots[0]
+  const title = rawPlot.rendered_cluster
+  const expressionLabel = rawPlot.y_axis_title
+  const layout = getViolinLayout(title, expressionLabel)
+  Plotly.relayout(rawPlot.plotId, layout)
 }
 
 /** Set plot in "Distribution" tab to a violin plot or box plot */

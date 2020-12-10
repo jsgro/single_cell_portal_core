@@ -2,7 +2,7 @@
  * @fileoverview Basic functions for scatter plots
  *
  * This code is used for scatter plots in the Study Overview page.  Scatter
- * plots are shown in a multiple of ways in the Explore tab of Study Overview,
+ * plots are shown in several ways in the Explore tab of Study Overview,
  * when viewing the tab by default, upon searching a single gene, and (soon)
  * upon searching multiple genes.
  *
@@ -22,24 +22,22 @@ import { getMainViewOptions } from 'lib/study-overview/view-options'
 export function resizeScatterPlots() {
   const plots = window.SCP.scatterPlots
 
-  for (let i = 0; i < plots.length; i++) {
-    const rawPlot = plots[i]
-    const layout = getScatterPlotLayout(rawPlot)
+  plots.forEach(rawPlot => {
     const target = rawPlot.plotId
+    const layout = getScatterPlotLayout(rawPlot)
     Plotly.relayout(target, layout)
-  }
+  })
 }
 
 /** Change Plotly scatter plot color scales */
 export function setScatterPlotColorScales(theme) {
   const plots = window.SCP.scatterPlots
 
-  for (let i = 0; i < plots.length; i++) {
-    const rawPlot = plots[i]
+  plots.forEach(rawPlot => {
     const target = rawPlot.plotId
     const dataUpdate = { 'marker.colorscale': theme }
     Plotly.update(target, dataUpdate)
-  }
+  })
 }
 
 /** Get Plotly layout object for scatter plot */
@@ -120,7 +118,7 @@ export function get2DScatterProps(cluster) {
   return layout
 }
 
-/** Set colors for group-based annotations */
+/** Set colors for group annotations */
 export function setMarkerColors(data) {
   return data.map((trace, i) => {
     trace.marker.color = getColorBrewerColor(i)
@@ -130,10 +128,6 @@ export function setMarkerColors(data) {
 
 /** Get height and width for a to-be-rendered cluster plot */
 function calculatePlotRect(numRows, numColumns) {
-  // console.log('numRows')
-  // console.log(numRows)
-  // console.log('numColumns')
-  // console.log(numColumns)
   // Get height
   const $ideo = $('#_ideogram')
   const ideogramHeight = $ideo.length ? $ideo.height() : 0
@@ -141,7 +135,7 @@ function calculatePlotRect(numRows, numColumns) {
   let height = $(window).height() - verticalPad - ideogramHeight
   if (numRows > 1) {height = height/numRows - 10}
 
-  // Get width, and account for expanding "View options" after page load
+  // Get width, and account for expanding "View Options" after page load
   const baseWidth = $('#render-target .tab-content').actual('width')
   const horizontalPad = 80 // Accounts for empty space to left and right
   let width = (baseWidth - horizontalPad) / numColumns
@@ -293,13 +287,13 @@ export async function scatterPlots(study, gene=null, hasReference=false) {
     numColumns: (study.spatialGroupNames.length > 0) ? 2 : 1
   }
 
-  for (let plotIndex = 0; plotIndex < frame.numColumns; plotIndex++) {
-    const options = getMainViewOptions(plotIndex)
+  for (let i = 0; i < frame.numColumns; i++) {
+    const options = getMainViewOptions(i)
     const clusterParams = Object.assign({ accession, gene }, options)
 
     frame.selector = '.multiplot:nth-child(1)'
     frame.hasLegend = true
-    frame.plotId = `scatter-plot-${plotIndex}`
+    frame.plotId = `scatter-plot-${i}`
 
     scatterPlot(clusterParams, frame)
 
