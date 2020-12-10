@@ -141,8 +141,8 @@ function calculatePlotRect(numRows, numColumns) {
   let width = (baseWidth - horizontalPad) / numColumns
 
   // Ensure plots aren't too small
-  if (height < 100) {height = 100}
-  if (width < 100) {width = 100}
+  height = Math.max(height, 100)
+  width = Math.max(width, 100)
 
   return { height, width }
 }
