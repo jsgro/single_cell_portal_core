@@ -22,7 +22,7 @@
                   <i
                     class='fas fa-question-circle'
                     title="Subsampling"
-                    data-content="Take a representative subsample of the current cluster
+                    data-content="Take a representative subsample of the current clusters
                     (<a href='https://github.com/broadinstitute/single_cell_portal/wiki/Subsampling-Cluster-Files' target='_blank'>learn more</a>).
                       <% if /view_gene_(set_)?expression$/.match(action_name) === false %>Choosing all cells may dramatically increase rendering time.  <% end %>
                       <% if @cluster.points < ClusterGroup::MAX_THRESHOLD %>
