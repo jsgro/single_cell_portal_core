@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 
 import { log, startPendingEvent } from 'lib/metrics-api'
+import { getColorBrewerColor } from 'lib/plot'
 import DotPlotLegend from './DotPlotLegend'
 
 export const dotPlotColorScheme = {
@@ -38,8 +39,8 @@ export default function DotPlot({ expressionValuesURL, annotationCellValuesURL, 
 
 /** Render Morpheus dot plot */
 function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotHeight=450) {
-
-  $(target).empty()
+  const $target = $(target)
+  $target.empty()
 
   // Collapse by mean
   const tools = [{
@@ -59,7 +60,7 @@ function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotH
   const config = {
     shape: 'circle',
     dataset: dataPath,
-    el: $(target),
+    el: $target,
     menu: null,
     colorScheme: {
       scalingMode: 'relative'
@@ -70,24 +71,17 @@ function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotH
     // to the heatmap once it's rendered
     tabManager: {
       add: (options) => {
-        $(target).empty()
-        $(target).append(options.$el)
-        return {id: $(target).attr('id'), $panel: $(target)}
+        $target.empty()
+        $target.append(options.$el)
+        return {id: $target.attr('id'), $panel: $target}
       },
       setTabTitle: () => {},
       setActiveTab: () => {},
-      getWidth: () => $(target).width(),
-      getHeight: () => $(target).height(),
+      getWidth: () => $target.width(),
+      getHeight: () => $target.height(),
       getTabCount: () => 1
     },
     tools
-  }
-
-  // Set height if specified, otherwise use default setting of 500 px
-  if (dotHeight !== undefined) {
-    config.height = dotHeight
-  } else {
-    config.height = 500
   }
 
   // Fit rows, columns, or both to screen
@@ -129,7 +123,7 @@ function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotH
     // Calling % 27 will always return to the beginning of colorBrewerSet
     // once we use all 27 values
     $(sortedAnnots).each((index, annot) => {
-      annotColorModel[annotation.name][annot] = window.colorBrewerSet[index % 27]
+      annotColorModel[annotation.name][annot] = getColorBrewerColor(index)
     })
     config.columnColorModel = annotColorModel
   }

@@ -91,12 +91,8 @@ module Api
 
         # packages up a bunch of calls to rendering service endpoints for a response object
         def self.get_cluster_viz_data(study, cluster, url_params)
-          annot_params = {
-            name: url_params[:annotation_name].blank? ? nil : url_params[:annotation_name],
-            type: url_params[:annotation_type].blank? ? nil : url_params[:annotation_type],
-            scope: url_params[:annotation_scope].blank? ? nil : url_params[:annotation_scope]
-          }
-          annotation = ExpressionVizService.get_selected_annotation(study,
+          annot_params = AnnotationsController.get_annotation_params(url_params)
+          annotation = AnnotationVizService.get_selected_annotation(study,
                                                        cluster,
                                                        annot_params[:name],
                                                        annot_params[:type],

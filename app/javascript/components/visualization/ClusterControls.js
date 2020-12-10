@@ -9,7 +9,9 @@ function getSubsampleOptions(annotationList, clusterName) {
   let subsampleOptions = [{ label: 'All Cells', value: '' }]
   if (clusterName) {
     let clusterSubsamples = annotationList.subsample_thresholds[clusterName]
-    clusterSubsamples = clusterSubsamples ? clusterSubsamples : []
+    if (!clusterSubsamples) {
+      clusterSubsamples = []
+    }
     subsampleOptions = subsampleOptions.concat(clusterSubsamples.map(num => {
       return { label: `${num}`, value: num }
     }))
@@ -36,6 +38,12 @@ function getAnnotationOptions(annotationList, clusterName) {
       options: annotationList.annotations
         .filter(annot => annot.cluster_name == clusterName)
   }]
+}
+
+/** returns the first annotation for the given cluster */
+function getDefaultAnnotationForCluster(annotationList, clusterName) {
+  return annotationList.annotations
+    .filter(annot => annot.cluster_name == cluster.value)[0]
 }
 
 /** takes the server response and returns subsample default subsample for the cluster */
@@ -109,10 +117,9 @@ export default function ClusterControls({studyAccession, onChange, showSubsample
           value={{ label: renderParams.cluster, value: renderParams.cluster }}
           onChange={ cluster => setRenderParams({
             userUpdated: true,
-            annotation: annotationList.annotations
-              .filter(annot => annot.cluster_name == cluster.value)[0],
+            annotation: getDefaultAnnotationForCluster(annotationList, cluster.name),
             cluster: cluster.value,
-            subsample: getDefaultSubsampleForCluster(cluster.value)
+            subsample: getDefaultSubsampleForCluster(annotationList, cluster.value)
           })}
           styles={customSelectStyle}
         />

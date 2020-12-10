@@ -1,23 +1,21 @@
+require 'test_helper'
 require 'api_test_helper'
-require 'test_instrumentor'
+
 class ExploreControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include Requests::JsonHelpers
   include Requests::HttpHelpers
   include Minitest::Hooks
   include TestInstrumentor
+  include SelfCleaningSuite
 
   before(:all) do
-    @user = FactoryBot.create(:api_user)
-    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
-                                                                           :provider => 'google_oauth2',
-                                                                           :uid => '123545',
-                                                                           :email => 'testing.user@gmail.com'
-                                                                       })
+    @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @basic_study = FactoryBot.create(:detached_study,
                                      name: 'Basic Explore',
                                      public: false,
-                                     user: @user)
+                                     user: @user,
+                                     test_array: @@studies_to_clean)
     @basic_study_cluster_file = FactoryBot.create(:cluster_file,
                                                   name: 'clusterA.txt',
                                                   file_type: 'Cluster',
@@ -31,25 +29,25 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
                                                     is_spatial: true)
 
     @empty_study = FactoryBot.create(:detached_study,
-                                     name: 'Empty study')
-    @user2 =  FactoryBot.create(:api_user)
-
-  end
-
-  after(:all) do
-    @basic_study.destroy
-    @empty_study.destroy
-    @user.destroy
-    @user2.destroy
+                                     name: 'Empty study',
+                                     test_array: @@studies_to_clean)
   end
 
   test 'should enforce view permissions' do
-    sign_in_and_update @user2
-    execute_http_request(:get, api_v1_study_explore_path(@basic_study), user: @user2)
+    user2 =  FactoryBot.create(:api_user, test_array: @@users_to_clean)
+    sign_in_and_update user2
+    execute_http_request(:get, api_v1_study_explore_path(@basic_study), user: user2)
     assert_equal 403, response.status
 
-    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study), user: @user2)
+    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study), user: user2)
     assert_equal 403, response.status
+
+    sign_in_and_update @user
+    execute_http_request(:get, api_v1_study_explore_path(@basic_study))
+    assert_equal 200, response.status
+
+    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study))
+    assert_equal 200, response.status
   end
 
   test 'should get basic study visualization data' do

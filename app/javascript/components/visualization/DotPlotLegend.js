@@ -45,10 +45,11 @@ export default function DotPlotLegend() {
           }
         </linearGradient>
         <rect fill={`url(#${gradientId})`} width={colorBarWidth} height="14" rx="10"/>
-        <text x="0" y={numberYPos}>min</text>
-        <text x={ colorBarWidth - 25 } y={numberYPos}>max</text>
-
-        <text x="-27" y={labelTextYPos}>Scaled mean expression</text>
+        <text x="-1" y={numberYPos}>0</text>
+        <text x={colorBarWidth / 2 - 7} y={numberYPos}>0.5</text>
+        <text x={colorBarWidth - 5} y={numberYPos}>1</text>
+        <rect fill="#CC0088" width="3" height="10" x={colorBarWidth / 2} y={numberYPos - 20} ry="2"/>
+        <text x="-22" y={labelTextYPos}>Scaled mean expression</text>
         {nonzeroNote}
       </g>
     </svg>

@@ -1,11 +1,13 @@
 require "test_helper"
-require 'delete_helper'
 
 class ExpressionVizServiceTest < ActiveSupport::TestCase
+  include Minitest::Hooks
+  include SelfCleaningSuite
+  include TestInstrumentor
 
-  setup do
-    @user = FactoryBot.create(:user)
-    @basic_study = FactoryBot.create(:detached_study, name: 'Basic Viz')
+  before(:all) do
+    @user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    @basic_study = FactoryBot.create(:detached_study, name: 'Basic Viz', test_array: @@studies_to_clean)
     @basic_study_cluster_file = FactoryBot.create(:cluster_file,
                                               name: 'cluster_1.txt', study: @basic_study,
                                               cell_input: {
@@ -48,16 +50,8 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
         annotation: 'species--group--study'
     }
     @basic_study.update(default_options: defaults)
-
   end
 
-  teardown do
-    studies = Study.any_of({name: 'Basic Viz'},{name: 'Ideogram Study'})
-    studies.each do |study|
-      delete_study_and_ensure_cascade(study)
-    end
-    @user.destroy
-  end
 
   # convenience method to load all gene expression data for a given study like requests to expression_controller
   def load_all_genes(study)
@@ -67,36 +61,26 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
   end
 
   test 'can find annotation for cluster' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     cluster = @basic_study.default_cluster
-    annotation = ExpressionVizService.get_selected_annotation(@basic_study, cluster, 'Category', 'group', 'cluster')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, 'Category', 'group', 'cluster')
     assert_equal 'Category', annotation[:name]
     assert_equal ['bar', 'baz'], annotation[:values]
     metadata = @basic_study.cell_metadata.first
-    study_annotation = ExpressionVizService.get_selected_annotation(@basic_study, cluster, metadata.name, metadata.annotation_type, 'study')
+    study_annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, metadata.name, metadata.annotation_type, 'study')
     assert_equal metadata.name, study_annotation[:name]
     assert_equal metadata.values, study_annotation[:values]
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should parse legacy annotation params' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     default_annot = @basic_study.default_annotation
     params = {annotation: default_annot}
     annot_keys = [:name, :type, :scope]
     expected_annotation = Hash[annot_keys.zip(default_annot.split('--'))]
     loaded_annotation = ExpressionVizService.parse_annotation_legacy_params(@basic_study, params)
     assert_equal expected_annotation, loaded_annotation
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should get global gene search render data' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
@@ -116,15 +100,11 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     expected_cells = %w(A C)
     assert_equal expected_expression, rendered_data[:values].dig('dog', :y)
     assert_equal expected_cells, rendered_data[:values].dig('dog', :cells)
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should load ideogram outputs' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     # we need a non-detached study, so create one
-    study = FactoryBot.create(:study, name: 'Ideogram Study')
+    study = FactoryBot.create(:study, name: 'Ideogram Study', test_array: @@studies_to_clean)
     cluster_file = FactoryBot.create(:cluster_file,
                                      name: 'cluster_1.txt', study: study,
                                      cell_input: {
@@ -153,47 +133,35 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     ideogram_opts = ideogram_output[ideogram_file.id.to_s]
     assert_equal ideogram_opts[:cluster], cluster.name
     assert_equal annotation, ideogram_opts[:annotation]
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should load expression axis label' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     assert_equal 'Expression', ExpressionVizService.load_expression_axis_title(@basic_study)
     label = 'log(TPM)'
     @basic_study.default_options = {expression_label: label}
     assert_equal label, ExpressionVizService.load_expression_axis_title(@basic_study)
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should initialize visualization object from annotation' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = ExpressionVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
     plotly_struct = ExpressionVizService.initialize_plotly_objects_by_annotation(annotation)
     annotation[:values].each do |value|
       trace = plotly_struct[value]
       assert trace.present?, "Did not find #{name} in #{plotly_struct.keys}"
       assert_equal value, trace[:name]
     end
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   # test group-based violin plot data
   test 'should load violin plot data' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     gene = @basic_study.genes.by_name_or_id('PTEN', @basic_study.expression_matrix_files.pluck(:id))
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = ExpressionVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
     violin_data = ExpressionVizService.load_expression_boxplot_data_array_scores(@basic_study, gene, cluster, annotation)
     # cells A & C belong to 'dog', and cell B belongs to 'cat' from default metadata annotation
     expected_output = {
@@ -201,17 +169,13 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
         cat: {y: [3.0], cells: %w(B), annotations: [], name: 'cat'}
     }
     assert_equal expected_output.with_indifferent_access, violin_data.with_indifferent_access
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   # test numeric annotation-based 2d scatter plots, showing expression vs. numeric annotation values
   test 'should load 2d annotation expression scatter' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     gene = @basic_study.genes.by_name_or_id('PTEN', @basic_study.expression_matrix_files.pluck(:id))
     cluster = @basic_study.default_cluster
-    annotation = ExpressionVizService.get_selected_annotation(@basic_study, cluster, 'Intensity', 'numeric', 'cluster')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, 'Intensity', 'numeric', 'cluster')
     scatter_data = ExpressionVizService.load_annotation_based_data_array_scatter(@basic_study, gene, cluster, annotation,
                                                                                  nil, @basic_study.default_expression_label)
     expected_x_data = [1.1, 2.2, 3.3]
@@ -220,19 +184,15 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     assert_equal expected_x_data, scatter_data[:all][:x]
     assert_equal expected_exp_data, scatter_data[:all][:y]
     assert_equal expected_cells, scatter_data[:all][:cells]
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   # test normal scatter plot with expression values overlaid, instead of annotations
   test 'should load expression based scatter plot' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     gene = @basic_study.genes.by_name_or_id('PTEN', @basic_study.expression_matrix_files.pluck(:id))
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = ExpressionVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
     expression_scatter = ExpressionVizService.load_expression_data_array_points(@basic_study, gene, cluster, annotation,
                                                                                 nil, @basic_study.default_expression_label,
                                                                                 'Blues')
@@ -246,18 +206,14 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     assert_equal expected_exp_data, expression_scatter[:all][:marker][:color]
     assert_equal @basic_study.default_expression_label, expression_scatter[:all][:marker][:colorbar][:title]
     assert_equal 'Blues', expression_scatter[:all][:marker][:colorscale]
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should load gene set violin plots' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     genes = load_all_genes(@basic_study)
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = ExpressionVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
     gene_set_violin = ExpressionVizService.load_gene_set_expression_boxplot_scores(@basic_study, genes, cluster, annotation,
                                                                                    'mean')
     # cells A & C belong to 'dog', and cell B belongs to 'cat' from default metadata annotation
@@ -267,17 +223,13 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
         cat: {y: [1.5], cells: %w(B), annotations:[], name: 'cat'}
     }
     assert_equal expected_set_expression.with_indifferent_access, gene_set_violin.with_indifferent_access
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   # test numeric annotation-based 2d scatter plots, showing expression vs. numeric annotation values for multiple genes
   test 'should load gene set 2d annotation expression scatter' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     genes = load_all_genes(@basic_study)
     cluster = @basic_study.default_cluster
-    annotation = ExpressionVizService.get_selected_annotation(@basic_study, cluster, 'Intensity', 'numeric', 'cluster')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, 'Intensity', 'numeric', 'cluster')
     gene_set_annot_scatter = ExpressionVizService.load_gene_set_annotation_based_scatter(
         @basic_study, genes, cluster, annotation, 'mean', nil, @basic_study.default_expression_label
     )
@@ -290,19 +242,15 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     assert_equal expected_x_data, gene_set_annot_scatter[:all][:x]
     assert_equal expected_exp_data, gene_set_annot_scatter[:all][:y]
     assert_equal expected_cells, gene_set_annot_scatter[:all][:cells]
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   # test normal scatter plot with gene set expression values overlaid (collapsed by metric), instead of annotations
   test 'should load gene set expression based scatter plot' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     genes = load_all_genes(@basic_study)
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = ExpressionVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
     gene_set_exp_statter = ExpressionVizService.load_gene_set_expression_data_arrays(
         @basic_study, genes, cluster, annotation, 'mean', nil,
         @basic_study.default_expression_label, 'Blues'
@@ -320,13 +268,9 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     assert_equal expected_exp_data, gene_set_exp_statter[:all][:marker][:color]
     assert_equal @basic_study.default_expression_label, gene_set_exp_statter[:all][:marker][:colorbar][:title]
     assert_equal 'Blues', gene_set_exp_statter[:all][:marker][:colorscale]
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should collapse by mean/median for gene expression values' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     genes = load_all_genes(@basic_study)
     # since there are only 2 expression values in each set, mean === median
     cells = %w(A B C)
@@ -339,7 +283,5 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
       assert_equal expected_value, calculated_mean, "Mean calculation incorrect; #{expected_value} != #{calculated_mean}"
       assert_equal expected_value, calculated_median, "Median calculation incorrect; #{expected_value} != #{calculated_median}"
     end
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end

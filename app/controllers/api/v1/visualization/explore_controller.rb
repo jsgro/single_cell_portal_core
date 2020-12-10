@@ -122,7 +122,7 @@ module Api
         end
 
         def cluster_options
-          render json: ClusterVizService.get_study_annotation_options(@study, current_api_user)
+          render json: AnnotationVizService.get_study_annotation_options(@study, current_api_user)
         end
       end
 

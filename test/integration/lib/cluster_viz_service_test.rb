@@ -1,11 +1,13 @@
 require 'test_helper'
-require 'delete_helper'
 
 class ClusterVizServiceTest < ActiveSupport::TestCase
+  include Minitest::Hooks
+  include TestInstrumentor
+  include SelfCleaningSuite
 
-  setup do
-    @user = FactoryBot.create(:admin_user)
-    @study = FactoryBot.create(:detached_study, name: 'Test Cluster Study')
+  before(:all) do
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:detached_study, name: 'Test Cluster Study', test_array: @@studies_to_clean)
     @study_cluster_file_1 = FactoryBot.create(:cluster_file,
                                               name: 'cluster_1.txt', study: @study,
                                               cell_input: {
@@ -44,17 +46,9 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
         annotation: 'species--group--study'
     }
     @study.update(default_options: defaults)
-
-  end
-
-  teardown do
-    delete_study_and_ensure_cascade(@study)
-    @user.destroy
   end
 
   test 'should load cluster' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     # test default cluster w/ empty params
     default_cluster = @study.default_cluster
     loaded_cluster = ClusterVizService.get_cluster_group(@study, {})
@@ -68,23 +62,15 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     other_cluster = ClusterVizService.get_cluster_group(@study, params)
     assert_equal expected_cluster, other_cluster,
                  "Did not correctly load expected cluster; #{expected_cluster.name} != #{other_cluster.name}"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should load all clusters' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
-    clusters = %w(cluster_1.txt cluster_2.txt)
+    clusters = @study.cluster_groups.pluck(:name)
     all_clusters = ClusterVizService.load_cluster_group_options(@study)
     assert_equal clusters, all_clusters, "Did not load correct clusters; #{clusters} != #{all_clusters}"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should load cluster annotation options' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     expected_options = {
         'Study Wide' => [
             %w(species species--group--study), %w(disease disease--group--study)
@@ -95,13 +81,9 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     }
     annotation_opts = ClusterVizService.load_cluster_group_annotations(@study, @study.default_cluster, @user)
     assert_equal expected_options, annotation_opts
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should load spatial clusters' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     spatial_name = 'spatial.txt'
     FactoryBot.create(:cluster_file,
                       name: spatial_name, study: @study,
@@ -113,13 +95,9 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
                       })
     loaded_option = ClusterVizService.load_spatial_options(@study)
     assert_equal [spatial_name], loaded_option
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should load subsampling options' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     # create a cluster w/ 2K cells
     coordinates = 1.upto(2000).to_a
     cells = coordinates.map {|n| "cell_#{n}"}
@@ -134,13 +112,9 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     cluster = @study.cluster_groups.by_name(cluster_name)
     options = ClusterVizService.subsampling_options(cluster)
     assert_equal [1000], options
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should load cluster coordinates' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     cluster = @study.default_cluster
     metadata = @study.cell_metadata.by_name_and_type('species', 'group')
     annotation = {name: metadata.name, type: metadata.annotation_type, scope: 'study'}
@@ -152,13 +126,9 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
         assert trace.try(:[], attribute).present?, "Did not find any values for #{name}:#{attribute}"
       end
     end
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should transform cluster coordinates for visualization' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     cluster = @study.default_cluster
     metadata = @study.cell_metadata.by_name_and_type('disease', 'group')
     annotation = {name: metadata.name, type: metadata.annotation_type, scope: 'study'}
@@ -173,13 +143,9 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
       assert_equal 'scatter3d', trace[:type]
       assert_equal 'markers', trace[:mode]
     end
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should load coordinate labels as annotations' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     cluster = @study.default_cluster
     FactoryBot.create(:coordinate_label_file,
                       cluster: cluster, name: 'coordinate_labels.txt', study: @study,
@@ -199,26 +165,18 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     assert selected_label[:font].present?
     font_keys = [:family, :size, :color]
     assert_equal font_keys, selected_label[:font].keys
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should load axis labels' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     cluster = @study.default_cluster
     axis_labels = ClusterVizService.load_axis_labels(cluster)
     axis_labels.values.each_with_index do |label, index|
       expected_label = "PCA #{index + 1}"
       assert_equal expected_label, label
     end
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should compute range for coordinates' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     cluster = @study.default_cluster
     metadata = @study.cell_metadata.by_name_and_type('species', 'group')
     annotation = {name: metadata.name, type: metadata.annotation_type, scope: 'study'}
@@ -234,13 +192,9 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     }
     calculated_range = ClusterVizService.set_range(cluster, coordinates.values)
     assert_equal expected_range, calculated_range
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should compute aspect ratio for predefined range' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     cluser_file_with_range = 'cluster_ranged.txt'
     FactoryBot.create(:cluster_file,
                       name: cluser_file_with_range, study: @study,
@@ -263,7 +217,5 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     expected_aspect = {mode: 'cube', x: 1.0, y: 1.0, z: 1.0}
     computed_aspect = ClusterVizService.compute_aspect_ratios(cluster.domain_ranges)
     assert_equal expected_aspect, computed_aspect
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end

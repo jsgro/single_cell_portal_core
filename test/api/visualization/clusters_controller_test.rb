@@ -1,26 +1,21 @@
+require 'test_helper'
 require 'api_test_helper'
-require 'test_instrumentor'
-require 'delete_helper'
 
 class ClustersControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include Requests::JsonHelpers
   include Requests::HttpHelpers
   include Minitest::Hooks
-  include TestInstrumentor
+  include ::SelfCleaningSuite
+  include ::TestInstrumentor
 
   before(:all) do
-    @user = FactoryBot.create(:api_user)
-    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
-                                                                           :provider => 'google_oauth2',
-                                                                           :uid => '123545',
-                                                                           :email => 'testing.user@gmail.com'
-                                                                       })
-
+    @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @basic_study = FactoryBot.create(:detached_study,
                                      name: 'Basic Cluster Study',
                                      public: false,
-                                     user: @user)
+                                     user: @user,
+                                     test_array: @@studies_to_clean)
     @basic_study_cluster_file = FactoryBot.create(:cluster_file,
                                                   name: 'clusterA.txt',
                                                   study: @basic_study,
@@ -40,28 +35,23 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
                                                      {name: 'disease', type: 'group', values: ['none', 'none', 'measles']}
                                                    ])
 
-    @empty_study = FactoryBot.create(:detached_study, name: 'Empty Cluster Study')
-    @user2 =  FactoryBot.create(:api_user)
-    # even though this study is only used in one test, create it here so teardown
-    # can be properly managed
-    @slash_study = FactoryBot.create(:detached_study, name: 'Cluster Slash Study')
-  end
-
-  after(:all) do
-    delete_study_and_ensure_cascade(@basic_study)
-    delete_study_and_ensure_cascade(@empty_study)
-    delete_study_and_ensure_cascade(@slash_study)
-    @user.destroy
-    @user2.destroy
   end
 
   test 'enforces view permissions' do
-    sign_in_and_update @user2
-    execute_http_request(:get, api_v1_study_clusters_path(@basic_study), user: @user2)
+    user2 = FactoryBot.create(:api_user, test_array: @@users_to_clean)
+    sign_in_and_update user2
+    execute_http_request(:get, api_v1_study_clusters_path(@basic_study), user: user2)
     assert_equal 403, response.status
 
-    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study), user: @user2)
+    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study), user: user2)
     assert_equal 403, response.status
+
+    sign_in_and_update @user
+    execute_http_request(:get, api_v1_study_clusters_path(@basic_study))
+    assert_equal 200, response.status
+
+    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study))
+    assert_equal 200, response.status
   end
 
   test 'index should return list of cluster names' do
@@ -69,7 +59,10 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:get, api_v1_study_clusters_path(@basic_study))
     assert_equal ["clusterA.txt"], json
 
-    execute_http_request(:get, api_v1_study_clusters_path(@empty_study))
+    empty_study = FactoryBot.create(:detached_study,
+                                    name: 'Empty Cluster Study',
+                                    test_array: @@studies_to_clean)
+    execute_http_request(:get, api_v1_study_clusters_path(empty_study))
     assert_equal [], json
   end
 
@@ -84,9 +77,12 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'should load clusters with slashes in name' do
+    slash_study = FactoryBot.create(:detached_study,
+                                    name: 'Cluster Slash Study',
+                                    test_array: @@studies_to_clean)
     cluster_with_slash = FactoryBot.create(:cluster_file,
                                            name: 'data/cluster_with_slash.txt',
-                                           study: @slash_study,
+                                           study: slash_study,
                                            cell_input: {
                                              x: [1, 2 , 3, 4],
                                              y: [5, 6, 7, 8],
@@ -98,7 +94,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
     # with a slash due to the route constraint of {:cluster_name=>/[^\/]+/}; using route helper api_v1_study_cluster_path()
     # with the params of cluster_name: 'data/cluster_with_slash.txt' or cluster_name: 'data%2Fcluster_with_slash' does not work
     cluster_name = 'data%2Fcluster_with_slash.txt'
-    basepath = "/single_cell/api/v1/studies/#{@slash_study.accession}/clusters/#{cluster_name}"
+    basepath = "/single_cell/api/v1/studies/#{slash_study.accession}/clusters/#{cluster_name}"
     query_string = '?annotation_name=category&annotation_type=group&annotation_scope=cluster'
     url = basepath + query_string
     execute_http_request(:get, url)
@@ -111,7 +107,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
     # assert that non-encoded cluster names do not load correct cluster
     # using path helper here results in cluster_name not being decoded properly by clusters_controller.rb
     # and is interpreted literally as data%2Fcluster_with_slash.txt, rather than data/cluster_with_slash.txt
-    execute_http_request(:get, api_v1_study_cluster_path(@slash_study.accession, cluster_name,
+    execute_http_request(:get, api_v1_study_cluster_path(slash_study.accession, cluster_name,
                                                          annotation_name: 'category', annotation_type: 'group',
                                                          annotation_scope: 'cluster'))
     assert_response :not_found

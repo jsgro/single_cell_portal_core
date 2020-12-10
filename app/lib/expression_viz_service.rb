@@ -15,7 +15,7 @@ class ExpressionVizService
     else
       render_data[:values] = load_annotation_based_data_array_scatter(study, gene, cluster, selected_annotation, subsample, render_data[:y_axis_title])
     end
-    render_data[:annotation_list] = ClusterVizService.get_study_annotation_options(study, current_user)
+    render_data[:annotation_list] = AnnotationVizService.get_study_annotation_options(study, current_user)
     render_data[:rendered_cluster] = cluster.name
     render_data[:rendered_annotation] = "#{selected_annotation[:name]}--#{selected_annotation[:type]}--#{selected_annotation[:scope]}"
     render_data[:rendered_subsample] = subsample
@@ -397,38 +397,6 @@ class ExpressionVizService
     }
   end
 
-  def self.get_selected_annotation(study, cluster, annot_name, annot_type, annot_scope)
-    # construct object based on name, type & scope
-    case annot_scope
-    when 'cluster'
-      annotation_source = cluster.cell_annotations.find {|ca| ca[:name] == annot_name && ca[:type] == annot_type}
-    when 'user'
-      annotation_source = UserAnnotation.find(annot_name)
-    else
-      annotation_source = study.cell_metadata.by_name_and_type(annot_name, annot_type)
-    end
-    # rescue from an invalid annotation request by defaulting to the first cell metadatum present
-    if annotation_source.nil?
-      annotation_source = study.cell_metadata.first
-    end
-    populate_annotation_by_class(source: annotation_source, scope: annot_scope, type: annot_type)
-  end
-
-  # attempt to load an annotation based on instance class
-  def self.populate_annotation_by_class(source:, scope:, type:)
-    if source.is_a?(CellMetadatum)
-      annotation = {name: source.name, type: source.annotation_type,
-                    scope: 'study', values: source.values.to_a,
-                    identifier: "#{source.name}--#{type}--#{scope}"}
-    elsif source.is_a?(UserAnnotation)
-      annotation = {name: source.name, type: type, scope: scope, values: source.values.to_a,
-                    identifier: "#{source.id}--#{type}--#{scope}", id: source.id}
-    elsif source.is_a?(Hash)
-      annotation = {name: source[:name], type: type, scope: scope, values: source[:values].to_a,
-                    identifier: "#{source[:name]}--#{type}--#{scope}"}
-    end
-    annotation
-  end
 
   # find mean of expression scores for a given cell & list of genes
   def self.calculate_mean(genes, cell)

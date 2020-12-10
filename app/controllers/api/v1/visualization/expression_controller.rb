@@ -35,7 +35,7 @@ module Api
 
         def render_violin
           cluster = ClusterVizService.get_cluster_group(@study, params)
-          annotation = ExpressionVizService.get_selected_annotation(@study,
+          annotation = AnnotationVizService.get_selected_annotation(@study,
                                                                     cluster,
                                                                     params[:annotation_name],
                                                                     params[:annotation_type],

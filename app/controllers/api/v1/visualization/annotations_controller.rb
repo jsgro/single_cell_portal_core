@@ -18,7 +18,7 @@ module Api
         before_action :check_api_cache!
         after_action :write_api_cache!
 
-        annotation_description_doc = 'Object with name (String), values (Array or uique values), type (String), scope (String), and cluster_name (string, if applicable)'
+        annotation_description_doc = 'Object with name (String), values (Array of uique values), type (String), scope (String), and cluster_name (string, if applicable)'
 
         swagger_path '/studies/{accession}/annotations' do
           operation :get do
@@ -52,7 +52,7 @@ module Api
 
         #
         def index
-          render json: ClusterVizService.available_annotations(@study, nil, current_api_user)
+          render json: AnnotationVizService.available_annotations(@study, nil, current_api_user)
         end
 
         swagger_path '/studies/{accession}/annotations/{annotation_name}' do
@@ -63,34 +63,34 @@ module Api
             key :summary, 'Get an annotation for a study'
             key :description, 'Get a single annotation object'
             key :operationId, 'study_annotation_path'
-            parameter({
-              name: :accession,
-              in: :path,
-              description: 'Study accession number (e.g. SCPXXX)',
-              required: true,
-              type: :string
-            })
-            parameter({
-              name: :annotation_name,
-              in: :path,
-              description: 'Name of annotation',
-              required: true,
-              type: :string
-            })
-            parameter({
-              name: :annotation_type,
-              in: :query,
-              description: 'Type of annotation. One of “group” or “numeric”.',
-              type: :string,
-              enum: VALID_TYPE_VALUES
-            })
-            parameter({
-              name: :annotation_scope,
-              in: :query,
-              description: 'Scope of annotation.  One of “study” or “cluster”.',
-              type: :string,
-              enum: VALID_SCOPE_VALUES
-            })
+            parameter do
+              key :name, :accession
+              key :in, :path
+              key :description, 'Study accession number (e.g. SCPXXX)'
+              key :required, true
+              key :type, :string
+            end
+            parameter do
+              key :name, :annotation_name
+              key :in, :path
+              key :description, 'Name of annotation'
+              key :required, true
+              key :type, :string
+            end
+            parameter do
+              key :name, :annotation_type
+              key :in, :query
+              key :description, 'Type of annotation. One of "group" or "numeric".'
+              key :type, :string
+              key :enum, VALID_TYPE_VALUES
+            end
+            parameter do
+              key :name, :annotation_scope
+              key :in, :query
+              key :description, 'Scope of annotation.  One of "study" or "cluster".'
+              key :type, :string
+              key :enum, VALID_SCOPE_VALUES
+            end
             response 200 do
               key :description, annotation_description_doc
             end
@@ -111,34 +111,34 @@ module Api
             key :summary, 'Get an annotation for a study'
             key :description, 'Get a single annotation object'
             key :operationId, 'study_annotation_cell_values_path'
-            parameter({
-              name: :accession,
-              in: :path,
-              description: 'Study accession number (e.g. SCPXXX)',
-              required: true,
-              type: :string
-            })
-            parameter({
-              name: :annotation_name,
-              in: :path,
-              description: 'Name of annotation',
-              required: true,
-              type: :string
-            })
-            parameter({
-              name: :annotation_type,
-              in: :query,
-              description: 'Type of annotation. One of “group” or “numeric”.',
-              type: :string,
-              enum: VALID_TYPE_VALUES
-            })
-            parameter({
-              name: :annotation_scope,
-              in: :query,
-              description: 'Scope of annotation.  One of “study” or “cluster”.',
-              type: :string,
-              enum: VALID_SCOPE_VALUES
-            })
+            parameter do
+              key :name, :accession
+              key :in, :path
+              key :description, 'Study accession number (e.g. SCPXXX)'
+              key :required, true
+              key :type, :string
+            end
+            parameter do
+              key :name, :annotation_name
+              key :in, :path
+              key :description, 'Name of annotation'
+              key :required, true
+              key :type, :string
+            end
+            parameter do
+              key :name, :annotation_type
+              key :in, :query
+              key :description, 'Type of annotation. One of “group” or “numeric”.'
+              key :type, :string
+              key :enum, VALID_TYPE_VALUES
+            end
+            parameter do
+              key :name, :annotation_scope
+              key :in, :query
+              key :description, 'Scope of annotation.  One of “study” or “cluster”.'
+              key :type, :string
+              key :enum, VALID_SCOPE_VALUES
+            end
             response 200 do
               key :description, '2-column tsv of cell names and their values for the requested annotation.  Column headers are NAME (the cell name) and the name of the returned annotation'
             end
@@ -148,16 +148,12 @@ module Api
 
         def cell_values
           annotation = self.class.get_selected_annotation(@study, params)
-          render plain: ClusterVizService.annotation_cell_values_tsv(@study, @study.default_cluster, annotation)
+          render plain: AnnotationVizService.annotation_cell_values_tsv(@study, @study.default_cluster, annotation)
         end
 
         # parses the url params to identify the selected cluster
         def self.get_selected_annotation(study, params)
-          annot_params = {
-            name: params[:annotation_name].blank? ? nil : params[:annotation_name],
-            type: params[:annotation_type].blank? ? nil : params[:annotation_type],
-            scope: params[:annotation_scope].blank? ? nil : params[:annotation_scope]
-          }
+          annot_params = get_annotation_params(params)
           if annot_params[:name] == '_default'
             annot_params[:name] = nil
           end
@@ -168,11 +164,20 @@ module Api
             end
             cluster = study.cluster_groups.by_name(params[:cluster])
           end
-          ExpressionVizService.get_selected_annotation(study,
+          AnnotationVizService.get_selected_annotation(study,
                                                        cluster,
                                                        annot_params[:name],
                                                        annot_params[:type],
                                                        annot_params[:scope])
+        end
+
+        # parses url params into an object with name, type, and scope keys
+        def self.get_annotation_params(url_params)
+           {
+            name: url_params[:annotation_name].blank? ? nil : url_params[:annotation_name],
+            type: url_params[:annotation_type].blank? ? nil : url_params[:annotation_type],
+            scope: url_params[:annotation_scope].blank? ? nil : url_params[:annotation_scope]
+          }
         end
       end
     end
