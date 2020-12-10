@@ -371,8 +371,6 @@ GEM
       activesupport (>= 4.2.0)
       rack (>= 1.1)
       rubocop (>= 0.87.0)
-    ruby-debug-ide (0.6.1)
-      rake (>= 0.8.1)
     ruby-prof (0.17.0)
     ruby-progressbar (1.9.0)
     ruby_dep (1.5.0)
@@ -475,6 +473,7 @@ GEM
 
 PLATFORMS
   ruby
+  x86_64-linux
 
 DEPENDENCIES
   actionpack-action_caching
@@ -518,7 +517,6 @@ DEPENDENCIES
   rest-client
   rubocop
   rubocop-rails
-  ruby-debug-ide
   ruby-prof
   ruby_native_statistics
   rubyzip
@@ -547,4 +545,4 @@ RUBY VERSION
    ruby 2.6.5p114
 
 BUNDLED WITH
-   2.1.4
+   2.2.0
