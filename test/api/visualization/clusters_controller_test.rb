@@ -34,7 +34,6 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
                                                      {name: 'species', type: 'group', values: ['dog', 'cat', 'dog']},
                                                      {name: 'disease', type: 'group', values: ['none', 'none', 'measles']}
                                                    ])
-
   end
 
   test 'enforces view permissions' do

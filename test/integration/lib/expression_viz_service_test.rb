@@ -52,7 +52,6 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     @basic_study.update(default_options: defaults)
   end
 
-
   # convenience method to load all gene expression data for a given study like requests to expression_controller
   def load_all_genes(study)
     gene_names = %w(PTEN AGPAT2)
@@ -104,7 +103,8 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
 
   test 'should load ideogram outputs' do
     # we need a non-detached study, so create one
-    study = FactoryBot.create(:study, name: 'Ideogram Study', test_array: @@studies_to_clean)
+    study = FactoryBot.create(:study, name: "Ideogram Study #{SecureRandom.uuid}", test_array: @@studies_to_clean)
+
     cluster_file = FactoryBot.create(:cluster_file,
                                      name: 'cluster_1.txt', study: study,
                                      cell_input: {
