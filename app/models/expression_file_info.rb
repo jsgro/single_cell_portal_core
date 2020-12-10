@@ -6,7 +6,7 @@ class ExpressionFileInfo
   field :library_preparation_protocol, type: String
   field :units, type: String
   field :biosample_input_type, type: String
-  field :multimodality, type: String
+  field :modality, type: String
   field :is_raw_counts, type: Boolean, default: false
 
   # note that species and reference genome/annotation live at the study_file level, not here
@@ -17,9 +17,18 @@ class ExpressionFileInfo
   BIOSAMPLE_INPUT_TYPE_VALUES = ['Whole cell', 'Single nuclei', 'Bulk']
   validates :biosample_input_type, inclusion: {in: BIOSAMPLE_INPUT_TYPE_VALUES}, allow_blank: true
 
-  MULTIMODALITY_VALUES = ['CITE-seq', 'Patch-seq']
-  validates :multimodality, inclusion: {in: MULTIMODALITY_VALUES}, allow_blank: true
-
+  MODALITY_VALUES = [
+    nil,
+    'Transcriptomic: unbiased',
+    'Transcriptomic: targeted',
+    'Spatial transcriptomics',
+    'Epigenomic: DNA-binding: histone modification',
+    'Epigenomic: DNA-binding: transcriptome factor location',
+    'Epigenomic: DNA chromatin accessibility',
+    'Epigenomic: DNA methylation',
+    'Proteomic'
+  ]
+  validates :modality, inclusion: {in: MODALITY_VALUES}
 
   LIBRARY_PREPARATION_VALUES = ['10x 3\' v1',
                                 '10x 3\' v2',
