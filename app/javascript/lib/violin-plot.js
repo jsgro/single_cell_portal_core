@@ -156,14 +156,20 @@ function parseResultsToArray(results) {
   })
 }
 
+/** Convenience wrapper for getViolinProps */
+function getViolinPropsWrapper(rawPlot) {
+  // The code below is heavily borrowed from legacy application.js
+  const dataArray = parseResultsToArray(rawPlot)
+  const jitter = rawPlot.values_jitter ? rawPlot.values_jitter : ''
+  const traceData = getViolinProps(
+    dataArray, rawPlot.rendered_cluster, jitter, rawPlot.y_axis_title
+  )
+  return traceData
+}
+
 /** Formats expression data for Plotly, draws violin (or box) plot */
 export function renderViolinPlot(target, results) {
-  // The code below is heavily borrowed from legacy application.js
-  const dataArray = parseResultsToArray(results)
-  const jitter = results.values_jitter ? results.values_jitter : ''
-  const traceData = getViolinProps(
-    dataArray, results.rendered_cluster, jitter, results.y_axis_title
-  )
+  const traceData = getViolinPropsWrapper(results)
   const expressionData = [].concat.apply([], traceData[0])
   const expressionLayout = traceData[1]
   // Check that the ID exists on the page to avoid errors in corner cases
@@ -186,6 +192,36 @@ export function resizeViolinPlot() {
   }
 }
 
+/**
+* Update data points in violin or box plot
+*
+* Adapted from _boxpoints_picker.html.erb
+*/
+export function updateDataPoints(mode) {
+  const rawPlot = window.SCP.violinPlots[0]
+  const traceData = getViolinPropsWrapper(rawPlot)
+  const expressionData = [...traceData[0]]
+
+  $('#boxpoints').val(mode)
+  $('#selected_boxpoints').val(mode)
+
+  const plotType = $('#plot_type').val()
+  const updateMode = mode === '' ? false : mode
+  $(expressionData).each(function() {
+    switch (plotType) {
+      case 'violin':
+        // eslint-disable-next-line no-invalid-this
+        this.points = updateMode
+        break
+      case 'box':
+        // eslint-disable-next-line no-invalid-this
+        this.boxpoints = updateMode
+        break
+    }
+  })
+  Plotly.react('box-plot', expressionData)
+}
+
 /** Load expression data and draw violin (or box) plot */
 export async function violinPlot(plotId, study, gene) {
   const plotDom = document.getElementById(plotId)
@@ -198,7 +234,6 @@ export async function violinPlot(plotId, study, gene) {
   )
   rawPlot.plotId = plotId
   window.SCP.violinPlots.push(rawPlot)
-
 
   renderViolinPlot(plotId, rawPlot)
 

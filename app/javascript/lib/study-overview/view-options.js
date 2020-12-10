@@ -10,6 +10,7 @@
  */
 
 import { setScatterPlotColorScales } from 'lib/scatter-plot'
+import { updateDataPoints } from 'lib/violin-plot'
 
 /** Get selections for top-level view options */
 export function getMainViewOptions(plotIndex) {
@@ -129,9 +130,16 @@ export function handleMenuChange(callback, callbackArgs) {
   handleClusterMenuChange(callback, callbackArgs)
   handleOtherMenuChange(callback, callbackArgs)
 
-  // listener to redraw expression scatter with new color profile
+  // Listener to redraw expression scatter with new color profile
   $('#colorscale').change(function() {
-  const theme = $(this).val() // eslint-disable-line
+    const theme = $(this).val() // eslint-disable-line
     setScatterPlotColorScales(theme)
+  })
+
+  $(document).off('change', '#boxpoints_select')
+  // Listener to redraw violin or box plot with new data points
+  $(document).on('change', '#boxpoints_select', function() {
+    const mode = $(this).val() // eslint-disable-line
+    updateDataPoints(mode)
   })
 }
