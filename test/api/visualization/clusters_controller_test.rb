@@ -46,7 +46,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
     assert_equal 403, response.status
 
     sign_in_and_update @user
-    execute_http_request(:get, api_v1_study_clusters_path(@basic_study))
+    execute_http_request(:get, api_v1_study_cluster_path(@basic_study))
     assert_equal 200, response.status
 
     execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study))

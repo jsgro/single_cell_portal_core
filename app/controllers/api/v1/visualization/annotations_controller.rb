@@ -112,7 +112,6 @@ module Api
             key :summary, 'Get cell values for an annotation for a study'
             key :description, 'Get cell values for an annotation object.  Useful for e.g. dot plots.'
             key :operationId, 'study_annotation_cell_values_path'
-<<<<<<< HEAD
             parameter do
               key :name, :accession
               key :in, :path

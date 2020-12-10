@@ -28,12 +28,21 @@ module Api
             key :summary, 'Get the default cluster and its sub-clusters for a study'
             key :description, 'Get the default cluster group and its constituent cluster annotations'
             key :operationId, 'study_clusters_path'
+            parameter do
+              key :name, :accession
+              key :in, :path
+              key :description, 'Accession of study'
+              key :required, true
+              key :type, :string
+            end
             response 200 do
-              key :type, :array
-              key :description, 'Array of all cluster group names for this study'
-              items do
-                key :type, :string
-                key :description, 'Name of cluster'
+              schema do
+                key :type, :array
+                key :description, 'Array of all cluster group names for this study'
+                items do
+                  key :type, :string
+                  key :description, 'Name of cluster'
+                end
               end
             end
             extend SwaggerResponses::StudyControllerResponses
@@ -53,20 +62,20 @@ module Api
             key :summary, 'Get a cluster\'s visualization data for a study'
             key :description, 'Get the cluster group and its constituent cluster annotations.'
             key :operationId, 'study_cluster_path'
-            parameter({
-              name: :accession,
-              in: :path,
-              description: 'Accession of study',
-              required: true,
-              type: :string
-            })
-            parameter({
-              name: :cluster_name,
-              in: :path,
-              description: 'Name of cluster group.  Use "_default" to return the default cluster',
-              required: true,
-              type: :string
-            })
+            parameter do
+              key :name, :accession
+              key :in, :path
+              key :description, 'Accession of study'
+              key :required, true
+              key :type, :string
+            end
+            parameter do
+              key :name, :cluster_name
+              key :in, :path
+              key :description, 'Name of cluster group.  Use "_default" to return the default cluster'
+              key :required, true
+              key :type, :string
+            end
             response 200 do
               key :description, 'Cluster visualization, suitable for rendering in Plotly'
             end
