@@ -41,6 +41,7 @@ class AnnotationVizService
       default_cluster: study.default_cluster&.name,
       default_annotation: AnnotationVizService.get_selected_annotation(study, nil, nil, nil, nil),
       annotations: AnnotationVizService.available_annotations(study, nil, user),
+      clusters: study.cluster_groups.pluck(:name),
       subsample_thresholds: subsample_thresholds
     }
   end

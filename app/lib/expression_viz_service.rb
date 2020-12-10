@@ -56,7 +56,6 @@ class ExpressionVizService
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     values = initialize_plotly_objects_by_annotation(annotation)
-
     # grab all cells present in the cluster, and use as keys to load expression scores
     # if a cell is not present for the gene, score gets set as 0.0
     cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)

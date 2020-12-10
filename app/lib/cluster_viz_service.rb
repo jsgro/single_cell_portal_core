@@ -34,9 +34,9 @@ class ClusterVizService
   def self.available_annotations_by_cluster(cluster, annotation_type=nil)
     cluster.cell_annotations_by_type(annotation_type).map do |annot|
       {
-        name: annot['name'],
-        type: annot['type'],
-        values: annot['values'],
+        name: annot[:name],
+        type: annot[:type],
+        values: annot[:values],
         scope: 'cluster',
         cluster_name: cluster.name
       }

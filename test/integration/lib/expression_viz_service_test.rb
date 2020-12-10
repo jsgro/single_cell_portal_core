@@ -83,15 +83,15 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = ExpressionVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
     gene = @basic_study.genes.by_name_or_id('PTEN', @basic_study.expression_matrix_files.pluck(:id))
     rendered_data = ExpressionVizService.get_global_expression_render_data(@basic_study, nil, gene, cluster,
                                                                            annotation, 'All', @user)
     expected_values = %w(dog cat)
     assert_equal expected_values, rendered_data[:values].keys
-    expected_clusters = @basic_study.cluster_groups.map(&:name).sort
-    loaded_clusters = rendered_data[:options].sort
-    assert_equal expected_clusters, loaded_clusters
+    expected_annotations = %w(Category disease Intensity species).sort
+    loaded_annotations = rendered_data[:annotation_list][:annotations].map{|a| a[:name]}.sort
+    assert_equal expected_annotations, loaded_annotations
     assert_equal cluster.name, rendered_data[:rendered_cluster]
     assert_equal default_annot, rendered_data[:rendered_annotation]
     # expression scores for 'dog'
@@ -138,7 +138,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
   test 'should load expression axis label' do
     assert_equal 'Expression', ExpressionVizService.load_expression_axis_title(@basic_study)
     label = 'log(TPM)'
-    @basic_study.default_options = {expression_label: label}
+    @basic_study.default_options = @basic_study.default_options.merge({expression_label: label})
     assert_equal label, ExpressionVizService.load_expression_axis_title(@basic_study)
   end
 
@@ -160,6 +160,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     gene = @basic_study.genes.by_name_or_id('PTEN', @basic_study.expression_matrix_files.pluck(:id))
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
+    byebug
     annot_name, annot_type, annot_scope = default_annot.split('--')
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
     violin_data = ExpressionVizService.load_expression_boxplot_data_array_scores(@basic_study, gene, cluster, annotation)

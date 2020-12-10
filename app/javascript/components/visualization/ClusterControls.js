@@ -21,10 +21,8 @@ function getSubsampleOptions(annotationList, clusterName) {
 
 /** takes the server response and returns cluster options suitable for react-select */
 function getClusterOptions(annotationList) {
-  return _uniq(annotationList.annotations
-    .map((annot) => annot.cluster_name)
-    .filter(name => !!name))
-    .map(name => {return { label: name, value: name}})
+  let clusterList = annotationList.clusters ? annotationList.clusters : []
+  return clusterList.map(name => {return { label: name, value: name}})
 }
 
 /** takes the server response and returns annotation options suitable for react-select */
@@ -42,8 +40,13 @@ function getAnnotationOptions(annotationList, clusterName) {
 
 /** returns the first annotation for the given cluster */
 function getDefaultAnnotationForCluster(annotationList, clusterName) {
-  return annotationList.annotations
-    .filter(annot => annot.cluster_name == cluster.value)[0]
+  const clusterAnnots = annotationList.annotations.filter(annot => annot.cluster_name == clusterName)
+  if (clusterAnnots.length) {
+    return clusterAnnots[0]
+  } else {
+    return annotationList.annotations[0]
+  }
+
 }
 
 /** takes the server response and returns subsample default subsample for the cluster */
