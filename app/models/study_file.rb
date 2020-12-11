@@ -270,10 +270,10 @@ class StudyFile
         key :description, 'Protocol used to generate expression matrix'
         key :enum, ExpressionFileInfo::LIBRARY_PREPARATION_VALUES
       end
-      property :multimodality do
+      property :modality do
         key :type, :string
-        key :description, 'Multimodality type'
-        key :enum, ExpressionFileInfo::MULTIMODALITY_VALUES
+        key :description, 'Modality type'
+        key :enum, ExpressionFileInfo::MODALITY_VALUES
       end
     end
     property :created_at do
@@ -415,10 +415,10 @@ class StudyFile
             key :description, 'Protocol used to generate expression matrix'
             key :enum, ExpressionFileInfo::LIBRARY_PREPARATION_VALUES
           end
-          property :multimodality do
+          property :modality do
             key :type, :string
-            key :description, 'Multimodality type'
-            key :enum, ExpressionFileInfo::MULTIMODALITY_VALUES
+            key :description, 'Modality type'
+            key :enum, ExpressionFileInfo::MODALITY_VALUES
           end
         end
       end
@@ -502,10 +502,10 @@ class StudyFile
             key :description, 'Protocol used to generate expression matrix'
             key :enum, ExpressionFileInfo::LIBRARY_PREPARATION_VALUES
           end
-          property :multimodality do
+          property :modality do
             key :type, :string
-            key :description, 'Multimodality type'
-            key :enum, ExpressionFileInfo::MULTIMODALITY_VALUES
+            key :description, 'Modality type'
+            key :enum, ExpressionFileInfo::MODALITY_VALUES
           end
         end
       end

@@ -38,7 +38,6 @@ group :development, :test do
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'
-  gem 'ruby-debug-ide'
   gem 'debase'
   gem 'test-unit'
   gem 'brakeman', :require => false
@@ -48,6 +47,11 @@ group :development, :test do
   gem 'puma'
   gem 'rubocop', require: false
   gem 'rubocop-rails', require: false
+end
+
+group :test do
+  gem 'simplecov', require: false
+  gem 'simplecov-lcov', require: false
 end
 
 gem 'devise'

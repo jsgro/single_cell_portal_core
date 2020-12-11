@@ -266,7 +266,7 @@ class BulkDownloadService
       {library_preparation_protocol: 'expression_file_info.library_preparation_protocol'},
       {units: 'expression_file_info.units'},
       {biosample_input_type: 'expression_file_info.biosample_input_type'},
-      {multimodality: 'expression_file_info.multimodality'}
+      {modality: 'expression_file_info.modality'}
     ]
 
     col_names = col_names_and_paths.map { |np| np.keys[0] }

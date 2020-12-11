@@ -1011,7 +1011,7 @@ function validateCandidateUpload(formId, filename, classSelector) {
     var form = $(formId)
     var names = [];
     classSelector.each(function(index, name) {
-        
+
         var n = $(name).val().trim();
         if (n !== '') {
             names.push(n);

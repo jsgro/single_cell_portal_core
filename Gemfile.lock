@@ -131,6 +131,7 @@ GEM
       responders
       warden (~> 1.2.3)
     digest-crc (0.4.1)
+    docile (1.3.2)
     domain_name (0.5.20180417)
       unf (>= 0.0.5, < 1.0.0)
     erubi (1.9.0)
@@ -370,8 +371,6 @@ GEM
       activesupport (>= 4.2.0)
       rack (>= 1.1)
       rubocop (>= 0.87.0)
-    ruby-debug-ide (0.6.1)
-      rake (>= 0.8.1)
     ruby-prof (0.17.0)
     ruby-progressbar (1.9.0)
     ruby_dep (1.5.0)
@@ -404,6 +403,11 @@ GEM
       faraday (~> 0.9)
       jwt (>= 1.5, < 3.0)
       multi_json (~> 1.10)
+    simplecov (0.19.0)
+      docile (~> 1.1)
+      simplecov-html (~> 0.11)
+    simplecov-html (0.12.3)
+    simplecov-lcov (0.8.0)
     spring (2.0.2)
       activesupport (>= 4.2)
     sprockets (3.7.2)
@@ -469,6 +473,7 @@ GEM
 
 PLATFORMS
   ruby
+  x86_64-linux
 
 DEPENDENCIES
   actionpack-action_caching
@@ -512,7 +517,6 @@ DEPENDENCIES
   rest-client
   rubocop
   rubocop-rails
-  ruby-debug-ide
   ruby-prof
   ruby_native_statistics
   rubyzip
@@ -521,6 +525,8 @@ DEPENDENCIES
   secure_headers
   selenium-webdriver
   sentry-raven
+  simplecov
+  simplecov-lcov
   spring
   swagger-blocks
   swagger_ui_engine
@@ -539,4 +545,4 @@ RUBY VERSION
    ruby 2.6.5p114
 
 BUNDLED WITH
-   2.1.4
+   2.2.0
