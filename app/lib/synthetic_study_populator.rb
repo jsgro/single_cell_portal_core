@@ -23,6 +23,7 @@ class SyntheticStudyPopulator
     puts("Populating synthetic study from #{synthetic_study_folder}")
     study = create_study(study_config, user, detached)
     add_files(study, study_config, synthetic_study_folder, user)
+    study
   end
 
   # find all matching instances of synthetic studies
@@ -93,7 +94,22 @@ class SyntheticStudyPopulator
         end
       end
 
+      if study_file_params[:file_type] == 'Coordinate Labels'
+        if !finfo['cluster_file_name']
+          throw 'Coordinate label files must specify a cluster_file_name'
+        end
+        matching_cluster_file = StudyFile.find_by(name: finfo['cluster_file_name'], study: study)
+        if matching_cluster_file.nil?
+          throw "No cluster file with name #{finfo['cluster_file_name']} to match coordinate labels"
+        end
+        study_file_params[:options] = {'cluster_file_id' => matching_cluster_file.id.to_s}
+      end
+
       study_file = StudyFile.create!(study_file_params)
+      # the status has to be 'uploading' when created so the file gets pulled into the workspace
+      # after creation, we want it to be uploaded so that, e.g. bundles can create
+      study_file.update(status: 'uploaded')
+
       if !study.detached
         FileParseService.run_parse_job(study_file, study, user)
       end

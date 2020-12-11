@@ -410,7 +410,7 @@ class ParseUtils
       end
 
       raw_header_data = coordinate_data.readline.encode('UTF-8', invalid: :replace, undef: :replace, replace: '').split(/[\t,]/).map(&:strip)
-      header_data = study.sanitize_input_array(raw_header_data)
+      header_data = self.sanitize_input_array(raw_header_data)
 
       # determine if 3d coordinates have been provided
       is_3d = header_data.include?('Z')
