@@ -71,7 +71,7 @@ class ExternalResourcesControllerTest < ActionDispatch::IntegrationTest
             description: description
         }
     }
-    execute_http_request(:patch, api_v1_study_external_resource_path(study_id: @study.id, id: external_resource_id), update_attributes)
+    execute_http_request(:patch, api_v1_study_external_resource_path(study_id: @study.id, id: external_resource_id), request_payload: update_attributes)
     assert_response :success
     assert json['description'] == update_attributes[:external_resource][:description],
            "Did not set description correctly, expected #{update_attributes[:external_resource][:description]} but found #{json['description']}"
