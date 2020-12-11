@@ -65,7 +65,7 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
   end
 
   test 'should load all clusters' do
-    clusters = @study.cluster_groups.pluck(:name)
+    clusters = @study.cluster_groups.where(:is_spatial.ne => true).pluck(:name)
     all_clusters = ClusterVizService.load_cluster_group_options(@study)
     assert_equal clusters, all_clusters, "Did not load correct clusters; #{clusters} != #{all_clusters}"
   end

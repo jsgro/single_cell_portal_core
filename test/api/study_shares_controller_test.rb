@@ -69,7 +69,7 @@ class StudySharesControllerTest < ActionDispatch::IntegrationTest
             deliver_emails: false
         }
     }
-    execute_http_request(:patch, api_v1_study_study_share_path(study_id: @study.id, id: study_share_id), update_attributes)
+    execute_http_request(:patch, api_v1_study_study_share_path(study_id: @study.id, id: study_share_id), request_payload: update_attributes)
     assert_response :success
     assert json['deliver_emails'] == update_attributes[:study_share][:deliver_emails], "Did not set deliver_emails correctly, expected #{update_attributes[:study_share][:deliver_emails]} but found #{json['deliver_emails']}"
     # delete study share
