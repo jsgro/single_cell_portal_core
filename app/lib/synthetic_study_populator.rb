@@ -23,6 +23,7 @@ class SyntheticStudyPopulator
     puts("Populating synthetic study from #{synthetic_study_folder}")
     study = create_study(study_config, user, detached)
     add_files(study, study_config, synthetic_study_folder, user)
+    study
   end
 
   # find all matching instances of synthetic studies
