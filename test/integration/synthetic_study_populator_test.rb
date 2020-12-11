@@ -24,6 +24,9 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
   teardown do
     # this will also destroy the dependent annotation and assembly
     @taxon.destroy!
+    if study.present?
+      Study.find_by(name: SYNTH_STUDY_INFO[:name]).destroy_and_remove_workspace
+    end
   end
 
   test 'should be able to populate a study with convention metadata' do
@@ -43,7 +46,7 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
     populated_study = Study.find_by(name: SYNTH_STUDY_INFO[:name])
 
     assert_not_nil populated_study
-    assert_equal 4, populated_study.study_files.count
+    assert_equal 5, populated_study.study_files.count
     assert_equal 'Metadata', populated_study.study_files.first.file_type
     assert_not_nil populated_study.study_detail.full_description
 
@@ -55,6 +58,5 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
     assert_equal 'Ensembl 94', raw_counts_file.genome_annotation.name
 
     # note that we're not testing the ingest process yet due to timing concerns
-    Study.find_by(name: SYNTH_STUDY_INFO[:name]).destroy_and_remove_workspace
   end
 end
