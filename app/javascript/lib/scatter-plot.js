@@ -130,18 +130,34 @@ export function setMarkerColors(data) {
   })
 }
 
-/** Get height and width for a to-be-rendered cluster plot */
-function calculatePlotRect(numRows, numColumns) {
+/**
+* Get height and width for a to-be-rendered cluster plot
+*
+* @param {Integer} numRows Number of rows of plots
+* @param {Integer} numColumns Number of columns of plots
+* @param {Number} verticalPad Space for e.g. page header, search, nav tabs
+* @param {Number} horizontalPad Space to left and right of plots gallery
+*/
+function calculatePlotRect(
+  numRows, numColumns, verticalPad=225, horizontalPad=80
+  ) {
   // Get height
   const $ideo = $('#_ideogram')
   const ideogramHeight = $ideo.length ? $ideo.height() : 0
-  const verticalPad = 225 // Accounts for page header, search area, nav tabs
-  let height = $(window).height() - verticalPad - ideogramHeight
-  if (numRows > 1) {height = height/numRows - 10}
+
+  // Height of screen viewport, minus fixed-height elements above gallery
+  const galleryHeight = $(window).height() - verticalPad - ideogramHeight
+
+  let height = galleryHeight
+  if (numRows > 1) {
+    // Fill as much gallery height as possible, but show tip of next row
+    // as an affordance that the gallery is vertically scrollable.
+    const secondRowTipHeight = 100
+    height = height - secondRowTipHeight
+  }
 
   // Get width, and account for expanding "View Options" after page load
   const baseWidth = $('#render-target .tab-content').actual('width')
-  const horizontalPad = 80 // Accounts for empty space to left and right
   let width = (baseWidth - horizontalPad) / numColumns
 
   // Ensure plots aren't too small
@@ -279,7 +295,8 @@ export async function scatterPlot(apiParams, props) {
  * @param {Boolean} hasReference Whether each plot has a paired reference
  */
 export async function initScatterPlots(study, gene=null, hasReference=false) {
-  const $container = $('#scatter-plots .panel-body')
+  const baseSelector = '#scatter-plots .panel-body'
+  const $container = $(baseSelector)
   $container.html('<div class="row multiplot"></div>')
   if (hasReference) {$container.append('<div class="row multiplot"></div>')}
 
@@ -295,7 +312,7 @@ export async function initScatterPlots(study, gene=null, hasReference=false) {
     const options = getMainViewOptions(i)
     const apiParams = Object.assign({ accession, gene }, options)
 
-    props.selector = '.multiplot:nth-child(1)'
+    props.selector = baseSelector + ' .multiplot:nth-child(1)'
     props.hasLegend = true
     props.plotId = `scatter-plot-${i}`
 
@@ -303,7 +320,7 @@ export async function initScatterPlots(study, gene=null, hasReference=false) {
 
     if (hasReference) {
       apiParams.gene = null
-      props.selector = '.multiplot:nth-child(2)'
+      props.selector = baseSelector + ' .multiplot:nth-child(2)'
       props.hasLegend = false
       props.plotId += '-reference'
       scatterPlot(apiParams, props)
