@@ -61,6 +61,15 @@ function attachEventHandlers(study) {
   })
 }
 
+/** If tab position was specified in URL, show the current tab */
+function showTabFromUrl() {
+  const hash = window.location.hash
+  if (hash !== '') {
+    const tab = hash.substring(1) // e.g. #foo -> foo
+    $(`#study-tabs a[href="#${tab}"]`).tab('show')
+  }
+}
+
 /** Initialize the "Explore" tab in Study Overview */
 export default async function exploreDefault() {
   clearPlots()
@@ -70,11 +79,8 @@ export default async function exploreDefault() {
     'plot:',
     true)
 
-  // if tab position was specified in url, show the current tab
-  if (window.location.href.split('#')[1] !== '') {
-    const tab = window.location.href.split('#')[1]
-    $(`#study-tabs a[href="#${tab}"]`).tab('show')
-  }
+  showTabFromUrl()
+
   $('#cluster-plot').data('camera', baseCamera)
 
   const accession = window.SCP.studyAccession
