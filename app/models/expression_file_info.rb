@@ -18,7 +18,6 @@ class ExpressionFileInfo
   validates :biosample_input_type, inclusion: {in: BIOSAMPLE_INPUT_TYPE_VALUES}, allow_blank: true
 
   MODALITY_VALUES = [
-    nil,
     'Transcriptomic: unbiased',
     'Transcriptomic: targeted',
     'Spatial transcriptomics',
