@@ -19,7 +19,7 @@ module Requests
   module HttpHelpers
     # execute an HTTP call of the specified method to a given path (with optional payload), setting accept & content_type
     # to :json and prepending the authorization bearer token to the headers
-    def execute_http_request(method, path, request_payload={}, user: @user)
+    def execute_http_request(method, path, request_payload: {}, user: @user)
       token = user.present? ? "Bearer #{user.api_access_token[:access_token]}" : nil
       headers = token.present? ? {authorization: "Bearer #{token}"} : {}
       send(method.to_sym, path, params: request_payload, as: :json, headers: headers)

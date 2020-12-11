@@ -59,7 +59,7 @@ class StudySharesControllerTest < ActionDispatch::IntegrationTest
             permission: 'Reviewer'
         }
     }
-    execute_http_request(:post, api_v1_study_study_shares_path(study_id: @study.id), study_share_attributes)
+    execute_http_request(:post, api_v1_study_study_shares_path(study_id: @study.id), request_payload: study_share_attributes)
     assert_response :success
     assert json['email'] == study_share_attributes[:study_share][:email], "Did not set email correctly, expected #{study_share_attributes[:study_share][:email]} but found #{json['email']}"
     # update study share
