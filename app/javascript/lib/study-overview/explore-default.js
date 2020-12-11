@@ -22,7 +22,8 @@
 */
 
 import { fetchExplore } from 'lib/scp-api'
-import { initScatterPlots, resizeScatterPlots } from 'lib/scatter-plot'
+import { exploreScatterPlots } from 'lib/study-overview/explore'
+import { resizeScatterPlots } from 'lib/scatter-plot'
 import { clearPlots } from 'lib/plot'
 import {
   addSpatialDropdown, handleMenuChange
@@ -42,7 +43,7 @@ function attachEventHandlers(study) {
     resizeScatterPlots()
   })
 
-  handleMenuChange(initScatterPlots, [study])
+  handleMenuChange(exploreScatterPlots, [study])
 
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
@@ -94,7 +95,7 @@ export default async function exploreDefault() {
 
     addSpatialDropdown(study)
 
-    initScatterPlots(study)
+    exploreScatterPlots(study)
   }
 
   if (study.inferCNVIdeogramFiles) {

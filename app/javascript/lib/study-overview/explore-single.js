@@ -21,7 +21,8 @@
 *   plots.  HTML scaffolding for all views exists in legacy ERB templates.
 */
 
-import { scatterPlot, initScatterPlots, resizeScatterPlots } from 'lib/scatter-plot'
+import { exploreScatterPlots } from 'lib/study-overview/explore'
+import { scatterPlot, resizeScatterPlots } from 'lib/scatter-plot'
 import { violinPlot, resizeViolinPlot } from 'lib/violin-plot'
 import { clearPlots } from 'lib/plot'
 import {
@@ -51,7 +52,7 @@ async function renderSingleGenePlots(study, gene) {
     scatterPlot(clusterParams, frame)
   }
 
-  initScatterPlots(study, gene, true)
+  exploreScatterPlots(study, gene, true)
 
   window.showRelatedGenesIdeogram()
 }
