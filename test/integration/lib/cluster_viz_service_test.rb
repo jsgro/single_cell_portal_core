@@ -65,6 +65,7 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
   end
 
   test 'should load all clusters' do
+    # expect to return all non-spatial cluster names
     clusters = @study.study_files.where(:is_spatial.ne => true, file_type: 'Cluster').pluck(:name)
     all_clusters = ClusterVizService.load_cluster_group_options(@study)
     assert_equal clusters, all_clusters, "Did not load correct clusters; #{clusters} != #{all_clusters}"
