@@ -158,6 +158,12 @@ module Api
 
           is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
 
+          if cluster.is_3d?
+            range = ClusterVizService.set_range(cluster, coordinates.values)
+          end
+
+          titles = ClusterVizService.load_axis_labels(cluster)
+
           gene_name = url_params[:gene]
           if gene_name.blank?
             # For "Clusters" tab in default view of Explore tab
@@ -165,26 +171,26 @@ module Api
           else
             # For single-gene view of Explore tab
             gene = study.genes.by_name_or_id(gene_name, study.expression_matrix_files.map(&:id))
-            title = ExpressionVizService.load_expression_axis_title(study)
+            y_axis_title = ExpressionVizService.load_expression_axis_title(study)
             if is_annotated_scatter
               # For "Annotated scatter" tab, shown in first tab for numeric annotations
-              coordinates = ExpressionVizService.load_annotation_based_data_array_scatter(study, gene, cluster, annotation, subsample, title)
+              coordinates = ExpressionVizService.load_annotation_based_data_array_scatter(study, gene, cluster, annotation, subsample, y_axis_title)
+              range = ClusterVizService.set_range(cluster, coordinates.values)
+              titles = {
+                x: annot_params[:name],
+                y: y_axis_title
+              }
             else
               # For "Scatter" tab
-              coordinates = ExpressionVizService.load_expression_data_array_points(study, gene, cluster, annotation, subsample, title, colorscale)
+              coordinates = ExpressionVizService.load_expression_data_array_points(study, gene, cluster, annotation, subsample, y_axis_title, colorscale)
             end
+          end
+
+          if cluster.is_3d? && cluster.has_range?
+            aspect = ClusterVizService.compute_aspect_ratios(range)
           end
 
           plot_data = ClusterVizService.transform_coordinates(coordinates, study, cluster, annotation)
-
-          if cluster.is_3d?
-            range = ClusterVizService.set_range(cluster, coordinates.values)
-            if cluster.has_range?
-              aspect = ClusterVizService.compute_aspect_ratios(range)
-            end
-          end
-
-          titles = ClusterVizService.load_axis_labels(cluster)
 
           axes_full = {
             titles: titles,
