@@ -4,6 +4,9 @@ FactoryBot.define do
   factory :study do
     transient do
       auto_suffixes { true }
+      # If specified, the created study will be added to the passed-in array after creation
+      # this enables easy managing of a central list of studies to be cleaned up by a test suite
+      test_array { nil }
     end
     public { true }
     data_dir { '/tmp' }
@@ -18,6 +21,9 @@ FactoryBot.define do
         end
         study.description << description_suffix
         study.save
+      end
+      if evaluator.test_array
+        evaluator.test_array.push(study)
       end
     end
     # create a study but mark as detached, so a Terra workspace is not created

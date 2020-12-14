@@ -12,7 +12,7 @@ import * as queryString from 'query-string'
 
 import { getAccessToken } from 'providers/UserProvider'
 import {
-  logFilterSearch, logSearch, logDownloadAuthorization, mapFiltersForLogging
+  logSearch, logDownloadAuthorization, mapFiltersForLogging
 } from './scp-api-metrics'
 
 // If true, returns mock data for all API responses.  Only for dev.
@@ -135,10 +135,24 @@ function stringifyQuery(paramObj) {
 */
 export async function fetchExplore(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/explore`
-  const [exploreInit, perfTime] =
+  const [exploreInit] =
     await scpApi(apiUrl, defaultInit(), mock, false)
 
   return exploreInit
+}
+
+/**
+ * Get all study-wide and cluster annotations for a study
+ *
+ * see definition at: app/controllers/api/v1/visualization/explore_controller.rb
+ *
+ * @param {String} studyAccession Study accession
+ * @param {Boolean} mock
+ */
+export async function fetchClusterOptions(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/explore/cluster_options`
+  const [values] = await scpApi(apiUrl, defaultInit(), mock, false)
+  return values
 }
 
 /**
@@ -174,18 +188,20 @@ export async function fetchCluster(
   }
 
   const params = stringifyQuery(paramObj)
-  const apiUrl = `/studies/${studyAccession}/clusters/${cluster}${params}`
+
+  if (!cluster) {
+    cluster = '_default'
+  }
+  const apiUrl = `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  const [scatter, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+  const [scatter] = await scpApi(apiUrl, defaultInit(), mock, false)
 
   return scatter
 }
 
 /**
  * Returns an object with violin plot expression data for a gene in a study
- *
- * This endpoint is volatile, so intentionally not documented in Swagger.
  *
  * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
  *
@@ -195,79 +211,99 @@ export async function fetchCluster(
  *
  */
 export async function fetchExpressionViolin(
-  studyAccession, gene, cluster, annotation, subsample, mock=false
+  studyAccession,
+  gene,
+  clusterName,
+  annotationName,
+  annotationScope,
+  annotationType,
+  subsample,
+  mock=false
 ) {
-  const clusterParam = cluster ? `&cluster=${encodeURIComponent(cluster)}` : ''
-  const annotationParam =
-    annotation ? `&annotation=${encodeURIComponent(annotation)}` : ''
-  const subsampleParam =
-    subsample ? `&subsample=${encodeURIComponent(subsample)}` : ''
-  const params =
-  `?gene=${gene}${clusterParam}${annotationParam}${subsampleParam}`
-  const apiUrl = `/studies/${studyAccession}/expression/violin${params}`
+  const paramObj = {
+    cluster: clusterName,
+    annotation_scope: annotationScope,
+    annotation_type: annotationType,
+    annotation_name: annotationName,
+    subsample,
+    gene
+  }
+  const apiUrl = `/studies/${studyAccession}/expression/violin${stringifyQuery(paramObj)}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  const [violin, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+  const [violin] = await scpApi(apiUrl, defaultInit(), mock, false)
 
   return violin
 }
 
+
 /**
  * Get all study-wide and cluster annotations for a study
  *
- * This endpoint is volatile and intentionally not documented in Swagger.
- *
- * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
- *
- * Example:
- * https://singlecell.broadinstitute.org/single_cell/api/v1/studies/SCP1/expression/annotations
- *
- * Returns
- * {
- *   "name":"CLUSTER","type":"group","scope":"study",
- *   "values":["DG","GABAergic","CA1","CA3","Glia","Ependymal","CA2","Non"],
- *   "identifier":"CLUSTER--group--study"
- * }
+ * see definition at: app/controllers/api/v1/visualization/annotations_controller.rb
  *
  * @param {String} studyAccession Study accession
  * @param {Boolean} mock
  */
-export async function fetchAnnotationValues(studyAccession, mock=false) {
-  const apiUrl = `/studies/${studyAccession}/expression/annotations`
-  const [values, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+export async function fetchAnnotations(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/annotations`
+  const [values] = await scpApi(apiUrl, defaultInit(), mock, false)
   return values
 }
 
 /**
- * Returns an object with heatmap expression data for genes in a study
+ * Get a single annotation for a study
  *
- * This endpoint is intentionally not documented in Swagger.
+ * see definition at: app/controllers/api/v1/visualization/annotations_controller.rb
  *
- * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
+ * @param {String} studyAccession Study accession
+ * @param {String} annotationName
+ */
+export async function fetchAnnotation(studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false) {
+  const paramObj = {
+    cluster: clusterName,
+    annotation_scope: annotationScope,
+    annotation_type: annotationType
+  }
+  annotationName = annotationName ? annotationName : '_default'
+  const apiUrl = `/studies/${studyAccession}/annotations/${encodeURIComponent(annotationName)}${stringifyQuery(paramObj)}`
+  const [values] = await scpApi(apiUrl, defaultInit(), mock)
+  return values
+}
+
+/** Get a url for retrieving a morpheus-suitable annotation values file */
+export function getAnnotationCellValuesURL(studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false) {
+  const paramObj = {
+    cluster: clusterName,
+    annotation_scope: annotationScope,
+    annotation_type: annotationType
+  }
+  annotationName = annotationName ? annotationName : '_default'
+  const apiUrl = `/studies/${studyAccession}/annotations/${encodeURIComponent(annotationName)}/cell_values${stringifyQuery(paramObj)}`
+  return getFullUrl(apiUrl)
+}
+
+
+/**
+ * Returns an url for fetching heatmap expression data for genes in a study
+ *
+ * A url generator rather than a fetch funtion is provided as morpheus needs a URL string
  *
  * @param {String} studyAccession study accession
  * @param {Array} genes List of gene names to get expression data for
  *
  */
-export async function fetchExpressionHeatmap(
-  studyAccession, genes, cluster, annotation, subsample, mock=false
-) {
-  const clusterParam =
-    cluster ? `&cluster=${encodeURIComponent(cluster)}` : ''
-  const annotationParam =
-    annotation ? `&annotation=${encodeURIComponent(annotation)}` : ''
-  const subsampleParam =
-    subsample ? `&annotation=${encodeURIComponent(subsample)}` : ''
-  const genesParam = encodeURIComponent(genes.join(','))
-  const params =
-    `?genes=${genesParam}${clusterParam}${annotationParam}${subsampleParam}`
-  const apiUrl = `/studies/${studyAccession}/expression_heatmaps${params}`
-  // don't camelcase the keys since those can be cluster names,
-  // so send false for the 4th argument
-  const [heatmap, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
-
-  return heatmap
+export function getExpressionHeatmapURL(studyAccession, genes, cluster, annotation, subsample) {
+  const paramObj = {
+    cluster,
+    annotation,
+    subsample,
+    genes: genes.join(',')
+  }
+  const path = `/studies/${studyAccession}/expression/heatmap${stringifyQuery(paramObj)}`
+  return getFullUrl(path)
 }
+
 
 export async function updateCurrentUser(updatedUser, mock=false) {
   const init = Object.assign({}, defaultInit(), {
@@ -418,6 +454,19 @@ export function getBrandingGroup() {
   return queryParams.scpbr
 }
 
+/** Get full URL for a given including any extension (or a mocked URL) */
+function getFullUrl(path, mock=false) {
+  if (globalMock) {
+    mock = true
+  }
+  const basePath = (mock || globalMock) ? `${mockOrigin}/mock_data` : defaultBasePath
+  let fullPath = basePath + path
+  if (mock) {
+    fullPath += '.json' // e.g. /mock_data/search/auth_code.json
+  }
+  return fullPath
+}
+
 /**
  * Client for SCP REST API.  Less fetch boilerplate, easier mocks.
  *
@@ -430,11 +479,7 @@ export default async function scpApi(
 ) {
   const perfTimeStart = performance.now()
 
-  if (globalMock) {mock = true}
-  const basePath =
-    (mock || globalMock) ? `${mockOrigin}/mock_data` : defaultBasePath
-  let fullPath = basePath + path
-  if (mock) {fullPath += '.json'} // e.g. /mock_data/search/auth_code.json
+  const fullPath = getFullUrl(path, mock)
 
   const response = await fetch(fullPath, init).catch(error => error)
 

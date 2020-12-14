@@ -20,9 +20,7 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    @study = Study.find_by(name: "Download Agreement #{@random_seed}")
-    @study.study_files.map(&:destroy)
-    @study.destroy_and_remove_workspace
+    Study.find_by(name: "Download Agreement #{@random_seed}").destroy
   end
 
   test 'should enforce download agreement' do

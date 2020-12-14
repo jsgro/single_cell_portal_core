@@ -1,8 +1,8 @@
 import React from 'react'
 
 import Study, { getByline } from 'components/search/results/Study'
-// import StudyGeneDotPlot from './StudyGeneDotPlot'
-import StudyViolinPlot from './StudyViolinPlot'
+import StudyGeneDotPlot from 'components/visualization/StudyGeneDotPlot'
+import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 
 
 /** Renders expression data for a study.  This assumes that the study has a 'gene_matches' property
@@ -21,11 +21,11 @@ export default function StudyGeneExpressions({ study }) {
       </div>
     )
   } else if (study.gene_matches.length > 1) {
+    studyRenderComponent = <StudyGeneDotPlot study={study} genes={study.gene_matches}/>
     // for now, this renders a bunch of violins, we should soon ugrade to dot plots
-    // <StudyGeneDotPlot study={study} genes={study.gene_matches}/>
-    studyRenderComponent = study.gene_matches.map(gene => {
-      return <StudyViolinPlot key={gene} study={study} gene={gene}/>
-    })
+    // studyRenderComponent = study.gene_matches.map(gene => {
+    //   return <StudyViolinPlot key={gene} study={study} gene={gene}/>
+    // })
   } else {
     studyRenderComponent = <StudyViolinPlot study={study} gene={study.gene_matches[0]}/>
   }

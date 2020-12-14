@@ -16,6 +16,14 @@ Rails.application.configure do
 
   # Enable/disable caching. By default caching is disabled.
   # Run rails dev:cache to toggle caching.
+
+  if Rails.root.join('tmp/caching-dev.txt').exist?
+    config.action_controller.perform_caching = true
+  else
+    config.action_controller.perform_caching = false
+    config.cache_store = :null_store
+  end
+
   config.action_controller.perform_caching = true
 
   config.public_file_server.headers = {

@@ -1339,7 +1339,7 @@ class SiteController < ApplicationController
 
   def set_selected_annotation
     annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
-    @selected_annotation = ExpressionVizService.get_selected_annotation(@study, @cluster, annot_params[:name], annot_params[:type], annot_params[:scope])
+    @selected_annotation = AnnotationVizService.get_selected_annotation(@study, @cluster, annot_params[:name], annot_params[:type], annot_params[:scope])
   end
 
   def set_workspace_samples

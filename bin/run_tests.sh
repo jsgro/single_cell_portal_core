@@ -104,11 +104,6 @@ else
     first_test_to_fail=${first_test_to_fail-"yarn ui-test"}
     ((FAILED_COUNT++))
   fi
-
-  if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
-    echo "uploading JS coverage to codecov"
-    bash <(curl -s https://codecov.io/bash) -cF javascript -t $CODECOV_TOKEN
-  fi
   RAILS_ENV=test bundle exec bin/rake test
   code=$?
   if [[ $code -ne 0 ]]; then
@@ -117,8 +112,8 @@ else
     ((FAILED_COUNT++))
   fi
   if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
-    echo "uploading ruby coverage to codecov"
-    bash <(curl -s https://codecov.io/bash) -cF ruby -t $CODECOV_TOKEN
+    echo "uploading all coverage data to codecov"
+    bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN
   fi
 fi
 clean_up

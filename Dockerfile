@@ -7,6 +7,7 @@ RUN bash -lc 'rvm rvmrc warning ignore /home/app/webapp/Gemfile'
 
 # Set up project dir, install gems, set up script to migrate database and precompile static assets on run
 RUN mkdir /home/app/webapp
+RUN sudo chown app:app /home/app/webapp # fix permission issues in local development on MacOSX
 RUN gem update --system
 RUN gem install bundler
 COPY Gemfile /home/app/webapp/Gemfile

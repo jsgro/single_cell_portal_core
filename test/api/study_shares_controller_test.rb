@@ -59,7 +59,7 @@ class StudySharesControllerTest < ActionDispatch::IntegrationTest
             permission: 'Reviewer'
         }
     }
-    execute_http_request(:post, api_v1_study_study_shares_path(study_id: @study.id), study_share_attributes)
+    execute_http_request(:post, api_v1_study_study_shares_path(study_id: @study.id), request_payload: study_share_attributes)
     assert_response :success
     assert json['email'] == study_share_attributes[:study_share][:email], "Did not set email correctly, expected #{study_share_attributes[:study_share][:email]} but found #{json['email']}"
     # update study share
@@ -69,7 +69,7 @@ class StudySharesControllerTest < ActionDispatch::IntegrationTest
             deliver_emails: false
         }
     }
-    execute_http_request(:patch, api_v1_study_study_share_path(study_id: @study.id, id: study_share_id), update_attributes)
+    execute_http_request(:patch, api_v1_study_study_share_path(study_id: @study.id, id: study_share_id), request_payload: update_attributes)
     assert_response :success
     assert json['deliver_emails'] == update_attributes[:study_share][:deliver_emails], "Did not set deliver_emails correctly, expected #{update_attributes[:study_share][:deliver_emails]} but found #{json['deliver_emails']}"
     # delete study share
