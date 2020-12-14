@@ -29,6 +29,9 @@ FactoryBot.define do
       end
     end
     factory :cluster_file do
+      # Rough performance timing in local (non-dockerized) development suggests that crating a user
+      # using this factory to create a sample cluster file with cells and annotations takes ~1.5 seconds
+      # a cluster file without cells and annotations takes ~0.5secods
       file_type { 'Cluster' }
       is_spatial { false }
       transient do

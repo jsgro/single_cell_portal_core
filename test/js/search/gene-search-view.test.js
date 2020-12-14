@@ -12,7 +12,7 @@ import { PropsGeneSearchProvider, GeneSearchContext, emptySearch } from 'provide
 import { UserContext } from 'providers/UserProvider'
 import StudyResultsPanel from 'components/search/results/ResultsPanel'
 import Study from 'components/search/results/Study'
-import StudyViolinPlot from 'components/search/genes/StudyViolinPlot'
+import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import * as ScpAPI from 'lib/scp-api'
 
 describe('Gene search page landing', () => {

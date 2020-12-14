@@ -15,11 +15,7 @@ class ExpressionVizService
     else
       render_data[:values] = load_annotation_based_data_array_scatter(study, gene, cluster, selected_annotation, subsample, render_data[:y_axis_title])
     end
-    render_data[:options] = ClusterVizService.load_cluster_group_options(study)
-    render_data[:sptial_options] = ClusterVizService.load_spatial_options(study)
-    render_data[:cluster_annotations] = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-    render_data[:subsampling_options] = ClusterVizService.subsampling_options(cluster)
-
+    render_data[:annotation_list] = AnnotationVizService.get_study_annotation_options(study, current_user)
     render_data[:rendered_cluster] = cluster.name
     render_data[:rendered_annotation] = "#{selected_annotation[:name]}--#{selected_annotation[:type]}--#{selected_annotation[:scope]}"
     render_data[:rendered_subsample] = subsample
@@ -60,7 +56,6 @@ class ExpressionVizService
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     values = initialize_plotly_objects_by_annotation(annotation)
-
     # grab all cells present in the cluster, and use as keys to load expression scores
     # if a cell is not present for the gene, score gets set as 0.0
     cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
@@ -401,38 +396,6 @@ class ExpressionVizService
     }
   end
 
-  def self.get_selected_annotation(study, cluster, annot_name, annot_type, annot_scope)
-    # construct object based on name, type & scope
-    case annot_scope
-    when 'cluster'
-      annotation_source = cluster.cell_annotations.find {|ca| ca[:name] == annot_name && ca[:type] == annot_type}
-    when 'user'
-      annotation_source = UserAnnotation.find(annot_name)
-    else
-      annotation_source = study.cell_metadata.by_name_and_type(annot_name, annot_type)
-    end
-    # rescue from an invalid annotation request by defaulting to the first cell metadatum present
-    if annotation_source.nil?
-      annotation_source = study.cell_metadata.first
-    end
-    populate_annotation_by_class(source: annotation_source, scope: annot_scope, type: annot_type)
-  end
-
-  # attempt to load an annotation based on instance class
-  def self.populate_annotation_by_class(source:, scope:, type:)
-    if source.is_a?(CellMetadatum)
-      annotation = {name: source.name, type: source.annotation_type,
-                    scope: 'study', values: source.values.to_a,
-                    identifier: "#{source.name}--#{type}--#{scope}"}
-    elsif source.is_a?(UserAnnotation)
-      annotation = {name: source.name, type: type, scope: scope, values: source.values.to_a,
-                    identifier: "#{source.id}--#{type}--#{scope}", id: source.id}
-    elsif source.is_a?(Hash)
-      annotation = {name: source[:name], type: type, scope: scope, values: source[:values].to_a,
-                    identifier: "#{source[:name]}--#{type}--#{scope}"}
-    end
-    annotation
-  end
 
   # find mean of expression scores for a given cell & list of genes
   def self.calculate_mean(genes, cell)
@@ -444,5 +407,62 @@ class ExpressionVizService
   def self.calculate_median(genes, cell)
     values = genes.map {|gene| gene['scores'][cell].to_f}
     Gene.array_median(values)
+  end
+
+  # return a text file for morpheus to use when rendering dotplots/heatmaps
+  # supports both expression data (gct format) and annotation data
+  def self.get_morpheus_text_data(study: nil,
+                                  file_type: nil,
+                                  genes: nil,
+                                  cluster: nil,
+                                  collapse_by: nil,
+                                  selected_annotation: nil)
+    cells = cluster.concatenate_data_arrays('text', 'cells')
+    row_data = []
+    case file_type
+    when :gct
+      headers = %w(Name Description)
+      cols = cells.size
+      cells.each do |cell|
+        headers << cell
+      end
+      rows = []
+      genes.each do |gene|
+        row = [gene['name'], ""]
+        case collapse_by
+        when 'z-score'
+          vals = Gene.z_score(gene['scores'], cells)
+          row += vals
+        when 'robust-z-score'
+          vals = Gene.robust_z_score(gene['scores'], cells)
+          row += vals
+        else
+          cells.each do |cell|
+            row << gene['scores'][cell].to_f
+          end
+        end
+        rows << row.join("\t")
+      end
+      row_data = ['#1.2', [rows.size, cols].join("\t"), headers.join("\t"), rows.join("\n")]
+    when :annotation
+      headers = ['NAME', selected_annotation[:name]]
+      if selected_annotation[:scope] == 'cluster'
+        annotations = cluster.concatenate_data_arrays(selected_annotation[:name], 'annotations')
+      else
+        study_annotations = study.cell_metadata_values(selected_annotation[:name], selected_annotation[:type])
+        annotations = []
+        cells.each do |cell|
+          annotations << study_annotations[cell]
+        end
+      end
+      # assemble rows of data
+      rows = []
+      cells.each_with_index do |cell, index|
+        rows << [cell, annotations[index]].join("\t")
+      end
+
+      row_data = [headers.join("\t"), rows.join("\n")]
+    end
+    row_data.join("\n")
   end
 end
