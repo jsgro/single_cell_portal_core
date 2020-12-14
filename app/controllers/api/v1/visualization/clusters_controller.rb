@@ -158,16 +158,15 @@ module Api
 
           is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
 
-          if cluster.is_3d?
-            range = ClusterVizService.set_range(cluster, coordinates.values)
-          end
-
           titles = ClusterVizService.load_axis_labels(cluster)
 
           gene_name = url_params[:gene]
           if gene_name.blank?
             # For "Clusters" tab in default view of Explore tab
             coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
+            if cluster.is_3d?
+              range = ClusterVizService.set_range(cluster, coordinates.values)
+            end
           else
             # For single-gene view of Explore tab
             gene = study.genes.by_name_or_id(gene_name, study.expression_matrix_files.map(&:id))
