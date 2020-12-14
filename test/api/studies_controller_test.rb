@@ -57,7 +57,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
             name: "New Study #{SecureRandom.uuid}"
         }
     }
-    execute_http_request(:post, api_v1_studies_path, study_attributes)
+    execute_http_request(:post, api_v1_studies_path, request_payload: study_attributes)
     assert_response :success
     assert json['name'] == study_attributes[:study][:name], "Did not set name correctly, expected #{study_attributes[:study][:name]} but found #{json['name']}"
     # update study, utilizing nested study_detail_attributes_full_description to ensure plain-text conversion works
@@ -69,7 +69,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
             }
         }
     }
-    execute_http_request(:patch, api_v1_study_path(id: study_id), update_attributes)
+    execute_http_request(:patch, api_v1_study_path(id: study_id), request_payload: update_attributes)
     assert_response :success
     plain_text_description = ActionController::Base.helpers.strip_tags update_attributes[:study][:study_detail_attributes][:full_description]
     assert json['description'] == plain_text_description, "Did not set description correctly, expected #{plain_text_description} but found #{json['description']}"

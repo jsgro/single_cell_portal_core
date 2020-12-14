@@ -68,7 +68,9 @@ class DirectoryListingsControllerTest < ActionDispatch::IntegrationTest
             "files" =>  files
         }
     }
-    execute_http_request(:post, api_v1_study_directory_listings_path(study_id: @study.id), directory_listing_attributes)
+    execute_http_request(:post,
+                         api_v1_study_directory_listings_path(study_id: @study.id),
+                         request_payload: directory_listing_attributes)
     assert_response :success
     assert json['name'] == directory_listing_attributes["directory_listing"]["name"], "Did not set name correctly, expected #{directory_listing_attributes["directory_listing"]["name"]} but found #{json['name']}"
     # update directory listing
@@ -85,7 +87,7 @@ class DirectoryListingsControllerTest < ActionDispatch::IntegrationTest
             "files" => files
         }
     }
-    execute_http_request(:patch, api_v1_study_directory_listing_path(study_id: @study.id, id: directory_listing_id), update_attributes)
+    execute_http_request(:patch, api_v1_study_directory_listing_path(study_id: @study.id, id: directory_listing_id), request_payload: update_attributes)
     assert_response :success
     assert json['sync_status'] == update_attributes["directory_listing"]["sync_status"], "Did not set sync_status correctly, expected #{update_attributes["directory_listing"]["sync_status"]} but found #{json['sync_status']}"
     assert json['files'] == update_attributes["directory_listing"]["files"], "Did not set files correctly, expected #{update_attributes["directory_listing"]["files"]} but found #{json['files']}"

@@ -38,11 +38,22 @@ Rails.application.routes.draw do
             post 'sync', to: 'studies#sync_study'
           end
           get 'explore', to: 'visualization/explore#show'
+          get 'explore/cluster_options', to: 'visualization/explore#cluster_options'
+
           resources :expression, controller: 'visualization/expression', only: [:show], param: :data_type
           resources :clusters, controller: 'visualization/clusters',
                                only: [:show, :index],
                                param: :cluster_name,
                                constraints: { cluster_name: /[^\/]+/ } # needed to allow '.' in cluster names
+          resources :annotations, controller: 'visualization/annotations',
+                               only: [:show, :index],
+                               param: :annotation_name,
+                               constraints: { annotation_name: /[^\/]+/ } do # needed to allow '.' in annotation names
+            member do
+              get 'cell_values', to: 'visualization/annotations#cell_values'
+            end
+          end
+
         end
         resource :current_user, only: [:update], controller: 'current_user'
 
@@ -52,6 +63,8 @@ Rails.application.routes.draw do
           get 'studies/:accession', to: 'site#view_study', as: :site_study_view
           get 'studies/:accession/download', to: 'site#download_data', as: :site_study_download_data
           get 'studies/:accession/stream', to: 'site#stream_data', as: :site_study_stream_data
+
+          # analysis routes
           get 'analyses', to: 'site#analyses', as: :site_analyses
           get 'analyses/:namespace/:name/:snapshot', to: 'site#get_analysis', as: :site_get_analysis
           get 'studies/:accession/analyses/:namespace/:name/:snapshot', to: 'site#get_study_analysis_config', as: :site_get_study_analysis_config

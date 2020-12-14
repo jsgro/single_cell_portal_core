@@ -51,7 +51,7 @@ export default function SearchSelectionProvider(props) {
   /** merges the update into the current selection */
   function updateSelection(value, searchNow) {
     // unless the value explicitly specifies a page, reset the selection page to 1
-    const newSelection = Object.assign({}, selection, {page: 1}, value)
+    const newSelection = Object.assign({}, selection, { page: 1 }, value)
     if (searchNow) {
       searchContext.updateSearch(newSelection)
     }

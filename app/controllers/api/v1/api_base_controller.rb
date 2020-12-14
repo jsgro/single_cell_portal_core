@@ -78,6 +78,24 @@ module Api
             end
           end
         end
+        # default responses for API endpoints that relate to a single study
+        # (e.g. those under the api/v1/studies/ path)
+        module StudyControllerResponses
+          def self.extended(base)
+            base.response 401 do
+              key :description, ApiBaseController.unauthorized
+            end
+            base.response 404 do
+              key :description, ApiBaseController.not_found(Study)
+            end
+            base.response 406 do
+              key :description, ApiBaseController.not_acceptable
+            end
+            base.response 410 do
+              key :description, ApiBaseController.resource_gone
+            end
+          end
+        end
       end
 
       # HTTP 423 - Resource locked (e.g. StudyFile is parsing or being subsampled)
