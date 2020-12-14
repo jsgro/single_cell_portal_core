@@ -174,7 +174,8 @@ module Api
             y_axis_title = ExpressionVizService.load_expression_axis_title(study)
             if is_annotated_scatter
               # For "Annotated scatter" tab, shown in first tab for numeric annotations
-              coordinates = ExpressionVizService.load_annotation_based_data_array_scatter(study, gene, cluster, annotation, subsample, y_axis_title)
+              coordinates = ExpressionVizService.load_annotation_based_data_array_scatter(
+                study, gene, cluster, annotation, subsample, y_axis_title)
               range = ClusterVizService.set_range(cluster, coordinates.values)
               titles = {
                 x: annot_params[:name],
@@ -204,6 +205,7 @@ module Api
             "description": cluster.study_file.description,
             "is3D": cluster.is_3d?,
             "isSubsampled": cluster.subsampled?,
+            "isAnnotatedScatter": is_annotated_scatter,
             "numPoints": cluster.points,
             "domainRanges": cluster.domain_ranges,
             "axes": axes_full,

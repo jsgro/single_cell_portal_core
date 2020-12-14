@@ -49,12 +49,6 @@ export function getBaseLayout(height, width) {
 
   const layout = {
     hovermode: 'closest',
-    margin: {
-      t: 25,
-      r: 0,
-      b: 20,
-      l: 0
-    },
     height,
     width,
     font
@@ -101,8 +95,20 @@ export function get2DScatterProps(cluster) {
   const { titles } = axes
 
   const layout = {
-    xaxis: { title: titles.x, showticklabels: false },
-    yaxis: { title: titles.y, showticklabels: false, scaleanchor: 'x' }
+    xaxis: { title: titles.x },
+    yaxis: { title: titles.y }
+  }
+
+  if (cluster.isAnnotatedScatter === false) {
+    layout.xaxis.showticklabels = false
+    layout.yaxis.scaleanchor = 'x'
+    layout.yaxis.showticklabels = false
+    layout.margin = {
+      t: 25,
+      r: 0,
+      b: 20,
+      l: 0
+    }
   }
 
   // if user has supplied a range, set that, otherwise let Plotly autorange

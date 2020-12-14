@@ -63,7 +63,7 @@ function attachEventHandlers(study, gene) {
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {
     resizeScatterPlots()
-    resizeViolinPlot()
+    if (getAnnotParams().type === 'group') { resizeViolinPlot() }
   })
 
   handleMenuChange(renderSingleGenePlots, [study, gene])
