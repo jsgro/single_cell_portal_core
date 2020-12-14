@@ -26,7 +26,7 @@
   </div>
   <div class="col-sm-2">
     <%= f.label :modality %><br />
-    <%= f.select :modality, options_for_select(ExpressionFileInfo::MODALITY_VALUES, f.object.modality),
+    <%= f.select :modality, options_for_select(ExpressionFileInfo::MODALITY_VALUES, f.object.modality || 'Transcriptomic: unbiased'),
                  {}, class: 'form-control' %>
   </div>
 </div>
