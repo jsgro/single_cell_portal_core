@@ -165,9 +165,11 @@ function calculatePlotRect(
   const baseWidth = $('#render-target .tab-content').actual('width')
   let width = (baseWidth - horizontalPad) / numColumns
 
-  // Ensure plots aren't too small
-  height = Math.max(height, 100)
-  width = Math.max(width, 100)
+  // Ensure plots aren't too small.
+  // This was needed as of 2020-12-14 to avoid a Plotly error in single-gene
+  // view: "Something went wrong with axes scaling"
+  height = Math.max(height, 200)
+  width = Math.max(width, 200)
 
   return { height, width }
 }
