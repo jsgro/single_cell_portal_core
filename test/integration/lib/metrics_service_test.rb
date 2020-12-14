@@ -2,6 +2,24 @@ require "test_helper"
 
 class MetricsServiceTest < ActiveSupport::TestCase
 
+  setup do
+    @user = User.create(
+        email: 'bard.user@gmail.com',
+        password: 'password',
+        uid: '99999',
+        access_token: {
+            access_token: 'foo',
+            expires_at: DateTime.new(3000, 1, 1),
+            expires_in: 3600
+        },
+        registered_for_firecloud: true
+    )
+  end
+
+  teardown do
+    User.find_by(email: 'bard.user@gmail.com').destroy
+  end
+
   test 'should log to Mixpanel via Bard' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
@@ -25,6 +43,7 @@ class MetricsServiceTest < ActiveSupport::TestCase
     expected_output_props = input_props.merge({
       appId: "single-cell-portal",
       env: "test",
+      registeredForTerra: true,
       authenticated: true
     })
 
@@ -37,18 +56,12 @@ class MetricsServiceTest < ActiveSupport::TestCase
       method: "POST"
     }
 
-    # A high-fidelity test double
-    user = User.new(access_token: {
-      access_token: 'foo',
-      expires_at: DateTime.new(3000, 1, 1)
-    })
-
     # Mock network traffic to/from Bard, the DSP service proxying Mixpanel
     mock = Minitest::Mock.new
     mock.expect :call, mock, [expected_args] # Mock `execute` call (request)
 
     RestClient::Request.stub :execute, mock do
-      response = MetricsService.log(event, input_props, user)
+      MetricsService.log(event, input_props, @user)
       mock.verify
     end
 
@@ -58,15 +71,9 @@ class MetricsServiceTest < ActiveSupport::TestCase
   test 'should post expected data to Mixpanel `identify` endpoint' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    # A high-fidelity test double
-    user = User.new(access_token: {
-      access_token: 'foo',
-      expires_at: DateTime.new(3000, 1, 1)
-    })
-
     cookies = {
       user_id: '168d8f62-f813-4e45-61d7-b81afe29642a' # Random UUIDv4 string
-    }
+    }.with_indifferent_access
     anon_id = cookies['user_id']
 
     # As input into RestClient::Request.execute.
@@ -83,7 +90,7 @@ class MetricsServiceTest < ActiveSupport::TestCase
     mock.expect :call, mock, [expected_args] # Mock `execute` call (request)
 
     RestClient::Request.stub :execute, mock do
-      response = MetricsService.merge_identities_in_mixpanel(user, cookies)
+      MetricsService.merge_identities_in_mixpanel(@user, cookies)
       mock.verify
     end
 

@@ -1,4 +1,5 @@
 require 'api_test_helper'
+require 'user_tokens_helper'
 
 class StudySharesControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -16,6 +17,11 @@ class StudySharesControllerTest < ActionDispatch::IntegrationTest
                                                                            :email => 'testing.user@gmail.com'
                                                                        })
     sign_in @user
+    @user.update_last_access_at!
+  end
+
+  teardown do
+    reset_user_tokens
   end
 
   test 'should get index' do

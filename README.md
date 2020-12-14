@@ -1,5 +1,8 @@
 # SINGLE CELL PORTAL README
 
+[![codecov](https://codecov.io/gh/broadinstitute/single_cell_portal_core/branch/development/graph/badge.svg?token=HMWE5BO2a4)](https://codecov.io/gh/broadinstitute/single_cell_portal_core)
+[![Build Status](https://travis-ci.com/broadinstitute/single_cell_portal_core.svg?branch=development)](https://travis-ci.com/broadinstitute/single_cell_portal_core)
+
 ## SETUP
 
 This application is built and deployed using [Docker](https://www.docker.com), specifically native
@@ -319,6 +322,29 @@ Since `yarn` does not automatically upgrade peer/indirect dependencies automatic
 in package.json), The following snippet can be used to update dependencies not covered in `yarn upgrade`:
 
 https://gist.github.com/pftg/fa8fe4ca2bb4638fbd19324376487f42
+
+## CACHING IN LOCAL DEVELOPMENT
+Single Cell Portal employs action caching for all data visualization requests, such as viewing cluster, violin, or dot 
+plots.  As such, making code changes during local development may not always reflect the most recent changes as a particular 
+request may have already been cached by the server.
+
+In order to turn caching on/off dynamically without having to restart the server, developers can run the following command 
+from the terminal:
+
+    bin/rails dev:cache
+
+This will add/remove a file in the `tmp` directory called `caching-dev.txt` that will govern whether or not action caching 
+is enabled.  NOTE: if you are developing inside Docker, you must run this command inside the running container.
+
+If you want to clear the entire cache for the portal while running, you can enter the Rails console and run the `Rails.cache.clear` 
+command which will clear the entire Rails cache (actions and assets, such as CSS and JS assets):
+
+    root@localhost:/home/app/webapp# bin/rails c
+    Loading development environment (Rails 5.2.4.4)
+    2.6.5 :001 > Rails.cache.clear
+   
+This will then return a list of cache paths that have been deleted.  If you encounter a `Directory not empty` error when 
+running this command, simply retry until it succeeds, as it usually only takes one or two attempts.
 
 ## TESTS
 

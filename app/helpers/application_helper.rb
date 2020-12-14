@@ -225,7 +225,7 @@ module ApplicationHelper
   # only options allowed are 1000, 10000, 20000, and 100000
   # will only provide options if subsampling has completed for a cluster
   def subsampling_options(cluster)
-    ExpressionRenderingService.subsampling_options(cluster)
+    ClusterVizService.subsampling_options(cluster)
   end
 
   # get a label for a workflow status code

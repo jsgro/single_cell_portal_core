@@ -38,7 +38,12 @@ Rails.application.routes.draw do
             post 'sync', to: 'studies#sync_study'
             get 'manifest', to: 'studies#generate_manifest'
           end
-          resources :expression_data, only: [:show], param: :data_type
+          get 'explore', to: 'visualization/explore#show'
+          resources :expression, controller: 'visualization/expression', only: [:show], param: :data_type
+          resources :clusters, controller: 'visualization/clusters',
+                               only: [:show, :index],
+                               param: :cluster_name,
+                               constraints: { cluster_name: /[^\/]+/ } # needed to allow '.' in cluster names
         end
         resource :current_user, only: [:update], controller: 'current_user'
 
@@ -197,7 +202,6 @@ Rails.application.routes.draw do
     get 'study/:accession/:study_name', to: 'site#study', as: :view_study
     get 'study/:accession/:study_name/edit_study_description', to: 'site#edit_study_description', as: :edit_study_description
     match 'study/:accession/:study_name/update_settings', to: 'site#update_study_settings', via: [:post, :patch], as: :update_study_settings
-    get 'study/:accession/:study_name/render_cluster', to: 'site#render_cluster', as: :render_cluster
     get 'study/:accession/:study_name/get_new_annotations', to: 'site#get_new_annotations', as: :get_new_annotations
     post 'study/:accession/:study_name/search', to: 'site#search_genes', as: :search_genes
     get 'study/:accession/:study_name/gene_expression/:gene/', to: 'site#view_gene_expression', as: :view_gene_expression,

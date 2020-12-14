@@ -4,26 +4,70 @@
   <%= f.hidden_field :_id, value: study_file._id %>
   <%= hidden_field_tag :selector, '#metadata_form' %>
   <%= hidden_field_tag :partial, 'initialize_metadata_form' %>
+  <% convention_required = User.feature_flag_for_instance(current_user, 'convention_required') %>
 	<div class="form-group row">
 		<div class="col-sm-4">
 			<%= f.label :name %><br />
 			<%= f.text_field :name, class: 'form-control filename', readonly: true, placeholder: 'Filename is taken from uploaded file...', autocomplete: 'off' %>
 		</div>
-		<div class="col-sm-8">
-			<%= f.label :description %><br />
-			<%= f.text_field :description, class: 'form-control' %>
-		</div>
-	</div>
-	<div class="form-group row">
-		<div class="col-sm-4">
+    <div class="col-sm-4">
 			<%= f.label :file_type %><br />
 			<%= f.text_field :file_type, readonly: true, class: 'form-control file-type' %>
 		</div>
-		<div class="col-sm-5 upload-field">
-      <div class="col-sm-5">
-        <%= f.label :use_metadata_convention, "Use Metadata Convention?" %> <%= render partial: 'metadata_convention_help_popover', locals: {id: f.object.id.to_s} %><br />
-        <%= f.select :use_metadata_convention, options_for_select([['Yes', true],['No', false]], study_file.use_metadata_convention), {}, class: 'form-control use-metadata-convention', disabled: !study_file.new_record? %>
-      </div>
+	</div>
+	<div class="form-group row">
+    <div class="col-sm-8">
+			<%= f.label :description %><br />
+			<%= f.text_field :description, class: 'form-control' %>
+		</div>
+  </div>
+  <div class="form-group row">
+		<div class="col-sm-6">
+      <%= f.label :use_metadata_convention do %>
+        Do you use SCP conventional names for required metadata column headers?
+        <%= render partial: 'metadata_convention_help_popover', locals: {id: f.object.id.to_s} %>
+      <% end %>
+      <br />
+      <%= f.label :use_metadata_convention_true, 'data-analytics-name': 'metadata-convention-optin' do %>
+        <%= f.radio_button :use_metadata_convention, true, checked: true, disabled: !study_file.new_record?%>
+        Yes
+      <% end %>
+      &nbsp;
+      <%= f.label :use_metadata_convention_false, 'data-analytics-name': 'metadata-convention-optout' do %>
+        <% if convention_required %>
+          <a href="#/" style="color:#999" id="convention-decline-label-<%= f.object.id.to_s %>"
+             data-content="Using the convention is now required.  If this presents a particular issue for your study, please contact us at <a href='mailto:scp-support@broadinstitute.zendesk.com'>scp-support@broadinstitute.zendesk.com</a> so we can help or make any updates to the convention."
+             data-toggle="popover"
+             data-analytics-name="convention-decline-label">
+            <%= f.radio_button :use_metadata_convention, false, checked: false, disabled: true %>
+            No
+          </a>
+
+        <% else %>
+          <%= f.radio_button :use_metadata_convention, false, checked: false, disabled: !study_file.new_record? %>
+          No
+        <% end %>
+      <% end %>
+      &nbsp; &nbsp; <a href="#/" id="convention-decline-helplink-<%= f.object.id.to_s %>"
+        data-toggle="popover"
+        data-content="Please contact us at <a href='mailto:scp-support@broadinstitute.zendesk.com'>scp-support@broadinstitute.zendesk.com</a> so we can help or make any needed updates to the convention."
+        data-analytics-name="convention-decline-helplink">
+        Using conventional names is an issue for my study
+      </a>
+      <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+        ['#convention-decline-label-', '#convention-decline-helplink-'].forEach(function(idString) {
+          var popoverTarget = idString + '<%= f.object.id.to_s %>'
+          $(popoverTarget).on('click', function() {
+            window.SCP.log('file-upload:metadata:optout-attempt', {studyAccession: '<%= @study.accession %>'})
+          })
+          enableHoverPopovers(popoverTarget);
+        })
+      </script>
+      <div id="use-metadata-convention-message"></div>
+    </div>
+  </div>
+  <div class="form-group row">
+    <div class="col-sm-5 upload-field">
       <% if !study_file.upload_file_name.nil? %>
         <p><label>Link to file </label><br /><%= render partial: '/layouts/download_link', locals: {study: @study, study_file: study_file} %></p>
       <% else %>
@@ -56,13 +100,47 @@
 
 	<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
 
+    function setMetadataConventionMessage(useMetadataConvention) {
+        var message;
+        const advancedUrl = "https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#metadata-powered-advanced-search"
+        const advancedLink = `<a href="${advancedUrl}" target="_blank" rel="noreferrer">advanced search</a>`
+        const conventionRequired = <%= convention_required == true %>;
+        const helpUrl = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+        if (conventionRequired) {
+          message =
+            `Learn <a href="${helpUrl}" target="_blank" rel="noreferrer">how to convert your file</a>.<br/>` +
+            `If the file fails metadata convention validation, you will be emailed messages to help correct it.`
+        }
+        else if (useMetadataConvention === true) {
+          message =
+            `This makes your data discoverable in ${advancedLink}.<br/>` +
+            `If the file fails metadata convention validation, you will be emailed messages to help correct it.`
+        } else {
+          const formatUrl = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+          const contactUsLink = '<a href="mailto:scp-support@broadinstitute.zendesk.com">scp-support@broadinstitute.zendesk.com</a>'
+          const contactUs = `If you need assistance, please contact us at ${contactUsLink}.`
+          message =
+            `Use the SCP metadata convention ("Yes") to make your data discoverable in ${advancedLink}.<br/>` +
+            `Learn <a href="${formatUrl}" target="_blank" rel="noreferrer">how to convert your file</a>.  ${contactUs}`
+        }
+        $('#use-metadata-convention-message').html(message + '<br/>')
+    }
+
 		$(function() {
 			if (<%= !study_file.upload_file_name.nil? %>) {
 				completeWizardStep('initialize_metadata_form_nav');
 				console.log('incrementing status for metadata upload');
 				$('#initialize_metadata_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_metadata_form_completed'}) %>");
 				$('#initialize_metadata_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
-			}
+      }
+
+      $(document).on('change', '[name="study_file[use_metadata_convention]"]', (event) => {
+        const useMetadataConvention = (event.target.value === 'true')
+        setMetadataConventionMessage(useMetadataConvention)
+      });
+
+      // Default to use the convention
+      setMetadataConventionMessage(true)
 
 			$('#metadata_form').fileupload({
 				url: "<%= upload_study_path(@study._id) %>",

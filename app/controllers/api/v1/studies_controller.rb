@@ -592,7 +592,8 @@ module Api
       private
 
       def set_study
-        @study = Study.find_by(id: params[:id])
+        # enable either id or accession as url param
+        @study = Study.any_of({accession: params[:id]},{id: params[:id]}).first
         if @study.nil? || @study.queued_for_deletion?
           head 404 and return
         elsif @study.detached?

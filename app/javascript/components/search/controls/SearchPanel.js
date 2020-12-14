@@ -9,6 +9,7 @@ import DownloadButton from './DownloadButton'
 import DownloadProvider from 'providers/DownloadProvider'
 import { StudySearchContext } from 'providers/StudySearchProvider'
 import { UserContext } from 'providers/UserProvider'
+import { SearchSelectionContext } from 'providers/SearchSelectionProvider'
 
 /** render the legacy 'popular' and 'recent' search buttons */
 function CommonSearchButtons() {
@@ -41,7 +42,7 @@ const helpModalContent = (<div>
   For more detailed information, visit
   our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies" target="_blank" rel="noreferrer">wiki</a>.
   <br/>If you are a study creator and would like to provide that metadata for your study to be searchable,
-  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention" target="_blank" rel="noreferrer">metadata guide</a>.
+  see our <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search" target="_blank" rel="noreferrer">metadata guide</a>.
 </div>)
 
 /**
@@ -50,13 +51,14 @@ const helpModalContent = (<div>
  */
 export default function SearchPanel({
   showCommonButtons,
+  advancedSearchDefault,
   keywordPrompt,
   searchOnLoad
 }) {
   // Note: This might become  a Higher-Order Component (HOC).
   // This search component is currently specific to the "Studies" tab, but
   // could possibly also enable search for "Genes" and "Cells" tabs.
-
+  const selectionContext = useContext(SearchSelectionContext)
   const searchState = useContext(StudySearchContext)
   const userState = useContext(UserContext)
   const featureFlagState = userState.featureFlagsWithDefaults
@@ -65,7 +67,8 @@ export default function SearchPanel({
       featureFlagState.faceted_search = true
     }
   }
-  const [showAdvancedSearch, setShowAdvancedSearch] = useState(featureFlagState.faceted_search)
+
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(advancedSearchDefault || featureFlagState.faceted_search)
   const [showSearchHelpModal, setShowSearchHelpModal] = useState(false)
   const [showSearchOptInModal, setShowSearchOptInModal] = useState(false)
   const [isNewToUser, setIsNewToUser] = useState(true)
@@ -86,7 +89,7 @@ export default function SearchPanel({
   }
 
   let advancedOptsLink = <a className="action advanced-opts" onClick={handleMoreFiltersClick}>
-    Advanced search<sup className="new-feature">BETA</sup>
+    Advanced Search <sup className="new-feature">BETA</sup>
   </a>
   if (showAdvancedSearch) {
     searchButtons = <FacetsPanel/>
@@ -116,6 +119,7 @@ export default function SearchPanel({
     // for signed-in users, update their feature flag, for everyone, save in localStorage
     // this means signed-in users will see advanced search even if they are not signed in, once they
     // opt in
+
     if (!userState.isAnonymous) {
       userState.updateFeatureFlags({ faceted_search: enabled })
     }
@@ -124,6 +128,9 @@ export default function SearchPanel({
     setIsNewToUser(false)
     if (modalShowFunc) {
       closeModal(modalShowFunc)
+    }
+    if (enabled) {
+      selectionContext.updateSelection({ terms: '' }, true)
     }
   }
 

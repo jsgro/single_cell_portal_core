@@ -73,7 +73,7 @@ class Study
     end
   end
 
-  has_many :genes, dependent: :delete do
+  has_many :genes do
     def by_name_or_id(term, study_file_ids)
       all_matches = any_of({name: term, :study_file_id.in => study_file_ids},
                             {searchable_name: term.downcase, :study_file_id.in => study_file_ids},
@@ -101,7 +101,7 @@ class Study
     end
   end
 
-  has_many :precomputed_scores, dependent: :delete do
+  has_many :precomputed_scores do
     def by_name(name)
       where(name: name).first
     end
@@ -134,25 +134,25 @@ class Study
     end
   end
 
-  has_many :cluster_groups, dependent: :delete do
+  has_many :cluster_groups do
     def by_name(name)
       find_by(name: name)
     end
   end
 
-  has_many :data_arrays, as: :linear_data, dependent: :delete do
+  has_many :data_arrays, as: :linear_data do
     def by_name_and_type(name, type)
       where(name: name, array_type: type).order_by(&:array_index)
     end
   end
 
-  has_many :cell_metadata, dependent: :delete do
+  has_many :cell_metadata do
     def by_name_and_type(name, type)
       where(name: name, annotation_type: type).first
     end
   end
 
-  has_many :directory_listings, dependent: :delete do
+  has_many :directory_listings do
     def unsynced
       where(sync_status: false).to_a
     end
@@ -179,8 +179,8 @@ class Study
   end
 
   # User annotations are per study
-  has_many :user_annotations, dependent: :delete
-  has_many :user_data_arrays, dependent: :delete
+  has_many :user_annotations
+  has_many :user_data_arrays
 
   # HCA metadata object
   has_many :analysis_metadata, dependent: :delete
@@ -189,7 +189,7 @@ class Study
   has_one :study_accession
 
   # External Resource links
-  has_many :external_resources, as: :resource_links
+  has_many :external_resources, as: :resource_links, dependent: :delete
 
   # Study Detail (full html description)
   has_one :study_detail, dependent: :delete
@@ -665,6 +665,7 @@ class Study
   after_validation  :assign_accession, on: :create
   # before_save       :verify_default_options
   after_create      :make_data_dir, :set_default_participant
+  before_destroy    :ensure_cascade_on_associations
   after_destroy     :remove_data_dir
   before_save       :set_readonly_access
 
@@ -1016,34 +1017,75 @@ class Study
     default
   end
 
+  # Returns default_annotation_params in string form [[name]]--[[type]]--[[scope]]
+  # to match the UI and how they're stored in default_options
+  def default_annotation(cluster=self.default_cluster)
+    params = default_annotation_params(cluster)
+    params.present? ? "#{params[:name]}--#{params[:type]}--#{params[:scope]}" : nil
+  end
+
   # helper to return default annotation to load, will fall back to first available annotation if no preference has been set
-  # or default annotation cannot be loaded
-  def default_annotation
-    default_cluster = self.default_cluster
+  # or default annotation cannot be loaded.  returns a hash of {name: ,type:, scope: }
+  def default_annotation_params(cluster=self.default_cluster)
     default_annot = self.default_options[:annotation]
+    annot_params = nil
     # in case default has not been set
     if default_annot.nil?
-      if !default_cluster.nil? && default_cluster.cell_annotations.any?
-        annot = default_cluster.cell_annotations.first
-        default_annot = "#{annot[:name]}--#{annot[:type]}--cluster"
+      if !cluster.nil? && cluster.cell_annotations.any?
+        annot = cluster.cell_annotations.first
+        annot_params = {
+          name: annot[:name],
+          type: annot[:type],
+          scope: 'cluster'
+        }
       elsif self.cell_metadata.any?
         metadatum = self.cell_metadata.first
-        default_annot = "#{metadatum.name}--#{metadatum.annotation_type}--study"
+        annot_params = {
+          name: metadatum.name,
+          type: metadatum.annotation_type,
+          scope: 'study'
+        }
       else
         # annotation won't be set yet if a user is parsing metadata without clusters, or vice versa
-        default_annot = nil
+        annot_params = nil
       end
+    else
+      annot_params = {
+        name: default_annotation_name,
+        type: default_annotation_type,
+        scope: default_annotation_scope
+      }
     end
-    default_annot
+    annot_params
   end
 
   # helper to return default annotation type (group or numeric)
   def default_annotation_type
-    if self.default_options[:annotation].nil?
+    if self.default_options[:annotation].blank?
       nil
     else
       # middle part of the annotation string is the type, e.g. Label--group--study
       self.default_options[:annotation].split('--')[1]
+    end
+  end
+
+  # helper to return default annotation name
+  def default_annotation_name
+    if self.default_options[:annotation].blank?
+      nil
+    else
+      # first part of the annotation string
+      self.default_options[:annotation].split('--')[0]
+    end
+  end
+
+  # helper to return default annotation scope
+  def default_annotation_scope
+    if self.default_options[:annotation].blank?
+      nil
+    else
+      # last part of the annotation string
+      self.default_options[:annotation].split('--')[2]
     end
   end
 
@@ -1320,7 +1362,7 @@ class Study
                                          cluster_name, annotation_name).first
     {
       'organism': exp_file.species_name,
-      'assembly': exp_file.genome_assembly['name'],
+      'assembly': exp_file.genome_assembly.try(:name),
       'annotationsPath': exp_file.api_url
     }
   end
@@ -1389,21 +1431,7 @@ class Study
     studies = self.where(queued_for_deletion: true)
     studies.each do |study|
       Rails.logger.info "#{Time.zone.now}: deleting queued study #{study.name}"
-      Gene.where(study_id: study.id).delete_all
-      study.study_files.each do |file|
-        DataArray.where(study_id: study.id, study_file_id: file.id).delete_all
-      end
-      CellMetadatum.where(study_id: study.id).delete_all
-      PrecomputedScore.where(study_id: study.id).delete_all
-      ClusterGroup.where(study_id: study.id).delete_all
-      StudyFile.where(study_id: study.id).delete_all
-      DirectoryListing.where(study_id: study.id).delete_all
-      UserAnnotation.where(study_id: study.id).delete_all
-      UserAnnotationShare.where(study_id: study.id).delete_all
-      UserDataArray.where(study_id: study.id).delete_all
-      AnalysisMetadatum.where(study_id: study.id).delete_all
-      StudyFileBundle.where(study_id: study.id).delete_all
-      # now destroy study to ensure everything is removed
+      # ensure_cascade_on_associations handles deleting parsed data
       study.destroy
       Rails.logger.info "#{Time.zone.now}: delete of #{study.name} completed"
     end
@@ -1543,7 +1571,7 @@ class Study
 
   # set access for the readonly service account if a study is public
   def set_readonly_access(grant_access=true, manual_set=false)
-    unless Rails.env == 'test' || self.queued_for_deletion
+    unless Rails.env == 'test' || self.queued_for_deletion || self.detached
       if manual_set || self.public_changed? || self.new_record?
         if self.firecloud_workspace.present? && self.firecloud_project.present? && ApplicationController.read_only_firecloud_client.present?
           access_level = self.public? ? 'READER' : 'NO ACCESS'
@@ -1587,7 +1615,7 @@ class Study
     Rails.logger.info "Removing workspace #{firecloud_project}/#{firecloud_workspace} in #{Rails.env} environment"
     begin
       ApplicationController.firecloud_client.delete_workspace(firecloud_project, firecloud_workspace)
-      DeleteQueueJob.new(metadata_file).perform
+      DeleteQueueJob.new(self.metadata_file).delay.perform if self.metadata_file.present?
       destroy
     rescue => e
       Rails.logger.error "Error in removing #{firecloud_project}/#{firecloud_workspace}"
@@ -1604,6 +1632,18 @@ class Study
       self.all.each do |study|
         study.destroy_and_remove_workspace
       end
+    end
+  end
+
+  # helper method that mimics DeleteQueueJob.delete_convention_data
+  # referenced from ensure_cascade_on_associations to prevent orphaned rows in BQ on manual deletes
+  def delete_convention_data
+    if self.metadata_file.present? && self.metadata_file.use_metadata_convention
+      Rails.logger.info "Removing convention data for #{self.accession} from BQ"
+      bq_dataset = ApplicationController.big_query_client.dataset CellMetadatum::BIGQUERY_DATASET
+      bq_dataset.query "DELETE FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE study_accession = '#{self.accession}' AND file_id = '#{self.metadata_file.id}'"
+      Rails.logger.info "BQ cleanup for #{self.accession} completed"
+      SearchFacet.delay.update_all_facet_filters
     end
   end
 
@@ -1930,5 +1970,27 @@ class Study
         errors.add(:firecloud_workspace, 'cannot be changed once initialized.')
       end
     end
+  end
+
+  # delete all records that are associate with this study before invoking :destroy to speed up performance
+  # only pertains to "parsed" data as other records will be cleaned up via callbacks
+  # provides much better performance to study.destroy while ensuring cleanup consistency
+  def ensure_cascade_on_associations
+    # ensure all BQ data is cleaned up first
+    self.delete_convention_data
+    self.study_files.each do |file|
+      DataArray.where(study_id: self.id, study_file_id: file.id).delete_all
+    end
+    Gene.where(study_id: self.id).delete_all
+    CellMetadatum.where(study_id: self.id).delete_all
+    PrecomputedScore.where(study_id: self.id).delete_all
+    ClusterGroup.where(study_id: self.id).delete_all
+    StudyFile.where(study_id: self.id).delete_all
+    DirectoryListing.where(study_id: self.id).delete_all
+    UserAnnotation.where(study_id: self.id).delete_all
+    UserAnnotationShare.where(study_id: self.id).delete_all
+    UserDataArray.where(study_id: self.id).delete_all
+    AnalysisMetadatum.where(study_id: self.id).delete_all
+    StudyFileBundle.where(study_id: self.id).delete_all
   end
 end

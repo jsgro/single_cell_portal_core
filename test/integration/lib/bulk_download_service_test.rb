@@ -1,12 +1,13 @@
 require "test_helper"
 require 'csv'
+require "bulk_download_helper"
 
 class BulkDownloadServiceTest < ActiveSupport::TestCase
 
   def setup
     @user = User.find_by(email: 'testing.user.2@gmail.com')
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-    @study = Study.find_by(name: "Test Study #{@random_seed}")
+    @study = Study.find_by(name: "Testing Study #{@random_seed}")
   end
 
   test 'should update user download quota' do
@@ -30,10 +31,12 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
     requested_file_types = %w(Metadata Expression)
     files = BulkDownloadService.get_requested_files(file_types: requested_file_types, study_accessions: [@study.accession])
-    assert_equal 2, files.size, "Did not find correct number of files, expected 2 but found #{files.size}"
-    expected_files = @study.study_files.by_type(['Metadata', 'Expression Matrix']).map(&:name).sort
+    expected_files = @study.study_files.where(:file_type.in => ['Metadata', /Matrix/, /10X/])
+    expected_count = expected_files.size
+    assert_equal expected_count, files.size, "Did not find correct number of files, expected #{expected_count} but found #{files.size}"
+    expected_filenames = expected_files.map(&:name).sort
     found_files = files.map(&:name).sort
-    assert_equal expected_files, found_files, "Did not find the correct files, expected: #{expected_files} but found #{found_files}"
+    assert_equal expected_filenames, found_files, "Did not find the correct files, expected: #{expected_files} but found #{found_files}"
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
@@ -43,18 +46,11 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
     requested_file_types = %w(Metadata Expression)
     files_by_size = BulkDownloadService.get_requested_file_sizes_by_type(file_types: requested_file_types, study_accessions: [@study.accession])
-    assert_equal 2, files_by_size.keys.size,
-                 "Did not find correct number of file classes, expected 2 but found #{files_by_size.keys.size}"
-    expected_response = {
-        Metadata: {
-            total_files: 1,
-            total_bytes: @study.metadata_file.upload_file_size
-        },
-        Expression: {
-            total_files: 1,
-            total_bytes: @study.expression_matrix_files.first.upload_file_size
-        }
-    }.with_indifferent_access
+    expected_files = @study.study_files.where(:file_type.in => ['Metadata', /Matrix/, /10X/])
+    returned_files = get_file_count_from_response(files_by_size)
+    assert_equal expected_files.size, returned_files,
+                 "Did not find correct number of file classes, expected #{expected_files.size} but found #{files_by_size.keys.size}"
+    expected_response = bulk_download_response(expected_files)
     assert_equal expected_response, files_by_size.with_indifferent_access,
                  "Did not return correct response, expected: #{expected_response} but found #{files_by_size}"
 
@@ -120,10 +116,11 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
   test 'should get list of permitted accessions' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
-    accessions = Study.pluck(:accession)
-    accessions_by_permission = BulkDownloadService.get_permitted_accessions(study_accessions: accessions, user: @user)
-    assert_equal accessions.sort, accessions_by_permission[:permitted].sort,
-                 "Did not return expected list of accessions; #{accessions_by_permission[:permitted]} != #{accessions}"
+
+    accessions = Study.viewable(@user).pluck(:accession)
+    permitted = BulkDownloadService.get_permitted_accessions(study_accessions: accessions, user: @user)
+    assert_equal accessions.sort, permitted.sort,
+                 "Did not return expected list of accessions; #{permitted} != #{accessions}"
 
     # add download agreement to remove study from list
     download_agreement = DownloadAgreement.new(study_id: @study.id, content: 'This is the agreement content')
