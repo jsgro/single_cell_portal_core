@@ -362,6 +362,7 @@ module ApplicationHelper
   end
 
    # Return a scope-limited access token that can be used in URLs (e.g. in urls passed to Morpheus)
+   # this is different than a totat in that it can be re-used
   def get_url_safe_access_token(user)
     token = ''
     if user.present?

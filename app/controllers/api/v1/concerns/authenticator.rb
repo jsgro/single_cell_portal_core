@@ -33,14 +33,7 @@ module Api
         def get_current_api_user
           user = nil
           if TOTAT_REQUIRED_ACTIONS.include?({controller: controller_name, action: action_name})
-            # check for a valid totat/action
-            if !params[:auth_code].present?
-              return nil
-            end
-            Rails.logger.info "Authenticating user via auth_token: #{params[:auth_code]}"
-            user = User.verify_totat(params[:auth_code], request.path)
-            user.try(:update_last_access_at!)
-            return user
+            return find_user_from_totat
           else
             api_access_token = extract_bearer_token(request)
             if api_access_token.present?
@@ -63,9 +56,8 @@ module Api
                 return user
               end
             else
-              if URL_SAFE_TOKEN_ALLOWED_ACTIONS.include?({controller: controller_name, action: action_name}) && params[:url_safe_token]
-                url_safe_token = params[:url_safe_token]
-                return User.find_by(authentication_token: url_safe_token)
+              if URL_SAFE_TOKEN_ALLOWED_ACTIONS.include?({controller: controller_name, action: action_name})
+                return find_user_from_url_safe_token
               end
             end
           end
@@ -73,6 +65,25 @@ module Api
         end
 
         private
+
+        def find_user_from_url_safe_token
+          if params[:url_safe_token].present?
+            url_safe_token = params[:url_safe_token]
+            return User.find_by(authentication_token: url_safe_token)
+          end
+          nil
+        end
+
+        def find_user_from_totat
+          # check for a valid totat/action
+          if !params[:auth_code].present?
+            return nil
+          end
+          Rails.logger.info "Authenticating user via auth_token: #{params[:auth_code]}"
+          user = User.verify_totat(params[:auth_code], request.path)
+          user.try(:update_last_access_at!)
+          return user
+        end
 
         def find_user_from_token(api_access_token)
           user = nil
