@@ -114,7 +114,7 @@ class ExpressionVizService
     end
     values = {}
     values[:all] = {x: [], y: [], cells: [], annotations: [], text: [], marker: {size: study.default_cluster_point_size,
-                                                                                 line: { color: 'rgb(40,40,40)', width: study.show_cluster_point_borders? ? 0.5 : 0}}}
+      line: { color: 'rgb(40,40,40)', width: study.show_cluster_point_borders? ? 0.5 : 0}}}
     if annotation[:scope] == 'cluster' || annotation[:scope] == 'user'
       annotation_array.each_with_index do |annot, index|
         annotation_value = annot
@@ -177,7 +177,17 @@ class ExpressionVizService
         annotations: [],
         text: [],
         cells: cells,
-        marker: {cmax: 0, cmin: 0, color: [], size: study.default_cluster_point_size, showscale: true, colorbar: {title: y_axis_title , titleside: 'right'}}
+        marker: {
+          cmax: 0,
+          cmin: 0,
+          color: [],
+          size: study.default_cluster_point_size,
+          showscale: true,
+          colorbar: {
+            title: y_axis_title ,
+            titleside: 'right'
+          }
+        }
     }
     if cluster.is_3d?
       expression[:all][:z] = z_array
@@ -384,7 +394,7 @@ class ExpressionVizService
     values
   end
 
-    # helper method for parsing the legacy [name]--[type]--[scope] string format into an object
+  # helper method for parsing the legacy [name]--[type]--[scope] string format into an object
   # finds the string from either params[:gene_set_annotation] or params[:annotation]
   def self.parse_annotation_legacy_params(study, params)
     selector = params[:annotation].nil? ? params[:gene_set_annotation] : params[:annotation]

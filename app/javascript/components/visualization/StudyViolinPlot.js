@@ -4,34 +4,8 @@ import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
 
 import { fetchExpressionViolin } from 'lib/scp-api'
-import createTracesAndLayout from 'lib/kernel-functions'
-import { plot } from 'lib/plot'
+import { renderViolinPlot } from 'lib/violin-plot'
 import ClusterControls from './ClusterControls'
-
-/** copied from legacy application.js */
-function parseResultsToArray(results) {
-  const keys = Object.keys(results.values)
-  return keys.sort().map(key => {
-    return [key, results.values[key].y]
-  })
-}
-
-/** Formats expression data for Plotly, renders chart */
-function parseAndPlot(results, graphElementId) {
-  // The code below is heavily borrowed from legacy application.js
-  const dataArray = parseResultsToArray(results)
-  const jitter = results.values_jitter ? results.values_jitter : ''
-  const traceData = createTracesAndLayout(
-    dataArray, results.rendered_cluster, jitter, results.y_axis_title
-  )
-  const expressionData = [].concat.apply([], traceData[0])
-  const expressionLayout = traceData[1]
-  // Check that the ID exists on the page to avoid errors in corner cases where users update search terms quickly
-  // or are toggling between study and gene view.
-  if (document.getElementById(graphElementId)) {
-    plot(graphElementId, expressionData, expressionLayout)
-  }
-}
 
 /** displays a violin plot of expression data for the given gene and study */
 export default function StudyViolinPlot({ study, gene }) {
@@ -40,6 +14,7 @@ export default function StudyViolinPlot({ study, gene }) {
   const [graphElementId] = useState(_uniqueId('study-violin-'))
   const [annotationList, setAnnotationList] = useState(null)
 
+  /** Update controls with cluster parameters */
   function handleControlUpdate(clusterParams) {
     if (clusterParams.userUpdated) {
       loadData(clusterParams)
@@ -65,7 +40,7 @@ export default function StudyViolinPlot({ study, gene }) {
     }
     setIsLoaded(true)
     setIsLoading(false)
-    parseAndPlot(results, graphElementId)
+    renderViolinPlot(graphElementId, results)
   }
 
   useEffect(() => {

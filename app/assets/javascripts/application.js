@@ -661,21 +661,6 @@ function getRenderUrlParams() {
   return urlParams;
 }
 
-// Handle changes in View Options for 'Distribution' view
-$(document).on('change', '#plot_type, #jitter', function() {
-  $('#expression-plots').data('box-rendered', false);
-  $('#expression-plots').data('scatter-rendered', false);
-  $('#expression-plots').data('reference-rendered', false);
-
-  updateSearchGeneParams();
-
-  if (typeof renderGeneExpressionPlots !== 'undefined' && /numeric/.test($('#annotation').val()) === false) {
-    // Accounts for changing View Options when not in Distribution view,
-    // but does not apply if we're looking at an annotation like "Intensity" or "Average intensity".
-    renderGeneExpressionPlots();
-  }
-});
-
 // Handles changes in View Options for 'Heatmap' view
 $(document).on('change', '#heatmap_row_centering, #annotation', function() {
   updateSearchGeneParams();
@@ -729,7 +714,6 @@ $(window).resize(function() {
     if(this.resizeTO) clearTimeout(this.resizeTO);
     this.resizeTO = setTimeout(function() {
         $(this).trigger('resizeEnd');
-        console.log('resizeEnd');
     }, 100);
 });
 
@@ -1061,12 +1045,6 @@ function gatherFilesByType(fileType) {
         }
     });
     return matchingfiles;
-}
-
-// calculate the current viewport to use for rendering cluster plots
-function calculatePlotViewport(target) {
-    var viewPort = $(window).height();
-    return viewPort - 250; //
 }
 
 // garbage collector to clear the search animation on global gene search (in case no results are found)

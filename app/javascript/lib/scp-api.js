@@ -49,7 +49,7 @@ export function studyNameAsUrlParam(studyName) {
  *
  * Docs: https:///singlecell.broadinstitute.org/single_cell/api/swagger_docs/v1#!/Search/search_auth_code_path
  *
- * @param {Boolean} mock Whether to use mock data.  Helps development, tests.
+ * @param {Boolean} mock If using mock data.  Helps development, tests.
  * @returns {Promise} Promise object described in "Example return" above
  *
  * @example
@@ -77,7 +77,7 @@ export async function fetchAuthCode(mock=false) {
  *
  * Docs: https:///singlecell.broadinstitute.org/single_cell/api/swagger_docs/v1#!/Search/search_facets_path
  *
- * @param {Boolean} mock Whether to use mock data.  Helps development, tests.
+ * @param {Boolean} mock If using mock data.  Helps development, tests.
  * @returns {Promise} Promise object containing camel-cased data from API
  */
 export async function fetchFacets(mock=false) {
@@ -95,12 +95,12 @@ export async function fetchFacets(mock=false) {
 }
 
 /**
- * Sets flag on whether to use mock data for all API responses.
+ * Sets flag on If using mock data for all API responses.
  *
  * This method is useful for tests and certain development scenarios,
  * e.g. when evolving a new API or to work around occasional API blockers.
  *
- * @param {Boolean} flag Whether to use mock data for all API responses
+ * @param {Boolean} flag If using mock data for all API responses
  */
 export function setGlobalMockFlag(flag) {
   globalMock = flag
@@ -122,7 +122,9 @@ export function setMockOrigin(origin) {
 
 /** Constructs and encodes URL parameters; omits those with no value */
 function stringifyQuery(paramObj) {
-  const stringified = queryString.stringify(paramObj, { skipEmptyString: true })
+  // Usage and API: https://github.com/sindresorhus/query-string#usage
+  const options = { skipEmptyString: true, skipNull: true }
+  const stringified = queryString.stringify(paramObj, options)
   return `?${stringified}`
 }
 
@@ -142,7 +144,7 @@ export async function fetchExplore(studyAccession, mock=false) {
 /**
  * Get all study-wide and cluster annotations for a study
  *
- * see definition at: app/controllers/api/v1/visualization/explore_controller.rb
+ * See definition: app/controllers/api/v1/visualization/explore_controller.rb
  *
  * @param {String} studyAccession Study accession
  * @param {Boolean} mock
@@ -156,28 +158,36 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
 /**
  * Returns an object with scatter plot data for a cluster in a study
  *
- * see definition at: app/controllers/api/v1/visualization/clusters_controller.rb
+ * See definition: app/controllers/api/v1/visualization/clusters_controller.rb
  *
  * @param {String} studyAccession Study accession
  * @param {String} cluster Name of cluster, as defined at upload
  * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
  * @param {String} subsample Subsampling threshold, e.g. 100000
  * @param {String} consensus Statistic to use for consensus, e.g. "mean"
+ * @param {Boolean} isAnnotatedScatter If showing "Annotated scatter" plot.
+ *                  Only applies for numeric (not group) annotations.
+ * @param {Boolean} mock If using mock data.  Helps development, tests.
  *
  * Example:
  * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
  */
 export async function fetchCluster(
-  studyAccession, cluster, annotation, subsample, consensus, mock=false
+  studyAccession, cluster, annotation, subsample, consensus, gene=null,
+  isAnnotatedScatter=null, mock=false
 ) {
   // Digest full annotation name to enable easy validation in API
   const [annotName, annotType, annotScope] = annotation.split('--')
+  // eslint-disable-next-line camelcase
+  const is_annotated_scatter = isAnnotatedScatter
   const paramObj = {
     annotation_name: annotName,
     annotation_type: annotType,
     annotation_scope: annotScope,
     subsample,
-    consensus
+    consensus,
+    gene,
+    is_annotated_scatter
   }
 
   const params = stringifyQuery(paramObj)
@@ -196,11 +206,16 @@ export async function fetchCluster(
 /**
  * Returns an object with violin plot expression data for a gene in a study
  *
- * see definition at: app/controllers/api/v1/visualization/expression_controller.rb
+ * See definition: app/controllers/api/v1/visualization/expression_controller.rb
  *
  * @param {String} studyAccession Study accession
- * @param {String} gene Gene names to get expression data for
- * @param {String} cluster Gene names to get expression data for
+ * @param {String} gene Gene name
+ * @param {String} clusterName Name of cluster
+ * @param {String} annotationName Name of annotation
+ * @param {String} annotationType Type of annotation ("group" or "numeric")
+ * @param {String} annotationName Scope of annotation ("study" or "cluster")
+ * @param {String} subsample Subsampling threshold
+ * @param {Boolean} mock If using mock data.  Helps development, tests.
  *
  */
 export async function fetchExpressionViolin(
@@ -208,16 +223,16 @@ export async function fetchExpressionViolin(
   gene,
   clusterName,
   annotationName,
-  annotationScope,
   annotationType,
+  annotationScope,
   subsample,
   mock=false
 ) {
   const paramObj = {
     cluster: clusterName,
-    annotation_scope: annotationScope,
-    annotation_type: annotationType,
     annotation_name: annotationName,
+    annotation_type: annotationType,
+    annotation_scope: annotationScope,
     subsample,
     gene
   }
@@ -233,7 +248,7 @@ export async function fetchExpressionViolin(
 /**
  * Get all study-wide and cluster annotations for a study
  *
- * see definition at: app/controllers/api/v1/visualization/annotations_controller.rb
+ * See definition: app/controllers/api/v1/visualization/annotations_controller.rb
  *
  * @param {String} studyAccession Study accession
  * @param {Boolean} mock
@@ -247,7 +262,7 @@ export async function fetchAnnotations(studyAccession, mock=false) {
 /**
  * Get a single annotation for a study
  *
- * see definition at: app/controllers/api/v1/visualization/annotations_controller.rb
+ * See definition: app/controllers/api/v1/visualization/annotations_controller.rb
  *
  * @param {String} studyAccession Study accession
  * @param {String} annotationName
@@ -313,7 +328,7 @@ export async function updateCurrentUser(updatedUser, mock=false) {
  *
  * @param {String} facet Identifier of facet
  * @param {String} query User-supplied query string
- * @param {Boolean} mock Whether to use mock data.  Helps development, tests.
+ * @param {Boolean} mock If using mock data.  Helps development, tests.
  * @returns {Promise} Promise object containing camel-cased data from API
  *
  * @example
@@ -376,7 +391,7 @@ export async function fetchDownloadSize(accessions, fileTypes, mock=false) {
  *   @param {Integer} page Page in search results
  *   @param {String} order Results ordering field
  *   @param {String} preset_search Query preset (e.g. 'covid19')
- * @param {Boolean} mock Whether to use mock data
+ * @param {Boolean} mock If using mock data
  * @returns {Promise} Promise object containing camel-cased data from API
  *
  * @example
@@ -447,6 +462,7 @@ export function getBrandingGroup() {
   return queryParams.scpbr
 }
 
+/** Get full URL for a given including any extension (or a mocked URL) */
 function getFullUrl(path, mock=false) {
   if (globalMock) {
     mock = true
@@ -464,7 +480,7 @@ function getFullUrl(path, mock=false) {
  *
  * @param {String} path Relative path for API endpoint, e.g. /search/auth_code
  * @param {Object} init Object for settings, just like standard fetch `init`
- * @param {Boolean} mock Whether to use mock data.  Helps development, tests.
+ * @param {Boolean} mock If using mock data.  Helps development, tests.
  */
 export default async function scpApi(
   path, init, mock=false, camelCase=true, toJson=true
