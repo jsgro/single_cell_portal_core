@@ -2,7 +2,9 @@
 * @fileoverview Functions shared across some of the three Explore tab views
 */
 
-import { getMainViewOptions } from 'lib/study-overview/view-options'
+import {
+  getMainViewOptions, getAnnotParams
+} from 'lib/study-overview/view-options'
 import { scatterPlot } from 'lib/scatter-plot'
 
 /**
@@ -33,6 +35,8 @@ async function exploreScatterPlotsHorizontal(study, gene) {
 
   scatterPlot(apiParams, props)
 
+  const annotName = getAnnotParams().name
+
   apiParams.gene = null
   props.selector = `${baseSelector} .row > div:nth-child(2)`
   props.hasLegend = false
@@ -40,7 +44,7 @@ async function exploreScatterPlotsHorizontal(study, gene) {
   props.layout = {
     showlegend: false,
     title: {
-      text: `${options.cluster}<br /><b>${options.annotation}</b>`,
+      text: `${options.cluster}<br /><b>${annotName}</b>`,
       font: {
         family: 'Helvetica Neue',
         size: 16,
