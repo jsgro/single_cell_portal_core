@@ -9,7 +9,9 @@
 import Plotly from 'plotly.js-dist'
 
 import { plot, getColorBrewerColor } from 'lib/plot'
-import { getMainViewOptions } from 'lib/study-overview/view-options'
+import {
+  getMainViewOptions, getAnnotParams
+} from 'lib/study-overview/view-options'
 import { fetchExpressionViolin } from 'lib/scp-api'
 
 // To consider: dedup this copy with the one that exists in application.js.
@@ -240,10 +242,12 @@ export async function violinPlot(plotId, study, gene) {
   const plotDom = document.getElementById(plotId)
   const spinner = new Spinner(window.opts).spin(plotDom)
 
-  const { cluster, annotation, subsample } = getMainViewOptions()
+  const { cluster, subsample } = getMainViewOptions()
+
+  const { name, type, scope } = getAnnotParams()
 
   const rawPlot = await fetchExpressionViolin(
-    study.accession, gene, cluster, annotation, subsample
+    study.accession, gene, cluster, name, type, scope, subsample
   )
   rawPlot.plotId = plotId
   rawPlot.plotType = $('#plot_type').val()
