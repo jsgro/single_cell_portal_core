@@ -19,7 +19,6 @@ module Api
         before_action :check_api_cache!
         after_action :write_api_cache!
 
-
         swagger_path '/studies/{accession}/clusters' do
           operation :get do
             key :tags, [
@@ -76,8 +75,14 @@ module Api
               key :required, true
               key :type, :string
             end
+            parameter do
+              key :name, :is_annotated_scatter
+              key :in, :query
+              key :description, 'Whether plot is an "Annotated Scatter", i.e. an annotation-based data array scatter plot.'
+              key :type, :string
+            end
             response 200 do
-              key :description, 'Cluster visualization, suitable for rendering in Plotly'
+              key :description, 'Scatter plot visualization of cluster, suitable for rendering in Plotly'
             end
             extend SwaggerResponses::StudyControllerResponses
           end
@@ -116,21 +121,45 @@ module Api
             return nil
           end
 
-          subsample = url_params[:subsample].blank? ? nil : url_params[:subsample]
+          subsample = url_params[:subsample].blank? ? nil : url_params[:subsample].to_i
 
           colorscale = url_params[:colorscale].blank? ? 'Reds' : url_params[:colorscale]
 
-          coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
-          plot_data = ClusterVizService.transform_coordinates(coordinates, study, cluster, annotation)
+          is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
 
-          if cluster.is_3d?
-            range = ClusterVizService.set_range(cluster, coordinates.values)
-            if cluster.has_range?
-              aspect = ClusterVizService.compute_aspect_ratios(range)
+          titles = ClusterVizService.load_axis_labels(cluster)
+
+          gene_name = url_params[:gene]
+          if gene_name.blank?
+            # For "Clusters" tab in default view of Explore tab
+            coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
+            if cluster.is_3d?
+              range = ClusterVizService.set_range(cluster, coordinates.values)
+            end
+          else
+            # For single-gene view of Explore tab
+            gene = study.genes.by_name_or_id(gene_name, study.expression_matrix_files.map(&:id))
+            y_axis_title = ExpressionVizService.load_expression_axis_title(study)
+            if is_annotated_scatter
+              # For "Annotated scatter" tab, shown in first tab for numeric annotations
+              coordinates = ExpressionVizService.load_annotation_based_data_array_scatter(
+                study, gene, cluster, annotation, subsample, y_axis_title)
+              range = ClusterVizService.set_range(cluster, coordinates.values)
+              titles = {
+                x: annot_params[:name],
+                y: y_axis_title
+              }
+            else
+              # For "Scatter" tab
+              coordinates = ExpressionVizService.load_expression_data_array_points(study, gene, cluster, annotation, subsample, y_axis_title, colorscale)
             end
           end
 
-          titles = ClusterVizService.load_axis_labels(cluster)
+          if cluster.is_3d? && cluster.has_range?
+            aspect = ClusterVizService.compute_aspect_ratios(range)
+          end
+
+          plot_data = ClusterVizService.transform_coordinates(coordinates, study, cluster, annotation)
 
           axes_full = {
             titles: titles,
@@ -144,11 +173,14 @@ module Api
             "description": cluster.study_file.description,
             "is3D": cluster.is_3d?,
             "isSubsampled": cluster.subsampled?,
+            "isAnnotatedScatter": is_annotated_scatter,
             "numPoints": cluster.points,
             "domainRanges": cluster.domain_ranges,
             "axes": axes_full,
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
             "coordinateLabels": coordinate_labels,
+            "cluster": cluster.name,
+            "gene": gene_name,
             "annotParams": annot_params
           }
         end

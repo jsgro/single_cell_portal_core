@@ -257,7 +257,8 @@ class ClusterVizService
       # assemble containers for each trace
       annotation[:values].each do |value|
         coordinates[value] = {x: [], y: [], text: [], cells: [], annotations: [], name: value,
-                              marker: {size: study.default_cluster_point_size, line: { color: 'rgb(40,40,40)', width: study.show_cluster_point_borders? ? 0.5 : 0}}}
+                              marker: {size: study.default_cluster_point_size,
+                              line: { color: 'rgb(40,40,40)', width: study.show_cluster_point_borders? ? 0.5 : 0}}}
         if cluster.is_3d?
           coordinates[value][:z] = []
         end
