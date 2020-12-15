@@ -156,6 +156,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
         units: 'raw counts',
         library_preparation_protocol: 'MARS-seq',
         biosample_input_type: 'Whole cell',
+        modality: 'Transcriptomic: targeted',
         is_raw_counts: true
       )
     )

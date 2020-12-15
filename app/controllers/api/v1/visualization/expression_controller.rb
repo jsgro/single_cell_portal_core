@@ -21,7 +21,7 @@ module Api
         # to be used other than by the SCP UI, and may change dramatically
         def show
           if (!@study.has_expression_data? || !@study.can_visualize_clusters?)
-            render json: {error: "Study #{@study.accession} does not support expression rendering"}, status: 400
+            render(json: {error: "Study #{@study.accession} does not support expression rendering"}, status: 400) and return
           end
           data_type = params[:data_type]
           if (data_type == 'violin')
