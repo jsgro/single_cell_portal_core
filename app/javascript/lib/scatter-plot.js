@@ -190,9 +190,13 @@ function getScatterPlotLayout(rawPlot) {
     layout = Object.assign(layout, dimensionProps)
   }
 
+  // Set any layout props defined upstream
   if (rawPlot.layout) {
     Object.assign(layout, rawPlot.layout)
   }
+
+  // Give space for legend below scatter plot
+  if (rawPlot.description) {layout.height -= 20}
 
   return layout
 }
@@ -242,9 +246,7 @@ export async function scatterPlot(apiParams, props) {
   const legendHtml = (hasLegend ? `<div id="${legendId}"></div>` : '')
 
   $(props.selector).append(
-    `<div id="${plotId}" class="plot"></div>
-      ${legendHtml}
-    </div>`
+    `<div id="${plotId}" class="plot">${legendHtml}</div>`
   )
 
   // Set default number of rows and columns of plots
