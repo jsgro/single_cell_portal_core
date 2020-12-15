@@ -8,6 +8,10 @@ module Api
           {controller: 'search', action: 'bulk_download'},
           {controller: 'studies', action: 'generate_manifest'}
         ]
+        URL_SAFE_TOKEN_ALLOWED_ACTIONS = [
+          {controller: 'expression', action: 'show'},
+          {controller: 'annotations', action: 'cell_values'}
+        ]
         def authenticate_api_user!
           head 401 unless api_user_signed_in?
         end
@@ -57,6 +61,11 @@ module Api
                 # update last_access_at
                 user.update_last_access_at!
                 return user
+              end
+            else
+              if URL_SAFE_TOKEN_ALLOWED_ACTIONS.include?({controller: controller_name, action: action_name}) && params[:url_safe_token]
+                url_safe_token = params[:url_safe_token]
+                return User.find_by(authentication_token: url_safe_token)
               end
             end
           end
