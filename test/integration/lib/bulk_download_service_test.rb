@@ -146,7 +146,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
   test 'should generate study manifest file' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
-    study = FactoryBot.create(:detached_study, name: "#{self.method_name}")
+    study = FactoryBot.create(:detached_study, name_prefix: "#{self.method_name}")
     raw_counts_file =  FactoryBot.create(:study_file,
       study: study,
       file_type: 'Expression Matrix',

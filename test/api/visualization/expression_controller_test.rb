@@ -12,7 +12,7 @@ class ExpressionControllerTest < ActionDispatch::IntegrationTest
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @basic_study = FactoryBot.create(:detached_study,
-                                     name: 'Basic Expression Study',
+                                     name_prefix: 'Basic Expression Study',
                                      public: false,
                                      user: @user,
                                      test_array: @@studies_to_clean)
