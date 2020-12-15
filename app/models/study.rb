@@ -1252,7 +1252,7 @@ class Study
         vals += array.values
       end
     end
-    vals
+    vals.uniq
   end
 
   # return a hash keyed by cell name of the requested study_metadata values
