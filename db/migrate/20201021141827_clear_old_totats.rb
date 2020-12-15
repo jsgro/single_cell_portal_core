@@ -1,7 +1,7 @@
 class ClearOldTotats < Mongoid::Migration
   def self.up
     User.where(:totat.exists => true).each do |user|
-      user.update(totat: nil, totat_t_ti: nil)
+      user.update(totat: nil)
     end
   end
 
