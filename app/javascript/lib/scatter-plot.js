@@ -145,7 +145,7 @@ export function setMarkerColors(data) {
 */
 function calculatePlotRect(
   numRows, numColumns, verticalPad=225, horizontalPad=80
-  ) {
+) {
   // Get height
   const $ideo = $('#_ideogram')
   const ideogramHeight = $ideo.length ? $ideo.height() : 0
@@ -188,6 +188,10 @@ function getScatterPlotLayout(rawPlot) {
   } else {
     dimensionProps = get2DScatterProps(rawPlot)
     layout = Object.assign(layout, dimensionProps)
+  }
+
+  if (rawPlot.layout) {
+    Object.assign(layout, rawPlot.layout)
   }
 
   return layout
@@ -233,7 +237,6 @@ export async function scatterPlot(apiParams, props) {
   props = Object.assign({}, props)
 
   const { plotId, hasLegend } = props
-  console.log(plotId)
 
   const legendId = (hasLegend ? `${plotId}-legend` : null)
   const legendHtml = (hasLegend ? `<div id="${legendId}"></div>` : '')

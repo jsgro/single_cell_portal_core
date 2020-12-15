@@ -37,6 +37,19 @@ async function exploreScatterPlotsHorizontal(study, gene) {
   props.selector = `${baseSelector} .row > div:nth-child(2)`
   props.hasLegend = false
   props.plotId += '-reference'
+  props.layout = {
+    showlegend: false,
+    title: {
+      text: `${options.cluster}<br /><b>${options.annotation}</b>`,
+      font: {
+        family: 'Helvetica Neue',
+        size: 16,
+        color: '#333'
+      }
+    },
+    margin: {},
+    dragmode: 'lasso, select'
+  }
   scatterPlot(apiParams, props)
 }
 
