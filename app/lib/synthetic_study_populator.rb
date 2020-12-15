@@ -84,12 +84,14 @@ class SyntheticStudyPopulator
 
       if study_file_params[:file_type] == 'Expression Matrix'
         exp_finfo_params = finfo['expression_file_info']
+        puts "exp_finfo_params: #{exp_finfo_params}"
         if exp_finfo_params.present?
           exp_file_info = ExpressionFileInfo.new(
             is_raw_counts: exp_finfo_params['is_raw_counts'] ? true : false,
             units: exp_finfo_params['units'],
             biosample_input_type: exp_finfo_params['biosample_input_type'],
-            library_preparation_protocol: exp_finfo_params['library_preparation_protocol']
+            library_preparation_protocol: exp_finfo_params['library_preparation_protocol'],
+            modality: exp_finfo_params['modality']
           )
           study_file_params['expression_file_info'] = exp_file_info
         end
