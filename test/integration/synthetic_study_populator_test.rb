@@ -29,12 +29,17 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
   teardown do
     # this will also destroy the dependent annotation and assembly
     @taxon.destroy!
-    Study.find_by(name: SYNTH_STUDY_INFO[:name]).destroy_and_remove_workspace
+    @study = Study.find_by(name: SYNTH_STUDY_INFO[:name])
+    if @study.present?
+      @study.destroy_and_remove_workspace
+    end
   end
 
   # this test covers both convention data and raw/processed expression matrix files
   # validates that repeated cells are permitted across matrix files
   test 'should be able to populate a study with convention metadata' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
     # SyntheticStudyPopulator does have logic for deleting existing sutdies on populate
     # but this is for belt-and-suspenders to make sure the delete is successful
     if Study.find_by(name: SYNTH_STUDY_INFO[:name])
@@ -93,7 +98,6 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
     assert_equal expected_cells, exp_cells, "Expression matrix cells not as expected; #{expected_cells} != #{exp_cells}"
     assert_equal expected_cells, all_cells, "All matrix cells not as expected; #{expected_cells} != #{all_cells}"
 
-    # note that we're not testing the ingest process yet due to timing concerns
-    Study.find_by(name: SYNTH_STUDY_INFO[:name]).destroy_and_remove_workspace
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end
