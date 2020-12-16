@@ -29,9 +29,9 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
   teardown do
     # this will also destroy the dependent annotation and assembly
     @taxon.destroy!
-    @study = Study.find_by(name: SYNTH_STUDY_INFO[:name])
-    if @study.present?
-      @study.destroy_and_remove_workspace
+    study = Study.find_by(name: SYNTH_STUDY_INFO[:name])
+    if study.present?
+      study.destroy_and_remove_workspace
     end
   end
 
