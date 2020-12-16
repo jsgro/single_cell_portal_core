@@ -585,7 +585,7 @@ module Api
                                                      :submission_id, :bam_id, :analysis_name, :visualization_name, :cluster_name,
                                                      :annotation_name],
                                            expression_file_info_attributes: [:id, :_destroy, :library_preparation_protocol, :units,
-                                                                             :biosample_input_type, :is_raw_counts])
+                                                                             :biosample_input_type, :modality, :is_raw_counts])
       end
     end
   end

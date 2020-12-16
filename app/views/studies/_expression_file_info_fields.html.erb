@@ -15,7 +15,7 @@
   <div class="col-sm-3">
     <%= f.label :biosample_input_type, "Biosample Input Type <i class='text-danger'>*</i>".html_safe %><br />
     <%= f.select :biosample_input_type, options_for_select(ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES, f.object.biosample_input_type),
-                 {}, class: 'form-control' %>
+                 {prompt: 'Select one...'}, class: 'form-control' %>
 
   </div>
   <div class="col-sm-3">

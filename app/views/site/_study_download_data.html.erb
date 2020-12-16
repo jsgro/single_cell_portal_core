@@ -101,7 +101,6 @@
             function (response) {
               var authCode = response.authCode;
               var timeInterval = response.timeInterval; // token expires after this many seconds
-              debugger;
               var expiresMinutes = timeInterval / 60;
               const accession = "<%= @study.accession %>"
               const curlSecureFlag = "<%= Rails.env.development? ? '-k' : '' %>"

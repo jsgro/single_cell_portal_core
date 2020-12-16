@@ -84,8 +84,6 @@ class StudyFile
   field :remote_location, type: String, default: ''
   field :options, type: Hash, default: {}
 
-  accepts_nested_attributes_for :expression_file_info
-
   Paperclip.interpolates :data_dir do |attachment, style|
     attachment.instance.data_dir
   end
