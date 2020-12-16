@@ -233,8 +233,8 @@
                   <%= link_to "Select Cells <i class='fas fa-toggle-off'></i>".html_safe, '#/', class: 'btn btn-default btn-sm', id: 'toggle-scatter', data: {toggle: 'tooltip', placement: 'right', trigger: 'hover'}, title: 'Enable cell selection for creating custom annotations (may hurt performance on large clusters).  Only available on 2d data.' %>
                   <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
                       $('#toggle-scatter').click(function() {
-                          console.log('clicked toggle-scatter')
-                          if (CLUSTER_TYPE === '2d') {
+                          // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
+                          if (!window.SCP.firstScatterPlotIs3D) {
                               $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off');
                               $('#selection_div').toggleClass('collapse');
                               var loadedCluster = $('#cluster').val();

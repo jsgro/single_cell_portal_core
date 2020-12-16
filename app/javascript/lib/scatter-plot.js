@@ -277,6 +277,15 @@ export async function scatterPlot(apiParams, props) {
   // Consider putting into a dictionary instead of a list
   scatterPlots.push(rawPlot)
 
+  if (scatterPlots.length === 1) {
+    // Set cluster type for "Create Annotations".  Crude, but ensures parity
+    // with legacy Study Overview functionality for studies lacking spatial
+    // data.
+    //
+    // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
+    window.SCP.firstScatterPlotIs3D = rawPlot.is3D
+  }
+
   // render annotation toggler picker if needed
   if (rawPlot.annotParams.type == 'numeric') {
     $('#toggle-plots').html('')

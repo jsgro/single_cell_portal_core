@@ -38,7 +38,6 @@
 var fileUploading = false;
 var PAGE_RENDERED = false;
 var OPEN_MODAL = '';
-var CLUSTER_TYPE = '3d';
 var UNSAFE_CHARACTERS = /[\;\/\?\:\@\=\&\'\"\<\>\#\%\{\}\|\\\^\~\[\]\`]/g;
 
 // Minimum width of plot + legend
