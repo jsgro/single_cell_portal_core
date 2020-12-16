@@ -385,8 +385,10 @@ class SiteController < ApplicationController
     @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
     @y_axis_title = ExpressionVizService.load_expression_axis_title(@study)
 
+    @gene = params[:gene]
+
     if @study.expressed_taxon_names.length > 1
-      @gene_taxons = @study.infer_taxons(params[:gene])
+      @gene_taxons = @study.infer_taxons(@gene)
     else
       @gene_taxons = @study.expressed_taxon_names
     end
@@ -1237,7 +1239,7 @@ class SiteController < ApplicationController
 
   def set_selected_annotation
     annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
-    @selected_annotation = ExpressionVizService.get_selected_annotation(@study, @cluster, annot_params[:name], annot_params[:type], annot_params[:scope])
+    @selected_annotation = AnnotationVizService.get_selected_annotation(@study, @cluster, annot_params[:name], annot_params[:type], annot_params[:scope])
   end
 
   def set_workspace_samples

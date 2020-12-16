@@ -59,7 +59,7 @@ class ExternalResourcesControllerTest < ActionDispatch::IntegrationTest
             title: 'Something'
         }
     }
-    execute_http_request(:post, api_v1_study_external_resources_path(study_id: @study.id), external_resource_attributes)
+    execute_http_request(:post, api_v1_study_external_resources_path(study_id: @study.id), request_payload: external_resource_attributes)
     assert_response :success
     assert json['title'] == external_resource_attributes[:external_resource][:title],
            "Did not set title correctly, expected #{external_resource_attributes[:external_resource][:title]} but found #{json['title']}"
@@ -71,7 +71,7 @@ class ExternalResourcesControllerTest < ActionDispatch::IntegrationTest
             description: description
         }
     }
-    execute_http_request(:patch, api_v1_study_external_resource_path(study_id: @study.id, id: external_resource_id), update_attributes)
+    execute_http_request(:patch, api_v1_study_external_resource_path(study_id: @study.id, id: external_resource_id), request_payload: update_attributes)
     assert_response :success
     assert json['description'] == update_attributes[:external_resource][:description],
            "Did not set description correctly, expected #{update_attributes[:external_resource][:description]} but found #{json['description']}"

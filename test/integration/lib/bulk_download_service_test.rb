@@ -116,11 +116,10 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
   test 'should get list of permitted accessions' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     accessions = Study.viewable(@user).pluck(:accession)
-    permitted = BulkDownloadService.get_permitted_accessions(study_accessions: accessions, user: @user)
-    assert_equal accessions.sort, permitted.sort,
-                 "Did not return expected list of accessions; #{permitted} != #{accessions}"
+    accessions_by_permission = BulkDownloadService.get_permitted_accessions(study_accessions: accessions, user: @user)
+    assert_equal accessions.sort, accessions_by_permission[:permitted].sort,
+                 "Did not return expected list of accessions; #{accessions_by_permission[:permitted]} != #{accessions}"
 
     # add download agreement to remove study from list
     download_agreement = DownloadAgreement.new(study_id: @study.id, content: 'This is the agreement content')
@@ -147,7 +146,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
   test 'should generate study manifest file' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
-    study = FactoryBot.create(:detached_study, name: "#{self.method_name}")
+    study = FactoryBot.create(:detached_study, name_prefix: "#{self.method_name}")
     raw_counts_file =  FactoryBot.create(:study_file,
       study: study,
       file_type: 'Expression Matrix',

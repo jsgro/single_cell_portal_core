@@ -1,21 +1,21 @@
+require 'test_helper'
 require 'api_test_helper'
 
-class ClusterControllerTest < ActionDispatch::IntegrationTest
+class ClustersControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include Requests::JsonHelpers
   include Requests::HttpHelpers
+  include Minitest::Hooks
+  include ::SelfCleaningSuite
+  include ::TestInstrumentor
 
-  setup do
-    @user = FactoryBot.create(:api_user)
-    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
-                                                                           :provider => 'google_oauth2',
-                                                                           :uid => '123545',
-                                                                           :email => 'testing.user@gmail.com'
-                                                                       })
-    sign_in @user
-    @user.update_last_access_at! # ensure user is marked as active
-
-    @basic_study = FactoryBot.create(:detached_study, name: 'Basic Cluster Study')
+  before(:all) do
+    @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
+    @basic_study = FactoryBot.create(:detached_study,
+                                     name_prefix: 'Basic Cluster Study',
+                                     public: false,
+                                     user: @user,
+                                     test_array: @@studies_to_clean)
     @basic_study_cluster_file = FactoryBot.create(:cluster_file,
                                                   name: 'clusterA.txt',
                                                   study: @basic_study,
@@ -34,56 +34,66 @@ class ClusterControllerTest < ActionDispatch::IntegrationTest
                                                      {name: 'species', type: 'group', values: ['dog', 'cat', 'dog']},
                                                      {name: 'disease', type: 'group', values: ['none', 'none', 'measles']}
                                                    ])
-
-     @empty_study = FactoryBot.create(:detached_study, name: 'Empty Cluster Study')
   end
 
-  teardown do
-    @empty_study.destroy
-    @user.destroy
-  end
+  test 'enforces view permissions' do
+    user2 = FactoryBot.create(:api_user, test_array: @@users_to_clean)
+    sign_in_and_update user2
+    execute_http_request(:get, api_v1_study_clusters_path(@basic_study), user: user2)
+    assert_equal 403, response.status
 
-  test 'should get basic cluster, with metadata annotation by default' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study), user: user2)
+    assert_equal 403, response.status
 
-
-    assert_equal 4, @basic_study.default_cluster.data_arrays.count
-
+    sign_in_and_update @user
     execute_http_request(:get, api_v1_study_clusters_path(@basic_study))
+    assert_equal 200, response.status
+
+    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study))
+    assert_equal 200, response.status
+  end
+
+  test 'index should return list of cluster names' do
+    sign_in_and_update @user
+    execute_http_request(:get, api_v1_study_clusters_path(@basic_study))
+    assert_equal ["clusterA.txt"], json
+
+    empty_study = FactoryBot.create(:detached_study,
+                                    name_prefix: 'Empty Cluster Study',
+                                    test_array: @@studies_to_clean)
+    execute_http_request(:get, api_v1_study_clusters_path(empty_study))
+    assert_equal [], json
+  end
+
+  test 'show should return visualization information' do
+    sign_in_and_update @user
+    execute_http_request(:get, api_v1_study_cluster_path(@basic_study, 'clusterA.txt'))
     assert_equal 3, json['numPoints']
     assert_equal ["cat (1 points)", "dog (2 points)"], json['data'].map{|d| d['name']}
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
-  end
-
-  test 'should 404 with no default cluster' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
-    execute_http_request(:get, api_v1_study_clusters_path(@empty_study))
-    assert_equal 404, response.status
-    assert_equal({"error"=>"No default cluster exists"}, json)
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+    assert_equal false, json['is3D']
+    dog_data = json['data'].find{|d| d['name'] == 'dog (2 points)'}
+    assert_equal [1, 6], dog_data['x']
   end
 
   test 'should load clusters with slashes in name' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
-    @cluster_with_slash = FactoryBot.create(:cluster_file,
-                                            name: 'data/cluster_with_slash.txt',
-                                            study: @basic_study,
-                                            cell_input: {
-                                              x: [1, 2 , 3, 4],
-                                              y: [5, 6, 7, 8],
-                                              cells: %w(A B C D)
-                                            },
-                                            annotation_input: [{name: 'category', type: 'group', values: ['bar', 'bar', 'baz', 'bar']}])
+    slash_study = FactoryBot.create(:detached_study,
+                                    name_prefix: 'Cluster Slash Study',
+                                    test_array: @@studies_to_clean)
+    cluster_with_slash = FactoryBot.create(:cluster_file,
+                                           name: 'data/cluster_with_slash.txt',
+                                           study: slash_study,
+                                           cell_input: {
+                                             x: [1, 2 , 3, 4],
+                                             y: [5, 6, 7, 8],
+                                             cells: %w(A B C D)
+                                           },
+                                           annotation_input: [{name: 'category', type: 'group', values: ['bar', 'bar', 'baz', 'bar']}])
 
     # slash must be URL encoded with %2F, and URL constructed manually as the path helper cannot resolve cluster_name param
     # with a slash due to the route constraint of {:cluster_name=>/[^\/]+/}; using route helper api_v1_study_cluster_path()
     # with the params of cluster_name: 'data/cluster_with_slash.txt' or cluster_name: 'data%2Fcluster_with_slash' does not work
     cluster_name = 'data%2Fcluster_with_slash.txt'
-    basepath = "/single_cell/api/v1/studies/#{@basic_study.accession}/clusters/#{cluster_name}"
+    basepath = "/single_cell/api/v1/studies/#{slash_study.accession}/clusters/#{cluster_name}"
     query_string = '?annotation_name=category&annotation_type=group&annotation_scope=cluster'
     url = basepath + query_string
     execute_http_request(:get, url)
@@ -96,13 +106,11 @@ class ClusterControllerTest < ActionDispatch::IntegrationTest
     # assert that non-encoded cluster names do not load correct cluster
     # using path helper here results in cluster_name not being decoded properly by clusters_controller.rb
     # and is interpreted literally as data%2Fcluster_with_slash.txt, rather than data/cluster_with_slash.txt
-    execute_http_request(:get, api_v1_study_cluster_path(@basic_study.accession, cluster_name,
+    execute_http_request(:get, api_v1_study_cluster_path(slash_study.accession, cluster_name,
                                                          annotation_name: 'category', annotation_type: 'group',
                                                          annotation_scope: 'cluster'))
     assert_response :not_found
     expected_error = {"error"=>"No cluster named data%2Fcluster_with_slash.txt could be found"}
     assert_equal expected_error, json
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end

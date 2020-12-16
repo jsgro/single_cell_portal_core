@@ -22,7 +22,7 @@ module.exports = {
         'morpheus': 'readonly',
         'igv': 'readonly',
         'Ideogram': 'readonly',
-        'createTracesAndLayout': 'readonly',
+        'getViolinProps': 'readonly',
         'ga': 'readonly',
         'bamAndBaiFiles': 'readonly'
     },
