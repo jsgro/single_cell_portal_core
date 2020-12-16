@@ -39,7 +39,11 @@ function getAnnotationOptions(annotationList, clusterName) {
 }
 
 /** returns the first annotation for the given cluster */
-function getDefaultAnnotationForCluster(annotationList, clusterName) {
+function getDefaultAnnotationForCluster(annotationList, clusterName, currentAnnotation) {
+  if (currentAnnotation && currentAnnotation.scope === 'study') {
+    // if they are changing cluster, and using a study-wide annotation, keep that annotation selected
+    return currentAnnotation
+  }
   const clusterAnnots = annotationList.annotations.filter(annot => annot.cluster_name == clusterName)
   if (clusterAnnots.length) {
     return clusterAnnots[0]
@@ -119,7 +123,7 @@ export default function ClusterControls({studyAccession, onChange, showSubsample
           value={{ label: renderParams.cluster, value: renderParams.cluster }}
           onChange={ cluster => setRenderParams({
             userUpdated: true,
-            annotation: getDefaultAnnotationForCluster(annotationList, cluster.name),
+            annotation: getDefaultAnnotationForCluster(annotationList, cluster.name, renderParams.annotation),
             cluster: cluster.value,
             subsample: getDefaultSubsampleForCluster(annotationList, cluster.value)
           })}

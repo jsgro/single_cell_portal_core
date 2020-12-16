@@ -149,7 +149,11 @@ module Api
 
         def cell_values
           annotation = self.class.get_selected_annotation(@study, params)
-          render plain: AnnotationVizService.annotation_cell_values_tsv(@study, @study.default_cluster, annotation)
+          cell_cluster = @study.cluster_groups.by_name(params[:cluster])
+          if cell_cluster.nil?
+            cell_cluster = @study.default_cluster
+          end
+          render plain: AnnotationVizService.annotation_cell_values_tsv(@study, cell_cluster, annotation)
         end
 
         # parses the url params to identify the selected cluster
@@ -171,6 +175,7 @@ module Api
                                                        annot_params[:type],
                                                        annot_params[:scope])
         end
+
 
         # parses url params into an object with name, type, and scope keys
         def self.get_annotation_params(url_params)

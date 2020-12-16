@@ -20,7 +20,7 @@ function StudyGeneDotPlot({ study, genes }) {
     <div className="row graph-container">
       <div className="col-md-10">
         { clusterParams &&
-          <DotPlot expressionValuesURL={getExpressionHeatmapURL(study.accession, genes)}
+          <DotPlot expressionValuesURL={getExpressionHeatmapURL(study.accession, genes, clusterParams.cluster)}
            annotationCellValuesURL={
              getAnnotationCellValuesURL(study.accession,
                clusterParams.cluster,
