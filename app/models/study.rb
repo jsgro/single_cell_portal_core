@@ -1230,29 +1230,29 @@ class Study
   # return an array of all single cell names in study, will check for master list of cells or concatenate all
   # cell lists from individual expression matrices
   def all_cells_array
-    vals = []
     arrays = DataArray.where(study_id: self.id, linear_data_type: 'Study', linear_data_id: self.id, name: 'All Cells').order_by(&:array_index)
     if arrays.any?
-      arrays.each do |array|
-        vals += array.values
-      end
+      arrays.pluck(:values).reduce(&:+)
     else
-      vals = self.all_expression_matrix_cells
+      self.all_expression_matrix_cells
     end
-    vals
   end
 
   # return an array of all cell names that have been used in expression matrices (does not get cells from cell metadata file)
   def all_expression_matrix_cells
-    vals = []
+    all_cells = []
     self.expression_matrix_files.each do |file|
-      arrays = DataArray.where(name: "#{file.name} Cells", array_type: 'cells', linear_data_type: 'Study',
-                               linear_data_id: self.id).order_by(&:array_index)
-      arrays.each do |array|
-        vals += array.values
-      end
+      expression_cells = self.expression_matrix_cells(file)
+      all_cells += expression_cells
     end
-    vals
+    all_cells.uniq
+  end
+
+  # return the cells found in a single expression matrix
+  def expression_matrix_cells(study_file)
+    arrays = DataArray.where(name: "#{study_file.name} Cells", array_type: 'cells', linear_data_type: 'Study',
+                             linear_data_id: self.id, study_file_id: study_file.id).order_by(&:array_index)
+    arrays.pluck(:values).reduce(&:+)
   end
 
   # return a hash keyed by cell name of the requested study_metadata values
