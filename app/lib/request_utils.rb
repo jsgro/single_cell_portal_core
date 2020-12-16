@@ -1,3 +1,5 @@
+require 'rails/commands/server/server_command'
+
 class RequestUtils
 
   # load same sanitizer as ActionView for stripping html/js from inputs
@@ -29,5 +31,17 @@ class RequestUtils
   def self.sanitize_search_terms(terms)
     inputs = terms.is_a?(Array) ? terms.join(',') : terms.to_s
     SANITIZER.sanitize(inputs).encode('ASCII-8BIT', invalid: :replace, undef: :replace)
+  end
+
+  # helper method for getting the base url with protocol, hostname, and port
+  # e.g. "https://localhost"
+  def self.get_base_url
+    url_opts = ApplicationController.default_url_options
+    base_url = "#{url_opts[:protocol]}://#{url_opts[:host]}"
+    port = Rails::Server::Options.new.parse!(ARGV)[:Port]
+    if port
+      base_url += ":#{port.to_s}"
+    end
+    base_url
   end
 end

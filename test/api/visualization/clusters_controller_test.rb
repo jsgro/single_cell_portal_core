@@ -12,7 +12,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @basic_study = FactoryBot.create(:detached_study,
-                                     name: 'Basic Cluster Study',
+                                     name_prefix: 'Basic Cluster Study',
                                      public: false,
                                      user: @user,
                                      test_array: @@studies_to_clean)
@@ -59,7 +59,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
     assert_equal ["clusterA.txt"], json
 
     empty_study = FactoryBot.create(:detached_study,
-                                    name: 'Empty Cluster Study',
+                                    name_prefix: 'Empty Cluster Study',
                                     test_array: @@studies_to_clean)
     execute_http_request(:get, api_v1_study_clusters_path(empty_study))
     assert_equal [], json
@@ -77,7 +77,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
 
   test 'should load clusters with slashes in name' do
     slash_study = FactoryBot.create(:detached_study,
-                                    name: 'Cluster Slash Study',
+                                    name_prefix: 'Cluster Slash Study',
                                     test_array: @@studies_to_clean)
     cluster_with_slash = FactoryBot.create(:cluster_file,
                                            name: 'data/cluster_with_slash.txt',

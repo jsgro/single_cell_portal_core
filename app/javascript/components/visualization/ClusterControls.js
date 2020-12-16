@@ -51,11 +51,7 @@ function getDefaultAnnotationForCluster(annotationList, clusterName) {
 
 /** takes the server response and returns subsample default subsample for the cluster */
 function getDefaultSubsampleForCluster(annotationList, clusterName) {
-  const clusterSubsamples = annotationList.subsample_thresholds[clusterName]
-  if (!clusterSubsamples || clusterSubsamples.length === 0) {
-    return ''
-  }
-  return Math.min(clusterSubsamples)
+  return '' // for now, default is always all cells
 }
 
 /** renders cluster, annotation, and (optionally) subsample controls for a study */
