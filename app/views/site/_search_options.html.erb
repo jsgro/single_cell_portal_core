@@ -233,6 +233,7 @@
                   <%= link_to "Select Cells <i class='fas fa-toggle-off'></i>".html_safe, '#/', class: 'btn btn-default btn-sm', id: 'toggle-scatter', data: {toggle: 'tooltip', placement: 'right', trigger: 'hover'}, title: 'Enable cell selection for creating custom annotations (may hurt performance on large clusters).  Only available on 2d data.' %>
                   <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
                       $('#toggle-scatter').click(function() {
+                          console.log('clicked toggle-scatter')
                           if (CLUSTER_TYPE === '2d') {
                               $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off');
                               $('#selection_div').toggleClass('collapse');
@@ -266,13 +267,14 @@
       <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
         <% if user_signed_in? %>
 
-          var targetPlotString = '<%= params[:gene_set].nil? && params[:gene].nil? ? 'cluster-plot' : 'scatter-plot' %>';
+          // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
+          var targetPlotId = 'scatter-plot-0';
 
           // Stick the search for selection facilitation in expression pages if selecting annotation
           $('#panel-selection').on('show.bs.collapse', function () {
               $(document).off('scroll', '#search-parent');
               $('#search-parent').stickyPanel(stickyOptions);
-              window.scrollTo(0,$(('#' + targetPlotString)).offset().top -175);
+              window.scrollTo(0,$(('#' + targetPlotId)).offset().top - 175);
               var boxSelectBtn = $("a[data-title='Box Select]");
               boxSelectBtn.click();
           });

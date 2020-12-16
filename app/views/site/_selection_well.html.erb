@@ -25,18 +25,15 @@
 </div>
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
 
-    if ($('#cluster-plot').length === 0) {
-        var targetPlotString = 'scatter-plot';
-    } else {
-        var targetPlotString = 'cluster-plot';
-    }
+    // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
+    var targetPlotId = 'scatter-plot-0';
 
-    var target = document.getElementById(targetPlotString);
+    var target = document.getElementById(targetPlotId);
 
     target.layout.dragmode = 'lasso';
 
     // change to lasso mode
-    Plotly.relayout(targetPlotString, target.layout);
+    Plotly.relayout(targetPlotId, target.layout);
 
     var selectionWell = $('#selection-well');
     var selectionTable = $('#selection-table');
