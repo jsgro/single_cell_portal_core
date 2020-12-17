@@ -30,37 +30,37 @@
 
     var target = document.getElementById(targetPlotId);
 
-    target.layout.dragmode = 'lasso';
-
-    // change to lasso mode
-    Plotly.relayout(targetPlotId, target.layout);
-
     var selectionWell = $('#selection-well');
     var selectionTable = $('#selection-table');
     var selectionButton = $('#selection-button');
 
     // array of arrays of cell names, aka selections, and of selection names
     var selections = [];
-    var array_of_names = [''];
+    var namesArray = [''];
 
     // show the selection well and submit button
     selectionWell.css('visibility', 'visible');
     selectionButton.css('visibility', 'visible');
 
     // Set the initial unselected array
-    var unselected_cell_name = [];
+    var unselectedCellArray = [];
 
     // set initial unselected
     for (var m = 0; m < target.data.length; m++){
-        unselected_cell_name.push(target.data[m].cells);
+        unselectedCellArray.push(target.data[m].cells);
     }
 
     // flatten array
-    unselected_cell_name = [].concat.apply([], unselected_cell_name);
+    unselectedCellArray = [].concat.apply([], unselectedCellArray);
 
-    var unselected = unselected_cell_name;
+    var unselected = unselectedCellArray;
     selections.push(unselected);
 
+    target.layout.dragmode = 'lasso';
+    target.layout.scene.unselectBatch = unselected
+
+    // change to lasso mode
+    Plotly.relayout(targetPlotId, target.layout);
 
     // Each annotation has a "Set label" text input.  This retrieves that HTML.
     function getSetLabelInputs(rowIndex, selectionValue, text_val) {
@@ -128,7 +128,7 @@
                 '<tr id="' + id + 'Row">' +
                 '<td id="' + id + '">' +
                 name + ': ' + numCells + ' Cells' +
-                getSetLabelInputs(n, selections[n], array_of_names[n]) +
+                getSetLabelInputs(n, selections[n], namesArray[n]) +
                 '</td>' +
                 deleteButton
                 '</tr>';
@@ -159,12 +159,12 @@
         // add this selection to all the others
         selections.push(selection);
         // add a blank name to array of names
-        array_of_names.push('');
+        namesArray.push('');
         // remove all empty arrays from selections, and their names
         for(i=0;i<selections.length;i++){
             if(selections[i].length <1){
                 selections.splice(i,1);
-                array_of_names.splice(i,1);
+                namesArray.splice(i,1);
             }
         }
         // after selection, update rows
@@ -175,7 +175,7 @@
     // Event listener to remember typing names in
     $('#selection-well').on("change paste keyup",".annotation-label", function(){
         var index = parseInt(this.id.replace('user_annotation_user_data_arrays_attributes_', '').replace('_name', ''));
-        array_of_names[index] = $(this).val();
+        namesArray[index] = $(this).val();
     });
 
     // Event listener to handle deleting selected annotations

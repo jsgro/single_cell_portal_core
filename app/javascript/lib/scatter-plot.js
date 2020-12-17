@@ -279,8 +279,8 @@ export async function scatterPlot(apiParams, props) {
 
   if (scatterPlots.length === 1) {
     // Set cluster type for "Create Annotations".  Crude, but ensures parity
-    // with legacy Study Overview functionality for studies lacking spatial
-    // data.
+    // with prior ERB-centric Study Overview functionality for studies lacking
+    // spatial data.
     //
     // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
     window.SCP.firstScatterPlotIs3D = rawPlot.is3D
