@@ -3,7 +3,6 @@
 # keyword and faceted search
 
 class BulkDownloadService
-
   extend ErrorTracker
 
   # Generate a String representation of a configuration file containing URLs and output paths to pass to
@@ -17,13 +16,33 @@ class BulkDownloadService
   #
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
-  def self.generate_curl_configuration(study_files:, user:, study_bucket_map:, output_pathname_map:)
+  def self.generate_curl_configuration(study_files:,
+                                       user:,
+                                       study_bucket_map:,
+                                       output_pathname_map:)
     curl_configs = ['--create-dirs', '--compressed']
     # Get signed URLs for all files in the requested download objects, and update user quota
     Parallel.map(study_files, in_threads: 100) do |study_file|
       client = FireCloudClient.new
       curl_configs << self.get_single_curl_command(file: study_file, fc_client: client, user: user,
                                                    study_bucket_map: study_bucket_map, output_pathname_map: output_pathname_map)
+    end
+    studies = study_files.map(&:study).uniq
+    study_manifest_paths = studies.map do |study|
+      "#{Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)}"
+    end
+    half_hour = 1800
+    totat = user.create_totat(half_hour, study_manifest_paths)
+    studies.map do |study|
+      manifest_config = ""
+      if Rails.env.development?
+        # if we're in development, allow not checking the cert
+        manifest_config += "-k\n"
+      end
+      manifest_path = RequestUtils.get_base_url + Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)
+      manifest_config += "url=#{manifest_path}?auth_code=#{totat[:totat]}\n"
+      manifest_config += "output=#{study.accession}/file_supplemental_info.tsv"
+      curl_configs << manifest_config
     end
     curl_configs.join("\n\n")
   end
@@ -58,11 +77,12 @@ class BulkDownloadService
   #   - +user+ (User) => User requesting download
   #
   # * *returns*
-  #   - (Array<String>) Array of permitted accessions to use in bulk download request
+  #   - Hash( key=> Array<String>) Hash categorizing the requested accessions as
+  #       valid, lacks_acceptance, or forbidden
   def self.get_permitted_accessions(study_accessions:, user:)
     viewable_accessions = Study.viewable(user).pluck(:accession)
     permitted_accessions = study_accessions & viewable_accessions
-
+    user_lacks_acceptance = []
     # collect array of study accession requiring acceptance of download agreement (checking for expiration)
     agreement_accessions = []
     DownloadAgreement.all.each do |agreement|
@@ -70,13 +90,14 @@ class BulkDownloadService
     end
     requires_agreement = permitted_accessions & agreement_accessions
     if requires_agreement.any?
-      user_lacks_acceptance = []
       requires_agreement.each do |accession|
         user_lacks_acceptance << accession unless DownloadAcceptance.where(study_accession: accession, email: user.email).exists?
       end
       permitted_accessions -= user_lacks_acceptance
     end
-    permitted_accessions
+    { permitted: permitted_accessions,
+      lacks_acceptance: user_lacks_acceptance,
+      forbidden: study_accessions - viewable_accessions}
   end
 
   # Get an array of StudyFiles from matching StudyAccessions and file_types
@@ -183,5 +204,82 @@ class BulkDownloadService
       output_map[study_file.id.to_s] = study_file.bulk_download_pathname
     end
     output_map
+  end
+
+  # generate a study_info object from an existing study
+  def self.generate_study_manifest(study)
+    info = HashWithIndifferentAccess.new
+    info[:study] = {
+      name: study.name,
+      description: study.description.try(:truncate, 150),
+      accession: study.accession,
+      cell_count: study.cell_count,
+      gene_count: study.gene_count,
+      link: RequestUtils.get_base_url + Rails.application.routes.url_helpers.view_study_path(accession: study.accession, study_name: study.name)
+    }
+    info[:files] = study.study_files
+                        .where(queued_for_deletion: false)
+                        .map{|f| generate_study_file_manifest(f)}
+    info
+  end
+
+  # generate a study_info.json object from an existing study_file
+  def self.generate_study_file_manifest(study_file)
+    output = {
+      filename: study_file.name,
+      file_type: study_file.file_type
+    }
+
+    if study_file.expression_file_info
+      output[:expression_file_info] = {}
+      study_file.expression_file_info.attributes.each  do |key, value|
+        output[:expression_file_info][key] = value
+      end
+    end
+    if study_file.taxon
+      output[:species_scientific_name] = study_file.taxon.scientific_name
+    end
+    if study_file.genome_assembly
+      output[:genome_assembly_name] = study_file.genome_assembly.name
+      output[:genome_assembly_accession] = study_file.genome_assembly.accession
+    end
+    if study_file.genome_annotation
+      output[:genome_annotation_name] = study_file.genome_annotation.name
+    end
+    output
+  end
+
+  # takes a study manifest file (from generate_study_manifest) and makes a tsv.
+  # Once the tsv format stabilizes for a couple of months, it will probably be best
+  # to update the synthetic studies seed file format to the tsv format (if possible)
+  # and consolidate this and the above methods.
+  def self.generate_study_files_tsv(study)
+    study_manifest = generate_study_manifest(study)
+    col_names_and_paths = [
+      {filename: 'filename'},
+      {file_type: 'file_type'},
+      {species_scientific_name: 'species_scientific_name'},
+      {genome_assembly_name: 'genome_assembly_name'},
+      {genome_assembly_accession: 'genome_assembly_accession'},
+      {genome_annotation_name: 'genome_annotation_name'},
+      {is_raw_counts: 'expression_file_info.is_raw_counts'},
+      {library_preparation_protocol: 'expression_file_info.library_preparation_protocol'},
+      {units: 'expression_file_info.units'},
+      {biosample_input_type: 'expression_file_info.biosample_input_type'},
+      {modality: 'expression_file_info.modality'}
+    ]
+
+    col_names = col_names_and_paths.map { |np| np.keys[0] }
+    tsv_string = col_names.join("\t") + "\n"
+
+    study_manifest[:files].each do |file_info|
+      file_row = col_names_and_paths.map do |name_and_path|
+        path = name_and_path.values[0]
+        file_value = file_info.dig(*(path.split('.')))
+        file_value ? file_value : ""
+      end
+      tsv_string += (file_row.join("\t") + "\n")
+    end
+    tsv_string
   end
 end

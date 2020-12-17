@@ -12,7 +12,7 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @basic_study = FactoryBot.create(:detached_study,
-                                     name: 'Basic Explore',
+                                     name_prefix: 'Basic Explore',
                                      public: false,
                                      user: @user,
                                      test_array: @@studies_to_clean)
@@ -29,7 +29,7 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
                                                     is_spatial: true)
 
     @empty_study = FactoryBot.create(:detached_study,
-                                     name: 'Empty study',
+                                     name_prefix: 'Empty study',
                                      test_array: @@studies_to_clean)
   end
 

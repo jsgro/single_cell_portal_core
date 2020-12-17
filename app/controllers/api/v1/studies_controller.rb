@@ -8,7 +8,8 @@ module Api
 
       before_action :authenticate_api_user!
       before_action :set_study, except: [:index, :create]
-      before_action :check_study_permission, except: [:index, :create]
+      before_action :check_study_permission, except: [:index, :create, :generate_manifest]
+      before_action :check_study_view_permission, only: [:generate_manifest]
 
       respond_to :json
 
@@ -331,6 +332,7 @@ module Api
 
       def sync_study
         @study_files = @study.study_files.valid
+        @study_files.each {|study_file| study_file.build_expression_file_info if study_file.expression_file_info.nil?}
         @directories = @study.directory_listings.to_a
         # keep a list of what we expect to be
         @files_by_dir = {}
@@ -484,6 +486,55 @@ module Api
         @synced_study_files.delete_if {|file| bundled_file_ids.include?(file.id)}
       end
 
+      swagger_path '/studies/{id}/manifest' do
+        operation :post do
+          key :tags, [
+              'Studies'
+          ]
+          key :summary, 'Get a study manifest file'
+          key :description, 'Return a file summarizing the study and each of the files within it'
+          key :operationId, 'generate_manifest'
+          parameter do
+            key :name, :id
+            key :in, :path
+            key :description, 'ID of study to generate manifest'
+            key :required, true
+            key :type, :string
+          end
+          response 200 do
+            key :description, 'Manifest file'
+            schema do
+              key :title, 'JSON object of study and study file'
+              # Once file format is finalized, complete this documentation
+            end
+          end
+          response 401 do
+            key :description, ApiBaseController.unauthorized
+          end
+          response 403 do
+            key :description, ApiBaseController.forbidden('View Study')
+          end
+          response 404 do
+            key :description, ApiBaseController.not_found(Study)
+          end
+          response 410 do
+            key :description, ApiBaseController.resource_gone
+          end
+          response 406 do
+            key :description, ApiBaseController.not_acceptable
+          end
+          response 500 do
+            key :description, 'Server error when attempting to generate study manifest'
+          end
+        end
+      end
+
+      def generate_manifest
+        manifest_obj = BulkDownloadService.generate_study_files_tsv(@study)
+        response.headers['Content-Disposition'] = 'attachment; filename=file_supplemental_info.tsv'
+        render plain: manifest_obj
+      end
+
       private
 
       def set_study
@@ -498,6 +549,11 @@ module Api
 
       def check_study_permission
         head 403 unless @study.can_edit?(current_api_user)
+      end
+
+      # checks the view permissions, either for the current_api_user or a totat, if given
+      def check_study_view_permission
+        head 403 unless (@study.public || @study.can_view?(current_api_user))
       end
 
       # study params whitelist

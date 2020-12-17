@@ -10,7 +10,7 @@ import camelcaseKeys from 'camelcase-keys'
 import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
 
-import { getAccessToken } from 'providers/UserProvider'
+import { getAccessToken, getURLSafeAccessToken } from 'providers/UserProvider'
 import {
   logSearch, logDownloadAuthorization, mapFiltersForLogging
 } from './scp-api-metrics'
@@ -284,7 +284,8 @@ export function getAnnotationCellValuesURL(studyAccession, clusterName, annotati
   const paramObj = {
     cluster: clusterName,
     annotation_scope: annotationScope,
-    annotation_type: annotationType
+    annotation_type: annotationType,
+    url_safe_token: getURLSafeAccessToken()
   }
   annotationName = annotationName ? annotationName : '_default'
   const apiUrl = `/studies/${studyAccession}/annotations/${encodeURIComponent(annotationName)}/cell_values${stringifyQuery(paramObj)}`
@@ -306,7 +307,8 @@ export function getExpressionHeatmapURL(studyAccession, genes, cluster, annotati
     cluster,
     annotation,
     subsample,
-    genes: genes.join(',')
+    genes: genes.join(','),
+    url_safe_token: getURLSafeAccessToken()
   }
   const path = `/studies/${studyAccession}/expression/heatmap${stringifyQuery(paramObj)}`
   return getFullUrl(path)

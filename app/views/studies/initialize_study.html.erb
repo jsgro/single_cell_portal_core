@@ -296,12 +296,12 @@
         $('#progress-count').html(pctCompleted+'% Completed');
         // user has finished wizard, show finish button
         if (index > 0) {
-          wizard.find('.pager .previous').removeClass('disabled');
+          wizard.find('.pager .previous').removeClass('disabled dimmed');
         }
         if (step == 'initialize_misc_form_nav') {
           wizard.find('.pager .next').hide();
           wizard.find('.pager .finish').show();
-          wizard.find('.pager .finish').removeClass('disabled');
+          wizard.find('.pager .finish').removeClass('disabled dimmed');
           wizard.find('.pager .finish').addClass('enabled');
           // next step is ready to be done, enable button
         } else {
@@ -309,7 +309,7 @@
         }
       },
       onNext: function(tab, navigation, index) {
-        wizard.find('.pager .previous').removeClass('disabled');
+        wizard.find('.pager .previous').removeClass('disabled dimmed');
         return true;
       }
     });

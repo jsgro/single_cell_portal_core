@@ -36,6 +36,7 @@ Rails.application.routes.draw do
           resources :external_resources, only: [:index, :show, :create, :update, :destroy]
           member do
             post 'sync', to: 'studies#sync_study'
+            get 'manifest', to: 'studies#generate_manifest'
           end
           get 'explore', to: 'visualization/explore#show'
           get 'explore/cluster_options', to: 'visualization/explore#cluster_options'
@@ -185,6 +186,7 @@ Rails.application.routes.draw do
         post 'initialize_bundled_file', to: 'studies#initialize_bundled_file', as: 'initialize_bundled_file'
         get 'load_annotation_options', to: 'studies#load_annotation_options', as: :load_annotation_options
         post 'update_default_options', to: 'studies#update_default_options', as: :update_default_options
+        get 'manifest', to: 'studies#generate_manifest', as: :generate_manifest
       end
     end
 
@@ -196,10 +198,6 @@ Rails.application.routes.draw do
     # public/private file download links (redirect to signed_urls from Google)
     get 'data/public/:accession/:study_name', to: 'site#download_file', as: :download_file
     get 'data/private/:accession/:study_name', to: 'studies#download_private_file', as: :download_private_file
-
-    post 'totat', to: 'site#create_totat', as: :create_totat
-    get 'bulk_data/:accession/:study_name/:download_object/:totat', to: 'site#download_bulk_files', as: :download_bulk_files,
-        constraints: {filename: /.*/}
 
     # user account actions
     get 'profile/:id', to: 'profiles#show', as: :view_profile
