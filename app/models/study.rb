@@ -73,7 +73,7 @@ class Study
     end
   end
 
-  has_many :genes, dependent: :delete do
+  has_many :genes do
     def by_name_or_id(term, study_file_ids)
       all_matches = any_of({name: term, :study_file_id.in => study_file_ids},
                             {searchable_name: term.downcase, :study_file_id.in => study_file_ids},
@@ -101,7 +101,7 @@ class Study
     end
   end
 
-  has_many :precomputed_scores, dependent: :delete do
+  has_many :precomputed_scores do
     def by_name(name)
       where(name: name).first
     end
@@ -134,25 +134,25 @@ class Study
     end
   end
 
-  has_many :cluster_groups, dependent: :delete do
+  has_many :cluster_groups do
     def by_name(name)
       find_by(name: name)
     end
   end
 
-  has_many :data_arrays, as: :linear_data, dependent: :delete do
+  has_many :data_arrays, as: :linear_data do
     def by_name_and_type(name, type)
       where(name: name, array_type: type).order_by(&:array_index)
     end
   end
 
-  has_many :cell_metadata, dependent: :delete do
+  has_many :cell_metadata do
     def by_name_and_type(name, type)
       where(name: name, annotation_type: type).first
     end
   end
 
-  has_many :directory_listings, dependent: :delete do
+  has_many :directory_listings do
     def unsynced
       where(sync_status: false).to_a
     end
@@ -179,8 +179,8 @@ class Study
   end
 
   # User annotations are per study
-  has_many :user_annotations, dependent: :delete
-  has_many :user_data_arrays, dependent: :delete
+  has_many :user_annotations
+  has_many :user_data_arrays
 
   # HCA metadata object
   has_many :analysis_metadata, dependent: :delete
@@ -189,7 +189,7 @@ class Study
   has_one :study_accession
 
   # External Resource links
-  has_many :external_resources, as: :resource_links
+  has_many :external_resources, as: :resource_links, dependent: :delete
 
   # Study Detail (full html description)
   has_one :study_detail, dependent: :delete
@@ -665,6 +665,7 @@ class Study
   after_validation  :assign_accession, on: :create
   # before_save       :verify_default_options
   after_create      :make_data_dir, :set_default_participant
+  before_destroy    :ensure_cascade_on_associations
   after_destroy     :remove_data_dir
   before_save       :set_readonly_access
 
@@ -934,6 +935,14 @@ class Study
 
   def can_visualize?
     self.can_visualize_clusters? || self.can_visualize_genome_data?
+  end
+
+  def has_raw_counts_matrices?
+    self.expression_matrices.where('expression_file_info.is_raw_counts' => true).exists?
+  end
+
+  def has_visualization_matrices?
+    self.expression_matrices.any_of({'expression_file_info.is_raw_counts' => false}, {expression_file_info: nil}).exists?
   end
 
   # quick getter to return any cell metadata that can_visualize?
@@ -1221,29 +1230,29 @@ class Study
   # return an array of all single cell names in study, will check for master list of cells or concatenate all
   # cell lists from individual expression matrices
   def all_cells_array
-    vals = []
     arrays = DataArray.where(study_id: self.id, linear_data_type: 'Study', linear_data_id: self.id, name: 'All Cells').order_by(&:array_index)
     if arrays.any?
-      arrays.each do |array|
-        vals += array.values
-      end
+      arrays.pluck(:values).reduce(&:+)
     else
-      vals = self.all_expression_matrix_cells
+      self.all_expression_matrix_cells
     end
-    vals
   end
 
   # return an array of all cell names that have been used in expression matrices (does not get cells from cell metadata file)
   def all_expression_matrix_cells
-    vals = []
+    all_cells = []
     self.expression_matrix_files.each do |file|
-      arrays = DataArray.where(name: "#{file.name} Cells", array_type: 'cells', linear_data_type: 'Study',
-                               linear_data_id: self.id).order_by(&:array_index)
-      arrays.each do |array|
-        vals += array.values
-      end
+      expression_cells = self.expression_matrix_cells(file)
+      all_cells += expression_cells
     end
-    vals
+    all_cells.uniq
+  end
+
+  # return the cells found in a single expression matrix
+  def expression_matrix_cells(study_file)
+    arrays = DataArray.where(name: "#{study_file.name} Cells", array_type: 'cells', linear_data_type: 'Study',
+                             linear_data_id: self.id, study_file_id: study_file.id).order_by(&:array_index)
+    arrays.pluck(:values).reduce(&:+)
   end
 
   # return a hash keyed by cell name of the requested study_metadata values
@@ -1310,9 +1319,14 @@ class Study
     self.study_files.by_type(['Expression Matrix', 'MM Coordinate Matrix'])
   end
 
+  # Mongoid criteria for expression files (rather than array of StudyFiles)
+  def expression_matrices
+    self.study_files.where(:file_type.in => ['Expression Matrix', 'MM Coordinate Matrix'])
+  end
+
   # helper method to directly access expression matrix file by name
   def expression_matrix_file(name)
-    self.study_files.find_by(:file_type.in => ['Expression Matrix', 'MM Coordinate Matrix'], name: name)
+    self.expression_matrices.find_by(name: name)
   end
   # helper method to directly access metadata file
   def metadata_file
@@ -1417,21 +1431,7 @@ class Study
     studies = self.where(queued_for_deletion: true)
     studies.each do |study|
       Rails.logger.info "#{Time.zone.now}: deleting queued study #{study.name}"
-      Gene.where(study_id: study.id).delete_all
-      study.study_files.each do |file|
-        DataArray.where(study_id: study.id, study_file_id: file.id).delete_all
-      end
-      CellMetadatum.where(study_id: study.id).delete_all
-      PrecomputedScore.where(study_id: study.id).delete_all
-      ClusterGroup.where(study_id: study.id).delete_all
-      StudyFile.where(study_id: study.id).delete_all
-      DirectoryListing.where(study_id: study.id).delete_all
-      UserAnnotation.where(study_id: study.id).delete_all
-      UserAnnotationShare.where(study_id: study.id).delete_all
-      UserDataArray.where(study_id: study.id).delete_all
-      AnalysisMetadatum.where(study_id: study.id).delete_all
-      StudyFileBundle.where(study_id: study.id).delete_all
-      # now destroy study to ensure everything is removed
+      # ensure_cascade_on_associations handles deleting parsed data
       study.destroy
       Rails.logger.info "#{Time.zone.now}: delete of #{study.name} completed"
     end
@@ -1632,6 +1632,18 @@ class Study
       self.all.each do |study|
         study.destroy_and_remove_workspace
       end
+    end
+  end
+
+  # helper method that mimics DeleteQueueJob.delete_convention_data
+  # referenced from ensure_cascade_on_associations to prevent orphaned rows in BQ on manual deletes
+  def delete_convention_data
+    if self.metadata_file.present? && self.metadata_file.use_metadata_convention
+      Rails.logger.info "Removing convention data for #{self.accession} from BQ"
+      bq_dataset = ApplicationController.big_query_client.dataset CellMetadatum::BIGQUERY_DATASET
+      bq_dataset.query "DELETE FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE study_accession = '#{self.accession}' AND file_id = '#{self.metadata_file.id}'"
+      Rails.logger.info "BQ cleanup for #{self.accession} completed"
+      SearchFacet.delay.update_all_facet_filters
     end
   end
 
@@ -1958,5 +1970,27 @@ class Study
         errors.add(:firecloud_workspace, 'cannot be changed once initialized.')
       end
     end
+  end
+
+  # delete all records that are associate with this study before invoking :destroy to speed up performance
+  # only pertains to "parsed" data as other records will be cleaned up via callbacks
+  # provides much better performance to study.destroy while ensuring cleanup consistency
+  def ensure_cascade_on_associations
+    # ensure all BQ data is cleaned up first
+    self.delete_convention_data
+    self.study_files.each do |file|
+      DataArray.where(study_id: self.id, study_file_id: file.id).delete_all
+    end
+    Gene.where(study_id: self.id).delete_all
+    CellMetadatum.where(study_id: self.id).delete_all
+    PrecomputedScore.where(study_id: self.id).delete_all
+    ClusterGroup.where(study_id: self.id).delete_all
+    StudyFile.where(study_id: self.id).delete_all
+    DirectoryListing.where(study_id: self.id).delete_all
+    UserAnnotation.where(study_id: self.id).delete_all
+    UserAnnotationShare.where(study_id: self.id).delete_all
+    UserDataArray.where(study_id: self.id).delete_all
+    AnalysisMetadatum.where(study_id: self.id).delete_all
+    StudyFileBundle.where(study_id: self.id).delete_all
   end
 end

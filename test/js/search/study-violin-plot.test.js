@@ -5,7 +5,7 @@ import React from 'react'
 import { render, waitForElementToBeRemoved, screen } from '@testing-library/react'
 import { enableFetchMocks } from 'jest-fetch-mock'
 
-import StudyViolinPlot from 'components/search/genes/StudyViolinPlot'
+import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import * as plotLib from 'lib/plot'
 
 const fs = require('fs')
@@ -31,11 +31,11 @@ describe('Violin plot in global gene search', () => {
 
     render(<StudyViolinPlot study={study} gene={study.gene_matches[0]}/>)
 
-    await waitForElementToBeRemoved(() => screen.getByTestId('expGraph-SCP25-mrpl15-loading-icon'))
+    await waitForElementToBeRemoved(() => screen.getByTestId('study-violin-1-loading-icon'))
 
     var args = mockPlot.mock.calls[0];
 
-    expect(args[0]).toBe('expGraph-SCP25-mrpl15')
+    expect(args[0]).toBe('study-violin-1')
 
     const firstTrace = args[1][0]
     expect(firstTrace.type).toBe('violin')

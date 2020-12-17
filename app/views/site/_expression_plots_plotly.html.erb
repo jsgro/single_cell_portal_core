@@ -1,8 +1,8 @@
 <%#
-This code renders the "Scatter" tab plot (hidden by default) for single-gene
+This code renders the "Distribution" and "Scatter" tabs and plot for single-gene
 search in Study Overview.
 
-See also: render_cluster.js.erb, which renders the "Distribution" tab that is
+See also: render_cluster.js.erb, which renders the "Clusters" tab that is
 shown by default.
 %>
 
@@ -173,7 +173,7 @@ var expressionData = [];
     <% if @expression[:all][:x].length >= ClusterGroup::MAX_THRESHOLD %>
     title += ' (subsampled to <%= ClusterGroup::MAX_THRESHOLD %> cells)';
     <% end %>
-    var data = createTracesAndLayout(formatted_array, title, jitter_var, expressionLabel);
+    var data = getViolinProps(formatted_array, title, jitter_var, expressionLabel);
     expressionData = [].concat.apply([], data[0] );
     expressionLayout = data[1];
 <% end%>

@@ -36,13 +36,25 @@ Rails.application.routes.draw do
           resources :external_resources, only: [:index, :show, :create, :update, :destroy]
           member do
             post 'sync', to: 'studies#sync_study'
+            get 'manifest', to: 'studies#generate_manifest'
           end
           get 'explore', to: 'visualization/explore#show'
+          get 'explore/cluster_options', to: 'visualization/explore#cluster_options'
+
           resources :expression, controller: 'visualization/expression', only: [:show], param: :data_type
           resources :clusters, controller: 'visualization/clusters',
                                only: [:show, :index],
                                param: :cluster_name,
                                constraints: { cluster_name: /[^\/]+/ } # needed to allow '.' in cluster names
+          resources :annotations, controller: 'visualization/annotations',
+                               only: [:show, :index],
+                               param: :annotation_name,
+                               constraints: { annotation_name: /[^\/]+/ } do # needed to allow '.' in annotation names
+            member do
+              get 'cell_values', to: 'visualization/annotations#cell_values'
+            end
+          end
+
         end
         resource :current_user, only: [:update], controller: 'current_user'
 
@@ -52,6 +64,8 @@ Rails.application.routes.draw do
           get 'studies/:accession', to: 'site#view_study', as: :site_study_view
           get 'studies/:accession/download', to: 'site#download_data', as: :site_study_download_data
           get 'studies/:accession/stream', to: 'site#stream_data', as: :site_study_stream_data
+
+          # analysis routes
           get 'analyses', to: 'site#analyses', as: :site_analyses
           get 'analyses/:namespace/:name/:snapshot', to: 'site#get_analysis', as: :site_get_analysis
           get 'studies/:accession/analyses/:namespace/:name/:snapshot', to: 'site#get_study_analysis_config', as: :site_get_study_analysis_config
@@ -172,6 +186,7 @@ Rails.application.routes.draw do
         post 'initialize_bundled_file', to: 'studies#initialize_bundled_file', as: 'initialize_bundled_file'
         get 'load_annotation_options', to: 'studies#load_annotation_options', as: :load_annotation_options
         post 'update_default_options', to: 'studies#update_default_options', as: :update_default_options
+        get 'manifest', to: 'studies#generate_manifest', as: :generate_manifest
       end
     end
 
@@ -183,10 +198,6 @@ Rails.application.routes.draw do
     # public/private file download links (redirect to signed_urls from Google)
     get 'data/public/:accession/:study_name', to: 'site#download_file', as: :download_file
     get 'data/private/:accession/:study_name', to: 'studies#download_private_file', as: :download_private_file
-
-    post 'totat', to: 'site#create_totat', as: :create_totat
-    get 'bulk_data/:accession/:study_name/:download_object/:totat', to: 'site#download_bulk_files', as: :download_bulk_files,
-        constraints: {filename: /.*/}
 
     # user account actions
     get 'profile/:id', to: 'profiles#show', as: :view_profile

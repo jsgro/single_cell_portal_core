@@ -22,7 +22,7 @@ module.exports = {
         'morpheus': 'readonly',
         'igv': 'readonly',
         'Ideogram': 'readonly',
-        'createTracesAndLayout': 'readonly',
+        'getViolinProps': 'readonly',
         'ga': 'readonly',
         'bamAndBaiFiles': 'readonly'
     },
@@ -50,6 +50,7 @@ module.exports = {
         'comma-spacing': 'warn',
         'comma-style': 'warn',
         'computed-property-spacing': 'warn',
+        'curly': ['warn', 'all'],
         'eol-last': 'warn',
         'func-call-spacing': 'warn',
         // 'implicit-arrow-linebreak': 'warn',

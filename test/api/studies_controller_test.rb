@@ -1,38 +1,33 @@
 require 'api_test_helper'
 require 'user_tokens_helper'
+require 'test_helper'
 
 class StudiesControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include Requests::JsonHelpers
   include Requests::HttpHelpers
+  include Minitest::Hooks
+  include ::SelfCleaningSuite
+  include ::TestInstrumentor
 
-  setup do
-    @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-    @user = User.first
-    @study = Study.find_by(name: "API Test Study #{@random_seed}")
-    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
-                                                                           :provider => 'google_oauth2',
-                                                                           :uid => '123545',
-                                                                           :email => 'testing.user@gmail.com'
-                                                                       })
-    sign_in @user
-    @user.update_last_access_at!
+  before(:all) do
+    @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:study,
+                               name_prefix: "Test Studies API",
+                               user: @user,
+                               public: true,
+                               test_array: @@studies_to_clean)
+    sign_in_and_update @user
   end
 
-  teardown do
-    reset_user_tokens
-  end
 
   test 'should get index' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
     execute_http_request(:get, api_v1_studies_path)
     assert_response :success
     assert json.size >= 1, 'Did not find any studies'
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should get study' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
     execute_http_request(:get, api_v1_study_path(@study))
     assert_response :success
     # check all attributes against database
@@ -40,24 +35,22 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
       if attribute =~ /_id/ && attribute != 'bucket_id' # make sure we're not parsing string as JSON
         assert json[attribute] == JSON.parse(value.to_json), "Attribute mismatch: #{attribute} is incorrect, expected #{JSON.parse(value.to_json)} but found #{json[attribute.to_s]}"
       elsif attribute =~ /_at/
-        assert DateTime.parse(json[attribute]) == value, "Attribute mismatch: #{attribute} is incorrect, expected #{value} but found #{DateTime.parse(json[attribute])}"
+        assert_equal value.to_i, DateTime.parse(json[attribute]).to_i, "Attribute mismatch: #{attribute} is incorrect, expected #{value} but found #{DateTime.parse(json[attribute])}"
       else
         assert json[attribute] == value, "Attribute mismatch: #{attribute} is incorrect, expected #{value} but found #{json[attribute.to_s]}"
       end
     end
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   # create, update & delete tested together to use new object rather than main testing study
   test 'should create then update then delete study' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
     # create study
     study_attributes = {
         study: {
             name: "New Study #{SecureRandom.uuid}"
         }
     }
-    execute_http_request(:post, api_v1_studies_path, study_attributes)
+    execute_http_request(:post, api_v1_studies_path, request_payload: study_attributes)
     assert_response :success
     assert json['name'] == study_attributes[:study][:name], "Did not set name correctly, expected #{study_attributes[:study][:name]} but found #{json['name']}"
     # update study, utilizing nested study_detail_attributes_full_description to ensure plain-text conversion works
@@ -69,20 +62,35 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
             }
         }
     }
-    execute_http_request(:patch, api_v1_study_path(id: study_id), update_attributes)
+    execute_http_request(:patch, api_v1_study_path(id: study_id), request_payload: update_attributes)
     assert_response :success
     plain_text_description = ActionController::Base.helpers.strip_tags update_attributes[:study][:study_detail_attributes][:full_description]
     assert json['description'] == plain_text_description, "Did not set description correctly, expected #{plain_text_description} but found #{json['description']}"
     # delete study, passing ?workspace=persist to skip FireCloud workspace deletion
     execute_http_request(:delete, api_v1_study_path(id: study_id))
     assert_response 204, "Did not successfully delete study, expected response of 204 but found #{@response.response_code}"
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  # get the study manifest for a study
+  test 'should get study manifest' do
+    totat = @user.create_totat(30, manifest_api_v1_study_path(@study))
+    get manifest_api_v1_study_path(@study), params: { auth_code: totat[:totat] }
+    assert_response :success
+
+    # should fail with bad totat
+    totat = @user.create_totat(30, manifest_api_v1_study_path(@study))
+    get manifest_api_v1_study_path(@study), params: { auth_code: 'haxxor' }
+    assert_response 401
+
+    # should fail if totat for a different purpose
+    totat = @user.create_totat(30, "/api/v1/some/other/thing")
+    get manifest_api_v1_study_path(@study), params: { auth_code: totat[:totat] }
+    assert_response 401
   end
 
   # test sync function by manually creating a new study using FireCloudClient methods, adding shares and files to the bucket,
   # then call sync_study API method
   test 'should create and then sync study' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
     # create study by calling FireCloud API manually
     study_name = "Sync Study #{SecureRandom.uuid}"
     workspace_name = study_name.downcase.gsub(/[^a-zA-Z0-9]+/, '-').chomp('-')
@@ -102,7 +110,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     puts 'creating ACL...'
     user_acl = ApplicationController.firecloud_client.create_workspace_acl(@user.email, 'WRITER', true, true)
     ApplicationController.firecloud_client.update_workspace_acl(FireCloudClient::PORTAL_NAMESPACE, workspace_name, user_acl)
-    share_user = User.find_by(email: 'testing.user.2@gmail.com')
+    share_user = FactoryBot.create(:api_user)
     share_acl = ApplicationController.firecloud_client.create_workspace_acl(share_user.email, 'READER', true, false)
     ApplicationController.firecloud_client.update_workspace_acl(FireCloudClient::PORTAL_NAMESPACE, workspace_name, share_acl)
     # validate acl set
@@ -137,7 +145,6 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     # clean up
     execute_http_request(:delete, api_v1_study_path(sync_study.id))
     assert_response 204, "Did not successfully delete sync study, expected response of 204 but found #{@response.response_code}"
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'hidden files are identified by regex' do

@@ -1,5 +1,5 @@
 FactoryBot.define do
-  # gets a ClusterGroup object, defaulting to the first user found.
+  # creates a ClusterGroup object
   factory :cluster_group do
     cluster_type { '2d' }
     cell_annotations { [] }

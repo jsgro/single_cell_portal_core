@@ -62,7 +62,7 @@ class StudyFileBundlesControllerTest < ActionDispatch::IntegrationTest
             ]
         }
     }
-    execute_http_request(:post, api_v1_study_study_file_bundles_path(study_id: @study.id), study_file_bundle_attributes)
+    execute_http_request(:post, api_v1_study_study_file_bundles_path(study_id: @study.id), request_payload: study_file_bundle_attributes)
     assert_response :success
     assert json['original_file_list'] == study_file_bundle_attributes['study_file_bundle']['original_file_list'],
            "Did not set name correctly, expected #{study_file_bundle_attributes['study_file_bundle']['original_file_list']} but found #{json['original_file_list']}"

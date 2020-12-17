@@ -21,27 +21,25 @@ module Api
         # to be used other than by the SCP UI, and may change dramatically
         def show
           if (!@study.has_expression_data? || !@study.can_visualize_clusters?)
-            render json: {error: "Study #{@study.accession} does not support expression rendering"}, status: 400
+            render(json: {error: "Study #{@study.accession} does not support expression rendering"}, status: 400) and return
           end
           data_type = params[:data_type]
           if (data_type == 'violin')
             render_violin
-          elsif (data_type == 'annotations')
-            render_annotation_values
+          elsif (data_type == 'heatmap')
+            render_heatmap
           else
             render json: {error: "Unknown expression data type: #{data_type}"}, status: 400
           end
-
         end
 
         def render_violin
           cluster = ClusterVizService.get_cluster_group(@study, params)
-          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
-          annotation = ExpressionVizService.get_selected_annotation(@study,
-                                                                       cluster,
-                                                                       annot_params[:name],
-                                                                       annot_params[:type],
-                                                                       annot_params[:scope])
+          annotation = AnnotationVizService.get_selected_annotation(@study,
+                                                                    cluster,
+                                                                    params[:annotation_name],
+                                                                    params[:annotation_type],
+                                                                    params[:annotation_scope])
           subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
           gene = @study.genes.by_name_or_id(params[:gene], @study.expression_matrix_files.map(&:id))
 
@@ -51,15 +49,25 @@ module Api
           render json: render_data, status: 200
         end
 
-        def render_annotation_values
+        # this is intended to provide morpheus compatibility, so it returns plain text, instead of json
+        def render_heatmap
           cluster = ClusterVizService.get_cluster_group(@study, params)
-          annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
-          annotation = ExpressionVizService.get_selected_annotation(@study,
-                                                                       cluster,
-                                                                       annot_params[:name],
-                                                                       annot_params[:type],
-                                                                       annot_params[:scope])
-          render json: annotation, status: 200
+          terms = RequestUtils.sanitize_search_terms(params[:genes]).split(',')
+          matrix_ids = @study.expression_matrix_files.map(&:id)
+          collapse_by = params[:row_centered]
+
+          genes = []
+          terms.each do |term|
+            matches = @study.genes.by_name_or_id(term, matrix_ids)
+            unless matches.empty?
+              genes << matches
+            end
+          end
+          expression_data = ExpressionVizService.get_morpheus_text_data(
+              genes: genes, cluster: cluster, collapse_by: collapse_by, file_type: :gct
+          )
+
+          render plain: expression_data, status: 200
         end
       end
     end

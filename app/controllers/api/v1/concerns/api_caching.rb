@@ -15,7 +15,7 @@ module Api
         # cache expiration is still handled by CacheRemovalJob
         def check_api_cache!
           cache_path = get_cache_key
-          if Rails.cache.exist?(cache_path)
+          if check_caching_config && Rails.cache.exist?(cache_path)
             Rails.logger.info "Reading from API cache: #{cache_path}"
             json_response = Rails.cache.fetch(cache_path)
             render json: json_response
@@ -25,7 +25,7 @@ module Api
         # write to the cache after a successful response
         def write_api_cache!
           cache_path = get_cache_key
-          unless Rails.cache.exist?(cache_path)
+          if check_caching_config && !Rails.cache.exist?(cache_path)
             Rails.logger.info "Writing to API cache: #{cache_path}"
             Rails.cache.write(cache_path, response.body)
           end
@@ -54,6 +54,16 @@ module Api
         # remove url-encoded characters from parameter values
         def sanitize_param(parameter)
           parameter.gsub(PATH_REGEX, '_')
+        end
+
+        # check if caching is enabled/disabled in development environment
+        # will always return true in all other environments
+        def check_caching_config
+          if Rails.env == 'development'
+            Rails.root.join('tmp/caching-dev.txt').exist?
+          else
+            true
+          end
         end
       end
     end

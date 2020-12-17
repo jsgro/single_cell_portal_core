@@ -23,6 +23,7 @@ class SyntheticStudyPopulator
     puts("Populating synthetic study from #{synthetic_study_folder}")
     study = create_study(study_config, user, detached)
     add_files(study, study_config, synthetic_study_folder, user)
+    study
   end
 
   # find all matching instances of synthetic studies
@@ -87,13 +88,30 @@ class SyntheticStudyPopulator
           exp_file_info = ExpressionFileInfo.new(
             is_raw_counts: exp_finfo_params['is_raw_counts'] ? true : false,
             units: exp_finfo_params['units'],
-            library_construction_protocol: exp_finfo_params['library_construction_protocol']
+            biosample_input_type: exp_finfo_params['biosample_input_type'],
+            library_preparation_protocol: exp_finfo_params['library_preparation_protocol'],
+            modality: exp_finfo_params['modality']
           )
           study_file_params['expression_file_info'] = exp_file_info
         end
       end
 
+      if study_file_params[:file_type] == 'Coordinate Labels'
+        if !finfo['cluster_file_name']
+          throw 'Coordinate label files must specify a cluster_file_name'
+        end
+        matching_cluster_file = StudyFile.find_by(name: finfo['cluster_file_name'], study: study)
+        if matching_cluster_file.nil?
+          throw "No cluster file with name #{finfo['cluster_file_name']} to match coordinate labels"
+        end
+        study_file_params[:options] = {'cluster_file_id' => matching_cluster_file.id.to_s}
+      end
+
       study_file = StudyFile.create!(study_file_params)
+      # the status has to be 'uploading' when created so the file gets pulled into the workspace
+      # after creation, we want it to be uploaded so that, e.g. bundles can create
+      study_file.update(status: 'uploaded')
+
       if !study.detached
         FileParseService.run_parse_job(study_file, study, user)
       end
@@ -143,13 +161,4 @@ class SyntheticStudyPopulator
     params
   end
 
-  # utility method to generate a study_info.json file string from an existing study
-  # useful for, e.g., downloading all the files from a production study to your local machine,
-  # and then using SyntheticStudyPopulator to ingest it
-  def self.generate_study_info_json(study)
-    info = {}
-    info['study'] = {name: study.name, description: study.description, data_dir: 'test'}
-    info['files'] = study.study_files.map{|f| { filename: f.name, type: f.file_type}}
-    puts JSON.pretty_generate(info)
-  end
 end

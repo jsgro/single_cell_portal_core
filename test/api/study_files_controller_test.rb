@@ -61,7 +61,7 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
             file_type: 'Other'
         }
     }
-    execute_http_request(:post, api_v1_study_study_files_path(study_id: @study.id), study_file_attributes)
+    execute_http_request(:post, api_v1_study_study_files_path(study_id: @study.id), request_payload: study_file_attributes)
     assert_response :success
     assert json['name'] == study_file_attributes[:study_file][:upload_file_name], "Did not set name correctly, expected #{study_file_attributes[:study_file][:upload_file_name]} but found #{json['name']}"
     # update study file
@@ -71,7 +71,7 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
             description: "Test description #{SecureRandom.uuid}"
         }
     }
-    execute_http_request(:patch, api_v1_study_study_file_path(study_id: @study.id, id: study_file_id), update_attributes)
+    execute_http_request(:patch, api_v1_study_study_file_path(study_id: @study.id, id: study_file_id), request_payload: update_attributes)
     assert_response :success
     assert json['description'] == update_attributes[:study_file][:description], "Did not set description correctly, expected #{update_attributes[:study_file][:description]} but found #{json['description']}"
     # delete study file
@@ -90,7 +90,7 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
             {'name' => 'labels.tsv', 'file_type' => 'Coordinate Labels' }
         ]
     }
-    execute_http_request(:post, api_v1_study_study_files_bundle_files_path(study_id: @study.id), study_file_bundle_attributes)
+    execute_http_request(:post, api_v1_study_study_files_bundle_files_path(study_id: @study.id), request_payload: study_file_bundle_attributes)
     assert_response :success
     assert json['original_file_list'] == study_file_bundle_attributes['files'],
            "Did not set name correctly, expected #{study_file_bundle_attributes['files']} but found #{json['original_file_list']}"

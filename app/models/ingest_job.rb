@@ -470,9 +470,16 @@ class IngestJob
 
     case file_type
     when /Matrix/
-      genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
-      message << "Gene-level entries created: #{genes}"
-      mixpanel_log_props.merge!({:numGenes => genes})
+      # since genes are not ingested for raw counts matrices, report number of cells ingested
+      if self.study_file.is_raw_counts_file?
+        cells = self.study.expression_matrix_cells(self.study_file).count
+        message << "Cells ingested: #{cells}"
+        mixpanel_log_props.merge!({:numCells => cells})
+      else
+        genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
+        message << "Gene-level entries created: #{genes}"
+        mixpanel_log_props.merge!({:numGenes => genes})
+      end
     when 'Metadata'
       use_metadata_convention = self.study_file.use_metadata_convention
       mixpanel_log_props.merge!({

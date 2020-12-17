@@ -1,11 +1,11 @@
 import {
   getBaseLayout, setMarkerColors
-} from 'lib/study-overview'
+} from 'lib/scatter-plot'
 
 const height = 279
 const width = 1570
 
-describe('Study Overview page', () => {
+describe('Scatter plot library', () => {
   it('configures plot layout', () => {
     // Test base layout
     const layout = getBaseLayout(height, width)

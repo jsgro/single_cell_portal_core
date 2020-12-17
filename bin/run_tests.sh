@@ -73,7 +73,9 @@ rm -f "$TMP_PIDS_DIR/delayed_job.*.pid"
 bin/delayed_job restart $PASSENGER_APP_ENV -n 6 || { echo "FAILED to start DELAYED_JOB" >&2; exit 1; } # WARNING: using "restart" with environment of test is a HACK that will prevent delayed_job from running in development mode, for example
 
 echo "Precompiling assets, yarn and webpacker..."
+export NODE_OPTIONS="--max-old-space-size=4096"
 RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:clean
+RAILS_ENV=test NODE_ENV=test yarn install --force --trace
 RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:precompile
 echo "Generating random seed, seeding test database..."
 RANDOM_SEED=$(openssl rand -hex 16)
@@ -104,11 +106,6 @@ else
     first_test_to_fail=${first_test_to_fail-"yarn ui-test"}
     ((FAILED_COUNT++))
   fi
-
-  if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
-    echo "uploading JS coverage to codecov"
-    bash <(curl -s https://codecov.io/bash) -cF javascript -t $CODECOV_TOKEN
-  fi
   RAILS_ENV=test bundle exec bin/rake test
   code=$?
   if [[ $code -ne 0 ]]; then
@@ -117,8 +114,8 @@ else
     ((FAILED_COUNT++))
   fi
   if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
-    echo "uploading ruby coverage to codecov"
-    bash <(curl -s https://codecov.io/bash) -cF ruby -t $CODECOV_TOKEN
+    echo "uploading all coverage data to codecov"
+    bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN
   fi
 fi
 clean_up

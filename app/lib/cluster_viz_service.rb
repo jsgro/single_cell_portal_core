@@ -30,6 +30,19 @@ class ClusterVizService
     grouped_options
   end
 
+
+  def self.available_annotations_by_cluster(cluster, annotation_type=nil)
+    cluster.cell_annotations_by_type(annotation_type).map do |annot|
+      {
+        name: annot[:name],
+        type: annot[:type],
+        values: annot[:values],
+        scope: 'cluster',
+        cluster_name: cluster.name
+      }
+    end
+  end
+
   # helper method to load spatial coordinate group names
   def self.load_spatial_options(study)
     spatial_file_ids = StudyFile.where(study: study, is_spatial: true, file_type: 'Cluster').pluck(:id)
@@ -244,7 +257,8 @@ class ClusterVizService
       # assemble containers for each trace
       annotation[:values].each do |value|
         coordinates[value] = {x: [], y: [], text: [], cells: [], annotations: [], name: value,
-                              marker: {size: study.default_cluster_point_size, line: { color: 'rgb(40,40,40)', width: study.show_cluster_point_borders? ? 0.5 : 0}}}
+                              marker: {size: study.default_cluster_point_size,
+                              line: { color: 'rgb(40,40,40)', width: study.show_cluster_point_borders? ? 0.5 : 0}}}
         if cluster.is_3d?
           coordinates[value][:z] = []
         end

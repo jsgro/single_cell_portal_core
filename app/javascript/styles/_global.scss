@@ -675,6 +675,15 @@ h6,
   font-size: 18px;
 }
 
+ul.pager li.dimmed {
+  opacity: 0.5;
+}
+
+.radio-pad {
+  padding-left: 10px;
+  padding-right: 15px;
+}
+
 #metadata-convention-explainer {
   overflow-x: scroll;
   margin-left: -7px;
