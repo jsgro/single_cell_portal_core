@@ -71,6 +71,7 @@ class IngestJob
         Rails.logger.error log_message
         raise RuntimeError.new(log_message)
       else
+        raise RuntimeError.new('triggering error emails')
         Rails.logger.info "Remote found for #{file_identifier}, launching Ingest job"
         submission = ApplicationController.papi_client.run_pipeline(study_file: self.study_file, user: self.user, action: self.action)
         Rails.logger.info "Ingest run initiated: #{submission.name}, queueing Ingest poller"
@@ -82,6 +83,10 @@ class IngestJob
       Rails.logger.error "Error in launching ingest of #{file_identifier}: #{e.class.name}:#{e.message}"
       error_context = ErrorTracker.format_extra_context(self.study, self.study_file, {action: self.action})
       ErrorTracker.report_exception(e, self.user, error_context)
+      # notify admins of failure, and notify user that admins are looking into the issue
+      SingleCellMailer.notify_admin_parse_launch_failure(self.study, self.study_file, self.user, self.action, e).deliver_now
+      user_message = self.generate_error_email_body(email_type: :launch_failure)
+      SingleCellMailer.user_notification(self.user, "Unable to parse #{self.study_file.upload_file_name}", user_message).deliver_now
     end
   end
 
@@ -553,6 +558,7 @@ class IngestJob
   #  - +email_type+ (Symbol) => Type of error email
   #                 :user => High-level error message intended for users, contains only messages and no stack traces
   #                 :dev => Debug-level error messages w/ stack traces intended for SCP team
+  #                 :launch_failure => User notification that ingest job did not launch and SCP team is investigating
   #
   # * *returns*
   #  - (String) => Contents of error messages for parse failure email
@@ -566,6 +572,10 @@ class IngestJob
       message_body = "<p>The file '#{self.study_file.upload_file_name}' uploaded by #{self.user.email} to #{self.study.accession} failed to ingest.</p>"
       message_body += "<p>A copy of this file can be found at #{self.generate_bucket_browser_tag}</p>"
       message_body += "<p>Detailed logs and PAPI events as follows:"
+    when :launch_failure
+      message_body = "<p>An error has occurred when attempting to launch the parse job associated with #{self.study_file.upload_file_name}."
+      message_body += "<p>Support staff has been notified and are investigating the issue.  "
+      message_body += "If you require immediate assistance, please contact scp-support@broadinstitute.zendesk.com.</p>"
     else
       error_contents = self.read_parse_logfile(self.user_error_filepath)
       message_body = "<p>'#{self.study_file.upload_file_name}' has failed during parsing.</p>"

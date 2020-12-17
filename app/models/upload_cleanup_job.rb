@@ -14,19 +14,19 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
     if study_file.nil?
       Rails.logger.info "#{Time.zone.now}: aborting UploadCleanupJob due to StudyFile already being deleted."
     elsif study_file.queued_for_deletion || study.queued_for_deletion
-      Rails.logger.info "#{Time.zone.now}: aborting UploadCleanupJob for #{study_file.bucket_location}:#{study_file.id} in '#{study.name}', file queued for deletion"
+      Rails.logger.info "#{Time.zone.now}: aborting UploadCleanupJob for #{study_file.bucket_location}:#{study_file.id} in '#{study.accession}', file queued for deletion"
       # check if there's still a local copy we need to clean up
       if study_file.is_local?
         study_file.remove_local_copy
       end
     else
       if !study_file.is_local?
-        Rails.logger.error "#{Time.zone.now}: error in UploadCleanupJob for #{study.name}:#{study_file.bucket_location}:#{study_file.id}; file no longer present"
+        Rails.logger.error "#{Time.zone.now}: error in UploadCleanupJob for #{study.accession}:#{study_file.bucket_location}:#{study_file.id}; file no longer present"
         SingleCellMailer.admin_notification('File missing on cleanup', nil, "<p>The study file #{study_file.upload_file_name} was missing from the local file system at the time of cleanup job execution.  Please check #{study.firecloud_project}/#{study.firecloud_workspace} to ensure the upload occurred.</p>")
       else
         begin
           # check workspace bucket for existence of remote file
-          Rails.logger.info "#{Time.zone.now}: performing UploadCleanupJob for #{study_file.bucket_location}:#{study_file.id} in '#{study.name}'"
+          Rails.logger.info "#{Time.zone.now}: performing UploadCleanupJob for #{study_file.bucket_location}:#{study_file.id} in '#{study.accession}'"
           remote_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, study_file.bucket_location)
           if remote_file.present?
             # check generation tags to make sure we're in sync
@@ -42,26 +42,33 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
             study_file.remove_local_copy
             Rails.logger.info "#{Time.zone.now}: cleanup for #{study_file.bucket_location}:#{study_file.id} complete"
           else
-            # remote file was not found, so attempt upload again and reschedule cleanup
-            Rails.logger.info "#{Time.zone.now}: remote file MISSING for #{study_file.bucket_location}:#{study_file.id}, attempting upload"
-            study.send_to_firecloud(study_file)
-            # schedule a new cleanup job
-            interval = retries * 2
-            run_at = interval.minutes.from_now
-            Rails.logger.info "#{Time.zone.now}: scheduling new UploadCleanupJob for #{study_file.bucket_location}:#{study_file.id}, will run at #{run_at}"
-            Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, retries), run_at: run_at)
+            # remote file was not found, so schedule a new cleanup job to check again
+            # file may be pushing in another thread, and attempting to push here creates infinite recursion if errors are encountered
+            if retries < 3
+              interval = retries * 2
+              run_at = interval.minutes.from_now
+              Rails.logger.info "#{Time.zone.now}: remote file MISSING for #{study_file.bucket_location}:#{study_file.id}, scheduling new UploadCleanupJob for #{run_at}"
+              Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, retries), run_at: run_at)
+            else
+              Rails.logger.error "#{Time.zone.now}: file #{study.accession}:#{study_file.bucket_location}:#{study_file.id} has failed to push to #{study.bucket_id}"
+              message = "<p>#{study_file.bucket_location} in #{study.accession} has failed to push to the associated bucket: #{study.bucket_id}</p>"
+              message += "<p>This file is located in the #{Rails.env} environment at #{study_file.local_location}</p>"
+              SingleCellMailer.admin_notification('UploadCleanupJob failure', nil, message).deliver_now
+            end
           end
         rescue => e
-          error_context = ErrorTracker.format_extra_context(study, study_file, {retry_count: retry_count})
+          error_context = ErrorTracker.format_extra_context(study, study_file, {retry_count: retries})
           ErrorTracker.report_exception(e, nil, error_context)
-          if retries <= 3
+          if retries < 3
             interval = retries * 2
-            run_at = interval.minutes.from_now
-            Rails.logger.error "#{Time.zone.now}: error in UploadCleanupJob for #{study.name}:#{study_file.bucket_location}:#{study_file.id}, will retry at #{run_at}; #{e.message}"
+            run_at = interval.seconds.from_now
+            Rails.logger.error "#{Time.zone.now}: error in UploadCleanupJob for #{study.accession}:#{study_file.bucket_location}:#{study_file.id}, will retry at #{run_at}; #{e.message}"
             Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, retries), run_at: run_at)
           else
-            Rails.logger.error "#{Time.zone.now}: error in UploadCleanupJob for #{study.name}:#{study_file.bucket_location}:#{study_file.id}; #{e.message}"
-            SingleCellMailer.admin_notification('UploadCleanupJob failure', nil, "<p>The following failure occurred when attempting to upload/clean up #{study.firecloud_project}/#{study.firecloud_workspace}:#{study_file.bucket_location}: #{e.message}</p>").deliver_now
+            Rails.logger.error "#{Time.zone.now}: terminal error in UploadCleanupJob for #{study.accession}:#{study_file.bucket_location}:#{study_file.id}; #{e.message}"
+            message = "<p>The following failure occurred when attempting to clean up #{study.firecloud_project}/#{study.firecloud_workspace}:#{study_file.bucket_location}</p>"
+            message += "<hr /><p>#{e.class.name}: #{e.message}</p>"
+            SingleCellMailer.admin_notification('UploadCleanupJob failure', nil, message).deliver_now
           end
         end
       end

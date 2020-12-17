@@ -31,7 +31,7 @@ class SingleCellMailer < ApplicationMailer
     @study = study_file.study
     @study_file = study_file
     @error = error
-    mail(to: @users, subject: '[Single Cell Portal ERROR] FireCloud auto-upload fail in ' + @study.name) do |format|
+    mail(to: @users, subject: '[Single Cell Portal ERROR] FireCloud auto-upload fail in ' + @study.accession) do |format|
       format.html
     end
   end
@@ -67,6 +67,19 @@ class SingleCellMailer < ApplicationMailer
       @user_email = user_email
       mail(to: dev_email, subject: '[Single Cell Portal Admin Notification] ' + title)
     end
+  end
+
+  # alert email to admins when ingest job fails to launch, usually because file does not push to bucket
+  def notify_admin_parse_launch_fail(study, study_file, corresponding_user, ingest_action, error)
+    dev_email_config = AdminConfiguration.find_by(config_type: 'QA Dev Email')
+    emails = dev_email_config.present? ? [dev_email_config.value] : User.where(admin: true).map(&:email)
+    @user = corresponding_user
+    @study = study
+    @study_file = study_file
+    @error = error
+    @action = ingest_action
+    title = 'Ingest Pipeline Launch Failure'
+    mail(to: emails, subject: '[Single Cell Portal Admin Notification] ' + title)
   end
 
   def daily_disk_status
