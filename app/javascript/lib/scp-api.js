@@ -191,7 +191,6 @@ export async function fetchCluster(
   }
 
   const params = stringifyQuery(paramObj)
-
   if (!cluster) {
     cluster = '_default'
   }

@@ -55,7 +55,7 @@ module Api
         def sanitize_param(parameter)
           parameter.gsub(PATH_REGEX, '_')
         end
-        
+
         # check if caching is enabled/disabled in development environment
         # will always return true in all other environments
         def check_caching_config
