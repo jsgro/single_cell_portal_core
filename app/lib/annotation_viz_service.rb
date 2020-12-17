@@ -69,7 +69,7 @@ class AnnotationVizService
       end
     end
     annotations.concat(cluster_annots)
-    if current_user.present?
+    if current_user.present? && cluster.present?
       user_annotations = UserAnnotation.viewable_by_cluster(current_user, cluster)
       annotations.concat(user_annotations)
     end
