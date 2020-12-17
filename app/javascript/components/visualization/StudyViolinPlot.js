@@ -34,8 +34,8 @@ export default function StudyViolinPlot({ study, gene }) {
         gene,
         clusterParams.cluster,
         clusterParams.annotation.name,
-        clusterParams.annotation.scope,
         clusterParams.annotation.type,
+        clusterParams.annotation.scope,
         clusterParams.subsample)
     }
     setIsLoaded(true)
