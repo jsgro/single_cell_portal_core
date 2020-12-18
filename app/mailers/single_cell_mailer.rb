@@ -28,7 +28,12 @@ class SingleCellMailer < ApplicationMailer
 
   def notify_admin_upload_fail(study_file, error)
     dev_email_config = AdminConfiguration.find_by(config_type: 'QA Dev Email')
-    emails = dev_email_config.present? ? [dev_email_config.value] : User.where(admin: true).map(&:email)
+    # if QA Dev email is configured, use that over individual admin emails
+    if dev_email_config.present?
+      emails = [dev_email_config.value]
+    else
+      emails = User.where(admin: true).map(&:email)
+    end
     @study = study_file.study
     @study_file = study_file
     @error = error
@@ -74,7 +79,12 @@ class SingleCellMailer < ApplicationMailer
   # alert email to admins when ingest job fails to launch, usually because file does not push to bucket
   def notify_admin_parse_launch_fail(study, study_file, corresponding_user, ingest_action, error)
     dev_email_config = AdminConfiguration.find_by(config_type: 'QA Dev Email')
-    emails = dev_email_config.present? ? [dev_email_config.value] : User.where(admin: true).map(&:email)
+    # if QA Dev email is configured, use that over individual admin emails
+    if dev_email_config.present?
+      emails = [dev_email_config.value]
+    else
+      emails = User.where(admin: true).map(&:email)
+    end
     @user = corresponding_user
     @study = study
     @study_file = study_file
