@@ -242,7 +242,7 @@ export async function violinPlot(plotId, study, gene) {
   const plotDom = document.getElementById(plotId)
   const spinner = new Spinner(window.opts).spin(plotDom)
 
-  const { cluster, subsample } = getMainViewOptions()
+  const { cluster, subsample } = getMainViewOptions(0)
 
   const { name, type, scope } = getAnnotParams()
 
