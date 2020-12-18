@@ -1,5 +1,5 @@
 <p>
-  The following error prevented a file from pushing to the workspace bucket and launching an ingest pipeline run:"
+  The following error prevented a file from pushing to the workspace bucket and launching an ingest pipeline run:
 </p>
 <h3>Error</h3>
 <p><strong><%= @error.class.name %></strong> - <%= @error.message %></p>
@@ -12,15 +12,16 @@
   <li>File: <%= @study_file.upload_file_name %></li>
   <li>File Type: <%= @study_file.file_type %></li>
   <li>Uploaded/synced on: <%= @study_file.created_at.to_s(:db) %></li>
+  <li>File still local? <%= @study_file.is_local? %></li>
 </ul>
 
 <p>
   Once the error has been resolved, please relaunch the file from the Rails console with the following commands:
 </p>
 
-<pre>
+<pre><strong>
   study = Study.find_by(accession: '<%= @study.accession %>')
   study_file = study.study_files.detect {|file| file.upload_file_name == '<%= @study_file.upload_file_name %>'}
-  user = User.find_by(email: '<%= @user.email %>'
+  user = User.find_by(email: '<%= @user.email %>')
   FileParseService.run_parse_job(study_file, study, user)
-</pre>
+</strong></pre>

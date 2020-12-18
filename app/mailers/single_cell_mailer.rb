@@ -27,11 +27,13 @@ class SingleCellMailer < ApplicationMailer
   end
 
   def notify_admin_upload_fail(study_file, error)
-    @users = User.where(admin: true).map(&:email)
+    dev_email_config = AdminConfiguration.find_by(config_type: 'QA Dev Email')
+    emails = dev_email_config.present? ? [dev_email_config.value] : User.where(admin: true).map(&:email)
     @study = study_file.study
     @study_file = study_file
     @error = error
-    mail(to: @users, subject: '[Single Cell Portal ERROR] FireCloud auto-upload fail in ' + @study.accession) do |format|
+    @user = @study.user
+    mail(to: emails, subject: '[Single Cell Portal ERROR] FireCloud auto-upload fail in ' + @study.accession) do |format|
       format.html
     end
   end
