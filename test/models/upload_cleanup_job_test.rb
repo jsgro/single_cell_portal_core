@@ -58,20 +58,22 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
 
     # now find delayed_job instance for UploadCleanupJob for this file for each retry and assert only 3 attempts are made
     0.upto(UploadCleanupJob::MAX_RETRIES).each do |retry_count|
-      cleanup_job = UploadCleanupJob.get_job_instance(study_file)
-      job_handler = UploadCleanupJob.dump_job_handler(cleanup_job)
+      cleanup_jobs = UploadCleanupJob.find_jobs_by_handler_type(UploadCleanupJob, study_file)
+      # make sure we're getting the latest job, as the previous may not have fully cleared out of the queue
+      latest_job = cleanup_jobs.sort_by(&:created_at).last
+      job_handler = UploadCleanupJob.dump_job_handler(latest_job)
       assert job_handler.retry_count == retry_count, "Retry count does not match: #{job_handler.retry_count} != #{retry_count}"
       # to force a job to run, unset :run_at
-      # wait until handler is cleared, which indicates job has run
-      cleanup_job.update(run_at: nil)
-      while cleanup_job.handler.present?
-        cleanup_job.reload
+      # wait until handler is cleared, which indicates job has run and will be garbage collected
+      latest_job.update(run_at: nil)
+      while latest_job.handler.present?
+        latest_job.reload
         sleep 1
       end
     end
-
-    cleanup_job = UploadCleanupJob.get_job_instance(study_file)
-    refute cleanup_job.present?, "Should not have found any cleanup jobs for file: #{cleanup_job}"
+    sleep 5 # give queue a chance to fully clear
+    cleanup_jobs = UploadCleanupJob.find_jobs_by_handler_type(UploadCleanupJob, study_file)
+    refute cleanup_jobs.any?, "Should not have found any cleanup jobs for file but found #{cleanup_jobs.size}"
 
     # clean up
     study_file.update(remote_location: nil)
@@ -88,7 +90,7 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
     run_at = 10.minutes.from_now.in_time_zone
     # queue job
     job = Delayed::Job.enqueue(UploadCleanupJob.new(@study, study_file, 0), run_at: run_at)
-    found_job = UploadCleanupJob.get_job_instance(study_file)
+    found_job = UploadCleanupJob.find_jobs_by_handler_type(UploadCleanupJob, study_file)
     assert_equal job.id, found_job.id, "Did not get correct instance of UploadCleanupJob; #{job.id} != #{found_job.id}"
     handler = UploadCleanupJob.dump_job_handler(job)
     handler_file_attributes = handler.study_file['attributes']

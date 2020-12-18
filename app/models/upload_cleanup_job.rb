@@ -7,6 +7,7 @@
 
 class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
   extend ErrorTracker
+  include DelayedJobAccessor
   MAX_RETRIES = 2
 
   def perform
@@ -105,20 +106,5 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
         DeleteQueueJob.new(study_file).perform
       end
     end
-  end
-
-  # find instance of UploadCleanupJob for a given file
-  def self.get_job_instance(study_file)
-    jobs = Delayed::Job.all
-    jobs.each do |job|
-      handler = dump_job_handler(job)
-      return job if handler.is_a?(UploadCleanupJob) && handler.study_file['attributes']['_id'] == study_file.id
-    end
-    nil # no job found for file
-  end
-
-  # decode YAML job handler into struct to read attributes
-  def self.dump_job_handler(job)
-    YAML.load(job.handler)
   end
 end
