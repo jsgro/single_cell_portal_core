@@ -69,6 +69,9 @@ class SummaryStatsUtils
     date_range = start_date..end_date
     until all_from_range
       jobs.operations.each do |job|
+        if job.metadata['startTime'].nil?
+          next
+        end
         submission_date = Time.zone.parse(job.metadata['startTime']).to_date
         # use `dig` to avoid NoMethodError
         database_name = job.metadata.dig('pipeline', 'environment', 'DATABASE_NAME')
