@@ -1,9 +1,9 @@
 /**
- * @fileoverview Functionality for "Create Annotations", or user annotations
- *
- * User annotations are created by signed-in users in the Explore tab of the
- * Study Overview page.
- */
+* @fileoverview User interface for "Create Annotations", or user annotations
+*
+* User annotations are created by signed-in users in the Explore tab of the
+* Study Overview page.
+*/
 
 /* eslint-disable no-invalid-this */
 
@@ -11,7 +11,7 @@ import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
 
 // array of arrays of cell names, aka selections, and of selection names
-const selections = []
+let selections = []
 const namesArray = ['']
 
 /** Get "Set label" text input HTML for each each annotation */
@@ -30,7 +30,7 @@ function getSetLabelInputs(rowIndex, selectionValue, textVal) {
   )
 }
 
-/** add rows to the table and update all the other rows */
+/** Add rows to the table and update all the other rows */
 function updateSelection() {
   // get all the names of rows to update
   const nameArray = []
@@ -40,7 +40,7 @@ function updateSelection() {
   })
 
   // iterate through the rows to update them
-  for (let i = 0; i < selections.length; i++) {
+  selections.forEach((selection, i) => {
     // for unselected row, when n == 0
     const name = (i === 0) ? 'Unselected' : `Selection ${i}`
 
@@ -56,19 +56,19 @@ function updateSelection() {
         `</div>` +
         `</td>`}`
 
-    const numCells = selections[i].length
+    const numCells = selection.length
     // rowString is the string to add, that contains all the row information
     const rowString =
       `<tr id="${id}Row">` +
       `<td id="${id}">${
         name}: ${numCells} Cells${
-        getSetLabelInputs(i, selections[i], namesArray[i])
+        getSetLabelInputs(i, selection, namesArray[i])
       }</td>${
         deleteButton}`
     '</tr>'
 
     $('#well-table').prepend(rowString)
-  }
+  })
   // attach listener to make sure all annotation labels are unique
   window.validateUnique('#create_annotations', '.annotation-label')
 }
@@ -91,22 +91,22 @@ function createSelection() {
       '</div>')
 
   // add the first row, unselected
-  for (let i = 0; i < selections.length; i++) {
+  selections.forEach((selection, i) => {
     const name = (i === 0) ? 'Unselected' : `Selection ${i}`
     const addS =
       `${'<tr>' +
-      '<td id="'}${name}">${name}: ${selections[i].length} Cells${
-        getSetLabelInputs(i, selections[i], '')
+      '<td id="'}${name}">${name}: ${selections.length} Cells${
+        getSetLabelInputs(i, selection, '')
       }</td>` +
       `</tr>`
 
     $('#well-table').prepend(addS)
-  }
+  })
 }
 
-/** Attach event listeners  */
+/** Attach event listeners for user annotations component */
 function attachEventListeners(target) {
-  // Listen for Plotly selections
+  // Listen for selections in the target scatter plot
   target.on('plotly_selected', eventData => {
     const selection =[]
 
@@ -120,20 +120,20 @@ function attachEventListeners(target) {
     })
 
     // update previous selections, to ensure they have no duplicate cell names
-    for (let i = 0; i < selections.length; i++) {
-      selections[i] = window._.difference(selections[i], selection)
-    }
+    selections = selections.map(thisSelection => {
+      return window._.difference(thisSelection, selection)
+    })
     // add this selection to all the others
     selections.push(selection)
     // add a blank name to array of names
     namesArray.push('')
     // remove all empty arrays from selections, and their names
-    for (let i = 0; i < selections.length; i++) {
-      if (selections[i].length === 0) {
+    selections.forEach((selection, i) => {
+      if (selection.length === 0) {
         selections.splice(i, 1)
         namesArray.splice(i, 1)
       }
-    }
+    })
     // after selection, update rows
     updateSelection(selections, namesArray)
   })
@@ -171,21 +171,18 @@ export default function userAnnotations() {
   $('#selection-well, #selection-button').css('visibility', 'visible')
 
   // Set the initial unselected array
-  let unselectedCellArray = []
+  let unselectedCells = []
 
   // set initial unselected
-  for (let i = 0; i < target.data.length; i++) {
-    unselectedCellArray.push(target.data[i].cells)
-  }
+  target.data.map(trace => unselectedCells.push(trace.cells))
 
   // flatten array
-  unselectedCellArray = [...unselectedCellArray]
+  unselectedCells = [...unselectedCells]
 
-  const unselected = unselectedCellArray
-  selections.push(unselected)
+  selections.push(unselectedCells)
 
   target.layout.dragmode = 'lasso'
-  target.layout.scene = { unselectBatch: unselected }
+  target.layout.scene = { unselectBatch: unselectedCells }
 
   // change to lasso mode
   Plotly.relayout(targetPlotId, target.layout)

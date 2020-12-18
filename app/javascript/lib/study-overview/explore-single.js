@@ -58,12 +58,12 @@ async function renderSingleGenePlots(study, gene) {
 }
 
 /** Listen for events, and update view accordingly */
-function attachEventHandlers(study, gene) {
+function attachEventListeners(study, gene) {
   // resize listener
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {
     resizeScatterPlots()
-    if (getAnnotParams().type === 'group') { resizeViolinPlot() }
+    if (getAnnotParams().type === 'group') {resizeViolinPlot()}
   })
 
   handleMenuChange(renderSingleGenePlots, [study, gene])
@@ -75,7 +75,7 @@ export default async function exploreSingle() {
   const study = window.SCP.study
   const gene = window.SCP.gene
 
-  attachEventHandlers(study, gene)
+  attachEventListeners(study, gene)
 
   addSpatialDropdown(study)
 

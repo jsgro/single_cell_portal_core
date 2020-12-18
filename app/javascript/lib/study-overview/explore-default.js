@@ -36,7 +36,7 @@ const baseCamera = {
 }
 
 /** Listen for events, and update view accordingly */
-function attachEventHandlers(study) {
+function attachEventListeners(study) {
   // resize listener
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {
@@ -90,7 +90,7 @@ export default async function exploreDefault() {
   window.SCP.study.accession = accession
   window.SCP.taxons = window.SCP.study.taxonNames
 
-  attachEventHandlers(study)
+  attachEventListeners(study)
 
   if (study.cluster) {
     // set default subsample option of 10K (if subsampled) or all cells
