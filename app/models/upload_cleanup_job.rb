@@ -7,9 +7,10 @@
 
 class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
   extend ErrorTracker
+  MAX_RETRIES = 2
 
   def perform
-    retries = retry_count + 1
+    self.retry_count += 1
     # make sure file or study isn't queued for deletion first
     if study_file.nil?
       Rails.logger.info "#{Time.zone.now}: aborting UploadCleanupJob due to StudyFile already being deleted."
@@ -26,7 +27,7 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
       else
         begin
           # check workspace bucket for existence of remote file
-          Rails.logger.info "#{Time.zone.now}: performing UploadCleanupJob for #{study_file.bucket_location}:#{study_file.id} in '#{study.accession}'"
+          Rails.logger.info "#{Time.zone.now}: performing UploadCleanupJob for #{study_file.bucket_location}:#{study_file.id} in '#{study.accession}', attempt ##{retry_count}"
           remote_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, study_file.bucket_location)
           if remote_file.present?
             # check generation tags to make sure we're in sync
@@ -44,11 +45,11 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
           else
             # remote file was not found, so schedule a new cleanup job to check again
             # file may be pushing in another thread, and attempting to push here creates infinite recursion if errors are encountered
-            if retries < 3
-              interval = retries * 2
+            if self.retry_count <= MAX_RETRIES
+              interval = retry_count * 2
               run_at = interval.minutes.from_now
               Rails.logger.info "#{Time.zone.now}: remote file MISSING for #{study_file.bucket_location}:#{study_file.id}, scheduling new UploadCleanupJob for #{run_at}"
-              Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, retries), run_at: run_at)
+              Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, self.retry_count), run_at: run_at)
             else
               Rails.logger.error "#{Time.zone.now}: file #{study.accession}:#{study_file.bucket_location}:#{study_file.id} has failed to push to #{study.bucket_id}"
               message = "<p>#{study_file.bucket_location} in #{study.accession} has failed to push to the associated bucket: #{study.bucket_id}</p>"
@@ -57,13 +58,13 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
             end
           end
         rescue => e
-          error_context = ErrorTracker.format_extra_context(study, study_file, {retry_count: retries})
+          error_context = ErrorTracker.format_extra_context(study, study_file, {retry_count: self.retry_count})
           ErrorTracker.report_exception(e, nil, error_context)
-          if retries < 3
-            interval = retries * 2
-            run_at = interval.seconds.from_now
+          if self.retry_count <= MAX_RETRIES
+            interval = self.retry_count * 2
+            run_at = interval.minutes.from_now
             Rails.logger.error "#{Time.zone.now}: error in UploadCleanupJob for #{study.accession}:#{study_file.bucket_location}:#{study_file.id}, will retry at #{run_at}; #{e.message}"
-            Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, retries), run_at: run_at)
+            Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, self.retry_count), run_at: run_at)
           else
             Rails.logger.error "#{Time.zone.now}: terminal error in UploadCleanupJob for #{study.accession}:#{study_file.bucket_location}:#{study_file.id}; #{e.message}"
             message = "<p>The following failure occurred when attempting to clean up #{study.firecloud_project}/#{study.firecloud_workspace}:#{study_file.bucket_location}</p>"
@@ -87,7 +88,7 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
       # final sanity check - see if there is a file in the bucket of the same size
       # this might happen if the post-upload action to update 'status' fails for some reason
       remote_file = ApplicationController.firecloud_client.get_workspace_file(study_file.study.bucket_id, study_file.bucket_location)
-      if remote_file.present? && remote_file.upload_file_size == study_file.upload_file_size
+      if remote_file.present? && remote_file.size == study_file.upload_file_size
         study_file.update(status: 'uploaded', generation: remote_file.generation.to_s)
         next
       else
@@ -103,5 +104,20 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
         DeleteQueueJob.new(study_file).perform
       end
     end
+  end
+
+  # find instance of UploadCleanupJob for a given file
+  def self.get_job_instance(study_file)
+    jobs = Delayed::Job.all
+    jobs.each do |job|
+      handler = dump_job_handler(job)
+      return job if handler.is_a?(UploadCleanupJob) && handler.study_file['attributes']['_id'] == study_file.id
+    end
+    nil # no job found for file
+  end
+
+  # decode YAML job handler into struct to read attributes
+  def self.dump_job_handler(job)
+    YAML.load(job.handler)
   end
 end
