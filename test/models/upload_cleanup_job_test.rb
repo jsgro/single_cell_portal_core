@@ -6,6 +6,10 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
     @study = Study.first
   end
 
+  def teardown
+    @study.study_files.where(file_type: 'Other').destroy_all
+  end
+
   test 'should automatically remove failed uploads' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
@@ -34,6 +38,64 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
     end_file_count = StudyFile.count
     assert_equal beginning_file_count, end_file_count,
                  "Study file counts do not match after removing failed uploads; #{beginning_file_count} != #{end_file_count}"
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'should only run cleanup job 3 times on error' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    file = File.open(Rails.root.join('test', 'test_data', 'table_1.xlsx'))
+    study_file = StudyFile.create!(study_id: @study.id, file_type: 'Other', upload: file)
+    @study.send_to_firecloud(study_file)
+    remote = ApplicationController.firecloud_client.get_workspace_file(@study.bucket_id, study_file.bucket_location)
+    assert remote.present?, "File did not push to study bucket, no remote found"
+
+    # to cause errors in UploadCleanupJobs, remove file from bucket as this will cause UploadCleanupJob to retry later
+    remote.delete
+    new_remote = ApplicationController.firecloud_client.get_workspace_file(@study.bucket_id, study_file.bucket_location)
+    refute new_remote.present?, "Delete did not succeed, found remote: #{new_remote}"
+
+    # now find delayed_job instance for UploadCleanupJob for this file for each retry and assert only 3 attempts are made
+    0.upto(UploadCleanupJob::MAX_RETRIES).each do |retry_count|
+      cleanup_job = UploadCleanupJob.get_job_instance(study_file)
+      job_handler = UploadCleanupJob.dump_job_handler(cleanup_job)
+      assert job_handler.retry_count == retry_count, "Retry count does not match: #{job_handler.retry_count} != #{retry_count}"
+      # to force a job to run, unset :run_at
+      # wait until handler is cleared, which indicates job has run
+      cleanup_job.update(run_at: nil)
+      while cleanup_job.handler.present?
+        cleanup_job.reload
+        sleep 1
+      end
+    end
+
+    cleanup_job = UploadCleanupJob.get_job_instance(study_file)
+    refute cleanup_job.present?, "Should not have found any cleanup jobs for file: #{cleanup_job}"
+
+    # clean up
+    study_file.update(remote_location: nil)
+    ApplicationController.firecloud_client.delete_workspace_file(@study.bucket_id, study_file.bucket_location)
+    study_file.destroy
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'should load job instance and decode handler' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study_file = @study.study_files.sample
+    run_at = 10.minutes.from_now.in_time_zone
+    # queue job
+    job = Delayed::Job.enqueue(UploadCleanupJob.new(@study, study_file, 0), run_at: run_at)
+    found_job = UploadCleanupJob.get_job_instance(study_file)
+    assert_equal job.id, found_job.id, "Did not get correct instance of UploadCleanupJob; #{job.id} != #{found_job.id}"
+    handler = UploadCleanupJob.dump_job_handler(job)
+    handler_file_attributes = handler.study_file['attributes']
+    assert_equal study_file.attributes, handler_file_attributes, "Study File attributes do not match: #{study_file.attributes} != #{handler_file_attributes}"
+
+    # clean up
+    job.destroy
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

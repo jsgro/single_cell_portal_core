@@ -50,7 +50,6 @@ class IngestJob
   #   - (RuntimeError) => If file cannot be pushed to remote bucket
   def push_remote_and_launch_ingest(skip_push: false)
     begin
-      raise StandardError.new('short circuit ingest to test emails')
       file_identifier = "#{self.study_file.bucket_location}:#{self.study_file.id}"
       if self.reparse
         Rails.logger.info "Deleting existing data for #{file_identifier}"
