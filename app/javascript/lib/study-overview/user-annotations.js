@@ -1,8 +1,11 @@
 /**
-* @fileoverview User interface for "Create Annotations", or user annotations
+* @fileoverview UI for "Create Annotation" -- creating a user annotation
 *
 * User annotations are created by signed-in users in the Explore tab of the
 * Study Overview page.
+*
+* Walk-through:
+* https://github.com/broadinstitute/single_cell_portal/wiki/Annotations
 */
 
 /* eslint-disable no-invalid-this */
@@ -10,19 +13,19 @@
 import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
 
-// Array of arrays of cell names, aka selections, and of selection names
+// Array of arrays of cell names, a.k.a. selections, and of selection labels
 let selections = []
-const namesArray = ['']
+const labels = ['']
 
-/** Get "Set annotation label" text input HTML for each each annotation */
-function getAnnotationLabelInputs(rowIndex, selectionValue, textVal) {
+/** Get "Set annotation label" text input HTML for each selection */
+function getAnnotationLabelInputs(rowIndex, selectionValue, label) {
   return (
     `<input type="text"
       name="user_annotation[user_data_arrays_attributes][${rowIndex}][name]"
       id="user_annotation_user_data_arrays_attributes_${rowIndex}_name"
       class="form-control annotation-label need-text"
       placeholder="Set annotation label"
-        value="${textVal}">` +
+      value="${label}">` +
     `<input type="hidden"
       name="user_annotation[user_data_arrays_attributes][${rowIndex}][values]"
       id="user_annotation_user_data_arrays_attributes_${rowIndex}_values"
@@ -51,7 +54,7 @@ function getSelectionRow(rowIndex, selections, id) {
 
   const numCells = selection.length
   const selectionTd = `<td id="${id}">${name}: ${numCells} cells${
-    getAnnotationLabelInputs(rowIndex, selection, namesArray[rowIndex])
+    getAnnotationLabelInputs(rowIndex, selection, labels[rowIndex])
   }</td>`
 
   const deleteButton = getDeleteButton(rowIndex, id)
@@ -121,16 +124,16 @@ function attachEventListeners(target) {
     // Add this selection to all the others
     selections.push(selection)
     // Add a blank name to array of names
-    namesArray.push('')
+    labels.push('')
     // Remove all empty arrays from selections, and their names
     selections.forEach((selection, i) => {
       if (selection.length === 0) {
         selections.splice(i, 1)
-        namesArray.splice(i, 1)
+        labels.splice(i, 1)
       }
     })
     // After selection, update rows
-    updateSelection(selections, namesArray)
+    updateSelection(selections, labels)
   })
 
   // Listen for text entry and remember it
@@ -140,7 +143,7 @@ function attachEventListeners(target) {
         .replace('user_annotation_user_data_arrays_attributes_', '')
         .replace('_name', '')
       const index = parseInt(trimmedId)
-      namesArray[index] = $(this).val()
+      labels[index] = $(this).val()
     }
   )
 
@@ -150,15 +153,15 @@ function attachEventListeners(target) {
     const index = parseInt(trimmedId)
     selections[0] = selections[0].concat(selections[index])
     selections.splice(index, 1)
-    updateSelection(selections, namesArray)
+    updateSelection(selections, labels)
   })
 }
 
-/** Initialize "Create Annotations" functionality for user annotations */
+/** Initialize "Create Annotation" functionality for user annotations */
 export default function userAnnotations() {
   $('#selection-well, #selection-button').css('visibility', 'visible')
 
-  // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
+  // TODO (SCP-2962): Support "Create Annotation" for spatial scatter plots
   const targetPlotId = 'scatter-plot-0'
 
   const target = document.getElementById(targetPlotId)
