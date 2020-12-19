@@ -10,7 +10,7 @@
 import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
 
-// array of arrays of cell names, aka selections, and of selection names
+// Array of arrays of cell names, aka selections, and of selection names
 let selections = []
 const namesArray = ['']
 
@@ -30,9 +30,20 @@ function getSetLabelInputs(rowIndex, selectionValue, textVal) {
   )
 }
 
+/** Get main part of a selection row well */
+function getSelectionTd(rowIndex, selections, id) {
+  const name = (rowIndex === 0) ? 'Unselected' : `Selection ${rowIndex}`
+  const selection = selections[rowIndex]
+
+  const numCells = selection.length
+  return `<td id="${id}">${name}: ${numCells} cells${
+    getSetLabelInputs(rowIndex, selection, namesArray[rowIndex])
+  }</td>`
+}
+
 /** Add rows to the table and update all the other rows */
 function updateSelection() {
-  // get all the names of rows to update
+  // Get all the names of rows to update
   const nameArray = []
   $('#well-table tbody tr').each(function() {
     nameArray.push(this.id)
@@ -40,12 +51,10 @@ function updateSelection() {
   })
 
   selections.forEach((selection, i) => {
-    // for unselected row, when n == 0
-    const name = (i === 0) ? 'Unselected' : `Selection ${i}`
-
+    // For unselected row, when n == 0
     const id = `Selection${parseInt(i)}`
 
-    // create delete button and listener, attach listener to update unselected
+    // Create delete button and listener, attach listener to update unselected
     const domClasses =
       'btn btn-sm btn-danger delete-btn annotation-delete-btn'
     const deleteButton = i === 0 ? '' :
@@ -55,81 +64,67 @@ function updateSelection() {
         `</div>` +
         `</td>`}`
 
-    const numCells = selection.length
-    const row =
-      `<tr>` +
-      `<td id="${id}">${name}: ${numCells} cells${
-        getSetLabelInputs(i, selection, namesArray[i])
-      }</td>${
-        deleteButton}`
-    '</tr>'
+    const selectionTd = getSelectionTd(i, selections, id)
+    const row = `<tr>${selectionTd}${deleteButton}</tr>`
 
     $('#well-table').prepend(row)
   })
-  // attach listener to make sure all annotation labels are unique
+  // Attach listener to make sure all annotation labels are unique
   window.validateUnique('#create_annotations', '.annotation-label')
 }
 
 /**
- * Create selection creates the first row, unselected. only called at
- * creation of selection well
+ * Create the first row, "Unselected: {#} cells". Only called once.
  */
 function createSelection() {
   const selectionTable = $('#selection-table')
-  selectionTable.empty()
-  // add a well and table to div
-  selectionTable.prepend(
+
+  // Initialize content to a well table
+  selectionTable.html(
     '<div class="col-sm-12">' +
         '<table id="well-table" class="table table-condensed">' +
           '<tbody></tbody>' +
         '</table>' +
       '</div>')
 
-  // add the first row, unselected
-  selections.forEach((selection, i) => {
-    const name = (i === 0) ? 'Unselected' : `Selection ${i}`
-    const row =
-      `${'<tr>' +
-      '<td id="'}${name}">${name}: ${selection.length} cells${
-        getSetLabelInputs(i, selection, '')
-      }</td>` +
-      `</tr>`
+  // Add the first row, i.e. "Unselected: {#} cells"
+  const selectionTd = getSelectionTd(0, selections, '')
+  const row = `<tr>${selectionTd}</tr>`
 
-    $('#well-table').prepend(row)
-  })
+  $('#well-table').prepend(row)
 }
 
 /** Attach event listeners for user annotations component */
 function attachEventListeners(target) {
   // Listen for selections in the target scatter plot
   target.on('plotly_selected', eventData => {
-    const selection =[]
+    const selection = []
 
     console.log(eventData)
 
-    // get selected cells curve number and point number
+    // Get selected cells curve number and point number
     // plotly only gives x and y values per point, so we have to use point id
     // to get annotation and cell name
     eventData.points.forEach(pt => {
       selection.push(target.data[pt.curveNumber].cells[pt.pointNumber])
     })
 
-    // update previous selections, to ensure they have no duplicate cell names
+    // Update previous selections, to ensure they have no duplicate cell names
     selections = selections.map(thisSelection => {
       return window._.difference(thisSelection, selection)
     })
-    // add this selection to all the others
+    // Add this selection to all the others
     selections.push(selection)
-    // add a blank name to array of names
+    // Add a blank name to array of names
     namesArray.push('')
-    // remove all empty arrays from selections, and their names
+    // Remove all empty arrays from selections, and their names
     selections.forEach((selection, i) => {
       if (selection.length === 0) {
         selections.splice(i, 1)
         namesArray.splice(i, 1)
       }
     })
-    // after selection, update rows
+    // After selection, update rows
     updateSelection(selections, namesArray)
   })
 
@@ -156,28 +151,22 @@ function attachEventListeners(target) {
 
 /** Initialize "Create Annotations" functionality for user annotations */
 export default function userAnnotations() {
+  $('#selection-well, #selection-button').css('visibility', 'visible')
+
   // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
   const targetPlotId = 'scatter-plot-0'
 
   const target = document.getElementById(targetPlotId)
 
-  // show the selection well and submit button
-  $('#selection-well, #selection-button').css('visibility', 'visible')
-
-  // Set the initial unselected array
-  let unselectedCells = []
-
-  // set initial unselected
-  target.data.map(trace => unselectedCells.push(trace.cells))
+  let unselectedCells = target.data.map(trace => trace.cells)
 
   unselectedCells = unselectedCells.flat()
-  // flatten array
   selections = [unselectedCells]
 
   target.layout.dragmode = 'lasso'
   target.layout.scene = { unselectBatch: unselectedCells }
 
-  // change to lasso mode
+  // Change scatter plot to use lasso mode, for free-hand cell selection
   Plotly.relayout(targetPlotId, target.layout)
 
   attachEventListeners(target)
