@@ -30,15 +30,33 @@ function getSetLabelInputs(rowIndex, selectionValue, textVal) {
   )
 }
 
+/** Get delete button for the row at the given index */
+function getDeleteButton(rowIndex, id) {
+  const domClasses = 'btn btn-sm btn-danger delete-btn annotation-delete-btn'
+  let deleteButton = ''
+  if (rowIndex > 0) {
+    deleteButton = `${'<td class="col-sm-1" style="padding-top: 27px;">' +
+    `<div class="${domClasses}" id="'${id}Button">` +
+    `<span class="fas fa-times"></span>` +
+    `</div>` +
+    `</td>`}`
+  }
+  return deleteButton
+}
+
 /** Get main part of a selection row well */
-function getSelectionTd(rowIndex, selections, id) {
+function getSelectionRow(rowIndex, selections, id) {
   const name = (rowIndex === 0) ? 'Unselected' : `Selection ${rowIndex}`
   const selection = selections[rowIndex]
 
   const numCells = selection.length
-  return `<td id="${id}">${name}: ${numCells} cells${
+  const selectionTd = `<td id="${id}">${name}: ${numCells} cells${
     getSetLabelInputs(rowIndex, selection, namesArray[rowIndex])
   }</td>`
+
+  const deleteButton = getDeleteButton(rowIndex, id)
+
+  return `<tr>${selectionTd}${deleteButton}</tr>`
 }
 
 /** Add rows to the table and update all the other rows */
@@ -53,30 +71,18 @@ function updateSelection() {
   selections.forEach((selection, i) => {
     // For unselected row, when n == 0
     const id = `Selection${parseInt(i)}`
-
-    // Create delete button and listener, attach listener to update unselected
-    const domClasses =
-      'btn btn-sm btn-danger delete-btn annotation-delete-btn'
-    const deleteButton = i === 0 ? '' :
-      `${'<td class="col-sm-1" style="padding-top: 27px;">' +
-        `<div class="${domClasses}" id="'${id}Button">` +
-        `<span class="fas fa-times"></span>` +
-        `</div>` +
-        `</td>`}`
-
-    const selectionTd = getSelectionTd(i, selections, id)
-    const row = `<tr>${selectionTd}${deleteButton}</tr>`
-
+    const row = getSelectionRow(i, selections, id)
     $('#well-table').prepend(row)
   })
+
   // Attach listener to make sure all annotation labels are unique
   window.validateUnique('#create_annotations', '.annotation-label')
 }
 
 /**
- * Create the first row, "Unselected: {#} cells". Only called once.
+ * Create selection table and "Unselected" row. Only called once.
  */
-function createSelection() {
+function createSelectionTable() {
   const selectionTable = $('#selection-table')
 
   // Initialize content to a well table
@@ -88,8 +94,7 @@ function createSelection() {
       '</div>')
 
   // Add the first row, i.e. "Unselected: {#} cells"
-  const selectionTd = getSelectionTd(0, selections, '')
-  const row = `<tr>${selectionTd}</tr>`
+  const row = getSelectionRow(0, selections, '')
 
   $('#well-table').prepend(row)
 }
@@ -171,5 +176,5 @@ export default function userAnnotations() {
 
   attachEventListeners(target)
 
-  createSelection()
+  createSelectionTable()
 }
