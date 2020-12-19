@@ -14,14 +14,14 @@ import Plotly from 'plotly.js-dist'
 let selections = []
 const namesArray = ['']
 
-/** Get "Set label" text input HTML for each each annotation */
-function getSetLabelInputs(rowIndex, selectionValue, textVal) {
+/** Get "Set annotation label" text input HTML for each each annotation */
+function getAnnotationLabelInputs(rowIndex, selectionValue, textVal) {
   return (
     `<input type="text"
       name="user_annotation[user_data_arrays_attributes][${rowIndex}][name]"
       id="user_annotation_user_data_arrays_attributes_${rowIndex}_name"
       class="form-control annotation-label need-text"
-      placeholder="Set label"
+      placeholder="Set annotation label"
         value="${textVal}">` +
     `<input type="hidden"
       name="user_annotation[user_data_arrays_attributes][${rowIndex}][values]"
@@ -44,14 +44,14 @@ function getDeleteButton(rowIndex, id) {
   return deleteButton
 }
 
-/** Get main part of a selection row well */
+/** Get text input for annotation label */
 function getSelectionRow(rowIndex, selections, id) {
   const name = (rowIndex === 0) ? 'Unselected' : `Selection ${rowIndex}`
   const selection = selections[rowIndex]
 
   const numCells = selection.length
   const selectionTd = `<td id="${id}">${name}: ${numCells} cells${
-    getSetLabelInputs(rowIndex, selection, namesArray[rowIndex])
+    getAnnotationLabelInputs(rowIndex, selection, namesArray[rowIndex])
   }</td>`
 
   const deleteButton = getDeleteButton(rowIndex, id)
