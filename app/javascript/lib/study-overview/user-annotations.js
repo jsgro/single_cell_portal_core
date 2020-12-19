@@ -39,7 +39,6 @@ function updateSelection() {
     $(this).remove()
   })
 
-  // iterate through the rows to update them
   selections.forEach((selection, i) => {
     // for unselected row, when n == 0
     const name = (i === 0) ? 'Unselected' : `Selection ${i}`
@@ -57,17 +56,15 @@ function updateSelection() {
         `</td>`}`
 
     const numCells = selection.length
-    // rowString is the string to add, that contains all the row information
-    const rowString =
-      `<tr id="${id}Row">` +
-      `<td id="${id}">${
-        name}: ${numCells} cells${
+    const row =
+      `<tr>` +
+      `<td id="${id}">${name}: ${numCells} cells${
         getSetLabelInputs(i, selection, namesArray[i])
       }</td>${
         deleteButton}`
     '</tr>'
 
-    $('#well-table').prepend(rowString)
+    $('#well-table').prepend(row)
   })
   // attach listener to make sure all annotation labels are unique
   window.validateUnique('#create_annotations', '.annotation-label')
@@ -79,8 +76,6 @@ function updateSelection() {
  */
 function createSelection() {
   const selectionTable = $('#selection-table')
-  console.log('createSelection')
-  // make sure table is empty
   selectionTable.empty()
   // add a well and table to div
   selectionTable.prepend(
@@ -93,14 +88,14 @@ function createSelection() {
   // add the first row, unselected
   selections.forEach((selection, i) => {
     const name = (i === 0) ? 'Unselected' : `Selection ${i}`
-    const addS =
+    const row =
       `${'<tr>' +
       '<td id="'}${name}">${name}: ${selection.length} cells${
         getSetLabelInputs(i, selection, '')
       }</td>` +
       `</tr>`
 
-    $('#well-table').prepend(addS)
+    $('#well-table').prepend(row)
   })
 }
 
