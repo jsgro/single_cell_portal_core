@@ -61,7 +61,7 @@ function updateSelection() {
     const rowString =
       `<tr id="${id}Row">` +
       `<td id="${id}">${
-        name}: ${numCells} Cells${
+        name}: ${numCells} cells${
         getSetLabelInputs(i, selection, namesArray[i])
       }</td>${
         deleteButton}`
@@ -95,7 +95,7 @@ function createSelection() {
     const name = (i === 0) ? 'Unselected' : `Selection ${i}`
     const addS =
       `${'<tr>' +
-      '<td id="'}${name}">${name}: ${selections.length} Cells${
+      '<td id="'}${name}">${name}: ${selection.length} cells${
         getSetLabelInputs(i, selection, '')
       }</td>` +
       `</tr>`
@@ -113,7 +113,7 @@ function attachEventListeners(target) {
     console.log(eventData)
 
     // get selected cells curve number and point number
-    // plotly only giver x and y values per point, so we have to use point id
+    // plotly only gives x and y values per point, so we have to use point id
     // to get annotation and cell name
     eventData.points.forEach(pt => {
       selection.push(target.data[pt.curveNumber].cells[pt.pointNumber])
@@ -153,7 +153,6 @@ function attachEventListeners(target) {
   $('#selection-well').on('click', '.annotation-delete-btn', function() {
     const trimmedId = this.id.replace('Selection', '').replace('Button', '')
     const index = parseInt(trimmedId)
-    console.log(index)
     selections[0] = selections[0].concat(selections[index])
     selections.splice(index, 1)
     updateSelection(selections, namesArray)
@@ -176,10 +175,9 @@ export default function userAnnotations() {
   // set initial unselected
   target.data.map(trace => unselectedCells.push(trace.cells))
 
+  unselectedCells = unselectedCells.flat()
   // flatten array
-  unselectedCells = [...unselectedCells]
-
-  selections.push(unselectedCells)
+  selections = [unselectedCells]
 
   target.layout.dragmode = 'lasso'
   target.layout.scene = { unselectBatch: unselectedCells }
