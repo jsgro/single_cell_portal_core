@@ -382,4 +382,9 @@ module ApplicationHelper
     end
     page_name
   end
+
+  # helper to add a red * to a form field label
+  def label_with_asterisk(label_name)
+    "#{label_name} <i class='text-danger'>*</i>".html_safe
+  end
 end
