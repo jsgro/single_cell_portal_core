@@ -39,7 +39,7 @@ function getDeleteButton(rowIndex, id) {
   let deleteButton = ''
   if (rowIndex > 0) {
     deleteButton = `${'<td class="col-sm-1" style="padding-top: 27px;">' +
-    `<div class="${domClasses}" id="'${id}Button">` +
+    `<div class="${domClasses}" id="${id}Button">` +
     `<span class="fas fa-times"></span>` +
     `</div>` +
     `</td>`}`
