@@ -28,6 +28,7 @@ import { clearPlots } from 'lib/plot'
 import {
   addSpatialDropdown, getMainViewOptions, getAnnotParams, handleMenuChange
 } from 'lib/study-overview/view-options'
+import { closeUserAnnotationsForm } from 'lib/study-overiew-user-annotations'
 
 /** Render violin and scatter plots for the Explore tab's single-gene view */
 async function renderSingleGenePlots(study, gene) {
@@ -80,4 +81,7 @@ export default async function exploreSingle() {
   addSpatialDropdown(study)
 
   renderSingleGenePlots(study, gene)
+
+  closeUserAnnotationsForm()
+
 }

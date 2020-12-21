@@ -157,6 +157,19 @@ function attachEventListeners(target) {
   })
 }
 
+/**
+* Close the user annotations panel if open when rendering clusters
+*/
+export function closeUserAnnotationsForm() {
+    if ( $('#selection_div').attr('class') === '' ) {
+        console.log('closing user annotations form');
+        // menu is open, so empty forms and reset button state
+        $('#selection_div').html('');
+        $('#selection_div').toggleClass('collapse');
+        $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off');
+    }
+}
+
 /** Initialize "Create Annotation" functionality for user annotations */
 export default function userAnnotations() {
   $('#selection-well, #selection-button').css('visibility', 'visible')

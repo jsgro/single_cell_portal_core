@@ -744,17 +744,28 @@ class SiteController < ApplicationController
 
     #Error handling block to create annotation
     begin
+
+      user_data_arrays_attributes = user_annotation_params[:user_data_arrays_attributes]
       # Get the label values and push to data names
-      user_annotation_params[:user_data_arrays_attributes].keys.each do |key|
-        user_annotation_params[:user_data_arrays_attributes][key][:values] =  user_annotation_params[:user_data_arrays_attributes][key][:values].split(',')
-        @data_names.push(user_annotation_params[:user_data_arrays_attributes][key][:name].strip )
+      user_data_arrays_attributes.keys.each do |key|
+        user_data_arrays_attributes[key][:values] =  user_data_arrays_attributes[key][:values].split(',')
+        @data_names.push(user_data_arrays_attributes[key][:name].strip)
       end
 
+      user_id = user_annotation_params[:user_id]
+      study_id = user_annotation_params[:study_id]
+      cluster_group_id = user_annotation_params[:cluster_group_id]
+      name = user_annotation_params[:name]
+      subsample = user_annotation_params[:subsample_threshold]
+      source_resolution = subsample.present? ? subsample.to_i : nil
+      subsample_annotation = user_annotation_params[:subsample_annotation]
+      loaded_annotation = user_annotation_params[:loaded_annotation]
+
       # Create the annotation
-      @user_annotation = UserAnnotation.new(user_id: user_annotation_params[:user_id], study_id: user_annotation_params[:study_id],
-                                            cluster_group_id: user_annotation_params[:cluster_group_id],
-                                            values: @data_names, name: user_annotation_params[:name],
-                                            source_resolution: user_annotation_params[:subsample_threshold].present? ? user_annotation_params[:subsample_threshold].to_i : nil)
+      @user_annotation = UserAnnotation.new(user_id: user_id, study_id: study_id,
+                                            cluster_group_id: cluster_group_id,
+                                            values: @data_names, name: name,
+                                            source_resolution: source_resolution)
 
       # override cluster setter to use the current selected cluster, needed for reloading
       @cluster = @user_annotation.cluster_group
@@ -762,7 +773,7 @@ class SiteController < ApplicationController
       # Error handling, save the annotation and handle exceptions
       if @user_annotation.save
         # Method call to create the user data arrays for this annotation
-        @user_annotation.initialize_user_data_arrays(user_annotation_params[:user_data_arrays_attributes], user_annotation_params[:subsample_annotation],user_annotation_params[:subsample_threshold], user_annotation_params[:loaded_annotation])
+        @user_annotation.initialize_user_data_arrays(user_data_arrays_attributes, subsample_annotation, subsample, loaded_annotation)
 
         # Reset the annotations in the dropdowns to include this new annotation
         @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)

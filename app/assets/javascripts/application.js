@@ -1046,17 +1046,6 @@ function unescapeHTML(encodedStr) {
     return $("<div/>").html(encodedStr).text();
 }
 
-// close the user annotations panel if open when rendering clusters
-function closeUserAnnotationsForm() {
-    if ( $('#selection_div').attr('class') === '' ) {
-        console.log('closing user annotations form');
-        // menu is open, so empty forms and reset button state
-        $('#selection_div').html('');
-        $('#selection_div').toggleClass('collapse');
-        $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off');
-    }
-}
-
 // validate an email address
 function validateEmail(email) {
     var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
