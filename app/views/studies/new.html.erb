@@ -15,7 +15,7 @@
       (projects created through the portal do by default).</strong></p>
   <p class="text-danger"><strong><i class="fas fa-fw fa-exclamation-triangle"></i> You cannot change the billing project of a workspace once it has been created.</strong></p>
   <h4>Metadata convention</h4>
-  <p>Metadata files must provide required information using <%= link_to 'SCP Conventional File format', 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format', target: :_blank %>. Select ontology terms from <%= link_to 'designated ontologies', 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Required-Conventional-Metadata', target: :_blank %>, adhere to <%= link_to 'metadata validation rules', 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#metadata-validation-rules', target: :_blank %>, and make make your study data discoverable through Single Cell Portal's new <a href="#" id="why-label-data-modal-link">Advanced Search feature</a>. Required metadata include: <strong>species</strong>, <strong>disease</strong>, <strong>organ</strong>, <strong>library_preparation_protocol</strong>, and <strong>sex</strong>.  To enable data reuse, you must also include <strong>cell name</strong>, <strong>biosample_id</strong>, and <strong>donor_id</strong></p>
+  <p>Metadata files must provide required information using <%= link_to 'SCP Conventional File Format', 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format', target: :_blank %>. Select ontology terms from <%= link_to 'designated ontologies', 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Required-Conventional-Metadata', target: :_blank %>, adhere to <%= link_to 'metadata validation rules', 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#metadata-validation-rules', target: :_blank %>, and make your study data discoverable through Single Cell Portal's new <a href="#" id="why-label-data-modal-link">Advanced Search feature</a>. Required metadata include: <strong>species</strong>, <strong>disease</strong>, <strong>organ</strong>, <strong>library_preparation_protocol</strong>, and <strong>sex</strong>.  To enable data reuse, you must also include <strong>cell name</strong>, <strong>biosample_id</strong>, and <strong>donor_id</strong>.</p>
 </div>
 
 <%= render 'form' %>
@@ -46,7 +46,7 @@
       </div>
       <div class="modal-body">
         <div>
-          <p>Annotating cells in your study consistently with ontology-based metadata allows your data to be accessed and used more broadly. The SCP Metadata Convention defines a set of metadata terms for consistent search across studies by leveraging established biomedical ontologies and controlled vocabulary. <strong><%= link_to 'Learn more', 'https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies', target: :_blank %></strong></p>
+          <p>Annotating cells in your study with ontology-based metadata allows your data to be accessed and used more broadly. The SCP Metadata Convention defines a set of metadata terms for consistent search across studies by leveraging established biomedical ontologies and controlled vocabulary. <strong><%= link_to 'Learn more', 'https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies', target: :_blank %></strong>.</p>
           </p>
         </div>
         <div class="text-center">
