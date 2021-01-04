@@ -11,8 +11,8 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
   MAX_RETRIES = 2
 
   def perform
-    retry_count ||= 0
-    retry_count += 1
+    attempt = self.retry_count + 1
+    Rails.logger.info "Loading UploadCleanupJob for #{study_file.upload_file_name}:#{study_file.id}, attempt #{attempt}"
     # make sure file or study isn't queued for deletion first
     if study_file.nil?
       Rails.logger.info "aborting UploadCleanupJob due to StudyFile already being deleted."
@@ -29,7 +29,7 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
       else
         begin
           # check workspace bucket for existence of remote file
-          Rails.logger.info "performing UploadCleanupJob for #{study_file.bucket_location}:#{study_file.id} in '#{study.accession}', attempt ##{retry_count}"
+          Rails.logger.info "performing UploadCleanupJob for #{study_file.bucket_location}:#{study_file.id} in '#{study.accession}', attempt ##{attempt}"
           remote_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, study_file.bucket_location)
           if remote_file.present?
             # check generation tags to make sure we're in sync
@@ -47,11 +47,11 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
           else
             # remote file was not found, so schedule a new cleanup job to check again
             # file may be pushing in another thread, and attempting to push here creates infinite recursion if errors are encountered
-            if retry_count <= MAX_RETRIES
-              interval = retry_count * 2
+            if attempt <= MAX_RETRIES
+              interval = attempt * 2
               run_at = interval.minutes.from_now
-              Rails.logger.info "remote file MISSING for #{study_file.bucket_location}:#{study_file.id}, scheduling new UploadCleanupJob for #{run_at}"
-              Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, retry_count), run_at: run_at)
+              Rails.logger.info "remote file MISSING for #{study_file.bucket_location}:#{study_file.id}, scheduling new UploadCleanupJob for #{run_at}, attempt: #{attempt}"
+              Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, attempt), run_at: run_at)
             else
               Rails.logger.error "file #{study.accession}:#{study_file.bucket_location}:#{study_file.id} has failed to push to #{study.bucket_id}"
               message = "<p>#{study_file.bucket_location} in #{study.accession} has failed to push to the associated bucket: #{study.bucket_id}</p>"
@@ -60,13 +60,13 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
             end
           end
         rescue => e
-          error_context = ErrorTracker.format_extra_context(study, study_file, {retry_count: retry_count})
+          error_context = ErrorTracker.format_extra_context(study, study_file, {retry_count: attempt})
           ErrorTracker.report_exception(e, nil, error_context)
-          if retry_count <= MAX_RETRIES
-            interval = retry_count * 2
+          if attempt <= MAX_RETRIES
+            interval = attempt * 2
             run_at = interval.minutes.from_now
             Rails.logger.error "error in UploadCleanupJob for #{study.accession}:#{study_file.bucket_location}:#{study_file.id}, will retry at #{run_at}; #{e.message}"
-            Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, retry_count), run_at: run_at)
+            Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, attempt), run_at: run_at)
           else
             Rails.logger.error "terminal error in UploadCleanupJob for #{study.accession}:#{study_file.bucket_location}:#{study_file.id}; #{e.message}"
             message = "<p>The following failure occurred when attempting to clean up #{study.firecloud_project}/#{study.firecloud_workspace}:#{study_file.bucket_location}</p>"
