@@ -39,7 +39,11 @@ function getAnnotationOptions(annotationList, clusterName) {
 }
 
 /** returns the first annotation for the given cluster */
-function getDefaultAnnotationForCluster(annotationList, clusterName) {
+function getDefaultAnnotationForCluster(annotationList, clusterName, currentAnnotation) {
+  if (currentAnnotation && currentAnnotation.scope === 'study') {
+    // if they are changing cluster, and using a study-wide annotation, keep that annotation selected
+    return currentAnnotation
+  }
   const clusterAnnots = annotationList.annotations.filter(annot => annot.cluster_name == clusterName)
   if (clusterAnnots.length) {
     return clusterAnnots[0]
@@ -51,11 +55,7 @@ function getDefaultAnnotationForCluster(annotationList, clusterName) {
 
 /** takes the server response and returns subsample default subsample for the cluster */
 function getDefaultSubsampleForCluster(annotationList, clusterName) {
-  const clusterSubsamples = annotationList.subsample_thresholds[clusterName]
-  if (!clusterSubsamples || clusterSubsamples.length === 0) {
-    return ''
-  }
-  return Math.min(clusterSubsamples)
+  return '' // for now, default is always all cells
 }
 
 /** renders cluster, annotation, and (optionally) subsample controls for a study */
@@ -119,7 +119,7 @@ export default function ClusterControls({studyAccession, onChange, showSubsample
           value={{ label: renderParams.cluster, value: renderParams.cluster }}
           onChange={ cluster => setRenderParams({
             userUpdated: true,
-            annotation: getDefaultAnnotationForCluster(annotationList, cluster.name),
+            annotation: getDefaultAnnotationForCluster(annotationList, cluster.name, renderParams.annotation),
             cluster: cluster.value,
             subsample: getDefaultSubsampleForCluster(annotationList, cluster.value)
           })}

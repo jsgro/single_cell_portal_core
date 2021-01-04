@@ -41,6 +41,7 @@ import exploreSingle from 'lib/study-overview/explore-single'
 // Stub, for later
 // import exploreMultipleGenes from 'lib/study-overview/explore-multiple-genes'
 
+
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI
   logPageView()

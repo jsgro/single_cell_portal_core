@@ -361,6 +361,16 @@ module ApplicationHelper
     end
   end
 
+   # Return a scope-limited access token that can be used in URLs (e.g. in urls passed to Morpheus)
+   # this is different than a totat in that it can be re-used
+  def get_url_safe_access_token(user)
+    token = ''
+    if user.present?
+      token = user.authentication_token
+    end
+    token
+  end
+
   def pluralize_without_count(count, noun, text=nil)
     count.to_i == 1 ? "#{noun}#{text}" : "#{noun.pluralize}#{text}"
   end
@@ -371,5 +381,10 @@ module ApplicationHelper
       page_name = 'root'
     end
     page_name
+  end
+
+  # helper to add a red * to a form field label
+  def label_with_asterisk(label_name)
+    "#{label_name} <i class='text-danger'>*</i>".html_safe
   end
 end

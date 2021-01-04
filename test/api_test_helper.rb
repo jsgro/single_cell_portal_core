@@ -34,6 +34,7 @@ module Requests
       })
       sign_in user
       user.update_last_access_at!
+      user.update(authentication_token: Devise.friendly_token(32))
     end
   end
 end

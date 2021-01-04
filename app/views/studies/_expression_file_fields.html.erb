@@ -4,3 +4,7 @@
     <%= f.text_field :y_axis_label, value: @study.has_expression_label? ? @study.default_expression_label : f.object.y_axis_label, placeholder: @study.default_expression_label, class: 'form-control', disabled: @study.has_expression_label? %>
   </div>
 </div>
+<div class="form-group">
+  <%= f.fields_for :expression_file_info %>
+</div>
+

@@ -477,6 +477,19 @@ function enableDefaultActions() {
         $(this).off('mousewheel.disableScroll')
     });
 
+    // reset units dropdown based on is_raw_counts?
+    $('body').on('click', '.raw-counts-radio', function() {
+        var isRawCount = $(this).val() == '1'
+        var expFileInfoForm = $(this).closest('.expression-file-info-fields')
+        var unitSelect = expFileInfoForm.find('.counts-unit-dropdown');
+        if ( !isRawCount ) {
+            unitSelect.val('');
+            setElementsEnabled(unitSelect, false);
+        } else {
+            setElementsEnabled(unitSelect, true);
+        }
+    });
+
     // when clicking the main study view page tabs, update the current URL so that when you refresh the tab stays open
     $('#study-tabs').on('shown.bs.tab', function(event) {
         var href = $(event.target).attr('href');
@@ -982,8 +995,10 @@ function validateName(value, selector) {
 }
 
 function validateCandidateUpload(formId, filename, classSelector) {
+    var form = $(formId)
     var names = [];
     classSelector.each(function(index, name) {
+
         var n = $(name).val().trim();
         if (n !== '') {
             names.push(n);
@@ -992,9 +1007,25 @@ function validateCandidateUpload(formId, filename, classSelector) {
     if (names.filter(function(n) {return n === filename}).length > 1) {
         alert(filename + ' has already been uploaded or is staged for upload.  Please select a different file.');
         return false;
-    } else {
-        return true;
     }
+    // enforce species selection
+    var taxonSelect = form.find('#study_file_taxon_id')
+    if (typeof taxonSelect !== 'undefined' && $(taxonSelect).val() == '') {
+        alert('Please select a species before uploading this file.');
+        setErrorOnBlank(taxonSelect);
+        return false;
+    }
+    // enforce units if matrix is raw counts
+    var countsRadio = Array.from(form.find('.raw-counts-radio')).find(radio => radio.checked);
+    if ( typeof countsRadio !== 'undefined' && $(countsRadio).val() == '1') {
+        var units = form.find('.counts-unit-dropdown');
+        if ( $(units).val() == '') {
+            alert('You must specify units for raw counts matrices.');
+            setErrorOnBlank(units);
+            return false;
+        }
+    }
+    return true;
 }
 
 // function to call Google Analytics whenever AJAX call is made
@@ -1134,4 +1165,5 @@ function setElementsEnabled(selector, enabled= true) {
         'cursor': enabled ? 'auto' : 'not-allowed'
     };
     selector.css(elementCss).parent().css(parentCss);
+    selector.attr('disabled', enabled ? false : 'disabled')
 }

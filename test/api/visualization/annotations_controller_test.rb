@@ -12,7 +12,7 @@ class AnnotationsControllerTest < ActionDispatch::IntegrationTest
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @basic_study = FactoryBot.create(:detached_study,
-                                     name: 'Basic Cluster Study',
+                                     name_prefix: 'Basic Cluster Study',
                                      public: false,
                                      user: @user,
                                      test_array: @@studies_to_clean)
@@ -47,10 +47,21 @@ class AnnotationsControllerTest < ActionDispatch::IntegrationTest
 
     execute_http_request(:get, cell_values_api_v1_study_annotation_path(@basic_study, 'foo'), user: user2)
     assert_equal 403, response.status
+
+    sign_in_and_update @user
+    execute_http_request(:get, api_v1_study_annotations_path(@basic_study, 'foo'), user: @user)
+    assert_equal 200, response.status
+
+    # test url_safe_token capability
+    get cell_values_api_v1_study_annotation_path(@basic_study, 'foo', params: {url_safe_token: @user.authentication_token})
+    assert_equal 200, response.status
+
+    get cell_values_api_v1_study_annotation_path(@basic_study, 'foo', params: {url_safe_token: 'garbage'})
+    assert_equal 401, response.status
   end
 
   test 'index should return list of annotations' do
-    empty_study = FactoryBot.create(:detached_study, name: 'Empty Annotation Study', test_array: @@studies_to_clean)
+    empty_study = FactoryBot.create(:detached_study, name_prefix: 'Empty Annotation Study', test_array: @@studies_to_clean)
     sign_in_and_update @user
     execute_http_request(:get, api_v1_study_annotations_path(@basic_study))
     assert_equal 3, json.length

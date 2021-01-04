@@ -24,7 +24,9 @@
       "expression_file_info": {
         "is_raw_counts": true,
         "units": "raw counts",
-        "library_construction_protocol": "MARS-seq"
+        "biosample_input_type": "Whole cell",
+        "library_preparation_protocol": "MARS-seq",
+        "modality": "Transcriptomic: targeted"
       }
     },
     {

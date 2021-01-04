@@ -17,7 +17,7 @@ class StudiesController < ApplicationController
   before_action :set_study, except: [:index, :new, :create, :download_private_file]
   before_action :set_file_types, only: [:sync_study, :sync_submission_outputs, :sync_study_file, :sync_orphaned_study_file,
                                         :update_study_file_from_sync]
-  before_action :check_edit_permissions, except: [:index, :new, :create, :download_private_file]
+  before_action :check_edit_permissions, except: [:index, :new, :create, :download_private_file, :generate_manifest]
   before_action do
     authenticate_user!
     check_access_settings
@@ -99,6 +99,7 @@ class StudiesController < ApplicationController
   # allow a user to sync files uploaded outside the portal into a workspace bucket with an existing study
   def sync_study
     @study_files = @study.study_files.valid
+    @study_files.each {|study_file| study_file.build_expression_file_info if study_file.expression_file_info.nil?}
     @directories = @study.directory_listings.to_a
     # keep a list of what we expect to be
     @files_by_dir = {}
@@ -442,6 +443,15 @@ class StudiesController < ApplicationController
   def new_study_file
     file_type = params[:file_type] ? params[:file_type] : 'Cluster'
     @study_file = @study.build_study_file({file_type: file_type})
+    @study_file.build_expression_file_info if @study_file.is_expression?
+    if params[:taxon_id]
+      taxon = Taxon.find(params[:taxon_id])
+      @study_file.taxon_id = taxon.id if taxon.present?
+    end
+    if params[:is_raw_counts]
+      raw_counts_val = params[:is_raw_counts] == 'true'
+      @study_file.expression_file_info.is_raw_counts = raw_counts_val
+    end
   end
 
   # method to perform chunked uploading of data
@@ -793,12 +803,18 @@ class StudiesController < ApplicationController
     @color = is_required ? 'danger' : 'info'
     @status = is_required ? 'Required' : 'Optional'
     @study_file = @study.build_study_file({file_type: @file_type})
+    @study_file.build_expression_file_info
 
     unless @file_type.nil?
       @reset_status = @study.study_files.valid.select {|sf| sf.file_type == @file_type && !sf.new_record?}.count == 0
     else
       @reset_status = false
     end
+  end
+
+  def generate_manifest
+    manifest_obj = BulkDownloadService.generate_study_files_tsv(@study)
+    render plain: manifest_obj
   end
 
   # adding new study_file entries based on remote files in GCP
@@ -1043,7 +1059,9 @@ class StudiesController < ApplicationController
                                        :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :is_spatial, :taxon_id, :genome_assembly_id, :study_file_bundle_id,
                                        options: [:cluster_group_id, :cluster_file_id, :font_family, :font_size, :font_color,
                                                  :matrix_id, :submission_id, :bam_id, :analysis_name, :visualization_name,
-                                                 :cluster_name, :annotation_name])
+                                                 :cluster_name, :annotation_name],
+                                       expression_file_info_attributes: [:id, :library_preparation_protocol, :units,
+                                                                         :biosample_input_type, :modality, :is_raw_counts])
   end
 
   def directory_listing_params
@@ -1093,6 +1111,7 @@ class StudiesController < ApplicationController
     if @other_files.empty?
       @other_files << @study.build_study_file({file_type: 'Documentation'})
     end
+    @expression_files.each {|file| file.build_expression_file_info if file.expression_file_info.nil?}
   end
 
   def set_user_projects
@@ -1208,7 +1227,10 @@ class StudiesController < ApplicationController
           # make sure file is not actually a folder by checking its size
           if file.size > 0
             # create a new entry
-            unsynced_file = StudyFile.new(study_id: @study.id, name: file.name, upload_file_name: file.name, upload_content_type: file.content_type, upload_file_size: file.size, generation: file.generation, remote_location: file.name)
+            unsynced_file = StudyFile.new(study_id: @study.id, name: file.name, upload_file_name: file.name,
+                                          upload_content_type: file.content_type, upload_file_size: file.size,
+                                          generation: file.generation, remote_location: file.name)
+            unsynced_file.build_expression_file_info
             @unsynced_files << unsynced_file
           end
         end
@@ -1249,6 +1271,7 @@ class StudiesController < ApplicationController
                                       upload_content_type: new_file.content_type, upload_file_size: new_file.size,
                                       generation: new_file.generation, remote_location: new_file.name,
                                       options: {submission_id: params[:submission_id]})
+      unsynced_output.build_expression_file_info
       # process output according to analysis_configuration output parameters and associations (if present)
       workflow_parts = output_name.split('.')
       call_name = workflow_parts.shift
