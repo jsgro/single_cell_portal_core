@@ -13,6 +13,8 @@
 import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
 
+import {log} from 'lib/metrics-api'
+
 // Array of arrays of cell names, a.k.a. selections, and of selection labels
 let selections = []
 const labels = ['']
@@ -155,6 +157,42 @@ function attachEventListeners(target) {
     selections.splice(index, 1)
     updateSelection(selections, labels)
   })
+
+  $(document).on('click', '#selection-submit', function(){
+    console.log('in click handler for #selection-submit')
+    var currentName = $('#user_annotation_name').val();
+    var needText = $('.need-text');
+    var numFields = needText.toArray().length;
+    var values = [];
+    var cont = true;
+    for (var i = 0; i < numFields; i++){
+      var text = needText.eq(i).val();
+      values.push(text);
+      if(text === ""){cont = false}
+    }
+
+    if (numFields < 3) {
+      alert('Your annotation must have at least two populations');
+    } else if ( !cont ) {
+      alert('You must provide a value for all labels before saving');
+      setErrorOnBlank(needText);
+    } else if (values.includes('Undefined')) {
+      alert('Undefined is a reserved term. Select a different name for this label.');
+      setErrorOnBlank(needText);
+    } else {
+      console.log('in "Saving... Please Wait"')
+      $('#generic-modal-title').html("Saving... Please Wait");
+      ga('send', 'event', 'engaged_user_action', 'create_custom_cell_annotation');
+      log('create-custom-cell-annotation');
+      launchModalSpinner('#generic-modal-spinner', '#generic-modal', function() {
+        console.log('**** in user-annotation form submit')
+        var form = $('#create_annotations');
+        console.log('form')
+        console.log(form)
+        form.submit();
+      });
+    }
+  });
 }
 
 /**

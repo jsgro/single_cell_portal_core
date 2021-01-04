@@ -235,11 +235,13 @@
                       $('#toggle-scatter').click(function() {
                           // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
                           if (!window.SCP.firstScatterPlotIs3D) {
+                              console.log('in #toggle-scatter click handler')
                               $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off');
                               $('#selection_div').toggleClass('collapse');
                               var loadedCluster = $('#cluster').val();
                               var loadedAnnotation = $('#annotation').val();
                               var loadedSubsample = $('#subsample').val();
+                              console.log('in #toggle-scatter click handler, before ajax request')
                               $.ajax({
                                   url: '<%= show_user_annotations_form_path(accession: @study.accession, study_name: @study.url_safe_name) %>?cluster=' + loadedCluster + '&annotation=' + loadedAnnotation + '&subsample=' + loadedSubsample,
                                   dataType: 'script'

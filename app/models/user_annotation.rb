@@ -86,6 +86,7 @@ class UserAnnotation
 
   # create an annotations user data arrays
   def initialize_user_data_arrays(user_data_arrays_attributes, annotation, threshold, loaded_annotation)
+    puts "**** in initializae_user_data_arrays"
     # set cluster and max length of data array
     # max length is the actual length of the annotation when not subsampled
     cluster = self.cluster_group
@@ -148,6 +149,7 @@ class UserAnnotation
   # {label:{name=>'label' values=>'Cell1, Cell2...' } label2=>...}
   # cluster is current cluster
   def create_array(cluster, threshold, annotation, user_data_arrays_attributes)
+    puts "**** in create_array"
     # create a hash of cell names of format
     # {cell_name1=>'its label', cell_name_2=>'its label'}
     user_annotation_map = {}
@@ -314,6 +316,7 @@ class UserAnnotation
   end
 
   def publish_to_study(current_user)
+    puts "**** in publish_to_study"
     begin
       # load original cluster group data arrays
       cluster = self.cluster_group

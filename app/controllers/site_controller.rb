@@ -739,6 +739,8 @@ class SiteController < ApplicationController
   # Method to create user annotations from box or lasso selection
   def create_user_annotations
 
+    puts "**** in create_user_annotations"
+
     # Data name is an array of the values of labels
     @data_names = []
 
@@ -772,6 +774,7 @@ class SiteController < ApplicationController
 
       # Error handling, save the annotation and handle exceptions
       if @user_annotation.save
+        puts "**** in create_user_annotations, @user_annotation.save === true"
         # Method call to create the user data arrays for this annotation
         @user_annotation.initialize_user_data_arrays(user_data_arrays_attributes, subsample_annotation, subsample, loaded_annotation)
 
@@ -786,6 +789,7 @@ class SiteController < ApplicationController
         # Update the dropdown partial
         render 'update_user_annotations'
       else
+        puts "**** in create_user_annotations, @user_annotation.save === false"
         # If there was an error saving, reload and alert the use something broke
         @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
         @options = ClusterVizService.load_cluster_group_options(@study)
@@ -796,6 +800,7 @@ class SiteController < ApplicationController
       end
         # More error handling, this is if can't save user annotation
     rescue Mongoid::Errors::InvalidValue => e
+      puts "**** in create_user_annotations, Mongoid::Errors"
       sanitized_params = user_annotation_params.dup
       sanitized_params.delete(:user_data_arrays_attributes) # remove data_arrays attributes due to size
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
@@ -809,6 +814,7 @@ class SiteController < ApplicationController
       render 'update_user_annotations'
 
     rescue NoMethodError => e
+      puts "**** in create_user_annotations, NoMethodError"
       sanitized_params = user_annotation_params.dup
       sanitized_params.delete(:user_data_arrays_attributes) # remove data_arrays attributes due to size
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
@@ -822,6 +828,7 @@ class SiteController < ApplicationController
       render 'update_user_annotations'
 
     rescue => e
+      puts "**** in create_user_annotations, e"
       sanitized_params = user_annotation_params.dup
       sanitized_params.delete(:user_data_arrays_attributes) # remove data_arrays attributes due to size
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
