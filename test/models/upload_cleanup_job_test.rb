@@ -90,7 +90,7 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
     run_at = 10.minutes.from_now.in_time_zone
     # queue job
     job = Delayed::Job.enqueue(UploadCleanupJob.new(@study, study_file, 0), run_at: run_at)
-    found_job = UploadCleanupJob.find_jobs_by_handler_type(UploadCleanupJob, study_file)
+    found_job = UploadCleanupJob.find_jobs_by_handler_type(UploadCleanupJob, study_file).first
     assert_equal job.id, found_job.id, "Did not get correct instance of UploadCleanupJob; #{job.id} != #{found_job.id}"
     handler = UploadCleanupJob.dump_job_handler(job)
     handler_file_attributes = handler.study_file['attributes']
