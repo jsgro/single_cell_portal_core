@@ -10,15 +10,6 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
     @study.study_files.where(file_type: 'Other').destroy_all
   end
 
-  test 'should print methods' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
-    puts "UPLOAD CLEANUP JOB METHODS: #{UploadCleanupJob.public_methods}"
-    puts "respond to find_jobs_by_handler_type: #{UploadCleanupJob.respond_to?(:find_jobs_by_handler_type)}"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
-  end
-
   test 'should automatically remove failed uploads' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
