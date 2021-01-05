@@ -67,10 +67,10 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
 
     # now find delayed_job instance for UploadCleanupJob for this file for each retry and assert only 3 attempts are made
     0.upto(UploadCleanupJob::MAX_RETRIES).each do |retry_count|
-      cleanup_jobs = UploadCleanupJob.find_jobs_by_handler_type(UploadCleanupJob, study_file)
+      cleanup_jobs = DelayedJobAccessor.find_jobs_by_handler_type(UploadCleanupJob, study_file)
       # make sure we're getting the latest job, as the previous may not have fully cleared out of the queue
       latest_job = cleanup_jobs.sort_by(&:created_at).last
-      job_handler = UploadCleanupJob.dump_job_handler(latest_job)
+      job_handler = DelayedJobAccessor.dump_job_handler(latest_job)
       assert job_handler.retry_count == retry_count, "Retry count does not match: #{job_handler.retry_count} != #{retry_count}"
       # to force a job to run, unset :run_at
       # wait until handler is cleared, which indicates job has run and will be garbage collected
@@ -81,32 +81,13 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
       end
     end
     sleep 5 # give queue a chance to fully clear
-    cleanup_jobs = UploadCleanupJob.find_jobs_by_handler_type(UploadCleanupJob, study_file)
+    cleanup_jobs = DelayedJobAccessor.find_jobs_by_handler_type(UploadCleanupJob, study_file)
     refute cleanup_jobs.any?, "Should not have found any cleanup jobs for file but found #{cleanup_jobs.size}"
 
     # clean up
     study_file.update(remote_location: nil)
     ApplicationController.firecloud_client.delete_workspace_file(@study.bucket_id, study_file.bucket_location)
     study_file.destroy
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
-  end
-
-  test 'should load job instance and decode handler' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
-    study_file = @study.study_files.sample
-    run_at = 10.minutes.from_now.in_time_zone
-    # queue job
-    job = Delayed::Job.enqueue(UploadCleanupJob.new(@study, study_file, 0), run_at: run_at)
-    found_job = UploadCleanupJob.find_jobs_by_handler_type(UploadCleanupJob, study_file).sort_by(&:created_at).last
-    assert_equal job.id, found_job.id, "Did not get correct instance of UploadCleanupJob; #{job.id} != #{found_job.id}"
-    handler = UploadCleanupJob.dump_job_handler(job)
-    handler_file_attributes = handler.study_file['attributes']
-    assert_equal study_file.attributes, handler_file_attributes, "Study File attributes do not match: #{study_file.attributes} != #{handler_file_attributes}"
-
-    # clean up
-    job.destroy
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

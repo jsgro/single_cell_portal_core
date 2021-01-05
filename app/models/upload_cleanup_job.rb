@@ -6,7 +6,6 @@
 ##
 
 class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
-  include DelayedJobAccessor
 
   MAX_RETRIES = 2
 

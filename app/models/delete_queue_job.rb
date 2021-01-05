@@ -1,7 +1,5 @@
 class DeleteQueueJob < Struct.new(:object)
 
-  include DelayedJobAccessor
-
   ###
   #
   # DeleteQueueJob: generic class to queue objects for deletion.  Can handle studies, study files, user annotations,

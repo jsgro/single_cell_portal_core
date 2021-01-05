@@ -5,7 +5,6 @@
 
 class IngestJob
   include ActiveModel::Model
-  include DelayedJobAccessor
 
   # for getting the latest convention version
   include Api::V1::Concerns::ConventionSchemas
