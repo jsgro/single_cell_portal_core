@@ -1,7 +1,6 @@
 class AnalysisParameter
   include Mongoid::Document
   extend ValidationTools
-  extend ErrorTracker
 
   belongs_to :analysis_configuration
   has_many :analysis_parameter_filters, dependent: :delete

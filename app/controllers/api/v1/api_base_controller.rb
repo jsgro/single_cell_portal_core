@@ -6,7 +6,6 @@ module Api
       include ActionController::MimeResponds
       include Concerns::IngestAware
       include Concerns::Authenticator
-      extend ErrorTracker
 
       rescue_from ActionController::ParameterMissing do |exception|
         render json: {error: exception.message}, status: 400

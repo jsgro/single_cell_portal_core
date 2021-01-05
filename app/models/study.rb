@@ -10,7 +10,6 @@ class Study
   include Mongoid::Document
   include Mongoid::Timestamps
   extend ValidationTools
-  extend ErrorTracker
   include Swagger::Blocks
 
   ###

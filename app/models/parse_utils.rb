@@ -1,6 +1,5 @@
 require 'rubygems/package' # for tar reader
 class ParseUtils
-  extend ErrorTracker
 
   # parse a 10X gene-barcode matrix file triplet (input matrix must be sorted by gene indices)
   def self.cell_ranger_expression_parse(study, user, matrix_study_file, genes_study_file, barcodes_study_file, opts={})

@@ -25,8 +25,6 @@ class IngestJob
   # Boolean indication of whether or not to delete file from bucket on parse failure
   attr_accessor :persist_on_fail
 
-  extend ErrorTracker
-
   # number of tries to push a file to a study bucket
   MAX_ATTEMPTS = 3
 

@@ -11,7 +11,6 @@ class User
   include Mongoid::Document
   include Mongoid::Timestamps
   include FeatureFlaggable
-  extend ErrorTracker
 
   ###
   #
