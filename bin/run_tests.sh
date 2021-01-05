@@ -99,14 +99,14 @@ then
   fi
 else
   echo "Running all unit & integration tests..."
-  # yarn ui-test
+  yarn ui-test
   code=$? # immediately capture exit code to prevent this from getting clobbered
   if [[ $code -ne 0 ]]; then
     RETURN_CODE=$code
     first_test_to_fail=${first_test_to_fail-"yarn ui-test"}
     ((FAILED_COUNT++))
   fi
-  RAILS_ENV=test bundle exec bin/rake test TEST=test/models/upload_cleanup_job_test.rb
+  RAILS_ENV=test bundle exec bin/rake test
   code=$?
   if [[ $code -ne 0 ]]; then
     RETURN_CODE=$code
