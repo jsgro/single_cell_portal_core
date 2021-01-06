@@ -242,10 +242,8 @@
                               var loadedAnnotation = $('#annotation').val();
                               var loadedSubsample = $('#subsample').val();
                               console.log('in #toggle-scatter click handler, before ajax request')
-                              $.ajax({
-                                  url: '<%= show_user_annotations_form_path(accession: @study.accession, study_name: @study.url_safe_name) %>?cluster=' + loadedCluster + '&annotation=' + loadedAnnotation + '&subsample=' + loadedSubsample,
-                                  dataType: 'script'
-                              });
+                              window.SCP.createUserAnnotationsPath = "<%= create_user_annotations_path(accession: @study.accession, study_name: @study.url_safe_name) %>";
+                              window.SCP.userAnnotations()
                           } else {
                               alert('You may not create annotations on 3d data.  Please select a different cluster before continuing.');
                               return false;

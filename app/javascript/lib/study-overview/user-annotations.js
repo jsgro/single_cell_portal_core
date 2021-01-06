@@ -190,6 +190,20 @@ function attachEventListeners(target) {
         console.log('form')
         console.log(form)
         form.submit();
+        $.ajax({
+          url: window.SCP.createUserAnnotationsPath,
+          method: 'POST',
+
+        })Endpoint format: /single_cell/study/<accession>/<study_name>/create_user_annotations
+  // Method: POST
+  // annotation_name: value of #annotation-name text input field
+  // user_id: current_user.id
+  // cluster_group_id: @cluster.id
+  // study_id: @study.id
+  // loaded_annotation: params[:annotation]
+  // if !params[:subsample].blank? %>
+  //    subsample_annotation: params[:annotation]
+  //    subsample_threshold: params[:subsample]
       });
     }
   });
@@ -208,8 +222,42 @@ export function closeUserAnnotationsForm() {
     }
 }
 
+function writeFormHtml() {
+  // Example form action:
+  // https://localhost:3000/single_cell/study/SCP70/male-mouse-brain/create_user_annotations
+  // Endpoint format: /single_cell/study/<accession>/<study_name>/create_user_annotations
+  // Method: POST
+  // annotation_name: value of #annotation-name text input field
+  // user_id: current_user.id
+  // cluster_group_id: @cluster.id
+  // study_id: @study.id
+  // loaded_annotation: params[:annotation]
+  // if !params[:subsample].blank? %>
+  //    subsample_annotation: params[:annotation]
+  //    subsample_threshold: params[:subsample]
+  const formHtml = `
+    <div class="row no-bottom-margin form-group" id="selection-well">
+      <div class="col-sm-12 form-group">
+        <input type="text"
+          id="annotation-name" class="form-control need-text annotation-name"
+          placeholder="Name this group of labels" />
+      </div>
+      <div id="selection-table"></div>
+      <div id="selection-button">
+        <div class="col-xs-12 text-center">
+          <button id="selection-submit" class="btn btn-success">Create Annotation</button>
+        </div>
+      </div>
+    </div>`
+
+  $('#selection_div').html(formHtml)
+}
+
 /** Initialize "Create Annotation" functionality for user annotations */
 export default function userAnnotations() {
+
+  writeFormHtml()
+
   $('#selection-well, #selection-button').css('visibility', 'visible')
 
   // TODO (SCP-2962): Support "Create Annotation" for spatial scatter plots

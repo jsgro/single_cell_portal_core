@@ -41,6 +41,17 @@ export function studyNameAsUrlParam(studyName) {
   return studyName.toLowerCase().replace(/ /g, '-').replace(/[^0-9a-z-]/gi, '')
 }
 
+/** Configure an `init` for `fetch` to use POST, and respect any mocking  */
+function configPost(mock=false) {
+  let init = defaultInit
+  if (mock === false && globalMock === false) {
+    init = Object.assign({}, defaultInit(), {
+      method: 'POST'
+  })
+
+  return init
+}
+
 /**
  * Get a one-time authorization code for download, and its lifetime in seconds
  *
@@ -58,18 +69,42 @@ export function studyNameAsUrlParam(studyName) {
  * fetchAuthCode(true)
  */
 export async function fetchAuthCode(mock=false) {
-  let init = defaultInit
-  if (mock === false && globalMock === false) {
-    init = Object.assign({}, defaultInit(), {
-      method: 'POST'
-    })
-  }
+  const init = configPost(mock)
 
   const [authCode, perfTime] = await scpApi('/search/auth_code', init, mock)
 
   logDownloadAuthorization(perfTime)
 
   return authCode
+}
+
+/**
+* Create a user annotation, a set of objects each with a label and cell names
+*
+* An annotation is a set of objects, each having a label and an array of cell
+* names.  Signed-in users can create custom annotations -- known as "user
+* annotations" -- in the Explore tab of the Study Overview page.
+*
+* See user-annotation.js for more context.
+*/
+export postUserAnnotation(
+  studyAccession, clusterName, annotationName, loadedAnnotation,
+  subsampleAnnotation, subsampleThreshold, mock=false
+) {
+  const init = configPost(mock)
+  const apiUrl = `/studies/${studyAccession}/annotations`
+  const [noop, perfTime] = await scpApi('/annotation', init, mock)
+
+
+  // Method: POST
+  // annotation_name: value of #annotation-name text input field
+  // user_id: current_user.id
+  // cluster_group_id: @cluster.id
+  // study_id: @study.id
+  // loaded_annotation: params[:annotation]
+  // if !params[:subsample].blank? %>
+  //    subsample_annotation: params[:annotation]
+  //    subsample_threshold: params[:subsample]
 }
 
 /**
@@ -279,7 +314,7 @@ export async function fetchAnnotation(studyAccession, clusterName, annotationNam
   return values
 }
 
-/** Get a url for retrieving a morpheus-suitable annotation values file */
+/** Get URL for a Morpheus-suitable annotation values file */
 export function getAnnotationCellValuesURL(studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false) {
   const paramObj = {
     cluster: clusterName,
@@ -294,9 +329,9 @@ export function getAnnotationCellValuesURL(studyAccession, clusterName, annotati
 
 
 /**
- * Returns an url for fetching heatmap expression data for genes in a study
+ * Returns an URL for fetching heatmap expression data for genes in a study
  *
- * A url generator rather than a fetch funtion is provided as morpheus needs a URL string
+ * A URL generator rather than a fetch funtion is provided as morpheus needs a URL string
  *
  * @param {String} studyAccession study accession
  * @param {Array} genes List of gene names to get expression data for
