@@ -73,7 +73,7 @@ class ExpressionFileInfo
   # this has to be invoked as a validation as callbacks only fire on parent document (StudyFile)
   def unset_units_unless_raw_counts
     unless self.is_raw_counts
-      self.units = nil
+      self.units = nil unless self.frozen? # document will be frozen if it is being unset, so don't attempt update
     end
   end
 
