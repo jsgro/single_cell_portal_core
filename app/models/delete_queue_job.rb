@@ -90,10 +90,6 @@ class DeleteQueueJob < Struct.new(:object)
         nil
       end
 
-      # remove any embedded documents from study_file before queueing for deletion as validation errors can occur
-      unset_embedded_documents(object)
-      object.reload
-
       # if this is a parent bundled file, delete all other associated files and bundle
       if object.is_bundle_parent?
         object.bundled_files.each do |file|
@@ -104,8 +100,11 @@ class DeleteQueueJob < Struct.new(:object)
       end
 
       # queue study file object for deletion, set file_type to DELETE to prevent it from being picked up in any queries
+      # use assign_attributes and save!(validate: false) to avoid any validation issues that might prevent saving
+      # this ensures file is queued for deletion, as dependent records have already been deleted
       new_name = "DELETE-#{SecureRandom.uuid}"
-      object.update!(queued_for_deletion: true, upload_file_name: new_name, name: new_name, file_type: 'DELETE')
+      object.assign_attributes({queued_for_deletion: true, upload_file_name: new_name, name: new_name, file_type: 'DELETE'})
+      object.save!(validate: false)
 
       # reset initialized if needed
       if study.cluster_groups.empty? || study.genes.empty? || study.cell_metadata.empty?
@@ -169,17 +168,6 @@ class DeleteQueueJob < Struct.new(:object)
     if metadata_file.use_metadata_convention
       bq_dataset.query "DELETE FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE study_accession = '#{study.accession}' AND file_id = '#{metadata_file.id}'"
       SearchFacet.delay.update_all_facet_filters
-    end
-  end
-
-  # remove any embedded documents before deleting study_file to prevent validation issues when queueing for deletion
-  def unset_embedded_documents(study_file)
-    study_file.embedded_relations.each do |name, relation|
-      embedded_document = study_file.send(relation.name)
-      if embedded_document.present?
-        study_file.send("#{name}=", nil)
-        study_file.save!
-      end
     end
   end
 end
