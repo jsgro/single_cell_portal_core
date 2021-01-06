@@ -318,6 +318,10 @@
        $('#gsutil-command-wrapper').slideToggle('slow');
     });
 
+    $('.clear-alert-modal').click(function() {
+      $("#message_modal").modal("hide");
+    })
+
     $('.tab-content').on('click', '.initialize-bundled-file', function() {
         var url = "<%= initialize_bundled_file_study_path(@study) %>";
         var dataAttr = $(this).data();
