@@ -2,7 +2,6 @@ class AnalysisConfiguration
   include Mongoid::Document
   include Swagger::Blocks
   extend ValidationTools
-  extend ErrorTracker
 
   belongs_to :user
   has_many :external_resources, as: :resource_links

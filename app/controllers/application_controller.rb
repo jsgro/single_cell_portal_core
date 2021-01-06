@@ -1,8 +1,6 @@
 
 class ApplicationController < ActionController::Base
 
-  extend ErrorTracker
-
   ###
   #
   # These are methods that are not specific to any one controller and are inherited into all

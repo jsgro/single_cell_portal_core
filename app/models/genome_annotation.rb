@@ -1,6 +1,5 @@
 class GenomeAnnotation
   include Mongoid::Document
-  extend ErrorTracker
 
   belongs_to :genome_assembly
   has_many :study_files

@@ -15,7 +15,6 @@ class StudyShare
 	include Mongoid::Document
 	include Mongoid::Timestamps
   include Swagger::Blocks
-	extend ErrorTracker
 
 	belongs_to :study
 
