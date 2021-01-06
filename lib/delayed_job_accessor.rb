@@ -52,7 +52,7 @@ module DelayedJobAccessor
     object_key = associated_object.class.name.underscore
     if handler.is_a?(job_class)
       matching_object = handler.send(object_key)
-    elsif handler.is_a?(Delayed::PerformableMethod)
+    elsif handler.is_a?(Delayed::PerformableMethod) && handler.object.is_a?(job_class)
       # handle case where a performable method was queued, and not an instance of a class
       matching_object = handler.object.send(object_key)
     end
