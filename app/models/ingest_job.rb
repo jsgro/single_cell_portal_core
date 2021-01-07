@@ -24,8 +24,6 @@ class IngestJob
   # Boolean indication of whether or not to delete file from bucket on parse failure
   attr_accessor :persist_on_fail
 
-  extend ErrorTracker
-
   # number of tries to push a file to a study bucket
   MAX_ATTEMPTS = 3
 
@@ -82,6 +80,12 @@ class IngestJob
       Rails.logger.error "Error in launching ingest of #{file_identifier}: #{e.class.name}:#{e.message}"
       error_context = ErrorTracker.format_extra_context(self.study, self.study_file, {action: self.action})
       ErrorTracker.report_exception(e, self.user, error_context)
+      # notify admins of failure, and notify user that admins are looking into the issue
+      SingleCellMailer.notify_admin_parse_launch_fail(self.study, self.study_file, self.user, self.action, e).deliver_now
+      user_message = "<p>An error has occurred when attempting to launch the parse job associated with #{self.study_file.upload_file_name}.  "
+      user_message += "Support staff has been notified and are investigating the issue.  "
+      user_message += "If you require immediate assistance, please contact scp-support@broadinstitute.zendesk.com.</p>"
+      SingleCellMailer.user_notification(self.user, "Unable to parse #{self.study_file.upload_file_name}", user_message).deliver_now
     end
   end
 

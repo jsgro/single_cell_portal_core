@@ -10,7 +10,6 @@ class Study
   include Mongoid::Document
   include Mongoid::Timestamps
   extend ValidationTools
-  extend ErrorTracker
   include Swagger::Blocks
 
   ###
@@ -1518,10 +1517,9 @@ class Study
     rescue => e
       error_context = ErrorTracker.format_extra_context(self, file)
       ErrorTracker.report_exception(e, user, error_context)
-      # if upload fails, try again using UploadCleanupJob in 2 minutes
-      run_at = 2.minutes.from_now
-      Rails.logger.error "#{Time.zone.now}: unable to upload '#{file.bucket_location}:#{file.id} to FireCloud, will retry at #{run_at}; #{e.message}"
-      Delayed::Job.enqueue(UploadCleanupJob.new(file.study, file, 0), run_at: run_at)
+      Rails.logger.error "#{Time.zone.now}: unable to upload '#{file.bucket_location}:#{file.id} to study bucket #{self.bucket_id}; #{e.message}"
+      # notify admin of failure so they can push the file and relauch parse
+      SingleCellMailer.notify_admin_upload_fail(file, e).deliver_now
     end
   end
 

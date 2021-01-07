@@ -3,7 +3,6 @@
 # keyword and faceted search
 
 class BulkDownloadService
-  extend ErrorTracker
 
   # Generate a String representation of a configuration file containing URLs and output paths to pass to
   # curl for initiating bulk downloads

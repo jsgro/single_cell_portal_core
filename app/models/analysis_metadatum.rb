@@ -8,7 +8,6 @@
 class AnalysisMetadatum
   include Mongoid::Document
   include Mongoid::Timestamps
-  extend ErrorTracker
 
   # field definitions
   belongs_to :study, optional: true
