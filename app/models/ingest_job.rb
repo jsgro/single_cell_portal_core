@@ -69,12 +69,19 @@ class IngestJob
         Rails.logger.error log_message
         raise RuntimeError.new(log_message)
       else
-        Rails.logger.info "Remote found for #{file_identifier}, launching Ingest job"
-        submission = ApplicationController.papi_client.run_pipeline(study_file: self.study_file, user: self.user, action: self.action)
-        Rails.logger.info "Ingest run initiated: #{submission.name}, queueing Ingest poller"
-        IngestJob.new(pipeline_name: submission.name, study: self.study, study_file: self.study_file,
-                      user: self.user, action: self.action, reparse: self.reparse,
-                      persist_on_fail: self.persist_on_fail).poll_for_completion
+        if self.can_launch_ingest?
+          Rails.logger.info "Remote found for #{file_identifier}, launching Ingest job"
+          submission = ApplicationController.papi_client.run_pipeline(study_file: self.study_file, user: self.user, action: self.action)
+          Rails.logger.info "Ingest run initiated: #{submission.name}, queueing Ingest poller"
+          IngestJob.new(pipeline_name: submission.name, study: self.study, study_file: self.study_file,
+                        user: self.user, action: self.action, reparse: self.reparse,
+                        persist_on_fail: self.persist_on_fail).poll_for_completion
+        else
+          run_at = 2.minutes.from_now
+          new_job = IngestJob.new(self.attributes)
+          Rails.logger.info "Remote found for #{file_identifier} but ingest gated by other parse jobs, queuing new job for #{run_at}"
+          new_job.delay(run_at: run_at).push_remote_and_launch_ingest
+        end
       end
     rescue => e
       Rails.logger.error "Error in launching ingest of #{file_identifier}: #{e.class.name}:#{e.message}"
@@ -118,12 +125,57 @@ class IngestJob
     is_pushed
   end
 
+  # Determine if a file is ready to be ingested.  This mainly validates that other concurrent parses for the same study
+  # will not interfere with validation for this current run
+  #
+  # * *returns*
+  #   - (Boolean) => T/F if file can launch PAPI ingest job
+  def can_launch_ingest?
+    case self.study_file.file_type
+    when /Matrix/
+      # expression matrices currently cannot be ingested in parallel due to constraints around validating cell names
+      # this block ensures that all other matrices have all cell names ingested and at least one gene entry, which
+      # ensures the matrix has validated
+      other_matrix_files = StudyFile.where(study_id: self.study.id, file_type: /Matrix/, :id.ne => self.study_file.id)
+      other_matrix_files.each do |matrix_file|
+        if matrix_file.parsing?
+          matrix_cells = self.study.expression_matrix_cells(matrix_file)
+          matrix_genes = Gene.where(study_id: self.study.id, study_file_id: matrix_file.id)
+          if !matrix_cells && !matrix_genes
+            # return false if matrix hasn't validated, unless the other matrix was uploaded after this file
+            # this is to prevent multiple matrix files queueing up and blocking each other from initiating PAPI jobs
+            return false unless matrix_file.created_at > self.study_file.created_at
+          end
+        end
+      end
+      true
+    else
+      # no other file types currently are gated for launching ingest
+      true
+    end
+  end
+
   # Patch for using with Delayed::Job.  Returns true to mimic an ActiveRecord instance
   #
   # * *returns*
   #   - True::TrueClass
   def persisted?
     true
+  end
+
+  # Get all instance variables associated with job
+  #
+  # * *returns*
+  #   - (Hash) => Hash of all instance variables
+  def attributes
+    {
+      study: self.study,
+      study_file: self.study_file,
+      user: self.user,
+      action: self.action,
+      reparse: self.reparse,
+      persist_on_fail: self.persist_on_fail
+    }
   end
 
   # Return an updated reference to this ingest run in PAPI
@@ -206,14 +258,23 @@ class IngestJob
     command_line.chomp("\n")
   end
 
+  # Get the first & last event timestamps to compute runtime
+  #
+  # * *returns*
+  #   - (Array<DateTime>) => Array of initial and terminal timestamps from PAPI events
+  def get_runtime_timestamps
+    events = self.events
+    start_time = DateTime.parse(events.first['timestamp'])
+    completion_time = DateTime.parse(events.last['timestamp'])
+    [start_time, completion_time]
+  end
+
   # Get the total runtime of parsing from event timestamps
   #
   # * *returns*
   #   - (String) => Text representation of total elapsed time
   def get_total_runtime
-    events = self.events
-    start_time = DateTime.parse(events.first['timestamp'])
-    completion_time = DateTime.parse(events.last['timestamp'])
+    start_time, completion_time = self.get_runtime_timestamps
     TimeDifference.between(start_time, completion_time).humanize
   end
 
@@ -222,9 +283,7 @@ class IngestJob
   # * *returns*
   #   - (Integer) => Total elapsed time in milliseconds
   def get_total_runtime_ms
-    events = self.events
-    start_time = DateTime.parse(events.first['timestamp'])
-    completion_time = DateTime.parse(events.last['timestamp'])
+    start_time, completion_time = self.get_runtime_timestamps
     (TimeDifference.between(start_time, completion_time).in_seconds * 1000).to_i
   end
 
