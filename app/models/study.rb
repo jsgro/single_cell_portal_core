@@ -876,7 +876,7 @@ class Study
   # primarily used when syncing study with FireCloud workspace
   def local_acl
     acl = {
-        "#{self.user.email}" => (Rails.env == 'production' && FireCloudClient::COMPUTE_BLACKLIST.include?(self.firecloud_project)) ? 'Edit' : 'Owner'
+        "#{self.user.email}" => (Rails.env.production? && FireCloudClient::COMPUTE_BLACKLIST.include?(self.firecloud_project)) ? 'Edit' : 'Owner'
     }
     self.study_shares.each do |share|
       acl["#{share.email}"] = share.permission
@@ -1569,7 +1569,7 @@ class Study
 
   # set access for the readonly service account if a study is public
   def set_readonly_access(grant_access=true, manual_set=false)
-    unless Rails.env == 'test' || self.queued_for_deletion || self.detached
+    unless Rails.env.test? || self.queued_for_deletion || self.detached
       if manual_set || self.public_changed? || self.new_record?
         if self.firecloud_workspace.present? && self.firecloud_project.present? && ApplicationController.read_only_firecloud_client.present?
           access_level = self.public? ? 'READER' : 'NO ACCESS'
@@ -1607,7 +1607,7 @@ class Study
 
   # deletes the study and its underlying workspace.  This method is disabled in production
   def destroy_and_remove_workspace
-    if Rails.env == 'production'
+    if Rails.env.production?
       return
     end
     Rails.logger.info "Removing workspace #{firecloud_project}/#{firecloud_workspace} in #{Rails.env} environment"
@@ -1626,7 +1626,7 @@ class Study
   # deletes all studies and removes all firecloud workspaces, will ONLY work if the environment is 'test' or 'pentest'
   # cannot be run in production/staging/development
   def self.delete_all_and_remove_workspaces
-    if Rails.env == 'test' || Rails.env == 'pentest'
+    if Rails.env.test? || Rails.env.pentest?
       self.all.each do |study|
         study.destroy_and_remove_workspace
       end
@@ -1745,7 +1745,7 @@ class Study
           workspace_permission = 'WRITER'
           can_compute = true
           # if study project is in the compute blacklist, revoke compute permission
-          if Rails.env == 'production' && FireCloudClient::COMPUTE_BLACKLIST.include?(self.firecloud_project)
+          if Rails.env.production? && FireCloudClient::COMPUTE_BLACKLIST.include?(self.firecloud_project)
             can_compute = false
           end
           acl = ApplicationController.firecloud_client.create_workspace_acl(study_owner, workspace_permission, true, can_compute)
@@ -1834,7 +1834,7 @@ class Study
           workspace_permission = 'WRITER'
           can_compute = true
           # if study project is in the compute blacklist, revoke compute permission
-          if Rails.env == 'production' && FireCloudClient::COMPUTE_BLACKLIST.include?(self.firecloud_project)
+          if Rails.env.production? && FireCloudClient::COMPUTE_BLACKLIST.include?(self.firecloud_project)
             can_compute = false
             Rails.logger.info "#{Time.zone.now}: Study: #{self.name} removing compute permissions"
             compute_acl = ApplicationController.firecloud_client.create_workspace_acl(self.user.email, workspace_permission, true, can_compute)
