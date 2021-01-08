@@ -140,7 +140,7 @@ class IngestJob
         if matrix_file.parsing?
           matrix_cells = self.study.expression_matrix_cells(matrix_file)
           matrix_genes = Gene.where(study_id: self.study.id, study_file_id: matrix_file.id)
-          if matrix_cells.empty? || matrix_genes.empty?
+          if !matrix_cells || matrix_genes.empty?
             # return false if matrix hasn't validated, unless the other matrix was uploaded after this file
             # this is to prevent multiple matrix files queueing up and blocking each other from initiating PAPI jobs
             return false unless matrix_file.created_at > self.study_file.created_at
