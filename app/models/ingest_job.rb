@@ -78,9 +78,8 @@ class IngestJob
                         persist_on_fail: self.persist_on_fail).poll_for_completion
         else
           run_at = 2.minutes.from_now
-          new_job = IngestJob.new(self.attributes)
-          Rails.logger.info "Remote found for #{file_identifier} but ingest gated by other parse jobs, queuing new job for #{run_at}"
-          new_job.delay(run_at: run_at).push_remote_and_launch_ingest
+          Rails.logger.info "Remote found for #{file_identifier} but ingest gated by other parse jobs, queuing another check for #{run_at}"
+          self.delay(run_at: run_at).push_remote_and_launch_ingest
         end
       end
     rescue => e
@@ -141,7 +140,7 @@ class IngestJob
         if matrix_file.parsing?
           matrix_cells = self.study.expression_matrix_cells(matrix_file)
           matrix_genes = Gene.where(study_id: self.study.id, study_file_id: matrix_file.id)
-          if !matrix_cells && !matrix_genes
+          if matrix_cells.empty? || matrix_genes.empty?
             # return false if matrix hasn't validated, unless the other matrix was uploaded after this file
             # this is to prevent multiple matrix files queueing up and blocking each other from initiating PAPI jobs
             return false unless matrix_file.created_at > self.study_file.created_at
@@ -274,8 +273,7 @@ class IngestJob
   # * *returns*
   #   - (String) => Text representation of total elapsed time
   def get_total_runtime
-    start_time, completion_time = self.get_runtime_timestamps
-    TimeDifference.between(start_time, completion_time).humanize
+    TimeDifference.between(*self.get_runtime_timestamps).humanize
   end
 
    # Get the total runtime of parsing from event timestamps, in milliseconds
@@ -283,8 +281,7 @@ class IngestJob
   # * *returns*
   #   - (Integer) => Total elapsed time in milliseconds
   def get_total_runtime_ms
-    start_time, completion_time = self.get_runtime_timestamps
-    (TimeDifference.between(start_time, completion_time).in_seconds * 1000).to_i
+    (TimeDifference.between(*self.get_runtime_timestamps).in_seconds * 1000).to_i
   end
 
   # Launch a background polling process.  Will check for completion, and if the pipeline has not completed
