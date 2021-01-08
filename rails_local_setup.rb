@@ -66,10 +66,7 @@ source_file_string += "export READ_ONLY_SERVICE_ACCOUNT_KEY=#{CONFIG_DIR}/.read_
 puts 'Setting secret_key_base'
 source_file_string += "export SECRET_KEY_BASE=#{`openssl rand -hex 64`}\n"
 
-if !exclude_tcell
-  puts 'Configuring TCell'
-  `bin/configure_tcell.rb`
-else
+if exclude_tcell
   puts "****\nYou are developing with TCell disabled--be sure to test that any third-party scripts or connection sources you add are also added to TCell\n****\n"
 end
 
