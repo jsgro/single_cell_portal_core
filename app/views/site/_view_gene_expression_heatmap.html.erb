@@ -60,6 +60,9 @@
     $('#dot-plot').data('rendered', false);
     function drawHeatmap(height) {
         $(window).off('resizeEnd');
+
+        $(window).on('resizeEnd', () => { $(window).trigger('resize.morpheus')})
+
         // clear out previous stored heatmap object
         $('#heatmap-plot').data('heatmap', null);
         $('#dot-plot').data('heatmap', null);
