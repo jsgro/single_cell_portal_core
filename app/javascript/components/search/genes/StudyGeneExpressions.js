@@ -28,6 +28,7 @@ export default function StudyGeneExpressions({ study }) {
     // render violin for single genes or collapsed
     studyRenderComponent = <StudyViolinPlot study={study} genes={study.gene_matches} collapseBy={collapseBy} setCollapseBy={setCollapseBy}/>
   }
+
   return (
     <div className="study-gene-result">
       <label htmlFor={study.name} id= 'result-title'>
@@ -47,6 +48,7 @@ export default function StudyGeneExpressions({ study }) {
         }
       </div>
       { studyRenderComponent }
+
     </div>
   )
 }

@@ -51,7 +51,7 @@ export default function StudyViolinPlot({ study, genes, setCollapseBy, collapseB
       loadData()
     }
   }, [study.accession, genes[0]])
-
+  const isCollapsedView = ['mean', 'median'].indexOf(collapseBy) >= 0
   return (
     <div className="row graph-container">
       <div className="col-md-10">
@@ -68,6 +68,11 @@ export default function StudyViolinPlot({ study, genes, setCollapseBy, collapseB
             data-testid={`${graphElementId}-loading-icon`}
             className="gene-load-spinner"
           />
+        }
+        { isCollapsedView &&
+          <div className="text-center">
+            <span>{collapseBy} expression of {study.gene_matches.join(', ')}</span>
+          </div>
         }
       </div>
       <div className="col-md-2 graph-controls">

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react'
 import _uniq from 'lodash/uniq'
 import _find from 'lodash/find'
 import Select from 'react-select'
+import { Popover, OverlayTrigger } from 'react-bootstrap'
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { fetchClusterOptions } from 'lib/scp-api'
 
@@ -168,7 +171,11 @@ export default function ClusterControls({studyAccession,
       </div>
       { setCollapseBy &&
         <div className="form-group">
-          <label>Collapse by</label>
+          <label>
+            <OverlayTrigger trigger="click" rootClose placement="top" overlay={collapseByPopover}>
+              <span>Collapse genes by <FontAwesomeIcon className="action" icon={faQuestionCircle}/></span>
+            </OverlayTrigger>
+          </label>
           <Select options={collapseOptions}
             value={_find(collapseOptions, {value: collapseBy})}
             onChange={ option => setCollapseBy(option.value) }
@@ -178,3 +185,9 @@ export default function ClusterControls({studyAccession,
     </div>
   )
 }
+
+ const collapseByPopover = (
+  <Popover>
+    Collapse expression scores of multiple genes for each cell using a selected metric.  'None' views genes individually in a dotplot.
+  </Popover>
+)
