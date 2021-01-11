@@ -11,6 +11,8 @@ import ClusterControls from './ClusterControls'
 export default function StudyViolinPlot({ study, genes, setCollapseBy, collapseBy }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  // array of gene names as they are listed in the study itself
+  const [studyGeneNames, setStudyGeneNames] = useState([])
   const [graphElementId] = useState(_uniqueId('study-violin-'))
   const [annotationList, setAnnotationList] = useState(null)
 
@@ -42,15 +44,16 @@ export default function StudyViolinPlot({ study, genes, setCollapseBy, collapseB
     }
     setIsLoaded(true)
     setIsLoading(false)
+    setStudyGeneNames(results.gene_names)
     renderViolinPlot(graphElementId, results)
   }
 
+  // do a load from the server if study, gene, or collapse parameter has changed
   useEffect(() => {
-    // do a load from the server if this is the initial load
-    if (!isLoading && !isLoaded) {
+    if (!isLoading) {
       loadData()
     }
-  }, [study.accession, genes[0]])
+  }, [study.accession, genes[0], collapseBy])
   const isCollapsedView = ['mean', 'median'].indexOf(collapseBy) >= 0
   return (
     <div className="row graph-container">
@@ -69,9 +72,9 @@ export default function StudyViolinPlot({ study, genes, setCollapseBy, collapseB
             className="gene-load-spinner"
           />
         }
-        { isCollapsedView &&
+        { isCollapsedView && studyGeneNames.length &&
           <div className="text-center">
-            <span>{collapseBy} expression of {study.gene_matches.join(', ')}</span>
+            <span>{collapseBy} expression of {studyGeneNames.join(', ')}</span>
           </div>
         }
       </div>

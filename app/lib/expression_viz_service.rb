@@ -20,6 +20,7 @@ class ExpressionVizService
     else
       render_data[:values] = load_annotation_based_data_array_scatter(study, genes, cluster, selected_annotation, subsample, render_data[:y_axis_title])
     end
+    render_data[:gene_names] = genes.map{ |g| g['name'] }
     render_data[:annotation_list] = AnnotationVizService.get_study_annotation_options(study, current_user)
     render_data[:rendered_cluster] = cluster.name
     render_data[:rendered_annotation] = "#{selected_annotation[:name]}--#{selected_annotation[:type]}--#{selected_annotation[:scope]}"
