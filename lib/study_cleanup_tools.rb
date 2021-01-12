@@ -24,7 +24,7 @@ module StudyCleanupTools
   # * *returns*
   #   - (TrueClass) => true if method was performed, otherwise ArgumentError is thrown
   def self.destroy_all_studies_and_workspaces(allow_dev_env: false)
-    if validate_environment!(allow_dev_env) && validate_hostname!
+    if validate_environment!(allow_dev_env) && validate_hostname! && validate_continuous_integration!
       Study.all.each do |study|
         # do not mass delete studies in protected projects
         study.destroy_and_remove_workspace if permit_billing_project?(study.firecloud_project)
@@ -40,15 +40,14 @@ module StudyCleanupTools
   # * *params*
   #   - +project_name+: (String) => Name of Terra billing project (defaults to FireCloudClient::PORTAL_NAMESPACE )
   #   - +allow_dev_env+: (Boolean) => allow execution of this method in development environment (default: false)
-  #   - +is_ci_run+ (Boolean) => true if ENV['CI'] is set (will happen during CI run in Travis)
   #
   # * *raises*
   #   - (ArgumentError) => if command cannot be run for failing a security check (hostname, project, environment, etc)
   #
   # * *returns*
-  #   - (Boolean) => true if method was performed, false or ArgumentError if security check fails
-  def self.delete_all_orphaned_workspaces(project_name = FireCloudClient::PORTAL_NAMESPACE, allow_dev_env: false, is_ci_run: ENV['CI'])
-    if validate_hostname! && validate_environment!(allow_dev_env) && validate_billing_project!(project_name) && is_ci_run
+  #   - (TrueClass) => true if method was performed, otherwise ArgumentError is thrown
+  def self.delete_all_orphaned_workspaces(project_name = FireCloudClient::PORTAL_NAMESPACE, allow_dev_env: false)
+    if validate_hostname! && validate_environment!(allow_dev_env) && validate_billing_project!(project_name) && validate_continuous_integration!
       workspaces = ApplicationController.firecloud_client.workspaces(project_name)
       workspaces.each do |workspace|
         ws_attr = workspace.dig('workspace')
@@ -74,8 +73,6 @@ module StudyCleanupTools
         end
       end
       true
-    else
-      false
     end
   end
 
@@ -127,6 +124,22 @@ module StudyCleanupTools
     allow_dev_env ? environments << 'development' : nil
     if !environments.include?(Rails.env)
       raise ArgumentError.new("#{Rails.env} is not a permitted environment for running StudyCleanupTools methods")
+    else
+      true
+    end
+  end
+
+  # ensure commands cannot be run in production/staging environments
+  # can be run manually in development if allow_dev_env is set to true
+  #
+  # * *raises*
+  #   - (ArgumentError) => if this is not a continuous integration run (governed by ENV['CI'] == true)
+  #
+  # * *returns*
+  #   - (TrueClass) => true if environment passes validation
+  def self.validate_continuous_integration!
+    if !ENV['CI'] || ENV['CI'].blank?
+      raise ArgumentError.new("This is not a continuous integration test run, ENV['CI'] is not true")
     else
       true
     end
