@@ -6,8 +6,8 @@
 
 module StudyCleanupTools
 
-  # disallow running an cleanup commands on deployed hosts
-  DISALLOWED_HOSTS = /broadinstitute/
+  # disallow running an cleanup commands on deployed production & staging hosts
+  DISALLOWED_HOSTS = /singlecell(-staging)?\.broadinstitute/
 
   # disallow running deletes against any of these projects
   DISALLOWED_BILLING_PROJECTS = %w(single-cell-portal single-cell-portal-staging)
