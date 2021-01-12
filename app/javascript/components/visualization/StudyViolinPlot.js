@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
+import _capitalize from 'lodash/capitalize'
 
 import { fetchExpressionViolin } from 'lib/scp-api'
 import { renderViolinPlot } from 'lib/violin-plot'
@@ -72,9 +73,11 @@ export default function StudyViolinPlot({ study, genes, setCollapseBy, collapseB
             className="gene-load-spinner"
           />
         }
-        { isCollapsedView && studyGeneNames.length &&
+        {/* we have to explicitly test length > 0 below, just asserting .length would
+         sometimes render a zero to the page*/}
+        { isCollapsedView && studyGeneNames.length > 0 &&
           <div className="text-center">
-            <span>{collapseBy} expression of {studyGeneNames.join(', ')}</span>
+            <span>{_capitalize(collapseBy)} expression of {studyGeneNames.join(', ')}</span>
           </div>
         }
       </div>
