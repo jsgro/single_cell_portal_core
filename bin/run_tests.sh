@@ -48,7 +48,10 @@ function clean_up {
   echo "Cleaning up..."
   bundle exec bin/rails runner -e test "StudyCleanupTools.destroy_all_studies_and_workspaces" || { echo "FAILED to delete studies and workspaces" >&2; exit 1; } # destroy all studies/workspaces to clean up any files
   bundle exec bin/rails runner -e test "BigQueryClient.clear_bq_table" || { echo "FAILED to clear BigQuery table" >&2; exit 1; } # make sure BQ table is cleared
-  bundle exec bin/rails runner -e test "StudyCleanupTools.delete_all_orphaned_workspaces" || { echo "FAILED to delete studies and workspaces" >&2; exit 1; } # remove any orphaned workspaces from previous failures
+  # only do workspace cleanup in CI run as this would delete workspaces from a local instance
+  if [[ "$CI" = true ]]; then
+      bundle exec bin/rails runner -e test "StudyCleanupTools.delete_all_orphaned_workspaces" || { echo "FAILED to delete orphaned workspaces" >&2; exit 1; } # remove any orphaned workspaces from previous failures
+  fi
   bundle exec rake RAILS_ENV=test db:purge
   echo "...cleanup complete."
 }
