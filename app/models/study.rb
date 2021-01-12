@@ -1623,16 +1623,6 @@ class Study
     Rails.logger.info "Workspace #{firecloud_project}/#{firecloud_workspace} successfully removed."
   end
 
-  # deletes all studies and removes all firecloud workspaces, will ONLY work if the environment is 'test' or 'pentest'
-  # cannot be run in production/staging/development
-  def self.delete_all_and_remove_workspaces
-    if Rails.env.test? || Rails.env.pentest?
-      self.all.each do |study|
-        study.destroy_and_remove_workspace
-      end
-    end
-  end
-
   # helper method that mimics DeleteQueueJob.delete_convention_data
   # referenced from ensure_cascade_on_associations to prevent orphaned rows in BQ on manual deletes
   def delete_convention_data
