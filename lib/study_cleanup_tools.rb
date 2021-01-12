@@ -61,9 +61,9 @@ module StudyCleanupTools
         else
           begin
             if is_workspace_owner?(workspace)
-              print "deleting #{ws_attr['name']}... "
+              print "deleting #{ws_project}/#{ws_name}... "
               ApplicationController.firecloud_client.delete_workspace(ws_project, ws_name)
-              puts "#{ws_attr['name']} successfully deleted"
+              puts "#{ws_project}/#{ws_name} successfully deleted"
             else
               puts "skipping #{ws_project}/#{ws_name} because it was created by #{ws_owner}"
             end
