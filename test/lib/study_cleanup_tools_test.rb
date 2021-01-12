@@ -5,6 +5,10 @@ class StudyCleanupToolsTest < ActiveSupport::TestCase
 
   include TestInstrumentor
 
+  teardown do
+    Rails.env = "test" # reset this value to prevent other env checks failing later as this will persist across all runs
+  end
+
   test 'should validate hostname' do
     assert StudyCleanupTools.validate_hostname!
   end
