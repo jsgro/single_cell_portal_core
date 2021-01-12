@@ -136,7 +136,7 @@ module StudyCleanupTools
   #   - (ArgumentError) => if this is not a continuous integration run (governed by ENV['CI'] == true)
   #
   # * *returns*
-  #   - (TrueClass) => true if environment passes validation
+  #   - (TrueClass) => true if CI run passes validation
   def self.validate_continuous_integration!
     if !ENV['CI'] || ENV['CI'].blank?
       raise ArgumentError.new("This is not a continuous integration test run, ENV['CI'] is not true")
