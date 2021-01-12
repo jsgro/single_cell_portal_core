@@ -92,6 +92,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
       cluster: cluster,
       selected_annotation: annotation,
       boxpoints: 'All',
+      consensus: 'nil',
       current_user: @user
     )
     expected_values = %w(dog cat)

@@ -29,7 +29,7 @@ describe('Violin plot in global gene search', () => {
     const mockPlot = jest.spyOn(plotLib, 'plot');
     mockPlot.mockImplementation(() => {});
 
-    render(<StudyViolinPlot study={study} gene={study.gene_matches[0]}/>)
+    render(<StudyViolinPlot study={study} genes={study.gene_matches}/>)
 
     await waitForElementToBeRemoved(() => screen.getByTestId('study-violin-1-loading-icon'))
 
