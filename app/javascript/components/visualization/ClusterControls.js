@@ -188,6 +188,6 @@ export default function ClusterControls({studyAccession,
 
  const collapseByPopover = (
   <Popover>
-    Collapse expression scores of multiple genes for each cell using a selected metric.  'None' views genes individually in a dotplot.
+    Collapse expression scores of multiple genes for each cell using a selected metric.  'None' views genes individually in a dot plot.
   </Popover>
 )

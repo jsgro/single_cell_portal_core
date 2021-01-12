@@ -30,7 +30,7 @@ export default function StudyViolinPlot({ study, genes, setCollapseBy, collapseB
     let results
     if (!clusterParams) {
       // this is the initial load
-      results = await fetchExpressionViolin(study.accession, genes,null,null,null,null,null,collapseBy)
+      results = await fetchExpressionViolin(study.accession, genes, null, null, null, null, null, collapseBy)
       setAnnotationList(results.annotation_list)
     } else {
       results = await fetchExpressionViolin(study.accession,

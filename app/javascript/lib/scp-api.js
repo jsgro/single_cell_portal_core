@@ -208,7 +208,7 @@ export async function fetchCluster(
  * See definition: app/controllers/api/v1/visualization/expression_controller.rb
  *
  * @param {String} studyAccession Study accession
- * @param {String} genes Gene name or array of gene names
+ * @param {(String|String[])} genes Gene name or array of gene names
  * @param {String} clusterName Name of cluster
  * @param {String} annotationName Name of annotation
  * @param {String} annotationType Type of annotation ("group" or "numeric")
