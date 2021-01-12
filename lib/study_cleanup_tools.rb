@@ -24,7 +24,7 @@ module StudyCleanupTools
   # * *returns*
   #   - (TrueClass) => true if method was performed, otherwise ArgumentError is thrown
   def self.destroy_all_studies_and_workspaces(allow_dev_env: false)
-    if validate_environment!(allow_dev_env) && validate_hostname! && validate_continuous_integration!
+    if validate_environment!(allow_dev_env) && validate_hostname!
       Study.all.each do |study|
         # do not mass delete studies in protected projects
         study.destroy_and_remove_workspace if permit_billing_project?(study.firecloud_project)
