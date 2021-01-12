@@ -6,36 +6,39 @@ class StudyCleanupToolsTest < ActiveSupport::TestCase
   include TestInstrumentor
 
   test 'should validate hostname' do
-    assert StudyCleanupTools.validate_hostname!, "#{Socket.gethostname} hostname should have validated but did not"
+    assert StudyCleanupTools.validate_hostname!
   end
 
   test 'should validate billing project' do
     billing_project = FireCloudClient::PORTAL_NAMESPACE
-    assert StudyCleanupTools.validate_billing_project!(billing_project),
-           "#{billing_project} project should have validated but did not"
+    assert StudyCleanupTools.validate_billing_project!(billing_project)
 
     # ensure error is raised on validation fail
     begin
       bad_project = "this-is-not-valid"
-      refute StudyCleanupTools.validate_billing_project!(bad_project), "#{bad_project} should not have validated but did"
+      refute StudyCleanupTools.validate_billing_project!(bad_project)
     rescue ArgumentError => error
       assert error.is_a?(ArgumentError)
     end
   end
 
   test 'should validate environment' do
-    assert StudyCleanupTools.validate_environment!, "#{Rails.env} environment should have validated but did not"
+    assert StudyCleanupTools.validate_environment!
 
     # test allowing development environment
     Rails.env = 'development'
-    assert StudyCleanupTools.validate_environment!(allow_dev_env: true),
-           "#{Rails.env} environment should have validated but did not"
+    assert StudyCleanupTools.validate_environment!(allow_dev_env: true)
+
     # ensure error is raised on validation fail
     begin
       Rails.env = 'staging'
-      refute StudyCleanupTools.validate_environment!, "#{Rails.env} environment should not have validated but did"
+      refute StudyCleanupTools.validate_environment!
     rescue ArgumentError => error
       assert error.is_a?(ArgumentError)
     end
+  end
+
+  test 'should validate continuous integration' do
+    assert StudyCleanupTools.validate_continuous_integration!
   end
 end
