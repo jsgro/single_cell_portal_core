@@ -18,7 +18,7 @@ class ExpressionVizService
 
       render_data[:values_jitter] = boxpoints
     else
-      render_data[:values] = load_annotation_based_data_array_scatter(study, genes, cluster, selected_annotation, subsample, render_data[:y_axis_title])
+      render_data[:values] = load_annotation_based_data_array_scatter(study, genes[0], cluster, selected_annotation, subsample, render_data[:y_axis_title])
     end
     render_data[:gene_names] = genes.map{ |g| g['name'] }
     render_data[:annotation_list] = AnnotationVizService.get_study_annotation_options(study, current_user)

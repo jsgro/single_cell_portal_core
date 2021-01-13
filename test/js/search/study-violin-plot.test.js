@@ -6,6 +6,7 @@ import { render, waitForElementToBeRemoved, screen } from '@testing-library/reac
 import { enableFetchMocks } from 'jest-fetch-mock'
 
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
+import {emptyRenderParams} from 'components/visualization/ClusterControls'
 import * as plotLib from 'lib/plot'
 
 const fs = require('fs')
@@ -29,7 +30,7 @@ describe('Violin plot in global gene search', () => {
     const mockPlot = jest.spyOn(plotLib, 'plot');
     mockPlot.mockImplementation(() => {});
 
-    render(<StudyViolinPlot study={study} genes={study.gene_matches}/>)
+    render(<StudyViolinPlot study={study} genes={study.gene_matches} renderParams={emptyRenderParams} setAnnotationList={()=>{}}/>)
 
     await waitForElementToBeRemoved(() => screen.getByTestId('study-violin-1-loading-icon'))
 

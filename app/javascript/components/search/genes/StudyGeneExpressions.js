@@ -1,19 +1,27 @@
 import React, { useState } from 'react'
+import _clone from 'lodash/clone'
 
 import Study, { getByline } from 'components/search/results/Study'
 import StudyGeneDotPlot from 'components/visualization/StudyGeneDotPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
+import ClusterControls, {emptyRenderParams} from 'components/visualization/ClusterControls'
+
 
 
 /** Renders expression data for a study.  This assumes that the study has a 'gene_matches' property
     to inform which genes to show data for
   */
 export default function StudyGeneExpressions({ study }) {
-  const [collapseBy, setCollapseBy] = useState(null)
+  const [renderParams, setRenderParams] = useState(_clone(emptyRenderParams))
+  const [annotationList, setAnnotationList] = useState(null)
+
   let studyRenderComponent
   if (!study.gene_matches) {
     return <Study study={study}/>
   }
+
+  const showDotPlot = study.gene_matches.length > 1 && !renderParams.collapseBy
+
   if (!study.can_visualize_clusters) {
     studyRenderComponent = (
       <div className="text-center">
@@ -21,12 +29,12 @@ export default function StudyGeneExpressions({ study }) {
           This study does not have cluster data to support visualization in the portal
       </div>
     )
-  } else if (study.gene_matches.length > 1 && !collapseBy) {
+  } else if (showDotPlot) {
     // render dotPlot for multigene searches that are not collapsed
-    studyRenderComponent = <StudyGeneDotPlot study={study} genes={study.gene_matches} collapseBy={collapseBy} setCollapseBy={setCollapseBy}/>
+    studyRenderComponent = <StudyGeneDotPlot study={study} genes={study.gene_matches} renderParams={renderParams}/>
   } else {
     // render violin for single genes or collapsed
-    studyRenderComponent = <StudyViolinPlot study={study} genes={study.gene_matches} collapseBy={collapseBy} setCollapseBy={setCollapseBy}/>
+    studyRenderComponent = <StudyViolinPlot study={study} genes={study.gene_matches} renderParams={renderParams} setAnnotationList={setAnnotationList}/>
   }
 
   return (
@@ -47,7 +55,20 @@ export default function StudyGeneExpressions({ study }) {
           })
         }
       </div>
-      { studyRenderComponent }
+      <div className="row graph-container">
+        <div className="col-md-10">
+          { studyRenderComponent }
+        </div>
+        <div className="col-md-2 graph-controls">
+          <ClusterControls
+            studyAccession={study.accession}
+            setRenderParams={setRenderParams}
+            renderParams={renderParams}
+            fetchAnnotationList={showDotPlot}
+            showCollapseBy={study.gene_matches.length > 1}
+            preloadedAnnotationList={annotationList}/>
+        </div>
+      </div>
 
     </div>
   )

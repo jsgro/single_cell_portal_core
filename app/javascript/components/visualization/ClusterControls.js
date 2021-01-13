@@ -8,6 +8,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { fetchClusterOptions } from 'lib/scp-api'
 
+export const emptyRenderParams = {
+  cluster: '',
+  annotation: '',
+  subsample: '',
+  collapseBy: null,
+}
+
 const collapseOptions = [
   {label: 'None', value: null},
   {label: 'Mean', value: 'mean'},
@@ -68,22 +75,33 @@ function getDefaultSubsampleForCluster(annotationList, clusterName) {
   return '' // for now, default is always all cells
 }
 
-/** renders cluster, annotation, and (optionally) subsample controls for a study */
+/** renders cluster, annotation, and (optionally) subsample and collapse controls for a study
+    by default, this control will handle fetching the dropdown options from the server.
+    If those options have already been fetched (or will be retrieved as part of a call already
+    being made, 'fetchAnnotationList' can be set to fale, and then a preloadedAnnotationList
+    can be provided
+
+    studyAccession: the study accesion
+    showCollapseBy: whether to show the collapse by dropdown
+    showSubsample: whether to show the subsample dropdown
+    preloadedAnnotationList: the results of a call to scpApi/fetchClusterOptions (or equivalent).
+      Only needs to be specified if fetchAnnotionList is false
+    fetchAnnotationList=true: whether this component should handle populating dropdown options
+    renderParams,
+    setRenderParams
+    )
+
+  */
 export default function ClusterControls({studyAccession,
-                                         onChange,
+                                         showCollapseBy,
                                          showSubsample,
                                          preloadedAnnotationList,
                                          fetchAnnotationList=true,
-                                         setCollapseBy,
-                                         collapseBy}) {
+                                         renderParams,
+                                         setRenderParams}) {
   const [annotationList, setAnnotationList] =
     useState({ default_cluster: null, default_annotation: null, annotations: [] })
-  const [renderParams, setRenderParams] = useState({
-    userUpdated: false,
-    cluster: '',
-    annotation: '',
-    subsample: ''
-  })
+
   const clusterOptions = getClusterOptions(annotationList)
   const annotationOptions = getAnnotationOptions(annotationList, renderParams.cluster)
   const subsampleOptions = getSubsampleOptions(annotationList, renderParams.cluster)
@@ -100,7 +118,6 @@ export default function ClusterControls({studyAccession,
   function update(newAnnotationList) {
     setAnnotationList(newAnnotationList)
     const newRenderParams = {
-      userUpdated: false,
       cluster: newAnnotationList.default_cluster,
       annotation: newAnnotationList.default_annotation,
       subsample: getDefaultSubsampleForCluster(newAnnotationList, newAnnotationList.default_cluster)
@@ -120,13 +137,6 @@ export default function ClusterControls({studyAccession,
     }
   }, [studyAccession, preloadedAnnotationList])
 
-  useEffect(() => {
-    // don't fire the onchange on initial render
-    if (renderParams.cluster !== '' && onChange) {
-      onChange(renderParams)
-    }
-  }, [renderParams.cluster, renderParams.annotation.name, renderParams.subsample])
-
   return (
     <div>
       <div className="form-group">
@@ -134,10 +144,10 @@ export default function ClusterControls({studyAccession,
         <Select options={clusterOptions}
           value={{ label: renderParams.cluster, value: renderParams.cluster }}
           onChange={ cluster => setRenderParams({
-            userUpdated: true,
             annotation: getDefaultAnnotationForCluster(annotationList, cluster.name, renderParams.annotation),
             cluster: cluster.value,
-            subsample: getDefaultSubsampleForCluster(annotationList, cluster.value)
+            subsample: getDefaultSubsampleForCluster(annotationList, cluster.value),
+            collapseBy: renderParams.collapseBy
           })}
           styles={customSelectStyle}
         />
@@ -149,10 +159,10 @@ export default function ClusterControls({studyAccession,
           getOptionLabel={annotation => annotation.name}
           getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
           onChange={annotation => setRenderParams({
-            userUpdated: true,
             annotation: annotation,
             cluster: renderParams.cluster,
-            subsample: renderParams.subsample
+            subsample: renderParams.subsample,
+            collapseBy: renderParams.collapseBy
           })}
           styles={ customSelectStyle }/>
       </div>
@@ -162,14 +172,14 @@ export default function ClusterControls({studyAccession,
           value={{ label: renderParams.subsample == '' ? 'All Cells' : renderParams.subsample,
                    value: renderParams.subsample }}
           onChange={subsample => setRenderParams({
-            userUpdated: true,
             annotation: renderParams.annotation,
             cluster: renderParams.cluster,
-            subsample: subsample.value
+            subsample: subsample.value,
+            collapseBy: renderParams.collapseBy
           })}
           styles={customSelectStyle}/>
       </div>
-      { setCollapseBy &&
+      { showCollapseBy &&
         <div className="form-group">
           <label>
             <OverlayTrigger trigger="click" rootClose placement="top" overlay={collapseByPopover}>
@@ -177,8 +187,13 @@ export default function ClusterControls({studyAccession,
             </OverlayTrigger>
           </label>
           <Select options={collapseOptions}
-            value={_find(collapseOptions, {value: collapseBy})}
-            onChange={ option => setCollapseBy(option.value) }
+            value={_find(collapseOptions, {value: renderParams.collapseBy})}
+            onChange={ collapseBy => setRenderParams({
+              annotation: renderParams.annotation,
+              cluster: renderParams.cluster,
+              subsample: renderParams.subsample,
+              collapseBy: collapseBy.value
+            }) }
             styles={customSelectStyle}/>
         </div>
       }
