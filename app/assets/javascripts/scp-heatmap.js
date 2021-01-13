@@ -1,7 +1,7 @@
 /**
  * Render Morpheus heatmap
  */
-function renderMorpheus(
+function renderHeatmap(
   dataPath, annotPath, selectedAnnot, selectedAnnotType, target, annotations,
   fitType, heatmapHeight, colorScaleMode
 ) {
