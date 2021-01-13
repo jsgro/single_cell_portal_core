@@ -74,7 +74,14 @@ module SelfCleaningSuite
   after(:all) do
     puts "#{self.class}: Cleaning up #{@@studies_to_clean.count} studies, #{@@users_to_clean.count} users"
     [@@studies_to_clean, @@users_to_clean].each do |entity_list|
-      entity_list.each { |entity| entity.destroy }
+      entity_list.each do |entity|
+        if entity.is_a?(Study) && !entity.detached?
+          # non-detached studies will leave behind workspaces if not removed
+          entity.destroy_and_remove_workspace
+        else
+          entity.destroy
+        end
+      end
       entity_list.clear
     end
   end
