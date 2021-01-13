@@ -83,4 +83,23 @@ class StudyCleanupToolsTest < ActiveSupport::TestCase
              "Did not find method signature for :permit_billing_project? in message: #{error.message}"
     end
   end
+
+  test 'should validate confirmation prompt before deleting' do
+    # simulate user prompt by mocking $stdin.gets
+    # positive test
+    mock = Minitest::Mock.new
+    mock.expect :gets, 'Delete All'
+    StringIO.stub :new, mock do
+      assert StudyCleanupTools.confirm_delete_request?(StringIO.new)
+      mock.verify
+    end
+
+    # negative test
+    mock = Minitest::Mock.new
+    mock.expect :gets, 'this should fail'
+    StringIO.stub :new, mock do
+      refute StudyCleanupTools.confirm_delete_request?(StringIO.new)
+      mock.verify
+    end
+  end
 end

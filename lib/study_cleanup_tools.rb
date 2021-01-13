@@ -26,6 +26,7 @@ module StudyCleanupTools
   def self.destroy_all_studies_and_workspaces(allow_dev_env: false)
     halt_on_validation_fail(:permit_environment?, allow_dev_env)
     halt_on_validation_fail(:permit_hostname?)
+    halt_on_validation_fail(:confirm_delete_request?) if !!(allow_dev_env && Rails.env.development?)
     study_count = 0
     Study.all.each do |study|
       # do not mass delete studies in protected projects
@@ -55,6 +56,7 @@ module StudyCleanupTools
     halt_on_validation_fail(:permit_hostname?)
     halt_on_validation_fail(:permit_billing_project?, project_name)
     halt_on_validation_fail(:is_continuous_integration?)
+    halt_on_validation_fail(:confirm_delete_request?) if !!(allow_dev_env && Rails.env.development?)
     workspaces = ApplicationController.firecloud_client.workspaces(project_name)
     workspace_count = 0
     workspaces.each do |workspace|
@@ -156,5 +158,17 @@ module StudyCleanupTools
   #   - (Boolean) => true/false if workspace was created by configured service account
   def self.service_account_created_workspace?(workspace_attributes)
     ApplicationController.firecloud_client.issuer == workspace_attributes.with_indifferent_access.dig(:workspace, :createdBy)
+  end
+
+  # ask for extra confirmation in development environment, will require user to enter text in prompt
+  #
+  # * *params*
+  #   - +stdin+: (IO) => IO object for collection input, will default to STDIN (param is used only for mocks in tests)
+  #
+  # * *returns*
+  #   - (Boolean) => true/false if user confirms with correct prompt
+  def self.confirm_delete_request?(stdin = STDIN)
+    print "Are you sure you want to run #{caller_locations.first.label}?  Please type 'Delete All' to execute: "
+    stdin.gets.strip == 'Delete All'
   end
 end
