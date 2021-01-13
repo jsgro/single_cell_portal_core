@@ -120,7 +120,7 @@ module StudyCleanupTools
   # * *params*
   #   - +allow_dev_env+: (Boolean) => true/false to allow running command in development environment (defaults to false)
   #
-  # # * *returns*
+  # * *returns*
   #   - (Boolean) => true/false if environment is permitted
   def self.permit_environment?(allow_dev_env = false)
     if allow_dev_env
