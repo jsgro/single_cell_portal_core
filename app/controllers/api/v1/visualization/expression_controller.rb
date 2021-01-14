@@ -42,18 +42,21 @@ module Api
                                                                     params[:annotation_scope])
           subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
           genes = RequestUtils.get_genes_from_param(@study, params[:genes])
-
-          render_data = ExpressionVizService.get_global_expression_render_data(
-            study: @study,
-            subsample: subsample,
-            genes: genes,
-            cluster: cluster,
-            selected_annotation: annotation,
-            boxpoints: params[:boxpoints],
-            consensus: params[:consensus],
-            current_user: current_api_user
-          )
-          render json: render_data, status: 200
+          if genes.empty?
+            render json: {error: 'You must supply at least one gene'}, status: 422
+          else
+            render_data = ExpressionVizService.get_global_expression_render_data(
+              study: @study,
+              subsample: subsample,
+              genes: genes,
+              cluster: cluster,
+              selected_annotation: annotation,
+              boxpoints: params[:boxpoints],
+              consensus: params[:consensus],
+              current_user: current_api_user
+            )
+            render json: render_data, status: 200
+          end
         end
 
         # this is intended to provide morpheus compatibility, so it returns plain text, instead of json
