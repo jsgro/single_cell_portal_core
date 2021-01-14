@@ -41,7 +41,7 @@ module Api
                                                                     params[:annotation_type],
                                                                     params[:annotation_scope])
           subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
-          genes = self.class.get_genes_from_param(@study, params[:genes])
+          genes = RequestUtils.get_genes_from_param(@study, params[:genes])
 
           render_data = ExpressionVizService.get_global_expression_render_data(
             study: @study,
@@ -61,7 +61,7 @@ module Api
           cluster = ClusterVizService.get_cluster_group(@study, params)
 
           collapse_by = params[:row_centered]
-          genes = self.class.get_genes_from_param(@study, params[:genes])
+          genes = RequestUtils.get_genes_from_param(@study, params[:genes])
 
           expression_data = ExpressionVizService.get_morpheus_text_data(
               genes: genes, cluster: cluster, collapse_by: collapse_by, file_type: :gct
@@ -70,18 +70,7 @@ module Api
           render plain: expression_data, status: 200
         end
 
-        def self.get_genes_from_param(study, gene_param)
-          terms = RequestUtils.sanitize_search_terms(gene_param).split(',')
-          matrix_ids = study.expression_matrix_files.map(&:id)
-          genes = []
-          terms.each do |term|
-            matches = study.genes.by_name_or_id(term, matrix_ids)
-            unless matches.empty?
-              genes << matches
-            end
-          end
-          genes
-        end
+
       end
     end
   end

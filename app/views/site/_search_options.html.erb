@@ -44,8 +44,8 @@
               <%= f.file_field :upload, class: 'form-control', accept: '.txt,text/plain' %>
             </div>
             <div class="form-group">
-              <%= f.label :consensus, "Collapse genes by <i class='fas fa-question-circle'></i>".html_safe, title: "Multiple genes only: Collapse expression scores of multiple genes for each cell using this metric.  Selecting 'None' will view genes individually as a heatmap.", data: {toggle: 'tooltip', placement: 'right'} %><br/>
-              <%= f.select :consensus, options_for_select([['Mean', 'mean'],['Median', 'median']], params[:consensus]), {include_blank: 'None'}, {class: 'form-control'} %>
+              <%= f.label :consensus, "View as <i class='fas fa-question-circle'></i>".html_safe, title: "Multiple genes only: Selecting one of the 'violin' options will combine expression scores of multiple genes for each cell using the selected metric.", data: {toggle: 'tooltip', placement: 'right'} %><br/>
+              <%= f.select :consensus, options_for_select([['Violin - mean', 'mean'],['Violin - median', 'median']], params[:consensus]), {include_blank: 'Dot plot'}, {class: 'form-control'} %>
             </div>
             <%= link_to "<span class='fas fa-chevron-left'></span> Back".html_safe, "javascript:", class: "btn pull-right #{action_name == 'study' ? 'btn-default disabled' : 'btn-warning'}", id: 'clear-gene-search', title: 'Clear gene search and return to cluster scatter plots', data: {toggle: 'tooltip'} %>
             <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
