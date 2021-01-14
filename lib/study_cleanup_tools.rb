@@ -24,9 +24,9 @@ module StudyCleanupTools
   # * *returns*
   #   - (Integer) => count of studies that were deleted
   def self.destroy_all_studies_and_workspaces(allow_dev_env: false)
-    halt_on_validation_fail(:permit_environment?, allow_dev_env)
-    halt_on_validation_fail(:permit_hostname?)
-    halt_on_validation_fail(:confirm_delete_request?) if !!(allow_dev_env && Rails.env.development?)
+    raise_exception_unless_true(:permit_environment?) { permit_environment?(allow_dev_env) }
+    raise_exception_unless_true(:permit_hostname?) { permit_hostname? }
+    raise_exception_unless_true(:confirm_delete_request?) { confirm_delete_request? } if !!(allow_dev_env && Rails.env.development?)
     study_count = 0
     Study.all.each do |study|
       # do not mass delete studies in protected projects
@@ -52,11 +52,11 @@ module StudyCleanupTools
   # * *returns*
   #   - (Integer) => count of workspaces that were deleted
   def self.delete_all_orphaned_workspaces(project_name = FireCloudClient::PORTAL_NAMESPACE, allow_dev_env: false)
-    halt_on_validation_fail(:permit_environment?, allow_dev_env)
-    halt_on_validation_fail(:permit_hostname?)
-    halt_on_validation_fail(:permit_billing_project?, project_name)
-    halt_on_validation_fail(:is_continuous_integration?)
-    halt_on_validation_fail(:confirm_delete_request?) if !!(allow_dev_env && Rails.env.development?)
+    raise_exception_unless_true(:permit_environment?) { permit_environment?(allow_dev_env) }
+    raise_exception_unless_true(:permit_hostname?) { permit_hostname? }
+    raise_exception_unless_true(:permit_billing_project?) { permit_billing_project?(project_name) }
+    raise_exception_unless_true(:is_continuous_integration?) { is_continuous_integration? }
+    raise_exception_unless_true(:confirm_delete_request?) { confirm_delete_request? } if !!(allow_dev_env && Rails.env.development?)
     workspaces = ApplicationController.firecloud_client.workspaces(project_name)
     workspace_count = 0
     workspaces.each do |workspace|
@@ -93,14 +93,13 @@ module StudyCleanupTools
   # handler to run a security check and raise an error on returning false to halt execution
   #
   # * *params*
-  #   - +validation_name+: (String, Symbol) => name of security check to perform
-  #   - +args+: (*Array) => array of arguments for calling method, passed with splat (*)
+  #   - +validation_name+: (String) => name of validation being run (for error message)
+  #   - +&block+: (Proc) => validation method to execute that returns true/false
   #
   # * *raises*
   #   - (RuntimeError) => raise exception if security check returns false to halt parent method execution
-  def self.halt_on_validation_fail(validation_name, *validation_args)
-    # check for presence of arguments to avoid ArgumentError in calling method
-    valid_command = validation_args.any? ? self.send(validation_name, *validation_args) : self.send(validation_name)
+  def self.raise_exception_unless_true(validation_name, &block)
+    valid_command = yield
     if !valid_command
       # report validation that failed and method caller
       error_message = "halting execution as #{validation_name} failed validation when calling #{self.name}##{caller_locations.first.label}"
@@ -138,7 +137,9 @@ module StudyCleanupTools
   # * *returns*
   #   - (Boolean) => true/false if this is a CI run
   def self.is_continuous_integration?
-    !!(ENV['CI']) # use double-bang (!!) to convert nil to false
+    # must do strict equality comparison, otherwise any value for ENV['CI'] will evaluate to true
+    # also boolean ENV variables are set as strings in Ruby
+    ENV['CI'].to_s === 'true'
   end
 
   # ensure requested billing project is not disallowed, and is the configured project for this instance
@@ -162,13 +163,10 @@ module StudyCleanupTools
 
   # ask for extra confirmation in development environment, will require user to enter text in prompt
   #
-  # * *params*
-  #   - +stdin+: (IO) => IO object for collection input, will default to STDIN (param is used only for mocks in tests)
-  #
   # * *returns*
   #   - (Boolean) => true/false if user confirms with correct prompt
-  def self.confirm_delete_request?(stdin = STDIN)
+  def self.confirm_delete_request?
     print "Are you sure you want to run #{caller_locations.first.label}?  Please type 'Delete All' to execute: "
-    stdin.gets.strip == 'Delete All'
+    STDIN.gets.strip == 'Delete All'
   end
 end

@@ -13,12 +13,13 @@ class StudyCleanupToolsTest < ActiveSupport::TestCase
     @basic_study = FactoryBot.create(:study, name_prefix: 'Cleanup Security Checks', test_array: @@studies_to_clean)
   end
 
-  teardown do
-    Rails.env = "test" # reset this value to prevent other env checks failing later as this will persist across all runs
-  end
-
   test 'should validate hostname' do
     assert StudyCleanupTools.permit_hostname?
+
+    # negative test, stub hostname
+    Socket.stub :gethostname, 'singlecell.broadinstitute.org' do
+      refute StudyCleanupTools.permit_hostname?
+    end
   end
 
   test 'should validate billing project' do
@@ -33,21 +34,43 @@ class StudyCleanupToolsTest < ActiveSupport::TestCase
     assert StudyCleanupTools.permit_environment?
 
     # test allowing development environment
-    Rails.env = 'development'
-    assert StudyCleanupTools.permit_environment?(allow_dev_env: true)
+    dev_mock = Minitest::Mock.new
+    dev_mock.expect :test?, false
+    dev_mock.expect :pentest?, false
+    dev_mock.expect :development?, true
+
+    Rails.stub :env, dev_mock do
+      assert StudyCleanupTools.permit_environment?(allow_dev_env: true)
+      dev_mock.verify
+    end
 
     # ensure production-like environments are disallowed
-    Rails.env = 'staging'
-    refute StudyCleanupTools.permit_environment?
+    staging_mock = Minitest::Mock.new
+    staging_mock.expect :test?, false
+    staging_mock.expect :pentest?, false
+
+    Rails.stub :env, staging_mock do
+      refute StudyCleanupTools.permit_environment?
+      staging_mock.verify
+    end
   end
 
   test 'should validate continuous integration' do
-    assert StudyCleanupTools.is_continuous_integration?
+    mock_env('CI' => 'true') do
+      assert StudyCleanupTools.is_continuous_integration?
+    end
+
+    mock_env('CI' => 'false') do
+      refute StudyCleanupTools.is_continuous_integration?
+    end
+
+    mock_env('CI' => nil) do
+      refute StudyCleanupTools.is_continuous_integration?
+    end
   end
 
   test 'should match workspace creator for service account' do
-    study = Study.first
-    workspace = ApplicationController.firecloud_client.get_workspace(study.firecloud_project, study.firecloud_workspace)
+    workspace = ApplicationController.firecloud_client.get_workspace(@basic_study.firecloud_project, @basic_study.firecloud_workspace)
     assert StudyCleanupTools.service_account_created_workspace?(workspace)
 
     # negative test with mock workspace JSON
@@ -59,47 +82,44 @@ class StudyCleanupToolsTest < ActiveSupport::TestCase
 
     # positive tests - known goods should return nil as there is no declared return value
     # no arguments
-    assert_nil StudyCleanupTools.halt_on_validation_fail(:permit_environment?)
+    assert_nil StudyCleanupTools.raise_exception_unless_true(:permit_environment?) { StudyCleanupTools.permit_environment? }
 
     # with arguments
-    assert_nil StudyCleanupTools.halt_on_validation_fail(:permit_billing_project?, FireCloudClient::PORTAL_NAMESPACE)
+    assert_nil StudyCleanupTools.raise_exception_unless_true(:permit_billing_project?) { StudyCleanupTools.permit_billing_project? FireCloudClient::PORTAL_NAMESPACE }
 
     # negative test with no arguments - should throw RuntimeError
     begin
-      Rails.env = 'staging'
-      StudyCleanupTools.halt_on_validation_fail(:permit_environment?)
+      mock = Minitest::Mock.new
+      mock.expect :test?, false
+      mock.expect :pentest?, false
+
+      Rails.stub :env, mock do
+        StudyCleanupTools.raise_exception_unless_true(:permit_environment?) { StudyCleanupTools.permit_environment? }
+      end
     rescue RuntimeError => error
       assert error.is_a?(RuntimeError)
       assert error.message.include?('permit_environment?'),
              "Did not find validation method signature for :permit_environment? in message: #{error.message}"
+      mock.verify
     end
 
     # negative test with arguments
     begin
-      StudyCleanupTools.halt_on_validation_fail(:permit_billing_project?, 'invalid-project')
+      StudyCleanupTools.raise_exception_unless_true(:permit_billing_project?) { StudyCleanupTools.permit_billing_project?('invalid-project') }
     rescue RuntimeError => error
       assert error.is_a?(RuntimeError)
       assert error.message.include?('permit_billing_project?'),
-             "Did not find method signature for :permit_billing_project? in message: #{error.message}"
+             "Did not find validation method signature for :permit_billing_project? in message: #{error.message}"
     end
   end
 
   test 'should validate confirmation prompt before deleting' do
-    # simulate user prompt by mocking $stdin.gets
-    # positive test
-    mock = Minitest::Mock.new
-    mock.expect :gets, 'Delete All'
-    StringIO.stub :new, mock do
-      assert StudyCleanupTools.confirm_delete_request?(StringIO.new)
-      mock.verify
+    STDIN.stub :gets, 'Delete All' do
+      assert StudyCleanupTools.confirm_delete_request?
     end
 
-    # negative test
-    mock = Minitest::Mock.new
-    mock.expect :gets, 'this should fail'
-    StringIO.stub :new, mock do
-      refute StudyCleanupTools.confirm_delete_request?(StringIO.new)
-      mock.verify
+    STDIN.stub :gets, 'this should fail' do
+      refute StudyCleanupTools.confirm_delete_request?
     end
   end
 end

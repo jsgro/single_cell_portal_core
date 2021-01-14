@@ -27,6 +27,18 @@ class ActiveSupport::TestCase
     end
     Hash[*difference.flatten]
   end
+
+  # mock environment variables
+  # from https://gist.github.com/jazzytomato/79bb6ff516d93486df4e14169f4426af
+  def mock_env(partial_env_hash)
+    old = ENV.to_hash
+    ENV.update partial_env_hash
+    begin
+      yield
+    ensure
+      ENV.replace old
+    end
+  end
 end
 
 
