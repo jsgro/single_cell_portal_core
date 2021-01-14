@@ -24,9 +24,9 @@ module StudyCleanupTools
   # * *returns*
   #   - (Integer) => count of studies that were deleted
   def self.destroy_all_studies_and_workspaces(allow_dev_env: false)
-    raise_exception_unless_true(:permit_environment?) { permit_environment?(allow_dev_env) }
-    raise_exception_unless_true(:permit_hostname?) { permit_hostname? }
-    raise_exception_unless_true(:confirm_delete_request?) { confirm_delete_request? } if !!(allow_dev_env && Rails.env.development?)
+    raise_exception_unless_true('permit_environment?') { permit_environment?(allow_dev_env) }
+    raise_exception_unless_true('permit_hostname?') { permit_hostname? }
+    raise_exception_unless_true('confirm_delete_request?') { confirm_delete_request? } if !!(allow_dev_env && Rails.env.development?)
     study_count = 0
     Study.all.each do |study|
       # do not mass delete studies in protected projects
@@ -52,11 +52,11 @@ module StudyCleanupTools
   # * *returns*
   #   - (Integer) => count of workspaces that were deleted
   def self.delete_all_orphaned_workspaces(project_name = FireCloudClient::PORTAL_NAMESPACE, allow_dev_env: false)
-    raise_exception_unless_true(:permit_environment?) { permit_environment?(allow_dev_env) }
-    raise_exception_unless_true(:permit_hostname?) { permit_hostname? }
-    raise_exception_unless_true(:permit_billing_project?) { permit_billing_project?(project_name) }
-    raise_exception_unless_true(:is_continuous_integration?) { is_continuous_integration? }
-    raise_exception_unless_true(:confirm_delete_request?) { confirm_delete_request? } if !!(allow_dev_env && Rails.env.development?)
+    raise_exception_unless_true('permit_environment?') { permit_environment?(allow_dev_env) }
+    raise_exception_unless_true('permit_hostname?') { permit_hostname? }
+    raise_exception_unless_true('permit_billing_project?') { permit_billing_project?(project_name) }
+    raise_exception_unless_true('is_continuous_integration?') { is_continuous_integration? }
+    raise_exception_unless_true('confirm_delete_request?') { confirm_delete_request? } if !!(allow_dev_env && Rails.env.development?)
     workspaces = ApplicationController.firecloud_client.workspaces(project_name)
     workspace_count = 0
     workspaces.each do |workspace|
@@ -102,8 +102,7 @@ module StudyCleanupTools
     valid_command = yield
     if !valid_command
       # report validation that failed and method caller
-      error_message = "halting execution as #{validation_name} failed validation when calling #{self.name}##{caller_locations.first.label}"
-      raise RuntimeError.new(error_message)
+      raise RuntimeError.new("#{validation_name} failed validation when calling #{self.name}##{caller_locations.first.label}")
     end
   end
 

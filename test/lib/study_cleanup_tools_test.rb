@@ -82,10 +82,10 @@ class StudyCleanupToolsTest < ActiveSupport::TestCase
 
     # positive tests - known goods should return nil as there is no declared return value
     # no arguments
-    assert_nil StudyCleanupTools.raise_exception_unless_true(:permit_environment?) { StudyCleanupTools.permit_environment? }
+    assert_nil StudyCleanupTools.raise_exception_unless_true('permit_environment?') { StudyCleanupTools.permit_environment? }
 
     # with arguments
-    assert_nil StudyCleanupTools.raise_exception_unless_true(:permit_billing_project?) { StudyCleanupTools.permit_billing_project? FireCloudClient::PORTAL_NAMESPACE }
+    assert_nil StudyCleanupTools.raise_exception_unless_true('permit_billing_project?') { StudyCleanupTools.permit_billing_project? FireCloudClient::PORTAL_NAMESPACE }
 
     # negative test with no arguments - should throw RuntimeError
     begin
@@ -94,18 +94,18 @@ class StudyCleanupToolsTest < ActiveSupport::TestCase
       mock.expect :pentest?, false
 
       Rails.stub :env, mock do
-        StudyCleanupTools.raise_exception_unless_true(:permit_environment?) { StudyCleanupTools.permit_environment? }
+        StudyCleanupTools.raise_exception_unless_true('permit_environment?') { StudyCleanupTools.permit_environment? }
       end
     rescue RuntimeError => error
       assert error.is_a?(RuntimeError)
       assert error.message.include?('permit_environment?'),
-             "Did not find validation method signature for :permit_environment? in message: #{error.message}"
+             "Did not find validation method signature for permit_environment? in message: #{error.message}"
       mock.verify
     end
 
     # negative test with arguments
     begin
-      StudyCleanupTools.raise_exception_unless_true(:permit_billing_project?) { StudyCleanupTools.permit_billing_project?('invalid-project') }
+      StudyCleanupTools.raise_exception_unless_true('permit_billing_project?') { StudyCleanupTools.permit_billing_project?('invalid-project') }
     rescue RuntimeError => error
       assert error.is_a?(RuntimeError)
       assert error.message.include?('permit_billing_project?'),
