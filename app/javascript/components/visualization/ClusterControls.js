@@ -16,9 +16,9 @@ export const emptyRenderParams = {
 }
 
 const collapseOptions = [
-  {label: 'None', value: null},
-  {label: 'Mean', value: 'mean'},
-  {label: 'Median', value: 'median'}
+  {label: 'Dot plot', value: null},
+  {label: 'Violin - Mean', value: 'mean'},
+  {label: 'Violin - Median', value: 'median'}
 ]
 
 /** takes the server response and returns subsample options suitable for react-select */
@@ -183,7 +183,7 @@ export default function ClusterControls({studyAccession,
         <div className="form-group">
           <label>
             <OverlayTrigger trigger="click" rootClose placement="top" overlay={collapseByPopover}>
-              <span>Collapse genes by <FontAwesomeIcon className="action" icon={faInfoCircle}/></span>
+              <span>View as <FontAwesomeIcon className="action" icon={faInfoCircle}/></span>
             </OverlayTrigger>
           </label>
           <Select options={collapseOptions}
@@ -203,6 +203,6 @@ export default function ClusterControls({studyAccession,
 
  const collapseByPopover = (
   <Popover id="collapse-by-genes-helptext">
-    Collapse expression scores of multiple genes for each cell using a selected metric.  'None' views genes individually in a dot plot.
+    Selecting one of the 'violin' options will combine expression scores of multiple genes for each cell using the selected metric.
   </Popover>
 )
