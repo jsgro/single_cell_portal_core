@@ -1,8 +1,15 @@
 <p>The following file failed to automatically push to Terra:</p>
 
-<p>Study: <%= @study.name %><br />
+<p>Study: <%= @study.accession %><br />
 File: <%= @study_file.upload_file_name %><br />
 Terra Workspace: <%= @study.firecloud_workspace %></p>
 
 <p>The error that occurred was: <%= @error %></p>
-<p>Please manually push the file to Terra.</p>
+<p>Please manually push the file to the workspace bucket and relaunch the parse job with the following commands:</p>
+
+<pre><strong>
+  study = Study.find_by(accession: '<%= @study.accession %>')
+  study_file = study.study_files.detect {|file| file.upload_file_name == '<%= @study_file.upload_file_name %>'}
+  user = User.find_by(email: '<%= @user.email %>')
+  FileParseService.run_parse_job(study_file, study, user)
+</strong></pre>

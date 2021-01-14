@@ -1,7 +1,5 @@
 class UserAnnotation
 
-  extend ErrorTracker
-
   ###
   #
   # UserAnnotation: class holding metadata about user-defined (as opposed to study-defined) annotation objects.  Annotation
@@ -16,7 +14,6 @@ class UserAnnotation
   ###
 
   include Mongoid::Document
-  extend ErrorTracker
   field :name, type: String
   field :values, type: Array
   field :queued_for_deletion, type: Boolean, default: false

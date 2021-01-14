@@ -11,9 +11,12 @@
   <h4>Billing Projects</h4>
   <p>You must select a billing project when creating your study.  You may use the default project, but you will not be allowed to run any computes in your workspace.  If you
     wish to run computes, then you must <%= scp_link_to 'create a billing project', billing_projects_path %> (using a Google billing account that you own) first before creating this study.
-    <strong>By selecting a project for your study other than the default project, you will be granting the Single Cell Portal access to your project if it does not already have access
-      (projects created through the portal do by default).</strong></p>
-  <strong><p class="text-danger"><i class="fas fa-fw fa-exclamation-triangle"></i> You cannot change the billing project of a workspace once it has been created.</p></strong>
+    <strong>By selecting a project for your study other than the default project, you will be granting the Single Cell Portal access to your billing project</strong>
+      (billing projects created through the portal also give access to Single Cell Portal).</p>
+  <p class="text-danger"><strong><i class="fas fa-fw fa-exclamation-triangle"></i> You cannot change the billing project of a workspace once it has been created.</strong></p>
+  <br/>
+  <h4>Required file format & ontologies</h4>
+  <p>Studies must have a metadata file specifying: <strong>species</strong>, <strong>disease</strong>, <strong>organ</strong>, <strong>library_preparation_protocol</strong>, <strong>sex</strong>, <strong>cell name</strong>, <strong>biosample_id</strong>, and <strong>donor_id</strong>.</p>  Metadata files must provide this information using <%= link_to 'SCP Conventional File Format', 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format', target: :_blank %>. Select ontology terms from <%= link_to 'designated ontologies', 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Required-Conventional-Metadata', target: :_blank %> to adhere to <%= link_to 'metadata validation rules', 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#metadata-validation-rules', target: :_blank %>.  These requirements make your study data discoverable through Single Cell Portal's Advanced Search feature.
 </div>
 
 <%= render 'form' %>
@@ -35,3 +38,4 @@
     </div>
   </div>
 </div>
+

@@ -15,7 +15,7 @@ class ExpressionFileInfo
   validates :units, inclusion: {in: UNITS_VALUES}, allow_blank: true
 
   BIOSAMPLE_INPUT_TYPE_VALUES = ['Whole cell', 'Single nuclei', 'Bulk']
-  validates :biosample_input_type, inclusion: {in: BIOSAMPLE_INPUT_TYPE_VALUES}, allow_blank: true
+  validates :biosample_input_type, inclusion: {in: BIOSAMPLE_INPUT_TYPE_VALUES}
 
   MODALITY_VALUES = [
     'Transcriptomic: unbiased',
@@ -62,7 +62,7 @@ class ExpressionFileInfo
                                 'smFISH',
                                 # single cell ChIP-seq assays
                                 'Drop-ChIP']
-  validates :library_preparation_protocol, inclusion: {in: LIBRARY_PREPARATION_VALUES}, allow_blank: true
+  validates :library_preparation_protocol, inclusion: {in: LIBRARY_PREPARATION_VALUES}
 
   validate :unset_units_unless_raw_counts
   validate :enforce_units_on_raw_counts
@@ -73,7 +73,7 @@ class ExpressionFileInfo
   # this has to be invoked as a validation as callbacks only fire on parent document (StudyFile)
   def unset_units_unless_raw_counts
     unless self.is_raw_counts
-      self.units = nil
+      self.units = nil unless self.frozen? # document will be frozen if it is being unset, so don't attempt update
     end
   end
 
@@ -83,5 +83,4 @@ class ExpressionFileInfo
       errors.add(:units, ' must have a value for raw counts matrices')
     end
   end
-
 end

@@ -8,8 +8,6 @@ class SearchFacet
   include Mongoid::Timestamps
   include Swagger::Blocks
 
-  extend ErrorTracker
-
   field :name, type: String
   field :identifier, type: String
   field :filters, type: Array, default: []

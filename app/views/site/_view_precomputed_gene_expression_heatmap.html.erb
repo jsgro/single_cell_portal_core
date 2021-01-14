@@ -52,7 +52,7 @@
 
             // reset status on render call
             $('#heatmap-plot').data('rendered', false);
-            renderMorpheus(newDataPath, '', '', '', '#heatmap-plot', {}, 'both', null, colorScalingMode);
+            renderHeatmap(newDataPath, '', '', '', '#heatmap-plot', {}, 'both', null, colorScalingMode);
         }
     });
 
@@ -68,7 +68,7 @@
             colorScalingMode = 'fixed';
         }
 
-        renderMorpheus(dataPath, '', '', '', '#heatmap-plot', {}, 'both', null, colorScalingMode);
+        renderHeatmap(dataPath, '', '', '', '#heatmap-plot', {}, 'both', null, colorScalingMode);
     });
 
 </script>

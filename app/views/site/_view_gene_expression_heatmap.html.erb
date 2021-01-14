@@ -60,6 +60,9 @@
     $('#dot-plot').data('rendered', false);
     function drawHeatmap(height) {
         $(window).off('resizeEnd');
+
+        $(window).on('resizeEnd', () => { $(window).trigger('resize.morpheus')})
+
         // clear out previous stored heatmap object
         $('#heatmap-plot').data('heatmap', null);
         $('#dot-plot').data('heatmap', null);
@@ -103,8 +106,8 @@
             url: '<%= annotation_values_path(accession: @study.accession, study_name: @study.url_safe_name) %>?' + renderUrlParams,
             dataType: 'JSON',
             success: function(annotations) {
-                renderMorpheus(dataPath, newAnnotPath, annotName, annotType, '#heatmap-plot', annotations, fit, height, colorScalingMode);
-                renderMorpheusDotPlot(dataPath, newAnnotPath, annotName, annotType, '#dot-plot', annotations, fit, height);
+                renderHeatmap(dataPath, newAnnotPath, annotName, annotType, '#heatmap-plot', annotations, fit, height, colorScalingMode);
+                renderDotPlot(dataPath, newAnnotPath, annotName, annotType, '#dot-plot', annotations, fit, height);
             }
         });
     }

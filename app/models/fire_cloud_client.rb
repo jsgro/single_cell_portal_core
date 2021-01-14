@@ -10,8 +10,6 @@
 
 class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :storage, :expires_at, :service_account_credentials)
 
-  extend ErrorTracker
-
   #
   # CONSTANTS
   #

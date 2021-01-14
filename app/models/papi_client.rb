@@ -10,8 +10,6 @@ require 'google/apis/genomics_v2alpha1'
 
 class PapiClient < Struct.new(:project, :service_account_credentials, :service)
 
-  extend ErrorTracker
-
   # Service account JSON credentials
   SERVICE_ACCOUNT_KEY = !ENV['SERVICE_ACCOUNT_KEY'].blank? ? (ENV['NOT_DOCKERIZED'] ? ENV['SERVICE_ACCOUNT_KEY'] : File.absolute_path(ENV['SERVICE_ACCOUNT_KEY'])) : ''
   # Google authentication scopes necessary for running pipelines
