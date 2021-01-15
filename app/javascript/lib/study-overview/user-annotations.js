@@ -13,7 +13,7 @@
 import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
 
-import {log} from 'lib/metrics-api'
+import { log } from 'lib/metrics-api'
 
 // Array of arrays of cell names, a.k.a. selections, and of selection labels
 let selections = []
@@ -158,68 +158,69 @@ function attachEventListeners(target) {
     updateSelection(selections, labels)
   })
 
-  $(document).on('click', '#selection-submit', function(){
+  $(document).on('click', '#selection-submit', () => {
     console.log('in click handler for #selection-submit')
-    var currentName = $('#user_annotation_name').val();
-    var needText = $('.need-text');
-    var numFields = needText.toArray().length;
-    var values = [];
-    var cont = true;
-    for (var i = 0; i < numFields; i++){
-      var text = needText.eq(i).val();
-      values.push(text);
-      if(text === ""){cont = false}
+    const currentName = $('#user_annotation_name').val()
+    const needText = $('.need-text')
+    const numFields = needText.toArray().length
+    const values = []
+    let cont = true
+    for (let i = 0; i < numFields; i++) {
+      const text = needText.eq(i).val()
+      values.push(text)
+      if (text === '') {cont = false}
     }
 
     if (numFields < 3) {
-      alert('Your annotation must have at least two populations');
-    } else if ( !cont ) {
-      alert('You must provide a value for all labels before saving');
-      setErrorOnBlank(needText);
+      alert('Your annotation must have at least two populations')
+    } else if (!cont) {
+      alert('You must provide a value for all labels before saving')
+      setErrorOnBlank(needText)
     } else if (values.includes('Undefined')) {
-      alert('Undefined is a reserved term. Select a different name for this label.');
-      setErrorOnBlank(needText);
+      alert('Undefined is a reserved term. Select a different name for this label.')
+      setErrorOnBlank(needText)
     } else {
       console.log('in "Saving... Please Wait"')
-      $('#generic-modal-title').html("Saving... Please Wait");
-      ga('send', 'event', 'engaged_user_action', 'create_custom_cell_annotation');
-      log('create-custom-cell-annotation');
-      launchModalSpinner('#generic-modal-spinner', '#generic-modal', function() {
+      $('#generic-modal-title').html('Saving... Please Wait')
+      ga('send', 'event', 'engaged_user_action', 'create_custom_cell_annotation')
+      log('create-custom-cell-annotation')
+      launchModalSpinner('#generic-modal-spinner', '#generic-modal', () => {
         console.log('**** in user-annotation form submit')
-        var form = $('#create_annotations');
+        const form = $('#create_annotations')
         console.log('form')
         console.log(form)
-        form.submit();
+        form.submit()
         $.ajax({
           url: window.SCP.createUserAnnotationsPath,
-          method: 'POST',
+          method: 'POST'
 
-        })Endpoint format: /single_cell/study/<accession>/<study_name>/create_user_annotations
-  // Method: POST
-  // annotation_name: value of #annotation-name text input field
-  // user_id: current_user.id
-  // cluster_group_id: @cluster.id
-  // study_id: @study.id
-  // loaded_annotation: params[:annotation]
-  // if !params[:subsample].blank? %>
-  //    subsample_annotation: params[:annotation]
-  //    subsample_threshold: params[:subsample]
-      });
+        })
+        // Endpoint format: /single_cell/study/<accession>/<study_name>/create_user_annotations
+        // Method: POST
+        // annotation_name: value of #annotation-name text input field
+        // user_id: current_user.id
+        // cluster_group_id: @cluster.id
+        // study_id: @study.id
+        // loaded_annotation: params[:annotation]
+        // if !params[:subsample].blank? %>
+        //    subsample_annotation: params[:annotation]
+        //    subsample_threshold: params[:subsample]
+      })
     }
-  });
+  })
 }
 
 /**
 * Close the user annotations panel if open when rendering clusters
 */
 export function closeUserAnnotationsForm() {
-    if ( $('#selection_div').attr('class') === '' ) {
-        console.log('closing user annotations form');
-        // menu is open, so empty forms and reset button state
-        $('#selection_div').html('');
-        $('#selection_div').toggleClass('collapse');
-        $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off');
-    }
+  if ($('#selection_div').attr('class') === '') {
+    console.log('closing user annotations form')
+    // menu is open, so empty forms and reset button state
+    $('#selection_div').html('')
+    $('#selection_div').toggleClass('collapse')
+    $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off')
+  }
 }
 
 function writeFormHtml() {
@@ -255,7 +256,6 @@ function writeFormHtml() {
 
 /** Initialize "Create Annotation" functionality for user annotations */
 export default function userAnnotations() {
-
   writeFormHtml()
 
   $('#selection-well, #selection-button').css('visibility', 'visible')

@@ -47,7 +47,8 @@ function configPost(mock=false) {
   if (mock === false && globalMock === false) {
     init = Object.assign({}, defaultInit(), {
       method: 'POST'
-  })
+    })
+  }
 
   return init
 }
@@ -87,7 +88,7 @@ export async function fetchAuthCode(mock=false) {
 *
 * See user-annotation.js for more context.
 */
-export postUserAnnotation(
+export async function postUserAnnotation(
   studyAccession, clusterName, annotationName, loadedAnnotation,
   subsampleAnnotation, subsampleThreshold, mock=false
 ) {
