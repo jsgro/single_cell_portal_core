@@ -182,7 +182,7 @@ class AdminConfiguration
         user = share.email
         share_permission = StudyShare::FIRECLOUD_ACL_MAP[share.permission]
         can_share = share_permission === 'WRITER' ? true : false
-        can_compute = Rails.env == 'production' ? false : share_permission === 'WRITER' ? true : false
+        can_compute = Rails.env.production? ? false : share_permission === 'WRITER' ? true : false
         Rails.logger.info "#{Time.zone.now}: restoring #{share_permission} permission for #{user}"
         restore_share_acl = ApplicationController.firecloud_client.create_workspace_acl(user, share_permission, can_share, can_compute)
         ApplicationController.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, restore_share_acl)
@@ -191,7 +191,7 @@ class AdminConfiguration
       owner = study.user.email
       Rails.logger.info "#{Time.zone.now}: restoring WRITER access for #{owner}"
       # restore permissions, setting compute acls correctly (disabled in production for COMPUTE_BLACKLIST projects)
-      restore_owner_acl = ApplicationController.firecloud_client.create_workspace_acl(owner, 'WRITER', true, Rails.env == 'production' ? false : true)
+      restore_owner_acl = ApplicationController.firecloud_client.create_workspace_acl(owner, 'WRITER', true, Rails.env.production? ? false : true)
       ApplicationController.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, restore_owner_acl)
       Rails.logger.info "#{Time.zone.now}: access restoration for #{study.name} complete"
     end
