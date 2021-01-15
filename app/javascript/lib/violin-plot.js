@@ -194,6 +194,9 @@ export function renderViolinPlot(target, results) {
 /** Resize Plotly violin -- e.g. upon resizing window or plot container  */
 export function resizeViolinPlot() {
   const rawPlot = violinPlots[0]
+  if (!rawPlot) {
+    return;  // this can happen if resize is called as the graph is being redrawn
+  }
   const title = rawPlot.rendered_cluster
   const expressionLabel = rawPlot.y_axis_title
   const layout = getViolinLayout(title, expressionLabel)
@@ -238,7 +241,7 @@ export function updateDataPoints(mode) {
 }
 
 /** Load expression data and draw violin (or box) plot */
-export async function violinPlot(plotId, study, gene) {
+export async function violinPlot(plotId, study, gene, consensus) {
   const plotDom = document.getElementById(plotId)
   const spinner = new Spinner(window.opts).spin(plotDom)
 
@@ -247,7 +250,7 @@ export async function violinPlot(plotId, study, gene) {
   const { name, type, scope } = getAnnotParams()
 
   const rawPlot = await fetchExpressionViolin(
-    study.accession, gene, cluster, name, type, scope, subsample
+    study.accession, gene, cluster, name, type, scope, subsample, consensus
   )
   rawPlot.plotId = plotId
   rawPlot.plotType = $('#plot_type').val()

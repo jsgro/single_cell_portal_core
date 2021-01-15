@@ -9,6 +9,7 @@ class ExpressionVizService
                                              current_user:)
     render_data = {}
     render_data[:y_axis_title] = load_expression_axis_title(study)
+
     if selected_annotation[:type] == 'group'
       if genes.count == 1
         render_data[:values] = load_expression_boxplot_data_array_scores(study, genes[0], cluster, selected_annotation, subsample)

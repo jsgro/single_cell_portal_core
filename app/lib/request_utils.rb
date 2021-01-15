@@ -44,4 +44,18 @@ class RequestUtils
     end
     base_url
   end
+
+  # extracts an array of genes from a comma-delimited string list of gene names
+  def self.get_genes_from_param(study, gene_param)
+    terms = RequestUtils.sanitize_search_terms(gene_param).split(',')
+    matrix_ids = study.expression_matrix_files.map(&:id)
+    genes = []
+    terms.each do |term|
+      matches = study.genes.by_name_or_id(term, matrix_ids)
+      unless matches.empty?
+        genes << matches
+      end
+    end
+    genes
+  end
 end
