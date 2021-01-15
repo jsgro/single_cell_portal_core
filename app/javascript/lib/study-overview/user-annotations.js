@@ -175,21 +175,22 @@ function attachEventListeners(target) {
       alert('Your annotation must have at least two populations')
     } else if (!cont) {
       alert('You must provide a value for all labels before saving')
-      setErrorOnBlank(needText)
+      window.setErrorOnBlank(needText)
     } else if (values.includes('Undefined')) {
       alert('Undefined is a reserved term. Select a different name for this label.')
-      setErrorOnBlank(needText)
+      window.setErrorOnBlank(needText)
     } else {
       console.log('in "Saving... Please Wait"')
       $('#generic-modal-title').html('Saving... Please Wait')
       ga('send', 'event', 'engaged_user_action', 'create_custom_cell_annotation')
       log('create-custom-cell-annotation')
-      launchModalSpinner('#generic-modal-spinner', '#generic-modal', () => {
+      window.launchModalSpinner('#generic-modal-spinner', '#generic-modal', () => {
         console.log('**** in user-annotation form submit')
         const form = $('#create_annotations')
         console.log('form')
         console.log(form)
         form.submit()
+
         $.ajax({
           url: window.SCP.createUserAnnotationsPath,
           method: 'POST'
