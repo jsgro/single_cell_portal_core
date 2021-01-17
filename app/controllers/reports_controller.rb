@@ -109,7 +109,7 @@ class ReportsController < ApplicationController
       else
         studies = @private_studies
       end
-      # build a hash of domain => study count
+      # build a hash of user email domain => study count
       domain_counts = Hash.new(0)
       studies.map {|s| user_domain_hash[s[3]]}.each {|d| domain_counts[d] += 1 }
       user_study_email_dist[study_type] = domain_counts
