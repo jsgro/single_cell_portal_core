@@ -12,16 +12,20 @@ class ReportsController < ApplicationController
   end
 
   # show summary statistics about portal studies and users
+  # Calculations in this method must be done reasonably performantly to avoid server timeouts
+  # This could eventually be converted to individual REST endpoints for each stat group
   def index
     # only load studies not queued for deletion
-    @all_studies = Study.where(queued_for_deletion: false).to_a
-    @public_studies = @all_studies.select {|s| s.public}
-    @private_studies = @all_studies.select {|s| !s.public}
+    @all_studies = Study.where(queued_for_deletion: false).pluck(:id, :created_at, :cell_count, :user_id, :public)
+    @public_studies = @all_studies.select {|s| s[4]}
+    @private_studies = @all_studies.select {|s| !s[4]}
+
+
     now = Time.zone.now
     one_week_ago = now - 1.weeks
 
     # set up local collections and labels
-    users = User.all.to_a
+    users = User.all.pluck(:id, :last_sign_in_at, :current_sign_in_at, :email)
     public_label = 'Public'
     private_label = 'Private'
     study_types = [public_label, private_label]
@@ -29,24 +33,29 @@ class ReportsController < ApplicationController
 
     # study distributions
     today = Date.today
-    @private_study_age_dist = {private_label => @private_studies.map {|s| (today - s.created_at.to_date).to_i / 7}}
+    @private_study_age_dist = {private_label => @private_studies.map {|s| (today - s[1].to_date).to_i / 7}}
     if @private_study_age_dist[private_label].empty?
       @private_dist_avg = 0
     else
       @private_dist_avg = @private_study_age_dist[private_label].reduce(0, :+) / @private_study_age_dist[private_label].size.to_f
     end
 
-    @collab_dist = {all_studies_label => @all_studies.map {|s| s.study_shares.size}}
-    @collab_dist_avg = @collab_dist[all_studies_label].reduce(0, :+) / @collab_dist[all_studies_label].size.to_f
-    @cell_dist = @all_studies.map(&:cell_count)
+    # build a hash of study_id => # of shares
+    share_count_hash = Hash.new(0)
+    StudyShare.pluck(:study_id).each { |id| share_count_hash[id] += 1 }
+    @collab_dist = { all_studies_label => share_count_hash.values }
+    @collab_dist_avg = @collab_dist[all_studies_label].sum / @collab_dist[all_studies_label].size.to_f
+    @cell_dist = @all_studies.map{|s| s[2] }
+    @private_cell_dist = @private_studies.map{|s| s[2] }
+    @public_cell_dist = @public_studies.map{|s| s[2] }
     # calculate bin size as 10 ** two orders of magnitude less than max cells
     bin_size = 10 ** (@cell_dist.max.to_s.size - 2)
     max_cells = @cell_dist.max - @cell_dist.max % bin_size
     @cell_count_bin_dist = {public_label => {}, private_label => {}}
     0.step(max_cells, bin_size).each do |bin|
       bin_label = "#{bin}-#{bin + bin_size}"
-      @cell_count_bin_dist[public_label][bin_label] = @public_studies.select {|s| s.cell_count >= bin && s.cell_count < (bin + bin_size)}.size
-      @cell_count_bin_dist[private_label][bin_label] = @private_studies.select {|s| s.cell_count >= bin && s.cell_count < (bin + bin_size)}.size
+      @cell_count_bin_dist[public_label][bin_label] = @public_studies.select {|s| s[2] >= bin && s[2] < (bin + bin_size)}.size
+      @cell_count_bin_dist[private_label][bin_label] = @private_studies.select {|s| s[2] >= bin && s[2] < (bin + bin_size)}.size
     end
     @cell_avg = @cell_dist.reduce(0, :+) / @cell_dist.size.to_f
 
@@ -54,13 +63,13 @@ class ReportsController < ApplicationController
     @cells_over_time = { 'All Studies' => {}, public_label => {}, private_label => {}}
     @all_studies.each do |study|
       # get date as YYYY-MM
-      date = study.created_at.strftime("%Y-%m")
-      cell_count = study.cell_count
+      date = study[1].strftime("%Y-%m")
+      cell_count = study[2]
       # initialize entry for that date in cumulative count
       @cells_over_time['All Studies'][date] ||= 0
       @cells_over_time['All Studies'][date] += cell_count
       # determine which bucket to add cell count into (Public/Private)
-      label = study.public? ? public_label : private_label
+      label = study[4] ? public_label : private_label
       @cells_over_time[label][date] ||= 0
       @cells_over_time[label][date] += cell_count
       # create an empty entry at the same timepoint in the opposite bucket so we have the same number of timepoints in both
@@ -81,20 +90,32 @@ class ReportsController < ApplicationController
     end
 
     # user distributions
-    @user_study_dist = {all_studies_label => users.map {|u| u.studies.size}}
-    email_domains = users.map(&:email).map {|email| email.split('@').last}.uniq
-    totals_by_domain = {}
+    # build a hash of user_id => study count
+    user_study_hash = Hash.new(0)
+    users.each {|u| user_study_hash[u[0]] = 0 }
+    @all_studies.each { |s| user_study_hash[s[3]] += 1 }
+    @user_study_dist = { all_studies_label => user_study_hash.values }
+
+    user_domain_hash = Hash.new(0)
+    users.each { |u| user_domain_hash[u[0]] = u[3].split('@').last }
+    email_domains = user_domain_hash.values.uniq.sort
     user_study_email_dist = {}
+    totals_by_domain = {}
+    email_domains.each {|d| totals_by_domain[d] = 0}
     study_types.each do |study_type|
       user_study_email_dist[study_type] = {}
-      email_domains.sort.each do |domain|
-        totals_by_domain[domain] ||= 0
-        count = users.select {|u| u.email =~ /#{domain}/}.map {|u| u.studies.select {|s| study_type == public_label ? s.public? : !s.public?}.size}.reduce(0, :+)
-        totals_by_domain[domain] += count
-        user_study_email_dist[study_type][domain] = count
+      if study_type == 'Public'
+        studies = @public_studies
+      else
+        studies = @private_studies
       end
+      # build a hash of domain => study count
+      domain_counts = Hash.new(0)
+      studies.map {|s| user_domain_hash[s[3]]}.each {|d| domain_counts[d] += 1 }
+      user_study_email_dist[study_type] = domain_counts
+      domain_counts.each {|domain, count| totals_by_domain[domain] += count }
     end
-    @user_study_avg = @user_study_dist[all_studies_label].reduce(0, :+) / @user_study_dist[all_studies_label].size.to_f
+    @user_study_avg = @user_study_dist[all_studies_label].sum / @user_study_dist[all_studies_label].size.to_f
     @email_domain_avg = totals_by_domain.values.reduce(0, :+) / totals_by_domain.values.size
 
     # compute time-based breakdown of returning user counts
@@ -108,11 +129,11 @@ class ReportsController < ApplicationController
       latest_date = user_timepoints.sort_by {|tp| tp.date}.last.date
       if latest_date < today
         next_period = latest_date + 1.week
-        @returning_users_by_week[next_period.to_s] = users.select {|user| user.last_sign_in_at >= latest_date || user.current_sign_in_at >= latest_date }.size
+        @returning_users_by_week[next_period.to_s] = users.select {|user| user[1] >= latest_date || user[2] >= latest_date }.size
       end
     else
       latest_date = today - 1.week
-      @returning_users_by_week[today.to_s] = users.select {|user| user.last_sign_in_at >= latest_date || user.current_sign_in_at >= latest_date }.size
+      @returning_users_by_week[today.to_s] = users.select {|user| user[1] && (user[1] >= latest_date || user[2] >= latest_date) }.size
     end
 
     # sort domain breakdowns by totals to order plot
@@ -147,8 +168,8 @@ class ReportsController < ApplicationController
         @pipeline_fail[pipeline_name][date_bracket] += 1
       end
     end
-    max_success_count = @pipeline_success.values.map(&:values).flatten.max
-    max_fail_count = @pipeline_fail.values.map(&:values).flatten.max
+    max_success_count = @pipeline_success.values.map(&:values).flatten.max || 0
+    max_fail_count = @pipeline_fail.values.map(&:values).flatten.max || 0
     @pipeline_success_range = [0, (max_success_count * 1.1)] # add 10% to range for annotations
     @pipeline_fail_range = [0, (max_fail_count * 1.1)] # add 10% to range for annotations
   end
