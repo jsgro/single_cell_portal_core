@@ -3,6 +3,9 @@ module Api
     module Concerns
       module Authenticator
         extend ActiveSupport::Concern
+        include ActionController::Cookies
+        include ActionController::RequestForgeryProtection
+
         OAUTH_V3_TOKEN_INFO = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
         TOTAT_REQUIRED_ACTIONS = [
           {controller: 'search', action: 'bulk_download'},
@@ -11,6 +14,12 @@ module Api
         URL_SAFE_TOKEN_ALLOWED_ACTIONS = [
           {controller: 'expression', action: 'show'},
           {controller: 'annotations', action: 'cell_values'}
+        ]
+        # these are API actions that we allow logged-in site users to access using
+        # regular rails session validation & csrf protection, which can be useful
+        # to save from having to put a token in a URL
+        COOKIE_ALLOWED_ACTIONS = [
+          {controller: 'reports', action: 'show'}
         ]
         def authenticate_api_user!
           head 401 unless api_user_signed_in?
@@ -34,6 +43,11 @@ module Api
           user = nil
           if TOTAT_REQUIRED_ACTIONS.include?({controller: controller_name, action: action_name})
             return find_user_from_totat
+          elsif COOKIE_ALLOWED_ACTIONS.include?({controller: controller_name, action: action_name}) && current_user.present?
+            # this is a request from a user logged into the website
+            verify_authenticity_token
+            verify_same_origin_request
+            return current_user
           else
             api_access_token = extract_bearer_token(request)
             if api_access_token.present?
