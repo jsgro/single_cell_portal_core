@@ -14,7 +14,7 @@ class ReportsService
   def self.get_report_data(report_name)
     report_obj = REPORTS[report_name.to_sym]
     if report_obj.nil?
-      raise "Unrecognized report #{report_name}"
+      raise ArgumentError.new("Unrecognized report: '#{report_name}'")
     end
 
     data = ReportsService.send(report_obj[:service_method])
