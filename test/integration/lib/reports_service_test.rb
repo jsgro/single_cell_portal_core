@@ -31,7 +31,7 @@ class ReportsServiceTest < ActiveSupport::TestCase
 
   test 'study_data return array of hashes with correct study information' do
     report_data = ReportsService.study_data
-    assert_equal Study.count, report_data.count
+    assert_equal Study.where(queued_for_deletion: false).count, report_data.count
     basic_study_row = report_data.select {|r| r[:id] == @basic_study.id}.first
     assert_equal @basic_study.accession, basic_study_row[:accession]
     assert_equal @user.email, basic_study_row[:owner_email]
