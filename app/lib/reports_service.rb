@@ -10,6 +10,7 @@ class ReportsService
     }
   }
 
+  # fetches the report data for the given report, and returns it as a tsv string
   def self.get_report_data(report_name)
     report_obj = REPORTS[report_name.to_sym]
     if report_obj.nil?
@@ -23,6 +24,8 @@ class ReportsService
     return response_array.concat(study_strings).join("\n")
   end
 
+  # returns an array of hashes representing summary data for each study.
+  # each entry in the array is a study
   def self.study_data
     study_fields = []
     all_studies = Study.where(queued_for_deletion: false)

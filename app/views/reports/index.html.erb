@@ -2,7 +2,7 @@
 <h3 class="lead">Updated as of <%= Time.zone.now.strftime("%A, %B %-d %Y %r") %> <%= link_to "<i class='fas fa-toggle-on'></i> Toggle Totals".html_safe, '#/', class: 'btn btn-default pull-right', id: 'toggle-column-annots' %></h3>
 <div class="row">
   <div class="col-md-12">
-    <%= link_to 'Raw study data tsv', api_v1_report_url('studies'), class: 'float-right'%>
+    <%= link_to 'Raw study data tsv', api_v1_report_url('studies') %>
   </div>
 </div>
 <div class="row">

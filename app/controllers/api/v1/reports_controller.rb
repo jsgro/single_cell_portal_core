@@ -16,7 +16,7 @@ module Api
         if !ReportsService::REPORTS.keys.include?(report_name)
           render(json: {error: "unrecognized report"}, status: 422) and return
         end
-        response.headers['Content-Disposition'] = 'attachment; filename=studies_data.tsv'
+        response.headers['Content-Disposition'] = "attachment; filename=#{report_name}_data.tsv"
         render plain: ReportsService.get_report_data(report_name)
       end
     end
