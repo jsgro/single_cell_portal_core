@@ -71,17 +71,21 @@ class ReportsService
     metadata_files = StudyFile.where(file_type: 'Metadata')
                               .pluck(:study_id, :use_metadata_convention, :created_at)
     metadata_files.each do |study_id, convention, created_at|
-      study_hash[study_id][:metadata_convention] = convention
-      study_hash[study_id][:metadata_file_created] = created_at
+      if study_hash[study_id] # check so we don't error for orphaned study files
+        study_hash[study_id][:metadata_convention] = convention
+        study_hash[study_id][:metadata_file_created] = created_at
+      end
     end
 
     # build a hash of metadata files to study_id
     expression_files = StudyFile.where(file_type: 'Expression Matrix')
                                 .pluck(:study_id, 'expression_file_info.is_raw_counts')
     expression_files.each do |study_id, is_raw_counts, created_at|
-      # mongoid plucks nested fields as {"is_raw_counts"=>true} objects rather than plain values
-      is_raw_counts_val = is_raw_counts.present? ? is_raw_counts['is_raw_counts'] : false
-      study_hash[study_id][:has_raw_counts] = study_hash[study_id][:has_raw_counts] || is_raw_counts_val
+      if study_hash[study_id] # check so we don't error for orphaned study files
+        # mongoid plucks nested fields as {"is_raw_counts"=>true} objects rather than plain values
+        is_raw_counts_val = is_raw_counts.present? ? is_raw_counts['is_raw_counts'] : false
+        study_hash[study_id][:has_raw_counts] = study_hash[study_id][:has_raw_counts] || is_raw_counts_val
+      end
     end
 
     study_hash.values
