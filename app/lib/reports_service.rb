@@ -68,7 +68,7 @@ class ReportsService
     end
 
     # build a hash of metadata files to study_id
-    metadata_files = StudyFile.where(file_type: 'Metadata')
+    metadata_files = StudyFile.where(file_type: 'Metadata', queued_for_deletion: false)
                               .pluck(:study_id, :use_metadata_convention, :created_at)
     metadata_files.each do |study_id, convention, created_at|
       if study_hash[study_id] # check so we don't error for orphaned study files
@@ -78,7 +78,7 @@ class ReportsService
     end
 
     # build a hash of metadata files to study_id
-    expression_files = StudyFile.where(file_type: 'Expression Matrix')
+    expression_files = StudyFile.where(file_type: 'Expression Matrix', queued_for_deletion: false)
                                 .pluck(:study_id, 'expression_file_info.is_raw_counts')
     expression_files.each do |study_id, is_raw_counts, created_at|
       if study_hash[study_id] # check so we don't error for orphaned study files
