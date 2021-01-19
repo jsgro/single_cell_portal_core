@@ -223,7 +223,7 @@ class ApplicationController < ActionController::Base
     begin
       # get filesize and make sure the user is under their quota
       requested_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, params[:filename])
-      if requested_file.present?
+      if requested_file.present? && !requested_file.size.nil?
         filesize = requested_file.size
         user_quota = current_user.daily_download_quota + filesize
         # check against download quota that is loaded in ApplicationController.get_download_quota
@@ -243,10 +243,15 @@ class ApplicationController < ActionController::Base
                       alert: 'We are unable to process your download.  Please try again later.' and return
         end
       else
-        # send notification to the study owner that file is missing (if notifications turned on)
-        SingleCellMailer.user_download_fail_notification(study, params[:filename]).deliver_now
-        redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
-                    alert: 'The file you requested is currently not available.  Please contact the study owner if you require access to this file.' and return
+        if requested_file.size.nil?
+          redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
+                      alert: 'We are unable to process your download because there is no file name provided.' and return
+        else
+          # send notification to the study owner that file is missing (if notifications turned on)
+          SingleCellMailer.user_download_fail_notification(study, params[:filename]).deliver_now
+          redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
+                      alert: 'The file you requested is currently not available.  Please contact the study owner if you require access to this file.' and return        
+        end
       end
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
