@@ -136,7 +136,9 @@ class IngestJob
       # this block ensures that all other matrices have all cell names ingested and at least one gene entry, which
       # ensures the matrix has validated
       other_matrix_files = StudyFile.where(study_id: self.study.id, file_type: /Matrix/, :id.ne => self.study_file.id)
-      other_matrix_files.each do |matrix_file|
+      # only check other matrix files of the same type, as this is what will be checked when validating
+      similar_matrix_files = other_matrix_files.select {|matrix| matrix.is_raw_counts_file? == self.study_file.is_raw_counts_file?}
+      similar_matrix_files.each do |matrix_file|
         if matrix_file.parsing?
           matrix_cells = self.study.expression_matrix_cells(matrix_file)
           matrix_genes = Gene.where(study_id: self.study.id, study_file_id: matrix_file.id)
