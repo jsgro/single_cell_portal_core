@@ -223,7 +223,7 @@ class ApplicationController < ActionController::Base
     begin
       # get filesize and make sure the user is under their quota
       requested_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, params[:filename])
-      if requested_file.present? && !requested_file.size.nil?
+      if requested_file.present? && requested_file.size.present?
         filesize = requested_file.size
         user_quota = current_user.daily_download_quota + filesize
         # check against download quota that is loaded in ApplicationController.get_download_quota
