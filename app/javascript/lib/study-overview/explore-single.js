@@ -59,7 +59,10 @@ async function renderSingleGenePlots(study, gene) {
 
   const geneList = window.SCP.formatTerms(gene)
   if (geneList.length > 1) {
+    // draw the dotPlot for comparison if this is a multi-gene collapsed by mean
     window.drawHeatmap()
+    // reattach the event handlers, since that call removes them
+    attachEventHandlers(study, gene)
   } else if (geneList.length === 1) {
     // only show ideogram for single gene queries
     window.showRelatedGenesIdeogram()
@@ -73,7 +76,8 @@ function attachEventHandlers(study, gene) {
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {
     resizeScatterPlots()
-    if (getAnnotParams().type === 'group') { resizeViolinPlot() }
+    // calling this method is safe even if there is no violin plot currently
+    resizeViolinPlot()
   })
 
   handleMenuChange(renderSingleGenePlots, [study, gene])
