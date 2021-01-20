@@ -14,11 +14,59 @@ class UserAnnotation
   ###
 
   include Mongoid::Document
+  include Swagger::Blocks
+
   field :name, type: String
   field :values, type: Array
   field :queued_for_deletion, type: Boolean, default: false
   field :publishing, type: Boolean, default: false
   field :source_resolution, type: Integer
+
+  swagger_schema :UserAnnotation do
+    key :name, 'UserAnnotation'
+    property :name do
+      key :type, :string
+      key :description, 'Name of new custom user annotation'
+    end
+    # property :user_id do
+    #   key :type, :string
+    #   key :description, 'User ID'
+    # end
+    # property :cluster_group_id do
+    #   key :type, :string
+    #   key :description, 'Cluster group ID'
+    # end
+    # property :study_id do
+    #   key :type, :string
+    #   key :description, 'Study ID'
+    # end
+    # property :subsample_threshold do
+    #   key :type, :string
+    #   key :description, 'Subsample threshold'
+    # end
+    # property :subsample_annotation do
+    #   key :type, :string
+    #   key :description, 'Subsample annotation'
+    # end
+    # property :loaded_annotation do
+    #   key :type, :string
+    #   key :description, 'Loaded annotation'
+    # end
+  end
+
+  swagger_schema :UserAnnotationInput do
+    allOf do
+      schema do
+        property :user_annotation do
+          key :type, :object
+          property :name do
+            key :type, :string
+            key :description, 'Name of new custom user annotation'
+          end
+        end
+      end
+    end
+  end
 
   belongs_to :user
   belongs_to :cluster_group

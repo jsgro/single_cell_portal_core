@@ -55,6 +55,7 @@ Rails.application.routes.draw do
             end
           end
 
+          post 'studies/:accession/annotation', to: 'annotations#create_annotation', as: :study_create_annotation
         end
         resource :current_user, only: [:update], controller: 'current_user'
 

@@ -112,7 +112,8 @@ module Api
           Api::V1::SearchController,
           Api::V1::Visualization::ClustersController,
           Api::V1::Visualization::AnnotationsController,
-          Api::V1::Visualization::ExploreController
+          Api::V1::Visualization::ExploreController,
+          Api::V1::AnnotationsController
       ].freeze
 
       def index
