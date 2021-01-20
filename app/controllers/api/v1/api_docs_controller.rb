@@ -98,6 +98,7 @@ module Api
           Taxon,
           AnalysisConfiguration,
           ExternalResource,
+          UserAnnotation,
           Api::V1::StudiesController,
           Api::V1::StudyFilesController,
           Api::V1::StudyFileBundlesController,
