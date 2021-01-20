@@ -247,10 +247,10 @@ class ApplicationController < ActionController::Base
                       alert: 'We are unable to process your download.  Please try again later.' and return
         end
       else
-          # send notification to the study owner that file is missing (if notifications turned on)
-          SingleCellMailer.user_download_fail_notification(study, params[:filename]).deliver_now
-          redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
-                      alert: 'The file you requested is currently not available.  Please contact the study owner if you require access to this file.' and return        
+        # send notification to the study owner that file is missing (if notifications turned on)
+        SingleCellMailer.user_download_fail_notification(study, params[:filename]).deliver_now
+        redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
+                    alert: 'The file you requested is currently not available.  Please contact the study owner if you require access to this file.' and return        
       end
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
