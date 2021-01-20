@@ -27,6 +27,18 @@ class ActiveSupport::TestCase
     end
     Hash[*difference.flatten]
   end
+
+  # mock environment variables
+  # from https://gist.github.com/jazzytomato/79bb6ff516d93486df4e14169f4426af
+  def mock_env(partial_env_hash)
+    old = ENV.to_hash
+    ENV.update partial_env_hash
+    begin
+      yield
+    ensure
+      ENV.replace old
+    end
+  end
 end
 
 
@@ -74,7 +86,14 @@ module SelfCleaningSuite
   after(:all) do
     puts "#{self.class}: Cleaning up #{@@studies_to_clean.count} studies, #{@@users_to_clean.count} users"
     [@@studies_to_clean, @@users_to_clean].each do |entity_list|
-      entity_list.each { |entity| entity.destroy }
+      entity_list.each do |entity|
+        if entity.is_a?(Study) && !entity.detached?
+          # non-detached studies will leave behind workspaces if not removed
+          entity.destroy_and_remove_workspace
+        else
+          entity.destroy
+        end
+      end
       entity_list.clear
     end
   end

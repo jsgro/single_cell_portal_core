@@ -20,12 +20,14 @@ FactoryBot.define do
                             study_file: file)
 
         end
-        FactoryBot.create(:data_array,
-                          array_type: 'cells',
-                          name: 'All Cells',
-                          array_index: 0,
-                          values: evaluator.cell_input,
-                          study_file: file)
+        if !evaluator.cell_input.empty?
+          FactoryBot.create(:data_array,
+                            array_type: 'cells',
+                            name: 'All Cells',
+                            array_index: 0,
+                            values: evaluator.cell_input,
+                            study_file: file)
+        end
       end
     end
     factory :cluster_file do
