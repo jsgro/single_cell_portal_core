@@ -85,8 +85,16 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     annot_name, annot_type, annot_scope = default_annot.split('--')
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
     gene = @basic_study.genes.by_name_or_id('PTEN', @basic_study.expression_matrix_files.pluck(:id))
-    rendered_data = ExpressionVizService.get_global_expression_render_data(@basic_study, nil, gene, cluster,
-                                                                           annotation, 'All', @user)
+    rendered_data = ExpressionVizService.get_global_expression_render_data(
+      study: @basic_study,
+      subsample: nil,
+      genes: [gene],
+      cluster: cluster,
+      selected_annotation: annotation,
+      boxpoints: 'All',
+      consensus: 'nil',
+      current_user: @user
+    )
     expected_values = %w(dog cat)
     assert_equal expected_values, rendered_data[:values].keys
     expected_annotations = %w(Category disease Intensity species).sort
@@ -99,7 +107,37 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     expected_cells = %w(A C)
     assert_equal expected_expression, rendered_data[:values].dig('dog', :y)
     assert_equal expected_cells, rendered_data[:values].dig('dog', :cells)
+
+    # confirm it works for consensus params
+    gene2 = @basic_study.genes.by_name_or_id('AGPAT2', @basic_study.expression_matrix_files.pluck(:id))
+    rendered_data = ExpressionVizService.get_global_expression_render_data(
+      study: @basic_study,
+      subsample: nil,
+      genes: [gene, gene2],
+      cluster: cluster,
+      selected_annotation: annotation,
+      boxpoints: 'All',
+      consensus: 'mean',
+      current_user: @user
+    )
+    assert_equal [0.0, 4.75], rendered_data[:values]['dog'][:y]
+
+    # confirm it works for numeric annotations
+    annot_name, annot_type, annot_scope = ['Intensity', 'numeric', 'cluster']
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    rendered_data = ExpressionVizService.get_global_expression_render_data(
+      study: @basic_study,
+      subsample: nil,
+      genes: [gene],
+      cluster: cluster,
+      selected_annotation: annotation,
+      boxpoints: 'All',
+      consensus: 'nil',
+      current_user: @user
+    )
+    assert_equal [1.1, 2.2, 3.3], rendered_data[:values][:all][:x]
   end
+
 
   test 'should load ideogram outputs' do
     # we need a non-detached study, so create one

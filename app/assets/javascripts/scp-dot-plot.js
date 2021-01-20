@@ -114,7 +114,7 @@ function renderDotPlotLegend(dotPlotTarget, legendTarget) {
 }
 
 /** Render Morpheus dot plot */
-function renderMorpheusDotPlot(
+function renderDotPlot(
   dataPath, annotPath, selectedAnnot, selectedAnnotType,
   target, annotations, fitType, dotHeight, legendTarget
 ) {
@@ -245,9 +245,9 @@ function renderMorpheusDotPlot(
 
 /** High-level function called from _expression_plots_view.html.erb */
 function drawDotplot(dataPath,
-                     requestToken,
-                     annotPathBase,
-                     annotValuesPath) {
+  requestToken,
+  annotPathBase,
+  annotValuesPath) {
   $(window).off('resizeEnd')
 
   // Clear out previous stored dotplot object
@@ -277,7 +277,7 @@ function drawDotplot(dataPath,
     url: `${annotValuesPath}?${renderUrlParams}`,
     dataType: 'JSON',
     success(annotations) {
-      renderMorpheusDotPlot(
+      renderDotPlot(
         dataPath, newAnnotPath, annotName, annotType, '#dot-plot',
         annotations, fit, height
       )

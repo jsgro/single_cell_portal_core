@@ -817,8 +817,8 @@ class StudyFile
       when 'BAM'
         selector += '.bam_id'
       when 'Cluster'
-        selector += '.cluster_group_id'
-        query_id = self.cluster_groups.first.id.to_s
+        selector += '.cluster_file_id'
+        query_id = self.id.to_s
       end
       StudyFile.where(selector => query_id) # return Mongoid::Criteria to lazy-load, better performance
     end
@@ -836,7 +836,7 @@ class StudyFile
       when 'BAM Index'
         selector = :bam_id
       when 'Coordinate Labels'
-        selector = :cluster_group_id
+        selector = :cluster_file_id
       end
       # call find_by(id: ) to avoid Mongoid::Errors::InvalidFind
       StudyFile.find_by(id: self.options[selector])

@@ -29,8 +29,6 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
   # this happens when attributes on nested documents have new constraints placed after creation, like additional
   # validations or fields
   test 'should allow deletion of legacy expression matrices' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     assert @basic_study_exp_file.valid?,
            "Expression file should be valid but is not: #{@basic_study_exp_file.errors.full_messages}"
     assert @basic_study.genes.count == 1,
@@ -52,7 +50,5 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
            "Did not successfully queue exp matrix for deletion: #{@basic_study_exp_file.queued_for_deletion}"
 
     assert_equal @basic_study.genes.count, 0, "Should not have found any genes but found #{@basic_study.genes.count}"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end

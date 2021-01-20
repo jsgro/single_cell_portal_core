@@ -21,7 +21,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   # constant used for retry loops in process_firecloud_request and execute_gcloud_method
   MAX_RETRY_COUNT = 5
   # constant used for incremental backoffs on retries (in seconds); ignored when running unit/integration test suite
-  RETRY_INTERVAL = Rails.env == 'test' ? 0 : 15
+  RETRY_INTERVAL = Rails.env.test? ? 0 : 15
   # List of URLs/Method names to never retry on or report error, regardless of error state
   ERROR_IGNORE_LIST = ["#{BASE_URL}/register"]
   # List of URLs/Method names to ignore incremental backoffs on (in cases of UI blocking)
