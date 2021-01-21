@@ -1,6 +1,13 @@
 <h1>Reports <%= link_to "<i class='fas fa-fw fa-chart-bar'></i> Request a new plot".html_safe, report_request_path, class: 'btn btn-primary pull-right', id: 'report-request' %></h1>
 <h3 class="lead">Updated as of <%= Time.zone.now.strftime("%A, %B %-d %Y %r") %> <%= link_to "<i class='fas fa-toggle-on'></i> Toggle Totals".html_safe, '#/', class: 'btn btn-default pull-right', id: 'toggle-column-annots' %></h3>
 <div class="row">
+  <div class="col-md-12">
+    <% if current_user.admin %>
+      <%= link_to 'Raw study data TSV', api_v1_report_url('studies') %>
+    <% end %>
+  </div>
+</div>
+<div class="row">
   <div class="col-md-6">
     <div id="plotly-study-count" class="plotly-report"></div>
   </div>
@@ -94,7 +101,7 @@
 
     var cellCounts = [{
         x: ['Public', 'Private'],
-        y: [<%= @public_studies.map(&:cell_count).reduce(0, :+) %>, <%= @private_studies.map(&:cell_count).reduce(0, :+) %>],
+        y: [<%= @public_cell_dist.sum %>, <%= @private_cell_dist.sum %>],
         type: 'bar',
         marker: {
             color: [colorBrewerSet[3], colorBrewerSet[4]]
@@ -103,7 +110,7 @@
 
     Plotly.newPlot('plotly-cell-count', cellCounts,
         {
-            title: 'How many cells total are in private or public studies?<br><b>Total number of cells in portal: ' + <%= @all_studies.map(&:cell_count).reduce(0, :+) %> + '</b>',
+            title: 'How many cells total are in private or public studies?<br><b>Total number of cells in portal: ' + <%= @cell_dist.sum %> + '</b>',
             titlefont: plotlyTitleFont,
             font: plotlyLabelFont,
             bargap: 0,

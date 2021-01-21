@@ -140,7 +140,8 @@ class ApplicationController < ActionController::Base
 
   # merge in extra parameters on redirects as necessary
   def merge_default_redirect_params(redirect_route, extra_params={})
-    merged_redirect_url = redirect_route.dup
+    # handle case where request.referrer is nil
+    merged_redirect_url = redirect_route.present? ? redirect_route.dup : site_path.dup
     extra_params.each do |key, value|
       if value.present?
         if redirect_route.include?('?')
@@ -223,6 +224,10 @@ class ApplicationController < ActionController::Base
     begin
       # get filesize and make sure the user is under their quota
       requested_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, params[:filename])
+      if params[:filename].blank?
+        redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
+                      alert: 'We are unable to process your download because there is no file name provided.' and return
+      end
       if requested_file.present?
         filesize = requested_file.size
         user_quota = current_user.daily_download_quota + filesize
@@ -246,7 +251,7 @@ class ApplicationController < ActionController::Base
         # send notification to the study owner that file is missing (if notifications turned on)
         SingleCellMailer.user_download_fail_notification(study, params[:filename]).deliver_now
         redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
-                    alert: 'The file you requested is currently not available.  Please contact the study owner if you require access to this file.' and return
+                    alert: 'The file you requested is currently not available.  Please contact the study owner if you require access to this file.' and return        
       end
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})

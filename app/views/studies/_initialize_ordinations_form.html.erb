@@ -10,13 +10,13 @@
     <div class="form-group row">
       <div class="col-sm-12">
         <%= f.label :is_spatial, 'Coordinate data type: ' %><br/>
-        <%= f.label :is_spatial_false do %>
-          <%= f.radio_button :is_spatial, false %>
+        <%= f.label :is_spatial_false, {for: "is_spatial_false_#{study_file._id}"} do %>
+          <%= f.radio_button :is_spatial, false, {id: "is_spatial_false_#{study_file._id}"} %>
           Clustering
         <% end %>
         &nbsp;
-        <%= f.label :is_spatial_true do %>
-          <%= f.radio_button :is_spatial, true %>
+        <%= f.label :is_spatial_true, {for: "is_spatial_true_#{study_file._id}"} do %>
+          <%= f.radio_button :is_spatial, true, {id: "is_spatial_true_#{study_file._id}"} %>
           Spatial transcriptomics positions
         <% end %>
 
