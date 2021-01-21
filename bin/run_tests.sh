@@ -132,5 +132,11 @@ if [[ $RETURN_CODE -eq 0 ]]; then
 else
   printf "\n### There were $FAILED_COUNT errors/failed test suites in this run, starting with $first_test_to_fail ###\n\n"
 fi
+
+# stop delayed_job if running locally
+if [[ "$CI" != "true" ]]; then
+  bin/delayed_job stop $PASSENGER_APP_ENV -n 6
+fi
+
 echo "Exiting with code: $RETURN_CODE"
 exit $RETURN_CODE
