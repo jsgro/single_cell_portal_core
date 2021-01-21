@@ -22,6 +22,9 @@ start=$(date +%s)
 RETURN_CODE=0
 FAILED_COUNT=0
 
+THIS_DIR="$(cd "$(dirname "$BASH_SOURCE")"; pwd)"
+BASE_DIR="$(dirname $THIS_DIR)"
+
 function setup_burp_cert {
   if [ -n "$BURP_PROXY" ]; then
     # we will store Burp certificate here
@@ -59,11 +62,7 @@ function clean_up {
 setup_burp_cert
 clean_up
 
-TMP_PIDS_DIR="/home/app/webapp/tmp/pids"
-if [ "$NOT_DOCKERIZED" = "true" ]
-then
-    TMP_PIDS_DIR="./tmp/pids"
-fi
+TMP_PIDS_DIR="$BASE_DIR/tmp/pids"
 rm ./log/test.log
 if [[ ! -d "$TMP_PIDS_DIR" ]]
 then
@@ -83,7 +82,7 @@ RAILS_ENV=test NODE_ENV=test yarn install --force --trace
 RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:precompile
 echo "Generating random seed, seeding test database..."
 RANDOM_SEED=$(openssl rand -hex 16)
-echo $RANDOM_SEED > /home/app/webapp/.random_seed
+echo $RANDOM_SEED > "$BASE_DIR/.random_seed"
 bundle exec rake RAILS_ENV=test db:seed || { echo "FAILED to seed test database!" >&2; exit 1; }
 bundle exec rake RAILS_ENV=test db:mongoid:create_indexes
 echo "Database initialized"
