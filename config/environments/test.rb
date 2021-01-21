@@ -45,13 +45,6 @@ Rails.application.configure do
   # config.action_view.raise_on_missing_translations = true
 
   # default_url_options for URL generation both Dockerized and non-Dockerized
-  if ENV['NOT_DOCKERIZED']
-    config.action_controller.default_url_options = { :host => 'localhost', protocol: 'https', port: 3000 }
-    config.action_controller.asset_host = 'localhost:3000'
-  else
-    config.action_controller.default_url_options = { :host => 'localhost', protocol: 'https' }
-    config.action_controller.asset_host = 'localhost'
-  end
 
   config.action_mailer.default_url_options = { :host => 'localhost', protocol: 'https' }
   config.action_mailer.delivery_method = :smtp
