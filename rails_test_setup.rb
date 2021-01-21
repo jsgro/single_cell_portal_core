@@ -15,13 +15,13 @@ require 'json'
 source_file_string = "#!/bin/bash\n"
 base_vault_path = 'secret/kdux/scp/staging'
 
-USE_VAULT_NAMESPACE = false
+use_vault_namespace = false
 ARGV.each do |arg|
   case arg
   when /--vault-path/
     base_vault_path = arg.split('=').last.strip
   when /--use-vault-namespace/
-    USE_VAULT_NAMESPACE=true
+    use_vault_namespace = true
   end
 end
 
@@ -39,7 +39,7 @@ secret_data_hash = JSON.parse(secret_string)['data']
 secret_data_hash.each do |key, value|
   # overwrite PORTAL_NAMESPACE unless --use-configured-namespace is declared
   if key == 'PORTAL_NAMESPACE'
-    value_override = USE_VAULT_NAMESPACE ? value : 'single-cell-portal-test'
+    value_override = use_vault_namespace ? value : 'single-cell-portal-test'
     source_file_string += "export #{key}=#{value_override}\n"
   else
     source_file_string += "export #{key}=#{value}\n"
