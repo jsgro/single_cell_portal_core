@@ -140,7 +140,8 @@ class ApplicationController < ActionController::Base
 
   # merge in extra parameters on redirects as necessary
   def merge_default_redirect_params(redirect_route, extra_params={})
-    merged_redirect_url = redirect_route.dup
+    # handle case where request.referrer is nil
+    merged_redirect_url = redirect_route.present? ? redirect_route.dup : site_path.dup
     extra_params.each do |key, value|
       if value.present?
         if redirect_route.include?('?')
