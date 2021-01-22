@@ -162,16 +162,6 @@ async function submitUserAnnotation() {
         accession, cluster, annotation, subsample,
         newAnnotationName, labelsAndCellNames
       )
-      // Endpoint format: /single_cell/study/<accession>/<study_name>/create_user_annotations
-      // Method: POST
-      // annotation_name: value of #user-annotation-name text input field
-      // user_id: current_user.id
-      // cluster_group_id: @cluster.id
-      // study_id: @study.id
-      // loaded_annotation: params[:annotation]
-      // if !params[:subsample].blank? %>
-      //    subsample_annotation: params[:annotation]
-      //    subsample_threshold: params[:subsample]
     })
   }
 }

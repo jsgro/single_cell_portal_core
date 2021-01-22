@@ -89,7 +89,8 @@ class UserAnnotationService
         Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unable to save user annotation with errors #{user_annotation.errors.full_messages.join(', ')}"
         return [notice, alert]
       end
-        # More error handling, this is if can't save user annotation
+
+    # Handle other errors in saving user annotation
     rescue Mongoid::Errors::InvalidValue => e
       puts "**** in create_user_annotations, Mongoid::Errors"
       error_context = ErrorTracker.format_extra_context(study, {params: log_params})

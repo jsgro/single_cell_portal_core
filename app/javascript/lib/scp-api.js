@@ -82,9 +82,9 @@ export async function fetchAuthCode(mock=false) {
 /**
 * Create a user annotation
 *
-* A "user annotation" is a named array.  Each item has a label and cell names.
-* Signed-in users can create these custom annotations in the Explore tab of
-* the Study Overview page.
+* A "user annotation" is a named object of arrays.  Each item has a label
+* (`name`) and cell names (`values`).  Signed-in users can create these
+* custom annotations in the Explore tab of the Study Overview page.
 *
 * See user-annotations.js for more context.
 *
@@ -93,21 +93,22 @@ export async function fetchAuthCode(mock=false) {
 * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
 * @param {String} subsample Subsampling threshold, e.g. 100000
 * @param {String} userAnnotationName Name of new annotation
-* @param {Array.<[label: String, cellNames: Array]>} selections User's
-*    selections (made via lasso or box in scatter plot) for this new
-*    annotation.  Each selection has a label and an array of cell names.
+* @param {Object.<string, Array.<[name: String, values: Array]>>}
+*    selections User's selections (made via lasso or box in scatter plot) for
+*    this new annotation.  Each selection has a label (`name`) and an array of
+*    cell names (`values`).
 */
 export async function createUserAnnotation(
   studyAccession, cluster, annotation, subsample,
   userAnnotationName, selections, mock=false
 ) {
-  console.log('in postUserAnnotation')
   const init = configPost(mock)
 
-  console.log('in postUserAnnotation, init:')
-  console.log(init)
-
-  // user_data_arrays_attributes: [:name, :values]
+  // Example `selections`:
+  // {
+  //  "0": {name: "Cells I selected", values: ["cell_A", "cell_B"]},
+  //  "1": {name: "Cells I didn't select", values: ["cell_C", "cell_D"]},
+  // }
 
   // TODO: Remove `loaded_annotation` after basic functionality is restored.
   // Per chat with Jon, it seems this a lurking duplicate variable.  It stems
@@ -140,21 +141,8 @@ export async function createUserAnnotation(
     loaded_annotation // Remove this upon resolving above TODO
   })
 
-  console.log('in postUserAnnotation, init after change')
-  console.log(init)
-
   const apiUrl = `/site/studies/${studyAccession}/user_annotation`
   const [noop, perfTime] = await scpApi(apiUrl, init, mock)
-
-  // Method: POST
-  // annotation_name: value of #annotation-name text input field
-  // user_id: current_user.id
-  // cluster_group_id: @cluster.id
-  // study_id: @study.id
-  // loaded_annotation: params[:annotation]
-  // if !params[:subsample].blank? %>
-  //    subsample_annotation: params[:annotation]
-  //    subsample_threshold: params[:subsample]
 }
 
 /**
