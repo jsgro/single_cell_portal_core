@@ -92,14 +92,14 @@ export async function fetchAuthCode(mock=false) {
 * @param {String} cluster Name of cluster, as defined at upload
 * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
 * @param {String} subsample Subsampling threshold, e.g. 100000
-* @param {String} newAnnotationName Name of new annotation
+* @param {String} userAnnotationName Name of new annotation
 * @param {Array.<[label: String, cellNames: Array]>} selections User's
 *    selections (made via lasso or box in scatter plot) for this new
 *    annotation.  Each selection has a label and an array of cell names.
 */
 export async function createUserAnnotation(
   studyAccession, cluster, annotation, subsample,
-  newAnnotationName, selections, mock=false
+  userAnnotationName, selections, mock=false
 ) {
   console.log('in postUserAnnotation')
   const init = configPost(mock)
@@ -111,10 +111,32 @@ export async function createUserAnnotation(
 
   console.log('in postUserAnnotation, before JSON.stringify')
 
+
+  // TODO: Resolve duplicate `subsample_annotation` argument.  This stems from
+  // `loaded_annotation` and `subsample_annotation` in pre-existing
+  // user annotation code.  Why are they the two variables instead of one?
+  //
+  // Relevant code in backend:
+  //
+  //  * In `user_annotation_service.rb` (adapted from `controllers/site_controller.rb`):
+  //      user_annotation.initialize_user_data_arrays(user_data_arrays_attributes, subsample_annotation, subsample, loaded_annotation)
+  //
+  //  * In `models/user_annotation.rb` (note `annotation` is `loaded_annotation`):
+  //      def initialize_user_data_arrays(user_data_arrays_attributes, annotation, threshold, loaded_annotation)
+  //      ...
+  //      subsample(user_data_arrays_attributes, [100000, 20000, 10000, 1000], cluster, loaded_annotation, max_length )
+  //
+  // Old front-end code had set `loaded_annotation` and
+  // `subsample_annotation` to the same value: `annotation`.
+  // See lines 9 and 12 in:
+  // https://github.com/broadinstitute/single_cell_portal_core/blob/00a5878170bd0b07c8ab650aec425da9e9c92493/app/views/site/_selection_well.html.erb
+  const loaded_annotation = annotation
+
   init.body = JSON.stringify({
-    name: newAnnotationName,
-    cluster, annotation, subsample
-    // annotation // Re duplicate argument: see TODO in `user-annotations.js`
+    name: userAnnotationName,
+    user_data_arrays_attributes: selections,
+    cluster, annotation, subsample,
+    loaded_annotation // Remove this upon resolving above TODO
   })
 
   console.log('in postUserAnnotation, init after change')

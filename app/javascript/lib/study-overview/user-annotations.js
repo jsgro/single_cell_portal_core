@@ -147,28 +147,8 @@ async function submitUserAnnotation() {
 
       const newAnnotationName = $('#user-annotation-name').val()
 
-      // TODO: Resolve duplicate `annotation` argument.  This stems from
-      // `loaded_annotation` and `subsample_annotation` in pre-existing
-      // user annotation code.  Why are they the two variables instead of one?
-      //
-      // Relevant code in backend:
-      //
-      //  * In `user_annotation_service.rb` (adapted from `controllers/site_controller.rb`):
-      //      user_annotation.initialize_user_data_arrays(user_data_arrays_attributes, subsample_annotation, subsample, loaded_annotation)
-      //
-      //  * In `models/user_annotation.rb` (note `annotation` is `loaded_annotation`):
-      //      def initialize_user_data_arrays(user_data_arrays_attributes, annotation, threshold, loaded_annotation)
-      //      ...
-      //      subsample(user_data_arrays_attributes, [100000, 20000, 10000, 1000], cluster, loaded_annotation, max_length )
-      //
-      // Old front-end code had set `loaded_annotation` and
-      // `subsample_annotation` to the same value: `annotation`.
-      // See lines 9 and 12 in:
-      // https://github.com/broadinstitute/single_cell_portal_core/blob/00a5878170bd0b07c8ab650aec425da9e9c92493/app/views/site/_selection_well.html.erb
-      //
-
       createUserAnnotation(
-        accession, cluster, annotation, subsample, annotation,
+        accession, cluster, annotation, subsample,
         newAnnotationName, selections
       )
       // Endpoint format: /single_cell/study/<accession>/<study_name>/create_user_annotations
