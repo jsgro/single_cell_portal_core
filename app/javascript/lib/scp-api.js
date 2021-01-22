@@ -54,7 +54,7 @@ function configPost(mock=false) {
 }
 
 /**
- * Get a one-time authorization code for download, and its lifetime in seconds
+ * Create and return a one-time authorization code for download
  *
  * TODO:
  * - Update API to use "expires_in" instead of "time_interval"
@@ -80,22 +80,48 @@ export async function fetchAuthCode(mock=false) {
 }
 
 /**
-* Create a user annotation, a set of objects each with a label and cell names
+* Create a user annotation
 *
-* An annotation is a set of objects, each having a label and an array of cell
-* names.  Signed-in users can create custom annotations -- known as "user
-* annotations" -- in the Explore tab of the Study Overview page.
+* A "user annotation" is a named array.  Each item has a label and cell names.
+* Signed-in users can create these custom annotations in the Explore tab of
+* the Study Overview page.
 *
-* See user-annotation.js for more context.
+* See user-annotations.js for more context.
+*
+* @param {String} studyAccession Study accession, e.g. SCP123
+* @param {String} cluster Name of cluster, as defined at upload
+* @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
+* @param {String} subsample Subsampling threshold, e.g. 100000
+* @param {String} newAnnotationName Name of new annotation
+* @param {Array.<[label: String, cellNames: Array]>} selections User's
+*    selections (made via lasso or box in scatter plot) for this new
+*    annotation.  Each selection has a label and an array of cell names.
 */
-export async function postUserAnnotation(
-  studyAccession, clusterName, annotationName, loadedAnnotation,
-  subsampleAnnotation, subsampleThreshold, mock=false
+export async function createUserAnnotation(
+  studyAccession, cluster, annotation, subsample,
+  newAnnotationName, selections, mock=false
 ) {
+  console.log('in postUserAnnotation')
   const init = configPost(mock)
-  const apiUrl = `/studies/${studyAccession}/annotations`
-  const [noop, perfTime] = await scpApi('/annotation', init, mock)
 
+  console.log('in postUserAnnotation, init:')
+  console.log(init)
+
+  // user_data_arrays_attributes: [:name, :values]
+
+  console.log('in postUserAnnotation, before JSON.stringify')
+
+  init.body = JSON.stringify({
+    name: newAnnotationName,
+    cluster, annotation, subsample
+    // annotation // Re duplicate argument: see TODO in `user-annotations.js`
+  })
+
+  console.log('in postUserAnnotation, init after change')
+  console.log(init)
+
+  const apiUrl = `/site/studies/${studyAccession}/user_annotation`
+  const [noop, perfTime] = await scpApi(apiUrl, init, mock)
 
   // Method: POST
   // annotation_name: value of #annotation-name text input field
@@ -529,6 +555,10 @@ function getFullUrl(path, mock=false) {
 export default async function scpApi(
   path, init, mock=false, camelCase=true, toJson=true
 ) {
+  console.log('in scpApi, path, init:')
+  console.log(path)
+  console.log(init)
+
   const perfTimeStart = performance.now()
 
   const fullPath = getFullUrl(path, mock)

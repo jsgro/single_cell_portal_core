@@ -53,8 +53,6 @@ module Api
 
         # remove url-encoded characters from parameter values
         def sanitize_param(parameter)
-          Rails.logger.info "parameter:"
-          Rails.logger.info parameter
           parameter.gsub(PATH_REGEX, '_')
         end
 

@@ -22,23 +22,25 @@ class UserAnnotation
   field :publishing, type: Boolean, default: false
   field :source_resolution, type: Integer
 
-  swagger_schema :CustomUserAnnotation do
-    key :name, 'CustomUserAnnotation'
+  # Define parameters used in API POST endpoint to create user annotations
+  swagger_schema :UserAnnotation do
+    key :name, 'UserAnnotation'
     property :name do
       key :type, :string
       key :description, 'Name of new custom user annotation'
     end
-    property :user_id do
+    key :name, 'UserAnnotation'
+    property :name do
       key :type, :string
-      key :description, 'User ID'
+      key :description, 'Name of new custom user annotation'
     end
-    property :cluster_group_id do
+    property :cluster do
       key :type, :string
-      key :description, 'Cluster group ID'
+      key :description, 'Cluster group name'
     end
-    property :study_id do
+    property :loaded_annotation do
       key :type, :string
-      key :description, 'Study ID'
+      key :description, 'Loaded annotation'
     end
     property :subsample_threshold do
       key :type, :string
@@ -47,10 +49,6 @@ class UserAnnotation
     property :subsample_annotation do
       key :type, :string
       key :description, 'Subsample annotation'
-    end
-    property :loaded_annotation do
-      key :type, :string
-      key :description, 'Loaded annotation'
     end
   end
 

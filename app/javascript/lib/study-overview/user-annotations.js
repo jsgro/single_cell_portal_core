@@ -13,7 +13,11 @@
 import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
 
+import {
+  getMainViewOptions
+} from 'lib/study-overview/view-options'
 import { log } from 'lib/metrics-api'
+import { createUserAnnotation } from 'lib/scp-api'
 
 // Array of arrays of cell names, a.k.a. selections, and of selection labels
 let selections = []
@@ -49,7 +53,7 @@ function getDeleteButton(rowIndex, id) {
   return deleteButton
 }
 
-/** Get text input for annotation label */
+/** Get text input and surrounding elements for annotation label */
 function getSelectionRow(rowIndex, selections, id) {
   const name = (rowIndex === 0) ? 'Unselected' : `Selection ${rowIndex}`
   const selection = selections[rowIndex]
@@ -102,6 +106,83 @@ function createSelectionTable() {
   const row = getSelectionRow(0, selections, '')
 
   $('#well-table').prepend(row)
+}
+
+/**
+ * Submit a new custom user annotation for creation in database.
+ *
+ * Called upon clicking the "Create Annotations" button.  Parses DOM for
+ * needed data, then posts to SCP REST API.
+ */
+async function submitUserAnnotation() {
+  console.log('in click handler for #selection-submit')
+  const needText = $('.need-text')
+  const numFields = needText.toArray().length
+  const values = []
+  let cont = true
+  for (let i = 0; i < numFields; i++) {
+    const text = needText.eq(i).val()
+    values.push(text)
+    if (text === '') {cont = false}
+  }
+
+  if (numFields < 3) {
+    alert('Your annotation must have at least two populations')
+  } else if (!cont) {
+    alert('You must provide a value for all labels before saving')
+    window.setErrorOnBlank(needText)
+  } else if (values.includes('Undefined')) {
+    alert('Undefined is a reserved term. Select a different name for this label.')
+    window.setErrorOnBlank(needText)
+  } else {
+    console.log('in "Saving... Please Wait"')
+    $('#generic-modal-title').html('Saving... Please Wait')
+    ga('send', 'event', 'engaged_user_action', 'create_custom_cell_annotation')
+    log('create-custom-cell-annotation')
+    window.launchModalSpinner('#generic-modal-spinner', '#generic-modal', () => {
+      console.log('**** in user-annotation form submit')
+
+      const accession = window.SCP.studyAccession
+      const { cluster, annotation, subsample } = getMainViewOptions(0)
+
+      const newAnnotationName = $('#user-annotation-name').val()
+
+      // TODO: Resolve duplicate `annotation` argument.  This stems from
+      // `loaded_annotation` and `subsample_annotation` in pre-existing
+      // user annotation code.  Why are they the two variables instead of one?
+      //
+      // Relevant code in backend:
+      //
+      //  * In `user_annotation_service.rb` (adapted from `controllers/site_controller.rb`):
+      //      user_annotation.initialize_user_data_arrays(user_data_arrays_attributes, subsample_annotation, subsample, loaded_annotation)
+      //
+      //  * In `models/user_annotation.rb` (note `annotation` is `loaded_annotation`):
+      //      def initialize_user_data_arrays(user_data_arrays_attributes, annotation, threshold, loaded_annotation)
+      //      ...
+      //      subsample(user_data_arrays_attributes, [100000, 20000, 10000, 1000], cluster, loaded_annotation, max_length )
+      //
+      // Old front-end code had set `loaded_annotation` and
+      // `subsample_annotation` to the same value: `annotation`.
+      // See lines 9 and 12 in:
+      // https://github.com/broadinstitute/single_cell_portal_core/blob/00a5878170bd0b07c8ab650aec425da9e9c92493/app/views/site/_selection_well.html.erb
+      //
+
+      createUserAnnotation(
+        accession, cluster, annotation, subsample, annotation,
+        newAnnotationName, selections
+      )
+      // Endpoint format: /single_cell/study/<accession>/<study_name>/create_user_annotations
+      // Method: POST
+      // annotation_name: value of #user-annotation-name text input field
+      // user_id: current_user.id
+      // cluster_group_id: @cluster.id
+      // study_id: @study.id
+      // loaded_annotation: params[:annotation]
+      // if !params[:subsample].blank? %>
+      //    subsample_annotation: params[:annotation]
+      //    subsample_threshold: params[:subsample]
+    })
+  }
 }
 
 /** Attach event listeners for user annotations component */
@@ -159,55 +240,7 @@ function attachEventListeners(target) {
   })
 
   $(document).on('click', '#selection-submit', () => {
-    console.log('in click handler for #selection-submit')
-    const currentName = $('#user_annotation_name').val()
-    const needText = $('.need-text')
-    const numFields = needText.toArray().length
-    const values = []
-    let cont = true
-    for (let i = 0; i < numFields; i++) {
-      const text = needText.eq(i).val()
-      values.push(text)
-      if (text === '') {cont = false}
-    }
-
-    if (numFields < 3) {
-      alert('Your annotation must have at least two populations')
-    } else if (!cont) {
-      alert('You must provide a value for all labels before saving')
-      window.setErrorOnBlank(needText)
-    } else if (values.includes('Undefined')) {
-      alert('Undefined is a reserved term. Select a different name for this label.')
-      window.setErrorOnBlank(needText)
-    } else {
-      console.log('in "Saving... Please Wait"')
-      $('#generic-modal-title').html('Saving... Please Wait')
-      ga('send', 'event', 'engaged_user_action', 'create_custom_cell_annotation')
-      log('create-custom-cell-annotation')
-      window.launchModalSpinner('#generic-modal-spinner', '#generic-modal', () => {
-        console.log('**** in user-annotation form submit')
-        const form = $('#create_annotations')
-        console.log('form')
-        console.log(form)
-        form.submit()
-
-        $.ajax({
-          url: window.SCP.createUserAnnotationsPath,
-          method: 'POST'
-
-        })
-        // Endpoint format: /single_cell/study/<accession>/<study_name>/create_user_annotations
-        // Method: POST
-        // annotation_name: value of #annotation-name text input field
-        // user_id: current_user.id
-        // cluster_group_id: @cluster.id
-        // study_id: @study.id
-        // loaded_annotation: params[:annotation]
-        // if !params[:subsample].blank? %>
-        //    subsample_annotation: params[:annotation]
-        //    subsample_threshold: params[:subsample]
-      })
-    }
+    submitUserAnnotation()
   })
 }
 
@@ -229,7 +262,7 @@ function writeFormHtml() {
   // https://localhost:3000/single_cell/study/SCP70/male-mouse-brain/create_user_annotations
   // Endpoint format: /single_cell/study/<accession>/<study_name>/create_user_annotations
   // Method: POST
-  // annotation_name: value of #annotation-name text input field
+  // annotation_name: value of #user-annotation-name text input field
   // user_id: current_user.id
   // cluster_group_id: @cluster.id
   // study_id: @study.id
@@ -241,7 +274,7 @@ function writeFormHtml() {
     <div class="row no-bottom-margin form-group" id="selection-well">
       <div class="col-sm-12 form-group">
         <input type="text"
-          id="annotation-name" class="form-control need-text annotation-name"
+          id="user-annotation-name" class="form-control need-text user-annotation-name"
           placeholder="Name this group of labels" />
       </div>
       <div id="selection-table"></div>
