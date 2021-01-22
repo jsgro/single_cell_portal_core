@@ -115,7 +115,7 @@ class UserAnnotation
 
   # create an annotations user data arrays
   def initialize_user_data_arrays(user_data_arrays_attributes, annotation, threshold, loaded_annotation)
-    puts "**** in initializae_user_data_arrays"
+    puts "**** in initialialize_user_data_arrays"
     # set cluster and max length of data array
     # max length is the actual length of the annotation when not subsampled
     cluster = self.cluster_group

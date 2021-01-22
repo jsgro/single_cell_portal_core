@@ -109,12 +109,9 @@ export async function createUserAnnotation(
 
   // user_data_arrays_attributes: [:name, :values]
 
-  console.log('in postUserAnnotation, before JSON.stringify')
-
-
   // TODO: Resolve duplicate `subsample_annotation` argument.  This stems from
   // `loaded_annotation` and `subsample_annotation` in pre-existing
-  // user annotation code.  Why are they the two variables instead of one?
+  // user annotation code.  Why are they two variables instead of one?
   //
   // Relevant code in backend:
   //
@@ -577,10 +574,6 @@ function getFullUrl(path, mock=false) {
 export default async function scpApi(
   path, init, mock=false, camelCase=true, toJson=true
 ) {
-  console.log('in scpApi, path, init:')
-  console.log(path)
-  console.log(init)
-
   const perfTimeStart = performance.now()
 
   const fullPath = getFullUrl(path, mock)

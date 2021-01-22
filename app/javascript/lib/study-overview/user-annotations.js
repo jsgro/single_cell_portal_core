@@ -147,9 +147,20 @@ async function submitUserAnnotation() {
 
       const newAnnotationName = $('#user-annotation-name').val()
 
+      // SCP REST API expects an object that looks like an array
+      // Consider refactoring user annotation code on server, to modernize
+      // this legacy artifact of using HTML form posts.
+      const labelsAndCellNames = {}
+      labels.map((label, i) => {
+        labelsAndCellNames[i] = {
+          name: label,
+          values: selections[i]
+        }
+      })
+
       createUserAnnotation(
         accession, cluster, annotation, subsample,
-        newAnnotationName, selections
+        newAnnotationName, labelsAndCellNames
       )
       // Endpoint format: /single_cell/study/<accession>/<study_name>/create_user_annotations
       // Method: POST
