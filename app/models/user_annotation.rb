@@ -178,7 +178,6 @@ class UserAnnotation
   # {label:{name=>'label' values=>'Cell1, Cell2...' } label2=>...}
   # cluster is current cluster
   def create_array(cluster, threshold, annotation, user_data_arrays_attributes)
-    puts "**** in create_array"
     # create a hash of cell names of format
     # {cell_name1=>'its label', cell_name_2=>'its label'}
     user_annotation_map = {}

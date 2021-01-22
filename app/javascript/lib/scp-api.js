@@ -109,6 +109,9 @@ export async function createUserAnnotation(
   //  "0": {name: "Cells I selected", values: ["cell_A", "cell_B"]},
   //  "1": {name: "Cells I didn't select", values: ["cell_C", "cell_D"]},
   // }
+  //
+  // See refactoring note starting "SCP REST API expects" in user-annotations.js
+
 
   // TODO: Remove `loaded_annotation` after basic functionality is restored.
   // Per chat with Jon, it seems this a lurking duplicate variable.  It stems
@@ -142,7 +145,9 @@ export async function createUserAnnotation(
   })
 
   const apiUrl = `/site/studies/${studyAccession}/user_annotation`
-  const [noop, perfTime] = await scpApi(apiUrl, init, mock)
+  const [noticeAndAlert, perfTime] = await scpApi(apiUrl, init, mock)
+
+  return noticeAndAlert
 }
 
 /**

@@ -49,7 +49,6 @@ module Api
       end
 
       def create_user_annotation
-          Rails.logger.info "**** in annotations_controller, create_user_annotation"
 
           notice, alert = UserAnnotationService.create_user_annotation(
             @study, params[:name], params[:user_data_arrays_attributes],

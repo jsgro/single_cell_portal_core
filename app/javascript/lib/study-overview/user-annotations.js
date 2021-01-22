@@ -23,14 +23,14 @@ import { createUserAnnotation } from 'lib/scp-api'
 let selections = []
 const labels = ['']
 
-/** Get "Set annotation label" text input HTML for each selection */
+/** Get "Label these cells" text input HTML for each selection */
 function getAnnotationLabelInputs(rowIndex, selectionValue, label) {
   return (
     `<input type="text"
       name="user_annotation[user_data_arrays_attributes][${rowIndex}][name]"
       id="user_annotation_user_data_arrays_attributes_${rowIndex}_name"
       class="form-control annotation-label need-text"
-      placeholder="Set annotation label"
+      placeholder="Label these cells"
       value="${label}">` +
     `<input type="hidden"
       name="user_annotation[user_data_arrays_attributes][${rowIndex}][values]"
@@ -108,61 +108,91 @@ function createSelectionTable() {
   $('#well-table').prepend(row)
 }
 
+/** Submits new user annotation, informs user via modals and alerts  */
+async function submit() {
+  $('#generic-modal-title').html('Saving... Please Wait')
+  ga('send', 'event', 'engaged_user_action', 'create_custom_cell_annotation')
+  log('create-custom-cell-annotation')
+  window.launchModalSpinner('#generic-modal-spinner', '#generic-modal', async () => {
+    const accession = window.SCP.studyAccession
+    const { cluster, annotation, subsample } = getMainViewOptions(0)
+
+    const newAnnotationName = $('#user-annotation-name').val()
+
+    // SCP REST API expects an object that looks like an array
+    // Consider refactoring user annotation code on server, to modernize
+    // this legacy artifact of using HTML form posts.
+    const labelsAndCellNames = {}
+    labels.map((label, i) => {
+      labelsAndCellNames[i] = {
+        name: label,
+        values: selections[i]
+      }
+    })
+
+    const response = await createUserAnnotation(
+      accession, cluster, annotation, subsample,
+      newAnnotationName, labelsAndCellNames
+    )
+
+    if (response.ok === false) {
+      response.json().then(json => {
+        alert(json.error)
+      })
+    } else {
+      // New user annotation was successfully saved;
+      // inform user and briefly guide them on how to use it
+      alert(response.notice)
+    }
+  })
+}
+
 /**
- * Submit a new custom user annotation for creation in database.
+ * Verify there are enough selections, and that they're properly labeled
  *
- * Called upon clicking the "Create Annotations" button.  Parses DOM for
- * needed data, then posts to SCP REST API.
+ * Inform user of any issues.
  */
-async function submitUserAnnotation() {
-  console.log('in click handler for #selection-submit')
+function validate() {
+  let isValid = false
+
   const needText = $('.need-text')
   const numFields = needText.toArray().length
-  const values = []
-  let cont = true
+  const labels = []
+  let allSelectionsAreLabeled = true
   for (let i = 0; i < numFields; i++) {
     const text = needText.eq(i).val()
-    values.push(text)
-    if (text === '') {cont = false}
+    labels.push(text)
+    if (text === '') {
+      allSelectionsAreLabeled = false
+    }
   }
 
   if (numFields < 3) {
-    alert('Your annotation must have at least two populations')
-  } else if (!cont) {
-    alert('You must provide a value for all labels before saving')
+    alert('Your annotation must have at least two selections.')
+  } else if (allSelectionsAreLabeled === false) {
+    alert('Provide a label for all selections before saving.')
     window.setErrorOnBlank(needText)
-  } else if (values.includes('Undefined')) {
-    alert('Undefined is a reserved term. Select a different name for this label.')
+  } else if (labels.includes('Undefined')) {
+    alert('Undefined is a reserved term.  Label this selection differently.')
     window.setErrorOnBlank(needText)
   } else {
-    console.log('in "Saving... Please Wait"')
-    $('#generic-modal-title').html('Saving... Please Wait')
-    ga('send', 'event', 'engaged_user_action', 'create_custom_cell_annotation')
-    log('create-custom-cell-annotation')
-    window.launchModalSpinner('#generic-modal-spinner', '#generic-modal', () => {
-      console.log('**** in user-annotation form submit')
+    isValid = true
+  }
 
-      const accession = window.SCP.studyAccession
-      const { cluster, annotation, subsample } = getMainViewOptions(0)
+  return isValid
+}
 
-      const newAnnotationName = $('#user-annotation-name').val()
+/**
+ * Validate and submit a new custom user annotation for creation in database.
+ *
+ * Called upon clicking the "Create Annotations" button.  Does some basic
+ * front-end validation, parses DOM for needed data, then posts to SCP REST API.
+ */
+async function validateAndSubmit() {
+  const isValid = validate()
 
-      // SCP REST API expects an object that looks like an array
-      // Consider refactoring user annotation code on server, to modernize
-      // this legacy artifact of using HTML form posts.
-      const labelsAndCellNames = {}
-      labels.map((label, i) => {
-        labelsAndCellNames[i] = {
-          name: label,
-          values: selections[i]
-        }
-      })
-
-      createUserAnnotation(
-        accession, cluster, annotation, subsample,
-        newAnnotationName, labelsAndCellNames
-      )
-    })
+  if (isValid) {
+    submit()
   }
 }
 
@@ -171,8 +201,6 @@ function attachEventListeners(target) {
   // Listen for selections in the target scatter plot
   target.on('plotly_selected', eventData => {
     const selection = []
-
-    console.log(eventData)
 
     // Get selected cells curve number and point number
     // plotly only gives x and y values per point, so we have to use point id
@@ -221,7 +249,7 @@ function attachEventListeners(target) {
   })
 
   $(document).on('click', '#selection-submit', () => {
-    submitUserAnnotation()
+    validateAndSubmit()
   })
 }
 
@@ -230,7 +258,6 @@ function attachEventListeners(target) {
 */
 export function closeUserAnnotationsForm() {
   if ($('#selection_div').attr('class') === '') {
-    console.log('closing user annotations form')
     // menu is open, so empty forms and reset button state
     $('#selection_div').html('')
     $('#selection_div').toggleClass('collapse')
@@ -239,24 +266,12 @@ export function closeUserAnnotationsForm() {
 }
 
 function writeFormHtml() {
-  // Example form action:
-  // https://localhost:3000/single_cell/study/SCP70/male-mouse-brain/create_user_annotations
-  // Endpoint format: /single_cell/study/<accession>/<study_name>/create_user_annotations
-  // Method: POST
-  // annotation_name: value of #user-annotation-name text input field
-  // user_id: current_user.id
-  // cluster_group_id: @cluster.id
-  // study_id: @study.id
-  // loaded_annotation: params[:annotation]
-  // if !params[:subsample].blank? %>
-  //    subsample_annotation: params[:annotation]
-  //    subsample_threshold: params[:subsample]
   const formHtml = `
     <div class="row no-bottom-margin form-group" id="selection-well">
       <div class="col-sm-12 form-group">
         <input type="text"
           id="user-annotation-name" class="form-control need-text user-annotation-name"
-          placeholder="Name this group of labels" />
+          placeholder="Name this annotation" />
       </div>
       <div id="selection-table"></div>
       <div id="selection-button">
