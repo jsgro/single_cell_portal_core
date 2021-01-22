@@ -1,7 +1,7 @@
 class UserAnnotationService
   # Methods to interact with annotation data, beyond just visualization
 
-  def self.create_user_annotation(study, new_annotation_name,
+  def self.create_user_annotation(study, name,
     user_data_arrays_attributes, cluster_name, loaded_annotation,
     subsample_threshold, subsample_annotation, current_user)
     Rails.logger.info "**** in create_user_annotations"
@@ -58,12 +58,16 @@ class UserAnnotationService
       cluster = user_annotation.cluster_group
 
       Rails.logger.info "**** 3"
+      Rails.logger.info "user_annotation"
+      Rails.logger.info user_annotation
+      Rails.logger.info "user_annotation.to_yaml"
+      Rails.logger.info user_annotation.to_yaml
 
-      # Error handling, save the annotation and handle exceptions
+      # Save the user annotation, and handle any exceptions
       if user_annotation.save
         Rails.logger.info "**** in create_user_annotations, @user_annotation.save === true"
         # Method call to create the user data arrays for this annotation
-        user_annotation.initialize_user_data_arrays(user_data_arrays_attributes, subsample_annotation, subsample, loaded_annotation)
+        user_annotation.initialize_user_data_arrays(user_data_arrays_attributes, subsample_annotation, subsample_threshold, loaded_annotation)
 
         # Reset the annotations in the dropdowns to include this new annotation
         cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
@@ -82,7 +86,7 @@ class UserAnnotationService
         options = ClusterVizService.load_cluster_group_options(study)
         notice = nil
         alert = 'The following errors prevented the annotation from being saved: ' + user_annotation.errors.full_messages.join(',')
-        logger.error "Creating user annotation of params: #{user_annotation_params}, unable to save user annotation with errors #{user_annotation.errors.full_messages.join(', ')}"
+        Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unable to save user annotation with errors #{user_annotation.errors.full_messages.join(', ')}"
         return [notice, alert]
       end
         # More error handling, this is if can't save user annotation

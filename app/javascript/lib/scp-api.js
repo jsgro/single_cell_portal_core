@@ -109,9 +109,10 @@ export async function createUserAnnotation(
 
   // user_data_arrays_attributes: [:name, :values]
 
-  // TODO: Resolve duplicate `subsample_annotation` argument.  This stems from
-  // `loaded_annotation` and `subsample_annotation` in pre-existing
-  // user annotation code.  Why are they two variables instead of one?
+  // TODO: Remove `loaded_annotation` after basic functionality is restored.
+  // Per chat with Jon, it seems this a lurking duplicate variable.  It stems
+  // from `loaded_annotation` and `subsample_annotation` in pre-existing
+  // user annotation code.  Those should be two variables instead of one.
   //
   // Relevant code in backend:
   //
@@ -127,6 +128,9 @@ export async function createUserAnnotation(
   // `subsample_annotation` to the same value: `annotation`.
   // See lines 9 and 12 in:
   // https://github.com/broadinstitute/single_cell_portal_core/blob/00a5878170bd0b07c8ab650aec425da9e9c92493/app/views/site/_selection_well.html.erb
+  //
+  // Given the above, and chat, Jon and I agree the variable should be removed,
+  // if testing reveals no related problem.
   const loaded_annotation = annotation
 
   init.body = JSON.stringify({
