@@ -18,12 +18,12 @@ module Api
 
       annotation_description_doc = 'Object with name (String), values (Array of unique values), type (String), scope (String), and cluster_name (string, if applicable)'
 
-      swagger_path '/site/studies/{accession}/annotation' do
+      swagger_path '/site/studies/{accession}/user_annotation' do
         operation :post do
           key :tags, [
               'Site'
           ]
-          key :summary, 'Create annotation'
+          key :summary, 'Create user annotation'
           key :description, 'Create new custom user annotation for the study'
           key :operationId, 'site_study_user_create_annotation_path'
           parameter do
@@ -50,7 +50,7 @@ module Api
 
       def create_user_annotation
 
-          notice, alert = UserAnnotationService.create_user_annotation(
+          notice, alert, annotations, options = UserAnnotationService.create_user_annotation(
             @study, params[:name], params[:user_data_arrays_attributes],
             params[:cluster], params[:loaded_annotation],
             params[:subsample_threshold], params[:subsample_annotation],
@@ -58,9 +58,28 @@ module Api
           )
 
           if notice.nil?
-            render json: {error: alert}, status: 500 and return
+            message = alert
+            errors = {name: 'Test'}
           else
-            render json: {notice: notice}
+            message = notice
+            errors = {}
+          end
+
+          Rails.logger.info '**** message, alert, annotations, options'
+          Rails.logger.info message
+          Rails.logger.info alert
+          Rails.logger.info annotations
+          Rails.logger.info options
+
+          response_body = {
+            message: message, annotations: annotations, errors: errors
+          }
+
+          if notice.nil?
+
+            render json: response_body, status: 500 and return
+          else
+            render json: response_body
           end
       end
     end

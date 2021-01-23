@@ -149,24 +149,29 @@ function prepareForApi(labels, cellArrays) {
 //   });
 // }
 
-/** Handle success or failure based on API response */
-function handleResponse(response) {
+/** Show success and update annotations menu, or show errors */
+function handleCreateResponse(message, annotations, errors) {
   window.closeModalSpinner('#generic-modal-spinner', '#generic-modal', () => {
-    if (response.ok === false) {
-      response.json().then(json => {
-        window.showMessageModal(json.error)
-      })
-    } else {
-      // New user annotation was successfully saved;
-      // inform user and briefly guide them on how to use it
-      window.showMessageModal(response.notice)
+    console.log('*** in handle, message, annotations, errors:')
+    console.log(message)
+    console.log(annotations)
+    console.log(errors)
+    window.showMessageModal(message)
+    if ($.isEmptyObject(errors)) {
       // $("#annotation").html("<%= escape_javascript(select_tag :annotation, grouped_options_for_select(@cluster_annotations, params[:annotation]), class: 'form-control' )%>");
+    } else {
+      if (errors.name) {
+        $('#user_annotation_name').parent().addClass('has-error has-feedback')
+      }
+      if (errors.values) {
+        $('.label-name').parent().addClass('has-error has-feedback')
+      }
     }
   })
 }
 
 /** Save new user annotation, inform user of status via modals  */
-async function submit() {
+async function create() {
   $('#generic-modal-title').html('Saving... Please Wait')
 
   /* eslint-disable-next-line */
@@ -176,12 +181,12 @@ async function submit() {
 
     const { name, selections } = prepareForApi(labels, cellArrays)
 
-    const response = await createUserAnnotation(
+    const { message, annotations, errors } = await createUserAnnotation(
       accession, cluster, annotation, subsample,
       name, selections
     )
 
-    handleResponse(response)
+    handleCreateResponse(message, annotations, errors)
   })
 }
 
@@ -221,17 +226,16 @@ function validate() {
 }
 
 /**
- * Validate and submit a new custom user annotation for creation in database.
+ * Validate and create a custom user annotation in database.
  *
  * Called upon clicking the "Create Annotation" button.  Does some basic
  * front-end validation, parses DOM for needed data, then posts to SCP REST API.
  */
-async function validateAndSubmit() {
-  console.log('**** in validateAndSubmit')
+async function validateAndCreate() {
   const isValid = validate()
 
   if (isValid) {
-    submit()
+    create()
   }
 }
 
@@ -288,7 +292,7 @@ function attachEventListeners(target) {
   })
 
   $(document).on('click', '#create-annotation-button', () => {
-    validateAndSubmit()
+    validateAndCreate()
   })
 }
 
