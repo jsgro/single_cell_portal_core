@@ -1,11 +1,16 @@
 /**
-* @fileoverview UI for "Create Annotation" -- creating a user annotation
+* @fileoverview UI for "Create Annotations" -- creating a user annotation
 *
 * User annotations are created by signed-in users in the Explore tab of the
 * Study Overview page.
 *
-* Walk-through:
+* Tutorial showing how this feature should work:
 * https://github.com/broadinstitute/single_cell_portal/wiki/Annotations
+*
+* A user annotation has a name and a set of "selections".  Each selection
+* has a label and an array of cell names.  Selections represent cells that the
+* user has manually selected -- typically via a free-hand lasso -- in the
+* "Clusters" scatter plot.
 */
 
 /* eslint-disable no-invalid-this */
@@ -16,27 +21,43 @@ import Plotly from 'plotly.js-dist'
 import {
   getMainViewOptions
 } from 'lib/study-overview/view-options'
-import { log } from 'lib/metrics-api'
 import { createUserAnnotation } from 'lib/scp-api'
 
-// Array of arrays of cell names, a.k.a. selections, and of selection labels
-let selections = []
+/**
+ * Each selection has a label and an array of cell names.
+ *
+ * Building on the tutorial linked atop file, here's how selections relate
+ * to this JavaScript's model of user annotations:
+ *
+ * userAnnotation = {
+ *   name: "demo-two-groups",
+ *   selections: [
+ *     {label: "inner", cellArray: ["cell_A", "cell_B"]},
+ *     {label: "peripheral", cellArray: ["cell_C", "cell_D"]}
+ *   ]
+ * }
+ */
 const labels = ['']
+let cellArrays = []
 
 /** Get "Label these cells" text input HTML for each selection */
-function getAnnotationLabelInputs(rowIndex, selectionValue, label) {
-  return (
+function getSelectionLabelInput(rowIndex, cellArray, label) {
+  const selectionLabelInput =
     `<input type="text"
       name="user_annotation[user_data_arrays_attributes][${rowIndex}][name]"
       id="user_annotation_user_data_arrays_attributes_${rowIndex}_name"
       class="form-control annotation-label need-text"
       placeholder="Label these cells"
-      value="${label}">` +
+      value="${label}">`
+
+  // This is used for the gene search
+  const hiddenSelectionInput =
     `<input type="hidden"
       name="user_annotation[user_data_arrays_attributes][${rowIndex}][values]"
       id="user_annotation_user_data_arrays_attributes_${rowIndex}_values"
-      value="${selectionValue}" />`
-  )
+      value="${cellArray}" />`
+
+  return selectionLabelInput + hiddenSelectionInput
 }
 
 /** Get delete button for the row at the given index */
@@ -53,15 +74,17 @@ function getDeleteButton(rowIndex, id) {
   return deleteButton
 }
 
-/** Get text input and surrounding elements for annotation label */
-function getSelectionRow(rowIndex, selections, id) {
+/** Get text input and surrounding elements for selection label */
+function getSelectionRow(rowIndex, cellArrays, id) {
   const name = (rowIndex === 0) ? 'Unselected' : `Selection ${rowIndex}`
-  const selection = selections[rowIndex]
+  const cellArray = cellArrays[rowIndex]
 
-  const numCells = selection.length
-  const selectionTd = `<td id="${id}">${name}: ${numCells} cells${
-    getAnnotationLabelInputs(rowIndex, selection, labels[rowIndex])
-  }</td>`
+  const numCells = cellArray.length
+  const labelInput =
+    getSelectionLabelInput(rowIndex, cellArray, labels[rowIndex])
+
+  const selectionTd =
+    `<td id="${id}">${name}: ${numCells} cells${labelInput}</td>`
 
   const deleteButton = getDeleteButton(rowIndex, id)
 
@@ -77,10 +100,10 @@ function updateSelection() {
     $(this).remove()
   })
 
-  selections.forEach((selection, i) => {
+  cellArrays.forEach((cellArray, i) => {
     // For unselected row, when n == 0
     const id = `Selection${parseInt(i)}`
-    const row = getSelectionRow(i, selections, id)
+    const row = getSelectionRow(i, cellArrays, id)
     $('#well-table').prepend(row)
   })
 
@@ -89,61 +112,76 @@ function updateSelection() {
 }
 
 /**
- * Create selection table and "Unselected" row. Only called once.
+ * Prepare user annotation before posting to SCP REST API
+ *
+ * API expects selections object that looks like an array.  Consider
+ * refactoring user annotation code on server, to modernize this artifact
+ * of previously using formData POST bodies, hidden HTML inputs, etc.
  */
-function createSelectionTable() {
-  const selectionTable = $('#selection-table')
+function prepareForApi(labels, cellArrays) {
+  const name = $('#user-annotation-name').val()
 
-  // Initialize content to a well table
-  selectionTable.html(
-    '<div class="col-sm-12">' +
-        '<table id="well-table" class="table table-condensed">' +
-          '<tbody></tbody>' +
-        '</table>' +
-      '</div>')
+  const selections = {}
+  labels.map((label, i) => {
+    selections[i] = {
+      name: label,
+      values: cellArrays[i]
+    }
+  })
 
-  // Add the first row, i.e. "Unselected: {#} cells"
-  const row = getSelectionRow(0, selections, '')
-
-  $('#well-table').prepend(row)
+  return { name, selections }
 }
 
-/** Submits new user annotation, informs user via modals and alerts  */
-async function submit() {
-  $('#generic-modal-title').html('Saving... Please Wait')
-  ga('send', 'event', 'engaged_user_action', 'create_custom_cell_annotation')
-  log('create-custom-cell-annotation')
-  window.launchModalSpinner('#generic-modal-spinner', '#generic-modal', async () => {
-    const accession = window.SCP.studyAccession
-    const { cluster, annotation, subsample } = getMainViewOptions(0)
+// /** Reload panel after saving user annotation */
+// function reloadAfterSave() {
+//   closeModalSpinner('#generic-modal-spinner', '#generic-modal', function () {
+//     $("#annotation").html("<%= escape_javascript(select_tag :annotation, grouped_options_for_select(@cluster_annotations, params[:annotation]), class: 'form-control' )%>");
+//     showMessageModal("<%= @notice.present? ? @notice.html_safe : nil %>", "<%= @alert.present? ? @alert.html_safe : nil %>");
+//     <% if @user_annotation.errors.any? %>
+//       <% @user_annotation.errors.keys.each do |key| %>
+//           <% if key === :name %>
+//               $('#user_annotation_name').parent().addClass('has-error has-feedback')
+//           <% elsif key === :values %>
+//               $('.label-name').parent().addClass('has-error has-feedback')
+//           <% end %>
+//       <% end %>
+//     <% end %>
+//   });
+// }
 
-    const newAnnotationName = $('#user-annotation-name').val()
-
-    // SCP REST API expects an object that looks like an array
-    // Consider refactoring user annotation code on server, to modernize
-    // this legacy artifact of using HTML form posts.
-    const labelsAndCellNames = {}
-    labels.map((label, i) => {
-      labelsAndCellNames[i] = {
-        name: label,
-        values: selections[i]
-      }
-    })
-
-    const response = await createUserAnnotation(
-      accession, cluster, annotation, subsample,
-      newAnnotationName, labelsAndCellNames
-    )
-
+/** Handle success or failure based on API response */
+function handleResponse(response) {
+  window.closeModalSpinner('#generic-modal-spinner', '#generic-modal', () => {
     if (response.ok === false) {
       response.json().then(json => {
-        alert(json.error)
+        window.showMessageModal(json.error)
       })
     } else {
       // New user annotation was successfully saved;
       // inform user and briefly guide them on how to use it
-      alert(response.notice)
+      window.showMessageModal(response.notice)
+      // $("#annotation").html("<%= escape_javascript(select_tag :annotation, grouped_options_for_select(@cluster_annotations, params[:annotation]), class: 'form-control' )%>");
     }
+  })
+}
+
+/** Save new user annotation, inform user of status via modals  */
+async function submit() {
+  $('#generic-modal-title').html('Saving... Please Wait')
+
+  /* eslint-disable-next-line */
+  window.launchModalSpinner('#generic-modal-spinner', '#generic-modal', async () => {
+    const accession = window.SCP.studyAccession
+    const { cluster, annotation, subsample } = getMainViewOptions(0)
+
+    const { name, selections } = prepareForApi(labels, cellArrays)
+
+    const response = await createUserAnnotation(
+      accession, cluster, annotation, subsample,
+      name, selections
+    )
+
+    handleResponse(response)
   })
 }
 
@@ -185,10 +223,11 @@ function validate() {
 /**
  * Validate and submit a new custom user annotation for creation in database.
  *
- * Called upon clicking the "Create Annotations" button.  Does some basic
+ * Called upon clicking the "Create Annotation" button.  Does some basic
  * front-end validation, parses DOM for needed data, then posts to SCP REST API.
  */
 async function validateAndSubmit() {
+  console.log('**** in validateAndSubmit')
   const isValid = validate()
 
   if (isValid) {
@@ -198,34 +237,34 @@ async function validateAndSubmit() {
 
 /** Attach event listeners for user annotations component */
 function attachEventListeners(target) {
-  // Listen for selections in the target scatter plot
+  // Listen for selections of cells in the target scatter plot
   target.on('plotly_selected', eventData => {
-    const selection = []
+    const cellArray = []
 
     // Get selected cells curve number and point number
     // plotly only gives x and y values per point, so we have to use point id
     // to get annotation and cell name
     eventData.points.forEach(pt => {
-      selection.push(target.data[pt.curveNumber].cells[pt.pointNumber])
+      cellArray.push(target.data[pt.curveNumber].cells[pt.pointNumber])
     })
 
     // Update previous selections, to ensure they have no duplicate cell names
-    selections = selections.map(thisSelection => {
-      return window._.difference(thisSelection, selection)
+    cellArrays = cellArrays.map(thisSelection => {
+      return window._.difference(thisSelection, cellArray)
     })
-    // Add this selection to all the others
-    selections.push(selection)
-    // Add a blank name to array of names
+    // Add this selected cell array to all the others
+    cellArrays.push(cellArray)
+    // Add a blank label to array of labels (TODO: make comment more meaningful)
     labels.push('')
-    // Remove all empty arrays from selections, and their names
-    selections.forEach((selection, i) => {
-      if (selection.length === 0) {
-        selections.splice(i, 1)
+    // Remove empty cell arrays and their labels
+    cellArrays.forEach((cellArray, i) => {
+      if (cellArray.length === 0) {
+        cellArrays.splice(i, 1)
         labels.splice(i, 1)
       }
     })
     // After selection, update rows
-    updateSelection(selections, labels)
+    updateSelection()
   })
 
   // Listen for text entry and remember it
@@ -243,12 +282,12 @@ function attachEventListeners(target) {
   $('#selection-well').on('click', '.annotation-delete-btn', function() {
     const trimmedId = this.id.replace('Selection', '').replace('Button', '')
     const index = parseInt(trimmedId)
-    selections[0] = selections[0].concat(selections[index])
-    selections.splice(index, 1)
-    updateSelection(selections, labels)
+    cellArrays[0] = cellArrays[0].concat(cellArrays[index])
+    cellArrays.splice(index, 1)
+    updateSelection()
   })
 
-  $(document).on('click', '#selection-submit', () => {
+  $(document).on('click', '#create-annotation-button', () => {
     validateAndSubmit()
   })
 }
@@ -257,36 +296,63 @@ function attachEventListeners(target) {
 * Close the user annotations panel if open when rendering clusters
 */
 export function closeUserAnnotationsForm() {
-  if ($('#selection_div').attr('class') === '') {
-    // menu is open, so empty forms and reset button state
-    $('#selection_div').html('')
-    $('#selection_div').toggleClass('collapse')
+  const panel = $('#create-annotation-panel')
+  if (panel.attr('class') === '') {
+    // Panel is open, so empty inputs and reset button state
+    panel.html('')
+    panel.toggleClass('collapse')
     $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off')
   }
 }
 
-function writeFormHtml() {
-  const formHtml = `
+/**
+ * Write selection table and "Unselected" row to DOM. Only called once.
+ */
+function writeSelectionTable() {
+  const selectionTable = $('#selection-table')
+
+  // Initialize content to a well table
+  selectionTable.html(
+    '<div class="col-sm-12">' +
+        '<table id="well-table" class="table table-condensed">' +
+          '<tbody></tbody>' +
+        '</table>' +
+      '</div>')
+
+  // Add the first row, i.e. "Unselected: {#} cells"
+  const row = getSelectionRow(0, cellArrays, '')
+
+  $('#well-table').prepend(row)
+}
+
+/**
+ * Write initial HTML for "Create Annotations" section
+ */
+function writeInitialDom() {
+  const initialHtml = `
     <div class="row no-bottom-margin form-group" id="selection-well">
       <div class="col-sm-12 form-group">
         <input type="text"
-          id="user-annotation-name" class="form-control need-text user-annotation-name"
+          id="user-annotation-name"
+          class="form-control need-text user-annotation-name"
           placeholder="Name this annotation" />
       </div>
       <div id="selection-table"></div>
       <div id="selection-button">
         <div class="col-xs-12 text-center">
-          <button id="selection-submit" class="btn btn-success">Create Annotation</button>
+          <button id="create-annotation-button" class="btn btn-success">
+            Create Annotation
+          </button>
         </div>
       </div>
     </div>`
 
-  $('#selection_div').html(formHtml)
+  $('#create-annotation-panel').html(initialHtml)
 }
 
 /** Initialize "Create Annotation" functionality for user annotations */
 export default function userAnnotations() {
-  writeFormHtml()
+  writeInitialDom()
 
   $('#selection-well, #selection-button').css('visibility', 'visible')
 
@@ -298,7 +364,7 @@ export default function userAnnotations() {
   let unselectedCells = target.data.map(trace => trace.cells)
 
   unselectedCells = unselectedCells.flat()
-  selections = [unselectedCells]
+  cellArrays = [unselectedCells]
 
   target.layout.dragmode = 'lasso'
   target.layout.scene = { unselectBatch: unselectedCells }
@@ -308,5 +374,5 @@ export default function userAnnotations() {
 
   attachEventListeners(target)
 
-  createSelectionTable()
+  writeSelectionTable()
 }

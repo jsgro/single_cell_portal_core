@@ -12,7 +12,8 @@ import * as queryString from 'query-string'
 
 import { getAccessToken, getURLSafeAccessToken } from 'providers/UserProvider'
 import {
-  logSearch, logDownloadAuthorization, mapFiltersForLogging
+  logSearch, logDownloadAuthorization, logCreateUserAnnotation,
+  mapFiltersForLogging
 } from './scp-api-metrics'
 
 // If true, returns mock data for all API responses.  Only for dev.
@@ -80,7 +81,7 @@ export async function fetchAuthCode(mock=false) {
 }
 
 /**
-* Create a user annotation
+* Create user annotation
 *
 * A "user annotation" is a named object of arrays.  Each item has a label
 * (`name`) and cell names (`values`).  Signed-in users can create these
@@ -146,6 +147,8 @@ export async function createUserAnnotation(
 
   const apiUrl = `/site/studies/${studyAccession}/user_annotation`
   const [noticeAndAlert, perfTime] = await scpApi(apiUrl, init, mock)
+
+  logCreateUserAnnotation()
 
   return noticeAndAlert
 }

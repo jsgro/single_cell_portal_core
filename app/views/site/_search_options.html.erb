@@ -237,7 +237,7 @@
                           if (!window.SCP.firstScatterPlotIs3D) {
                               console.log('in #toggle-scatter click handler')
                               $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off');
-                              $('#selection_div').toggleClass('collapse');
+                              $('#create-annotation-panel').toggleClass('collapse');
                               var loadedCluster = $('#cluster').val();
                               var loadedAnnotation = $('#annotation').val();
                               var loadedSubsample = $('#subsample').val();
@@ -258,7 +258,7 @@
           </div>
           <div class="row">
             <div class="col-sm-12">
-              <div id="selection_div" class="collapse"></div>
+              <div id="create-annotation-panel" class="collapse"></div>
             </div>
           </div>
         </div>
