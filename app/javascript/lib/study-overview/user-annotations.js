@@ -29,13 +29,16 @@ import { createUserAnnotation } from 'lib/scp-api'
  * Building on the tutorial linked atop file, here's how selections relate
  * to this JavaScript's model of user annotations:
  *
- * userAnnotation = {
+ * {
  *   name: "demo-two-groups",
  *   selections: [
  *     {label: "inner", cellArray: ["cell_A", "cell_B"]},
  *     {label: "peripheral", cellArray: ["cell_C", "cell_D"]}
  *   ]
  * }
+ *
+ * Note: the succinct model above is transformed immediately before API POST.
+ * See `prepareForApi` for transform details.
  */
 const labels = ['']
 let cellArrays = []
@@ -108,7 +111,7 @@ function updateSelection() {
   })
 
   // Attach listener to make sure all annotation labels are unique
-  window.validateUnique('#create_annotations', '.annotation-label')
+  window.validateUnique('#create-annotation-panel', '.annotation-label')
 }
 
 /**
@@ -118,6 +121,18 @@ function updateSelection() {
  * to be a string that looks like an array.  Consider refactoring user
  * annotation code on server, to modernize this artifact of previously
  * using formData POST bodies, hidden HTML inputs, etc.
+ *
+ * Example output:
+ *
+ * {
+ *   name: "demo-two-groups",
+ *   selections: {
+ *     {"0": {name: "inner", values: "cell_A,cell_B"]},
+ *     {"1": {name: "peripheral", values: "cell_C,cell_D"]}
+ *   }
+ * }
+ *
+ * Compare this to model outlined atop file ("this JavaScript's model").
  */
 function prepareForApi(labels, cellArrays) {
   const name = $('#user-annotation-name').val()
@@ -299,10 +314,10 @@ function writeSelectionTable() {
   // Initialize content to a well table
   selectionTable.html(
     '<div class="col-sm-12">' +
-        '<table id="well-table" class="table table-condensed">' +
-          '<tbody></tbody>' +
-        '</table>' +
-      '</div>')
+      '<table id="well-table" class="table table-condensed">' +
+        '<tbody></tbody>' +
+      '</table>' +
+    '</div>')
 
   // Add the first row, i.e. "Unselected: {#} cells"
   const row = getSelectionRow(0, cellArrays, '')
