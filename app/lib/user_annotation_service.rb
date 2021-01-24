@@ -18,7 +18,6 @@ class UserAnnotationService
 
     user_id = current_user.id
 
-    # byebug
     cluster_group_id = study.cluster_groups.find_by(name: cluster_name).id
 
     study_id = study[:id]
@@ -28,11 +27,17 @@ class UserAnnotationService
 
     begin
 
+      Rails.logger.info("**** user_data_arrays_attributes before")
+      Rails.logger.info(user_data_arrays_attributes)
+
       # Get the label values and push to data names
       user_data_arrays_attributes.keys.each do |key|
-        user_data_arrays_attributes[key][:values] =  user_data_arrays_attributes[key][:values].split(',')
+        # user_data_arrays_attributes[key][:values] =  user_data_arrays_attributes[key][:values].split(',')
         data_names.push(user_data_arrays_attributes[key][:name].strip)
       end
+
+      Rails.logger.info("**** user_data_arrays_attributes after")
+      Rails.logger.info(user_data_arrays_attributes)
 
       source_resolution = subsample_threshold.present? ? subsample_threshold.to_i : nil
 
@@ -65,7 +70,7 @@ class UserAnnotationService
         alert = 'The following errors prevented the annotation from being saved: ' + user_annotation.errors.full_messages.join(',')
         Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unable to save user annotation with errors #{user_annotation.errors.full_messages.join(', ')}"
       end
-      [notice, alert, cluster_annotations, options]
+      [notice, alert, cluster_annotations, options, user_annotation]
 
     # Handle other errors in saving user annotation
     rescue Mongoid::Errors::InvalidValue => e
@@ -77,7 +82,7 @@ class UserAnnotationService
       notice = nil
       alert = 'The following errors prevented the annotation from being saved: ' + 'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
       Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, invalid value of #{e.message}"
-      [notice, alert, cluster_annotations, options]
+      [notice, alert, cluster_annotations, options, user_annotation]
 
     rescue NoMethodError => e
       error_context = ErrorTracker.format_extra_context(study, {params: log_params})
@@ -88,7 +93,7 @@ class UserAnnotationService
       notice = nil
       alert = 'The following errors prevented the annotation from being saved: ' + e.message
       Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, no method error #{e.message}"
-      [notice, alert, cluster_annotations, options]
+      [notice, alert, cluster_annotations, options, user_annotation]
 
     rescue => e
       error_context = ErrorTracker.format_extra_context(study, {params: log_params})
@@ -99,7 +104,7 @@ class UserAnnotationService
       notice = nil
       alert = 'An unexpected error prevented the annotation from being saved: ' + e.message
       Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unexpected error #{e.message}"
-      [notice, alert, cluster_annotations, options]
+      [notice, alert, cluster_annotations, options, user_annotation]
 
     end
   end

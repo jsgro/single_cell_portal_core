@@ -149,34 +149,25 @@ export async function createUserAnnotation(
   const [jsonOrResponse, perfTime] = await scpApi(apiUrl, init, mock)
 
   let message = ''
-  const annotations = {}
+  let annotations = {}
   let errors = {}
-
-  console.log('*** in handle, jsonOrResponse:')
-  console.log(jsonOrResponse)
 
   if (jsonOrResponse.ok === false) {
     // Parse errors from failed `fetch` response
     //
     // Consider refactoring this error handling.  It would require
     // finer-grained status codes in this API endpoint for handled
-    // vs. unhandled and e.g. bad request (400) vs. internal server error
-    // (500).
+    // vs. unhandled and e.g. bad request (400) vs. server error (500).
     const json = await jsonOrResponse.json()
     message = json.message
     errors = json.errors
   } else {
     // Parse JSON of successful response
     message = jsonOrResponse.message
-    // TODO: annotations = jsonOrResponse.annotations
+    annotations = jsonOrResponse.annotations
   }
 
   logCreateUserAnnotation()
-
-  console.log('*** in createUserAnnotation, message, annotations, errors:')
-  console.log(message)
-  console.log(annotations)
-  console.log(errors)
 
   return { message, annotations, errors }
 }

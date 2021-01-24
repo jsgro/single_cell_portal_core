@@ -50,7 +50,7 @@ module Api
 
       def create_user_annotation
 
-          notice, alert, annotations, options = UserAnnotationService.create_user_annotation(
+          notice, alert, annotations, options, user_annotation = UserAnnotationService.create_user_annotation(
             @study, params[:name], params[:user_data_arrays_attributes],
             params[:cluster], params[:loaded_annotation],
             params[:subsample_threshold], params[:subsample_annotation],

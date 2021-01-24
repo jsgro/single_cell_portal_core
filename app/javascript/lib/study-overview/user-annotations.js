@@ -125,7 +125,7 @@ function prepareForApi(labels, cellArrays) {
   labels.map((label, i) => {
     selections[i] = {
       name: label,
-      values: cellArrays[i]
+      values: cellArrays[i].join(',')
     }
   })
 
