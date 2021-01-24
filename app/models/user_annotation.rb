@@ -114,8 +114,6 @@ class UserAnnotation
 
   # create an annotations user data arrays
   def initialize_user_data_arrays(user_data_arrays_attributes, annotation, threshold, loaded_annotation)
-    Rails.logger.info "**** in initialialize_user_data_arrays, user_data_arrays_attributes:"
-    Rails.logger.info user_data_arrays_attributes
     # set cluster and max length of data array
     # max length is the actual length of the annotation when not subsampled
     cluster = self.cluster_group
@@ -178,9 +176,6 @@ class UserAnnotation
   # {label:{name=>'label' values=>'Cell1, Cell2...' } label2=>...}
   # cluster is current cluster
   def create_array(cluster, threshold, annotation, user_data_arrays_attributes)
-    Rails.logger.info "user_data_arrays_attributes"
-    Rails.logger.info user_data_arrays_attributes
-
     # create a hash of cell names of format
     # {cell_name1=>'its label', cell_name_2=>'its label'}
     user_annotation_map = {}
@@ -190,9 +185,6 @@ class UserAnnotation
         user_annotation_map[cell_name] = name
       end
     end
-
-    Rails.logger.info "user_annotation_map"
-    Rails.logger.info user_annotation_map
 
     # get the cell names, x values and y values this selection was created on
     cell_name_array = cluster.concatenate_data_arrays('text', 'cells', threshold, annotation)
@@ -215,9 +207,6 @@ class UserAnnotation
     # check if any of the values are undefined, aka this data array is being extrapolated
     undefined_happened = false
 
-    Rails.logger.info "**** cell_name_array"
-    Rails.logger.info cell_name_array
-
     cell_name_array.each do |name|
       cell_name = user_annotation_map[name]
       if cell_name.nil?
@@ -227,12 +216,6 @@ class UserAnnotation
       end
       annotation_array << cell_name
     end
-
-    Rails.logger.info "**** undefined_happened"
-    Rails.logger.info undefined_happened
-
-    Rails.logger.info "**** annotation_array"
-    Rails.logger.info annotation_array
 
     # Create the name of the subsample annotation
     sub_an = self.formatted_annotation_identifier

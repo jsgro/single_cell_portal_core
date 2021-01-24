@@ -19,7 +19,7 @@ import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
 
 import {
-  getMainViewOptions
+  getMainViewOptions, getAnnotationDropdown
 } from 'lib/study-overview/view-options'
 import { createUserAnnotation } from 'lib/scp-api'
 
@@ -114,54 +114,35 @@ function updateSelection() {
 /**
  * Prepare user annotation before posting to SCP REST API
  *
- * API expects selections object that looks like an array.  Consider
- * refactoring user annotation code on server, to modernize this artifact
- * of previously using formData POST bodies, hidden HTML inputs, etc.
+ * API expects selections object that looks like an array, and `values`
+ * to be a string that looks like an array.  Consider refactoring user
+ * annotation code on server, to modernize this artifact of previously
+ * using formData POST bodies, hidden HTML inputs, etc.
  */
 function prepareForApi(labels, cellArrays) {
   const name = $('#user-annotation-name').val()
 
   const selections = {}
   labels.map((label, i) => {
-    selections[i] = {
+    selections[i] = { // Rails expects array-like object
       name: label,
-      values: cellArrays[i].join(',')
+      values: cellArrays[i].join(',') // Rails expects array-like string
     }
   })
 
   return { name, selections }
 }
 
-// /** Reload panel after saving user annotation */
-// function reloadAfterSave() {
-//   closeModalSpinner('#generic-modal-spinner', '#generic-modal', function () {
-//     $("#annotation").html("<%= escape_javascript(select_tag :annotation, grouped_options_for_select(@cluster_annotations, params[:annotation]), class: 'form-control' )%>");
-//     showMessageModal("<%= @notice.present? ? @notice.html_safe : nil %>", "<%= @alert.present? ? @alert.html_safe : nil %>");
-//     <% if @user_annotation.errors.any? %>
-//       <% @user_annotation.errors.keys.each do |key| %>
-//           <% if key === :name %>
-//               $('#user_annotation_name').parent().addClass('has-error has-feedback')
-//           <% elsif key === :values %>
-//               $('.label-name').parent().addClass('has-error has-feedback')
-//           <% end %>
-//       <% end %>
-//     <% end %>
-//   });
-// }
-
 /** Show success and update annotations menu, or show errors */
-function handleCreateResponse(message, annotations, errors) {
+function handleCreateResponse(message, annotations, errors, selected) {
   window.closeModalSpinner('#generic-modal-spinner', '#generic-modal', () => {
-    console.log('*** in handle, message, annotations, errors:')
-    console.log(message)
-    console.log(annotations)
-    console.log(errors)
     window.showMessageModal(message)
     if ($.isEmptyObject(errors)) {
-      // $("#annotation").html("<%= escape_javascript(select_tag :annotation, grouped_options_for_select(@cluster_annotations, params[:annotation]), class: 'form-control' )%>");
+      const annotationDropdown = getAnnotationDropdown(annotations, selected)
+      $('#annotation').parent().replaceWith(annotationDropdown)
     } else {
       if (errors.name) {
-        $('#user_annotation_name').parent().addClass('has-error has-feedback')
+        $('#user-annotation-name').parent().addClass('has-error has-feedback')
       }
       if (errors.values) {
         $('.label-name').parent().addClass('has-error has-feedback')
@@ -186,7 +167,7 @@ async function create() {
       name, selections
     )
 
-    handleCreateResponse(message, annotations, errors)
+    handleCreateResponse(message, annotations, errors, name)
   })
 }
 

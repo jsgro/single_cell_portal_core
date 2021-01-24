@@ -33,7 +33,7 @@ export function getAnnotParams() {
   return { name, type, scope }
 }
 
-/** Get HTML for dropdown menu for spatial files */
+/** Get HTML for "Spatial group" dropdown menu */
 function getSpatialDropdown(study) {
   const options = study.spatialGroupNames.map(name => {
     return `<option value="${name}">${name}</option>`
@@ -56,6 +56,43 @@ export function addSpatialDropdown(study) {
     const dropdown = getSpatialDropdown(study)
     $('#view-options #precomputed-panel #precomputed .row').append(dropdown)
   }
+}
+
+/** Get HTML for a dropdown for a main view option */
+function getMainDropdown(domId, options, label) {
+  const select =
+    `<select name="${domId}" id="${domId}" class="form-control">${
+      options
+    }</select>`
+  return (
+    `<div class="form-group col-sm-4">` +
+      `<label for=${domId}>${label}</label><br/>${select}` +
+    `</div>`
+  )
+}
+
+/**
+ * Get HTML for "Selection annotation" drop-down menu
+ *
+ * @param {Object} annotations Annotations object.  Top keys are scopes
+ *   (e.g. 'Study-Wide') with values that are lists of annotation
+ *   <value, label> arrays.  `value` is a 3-part annotation identifier,
+ *   `label` is the user-facing name.
+ * @param {String} selectedOptionLabel Label of the selected option
+ */
+export function getAnnotationDropdown(annotations, selectedOptionLabel=null) {
+  const options = Object.keys(annotations).map(scope => {
+    const options = annotations[scope].map(([label, value]) => {
+      let selected = ''
+      if (selectedOptionLabel && selectedOptionLabel === label) {
+        selected = ' selected'
+      }
+      return `<option value="${value}"${selected}>${label}</option>`
+    })
+    return `<optgroup label="${scope}">${options}</optgroup>`
+  })
+
+  return getMainDropdown('annotations', options, 'Select annotation')
 }
 
 /**

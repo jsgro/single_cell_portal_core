@@ -27,17 +27,10 @@ class UserAnnotationService
 
     begin
 
-      Rails.logger.info("**** user_data_arrays_attributes before")
-      Rails.logger.info(user_data_arrays_attributes)
-
       # Get the label values and push to data names
       user_data_arrays_attributes.keys.each do |key|
-        # user_data_arrays_attributes[key][:values] =  user_data_arrays_attributes[key][:values].split(',')
         data_names.push(user_data_arrays_attributes[key][:name].strip)
       end
-
-      Rails.logger.info("**** user_data_arrays_attributes after")
-      Rails.logger.info(user_data_arrays_attributes)
 
       source_resolution = subsample_threshold.present? ? subsample_threshold.to_i : nil
 
