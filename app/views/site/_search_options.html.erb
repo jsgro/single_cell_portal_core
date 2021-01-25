@@ -234,7 +234,7 @@
                   <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
                       $('#toggle-scatter').click(function() {
                           // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
-                          if (!window.SCP.firstScatterPlotIs3D) {
+                          if (!window.SCP.getScatterPlots()[0].is3D) {
                               $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off');
                               $('#create-annotation-panel').toggleClass('collapse');
                               window.SCP.userAnnotations()

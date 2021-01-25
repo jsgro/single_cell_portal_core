@@ -43,7 +43,7 @@ export function studyNameAsUrlParam(studyName) {
 }
 
 /** Configure an `init` for `fetch` to use POST, and respect any mocking  */
-function configPost(mock=false) {
+function defaultPostInit(mock=false) {
   let init = defaultInit
   if (mock === false && globalMock === false) {
     init = Object.assign({}, defaultInit(), {
@@ -71,7 +71,7 @@ function configPost(mock=false) {
  * fetchAuthCode(true)
  */
 export async function fetchAuthCode(mock=false) {
-  const init = configPost(mock)
+  const init = defaultPostInit(mock)
 
   const [authCode, perfTime] = await scpApi('/search/auth_code', init, mock)
 
@@ -102,7 +102,7 @@ export async function createUserAnnotation(
   studyAccession, cluster, annotation, subsample,
   userAnnotationName, selections, mock=false
 ) {
-  const init = configPost(mock)
+  const init = defaultPostInit(mock)
 
   init.body = JSON.stringify({
     name: userAnnotationName,

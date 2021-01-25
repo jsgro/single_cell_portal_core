@@ -34,6 +34,7 @@ import {
 import { getLogPlotProps } from 'lib/scp-api-metrics'
 import { formatTerms } from 'providers/StudySearchProvider'
 import getViolinProps from 'lib/violin-plot'
+import {getScatterPlots} from 'lib/scatter-plot'
 import * as ScpApi from 'lib/scp-api'
 import exploreDefault from 'lib/study-overview/explore-default'
 import exploreSingle from 'lib/study-overview/explore-single'
@@ -86,6 +87,7 @@ window.SCP.formatTerms = formatTerms
 window.SCP.API = ScpApi
 window.SCP.exploreDefault = exploreDefault
 window.SCP.exploreSingle = exploreSingle
+window.SCP.getScatterPlots = getScatterPlots
 window.SCP.userAnnotations = userAnnotations
 
 /*

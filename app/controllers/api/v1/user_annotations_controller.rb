@@ -30,9 +30,9 @@ module Api
           parameter do
             key :name, :user_annotation
             key :in, :body
-            key :description, 'UserAnnotation object'
+            key :description, 'UserAnnotationInput object'
             schema do
-              key :'$ref', :UserAnnotation
+              key :'$ref', :UserAnnotationInput
             end
           end
           response 200 do
@@ -54,7 +54,7 @@ module Api
             message: message, annotations: annotations
           }
 
-          render json: response_body, status: status and return
+          render json: response_body, status: status
       end
     end
   end

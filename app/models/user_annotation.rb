@@ -23,7 +23,7 @@ class UserAnnotation
   field :source_resolution, type: Integer
 
   # Define parameters used in API POST endpoint to create user annotations
-  swagger_schema :UserAnnotation do
+  swagger_schema :UserAnnotationInput do
     key :name, 'UserAnnotation'
     property :name do
       key :type, :string
