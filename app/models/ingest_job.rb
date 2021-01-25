@@ -513,15 +513,15 @@ class IngestJob
     end
   end
 
-  # logs analytics to Mixpanel
+  # gather statistics about this run to report to Mixpanel
   #
-  # * *yields*
-  #  - MetricsService.log => Hash of job attributes/statistics, which are reported to Mixpanel via
-  def log_to_mixpanel
+  # * *returns*
+  #   - (Hash) => Hash of job statistics to use with IngestJob#log_to_mixpanel
+  def get_job_analytics
     file_type = self.study_file.file_type
     # Event properties to log to Mixpanel.
     # Mixpanel uses camelCase for props; snake_case would degrade Mixpanel UX.
-    mixpanel_log_props = {
+    job_props = {
       perfTime: self.get_total_runtime_ms, # Latency in milliseconds
       fileType: file_type,
       fileSize: self.study_file.upload_file_size,
@@ -535,18 +535,18 @@ class IngestJob
       # since genes are not ingested for raw counts matrices, report number of cells ingested
       if self.study_file.is_raw_counts_file?
         cells = self.study.expression_matrix_cells(self.study_file).count
-        mixpanel_log_props.merge!({:numCells => cells})
+        job_props.merge!({:numCells => cells})
       else
         genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
-        mixpanel_log_props.merge!({:numGenes => genes})
+        job_props.merge!({:numGenes => genes})
       end
     when 'Metadata'
       use_metadata_convention = self.study_file.use_metadata_convention
-      mixpanel_log_props.merge!({useMetadataConvention: use_metadata_convention})
+      job_props.merge!({useMetadataConvention: use_metadata_convention})
       if use_metadata_convention
         project_name = 'alexandria_convention' # hard-coded is fine for now, consider implications if we get more projects
         current_schema_version = get_latest_schema_version(project_name)
-        mixpanel_log_props.merge!(
+        job_props.merge!(
           {
             metadataConvention: project_name,
             schemaVersion: current_schema_version
@@ -560,7 +560,7 @@ class IngestJob
         cluster_points = cluster.points
         can_subsample = cluster.can_subsample?
         metadata_file_present = self.study.metadata_file.present?
-        mixpanel_log_props.merge!(
+        job_props.merge!(
           {
             clusterType: cluster_type,
             numClusterPoints: cluster_points,
@@ -570,7 +570,15 @@ class IngestJob
         )
       end
     end
+    job_props.with_indifferent_access
+  end
 
+  # logs analytics to Mixpanel
+  #
+  # * *yields*
+  #  - MetricsService.log => reports output of IngestJob#get_job_analytics to Mixpanel via Bard
+  def log_to_mixpanel
+    mixpanel_log_props = self.get_job_analytics
     # log job properties to Mixpanel
     MetricsService.log('ingest', mixpanel_log_props, self.user)
   end
