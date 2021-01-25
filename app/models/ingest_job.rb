@@ -310,6 +310,7 @@ class IngestJob
       Rails.logger.error "IngestJob poller: #{self.pipeline_name} has failed."
       # log errors to application log for inspection
       self.log_error_messages
+      self.log_to_mixpanel # log before queuing file for deletion to preserve properties
       self.create_study_file_copy
       self.study_file.update(parse_status: 'failed')
       DeleteQueueJob.new(self.study_file).delay.perform
@@ -322,7 +323,6 @@ class IngestJob
       SingleCellMailer.notify_user_parse_fail(self.user.email, subject, user_email_content, self.study).deliver_now
       admin_email_content = self.generate_error_email_body(email_type: :dev)
       SingleCellMailer.notify_admin_parse_fail(self.user.email, subject, admin_email_content).deliver_now
-      self.log_to_mixpanel
     else
       Rails.logger.info "IngestJob poller: #{self.pipeline_name} is not done; queuing check for #{run_at}"
       self.delay(run_at: run_at).poll_for_completion
