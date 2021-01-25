@@ -222,7 +222,7 @@ function validate() {
 }
 
 /**
- * Validate and create a custom user annotation in database.
+ * Validate and create a custom user annotation.
  *
  * Called upon clicking the "Create Annotation" button.  Does some basic
  * front-end validation, parses DOM for needed data, then posts to SCP REST API.
@@ -289,6 +289,7 @@ function attachEventListeners(target) {
 
   $(document).on('click', '#create-annotation-button', () => {
     validateAndCreate()
+    return false // Prevent gene search form submission
   })
 }
 
