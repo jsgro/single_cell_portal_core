@@ -92,7 +92,7 @@ export function getAnnotationDropdown(annotations, selectedOptionLabel=null) {
     return `<optgroup label="${scope}">${options}</optgroup>`
   })
 
-  return getMainDropdown('annotations', options, 'Select annotation')
+  return getMainDropdown('annotation', options, 'Select annotation')
 }
 
 /**
