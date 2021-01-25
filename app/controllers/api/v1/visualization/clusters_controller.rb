@@ -122,28 +122,34 @@ module Api
           end
 
           subsample = url_params[:subsample].blank? ? nil : url_params[:subsample].to_i
+          consensus = url_params[:consensus].blank? ? nil : url_params[:consensus]
 
           colorscale = url_params[:colorscale].blank? ? 'Reds' : url_params[:colorscale]
 
           is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
 
           titles = ClusterVizService.load_axis_labels(cluster)
-
-          gene_name = url_params[:gene]
-          if gene_name.blank?
+          coordinates = nil
+          genes = RequestUtils.get_genes_from_param(study, url_params[:gene])
+          if url_params[:gene].blank?
             # For "Clusters" tab in default view of Explore tab
             coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
             if cluster.is_3d?
               range = ClusterVizService.set_range(cluster, coordinates.values)
             end
           else
-            # For single-gene view of Explore tab
-            gene = study.genes.by_name_or_id(gene_name, study.expression_matrix_files.map(&:id))
+            # For single-gene view of Explore tab (or collapsed multi-gene)
+            is_collapsed_view = genes.length > 1 && consensus.present?
             y_axis_title = ExpressionVizService.load_expression_axis_title(study)
+
             if is_annotated_scatter
               # For "Annotated scatter" tab, shown in first tab for numeric annotations
-              coordinates = ExpressionVizService.load_annotation_based_data_array_scatter(
-                study, gene, cluster, annotation, subsample, y_axis_title)
+              if is_collapsed_view
+                coordinates = ExpressionVizService.load_gene_set_annotation_based_scatter(study, genes, cluster, annotation, consensus, subsample, y_axis_title)
+              else
+                coordinates = ExpressionVizService.load_annotation_based_data_array_scatter(
+                  study, genes[0], cluster, annotation, subsample, y_axis_title)
+              end
               range = ClusterVizService.set_range(cluster, coordinates.values)
               titles = {
                 x: annot_params[:name],
@@ -151,7 +157,11 @@ module Api
               }
             else
               # For "Scatter" tab
-              coordinates = ExpressionVizService.load_expression_data_array_points(study, gene, cluster, annotation, subsample, y_axis_title, colorscale)
+              if is_collapsed_view
+                coordinates = ExpressionVizService.load_gene_set_expression_boxplot_scores(study, genes, cluster, selected_annotation, consensus, subsample)
+              else
+                coordinates = ExpressionVizService.load_expression_data_array_points(study, genes[0], cluster, annotation, subsample, y_axis_title, colorscale)
+              end
             end
           end
 
@@ -180,7 +190,7 @@ module Api
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
             "coordinateLabels": coordinate_labels,
             "cluster": cluster.name,
-            "gene": gene_name,
+            "gene": genes.map {|g| g['name']}.join(' ,'),
             "annotParams": annot_params
           }
         end

@@ -30,19 +30,22 @@ import {
 } from 'lib/study-overview/view-options'
 import { closeUserAnnotationsForm } from 'lib/study-overview/user-annotations'
 
-/** Render violin and scatter plots for the Explore tab's single-gene view */
+/** Render violin and scatter plots for the Explore tab's single-gene view
+ * this also handles multi-gene plots where the genes are collapsed by mean/median
+ */
 async function renderSingleGenePlots(study, gene) {
   clearPlots()
 
   $('#box-plot').html('')
   $('#scatter-plots .panel-body').html('')
+  const consensus = $('#search_consensus').val()
 
   // Draw violin (or box) plot if showing group annotation, or
   // draw scatter plot if showing numeric annotation
   const annotType = getAnnotParams().type
   if (annotType === 'group') {
     $('#distribution-link').html('Distribution')
-    violinPlot('box-plot', study, gene)
+    violinPlot('box-plot', study, gene, consensus)
   } else {
     $('#distribution-link').html('Annotated Scatter')
     const accession = study.accession
@@ -55,7 +58,17 @@ async function renderSingleGenePlots(study, gene) {
 
   exploreScatterPlots(study, gene, true)
 
-  window.showRelatedGenesIdeogram()
+  const geneList = window.SCP.formatTerms(gene)
+  if (geneList.length > 1) {
+    // draw the dotPlot for comparison if this is a multi-gene collapsed by mean
+    window.drawHeatmap()
+    // reattach the event handlers, since that call removes them
+    attachEventHandlers(study, gene)
+  } else if (geneList.length === 1) {
+    // only show ideogram for single gene queries
+    window.showRelatedGenesIdeogram()
+  }
+
 }
 
 /** Listen for events, and update view accordingly */
@@ -64,7 +77,8 @@ function attachEventListeners(study, gene) {
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {
     resizeScatterPlots()
-    if (getAnnotParams().type === 'group') {resizeViolinPlot()}
+    // calling this method is safe even if there is no violin plot currently
+    resizeViolinPlot()
   })
 
   addMenuListeners(renderSingleGenePlots, [study, gene])
@@ -74,7 +88,12 @@ function attachEventListeners(study, gene) {
 export default async function exploreSingle() {
   // As set in exploreDefault
   const study = window.SCP.study
-  const gene = window.SCP.gene
+  let gene = window.SCP.gene
+  if (!gene || !gene.length) {
+    // if window.SCP.gene is not defined, read it from the search bar
+    // this happens when, e.g. 'view as' -> 'violin - mean' is selected
+    gene = window.SCP.formatTerms($('#search_genes').val()).join(',')
+  }
 
   attachEventListeners(study, gene)
 

@@ -653,6 +653,10 @@ class StudyFile
     self.parse_status == 'parsing'
   end
 
+  def unparsed?
+    self.parse_status == 'unparsed'
+  end
+
   # determine whether we have all necessary files to parse this file.  Mainly applies to MM Coordinate Matrices and associated 10X files
   def able_to_parse?
     if !self.parseable?

@@ -72,7 +72,7 @@ class TaxonsController < ApplicationController
     if annotation_link.present?
       redirect_to annotation_link and return
     else
-      redirect_to request.referrer, alert: "Unable to generate a public link for '#{@taxon.genome_annotation_link}'.  Please try again."
+      redirect_to taxons_path, alert: "Unable to generate a public link for '#{@taxon.genome_annotation_link}'.  Please try again."
     end
   end
 

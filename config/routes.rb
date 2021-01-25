@@ -23,6 +23,7 @@ Rails.application.routes.draw do
               constraints: {version: /.*/}
         end
         resources :taxons, only: [:index, :show]
+        resources :reports, only: [:show], param: :report_name
         resources :studies, only: [:index, :show, :create, :update, :destroy] do
           post 'study_files/bundle', to: 'study_files#bundle', as: :study_files_bundle_files
           resources :study_files, only: [:index, :show, :create, :update, :destroy] do
