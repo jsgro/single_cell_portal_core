@@ -26,7 +26,7 @@ import { scatterPlot, resizeScatterPlots } from 'lib/scatter-plot'
 import { violinPlot, resizeViolinPlot } from 'lib/violin-plot'
 import { clearPlots } from 'lib/plot'
 import {
-  addSpatialDropdown, getMainViewOptions, getAnnotParams, handleMenuChange
+  addSpatialDropdown, getMainViewOptions, getAnnotParams, addMenuListeners
 } from 'lib/study-overview/view-options'
 import { closeUserAnnotationsForm } from 'lib/study-overview/user-annotations'
 
@@ -67,7 +67,7 @@ function attachEventListeners(study, gene) {
     if (getAnnotParams().type === 'group') {resizeViolinPlot()}
   })
 
-  handleMenuChange(renderSingleGenePlots, [study, gene])
+  addMenuListeners(renderSingleGenePlots, [study, gene])
 }
 
 /** Initialize single-gene view for "Explore" tab in Study Overview */

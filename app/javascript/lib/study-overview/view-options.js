@@ -111,13 +111,13 @@ export function updateCluster(
 }
 
 /**
- * Event handler for changes to "Load cluster" menu.  Fetch new annotations,
+ * Event listener for changes to "Load cluster" menu.  Fetch new annotations,
  * then render dynamically-specified plots for selected cluster.
  *
  * @param {Function} callback Function to call after fetching new annots
  * @param {Array} callbackArgs List of arguments for `callback` function
  */
-function handleClusterMenuChange(callback, callbackArgs) {
+function addClusterMenuListener(callback, callbackArgs) {
   $(document).off('change', '#cluster')
   $(document).on('change', '#cluster', function() {
     const cluster = $(this).val() // eslint-disable-line
@@ -140,7 +140,7 @@ function handleClusterMenuChange(callback, callbackArgs) {
 }
 
 /** Handle menu changes for annotations, subsampling, and spatial groups */
-function handleOtherMenuChange(callback, callbackArgs) {
+function addOtherMenuListeners(callback, callbackArgs) {
   const menuSelectors = '#annotation, #subsample, #spatial-group'
   $(document).off('change', menuSelectors)
   $(document).on('change', menuSelectors, function() {
@@ -154,7 +154,7 @@ function handleOtherMenuChange(callback, callbackArgs) {
 }
 
 /**
- * Event handler for new selections in menus for:
+ * Event listener for new selections in menus for:
  *  - Load cluster
  *  - Select annotation
  *  - Subsampling threshold
@@ -163,9 +163,9 @@ function handleOtherMenuChange(callback, callbackArgs) {
  * @param {Function} callback Function to call after fetching new annots
  * @param {Array} callbackArgs List of arguments for `callback` function
  */
-export function handleMenuChange(callback, callbackArgs) {
-  handleClusterMenuChange(callback, callbackArgs)
-  handleOtherMenuChange(callback, callbackArgs)
+export function addMenuListeners(callback, callbackArgs) {
+  addClusterMenuListener(callback, callbackArgs)
+  addOtherMenuListeners(callback, callbackArgs)
 
   // Listener to redraw expression scatter with new color profile
   $('#colorscale').change(function() {

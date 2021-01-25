@@ -26,7 +26,7 @@ import { exploreScatterPlots } from 'lib/study-overview/explore'
 import { resizeScatterPlots } from 'lib/scatter-plot'
 import { clearPlots } from 'lib/plot'
 import {
-  addSpatialDropdown, handleMenuChange
+  addSpatialDropdown, addMenuListeners
 } from 'lib/study-overview/view-options'
 
 const baseCamera = {
@@ -43,7 +43,7 @@ function attachEventListeners(study) {
     resizeScatterPlots()
   })
 
-  handleMenuChange(exploreScatterPlots, [study])
+  addMenuListeners(exploreScatterPlots, [study])
 
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
