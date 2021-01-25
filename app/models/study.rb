@@ -188,7 +188,7 @@ class Study
   has_one :study_accession
 
   # External Resource links
-  has_many :external_resources, as: :resource_links, dependent: :delete
+  has_many :external_resources, as: :resource_links, dependent: :destroy
 
   # Study Detail (full html description)
   has_one :study_detail, dependent: :delete
@@ -530,6 +530,14 @@ class Study
       items do
         key :title, 'StudyFile'
         key '$ref', 'SiteStudyFile'
+      end
+    end
+    property :external_resources do
+      key :type, :array
+      key :description, 'Available external resource links'
+      items do
+        key :title, 'ExternalResource'
+        key '$ref', :ExternalResourceInput
       end
     end
   end

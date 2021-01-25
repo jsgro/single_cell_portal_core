@@ -11,3 +11,11 @@ if study.detached
 else
   json.study_files study.study_files, partial: 'api/v1/site/study_file', as: :study_file, locals: {study: study}
 end
+json.external_resources do
+  json.array! study.external_resources do |external_resource|
+    json.set! :title, external_resource.title
+    json.set! :description, external_resource.description
+    json.set! :url, external_resource.url
+    json.set! :publication_url, external_resource.publication_url
+  end
+end
