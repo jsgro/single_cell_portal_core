@@ -102,7 +102,7 @@ class IngestJobTest < ActiveSupport::TestCase
         action: :ingest_expression,
         studyAccession: @basic_study.accession,
         jobStatus: 'success',
-        numGenes: 1
+        numGenes: @basic_study.genes.count
       }.with_indifferent_access
 
       job_analytics = job.get_job_analytics
