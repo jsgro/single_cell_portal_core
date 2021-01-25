@@ -141,20 +141,32 @@ function prepareForApi(labels, cellArrays) {
   return { name, selections }
 }
 
+const serverErrorEnd =
+  'Sorry, an error has occurred. Support has been notified. Please try ' +
+  'again. If this error persists, or you require assistance, please ' +
+  'contact support at <br/>' +
+  '<a href="mailto:scp-support@broadinstitute.zendesk.com">' +
+    'scp-support@broadinstitute.zendesk.com' +
+  '</a>'
+
+const userErrorEnd =
+  'If you require assistance, please contact support at <br/>' +
+  '<a href="mailto:scp-support@broadinstitute.zendesk.com">' +
+    'scp-support@broadinstitute.zendesk.com' +
+  '</a>'
+
 /** Show success and update annotations menu, or show errors */
-function handleCreateResponse(message, annotations, errors, selected) {
+function handleCreateResponse(message, annotations, errorType, selected) {
   window.closeModalSpinner('#generic-modal-spinner', '#generic-modal', () => {
-    window.showMessageModal(message)
-    if ($.isEmptyObject(errors)) {
+    if (!errorType) {
+      window.showMessageModal(message) // Show success message
       const annotationDropdown = getAnnotationDropdown(annotations, selected)
       $('#annotation').parent().replaceWith(annotationDropdown)
     } else {
-      if (errors.name) {
-        $('#user-annotation-name').parent().addClass('has-error has-feedback')
-      }
-      if (errors.values) {
-        $('.label-name').parent().addClass('has-error has-feedback')
-      }
+      const end = (errorType === 'server' ? serverErrorEnd : userErrorEnd)
+      message += `<br/><br/>${end}`
+      window.showMessageModal(null, message) // Show error message
+      $('#user-annotation-name').parent().addClass('has-error has-feedback')
     }
   })
 }
@@ -170,12 +182,12 @@ async function create() {
 
     const { name, selections } = prepareForApi(labels, cellArrays)
 
-    const { message, annotations, errors } = await createUserAnnotation(
+    const { message, annotations, errorType } = await createUserAnnotation(
       accession, cluster, annotation, subsample,
       name, selections
     )
 
-    handleCreateResponse(message, annotations, errors, name)
+    handleCreateResponse(message, annotations, errorType, annotation)
   })
 }
 

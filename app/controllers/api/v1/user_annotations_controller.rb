@@ -1,11 +1,7 @@
 module Api
   module V1
-    # API methods for annotation-related data
-    #
-    # These methods are not tightly coupled with visualizations.
-    # They might overlap somewhat with those in
-    # visualizations/annotations_controller.rb, but methods in
-    # this class do not depend on those methods.
+    # API methods for user annotations
+
     class UserAnnotationsController < ApiBaseController
       include Concerns::Authenticator
       include Concerns::StudyAware
@@ -50,31 +46,18 @@ module Api
 
       def create_user_annotation
 
-          notice, alert, annotations, user_annotation = UserAnnotationService.create_user_annotation(
+          message, annotations, status = UserAnnotationService.create_user_annotation(
             @study, params[:name], params[:user_data_arrays_attributes],
             params[:cluster], params[:loaded_annotation],
             params[:subsample_threshold], params[:subsample_annotation],
             current_api_user
           )
 
-          if notice.nil?
-            message = alert
-            errors = {name: 'Test'}
-          else
-            message = notice
-            errors = {}
-          end
-
           response_body = {
-            message: message, annotations: annotations, errors: errors
+            message: message, annotations: annotations
           }
 
-          if notice.nil?
-
-            render json: response_body, status: 500 and return
-          else
-            render json: response_body
-          end
+          render json: response_body, status: status and return
       end
     end
   end

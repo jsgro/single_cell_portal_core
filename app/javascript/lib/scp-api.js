@@ -150,17 +150,21 @@ export async function createUserAnnotation(
 
   let message = ''
   let annotations = {}
-  let errors = {}
+  let errorType = null
 
+  // Consider refactoring this when migrating user-annotations.js to
+  // React, so components share more error handling logic and UI
   if (jsonOrResponse.ok === false) {
-    // Parse errors from failed `fetch` response
-    //
-    // Consider refactoring this error handling.  It would require
-    // finer-grained status codes in this API endpoint for handled
-    // vs. unhandled and e.g. bad request (400) vs. server error (500).
     const json = await jsonOrResponse.json()
     message = json.message
-    errors = json.errors
+    const status = jsonOrResponse.status
+    if (status === 400) {
+      errorType = 'user'
+    } else if (status === 500) {
+      errorType = 'server'
+    } else {
+      errorType = 'other'
+    }
   } else {
     // Parse JSON of successful response
     message = jsonOrResponse.message
@@ -169,7 +173,7 @@ export async function createUserAnnotation(
 
   logCreateUserAnnotation()
 
-  return { message, annotations, errors }
+  return { message, annotations, errorType }
 }
 
 /**

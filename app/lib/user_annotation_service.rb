@@ -51,17 +51,16 @@ class UserAnnotationService
         # Reset the annotations in the dropdowns to include this new annotation
         cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
 
-        # No need for an alert, only a message saying successfully created
-        alert = nil
-        notice = "User Annotation: '#{user_annotation.name}' successfully saved. You may now view this annotation via the annotations dropdown."
+        message = "User Annotation: '#{user_annotation.name}' successfully saved. You may now view this annotation via the annotations dropdown."
+        status = 200 # Success
       else
-        # If there was an error saving, reload and alert the use something broke
+        # If there was an error saving, alert the user something broke
         cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-        notice = nil
-        alert = 'The following errors prevented the annotation from being saved: ' + user_annotation.errors.full_messages.join(',')
+        message = 'The following errors prevented the annotation from being saved: ' + user_annotation.errors.full_messages.join(',')
         Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unable to save user annotation with errors #{user_annotation.errors.full_messages.join(', ')}"
+        status = 400  # Bad request
       end
-      [notice, alert, cluster_annotations, user_annotation]
+      [message, cluster_annotations, status]
 
     # Handle other errors in saving user annotation
     rescue Mongoid::Errors::InvalidValue => e
@@ -69,30 +68,27 @@ class UserAnnotationService
       ErrorTracker.report_exception(e, current_user, error_context)
       # If an invalid value was somehow passed through the form, and couldn't save the annotation
       cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-      notice = nil
-      alert = 'The following errors prevented the annotation from being saved: ' + 'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
+      message = 'The following errors prevented the annotation from being saved: ' + 'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
       Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, invalid value of #{e.message}"
-      [notice, alert, cluster_annotations, user_annotation]
+      [message, cluster_annotations, 400] # Bad request
 
     rescue NoMethodError => e
       error_context = ErrorTracker.format_extra_context(study, {params: log_params})
       ErrorTracker.report_exception(e, current_user, error_context)
       # If something is nil and can't have a method called on it, respond with an alert
       cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-      notice = nil
-      alert = 'The following errors prevented the annotation from being saved: ' + e.message
+      message = 'The following errors prevented the annotation from being saved: ' + e.message
       Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, no method error #{e.message}"
-      [notice, alert, cluster_annotations, user_annotation]
+      [message, cluster_annotations, 500] # Internal server error
 
     rescue => e
       error_context = ErrorTracker.format_extra_context(study, {params: log_params})
       ErrorTracker.report_exception(e, current_user, error_context)
       # If a generic unexpected error occurred and couldn't save the annotation
       cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-      notice = nil
-      alert = 'An unexpected error prevented the annotation from being saved: ' + e.message
+      message = 'An unexpected error prevented the annotation from being saved: ' + e.message
       Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unexpected error #{e.message}"
-      [notice, alert, cluster_annotations, user_annotation]
+      [message, cluster_annotations, 500] # Internal server error
 
     end
   end
