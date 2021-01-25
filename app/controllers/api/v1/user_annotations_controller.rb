@@ -49,8 +49,7 @@ module Api
           message, annotations, status = UserAnnotationService.create_user_annotation(
             @study, params[:name], params[:user_data_arrays_attributes],
             params[:cluster], params[:loaded_annotation],
-            params[:subsample_threshold], params[:subsample_annotation],
-            current_api_user
+            params[:subsample_threshold], current_api_user
           )
 
           response_body = {

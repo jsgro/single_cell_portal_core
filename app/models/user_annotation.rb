@@ -37,10 +37,6 @@ class UserAnnotation
       key :type, :string
       key :description, 'Cluster group name'
     end
-    property :loaded_annotation do
-      key :type, :string
-      key :description, 'Loaded annotation'
-    end
     property :subsample_threshold do
       key :type, :string
       key :description, 'Subsample threshold'
@@ -210,7 +206,6 @@ class UserAnnotation
     cell_name_array.each do |name|
       cell_name = user_annotation_map[name]
       if cell_name.nil?
-        # byebug
         cell_name = 'Undefined'
         undefined_happened = true
       end
@@ -342,7 +337,6 @@ class UserAnnotation
   end
 
   def publish_to_study(current_user)
-    puts "**** in publish_to_study"
     begin
       # load original cluster group data arrays
       cluster = self.cluster_group

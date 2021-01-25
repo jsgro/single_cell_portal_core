@@ -94,10 +94,9 @@ export async function fetchAuthCode(mock=false) {
 * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
 * @param {String} subsample Subsampling threshold, e.g. 100000
 * @param {String} userAnnotationName Name of new annotation
-* @param {Object.<string, Array.<[name: String, values: Array]>>}
-*    selections User's selections (made via lasso or box in scatter plot) for
-*    this new annotation.  Each selection has a label (`name`) and an array of
-*    cell names (`values`).
+* @param {Object} selections User selections for new annotation.
+*    Each selection has a label (`name`) and list of cell names (`values`).
+*    See `prepareForApi` in `user-annotations.js` for details.
 */
 export async function createUserAnnotation(
   studyAccession, cluster, annotation, subsample,
@@ -105,44 +104,10 @@ export async function createUserAnnotation(
 ) {
   const init = configPost(mock)
 
-  // Example `selections`:
-  // {
-  //  "0": {name: "Cells I selected", values: ["cell_A", "cell_B"]},
-  //  "1": {name: "Cells I didn't select", values: ["cell_C", "cell_D"]},
-  // }
-  //
-  // See refactoring note starting "SCP REST API expects" in user-annotations.js
-
-
-  // TODO: Remove `loaded_annotation` after basic functionality is restored.
-  // Per chat with Jon, it seems this a lurking duplicate variable.  It stems
-  // from `loaded_annotation` and `subsample_annotation` in pre-existing
-  // user annotation code.  Those should be two variables instead of one.
-  //
-  // Relevant code in backend:
-  //
-  //  * In `user_annotation_service.rb` (adapted from `controllers/site_controller.rb`):
-  //      user_annotation.initialize_user_data_arrays(user_data_arrays_attributes, subsample_annotation, subsample, loaded_annotation)
-  //
-  //  * In `models/user_annotation.rb` (note `annotation` is `loaded_annotation`):
-  //      def initialize_user_data_arrays(user_data_arrays_attributes, annotation, threshold, loaded_annotation)
-  //      ...
-  //      subsample(user_data_arrays_attributes, [100000, 20000, 10000, 1000], cluster, loaded_annotation, max_length )
-  //
-  // Old front-end code had set `loaded_annotation` and
-  // `subsample_annotation` to the same value: `annotation`.
-  // See lines 9 and 12 in:
-  // https://github.com/broadinstitute/single_cell_portal_core/blob/00a5878170bd0b07c8ab650aec425da9e9c92493/app/views/site/_selection_well.html.erb
-  //
-  // Given the above, and chat, Jon and I agree the variable should be removed,
-  // if testing reveals no related problem.
-  const loaded_annotation = annotation
-
   init.body = JSON.stringify({
     name: userAnnotationName,
     user_data_arrays_attributes: selections,
-    cluster, annotation, subsample,
-    loaded_annotation // Remove this upon resolving above TODO
+    cluster, annotation, subsample
   })
 
   const apiUrl = `/site/studies/${studyAccession}/user_annotation`

@@ -3,14 +3,14 @@ class UserAnnotationService
 
   def self.create_user_annotation(study, name,
     user_data_arrays_attributes, cluster_name, loaded_annotation,
-    subsample_threshold, subsample_annotation, current_user)
+    subsample_threshold, current_user)
 
     # Parameters to log for any errors
     user_annotation_params = {
       study: study, name: name, cluster_name: cluster_name,
       loaded_annotation: loaded_annotation,
       subsample_threshold: subsample_threshold,
-      subsample_annotation: subsample_annotation, current_user: current_user
+      current_user: current_user
     }
     log_params = user_annotation_params.dup
     # Don't log data_arrays; it's too big
@@ -45,6 +45,13 @@ class UserAnnotationService
 
       # Save the user annotation, and handle any exceptions
       if user_annotation.save
+
+        # Consider refactoring user_annotation_test.rb and
+        # models/user_annotation.rb to remove `subsample_annotation`.  Jon
+        # and Eric investigated on 2021-01-22 and determined that there are no
+        # known use cases where `subsample_annotation` != `loaded_annotation`.
+        subsample_annotation = loaded_annotation
+
         # Method call to create the user data arrays for this annotation
         user_annotation.initialize_user_data_arrays(user_data_arrays_attributes, subsample_annotation, subsample_threshold, loaded_annotation)
 
