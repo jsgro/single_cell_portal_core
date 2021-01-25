@@ -50,7 +50,7 @@ module Api
 
       def create_user_annotation
 
-          notice, alert, annotations, options, user_annotation = UserAnnotationService.create_user_annotation(
+          notice, alert, annotations, user_annotation = UserAnnotationService.create_user_annotation(
             @study, params[:name], params[:user_data_arrays_attributes],
             params[:cluster], params[:loaded_annotation],
             params[:subsample_threshold], params[:subsample_annotation],
@@ -64,12 +64,6 @@ module Api
             message = notice
             errors = {}
           end
-
-          Rails.logger.info '**** message, alert, annotations, options'
-          Rails.logger.info message
-          Rails.logger.info alert
-          Rails.logger.info annotations
-          Rails.logger.info options
 
           response_body = {
             message: message, annotations: annotations, errors: errors

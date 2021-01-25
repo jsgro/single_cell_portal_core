@@ -53,14 +53,7 @@ function getSelectionLabelInput(rowIndex, cellArray, label) {
       placeholder="Label these cells"
       value="${label}">`
 
-  // This is used for the gene search
-  const hiddenSelectionInput =
-    `<input type="hidden"
-      name="user_annotation[user_data_arrays_attributes][${rowIndex}][values]"
-      id="user_annotation_user_data_arrays_attributes_${rowIndex}_values"
-      value="${cellArray}" />`
-
-  return selectionLabelInput + hiddenSelectionInput
+  return selectionLabelInput
 }
 
 /** Get delete button for the row at the given index */

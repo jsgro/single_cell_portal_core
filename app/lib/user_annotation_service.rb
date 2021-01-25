@@ -13,7 +13,7 @@ class UserAnnotationService
       subsample_annotation: subsample_annotation, current_user: current_user
     }
     log_params = user_annotation_params.dup
-    # remove data_arrays attributes due to size
+    # Don't log data_arrays; it's too big
     log_params.delete(:user_data_arrays_attributes)
 
     user_id = current_user.id
@@ -50,7 +50,6 @@ class UserAnnotationService
 
         # Reset the annotations in the dropdowns to include this new annotation
         cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-        options = ClusterVizService.load_cluster_group_options(study)
 
         # No need for an alert, only a message saying successfully created
         alert = nil
@@ -58,12 +57,11 @@ class UserAnnotationService
       else
         # If there was an error saving, reload and alert the use something broke
         cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-        options = ClusterVizService.load_cluster_group_options(study)
         notice = nil
         alert = 'The following errors prevented the annotation from being saved: ' + user_annotation.errors.full_messages.join(',')
         Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unable to save user annotation with errors #{user_annotation.errors.full_messages.join(', ')}"
       end
-      [notice, alert, cluster_annotations, options, user_annotation]
+      [notice, alert, cluster_annotations, user_annotation]
 
     # Handle other errors in saving user annotation
     rescue Mongoid::Errors::InvalidValue => e
@@ -71,33 +69,30 @@ class UserAnnotationService
       ErrorTracker.report_exception(e, current_user, error_context)
       # If an invalid value was somehow passed through the form, and couldn't save the annotation
       cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-      options = ClusterVizService.load_cluster_group_options(study)
       notice = nil
       alert = 'The following errors prevented the annotation from being saved: ' + 'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
       Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, invalid value of #{e.message}"
-      [notice, alert, cluster_annotations, options, user_annotation]
+      [notice, alert, cluster_annotations, user_annotation]
 
     rescue NoMethodError => e
       error_context = ErrorTracker.format_extra_context(study, {params: log_params})
       ErrorTracker.report_exception(e, current_user, error_context)
       # If something is nil and can't have a method called on it, respond with an alert
       cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-      options = ClusterVizService.load_cluster_group_options(study)
       notice = nil
       alert = 'The following errors prevented the annotation from being saved: ' + e.message
       Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, no method error #{e.message}"
-      [notice, alert, cluster_annotations, options, user_annotation]
+      [notice, alert, cluster_annotations, user_annotation]
 
     rescue => e
       error_context = ErrorTracker.format_extra_context(study, {params: log_params})
       ErrorTracker.report_exception(e, current_user, error_context)
       # If a generic unexpected error occurred and couldn't save the annotation
       cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-      options = ClusterVizService.load_cluster_group_options(study)
       notice = nil
       alert = 'An unexpected error prevented the annotation from being saved: ' + e.message
       Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unexpected error #{e.message}"
-      [notice, alert, cluster_annotations, options, user_annotation]
+      [notice, alert, cluster_annotations, user_annotation]
 
     end
   end
