@@ -233,16 +233,11 @@
                   <%= link_to "Select Cells <i class='fas fa-toggle-off'></i>".html_safe, '#/', class: 'btn btn-default btn-sm', id: 'toggle-scatter', data: {toggle: 'tooltip', placement: 'right', trigger: 'hover'}, title: 'Enable cell selection for creating custom annotations (may hurt performance on large clusters).  Only available on 2d data.' %>
                   <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
                       $('#toggle-scatter').click(function() {
-                          if (CLUSTER_TYPE === '2d') {
+                          // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
+                          if (!window.SCP.getScatterPlots()[0].is3D) {
                               $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off');
-                              $('#selection_div').toggleClass('collapse');
-                              var loadedCluster = $('#cluster').val();
-                              var loadedAnnotation = $('#annotation').val();
-                              var loadedSubsample = $('#subsample').val();
-                              $.ajax({
-                                  url: '<%= show_user_annotations_form_path(accession: @study.accession, study_name: @study.url_safe_name) %>?cluster=' + loadedCluster + '&annotation=' + loadedAnnotation + '&subsample=' + loadedSubsample,
-                                  dataType: 'script'
-                              });
+                              $('#create-annotation-panel').toggleClass('collapse');
+                              window.SCP.userAnnotations()
                           } else {
                               alert('You may not create annotations on 3d data.  Please select a different cluster before continuing.');
                               return false;
@@ -258,7 +253,7 @@
           </div>
           <div class="row">
             <div class="col-sm-12">
-              <div id="selection_div" class="collapse"></div>
+              <div id="create-annotation-panel" class="collapse"></div>
             </div>
           </div>
         </div>
@@ -266,13 +261,14 @@
       <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
         <% if user_signed_in? %>
 
-          var targetPlotString = '<%= params[:gene_set].nil? && params[:gene].nil? ? 'cluster-plot' : 'scatter-plot' %>';
+          // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
+          var targetPlotId = 'scatter-plot-0';
 
           // Stick the search for selection facilitation in expression pages if selecting annotation
           $('#panel-selection').on('show.bs.collapse', function () {
               $(document).off('scroll', '#search-parent');
               $('#search-parent').stickyPanel(stickyOptions);
-              window.scrollTo(0,$(('#' + targetPlotString)).offset().top -175);
+              window.scrollTo(0,$(('#' + targetPlotId)).offset().top - 175);
               var boxSelectBtn = $("a[data-title='Box Select]");
               boxSelectBtn.click();
           });

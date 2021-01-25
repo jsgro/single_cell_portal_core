@@ -55,7 +55,6 @@ Rails.application.routes.draw do
               get 'cell_values', to: 'visualization/annotations#cell_values'
             end
           end
-
         end
         resource :current_user, only: [:update], controller: 'current_user'
 
@@ -65,6 +64,8 @@ Rails.application.routes.draw do
           get 'studies/:accession', to: 'site#view_study', as: :site_study_view
           get 'studies/:accession/download', to: 'site#download_data', as: :site_study_download_data
           get 'studies/:accession/stream', to: 'site#stream_data', as: :site_study_stream_data
+
+          post 'studies/:accession/user_annotation', to: 'user_annotations#create_user_annotation', as: :site_study_create_user_annotation
 
           # analysis routes
           get 'analyses', to: 'site#analyses', as: :site_analyses

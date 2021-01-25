@@ -39,7 +39,6 @@
 var fileUploading = false;
 var PAGE_RENDERED = false;
 var OPEN_MODAL = '';
-var CLUSTER_TYPE = '3d';
 var UNSAFE_CHARACTERS = /[\;\/\?\:\@\=\&\'\"\<\>\#\%\{\}\|\\\^\~\[\]\`]/g;
 
 // Minimum width of plot + legend
@@ -982,17 +981,6 @@ function gaTrack(path, title) {
 // decode an HTML-encoded string
 function unescapeHTML(encodedStr) {
     return $("<div/>").html(encodedStr).text();
-}
-
-// close the user annotations panel if open when rendering clusters
-function closeUserAnnotationsForm() {
-    if ( $('#selection_div').attr('class') === '' ) {
-        console.log('closing user annotations form');
-        // menu is open, so empty forms and reset button state
-        $('#selection_div').html('');
-        $('#selection_div').toggleClass('collapse');
-        $('#toggle-scatter').children().toggleClass('fa-toggle-on fa-toggle-off');
-    }
 }
 
 // validate an email address
