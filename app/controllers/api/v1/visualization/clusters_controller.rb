@@ -16,8 +16,8 @@ module Api
         before_action :set_current_api_user!
         before_action :set_study
         before_action :check_study_view_permission
-        before_action :check_api_cache!
-        after_action :write_api_cache!
+        # before_action :check_api_cache!
+        # after_action :write_api_cache!
 
         swagger_path '/studies/{accession}/clusters' do
           operation :get do
@@ -102,7 +102,12 @@ module Api
               render json: {error: "No cluster named #{cluster_name} could be found"}, status: 404 and return
             end
           end
-          viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
+          viz_data = nil
+          if User.feature_flag_for_instance(current_api_user, 'mock_viz_retrieval')
+            render plain: self.class.get_fixed_size_response(params[:subsample].to_i, current_api_user) and return
+          else
+            viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
+          end
           if viz_data.nil?
             render json: {error: 'Annotation could not be found'}, status: 404 and return
           end
@@ -171,6 +176,7 @@ module Api
 
           plot_data = ClusterVizService.transform_coordinates(coordinates, study, cluster, annotation)
 
+
           axes_full = {
             titles: titles,
             ranges: range,
@@ -178,7 +184,7 @@ module Api
           }
 
           coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(cluster)
-          {
+          response_obj = {
             "data": plot_data,
             "description": cluster.study_file.description,
             "is3D": cluster.is_3d?,
@@ -193,6 +199,64 @@ module Api
             "gene": genes.map {|g| g['name']}.join(' ,'),
             "annotParams": annot_params
           }
+          response_obj
+        end
+
+        # returns a string that can be immmediately passed to the front end for cluster visualization
+        # the only parameter is the number of cells in the response
+        # this method either randomly generates the data, or pulls the data from a postgres instance
+        # depending on the feature flag
+        def self.get_fixed_size_response(num_cells, user)
+          use_postgres = true
+          if User.feature_flag_for_instance(user, 'postgres_viz_backend')
+            conn = PostgresConnection.get
+            result = conn.exec("select json_data from cluster_data where cluster_name = 'cluster#{num_cells}';")
+            return result.first['json_data']
+          else
+            num_annots = 10
+            fake_annotations = num_annots.times.map { |n| "ant#{n}" }
+            mock_response = {
+              :description=>nil,
+              :is3D=>false,
+              :isSubsampled=>false,
+              :isAnnotatedScatter=>false,
+              :numPoints=>num_cells,
+              :domainRanges=>nil,
+              :axes=> {
+                :titles=>{:x=>"X", :y=>"Y", :z=>"Z"},
+                :ranges=>nil,
+                :aspects=>nil
+              },
+              :hasCoordinateLabels=>true,
+              :coordinateLabels=>[
+                {:showarrow=>false, :x=>20.0, :y=>20.0, :text=>"Lower left", :font=>{:family=>"Helvetica Neue", :size=>10, :color=>"#333333"}},
+                {:showarrow=>false, :x=>140.0, :y=>140.0, :text=>"Upper right", :font=>{:family=>"Helvetica Neue", :size=>10, :color=>"#333333"}},
+                {:showarrow=>false, :x=>30.0, :y=>130.0, :text=>"Upper left", :font=>{:family=>"Helvetica Neue", :size=>10, :color=>"#333333"}},
+                {:showarrow=>false, :x=>120.0, :y=>33.0, :text=>"Lower right", :font=>{:family=>"Helvetica Neue", :size=>10, :color=>"#333333"}}
+              ],
+              :cluster=>"cluster.tsv",
+              :gene=>"",
+              :annotParams=>{:name=>"biosample_id", :type=>"group", :scope=>"study"}
+            }
+            annot_size = num_cells / num_annots
+            data = num_annots.times.map do |i|
+              cells = annot_size.times.map {|ii| "gatc_gatc_gatc_c#{i}_#{ii}" }
+              {
+                x: annot_size.times.map { (((rand + 1) * (rand + 1)) * 17 + i * 14).round(3) },
+                y: annot_size.times.map { (rand * 140).round(3) },
+                cells: cells,
+                name: "cluster #{i} (#{annot_size} points)",
+                type: 'scattergl',
+                mode: 'markers',
+                marker: {:size=>3, :line=>{:color=>"rgb(40,40,40)", :width=>0}},
+                opacity: 1.0,
+                text: cells.map {|c| "<b>#{c}</b><br>#{fake_annotations[i]}"},
+                annotations: fake_annotations
+              }
+            end
+            mock_response[:data] = data
+            return mock_response.to_json
+          end
         end
       end
     end

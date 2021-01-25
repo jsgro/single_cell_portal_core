@@ -85,6 +85,7 @@ window.SCP.formatTerms = formatTerms
 window.SCP.API = ScpApi
 window.SCP.exploreDefault = exploreDefault
 window.SCP.exploreSingle = exploreSingle
+window.SCP.perf = {}
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code

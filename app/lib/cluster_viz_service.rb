@@ -52,11 +52,15 @@ class ClusterVizService
   # return an array of values to use for subsampling dropdown scaled to number of cells in study
   # only options allowed are 1000, 10000, 20000, and 100000
   # will only provide options if subsampling has completed for a cluster
-  def self.subsampling_options(cluster)
+  def self.subsampling_options(cluster, user=nil)
     if cluster.is_subsampling?
       []
     else
-      ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < cluster.points}
+      if User.feature_flag_for_instance(user, 'mock_viz_retrieval')
+        return [1000, 2000, 10000, 50000, 100000, 200000, 300000, 500000, 1000000, 2000000, 3000000, 5000000, 6000000, 7000000, 10000000]
+      else
+        return ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < cluster.points}
+      end
     end
   end
 

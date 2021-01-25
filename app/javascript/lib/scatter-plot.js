@@ -210,9 +210,11 @@ function renderScatterPlot(rawPlot, plotId, legendId) {
   if (rawPlot.annotParams.type === 'group' && !rawPlot.gene) {
     data = setMarkerColors(data)
   }
-
+  performance.measure('json received to start plot', 'json_returned')
+  performance.mark('plotly_started')
   Plotly.newPlot(plotId, data, layout)
-
+  performance.measure('plot started to plot render', 'plotly_started')
+  console.log(performance.getEntriesByType("measure"))
   if (legendId) {
     $(`#${legendId}`).html(
       `<p class="text-center help-block">${rawPlot.description}</p>`

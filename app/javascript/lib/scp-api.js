@@ -498,13 +498,14 @@ export default async function scpApi(
   const fullPath = getFullUrl(path, mock)
 
   const response = await fetch(fullPath, init).catch(error => error)
-
+  performance.mark('fetch_returned')
   // Milliseconds taken to fetch data from API
   const perfTime = Math.round(performance.now() - perfTimeStart)
-
   if (response.ok) {
     if (toJson) {
       const json = await response.json()
+      performance.measure('data received to json returned', 'fetch_returned')
+      performance.mark('json_returned')
       // Converts API's snake_case to JS-preferrable camelCase,
       // for easy destructuring assignment.
       if (camelCase) {
