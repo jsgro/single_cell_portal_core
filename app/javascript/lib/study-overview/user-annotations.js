@@ -37,7 +37,7 @@ import { createUserAnnotation } from 'lib/scp-api'
  *   ]
  * }
  *
- * Note: the succinct model above is transformed immediately before API POST.
+ * Note: the model above is transformed immediately before API POST.
  * See `prepareForApi` for transform details.
  */
 const labels = ['']

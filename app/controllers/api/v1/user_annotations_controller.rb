@@ -12,8 +12,6 @@ module Api
       before_action :set_study
       before_action :check_study_view_permission
 
-      annotation_description_doc = 'Object with name (String), values (Array of unique values), type (String), scope (String), and cluster_name (string, if applicable)'
-
       swagger_path '/site/studies/{accession}/user_annotation' do
         operation :post do
           key :tags, [
