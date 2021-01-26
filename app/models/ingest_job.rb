@@ -533,10 +533,9 @@ class IngestJob
     case file_type
     when /Matrix/
       # since genes are not ingested for raw counts matrices, report number of cells ingested
-      if self.study_file.is_raw_counts_file?
-        cells = self.study.expression_matrix_cells(self.study_file).count
-        job_props.merge!({:numCells => cells})
-      else
+      cells = self.study.expression_matrix_cells(self.study_file).count
+      job_props.merge!({:numCells => cells})
+      if !self.study_file.is_raw_counts_file?
         genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
         job_props.merge!({:numGenes => genes})
       end
@@ -555,17 +554,17 @@ class IngestJob
       end
     when 'Cluster'
       cluster = ClusterGroup.find_by(study_id: self.study.id, study_file_id: self.study_file.id)
-      if self.action == :ingest_cluster
+      job_props.merge!({metadataFilePresent: self.study.metadata_file.present?})
+      # must make sure cluster is present, as parse failures may result in no data having been stored
+      if self.action == :ingest_cluster && cluster.present?
         cluster_type = cluster.cluster_type
         cluster_points = cluster.points
         can_subsample = cluster.can_subsample?
-        metadata_file_present = self.study.metadata_file.present?
         job_props.merge!(
           {
             clusterType: cluster_type,
             numClusterPoints: cluster_points,
-            canSubsample: can_subsample,
-            metadataFilePresent: metadata_file_present
+            canSubsample: can_subsample
           }
         )
       end
