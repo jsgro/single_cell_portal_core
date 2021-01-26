@@ -94,6 +94,9 @@ class IngestJobTest < ActiveSupport::TestCase
     mock.expect :metadata, mock_metadata
     mock.expect :error, nil
 
+    cells = @basic_study.expression_matrix_cells(@basic_study_exp_file)
+    num_cells = cells.present? ? cells.count : 0
+
     ApplicationController.papi_client.stub :get_pipeline, mock do
       expected_outputs = {
         perfTime: 60000,
@@ -103,7 +106,7 @@ class IngestJobTest < ActiveSupport::TestCase
         studyAccession: @basic_study.accession,
         jobStatus: 'success',
         numGenes: @basic_study.genes.count,
-        numCells: @basic_study.expression_matrix_cells(@basic_study_exp_file).count
+        numCells: num_cells
       }.with_indifferent_access
 
       job_analytics = job.get_job_analytics
