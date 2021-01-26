@@ -14,11 +14,38 @@ class UserAnnotation
   ###
 
   include Mongoid::Document
+  include Swagger::Blocks
+
   field :name, type: String
   field :values, type: Array
   field :queued_for_deletion, type: Boolean, default: false
   field :publishing, type: Boolean, default: false
   field :source_resolution, type: Integer
+
+  # Define parameters used in API POST endpoint to create user annotations
+  swagger_schema :UserAnnotationInput do
+    key :name, 'UserAnnotation'
+    property :name do
+      key :type, :string
+      key :description, 'Name of new custom user annotation'
+    end
+    property :user_data_arrays_attributes do
+      key :type, :object
+      key :description, 'Labels (names) and cell name arrays (values) for each selection'
+    end
+    property :cluster do
+      key :type, :string
+      key :description, 'Cluster group name'
+    end
+    property :subsample_threshold do
+      key :type, :string
+      key :description, 'Subsample threshold'
+    end
+    property :subsample_annotation do
+      key :type, :string
+      key :description, 'Subsample annotation'
+    end
+  end
 
   belongs_to :user
   belongs_to :cluster_group
@@ -184,7 +211,6 @@ class UserAnnotation
       end
       annotation_array << cell_name
     end
-
 
     # Create the name of the subsample annotation
     sub_an = self.formatted_annotation_identifier

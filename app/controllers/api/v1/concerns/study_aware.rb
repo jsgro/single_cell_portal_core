@@ -6,7 +6,8 @@ module Api
 
         def set_study
           # allow either accession or id
-          @study = Study.any_of({accession: params[:study_id]},{id: params[:study_id]}).first
+          id = params[:accession].present? ? params[:accession] : params[:study_id]
+          @study = Study.any_of({accession: id},{id: id}).first
           if @study.nil? || @study.queued_for_deletion?
             head 404 and return
           end
