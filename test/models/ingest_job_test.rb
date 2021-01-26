@@ -102,7 +102,8 @@ class IngestJobTest < ActiveSupport::TestCase
         action: :ingest_expression,
         studyAccession: @basic_study.accession,
         jobStatus: 'success',
-        numGenes: @basic_study.genes.count
+        numGenes: @basic_study.genes.count,
+        numCells: @basic_study.expression_matrix_cells(@basic_study_exp_file).count
       }.with_indifferent_access
 
       job_analytics = job.get_job_analytics
@@ -131,7 +132,8 @@ class IngestJobTest < ActiveSupport::TestCase
         action: :ingest_expression,
         studyAccession: @basic_study.accession,
         jobStatus: 'failed',
-        numGenes: 0
+        numGenes: 0,
+        numCells: 0
       }.with_indifferent_access
 
       job_analytics = job.get_job_analytics
