@@ -37,7 +37,7 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     @study = Study.find_by(name: "API Test Study #{@random_seed}")
-    expected_files = @study.study_files.count
+    expected_files = @study.study_files.downloadable.count
     expected_resources = @study.external_resources.count
     execute_http_request(:get, api_v1_site_study_view_path(accession: @study.accession))
     assert_response :success

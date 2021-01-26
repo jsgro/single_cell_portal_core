@@ -60,6 +60,11 @@ class Study
     def valid
       where(queued_for_deletion: false, :generation.ne => nil).to_a
     end
+
+    # includes links to external data which do not reside in the workspace bucket
+    def downloadable
+      where(queued_for_deletion: false).any_of({:generation.ne => nil}, {:human_fastq_url.ne => nil})
+    end
   end
 
   has_many :study_file_bundles, dependent: :destroy do

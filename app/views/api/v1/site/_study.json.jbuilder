@@ -9,7 +9,7 @@ json.set! :gene_count, study.gene_count
 if study.detached
   json.set! :study_files, 'Unavailable (cannot load study workspace or bucket)'
 else
-  json.study_files study.study_files.valid, partial: 'api/v1/site/study_file', as: :study_file, locals: {study: study}
+  json.study_files study.study_files.downloadable, partial: 'api/v1/site/study_file', as: :study_file, locals: {study: study}
 end
 json.external_resources do
   json.array! study.external_resources do |external_resource|
