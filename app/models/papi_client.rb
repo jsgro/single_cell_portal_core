@@ -98,7 +98,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
     study = study_file.study
     accession = study.accession
     resources = self.create_resources_object(regions: ['us-central1'])
-    command_line = self.get_command_line(study_file: study_file, action: action,  user_metrics_uuid: user.metrics_uuid)
+    command_line = self.get_command_line(study_file: study_file, action: action, user_metrics_uuid: user.metrics_uuid)
     labels = {
         study_accession: accession,
         user_id: user.id.to_s,
