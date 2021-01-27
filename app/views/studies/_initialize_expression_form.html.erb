@@ -83,7 +83,7 @@
 
 	<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
       $('#expression_form_<%= study_file._id %>').find('.file-type').on('change', function() {
-        if ($(this).val() === 'Expression Matrix') {
+        if ( $('#expression_form_<%= study_file._id %> #study_file_file_type_expression_matrix').prop("checked") ) {
           $('#expression_form_<%= study_file._id %>').find('.initialize-bundle-target').empty();
         }
       });
@@ -102,7 +102,7 @@
 					// auto-select MM Coordinate Matrix if applicable
           fileExt = fileName.split('.').slice(-1)[0];
           if (fileExt === 'mtx') {
-              $('#expression_form_<%= study_file._id %> .file-type').val('MM Coordinate Matrix');
+              $('#expression_form_<%= study_file._id %> #study_file_file_type_mm_coordinate_matrix').prop("checked", true);
           }
           $('#expression_form_<%= study_file._id %> .filename').val(fileName);
           var canUpload = validateCandidateUpload("#expression_form_<%= study_file._id %>", fileName, $('.initialize_expression_form .filename'));
@@ -124,7 +124,7 @@
 				chunkdone: function(e, data) {
 					var perc = parseInt(data.loaded / data.total * 100, 10);
 					$(data.context).find('h1').html(perc + "% uploaded");
-            if ( $('#<%= study_file.id %>-bundle-btns').length === 0 && $('#expression_form_<%= study_file._id %>').find('.file-type').val() === 'MM Coordinate Matrix') {
+            if ( $('#<%= study_file.id %>-bundle-btns').length === 0 && $('#expression_form_<%= study_file._id %> #study_file_file_type_mm_coordinate_matrix').prop("checked") ) {
                 $('#expression_form_<%= study_file._id %>').find('.initialize-bundle-target').html("<%= j(render partial: 'study_file_bundle_btns', locals: {study_file_id: study_file.id.to_s, file_type: 'MM Coordinate Matrix'}) %>")
             }
 				},
