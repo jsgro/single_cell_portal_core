@@ -57,7 +57,7 @@ module Api
               'Site'
           ]
           key :summary, 'View a Study & available StudyFiles'
-          key :description, 'View a single Study, and any StudyFiles available for download/streaming'
+          key :description, 'View a single Study, and any StudyFiles available for download/streaming, plus ExternalResource links'
           key :operationId, 'site_study_view_path'
           parameter do
             key :name, :accession
@@ -67,7 +67,7 @@ module Api
             key :type, :string
           end
           response 200 do
-            key :description, 'Study, Array of StudyFiles'
+            key :description, 'Study, Array of StudyFiles, ExternalResources'
             schema do
               key :title, 'Study, StudyFiles'
               key :'$ref', :SiteStudyWithFiles

@@ -82,15 +82,17 @@
   </div>
 
 	<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-      $('#expression_form_<%= study_file._id %>').find('.file-type').on('change', function() {
-        if ($(this).val() === 'Expression Matrix') {
-          $('#expression_form_<%= study_file._id %>').find('.initialize-bundle-target').empty();
+
+      var expFormId = "#expression_form_<%= study_file._id %>";
+      $(expFormId).find('.file-type').on('change', function() {
+        if ( $(expFormId + ' #study_file_file_type_expression_matrix').prop("checked") ) {
+          $(expFormId).find('.initialize-bundle-target').empty();
         }
       });
 
 		$(function() {
 
-        $('#expression_form_<%= study_file._id %>').fileupload({
+        $(expFormId).fileupload({
 				url: "<%= upload_study_path(@study._id) %>",
 				maxChunkSize: 10000000,
 				type: 'PATCH',
@@ -102,10 +104,10 @@
 					// auto-select MM Coordinate Matrix if applicable
           fileExt = fileName.split('.').slice(-1)[0];
           if (fileExt === 'mtx') {
-              $('#expression_form_<%= study_file._id %> .file-type').val('MM Coordinate Matrix');
+              $(expFormId + ' #study_file_file_type_mm_coordinate_matrix').prop("checked", true);
           }
-          $('#expression_form_<%= study_file._id %> .filename').val(fileName);
-          var canUpload = validateCandidateUpload("#expression_form_<%= study_file._id %>", fileName, $('.initialize_expression_form .filename'));
+          $(expFormId + ' .filename').val(fileName);
+          var canUpload = validateCandidateUpload(expFormId, fileName, $('.initialize_expression_form .filename'));
           if ( canUpload ) {
               $.getJSON("<%= resume_upload_study_path %>", { file: fileName }, function (result) {
                   var file = result.file;
@@ -118,14 +120,14 @@
                   }
               });
           } else {
-              $('#expression_form_<%= study_file._id %> .filename').val('');
+              $(expFormId + ' .filename').val('');
           }
 				},
 				chunkdone: function(e, data) {
 					var perc = parseInt(data.loaded / data.total * 100, 10);
 					$(data.context).find('h1').html(perc + "% uploaded");
-            if ( $('#<%= study_file.id %>-bundle-btns').length === 0 && $('#expression_form_<%= study_file._id %>').find('.file-type').val() === 'MM Coordinate Matrix') {
-                $('#expression_form_<%= study_file._id %>').find('.initialize-bundle-target').html("<%= j(render partial: 'study_file_bundle_btns', locals: {study_file_id: study_file.id.to_s, file_type: 'MM Coordinate Matrix'}) %>")
+            if ( $('#<%= study_file.id %>-bundle-btns').length === 0 && $(expFormId + ' #study_file_file_type_mm_coordinate_matrix').prop("checked") ) {
+                $(expFormId).find('.initialize-bundle-target').html("<%= j(render partial: 'study_file_bundle_btns', locals: {study_file_id: study_file.id.to_s, file_type: 'MM Coordinate Matrix'}) %>")
             }
 				},
 				done: function(e, data) {
@@ -145,7 +147,7 @@
                           file: fileName,
                           modal_target: '#expression-parse-modal',
                           partial: 'initialize_expression_form',
-                          selector: "#expression_form_<%= study_file._id %>"
+                          selector: expFormId
                       },
                       dataType: 'script'
                   });
@@ -172,7 +174,7 @@
 			});
 		});
 
-      $('#expression_form_<%= study_file._id %>').on('nested:fieldAdded', function(event){
+      $(expFormId).on('nested:fieldAdded', function(event){
           $('#add-expression-file-info').tooltip('destroy')
           $('#add-expression-file-info').remove()
       })

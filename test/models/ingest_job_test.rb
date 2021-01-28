@@ -22,6 +22,7 @@ class IngestJobTest < ActiveSupport::TestCase
     @basic_study_exp_file.build_expression_file_info(is_raw_counts: false, library_preparation_protocol: 'MARS-seq',
                                                      modality: 'Transcriptomic: unbiased', biosample_input_type: 'Whole cell')
     @basic_study_exp_file.parse_status = 'parsed'
+    @basic_study_exp_file.upload_file_size = 1024
     @basic_study_exp_file.save!
 
     # insert "all cells" array for this expression file
@@ -35,6 +36,7 @@ class IngestJobTest < ActiveSupport::TestCase
                                        study: @basic_study)
     @other_matrix.build_expression_file_info(is_raw_counts: false, library_preparation_protocol: 'MARS-seq',
                                              modality: 'Transcriptomic: unbiased', biosample_input_type: 'Whole cell')
+    @other_matrix.upload_file_size = 2048
     @other_matrix.save!
   end
 
@@ -78,4 +80,68 @@ class IngestJobTest < ActiveSupport::TestCase
 
   end
 
+  test 'should gather job properties to report to mixpanel' do
+    # positive test
+    job = IngestJob.new(study: @basic_study, study_file: @basic_study_exp_file, user: @user, action: :ingest_expression)
+    mock = Minitest::Mock.new
+    now = DateTime.now.in_time_zone
+    mock_metadata = {
+      events: [
+        {timestamp: now.to_s},
+        {timestamp: (now + 1.minute).to_s}
+      ]
+    }.with_indifferent_access
+    mock.expect :metadata, mock_metadata
+    mock.expect :error, nil
+
+    cells = @basic_study.expression_matrix_cells(@basic_study_exp_file)
+    num_cells = cells.present? ? cells.count : 0
+
+    ApplicationController.papi_client.stub :get_pipeline, mock do
+      expected_outputs = {
+        perfTime: 60000,
+        fileType: @basic_study_exp_file.file_type,
+        fileSize: @basic_study_exp_file.upload_file_size,
+        action: :ingest_expression,
+        studyAccession: @basic_study.accession,
+        jobStatus: 'success',
+        numGenes: @basic_study.genes.count,
+        numCells: num_cells
+      }.with_indifferent_access
+
+      job_analytics = job.get_job_analytics
+      mock.verify
+      assert_equal expected_outputs, job_analytics
+    end
+
+    # negative test
+    job = IngestJob.new(study: @basic_study, study_file: @other_matrix, user: @user, action: :ingest_expression)
+    mock = Minitest::Mock.new
+    now = DateTime.now.in_time_zone
+    mock_metadata = {
+      events: [
+        {timestamp: now.to_s},
+        {timestamp: (now + 2.minutes).to_s}
+      ]
+    }.with_indifferent_access
+    mock.expect :metadata, mock_metadata
+    mock.expect :error, {code: 1, message: 'mock message'} # simulate error
+
+    ApplicationController.papi_client.stub :get_pipeline, mock do
+      expected_outputs = {
+        perfTime: 120000,
+        fileType: @other_matrix.file_type,
+        fileSize: @other_matrix.upload_file_size,
+        action: :ingest_expression,
+        studyAccession: @basic_study.accession,
+        jobStatus: 'failed',
+        numGenes: 0,
+        numCells: 0
+      }.with_indifferent_access
+
+      job_analytics = job.get_job_analytics
+      mock.verify
+      assert_equal expected_outputs, job_analytics
+    end
+  end
 end
