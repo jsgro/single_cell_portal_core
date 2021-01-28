@@ -1,10 +1,46 @@
 class AnnotationVizService
   # set of utility methods used for interacting with annotation data
-  def self.get_selected_annotation(study, cluster, annot_name, annot_type, annot_scope)
+
+  # Retrieves an object representing the selected annotation. If nil is passed for the last four
+  # arguments, it will get the study annotation instead
+  # Params:
+  # - study: the Study object
+  # - cluster: ClusterGroup object (or nil for study-wide annotations)
+  # - annot_name: string name of the annotation
+  # - annot_type: string type (group or numeric)
+  # - annot_scope: string scope (study, cluster, or user)
+  # Returns:
+  # - See populate_annotation_by_class for the object structure
+  def self.get_selected_annotation(study, cluster=nil, annot_name=nil, annot_type=nil, annot_scope=nil)
     # construct object based on name, type & scope
+    if annot_name.blank?
+      # get the default annotation
+      default_annot = nil
+      if annot_scope == 'study'
+        # get the default study-wide annotation
+        default_annot = study.default_annotation(nil)
+      elsif cluster.present?
+        # get the default annotation for the cluster
+        default_annot = study.default_annotation(cluster)
+      else
+        # get the default annotation for the default cluster
+        default_annot = study.default_annotation
+      end
+
+      if !default_annot.blank?
+        annot_name, annot_type, annot_scope = default_annot.split('--')
+        if cluster.blank?
+          cluster = study.default_cluster
+        end
+      end
+    end
     case annot_scope
     when 'cluster'
       annotation_source = cluster.cell_annotations.find {|ca| ca[:name] == annot_name && ca[:type] == annot_type}
+      if annotation_source.nil?
+        # if there's no match, default to the first annotation
+        annotation_source = cluster.cell_annotations.first
+      end
     when 'user'
       annotation_source = UserAnnotation.find(annot_name)
     else
@@ -18,6 +54,16 @@ class AnnotationVizService
   end
 
   # attempt to load an annotation based on instance class
+  # Params:
+  # - source: A ClusterGroup cell_annotation, a UserAnnotation, or a CellMetadatum object
+  # Returns:
+  # - {
+  #     name: string name of annotation
+  #     type: string type
+  #     scope: string scope
+  #     values: unique values for the annotation
+  #     identifier: string in the form of "{name}--{type}--{scope}", suitable for frontend options selectors
+  #   }
   def self.populate_annotation_by_class(source:, scope:, type:)
     if source.is_a?(CellMetadatum)
       annotation = {name: source.name, type: source.annotation_type,
