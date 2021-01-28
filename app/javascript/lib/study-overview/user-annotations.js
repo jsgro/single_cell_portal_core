@@ -363,7 +363,7 @@ export default function userAnnotations() {
   $('#selection-well, #selection-button').css('visibility', 'visible')
 
   // TODO (SCP-2962): Support "Create Annotation" for spatial scatter plots
-  const targetPlotId = 'scatter-plot-0'
+  const targetPlotId = getScatterPlots()[0].plotId
 
   const target = document.getElementById(targetPlotId)
 

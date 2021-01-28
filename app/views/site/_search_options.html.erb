@@ -262,7 +262,7 @@
         <% if user_signed_in? %>
 
           // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
-          var targetPlotId = 'scatter-plot-0';
+          var targetPlotId = window.SCP.getScatterPlots()[0].plotId;
 
           // Stick the search for selection facilitation in expression pages if selecting annotation
           $('#panel-selection').on('show.bs.collapse', function () {
