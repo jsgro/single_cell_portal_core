@@ -127,7 +127,7 @@ EXTRA_ARGS=""
 if [[ "$TEST_FILEPATH" != "" ]]; then
   EXTRA_ARGS="TEST=$TEST_FILEPATH"
   if [[ "$MATCHING_TESTS" != "" ]]; then
-    EXTRA_ARGS="$EXTRA_ARGS TESTOPTS=' -n /$MATCHING_TESTS/'"
+    EXTRA_ARGS="$EXTRA_ARGS TESTOPTS=' -n $MATCHING_TESTS'"
   fi
 fi
 RAILS_ENV=test bundle exec bin/rake test $EXTRA_ARGS
