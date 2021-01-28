@@ -123,14 +123,13 @@ if [[ "$TEST_FILEPATH" == "" ]]; then
 fi
 
 # configure and invoke rake command for rails tests
-EXTRA_ARGS=""
-if [[ "$TEST_FILEPATH" != "" ]]; then
-  EXTRA_ARGS="TEST=$TEST_FILEPATH"
-  if [[ "$MATCHING_TESTS" != "" ]]; then
-    EXTRA_ARGS="$EXTRA_ARGS TESTOPTS=' -n $MATCHING_TESTS'"
-  fi
+if [[ "$MATCHING_TESTS" != "" ]] && [[ "$TEST_FILEPATH" != "" ]]; then
+  RAILS_ENV=test bundle exec bin/rake test TEST="$TEST_FILEPATH" TESTOPTS=" -n $MATCHING_TESTS"
+elif [[ "$TEST_FILEPATH" != "" ]]; then
+  RAILS_ENV=test bundle exec bin/rake test TEST="$TEST_FILEPATH"
+else
+  RAILS_ENV=test bundle exec bin/rake test
 fi
-RAILS_ENV=test bundle exec bin/rake test $EXTRA_ARGS
 code=$?
 if [[ $code -ne 0 ]]; then
   RETURN_CODE=$code
