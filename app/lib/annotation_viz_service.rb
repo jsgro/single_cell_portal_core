@@ -93,7 +93,7 @@ class AnnotationVizService
   end
 
   # returns a flat array of annotation objects, with name, scope, annotation_type, and values for each
-  def self.available_annotations(study, cluster, current_user, annotation_type=nil)
+  def self.available_annotations(study, cluster=nil, current_user=nil, annotation_type=nil)
     annotations = []
     viewable = study.viewable_metadata
     metadata = annotation_type.nil? ? viewable : viewable.select {|m| m.annotation_type == annotation_type}

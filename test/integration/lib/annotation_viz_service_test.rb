@@ -76,4 +76,15 @@ class AnnotationVizServiceTest < ActiveSupport::TestCase
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, 'foobar', 'group', 'cluster')
     assert_equal 'Category', annotation[:name]
   end
+
+  test 'available annotations returns the available annotations' do
+    annots = AnnotationVizService.available_annotations(@basic_study)
+    assert_equal ["species", "disease", "Category", "Intensity", "Fizziness", "Buzziness"], annots.map { |a| a[:name] }
+    assert_equal [nil, nil, "cluster_1.txt", "cluster_1.txt", "cluster_2.txt", "cluster_2.txt"], annots.map { |a| a[:cluster_name] }
+
+    # if a cluster is specified, returns the study wide and annotations specific to that cluster
+    cluster = @basic_study.cluster_groups.find_by(name: 'cluster_1.txt')
+    annots = AnnotationVizService.available_annotations(@basic_study, cluster)
+    assert_equal ["species", "disease", "Category", "Intensity"], annots.map { |a| a[:name] }
+  end
 end
