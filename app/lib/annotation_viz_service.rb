@@ -2,7 +2,7 @@ class AnnotationVizService
   # set of utility methods used for interacting with annotation data
 
   # Retrieves an object representing the selected annotation. If nil is passed for the last four
-  # arguments, it will get the study annotation instead
+  # arguments, it will get the study's default annotation instead
   # Params:
   # - study: the Study object
   # - cluster: ClusterGroup object (or nil for study-wide annotations)
@@ -11,7 +11,7 @@ class AnnotationVizService
   # - annot_scope: string scope (study, cluster, or user)
   # Returns:
   # - See populate_annotation_by_class for the object structure
-  def self.get_selected_annotation(study, cluster=nil, annot_name=nil, annot_type=nil, annot_scope=nil)
+  def self.get_selected_annotation(study, cluster: nil, annot_name: nil, annot_type: nil, annot_scope: nil)
     # construct object based on name, type & scope
     if annot_name.blank?
       # get the default annotation
@@ -34,6 +34,7 @@ class AnnotationVizService
         end
       end
     end
+
     case annot_scope
     when 'cluster'
       annotation_source = cluster.cell_annotations.find {|ca| ca[:name] == annot_name && ca[:type] == annot_type}
@@ -85,15 +86,15 @@ class AnnotationVizService
     ]
     {
       default_cluster: study.default_cluster&.name,
-      default_annotation: AnnotationVizService.get_selected_annotation(study, nil, nil, nil, nil),
-      annotations: AnnotationVizService.available_annotations(study, nil, user),
+      default_annotation: AnnotationVizService.get_selected_annotation(study),
+      annotations: AnnotationVizService.available_annotations(study, cluster: nil, current_user: user),
       clusters: study.cluster_groups.pluck(:name),
       subsample_thresholds: subsample_thresholds
     }
   end
 
   # returns a flat array of annotation objects, with name, scope, annotation_type, and values for each
-  def self.available_annotations(study, cluster=nil, current_user=nil, annotation_type=nil)
+  def self.available_annotations(study, cluster: nil, current_user: nil, annotation_type: nil)
     annotations = []
     viewable = study.viewable_metadata
     metadata = annotation_type.nil? ? viewable : viewable.select {|m| m.annotation_type == annotation_type}

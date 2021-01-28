@@ -36,16 +36,16 @@ class AnnotationVizServiceTest < ActiveSupport::TestCase
 
 
   test 'gets the default annotation when no annotation name is specified' do
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, nil, nil, nil, nil)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study)
     assert_equal 'Category', annotation[:name]
     assert_equal  ['bar', 'baz'], annotation[:values]
 
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, nil, nil, nil, 'study')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, annot_scope: 'study')
     assert_equal 'species', annotation[:name]
     assert_equal  ['dog', 'cat'], annotation[:values]
 
     fizz_cluster = @basic_study.cluster_groups.find_by(name: 'cluster_2.txt')
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, fizz_cluster, nil, nil, nil)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: fizz_cluster)
     assert_equal 'Fizziness', annotation[:name]
     assert_equal  ['high', 'low', 'medium'], annotation[:values]
 
@@ -53,27 +53,27 @@ class AnnotationVizServiceTest < ActiveSupport::TestCase
         cluster: 'cluster_1.txt',
         annotation: 'species--group--study'
     })
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, nil, nil, nil, nil)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study)
     assert_equal 'species', annotation[:name]
     assert_equal ['dog', 'cat'], annotation[:values]
   end
 
   test 'can get annotations by name and scope' do
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, nil, 'disease', 'group', 'study')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, annot_name: 'disease', annot_type: 'group', annot_scope: 'study')
     assert_equal 'disease', annotation[:name]
     assert_equal  ['none', 'measles'], annotation[:values]
 
     cluster = @basic_study.cluster_groups.first
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, 'Intensity', 'numeric', 'cluster')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: 'Intensity', annot_type: 'numeric', annot_scope: 'cluster')
     assert_equal 'Intensity', annotation[:name]
     assert_equal  [1.1, 2.2, 3.3], annotation[:values]
   end
 
   test 'returns first study/cluster annotation if no matching annotation is found' do
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, nil, 'foobar', 'group', 'study')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, annot_name: 'foobar', annot_scope: 'group', annot_type: 'study')
     assert_equal 'species', annotation[:name]
     cluster = @basic_study.cluster_groups.first
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, 'foobar', 'group', 'cluster')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: 'foobar', annot_type: 'group', annot_scope: 'cluster')
     assert_equal 'Category', annotation[:name]
   end
 
@@ -84,7 +84,7 @@ class AnnotationVizServiceTest < ActiveSupport::TestCase
 
     # if a cluster is specified, returns the study wide and annotations specific to that cluster
     cluster = @basic_study.cluster_groups.find_by(name: 'cluster_1.txt')
-    annots = AnnotationVizService.available_annotations(@basic_study, cluster)
+    annots = AnnotationVizService.available_annotations(@basic_study, cluster: cluster)
     assert_equal ["species", "disease", "Category", "Intensity"], annots.map { |a| a[:name] }
   end
 end
