@@ -5,10 +5,12 @@
 #
 # can take the following arguments:
 #
-# -t filepath    Run all tests in the specified file
+# -t filepath   Run all tests in the specified file
 # -R regex      Run all matching tests in the file specified with -t
+# -l            Invoke rails_local_setup.rb to configure environment before running tests (if developing non-Dockerized)
 
-while getopts "t:R:" OPTION; do
+LOCAL_SETUP="false"
+while getopts "t:R:l" OPTION; do
 case $OPTION in
   t)
     TEST_FILEPATH="$OPTARG"
@@ -16,11 +18,17 @@ case $OPTION in
   R)
     MATCHING_TESTS="$OPTARG"
     ;;
+  l)
+    LOCAL_SETUP="true"
+    ;;
   esac
 done
 start=$(date +%s)
 RETURN_CODE=0
 FAILED_COUNT=0
+
+THIS_DIR="$(cd "$(dirname "$BASH_SOURCE")"; pwd)"
+BASE_DIR="$(dirname $THIS_DIR)"
 
 function setup_burp_cert {
   if [ -n "$BURP_PROXY" ]; then
@@ -44,6 +52,8 @@ function setup_burp_cert {
   fi
 }
 
+export PASSENGER_APP_ENV=test
+
 function clean_up {
   echo "Cleaning up..."
   bundle exec bin/rails runner -e test "StudyCleanupTools.destroy_all_studies_and_workspaces" || { echo "FAILED to delete studies and workspaces" >&2; exit 1; } # destroy all studies/workspaces to clean up any files
@@ -56,24 +66,35 @@ function clean_up {
   echo "...cleanup complete."
 }
 
-setup_burp_cert
-clean_up
-
-TMP_PIDS_DIR="/home/app/webapp/tmp/pids"
-if [ "$NOT_DOCKERIZED" = "true" ]
-then
-    TMP_PIDS_DIR="./tmp/pids"
-fi
+TMP_PIDS_DIR="$BASE_DIR/tmp/pids"
 rm ./log/test.log
 if [[ ! -d "$TMP_PIDS_DIR" ]]
 then
-    echo "*** MAKING tmp/pids DIR ***"
-    mkdir -p "$TMP_PIDS_DIR" || { echo "FAILED to create $TMP_PIDS_DIR" >&2; exit 1; }
-    echo "*** COMPLETED ***"
+  echo "*** MAKING tmp/pids DIR ***"
+  mkdir -p "$TMP_PIDS_DIR" || { echo "FAILED to create $TMP_PIDS_DIR" >&2; exit 1; }
+  echo "*** COMPLETED ***"
 fi
-export PASSENGER_APP_ENV=test
+
+# export secrets for local testing, and ensure delayed_job is not running
+# if not testing locally, remove any dangling pid files
+if [[ $LOCAL_SETUP == "true" ]]; then
+  echo "setting up environment for local testing"
+  $BASE_DIR/rails_local_setup.rb -e $PASSENGER_APP_ENV
+  . $BASE_DIR/config/secrets/.source_env.bash
+  rm $BASE_DIR/config/secrets/.source_env.bash
+  pids=$(ls $TMP_PIDS_DIR/delayed_job.*.pid | xargs cat)
+  for pid in $pids
+  do
+    kill -9 $pid
+  done
+else
+  rm -f "$TMP_PIDS_DIR/delayed_job.*.pid"
+fi
+
+setup_burp_cert
+clean_up
+
 echo "*** STARTING DELAYED_JOB for $PASSENGER_APP_ENV env ***"
-rm -f "$TMP_PIDS_DIR/delayed_job.*.pid"
 bin/delayed_job restart $PASSENGER_APP_ENV -n 6 || { echo "FAILED to start DELAYED_JOB" >&2; exit 1; } # WARNING: using "restart" with environment of test is a HACK that will prevent delayed_job from running in development mode, for example
 
 echo "Precompiling assets, yarn and webpacker..."
@@ -83,26 +104,15 @@ RAILS_ENV=test NODE_ENV=test yarn install --force --trace
 RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:precompile
 echo "Generating random seed, seeding test database..."
 RANDOM_SEED=$(openssl rand -hex 16)
-echo $RANDOM_SEED > /home/app/webapp/.random_seed
+echo $RANDOM_SEED > "$BASE_DIR/.random_seed"
 bundle exec rake RAILS_ENV=test db:seed || { echo "FAILED to seed test database!" >&2; exit 1; }
 bundle exec rake RAILS_ENV=test db:mongoid:create_indexes
 echo "Database initialized"
 echo "Launching tests using seed: $RANDOM_SEED"
-if [ "$TEST_FILEPATH" != "" ]
-then
-  if [ "$MATCHING_TESTS" != "" ]
-  then
-    EXTRA_ARGS="-n $MATCHING_TESTS"
-  fi
-  echo "Running specified tests: $TEST_FILEPATH $EXTRA_ARGS"
-  bundle exec ruby -I test $TEST_FILEPATH $EXTRA_ARGS
-  code=$? # immediately capture exit code to prevent this from getting clobbered
-  if [[ $code -ne 0 ]]; then
-    RETURN_CODE=$code
-    ((FAILED_COUNT++))
-  fi
-else
-  echo "Running all unit & integration tests..."
+
+echo "Running specified unit & integration tests..."
+# only run yarn ui-test if we haven't specified a single ruby test suite to run
+if [[ "$TEST_FILEPATH" == "" ]]; then
   yarn ui-test
   code=$? # immediately capture exit code to prevent this from getting clobbered
   if [[ $code -ne 0 ]]; then
@@ -110,18 +120,27 @@ else
     first_test_to_fail=${first_test_to_fail-"yarn ui-test"}
     ((FAILED_COUNT++))
   fi
-  RAILS_ENV=test bundle exec bin/rake test
-  code=$?
-  if [[ $code -ne 0 ]]; then
-    RETURN_CODE=$code
-    first_test_to_fail=${first_test_to_fail-"rake test"}
-    ((FAILED_COUNT++))
-  fi
-  if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
-    echo "uploading all coverage data to codecov"
-    bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN
-  fi
 fi
+
+# configure and invoke rake command for rails tests
+if [[ "$MATCHING_TESTS" != "" ]] && [[ "$TEST_FILEPATH" != "" ]]; then
+  RAILS_ENV=test bundle exec bin/rake test TEST="$TEST_FILEPATH" TESTOPTS=" -n $MATCHING_TESTS"
+elif [[ "$TEST_FILEPATH" != "" ]]; then
+  RAILS_ENV=test bundle exec bin/rake test TEST="$TEST_FILEPATH"
+else
+  RAILS_ENV=test bundle exec bin/rake test
+fi
+code=$?
+if [[ $code -ne 0 ]]; then
+  RETURN_CODE=$code
+  first_test_to_fail=${first_test_to_fail-"rake test"}
+  ((FAILED_COUNT++))
+fi
+if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
+  echo "uploading all coverage data to codecov"
+  bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN
+fi
+
 clean_up
 end=$(date +%s)
 difference=$(($end - $start))
@@ -133,5 +152,6 @@ if [[ $RETURN_CODE -eq 0 ]]; then
 else
   printf "\n### There were $FAILED_COUNT errors/failed test suites in this run, starting with $first_test_to_fail ###\n\n"
 fi
+
 echo "Exiting with code: $RETURN_CODE"
 exit $RETURN_CODE

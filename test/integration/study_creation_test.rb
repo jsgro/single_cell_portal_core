@@ -65,14 +65,7 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     assert example_files[:metadata][:object].present?, "Metadata failed to associate, found no file: #{example_files[:metadata][:object].present?}"
 
     # first cluster
-    file_params = {study_file:
-                       {
-                           name: 'Test Cluster 1', file_type: 'Cluster', study_id: study.id.to_s,
-                           study_file_x_axis_min: -100, study_file_x_axis_max: 100, study_file_y_axis_min: -75,
-                           study_file_y_axis_max: 75, study_file_z_axis_min: -125, study_file_z_axis_max: 125,
-                           study_file_x_axis_label: 'X Axis', study_file_y_axis_label: 'Y Axis', study_file_z_axis_label: 'Z Axis'
-                       }
-    }
+    file_params = {study_file: { name: 'Test Cluster 1', file_type: 'Cluster', study_id: study.id.to_s } }
     perform_study_file_upload(example_files[:cluster][:name], file_params, study.id)
     assert_response 200, "Cluster 1 upload failed: #{@response.code}"
     assert_equal 1, study.cluster_ordinations_files.size, "Cluster 1 failed to associate, found #{study.cluster_ordinations_files.size} files"
