@@ -61,11 +61,11 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
 
   test 'can find annotation for cluster' do
     cluster = @basic_study.default_cluster
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, 'Category', 'group', 'cluster')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: 'Category', annot_type: 'group', annot_scope: 'cluster')
     assert_equal 'Category', annotation[:name]
     assert_equal ['bar', 'baz'], annotation[:values]
     metadata = @basic_study.cell_metadata.first
-    study_annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, metadata.name, metadata.annotation_type, 'study')
+    study_annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: metadata.name, annot_type: metadata.annotation_type, annot_scope: 'study')
     assert_equal metadata.name, study_annotation[:name]
     assert_equal metadata.values, study_annotation[:values]
   end
@@ -83,7 +83,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
     gene = @basic_study.genes.by_name_or_id('PTEN', @basic_study.expression_matrix_files.pluck(:id))
     rendered_data = ExpressionVizService.get_global_expression_render_data(
       study: @basic_study,
@@ -124,7 +124,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
 
     # confirm it works for numeric annotations
     annot_name, annot_type, annot_scope = ['Intensity', 'numeric', 'cluster']
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
     rendered_data = ExpressionVizService.get_global_expression_render_data(
       study: @basic_study,
       subsample: nil,
@@ -184,7 +184,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
     plotly_struct = ExpressionVizService.initialize_plotly_objects_by_annotation(annotation)
     annotation[:values].each do |value|
       trace = plotly_struct[value]
@@ -199,7 +199,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
     violin_data = ExpressionVizService.load_expression_boxplot_data_array_scores(@basic_study, gene, cluster, annotation)
     # cells A & C belong to 'dog', and cell B belongs to 'cat' from default metadata annotation
     expected_output = {
@@ -213,7 +213,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
   test 'should load 2d annotation expression scatter' do
     gene = @basic_study.genes.by_name_or_id('PTEN', @basic_study.expression_matrix_files.pluck(:id))
     cluster = @basic_study.default_cluster
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, 'Intensity', 'numeric', 'cluster')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: 'Intensity', annot_type: 'numeric', annot_scope: 'cluster')
     scatter_data = ExpressionVizService.load_annotation_based_data_array_scatter(@basic_study, gene, cluster, annotation,
                                                                                  nil, @basic_study.default_expression_label)
     expected_x_data = [1.1, 2.2, 3.3]
@@ -230,7 +230,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
     expression_scatter = ExpressionVizService.load_expression_data_array_points(@basic_study, gene, cluster, annotation,
                                                                                 nil, @basic_study.default_expression_label,
                                                                                 'Blues')
@@ -251,7 +251,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
     gene_set_violin = ExpressionVizService.load_gene_set_expression_boxplot_scores(@basic_study, genes, cluster, annotation,
                                                                                    'mean')
     # cells A & C belong to 'dog', and cell B belongs to 'cat' from default metadata annotation
@@ -267,7 +267,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
   test 'should load gene set 2d annotation expression scatter' do
     genes = load_all_genes(@basic_study)
     cluster = @basic_study.default_cluster
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, 'Intensity', 'numeric', 'cluster')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: 'Intensity', annot_type: 'numeric', annot_scope: 'cluster')
     gene_set_annot_scatter = ExpressionVizService.load_gene_set_annotation_based_scatter(
         @basic_study, genes, cluster, annotation, 'mean', nil, @basic_study.default_expression_label
     )
@@ -288,7 +288,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     cluster = @basic_study.default_cluster
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
-    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster, annot_name, annot_type, annot_scope)
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
     gene_set_exp_statter = ExpressionVizService.load_gene_set_expression_data_arrays(
         @basic_study, genes, cluster, annotation, 'mean', nil,
         @basic_study.default_expression_label, 'Blues'

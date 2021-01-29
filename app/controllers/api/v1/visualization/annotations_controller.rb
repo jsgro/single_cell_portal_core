@@ -52,7 +52,7 @@ module Api
 
         #
         def index
-          render json: AnnotationVizService.available_annotations(@study, nil, current_api_user)
+          render json: AnnotationVizService.available_annotations(@study, cluster: nil, current_user: current_api_user)
         end
 
         swagger_path '/studies/{accession}/annotations/{annotation_name}' do
@@ -170,10 +170,10 @@ module Api
             cluster = study.cluster_groups.by_name(params[:cluster])
           end
           AnnotationVizService.get_selected_annotation(study,
-                                                       cluster,
-                                                       annot_params[:name],
-                                                       annot_params[:type],
-                                                       annot_params[:scope])
+                                                       cluster: cluster,
+                                                       annot_name: annot_params[:name],
+                                                       annot_type: annot_params[:type],
+                                                       annot_scope: annot_params[:scope])
         end
 
 
