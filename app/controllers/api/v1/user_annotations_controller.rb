@@ -44,6 +44,7 @@ module Api
 
       def create_user_annotation
 
+        begin
           message, annotations, status = UserAnnotationService.create_user_annotation(
             @study, params[:name], params[:user_data_arrays_attributes],
             params[:cluster], params[:loaded_annotation],
@@ -55,6 +56,25 @@ module Api
           }
 
           render json: response_body, status: status
+
+        # Handle other errors in saving user annotation
+        rescue Mongoid::Errors::InvalidValue => e
+          error_context = ErrorTracker.format_extra_context(study, {params: log_params})
+          ErrorTracker.report_exception(e, current_user, error_context)
+          # If an invalid value was somehow passed through the form, and couldn't save the annotation
+          cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
+          message = 'The following errors prevented the annotation from being saved: ' + 'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
+          Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, invalid value of #{e.message}"
+          render json: {message: message}, status: 400 # Bad request
+
+        rescue => e
+          error_context = ErrorTracker.format_extra_context(study, {params: log_params})
+          ErrorTracker.report_exception(e, current_user, error_context)
+          # If a generic unexpected error occurred and couldn't save the annotation
+          cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
+          message = 'An unexpected error prevented the annotation from being saved: ' + e.message
+          Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unexpected error #{e.message}"
+          render json: {message: message}, status: 500
       end
     end
   end

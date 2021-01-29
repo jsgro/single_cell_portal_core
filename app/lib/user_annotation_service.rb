@@ -44,7 +44,7 @@ class UserAnnotationService
       cluster = user_annotation.cluster_group
 
       # Save the user annotation, and handle any exceptions
-      if user_annotation.save
+      if user_annotation.save!
 
         # Consider refactoring user_annotation_test.rb and
         # models/user_annotation.rb to remove `subsample_annotation`.  Jon
@@ -64,38 +64,9 @@ class UserAnnotationService
         # If there was an error saving, alert the user something broke
         cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
         message = 'The following errors prevented the annotation from being saved: ' + user_annotation.errors.full_messages.join(',')
-        Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unable to save user annotation with errors #{user_annotation.errors.full_messages.join(', ')}"
         status = 400  # Bad request
       end
       [message, cluster_annotations, status]
-
-    # Handle other errors in saving user annotation
-    rescue Mongoid::Errors::InvalidValue => e
-      error_context = ErrorTracker.format_extra_context(study, {params: log_params})
-      ErrorTracker.report_exception(e, current_user, error_context)
-      # If an invalid value was somehow passed through the form, and couldn't save the annotation
-      cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-      message = 'The following errors prevented the annotation from being saved: ' + 'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
-      Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, invalid value of #{e.message}"
-      [message, cluster_annotations, 400] # Bad request
-
-    rescue NoMethodError => e
-      error_context = ErrorTracker.format_extra_context(study, {params: log_params})
-      ErrorTracker.report_exception(e, current_user, error_context)
-      # If something is nil and can't have a method called on it, respond with an alert
-      cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-      message = 'The following errors prevented the annotation from being saved: ' + e.message
-      Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, no method error #{e.message}"
-      [message, cluster_annotations, 500] # Internal server error
-
-    rescue => e
-      error_context = ErrorTracker.format_extra_context(study, {params: log_params})
-      ErrorTracker.report_exception(e, current_user, error_context)
-      # If a generic unexpected error occurred and couldn't save the annotation
-      cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
-      message = 'An unexpected error prevented the annotation from being saved: ' + e.message
-      Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unexpected error #{e.message}"
-      [message, cluster_annotations, 500] # Internal server error
 
     end
   end
