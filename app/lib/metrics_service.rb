@@ -135,8 +135,8 @@ class MetricsService
   # @param {ActionDispatch::Request} request - request object in which exception was thrown
   # @param {User} user - User model object, if present
   # @param {Study} study - Study model object, if present
-  def self.report_error(exception, request, user, study)
-    Rails.logger.error "Reporting error analytics to mixpanel for #{exception}"
+  def self.report_error(exception, request, user=nil, study=nil)
+    Rails.logger.error "Reporting error analytics to mixpanel for (#{exception.class.name}) #{exception.message}"
     props = {
       requestPath: request.fullpath,
       controllerName: request.parameters['controller'],

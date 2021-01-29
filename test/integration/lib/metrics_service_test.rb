@@ -96,4 +96,54 @@ class MetricsServiceTest < ActiveSupport::TestCase
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
+
+  test 'should report errors to mixpanel' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    request_parameters = { 'controller' => 'site', 'action' => 'index'}
+    fullpath = '/single_cell'
+    user_id = SecureRandom.uuid
+
+    # mock environment for request object (sets necessary values for MetricsService.report_error)
+    env = {
+      'rack.request.cookie_hash' => {
+        user_id: user_id
+      },
+      'rack.input' => {},
+      'action_dispatch.request.path_parameters' => request_parameters,
+      'PATH_INFO' => fullpath
+    }.with_indifferent_access
+
+    request = ActionDispatch::Request.new(env)
+    error = StandardError.new('this is the error message')
+
+    expected_output_props = {
+      requestPath: fullpath,
+      controllerName: request_parameters['controller'],
+      actionName: request_parameters['action'],
+      errorClass: error.class.name,
+      errorMessage: error.message,
+      appId: 'single-cell-portal',
+      env: Rails.env,
+      authenticated: false,
+      distinct_id: user_id
+    }.with_indifferent_access
+
+    expected_args = {
+      url: 'https://terra-bard-dev.appspot.com/api/event',
+      headers: {'Content-Type': 'application/json'},
+      payload: {event: 'server-error', properties: expected_output_props}.to_json,
+      method: 'POST'
+    }
+
+    mock = Minitest::Mock.new
+    mock.expect :call, mock, [expected_args]
+
+    RestClient::Request.stub :execute, mock do
+      MetricsService.report_error(error, request)
+      mock.verify
+    end
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
 end
