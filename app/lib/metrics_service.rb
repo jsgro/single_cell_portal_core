@@ -18,7 +18,7 @@ class MetricsService
       method: 'POST'
     })
     begin
-      Rails.logger.info "#{Time.zone.now}: Posting to Mixpanel.  Params: #{params}"
+      Rails.logger.info "#{Time.zone.now}: Posting to Mixpanel. Params: #{params}"
       # Uncomment line below to get known-good test data
       # puts "Posting to Mixpanel.  Params: #{params}"
       RestClient::Request.execute(params)
@@ -123,5 +123,55 @@ class MetricsService
 
     self.post_to_bard(params, user)
 
+  end
+
+  # Log error metrics to Mixpanel via Bard web service
+  # Handled from rescue_from blocks in controllers
+  #
+  # Bard docs:
+  # https://terra-bard-prod.appspot.com/docs/
+  #
+  # @param {Exception} exception - instance of exception that was caught
+  # @param {ActionDispatch::Request} request - request object in which exception was thrown
+  # @param {User} user - User model object, if present
+  # @param {Study} study - Study model object, if present
+  def self.report_error(exception, request, user, study)
+    Rails.logger.error "Reporting error analytics to mixpanel for #{exception}"
+    props = {
+      requestPath: request.fullpath,
+      controllerName: request.parameters['controller'],
+      actionName: request.parameters['action'],
+      errorClass: exception.class.name,
+      errorMessage: exception.message,
+      appId: 'single-cell-portal',
+      env: Rails.env
+    }
+
+    # add study accession if this action was study-specific
+    if study.present?
+      props.merge!({studyAccession: study.accession})
+    end
+
+    headers = {
+      'Content-Type': 'application/json'
+    }
+
+    # configure properties/headers depending on user presence
+    if user.present?
+      props.merge!({ authenticated: true, registeredForTerra: user.registered_for_firecloud })
+      headers.merge!({'Authorization': "Bearer #{user.token_for_api_call.dig('access_token')}"})
+    else
+      props.merge!({ authenticated: false, distinct_id: request.cookies['user_id'] })
+    end
+
+    post_body = {'event': 'server-error', 'properties': props}.to_json
+
+    params = {
+      url: BARD_ROOT + '/api/event',
+      headers: headers,
+      payload: post_body
+    }
+
+    self.post_to_bard(params, user)
   end
 end
