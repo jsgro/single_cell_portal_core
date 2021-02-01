@@ -50,6 +50,7 @@ class UserAnnotationService
         message = "User Annotation: '#{user_annotation.name}' successfully saved. You may now view this annotation via the annotations dropdown."
         status = 200 # Success
       else
+        Rails.logger.info "**** In user_annotations.save! === false"
         # If there was an error saving, alert the user something broke
         cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
         message = 'The following errors prevented the annotation from being saved: ' + user_annotation.errors.full_messages.join(',')
