@@ -146,7 +146,6 @@ class MetricsServiceTest < ActiveSupport::TestCase
     mock = Minitest::Mock.new
     mock.expect :call, mock, [expected_args]
 
-    Rails.logger.info "expected_args: #{expected_args}"
     RestClient::Request.stub :execute, mock do
       MetricsService.report_error(error, request)
       mock.verify
