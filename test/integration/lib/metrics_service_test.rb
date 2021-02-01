@@ -118,11 +118,10 @@ class MetricsServiceTest < ActiveSupport::TestCase
     error = StandardError.new('this is the error message')
 
     expected_output_props = {
-      requestPath: fullpath,
-      controllerName: request_parameters['controller'],
-      actionName: request_parameters['action'],
-      errorClass: error.class.name,
-      errorMessage: error.message,
+      appPath: fullpath,
+      serverMethod: "#{request_parameters['controller']}##{request_parameters['action']}",
+      type: error.class.name,
+      text: error.message,
       appId: 'single-cell-portal',
       env: Rails.env,
       authenticated: false,

@@ -137,12 +137,23 @@ class MetricsService
   # @param {Study} study - Study model object, if present
   def self.report_error(exception, request, user=nil, study=nil)
     Rails.logger.error "Reporting error analytics to mixpanel for (#{exception.class.name}) #{exception.message}"
+
+    # error properties hash details
+    # appPath: request URL where error occurred
+    # serverMethod: Rails controller & method that corresponds to the error
+    # type: error Ruby class
+    # text: error message/details
+    # appId: identifier for Single Cell Portal
+    # env: Rails environment
+    # studyAccession: corresponding SCP study (if present)
+    # authenticated: user auth status
+    # registeredForTerra: status of user Terra registration (if present)
+    # distinct_id: user metrics UUID for identifying users in Bard
     props = {
-      requestPath: request.fullpath,
-      controllerName: request.parameters['controller'],
-      actionName: request.parameters['action'],
-      errorClass: exception.class.name,
-      errorMessage: exception.message,
+      appPath: request.fullpath,
+      serverMethod: "#{request.parameters['controller']}##{request.parameters['action']}",
+      type: exception.class.name,
+      text: exception.message,
       appId: 'single-cell-portal',
       env: Rails.env
     }
@@ -164,7 +175,7 @@ class MetricsService
       props.merge!({ authenticated: false, distinct_id: request.cookies['user_id'] })
     end
 
-    post_body = {'event': 'server-error', 'properties': props}.to_json
+    post_body = {'event': 'error', 'properties': props}.to_json
 
     params = {
       url: BARD_ROOT + '/api/event',
