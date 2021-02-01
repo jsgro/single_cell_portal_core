@@ -5,16 +5,17 @@ module Api
     class UserAnnotationsController < ApiBaseController
       include Concerns::Authenticator
       include Concerns::ApiCaching
+      include Concerns::StudyAware
       include Swagger::Blocks
 
       before_action :set_current_api_user!
       before_action :set_study
-      before_action :check_study_permission
+      before_action :check_study_view_permission
 
-      swagger_path '/site/studies/{accession}/user_annotation' do
+      swagger_path '/studies/{accession}/user_annotation' do
         operation :post do
           key :tags, [
-              'Site'
+              'Studies'
           ]
           key :summary, 'Create user annotation'
           key :description, 'Create new custom user annotation for the study'
@@ -41,7 +42,7 @@ module Api
         end
       end
 
-      def create_user_annotation
+      def create
 
         begin
           # Parameters to log for any errors
@@ -84,14 +85,6 @@ module Api
           Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unexpected error #{e.message}"
           render json: {message: message}, status: 500 # Server error
         end
-      end
-
-      def set_study
-        @study = Study.find_by({accession: params[:accession]})
-      end
-
-      def check_study_permission
-        head 403 unless @study.can_edit?(current_api_user)
       end
     end
   end

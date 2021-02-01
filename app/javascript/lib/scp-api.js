@@ -110,7 +110,7 @@ export async function createUserAnnotation(
     cluster, annotation, subsample
   })
 
-  const apiUrl = `/site/studies/${studyAccession}/user_annotation`
+  const apiUrl = `/studies/${studyAccession}/user_annotations`
   const [jsonOrResponse, perfTime] = await scpApi(apiUrl, init, mock)
 
   let message = ''
