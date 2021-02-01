@@ -138,9 +138,13 @@ class MetricsService
   def self.report_error(exception, request, user=nil, study=nil)
     Rails.logger.error "Reporting error analytics to mixpanel for (#{exception.class.name}) #{exception.message}"
 
+    # get browser/client information from user agent
+    browser = Browser.new(request.env['HTTP_USER_AGENT'])
+
     # error properties hash details
-    # appPath: request URL where error occurred
-    # serverMethod: Rails controller & method that corresponds to the error
+    #
+    # appFullPath: request URL where error occurred
+    # appPath: Rails controller & method that corresponds to the error
     # type: error Ruby class
     # text: error message/details
     # appId: identifier for Single Cell Portal
@@ -149,12 +153,20 @@ class MetricsService
     # authenticated: user auth status
     # registeredForTerra: status of user Terra registration (if present)
     # distinct_id: user metrics UUID for identifying users in Bard
+    # browser: client browser name
+    # browser_version: client browser version
+    # os: client operating system
     props = {
-      appPath: request.fullpath,
-      serverMethod: "#{request.parameters['controller']}##{request.parameters['action']}",
+      appFullPath: self.sanitize_url(request.fullpath),
+      appPath: self.get_page_name(request.parameters['controller'], request.parameters['action']),
+      referrer: self.sanitize_url(request.referrer),
       type: exception.class.name,
       text: exception.message,
       appId: 'single-cell-portal',
+      os: browser.platform.name,
+      browser: browser.name,
+      browser_version: browser.version,
+      brand: request.query_parameters.dig('scpbr'),
       env: Rails.env
     }
 
@@ -184,5 +196,30 @@ class MetricsService
     }
 
     self.post_to_bard(params, user)
+  end
+
+  # remove study names from url, if present
+  #
+  # @param {String} url - input URL from SCP
+  def self.sanitize_url(url)
+    return nil if url.nil? # error handling for nil entry, e.g. request.referrer is not set
+    study_name_match = url.match(/\/single_cell\/study\/SCP\d+/)
+    if study_name_match.present?
+      study_name_match.to_s
+    else
+      url
+    end
+  end
+
+  # get a formatted identifer for controller/action
+  #
+  # @param {String} controller - name of Rails controller
+  # @param {String} action - name of Rails action from controller
+  def self.get_page_name(controller, action)
+    page_name = "#{controller}-#{action}".gsub('_', '-')
+    if page_name == 'site-index'
+      page_name = 'root'
+    end
+    page_name
   end
 end
