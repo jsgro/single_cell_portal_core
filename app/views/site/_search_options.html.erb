@@ -261,13 +261,14 @@
       <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
         <% if user_signed_in? %>
 
-          // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
-          var targetPlotId = window.SCP.getScatterPlots()[0].plotId;
-
           // Stick the search for selection facilitation in expression pages if selecting annotation
           $('#panel-selection').on('show.bs.collapse', function () {
               $(document).off('scroll', '#search-parent');
               $('#search-parent').stickyPanel(stickyOptions);
+
+              // TODO (SCP-2962): Support "Create Annotations" for spatial scatter plots
+              var targetPlotId = window.SCP.getScatterPlots()[0].plotId
+
               window.scrollTo(0,$(('#' + targetPlotId)).offset().top - 175);
               var boxSelectBtn = $("a[data-title='Box Select]");
               boxSelectBtn.click();

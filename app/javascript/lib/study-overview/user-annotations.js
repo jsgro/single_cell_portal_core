@@ -18,6 +18,7 @@
 import $ from 'jquery'
 import Plotly from 'plotly.js-dist'
 
+import {getScatterPlots} from 'lib/scatter-plot'
 import {
   getMainViewOptions, getAnnotationDropdown
 } from 'lib/study-overview/view-options'
@@ -363,7 +364,10 @@ export default function userAnnotations() {
   $('#selection-well, #selection-button').css('visibility', 'visible')
 
   // TODO (SCP-2962): Support "Create Annotation" for spatial scatter plots
-  const targetPlotId = getScatterPlots()[0].plotId
+  var targetPlotId = ''
+  if (getScatterPlots().length > 0) {
+    targetPlotId = getScatterPlots()[0].plotId
+  }
 
   const target = document.getElementById(targetPlotId)
 

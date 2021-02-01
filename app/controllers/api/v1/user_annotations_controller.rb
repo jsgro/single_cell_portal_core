@@ -4,13 +4,12 @@ module Api
 
     class UserAnnotationsController < ApiBaseController
       include Concerns::Authenticator
-      include Concerns::StudyAware
       include Concerns::ApiCaching
       include Swagger::Blocks
 
       before_action :set_current_api_user!
       before_action :set_study
-      before_action :check_study_view_permission
+      before_action :check_study_permission
 
       swagger_path '/site/studies/{accession}/user_annotation' do
         operation :post do
@@ -23,7 +22,7 @@ module Api
           parameter do
             key :name, :accession
             key :in, :path
-            key :description, 'Study accession number (e.g. SCPXXX)'
+            key :description, 'Study accession number (e.g. SCP123)'
             key :required, true
             key :type, :string
           end
@@ -45,9 +44,18 @@ module Api
       def create_user_annotation
 
         begin
+          # Parameters to log for any errors
+          user_annotation_params = params.dup
+          user_annotation_params[:current_user] = current_user
+          log_params = user_annotation_params.dup
+          # Don't log data_arrays; it's too big
+          log_params.delete(:user_data_arrays_attributes)
+
+          cluster = params[:cluster]
+
           message, annotations, status = UserAnnotationService.create_user_annotation(
             @study, params[:name], params[:user_data_arrays_attributes],
-            params[:cluster], params[:loaded_annotation],
+            cluster, params[:loaded_annotation],
             params[:subsample_threshold], current_api_user
           )
 
@@ -59,22 +67,31 @@ module Api
 
         # Handle other errors in saving user annotation
         rescue Mongoid::Errors::InvalidValue => e
-          error_context = ErrorTracker.format_extra_context(study, {params: log_params})
+          error_context = ErrorTracker.format_extra_context(@study, {params: log_params})
           ErrorTracker.report_exception(e, current_user, error_context)
           # If an invalid value was somehow passed through the form, and couldn't save the annotation
-          cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
+          cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, cluster, current_user)
           message = 'The following errors prevented the annotation from being saved: ' + 'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
           Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, invalid value of #{e.message}"
           render json: {message: message}, status: 400 # Bad request
 
         rescue => e
-          error_context = ErrorTracker.format_extra_context(study, {params: log_params})
+          error_context = ErrorTracker.format_extra_context(@study, {params: log_params})
           ErrorTracker.report_exception(e, current_user, error_context)
           # If a generic unexpected error occurred and couldn't save the annotation
-          cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
+          cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, cluster, current_user)
           message = 'An unexpected error prevented the annotation from being saved: ' + e.message
           Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unexpected error #{e.message}"
-          render json: {message: message}, status: 500
+          render json: {message: message}, status: 500 # Server error
+        end
+      end
+
+      def set_study
+        @study = Study.find_by({accession: params[:accession]})
+      end
+
+      def check_study_permission
+        head 403 unless @study.can_edit?(current_api_user)
       end
     end
   end

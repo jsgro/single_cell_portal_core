@@ -5,17 +5,6 @@ class UserAnnotationService
     user_data_arrays_attributes, cluster_name, loaded_annotation,
     subsample_threshold, current_user)
 
-    # Parameters to log for any errors
-    user_annotation_params = {
-      study: study, name: name, cluster_name: cluster_name,
-      loaded_annotation: loaded_annotation,
-      subsample_threshold: subsample_threshold,
-      current_user: current_user
-    }
-    log_params = user_annotation_params.dup
-    # Don't log data_arrays; it's too big
-    log_params.delete(:user_data_arrays_attributes)
-
     user_id = current_user.id
 
     cluster_group_id = study.cluster_groups.find_by(name: cluster_name).id

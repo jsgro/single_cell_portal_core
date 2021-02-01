@@ -5,9 +5,7 @@ module Api
         extend ActiveSupport::Concern
 
         def set_study
-          # allow either accession or id
-          id = params[:accession].present? ? params[:accession] : params[:study_id]
-          @study = Study.any_of({accession: id},{id: id}).first
+          @study = Study.any_of({accession: params[:study_id]},{id: params[:study_id]}).first
           if @study.nil? || @study.queued_for_deletion?
             head 404 and return
           end
