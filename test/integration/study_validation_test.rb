@@ -18,6 +18,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     reset_user_tokens
     # remove all validation studies
     Study.where(name: /Validation/).destroy_all
+    Study.find_by(name: "Testing Study #{@random_seed}").update(public: true)
   end
 
   # check that file header/format checks still function properly
@@ -388,6 +389,39 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
       uploaded_matrix.reload
     end
     puts "After #{seconds_slept} seconds, #{new_matrix} is #{uploaded_matrix.parse_status}."
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  # ensure unauthorized users cannot edit other studies
+  test 'should enforce edit access restrictions on studies' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
+    patch study_path(study), params: {study: { public: false }}
+    follow_redirect!
+    assert_response :success
+    study.reload
+    refute study.public
+
+    auth_as_user(@sharing_user)
+    sign_in @sharing_user
+    patch study_path(study), params: {study: { public: true }}
+    follow_redirect!
+    assert_equal studies_path, path, "Did not redirect to My Studies page"
+    study.reload
+    refute study.public
+
+    sign_out @sharing_user
+    get site_path
+    patch study_path(study), params: {study: { public: true }}
+    assert_response 302 # redirect to "My Studies" page when :check_edit_permissions fires
+    follow_redirect!
+    assert_response 302 # redirect to sign in page when :authenticate_user! fires
+    follow_redirect!
+    assert_equal new_user_session_path, path # redirects have finished and path is updated
+    study.reload
+    refute study.public
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
