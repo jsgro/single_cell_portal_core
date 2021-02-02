@@ -10,9 +10,9 @@ import ClusterControls from 'components/visualization/ClusterControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { stringifyQuery, fetchExplore } from 'lib/scp-api'
 
-// manages view options and basic layout for the explore tab
+//
 
-
+/* converts query string parameters into the viewOptions objet */
 function buildViewOptionsFromQuery(query) {
   const queryParams = queryString.parse(query)
   let annotation = {
@@ -34,6 +34,7 @@ function buildViewOptionsFromQuery(query) {
   }
 }
 
+/* converts the viewOptions object into a query string, inverse of buildViewOptionsFromQuery */
 function buildQueryFromViewOptions(viewOptions) {
   let querySafeOptions = _clone(viewOptions)
   const annot = viewOptions.annotation
@@ -41,7 +42,10 @@ function buildQueryFromViewOptions(viewOptions) {
   return stringifyQuery(querySafeOptions)
 }
 
-
+/*
+ * manages view options and basic layout for the explore tab
+ * this component handles calling the api explore endpoint to get view options (clusters, etc..) for the study
+ */
 function RoutableExploreTab({studyAccession}) {
   const [exploreInfo, setExploreInfo] = useState(null)
   const location = useLocation()
@@ -105,6 +109,7 @@ function RoutableExploreTab({studyAccession}) {
   )
 }
 
+/* wraps the explore tab in a Router object so it can use Reach hooks for routable parameters */
 export default function ExploreTab({studyAccession}) {
   return (
     <Router>
@@ -113,6 +118,7 @@ export default function ExploreTab({studyAccession}) {
   )
 }
 
+/* convenience function for rendering this in a non-React part of the application */
 export function renderExploreView(target, studyAccession) {
   ReactDOM.render(
     <ExploreTab studyAccession={studyAccession}/>,
