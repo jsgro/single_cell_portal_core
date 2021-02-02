@@ -80,6 +80,7 @@ module Api
             taxonNames: @study.expressed_taxon_names,
             inferCNVIdeogramFiles: ideogram_files,
             uniqueGenes: @study.unique_genes,
+            annotationList: AnnotationVizService.get_study_annotation_options(@study, current_api_user),
             clusterGroupNames: ClusterVizService.load_cluster_group_options(@study),
             spatialGroupNames: ClusterVizService.load_spatial_options(@study),
             clusterPointAlpha: @study.default_cluster_point_alpha

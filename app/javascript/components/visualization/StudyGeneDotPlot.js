@@ -7,7 +7,7 @@ import ClusterControls from './ClusterControls'
 import { getAnnotationCellValuesURL, getExpressionHeatmapURL } from 'lib/scp-api'
 
 /** Renders a dotplot and associated cluster/annotation selection controls */
-export default function StudyGeneDotPlot({ study, genes, renderParams }) {
+export default function StudyGeneDotPlot({ study, genes, renderParams, annotationValues }) {
 
   /** fetch the expression data from the server */
   async function updateAnnotation(params) {
@@ -27,7 +27,8 @@ export default function StudyGeneDotPlot({ study, genes, renderParams }) {
              renderParams.annotation.type,
              renderParams.subsample)
          }
-         annotation={renderParams.annotation}/>
+         annotation={renderParams.annotation}
+         annotationValues={annotationValues}/>
       }
       { !renderParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </>

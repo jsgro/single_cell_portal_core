@@ -45,6 +45,7 @@
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   window.SCP.studyAccession = '<%= @study.accession %>';
 
-  window.SCP.exploreDefault();
+  //window.SCP.exploreDefault();
+  window.SCP.renderExploreView($('#study-visualize')[0], window.SCP.studyAccession)
 
 </script>
