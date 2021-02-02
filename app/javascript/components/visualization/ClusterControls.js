@@ -21,10 +21,19 @@ const collapseOptions = [
   {label: 'Violin - Median', value: 'median'}
 ]
 
+// takes a full annotation object, which may have
+function annotationKeyProperties(annotation) {
+  return {
+    name: annotation.name,
+    type: annotation.type,
+    scope: annotation.scope
+  }
+}
+
 /** takes the server response and returns subsample options suitable for react-select */
 function getSubsampleOptions(annotationList, clusterName) {
   let subsampleOptions = [{ label: 'All Cells', value: '' }]
-  if (clusterName) {
+  if (clusterName && annotationList.subsample_thresholds) {
     let clusterSubsamples = annotationList.subsample_thresholds[clusterName]
     if (!clusterSubsamples) {
       clusterSubsamples = []
@@ -47,11 +56,11 @@ function getAnnotationOptions(annotationList, clusterName) {
   return [{
       label: 'Study Wide',
       options: annotationList.annotations
-        .filter(annot => annot.scope == 'study')
+        .filter(annot => annot.scope == 'study').map(annot => annotationKeyProperties(annot))
     }, {
       label: 'Cluster-Based',
       options: annotationList.annotations
-        .filter(annot => annot.cluster_name == clusterName)
+        .filter(annot => annot.cluster_name == clusterName).map(annot => annotationKeyProperties(annot))
   }]
 }
 
@@ -119,7 +128,7 @@ export default function ClusterControls({studyAccession,
     setAnnotationList(newAnnotationList)
     const newRenderParams = {
       cluster: newAnnotationList.default_cluster,
-      annotation: newAnnotationList.default_annotation,
+      annotation: annotationKeyProperties(newAnnotationList.default_annotation),
       subsample: getDefaultSubsampleForCluster(newAnnotationList, newAnnotationList.default_cluster)
     }
     setRenderParams(newRenderParams)
@@ -144,7 +153,7 @@ export default function ClusterControls({studyAccession,
         <Select options={clusterOptions}
           value={{ label: renderParams.cluster, value: renderParams.cluster }}
           onChange={ cluster => setRenderParams({
-            annotation: getDefaultAnnotationForCluster(annotationList, cluster.name, renderParams.annotation),
+            annotation: annotationKeyProperties(getDefaultAnnotationForCluster(annotationList, cluster.name, renderParams.annotation)),
             cluster: cluster.value,
             subsample: getDefaultSubsampleForCluster(annotationList, cluster.value),
             collapseBy: renderParams.collapseBy

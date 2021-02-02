@@ -14,7 +14,7 @@ export const dotPlotColorScheme = {
 }
 
 /** renders a morpheus powered dotPlot for the given URL paths and annotation */
-export default function DotPlot({ expressionValuesURL, annotationCellValuesURL, annotation }) {
+export default function DotPlot({ expressionValuesURL, annotationCellValuesURL, annotation, annotationValues }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
   useEffect(() => {
     const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
@@ -24,6 +24,7 @@ export default function DotPlot({ expressionValuesURL, annotationCellValuesURL, 
       expressionValuesURL,
       annotationCellValuesURL,
       annotation,
+      annotationValues,
       '',
       450
     )
@@ -38,7 +39,7 @@ export default function DotPlot({ expressionValuesURL, annotationCellValuesURL, 
 }
 
 /** Render Morpheus dot plot */
-function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotHeight=450) {
+function renderDotPlot(target, dataPath, annotPath, annotation, annotationValues, fitType='', dotHeight=450) {
   const $target = $(target)
   $target.empty()
 
@@ -118,7 +119,7 @@ function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotH
     // Create mapping of selected annotations to colorBrewer colors
     const annotColorModel = {}
     annotColorModel[annotation.name] = {}
-    const sortedAnnots = annotation['values'].sort()
+    const sortedAnnots = annotationValues.sort()
 
     // Calling % 27 will always return to the beginning of colorBrewerSet
     // once we use all 27 values
