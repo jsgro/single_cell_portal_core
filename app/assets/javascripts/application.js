@@ -601,6 +601,8 @@ function showMessageModal(notice=null, alert=null) {
     }
     if (alert) {
         alertElement.html("<strong>" + alert + "</strong>");
+        // also log alert content to Mixpanel
+        window.SCP.log('error-modal', {text: alert})
     } else {
         alertElement.empty();
     }
