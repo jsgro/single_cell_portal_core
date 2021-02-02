@@ -131,7 +131,7 @@ export default function ClusterControls({studyAccession,
       annotation: annotationKeyProperties(newAnnotationList.default_annotation),
       subsample: getDefaultSubsampleForCluster(newAnnotationList, newAnnotationList.default_cluster)
     }
-    setRenderParams(newRenderParams)
+    setRenderParams(newRenderParams, false)
   }
 
   useEffect(() => {
@@ -147,7 +147,7 @@ export default function ClusterControls({studyAccession,
   }, [studyAccession, preloadedAnnotationList])
 
   return (
-    <div>
+    <div className="cluster-controls">
       <div className="form-group">
         <label>Load cluster</label>
         <Select options={clusterOptions}
