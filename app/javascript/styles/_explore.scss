@@ -1,0 +1,18 @@
+.study-explore {
+	position: relative;
+}
+
+.view-options-toggle {
+	border: none;
+	background: none;
+	font-weight: bold;
+	position: absolute;
+	top: 0px;
+	right: 0px;
+}
+
+
+.study-explore .cluster-controls {
+  // leave room for the 'view options' toggle
+	margin-top: 3em;
+}

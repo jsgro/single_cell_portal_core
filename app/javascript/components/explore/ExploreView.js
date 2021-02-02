@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom'
 import { Router, navigate, useLocation } from '@reach/router'
 import * as queryString from 'query-string'
 import _clone from 'lodash/clone'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 
 import ClusterControls from 'components/visualization/ClusterControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
@@ -40,42 +42,65 @@ function buildQueryFromViewOptions(viewOptions) {
 }
 
 
-function RoutableViewOptions({studyAccession}) {
+function RoutableExploreTab({studyAccession}) {
   const [exploreInfo, setExploreInfo] = useState(null)
   const location = useLocation()
+  const [initialOptions, setInitialOptions] = useState(null)
+  const [showViewOptions, setShowViewOptions] = useState(true)
 
-  const viewOptions = buildViewOptionsFromQuery(location.search)
+  let viewOptions = buildViewOptionsFromQuery(location.search)
+  if (initialOptions && !location.search) {
+    // just render the defaults
+    viewOptions = initialOptions
+  }
 
-  function updateViewOptions(newOptions) {
+  function updateViewOptions(newOptions, isUserUpdated=true) {
     const mergedOpts = Object.assign({}, viewOptions, newOptions)
-    const query = buildQueryFromViewOptions(mergedOpts)
-    // view options settings should not add history entries
-    // e.g. when a user hits 'back', it shouldn't undo their cluster selection,
-    // it should take them to the page they were on before they came to the explore tab
-    navigate(`${query}#study-visualize`, { replace: true })
+    if (!isUserUpdated) {
+      // this is just default params being fetched from the server, so don't change the url
+      setInitialOptions(mergedOpts)
+    } else {
+      const query = buildQueryFromViewOptions(mergedOpts)
+      // view options settings should not add history entries
+      // e.g. when a user hits 'back', it shouldn't undo their cluster selection,
+      // it should take them to the page they were on before they came to the explore tab
+      navigate(`${query}#study-visualize`, { replace: true })
+    }
+
   }
 
   useEffect(() => {
     fetchExplore(studyAccession).then(result => setExploreInfo(result))
   }, [studyAccession])
 
+  let viewOptionsIcon = showViewOptions ? faCaretRight : faCaretLeft
+  let [tabClass, controlClass] = ['col-md-12', 'hidden']
+  if (showViewOptions) {
+    [tabClass, controlClass] = ['col-md-10', 'col-md-2']
+  }
+
   return (
-    <div className="row">
-      <div className="col-md-10">
-        <ExploreDisplayTabs studyAccession={studyAccession}
-                            viewOptions={viewOptions}
-                            updateViewOptions={updateViewOptions}
-                            uniqueGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-      </div>
-      <div className="col-md-2">
-        { exploreInfo &&
+    <div className="study-explore">
+
+      <div className="row">
+        <div className={tabClass}>
+          <ExploreDisplayTabs studyAccession={studyAccession}
+                              viewOptions={viewOptions}
+                              updateViewOptions={updateViewOptions}
+                              exploreInfo={exploreInfo}/>
+        </div>
+        <div className={controlClass}>
           <ClusterControls studyAccession={studyAccession}
                            renderParams={ viewOptions }
                            setRenderParams={updateViewOptions}
-                           preloadedAnnotationList={exploreInfo.annotationList}
+                           preloadedAnnotationList={exploreInfo ? exploreInfo.annotationList : null}
                            fetchAnnotationList={false}/>
-        }
+
+        </div>
       </div>
+      <button className="action view-options-toggle" onClick={() => setShowViewOptions(!showViewOptions)}>
+        <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/> View Options
+      </button>
     </div>
   )
 }
@@ -83,7 +108,7 @@ function RoutableViewOptions({studyAccession}) {
 export default function ExploreTab({studyAccession}) {
   return (
     <Router>
-      <RoutableViewOptions studyAccession={studyAccession} default/>
+      <RoutableExploreTab studyAccession={studyAccession} default/>
     </Router>
   )
 }
