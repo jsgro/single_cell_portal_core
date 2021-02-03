@@ -25,15 +25,15 @@ module Api
         end
         property :cluster do
           key :type, :string
-          key :description, 'Cluster group name'
+          key :description, 'Name of cluster group from which this user annotation derives'
+        end
+        property :annotation do
+          key :type, :string
+          key :description, 'Annotation from which this user annotation derives'
         end
         property :subsample_threshold do
           key :type, :string
-          key :description, 'Subsample threshold'
-        end
-        property :subsample_annotation do
-          key :type, :string
-          key :description, 'Subsample annotation'
+          key :description, 'Subsample threshold from which this user annotation derives'
         end
       end
 
@@ -80,11 +80,15 @@ module Api
 
           cluster = params[:cluster]
 
-          message, annotations = UserAnnotationService.create_user_annotation(
+          annotations = UserAnnotationService.create_user_annotation(
             @study, params[:name], params[:user_data_arrays_attributes],
-            cluster, params[:loaded_annotation],
+            cluster, params[:annotation],
             params[:subsample_threshold], current_api_user
           )
+
+          message =
+            "User Annotation: '#{params[:name]}' successfully saved.  " +
+            "You can now view this annotation via the \"Annotations\" dropdown."
 
           render json: {message: message, annotations: annotations}
 

@@ -4,9 +4,16 @@ class UserAnnotationService
   # Create new custom user annotation
   #
   # * *params*
-  #   See `swagger_schema` in user_annotations_controller.rb
+  #   - (Study) study Object for current study
+  #   - (String) name Name of new user annotation
+  #   - (Object) user_data_arrays_attributes Labels (names) and cell name
+  #       arrays (values) for each selection
+  #   - (String) cluster_name Name of loaded cluster
+  #   - (String) loaded_annotation Three-part name of loaded annotation
+  #   - (String) subsample_threshold Value of subsampling threshold
+  #   - (Object) current_user Object for current user
   # * *return*
-  #   - (Array) [message, cluster_annotations] Success message and updated annotations list
+  #   - (Object) cluster_annotations Updated annotations object
   def self.create_user_annotation(study, name,
     user_data_arrays_attributes, cluster_name, loaded_annotation,
     subsample_threshold, current_user)
@@ -20,28 +27,25 @@ class UserAnnotationService
     }
 
     user_id = current_user.id
-
     cluster_group_id = study.cluster_groups.find_by(name: cluster_name).id
-
-    study_id = study[:id]
 
     # Data name is an array of the values of labels
     data_names = []
-
     # Get the label values and push to data names
     user_data_arrays_attributes.keys.each do |key|
       data_names.push(user_data_arrays_attributes[key][:name].strip)
     end
-
     source_resolution = subsample_threshold.present? ? subsample_threshold.to_i : nil
 
     # Create the annotation
-    user_annotation = UserAnnotation.new(user_id: user_id, study_id: study_id,
-                                          cluster_group_id: cluster_group_id,
-                                          values: data_names, name: name,
-                                          source_resolution: source_resolution)
+    user_annotation = UserAnnotation.new(
+      user_id: user_id, study_id: study[:id],
+      cluster_group_id: cluster_group_id,
+      values: data_names, name: name,
+      source_resolution: source_resolution)
 
-    # override cluster setter to use the current selected cluster, needed for reloading
+    # override cluster setter to use the current selected cluster, needed for
+    # reloading
     cluster = user_annotation.cluster_group
 
     # Save the user annotation, and handle any exceptions
@@ -55,14 +59,17 @@ class UserAnnotationService
       subsample_annotation = loaded_annotation
 
       # Method call to create the user data arrays for this annotation
-      user_annotation.initialize_user_data_arrays(user_data_arrays_attributes, subsample_annotation, subsample_threshold, loaded_annotation)
+      user_annotation.initialize_user_data_arrays(
+        user_data_arrays_attributes, subsample_annotation, subsample_threshold,
+        loaded_annotation
+      )
 
       # Reset the annotations in the dropdowns to include this new annotation
-      cluster_annotations = ClusterVizService.load_cluster_group_annotations(study, cluster, current_user)
+      cluster_annotations = ClusterVizService.load_cluster_group_annotations(
+        study, cluster, current_user
+      )
 
-      message = "User Annotation: '#{user_annotation.name}' successfully saved. You may now view this annotation via the annotations dropdown."
-
-      [message, cluster_annotations]
+      cluster_annotations
 
     # Handle errors.  In service classes like this, we:
     #   * Log to the local VM via Rails.logger.error
