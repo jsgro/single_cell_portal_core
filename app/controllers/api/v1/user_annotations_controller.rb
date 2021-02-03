@@ -74,7 +74,8 @@ module Api
           user_annotation_params = params.dup
           user_annotation_params[:current_user] = current_user
           log_params = user_annotation_params.dup
-          # Don't log data_arrays; it's too big
+
+          # Don't log data_arrays to Sentry; it's too big
           log_params.delete(:user_data_arrays_attributes)
 
           cluster = params[:cluster]
@@ -87,31 +88,15 @@ module Api
 
           render json: {message: message, annotations: annotations}
 
-        # Handle other errors in saving user annotation
-        rescue Mongoid::Errors::InvalidValue => e
+        # Handle errors in saving user annotation
+        rescue ArgumentError => e
           error_context = ErrorTracker.format_extra_context(@study, {params: log_params})
           ErrorTracker.report_exception(e, current_user, error_context)
-          message = 'The following errors prevented the annotation from being saved: ' + 'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
-          Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, invalid value of #{e.message}"
-          render json: {error: error}, status: 400 # Bad request
-
+          render json: {error: e.message}, status: 400 # Bad request
         rescue => e
-          # If a generic unexpected error occurred and couldn't save the annotation
-          error_context = ErrorTracker.format_extra_context(@study, {params: log_params})
           ErrorTracker.report_exception(e, current_user, error_context)
-
-          if e.summary.include? 'Name' and e.summary.include? 'has already been taken'
-            error =
-              'An annotation with the name you provided already exists.  ' +
-              'Please name your annotation something other than: ' +
-              '"' + params[:name] + '"'
-            Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, user error #{error}"
-            render json: {error: error}, status: 400 # Server error
-          else
-            error = 'An unexpected error prevented the annotation from being saved: ' + e.message
-            Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, unexpected error #{e.message}"
-            render json: {error: error}, status: 500 # Server error
-          end
+          message = 'An unexpected error prevented the annotation from being saved: ' + e.message
+          render json: {error: message}, status: 500 # Server error
         end
       end
     end

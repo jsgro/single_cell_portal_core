@@ -1,9 +1,23 @@
 class UserAnnotationService
   # Methods to interact with annotation data, beyond just visualization
 
+  # Create new custom user annotation
+  #
+  # * *params*
+  #   See `swagger_schema` in user_annotations_controller.rb
+  # * *return*
+  #   - (Array) [message, cluster_annotations] Success message and updated annotations list
   def self.create_user_annotation(study, name,
     user_data_arrays_attributes, cluster_name, loaded_annotation,
     subsample_threshold, current_user)
+
+    # Parameters to log for any errors
+    user_annotation_params = {
+      study: study, name: name, cluster_name: cluster_name,
+      loaded_annotation: loaded_annotation,
+      subsample_threshold: subsample_threshold,
+      current_user: current_user
+    }
 
     user_id = current_user.id
 
@@ -31,7 +45,8 @@ class UserAnnotationService
     cluster = user_annotation.cluster_group
 
     # Save the user annotation, and handle any exceptions
-    if user_annotation.save!
+    begin
+      user_annotation.save!
 
       # Consider refactoring user_annotation_test.rb and
       # models/user_annotation.rb to remove `subsample_annotation`.  Jon
@@ -48,7 +63,32 @@ class UserAnnotationService
       message = "User Annotation: '#{user_annotation.name}' successfully saved. You may now view this annotation via the annotations dropdown."
 
       [message, cluster_annotations]
-    end
 
+    # Handle errors.  In service classes like this, we:
+    #   * Log to the local VM via Rails.logger.error
+    #   * Don't log to third-parties like Sentry, e.g.
+    #     don't call ErrorTracker.report_exception
+    #   * Transform implementation-specific errors (e.g.Mongoid::Foo::Bar)
+    #     to generic errors (e.g. ArgumentError)
+    rescue Mongoid::Errors::InvalidValue => e
+      Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, invalid value of #{e.message}"
+      message =
+        'The following errors prevented the annotation from being saved: ' +
+        'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
+      raise ArgumentError, message
+    rescue Mongoid::Errors::Validations => e
+      # Handle common known user errrors due to invalid input;
+      # and raise general exception for others
+      if e.summary.include? 'Name' and e.summary.include? 'has already been taken'
+        Rails.logger.error "Creating user annotation of params: #{user_annotation_params}, user error #{e.summary}"
+        message =
+          'An annotation with the name you provided ("' + name + '") already exists.  ' +
+          'Please name your annotation something different.'
+        raise ArgumentError, message
+      else
+        Rails.logger.error "Unhandled validation error when creating user annotation, using params: #{user_annotation_params}, user error #{e.summary}"
+        raise e
+      end
+    end
   end
 end
