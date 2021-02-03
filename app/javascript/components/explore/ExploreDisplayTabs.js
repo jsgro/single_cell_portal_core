@@ -37,7 +37,7 @@ export default function ExploreDisplayTabs({studyAccession, exploreInfo, viewOpt
       <div className="row">
         <div className="col-md-12">
           { showClusterTab &&
-            <ScatterPlotGroup viewOptions={viewOptions}  exploreInfo={exploreInfo}/>
+            <ScatterPlotGroup studyAccession={studyAccession} viewOptions={viewOptions}  exploreInfo={exploreInfo}/>
           }
         </div>
       </div>

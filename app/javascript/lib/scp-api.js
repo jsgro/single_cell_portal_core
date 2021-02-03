@@ -162,7 +162,7 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  *
  * @param {String} studyAccession Study accession
  * @param {String} cluster Name of cluster, as defined at upload
- * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
+ * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study", or object with name,type, and scope properties
  * @param {String} subsample Subsampling threshold, e.g. 100000
  * @param {String} consensus Statistic to use for consensus, e.g. "mean"
  * @param {Boolean} isAnnotatedScatter If showing "Annotated scatter" plot.
@@ -177,7 +177,10 @@ export async function fetchCluster(
   isAnnotatedScatter=null, mock=false
 ) {
   // Digest full annotation name to enable easy validation in API
-  const [annotName, annotType, annotScope] = annotation.split('--')
+  let [annotName, annotType, annotScope] = [annotation.name, annotation.type, annotation.scope]
+  if (annotName == undefined) {
+    [annotName, annotType, annotScope] = annotation.split('--')
+  }
   // eslint-disable-next-line camelcase
   const is_annotated_scatter = isAnnotatedScatter
   const paramObj = {
@@ -191,7 +194,7 @@ export async function fetchCluster(
   }
 
   const params = stringifyQuery(paramObj)
-  if (!cluster) {
+  if (!cluster || cluster === '') {
     cluster = '_default'
   }
   const apiUrl = `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
