@@ -10,12 +10,12 @@
 user_access_token = {access_token: 'test-api-token', expires_in: 3600, expires_at: Time.zone.now + 1.hour}
 user_2_access_token = {access_token: 'test-api-token-2', expires_in: 3600, expires_at: Time.zone.now + 1.hour}
 user = User.find_or_initialize_by(email:'testing.user@gmail.com')
-user.update!(password:'password', admin: true, uid: '12345',
+user.update!(password:'password', admin: true, uid: '12345', metrics_uuid: SecureRandom.uuid, 
              api_access_token: user_access_token, access_token: user_access_token, registered_for_firecloud: true,
              authentication_token: Devise.friendly_token(32))
 user_2 = User.find_or_initialize_by(email: 'sharing.user@gmail.com')
 user_2.update!(password: 'password', uid: '67890',
-               api_access_token: user_2_access_token, access_token: user_2_access_token)
+               api_access_token: user_2_access_token, access_token: user_2_access_token, metrics_uuid: SecureRandom.uuid)
 
 TosAcceptance.create(email: user.email)
 TosAcceptance.create(email: user_2.email)
@@ -144,7 +144,7 @@ StudyFileBundle.create!(bundle_type: 'BAM', original_file_list: [{'name' => 'sam
 resource = api_study.external_resources.build(url: 'https://singlecell.broadinstitute.org', title: 'SCP',
                                               description: 'Link to Single Cell Portal')
 resource.save!
-api_user = User.create!(email:'testing.user.2@gmail.com', password:'someotherpassword',
+api_user = User.create!(email:'testing.user.2@gmail.com', password:'someotherpassword', metrics_uuid: SecureRandom.uuid,
              api_access_token: {access_token: 'test-api-token-2', expires_in: 3600, expires_at: Time.zone.now + 1.hour})
 
 # Analysis Configuration seeds
