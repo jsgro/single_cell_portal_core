@@ -69,10 +69,10 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
     sign_in_and_update @user
     execute_http_request(:get, api_v1_study_cluster_path(@basic_study, 'clusterA.txt'))
     assert_equal 3, json['numPoints']
-    assert_equal ["cat (1 points)", "dog (2 points)"], json['data'].map{|d| d['name']}
+    assert_equal ["bar (2 points)", "baz (1 points)"], json['data'].map{|d| d['name']}
     assert_equal false, json['is3D']
-    dog_data = json['data'].find{|d| d['name'] == 'dog (2 points)'}
-    assert_equal [1, 6], dog_data['x']
+    bar_data = json['data'].find{|d| d['name'] == 'bar (2 points)'}
+    assert_equal [1, 4], bar_data['x']
   end
 
   test 'should load clusters with slashes in name' do

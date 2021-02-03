@@ -305,10 +305,12 @@ class IngestJob
       SingleCellMailer.notify_user_parse_complete(self.user.email, subject, message, self.study).deliver_now
       self.set_study_state_after_ingest
       self.study_file.invalidate_cache_by_file_type # clear visualization caches for file
+      self.log_to_mixpanel
     elsif self.done? && self.failed?
       Rails.logger.error "IngestJob poller: #{self.pipeline_name} has failed."
       # log errors to application log for inspection
       self.log_error_messages
+      self.log_to_mixpanel # log before queuing file for deletion to preserve properties
       self.create_study_file_copy
       self.study_file.update(parse_status: 'failed')
       DeleteQueueJob.new(self.study_file).delay.perform
@@ -511,7 +513,77 @@ class IngestJob
     end
   end
 
-  # generates parse completion email body, and logs analytics to Mixpanel
+  # gather statistics about this run to report to Mixpanel
+  #
+  # * *returns*
+  #   - (Hash) => Hash of job statistics to use with IngestJob#log_to_mixpanel
+  def get_job_analytics
+    file_type = self.study_file.file_type
+    # Event properties to log to Mixpanel.
+    # Mixpanel uses camelCase for props; snake_case would degrade Mixpanel UX.
+    job_props = {
+      perfTime: self.get_total_runtime_ms, # Latency in milliseconds
+      fileType: file_type,
+      fileSize: self.study_file.upload_file_size,
+      action: self.action,
+      studyAccession: self.study.accession,
+      jobStatus: self.failed? ? 'failed' : 'success'
+    }
+
+    case file_type
+    when /Matrix/
+      # since genes are not ingested for raw counts matrices, report number of cells ingested
+      cells = self.study.expression_matrix_cells(self.study_file)
+      cell_count = cells.present? ? cells.count : 0
+      job_props.merge!({:numCells => cell_count})
+      if !self.study_file.is_raw_counts_file?
+        genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
+        job_props.merge!({:numGenes => genes})
+      end
+    when 'Metadata'
+      use_metadata_convention = self.study_file.use_metadata_convention
+      job_props.merge!({useMetadataConvention: use_metadata_convention})
+      if use_metadata_convention
+        project_name = 'alexandria_convention' # hard-coded is fine for now, consider implications if we get more projects
+        current_schema_version = get_latest_schema_version(project_name)
+        job_props.merge!(
+          {
+            metadataConvention: project_name,
+            schemaVersion: current_schema_version
+          }
+        )
+      end
+    when 'Cluster'
+      cluster = ClusterGroup.find_by(study_id: self.study.id, study_file_id: self.study_file.id)
+      job_props.merge!({metadataFilePresent: self.study.metadata_file.present?})
+      # must make sure cluster is present, as parse failures may result in no data having been stored
+      if self.action == :ingest_cluster && cluster.present?
+        cluster_type = cluster.cluster_type
+        cluster_points = cluster.points
+        can_subsample = cluster.can_subsample?
+        job_props.merge!(
+          {
+            clusterType: cluster_type,
+            numClusterPoints: cluster_points,
+            canSubsample: can_subsample
+          }
+        )
+      end
+    end
+    job_props.with_indifferent_access
+  end
+
+  # logs analytics to Mixpanel
+  #
+  # * *yields*
+  #  - MetricsService.log => reports output of IngestJob#get_job_analytics to Mixpanel via Bard
+  def log_to_mixpanel
+    mixpanel_log_props = self.get_job_analytics
+    # log job properties to Mixpanel
+    MetricsService.log('ingest', mixpanel_log_props, self.user)
+  end
+
+  # generates parse completion email body
   #
   # * *returns*
   #   - (Array) => List of message strings to print in a completion email
@@ -520,43 +592,24 @@ class IngestJob
 
     message = ["Total parse time: #{self.get_total_runtime}"]
 
-    # Event properties to log to Mixpanel.
-    # Mixpanel uses camelCase for props; snake_case would degrade Mixpanel UX.
-    mixpanel_log_props = {
-      perfTime: self.get_total_runtime_ms, # Latency in milliseconds
-      fileType: file_type,
-      fileSize: self.study_file.upload_file_size,
-      action: self.action,
-      studyAccession: self.study.accession
-    }
-
     case file_type
     when /Matrix/
       # since genes are not ingested for raw counts matrices, report number of cells ingested
       if self.study_file.is_raw_counts_file?
         cells = self.study.expression_matrix_cells(self.study_file).count
         message << "Cells ingested: #{cells}"
-        mixpanel_log_props.merge!({:numCells => cells})
       else
         genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
         message << "Gene-level entries created: #{genes}"
-        mixpanel_log_props.merge!({:numGenes => genes})
       end
     when 'Metadata'
       use_metadata_convention = self.study_file.use_metadata_convention
-      mixpanel_log_props.merge!({
-        useMetadataConvention: use_metadata_convention,
-      })
       if use_metadata_convention
         project_name = 'alexandria_convention' # hard-coded is fine for now, consider implications if we get more projects
         current_schema_version = get_latest_schema_version(project_name)
         schema_url = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention'
         message << "This metadata file was validated against the latest <a href='#{schema_url}'>Metadata Convention</a>"
         message << "Convention version: <strong>#{project_name}/#{current_schema_version}</strong>"
-        mixpanel_log_props.merge!({
-          metadataConvention: project_name,
-          schemaVersion: current_schema_version
-        })
       end
       cell_metadata = CellMetadatum.where(study_id: self.study.id, study_file_id: self.study_file.id)
       message << "Entries created:"
@@ -588,21 +641,11 @@ class IngestJob
           message << "You will receive an additional email once this has completed."
           message << "While subsamples are being computed, you will not be able to remove this cluster file or your metadata file."
         end
-
-        mixpanel_log_props.merge!({
-          clusterType: cluster_type,
-          numClusterPoints: cluster_points,
-          canSubsample: can_subsample,
-          metadataFilePresent: metadata_file_present
-        })
       else
         message << "Subsampling has completed for #{cluster.name}"
         message << "Subsamples generated: #{cluster.subsample_thresholds_required.join(', ')}"
       end
     end
-
-    MetricsService.log('ingest', mixpanel_log_props, user)
-
     message
   end
 

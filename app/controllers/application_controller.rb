@@ -162,13 +162,6 @@ class ApplicationController < ActionController::Base
     uri.scheme == 'https' && ValidationTools::GCS_HOSTNAMES.include?(uri.hostname) && parsed_query.keys == ValidationTools::SIGNED_URL_KEYS
   end
 
-  def handle_401
-    respond_to do |format|
-      format.html {redirect_to new_user_session_path, alert: 'Your session has expired.'}
-      format.js {render js: "alert('Your session has expired; Please log in again')"}
-    end
-  end
-
   # helper method to check all conditions before allowing a user to download file
   # verifies user permissions, study availability, and download agreements, as well as external services
   def verify_file_download_permissions(study)
@@ -259,6 +252,15 @@ class ApplicationController < ActionController::Base
       logger.error "#{Time.zone.now}: error generating signed url for #{params[:filename]}; #{e.message}"
       redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
                   alert: "We were unable to download the file #{params[:filename]} do to an error: #{view_context.simple_format(e.message)}" and return
+    end
+  end
+
+  # generic exception handling for reporting to Mixpanel/Sentry
+  rescue_from Exception do |exception|
+    MetricsService.report_error(exception, request, current_user, @study)
+    respond_to do |format|
+      format.html { render '/error_pages/500', layout: 'application', status: 500 }
+      format.json { render json: {error: exception.message}, status: 500}
     end
   end
 

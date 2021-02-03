@@ -36,10 +36,10 @@ module Api
         def render_violin
           cluster = ClusterVizService.get_cluster_group(@study, params)
           annotation = AnnotationVizService.get_selected_annotation(@study,
-                                                                    cluster,
-                                                                    params[:annotation_name],
-                                                                    params[:annotation_type],
-                                                                    params[:annotation_scope])
+                                                                    cluster: cluster,
+                                                                    annot_name: params[:annotation_name],
+                                                                    annot_type: params[:annotation_type],
+                                                                    annot_scope: params[:annotation_scope])
           subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
           genes = RequestUtils.get_genes_from_param(@study, params[:genes])
           if genes.empty?
