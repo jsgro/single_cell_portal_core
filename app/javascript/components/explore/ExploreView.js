@@ -78,22 +78,22 @@ function RoutableExploreTab({studyAccession}) {
   }, [studyAccession])
 
   let viewOptionsIcon = showViewOptions ? faCaretRight : faCaretLeft
-  let [tabClass, controlClass] = ['col-md-12', 'hidden']
+  let [mainViewClass, controlPanelClass, optionsLinkClass ] = ['col-md-12', 'hidden', 'closed']
   if (showViewOptions) {
-    [tabClass, controlClass] = ['col-md-10', 'col-md-2']
+    [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2', 'open']
   }
 
   return (
     <div className="study-explore">
 
       <div className="row">
-        <div className={tabClass}>
+        <div className={mainViewClass}>
           <ExploreDisplayTabs studyAccession={studyAccession}
                               viewOptions={viewOptions}
                               updateViewOptions={updateViewOptions}
                               exploreInfo={exploreInfo}/>
         </div>
-        <div className={controlClass}>
+        <div className={controlPanelClass}>
           <ClusterControls studyAccession={studyAccession}
                            renderParams={ viewOptions }
                            setRenderParams={updateViewOptions}
@@ -102,7 +102,7 @@ function RoutableExploreTab({studyAccession}) {
 
         </div>
       </div>
-      <button className="action view-options-toggle" onClick={() => setShowViewOptions(!showViewOptions)}>
+      <button className={`action view-options-toggle ${optionsLinkClass}`} onClick={() => setShowViewOptions(!showViewOptions)}>
         <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/> View Options
       </button>
     </div>

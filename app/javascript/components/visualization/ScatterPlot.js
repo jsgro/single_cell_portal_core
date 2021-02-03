@@ -26,22 +26,22 @@ export default function ScatterPlot({studyAccession, viewOptions, exploreInfo}) 
 
   function handleResponse(clusterResponse) {
     if (clusterResponse.annotParams.type === 'group' && !clusterResponse.gene) {
-      clusterResponse = setMarkerColors(clusterResponse)
+      clusterResponse.data = setMarkerColors(clusterResponse.data)
     }
     const layout = basePlotlyLayout(clusterResponse)
-    Plotly.newPlot(graphElementId, clusterResponse, layout, {responsive: true})
+    Plotly.newPlot(graphElementId, clusterResponse.data, layout, { responsive: true })
     setClusterData(clusterResponse)
+    setIsLoading(false)
   }
 
   useEffect(() => {
+    setIsLoading(true)
     const clusterResponse = fetchCluster(studyAccession,
                               viewOptions.cluster,
                               viewOptions.annotation ? viewOptions.annotation : '',
                               viewOptions.subsample,
                               viewOptions.consensus,
                               viewOptions.genes).then(handleResponse)
-
-
   }, [viewOptions.cluster, viewOptions.annotation.name, viewOptions.subsample])
   return (
     <div className="plot">
