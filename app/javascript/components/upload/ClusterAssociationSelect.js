@@ -50,14 +50,13 @@ export default function ClusterAssociationSelect({initialValue, parentForm, hidd
     updateHiddenField(hiddenField, selections)
   }
 
-  const selectOpts = opts
-
   return (
     <label>
       Corresponding cluster:
-      <Select options={selectOpts}
+      <Select options={opts}
               value={selected}
               isMulti={true}
+              placeholder="None"
               onChange={updateSelection}/>
     </label>
   )

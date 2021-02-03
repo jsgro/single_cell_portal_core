@@ -9,7 +9,7 @@
   <%= f.hidden_field :spatial_cluster_associations, {class: 'hidden spatial_cluster_associations', multiple: true} %>
   <% if User.feature_flag_for_instance(current_user, 'spatial_transcriptomics') %>
     <div class="form-group row">
-      <div class="col-sm-8" >
+      <div class="col-sm-4" >
         <%= f.label :is_spatial, 'Coordinate data type: ' %><br/>
         <%= f.label :is_spatial_false, {for: "is_spatial_false_#{study_file._id}"} do %>
           <%= f.radio_button :is_spatial, false, {id: "is_spatial_false_#{study_file._id}", class: "is_spatial_false"}  %>
@@ -22,7 +22,7 @@
         <% end %>
 
       </div>
-      <div class="col-sm-4">
+      <div class="col-sm-8">
         <div class="spatial_associations_select"></div>
       </div>
     </div>
