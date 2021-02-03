@@ -23,6 +23,10 @@ export function clearScatterPlots() {
   scatterPlots = []
 }
 
+export function getScatterPlots() {
+  return scatterPlots
+}
+
 /**
  * Resize Plotly scatter plots, e.g. on window resize or "View Options" click
  */
