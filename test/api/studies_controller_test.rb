@@ -40,6 +40,11 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
         assert json[attribute] == value, "Attribute mismatch: #{attribute} is incorrect, expected #{value} but found #{json[attribute.to_s]}"
       end
     end
+
+    # ensure other users cannot access study
+    sign_in_and_update(@user_2)
+    execute_http_request(:get, api_v1_study_path(@study), user: @user_2)
+    assert_response 403
   end
 
   # create, update & delete tested together to use new object rather than main testing study
@@ -158,7 +163,6 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
 
   test 'should enforce edit access restrictions on studies' do
     # auth as other user
-    sign_out @user
     sign_in_and_update(@user_2)
     update_attributes = {
       study: {
@@ -167,6 +171,5 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     }
     execute_http_request(:patch, api_v1_study_path(id: @study.id.to_s), request_payload: update_attributes, user: @user_2)
     assert_response 403
-    sign_in_and_update(@user)
   end
 end
