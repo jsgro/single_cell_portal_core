@@ -121,7 +121,7 @@ class SiteController < ApplicationController
                                                                 scpbr: params[:scpbr])) and return
     else
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
-                  alert: 'Study not found.  Please check the name and try again.' and return
+                  alert: "You either do not have permission to perform that action, or #{params[:identifier]} does not exist." and return
     end
   end
 
@@ -789,6 +789,7 @@ class SiteController < ApplicationController
       sanitized_params.delete(:user_data_arrays_attributes) # remove data_arrays attributes due to size
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       # If an invalid value was somehow passed through the form, and couldn't save the annotation
       @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
       @options = ClusterVizService.load_cluster_group_options(@study)
@@ -802,6 +803,7 @@ class SiteController < ApplicationController
       sanitized_params.delete(:user_data_arrays_attributes) # remove data_arrays attributes due to size
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       # If something is nil and can't have a method called on it, respond with an alert
       @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
       @options = ClusterVizService.load_cluster_group_options(@study)
@@ -815,6 +817,7 @@ class SiteController < ApplicationController
       sanitized_params.delete(:user_data_arrays_attributes) # remove data_arrays attributes due to size
       error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       # If a generic unexpected error occurred and couldn't save the annotation
       @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
       @options = ClusterVizService.load_cluster_group_options(@study)
@@ -895,6 +898,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "Error retrieving workspace samples for #{study.name}; #{e.message}"
       render json: []
     end
@@ -947,6 +951,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.info "Error saving workspace entities: #{e.message}"
       @alert = "An error occurred while trying to save your sample information: #{view_context.simple_format(e.message)}"
       render action: :notice
@@ -974,6 +979,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "Error deleting workspace entities: #{e.message}"
       @alert = "An error occurred while trying to delete your sample information: #{view_context.simple_format(e.message)}"
       render action: :notice
@@ -1028,6 +1034,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "Unable to submit workflow #{@analysis_configuration.identifier} in #{@study.firecloud_workspace} due to: #{e.message}"
       @alert = "We were unable to submit your workflow due to an error: #{e.message}"
       render action: :notice
@@ -1042,6 +1049,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "Unable to load workspace submission #{params[:submission_id]} in #{@study.firecloud_workspace} due to: #{e.message}"
       render js: "alert('We were unable to load the requested submission due to an error: #{e.message}')"
     end
@@ -1056,6 +1064,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       @alert = "Unable to abort submission #{@submission_id} due to an error: #{e.message}"
       render action: :notice
     end
@@ -1091,6 +1100,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       @alert = "Unable to retrieve submission #{@submission_id} error messages due to: #{e.message}"
       render action: :notice
     end
@@ -1113,6 +1123,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       @alert = "Unable to retrieve submission #{@submission_id} outputs due to: #{e.message}"
       render action: :notice
     end
@@ -1141,6 +1152,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       @alert = "An error occurred trying to load submission '#{params[:submission_id]}': #{e.message}"
       render action: :notice
     end
@@ -1177,6 +1189,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "Unable to remove submission #{params[:submission_id]} files from #{@study.firecloud_workspace} due to: #{e.message}"
       @alert = "Unable to delete the outputs for #{params[:submission_id]} due to the following error: #{e.message}"
       render action: :notice
@@ -1222,7 +1235,8 @@ class SiteController < ApplicationController
     @study = Study.find_by(accession: params[:accession])
         # redirect if study is not found
     if @study.nil?
-      redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: 'Study not found.  Please check the name and try again.' and return
+      redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
+                  alert: "You either do not have permission to perform that action, or #{params[:accession]} does not exist." and return
     end
         #Check if current url_safe_name matches model
     unless @study.url_safe_name == params[:study_name]
@@ -1285,6 +1299,7 @@ class SiteController < ApplicationController
       logger.error "Error checking FireCloud API status: #{e.class.name} -- #{e.message}"
       error_context = ErrorTracker.format_extra_context(@study, {firecloud_status: api_status})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
     end
   end
 
@@ -1309,6 +1324,7 @@ class SiteController < ApplicationController
       logger.error "Error setting study permissions: #{e.class.name} -- #{e.message}"
       error_context = ErrorTracker.format_extra_context(@study)
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
     end
   end
 
@@ -1388,7 +1404,7 @@ class SiteController < ApplicationController
   # check if a study is 'detached' from a workspace
   def check_study_detached
     if @study.detached?
-      @alert = 'We were unable to complete your request as the study is question is detached from the workspace (maybe the workspace was deleted?)'
+      @alert = "We were unable to complete your request as #{@study.accession} is detached from the workspace (maybe the workspace was deleted?)"
       respond_to do |format|
         format.js {render js: "alert('#{@alert}');"}
         format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: @alert and return}
