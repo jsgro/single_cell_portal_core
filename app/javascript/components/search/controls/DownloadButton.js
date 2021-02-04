@@ -15,7 +15,7 @@ import { DownloadContext } from 'providers/DownloadProvider'
 import { fetchAuthCode } from 'lib/scp-api'
 
 /**
- * Fetch auth code, build download command, return configuration object
+ * Create auth code, build download command, return configuration object
  *
  * @returns {Object} Object for auth code, time interval, and download command
  */
@@ -157,13 +157,13 @@ function DownloadCommandContainer(props) {
  */
 function bytesToSize(bytes) {
   const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB']
-  if (bytes === 0) return 'n/a'
+  if (bytes === 0) {return 'n/a'}
 
   // eweitz: Most implementations use log(1024), but such units are
   // binary and have values like MiB (mebibyte)
   const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1000)), 10)
 
-  if (i === 0) return `${bytes} ${sizes[i]}`
+  if (i === 0) {return `${bytes} ${sizes[i]}`}
   return `${(bytes / (1000 ** i)).toFixed(1)} ${sizes[i]}`
 }
 
