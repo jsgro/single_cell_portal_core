@@ -35,9 +35,6 @@ gem 'minitest-reporters'
 
 group :development, :test do
   # Access an IRB console on exception pages or by using <%= console %> in views
-
-  # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
-  gem 'spring'
   gem 'debase'
   gem 'test-unit'
   gem 'brakeman', :require => false
@@ -97,3 +94,4 @@ gem 'rubyzip'
 gem 'time_difference'
 gem 'tcell_agent'
 gem 'sys-filesystem', require: 'sys/filesystem'
+gem 'browser'

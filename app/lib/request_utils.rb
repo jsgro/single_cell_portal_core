@@ -38,9 +38,8 @@ class RequestUtils
   def self.get_base_url
     url_opts = ApplicationController.default_url_options
     base_url = "#{url_opts[:protocol]}://#{url_opts[:host]}"
-    port = Rails::Server::Options.new.parse!(ARGV)[:Port]
-    if port
-      base_url += ":#{port.to_s}"
+    if url_opts[:port].present?
+      base_url += ":#{url_opts[:port]}"
     end
     base_url
   end

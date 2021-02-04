@@ -48,8 +48,15 @@ Rails.application.configure do
   # config.action_view.raise_on_missing_translations = true
 
   # Mitigate X-Forwarded-Host injection attacks
-  config.action_controller.default_url_options = { :host => 'localhost', protocol: 'https'}
-  config.action_controller.asset_host = ENV['NOT_DOCKERIZED'] ? 'localhost:3000' : 'localhost'
+
+  # default_url_options for URL generation both Dockerized and non-Dockerized
+  if ENV['NOT_DOCKERIZED']
+    config.action_controller.default_url_options = { :host => 'localhost', protocol: 'https', port: 3000 }
+    config.action_controller.asset_host = 'localhost:3000'
+  else
+    config.action_controller.default_url_options = { :host => 'localhost', protocol: 'https' }
+    config.action_controller.asset_host = 'localhost'
+  end
 
   # Use an evented file watcher to asynchronously detect changes in source code,
   # routes, locales, etc. This feature depends on the listen gem.

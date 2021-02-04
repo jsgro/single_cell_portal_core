@@ -110,7 +110,7 @@ export async function createUserAnnotation(
     cluster, annotation, subsample
   })
 
-  const apiUrl = `/site/studies/${studyAccession}/user_annotation`
+  const apiUrl = `/studies/${studyAccession}/user_annotations`
   const [jsonOrResponse, perfTime] = await scpApi(apiUrl, init, mock)
 
   let message = ''
@@ -121,7 +121,7 @@ export async function createUserAnnotation(
   // React, so components share more error handling logic and UI
   if (jsonOrResponse.ok === false) {
     const json = await jsonOrResponse.json()
-    message = json.message
+    message = json.error
     const status = jsonOrResponse.status
     if (status === 400) {
       errorType = 'user'

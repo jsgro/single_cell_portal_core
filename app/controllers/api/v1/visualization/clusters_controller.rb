@@ -113,10 +113,10 @@ module Api
         def self.get_cluster_viz_data(study, cluster, url_params)
           annot_params = AnnotationsController.get_annotation_params(url_params)
           annotation = AnnotationVizService.get_selected_annotation(study,
-                                                       cluster,
-                                                       annot_params[:name],
-                                                       annot_params[:type],
-                                                       annot_params[:scope])
+                                                       cluster: cluster,
+                                                       annot_name: annot_params[:name],
+                                                       annot_type: annot_params[:type],
+                                                       annot_scope: annot_params[:scope])
           if !annotation
             return nil
           end
