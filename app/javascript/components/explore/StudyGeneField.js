@@ -13,16 +13,14 @@ export default function StudyGeneField({ genes, setGenes, allGenes }) {
   const [inputText, setInputText] = useState('')
 
   let geneOptions = []
-  if (allGenes) {
-    if (inputText && inputText.length > 1) {
-      const lowerCaseInput = inputText.toLowerCase()
-      geneOptions = allGenes.filter(geneName => {
-        return geneName.toLowerCase().includes(lowerCaseInput)
-      }).map(geneName => ({
-        label: geneName,
-        value: geneName
-      }))
-    }
+  if (allGenes && inputText && inputText.length > 1) {
+    const lowerCaseInput = inputText.toLowerCase()
+    geneOptions = allGenes.filter(geneName => {
+      return geneName.toLowerCase().includes(lowerCaseInput)
+    }).map(geneName => ({
+      label: geneName,
+      value: geneName
+    }))
   }
 
   let enteredGeneArray = []
