@@ -20,6 +20,8 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
 
   teardown do
     reset_user_tokens
+    study = Study.find_by(name: "API Test Study #{@random_seed}")
+    study.update(public: true, detached: false)
   end
 
   test 'should get all studies' do
@@ -45,6 +47,13 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
            "Did not find correct number of files, expected #{expected_files} but found #{json['study_files'].size}"
     assert json['external_resources'].size == expected_resources,
            "Did not find correct number of resource links, expected #{expected_resources} but found #{json['external_resources'].size}"
+
+    # ensure access restrictions are in place
+    @study.update(public: false)
+    other_user = User.find_by(email: 'sharing.user@gmail.com')
+    sign_in_and_update other_user
+    execute_http_request(:get, api_v1_site_study_view_path(accession: @study.accession), user: other_user)
+    assert_response 403
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
@@ -85,8 +94,6 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     assert_response 410,
                     "Did not provide correct response code when downloading file from detached study, expected 401 but found #{response.code}"
 
-    # reset status so downstream tests don't break
-    @study.update(detached: false)
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
@@ -108,6 +115,14 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     @user = nil
     execute_http_request(:get, api_v1_site_study_download_data_path(accession: @study.accession, filename: file.upload_file_name))
     assert_response 401, "Did not correctly respond 401 if user is not signed in: #{response.code}"
+
+    # ensure private downloads respect access restriction
+    @study.update(public: false)
+    other_user = User.find_by(email: 'sharing.user@gmail.com')
+    sign_in_and_update other_user
+    execute_http_request(:get, api_v1_site_study_download_data_path(accession: @study.accession, filename: file.upload_file_name),
+                         user: other_user)
+    assert_response 403
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
@@ -133,6 +148,13 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     @user = nil
     execute_http_request(:get, api_v1_site_study_stream_data_path(accession: @study.accession, filename: file.upload_file_name))
     assert_response 401, "Did not correctly respond 401 if user is not signed in: #{response.code}"
+
+    @study.update(public: false)
+    other_user = User.find_by(email: 'sharing.user@gmail.com')
+    sign_in_and_update other_user
+    execute_http_request(:get, api_v1_site_study_stream_data_path(accession: @study.accession, filename: file.upload_file_name),
+                         user: other_user)
+    assert_response 403
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
