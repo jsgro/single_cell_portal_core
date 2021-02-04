@@ -56,6 +56,7 @@ function RoutableExploreTab({studyAccession}) {
   if (initialOptions && !location.search) {
     // just render the defaults
     viewOptions = initialOptions
+    viewOptions.isUserUpdated = false
   }
 
   function updateViewOptions(newOptions, isUserUpdated=true) {
