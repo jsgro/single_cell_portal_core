@@ -6,10 +6,10 @@ import ScatterPlotGroup from './ScatterPlotGroup'
 /*
  * Renders the gene search box and the tab selection
  * Responsible for determining which tabs are available for a given view of the study
- * @param {string} studyAccession  the study accession to visualize
- * @param {obj} exploreInfo  the object returned from a call to api/v1/studies/{study}/visualization/explore
- * @param {obj} viewOptions  object with cluster, annotation, and other viewing properties specified.
- * @param { function } updateViewOptions function for passing updates to the viewOptions object
+ * @param {String} studyAccession  the study accession to visualize
+ * @param {Object} exploreInfo  the object returned from a call to api/v1/studies/{study}/visualization/explore
+ * @param {Object} viewOptions  object with cluster, annotation, and other viewing properties specified.
+ * @param { Function } updateViewOptions function for passing updates to the viewOptions object
  */
 export default function ExploreDisplayTabs({studyAccession, exploreInfo, viewOptions, updateViewOptions}) {
   const showClusterTab = !viewOptions.genes
