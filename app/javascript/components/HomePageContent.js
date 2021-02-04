@@ -14,7 +14,7 @@ import ErrorBoundary from 'lib/ErrorBoundary'
 import * as queryString from 'query-string'
 
 /** include search controls and results */
-export function StudySearchView({advancedSearchDefault}) {
+export function StudySearchView({ advancedSearchDefault }) {
   const studySearchState = useContext(StudySearchContext)
   return <>
     <SearchPanel advancedSearchDefault={advancedSearchDefault} searchOnLoad={true}/>

@@ -12,13 +12,13 @@ export const emptyRenderParams = {
   cluster: '',
   annotation: '',
   subsample: '',
-  collapseBy: null,
+  collapseBy: null
 }
 
 const collapseOptions = [
-  {label: 'Dot plot', value: null},
-  {label: 'Violin - Mean', value: 'mean'},
-  {label: 'Violin - Median', value: 'median'}
+  { label: 'Dot plot', value: null },
+  { label: 'Violin - Mean', value: 'mean' },
+  { label: 'Violin - Median', value: 'median' }
 ]
 
 // takes a full annotation object, which may have
@@ -47,20 +47,20 @@ function getSubsampleOptions(annotationList, clusterName) {
 
 /** takes the server response and returns cluster options suitable for react-select */
 function getClusterOptions(annotationList) {
-  let clusterList = annotationList.clusters ? annotationList.clusters : []
-  return clusterList.map(name => {return { label: name, value: name}})
+  const clusterList = annotationList.clusters ? annotationList.clusters : []
+  return clusterList.map(name => {return { label: name, value: name }})
 }
 
 /** takes the server response and returns annotation options suitable for react-select */
 function getAnnotationOptions(annotationList, clusterName) {
   return [{
-      label: 'Study Wide',
-      options: annotationList.annotations
-        .filter(annot => annot.scope == 'study').map(annot => annotationKeyProperties(annot))
-    }, {
-      label: 'Cluster-Based',
-      options: annotationList.annotations
-        .filter(annot => annot.cluster_name == clusterName).map(annot => annotationKeyProperties(annot))
+    label: 'Study Wide',
+    options: annotationList.annotations
+      .filter(annot => annot.scope == 'study').map(annot => annotationKeyProperties(annot))
+  }, {
+    label: 'Cluster-Based',
+    options: annotationList.annotations
+      .filter(annot => annot.cluster_name == clusterName).map(annot => annotationKeyProperties(annot))
   }]
 }
 
@@ -76,7 +76,6 @@ function getDefaultAnnotationForCluster(annotationList, clusterName, currentAnno
   } else {
     return annotationList.annotations[0]
   }
-
 }
 
 /** takes the server response and returns subsample default subsample for the cluster */
@@ -101,13 +100,15 @@ function getDefaultSubsampleForCluster(annotationList, clusterName) {
     )
 
   */
-export default function ClusterControls({studyAccession,
-                                         showCollapseBy,
-                                         showSubsample,
-                                         preloadedAnnotationList,
-                                         fetchAnnotationList=true,
-                                         renderParams,
-                                         setRenderParams}) {
+export default function ClusterControls({
+  studyAccession,
+  showCollapseBy,
+  showSubsample,
+  preloadedAnnotationList,
+  fetchAnnotationList=true,
+  renderParams,
+  setRenderParams
+}) {
   const [annotationList, setAnnotationList] =
     useState({ default_cluster: null, default_annotation: null, annotations: [] })
 
@@ -117,7 +118,7 @@ export default function ClusterControls({studyAccession,
 
   // override the default of interior scrollbars on the menu
   const customSelectStyle = {
-    control: (provided) => ({
+    control: provided => ({
       ...provided,
       borderColor: '#4d72aa'
     })
@@ -139,10 +140,8 @@ export default function ClusterControls({studyAccession,
     // or if the preloadedList has been specified already
     if (fetchAnnotationList) {
       fetchClusterOptions(studyAccession).then(newAnnotationList => update(newAnnotationList))
-    } else {
-      if (preloadedAnnotationList) {
-        update(preloadedAnnotationList)
-      }
+    } else if (preloadedAnnotationList) {
+      update(preloadedAnnotationList)
     }
   }, [studyAccession, preloadedAnnotationList])
 
@@ -152,7 +151,7 @@ export default function ClusterControls({studyAccession,
         <label>Load cluster</label>
         <Select options={clusterOptions}
           value={{ label: renderParams.cluster, value: renderParams.cluster }}
-          onChange={ cluster => setRenderParams({
+          onChange={cluster => setRenderParams({
             annotation: annotationKeyProperties(getDefaultAnnotationForCluster(annotationList, cluster.name, renderParams.annotation)),
             cluster: cluster.value,
             subsample: getDefaultSubsampleForCluster(annotationList, cluster.value),
@@ -168,18 +167,20 @@ export default function ClusterControls({studyAccession,
           getOptionLabel={annotation => annotation.name}
           getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
           onChange={annotation => setRenderParams({
-            annotation: annotation,
+            annotation,
             cluster: renderParams.cluster,
             subsample: renderParams.subsample,
             collapseBy: renderParams.collapseBy
           })}
-          styles={ customSelectStyle }/>
+          styles={customSelectStyle}/>
       </div>
       <div className="form-group">
         <label>Subsampling</label>
         <Select options={subsampleOptions}
-          value={{ label: renderParams.subsample == '' ? 'All Cells' : renderParams.subsample,
-                   value: renderParams.subsample }}
+          value={{
+            label: renderParams.subsample == '' ? 'All Cells' : renderParams.subsample,
+            value: renderParams.subsample
+          }}
           onChange={subsample => setRenderParams({
             annotation: renderParams.annotation,
             cluster: renderParams.cluster,
@@ -196,13 +197,13 @@ export default function ClusterControls({studyAccession,
             </OverlayTrigger>
           </label>
           <Select options={collapseOptions}
-            value={_find(collapseOptions, {value: renderParams.collapseBy})}
-            onChange={ collapseBy => setRenderParams({
+            value={_find(collapseOptions, { value: renderParams.collapseBy })}
+            onChange={collapseBy => setRenderParams({
               annotation: renderParams.annotation,
               cluster: renderParams.cluster,
               subsample: renderParams.subsample,
               collapseBy: collapseBy.value
-            }) }
+            })}
             styles={customSelectStyle}/>
         </div>
       }
@@ -210,7 +211,7 @@ export default function ClusterControls({studyAccession,
   )
 }
 
- const collapseByPopover = (
+const collapseByPopover = (
   <Popover id="collapse-by-genes-helptext">
     Selecting one of the 'violin' options will combine expression scores of multiple genes for each cell using the selected metric.
   </Popover>

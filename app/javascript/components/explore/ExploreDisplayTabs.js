@@ -11,33 +11,33 @@ import ScatterPlotGroup from './ScatterPlotGroup'
  * @param {Object} viewOptions  object with cluster, annotation, and other viewing properties specified.
  * @param { Function } updateViewOptions function for passing updates to the viewOptions object
  */
-export default function ExploreDisplayTabs({studyAccession, exploreInfo, viewOptions, updateViewOptions}) {
+export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOptions, updateViewOptions }) {
   const showClusterTab = !viewOptions.genes
   function setGenes(geneString) {
-    updateViewOptions({genes: geneString})
+    updateViewOptions({ genes: geneString })
   }
   return (
     <>
       <div className="row">
         <div className="col-md-5">
           <StudyGeneField genes={viewOptions.genes}
-                          setGenes={setGenes}
-                          allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
+            setGenes={setGenes}
+            allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
         </div>
         <div className="col-md-7">
           <ul className="nav nav-tabs" role="tablist" data-analytics-name="explore-default">
-          { showClusterTab &&
+            { showClusterTab &&
             <li role="presentation" className="study-nav">
-              <a onClick={() => updateViewOptions({tab: 'cluster'})}>Clusters</a>
+              <a onClick={() => updateViewOptions({ tab: 'cluster' })}>Clusters</a>
             </li>
-          }
+            }
           </ul>
         </div>
       </div>
       <div className="row">
         <div className="col-md-12">
           { showClusterTab &&
-            <ScatterPlotGroup studyAccession={studyAccession} viewOptions={viewOptions}  exploreInfo={exploreInfo}/>
+            <ScatterPlotGroup studyAccession={studyAccession} viewOptions={viewOptions} exploreInfo={exploreInfo}/>
           }
         </div>
       </div>

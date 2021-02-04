@@ -71,10 +71,10 @@ function renderDotPlot(target, dataPath, annotPath, annotation, annotationValues
     // (after 2+ hours of digging) to prevent morpheus auto-scrolling
     // to the heatmap once it's rendered
     tabManager: {
-      add: (options) => {
+      add: options => {
         $target.empty()
         $target.append(options.$el)
-        return {id: $target.attr('id'), $panel: $target}
+        return { id: $target.attr('id'), $panel: $target }
       },
       setTabTitle: () => {},
       setActiveTab: () => {},

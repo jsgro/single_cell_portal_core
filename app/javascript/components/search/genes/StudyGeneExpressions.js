@@ -4,7 +4,7 @@ import _clone from 'lodash/clone'
 import Study, { getByline } from 'components/search/results/Study'
 import StudyGeneDotPlot from 'components/visualization/StudyGeneDotPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
-import ClusterControls, {emptyRenderParams} from 'components/visualization/ClusterControls'
+import ClusterControls, { emptyRenderParams } from 'components/visualization/ClusterControls'
 import { fetchClusterOptions } from 'lib/scp-api'
 
 // finds the corresponding entry in annotationList for the given annotation,
@@ -49,9 +49,9 @@ export default function StudyGeneExpressions({ study }) {
     // render dotPlot for multigene searches that are not collapsed
     const annotationValues = getAnnotationValues(renderParams.annotation, annotationList)
     studyRenderComponent = <StudyGeneDotPlot study={study}
-                                             genes={study.gene_matches}
-                                             renderParams={renderParams}
-                                             annotationValues={annotationValues}/>
+      genes={study.gene_matches}
+      renderParams={renderParams}
+      annotationValues={annotationValues}/>
   } else {
     // render violin for single genes or collapsed
     studyRenderComponent = <StudyViolinPlot study={study} genes={study.gene_matches} renderParams={renderParams} setAnnotationList={setAnnotationList}/>

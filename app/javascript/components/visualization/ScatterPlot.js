@@ -8,13 +8,12 @@ import { setMarkerColors } from 'lib/scatter-plot'
 import { labelFont, getColorBrewerColor } from 'lib/plot'
 
 
-
-export default function ScatterPlot({studyAccession, viewOptions, exploreInfo}) {
+export default function ScatterPlot({ studyAccession, viewOptions, exploreInfo }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  let [clusterData, setClusterData] = useState(null)
+  const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
-  let hasLegend = true
+  const hasLegend = true
 
   function handleResponse(clusterResponse) {
     try {
@@ -24,7 +23,7 @@ export default function ScatterPlot({studyAccession, viewOptions, exploreInfo}) 
       const layout = getPlotlyLayout(clusterResponse)
       Plotly.newPlot(graphElementId, clusterResponse.data, layout, { responsive: true })
     } catch (error) {
-      alert("An unexpected error occurred rendering the graph: " + error)
+      alert(`An unexpected error occurred rendering the graph: ${error}`)
     }
 
     setClusterData(clusterResponse)
@@ -37,11 +36,11 @@ export default function ScatterPlot({studyAccession, viewOptions, exploreInfo}) 
     if (viewOptions.isUserUpdated !== false) {
       setIsLoading(true)
       const clusterResponse = fetchCluster(studyAccession,
-                                viewOptions.cluster,
-                                viewOptions.annotation ? viewOptions.annotation : '',
-                                viewOptions.subsample,
-                                viewOptions.consensus,
-                                viewOptions.genes).then(handleResponse)
+        viewOptions.cluster,
+        viewOptions.annotation ? viewOptions.annotation : '',
+        viewOptions.subsample,
+        viewOptions.consensus,
+        viewOptions.genes).then(handleResponse)
     }
   }, [viewOptions.cluster, viewOptions.annotation.name, viewOptions.subsample])
   return (
@@ -70,7 +69,7 @@ export default function ScatterPlot({studyAccession, viewOptions, exploreInfo}) 
 
 /** Get Plotly layout object for scatter plot */
 function getPlotlyLayout(clusterResponse) {
-  let layout = {
+  const layout = {
     hovermode: 'closest',
     font: labelFont
   }

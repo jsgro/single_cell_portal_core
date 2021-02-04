@@ -78,7 +78,7 @@ export default function CombinedFacetControl({ controlDisplayName, facetIds }) {
 
   /** do the search and close the modal */
   function handleApplyClick() {
-    if (!canApply) return
+    if (!canApply) {return}
     selectionContext.performSearch()
     if (setShowFilters) {
       setShowFilters(false)

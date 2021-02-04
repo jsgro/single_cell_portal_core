@@ -22,21 +22,21 @@ function buildViewOptionsFromQuery(query) {
   }
   if (queryParams.annotation) {
     const [name, type, scope] = queryParams.annotation.split('--')
-    annotation = {name, type, scope}
+    annotation = { name, type, scope }
   }
   return {
     cluster: queryParams.cluster ? queryParams.cluster : '',
-    annotation: annotation,
+    annotation,
     subsample: queryParams.subsample ? queryParams.subsample : '',
     collapseBy: queryParams.collapseBy ? queryParams.collapseBy : null,
     spatialFiles: queryParams.spatialFiles ? queryParams.spatialFiles.split(',') : [],
-    genes: queryParams.genes ? queryParams.genes : '',
+    genes: queryParams.genes ? queryParams.genes : ''
   }
 }
 
 /* converts the viewOptions object into a query string, inverse of buildViewOptionsFromQuery */
 function buildQueryFromViewOptions(viewOptions) {
-  let querySafeOptions = _clone(viewOptions)
+  const querySafeOptions = _clone(viewOptions)
   const annot = viewOptions.annotation
   querySafeOptions.annotation = [annot.name, annot.type, annot.scope].join('--')
   return stringifyQuery(querySafeOptions)
@@ -46,7 +46,7 @@ function buildQueryFromViewOptions(viewOptions) {
  * manages view options and basic layout for the explore tab
  * this component handles calling the api explore endpoint to get view options (clusters, etc..) for the study
  */
-function RoutableExploreTab({studyAccession}) {
+function RoutableExploreTab({ studyAccession }) {
   const [exploreInfo, setExploreInfo] = useState(null)
   const location = useLocation()
   const [initialOptions, setInitialOptions] = useState(null)
@@ -71,15 +71,14 @@ function RoutableExploreTab({studyAccession}) {
       // it should take them to the page they were on before they came to the explore tab
       navigate(`${query}#study-visualize`, { replace: true })
     }
-
   }
 
   useEffect(() => {
     fetchExplore(studyAccession).then(result => setExploreInfo(result))
   }, [studyAccession])
 
-  let viewOptionsIcon = showViewOptions ? faCaretRight : faCaretLeft
-  let [mainViewClass, controlPanelClass, optionsLinkClass ] = ['col-md-12', 'hidden', 'closed']
+  const viewOptionsIcon = showViewOptions ? faCaretRight : faCaretLeft
+  let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden', 'closed']
   if (showViewOptions) {
     [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2', 'open']
   }
@@ -90,16 +89,16 @@ function RoutableExploreTab({studyAccession}) {
       <div className="row">
         <div className={mainViewClass}>
           <ExploreDisplayTabs studyAccession={studyAccession}
-                              viewOptions={viewOptions}
-                              updateViewOptions={updateViewOptions}
-                              exploreInfo={exploreInfo}/>
+            viewOptions={viewOptions}
+            updateViewOptions={updateViewOptions}
+            exploreInfo={exploreInfo}/>
         </div>
         <div className={controlPanelClass}>
           <ClusterControls studyAccession={studyAccession}
-                           renderParams={ viewOptions }
-                           setRenderParams={updateViewOptions}
-                           preloadedAnnotationList={exploreInfo ? exploreInfo.annotationList : null}
-                           fetchAnnotationList={false}/>
+            renderParams={viewOptions}
+            setRenderParams={updateViewOptions}
+            preloadedAnnotationList={exploreInfo ? exploreInfo.annotationList : null}
+            fetchAnnotationList={false}/>
 
         </div>
       </div>
@@ -111,7 +110,7 @@ function RoutableExploreTab({studyAccession}) {
 }
 
 /* wraps the explore tab in a Router object so it can use Reach hooks for routable parameters */
-export default function ExploreTab({studyAccession}) {
+export default function ExploreTab({ studyAccession }) {
   return (
     <Router>
       <RoutableExploreTab studyAccession={studyAccession} default/>

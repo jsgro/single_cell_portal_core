@@ -95,7 +95,7 @@ export default function StudyGeneField({ genes, setGenes, allGenes }) {
           // the default blur behavior removes any entered free text,
           // we want to instead auto-convert entered free text to a gene tag
           onBlur={syncGeneArrayToInputText}
-          placeholder={ 'Genes (e.g. "PTEN NF2")' }
+          placeholder={'Genes (e.g. "PTEN NF2")'}
         />
         <div className="input-group-append">
           <Button type="submit">

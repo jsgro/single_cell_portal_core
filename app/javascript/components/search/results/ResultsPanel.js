@@ -76,10 +76,10 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
   )
 }
 
-const FacetResultsFooter = ({studySearchState}) => {
+const FacetResultsFooter = ({ studySearchState }) => {
   let resultsFooter = <div></div>
   if (studySearchState.isLoaded && studySearchState.params &&
-      getNumFacetsAndFilters(studySearchState.params.facets)[0]  > 0) {
+      getNumFacetsAndFilters(studySearchState.params.facets)[0] > 0) {
     resultsFooter = (
       <div className="flexbox alert alert-info">
         <div className="">
@@ -94,7 +94,7 @@ const FacetResultsFooter = ({studySearchState}) => {
       </div>
     )
   }
-  return resultsFooter;
+  return resultsFooter
 }
 
 

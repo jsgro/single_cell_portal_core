@@ -18,7 +18,7 @@ const filterNamesById = {}
  */
 export function mapFiltersForLogging(facetsOrFilters, isFacets=false) {
   // If testing, skip.  Tech debt to reconsider later.
-  if ('SCP' in window === false) return
+  if ('SCP' in window === false) {return}
 
   // This construct is kludgy, but helps cohesion and encapsulation
   // by putting related dense code here instead of in the calling functions
