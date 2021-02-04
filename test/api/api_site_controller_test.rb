@@ -1,7 +1,7 @@
 require 'api_test_helper'
 require 'user_tokens_helper'
 
-class SiteControllerTest < ActionDispatch::IntegrationTest
+class ApiSiteControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include Requests::JsonHelpers
   include Requests::HttpHelpers
