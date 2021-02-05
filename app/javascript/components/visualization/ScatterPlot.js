@@ -5,23 +5,24 @@ import _uniqueId from 'lodash/uniqueId'
 
 import { fetchCluster } from 'lib/scp-api'
 import { setMarkerColors } from 'lib/scatter-plot'
-import { labelFont, getColorBrewerColor } from 'lib/plot'
+import { labelFont } from 'lib/plot'
 
-
+/** Renders the appropriate scatter plot for the given study and viewOptions
+  * See ExploreView.js for the full specification of the viewOptions object
+  */
 export default function ScatterPlot({ studyAccession, viewOptions, exploreInfo }) {
-  const [isLoaded, setIsLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
-  const hasLegend = true
 
+  /** process the received scatter data from the server */
   function handleResponse(clusterResponse) {
     try {
       if (clusterResponse.annotParams.type === 'group' && !clusterResponse.gene) {
         clusterResponse.data = setMarkerColors(clusterResponse.data)
       }
       const layout = getPlotlyLayout(clusterResponse)
-      Plotly.newPlot(graphElementId, clusterResponse.data, layout, { responsive: true })
+      window.Plotly.newPlot(graphElementId, clusterResponse.data, layout, { responsive: true })
     } catch (error) {
       alert(`An unexpected error occurred rendering the graph: ${error}`)
     }
@@ -35,7 +36,7 @@ export default function ScatterPlot({ studyAccession, viewOptions, exploreInfo }
     // we will have already fetched the default view
     if (viewOptions.isUserUpdated !== false) {
       setIsLoading(true)
-      const clusterResponse = fetchCluster(studyAccession,
+      fetchCluster(studyAccession,
         viewOptions.cluster,
         viewOptions.annotation ? viewOptions.annotation : '',
         viewOptions.subsample,
@@ -68,24 +69,42 @@ export default function ScatterPlot({ studyAccession, viewOptions, exploreInfo }
 }
 
 /** Get Plotly layout object for scatter plot */
-function getPlotlyLayout(clusterResponse) {
+function getPlotlyLayout({
+  axes,
+  domainRanges,
+  hasCoordinateLabels,
+  coordinateLabels,
+  isAnnotatedScatter,
+  is3d
+}) {
   const layout = {
     hovermode: 'closest',
     font: labelFont
   }
-  if (clusterResponse.is3d) {
-    layout.scene = get3DScatterProps(clusterResponse)
+  if (is3d) {
+    layout.scene = get3DScatterProps({ domainRanges, axes })
   } else {
-    Object.assign(layout, get2DScatterProps(clusterResponse))
+    const props2d = get2DScatterProps({
+      axes,
+      domainRanges,
+      hasCoordinateLabels,
+      coordinateLabels,
+      isAnnotatedScatter
+    })
+    Object.assign(layout, props2d)
   }
 
   return layout
 }
 
-function get2DScatterProps(cluster) {
-  const {
-    axes, domainRanges, hasCoordinateLabels, coordinateLabels
-  } = cluster
+/** returns the plotly layout object for the given scatter data */
+function get2DScatterProps({
+  axes,
+  domainRanges,
+  hasCoordinateLabels,
+  coordinateLabels,
+  isAnnotatedScatter
+}) {
   const { titles } = axes
 
   const layout = {
@@ -93,7 +112,7 @@ function get2DScatterProps(cluster) {
     yaxis: { title: titles.y }
   }
 
-  if (cluster.isAnnotatedScatter === false) {
+  if (isAnnotatedScatter === false) {
     layout.xaxis.showticklabels = false
     layout.yaxis.scaleanchor = 'x'
     layout.yaxis.showticklabels = false
@@ -128,8 +147,7 @@ const baseCamera = {
 }
 
 /** Gets Plotly layout scene props for 3D scatter plot */
-export function get3DScatterProps(cluster) {
-  const { domainRanges, axes } = cluster
+export function get3DScatterProps({ domainRanges, axes }) {
   const { titles, ranges, aspects } = axes
 
   const scene = {

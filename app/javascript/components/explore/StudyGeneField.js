@@ -1,31 +1,35 @@
-import React, { useContext, useState } from 'react'
+import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
 import Modal from 'react-bootstrap/lib/Modal'
 import CreatableSelect from 'react-select/creatable'
 
+
 /** renders the gene text input
-  * This is split into its own component both for modularity, and also because
-  * having it inlined in GeneSearchView led to a mysterious infinite-repaint bug in StudyResults
+  * This shares a lot of logic with search/genes/GeneKeyword, but is kept as a separate component for
+  * now, as the need for autocomplete raises additional complexity
   */
 export default function StudyGeneField({ genes, setGenes, allGenes }) {
   const [inputText, setInputText] = useState('')
 
   let geneOptions = []
-  if (allGenes && inputText && inputText.length > 1) {
-    const lowerCaseInput = inputText.toLowerCase()
-    geneOptions = allGenes.filter(geneName => {
-      return geneName.toLowerCase().includes(lowerCaseInput)
-    }).map(geneName => ({
-      label: geneName,
-      value: geneName
-    }))
+  if (allGenes) {
+    // only show dropdown options once they've typed 2 or more characters
+    if (inputText && inputText.length > 1) {
+      const lowerCaseInput = inputText.toLowerCase()
+      geneOptions = allGenes.filter(geneName => {
+        return geneName.toLowerCase().includes(lowerCaseInput)
+      }).map(geneName => ({
+        label: geneName,
+        value: geneName
+      }))
+    }
   }
 
   let enteredGeneArray = []
   if (genes) {
-    enteredGeneArray = genes.split(' ').map(geneName => ({
+    enteredGeneArray = genes.map(geneName => ({
       label: geneName,
       value: geneName
     }))
@@ -44,7 +48,7 @@ export default function StudyGeneField({ genes, setGenes, allGenes }) {
     event.preventDefault()
     const newGeneArray = syncGeneArrayToInputText()
     if (newGeneArray && newGeneArray.length) {
-      setGenes(newGeneArray.map(g => g.value).join(' '))
+      setGenes(newGeneArray.map(g => g.value))
     } else {
       setShowEmptySearchModal(true)
     }

@@ -1,6 +1,7 @@
 import React from 'react'
 import ScatterPlot from 'components/visualization/ScatterPlot'
-/* handles a group of scatter plots, inlcuding clusters, gene expression, and/or spatial */
+
+/** handles a group of scatter plots, inlcuding clusters, gene expression, and/or spatial */
 export default function ScatterPlotGroup({ studyAccession, viewOptions, exploreInfo }) {
   let plotContainerClass = 'col-md-12'
   if (viewOptions.spatialClusters && viewOptions.spatialClusters.length) {
@@ -8,7 +9,7 @@ export default function ScatterPlotGroup({ studyAccession, viewOptions, exploreI
   }
   return (
     <div className="row">
-      Here's the ScatterPlotGroup
+      ScatterPlotGroup
       <div className={plotContainerClass}>
         <ScatterPlot studyAccession={studyAccession} viewOptions={viewOptions} exploreInfo={exploreInfo}/>
       </div>

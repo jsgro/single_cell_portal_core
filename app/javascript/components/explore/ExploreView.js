@@ -8,11 +8,9 @@ import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 
 import ClusterControls from 'components/visualization/ClusterControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
-import { stringifyQuery, fetchExplore } from 'lib/scp-api'
+import { stringifyQuery, fetchExplore, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
 
-//
-
-/* converts query string parameters into the viewOptions objet */
+/** converts query string parameters into the viewOptions objet */
 function buildViewOptionsFromQuery(query) {
   const queryParams = queryString.parse(query)
   let annotation = {
@@ -30,19 +28,21 @@ function buildViewOptionsFromQuery(query) {
     subsample: queryParams.subsample ? queryParams.subsample : '',
     collapseBy: queryParams.collapseBy ? queryParams.collapseBy : null,
     spatialFiles: queryParams.spatialFiles ? queryParams.spatialFiles.split(',') : [],
-    genes: queryParams.genes ? queryParams.genes : ''
+    genes: geneParamToArray(queryParams.genes),
+    tab: queryParams.tab ? queryParams.tab : ''
   }
 }
 
-/* converts the viewOptions object into a query string, inverse of buildViewOptionsFromQuery */
+/** converts the viewOptions object into a query string, inverse of buildViewOptionsFromQuery */
 function buildQueryFromViewOptions(viewOptions) {
   const querySafeOptions = _clone(viewOptions)
   const annot = viewOptions.annotation
   querySafeOptions.annotation = [annot.name, annot.type, annot.scope].join('--')
+  querySafeOptions.genes = geneArrayToParam(querySafeOptions.genes)
   return stringifyQuery(querySafeOptions)
 }
 
-/*
+/**
  * manages view options and basic layout for the explore tab
  * this component handles calling the api explore endpoint to get view options (clusters, etc..) for the study
  */
@@ -59,6 +59,7 @@ function RoutableExploreTab({ studyAccession }) {
     viewOptions.isUserUpdated = false
   }
 
+  /** Merges the received update into the viewOptions, and updates the page URL if need */
   function updateViewOptions(newOptions, isUserUpdated=true) {
     const mergedOpts = Object.assign({}, viewOptions, newOptions)
     if (!isUserUpdated) {
@@ -102,14 +103,15 @@ function RoutableExploreTab({ studyAccession }) {
 
         </div>
       </div>
-      <button className={`action view-options-toggle ${optionsLinkClass}`} onClick={() => setShowViewOptions(!showViewOptions)}>
+      <button className={`action view-options-toggle ${optionsLinkClass}`}
+        onClick={() => setShowViewOptions(!showViewOptions)}>
         <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/> View Options
       </button>
     </div>
   )
 }
 
-/* wraps the explore tab in a Router object so it can use Reach hooks for routable parameters */
+/** wraps the explore tab in a Router object so it can use Reach hooks for routable parameters */
 export default function ExploreTab({ studyAccession }) {
   return (
     <Router>
@@ -118,7 +120,7 @@ export default function ExploreTab({ studyAccession }) {
   )
 }
 
-/* convenience function for rendering this in a non-React part of the application */
+/** convenience function for rendering this in a non-React part of the application */
 export function renderExploreView(target, studyAccession) {
   ReactDOM.render(
     <ExploreTab studyAccession={studyAccession}/>,

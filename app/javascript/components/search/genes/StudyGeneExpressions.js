@@ -54,7 +54,7 @@ export default function StudyGeneExpressions({ study }) {
       annotationValues={annotationValues}/>
   } else {
     // render violin for single genes or collapsed
-    studyRenderComponent = <StudyViolinPlot study={study} genes={study.gene_matches} renderParams={renderParams} setAnnotationList={setAnnotationList}/>
+    studyRenderComponent = <StudyViolinPlot studyAccession={study.accession} genes={study.gene_matches} renderParams={renderParams} setAnnotationList={setAnnotationList}/>
   }
 
   useEffect(() => {

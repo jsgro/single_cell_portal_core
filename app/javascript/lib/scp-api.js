@@ -41,6 +41,17 @@ export function studyNameAsUrlParam(studyName) {
   return studyName.toLowerCase().replace(/ /g, '-').replace(/[^0-9a-z-]/gi, '')
 }
 
+/** convert a gene param string to an array of individual gene names */
+export function geneParamToArray(genes) {
+  return genes ? genes.split(' ') : []
+}
+
+/** convert a gene array to a gene param string */
+export function geneArrayToParam(genes) {
+  return genes ? genes.join(' ') : ''
+}
+
+
 /**
  * Get a one-time authorization code for download, and its lifetime in seconds
  *

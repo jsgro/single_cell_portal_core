@@ -3,24 +3,37 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
 import _capitalize from 'lodash/capitalize'
-import _clone from 'lodash/clone'
-
 import { fetchExpressionViolin } from 'lib/scp-api'
 import { renderViolinPlot } from 'lib/violin-plot'
 
-/** displays a violin plot of expression data for the given gene and study */
-export default function StudyViolinPlot({ study, genes, renderParams, setAnnotationList }) {
-  const [isLoaded, setIsLoaded] = useState(false)
+/** displays a violin plot of expression data for the given gene and study
+ * @param studyAccession {String} the study accession
+ * @param genes {Array[String]} array of gene names
+ * @param renderParams {Object} object specifying cluster, annotation, subsample and collapseBy
+ *   this is the same object returned/maintained by ClusterControls
+ * @param setAnnotationList {function} for global gene search and other places where a single call is used to
+ *   fetch both the default expression data and the cluster menu options, a function that will be
+ *   called with the annotationList returned by that call.
+  */
+export default function StudyViolinPlot({ studyAccession, genes, renderParams, setAnnotationList }) {
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
   const [studyGeneNames, setStudyGeneNames] = useState([])
+  /** this component has cases where it fetches state that it does not own -- specifically,
+   * in global gene search, the annotation list of all the control menu options is retrieved in
+   * the same call as the expression data to reduce service calls.  Then this component calls
+   * setAnnotationList to pass that up to the parent and eventually the cluster control dropdowns.
+   * Once received, the cluster control will then update render params as it popualtes itself with the defaults.
+   * This component needs to ignore that update.
+   */
+  const [ignoreNextParamUpdate, setIgnoreNextParamUpdate] = useState(false)
   const [graphElementId] = useState(_uniqueId('study-violin-'))
 
   /** gets expression data from the server */
   async function loadData() {
     setIsLoading(true)
     const results = await fetchExpressionViolin(
-      study.accession,
+      studyAccession,
       genes,
       renderParams.cluster,
       renderParams.annotation.name,
@@ -29,22 +42,29 @@ export default function StudyViolinPlot({ study, genes, renderParams, setAnnotat
       renderParams.subsample,
       renderParams.collapseBy
     )
-    if (!renderParams.cluster) {
-      setAnnotationList(results.annotation_list)
-    }
-    setIsLoaded(true)
     setIsLoading(false)
     setStudyGeneNames(results.gene_names)
     renderViolinPlot(graphElementId, results)
-  }
-
-  // do a load from the server if any parameter has changed *except* renderParams.annotationList
-  useEffect(() => {
-    if (!isLoading) {
-      loadData()
+    if (setAnnotationList) {
+      setAnnotationList(results.annotation_list)
     }
-  }, [
-    study.accession,
+  }
+  /** handles fetching the expression data (and menu option data) from the server */
+  useEffect(() => {
+    if (!ignoreNextParamUpdate) {
+      if (!isLoading) {
+        // if this is an initial render and we are responsible for loading the annotation list (e.g. global gene search)
+        // ignore the follow-on param update
+        if (!renderParams.cluster && setAnnotationList) {
+          setIgnoreNextParamUpdate(true)
+        }
+        loadData()
+      }
+    } else {
+      setIgnoreNextParamUpdate(false)
+    }
+  }, [ // do a load from the server if any of the paramenters passed to fetchExpressionViolin have changed
+    studyAccession,
     genes[0],
     renderParams.cluster,
     renderParams.annotation.name,
