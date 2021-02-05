@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import _clone from 'lodash/clone'
 
 import Study, { getByline } from 'components/search/results/Study'
-import StudyGeneDotPlot from 'components/visualization/StudyGeneDotPlot'
+import DotPlot from 'components/visualization/DotPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import ClusterControls, { emptyRenderParams, getAnnotationValues } from 'components/visualization/ClusterControls'
 import { fetchClusterOptions } from 'lib/scp-api'
@@ -34,7 +34,7 @@ export default function StudyGeneExpressions({ study }) {
     // render dotPlot for multigene searches that are not collapsed
     const annotationValues = getAnnotationValues(renderParams.annotation,
                                                  annotationList ? annotationList.annotations : [])
-    studyRenderComponent = <StudyGeneDotPlot studyAccession={study.accession}
+    studyRenderComponent = <DotPlot studyAccession={study.accession}
       genes={study.gene_matches}
       renderParams={renderParams}
       annotationValues={annotationValues}/>

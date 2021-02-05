@@ -30,7 +30,7 @@ export default function ScatterPlot({ studyAccession, viewOptions, plotOptions }
     setClusterData(clusterResponse)
     setIsLoading(false)
   }
-  console.log(viewOptions)
+
   useEffect(() => {
     // don't update if the param changes are just defaults coming back from the server,
     // we will have already fetched the default view
@@ -43,7 +43,11 @@ export default function ScatterPlot({ studyAccession, viewOptions, plotOptions }
         viewOptions.consensus,
         viewOptions.genes).then(handleResponse)
     }
-  }, [viewOptions.cluster, viewOptions.annotation.name, viewOptions.subsample, viewOptions.consensus, viewOptions.genes.join(',')])
+  }, [viewOptions.cluster,
+    viewOptions.annotation.name,
+    viewOptions.subsample,
+    viewOptions.consensus,
+    viewOptions.genes.join(',')])
   return (
     <div className="plot">
       <div

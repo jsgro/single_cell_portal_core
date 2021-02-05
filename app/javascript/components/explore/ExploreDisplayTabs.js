@@ -3,7 +3,8 @@ import _clone from 'lodash/clone'
 import StudyGeneField from './StudyGeneField'
 import ScatterPlot from 'components/visualization/ScatterPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
-import StudyGeneDotPlot from 'components/visualization/StudyGeneDotPlot'
+import DotPlot from 'components/visualization/DotPlot'
+import Heatmap from 'components/visualization/Heatmap'
 import { getAnnotationValues } from 'components/visualization/ClusterControls'
 
 const tabList = [
@@ -126,6 +127,11 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
                 annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}/>
             </div>
           }
+          { enabledTabs.includes('heatmap') &&
+            <div className={shownTab === 'heatmap' ? '' : 'hidden'}>
+              <Heatmap studyAccession={studyAccession} renderParams={viewOptions} genes={viewOptions.genes} />
+            </div>
+          }
         </div>
       </div>
     </>
@@ -135,7 +141,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
 /** renders the dot plot tab for multi gene searches */
 function DotPlotTab({studyAccession, viewOptions, annotations}) {
   let annotationValues = getAnnotationValues(viewOptions.annotation, annotations)
-  return (<StudyGeneDotPlot
+  return (<DotPlot
     studyAccession={studyAccession}
     renderParams={viewOptions}
     genes={viewOptions.genes}
