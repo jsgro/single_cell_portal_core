@@ -7,39 +7,39 @@ import { log, startPendingEvent } from 'lib/metrics-api'
 import { getExpressionHeatmapURL, getAnnotationCellValuesURL } from 'lib/scp-api'
 
 /** renders a morpheus powered heatmap for the given params */
-export default function Heatmap({ studyAccession, genes, renderParams }) {
+export default function Heatmap({ studyAccession, genes, dataParams }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
-  const expressionValuesURL = getExpressionHeatmapURL(studyAccession, genes, renderParams.cluster)
+  const expressionValuesURL = getExpressionHeatmapURL(studyAccession, genes, dataParams.cluster)
   const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
-                                                             renderParams.cluster,
-                                                             renderParams.annotation.name,
-                                                             renderParams.annotation.scope,
-                                                             renderParams.annotation.type,
-                                                             renderParams.subsample)
+                                                             dataParams.cluster,
+                                                             dataParams.annotation.name,
+                                                             dataParams.annotation.scope,
+                                                             dataParams.annotation.type,
+                                                             dataParams.subsample)
 
   useEffect(() => {
-    if (renderParams.cluster) {
+    if (dataParams.cluster) {
       const plotEvent = startPendingEvent('plot:heatmap', window.SCP.getLogPlotProps())
       log('heatmap:initialize')
       renderHeatmap({
         target: `#${graphId}`,
         expressionValuesURL: expressionValuesURL,
         annotationCellValuesURL: annotationCellValuesURL,
-        annotationName: renderParams.annotation.name
+        annotationName: dataParams.annotation.name
       })
       plotEvent.complete()
     }
   }, [
     studyAccession, genes.join(','),
-    renderParams.cluster,
-    renderParams.annotation.name,
-    renderParams.annotation.scope
+    dataParams.cluster,
+    dataParams.annotation.name,
+    dataParams.annotation.scope
   ])
   return (
     <div>
-      { renderParams.cluster &&
+      { dataParams.cluster &&
         <div id={graphId} className="heatmap-graph"></div> }
-      { !renderParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+      { !dataParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </div>
   )
 }

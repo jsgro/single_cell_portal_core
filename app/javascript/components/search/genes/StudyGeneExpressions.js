@@ -4,7 +4,7 @@ import _clone from 'lodash/clone'
 import Study, { getByline } from 'components/search/results/Study'
 import DotPlot from 'components/visualization/DotPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
-import ClusterControls, { emptyRenderParams, getAnnotationValues } from 'components/visualization/ClusterControls'
+import ClusterControls, { emptyDataParams, getAnnotationValues } from 'components/visualization/ClusterControls'
 import { fetchClusterOptions } from 'lib/scp-api'
 
 
@@ -13,7 +13,7 @@ import { fetchClusterOptions } from 'lib/scp-api'
     to inform which genes to show data for
   */
 export default function StudyGeneExpressions({ study }) {
-  const [renderParams, setRenderParams] = useState(_clone(emptyRenderParams))
+  const [dataParams, setDataParams] = useState(_clone(emptyDataParams))
   const [annotationList, setAnnotationList] = useState(null)
 
   let studyRenderComponent
@@ -21,7 +21,7 @@ export default function StudyGeneExpressions({ study }) {
     return <Study study={study}/>
   }
 
-  const showDotPlot = study.gene_matches.length > 1 && !renderParams.consensus
+  const showDotPlot = study.gene_matches.length > 1 && !dataParams.consensus
 
   if (!study.can_visualize_clusters) {
     studyRenderComponent = (
@@ -32,15 +32,15 @@ export default function StudyGeneExpressions({ study }) {
     )
   } else if (showDotPlot) {
     // render dotPlot for multigene searches that are not collapsed
-    const annotationValues = getAnnotationValues(renderParams.annotation,
+    const annotationValues = getAnnotationValues(dataParams.annotation,
                                                  annotationList ? annotationList.annotations : [])
     studyRenderComponent = <DotPlot studyAccession={study.accession}
       genes={study.gene_matches}
-      renderParams={renderParams}
+      dataParams={dataParams}
       annotationValues={annotationValues}/>
   } else {
     // render violin for single genes or collapsed
-    studyRenderComponent = <StudyViolinPlot studyAccession={study.accession} genes={study.gene_matches} renderParams={renderParams} setAnnotationList={setAnnotationList}/>
+    studyRenderComponent = <StudyViolinPlot studyAccession={study.accession} genes={study.gene_matches} dataParams={dataParams} setAnnotationList={setAnnotationList}/>
   }
 
   useEffect(() => {
@@ -75,8 +75,8 @@ export default function StudyGeneExpressions({ study }) {
         <div className="col-md-2 graph-controls">
           <ClusterControls
             studyAccession={study.accession}
-            setRenderParams={setRenderParams}
-            renderParams={renderParams}
+            setDataParams={setDataParams}
+            dataParams={dataParams}
             fetchAnnotationList={false}
             showConsensus={study.gene_matches.length > 1}
             preloadedAnnotationList={annotationList}/>

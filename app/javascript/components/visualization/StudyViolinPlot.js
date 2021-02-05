@@ -9,13 +9,13 @@ import { renderViolinPlot } from 'lib/violin-plot'
 /** displays a violin plot of expression data for the given gene and study
  * @param studyAccession {String} the study accession
  * @param genes {Array[String]} array of gene names
- * @param renderParams {Object} object specifying cluster, annotation, subsample and consensus
+ * @param dataParams {Object} object specifying cluster, annotation, subsample and consensus
  *   this is the same object returned/maintained by ClusterControls
  * @param setAnnotationList {function} for global gene search and other places where a single call is used to
  *   fetch both the default expression data and the cluster menu options, a function that will be
  *   called with the annotationList returned by that call.
   */
-export default function StudyViolinPlot({ studyAccession, genes, renderParams, setAnnotationList }) {
+export default function StudyViolinPlot({ studyAccession, genes, dataParams, setAnnotationList }) {
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
   const [studyGeneNames, setStudyGeneNames] = useState([])
@@ -27,12 +27,12 @@ export default function StudyViolinPlot({ studyAccession, genes, renderParams, s
     const results = await fetchExpressionViolin(
       studyAccession,
       genes,
-      renderParams.cluster,
-      renderParams.annotation.name,
-      renderParams.annotation.type,
-      renderParams.annotation.scope,
-      renderParams.subsample,
-      renderParams.consensus
+      dataParams.cluster,
+      dataParams.annotation.name,
+      dataParams.annotation.type,
+      dataParams.annotation.scope,
+      dataParams.subsample,
+      dataParams.consensus
     )
     setIsLoading(false)
     setStudyGeneNames(results.gene_names)
@@ -43,19 +43,19 @@ export default function StudyViolinPlot({ studyAccession, genes, renderParams, s
   }
   /** handles fetching the expression data (and menu option data) from the server */
   useEffect(() => {
-    if (!isLoading && renderParams.isUserUpdated !== false) {
+    if (!isLoading && dataParams.isUserUpdated !== false) {
       loadData()
     }
   }, [ // do a load from the server if any of the paramenters passed to fetchExpressionViolin have changed
     studyAccession,
     genes[0],
-    renderParams.cluster,
-    renderParams.annotation.name,
-    renderParams.annotation.scope,
-    renderParams.subsample,
-    renderParams.consensus
+    dataParams.cluster,
+    dataParams.annotation.name,
+    dataParams.annotation.scope,
+    dataParams.subsample,
+    dataParams.consensus
   ])
-  const isCollapsedView = ['mean', 'median'].indexOf(renderParams.consensus) >= 0
+  const isCollapsedView = ['mean', 'median'].indexOf(dataParams.consensus) >= 0
   return (
     <>
       <div
@@ -76,7 +76,7 @@ export default function StudyViolinPlot({ studyAccession, genes, renderParams, s
        sometimes render a zero to the page*/}
       { isCollapsedView && studyGeneNames.length > 0 &&
         <div className="text-center">
-          <span>{_capitalize(renderParams.consensus)} expression of {studyGeneNames.join(', ')}</span>
+          <span>{_capitalize(dataParams.consensus)} expression of {studyGeneNames.join(', ')}</span>
         </div>
       }
     </>

@@ -19,37 +19,37 @@ export const dotPlotColorScheme = {
 /** renders a morpheus powered dotPlot for the given URL paths and annotation
   * Note that this has a lot in common with Heatmap.js.  they are separate for now
   * as their display capabilities may diverge (esp. since DotPlot is used in global gene search)*/
-export default function DotPlot({ studyAccession, genes, renderParams, annotationValues }) {
+export default function DotPlot({ studyAccession, genes, dataParams, annotationValues }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
-  const expressionValuesURL = getExpressionHeatmapURL(studyAccession, genes, renderParams.cluster)
+  const expressionValuesURL = getExpressionHeatmapURL(studyAccession, genes, dataParams.cluster)
   const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
-                                                             renderParams.cluster,
-                                                             renderParams.annotation.name,
-                                                             renderParams.annotation.scope,
-                                                             renderParams.annotation.type,
-                                                             renderParams.subsample)
+                                                             dataParams.cluster,
+                                                             dataParams.annotation.name,
+                                                             dataParams.annotation.scope,
+                                                             dataParams.annotation.type,
+                                                             dataParams.subsample)
   useEffect(() => {
-    if (renderParams.annotation.name) {
+    if (dataParams.annotation.name) {
       const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
       log('dot-plot:initialize')
       renderDotPlot({
         target: `#${graphId}`,
         expressionValuesURL: expressionValuesURL,
         annotationCellValuesURL: annotationCellValuesURL,
-        annotationName: renderParams.annotation.name,
+        annotationName: dataParams.annotation.name,
         annotationValues: annotationValues
       })
       plotEvent.complete()
     }
-  }, [expressionValuesURL, annotationCellValuesURL, renderParams.annotation.name, renderParams.annotation.scope])
+  }, [expressionValuesURL, annotationCellValuesURL, dataParams.annotation.name, dataParams.annotation.scope])
   return (
     <div>
-    { renderParams.cluster &&
+    { dataParams.cluster &&
       <>
         <div id={graphId} className="dotplot-graph"></div>
         <DotPlotLegend/>
       </> }
-    { !renderParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+    { !dataParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </div>
   )
 }

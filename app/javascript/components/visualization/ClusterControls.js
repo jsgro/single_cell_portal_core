@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import _uniq from 'lodash/uniq'
 import _find from 'lodash/find'
 import Select from 'react-select'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
@@ -8,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { fetchClusterOptions } from 'lib/scp-api'
 
-export const emptyRenderParams = {
+export const emptyDataParams = {
   cluster: '',
   annotation: '',
   subsample: '',
@@ -114,8 +113,8 @@ function getDefaultSubsampleForCluster(annotationList, clusterName) {
     preloadedAnnotationList: the results of a call to scpApi/fetchClusterOptions (or equivalent).
       Only needs to be specified if fetchAnnotionList is false
     fetchAnnotationList=true: whether this component should handle populating dropdown options
-    renderParams,
-    setRenderParams
+    dataParams,
+    setDataParams
     )
 
   */
@@ -125,15 +124,15 @@ export default function ClusterControls({
   showSubsample,
   preloadedAnnotationList,
   fetchAnnotationList=true,
-  renderParams,
-  setRenderParams
+  dataParams,
+  setDataParams
 }) {
   const [annotationList, setAnnotationList] =
     useState({ default_cluster: null, default_annotation: null, annotations: [] })
 
   const clusterOptions = getClusterOptions(annotationList)
-  const annotationOptions = getAnnotationOptions(annotationList, renderParams.cluster)
-  const subsampleOptions = getSubsampleOptions(annotationList, renderParams.cluster)
+  const annotationOptions = getAnnotationOptions(annotationList, dataParams.cluster)
+  const subsampleOptions = getSubsampleOptions(annotationList, dataParams.cluster)
 
   // override the default of interior scrollbars on the menu
   const customSelectStyle = {
@@ -146,13 +145,13 @@ export default function ClusterControls({
   /** update the render params in response to receiving the names of the default values from the server */
   function update(newAnnotationList) {
     setAnnotationList(newAnnotationList)
-    const newRenderParams = {
+    const newDataParams = {
       cluster: newAnnotationList.default_cluster,
       annotation: annotationKeyProperties(newAnnotationList.default_annotation),
       subsample: getDefaultSubsampleForCluster(newAnnotationList, newAnnotationList.default_cluster),
       isUserUpdated: false
     }
-    setRenderParams(newRenderParams)
+    setDataParams(newDataParams)
   }
 
   useEffect(() => {
@@ -170,12 +169,12 @@ export default function ClusterControls({
       <div className="form-group">
         <label>Load cluster</label>
         <Select options={clusterOptions}
-          value={{ label: renderParams.cluster, value: renderParams.cluster }}
-          onChange={cluster => setRenderParams({
-            annotation: annotationKeyProperties(getDefaultAnnotationForCluster(annotationList, cluster.name, renderParams.annotation)),
+          value={{ label: dataParams.cluster, value: dataParams.cluster }}
+          onChange={cluster => setDataParams({
+            annotation: annotationKeyProperties(getDefaultAnnotationForCluster(annotationList, cluster.name, dataParams.annotation)),
             cluster: cluster.value,
             subsample: getDefaultSubsampleForCluster(annotationList, cluster.value),
-            consensus: renderParams.consensus
+            consensus: dataParams.consensus
           })}
           styles={customSelectStyle}
         />
@@ -183,14 +182,14 @@ export default function ClusterControls({
       <div className="form-group">
         <label>Select annotation</label>
         <Select options={annotationOptions}
-          value={renderParams.annotation}
+          value={dataParams.annotation}
           getOptionLabel={annotation => annotation.name}
           getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
-          onChange={annotation => setRenderParams({
+          onChange={annotation => setDataParams({
             annotation,
-            cluster: renderParams.cluster,
-            subsample: renderParams.subsample,
-            consensus: renderParams.consensus
+            cluster: dataParams.cluster,
+            subsample: dataParams.subsample,
+            consensus: dataParams.consensus
           })}
           styles={customSelectStyle}/>
       </div>
@@ -198,14 +197,14 @@ export default function ClusterControls({
         <label>Subsampling</label>
         <Select options={subsampleOptions}
           value={{
-            label: renderParams.subsample == '' ? 'All Cells' : renderParams.subsample,
-            value: renderParams.subsample
+            label: dataParams.subsample == '' ? 'All Cells' : dataParams.subsample,
+            value: dataParams.subsample
           }}
-          onChange={subsample => setRenderParams({
-            annotation: renderParams.annotation,
-            cluster: renderParams.cluster,
+          onChange={subsample => setDataParams({
+            annotation: dataParams.annotation,
+            cluster: dataParams.cluster,
             subsample: subsample.value,
-            consensus: renderParams.consensus
+            consensus: dataParams.consensus
           })}
           styles={customSelectStyle}/>
       </div>
@@ -217,11 +216,11 @@ export default function ClusterControls({
             </OverlayTrigger>
           </label>
           <Select options={consensusOptions}
-            value={_find(consensusOptions, { value: renderParams.consensus })}
-            onChange={consensus => setRenderParams({
-              annotation: renderParams.annotation,
-              cluster: renderParams.cluster,
-              subsample: renderParams.subsample,
+            value={_find(consensusOptions, { value: dataParams.consensus })}
+            onChange={consensus => setDataParams({
+              annotation: dataParams.annotation,
+              cluster: dataParams.cluster,
+              subsample: dataParams.subsample,
               consensus: consensus.value
             })}
             styles={customSelectStyle}/>
@@ -232,7 +231,7 @@ export default function ClusterControls({
 }
 
 const consensusPopover = (
-  <Popover id="collapse-by-genes-helptext">
-    Selecting one of the 'violin' options will combine expression scores of multiple genes for each cell using the selected metric.
+  <Popover id="consensus-by-genes-helptext">
+    Selecting one of the "violin" options will combine expression scores of multiple genes for each cell using the selected metric.
   </Popover>
 )

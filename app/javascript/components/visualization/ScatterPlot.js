@@ -7,10 +7,10 @@ import { fetchCluster } from 'lib/scp-api'
 import { setMarkerColors } from 'lib/scatter-plot'
 import { labelFont } from 'lib/plot'
 
-/** Renders the appropriate scatter plot for the given study and viewOptions
-  * See ExploreView.js for the full specification of the viewOptions object
+/** Renders the appropriate scatter plot for the given study and dataParams
+  * See ExploreView.js for the full specification of the dataParams object
   */
-export default function ScatterPlot({ studyAccession, viewOptions, plotOptions }) {
+export default function ScatterPlot({ studyAccession, dataParams, plotOptions }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
@@ -34,20 +34,20 @@ export default function ScatterPlot({ studyAccession, viewOptions, plotOptions }
   useEffect(() => {
     // don't update if the param changes are just defaults coming back from the server,
     // we will have already fetched the default view
-    if (viewOptions.isUserUpdated !== false) {
+    if (dataParams.isUserUpdated !== false) {
       setIsLoading(true)
       fetchCluster(studyAccession,
-        viewOptions.cluster,
-        viewOptions.annotation ? viewOptions.annotation : '',
-        viewOptions.subsample,
-        viewOptions.consensus,
-        viewOptions.genes).then(handleResponse)
+        dataParams.cluster,
+        dataParams.annotation ? dataParams.annotation : '',
+        dataParams.subsample,
+        dataParams.consensus,
+        dataParams.genes).then(handleResponse)
     }
-  }, [viewOptions.cluster,
-    viewOptions.annotation.name,
-    viewOptions.subsample,
-    viewOptions.consensus,
-    viewOptions.genes.join(',')])
+  }, [dataParams.cluster,
+    dataParams.annotation.name,
+    dataParams.subsample,
+    dataParams.consensus,
+    dataParams.genes.join(',')])
   return (
     <div className="plot">
       <div
