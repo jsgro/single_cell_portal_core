@@ -9,7 +9,7 @@ import { renderViolinPlot } from 'lib/violin-plot'
 /** displays a violin plot of expression data for the given gene and study
  * @param studyAccession {String} the study accession
  * @param genes {Array[String]} array of gene names
- * @param renderParams {Object} object specifying cluster, annotation, subsample and collapseBy
+ * @param renderParams {Object} object specifying cluster, annotation, subsample and consensus
  *   this is the same object returned/maintained by ClusterControls
  * @param setAnnotationList {function} for global gene search and other places where a single call is used to
  *   fetch both the default expression data and the cluster menu options, a function that will be
@@ -19,14 +19,6 @@ export default function StudyViolinPlot({ studyAccession, genes, renderParams, s
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
   const [studyGeneNames, setStudyGeneNames] = useState([])
-  /** this component has cases where it fetches state that it does not own -- specifically,
-   * in global gene search, the annotation list of all the control menu options is retrieved in
-   * the same call as the expression data to reduce service calls.  Then this component calls
-   * setAnnotationList to pass that up to the parent and eventually the cluster control dropdowns.
-   * Once received, the cluster control will then update render params as it popualtes itself with the defaults.
-   * This component needs to ignore that update.
-   */
-  const [ignoreNextParamUpdate, setIgnoreNextParamUpdate] = useState(false)
   const [graphElementId] = useState(_uniqueId('study-violin-'))
 
   /** gets expression data from the server */
@@ -40,7 +32,7 @@ export default function StudyViolinPlot({ studyAccession, genes, renderParams, s
       renderParams.annotation.type,
       renderParams.annotation.scope,
       renderParams.subsample,
-      renderParams.collapseBy
+      renderParams.consensus
     )
     setIsLoading(false)
     setStudyGeneNames(results.gene_names)
@@ -51,17 +43,8 @@ export default function StudyViolinPlot({ studyAccession, genes, renderParams, s
   }
   /** handles fetching the expression data (and menu option data) from the server */
   useEffect(() => {
-    if (!ignoreNextParamUpdate) {
-      if (!isLoading) {
-        // if this is an initial render and we are responsible for loading the annotation list (e.g. global gene search)
-        // ignore the follow-on param update
-        if (!renderParams.cluster && setAnnotationList) {
-          setIgnoreNextParamUpdate(true)
-        }
-        loadData()
-      }
-    } else {
-      setIgnoreNextParamUpdate(false)
+    if (!isLoading && renderParams.isUserUpdated !== false) {
+      loadData()
     }
   }, [ // do a load from the server if any of the paramenters passed to fetchExpressionViolin have changed
     studyAccession,
@@ -70,9 +53,9 @@ export default function StudyViolinPlot({ studyAccession, genes, renderParams, s
     renderParams.annotation.name,
     renderParams.annotation.scope,
     renderParams.subsample,
-    renderParams.collapseBy
+    renderParams.consensus
   ])
-  const isCollapsedView = ['mean', 'median'].indexOf(renderParams.collapseBy) >= 0
+  const isCollapsedView = ['mean', 'median'].indexOf(renderParams.consensus) >= 0
   return (
     <>
       <div
@@ -93,7 +76,7 @@ export default function StudyViolinPlot({ studyAccession, genes, renderParams, s
        sometimes render a zero to the page*/}
       { isCollapsedView && studyGeneNames.length > 0 &&
         <div className="text-center">
-          <span>{_capitalize(renderParams.collapseBy)} expression of {studyGeneNames.join(', ')}</span>
+          <span>{_capitalize(renderParams.consensus)} expression of {studyGeneNames.join(', ')}</span>
         </div>
       }
     </>

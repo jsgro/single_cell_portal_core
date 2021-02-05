@@ -3,13 +3,15 @@ import _clone from 'lodash/clone'
 import StudyGeneField from './StudyGeneField'
 import ScatterPlot from 'components/visualization/ScatterPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
+import StudyGeneDotPlot from 'components/visualization/StudyGeneDotPlot'
+import { getAnnotationValues } from 'components/visualization/ClusterControls'
 
 const tabList = [
-  {key: 'cluster', label: 'Cluster'},
-  {key: 'scatter', label: 'Scatter'},
-  {key: 'distribution', label: 'Distribution'},
-  {key: 'dotplot', label: 'Dot Plot'},
-  {key: 'heatmap', label: 'Heatmap'}
+  { key: 'cluster', label: 'Cluster' },
+  { key: 'scatter', label: 'Scatter' },
+  { key: 'distribution', label: 'Distribution' },
+  { key: 'dotplot', label: 'Dot Plot' },
+  { key: 'heatmap', label: 'Heatmap' }
 ]
 
 /**
@@ -31,14 +33,15 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
   const isGene = viewOptions.genes.length > 0
 
   let enabledTabs = []
-  // viewOptions object without genes specified, to pass to cluster comparison graphs
-  const genelessViewOptions = _clone(viewOptions)
-  genelessViewOptions.genes = []
+
 
   if (isGene) {
-
     if (isMultiGene) {
-      enabledTabs = ['dotplot', 'heatmap']
+      if (viewOptions.consensus) {
+        enabledTabs = ['scatter', 'distribution', 'dotplot']
+      } else {
+        enabledTabs = ['dotplot', 'heatmap']
+      }
     } else {
       enabledTabs = ['scatter', 'distribution']
     }
@@ -50,6 +53,9 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
   if (!enabledTabs.includes(shownTab)) {
     shownTab = enabledTabs[0]
   }
+  // viewOptions object without genes specified, to pass to cluster comparison graphs
+  const genelessViewOptions = _clone(viewOptions)
+  genelessViewOptions.genes = []
 
   /** helper function so that StudyGeneField doesn't have to see the full viewOptions object */
   function setGenes(geneString) {
@@ -81,7 +87,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
         <div className="col-md-12 explore-plot-tab-content">
           { enabledTabs.includes('cluster') &&
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
-              <ScatterPlotGroup studyAccession={studyAccession} viewOptions={viewOptions} />
+              <ScatterPlot studyAccession={studyAccession} viewOptions={viewOptions} />
             </div>
           }
           { enabledTabs.includes('scatter') &&
@@ -104,8 +110,27 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
               <StudyViolinPlot studyAccession={studyAccession} renderParams={viewOptions} genes={viewOptions.genes}/>
             </div>
           }
+          { enabledTabs.includes('dotplot') &&
+            <div className={shownTab === 'dotplot' ? '' : 'hidden'}>
+              <DotPlotTab
+                studyAccession={studyAccession}
+                viewOptions={viewOptions}
+                annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}/>
+            </div>
+          }
         </div>
       </div>
     </>
   )
+}
+
+/** renders the dot plot tab for multi gene searches */
+function DotPlotTab({studyAccession, viewOptions, annotations}) {
+  let annotationValues = getAnnotationValues(viewOptions.annotation, annotations)
+  return (<StudyGeneDotPlot
+    studyAccession={studyAccession}
+    renderParams={viewOptions}
+    genes={viewOptions.genes}
+    annotationValues={annotationValues}
+  />)
 }

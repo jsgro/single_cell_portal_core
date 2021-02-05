@@ -12,22 +12,41 @@ export const emptyRenderParams = {
   cluster: '',
   annotation: '',
   subsample: '',
-  collapseBy: null
+  consensus: null
 }
 
-const collapseOptions = [
+const consensusOptions = [
   { label: 'Dot plot', value: null },
   { label: 'Violin - Mean', value: 'mean' },
   { label: 'Violin - Median', value: 'median' }
 ]
 
-// takes a full annotation object, which may have
+/** takes a full annotation object, which may have values and other properties, and just extracts the
+  * key parameters for url state */
 function annotationKeyProperties(annotation) {
   return {
     name: annotation.name,
     type: annotation.type,
     scope: annotation.scope
   }
+}
+
+/** finds the corresponding entry in annotationList for the given annotation,
+ * and returns the unique values for the anotations
+ */
+export function getAnnotationValues(annotation, allAnnotations) {
+  let annotationValues = []
+  if (allAnnotations && allAnnotations.annotations) {
+    const matchedAnnotation = allAnnotations.annotations.find(a => {
+      return a.name === annotation.name &&
+             a.type === annotation.type &&
+             a.scope === annotation.scope
+    })
+    if (matchedAnnotation) {
+      annotationValues = matchedAnnotation.values
+    }
+  }
+  return annotationValues
 }
 
 /** takes the server response and returns subsample options suitable for react-select */
@@ -83,14 +102,14 @@ function getDefaultSubsampleForCluster(annotationList, clusterName) {
   return '' // for now, default is always all cells
 }
 
-/** renders cluster, annotation, and (optionally) subsample and collapse controls for a study
+/** renders cluster, annotation, and (optionally) subsample and consensus controls for a study
     by default, this control will handle fetching the dropdown options from the server.
     If those options have already been fetched (or will be retrieved as part of a call already
     being made, 'fetchAnnotationList' can be set to fale, and then a preloadedAnnotationList
     can be provided
 
     studyAccession: the study accesion
-    showCollapseBy: whether to show the collapse by dropdown
+    showConsensus: whether to show the consensus ('View as') dropdown
     showSubsample: whether to show the subsample dropdown
     preloadedAnnotationList: the results of a call to scpApi/fetchClusterOptions (or equivalent).
       Only needs to be specified if fetchAnnotionList is false
@@ -102,7 +121,7 @@ function getDefaultSubsampleForCluster(annotationList, clusterName) {
   */
 export default function ClusterControls({
   studyAccession,
-  showCollapseBy,
+  showConsensus,
   showSubsample,
   preloadedAnnotationList,
   fetchAnnotationList=true,
@@ -124,15 +143,16 @@ export default function ClusterControls({
     })
   }
 
-
+  /** update the render params in response to receiving the names of the default values from the server */
   function update(newAnnotationList) {
     setAnnotationList(newAnnotationList)
     const newRenderParams = {
       cluster: newAnnotationList.default_cluster,
       annotation: annotationKeyProperties(newAnnotationList.default_annotation),
-      subsample: getDefaultSubsampleForCluster(newAnnotationList, newAnnotationList.default_cluster)
+      subsample: getDefaultSubsampleForCluster(newAnnotationList, newAnnotationList.default_cluster),
+      isUserUpdated: false
     }
-    setRenderParams(newRenderParams, false)
+    setRenderParams(newRenderParams)
   }
 
   useEffect(() => {
@@ -155,7 +175,7 @@ export default function ClusterControls({
             annotation: annotationKeyProperties(getDefaultAnnotationForCluster(annotationList, cluster.name, renderParams.annotation)),
             cluster: cluster.value,
             subsample: getDefaultSubsampleForCluster(annotationList, cluster.value),
-            collapseBy: renderParams.collapseBy
+            consensus: renderParams.consensus
           })}
           styles={customSelectStyle}
         />
@@ -170,7 +190,7 @@ export default function ClusterControls({
             annotation,
             cluster: renderParams.cluster,
             subsample: renderParams.subsample,
-            collapseBy: renderParams.collapseBy
+            consensus: renderParams.consensus
           })}
           styles={customSelectStyle}/>
       </div>
@@ -185,24 +205,24 @@ export default function ClusterControls({
             annotation: renderParams.annotation,
             cluster: renderParams.cluster,
             subsample: subsample.value,
-            collapseBy: renderParams.collapseBy
+            consensus: renderParams.consensus
           })}
           styles={customSelectStyle}/>
       </div>
-      { showCollapseBy &&
+      { showConsensus &&
         <div className="form-group">
           <label>
-            <OverlayTrigger trigger="click" rootClose placement="top" overlay={collapseByPopover}>
+            <OverlayTrigger trigger="click" rootClose placement="top" overlay={consensusPopover}>
               <span>View as <FontAwesomeIcon className="action" icon={faInfoCircle}/></span>
             </OverlayTrigger>
           </label>
-          <Select options={collapseOptions}
-            value={_find(collapseOptions, { value: renderParams.collapseBy })}
-            onChange={collapseBy => setRenderParams({
+          <Select options={consensusOptions}
+            value={_find(consensusOptions, { value: renderParams.consensus })}
+            onChange={consensus => setRenderParams({
               annotation: renderParams.annotation,
               cluster: renderParams.cluster,
               subsample: renderParams.subsample,
-              collapseBy: collapseBy.value
+              consensus: consensus.value
             })}
             styles={customSelectStyle}/>
         </div>
@@ -211,7 +231,7 @@ export default function ClusterControls({
   )
 }
 
-const collapseByPopover = (
+const consensusPopover = (
   <Popover id="collapse-by-genes-helptext">
     Selecting one of the 'violin' options will combine expression scores of multiple genes for each cell using the selected metric.
   </Popover>

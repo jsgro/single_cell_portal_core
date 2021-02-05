@@ -43,12 +43,12 @@ export function studyNameAsUrlParam(studyName) {
 
 /** convert a gene param string to an array of individual gene names */
 export function geneParamToArray(genes) {
-  return genes ? genes.split(' ') : []
+  return genes ? genes.split(',') : []
 }
 
 /** convert a gene array to a gene param string */
 export function geneArrayToParam(genes) {
-  return genes ? genes.join(' ') : ''
+  return genes ? genes.join(',') : ''
 }
 
 
@@ -327,7 +327,7 @@ export function getExpressionHeatmapURL(studyAccession, genes, cluster, annotati
     cluster,
     annotation,
     subsample,
-    genes: genes.join(','),
+    genes: geneArrayToParam(genes),
     url_safe_token: getURLSafeAccessToken()
   }
   const path = `/studies/${studyAccession}/expression/heatmap${stringifyQuery(paramObj)}`

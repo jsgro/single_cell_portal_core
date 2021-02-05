@@ -4,25 +4,10 @@ import _clone from 'lodash/clone'
 import Study, { getByline } from 'components/search/results/Study'
 import StudyGeneDotPlot from 'components/visualization/StudyGeneDotPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
-import ClusterControls, { emptyRenderParams } from 'components/visualization/ClusterControls'
+import ClusterControls, { emptyRenderParams, getAnnotationValues } from 'components/visualization/ClusterControls'
 import { fetchClusterOptions } from 'lib/scp-api'
 
-// finds the corresponding entry in annotationList for the given annotation,
-// and returns the unique values for the anotations
-function getAnnotationValues(annotation, annotationList) {
-  let annotationValues = []
-  if (annotationList && annotationList.annotations) {
-    const matchedAnnotation = annotationList.annotations.find(a => {
-      return a.name === annotation.name &&
-             a.type === annotation.type &&
-             a.scope === annotation.scope
-    })
-    if (matchedAnnotation) {
-      annotationValues = matchedAnnotation.values
-    }
-  }
-  return annotationValues
-}
+
 
 /** Renders expression data for a study.  This assumes that the study has a 'gene_matches' property
     to inform which genes to show data for
@@ -36,7 +21,7 @@ export default function StudyGeneExpressions({ study }) {
     return <Study study={study}/>
   }
 
-  const showDotPlot = study.gene_matches.length > 1 && !renderParams.collapseBy
+  const showDotPlot = study.gene_matches.length > 1 && !renderParams.consensus
 
   if (!study.can_visualize_clusters) {
     studyRenderComponent = (
@@ -47,8 +32,9 @@ export default function StudyGeneExpressions({ study }) {
     )
   } else if (showDotPlot) {
     // render dotPlot for multigene searches that are not collapsed
-    const annotationValues = getAnnotationValues(renderParams.annotation, annotationList)
-    studyRenderComponent = <StudyGeneDotPlot study={study}
+    const annotationValues = getAnnotationValues(renderParams.annotation,
+                                                 annotationList ? annotationList.annotations : [])
+    studyRenderComponent = <StudyGeneDotPlot studyAccession={study.accession}
       genes={study.gene_matches}
       renderParams={renderParams}
       annotationValues={annotationValues}/>
@@ -92,7 +78,7 @@ export default function StudyGeneExpressions({ study }) {
             setRenderParams={setRenderParams}
             renderParams={renderParams}
             fetchAnnotationList={false}
-            showCollapseBy={study.gene_matches.length > 1}
+            showConsensus={study.gene_matches.length > 1}
             preloadedAnnotationList={annotationList}/>
         </div>
       </div>

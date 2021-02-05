@@ -26,7 +26,7 @@ function buildViewOptionsFromQuery(query) {
     cluster: queryParams.cluster ? queryParams.cluster : '',
     annotation,
     subsample: queryParams.subsample ? queryParams.subsample : '',
-    collapseBy: queryParams.collapseBy ? queryParams.collapseBy : null,
+    consensus: queryParams.consensus ? queryParams.consensus : null,
     spatialFiles: queryParams.spatialFiles ? queryParams.spatialFiles.split(',') : [],
     genes: geneParamToArray(queryParams.genes),
     tab: queryParams.tab ? queryParams.tab : ''
@@ -35,10 +35,15 @@ function buildViewOptionsFromQuery(query) {
 
 /** converts the viewOptions object into a query string, inverse of buildViewOptionsFromQuery */
 function buildQueryFromViewOptions(viewOptions) {
-  const querySafeOptions = _clone(viewOptions)
   const annot = viewOptions.annotation
-  querySafeOptions.annotation = [annot.name, annot.type, annot.scope].join('--')
-  querySafeOptions.genes = geneArrayToParam(querySafeOptions.genes)
+  const querySafeOptions = {
+    cluster: viewOptions.cluster,
+    annotation: [annot.name, annot.type, annot.scope].join('--'),
+    genes: geneArrayToParam(viewOptions.genes),
+    consensus: viewOptions.consensus,
+    tab: viewOptions.tab,
+    spatialFiles: viewOptions.spatialFiles.join(',')
+  }
   return stringifyQuery(querySafeOptions)
 }
 
@@ -49,20 +54,18 @@ function buildQueryFromViewOptions(viewOptions) {
 function RoutableExploreTab({ studyAccession }) {
   const [exploreInfo, setExploreInfo] = useState(null)
   const location = useLocation()
-  const [initialOptions, setInitialOptions] = useState(null)
   const [showViewOptions, setShowViewOptions] = useState(true)
-
+  const [initialOptions, setInitialOptions] = useState(null)
   let viewOptions = buildViewOptionsFromQuery(location.search)
   if (initialOptions && !location.search) {
     // just render the defaults
     viewOptions = initialOptions
-    viewOptions.isUserUpdated = false
   }
 
   /** Merges the received update into the viewOptions, and updates the page URL if need */
-  function updateViewOptions(newOptions, isUserUpdated=true) {
+  function updateViewOptions(newOptions) {
     const mergedOpts = Object.assign({}, viewOptions, newOptions)
-    if (!isUserUpdated) {
+    if (newOptions.isUserUpdated === false) {
       // this is just default params being fetched from the server, so don't change the url
       setInitialOptions(mergedOpts)
     } else {
@@ -99,8 +102,8 @@ function RoutableExploreTab({ studyAccession }) {
             renderParams={viewOptions}
             setRenderParams={updateViewOptions}
             preloadedAnnotationList={exploreInfo ? exploreInfo.annotationList : null}
-            fetchAnnotationList={false}/>
-
+            fetchAnnotationList={false}
+            showConsensus={viewOptions.genes.length > 1}/>
         </div>
       </div>
       <button className={`action view-options-toggle ${optionsLinkClass}`}
