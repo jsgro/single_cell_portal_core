@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useEffect, useRef} from 'react'
 import _clone from 'lodash/clone'
 import StudyGeneField from './StudyGeneField'
 import ScatterPlot from 'components/visualization/ScatterPlot'
@@ -31,9 +31,8 @@ const tabList = [
 export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOptions, updateViewOptions }) {
   const isMultiGene = viewOptions.genes.length > 1
   const isGene = viewOptions.genes.length > 0
-
+  const firstRender = useRef(true);
   let enabledTabs = []
-
 
   if (isGene) {
     if (isMultiGene) {
@@ -61,6 +60,15 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
   function setGenes(geneString) {
     updateViewOptions({ genes: geneString })
   }
+
+  useEffect(() => {
+    if (!firstRender.current) {
+      // switch back to the default tab for a given view when the genes/consensus changes
+      updateViewOptions({ tab: enabledTabs[0] })
+    } else {
+      firstRender.current = false
+    }
+  }, [viewOptions.genes.join(','), viewOptions.consensus])
   return (
     <>
       <div className="row">
