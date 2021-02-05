@@ -10,7 +10,7 @@ import { labelFont } from 'lib/plot'
 /** Renders the appropriate scatter plot for the given study and viewOptions
   * See ExploreView.js for the full specification of the viewOptions object
   */
-export default function ScatterPlot({ studyAccession, viewOptions, exploreInfo }) {
+export default function ScatterPlot({ studyAccession, viewOptions, plotOptions }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
@@ -21,7 +21,7 @@ export default function ScatterPlot({ studyAccession, viewOptions, exploreInfo }
       if (clusterResponse.annotParams.type === 'group' && !clusterResponse.gene) {
         clusterResponse.data = setMarkerColors(clusterResponse.data)
       }
-      const layout = getPlotlyLayout(clusterResponse)
+      const layout = getPlotlyLayout(clusterResponse, plotOptions)
       window.Plotly.newPlot(graphElementId, clusterResponse.data, layout, { responsive: true })
     } catch (error) {
       alert(`An unexpected error occurred rendering the graph: ${error}`)
@@ -76,10 +76,11 @@ function getPlotlyLayout({
   coordinateLabels,
   isAnnotatedScatter,
   is3d
-}) {
+}, {showlegend=true}={}) {
   const layout = {
     hovermode: 'closest',
-    font: labelFont
+    font: labelFont,
+    showlegend: showlegend
   }
   if (is3d) {
     layout.scene = get3DScatterProps({ domainRanges, axes })

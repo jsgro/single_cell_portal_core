@@ -1,7 +1,7 @@
 import React from 'react'
-
+import _clone from 'lodash/clone'
 import StudyGeneField from './StudyGeneField'
-import ScatterPlotGroup from './ScatterPlotGroup'
+import ScatterPlot from 'components/visualization/ScatterPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 
 const tabList = [
@@ -31,7 +31,12 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
   const isGene = viewOptions.genes.length > 0
 
   let enabledTabs = []
+  // viewOptions object without genes specified, to pass to cluster comparison graphs
+  const genelessViewOptions = _clone(viewOptions)
+  genelessViewOptions.genes = []
+
   if (isGene) {
+
     if (isMultiGene) {
       enabledTabs = ['dotplot', 'heatmap']
     } else {
@@ -76,23 +81,29 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
         <div className="col-md-12 explore-plot-tab-content">
           { enabledTabs.includes('cluster') &&
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
-              <ScatterPlotGroup studyAccession={studyAccession} viewOptions={viewOptions} exploreInfo={exploreInfo}/>
+              <ScatterPlotGroup studyAccession={studyAccession} viewOptions={viewOptions} />
             </div>
           }
-          <div>
-            { enabledTabs.includes('scatter') &&
-              <div className={shownTab === 'scatter' ? '' : 'hidden'}>
-                <ScatterPlotGroup studyAccession={studyAccession} viewOptions={viewOptions} exploreInfo={exploreInfo}/>
+          { enabledTabs.includes('scatter') &&
+            <div className={shownTab === 'scatter' ? '' : 'hidden'}>
+              <div className="row">
+                <div className="col-md-6">
+                  <ScatterPlot studyAccession={studyAccession} viewOptions={viewOptions} />
+                </div>
+                <div className="col-md-6">
+                  <ScatterPlot
+                    studyAccession={studyAccession}
+                    viewOptions={genelessViewOptions}
+                    plotOptions= {{showlegend: false}}/>
+                </div>
               </div>
-            }
-          </div>
-          <div>
-            { enabledTabs.includes('distribution') &&
-              <div className={shownTab === 'distribution' ? '' : 'hidden'}>
-                <StudyViolinPlot studyAccession={studyAccession} renderParams={viewOptions} genes={viewOptions.genes}/>
-              </div>
-            }
-          </div>
+            </div>
+          }
+          { enabledTabs.includes('distribution') &&
+            <div className={shownTab === 'distribution' ? '' : 'hidden'}>
+              <StudyViolinPlot studyAccession={studyAccession} renderParams={viewOptions} genes={viewOptions.genes}/>
+            </div>
+          }
         </div>
       </div>
     </>
