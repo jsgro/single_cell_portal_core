@@ -72,7 +72,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
         <div className="col-md-7">
           <ul className="nav nav-tabs" role="tablist" data-analytics-name="explore-default">
             { enabledTabs.map(tabKey => {
-              const label = tabList.find(({key}) => key === tabKey).label
+              const label = tabList.find(({ key }) => key === tabKey).label
               return (
                 <li key={tabKey} role="presentation" className={`study-nav ${tabKey === shownTab ? 'active' : ''}`}>
                   <a onClick={() => updateViewOptions({ tab: tabKey })}>{label}</a>
@@ -100,7 +100,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
                   <ScatterPlot
                     studyAccession={studyAccession}
                     viewOptions={genelessViewOptions}
-                    plotOptions= {{showlegend: false}}/>
+                    plotOptions= {{ showlegend: false }}/>
                 </div>
               </div>
             </div>
@@ -125,8 +125,8 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
 }
 
 /** renders the dot plot tab for multi gene searches */
-function DotPlotTab({studyAccession, viewOptions, annotations}) {
-  let annotationValues = getAnnotationValues(viewOptions.annotation, annotations)
+function DotPlotTab({ studyAccession, viewOptions, annotations }) {
+  const annotationValues = getAnnotationValues(viewOptions.annotation, annotations)
   return (<StudyGeneDotPlot
     studyAccession={studyAccession}
     renderParams={viewOptions}

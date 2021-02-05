@@ -27,6 +27,7 @@ export function clearScatterPlots() {
  * Resize Plotly scatter plots, e.g. on window resize or "View Options" click
  */
 export function resizeScatterPlots() {
+  console.log('in resizeScatterPlots')
   scatterPlots.forEach(rawPlot => {
     const target = rawPlot.plotId
     const layout = getScatterPlotLayout(rawPlot)

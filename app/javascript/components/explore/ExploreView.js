@@ -81,6 +81,7 @@ function RoutableExploreTab({ studyAccession }) {
     fetchExplore(studyAccession).then(result => setExploreInfo(result))
   }, [studyAccession])
 
+  // Toggle "View Options" panel
   const viewOptionsIcon = showViewOptions ? faCaretRight : faCaretLeft
   let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden', 'closed']
   if (showViewOptions) {

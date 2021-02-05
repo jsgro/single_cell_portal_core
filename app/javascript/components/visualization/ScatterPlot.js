@@ -30,6 +30,8 @@ export default function ScatterPlot({ studyAccession, viewOptions, plotOptions }
     setClusterData(clusterResponse)
     setIsLoading(false)
   }
+
+  console.log('viewOptions')
   console.log(viewOptions)
   useEffect(() => {
     // don't update if the param changes are just defaults coming back from the server,
@@ -76,11 +78,11 @@ function getPlotlyLayout({
   coordinateLabels,
   isAnnotatedScatter,
   is3d
-}, {showlegend=true}={}) {
+}, { showlegend=true }={}) {
   const layout = {
     hovermode: 'closest',
     font: labelFont,
-    showlegend: showlegend
+    showlegend
   }
   if (is3d) {
     layout.scene = get3DScatterProps({ domainRanges, axes })
