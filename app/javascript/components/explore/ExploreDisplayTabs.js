@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import _clone from 'lodash/clone'
 import StudyGeneField from './StudyGeneField'
 import ScatterPlot from 'components/visualization/ScatterPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
-import StudyGeneDotPlot from 'components/visualization/StudyGeneDotPlot'
+import DotPlot from 'components/visualization/DotPlot'
+import Heatmap from 'components/visualization/Heatmap'
 import { getAnnotationValues } from 'components/visualization/ClusterControls'
 
 const tabList = [
@@ -20,24 +21,23 @@ const tabList = [
  *
  * We want to mount all components that are enabled, so they can fetch their data and persist
  * even when they are not currently in view. We don't want to mount non-enabled components
- * as their display doesn't make sense with the current viewOptions, and so they will
- * need to re-render on viewOptions change anyway
+ * as their display doesn't make sense with the current dataParams, and so they will
+ * need to re-render on dataParams change anyway
  *
  * @param {String} studyAccession  the study accession to visualize
  * @param {Object} exploreInfo  the object returned from a call to api/v1/studies/{study}/visualization/explore
- * @param {Object} viewOptions  object with cluster, annotation, and other viewing properties specified.
- * @param { Function } updateViewOptions function for passing updates to the viewOptions object
+ * @param {Object} dataParams  object with cluster, annotation, and other viewing properties specified.
+ * @param { Function } updateDataParams function for passing updates to the dataParams object
  */
-export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOptions, updateViewOptions }) {
-  const isMultiGene = viewOptions.genes.length > 1
-  const isGene = viewOptions.genes.length > 0
-
+export default function ExploreDisplayTabs({ studyAccession, exploreInfo, dataParams, updateDataParams }) {
+  const isMultiGene = dataParams.genes.length > 1
+  const isGene = dataParams.genes.length > 0
+  const firstRender = useRef(true)
   let enabledTabs = []
-
 
   if (isGene) {
     if (isMultiGene) {
-      if (viewOptions.consensus) {
+      if (dataParams.consensus) {
         enabledTabs = ['scatter', 'distribution', 'dotplot']
       } else {
         enabledTabs = ['dotplot', 'heatmap']
@@ -49,23 +49,32 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
     enabledTabs = ['cluster']
   }
 
-  let shownTab = viewOptions.tab
+  let shownTab = dataParams.tab
   if (!enabledTabs.includes(shownTab)) {
     shownTab = enabledTabs[0]
   }
-  // viewOptions object without genes specified, to pass to cluster comparison graphs
-  const genelessViewOptions = _clone(viewOptions)
-  genelessViewOptions.genes = []
+  // dataParams object without genes specified, to pass to cluster comparison graphs
+  const genelessDataParams = _clone(dataParams)
+  genelessDataParams.genes = []
 
-  /** helper function so that StudyGeneField doesn't have to see the full viewOptions object */
+  /** helper function so that StudyGeneField doesn't have to see the full dataParams object */
   function setGenes(geneString) {
-    updateViewOptions({ genes: geneString })
+    updateDataParams({ genes: geneString })
   }
+
+  useEffect(() => {
+    if (!firstRender.current) {
+      // switch back to the default tab for a given view when the genes/consensus changes
+      updateDataParams({ tab: enabledTabs[0] })
+    } else {
+      firstRender.current = false
+    }
+  }, [dataParams.genes.join(','), dataParams.consensus])
   return (
     <>
       <div className="row">
         <div className="col-md-5">
-          <StudyGeneField genes={viewOptions.genes}
+          <StudyGeneField genes={dataParams.genes}
             setGenes={setGenes}
             allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
         </div>
@@ -75,7 +84,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
                 <li key={tabKey} role="presentation" className={`study-nav ${tabKey === shownTab ? 'active' : ''}`}>
-                  <a onClick={() => updateViewOptions({ tab: tabKey })}>{label}</a>
+                  <a onClick={() => updateDataParams({ tab: tabKey })}>{label}</a>
                 </li>
               )
             })}
@@ -87,19 +96,19 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
         <div className="col-md-12 explore-plot-tab-content">
           { enabledTabs.includes('cluster') &&
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
-              <ScatterPlot studyAccession={studyAccession} viewOptions={viewOptions} />
+              <ScatterPlot studyAccession={studyAccession} dataParams={dataParams} />
             </div>
           }
           { enabledTabs.includes('scatter') &&
             <div className={shownTab === 'scatter' ? '' : 'hidden'}>
               <div className="row">
                 <div className="col-md-6">
-                  <ScatterPlot studyAccession={studyAccession} viewOptions={viewOptions} />
+                  <ScatterPlot studyAccession={studyAccession} dataParams={dataParams} />
                 </div>
                 <div className="col-md-6">
                   <ScatterPlot
                     studyAccession={studyAccession}
-                    viewOptions={genelessViewOptions}
+                    dataParams={genelessDataParams}
                     plotOptions= {{ showlegend: false }}/>
                 </div>
               </div>
@@ -107,15 +116,20 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
           }
           { enabledTabs.includes('distribution') &&
             <div className={shownTab === 'distribution' ? '' : 'hidden'}>
-              <StudyViolinPlot studyAccession={studyAccession} renderParams={viewOptions} genes={viewOptions.genes}/>
+              <StudyViolinPlot studyAccession={studyAccession} dataParams={dataParams} genes={dataParams.genes}/>
             </div>
           }
           { enabledTabs.includes('dotplot') &&
             <div className={shownTab === 'dotplot' ? '' : 'hidden'}>
               <DotPlotTab
                 studyAccession={studyAccession}
-                viewOptions={viewOptions}
+                dataParams={dataParams}
                 annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}/>
+            </div>
+          }
+          { enabledTabs.includes('heatmap') &&
+            <div className={shownTab === 'heatmap' ? '' : 'hidden'}>
+              <Heatmap studyAccession={studyAccession} dataParams={dataParams} genes={dataParams.genes} />
             </div>
           }
         </div>
@@ -125,12 +139,12 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, viewOp
 }
 
 /** renders the dot plot tab for multi gene searches */
-function DotPlotTab({ studyAccession, viewOptions, annotations }) {
-  const annotationValues = getAnnotationValues(viewOptions.annotation, annotations)
-  return (<StudyGeneDotPlot
+function DotPlotTab({ studyAccession, dataParams, annotations }) {
+  const annotationValues = getAnnotationValues(dataParams.annotation, annotations)
+  return (<DotPlot
     studyAccession={studyAccession}
-    renderParams={viewOptions}
-    genes={viewOptions.genes}
+    dataParams={dataParams}
+    genes={dataParams.genes}
     annotationValues={annotationValues}
   />)
 }

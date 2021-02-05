@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import _uniqueId from 'lodash/uniqueId'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faDna } from '@fortawesome/free-solid-svg-icons'
 
 import { log, startPendingEvent } from 'lib/metrics-api'
 import { getColorBrewerColor } from 'lib/plot'
 import DotPlotLegend from './DotPlotLegend'
+import { getAnnotationCellValuesURL, getExpressionHeatmapURL } from 'lib/scp-api'
 
 export const dotPlotColorScheme = {
   // Blue, purple, red.  These red and blue hues are accessible, per WCAG.
@@ -13,33 +16,46 @@ export const dotPlotColorScheme = {
   values: [0, 0.5, 1]
 }
 
-/** renders a morpheus powered dotPlot for the given URL paths and annotation */
-export default function DotPlot({ expressionValuesURL, annotationCellValuesURL, annotation, annotationValues }) {
+/** renders a morpheus powered dotPlot for the given URL paths and annotation
+  * Note that this has a lot in common with Heatmap.js.  they are separate for now
+  * as their display capabilities may diverge (esp. since DotPlot is used in global gene search)*/
+export default function DotPlot({ studyAccession, genes, dataParams, annotationValues }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
+  const expressionValuesURL = getExpressionHeatmapURL(studyAccession, genes, dataParams.cluster)
+  const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
+                                                             dataParams.cluster,
+                                                             dataParams.annotation.name,
+                                                             dataParams.annotation.scope,
+                                                             dataParams.annotation.type,
+                                                             dataParams.subsample)
   useEffect(() => {
-    const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
-    log('dot-plot:initialize')
-    renderDotPlot(
-      `#${graphId}`,
-      expressionValuesURL,
-      annotationCellValuesURL,
-      annotation,
-      annotationValues,
-      '',
-      450
-    )
-    plotEvent.complete()
-  }, [expressionValuesURL, annotationCellValuesURL, annotation.name, annotation.scope])
+    if (dataParams.annotation.name) {
+      const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
+      log('dot-plot:initialize')
+      renderDotPlot({
+        target: `#${graphId}`,
+        expressionValuesURL: expressionValuesURL,
+        annotationCellValuesURL: annotationCellValuesURL,
+        annotationName: dataParams.annotation.name,
+        annotationValues: annotationValues
+      })
+      plotEvent.complete()
+    }
+  }, [expressionValuesURL, annotationCellValuesURL, dataParams.annotation.name, dataParams.annotation.scope])
   return (
     <div>
-      <div id={graphId} className="dotplot-graph"></div>
-      <DotPlotLegend/>
+    { dataParams.cluster &&
+      <>
+        <div id={graphId} className="dotplot-graph"></div>
+        <DotPlotLegend/>
+      </> }
+    { !dataParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </div>
   )
 }
 
 /** Render Morpheus dot plot */
-function renderDotPlot(target, dataPath, annotPath, annotation, annotationValues, fitType='', dotHeight=450) {
+function renderDotPlot({target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues}) {
   const $target = $(target)
   $target.empty()
 
@@ -50,7 +66,7 @@ function renderDotPlot(target, dataPath, annotPath, annotation, annotationValues
       collapse_method: 'Mean',
       shape: 'circle',
       collapse: ['Columns'],
-      collapse_to_fields: [annotation.name],
+      collapse_to_fields: [annotationName],
       pass_expression: '>',
       pass_value: '0',
       percentile: '100',
@@ -60,7 +76,7 @@ function renderDotPlot(target, dataPath, annotPath, annotation, annotationValues
 
   const config = {
     shape: 'circle',
-    dataset: dataPath,
+    dataset: expressionValuesURL,
     el: $target,
     menu: null,
     colorScheme: {
@@ -85,32 +101,19 @@ function renderDotPlot(target, dataPath, annotPath, annotation, annotationValues
     tools
   }
 
-  // Fit rows, columns, or both to screen
-  if (fitType === 'cols') {
-    config.columnSize = 'fit'
-  } else if (fitType === 'rows') {
-    config.rowSize = 'fit'
-  } else if (fitType === 'both') {
-    config.columnSize = 'fit'
-    config.rowSize = 'fit'
-  } else {
-    config.columnSize = null
-    config.rowSize = null
-  }
-
   // Load annotations if specified
-  if (annotPath !== '') {
+  if (annotationCellValuesURL !== '') {
     config.columnAnnotations = [{
-      file: annotPath,
+      file: annotationCellValuesURL,
       datasetField: 'id',
       fileField: 'NAME',
-      include: [annotation.name]
+      include: [annotationName]
     }]
     config.columnSortBy = [
-      { field: annotation.name, order: 0 }
+      { field: annotationName, order: 0 }
     ]
     config.columns = [
-      { field: annotation.name, display: 'text' }
+      { field: annotationName, display: 'text' }
     ]
     config.rows = [
       { field: 'id', display: 'text' }
@@ -118,13 +121,13 @@ function renderDotPlot(target, dataPath, annotPath, annotation, annotationValues
 
     // Create mapping of selected annotations to colorBrewer colors
     const annotColorModel = {}
-    annotColorModel[annotation.name] = {}
+    annotColorModel[annotationName] = {}
     const sortedAnnots = annotationValues.sort()
 
     // Calling % 27 will always return to the beginning of colorBrewerSet
     // once we use all 27 values
     $(sortedAnnots).each((index, annot) => {
-      annotColorModel[annotation.name][annot] = getColorBrewerColor(index)
+      annotColorModel[annotationName][annot] = getColorBrewerColor(index)
     })
     config.columnColorModel = annotColorModel
   }

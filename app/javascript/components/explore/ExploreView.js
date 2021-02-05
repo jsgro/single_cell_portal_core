@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { Router, navigate, useLocation } from '@reach/router'
 import * as queryString from 'query-string'
-import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 
@@ -10,8 +9,8 @@ import ClusterControls from 'components/visualization/ClusterControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { stringifyQuery, fetchExplore, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
 
-/** converts query string parameters into the viewOptions objet */
-function buildViewOptionsFromQuery(query) {
+/** converts query string parameters into the dataParams objet */
+function buildDataParamsFromQuery(query) {
   const queryParams = queryString.parse(query)
   let annotation = {
     name: '',
@@ -33,16 +32,16 @@ function buildViewOptionsFromQuery(query) {
   }
 }
 
-/** converts the viewOptions object into a query string, inverse of buildViewOptionsFromQuery */
-function buildQueryFromViewOptions(viewOptions) {
-  const annot = viewOptions.annotation
+/** converts the dataParams object into a query string, inverse of buildDataParamsFromQuery */
+function buildQueryFromDataParams(dataParams) {
+  const annot = dataParams.annotation
   const querySafeOptions = {
-    cluster: viewOptions.cluster,
+    cluster: dataParams.cluster,
     annotation: [annot.name, annot.type, annot.scope].join('--'),
-    genes: geneArrayToParam(viewOptions.genes),
-    consensus: viewOptions.consensus,
-    tab: viewOptions.tab,
-    spatialFiles: viewOptions.spatialFiles.join(',')
+    genes: geneArrayToParam(dataParams.genes),
+    consensus: dataParams.consensus,
+    tab: dataParams.tab,
+    spatialFiles: dataParams.spatialFiles.join(',')
   }
   return stringifyQuery(querySafeOptions)
 }
@@ -54,22 +53,22 @@ function buildQueryFromViewOptions(viewOptions) {
 function RoutableExploreTab({ studyAccession }) {
   const [exploreInfo, setExploreInfo] = useState(null)
   const location = useLocation()
-  const [showViewOptions, setShowViewOptions] = useState(true)
+  const [showDataParams, setShowDataParams] = useState(true)
   const [initialOptions, setInitialOptions] = useState(null)
-  let viewOptions = buildViewOptionsFromQuery(location.search)
+  let dataParams = buildDataParamsFromQuery(location.search)
   if (initialOptions && !location.search) {
     // just render the defaults
-    viewOptions = initialOptions
+    dataParams = initialOptions
   }
 
-  /** Merges the received update into the viewOptions, and updates the page URL if need */
-  function updateViewOptions(newOptions) {
-    const mergedOpts = Object.assign({}, viewOptions, newOptions)
+  /** Merges the received update into the dataParams, and updates the page URL if need */
+  function updateDataParams(newOptions) {
+    const mergedOpts = Object.assign({}, dataParams, newOptions)
     if (newOptions.isUserUpdated === false) {
       // this is just default params being fetched from the server, so don't change the url
       setInitialOptions(mergedOpts)
     } else {
-      const query = buildQueryFromViewOptions(mergedOpts)
+      const query = buildQueryFromDataParams(mergedOpts)
       // view options settings should not add history entries
       // e.g. when a user hits 'back', it shouldn't undo their cluster selection,
       // it should take them to the page they were on before they came to the explore tab
@@ -82,9 +81,9 @@ function RoutableExploreTab({ studyAccession }) {
   }, [studyAccession])
 
   // Toggle "View Options" panel
-  const viewOptionsIcon = showViewOptions ? faCaretRight : faCaretLeft
+  const dataParamsIcon = showDataParams ? faCaretRight : faCaretLeft
   let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden', 'closed']
-  if (showViewOptions) {
+  if (showDataParams) {
     [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2', 'open']
   }
 
@@ -94,22 +93,22 @@ function RoutableExploreTab({ studyAccession }) {
       <div className="row">
         <div className={mainViewClass}>
           <ExploreDisplayTabs studyAccession={studyAccession}
-            viewOptions={viewOptions}
-            updateViewOptions={updateViewOptions}
+            dataParams={dataParams}
+            updateDataParams={updateDataParams}
             exploreInfo={exploreInfo}/>
         </div>
         <div className={controlPanelClass}>
           <ClusterControls studyAccession={studyAccession}
-            renderParams={viewOptions}
-            setRenderParams={updateViewOptions}
+            dataParams={dataParams}
+            setDataParams={updateDataParams}
             preloadedAnnotationList={exploreInfo ? exploreInfo.annotationList : null}
             fetchAnnotationList={false}
-            showConsensus={viewOptions.genes.length > 1}/>
+            showConsensus={dataParams.genes.length > 1}/>
         </div>
       </div>
       <button className={`action view-options-toggle ${optionsLinkClass}`}
-        onClick={() => setShowViewOptions(!showViewOptions)}>
-        <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/> View Options
+        onClick={() => setShowDataParams(!showDataParams)}>
+        <FontAwesomeIcon className="fa-lg" icon={dataParamsIcon}/> View Options
       </button>
     </div>
   )
