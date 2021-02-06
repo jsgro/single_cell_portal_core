@@ -5,9 +5,10 @@ import { faDna } from '@fortawesome/free-solid-svg-icons'
 
 import { log, startPendingEvent } from 'lib/metrics-api'
 import { getExpressionHeatmapURL, getAnnotationCellValuesURL } from 'lib/scp-api'
+import { morpheusTabManager } from './DotPlot'
 
 /** renders a morpheus powered heatmap for the given params */
-export default function Heatmap({ studyAccession, genes, dataParams }) {
+export default function Heatmap({ studyAccession, genes, dataParams, widthFunc}) {
   const [graphId] = useState(_uniqueId('heatmap-'))
   const expressionValuesURL = getExpressionHeatmapURL(studyAccession, genes, dataParams.cluster)
   const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
@@ -25,7 +26,8 @@ export default function Heatmap({ studyAccession, genes, dataParams }) {
         target: `#${graphId}`,
         expressionValuesURL: expressionValuesURL,
         annotationCellValuesURL: annotationCellValuesURL,
-        annotationName: dataParams.annotation.name
+        annotationName: dataParams.annotation.name,
+        widthFunc: widthFunc
       })
       plotEvent.complete()
     }
@@ -38,14 +40,14 @@ export default function Heatmap({ studyAccession, genes, dataParams }) {
   return (
     <div>
       { dataParams.cluster &&
-        <div id={graphId} className="heatmap-graph"></div> }
+        <div id={graphId} className="heatmap-graph" style={{minWidth: '80vw'}}></div> }
       { !dataParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </div>
   )
 }
 
 /** Render Morpheus heatmap */
-function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, annotationName }) {
+function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, annotationName, widthFunc }) {
   const $target = $(target)
   $target.empty()
   // TODO -- add to viewOptions
@@ -62,18 +64,7 @@ function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, a
     // We implement our own trivial tab manager as it seems to be the only way
     // (after 2+ hours of digging) to prevent morpheus auto-scrolling
     // to the heatmap once it's rendered
-    tabManager: {
-      add: options => {
-        $target.empty()
-        $target.append(options.$el)
-        return { id: $target.attr('id'), $panel: $target }
-      },
-      setTabTitle: () => {},
-      setActiveTab: () => {},
-      getWidth: () => $target.width(),
-      getHeight: () => $target.height(),
-      getTabCount: () => 1
-    }
+    tabManager: morpheusTabManager($target, widthFunc)
   }
    // pull fit type as well, defaults to ''
   const fitType = ''

@@ -19,7 +19,7 @@ export const dotPlotColorScheme = {
 /** renders a morpheus powered dotPlot for the given URL paths and annotation
   * Note that this has a lot in common with Heatmap.js.  they are separate for now
   * as their display capabilities may diverge (esp. since DotPlot is used in global gene search)*/
-export default function DotPlot({ studyAccession, genes, dataParams, annotationValues }) {
+export default function DotPlot({ studyAccession, genes, dataParams, annotationValues, widthFunc }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
   const expressionValuesURL = getExpressionHeatmapURL(studyAccession, genes, dataParams.cluster)
   const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
@@ -37,7 +37,8 @@ export default function DotPlot({ studyAccession, genes, dataParams, annotationV
         expressionValuesURL: expressionValuesURL,
         annotationCellValuesURL: annotationCellValuesURL,
         annotationName: dataParams.annotation.name,
-        annotationValues: annotationValues
+        annotationValues: annotationValues,
+        widthFunc: widthFunc
       })
       plotEvent.complete()
     }
@@ -55,7 +56,7 @@ export default function DotPlot({ studyAccession, genes, dataParams, annotationV
 }
 
 /** Render Morpheus dot plot */
-function renderDotPlot({target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues}) {
+function renderDotPlot({target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues, widthFunc}) {
   const $target = $(target)
   $target.empty()
 
@@ -83,21 +84,7 @@ function renderDotPlot({target, expressionValuesURL, annotationCellValuesURL, an
       scalingMode: 'relative'
     },
     focus: null,
-    // We implement our own trivial tab manager as it seems to be the only way
-    // (after 2+ hours of digging) to prevent morpheus auto-scrolling
-    // to the heatmap once it's rendered
-    tabManager: {
-      add: options => {
-        $target.empty()
-        $target.append(options.$el)
-        return { id: $target.attr('id'), $panel: $target }
-      },
-      setTabTitle: () => {},
-      setActiveTab: () => {},
-      getWidth: () => $target.width(),
-      getHeight: () => $target.height(),
-      getTabCount: () => 1
-    },
+    tabManager: morpheusTabManager($target, widthFunc),
     tools
   }
 
@@ -136,4 +123,27 @@ function renderDotPlot({target, expressionValuesURL, annotationCellValuesURL, an
 
   // Instantiate dot plot and embed in DOM element
   new window.morpheus.HeatMap(config)
+}
+
+/** return a trivial tab manager that handles focus and sizing
+ * We implement our own trivial tab manager as it seems to be the only way
+ * (after 2+ hours of digging) to prevent morpheus auto-scrolling
+ * to a heatmap once it's rendered
+ */
+export function morpheusTabManager($target, widthFunc) {
+  if (!widthFunc) {
+    widthFunc = () => $target.width()
+  }
+  return {
+    add: options => {
+      $target.empty()
+      $target.append(options.$el)
+      return { id: $target.attr('id'), $panel: $target }
+    },
+    setTabTitle: () => {},
+    setActiveTab: () => {},
+    getWidth: widthFunc,
+    getHeight: () => $target.height(),
+    getTabCount: () => 1
+  }
 }

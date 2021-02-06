@@ -36,6 +36,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, dataPa
   const isMultiGene = dataParams.genes.length > 1
   const isGene = dataParams.genes.length > 0
   const firstRender = useRef(true);
+  let tabContainerEl = useRef(null);
   let enabledTabs = []
 
   if (isGene) {
@@ -64,7 +65,10 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, dataPa
   function setGenes(genes) {
     updateDataParams({ genes: genes })
   }
-
+  /** helper function to get render width avaiable for chart components, since they may be first rendered hidden */
+  function getTabWidth() {
+    return tabContainerEl.clientWidth - 30 // 30 is the bootstrap auto-padding
+  }
   useEffect(() => {
     if (!firstRender.current) {
       // switch back to the default tab for a given view when the genes/consensus changes
@@ -104,7 +108,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, dataPa
       </div>
 
       <div className="row">
-        <div className="col-md-12 explore-plot-tab-content">
+        <div className="col-md-12 explore-plot-tab-content" ref={tabContainerEl}>
           { enabledTabs.includes('cluster') &&
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
               <ScatterPlot studyAccession={studyAccession} dataParams={dataParams} />
@@ -135,12 +139,13 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, dataPa
               <DotPlotTab
                 studyAccession={studyAccession}
                 dataParams={dataParams}
-                annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}/>
+                annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}
+                widthFunc={getTabWidth}/>
             </div>
           }
           { enabledTabs.includes('heatmap') &&
             <div className={shownTab === 'heatmap' ? '' : 'hidden'}>
-              <Heatmap studyAccession={studyAccession} dataParams={dataParams} genes={dataParams.genes} />
+              <Heatmap studyAccession={studyAccession} dataParams={dataParams} genes={dataParams.genes} widthFunc={getTabWidth}/>
             </div>
           }
         </div>
@@ -150,12 +155,13 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, dataPa
 }
 
 /** renders the dot plot tab for multi gene searches */
-function DotPlotTab({studyAccession, dataParams, annotations}) {
+function DotPlotTab({studyAccession, dataParams, annotations, widthFunc}) {
   let annotationValues = getAnnotationValues(dataParams.annotation, annotations)
   return (<DotPlot
     studyAccession={studyAccession}
     dataParams={dataParams}
     genes={dataParams.genes}
     annotationValues={annotationValues}
+    widthFunc={widthFunc}
   />)
 }
