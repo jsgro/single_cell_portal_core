@@ -1,5 +1,8 @@
 import React, {useEffect, useRef} from 'react'
 import _clone from 'lodash/clone'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faReply } from '@fortawesome/free-solid-svg-icons'
+
 import StudyGeneField from './StudyGeneField'
 import ScatterPlot from 'components/visualization/ScatterPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
@@ -58,8 +61,8 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, dataPa
   genelessDataParams.genes = []
 
   /** helper function so that StudyGeneField doesn't have to see the full dataParams object */
-  function setGenes(geneString) {
-    updateDataParams({ genes: geneString })
+  function setGenes(genes) {
+    updateDataParams({ genes: genes })
   }
 
   useEffect(() => {
@@ -74,9 +77,17 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, dataPa
     <>
       <div className="row">
         <div className="col-md-5">
-          <StudyGeneField genes={dataParams.genes}
-            setGenes={setGenes}
-            allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
+          <div className="flexbox">
+            <StudyGeneField genes={dataParams.genes}
+              setGenes={setGenes}
+              allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
+            {isGene && <button className="action fa-lg"
+              onClick={() => setGenes([])}
+              title="return to cluster view"
+              data-analytics-name="back-to-cluster-view">
+              <FontAwesomeIcon icon={faReply}/>
+            </button> }
+          </div>
         </div>
         <div className="col-md-7">
           <ul className="nav nav-tabs" role="tablist" data-analytics-name="explore-default">
