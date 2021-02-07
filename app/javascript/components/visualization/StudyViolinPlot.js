@@ -57,7 +57,7 @@ export default function StudyViolinPlot({ studyAccession, genes, dataParams, set
   ])
   const isCollapsedView = ['mean', 'median'].indexOf(dataParams.consensus) >= 0
   return (
-    <>
+    <div className="plot">
       <div
         className="expression-graph"
         id={graphElementId}
@@ -79,6 +79,6 @@ export default function StudyViolinPlot({ studyAccession, genes, dataParams, set
           <span>{_capitalize(dataParams.consensus)} expression of {studyGeneNames.join(', ')}</span>
         </div>
       }
-    </>
+    </div>
   )
 }

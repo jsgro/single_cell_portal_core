@@ -38,7 +38,7 @@ export default function Heatmap({ studyAccession, genes, dataParams, widthFunc})
     dataParams.annotation.scope
   ])
   return (
-    <div>
+    <div className="plot">
       { dataParams.cluster &&
         <div id={graphId} className="heatmap-graph" style={{minWidth: '80vw'}}></div> }
       { !dataParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }

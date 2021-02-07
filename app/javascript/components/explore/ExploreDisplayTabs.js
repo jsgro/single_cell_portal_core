@@ -32,11 +32,11 @@ const tabList = [
  * @param {Object} dataParams  object with cluster, annotation, and other viewing properties specified.
  * @param { Function } updateDataParams function for passing updates to the dataParams object
  */
-export default function ExploreDisplayTabs({ studyAccession, exploreInfo, dataParams, updateDataParams }) {
+export default function ExploreDisplayTabs({ studyAccession, exploreInfo, renderParams, dataParams, updateDataParams }) {
   const isMultiGene = dataParams.genes.length > 1
   const isGene = dataParams.genes.length > 0
-  const firstRender = useRef(true);
-  let tabContainerEl = useRef(null);
+  const firstRender = useRef(true)
+  const tabContainerEl = useRef(null)
   let enabledTabs = []
 
   if (isGene) {
@@ -63,7 +63,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, dataPa
 
   /** helper function so that StudyGeneField doesn't have to see the full dataParams object */
   function setGenes(genes) {
-    updateDataParams({ genes: genes })
+    updateDataParams({ genes })
   }
   /** helper function to get render width avaiable for chart components, since they may be first rendered hidden */
   function getTabWidth() {
@@ -118,13 +118,17 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, dataPa
             <div className={shownTab === 'scatter' ? '' : 'hidden'}>
               <div className="row">
                 <div className="col-md-6">
-                  <ScatterPlot studyAccession={studyAccession} dataParams={dataParams} />
+                  <ScatterPlot
+                    studyAccession={studyAccession}
+                    dataParams={dataParams}
+                    renderParams={renderParams}/>
                 </div>
                 <div className="col-md-6">
                   <ScatterPlot
                     studyAccession={studyAccession}
                     dataParams={genelessDataParams}
-                    plotOptions= {{showlegend: false}}/>
+                    renderParams={renderParams}
+                    plotOptions= {{ showlegend: false }}/>
                 </div>
               </div>
             </div>
