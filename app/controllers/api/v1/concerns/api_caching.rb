@@ -9,7 +9,7 @@ module Api
         CACHE_PATH_BLACKLIST = %w(controller action format study_id)
 
         # character regex to convert into underscores (_) for cache path setting
-        PATH_REGEX =/(\/|%2F|%20|\?|&|=|\.)/
+        PATH_REGEX =/(\/|%2C|%2F|%20|\?|&|=|\.)/
 
         # check Rails cache for JSON response based off url/params
         # cache expiration is still handled by CacheRemovalJob
@@ -36,24 +36,20 @@ module Api
         # construct cache_key for accessing Rails cache
         def get_cache_key
           # transform / into _ to avoid encoding as %2f
-          sanitized_path = sanitize_path
+          sanitized_path = sanitize_value(request.path)
           # remove unwanted parameters from cache_key, as well as empty values
           # this simplifies base key into smaller value, e.g. _single_cell_api_v1_studies_SCP123_explore_
           params_key = params.to_unsafe_hash.reject {|name, value| CACHE_PATH_BLACKLIST.include?(name) || value.empty?}.
               map do |parameter_name, parameter_value|
-            "#{parameter_name}_#{sanitize_param(parameter_value).split.join('_')}"
+            "#{parameter_name}_#{sanitize_value(parameter_value).split.join('_')}"
           end
           [sanitized_path, params_key].join('_')
         end
 
-        # convert url pathname into easily readable fragment
-        def sanitize_path
-          request.path.gsub(PATH_REGEX, '_')
-        end
-
         # remove url-encoded characters from parameter values
-        def sanitize_param(parameter)
-          parameter.gsub(PATH_REGEX, '_')
+        # extra gsub at the end will catch any invalid % encodings that were mangled and remove them
+        def sanitize_value(value)
+          value.gsub(PATH_REGEX, '_').gsub(/%/, '')
         end
 
         # check if caching is enabled/disabled in development environment
