@@ -10,18 +10,22 @@
   a {
   	cursor: pointer;
 	}
+
+	button.action {
+		border: none;
+	}
+
+	.plot {
+		position: relative;
+		background: #fff;
+		min-height: 300px;
+	}
 }
-
-
 
 .explore-plot-tab-content {
 	min-height: 50vh;
 }
 
-.plot {
-	position: relative;
-	background: #fff;
-}
 
 .explore-plot-tab-content {
 	background: #fff;
@@ -43,4 +47,19 @@
 .study-explore .cluster-controls {
   // leave room for the 'view options' toggle
 	margin-top: 3em;
+}
+
+.render-controls {
+	.panel {
+		border: none;
+		border-radius: 5px;
+		background: #fff;
+		box-shadow: none;
+	}
+	.panel-heading {
+	  cursor: pointer;
+		background: #ddd;
+		border-radius: 5px;
+		font-weight: bold;
+	}
 }

@@ -7,10 +7,18 @@ import { fetchCluster } from 'lib/scp-api'
 import { setMarkerColors } from 'lib/scatter-plot'
 import { labelFont } from 'lib/plot'
 
+export const SCATTER_COLOR_OPTIONS = [
+  'Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu', 'Reds', 'Blues', 'Picnic',
+  'Rainbow', 'Portland', 'Jet', 'Hot', 'Blackbody', 'Earth', 'Electric', 'Viridis', 'Cividis'
+]
+
+export const defaultScatterColor = 'Reds'
+
+
 /** Renders the appropriate scatter plot for the given study and dataParams
   * See ExploreView.js for the full specification of the dataParams object
   */
-export default function ScatterPlot({ studyAccession, dataParams, plotOptions }) {
+export default function ScatterPlot({ studyAccession, renderParams, dataParams, plotOptions }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
@@ -22,6 +30,9 @@ export default function ScatterPlot({ studyAccession, dataParams, plotOptions })
         clusterResponse.data = setMarkerColors(clusterResponse.data)
       }
       const layout = getPlotlyLayout(clusterResponse, plotOptions)
+      if (renderParams.scatterColor) {
+        clusterResponse.data[0].marker.colorscale = renderParams.scatterColor
+      }
       window.Plotly.newPlot(graphElementId, clusterResponse.data, layout, { responsive: true })
     } catch (error) {
       alert(`An unexpected error occurred rendering the graph: ${error}`)
@@ -31,8 +42,7 @@ export default function ScatterPlot({ studyAccession, dataParams, plotOptions })
     setIsLoading(false)
   }
 
-  console.log('viewOptions')
-  console.log(viewOptions)
+  // useEffect for fetching graph data and drawing the plot
   useEffect(() => {
     // don't update if the param changes are just defaults coming back from the server,
     // we will have already fetched the default view
@@ -50,6 +60,16 @@ export default function ScatterPlot({ studyAccession, dataParams, plotOptions })
     dataParams.subsample,
     dataParams.consensus,
     dataParams.genes.join(',')])
+
+  // useEffect for handling color profile re-renders
+  useEffect(() => {
+    // Don't try to update the color if the graph hasn't loaded yet
+    if (clusterData && !isLoading) {
+      const dataUpdate = { 'marker.colorscale': renderParams.scatterColor }
+      window.Plotly.update(graphElementId, dataUpdate)
+    }
+  }, [renderParams.scatterColor])
+
   return (
     <div className="plot">
       <div
@@ -100,6 +120,7 @@ function getPlotlyLayout({
     })
     Object.assign(layout, props2d)
   }
+
 
   return layout
 }

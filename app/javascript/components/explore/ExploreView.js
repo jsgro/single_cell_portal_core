@@ -4,8 +4,10 @@ import { Router, navigate, useLocation } from '@reach/router'
 import * as queryString from 'query-string'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons'
+import _clone from 'lodash/clone'
 
 import ClusterControls from 'components/visualization/ClusterControls'
+import RenderControls, { defaultRenderParams } from 'components/visualization/RenderControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { stringifyQuery, fetchExplore, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
 
@@ -33,7 +35,7 @@ function buildDataParamsFromQuery(query) {
 }
 
 /** converts the dataParams object into a query string, inverse of buildDataParamsFromQuery */
-function buildQueryFromDataParams(dataParams) {
+function buildQueryFromParams(dataParams, renderParams) {
   const annot = dataParams.annotation
   const querySafeOptions = {
     cluster: dataParams.cluster,
@@ -41,9 +43,29 @@ function buildQueryFromDataParams(dataParams) {
     genes: geneArrayToParam(dataParams.genes),
     consensus: dataParams.consensus,
     tab: dataParams.tab,
-    spatialFiles: dataParams.spatialFiles.join(',')
+    spatialFiles: dataParams.spatialFiles.join(','),
+    scatterColor: renderParams.scatterColor
   }
+  // remove keys from renderParams that are equal to the defaults
+  Object.keys(defaultRenderParams).forEach(key => {
+    if (querySafeOptions[key] === defaultRenderParams[key]) {
+      delete querySafeOptions[key]
+    }
+  })
   return stringifyQuery(querySafeOptions)
+}
+
+/** converts query string params into the renderParams object, wich controls plot visualization customization */
+function buildRenderParamsFromQuery(query) {
+  const queryParams = queryString.parse(query)
+  const renderParams = _clone(defaultRenderParams)
+  const urlProps = ['scatterColor']
+  urlProps.forEach(optName => {
+    if (queryParams[optName] && queryParams[optName].length) {
+      renderParams[optName] = queryParams[optName]
+    }
+  })
+  return renderParams
 }
 
 /**
@@ -56,6 +78,7 @@ function RoutableExploreTab({ studyAccession }) {
   const [showDataParams, setShowDataParams] = useState(true)
   const [initialOptions, setInitialOptions] = useState(null)
   let dataParams = buildDataParamsFromQuery(location.search)
+  const renderParams = buildRenderParamsFromQuery(location.search)
   if (initialOptions && !location.search) {
     // just render the defaults
     dataParams = initialOptions
@@ -68,12 +91,20 @@ function RoutableExploreTab({ studyAccession }) {
       // this is just default params being fetched from the server, so don't change the url
       setInitialOptions(mergedOpts)
     } else {
-      const query = buildQueryFromDataParams(mergedOpts)
+      const query = buildQueryFromParams(mergedOpts, renderParams)
       // view options settings should not add history entries
       // e.g. when a user hits 'back', it shouldn't undo their cluster selection,
       // it should take them to the page they were on before they came to the explore tab
       navigate(`${query}#study-visualize`, { replace: true })
     }
+  }
+
+  /** Merges the received update into the dataParams, and updates the page URL if need */
+  function updateRenderParams(newOptions) {
+    const mergedOpts = Object.assign({}, renderParams, newOptions)
+    const query = buildQueryFromParams(dataParams, mergedOpts)
+    // view options settings should not add history entries
+    navigate(`${query}#study-visualize`, { replace: true })
   }
 
   useEffect(() => {
@@ -94,6 +125,7 @@ function RoutableExploreTab({ studyAccession }) {
         <div className={mainViewClass}>
           <ExploreDisplayTabs studyAccession={studyAccession}
             dataParams={dataParams}
+            renderParams={renderParams}
             updateDataParams={updateDataParams}
             exploreInfo={exploreInfo}/>
         </div>
@@ -104,6 +136,7 @@ function RoutableExploreTab({ studyAccession }) {
             preloadedAnnotationList={exploreInfo ? exploreInfo.annotationList : null}
             fetchAnnotationList={false}
             showConsensus={dataParams.genes.length > 1}/>
+          <RenderControls renderParams={renderParams} updateRenderParams={updateRenderParams}/>
         </div>
       </div>
       <button className={`action view-options-toggle ${optionsLinkClass}`}
