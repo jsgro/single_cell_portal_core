@@ -19,44 +19,46 @@ export const dotPlotColorScheme = {
 /** renders a morpheus powered dotPlot for the given URL paths and annotation
   * Note that this has a lot in common with Heatmap.js.  they are separate for now
   * as their display capabilities may diverge (esp. since DotPlot is used in global gene search)*/
-export default function DotPlot({ studyAccession, genes, dataParams, annotationValues, widthFunc }) {
+export default function DotPlot({ studyAccession, genes, dataParams, annotationValues, dimensionsFn }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
   const expressionValuesURL = getExpressionHeatmapURL(studyAccession, genes, dataParams.cluster)
   const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
-                                                             dataParams.cluster,
-                                                             dataParams.annotation.name,
-                                                             dataParams.annotation.scope,
-                                                             dataParams.annotation.type,
-                                                             dataParams.subsample)
+    dataParams.cluster,
+    dataParams.annotation.name,
+    dataParams.annotation.scope,
+    dataParams.annotation.type,
+    dataParams.subsample)
   useEffect(() => {
     if (dataParams.annotation.name) {
       const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
       log('dot-plot:initialize')
       renderDotPlot({
         target: `#${graphId}`,
-        expressionValuesURL: expressionValuesURL,
-        annotationCellValuesURL: annotationCellValuesURL,
+        expressionValuesURL,
+        annotationCellValuesURL,
         annotationName: dataParams.annotation.name,
-        annotationValues: annotationValues,
-        widthFunc: widthFunc
+        annotationValues,
+        dimensionsFn
       })
       plotEvent.complete()
     }
   }, [expressionValuesURL, annotationCellValuesURL, dataParams.annotation.name, dataParams.annotation.scope])
   return (
     <div>
-    { dataParams.cluster &&
+      { dataParams.cluster &&
       <>
         <div id={graphId} className="dotplot-graph"></div>
         <DotPlotLegend/>
       </> }
-    { !dataParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+      { !dataParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </div>
   )
 }
 
 /** Render Morpheus dot plot */
-function renderDotPlot({target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues, widthFunc}) {
+function renderDotPlot(
+  { target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues, dimensionsFn }
+) {
   const $target = $(target)
   $target.empty()
 
@@ -84,7 +86,7 @@ function renderDotPlot({target, expressionValuesURL, annotationCellValuesURL, an
       scalingMode: 'relative'
     },
     focus: null,
-    tabManager: morpheusTabManager($target, widthFunc),
+    tabManager: morpheusTabManager($target, dimensionsFn),
     tools
   }
 
@@ -130,9 +132,9 @@ function renderDotPlot({target, expressionValuesURL, annotationCellValuesURL, an
  * (after 2+ hours of digging) to prevent morpheus auto-scrolling
  * to a heatmap once it's rendered
  */
-export function morpheusTabManager($target, widthFunc) {
-  if (!widthFunc) {
-    widthFunc = () => $target.width()
+export function morpheusTabManager($target, dimensionsFn) {
+  if (!dimensionsFn) {
+    dimensionsFn = () => $target.width()
   }
   return {
     add: options => {
@@ -142,7 +144,7 @@ export function morpheusTabManager($target, widthFunc) {
     },
     setTabTitle: () => {},
     setActiveTab: () => {},
-    getWidth: widthFunc,
+    getWidth: dimensionsFn().width,
     getHeight: () => $target.height(),
     getTabCount: () => 1
   }

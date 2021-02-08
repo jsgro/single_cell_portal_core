@@ -17,8 +17,10 @@ export default function RenderControls({ renderParams, updateRenderParams }) {
     <div className="render-controls">
       <Panel className="render-scatter" expanded={showScatter} onToggle={() => setShowScatter(!showScatter)}>
         <Panel.Heading onClick={() => setShowScatter(!showScatter)}>
-          <Panel.Title className="action" componentClass="a" title="toggle scatter display controls" data-analytics-name="render-params-scatter-toggle">
-            <FontAwesomeIcon className="fa-lg" icon={showScatter ? faCaretDown : faCaretRight }/>&nbsp;
+          <Panel.Title
+            className="action" componentClass="a" title="toggle scatter display controls"
+            data-analytics-name="render-params-scatter-toggle">
+            <FontAwesomeIcon className="fa-lg" icon={showScatter ? faCaretDown : faCaretRight}/>&nbsp;
             Scatter
           </Panel.Title>
         </Panel.Heading>
@@ -29,7 +31,7 @@ export default function RenderControls({ renderParams, updateRenderParams }) {
               options={SCATTER_COLOR_OPTIONS.map(color => ({ label: color, value: color }))}
               value={{ label: renderParams.scatterColor, value: renderParams.scatterColor }}
               clearable={false}
-              onChange={option => updateRenderParams({scatterColor: option.value})}/>
+              onChange={option => updateRenderParams({ scatterColor: option.value })}/>
           </Panel.Body>
         </Panel.Collapse>
       </Panel>

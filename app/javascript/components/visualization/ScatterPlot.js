@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
@@ -18,7 +18,7 @@ export const defaultScatterColor = 'Reds'
 /** Renders the appropriate scatter plot for the given study and dataParams
   * See ExploreView.js for the full specification of the dataParams object
   */
-export default function ScatterPlot({ studyAccession, renderParams, dataParams, plotOptions }) {
+export default function ScatterPlot({ studyAccession, dataParams, renderParams, showDataParams, dimensionsFn, plotOptions }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
@@ -61,14 +61,24 @@ export default function ScatterPlot({ studyAccession, renderParams, dataParams, 
     dataParams.consensus,
     dataParams.genes.join(',')])
 
-  // useEffect for handling color profile re-renders
-  useEffect(() => {
+  // Handle Plotly `data` updates, e.g. changes in color profile
+  useLayoutEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
       const dataUpdate = { 'marker.colorscale': renderParams.scatterColor }
       window.Plotly.update(graphElementId, dataUpdate)
     }
   }, [renderParams.scatterColor])
+
+  // Handle Plotly `layout` updates, e.g. changes in width or height
+  useLayoutEffect(() => {
+    // Don't update if the graph hasn't loaded yet
+    if (clusterData && !isLoading) {
+      const { width, height } = dimensionsFn()
+      const layoutUpdate = { width, height }
+      window.Plotly.relayout(graphElementId, layoutUpdate)
+    }
+  }, [showDataParams])
 
   return (
     <div className="plot">

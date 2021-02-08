@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faReply } from '@fortawesome/free-solid-svg-icons'
@@ -33,12 +33,15 @@ const tabList = [
  * @param { Function } updateDataParams function for passing updates to the dataParams object
  */
 export default function ExploreDisplayTabs(
-  { studyAccession, exploreInfo, renderParams, dataParams, updateDataParams }
+  {
+    studyAccession, exploreInfo, dataParams, renderParams, showDataParams,
+    updateDataParams
+  }
 ) {
   const isMultiGene = dataParams.genes.length > 1
   const isGene = dataParams.genes.length > 0
   const firstRender = useRef(true)
-  const tabContainerEl = useRef(null)
+  const plotContainerClass = 'explore-plot-tab-content'
   let enabledTabs = []
 
   if (isGene) {
@@ -59,7 +62,7 @@ export default function ExploreDisplayTabs(
   if (!enabledTabs.includes(shownTab)) {
     shownTab = enabledTabs[0]
   }
-  // dataParams object without genes specified, to pass to cluster comparison graphs
+  // dataParams object without genes specified, to pass to cluster comparison plots
   const genelessDataParams = _clone(dataParams)
   genelessDataParams.genes = []
 
@@ -67,10 +70,22 @@ export default function ExploreDisplayTabs(
   function setGenes(genes) {
     updateDataParams({ genes })
   }
-  /** helper function to get render width avaiable for chart components, since they may be first rendered hidden */
-  function getTabWidth() {
-    return tabContainerEl.clientWidth - 30 // 30 is the bootstrap auto-padding
+
+  /** Get width and height available for plot components, since they may be first rendered hidden */
+  function getPlotContainerDimensions() {
+    let width = 0
+    let height = 0
+    const container = document.querySelector(`.${plotContainerClass}`)
+    if (container) {
+      width = container.clientWidth - 30 // 30 is the bootstrap auto-padding
+      height = container.clientHeight
+    }
+    console.log('container, width:')
+    console.log(container)
+    console.log(width)
+    return { width, height }
   }
+
   useEffect(() => {
     if (!firstRender.current) {
       // switch back to the default tab for a given view when the genes/consensus changes
@@ -89,7 +104,7 @@ export default function ExploreDisplayTabs(
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
             {isGene && <button className="action fa-lg"
               onClick={() => setGenes([])}
-              title="return to cluster view"
+              title="Return to cluster view"
               data-analytics-name="back-to-cluster-view">
               <FontAwesomeIcon icon={faReply}/>
             </button> }
@@ -110,10 +125,16 @@ export default function ExploreDisplayTabs(
       </div>
 
       <div className="row">
-        <div className="col-md-12 explore-plot-tab-content" ref={tabContainerEl}>
+        <div className="explore-plot-tab-content">
           { enabledTabs.includes('cluster') &&
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
-              <ScatterPlot studyAccession={studyAccession} dataParams={dataParams} />
+              <ScatterPlot
+                studyAccession={studyAccession}
+                dataParams={dataParams}
+                renderParams={renderParams}
+                showDataParams={showDataParams}
+                dimensionsFn={getPlotContainerDimensions}
+              />
             </div>
           }
           { enabledTabs.includes('scatter') &&
@@ -146,12 +167,16 @@ export default function ExploreDisplayTabs(
                 studyAccession={studyAccession}
                 dataParams={dataParams}
                 annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}
-                widthFunc={getTabWidth}/>
+                dimensionsFn={getPlotContainerDimensions}/>
             </div>
           }
           { enabledTabs.includes('heatmap') &&
             <div className={shownTab === 'heatmap' ? '' : 'hidden'}>
-              <Heatmap studyAccession={studyAccession} dataParams={dataParams} genes={dataParams.genes} widthFunc={getTabWidth}/>
+              <Heatmap
+                studyAccession={studyAccession}
+                dataParams={dataParams}
+                genes={dataParams.genes}
+                dimensionsFn={getPlotContainerDimensions}/>
             </div>
           }
         </div>

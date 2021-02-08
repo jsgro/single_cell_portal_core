@@ -8,15 +8,15 @@ import { getExpressionHeatmapURL, getAnnotationCellValuesURL } from 'lib/scp-api
 import { morpheusTabManager } from './DotPlot'
 
 /** renders a morpheus powered heatmap for the given params */
-export default function Heatmap({ studyAccession, genes, dataParams, widthFunc}) {
+export default function Heatmap({ studyAccession, genes, dataParams, dimensionsFn }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
   const expressionValuesURL = getExpressionHeatmapURL(studyAccession, genes, dataParams.cluster)
   const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
-                                                             dataParams.cluster,
-                                                             dataParams.annotation.name,
-                                                             dataParams.annotation.scope,
-                                                             dataParams.annotation.type,
-                                                             dataParams.subsample)
+    dataParams.cluster,
+    dataParams.annotation.name,
+    dataParams.annotation.scope,
+    dataParams.annotation.type,
+    dataParams.subsample)
 
   useEffect(() => {
     if (dataParams.cluster) {
@@ -24,10 +24,10 @@ export default function Heatmap({ studyAccession, genes, dataParams, widthFunc})
       log('heatmap:initialize')
       renderHeatmap({
         target: `#${graphId}`,
-        expressionValuesURL: expressionValuesURL,
-        annotationCellValuesURL: annotationCellValuesURL,
+        expressionValuesURL,
+        annotationCellValuesURL,
         annotationName: dataParams.annotation.name,
-        widthFunc: widthFunc
+        dimensionsFn
       })
       plotEvent.complete()
     }
@@ -40,14 +40,14 @@ export default function Heatmap({ studyAccession, genes, dataParams, widthFunc})
   return (
     <div className="plot">
       { dataParams.cluster &&
-        <div id={graphId} className="heatmap-graph" style={{minWidth: '80vw'}}></div> }
+        <div id={graphId} className="heatmap-graph" style={{ minWidth: '80vw' }}></div> }
       { !dataParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </div>
   )
 }
 
 /** Render Morpheus heatmap */
-function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, annotationName, widthFunc }) {
+function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, annotationName, dimensionsFn }) {
   const $target = $(target)
   $target.empty()
   // TODO -- add to viewOptions
@@ -64,9 +64,9 @@ function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, a
     // We implement our own trivial tab manager as it seems to be the only way
     // (after 2+ hours of digging) to prevent morpheus auto-scrolling
     // to the heatmap once it's rendered
-    tabManager: morpheusTabManager($target, widthFunc)
+    tabManager: morpheusTabManager($target, dimensionsFn)
   }
-   // pull fit type as well, defaults to ''
+  // pull fit type as well, defaults to ''
   const fitType = ''
   // Fit rows, columns, or both to screen
   if (fitType === 'cols') {

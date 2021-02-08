@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { Router, navigate, useLocation } from '@reach/router'
 import * as queryString from 'query-string'
@@ -55,7 +55,7 @@ function buildQueryFromParams(dataParams, renderParams) {
   return stringifyQuery(querySafeOptions)
 }
 
-/** converts query string params into the renderParams object, wich controls plot visualization customization */
+/** converts query string params into the renderParams object, which controls plot visualization customization */
 function buildRenderParamsFromQuery(query) {
   const queryParams = queryString.parse(query)
   const renderParams = _clone(defaultRenderParams)
@@ -79,6 +79,8 @@ function RoutableExploreTab({ studyAccession }) {
   const [initialOptions, setInitialOptions] = useState(null)
   let dataParams = buildDataParamsFromQuery(location.search)
   const renderParams = buildRenderParamsFromQuery(location.search)
+  const tabContainerEl = useRef(null)
+
   if (initialOptions && !location.search) {
     // just render the defaults
     dataParams = initialOptions
@@ -107,6 +109,11 @@ function RoutableExploreTab({ studyAccession }) {
     navigate(`${query}#study-visualize`, { replace: true })
   }
 
+  /** Handle clicks on "View Options" toggler element */
+  function handleViewOptionsClick() {
+    setShowDataParams(!showDataParams)
+  }
+
   useEffect(() => {
     fetchExplore(studyAccession).then(result => setExploreInfo(result))
   }, [studyAccession])
@@ -122,10 +129,11 @@ function RoutableExploreTab({ studyAccession }) {
     <div className="study-explore">
 
       <div className="row">
-        <div className={mainViewClass}>
+        <div className={mainViewClass} ref={tabContainerEl}>
           <ExploreDisplayTabs studyAccession={studyAccession}
             dataParams={dataParams}
             renderParams={renderParams}
+            showDataParams={showDataParams}
             updateDataParams={updateDataParams}
             exploreInfo={exploreInfo}/>
         </div>
@@ -139,10 +147,10 @@ function RoutableExploreTab({ studyAccession }) {
           <RenderControls renderParams={renderParams} updateRenderParams={updateRenderParams}/>
         </div>
       </div>
-      <button className={`action view-options-toggle ${optionsLinkClass}`}
-        onClick={() => setShowDataParams(!showDataParams)}>
+      <a className={`action view-options-toggle ${optionsLinkClass}`}
+        onClick={() => handleViewOptionsClick()}>
         <FontAwesomeIcon className="fa-lg" icon={dataParamsIcon}/> View Options
-      </button>
+      </a>
     </div>
   )
 }
