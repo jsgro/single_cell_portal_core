@@ -18,7 +18,10 @@ export const defaultScatterColor = 'Reds'
 /** Renders the appropriate scatter plot for the given study and dataParams
   * See ExploreView.js for the full specification of the dataParams object
   */
-export default function ScatterPlot({ studyAccession, dataParams, renderParams, showDataParams, dimensionsFn, plotOptions }) {
+export default function ScatterPlot({
+  studyAccession, dataParams, renderParams, showDataParams, dimensionsFn, plotOptions,
+  numPlots=1
+}) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
@@ -74,7 +77,8 @@ export default function ScatterPlot({ studyAccession, dataParams, renderParams, 
   useLayoutEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
-      const { width, height } = dimensionsFn()
+      let { width, height } = dimensionsFn()
+      width /= numPlots
       const layoutUpdate = { width, height }
       window.Plotly.relayout(graphElementId, layoutUpdate)
     }
@@ -130,7 +134,6 @@ function getPlotlyLayout({
     })
     Object.assign(layout, props2d)
   }
-
 
   return layout
 }

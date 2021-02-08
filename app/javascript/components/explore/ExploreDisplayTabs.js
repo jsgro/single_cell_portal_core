@@ -144,14 +144,21 @@ export default function ExploreDisplayTabs(
                   <ScatterPlot
                     studyAccession={studyAccession}
                     dataParams={dataParams}
-                    renderParams={renderParams}/>
+                    renderParams={renderParams}
+                    showDataParams={showDataParams}
+                    dimensionsFn={getPlotContainerDimensions}
+                    numPlots={2}
+                  />
                 </div>
                 <div className="col-md-6">
                   <ScatterPlot
                     studyAccession={studyAccession}
                     dataParams={genelessDataParams}
                     renderParams={renderParams}
-                    plotOptions= {{ showlegend: false }}/>
+                    showDataParams={showDataParams}
+                    dimensionsFn={getPlotContainerDimensions}
+                    plotOptions= {{ showlegend: false }}
+                    numPlots={2}/>
                 </div>
               </div>
             </div>
