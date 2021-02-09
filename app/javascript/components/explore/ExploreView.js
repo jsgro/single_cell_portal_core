@@ -44,7 +44,8 @@ function buildQueryFromParams(dataParams, renderParams) {
     consensus: dataParams.consensus,
     tab: dataParams.tab,
     spatialFiles: dataParams.spatialFiles.join(','),
-    scatterColor: renderParams.scatterColor
+    scatterColor: renderParams.scatterColor,
+    distributionPlot: renderParams.distributionPlot
   }
   // remove keys from renderParams that are equal to the defaults
   Object.keys(defaultRenderParams).forEach(key => {
@@ -59,7 +60,7 @@ function buildQueryFromParams(dataParams, renderParams) {
 function buildRenderParamsFromQuery(query) {
   const queryParams = queryString.parse(query)
   const renderParams = _clone(defaultRenderParams)
-  const urlProps = ['scatterColor']
+  const urlProps = ['scatterColor', 'distributionPlot']
   urlProps.forEach(optName => {
     if (queryParams[optName] && queryParams[optName].length) {
       renderParams[optName] = queryParams[optName]
@@ -124,8 +125,9 @@ function RoutableExploreTab({ studyAccession }) {
         <div className={mainViewClass}>
           <ExploreDisplayTabs studyAccession={studyAccession}
             dataParams={dataParams}
-            renderParams={renderParams}
             updateDataParams={updateDataParams}
+            renderParams={renderParams}
+            updateRenderParams={updateRenderParams}
             exploreInfo={exploreInfo}/>
         </div>
         <div className={controlPanelClass}>

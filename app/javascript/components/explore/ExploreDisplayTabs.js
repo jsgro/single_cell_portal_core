@@ -32,7 +32,14 @@ const tabList = [
  * @param {Object} dataParams  object with cluster, annotation, and other viewing properties specified.
  * @param { Function } updateDataParams function for passing updates to the dataParams object
  */
-export default function ExploreDisplayTabs({ studyAccession, exploreInfo, renderParams, dataParams, updateDataParams }) {
+export default function ExploreDisplayTabs({
+  studyAccession,
+  exploreInfo,
+  renderParams,
+  updateRenderParams,
+  dataParams,
+  updateDataParams
+}) {
   const isMultiGene = dataParams.genes.length > 1
   const isGene = dataParams.genes.length > 0
   const firstRender = useRef(true)
@@ -111,7 +118,11 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, render
         <div className="col-md-12 explore-plot-tab-content" ref={tabContainerEl}>
           { enabledTabs.includes('cluster') &&
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
-              <ScatterPlot studyAccession={studyAccession} dataParams={dataParams} />
+              <ScatterPlot
+                studyAccession={studyAccession}
+                dataParams={dataParams}
+                renderParams={renderParams}
+                updateRenderParams={updateRenderParams}/>
             </div>
           }
           { enabledTabs.includes('scatter') &&
@@ -121,13 +132,15 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, render
                   <ScatterPlot
                     studyAccession={studyAccession}
                     dataParams={dataParams}
-                    renderParams={renderParams}/>
+                    renderParams={renderParams}
+                    updateRenderParams={updateRenderParams}/>
                 </div>
                 <div className="col-md-6">
                   <ScatterPlot
                     studyAccession={studyAccession}
                     dataParams={genelessDataParams}
                     renderParams={renderParams}
+                    updateRenderParams={updateRenderParams}
                     plotOptions= {{ showlegend: false }}/>
                 </div>
               </div>
@@ -135,7 +148,12 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, render
           }
           { enabledTabs.includes('distribution') &&
             <div className={shownTab === 'distribution' ? '' : 'hidden'}>
-              <StudyViolinPlot studyAccession={studyAccession} dataParams={dataParams} genes={dataParams.genes}/>
+              <StudyViolinPlot
+                studyAccession={studyAccession}
+                dataParams={dataParams}
+                renderParams={renderParams}
+                updateRenderParams={updateRenderParams}
+                genes={dataParams.genes}/>
             </div>
           }
           { enabledTabs.includes('dotplot') &&
