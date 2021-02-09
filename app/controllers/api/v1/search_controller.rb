@@ -526,6 +526,13 @@ module Api
             end
             key :collectionFormat, :csv
           end
+          parameter do
+            key :name, :directory
+            key :type, :string
+            key :in, :query
+            key :description, 'Name of corresponding to directory folder to download (for single-study bulk download only), can be "all"'
+            key :required, false
+          end
           response 200 do
             key :description, 'Curl configuration file with signed URLs for requested data'
             key :type, :string
@@ -575,6 +582,16 @@ module Api
         end
         permitted_accessions = accessions_by_permission[:permitted]
 
+        # if this is a single-study download, allow for DirectoryListing downloads
+        if permitted_accessions.size == 1 && params[:directory].present?
+          study_accession = permitted_accessions.first
+          directories = self.class.find_matching_directories(params[:directory], study_accession)
+          directory_files = ::BulkDownloadService.get_requested_directory_files(directories)
+        else
+          directories = []
+          directory_files = []
+        end
+
         # get requested files
         # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
         files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
@@ -583,19 +600,20 @@ module Api
         # determine quota impact & update user's download quota
         # will throw a RuntimeError if the download exceeds the user's daily quota
         begin
-          ::BulkDownloadService.update_user_download_quota(user: current_api_user, files: files_requested)
+          ::BulkDownloadService.update_user_download_quota(user: current_api_user, files: files_requested, directories: directories)
         rescue RuntimeError => e
           render json: {error: e.message}, status: 403 and return
         end
 
         # create maps to avoid Mongo timeouts when generating curl commands in parallel processes
         bucket_map = ::BulkDownloadService.generate_study_bucket_map(permitted_accessions)
-        pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested)
+        pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories)
 
         # generate curl config file
         logger.info "Beginning creation of curl configuration for user_id, auth token: #{current_api_user.id}"
         start_time = Time.zone.now
         @configuration = ::BulkDownloadService.generate_curl_configuration(study_files: files_requested,
+                                                                           directory_files: directory_files,
                                                                            user: current_api_user,
                                                                            study_bucket_map: bucket_map,
                                                                            output_pathname_map: pathname_map)
@@ -875,6 +893,19 @@ module Api
       def self.find_matching_file_types(raw_file_types)
         file_types = split_query_param_on_delim(parameter: raw_file_types)
         StudyFile::BULK_DOWNLOAD_TYPES & file_types # find array intersection
+      end
+
+      # find matching directories in a given study
+      # this only works for single-study bulk download, not from advanced/faceted search
+      # can be 'all', or a single directory
+      def self.find_matching_directories(directory_name, accession)
+        study = Study.find_by(accession: accession)
+        sanitized_dirname = URI.decode(directory_name)
+        selector = DirectoryListing.where(study_id: study.id, sync_status: true)
+        if sanitized_dirname.downcase != 'all'
+          selector = selector.where(name: sanitized_dirname)
+        end
+        selector
       end
 
       # generic split function, handles type checking

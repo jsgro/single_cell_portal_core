@@ -51,6 +51,46 @@ module Api
         @studies = Study.viewable(current_api_user)
       end
 
+      swagger_schema :DirectoryListingDownload do
+        property :name do
+          key :type, :string
+          key :description, 'Name of remote GCS directory containing files'
+        end
+        property :description do
+          key :type, :string
+          key :format, :email
+          key :description, 'Block description for all files contained in DirectoryListing'
+        end
+        property :file_type do
+          key :type, :string
+          key :description, 'File type (i.e. extension) of all files contained in DirectoryListing'
+        end
+        property :download_url do
+          key :type, :string
+          key :description, 'URL to bulk download all files in this directory'
+        end
+        property :files do
+          key :type, :array
+          key :description, 'Array of file objects'
+          items type: :object do
+            key :title, 'GCS File object'
+            key :required, [:name, :size, :generation]
+            property :name do
+              key :type, :string
+              key :description, 'name of File'
+            end
+            property :size do
+              key :type, :integer
+              key :description, 'size of File'
+            end
+            property :generation do
+              key :type, :string
+              key :description, 'GCS generation tag of File'
+            end
+          end
+        end
+      end
+
       swagger_path '/site/studies/{accession}' do
         operation :get do
           key :tags, [

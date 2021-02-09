@@ -104,7 +104,7 @@ class DirectoryListing
         end
       end
     end
-  end
+	end
 
 	validates_uniqueness_of :name, scope: [:study_id, :file_type]
   validates_presence_of :name, :file_type, :files
@@ -132,6 +132,20 @@ class DirectoryListing
 		else
 			download_private_file_path(accession: self.study.accession, study_name: self.study.url_safe_name, filename: file)
 		end
+	end
+
+	# output path for bulk download
+	def bulk_download_pathname(file)
+		if self.name == '/'
+			"#{self.study.accession}/root_dir/#{file[:name]}"
+		else
+			"#{self.study.accession}/#{file[:name]}"
+		end
+	end
+
+	# helper to get total number of bytes in directory
+	def total_bytes
+		self.files.map {|file| file[:size].to_i}.reduce(:+) # to_i handles any nil file sizes
 	end
 
 	# helper to render name appropriately for use in download modals

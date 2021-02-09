@@ -33,8 +33,11 @@ class StudyFile
   ASSEMBLY_REQUIRED_TYPES = ['BAM', 'Ideogram Annotations']
   GZIP_MAGIC_NUMBER = "\x1f\x8b".force_encoding(Encoding::ASCII_8BIT)
   REQUIRED_ATTRIBUTES = %w(file_type name)
+  # allowed bulk download file types
+  # 'Expression' covers dense & sparse matrix files
+  # 'None' is used when only bulk downloading a single directory_listing folder
   BULK_DOWNLOAD_TYPES = ['Expression', 'Metadata', 'Cluster', 'Coordinate Labels', 'Fastq', 'BAM', 'Documentation',
-                         'Other', 'Analysis Output', 'Ideogram Annotations']
+                         'Other', 'Analysis Output', 'Ideogram Annotations', 'None']
 
   # Constants for scoping values for AnalysisParameter inputs/outputs
   ASSOCIATED_MODEL_METHOD = %w(gs_url name upload_file_name bucket_location)

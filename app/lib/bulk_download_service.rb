@@ -9,6 +9,7 @@ class BulkDownloadService
   #
   # * *params*
   #   - +study_files+ (Array<StudyFile>) => Array of StudyFiles to be downloaded
+  #   - +directory_files+ (Array<Hash>) => Array of file descriptors in a bucket folder (from get_requested_directory_files)
   #   - +user+ (User) => User requesting download
   #   - +study_bucket_map+ => Map of study IDs to bucket names
   #   - +output_pathname_map+ => Map of study file IDs to output pathnames
@@ -16,14 +17,17 @@ class BulkDownloadService
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
   def self.generate_curl_configuration(study_files:,
+                                       directory_files: [],
                                        user:,
                                        study_bucket_map:,
                                        output_pathname_map:)
     curl_configs = ['--create-dirs', '--compressed']
-    # Get signed URLs for all files in the requested download objects, and update user quota
-    Parallel.map(study_files, in_threads: 100) do |study_file|
+    # create an array of all objects to be downloaded, including directory files
+    download_objects = study_files.to_a + directory_files
+    # Get signed URLs for all files in the requested download objects
+    Parallel.map(download_objects, in_threads: 100) do |download_object|
       client = FireCloudClient.new
-      curl_configs << self.get_single_curl_command(file: study_file, fc_client: client, user: user,
+      curl_configs << self.get_single_curl_command(file: download_object, fc_client: client, user: user,
                                                    study_bucket_map: study_bucket_map, output_pathname_map: output_pathname_map)
     end
     studies = study_files.map(&:study).uniq
@@ -52,12 +56,15 @@ class BulkDownloadService
   # * *params*
   #   - +user+ (User) => User performing bulk download action
   #   - +files+ (Array<StudyFile>) => Array of files requested
+  #   - +files+ (Array<DirectoryListing>) => Array of files requested in DirectoryListings
   #
   # * *raises*
   #   - (RuntimeError) => User download quota exceeded
-  def self.update_user_download_quota(user:, files:)
+  def self.update_user_download_quota(user:, files:, directories: )
     download_quota = ApplicationController.get_download_quota
-    bytes_requested = files.map(&:upload_file_size).compact.reduce(:+)
+    file_bytes_requested = files.map(&:upload_file_size).compact.reduce(0, :+)
+    dir_bytes_requested = directories.map(&:total_bytes).reduce(0, :+)
+    bytes_requested = file_bytes_requested + dir_bytes_requested
     bytes_allowed = download_quota - user.daily_download_quota
     if bytes_requested > bytes_allowed
       raise RuntimeError.new "Total file size exceeds user download quota: #{bytes_requested} bytes requested, #{bytes_allowed} bytes allowed"
@@ -108,6 +115,8 @@ class BulkDownloadService
   # * *return*
   #   - (Array<StudyFile>) => Array of StudyFiles to pass to #generate_curl_config
   def self.get_requested_files(file_types: [], study_accessions:)
+    # if 'None' is requested type, exit immediately as this is only for a single folder download
+    return [] if file_types == ['None']
     # replace 'Expression' with both dense & sparse matrix file types
     # include bundled 10X files as well to avoid MongoDB timeout issues when trying to load bundles
     if file_types.include?('Expression')
@@ -119,6 +128,27 @@ class BulkDownloadService
     # get requested files, excluding externally stored sequence data
     base_file_selector = StudyFile.where(human_fastq_url: nil, :study_id.in => studies.pluck(:id))
     file_types.present? ? base_file_selector.where(:file_type.in => file_types) : base_file_selector
+  end
+
+  # get all requested files from matching DirectoryListings
+  #
+  # * *params*
+  #   - +directories+ (Mongoid::Critera) => selector mapping to requested DirectoryListings from a study
+  #
+  # * *returns*
+  #   - (Array<Hash>) => {name: name/relative location of file in bucket, study_id: id of study}
+  def self.get_requested_directory_files(directories)
+    dir_files = []
+    directories.each do |directory|
+      directory.files.each do |file|
+        dir_file = {
+          name: file[:name],
+          study_id: directory.study.id.to_s
+        }.with_indifferent_access
+        dir_files << dir_file
+      end
+    end
+    dir_files
   end
 
   # Get a preview of the number of files/total bytes by StudyAccession and file_type
@@ -145,7 +175,7 @@ class BulkDownloadService
   # curl for initiating bulk downloads
   #
   # * *params*
-  #   - +file+ (StudyFile) => StudyFiles to be downloaded
+  #   - +file+ (StudyFile, Hash) => file object to be downloaded
   #   - +fc_client+ (FireCloudClient) => Client to call GCS and generate signed_url
   #   - +user+ (User) => User requesting download
   #   - +study_bucket_map+ => Map of study IDs to bucket names
@@ -156,9 +186,15 @@ class BulkDownloadService
   def self.get_single_curl_command(file:, fc_client:, user:, study_bucket_map:, output_pathname_map:)
     fc_client ||= ApplicationController.firecloud_client
     # if a file is a StudyFile, use bucket_location, otherwise the :name key will contain its location (if DirectoryListing)
-    file_location = file.bucket_location
-    bucket_name = study_bucket_map[file.study_id.to_s]
-    output_path = output_pathname_map[file.id.to_s]
+    if file.is_a?(StudyFile)
+      file_location = file.bucket_location
+      bucket_name = study_bucket_map[file.study_id.to_s]
+      output_path = output_pathname_map[file.id.to_s]
+    elsif file.is_a?(Hash)
+      file_location = file[:name]
+      bucket_name = study_bucket_map[file[:study_id]]
+      output_path = output_pathname_map[file[:name]]
+    end
 
     begin
       signed_url = fc_client.execute_gcloud_method(:generate_signed_url, 0, bucket_name, file_location,
@@ -194,13 +230,19 @@ class BulkDownloadService
   #
   # * *params*
   #   - +study_files+ (Array<StudyFile>) => Array of StudyFiles to be downloaded
+  #   - +directories+ (Array<DirectoryListing>) => Array of DirectoryListings to be downloaded
   #
   # * *returns*
   #   - (Hash<String, String>) => Map of study file IDs to output pathnames
-  def self.generate_output_path_map(study_files)
+  def self.generate_output_path_map(study_files, directories)
     output_map = {}
     study_files.each do |study_file|
       output_map[study_file.id.to_s] = study_file.bulk_download_pathname
+    end
+    directories.each do |directory|
+      directory.files.each do |file|
+        output_map[file[:name]] = directory.bulk_download_pathname(file)
+      end
     end
     output_map
   end
