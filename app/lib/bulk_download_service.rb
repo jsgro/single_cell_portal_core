@@ -60,7 +60,7 @@ class BulkDownloadService
   #
   # * *raises*
   #   - (RuntimeError) => User download quota exceeded
-  def self.update_user_download_quota(user:, files:, directories: )
+  def self.update_user_download_quota(user:, files:, directories: [])
     download_quota = ApplicationController.get_download_quota
     file_bytes_requested = files.map(&:upload_file_size).compact.reduce(0, :+)
     dir_bytes_requested = directories.map(&:total_bytes).reduce(0, :+)
@@ -171,6 +171,24 @@ class BulkDownloadService
     files_by_type
   end
 
+  # Get a preview of the number of files/total bytes by DirectoryListing name (single study)
+  #
+  # * *params*
+  #   - +directories+ (Array<DirectoryListing>, Mongoid::Criteria) => Array of requested directories
+  #
+  # * *returns*
+  #   - (Hash) => Hash of directory names to total_files & total_bytes
+  def self.get_requested_directory_sizes(directories)
+    directories_by_name = {}
+    directories.each do |directory|
+      directories_by_name[directory.name] = {
+        total_bytes: directory.total_bytes,
+        total_files: directory.files.count
+      }
+    end
+    directories_by_name
+  end
+
   # Generate a String representation of a configuration file containing URLs and output paths to pass to
   # curl for initiating bulk downloads
   #
@@ -234,7 +252,7 @@ class BulkDownloadService
   #
   # * *returns*
   #   - (Hash<String, String>) => Map of study file IDs to output pathnames
-  def self.generate_output_path_map(study_files, directories)
+  def self.generate_output_path_map(study_files, directories=[])
     output_map = {}
     study_files.each do |study_file|
       output_map[study_file.id.to_s] = study_file.bulk_download_pathname
