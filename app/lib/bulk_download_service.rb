@@ -43,7 +43,8 @@ class BulkDownloadService
         manifest_config += "-k\n"
       end
       manifest_path = RequestUtils.get_base_url + Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)
-      manifest_config += "url=#{manifest_path}?auth_code=#{totat[:totat]}\n"
+      include_dirs = directory_files.any?
+      manifest_config += "url=#{manifest_path}?auth_code=#{totat[:totat]}&include_dirs=#{include_dirs}\n"
       manifest_config += "output=#{study.accession}/file_supplemental_info.tsv"
       curl_configs << manifest_config
     end
@@ -266,7 +267,7 @@ class BulkDownloadService
   end
 
   # generate a study_info object from an existing study
-  def self.generate_study_manifest(study)
+  def self.generate_study_manifest(study, include_dirs=false)
     info = HashWithIndifferentAccess.new
     info[:study] = {
       name: study.name,
@@ -279,13 +280,17 @@ class BulkDownloadService
     info[:files] = study.study_files
                         .where(queued_for_deletion: false)
                         .map{|f| generate_study_file_manifest(f)}
+    if include_dirs
+      info[:directories] = study.directory_listings.are_synced
+                                .map {|d| generate_directory_listing_manifest(d)}
+    end
     info
   end
 
   # generate a study_info.json object from an existing study_file
   def self.generate_study_file_manifest(study_file)
     output = {
-      filename: study_file.name,
+      filename: study_file.upload_file_name,
       file_type: study_file.file_type
     }
 
@@ -308,12 +313,27 @@ class BulkDownloadService
     output
   end
 
+  # generate a study_info.json object from an existing directory_listing
+  def self.generate_directory_listing_manifest(directory_listing)
+    output = []
+    directory_listing.files.each do |file|
+      entry = {
+        filename: directory_listing.bulk_download_folder(file),
+        file_type: directory_listing.file_type,
+        species_scientific_name: directory_listing.taxon.try(:scientific_name)
+      }
+      output << entry
+    end
+    output
+  end
+
   # takes a study manifest file (from generate_study_manifest) and makes a tsv.
   # Once the tsv format stabilizes for a couple of months, it will probably be best
   # to update the synthetic studies seed file format to the tsv format (if possible)
   # and consolidate this and the above methods.
-  def self.generate_study_files_tsv(study)
-    study_manifest = generate_study_manifest(study)
+  # include_dirs governs whether or not to include directory listing objects in manifest
+  def self.generate_study_files_tsv(study, include_dirs=false)
+    study_manifest = generate_study_manifest(study, include_dirs)
     col_names_and_paths = [
       {filename: 'filename'},
       {file_type: 'file_type'},
@@ -338,6 +358,18 @@ class BulkDownloadService
         file_value ? file_value : ""
       end
       tsv_string += (file_row.join("\t") + "\n")
+    end
+    if study_manifest[:directories].present?
+      study_manifest[:directories].each do |directory_entry|
+        directory_entry.each do |dir_file_info|
+          file_row = col_names_and_paths.map do |name_and_path|
+            path = name_and_path.values[0]
+            file_value = dir_file_info.dig(*(path.split('.')))
+            file_value ? file_value : ""
+          end
+          tsv_string += (file_row.join("\t") + "\n")
+        end
+      end
     end
     tsv_string
   end

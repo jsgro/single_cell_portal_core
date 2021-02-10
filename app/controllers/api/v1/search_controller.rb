@@ -619,7 +619,7 @@ module Api
                                                                            output_pathname_map: pathname_map)
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
-        logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size} total files"
+        logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size + directory_files.size} total files"
         logger.info "Total time in generating curl configuration: #{runtime}"
         send_data @configuration, type: 'text/plain', filename: 'cfg.txt'
       end

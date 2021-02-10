@@ -136,16 +136,17 @@ class DirectoryListing
 
 	# output path for bulk download
 	def bulk_download_pathname(file)
-		if self.name == '/'
-			"#{self.study.accession}/root_dir/#{file[:name]}"
-		else
-			"#{self.study.accession}/#{file[:name]}"
-		end
+		"#{self.study.accession}/#{bulk_download_folder(file)}"
 	end
 
 	# helper to get total number of bytes in directory
 	def total_bytes
 		self.files.map {|file| file[:size].to_i}.reduce(:+) # to_i handles any nil file sizes
+	end
+
+	# location of a given file in a bulk download directory
+	def bulk_download_folder(file)
+		self.name == '/' ? "root_dir/#{file[:name]}": file[:name]
 	end
 
 	# helper to render name appropriately for use in download modals
@@ -154,6 +155,15 @@ class DirectoryListing
 			self.name
 		else
 			'/' + self.name + '/'
+		end
+	end
+
+	# helper for setting DOM attributes that are URL-encoded
+	def url_safe_name
+		if self.name == '/'
+			'root-dir'
+		else
+			self.name
 		end
 	end
 
