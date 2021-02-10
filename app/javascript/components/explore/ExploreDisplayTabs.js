@@ -44,6 +44,20 @@ export default function ExploreDisplayTabs(
   const plotContainerClass = 'explore-plot-tab-content'
   let enabledTabs = []
 
+  let hasSpatialGroups = false
+  let spatialDataParams = null
+  if (exploreInfo) {
+    hasSpatialGroups = exploreInfo.spatialGroupNames.length > 0
+
+    // TODO (SCP-3040): Implement mapping of spatial and cluster groups
+    const spatialGroup = exploreInfo.spatialGroupNames[0]
+    spatialDataParams = Object.assign({}, dataParams)
+    spatialDataParams.cluster = spatialGroup
+  }
+
+  console.log('exploreInfo')
+  console.log(exploreInfo)
+
   if (isGene) {
     if (isMultiGene) {
       if (dataParams.consensus) {
@@ -100,9 +114,6 @@ export default function ExploreDisplayTabs(
     height = Math.max(height, 200)
     width = Math.max(width, 200)
 
-    console.log('width, height')
-    console.log(width, height)
-
     return { width, height }
   }
 
@@ -146,7 +157,7 @@ export default function ExploreDisplayTabs(
 
       <div className="row">
         <div className="explore-plot-tab-content">
-          { enabledTabs.includes('cluster') &&
+          { enabledTabs.includes('cluster') && !hasSpatialGroups &&
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
               <ScatterPlot
                 studyAccession={studyAccession}
@@ -158,7 +169,64 @@ export default function ExploreDisplayTabs(
               />
             </div>
           }
-          { enabledTabs.includes('scatter') &&
+          { enabledTabs.includes('cluster') && hasSpatialGroups &&
+            <div className={shownTab === 'cluster' ? '' : 'hidden'}>
+              <div className="row">
+                <div className="col-md-6">
+                  <ScatterPlot
+                    studyAccession={studyAccession}
+                    dataParams={dataParams}
+                    renderParams={renderParams}
+                    showDataParams={showDataParams}
+                    updateRenderParams={updateRenderParams}
+                    dimensionsFn={getPlotRect}
+                    numColumns={2}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <ScatterPlot
+                    studyAccession={studyAccession}
+                    dataParams={spatialDataParams}
+                    renderParams={renderParams}
+                    showDataParams={showDataParams}
+                    updateRenderParams={updateRenderParams}
+                    dimensionsFn={getPlotRect}
+                    numColumns={2}
+                  />
+                </div>
+              </div>
+            </div>
+          }
+          { enabledTabs.includes('scatter') && !hasSpatialGroups &&
+            <div className={shownTab === 'scatter' ? '' : 'hidden'}>
+              <div className="row">
+                <div className="col-md-6">
+                  <ScatterPlot
+                    studyAccession={studyAccession}
+                    dataParams={dataParams}
+                    renderParams={renderParams}
+                    showDataParams={showDataParams}
+                    updateRenderParams={updateRenderParams}
+                    dimensionsFn={getPlotRect}
+                    numColumns={2}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <ScatterPlot
+                    studyAccession={studyAccession}
+                    dataParams={genelessDataParams}
+                    renderParams={renderParams}
+                    showDataParams={showDataParams}
+                    updateRenderParams={updateRenderParams}
+                    dimensionsFn={getPlotRect}
+                    plotOptions= {{ showlegend: false }}
+                    numColumns={2}
+                  />
+                </div>
+              </div>
+            </div>
+          }
+          { enabledTabs.includes('scatter') && hasSpatialGroups &&
             <div className={shownTab === 'scatter' ? '' : 'hidden'}>
               <div className="row">
                 <div className="col-md-6">
