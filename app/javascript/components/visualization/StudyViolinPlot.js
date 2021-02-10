@@ -23,7 +23,9 @@ export const defaultDistributionPlot = DISTRIBUTION_PLOT_OPTIONS[0].value
  *   fetch both the default expression data and the cluster menu options, a function that will be
  *   called with the annotationList returned by that call.
   */
-export default function StudyViolinPlot({ studyAccession, genes, dataParams, renderParams, updateRenderParams, setAnnotationList }) {
+export default function StudyViolinPlot({
+  studyAccession, genes, dataParams, renderParams, updateRenderParams, setAnnotationList
+}) {
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
   const [studyGeneNames, setStudyGeneNames] = useState([])
@@ -53,7 +55,7 @@ export default function StudyViolinPlot({ studyAccession, genes, dataParams, ren
     if (!distributionPlot) {
       distributionPlot = defaultDistributionPlot
     }
-    renderViolinPlot(graphElementId, results, {plotType: distributionPlot})
+    renderViolinPlot(graphElementId, results, { plotType: distributionPlot })
     if (setAnnotationList) {
       setAnnotationList(results.annotation_list)
     }
@@ -78,7 +80,7 @@ export default function StudyViolinPlot({ studyAccession, genes, dataParams, ren
   useEffect(() => {
     // Don't try to update the if the data hasn't loaded yet
     if (!isLoading && studyGeneNames.length > 0) {
-      window.Plotly.restyle(graphElementId, {type: renderParams.distributionPlot})
+      window.Plotly.restyle(graphElementId, { type: renderParams.distributionPlot })
     }
   }, [renderParams.distributionPlot])
 

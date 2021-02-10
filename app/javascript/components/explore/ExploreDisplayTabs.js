@@ -72,7 +72,7 @@ export default function ExploreDisplayTabs(
   }
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
-  function getPlotContainerDimensions(
+  function getPlotRect(
     { numRows=1, numColumns=1, verticalPad=225, horizontalPad=80 } = {}
   ) {
     // Get width, and account for expanding "View Options" after page load
@@ -99,6 +99,9 @@ export default function ExploreDisplayTabs(
     // view: "Something went wrong with axes scaling"
     height = Math.max(height, 200)
     width = Math.max(width, 200)
+
+    console.log('width, height')
+    console.log(width, height)
 
     return { width, height }
   }
@@ -151,7 +154,7 @@ export default function ExploreDisplayTabs(
                 renderParams={renderParams}
                 showDataParams={showDataParams}
                 updateRenderParams={updateRenderParams}
-                dimensionsFn={getPlotContainerDimensions}
+                dimensionsFn={getPlotRect}
               />
             </div>
           }
@@ -165,8 +168,8 @@ export default function ExploreDisplayTabs(
                     renderParams={renderParams}
                     showDataParams={showDataParams}
                     updateRenderParams={updateRenderParams}
-                    dimensionsFn={getPlotContainerDimensions}
-                    numPlots={2}
+                    dimensionsFn={getPlotRect}
+                    numColumns={2}
                   />
                 </div>
                 <div className="col-md-6">
@@ -176,9 +179,9 @@ export default function ExploreDisplayTabs(
                     renderParams={renderParams}
                     showDataParams={showDataParams}
                     updateRenderParams={updateRenderParams}
-                    dimensionsFn={getPlotContainerDimensions}
+                    dimensionsFn={getPlotRect}
                     plotOptions= {{ showlegend: false }}
-                    numPlots={2}
+                    numColumns={2}
                   />
                 </div>
               </div>
@@ -200,7 +203,7 @@ export default function ExploreDisplayTabs(
                 studyAccession={studyAccession}
                 dataParams={dataParams}
                 annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}
-                dimensionsFn={getPlotContainerDimensions}/>
+                dimensionsFn={getPlotRect}/>
             </div>
           }
           { enabledTabs.includes('heatmap') &&
@@ -209,7 +212,7 @@ export default function ExploreDisplayTabs(
                 studyAccession={studyAccession}
                 dataParams={dataParams}
                 genes={dataParams.genes}
-                dimensionsFn={getPlotContainerDimensions}/>
+                dimensionsFn={getPlotRect}/>
             </div>
           }
         </div>

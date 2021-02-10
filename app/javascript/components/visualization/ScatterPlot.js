@@ -20,7 +20,7 @@ export const defaultScatterColor = 'Reds'
   */
 export default function ScatterPlot({
   studyAccession, dataParams, renderParams, showDataParams, dimensionsFn, plotOptions,
-  updateRenderParams, numPlots=1
+  updateRenderParams, numColumns=1
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
@@ -34,11 +34,11 @@ export default function ScatterPlot({
 
     // Get Plotly layout
     const layout = getPlotlyLayout(clusterResponse, plotOptions)
-    const { width, height } = dimensionsFn({ numColumns: numPlots })
+    const { width, height } = dimensionsFn({ numColumns })
     layout.width = width
     layout.height = height
 
-    // Set color set
+    // Set color scale
     let scatterColor = renderParams.scatterColor
     if (!scatterColor) {
       scatterColor = clusterResponse.data[0].marker.colorscale
@@ -57,7 +57,7 @@ export default function ScatterPlot({
     setIsLoading(false)
   }
 
-  // Fetch plot data then draw it, upon load or change of any data parameter
+  // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     // don't update if the param changes are just defaults coming back from the server,
     // we will have already fetched the default view
@@ -76,7 +76,7 @@ export default function ScatterPlot({
     dataParams.consensus,
     dataParams.genes.join(',')])
 
-  // Handle Plotly `data` updates, e.g. changes in color profile
+  // Handles Plotly `data` updates, e.g. changes in color profile
   useLayoutEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
@@ -85,11 +85,11 @@ export default function ScatterPlot({
     }
   }, [renderParams.scatterColor])
 
-  // Adjust width and height of plots upon toggle of "View Options"
+  // Adjusts width and height of plots upon toggle of "View Options"
   useLayoutEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
-      const { width, height } = dimensionsFn({ numColumns: numPlots })
+      const { width, height } = dimensionsFn({ numColumns })
       const layoutUpdate = { width, height }
       window.Plotly.relayout(graphElementId, layoutUpdate)
     }
@@ -119,7 +119,7 @@ export default function ScatterPlot({
   )
 }
 
-/** Get Plotly layout object for scatter plot */
+/** Gets Plotly layout object for scatter plot */
 function getPlotlyLayout({
   axes,
   domainRanges,
@@ -127,11 +127,10 @@ function getPlotlyLayout({
   coordinateLabels,
   isAnnotatedScatter,
   is3d
-}, { showlegend=true }={}) {
+}) {
   const layout = {
     hovermode: 'closest',
-    font: labelFont,
-    showlegend
+    font: labelFont
   }
   if (is3d) {
     layout.scene = get3DScatterProps({ domainRanges, axes })
@@ -149,7 +148,7 @@ function getPlotlyLayout({
   return layout
 }
 
-/** Get Plotly layout object for two-dimensional scatter plot */
+/** Gets Plotly layout object for two-dimensional scatter plot */
 function get2DScatterProps({
   axes,
   domainRanges,
