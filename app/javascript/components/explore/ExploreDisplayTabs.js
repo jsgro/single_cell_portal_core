@@ -44,20 +44,6 @@ export default function ExploreDisplayTabs(
   const plotContainerClass = 'explore-plot-tab-content'
   let enabledTabs = []
 
-  let hasSpatialGroups = false
-  let spatialDataParams = null
-  if (exploreInfo) {
-    hasSpatialGroups = exploreInfo.spatialGroupNames.length > 0
-
-    // TODO (SCP-3040): Implement mapping of spatial and cluster groups
-    const spatialGroup = exploreInfo.spatialGroupNames[0]
-    spatialDataParams = Object.assign({}, dataParams)
-    spatialDataParams.cluster = spatialGroup
-  }
-
-  console.log('exploreInfo')
-  console.log(exploreInfo)
-
   if (isGene) {
     if (isMultiGene) {
       if (dataParams.consensus) {
@@ -77,13 +63,31 @@ export default function ExploreDisplayTabs(
     shownTab = enabledTabs[0]
   }
   // dataParams object without genes specified, to pass to cluster comparison plots
-  const genelessDataParams = _clone(dataParams)
-  genelessDataParams.genes = []
+  const referencePlotDataParams = _clone(dataParams)
+  referencePlotDataParams.genes = []
 
   /** helper function so that StudyGeneField doesn't have to see the full dataParams object */
   function setGenes(genes) {
     updateDataParams({ genes })
   }
+
+  let hasSpatialGroups = false
+  let spatialDataParams = null
+  let spatialReferencePlotDataParams = null
+  if (exploreInfo) {
+    hasSpatialGroups = exploreInfo.spatialGroupNames.length > 0
+
+    // TODO (SCP-3040): Implement mapping of spatial and cluster groups
+    const spatialGroup = exploreInfo.spatialGroupNames[0]
+    spatialDataParams = _clone(dataParams)
+    spatialDataParams.cluster = spatialGroup
+    spatialReferencePlotDataParams = _clone(spatialDataParams)
+    spatialReferencePlotDataParams.genes = []
+  }
+
+  console.log('dataParams, referencePlotDataParams, spatialDataParams, spatialReferencePlotDataParams')
+  console.log(dataParams, referencePlotDataParams, spatialDataParams, spatialReferencePlotDataParams)
+
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
   function getPlotRect(
@@ -214,7 +218,7 @@ export default function ExploreDisplayTabs(
                 <div className="col-md-6">
                   <ScatterPlot
                     studyAccession={studyAccession}
-                    dataParams={genelessDataParams}
+                    dataParams={referencePlotDataParams}
                     renderParams={renderParams}
                     showDataParams={showDataParams}
                     updateRenderParams={updateRenderParams}
@@ -239,16 +243,34 @@ export default function ExploreDisplayTabs(
                     dimensionsFn={getPlotRect}
                     numColumns={2}
                   />
-                </div>
-                <div className="col-md-6">
                   <ScatterPlot
                     studyAccession={studyAccession}
-                    dataParams={genelessDataParams}
+                    dataParams={referencePlotDataParams}
                     renderParams={renderParams}
                     showDataParams={showDataParams}
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotRect}
                     plotOptions= {{ showlegend: false }}
+                    numColumns={2}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <ScatterPlot
+                    studyAccession={studyAccession}
+                    dataParams={spatialDataParams}
+                    renderParams={renderParams}
+                    showDataParams={showDataParams}
+                    updateRenderParams={updateRenderParams}
+                    dimensionsFn={getPlotRect}
+                    numColumns={2}
+                  />
+                  <ScatterPlot
+                    studyAccession={studyAccession}
+                    dataParams={spatialReferencePlotDataParams}
+                    renderParams={renderParams}
+                    showDataParams={showDataParams}
+                    updateRenderParams={updateRenderParams}
+                    dimensionsFn={getPlotRect}
                     numColumns={2}
                   />
                 </div>
