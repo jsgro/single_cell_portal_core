@@ -54,7 +54,7 @@ module Api
       swagger_schema :DirectoryListingDownload do
         property :name do
           key :type, :string
-          key :description, 'Name of remote GCS directory containing files'
+          key :description, 'Name of remote Google Cloud Storage (GCS) directory containing files'
         end
         property :description do
           key :type, :string

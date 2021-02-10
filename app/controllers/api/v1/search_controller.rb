@@ -530,7 +530,7 @@ module Api
             key :name, :directory
             key :type, :string
             key :in, :query
-            key :description, 'Name of corresponding to directory folder to download (for single-study bulk download only), can be "all"'
+            key :description, 'Name of directory folder to download (for single-study bulk download only), can be "all"'
             key :required, false
           end
           response 200 do
