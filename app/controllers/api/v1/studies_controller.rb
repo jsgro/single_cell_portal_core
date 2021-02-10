@@ -501,6 +501,13 @@ module Api
             key :required, true
             key :type, :string
           end
+          parameter do
+            key :name, :include_dirs
+            key :in, :query
+            key :description, 'Include directory listings in manifest'
+            key :required, false
+            key :type, :string
+          end
           response 200 do
             key :description, 'Manifest file'
             schema do
@@ -530,7 +537,8 @@ module Api
       end
 
       def generate_manifest
-        manifest_obj = BulkDownloadService.generate_study_files_tsv(@study)
+        include_dirs = params[:include_dirs] == 'true'
+        manifest_obj = BulkDownloadService.generate_study_files_tsv(@study, include_dirs)
         response.headers['Content-Disposition'] = 'attachment; filename=file_supplemental_info.tsv'
         render plain: manifest_obj
       end

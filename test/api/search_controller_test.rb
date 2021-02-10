@@ -245,8 +245,9 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     auth_code = json['auth_code']
 
     files = study.study_files.by_type(['Expression Matrix', 'Metadata'])
+    directory = study.directory_listings.first
     execute_http_request(:get, api_v1_search_bulk_download_path(
-        auth_code: auth_code, accessions: study.accession, file_types: file_types)
+        auth_code: auth_code, accessions: study.accession, file_types: file_types, directory: directory.name)
     )
     assert_response :success
 
@@ -256,6 +257,13 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
       assert config_file.include?(filename), "Did not find URL for filename: #{filename}"
       output_path = file.bulk_download_pathname
       assert config_file.include?(output_path), "Did not correctly set output path for #{filename} to #{output_path}"
+    end
+
+    directory.files.each do |file|
+      filename = file[:name]
+      assert config_file.include?(filename), "Did not find URL for directory filename: #{filename}"
+      output_path = directory.bulk_download_pathname(file)
+      assert config_file.include?(output_path), "Did not correctly set output path for directory file #{filename} to #{output_path}"
     end
 
     # ensure bad/missing auth_token return 401
