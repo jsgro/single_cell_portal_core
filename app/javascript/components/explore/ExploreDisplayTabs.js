@@ -72,17 +72,37 @@ export default function ExploreDisplayTabs(
   }
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
-  function getPlotContainerDimensions() {
-    let width = 0
-    let height = 0
-    const container = document.querySelector(`.${plotContainerClass}`)
-    if (container) {
-      width = container.clientWidth - 30 // 30 is the bootstrap auto-padding
-      height = container.clientHeight
+  function getPlotContainerDimensions(
+    numRows=1, numColumns=1, verticalPad=225, horizontalPad=80
+  ) {
+    // Get width, and account for expanding "View Options" after page load
+    const baseWidth = $(`.${plotContainerClass}`).actual('width')
+    let width = (baseWidth - horizontalPad) / numColumns
+
+    // Get height
+    const $ideo = $('#_ideogram')
+    const ideogramHeight = $ideo.length ? $ideo.height() : 0
+
+    // Height of screen viewport, minus fixed-height elements above gallery
+    const galleryHeight = $(window).height() - verticalPad - ideogramHeight
+
+    let height = galleryHeight
+    if (numRows > 1) {
+      // Fill as much gallery height as possible, but show tip of next row
+      // as an affordance that the gallery is vertically scrollable.
+      const secondRowTipHeight = 100
+      height = height - secondRowTipHeight
     }
-    console.log('container, width:')
-    console.log(container)
-    console.log(width)
+
+    // Ensure plots aren't too small.
+    // This was needed as of 2020-12-14 to avoid a Plotly error in single-gene
+    // view: "Something went wrong with axes scaling"
+    height = Math.max(height, 200)
+    width = Math.max(width, 200)
+
+    console.log('width, height')
+    console.log(width, height)
+
     return { width, height }
   }
 
@@ -161,7 +181,8 @@ export default function ExploreDisplayTabs(
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotContainerDimensions}
                     plotOptions= {{ showlegend: false }}
-                    numPlots={2}/>
+                    numPlots={2}
+                  />
                 </div>
               </div>
             </div>
