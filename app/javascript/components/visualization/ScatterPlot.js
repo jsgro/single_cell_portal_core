@@ -32,6 +32,10 @@ export default function ScatterPlot({
       clusterResponse.data = setMarkerColors(clusterResponse.data)
     }
     const layout = getPlotlyLayout(clusterResponse, plotOptions)
+    const { width, height } = dimensionsFn({ numColumns: numPlots })
+    layout.width = width
+    layout.height = height
+
     let scatterColor = renderParams.scatterColor
     if (!scatterColor) {
       scatterColor = clusterResponse.data[0].marker.colorscale
@@ -80,8 +84,7 @@ export default function ScatterPlot({
   useLayoutEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
-      let { width, height } = dimensionsFn()
-      width /= numPlots
+      const { width, height } = dimensionsFn({ numColumns: numPlots })
       const layoutUpdate = { width, height }
       window.Plotly.relayout(graphElementId, layoutUpdate)
     }

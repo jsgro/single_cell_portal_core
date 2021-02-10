@@ -73,7 +73,7 @@ export default function ExploreDisplayTabs(
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
   function getPlotContainerDimensions(
-    numRows=1, numColumns=1, verticalPad=225, horizontalPad=80
+    { numRows=1, numColumns=1, verticalPad=225, horizontalPad=80 } = {}
   ) {
     // Get width, and account for expanding "View Options" after page load
     const baseWidth = $(`.${plotContainerClass}`).actual('width')
@@ -99,9 +99,6 @@ export default function ExploreDisplayTabs(
     // view: "Something went wrong with axes scaling"
     height = Math.max(height, 200)
     width = Math.max(width, 200)
-
-    console.log('width, height')
-    console.log(width, height)
 
     return { width, height }
   }
