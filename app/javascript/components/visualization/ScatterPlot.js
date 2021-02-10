@@ -26,16 +26,19 @@ export default function ScatterPlot({
   const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
 
-  /** process the received scatter data from the server */
+  /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
     if (clusterResponse.annotParams.type === 'group' && !clusterResponse.gene) {
       clusterResponse.data = setMarkerColors(clusterResponse.data)
     }
+
+    // Get Plotly layout
     const layout = getPlotlyLayout(clusterResponse, plotOptions)
     const { width, height } = dimensionsFn({ numColumns: numPlots })
     layout.width = width
     layout.height = height
 
+    // Set color set
     let scatterColor = renderParams.scatterColor
     if (!scatterColor) {
       scatterColor = clusterResponse.data[0].marker.colorscale
@@ -44,7 +47,9 @@ export default function ScatterPlot({
       scatterColor = defaultScatterColor
     }
     clusterResponse.data[0].marker.colorscale = scatterColor
-    window.Plotly.newPlot(graphElementId, clusterResponse.data, layout, { responsive: true })
+
+    window.Plotly.newPlot(graphElementId, clusterResponse.data, layout)
+
     if (scatterColor !== renderParams.scatterColor) {
       updateRenderParams({ scatterColor })
     }
@@ -52,7 +57,7 @@ export default function ScatterPlot({
     setIsLoading(false)
   }
 
-  // useEffect for fetching graph data and drawing the plot
+  // Fetch plot data then draw it, upon load or change of any data parameter
   useEffect(() => {
     // don't update if the param changes are just defaults coming back from the server,
     // we will have already fetched the default view
@@ -80,7 +85,7 @@ export default function ScatterPlot({
     }
   }, [renderParams.scatterColor])
 
-  // Handle Plotly `layout` updates, e.g. changes in width or height
+  // Adjust width and height of plots upon toggle of "View Options"
   useLayoutEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
@@ -144,7 +149,7 @@ function getPlotlyLayout({
   return layout
 }
 
-/** returns the plotly layout object for the given scatter data */
+/** Get Plotly layout object for two-dimensional scatter plot */
 function get2DScatterProps({
   axes,
   domainRanges,
