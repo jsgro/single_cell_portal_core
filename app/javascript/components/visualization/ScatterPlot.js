@@ -20,7 +20,7 @@ export const defaultScatterColor = 'Reds'
   */
 export default function ScatterPlot({
   studyAccession, dataParams, renderParams, showDataParams, dimensionsFn, plotOptions,
-  numPlots=1
+  updateRenderParams, numPlots=1
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
@@ -28,19 +28,22 @@ export default function ScatterPlot({
 
   /** process the received scatter data from the server */
   function handleResponse(clusterResponse) {
-    try {
-      if (clusterResponse.annotParams.type === 'group' && !clusterResponse.gene) {
-        clusterResponse.data = setMarkerColors(clusterResponse.data)
-      }
-      const layout = getPlotlyLayout(clusterResponse, plotOptions)
-      if (renderParams.scatterColor) {
-        clusterResponse.data[0].marker.colorscale = renderParams.scatterColor
-      }
-      window.Plotly.newPlot(graphElementId, clusterResponse.data, layout, { responsive: true })
-    } catch (error) {
-      alert(`An unexpected error occurred rendering the graph: ${error}`)
+    if (clusterResponse.annotParams.type === 'group' && !clusterResponse.gene) {
+      clusterResponse.data = setMarkerColors(clusterResponse.data)
     }
-
+    const layout = getPlotlyLayout(clusterResponse, plotOptions)
+    let scatterColor = renderParams.scatterColor
+    if (!scatterColor) {
+      scatterColor = clusterResponse.data[0].marker.colorscale
+    }
+    if (!scatterColor) {
+      scatterColor = defaultScatterColor
+    }
+    clusterResponse.data[0].marker.colorscale = scatterColor
+    window.Plotly.newPlot(graphElementId, clusterResponse.data, layout, { responsive: true })
+    if (scatterColor !== renderParams.scatterColor) {
+      updateRenderParams({ scatterColor })
+    }
     setClusterData(clusterResponse)
     setIsLoading(false)
   }

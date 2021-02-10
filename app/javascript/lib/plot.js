@@ -64,3 +64,35 @@ export function plot(graphElementId, data, layout) {
     layout
   )
 }
+
+// To consider: dedup this copy with the one that exists in application.js.
+export const plotlyDefaultLineColor = 'rgb(40, 40, 40)'
+
+/**
+ * More memory- and time-efficient analog of Math.min
+ * From https://stackoverflow.com/a/13440842/10564415.
+*/
+export function arrayMin(arr) {
+  let len = arr.length; let min = Infinity
+  while (len--) {
+    if (arr[len] < min) {
+      min = arr[len]
+    }
+  }
+  return min
+}
+
+/**
+ * More memory- and time-efficient analog of Math.max
+ * From https://stackoverflow.com/a/13440842/10564415.
+*/
+export function arrayMax(arr) {
+  let len = arr.length; let max = -Infinity
+  while (len--) {
+    if (arr[len] > max) {
+      max = arr[len]
+    }
+  }
+  return max
+}
+

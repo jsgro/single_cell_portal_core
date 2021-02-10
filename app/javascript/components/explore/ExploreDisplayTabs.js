@@ -35,7 +35,7 @@ const tabList = [
 export default function ExploreDisplayTabs(
   {
     studyAccession, exploreInfo, dataParams, renderParams, showDataParams,
-    updateDataParams
+    updateDataParams, updateRenderParams
   }
 ) {
   const isMultiGene = dataParams.genes.length > 1
@@ -133,6 +133,7 @@ export default function ExploreDisplayTabs(
                 dataParams={dataParams}
                 renderParams={renderParams}
                 showDataParams={showDataParams}
+                updateRenderParams={updateRenderParams}
                 dimensionsFn={getPlotContainerDimensions}
               />
             </div>
@@ -146,6 +147,7 @@ export default function ExploreDisplayTabs(
                     dataParams={dataParams}
                     renderParams={renderParams}
                     showDataParams={showDataParams}
+                    updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotContainerDimensions}
                     numPlots={2}
                   />
@@ -156,6 +158,7 @@ export default function ExploreDisplayTabs(
                     dataParams={genelessDataParams}
                     renderParams={renderParams}
                     showDataParams={showDataParams}
+                    updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotContainerDimensions}
                     plotOptions= {{ showlegend: false }}
                     numPlots={2}/>
@@ -165,7 +168,12 @@ export default function ExploreDisplayTabs(
           }
           { enabledTabs.includes('distribution') &&
             <div className={shownTab === 'distribution' ? '' : 'hidden'}>
-              <StudyViolinPlot studyAccession={studyAccession} dataParams={dataParams} genes={dataParams.genes}/>
+              <StudyViolinPlot
+                studyAccession={studyAccession}
+                dataParams={dataParams}
+                renderParams={renderParams}
+                updateRenderParams={updateRenderParams}
+                genes={dataParams.genes}/>
             </div>
           }
           { enabledTabs.includes('dotplot') &&
