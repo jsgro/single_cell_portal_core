@@ -19,7 +19,6 @@ import Ideogram from 'ideogram'
 function onClickAnnot(annot) {
   // Ideogram object; used to inspect ideogram state
   const ideogram = this // eslint-disable-line
-  document.querySelector('#search_genes').value = annot.name
 
   // Enable merge of related-genes log props into search log props
   // This helps profile the numerator of click-through-rate
@@ -31,7 +30,7 @@ function onClickAnnot(annot) {
 
   event['type'] = 'click-related-genes'
 
-  window.submitGeneSearch(event)
+  ideogram.SCP.searchGenes([annot.name], event)
 }
 
 /**
@@ -134,7 +133,7 @@ function onPlotRelatedGenes() {
  * This is only done in the context of single-gene search in Study Overview
  */
 export default function RelatedGenesIdeogram({
-  gene, taxon, target, height
+  gene, taxon, target, height, genesInScope, searchGenes
 }) {
   const verticalPad = 40 // Total top and bottom padding
 
@@ -157,9 +156,11 @@ export default function RelatedGenesIdeogram({
         showRelatedGenesIdeogram(target)
       }
     }
-
     window.ideogram =
-      Ideogram.initRelatedGenes(ideoConfig, window.SCP.uniqueGenes)
+      Ideogram.initRelatedGenes(ideoConfig, genesInScope)
+
+    // Extend ideogram with custom SCP function to search genes
+    window.ideogram.SCP = { searchGenes }
   }, [gene])
 
   return (

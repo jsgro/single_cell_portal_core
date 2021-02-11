@@ -10,13 +10,13 @@ import CreatableSelect from 'react-select/creatable'
   * This shares a lot of logic with search/genes/GeneKeyword, but is kept as a separate component for
   * now, as the need for autocomplete raises additional complexity
   */
-export default function StudyGeneField({ genes, setGenes, allGenes }) {
+export default function StudyGeneField({ genes, searchGenes, allGenes }) {
   const [inputText, setInputText] = useState('')
 
   let geneOptions = []
   if (allGenes) {
-    // only show dropdown options once they've typed 2 or more characters
-    if (inputText && inputText.length > 1) {
+    // Autocomplete when user starts typing
+    if (inputText && inputText.length > 0) {
       const lowerCaseInput = inputText.toLowerCase()
       geneOptions = allGenes.filter(geneName => {
         return geneName.toLowerCase().includes(lowerCaseInput)
@@ -40,7 +40,6 @@ export default function StudyGeneField({ genes, setGenes, allGenes }) {
     * and the current text the user is typing (inputText) */
   const [geneArray, setGeneArray] = useState(enteredGeneArray)
 
-
   const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
 
   /** handles a user submitting a gene search */
@@ -48,7 +47,8 @@ export default function StudyGeneField({ genes, setGenes, allGenes }) {
     event.preventDefault()
     const newGeneArray = syncGeneArrayToInputText()
     if (newGeneArray && newGeneArray.length) {
-      setGenes(newGeneArray.map(g => g.value))
+      if (!event) {event = { type: 'clear' }}
+      searchGenes(newGeneArray.map(g => g.value), event.type)
     } else {
       setShowEmptySearchModal(true)
     }
@@ -91,7 +91,7 @@ export default function StudyGeneField({ genes, setGenes, allGenes }) {
           isClearable
           isMulti
           isValidNewOption={() => false}
-          noOptionsMessage={() => (inputText.length > 1 ? 'No matching genes' : 'type to search...')}
+          noOptionsMessage={() => (inputText.length > 1 ? 'No matching genes' : 'Type to search...')}
           options={geneOptions}
           onChange={value => setGeneArray(value ? value : [])}
           onInputChange={inputValue => setInputText(inputValue)}
@@ -114,7 +114,7 @@ export default function StudyGeneField({ genes, setGenes, allGenes }) {
         animation={false}
         bsSize='small'>
         <Modal.Body className="text-center">
-          You must enter at least one gene to search
+          Enter at least one gene to search
         </Modal.Body>
       </Modal>
     </form>

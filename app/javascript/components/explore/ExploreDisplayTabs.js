@@ -67,7 +67,27 @@ export default function ExploreDisplayTabs(
   referencePlotDataParams.genes = []
 
   /** helper function so that StudyGeneField doesn't have to see the full dataParams object */
-  function setGenes(genes) {
+  function searchGenes(genes, logProps) {
+    const trigger = logProps ? logProps.type : 'clear'
+
+    // Properties logged for all gene searches from Study Overview
+    const defaultLogProps = {
+      type: 'gene',
+      context: 'study',
+      genes,
+      numGenes: genes.length,
+      trigger, // "submit", "click", or "click-related-genes"
+      speciesList: exploreInfo.taxonNames
+    }
+
+    // Merge log props from custom event
+    if (trigger === 'click-related-genes') {
+      Object.assign(logProps, defaultLogProps)
+    }
+
+    // TODO: Log study gene search, to not break existing analytics
+    // Avoid logging `clear` trigger; it is not a search
+
     updateDataParams({ genes })
   }
 
@@ -139,10 +159,10 @@ export default function ExploreDisplayTabs(
         <div className="col-md-5">
           <div className="flexbox">
             <StudyGeneField genes={dataParams.genes}
-              setGenes={setGenes}
+              searchGenes={searchGenes}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
             {isGene && <button className="action fa-lg"
-              onClick={() => setGenes([])}
+              onClick={() => searchGenes([])}
               title="Return to cluster view"
               data-analytics-name="back-to-cluster-view">
               <FontAwesomeIcon icon={faReply}/>
@@ -171,6 +191,8 @@ export default function ExploreDisplayTabs(
               taxon={currentTaxon}
               target={`.${plotContainerClass}`}
               height={ideogramHeight}
+              genesInScope={exploreInfo.uniqueGenes}
+              searchGenes={searchGenes}
             />
           }
           { enabledTabs.includes('cluster') && !hasSpatialGroups &&
