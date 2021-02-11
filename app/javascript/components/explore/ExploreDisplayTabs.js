@@ -9,6 +9,7 @@ import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import DotPlot from 'components/visualization/DotPlot'
 import Heatmap from 'components/visualization/Heatmap'
 import { getAnnotationValues } from 'components/visualization/ClusterControls'
+import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
 
 const tabList = [
   { key: 'cluster', label: 'Cluster' },
@@ -70,6 +71,7 @@ export default function ExploreDisplayTabs(
     updateDataParams({ genes })
   }
 
+  // Handle spatial transcriptomics data
   let hasSpatialGroups = false
   let spatialDataParams = null
   let spatialReferencePlotDataParams = null
@@ -87,6 +89,19 @@ export default function ExploreDisplayTabs(
   console.log('dataParams, referencePlotDataParams, spatialDataParams, spatialReferencePlotDataParams')
   console.log(dataParams, referencePlotDataParams, spatialDataParams, spatialReferencePlotDataParams)
 
+  console.log('exploreInfo')
+  console.log(exploreInfo)
+  let currentTaxon = null
+  let searchedGene = null
+  if (
+    exploreInfo &&
+    exploreInfo.taxonNames.length === 1 && dataParams.genes.length === 1
+  ) {
+    currentTaxon = exploreInfo.taxonNames[0]
+    searchedGene = dataParams.genes[0]
+    const target = `.${plotContainerClass}`
+    RelatedGenesIdeogram(searchedGene, currentTaxon, target)
+  }
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
   function getPlotRect(
