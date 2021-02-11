@@ -92,16 +92,16 @@ export default function ExploreDisplayTabs(
   console.log('exploreInfo')
   console.log(exploreInfo)
   const ideogramHeight = 140
+  let showRelatedGenesIdeogram = false
   let currentTaxon = null
   let searchedGene = null
   if (
     exploreInfo &&
     exploreInfo.taxonNames.length === 1 && dataParams.genes.length === 1
   ) {
+    showRelatedGenesIdeogram = true
     currentTaxon = exploreInfo.taxonNames[0]
     searchedGene = dataParams.genes[0]
-    const target = `.${plotContainerClass}`
-    RelatedGenesIdeogram(searchedGene, currentTaxon, target, ideogramHeight)
   }
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
@@ -165,6 +165,14 @@ export default function ExploreDisplayTabs(
 
       <div className="row">
         <div className="explore-plot-tab-content">
+          { showRelatedGenesIdeogram &&
+            <RelatedGenesIdeogram
+              gene={searchedGene}
+              taxon={currentTaxon}
+              target={`.${plotContainerClass}`}
+              height={ideogramHeight}
+            />
+          }
           { enabledTabs.includes('cluster') && !hasSpatialGroups &&
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
               <ScatterPlot

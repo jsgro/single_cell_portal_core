@@ -11,6 +11,8 @@
  * https://github.com/broadinstitute/single_cell_portal_core/pull/735
  */
 
+import React, { useEffect } from 'react'
+
 import Ideogram from 'ideogram'
 
 /** Handle clicks on Ideogram annotations */
@@ -131,43 +133,39 @@ function onPlotRelatedGenes() {
  *
  * This is only done in the context of single-gene search in Study Overview
  */
-export default function RelatedGenesIdeogram(gene, taxon, target, ideoHeight) {
-  if (taxon === null) {return}
-
-  // Clear any prior ideogram
-  if (typeof window.ideogram !== 'undefined') {
-    delete window.ideogram
-    const ideoContainer =
-      document.querySelector('#related-genes-ideogram-container')
-    if (ideoContainer) {ideoContainer.remove()}
-  }
-
-  // Create scaffolding for Ideogram for related genes
-  const ideoContainer =
-    '<div id="related-genes-ideogram-container" class="hidden-related-genes-ideogram"></div>' // eslint-disable-line
-  document.querySelector('body').insertAdjacentHTML('beforeEnd', ideoContainer)
-
+export default function RelatedGenesIdeogram({
+  gene, taxon, target, height
+}) {
   const verticalPad = 40 // Total top and bottom padding
 
-  const ideoConfig = {
-    container: '#related-genes-ideogram-container',
-    organism: taxon,
-    chrWidth: 9,
-    chrHeight: ideoHeight - verticalPad,
-    chrLabelSize: 12,
-    annotationHeight: 7,
-    showAnnotLabels: false,
-    onClickAnnot,
-    onPlotRelatedGenes,
-    onWillShowAnnotTooltip,
-    onLoad() {
-      // Handles edge case: when organism lacks chromosome-level assembly
-      if (!genomeHasChromosomes()) {return}
-      this.plotRelatedGenes(gene)
-      showRelatedGenesIdeogram(target)
+  useEffect(() => {
+    const ideoConfig = {
+      container: '#related-genes-ideogram-container',
+      organism: taxon,
+      chrWidth: 9,
+      chrHeight: height - verticalPad,
+      chrLabelSize: 12,
+      annotationHeight: 7,
+      showAnnotLabels: false,
+      onClickAnnot,
+      onPlotRelatedGenes,
+      onWillShowAnnotTooltip,
+      onLoad() {
+        // Handles edge case: when organism lacks chromosome-level assembly
+        if (!genomeHasChromosomes()) {return}
+        this.plotRelatedGenes(gene)
+        showRelatedGenesIdeogram(target)
+      }
     }
-  }
 
-  window.ideogram =
-    Ideogram.initRelatedGenes(ideoConfig, window.SCP.uniqueGenes)
+    window.ideogram =
+      Ideogram.initRelatedGenes(ideoConfig, window.SCP.uniqueGenes)
+  }, [gene])
+
+  return (
+    <div
+      id="related-genes-ideogram-container"
+      className="hidden-related-genes-ideogram">
+    </div>
+  )
 }

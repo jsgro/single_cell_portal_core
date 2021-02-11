@@ -184,7 +184,7 @@ function RoutableExploreTab({ studyAccession }) {
   )
 }
 
-/** wraps the explore tab in a Router object so it can use Reach hooks for routable parameters */
+/** wraps the explore tab in a Router object so it can use React hooks for routable parameters */
 export default function ExploreTab({ studyAccession }) {
   return (
     <Router>
