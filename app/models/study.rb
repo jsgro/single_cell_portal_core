@@ -537,6 +537,14 @@ class Study
         key '$ref', 'SiteStudyFile'
       end
     end
+    property :directory_listings do
+      key :type, :array
+      key :description, 'Available Directories of files for bulk download'
+      items do
+        key :title, 'DirectoryListing'
+        key '$ref', 'DirectoryListingDownload'
+      end
+    end
     property :external_resources do
       key :type, :array
       key :description, 'Available external resource links'

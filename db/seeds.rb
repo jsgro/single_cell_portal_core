@@ -125,6 +125,14 @@ gene2_vals.save!
 gene2_cells = gene_2.data_arrays.build(name: gene_2.cell_key, array_type: 'cells', cluster_name: expression_file.name,
                                        array_index: 1, study_id: study.id, study_file_id: expression_file.id, values: all_cell_array)
 gene2_cells.save!
+DirectoryListing.create!(name: 'fastq', file_type: 'fastq',
+                         files: [
+                           {name: '1_L1_001.fastq', size: 100, generation: '12345'},
+                           {name: '1_R1_001.fastq', size: 100, generation: '12345'},
+                           {name: '2_L1_001.fastq', size: 100, generation: '12345'},
+                           {name: '2_R1_001.fastq', size: 100, generation: '12345'},
+                         ], sync_status: true, study_id: study.id)
+
 
 # API TEST SEEDS
 api_study = Study.create!(name: "API Test Study #{@random_seed}", data_dir: 'api_test_study', user_id: user.id,
