@@ -91,6 +91,7 @@ export default function ExploreDisplayTabs(
 
   console.log('exploreInfo')
   console.log(exploreInfo)
+  const ideogramHeight = 140
   let currentTaxon = null
   let searchedGene = null
   if (
@@ -100,21 +101,18 @@ export default function ExploreDisplayTabs(
     currentTaxon = exploreInfo.taxonNames[0]
     searchedGene = dataParams.genes[0]
     const target = `.${plotContainerClass}`
-    RelatedGenesIdeogram(searchedGene, currentTaxon, target)
+    RelatedGenesIdeogram(searchedGene, currentTaxon, target, ideogramHeight)
   }
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
   function getPlotRect(
-    { numRows=1, numColumns=1, verticalPad=225, horizontalPad=80 } = {}
+    { numColumns=1, numRows=1, verticalPad=225, horizontalPad=80 } = {}
   ) {
     // Get width, and account for expanding "View Options" after page load
     const baseWidth = $(`.${plotContainerClass}`).actual('width')
     let width = (baseWidth - horizontalPad) / numColumns
 
     // Get height
-    const $ideo = $('#_ideogram')
-    const ideogramHeight = $ideo.length ? $ideo.height() : 0
-
     // Height of screen viewport, minus fixed-height elements above gallery
     const galleryHeight = $(window).height() - verticalPad - ideogramHeight
 
@@ -248,6 +246,7 @@ export default function ExploreDisplayTabs(
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotRect}
                     numColumns={2}
+                    numRows={2}
                   />
                   <ScatterPlot
                     studyAccession={studyAccession}
@@ -258,6 +257,7 @@ export default function ExploreDisplayTabs(
                     dimensionsFn={getPlotRect}
                     plotOptions= {{ showlegend: false }}
                     numColumns={2}
+                    numRows={2}
                   />
                 </div>
                 <div className="col-md-6">
@@ -269,6 +269,7 @@ export default function ExploreDisplayTabs(
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotRect}
                     numColumns={2}
+                    numRows={2}
                   />
                   <ScatterPlot
                     studyAccession={studyAccession}
@@ -278,6 +279,7 @@ export default function ExploreDisplayTabs(
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotRect}
                     numColumns={2}
+                    numRows={2}
                   />
                 </div>
               </div>

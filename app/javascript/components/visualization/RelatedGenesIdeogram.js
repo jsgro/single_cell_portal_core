@@ -131,7 +131,7 @@ function onPlotRelatedGenes() {
  *
  * This is only done in the context of single-gene search in Study Overview
  */
-export default function RelatedGenesIdeogram(gene, taxon, target) {
+export default function RelatedGenesIdeogram(gene, taxon, target, ideoHeight) {
   if (taxon === null) {return}
 
   // Clear any prior ideogram
@@ -147,11 +147,13 @@ export default function RelatedGenesIdeogram(gene, taxon, target) {
     '<div id="related-genes-ideogram-container" class="hidden-related-genes-ideogram"></div>' // eslint-disable-line
   document.querySelector('body').insertAdjacentHTML('beforeEnd', ideoContainer)
 
+  const verticalPad = 40 // Total top and bottom padding
+
   const ideoConfig = {
     container: '#related-genes-ideogram-container',
     organism: taxon,
     chrWidth: 9,
-    chrHeight: 100,
+    chrHeight: ideoHeight - verticalPad,
     chrLabelSize: 12,
     annotationHeight: 7,
     showAnnotLabels: false,
