@@ -20,7 +20,6 @@ export default function RenderControls({ renderParams, updateRenderParams }) {
   const scatterColorValue = renderParams.scatterColor ? renderParams.scatterColor : ' '
   let distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS.find(opt => opt.value === renderParams.distributionPlot)
   if (!distributionPlotValue) {
-    // we don't want to
     distributionPlotValue = ' '
   }
   return (

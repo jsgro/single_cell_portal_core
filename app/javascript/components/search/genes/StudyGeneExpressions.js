@@ -6,6 +6,7 @@ import DotPlot from 'components/visualization/DotPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import ClusterControls, { emptyDataParams, getAnnotationValues } from 'components/visualization/ClusterControls'
 import { fetchClusterOptions } from 'lib/scp-api'
+import { getDefaultClusterParams } from 'lib/cluster-utils'
 
 
 
@@ -15,6 +16,12 @@ import { fetchClusterOptions } from 'lib/scp-api'
 export default function StudyGeneExpressions({ study }) {
   const [dataParams, setDataParams] = useState(_clone(emptyDataParams))
   const [annotationList, setAnnotationList] = useState(null)
+  let controlDataParams = _clone(dataParams)
+
+  if (annotationList && !dataParams.cluster) {
+    // if the user hasn't specified anything yet, but we have the study defaults, use those
+    controlDataParams = Object.assign(controlDataParams, getDefaultClusterParams(annotationList))
+  }
 
   let studyRenderComponent
   if (!study.gene_matches) {
@@ -32,23 +39,15 @@ export default function StudyGeneExpressions({ study }) {
     )
   } else if (showDotPlot) {
     // render dotPlot for multigene searches that are not collapsed
-    const annotationValues = getAnnotationValues(dataParams.annotation,
-                                                 annotationList ? annotationList.annotations : [])
+    const annotationValues = getAnnotationValues(controlDataParams.annotation, annotationList)
     studyRenderComponent = <DotPlot studyAccession={study.accession}
       genes={study.gene_matches}
-      dataParams={dataParams}
+      dataParams={controlDataParams}
       annotationValues={annotationValues}/>
   } else {
     // render violin for single genes or collapsed
     studyRenderComponent = <StudyViolinPlot studyAccession={study.accession} genes={study.gene_matches} dataParams={dataParams} setAnnotationList={setAnnotationList}/>
   }
-
-  useEffect(() => {
-    // if showing a dotplot, we need to fetch the annotation values to feed into morpheus
-    if (showDotPlot) {
-      fetchClusterOptions(study.accession).then(newAnnotationList => setAnnotationList(newAnnotationList))
-    }
-  }, [study.accession])
 
   return (
     <div className="study-gene-result">
@@ -76,7 +75,7 @@ export default function StudyGeneExpressions({ study }) {
           <ClusterControls
             studyAccession={study.accession}
             setDataParams={setDataParams}
-            dataParams={dataParams}
+            dataParams={controlDataParams}
             fetchAnnotationList={false}
             showConsensus={study.gene_matches.length > 1}
             preloadedAnnotationList={annotationList}/>

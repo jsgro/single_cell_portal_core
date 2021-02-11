@@ -59,17 +59,13 @@ export default function ScatterPlot({
 
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
-    // don't update if the param changes are just defaults coming back from the server,
-    // we will have already fetched the default view
-    if (dataParams.isUserUpdated !== false) {
-      setIsLoading(true)
-      fetchCluster(studyAccession,
-        dataParams.cluster,
-        dataParams.annotation ? dataParams.annotation : '',
-        dataParams.subsample,
-        dataParams.consensus,
-        dataParams.genes).then(handleResponse)
-    }
+    setIsLoading(true)
+    fetchCluster(studyAccession,
+      dataParams.cluster,
+      dataParams.annotation ? dataParams.annotation : '',
+      dataParams.subsample,
+      dataParams.consensus,
+      dataParams.genes).then(handleResponse)
   }, [dataParams.cluster,
     dataParams.annotation.name,
     dataParams.subsample,

@@ -24,7 +24,7 @@ export const defaultDistributionPlot = DISTRIBUTION_PLOT_OPTIONS[0].value
  *   called with the annotationList returned by that call.
   */
 export default function StudyViolinPlot({
-  studyAccession, genes, dataParams, renderParams, updateRenderParams, setAnnotationList
+  studyAccession, genes, dataParams, renderParams={}, updateRenderParams, setAnnotationList
 }) {
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
@@ -59,7 +59,9 @@ export default function StudyViolinPlot({
     if (setAnnotationList) {
       setAnnotationList(results.annotation_list)
     }
-    updateRenderParams({ distributionPlot }, false)
+    if (updateRenderParams) {
+      updateRenderParams({ distributionPlot }, false)
+    }
   }
   /** handles fetching the expression data (and menu option data) from the server */
   useEffect(() => {

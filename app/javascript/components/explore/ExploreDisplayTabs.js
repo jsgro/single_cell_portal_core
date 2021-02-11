@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faReply } from '@fortawesome/free-solid-svg-icons'
@@ -34,13 +34,12 @@ const tabList = [
  */
 export default function ExploreDisplayTabs(
   {
-    studyAccession, exploreInfo, dataParams, renderParams, showDataParams,
+    studyAccession, exploreInfo, dataParams, controlDataParams, renderParams, showDataParams,
     updateDataParams, updateRenderParams
   }
 ) {
   const isMultiGene = dataParams.genes.length > 1
   const isGene = dataParams.genes.length > 0
-  const firstRender = useRef(true)
   const plotContainerClass = 'explore-plot-tab-content'
   let enabledTabs = []
 
@@ -58,7 +57,7 @@ export default function ExploreDisplayTabs(
     enabledTabs = ['cluster']
   }
 
-  let shownTab = dataParams.tab
+  let shownTab = renderParams.tab
   if (!enabledTabs.includes(shownTab)) {
     shownTab = enabledTabs[0]
   }
@@ -106,14 +105,6 @@ export default function ExploreDisplayTabs(
     return { width, height }
   }
 
-  useEffect(() => {
-    if (!firstRender.current) {
-      // switch back to the default tab for a given view when the genes/consensus changes
-      updateDataParams({ tab: enabledTabs[0] })
-    } else {
-      firstRender.current = false
-    }
-  }, [dataParams.genes.join(','), dataParams.consensus])
   return (
     <>
       <div className="row">
@@ -136,7 +127,7 @@ export default function ExploreDisplayTabs(
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
                 <li key={tabKey} role="presentation" className={`study-nav ${tabKey === shownTab ? 'active' : ''}`}>
-                  <a onClick={() => updateDataParams({ tab: tabKey })}>{label}</a>
+                  <a onClick={() => updateRenderParams({ tab: tabKey })}>{label}</a>
                 </li>
               )
             })}
@@ -201,7 +192,7 @@ export default function ExploreDisplayTabs(
             <div className={shownTab === 'dotplot' ? '' : 'hidden'}>
               <DotPlotTab
                 studyAccession={studyAccession}
-                dataParams={dataParams}
+                dataParams={controlDataParams}
                 annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}
                 dimensionsFn={getPlotRect}/>
             </div>
@@ -210,7 +201,7 @@ export default function ExploreDisplayTabs(
             <div className={shownTab === 'heatmap' ? '' : 'hidden'}>
               <Heatmap
                 studyAccession={studyAccession}
-                dataParams={dataParams}
+                dataParams={controlDataParams}
                 genes={dataParams.genes}
                 dimensionsFn={getPlotRect}/>
             </div>

@@ -42,7 +42,10 @@ export default function DotPlot({ studyAccession, genes, dataParams, annotationV
       })
       plotEvent.complete()
     }
-  }, [expressionValuesURL, annotationCellValuesURL, dataParams.annotation.name, dataParams.annotation.scope])
+  }, [expressionValuesURL,
+      annotationCellValuesURL,
+      dataParams.annotation.name,
+      dataParams.annotation.scope])
   return (
     <div>
       { dataParams.cluster &&
@@ -144,7 +147,7 @@ export function morpheusTabManager($target, dimensionsFn) {
     },
     setTabTitle: () => {},
     setActiveTab: () => {},
-    getWidth: dimensionsFn().width,
+    getWidth: () => { return dimensionsFn().width },
     getHeight: () => $target.height(),
     getTabCount: () => 1
   }

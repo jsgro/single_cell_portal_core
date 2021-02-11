@@ -6,6 +6,7 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { fetchClusterOptions } from 'lib/scp-api'
+import { getDefaultSubsampleForCluster, annotationKeyProperties } from 'lib/cluster-utils'
 
 export const emptyDataParams = {
   cluster: '',
@@ -19,16 +20,6 @@ const consensusOptions = [
   { label: 'Violin - Mean', value: 'mean' },
   { label: 'Violin - Median', value: 'median' }
 ]
-
-/** takes a full annotation object, which may have values and other properties, and just extracts the
-  * key parameters for url state */
-function annotationKeyProperties(annotation) {
-  return {
-    name: annotation.name,
-    type: annotation.type,
-    scope: annotation.scope
-  }
-}
 
 /** finds the corresponding entry in annotationList for the given annotation,
  * and returns the unique values for the anotations
@@ -96,10 +87,6 @@ function getDefaultAnnotationForCluster(annotationList, clusterName, currentAnno
   }
 }
 
-/** takes the server response and returns subsample default subsample for the cluster */
-function getDefaultSubsampleForCluster(annotationList, clusterName) {
-  return '' // for now, default is always all cells
-}
 
 /** renders cluster, annotation, and (optionally) subsample and consensus controls for a study
     by default, this control will handle fetching the dropdown options from the server.
@@ -142,25 +129,13 @@ export default function ClusterControls({
     })
   }
 
-  /** update the render params in response to receiving the names of the default values from the server */
-  function update(newAnnotationList) {
-    setAnnotationList(newAnnotationList)
-    const newDataParams = {
-      cluster: newAnnotationList.default_cluster,
-      annotation: annotationKeyProperties(newAnnotationList.default_annotation),
-      subsample: getDefaultSubsampleForCluster(newAnnotationList, newAnnotationList.default_cluster),
-      isUserUpdated: false
-    }
-    setDataParams(newDataParams)
-  }
-
   useEffect(() => {
     // only update if this component is responsible for loading annotation data from the server
     // or if the preloadedList has been specified already
     if (fetchAnnotationList) {
-      fetchClusterOptions(studyAccession).then(newAnnotationList => update(newAnnotationList))
+      fetchClusterOptions(studyAccession).then(newAnnotationList => setAnnotationList(newAnnotationList))
     } else if (preloadedAnnotationList) {
-      update(preloadedAnnotationList)
+      setAnnotationList(preloadedAnnotationList)
     }
   }, [studyAccession, preloadedAnnotationList])
 

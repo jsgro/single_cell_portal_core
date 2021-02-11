@@ -191,7 +191,7 @@ module Api
             "coordinateLabels": coordinate_labels,
             "cluster": cluster.name,
             "gene": genes.map {|g| g['name']}.join(' ,'),
-            "annotParams": annot_params
+            "annotParams": annotation
           }
         end
       end
