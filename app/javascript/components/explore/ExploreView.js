@@ -7,14 +7,17 @@ import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import _clone from 'lodash/clone'
 
 import ClusterControls from 'components/visualization/ClusterControls'
-import RenderControls, { defaultRenderParams } from 'components/visualization/RenderControls'
+import PlotDisplayControls, { defaultRenderParams } from 'components/visualization/PlotDisplayControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { stringifyQuery, fetchExplore, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
 import { getDefaultClusterParams } from 'lib/cluster-utils'
+import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
 
 /** converts query string parameters into the dataParams objet */
 function buildDataParamsFromQuery(query) {
-  const dataParams = { userSpecified: {} }
+  const dataParams = {
+    userSpecified: {}
+  }
   const queryParams = queryString.parse(query)
   let annotation = {
     name: '',
@@ -41,6 +44,7 @@ function buildDataParamsFromQuery(query) {
   dataParams.consensus = queryParams.consensus ? queryParams.consensus : null
   dataParams.spatialFiles = queryParams.spatialFiles ? queryParams.spatialFiles.split(',') : []
   dataParams.genes = geneParamToArray(queryParams.genes)
+  dataParams.heatmapRowCentering = queryParams.rowCentered ? queryParams.rowCentered : DEFAULT_ROW_CENTERING
   return dataParams
 }
 
@@ -53,6 +57,7 @@ function buildQueryFromParams(dataParams, renderParams) {
     genes: geneArrayToParam(dataParams.genes),
     consensus: dataParams.consensus,
     spatialFiles: dataParams.spatialFiles.join(','),
+    rowCentered: dataParams.heatmapRowCentering,
     tab: renderParams.tab,
     scatterColor: renderParams.scatterColor,
     distributionPlot: renderParams.distributionPlot
@@ -173,7 +178,10 @@ function RoutableExploreTab({ studyAccession }) {
             preloadedAnnotationList={exploreInfo ? exploreInfo.annotationList : null}
             fetchAnnotationList={false}
             showConsensus={dataParams.genes.length > 1}/>
-          <RenderControls renderParams={renderParams} updateRenderParams={updateRenderParams}/>
+          <PlotDisplayControls renderParams={renderParams}
+            updateRenderParams={updateRenderParams}
+            dataParams={controlDataParams}
+            updateDataParams={updateDataParams}/>
         </div>
       </div>
       <a className={`action view-options-toggle ${optionsLinkClass}`}

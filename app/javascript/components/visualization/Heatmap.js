@@ -7,10 +7,24 @@ import { log, startPendingEvent } from 'lib/metrics-api'
 import { getExpressionHeatmapURL, getAnnotationCellValuesURL } from 'lib/scp-api'
 import { morpheusTabManager } from './DotPlot'
 
+export const ROW_CENTERING_OPTIONS = [
+  { label: 'None', value: '' },
+  { label: 'Z-score [(v - mean) / stdev]', value: 'z-score' },
+  { label: 'Robust z-score [(v - median) / MAD]', value: 'robust z-score' }
+]
+
+export const DEFAULT_ROW_CENTERING = ''
+
+
 /** renders a morpheus powered heatmap for the given params */
-export default function Heatmap({ studyAccession, genes, dataParams, dimensionsFn }) {
+export default function Heatmap({ studyAccession, genes, dataParams, renderParams, dimensionsFn }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
-  const expressionValuesURL = getExpressionHeatmapURL(studyAccession, genes, dataParams.cluster)
+  const expressionValuesURL = getExpressionHeatmapURL({
+    studyAccession,
+    genes,
+    cluster: dataParams.cluster,
+    heatmapRowCentering: dataParams.heatmapRowCentering
+  })
   const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
     dataParams.cluster,
     dataParams.annotation.name,
@@ -35,7 +49,8 @@ export default function Heatmap({ studyAccession, genes, dataParams, dimensionsF
     studyAccession, genes.join(','),
     dataParams.cluster,
     dataParams.annotation.name,
-    dataParams.annotation.scope
+    dataParams.annotation.scope,
+    dataParams.heatmapRowCentering
   ])
   return (
     <div className="plot">
@@ -50,8 +65,13 @@ export default function Heatmap({ studyAccession, genes, dataParams, dimensionsF
 function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, annotationName, dimensionsFn }) {
   const $target = $(target)
   $target.empty()
-  // TODO -- add to viewOptions
+
   const heatmap_row_centering = ''
+  var colorScalingMode = 'relative';
+  // determine whether to scale row colors globally or by row
+  if (heatmap_row_centering !== '') {
+      colorScalingMode = 'fixed';
+  }
 
   const config = {
     dataset: expressionValuesURL,

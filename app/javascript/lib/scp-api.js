@@ -322,12 +322,16 @@ export function getAnnotationCellValuesURL(studyAccession, clusterName, annotati
  * @param {Array} genes List of gene names to get expression data for
  *
  */
-export function getExpressionHeatmapURL(studyAccession, genes, cluster, annotation, subsample) {
+export function getExpressionHeatmapURL({
+  studyAccession, genes, cluster,
+  annotation, subsample, heatmapRowCentering
+}) {
   const paramObj = {
     cluster,
     annotation,
     subsample,
     genes: geneArrayToParam(genes),
+    row_centered: heatmapRowCentering,
     url_safe_token: getURLSafeAccessToken()
   }
   const path = `/studies/${studyAccession}/expression/heatmap${stringifyQuery(paramObj)}`

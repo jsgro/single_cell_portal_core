@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretRight, faCaretDown } from '@fortawesome/free-solid-svg-icons'
 import { SCATTER_COLOR_OPTIONS } from 'components/visualization/ScatterPlot'
 import { DISTRIBUTION_PLOT_OPTIONS } from 'components/visualization/StudyViolinPlot'
+import { ROW_CENTERING_OPTIONS } from 'components/visualization/Heatmap'
 
 export const defaultRenderParams = {
   scatterColor: undefined,
@@ -13,23 +14,28 @@ export const defaultRenderParams = {
 }
 
 /** the graph customization controls for the exlore tab */
-export default function RenderControls({ renderParams, updateRenderParams }) {
+export default function RenderControls({ renderParams, updateRenderParams, dataParams, updateDataParams }) {
   const [showScatter, setShowScatter] = useState(false)
+  const [showHeatmap, setShowHeatmap] = useState(false)
   const [showDistribution, setShowDistribution] = useState(false)
 
   const scatterColorValue = renderParams.scatterColor ? renderParams.scatterColor : ' '
   let distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS.find(opt => opt.value === renderParams.distributionPlot)
   if (!distributionPlotValue) {
-    distributionPlotValue = ' '
+    distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS[0]
+  }
+  let heatmapRowCenteringValue = ROW_CENTERING_OPTIONS.find(opt => opt.value === dataParams.heatmapRowCentering)
+  if (!heatmapRowCenteringValue) {
+    heatmapRowCenteringValue = ROW_CENTERING_OPTIONS[0]
   }
   return (
     <div className="render-controls">
-      <Panel className="render-scatter" expanded={showScatter} onToggle={() => setShowScatter(!showScatter)}>
+      <Panel className="controls-scatter" expanded={showScatter} onToggle={() => setShowScatter(!showScatter)}>
         <Panel.Heading onClick={() => setShowScatter(!showScatter)}>
           <Panel.Title className="action"
             componentClass="a"
             title="toggle scatter display controls"
-            data-analytics-name="render-params-scatter-toggle">
+            data-analytics-name="plot-params-scatter-toggle">
             <FontAwesomeIcon className="fa-lg" icon={showScatter ? faCaretDown : faCaretRight}/>&nbsp;
             Scatter
           </Panel.Title>
@@ -45,14 +51,14 @@ export default function RenderControls({ renderParams, updateRenderParams }) {
           </Panel.Body>
         </Panel.Collapse>
       </Panel>
-      <Panel className="render-distribution"
+      <Panel className="controls-distribution"
         expanded={showDistribution}
         onToggle={() => setShowDistribution(!showDistribution)}>
         <Panel.Heading onClick={() => setShowDistribution(!showDistribution)}>
           <Panel.Title className="action"
             componentClass="a"
             title="toggle distribution display controls"
-            data-analytics-name="render-params-distribution-toggle">
+            data-analytics-name="plot-params-distribution-toggle">
             <FontAwesomeIcon className="fa-lg" icon={showDistribution ? faCaretDown : faCaretRight}/>&nbsp;
             Distribution
           </Panel.Title>
@@ -65,6 +71,29 @@ export default function RenderControls({ renderParams, updateRenderParams }) {
               value={distributionPlotValue}
               clearable={false}
               onChange={option => updateRenderParams({ distributionPlot: option.value })}/>
+          </Panel.Body>
+        </Panel.Collapse>
+      </Panel>
+      <Panel className="controls-heatmap"
+        expanded={showHeatmap}
+        onToggle={() => setShowHeatmap(!showHeatmap)}>
+        <Panel.Heading onClick={() => setShowHeatmap(!showHeatmap)}>
+          <Panel.Title className="action"
+            componentClass="a"
+            title="toggle heatmap display controls"
+            data-analytics-name="plot-params-heatmap-toggle">
+            <FontAwesomeIcon className="fa-lg" icon={showHeatmap ? faCaretDown : faCaretRight}/>&nbsp;
+            Heatmap
+          </Panel.Title>
+        </Panel.Heading>
+        <Panel.Collapse>
+          <Panel.Body>
+            <label htmlFor="colorscale-picker">Row centering </label>
+            <Select name="colorscale-picker"
+              options={ROW_CENTERING_OPTIONS}
+              value={heatmapRowCenteringValue}
+              clearable={false}
+              onChange={option => updateDataParams({ heatmapRowCentering: option.value })}/>
           </Panel.Body>
         </Panel.Collapse>
       </Panel>

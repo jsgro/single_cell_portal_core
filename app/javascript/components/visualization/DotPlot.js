@@ -21,7 +21,7 @@ export const dotPlotColorScheme = {
   * as their display capabilities may diverge (esp. since DotPlot is used in global gene search)*/
 export default function DotPlot({ studyAccession, genes, dataParams, annotationValues, dimensionsFn }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
-  const expressionValuesURL = getExpressionHeatmapURL(studyAccession, genes, dataParams.cluster)
+  const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster: dataParams.cluster })
   const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
     dataParams.cluster,
     dataParams.annotation.name,
