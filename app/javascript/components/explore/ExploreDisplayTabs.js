@@ -9,6 +9,7 @@ import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import DotPlot from 'components/visualization/DotPlot'
 import Heatmap from 'components/visualization/Heatmap'
 import { getAnnotationValues } from 'components/visualization/ClusterControls'
+import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
 
 const tabList = [
   { key: 'cluster', label: 'Cluster' },
@@ -66,10 +67,31 @@ export default function ExploreDisplayTabs(
   referencePlotDataParams.genes = []
 
   /** helper function so that StudyGeneField doesn't have to see the full dataParams object */
-  function setGenes(genes) {
+  function searchGenes(genes, logProps) {
+    const trigger = logProps ? logProps.type : 'clear'
+
+    // Properties logged for all gene searches from Study Overview
+    const defaultLogProps = {
+      type: 'gene',
+      context: 'study',
+      genes,
+      numGenes: genes.length,
+      trigger, // "submit", "click", or "click-related-genes"
+      speciesList: exploreInfo.taxonNames
+    }
+
+    // Merge log props from custom event
+    if (trigger === 'click-related-genes') {
+      Object.assign(logProps, defaultLogProps)
+    }
+
+    // TODO: Log study gene search, to not break existing analytics
+    // Avoid logging `clear` trigger; it is not a search
+
     updateDataParams({ genes })
   }
 
+  // Handle spatial transcriptomics data
   let hasSpatialGroups = false
   let spatialDataParams = null
   let spatialReferencePlotDataParams = null
@@ -87,19 +109,30 @@ export default function ExploreDisplayTabs(
   console.log('dataParams, referencePlotDataParams, spatialDataParams, spatialReferencePlotDataParams')
   console.log(dataParams, referencePlotDataParams, spatialDataParams, spatialReferencePlotDataParams)
 
+  console.log('exploreInfo')
+  console.log(exploreInfo)
+  const ideogramHeight = 140
+  let showRelatedGenesIdeogram = false
+  let currentTaxon = null
+  let searchedGene = null
+  if (
+    exploreInfo &&
+    exploreInfo.taxonNames.length === 1 && dataParams.genes.length === 1
+  ) {
+    showRelatedGenesIdeogram = true
+    currentTaxon = exploreInfo.taxonNames[0]
+    searchedGene = dataParams.genes[0]
+  }
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
   function getPlotRect(
-    { numRows=1, numColumns=1, verticalPad=225, horizontalPad=80 } = {}
+    { numColumns=1, numRows=1, verticalPad=225, horizontalPad=80 } = {}
   ) {
     // Get width, and account for expanding "View Options" after page load
     const baseWidth = $(`.${plotContainerClass}`).actual('width')
     let width = (baseWidth - horizontalPad) / numColumns
 
     // Get height
-    const $ideo = $('#_ideogram')
-    const ideogramHeight = $ideo.length ? $ideo.height() : 0
-
     // Height of screen viewport, minus fixed-height elements above gallery
     const galleryHeight = $(window).height() - verticalPad - ideogramHeight
 
@@ -126,10 +159,10 @@ export default function ExploreDisplayTabs(
         <div className="col-md-5">
           <div className="flexbox">
             <StudyGeneField genes={dataParams.genes}
-              setGenes={setGenes}
+              searchGenes={searchGenes}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
             {isGene && <button className="action fa-lg"
-              onClick={() => setGenes([])}
+              onClick={() => searchGenes([])}
               title="Return to cluster view"
               data-analytics-name="back-to-cluster-view">
               <FontAwesomeIcon icon={faReply}/>
@@ -152,6 +185,16 @@ export default function ExploreDisplayTabs(
 
       <div className="row">
         <div className="explore-plot-tab-content">
+          { showRelatedGenesIdeogram &&
+            <RelatedGenesIdeogram
+              gene={searchedGene}
+              taxon={currentTaxon}
+              target={`.${plotContainerClass}`}
+              height={ideogramHeight}
+              genesInScope={exploreInfo.uniqueGenes}
+              searchGenes={searchGenes}
+            />
+          }
           { enabledTabs.includes('cluster') && !hasSpatialGroups &&
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
               <ScatterPlot
@@ -233,6 +276,7 @@ export default function ExploreDisplayTabs(
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotRect}
                     numColumns={2}
+                    numRows={2}
                   />
                   <ScatterPlot
                     studyAccession={studyAccession}
@@ -243,6 +287,7 @@ export default function ExploreDisplayTabs(
                     dimensionsFn={getPlotRect}
                     plotOptions= {{ showlegend: false }}
                     numColumns={2}
+                    numRows={2}
                   />
                 </div>
                 <div className="col-md-6">
@@ -254,6 +299,7 @@ export default function ExploreDisplayTabs(
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotRect}
                     numColumns={2}
+                    numRows={2}
                   />
                   <ScatterPlot
                     studyAccession={studyAccession}
@@ -263,6 +309,7 @@ export default function ExploreDisplayTabs(
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotRect}
                     numColumns={2}
+                    numRows={2}
                   />
                 </div>
               </div>

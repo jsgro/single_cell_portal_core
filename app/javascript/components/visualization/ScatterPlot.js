@@ -20,7 +20,7 @@ export const defaultScatterColor = 'Reds'
   */
 export default function ScatterPlot({
   studyAccession, dataParams, renderParams, showDataParams, dimensionsFn, plotOptions,
-  updateRenderParams, numColumns=1
+  updateRenderParams, numColumns=1, numRows=1
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
@@ -34,7 +34,7 @@ export default function ScatterPlot({
 
     // Get Plotly layout
     const layout = getPlotlyLayout(clusterResponse, plotOptions)
-    const { width, height } = dimensionsFn({ numColumns })
+    const { width, height } = dimensionsFn({ numColumns, numRows })
     layout.width = width
     layout.height = height
 
@@ -89,7 +89,7 @@ export default function ScatterPlot({
   useLayoutEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
-      const { width, height } = dimensionsFn({ numColumns })
+      const { width, height } = dimensionsFn({ numColumns, numRows })
       const layoutUpdate = { width, height }
       window.Plotly.relayout(graphElementId, layoutUpdate)
     }
