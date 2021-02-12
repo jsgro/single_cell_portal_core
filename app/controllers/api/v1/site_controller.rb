@@ -199,6 +199,7 @@ module Api
         rescue RuntimeError => e
           error_context = ErrorTracker.format_extra_context(@study, {params: params})
           ErrorTracker.report_exception(e, current_api_user, error_context)
+          MetricsService.report_error(e, request, current_api_user, @study)
           logger.error "Error generating signed url for #{params[:filename]}; #{e.message}"
           render json: {error: "Error generating signed url for #{params[:filename]}; #{e.message}"}, status: 500
         end
@@ -292,6 +293,7 @@ module Api
         rescue RuntimeError => e
           error_context = ErrorTracker.format_extra_context(@study, {params: params})
           ErrorTracker.report_exception(e, current_api_user, error_context)
+          MetricsService.report_error(e, request, current_api_user, @study)
           logger.error "Error generating signed url for #{params[:filename]}; #{e.message}"
           render json: {error: "Error generating signed url for #{params[:filename]}; #{e.message}"}, status: 500
         end
@@ -598,6 +600,7 @@ module Api
         rescue => e
           error_context = ErrorTracker.format_extra_context(@study, {params: params})
           ErrorTracker.report_exception(e, current_api_user, error_context)
+          MetricsService.report_error(e, request, current_api_user, @study)
           logger.error "Unable to submit workflow #{@analysis_configuration.identifier} in #{@study.firecloud_workspace} due to: #{e.class.name}: #{e.message}"
           alert = "We were unable to submit your workflow due to an error: #{e.class.name}: #{e.message}"
           render json: {error: alert}, status: 500
@@ -755,6 +758,7 @@ module Api
           rescue => e
             error_context = ErrorTracker.format_extra_context(@study, {params: params})
             ErrorTracker.report_exception(e, current_api_user, error_context)
+            MetricsService.report_error(e, request, current_api_user, @study)
             logger.error "Unable to abort submission: #{params[:submission_id]} due to error: #{e.message}"
             render json: {error: "#{e.class.name}: #{e.message}"}, status: 500
           end
@@ -828,6 +832,7 @@ module Api
           rescue => e
             error_context = ErrorTracker.format_extra_context(@study, {params: params})
             ErrorTracker.report_exception(e, current_user, error_context)
+            MetricsService.report_error(e, request, current_api_user, @study)
             logger.error "Unable to remove submission #{params[:submission_id]} files from #{@study.firecloud_workspace} due to: #{e.class.name}: #{e.message}"
             render json: {error: "Unable to delete the outputs for #{params[:submission_id]} due to the following error: #{e.class.name}: #{e.message}"}, status: 500
           end
@@ -955,6 +960,7 @@ module Api
               rescue => e
                 error_context = ErrorTracker.format_extra_context(@study, {params: params, analysis_metadata: metadata_attr})
                 ErrorTracker.report_exception(e, current_api_user, error_context)
+                MetricsService.report_error(e, request, current_api_user, @study)
                 logger.error "Unable to create analysis metadatum for #{params[:submission_id]}: #{e.class.name}:: #{e.message}"
               end
             end
@@ -963,6 +969,7 @@ module Api
         rescue => e
           error_context = ErrorTracker.format_extra_context(@study, {params: params})
           ErrorTracker.report_exception(e, current_api_user, error_context)
+          MetricsService.report_error(e, request, current_api_user, @study)
           alert = "We were unable to sync the outputs from submission #{params[:submission_id]} due to the following error: #{e.class.name}: #{e.message}"
           render json: {error: alert}, status: 500
         end
