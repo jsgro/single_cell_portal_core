@@ -7,7 +7,13 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     @test_user = User.find_by(email: 'testing.user@gmail.com')
     auth_as_user(@test_user)
     sign_in @test_user
-    @study = Study.first
+    @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+    @study = Study.find_by(name: "Testing Study #{@random_seed}")
+  end
+
+  def teardown
+    # reset public permission
+    @study.update(public: true)
   end
 
   test 'should redirect to home page from bare domain' do
@@ -51,6 +57,76 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     assert_response 200, 'Did not redirect successfully after banner was deleted'
     # Ensure page does not contain notification banner
     assert_select ".notification-banner", false, "Notification banner was not deleted and still is present on page."
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'should control access to private studies' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    get view_study_path(accession: @study.accession, study_name: @study.url_safe_name)
+    assert_response :success
+
+    # set to private, validate study owner/admin can still access
+    @study.update(public: false)
+    get view_study_path(accession: @study.accession, study_name: @study.url_safe_name)
+    assert_response :success
+
+    # negative tests
+    sign_out(@test_user)
+    get view_study_path(accession: @study.accession, study_name: @study.url_safe_name)
+    assert_response 302
+    follow_redirect!
+    assert_equal new_user_session_path, path
+
+    @sharing_user = User.find_by(email: 'sharing.user@gmail.com')
+    auth_as_user(@sharing_user)
+    sign_in @sharing_user
+
+    get view_study_path(accession: @study.accession, study_name: @study.url_safe_name)
+    assert_response 302
+    follow_redirect!
+    assert_equal site_path, path
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'should control access to files in private studies' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    file = @study.study_files.sample
+    get download_file_path(accession: @study.accession, study_name: @study.url_safe_name, filename: file.upload_file_name)
+    assert_response 302
+    # since this is an external redirect, we cannot call follow_redirect! but instead have to get the location header
+    signed_url = response.headers['Location']
+    assert signed_url.include?(file.upload_file_name), "Redirect url does not point at requested file"
+
+    # set to private, validate study owner/admin can still access
+    # note that download_file_path and download_private_file_path both resolve to the same method and enforce the same restrictions
+    # both paths are preserved for legacy redirects from published papers
+    @study.update(public: false)
+    get download_private_file_path(accession: @study.accession, study_name: @study.url_safe_name, filename: file.upload_file_name)
+    assert_response 302
+    signed_url = response.headers['Location']
+    assert signed_url.include?(file.upload_file_name), "Redirect url does not point at requested file"
+
+    # negative tests
+    sign_out(@test_user)
+    get download_private_file_path(accession: @study.accession, study_name: @study.url_safe_name, filename: file.upload_file_name)
+    assert_response 302
+    follow_redirect!
+    assert_equal new_user_session_path, path, "Did not redirect to sign in page"
+
+    @sharing_user = User.find_by(email: 'sharing.user@gmail.com')
+    auth_as_user(@sharing_user)
+    sign_in @sharing_user
+
+    get download_private_file_path(accession: @study.accession, study_name: @study.url_safe_name, filename: file.upload_file_name)
+    assert_response 302
+    follow_redirect!
+    assert_equal site_path, path, "Did not redirect to home page"
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
 end
