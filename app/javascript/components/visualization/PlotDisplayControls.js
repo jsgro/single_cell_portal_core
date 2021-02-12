@@ -75,6 +75,7 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
               options={DISTRIBUTION_PLOT_OPTIONS}
               value={distributionPlotValue}
               clearable={false}
+              isSearchable={false}
               onChange={option => updateRenderParams({ distributionPlot: option.value })}/>
           </Panel.Body>
         </Panel.Collapse>
@@ -98,12 +99,14 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
               options={ROW_CENTERING_OPTIONS}
               value={heatmapRowCenteringValue}
               clearable={false}
+              isSearchable={false}
               onChange={option => updateDataParams({ heatmapRowCentering: option.value })}/>
             <label htmlFor="fit-picker">Fit options </label>
             <Select name="fit-picker"
               options={FIT_OPTIONS}
               value={heatmapFitValue}
               clearable={false}
+              isSearchable={false}
               onChange={option => updateRenderParams({ heatmapFit: option.value })}/>
           </Panel.Body>
         </Panel.Collapse>

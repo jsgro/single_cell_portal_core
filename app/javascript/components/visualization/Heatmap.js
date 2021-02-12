@@ -6,6 +6,7 @@ import { faDna, faArrowsAltV, faArrowsAltH, faArrowsAlt } from '@fortawesome/fre
 import { log, startPendingEvent } from 'lib/metrics-api'
 import { getExpressionHeatmapURL, getAnnotationCellValuesURL } from 'lib/scp-api'
 import { morpheusTabManager } from './DotPlot'
+import { useUpdateEffect } from 'hooks/useUpdate'
 
 export const ROW_CENTERING_OPTIONS = [
   { label: 'None', value: '' },
@@ -17,9 +18,9 @@ export const DEFAULT_ROW_CENTERING = ''
 
 export const FIT_OPTIONS = [
   { label: <span>None</span>, value: '' },
-  { label: <span><FontAwesomeIcon icon={faArrowsAltV}/>Rows</span>, value: 'rows' },
-  { label: <span><FontAwesomeIcon icon={faArrowsAltH}/>Columns</span>, value: 'cols' },
-  { label: <span><FontAwesomeIcon icon={faArrowsAlt}/>Both</span>, value: 'both' }
+  { label: <span><FontAwesomeIcon icon={faArrowsAltV}/> Rows</span>, value: 'rows' },
+  { label: <span><FontAwesomeIcon icon={faArrowsAltH}/> Columns</span>, value: 'cols' },
+  { label: <span><FontAwesomeIcon icon={faArrowsAlt}/> Both</span>, value: 'both' }
 ]
 export const DEFAULT_FIT = ''
 
@@ -50,7 +51,8 @@ export default function Heatmap({ studyAccession, genes, dataParams, renderParam
         annotationCellValuesURL,
         annotationName: dataParams.annotation.name,
         dimensionsFn,
-        fit: renderParams.heatmapFit
+        fit: renderParams.heatmapFit,
+        rowCentering: dataParams.heatmapRowCentering
       })
       plotEvent.complete()
     }
@@ -62,7 +64,7 @@ export default function Heatmap({ studyAccession, genes, dataParams, renderParam
     dataParams.heatmapRowCentering
   ])
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     if (morpheusHeatmap.current && morpheusHeatmap.current.fitToWindow) {
       const fit = renderParams.heatmapFit
       morpheusHeatmap.current.fitToWindow({
@@ -83,23 +85,19 @@ export default function Heatmap({ studyAccession, genes, dataParams, renderParam
 }
 
 /** Render Morpheus heatmap */
-function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, annotationName, dimensionsFn, fit }) {
+function renderHeatmap({
+  target, expressionValuesURL, annotationCellValuesURL, annotationName,
+  dimensionsFn, fit, rowCentering
+}) {
   const $target = $(target)
   $target.empty()
-
-  const heatmap_row_centering = ''
-  var colorScalingMode = 'relative';
-  // determine whether to scale row colors globally or by row
-  if (heatmap_row_centering !== '') {
-      colorScalingMode = 'fixed';
-  }
 
   const config = {
     dataset: expressionValuesURL,
     el: $target,
     menu: null,
     colorScheme: {
-      scalingMode: 'relative'
+      scalingMode: rowCentering !== '' ? 'fixed' : 'relative'
     },
     focus: null,
     // We implement our own trivial tab manager as it seems to be the only way
@@ -139,6 +137,5 @@ function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, a
       { field: 'id', display: 'text' }
     ]
   }
-  window.heatmap = new window.morpheus.HeatMap(config)
-  return  window.heatmap
+  return new window.morpheus.HeatMap(config)
 }

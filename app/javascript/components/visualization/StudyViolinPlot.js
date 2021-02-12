@@ -5,6 +5,7 @@ import _uniqueId from 'lodash/uniqueId'
 import _capitalize from 'lodash/capitalize'
 import { fetchExpressionViolin } from 'lib/scp-api'
 import { getColorBrewerColor, arrayMin, arrayMax, plotlyDefaultLineColor } from 'lib/plot'
+import { useUpdateEffect } from 'hooks/useUpdate'
 
 export const DISTRIBUTION_PLOT_OPTIONS = [
   { label: 'Violin plot', value: 'violin' },
@@ -79,7 +80,7 @@ export default function StudyViolinPlot({
   ])
 
   // useEffect for handling render param re-renders
-  useEffect(() => {
+  useUpdateEffect(() => {
     // Don't try to update the if the data hasn't loaded yet
     if (!isLoading && studyGeneNames.length > 0) {
       window.Plotly.restyle(graphElementId, { type: renderParams.distributionPlot })

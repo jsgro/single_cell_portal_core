@@ -49,6 +49,13 @@ export default function StudyGeneExpressions({ study }) {
     studyRenderComponent = <StudyViolinPlot studyAccession={study.accession} genes={study.gene_matches} dataParams={dataParams} setAnnotationList={setAnnotationList}/>
   }
 
+   useEffect(() => {
+    // if showing a dotplot, we need to fetch the annotation values to feed into morpheus
+    if (showDotPlot) {
+      fetchClusterOptions(study.accession).then(newAnnotationList => setAnnotationList(newAnnotationList))
+    }
+  }, [study.accession])
+
   return (
     <div className="study-gene-result">
       <label htmlFor={study.name} id= 'result-title'>
