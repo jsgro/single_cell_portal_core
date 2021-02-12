@@ -6,11 +6,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretRight, faCaretDown } from '@fortawesome/free-solid-svg-icons'
 import { SCATTER_COLOR_OPTIONS } from 'components/visualization/ScatterPlot'
 import { DISTRIBUTION_PLOT_OPTIONS } from 'components/visualization/StudyViolinPlot'
-import { ROW_CENTERING_OPTIONS } from 'components/visualization/Heatmap'
+import { ROW_CENTERING_OPTIONS, FIT_OPTIONS } from 'components/visualization/Heatmap'
 
 export const defaultRenderParams = {
   scatterColor: undefined,
-  distributionPlot: undefined
+  distributionPlot: undefined,
+  heatmapFit: undefined
 }
 
 /** the graph customization controls for the exlore tab */
@@ -27,6 +28,10 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
   let heatmapRowCenteringValue = ROW_CENTERING_OPTIONS.find(opt => opt.value === dataParams.heatmapRowCentering)
   if (!heatmapRowCenteringValue) {
     heatmapRowCenteringValue = ROW_CENTERING_OPTIONS[0]
+  }
+  let heatmapFitValue = FIT_OPTIONS.find(opt => opt.value === renderParams.heatmapFit)
+  if (!heatmapFitValue) {
+    heatmapFitValue = FIT_OPTIONS[0]
   }
   return (
     <div className="render-controls">
@@ -65,8 +70,8 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
         </Panel.Heading>
         <Panel.Collapse>
           <Panel.Body>
-            <label htmlFor="colorscale-picker">Plot type </label>
-            <Select name="colorscale-picker"
+            <label htmlFor="distribution-plot-picker">Plot type </label>
+            <Select name="distribution-plot-picker"
               options={DISTRIBUTION_PLOT_OPTIONS}
               value={distributionPlotValue}
               clearable={false}
@@ -88,12 +93,18 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
         </Panel.Heading>
         <Panel.Collapse>
           <Panel.Body>
-            <label htmlFor="colorscale-picker">Row centering </label>
-            <Select name="colorscale-picker"
+            <label htmlFor="row-centering-picker">Row centering </label>
+            <Select name="row-centering-picker"
               options={ROW_CENTERING_OPTIONS}
               value={heatmapRowCenteringValue}
               clearable={false}
               onChange={option => updateDataParams({ heatmapRowCentering: option.value })}/>
+            <label htmlFor="fit-picker">Fit options </label>
+            <Select name="fit-picker"
+              options={FIT_OPTIONS}
+              value={heatmapFitValue}
+              clearable={false}
+              onChange={option => updateRenderParams({ heatmapFit: option.value })}/>
           </Panel.Body>
         </Panel.Collapse>
       </Panel>

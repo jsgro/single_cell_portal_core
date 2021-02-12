@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
+import { faDna, faArrowsAltV, faArrowsAltH, faArrowsAlt } from '@fortawesome/free-solid-svg-icons'
 
 import { log, startPendingEvent } from 'lib/metrics-api'
 import { getExpressionHeatmapURL, getAnnotationCellValuesURL } from 'lib/scp-api'
@@ -15,10 +15,18 @@ export const ROW_CENTERING_OPTIONS = [
 
 export const DEFAULT_ROW_CENTERING = ''
 
+export const FIT_OPTIONS = [
+  { label: <span>None</span>, value: '' },
+  { label: <span><FontAwesomeIcon icon={faArrowsAltV}/>Rows</span>, value: 'rows' },
+  { label: <span><FontAwesomeIcon icon={faArrowsAltH}/>Columns</span>, value: 'cols' },
+  { label: <span><FontAwesomeIcon icon={faArrowsAlt}/>Both</span>, value: 'both' }
+]
+export const DEFAULT_FIT = ''
 
 /** renders a morpheus powered heatmap for the given params */
-export default function Heatmap({ studyAccession, genes, dataParams, renderParams, dimensionsFn }) {
+export default function Heatmap({ studyAccession, genes, dataParams, renderParams={}, dimensionsFn }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
+  const morpheusHeatmap = useRef(null)
   const expressionValuesURL = getExpressionHeatmapURL({
     studyAccession,
     genes,
@@ -36,12 +44,13 @@ export default function Heatmap({ studyAccession, genes, dataParams, renderParam
     if (dataParams.cluster) {
       const plotEvent = startPendingEvent('plot:heatmap', window.SCP.getLogPlotProps())
       log('heatmap:initialize')
-      renderHeatmap({
+      morpheusHeatmap.current = renderHeatmap({
         target: `#${graphId}`,
         expressionValuesURL,
         annotationCellValuesURL,
         annotationName: dataParams.annotation.name,
-        dimensionsFn
+        dimensionsFn,
+        fit: renderParams.heatmapFit
       })
       plotEvent.complete()
     }
@@ -52,6 +61,18 @@ export default function Heatmap({ studyAccession, genes, dataParams, renderParam
     dataParams.annotation.scope,
     dataParams.heatmapRowCentering
   ])
+
+  useEffect(() => {
+    if (morpheusHeatmap.current && morpheusHeatmap.current.fitToWindow) {
+      const fit = renderParams.heatmapFit
+      morpheusHeatmap.current.fitToWindow({
+        fitRows: fit === 'rows' || fit === 'both',
+        fitColumns: fit === 'cols' || fit === 'both',
+        repaint: true
+      })
+    }
+  }, [renderParams.heatmapFit])
+
   return (
     <div className="plot">
       { dataParams.cluster &&
@@ -62,7 +83,7 @@ export default function Heatmap({ studyAccession, genes, dataParams, renderParam
 }
 
 /** Render Morpheus heatmap */
-function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, annotationName, dimensionsFn }) {
+function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, annotationName, dimensionsFn, fit }) {
   const $target = $(target)
   $target.empty()
 
@@ -86,14 +107,13 @@ function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, a
     // to the heatmap once it's rendered
     tabManager: morpheusTabManager($target, dimensionsFn)
   }
-  // pull fit type as well, defaults to ''
-  const fitType = ''
+
   // Fit rows, columns, or both to screen
-  if (fitType === 'cols') {
+  if (fit === 'cols') {
     config.columnSize = 'fit'
-  } else if (fitType === 'rows') {
+  } else if (fit === 'rows') {
     config.rowSize = 'fit'
-  } else if (fitType === 'both') {
+  } else if (fit === 'both') {
     config.columnSize = 'fit'
     config.rowSize = 'fit'
   } else {
@@ -119,6 +139,6 @@ function renderHeatmap({ target, expressionValuesURL, annotationCellValuesURL, a
       { field: 'id', display: 'text' }
     ]
   }
-
-  new window.morpheus.HeatMap(config)
+  window.heatmap = new window.morpheus.HeatMap(config)
+  return  window.heatmap
 }
