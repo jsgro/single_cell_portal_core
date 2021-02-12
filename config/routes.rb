@@ -56,6 +56,7 @@ Rails.application.routes.draw do
             end
           end
 
+          resources :user_annotations, only: [:create], params: :accession
         end
         resource :current_user, only: [:update], controller: 'current_user'
 

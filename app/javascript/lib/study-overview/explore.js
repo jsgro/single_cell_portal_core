@@ -3,7 +3,7 @@
 */
 
 import {
-  getMainViewOptions, getAnnotParams
+  getMainViewOptions
 } from 'lib/study-overview/view-options'
 import { scatterPlot } from 'lib/scatter-plot'
 
@@ -35,7 +35,7 @@ async function exploreScatterPlotsHorizontal(study, gene) {
 
   scatterPlot(apiParams, props)
 
-  const annotName = getAnnotParams().name
+  const annotDisplayName = $("#annotation option:selected").text();
 
   apiParams.gene = null
   props.selector = `${baseSelector} .row > div:nth-child(2)`
@@ -44,7 +44,7 @@ async function exploreScatterPlotsHorizontal(study, gene) {
   props.layout = {
     showlegend: false,
     title: {
-      text: `${options.cluster}<br /><b>${annotName}</b>`,
+      text: `${options.cluster}<br /><b>${annotDisplayName}</b>`,
       font: {
         family: 'Helvetica Neue',
         size: 16,

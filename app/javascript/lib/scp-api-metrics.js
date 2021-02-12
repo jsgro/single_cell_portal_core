@@ -18,7 +18,7 @@ const filterNamesById = {}
  */
 export function mapFiltersForLogging(facetsOrFilters, isFacets=false) {
   // If testing, skip.  Tech debt to reconsider later.
-  if ('SCP' in window === false) return
+  if ('SCP' in window === false) {return}
 
   // This construct is kludgy, but helps cohesion and encapsulation
   // by putting related dense code here instead of in the calling functions
@@ -127,6 +127,14 @@ export function logSearch(type, searchParams, perfTime) {
     'send', 'event', gaEventCategory, 'study-search',
     'num-terms', numTerms
   )
+}
+
+/**
+ * Log create user annotation metrics
+ */
+export function logCreateUserAnnotation() {
+  ga('send', 'event', 'engaged_user_action', 'create_custom_cell_annotation')
+  log('create-custom-cell-annotation')
 }
 
 /**
