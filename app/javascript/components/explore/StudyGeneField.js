@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
@@ -79,6 +79,14 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
         setTimeout(() => {setInputText(' ')}, 0)
     }
   }
+
+  useEffect(() => {
+    if (genes.join(',') !== geneArray.map(opt => opt.label).join(',')) {
+      // the genes have been updated elsewhere -- resync
+      setGeneArray([])
+      setInputText('')
+    }
+  }, [genes.join(',')])
 
   return (
     <form className="gene-keyword-search form-horizontal" onSubmit={handleSubmit}>
