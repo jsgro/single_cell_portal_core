@@ -6,6 +6,7 @@ import { faPlus, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import _difference from 'lodash/difference'
 
 import { useUpdateEffect } from 'hooks/useUpdate'
+import { isUserLoggedIn } from 'providers/UserProvider'
 
 /** takes in an element with a plotly graph and returns an array of selected cell names */
 function getSelectedCells(plotlyTarget) {
@@ -36,16 +37,40 @@ function computeRemainderLabel(selectedAnnotations, allTraces) {
   }
 }
 
+/** returns a list of validation messages.  If empty, the submission is valid */
+function validationMessages(userAnnotations, annotationName, annotations) {
+  const msgs = []
+  if (userAnnotations.length < 2) {
+    msgs.push('Drag on a scatter plot to select a group of cells.')
+    // don't clutter with extra messages if they haven't done anything yet
+    return msgs
+  }
+  if (userAnnotations.some(annot => annot.name.length < 1)) {
+    msgs.push('Label all selections.')
+  }
+  if (userAnnotations.some(annot => annot.name === 'Undefined')) {
+    msgs.push('"Undefined" may not be used as a label.')
+  }
+  if (annotationName.length < 1) {
+    msgs.push('Enter a name for this annotation')
+  }
+  const existingAnnotNames = annotations.map(annot => annot.name)
+  if (existingAnnotNames.includes(annotationName)) {
+    msgs.push(`${annotationName} already exists. Select a different name.`)
+  }
+  return msgs
+}
 
 
 /** the graph customization controls for the exlore tab */
-export default function CreateAnnotation({ dataParams, updateDataParams, isSelecting, setIsSelecting, currentPointsSelected }) {
+export default function CreateAnnotation({ isSelecting, setIsSelecting, currentPointsSelected, annotations }) {
   const [showControl, setShowControl] = useState(false)
   const [userAnnotations, setUserAnnotations] = useState([])
   const [annotationName, setAnnotationName] = useState('')
   const [plotlyTarget, setPlotlyTarget] = useState(null)
 
-  const isCreateEnabled = userAnnotations.length > 1 && annotationName.length > 0
+  const messages = validationMessages(userAnnotations, annotationName, annotations)
+  const isCreateEnabled = messages.length === 0
 
   /** handle the use3r updating the name of one of the annotations */
   function setLabelName(name, annotIndex) {
@@ -107,7 +132,7 @@ export default function CreateAnnotation({ dataParams, updateDataParams, isSelec
       // use is deleting the only annotation they've made so far (there exist only that and the remainder)
       setUserAnnotations([])
     } else {
-      // build new array of non-deleted labels, and without the 'unselected'
+      // build new array of non-deleted labels, and without the 'remainder' label
       const newUserAnnots = userAnnotations.filter((annot, index) => index != deleteIndex && !annot.isRemainder)
       newUserAnnots.push(computeRemainderLabel(newUserAnnots, plotlyTarget.data))
       setUserAnnotations(newUserAnnots)
@@ -121,11 +146,20 @@ export default function CreateAnnotation({ dataParams, updateDataParams, isSelec
     setPlotlyTarget(target)
   }, [currentPointsSelected])
 
+  let createButton = (<button className="action" onClick={handlePanelToggle}>
+    <FontAwesomeIcon icon={showControl ? faMinus : faPlus}/> Create annotation
+  </button>)
+  if (!isUserLoggedIn()) {
+    createButton = <button className="action"
+      data-toggle="tooltip"
+      title="You must sign in to create custom annotations">
+      <FontAwesomeIcon icon={faPlus}/> Create annotation
+    </button>
+  }
+
   return (
     <div className="create-annotation-control">
-      <button className="action" onClick={handlePanelToggle}>
-        <FontAwesomeIcon icon={showControl ? faMinus : faPlus}/> Create annotation
-      </button>
+      {createButton }
       <Panel className="create-annotation" expanded={showControl} onToggle={handlePanelToggle}>
         <Panel.Collapse>
           <Panel.Body>
@@ -142,11 +176,18 @@ export default function CreateAnnotation({ dataParams, updateDataParams, isSelec
                 height={20}
                 id="annotation-select-cells"/>
             </label>
-            <span className="detail">drag over the scatter plot to select a group of cells</span>
 
             { userAnnotations.map((annotation, index) => {
-              return <UserLabelInput annotation={annotation} index={index} setName={setLabelName} deleteLabel={handleDelete}/>
+              return <UserLabelInput
+                key={index}
+                annotation={annotation}
+                index={index}
+                setName={setLabelName}
+                deleteLabel={handleDelete}/>
             })}
+            <ul className="detail">
+              {messages.map(msg => <li>{msg}</li>)}
+            </ul>
             <button className="btn btn-primary" disabled={!isCreateEnabled} onClick={handleCreate}>Create</button>
             &nbsp;
             <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>

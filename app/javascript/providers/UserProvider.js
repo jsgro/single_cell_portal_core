@@ -13,6 +13,11 @@ export function getAccessToken() {
   return ('SCP' in window) ? window.SCP.userAccessToken : 'test'
 }
 
+/** returns true if the current user is logged in */
+export function isUserLoggedIn() {
+  return !!getAccessToken()
+}
+
 /**
   * Returns a scope-limited access token that can be used as a URL param
   * window.SCP is not available when running via Jest tests,

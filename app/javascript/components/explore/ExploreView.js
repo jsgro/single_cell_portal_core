@@ -193,8 +193,7 @@ function RoutableExploreTab({ studyAccession }) {
           <CreateAnnotation
             isSelecting={isCellSelecting}
             setIsSelecting={setIsCellSelecting}
-            dataParams={dataParams}
-            updateDataParams={updateDataParams}
+            annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}
             currentPointsSelected={currentPointsSelected}/>
           <PlotDisplayControls renderParams={renderParams}
             updateRenderParams={updateRenderParams}
