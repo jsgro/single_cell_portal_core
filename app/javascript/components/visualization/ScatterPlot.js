@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
@@ -6,6 +6,7 @@ import _uniqueId from 'lodash/uniqueId'
 import { fetchCluster } from 'lib/scp-api'
 import { setMarkerColors } from 'lib/scatter-plot'
 import { labelFont } from 'lib/plot'
+import { useUpdateLayoutEffect } from 'hooks/useUpdate'
 
 export const SCATTER_COLOR_OPTIONS = [
   'Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu', 'Reds', 'Blues', 'Picnic',
@@ -20,7 +21,7 @@ export const defaultScatterColor = 'Reds'
   */
 export default function ScatterPlot({
   studyAccession, dataParams, renderParams, showDataParams, dimensionsFn, plotOptions,
-  updateRenderParams, numColumns=1, numRows=1
+  updateRenderParams, numColumns=1, numRows=1, isCellSelecting=false, plotPointsSelected
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
@@ -49,6 +50,8 @@ export default function ScatterPlot({
     clusterResponse.data[0].marker.colorscale = scatterColor
 
     window.Plotly.newPlot(graphElementId, clusterResponse.data, layout)
+    $(`#${graphElementId}`).off('plotly_selected')
+    $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
 
     if (scatterColor !== renderParams.scatterColor) {
       updateRenderParams({ scatterColor })
@@ -77,18 +80,33 @@ export default function ScatterPlot({
     dataParams.genes.join(',')])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
-  useLayoutEffect(() => {
+  useUpdateLayoutEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
+      console.log('updating color scale')
       const dataUpdate = { 'marker.colorscale': renderParams.scatterColor }
       window.Plotly.update(graphElementId, dataUpdate)
     }
   }, [renderParams.scatterColor])
 
+  // Handles cell select mode updates
+  useUpdateLayoutEffect(() => {
+    // Don't try to update the color if the graph hasn't loaded yet
+    if (clusterData && !isLoading) {
+      console.log('updating drag mode')
+      const newDragMode = getDragMode(isCellSelecting)
+      window.Plotly.relayout(graphElementId, { dragmode: newDragMode })
+      if (!isCellSelecting) {
+        window.Plotly.restyle(graphElementId, { selectedpoints: [null] })
+      }
+    }
+  }, [isCellSelecting])
+
   // Adjusts width and height of plots upon toggle of "View Options"
-  useLayoutEffect(() => {
+  useUpdateLayoutEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
+      console.log('updating height')
       const { width, height } = dimensionsFn({ numColumns, numRows })
       const layoutUpdate = { width, height }
       window.Plotly.relayout(graphElementId, layoutUpdate)
@@ -126,11 +144,13 @@ function getPlotlyLayout({
   hasCoordinateLabels,
   coordinateLabels,
   isAnnotatedScatter,
-  is3d
+  is3d,
+  isCellSelecting=false
 }) {
   const layout = {
     hovermode: 'closest',
-    font: labelFont
+    font: labelFont,
+    dragmode: getDragMode(isCellSelecting)
   }
   if (is3d) {
     layout.scene = get3DScatterProps({ domainRanges, axes })
@@ -225,5 +245,10 @@ export function get3DScatterProps({ domainRanges, axes }) {
   }
 
   return scene
+}
+
+/** get the appropriate plotly dragmode option string */
+function getDragMode(isCellSelecting) {
+  return isCellSelecting ? 'lasso' : 'lasso, select'
 }
 

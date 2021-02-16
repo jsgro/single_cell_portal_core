@@ -26,6 +26,25 @@
 	min-height: 50vh;
 }
 
+.create-annotation-control {
+	label {
+		font-weight: normal;
+	}
+	input[type="text"] {
+		margin-bottom: 0.5em;
+	}
+	.delete-icon {
+		border: none;
+		color: #777;
+		background: none;
+		max-height: 1.8em;
+		border-radius: 1em;
+		&:hover {
+			background: #eef;
+		}
+	}
+}
+
 
 .explore-plot-tab-content {
 	background: #fff;
@@ -61,4 +80,9 @@
 		background: #ddd;
 		border-radius: 5px;
 	}
+}
+
+.react-switch {
+  vertical-align: middle;
+  margin-left: 4px;
 }

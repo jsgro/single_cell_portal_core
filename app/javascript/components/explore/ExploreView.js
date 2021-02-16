@@ -7,6 +7,7 @@ import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import _clone from 'lodash/clone'
 
 import ClusterControls from 'components/visualization/ClusterControls'
+import CreateAnnotation from './CreateAnnotation'
 import PlotDisplayControls, { defaultRenderParams } from 'components/visualization/PlotDisplayControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { stringifyQuery, fetchExplore, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
@@ -96,9 +97,12 @@ function RoutableExploreTab({ studyAccession }) {
   const [exploreInfo, setExploreInfo] = useState(null)
   const location = useLocation()
   const [showDataParams, setShowDataParams] = useState(true)
+  const [isCellSelecting, setIsCellSelecting] = useState(false)
+  const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
   const dataParams = buildDataParamsFromQuery(location.search)
   const renderParams = buildRenderParamsFromQuery(location.search)
   const tabContainerEl = useRef(null)
+
 
   let controlDataParams = _clone(dataParams)
   if (exploreInfo && !dataParams.cluster) {
@@ -142,6 +146,11 @@ function RoutableExploreTab({ studyAccession }) {
     navigate(`${query}#study-visualize`, { replace: true })
   }
 
+  /** handler for when the user selects points in a plotly scatter graph */
+  function plotPointsSelected(points) {
+    setCurrentPointsSelected(points)
+  }
+
   /** Handle clicks on "View Options" toggler element */
   function handleViewOptionsClick() {
     setShowDataParams(!showDataParams)
@@ -170,7 +179,9 @@ function RoutableExploreTab({ studyAccession }) {
             showDataParams={showDataParams}
             updateDataParams={updateDataParams}
             updateRenderParams={updateRenderParams}
-            exploreInfo={exploreInfo}/>
+            exploreInfo={exploreInfo}
+            isCellSelecting={isCellSelecting}
+            plotPointsSelected={plotPointsSelected}/>
         </div>
         <div className={controlPanelClass}>
           <ClusterControls studyAccession={studyAccession}
@@ -179,6 +190,12 @@ function RoutableExploreTab({ studyAccession }) {
             preloadedAnnotationList={exploreInfo ? exploreInfo.annotationList : null}
             fetchAnnotationList={false}
             showConsensus={dataParams.genes.length > 1}/>
+          <CreateAnnotation
+            isSelecting={isCellSelecting}
+            setIsSelecting={setIsCellSelecting}
+            dataParams={dataParams}
+            updateDataParams={updateDataParams}
+            currentPointsSelected={currentPointsSelected}/>
           <PlotDisplayControls renderParams={renderParams}
             updateRenderParams={updateRenderParams}
             dataParams={controlDataParams}

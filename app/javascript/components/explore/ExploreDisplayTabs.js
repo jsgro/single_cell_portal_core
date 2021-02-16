@@ -36,7 +36,7 @@ const tabList = [
 export default function ExploreDisplayTabs(
   {
     studyAccession, exploreInfo, dataParams, controlDataParams, renderParams, showDataParams,
-    updateDataParams, updateRenderParams
+    updateDataParams, updateRenderParams, isCellSelecting, plotPointsSelected
   }
 ) {
   const isMultiGene = dataParams.genes.length > 1
@@ -204,6 +204,8 @@ export default function ExploreDisplayTabs(
                 showDataParams={showDataParams}
                 updateRenderParams={updateRenderParams}
                 dimensionsFn={getPlotRect}
+                isCellSelecting={isCellSelecting}
+                plotPointsSelected={plotPointsSelected}
               />
             </div>
           }
@@ -219,6 +221,8 @@ export default function ExploreDisplayTabs(
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotRect}
                     numColumns={2}
+                    isCellSelecting={isCellSelecting}
+                    plotPointsSelected={plotPointsSelected}
                   />
                 </div>
                 <div className="col-md-6">
@@ -230,6 +234,8 @@ export default function ExploreDisplayTabs(
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotRect}
                     numColumns={2}
+                    isCellSelecting={isCellSelecting}
+                    plotPointsSelected={plotPointsSelected}
                   />
                 </div>
               </div>
@@ -247,6 +253,8 @@ export default function ExploreDisplayTabs(
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotRect}
                     numColumns={2}
+                    isCellSelecting={isCellSelecting}
+                    plotPointsSelected={plotPointsSelected}
                   />
                 </div>
                 <div className="col-md-6">
@@ -259,6 +267,8 @@ export default function ExploreDisplayTabs(
                     dimensionsFn={getPlotRect}
                     plotOptions= {{ showlegend: false }}
                     numColumns={2}
+                    isCellSelecting={isCellSelecting}
+                    plotPointsSelected={plotPointsSelected}
                   />
                 </div>
               </div>
@@ -277,6 +287,8 @@ export default function ExploreDisplayTabs(
                     dimensionsFn={getPlotRect}
                     numColumns={2}
                     numRows={2}
+                    isCellSelecting={isCellSelecting}
+                    plotPointsSelected={plotPointsSelected}
                   />
                   <ScatterPlot
                     studyAccession={studyAccession}
@@ -288,6 +300,8 @@ export default function ExploreDisplayTabs(
                     plotOptions= {{ showlegend: false }}
                     numColumns={2}
                     numRows={2}
+                    isCellSelecting={isCellSelecting}
+                    plotPointsSelected={plotPointsSelected}
                   />
                 </div>
                 <div className="col-md-6">
@@ -300,6 +314,8 @@ export default function ExploreDisplayTabs(
                     dimensionsFn={getPlotRect}
                     numColumns={2}
                     numRows={2}
+                    isCellSelecting={isCellSelecting}
+                    plotPointsSelected={plotPointsSelected}
                   />
                   <ScatterPlot
                     studyAccession={studyAccession}
@@ -310,6 +326,8 @@ export default function ExploreDisplayTabs(
                     dimensionsFn={getPlotRect}
                     numColumns={2}
                     numRows={2}
+                    isCellSelecting={isCellSelecting}
+                    plotPointsSelected={plotPointsSelected}
                   />
                 </div>
               </div>
