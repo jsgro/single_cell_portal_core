@@ -98,7 +98,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
     study = study_file.study
     accession = study.accession
     resources = self.create_resources_object(regions: ['us-central1'])
-    command_line = self.get_command_line(study_file: study_file, action: action)
+    command_line = self.get_command_line(study_file: study_file, action: action, user_metrics_uuid: user.metrics_uuid)
     labels = {
         study_accession: accession,
         user_id: user.id.to_s,
@@ -266,10 +266,10 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #
   # * *raises*
   #   - (ArgumentError) => The requested StudyFile and action do not correspond with each other, or cannot be run yet
-  def get_command_line(study_file:, action:)
+  def get_command_line(study_file:, action:, user_metrics_uuid:)
     validate_action_by_file(action, study_file)
     study = study_file.study
-    command_line = "python ingest_pipeline.py --study-id #{study.id} --study-file-id #{study_file.id} #{action}"
+    command_line = "python ingest_pipeline.py --study-id #{study.id} --study-file-id #{study_file.id} --user-metrics-uuid #{user_metrics_uuid} #{action}"
     case action.to_s
     when 'ingest_expression'
       if study_file.file_type == 'Expression Matrix'

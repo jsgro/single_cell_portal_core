@@ -11,6 +11,7 @@ FactoryBot.define do
     end
     email { "test.user.#{random_seed}@test.edu" }
     password { "test_password" }
+    metrics_uuid { SecureRandom.uuid }
     after(:create) do |user, evaluator|
       if evaluator.test_array
         evaluator.test_array.push(user)

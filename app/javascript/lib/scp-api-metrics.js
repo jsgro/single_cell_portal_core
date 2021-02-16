@@ -130,6 +130,14 @@ export function logSearch(type, searchParams, perfTime) {
 }
 
 /**
+ * Log create user annotation metrics
+ */
+export function logCreateUserAnnotation() {
+  ga('send', 'event', 'engaged_user_action', 'create_custom_cell_annotation')
+  log('create-custom-cell-annotation')
+}
+
+/**
  * Log filter search metrics
  */
 export function logFilterSearch(facet, terms) {

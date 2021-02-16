@@ -15,7 +15,7 @@ import { DownloadContext } from 'providers/DownloadProvider'
 import { fetchAuthCode } from 'lib/scp-api'
 
 /**
- * Fetch auth code, build download command, return configuration object
+ * Create auth code, build download command, return configuration object
  *
  * @returns {Object} Object for auth code, time interval, and download command
  */

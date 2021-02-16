@@ -26,7 +26,7 @@ import { exploreScatterPlots } from 'lib/study-overview/explore'
 import { resizeScatterPlots } from 'lib/scatter-plot'
 import { clearPlots } from 'lib/plot'
 import {
-  addSpatialDropdown, handleMenuChange
+  addSpatialDropdown, addMenuListeners
 } from 'lib/study-overview/view-options'
 
 const baseCamera = {
@@ -36,14 +36,14 @@ const baseCamera = {
 }
 
 /** Listen for events, and update view accordingly */
-function attachEventHandlers(study) {
+function attachEventListeners(study) {
   // resize listener
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {
     resizeScatterPlots()
   })
 
-  handleMenuChange(exploreScatterPlots, [study])
+  addMenuListeners(exploreScatterPlots, [study])
 
   // For inferCNV ideogram
   $('#ideogram_annotation').on('change', function() {
@@ -90,7 +90,7 @@ export default async function exploreDefault() {
   window.SCP.study.accession = accession
   window.SCP.taxons = window.SCP.study.taxonNames
 
-  attachEventHandlers(study)
+  attachEventListeners(study)
 
   if (study.cluster) {
     // set default subsample option of 10K (if subsampled) or all cells

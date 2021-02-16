@@ -88,6 +88,7 @@ window.SCP.exploreDefault = exploreDefault
 window.SCP.exploreSingle = exploreSingle
 window.SCP.renderExploreView = renderExploreView
 
+
 /*
  * For down the road, when we use ES6 imports in SCP JS app code
  * export {$, jQuery, ClassicEditor, Spinner, morpheus, igv, Ideogram};

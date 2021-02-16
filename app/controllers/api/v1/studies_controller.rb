@@ -225,6 +225,7 @@ module Api
             rescue => e
               error_context = ErrorTracker.format_extra_context(@study, {params: params})
               ErrorTracker.report_exception(e, current_api_user, error_context)
+              MetricsService.report_error(e, request, current_api_user, @study)
               logger.error "#{Time.zone.now} unable to delete workspace: #{@study.firecloud_workspace}; #{e.message}"
               render json: {error: "Error deleting FireCloud workspace #{@study.firecloud_project}/#{@study.firecloud_workspace}: #{e.message}"}, status: 500
             end
@@ -405,6 +406,7 @@ module Api
         rescue => e
           error_context = ErrorTracker.format_extra_context(@study, {params: params})
           ErrorTracker.report_exception(e, current_api_user, error_context)
+          MetricsService.report_error(e, request, current_api_user, @study)
           logger.error "#{Time.zone.now}: error syncing files in workspace bucket #{@study.firecloud_workspace} due to error: #{e.message}"
           render json: {error: "Unable to sync with workspace bucket: #{view_context.simple_format(e.message)}"}, status: 500
         end
@@ -501,6 +503,13 @@ module Api
             key :required, true
             key :type, :string
           end
+          parameter do
+            key :name, :include_dirs
+            key :in, :query
+            key :description, 'Include directory listings in manifest'
+            key :required, false
+            key :type, :string
+          end
           response 200 do
             key :description, 'Manifest file'
             schema do
@@ -530,7 +539,8 @@ module Api
       end
 
       def generate_manifest
-        manifest_obj = BulkDownloadService.generate_study_files_tsv(@study)
+        include_dirs = params[:include_dirs] == 'true'
+        manifest_obj = BulkDownloadService.generate_study_files_tsv(@study, include_dirs)
         response.headers['Content-Disposition'] = 'attachment; filename=file_supplemental_info.tsv'
         render plain: manifest_obj
       end

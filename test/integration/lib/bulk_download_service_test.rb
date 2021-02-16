@@ -15,8 +15,9 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
     files = @study.study_files
     starting_quota = @user.daily_download_quota
-    bytes_requested = files.map(&:upload_file_size).reduce(:+)
-    BulkDownloadService.update_user_download_quota(user: @user, files: files)
+    directory = @study.directory_listings.first
+    bytes_requested = files.map(&:upload_file_size).reduce(:+) + directory.total_bytes
+    BulkDownloadService.update_user_download_quota(user: @user, files: files, directories: @study.directory_listings)
     @user.reload
     current_quota = @user.daily_download_quota
     assert current_quota > starting_quota, "User download quota did not increase"
@@ -41,6 +42,20 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  test 'should get requested directories' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    files = BulkDownloadService.get_requested_directory_files(@study.directory_listings)
+    expected_files = @study.directory_listings.first.files
+    expected_count = expected_files.size
+    assert_equal expected_count, files.size, "Did not find correct number of files, expected #{expected_count} but found #{files.size}"
+    expected_filenames = expected_files.map {|f| f[:name]}.sort
+    found_files = files.map {|f| f[:name]}.sort
+    assert_equal expected_filenames, found_files, "Did not find the correct files, expected: #{expected_files} but found #{found_files}"
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
   test 'should get requested file sizes by query' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
@@ -57,28 +72,54 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  test 'should get requested directory sizes' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    dir_files_by_size = BulkDownloadService.get_requested_directory_sizes(@study.directory_listings)
+    directory = @study.directory_listings.first
+    expected_files = directory.files
+    returned_files = get_file_count_from_response(dir_files_by_size)
+    assert_equal expected_files.size, returned_files,
+                 "Did not find correct number of directory files, expected #{expected_files.size} but found #{returned_files}"
+    expected_bytes = directory.total_bytes
+    returned_bytes = get_file_size_from_response(dir_files_by_size)
+    assert_equal expected_bytes, returned_bytes,
+                 "Did not find correct total_bytes for directory, expected #{expected_bytes} but found #{returned_bytes}"
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
   # should return curl configuration file contents
   # mock call to GCS as this is covered in API/SearchControllerTest
   test 'should generate curl configuration' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     study_file = @study.metadata_file
+    directory = @study.directory_listings.first
     bucket_map = BulkDownloadService.generate_study_bucket_map([@study.accession])
-    path_map = BulkDownloadService.generate_output_path_map([study_file])
+    path_map = BulkDownloadService.generate_output_path_map([study_file], [directory])
+    directory_file_list = BulkDownloadService.get_requested_directory_files([directory])
     signed_url = "https://storage.googleapis.com/#{@study.bucket_id}/#{study_file.upload_file_name}"
     output_path = study_file.bulk_download_pathname
+    directory_file = directory.files.sample
+    dir_signed_url = "https://storage.googleapis.com/#{@study.bucket_id}/#{directory_file[:name]}"
+    dir_output_path = directory.bulk_download_pathname(directory_file)
     manifest_path = "#{RequestUtils.get_base_url}/single_cell/api/v1/studies/#{@study.id}/manifest"
 
     # mock call to GCS
     mock = Minitest::Mock.new
     mock.expect :execute_gcloud_method, signed_url, [:generate_signed_url, Integer, String, String, Hash]
+    mock.expect :execute_gcloud_method, dir_signed_url, [:generate_signed_url, Integer, String, String, Hash]
     FireCloudClient.stub :new, mock do
       configuration = BulkDownloadService.generate_curl_configuration(study_files: [study_file], user: @user,
+                                                                      directory_files: directory_file_list,
                                                                       study_bucket_map: bucket_map,
                                                                       output_pathname_map: path_map)
       mock.verify
       assert configuration.include?(signed_url), "Configuration does not include expected signed URL (#{signed_url}): #{configuration}"
       assert configuration.include?(output_path), "Configuration does not include expected output path (#{output_path}): #{configuration}"
+      assert configuration.include?(dir_signed_url), "Configuration does not include expected directory signed URL (#{dir_signed_url}): #{configuration}"
+      assert configuration.include?(dir_output_path), "Configuration does not include expected directory output path (#{dir_output_path}): #{configuration}"
       assert configuration.include?(manifest_path), "Configuration does not include manifest link (#{manifest_path}): #{configuration}"
     end
 
@@ -103,12 +144,22 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
   test 'should generate map of study file ids to output pathnames' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    output_map = BulkDownloadService.generate_output_path_map(StudyFile.all)
-    output_map.each do |study_file_id, output_path|
-      study_file = StudyFile.find(study_file_id)
-      assert study_file.present?, "Invalid study_file_id: #{study_file_id}"
-      assert_equal study_file.bulk_download_pathname, output_path,
-                   "Invalid bulk_download_pathname for #{study_file_id}: #{study_file.bulk_download_pathname} != #{output_path}"
+    files = @study.study_files
+    directories = @study.directory_listings
+    output_map = BulkDownloadService.generate_output_path_map(files, directories)
+    files.each do |file|
+      expected_output_path = file.bulk_download_pathname
+      output_path = output_map[file.id.to_s]
+      assert_equal expected_output_path, output_path,
+                   "Invalid bulk_download_pathname for #{file.id}: #{expected_output_path} != #{output_path}"
+    end
+    directories.each do |directory|
+      directory.files.each do |file|
+        expected_output_path = directory.bulk_download_pathname(file)
+        output_path = output_map[file[:name]]
+        assert_equal expected_output_path, output_path,
+                     "Invalid bulk_download_pathname for directory file #{directory[:name]}/#{file[:name]}: #{expected_output_path} != #{output_path}"
+      end
     end
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"

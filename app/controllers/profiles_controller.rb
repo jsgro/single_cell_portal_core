@@ -34,6 +34,7 @@ class ProfilesController < ApplicationController
         end
       rescue => e
         ErrorTracker.report_exception(e, current_user, params.to_unsafe_hash)
+        MetricsService.report_error(e, request, current_user)
         logger.info "#{Time.zone.now}: unable to retrieve FireCloud profile for #{current_user.email}: #{e.message}"
       end
     end
@@ -89,6 +90,7 @@ class ProfilesController < ApplicationController
       end
     rescue => e
       ErrorTracker.report_exception(e, current_user, params.to_unsafe_hash)
+      MetricsService.report_error(e, request, current_user)
       logger.info "#{Time.zone.now}: unable to update FireCloud profile for #{current_user.email}: #{e.message}"
       @alert = "An error occurred when trying to update your FireCloud profile: #{e.message}"
     end

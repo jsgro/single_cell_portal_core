@@ -14,6 +14,8 @@ class UserAnnotation
   ###
 
   include Mongoid::Document
+  include Swagger::Blocks
+
   field :name, type: String
   field :values, type: Array
   field :queued_for_deletion, type: Boolean, default: false
@@ -184,7 +186,6 @@ class UserAnnotation
       end
       annotation_array << cell_name
     end
-
 
     # Create the name of the subsample annotation
     sub_an = self.formatted_annotation_identifier

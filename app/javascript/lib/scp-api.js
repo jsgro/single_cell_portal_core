@@ -12,7 +12,8 @@ import * as queryString from 'query-string'
 
 import { getAccessToken, getURLSafeAccessToken } from 'providers/UserProvider'
 import {
-  logSearch, logDownloadAuthorization, mapFiltersForLogging
+  logSearch, logDownloadAuthorization, logCreateUserAnnotation,
+  mapFiltersForLogging
 } from './scp-api-metrics'
 
 // If true, returns mock data for all API responses.  Only for dev.
@@ -52,8 +53,20 @@ export function geneArrayToParam(genes) {
 }
 
 
+/** Configure an `init` for `fetch` to use POST, and respect any mocking  */
+function defaultPostInit(mock=false) {
+  let init = defaultInit
+  if (mock === false && globalMock === false) {
+    init = Object.assign({}, defaultInit(), {
+      method: 'POST'
+    })
+  }
+
+  return init
+}
+
 /**
- * Get a one-time authorization code for download, and its lifetime in seconds
+ * Create and return a one-time authorization code for download
  *
  * TODO:
  * - Update API to use "expires_in" instead of "time_interval"
@@ -69,18 +82,74 @@ export function geneArrayToParam(genes) {
  * fetchAuthCode(true)
  */
 export async function fetchAuthCode(mock=false) {
-  let init = defaultInit
-  if (mock === false && globalMock === false) {
-    init = Object.assign({}, defaultInit(), {
-      method: 'POST'
-    })
-  }
+  const init = defaultPostInit(mock)
 
   const [authCode, perfTime] = await scpApi('/search/auth_code', init, mock)
 
   logDownloadAuthorization(perfTime)
 
   return authCode
+}
+
+/**
+* Create user annotation
+*
+* A "user annotation" is a named object of arrays.  Each item has a label
+* (`name`) and cell names (`values`).  Signed-in users can create these
+* custom annotations in the Explore tab of the Study Overview page.
+*
+* See user-annotations.js for more context.
+*
+* @param {String} studyAccession Study accession, e.g. SCP123
+* @param {String} cluster Name of cluster, as defined at upload
+* @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
+* @param {String} subsample Subsampling threshold, e.g. 100000
+* @param {String} userAnnotationName Name of new annotation
+* @param {Object} selections User selections for new annotation.
+*    Each selection has a label (`name`) and list of cell names (`values`).
+*    See `prepareForApi` in `user-annotations.js` for details.
+*/
+export async function createUserAnnotation(
+  studyAccession, cluster, annotation, subsample,
+  userAnnotationName, selections, mock=false
+) {
+  const init = defaultPostInit(mock)
+
+  init.body = JSON.stringify({
+    name: userAnnotationName,
+    user_data_arrays_attributes: selections,
+    cluster, annotation, subsample
+  })
+
+  const apiUrl = `/studies/${studyAccession}/user_annotations`
+  const [jsonOrResponse, perfTime] = await scpApi(apiUrl, init, mock)
+
+  let message = ''
+  let annotations = {}
+  let errorType = null
+
+  // Consider refactoring this when migrating user-annotations.js to
+  // React, so components share more error handling logic and UI
+  if (jsonOrResponse.ok === false) {
+    const json = await jsonOrResponse.json()
+    message = json.error
+    const status = jsonOrResponse.status
+    if (status === 400) {
+      errorType = 'user'
+    } else if (status === 500) {
+      errorType = 'server'
+    } else {
+      errorType = 'other'
+    }
+  } else {
+    // Parse JSON of successful response
+    message = jsonOrResponse.message
+    annotations = jsonOrResponse.annotations
+  }
+
+  logCreateUserAnnotation()
+
+  return { message, annotations, errorType }
 }
 
 /**
@@ -299,7 +368,7 @@ export async function fetchAnnotation(studyAccession, clusterName, annotationNam
   return values
 }
 
-/** Get a url for retrieving a morpheus-suitable annotation values file */
+/** Get URL for a Morpheus-suitable annotation values file */
 export function getAnnotationCellValuesURL(studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false) {
   const paramObj = {
     cluster: clusterName,
@@ -314,9 +383,9 @@ export function getAnnotationCellValuesURL(studyAccession, clusterName, annotati
 
 
 /**
- * Returns an url for fetching heatmap expression data for genes in a study
+ * Returns an URL for fetching heatmap expression data for genes in a study
  *
- * A url generator rather than a fetch funtion is provided as morpheus needs a URL string
+ * A URL generator rather than a fetch funtion is provided as morpheus needs a URL string
  *
  * @param {String} studyAccession study accession
  * @param {Array} genes List of gene names to get expression data for

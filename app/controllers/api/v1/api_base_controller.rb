@@ -8,16 +8,20 @@ module Api
       include Concerns::Authenticator
 
       rescue_from ActionController::ParameterMissing do |exception|
+        MetricsService.report_error(exception, request, current_api_user, @study)
         render json: {error: exception.message}, status: 400
       end
 
       rescue_from NoMethodError, Faraday::ConnectionFailed do |exception|
+        MetricsService.report_error(exception, request, current_api_user, @study)
         render json: {error: exception.message}, status: 500
       end
 
       # this is needed to get stack traces of view errors on the console in development
       # otherwise, e.g. errors in study_search_results_objects.rb would just be swallowed and returned as 500
-      rescue_from StandardError do |exception|
+      # this also logs exceptions in Mixpanel/Sentry
+      rescue_from Exception do |exception|
+        MetricsService.report_error(exception, request, current_api_user, @study)
         ErrorTracker.report_exception(exception, current_api_user, params.to_unsafe_hash)
         logger.error ([exception.message] + exception.backtrace).join($/)
         if Rails.env.production?
