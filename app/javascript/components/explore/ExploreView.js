@@ -11,7 +11,7 @@ import CreateAnnotation from './CreateAnnotation'
 import PlotDisplayControls, { defaultRenderParams } from 'components/visualization/PlotDisplayControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { stringifyQuery, fetchExplore, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
-import { getDefaultClusterParams } from 'lib/cluster-utils'
+import { getDefaultClusterParams, getIdentifierForAnnotation } from 'lib/cluster-utils'
 import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
 
 /** converts query string parameters into the dataParams objet */
@@ -51,10 +51,9 @@ function buildDataParamsFromQuery(query) {
 
 /** converts the params objects into a query string, inverse of build*ParamsFromQuery */
 function buildQueryFromParams(dataParams, renderParams) {
-  const annot = dataParams.annotation
   const querySafeOptions = {
     cluster: dataParams.cluster,
-    annotation: [annot.name, annot.type, annot.scope].join('--'),
+    annotation: getIdentifierForAnnotation(dataParams.annotation),
     genes: geneArrayToParam(dataParams.genes),
     consensus: dataParams.consensus,
     spatialFiles: dataParams.spatialFiles.join(','),
@@ -108,6 +107,13 @@ function RoutableExploreTab({ studyAccession }) {
   if (exploreInfo && !dataParams.cluster) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
     controlDataParams = Object.assign(controlDataParams, getDefaultClusterParams(exploreInfo.annotationList))
+  }
+
+  /** in the event a component takes an action which updates the list of annotations available
+    * e.g. by creating a user annotation, this updates the list */
+  function setAnnotationList(newAnnotationList) {
+    const newExploreInfo = Object.assign({}, exploreInfo, { annotationList: newAnnotationList })
+    setExploreInfo(newExploreInfo)
   }
 
   /** Merges the received update into the dataParams, and updates the page URL if need */
@@ -193,8 +199,12 @@ function RoutableExploreTab({ studyAccession }) {
           <CreateAnnotation
             isSelecting={isCellSelecting}
             setIsSelecting={setIsCellSelecting}
-            annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}
-            currentPointsSelected={currentPointsSelected}/>
+            annotationList={exploreInfo ? exploreInfo.annotationList : null}
+            currentPointsSelected={currentPointsSelected}
+            dataParams={controlDataParams}
+            updateDataParams={updateDataParams}
+            setAnnotationList={setAnnotationList}
+            studyAccession={studyAccession}/>
           <PlotDisplayControls renderParams={renderParams}
             updateRenderParams={updateRenderParams}
             dataParams={controlDataParams}

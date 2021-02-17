@@ -8,7 +8,7 @@ import ScatterPlot from 'components/visualization/ScatterPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import DotPlot from 'components/visualization/DotPlot'
 import Heatmap from 'components/visualization/Heatmap'
-import { getAnnotationValues } from 'components/visualization/ClusterControls'
+import { getAnnotationValues } from 'lib/cluster-utils'
 import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
 
 const tabList = [

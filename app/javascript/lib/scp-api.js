@@ -127,6 +127,7 @@ export async function createUserAnnotation(
   let message = ''
   let annotations = {}
   let errorType = null
+  let newAnnotations = []
 
   // Consider refactoring this when migrating user-annotations.js to
   // React, so components share more error handling logic and UI
@@ -145,11 +146,12 @@ export async function createUserAnnotation(
     // Parse JSON of successful response
     message = jsonOrResponse.message
     annotations = jsonOrResponse.annotations
+    newAnnotations = jsonOrResponse.annotationList
   }
 
   logCreateUserAnnotation()
 
-  return { message, annotations, errorType }
+  return { message, annotations, errorType, newAnnotations }
 }
 
 /**

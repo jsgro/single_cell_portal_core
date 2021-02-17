@@ -2,79 +2,43 @@ import React, { useState } from 'react'
 import Panel from 'react-bootstrap/lib/Panel'
 import Switch from 'react-switch'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faMinus, faTimes, faListUl, faDna } from '@fortawesome/free-solid-svg-icons'
 import _difference from 'lodash/difference'
+import Modal from 'react-bootstrap/lib/Modal'
 
 import { useUpdateEffect } from 'hooks/useUpdate'
 import { isUserLoggedIn } from 'providers/UserProvider'
-
-/** takes in an element with a plotly graph and returns an array of selected cell names */
-function getSelectedCells(plotlyTarget) {
-  const selectedPoints = []
-  plotlyTarget.data.forEach(trace => {
-    if (trace.selectedpoints) {
-      const selections = trace.selectedpoints.map(pointIndex => {
-        return trace.cells[pointIndex]
-      })
-      // push/apply has better performance than concat, apparently
-      // https://codeburst.io/jsnoob-push-vs-concat-basics-and-performance-comparison-7a4b55242fa9
-      Array.prototype.push.apply(selectedPoints, selections)
-    }
-  })
-  return selectedPoints
-}
-
-/** derives an 'unselected' annotation label from the remainder of points */
-function computeRemainderLabel(selectedAnnotations, allTraces) {
-  const selectedCount = selectedAnnotations.map(annot => annot.cells.length).reduce((a, b) => a + b, 0)
-  const totalCount = allTraces.map(trace => trace.cells.length).reduce((a, b) => a + b, 0)
-  const unselectedCount = totalCount - selectedCount
-  return {
-    name: '',
-    isRemainder: true,
-    count: unselectedCount,
-    cells: []
-  }
-}
-
-/** returns a list of validation messages.  If empty, the submission is valid */
-function validationMessages(userAnnotations, annotationName, annotations) {
-  const msgs = []
-  if (userAnnotations.length < 2) {
-    msgs.push('Drag on a scatter plot to select a group of cells.')
-    // don't clutter with extra messages if they haven't done anything yet
-    return msgs
-  }
-  if (userAnnotations.some(annot => annot.name.length < 1)) {
-    msgs.push('Label all selections.')
-  }
-  if (userAnnotations.some(annot => annot.name === 'Undefined')) {
-    msgs.push('"Undefined" may not be used as a label.')
-  }
-  if (annotationName.length < 1) {
-    msgs.push('Enter a name for this annotation')
-  }
-  const existingAnnotNames = annotations.map(annot => annot.name)
-  if (existingAnnotNames.includes(annotationName)) {
-    msgs.push(`${annotationName} already exists. Select a different name.`)
-  }
-  return msgs
-}
+import { getIdentifierForAnnotation, getDefaultAnnotationForCluster } from 'lib/cluster-utils'
+import { createUserAnnotation } from 'lib/scp-api'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
+import { userErrorEnd, serverErrorEnd } from 'lib/error-utils'
 
 
-/** the graph customization controls for the exlore tab */
-export default function CreateAnnotation({ isSelecting, setIsSelecting, currentPointsSelected, annotations }) {
+/** A control for adding a new user-defined annotation */
+function CreateAnnotation({
+  isSelecting,
+  setIsSelecting,
+  currentPointsSelected,
+  annotationList,
+  setAnnotationList,
+  studyAccession,
+  dataParams,
+  updateDataParams
+}) {
   const [showControl, setShowControl] = useState(false)
-  const [userAnnotations, setUserAnnotations] = useState([])
+  const [isLoading, setIsLoading] = useState(!!annotationList)
+  const [userLabels, setUserLabels] = useState([])
   const [annotationName, setAnnotationName] = useState('')
   const [plotlyTarget, setPlotlyTarget] = useState(null)
+  const [showResponseModal, setShowResponseModal] = useState(false)
+  const [responseModalContent, setResponseModalContent] = useState({})
 
-  const messages = validationMessages(userAnnotations, annotationName, annotations)
+  const messages = validationMessages(userLabels, annotationName, annotationList ? annotationList.annotations : {})
   const isCreateEnabled = messages.length === 0
 
   /** handle the use3r updating the name of one of the annotations */
   function setLabelName(name, annotIndex) {
-    const newUserAnnots = userAnnotations.map((annot, index) => {
+    const newUserAnnots = userLabels.map((annot, index) => {
       return {
         name: index === annotIndex ? name : annot.name,
         cells: annot.cells,
@@ -82,37 +46,94 @@ export default function CreateAnnotation({ isSelecting, setIsSelecting, currentP
         count: annot.count
       }
     })
-    setUserAnnotations(newUserAnnots)
+    setUserLabels(newUserAnnots)
   }
 
   /** user cancels creating an annotation */
   function handleCancel() {
-    setUserAnnotations([])
+    setUserLabels([])
     setAnnotationName('')
   }
 
+  /** renders an appropriate modal and updates the cluster params with the response from the server */
+  function handleCreateResponse({ message, annotations, errorType, newAnnotations }) {
+    if (!errorType) {
+      setResponseModalContent({
+        message: `User Annotation: ${annotationName} successfully saved`,
+        footer: 'You can now view this annotation via the "Annotations" dropdown.'
+      })
+      setAnnotationList(Object.assign({}, annotationList, { annotations: newAnnotations }))
+      const newAnnotation = newAnnotations.find(a => a.name === annotationName && a.scope === 'user')
+      updateDataParams({ // set the user-created annotation as the currently selected one
+        annotation: {
+          name: newAnnotation.id,
+          type: 'group',
+          scope: 'user'
+        },
+        cluster: dataParams.cluster,
+        subsample: dataParams.subsample
+      })
+    } else {
+      setResponseModalContent({
+        message: `User Annotation: ${annotationName} successfully saved`,
+        footer: errorType === 'server' ? serverErrorEnd : userErrorEnd
+      })
+    }
+    setShowResponseModal(true)
+    setUserLabels([])
+    setAnnotationName('')
+    setIsSelecting(false)
+    setShowControl(false)
+    setIsLoading(false)
+  }
+
+  /** handles user presses create -- so the labels have already been validated for submission */
   function handleCreate() {
-    // do stuff
+    const selectionPayload = {}
+    userLabels.forEach((selection, index) => {
+      selectionPayload[index] = {
+        name: selection.name,
+        values: selection.cells.join(',')
+      }
+    })
+    let attachedAnnotation = dataParams.annotation
+    if (attachedAnnotation.scope === 'user') {
+      // user annotations have to be bound to a non-user created annotation, so if the current shown
+      // annotation is a user-defined one, attach this to the cluster default instead
+      attachedAnnotation = getDefaultAnnotationForCluster(annotationList, dataParams.cluster)
+    }
+    setIsLoading(true)
+    createUserAnnotation(
+      studyAccession,
+      dataParams.cluster,
+      getIdentifierForAnnotation(attachedAnnotation),
+      dataParams.subsample,
+      annotationName,
+      selectionPayload
+    ).then(handleCreateResponse)
   }
 
   /** creates a new label entry for the given cell names */
   function addNewLabel(cellNames, allTraces) {
     if (cellNames.length) {
+      let newUserLabels = userLabels.slice()
+      if (newUserLabels.length < 1) {
+        newUserLabels.push(computeRemainderLabel(allTraces))
+      }
       const newAnnot = {
         name: '',
         cells: cellNames
       }
       // update previous selections to make sure they don't include duplicate cell names
-      const newUserAnnots = userAnnotations.filter(annot => !annot.isRemainder).map(annot => {
+      newUserLabels = newUserLabels.map(annot => {
         return {
           name: annot.name,
-          cells: _difference(annot.cells, cellNames)
+          cells: _difference(annot.cells, cellNames),
+          isRemainder: annot.isRemainder
         }
       })
-      newUserAnnots.unshift(newAnnot)
-      newUserAnnots.push(computeRemainderLabel(newUserAnnots, allTraces))
-      setUserAnnotations(newUserAnnots)
-      setPlotlyTarget()
+      newUserLabels.unshift(newAnnot)
+      setUserLabels(newUserLabels)
     }
   }
 
@@ -128,14 +149,14 @@ export default function CreateAnnotation({ isSelecting, setIsSelecting, currentP
 
   /** handle deletion of a label */
   function handleDelete(deleteIndex) {
-    if (userAnnotations.length === 2) {
+    if (userLabels.length === 2) {
       // use is deleting the only annotation they've made so far (there exist only that and the remainder)
-      setUserAnnotations([])
+      setUserLabels([])
     } else {
       // build new array of non-deleted labels, and without the 'remainder' label
-      const newUserAnnots = userAnnotations.filter((annot, index) => index != deleteIndex && !annot.isRemainder)
+      const newUserAnnots = userLabels.filter((annot, index) => index != deleteIndex && !annot.isRemainder)
       newUserAnnots.push(computeRemainderLabel(newUserAnnots, plotlyTarget.data))
-      setUserAnnotations(newUserAnnots)
+      setUserLabels(newUserAnnots)
     }
   }
 
@@ -163,46 +184,76 @@ export default function CreateAnnotation({ isSelecting, setIsSelecting, currentP
       <Panel className="create-annotation" expanded={showControl} onToggle={handlePanelToggle}>
         <Panel.Collapse>
           <Panel.Body>
-            <input
-              type="text"
-              value={annotationName}
-              placeholder="Name this annotation"
-              onChange={event => setAnnotationName(event.target.value)}/>
-            <label htmlFor="annotation-select-cells">Selecting Cells
-              <Switch
-                checked={isSelecting}
-                onChange={selected => setIsSelecting(selected)}
-                className="react-switch"
-                height={20}
-                id="annotation-select-cells"/>
-            </label>
+            { isLoading && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+            { !isLoading &&
+              <>
+                <input
+                  type="text"
+                  value={annotationName}
+                  placeholder="Name this annotation"
+                  onChange={event => setAnnotationName(event.target.value)}/>
+                <label htmlFor="annotation-select-cells">Selecting Cells
+                  <Switch
+                    checked={isSelecting}
+                    onChange={selected => setIsSelecting(selected)}
+                    className="react-switch"
+                    height={20}
+                    id="annotation-select-cells"/>
+                </label>
 
-            { userAnnotations.map((annotation, index) => {
-              return <UserLabelInput
-                key={index}
-                annotation={annotation}
-                index={index}
-                setName={setLabelName}
-                deleteLabel={handleDelete}/>
-            })}
-            <ul className="detail">
-              {messages.map(msg => <li>{msg}</li>)}
-            </ul>
-            <button className="btn btn-primary" disabled={!isCreateEnabled} onClick={handleCreate}>Create</button>
-            &nbsp;
-            <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
+                { userLabels.map((annotation, index) => {
+                  return <UserLabelInput
+                    key={index}
+                    annotation={annotation}
+                    index={index}
+                    setName={setLabelName}
+                    deleteLabel={handleDelete}/>
+                })}
+                <ul className="detail">
+                  {messages.map((msg, index) => <li key={index}>{msg}</li>)}
+                </ul>
+                <div>
+                  <button className="btn btn-primary" disabled={!isCreateEnabled} onClick={handleCreate}>Create</button>
+                  &nbsp;
+                  <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
+                </div>
+                <br/>
+                <a className="action" href="/single_cell/user_annotations" target="_blank" data-toggle="tooltip"
+                  title="manage all your created annotations">
+                  <FontAwesomeIcon icon={faListUl}/> Manage all
+                </a>
+              </>
+            }
           </Panel.Body>
         </Panel.Collapse>
       </Panel>
+      <Modal
+        show={showResponseModal}
+        onHide={() => setShowResponseModal(false)}
+        animation={false}>
+        <Modal.Body className="">
+          { responseModalContent.message }
+          <br/><br/>
+          { responseModalContent.footer }
+        </Modal.Body>
+        <Modal.Footer>
+          <button className="btn btn-md btn-primary" onClick={() => {
+            setShowResponseModal(false)
+          }}>Ok</button>
+        </Modal.Footer>
+      </Modal>
     </div>
   )
 }
+
+const CreateAnnotationControl = withErrorBoundary(CreateAnnotation)
+export default CreateAnnotationControl
 
 /** component for input of an annotation grouping */
 function UserLabelInput({ annotation, index, setName, deleteLabel }) {
   let labelText = ''
   if (annotation.isRemainder) {
-    labelText = `Unselected: ${annotation.count} cells`
+    labelText = `Unselected: ${annotation.cells.length} cells`
   } else {
     labelText = `Selection ${index}: ${annotation.cells.length} cells`
   }
@@ -233,4 +284,54 @@ function UserLabelInput({ annotation, index, setName, deleteLabel }) {
       </div>
     </div>
   )
+}
+
+/** takes in an element with a plotly graph and returns an array of selected cell names */
+function getSelectedCells(plotlyTarget) {
+  const selectedPoints = []
+  plotlyTarget.data.forEach(trace => {
+    if (trace.selectedpoints) {
+      const selections = trace.selectedpoints.map(pointIndex => {
+        return trace.cells[pointIndex]
+      })
+      // push/apply has better performance than concat, apparently
+      // https://codeburst.io/jsnoob-push-vs-concat-basics-and-performance-comparison-7a4b55242fa9
+      Array.prototype.push.apply(selectedPoints, selections)
+    }
+  })
+  return selectedPoints
+}
+
+/** makes a 'remainder' annotation label that initially contains all cells */
+function computeRemainderLabel(allTraces) {
+  const cells = allTraces.map(trace => trace.cells).flat()
+  return {
+    name: '',
+    isRemainder: true,
+    cells
+  }
+}
+
+/** returns a list of validation messages.  If empty, the submission is valid */
+function validationMessages(userLabels, annotationName, annotations) {
+  const msgs = []
+  if (userLabels.length < 2) {
+    msgs.push('Drag on a scatter plot to select a group of cells.')
+    // don't clutter with extra messages if they haven't done anything yet
+    return msgs
+  }
+  if (userLabels.some(annot => annot.name.length < 1)) {
+    msgs.push('Label all selections.')
+  }
+  if (userLabels.some(annot => annot.name === 'Undefined')) {
+    msgs.push('"Undefined" may not be used as a label.')
+  }
+  if (annotationName.length < 1) {
+    msgs.push('Enter a name for this annotation')
+  }
+  const existingAnnotNames = annotations.map(annot => annot.name)
+  if (existingAnnotNames.includes(annotationName)) {
+    msgs.push(`${annotationName} already exists. Select a different name.`)
+  }
+  return msgs
 }

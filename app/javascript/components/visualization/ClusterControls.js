@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import _find from 'lodash/find'
+import _clone from 'lodash/clone'
 import Select from 'react-select'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { fetchClusterOptions } from 'lib/scp-api'
-import { getDefaultSubsampleForCluster, annotationKeyProperties } from 'lib/cluster-utils'
+import { getDefaultSubsampleForCluster, annotationKeyProperties,
+  getDefaultAnnotationForCluster, getMatchedAnnotation } from 'lib/cluster-utils'
 
 export const emptyDataParams = {
   cluster: '',
@@ -21,23 +23,7 @@ const consensusOptions = [
   { label: 'Violin - Median', value: 'median' }
 ]
 
-/** finds the corresponding entry in annotationList for the given annotation,
- * and returns the unique values for the anotations
- */
-export function getAnnotationValues(annotation, allAnnotations) {
-  let annotationValues = []
-  if (allAnnotations && allAnnotations.annotations) {
-    const matchedAnnotation = allAnnotations.annotations.find(a => {
-      return a.name === annotation.name &&
-             a.type === annotation.type &&
-             a.scope === annotation.scope
-    })
-    if (matchedAnnotation) {
-      annotationValues = matchedAnnotation.values
-    }
-  }
-  return annotationValues
-}
+
 
 /** takes the server response and returns subsample options suitable for react-select */
 function getSubsampleOptions(annotationList, clusterName) {
@@ -69,22 +55,14 @@ function getAnnotationOptions(annotationList, clusterName) {
   }, {
     label: 'Cluster-Based',
     options: annotationList.annotations
-      .filter(annot => annot.cluster_name == clusterName).map(annot => annotationKeyProperties(annot))
+      .filter(annot => annot.cluster_name === clusterName && annot.scope === 'cluster')
+      .map(annot => annotationKeyProperties(annot))
+  }, {
+    label: 'User-Based',
+    options: annotationList.annotations
+      .filter(annot => annot.cluster_name === clusterName && annot.scope === 'user')
+      .map(annot => annotationKeyProperties(annot))
   }]
-}
-
-/** returns the first annotation for the given cluster */
-function getDefaultAnnotationForCluster(annotationList, clusterName, currentAnnotation) {
-  if (currentAnnotation && currentAnnotation.scope === 'study') {
-    // if they are changing cluster, and using a study-wide annotation, keep that annotation selected
-    return currentAnnotation
-  }
-  const clusterAnnots = annotationList.annotations.filter(annot => annot.cluster_name == clusterName)
-  if (clusterAnnots.length) {
-    return clusterAnnots[0]
-  } else {
-    return annotationList.annotations[0]
-  }
 }
 
 
@@ -129,6 +107,16 @@ export default function ClusterControls({
     })
   }
 
+  let shownAnnotation = _clone(dataParams.annotation)
+  // for user annotations, we have to match the given id to a name to show the name in the dropdown
+  if (dataParams.annotation && dataParams.annotation.scope === 'user') {
+    const matchedAnnotation = getMatchedAnnotation(dataParams.annotation, preloadedAnnotationList)
+    if (matchedAnnotation) {
+      shownAnnotation.name = matchedAnnotation.name
+      shownAnnotation.id = matchedAnnotation.id
+    }
+  }
+
   useEffect(() => {
     // only update if this component is responsible for loading annotation data from the server
     // or if the preloadedList has been specified already
@@ -157,7 +145,7 @@ export default function ClusterControls({
       <div className="form-group">
         <label>Select annotation</label>
         <Select options={annotationOptions}
-          value={dataParams.annotation}
+          value={shownAnnotation}
           getOptionLabel={annotation => annotation.name}
           getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
           onChange={annotation => setDataParams({

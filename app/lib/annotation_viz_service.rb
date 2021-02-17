@@ -93,6 +93,18 @@ class AnnotationVizService
     }
   end
 
+  # convert a UserAnnotation object to a annotation of the type expected by the frontend
+  def self.user_annot_to_annot(user_annotation, cluster)
+    {
+      name: user_annotation.name,
+      id: user_annotation.id.to_s,
+      type: 'group', # all user annotations are group
+      values: user_annotation.values,
+      scope: 'user',
+      cluster_name: cluster.name
+    }
+  end
+
   # returns a flat array of annotation objects, with name, scope, annotation_type, and values for each
   def self.available_annotations(study, cluster: nil, current_user: nil, annotation_type: nil)
     annotations = []
@@ -110,16 +122,20 @@ class AnnotationVizService
     cluster_annots = []
     if cluster.present?
       cluster_annots = ClusterVizService.available_annotations_by_cluster(cluster, annotation_type)
+      if current_user.present?
+        cluster_annots.concat(UserAnnotation.viewable_by_cluster(current_user, cluster)
+                                            .map{ |ua| AnnotationVizService.user_annot_to_annot(ua, cluster) })
+      end
     else
       study.cluster_groups.each do |cluster_group|
         cluster_annots.concat(ClusterVizService.available_annotations_by_cluster(cluster_group, annotation_type))
+        if current_user.present?
+          cluster_annots.concat(UserAnnotation.viewable_by_cluster(current_user, cluster_group)
+                                              .map{ |ua| AnnotationVizService.user_annot_to_annot(ua, cluster_group) })
+        end
       end
     end
     annotations.concat(cluster_annots)
-    if current_user.present? && cluster.present?
-      user_annotations = UserAnnotation.viewable_by_cluster(current_user, cluster)
-      annotations.concat(user_annotations)
-    end
     annotations
   end
 

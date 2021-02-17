@@ -4,9 +4,9 @@ import _clone from 'lodash/clone'
 import Study, { getByline } from 'components/search/results/Study'
 import DotPlot from 'components/visualization/DotPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
-import ClusterControls, { emptyDataParams, getAnnotationValues } from 'components/visualization/ClusterControls'
+import ClusterControls, { emptyDataParams } from 'components/visualization/ClusterControls'
 import { fetchClusterOptions } from 'lib/scp-api'
-import { getDefaultClusterParams } from 'lib/cluster-utils'
+import { getDefaultClusterParams, getAnnotationValues } from 'lib/cluster-utils'
 
 
 
