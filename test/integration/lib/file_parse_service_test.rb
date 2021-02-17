@@ -74,6 +74,28 @@ class FileParseServiceTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
+  test 'should clean up ingest artifacts after one month' do
+    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
+
+    study = Study.first
+    file_mock = Minitest::Mock.new
+    two_months_ago = DateTime.now - 2.months
+    file_mock.expect :size, 1024
+    file_mock.expect :created_at, two_months_ago
+    file_mock.expect :name, 'file.txt'
+    file_mock.expect :delete, true
+    bucket_mock = Minitest::Mock.new
+    bucket_mock.expect :execute_gcloud_method, [file_mock], [:get_workspace_files, Integer, String, Hash]
+
+    FireCloudClient.stub :new, bucket_mock do
+      FileParseService.delete_ingest_artifacts(study, 30.days.ago)
+      bucket_mock.verify
+      file_mock.verify
+    end
+
+    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
+  end
+
   # TODO: once SCP-2765 is completed, test that all genes/values are parsed from mtx bundle
   # this will replace the deprecated 'should parse valid mtx bundle' from study_validation_test.rb
   test 'should store all genes and expression values from mtx parse' do

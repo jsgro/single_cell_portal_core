@@ -155,7 +155,7 @@ class FileParseService
     Rails.logger.info "Cleaning up all ingest pipeline artifacts older than #{cutoff_date}"
     Study.where(queued_for_deletion: false, detached: false).each do |study|
       Rails.logger.info "Checking #{study.accession}:#{study.bucket_id}"
-      study.delete_ingest_artifacts(cutoff_date)
+      delete_ingest_artifacts(study, cutoff_date)
     end
   end
 
