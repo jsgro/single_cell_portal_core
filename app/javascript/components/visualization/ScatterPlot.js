@@ -59,11 +59,7 @@ export default function ScatterPlot({
     setClusterData(clusterResponse)
     setIsLoading(false)
   }
-  console.log([dataParams.cluster,
-    dataParams.annotation.name,
-    dataParams.subsample,
-    dataParams.consensus,
-    dataParams.genes.join(',')])
+
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     setIsLoading(true)

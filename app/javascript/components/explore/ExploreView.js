@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import { Router, navigate, useLocation } from '@reach/router'
 import * as queryString from 'query-string'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons'
+import { faCaretLeft, faCaretRight, faLink } from '@fortawesome/free-solid-svg-icons'
 import _clone from 'lodash/clone'
 
 import ClusterControls from 'components/visualization/ClusterControls'
@@ -152,6 +152,11 @@ function RoutableExploreTab({ studyAccession }) {
     navigate(`${query}#study-visualize`, { replace: true })
   }
 
+  /** copies the url to the clipboard */
+  function copyLink() {
+    navigator.clipboard.writeText(window.location.href)
+  }
+
   /** handler for when the user selects points in a plotly scatter graph */
   function plotPointsSelected(points) {
     setCurrentPointsSelected(points)
@@ -168,9 +173,9 @@ function RoutableExploreTab({ studyAccession }) {
 
   // Toggle "View Options" panel
   const dataParamsIcon = showDataParams ? faCaretRight : faCaretLeft
-  let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden', 'closed']
+  let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden view-options', 'closed']
   if (showDataParams) {
-    [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2', 'open']
+    [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2 view-options', 'open']
   }
 
   return (
@@ -190,6 +195,7 @@ function RoutableExploreTab({ studyAccession }) {
             plotPointsSelected={plotPointsSelected}/>
         </div>
         <div className={controlPanelClass}>
+
           <ClusterControls studyAccession={studyAccession}
             dataParams={controlDataParams}
             setDataParams={updateDataParams}
@@ -209,6 +215,9 @@ function RoutableExploreTab({ studyAccession }) {
             updateRenderParams={updateRenderParams}
             dataParams={controlDataParams}
             updateDataParams={updateDataParams}/>
+          <button onClick={copyLink} className="action" data-toggle="tooltip" title="copy a link to this visualization to the clipboard">
+            Copy link <FontAwesomeIcon icon={faLink}/>
+          </button>
         </div>
       </div>
       <a className={`action view-options-toggle ${optionsLinkClass}`}

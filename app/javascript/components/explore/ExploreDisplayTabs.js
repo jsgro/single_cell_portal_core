@@ -106,11 +106,6 @@ export default function ExploreDisplayTabs(
     spatialReferencePlotDataParams.genes = []
   }
 
-  console.log('dataParams, referencePlotDataParams, spatialDataParams, spatialReferencePlotDataParams')
-  console.log(dataParams, referencePlotDataParams, spatialDataParams, spatialReferencePlotDataParams)
-
-  console.log('exploreInfo')
-  console.log(exploreInfo)
   const ideogramHeight = 140
   let showRelatedGenesIdeogram = false
   let currentTaxon = null
@@ -195,24 +190,10 @@ export default function ExploreDisplayTabs(
               searchGenes={searchGenes}
             />
           }
-          { enabledTabs.includes('cluster') && !hasSpatialGroups &&
-            <div className={shownTab === 'cluster' ? '' : 'hidden'}>
-              <ScatterPlot
-                studyAccession={studyAccession}
-                dataParams={dataParams}
-                renderParams={renderParams}
-                showDataParams={showDataParams}
-                updateRenderParams={updateRenderParams}
-                dimensionsFn={getPlotRect}
-                isCellSelecting={isCellSelecting}
-                plotPointsSelected={plotPointsSelected}
-              />
-            </div>
-          }
-          { enabledTabs.includes('cluster') && hasSpatialGroups &&
+          { enabledTabs.includes('cluster') &&
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
               <div className="row">
-                <div className="col-md-6">
+                <div className={hasSpatialGroups ? 'col-md-6' : 'col-md-12'}>
                   <ScatterPlot
                     studyAccession={studyAccession}
                     dataParams={dataParams}
@@ -225,23 +206,25 @@ export default function ExploreDisplayTabs(
                     plotPointsSelected={plotPointsSelected}
                   />
                 </div>
-                <div className="col-md-6">
-                  <ScatterPlot
-                    studyAccession={studyAccession}
-                    dataParams={spatialDataParams}
-                    renderParams={renderParams}
-                    showDataParams={showDataParams}
-                    updateRenderParams={updateRenderParams}
-                    dimensionsFn={getPlotRect}
-                    numColumns={2}
-                    isCellSelecting={isCellSelecting}
-                    plotPointsSelected={plotPointsSelected}
-                  />
+                <div className={hasSpatialGroups ? 'col-md-6' : 'hidden'}>
+                  { hasSpatialGroups &&
+                    <ScatterPlot
+                      studyAccession={studyAccession}
+                      dataParams={spatialDataParams}
+                      renderParams={renderParams}
+                      showDataParams={showDataParams}
+                      updateRenderParams={updateRenderParams}
+                      dimensionsFn={getPlotRect}
+                      numColumns={2}
+                      isCellSelecting={isCellSelecting}
+                      plotPointsSelected={plotPointsSelected}
+                    />
+                  }
                 </div>
               </div>
             </div>
           }
-          { enabledTabs.includes('scatter') && !hasSpatialGroups &&
+          { enabledTabs.includes('scatter') &&
             <div className={shownTab === 'scatter' ? '' : 'hidden'}>
               <div className="row">
                 <div className="col-md-6">
@@ -272,65 +255,38 @@ export default function ExploreDisplayTabs(
                   />
                 </div>
               </div>
-            </div>
-          }
-          { enabledTabs.includes('scatter') && hasSpatialGroups &&
-            <div className={shownTab === 'scatter' ? '' : 'hidden'}>
-              <div className="row">
-                <div className="col-md-6">
-                  <ScatterPlot
-                    studyAccession={studyAccession}
-                    dataParams={dataParams}
-                    renderParams={renderParams}
-                    showDataParams={showDataParams}
-                    updateRenderParams={updateRenderParams}
-                    dimensionsFn={getPlotRect}
-                    numColumns={2}
-                    numRows={2}
-                    isCellSelecting={isCellSelecting}
-                    plotPointsSelected={plotPointsSelected}
-                  />
-                  <ScatterPlot
-                    studyAccession={studyAccession}
-                    dataParams={referencePlotDataParams}
-                    renderParams={renderParams}
-                    showDataParams={showDataParams}
-                    updateRenderParams={updateRenderParams}
-                    dimensionsFn={getPlotRect}
-                    plotOptions= {{ showlegend: false }}
-                    numColumns={2}
-                    numRows={2}
-                    isCellSelecting={isCellSelecting}
-                    plotPointsSelected={plotPointsSelected}
-                  />
+              { hasSpatialGroups &&
+                <div className="row">
+                  <div className="col-md-6">
+                    <ScatterPlot
+                      studyAccession={studyAccession}
+                      dataParams={spatialDataParams}
+                      renderParams={renderParams}
+                      showDataParams={showDataParams}
+                      updateRenderParams={updateRenderParams}
+                      dimensionsFn={getPlotRect}
+                      numColumns={2}
+                      numRows={2}
+                      isCellSelecting={isCellSelecting}
+                      plotPointsSelected={plotPointsSelected}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <ScatterPlot
+                      studyAccession={studyAccession}
+                      dataParams={spatialReferencePlotDataParams}
+                      renderParams={renderParams}
+                      showDataParams={showDataParams}
+                      updateRenderParams={updateRenderParams}
+                      dimensionsFn={getPlotRect}
+                      numColumns={2}
+                      numRows={2}
+                      isCellSelecting={isCellSelecting}
+                      plotPointsSelected={plotPointsSelected}
+                    />
+                  </div>
                 </div>
-                <div className="col-md-6">
-                  <ScatterPlot
-                    studyAccession={studyAccession}
-                    dataParams={spatialDataParams}
-                    renderParams={renderParams}
-                    showDataParams={showDataParams}
-                    updateRenderParams={updateRenderParams}
-                    dimensionsFn={getPlotRect}
-                    numColumns={2}
-                    numRows={2}
-                    isCellSelecting={isCellSelecting}
-                    plotPointsSelected={plotPointsSelected}
-                  />
-                  <ScatterPlot
-                    studyAccession={studyAccession}
-                    dataParams={spatialReferencePlotDataParams}
-                    renderParams={renderParams}
-                    showDataParams={showDataParams}
-                    updateRenderParams={updateRenderParams}
-                    dimensionsFn={getPlotRect}
-                    numColumns={2}
-                    numRows={2}
-                    isCellSelecting={isCellSelecting}
-                    plotPointsSelected={plotPointsSelected}
-                  />
-                </div>
-              </div>
+              }
             </div>
           }
           { enabledTabs.includes('distribution') &&
