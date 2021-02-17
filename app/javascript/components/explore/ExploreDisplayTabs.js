@@ -156,15 +156,16 @@ export default function ExploreDisplayTabs(
             <StudyGeneField genes={dataParams.genes}
               searchGenes={searchGenes}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-            {isGene && <button className="action fa-lg"
+            <button className={isGene ? 'action fa-lg' : 'hidden'}
               onClick={() => searchGenes([])}
               title="Return to cluster view"
+              data-toggle="tooltip"
               data-analytics-name="back-to-cluster-view">
               <FontAwesomeIcon icon={faReply}/>
-            </button> }
+            </button>
           </div>
         </div>
-        <div className="col-md-7">
+        <div className="col-md-6 col-md-offset-1">
           <ul className="nav nav-tabs" role="tablist" data-analytics-name="explore-default">
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
@@ -201,7 +202,7 @@ export default function ExploreDisplayTabs(
                     showDataParams={showDataParams}
                     updateRenderParams={updateRenderParams}
                     dimensionsFn={getPlotRect}
-                    numColumns={2}
+                    numColumns={hasSpatialGroups ? 2 : 1}
                     isCellSelecting={isCellSelecting}
                     plotPointsSelected={plotPointsSelected}
                   />

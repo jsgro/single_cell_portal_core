@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSearch } from '@fortawesome/free-solid-svg-icons'
+import { faSearch, faFileUpload } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
 import Modal from 'react-bootstrap/lib/Modal'
 import CreatableSelect from 'react-select/creatable'
@@ -89,8 +89,13 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
   }, [genes.join(',')])
 
   return (
-    <form className="gene-keyword-search form-horizontal" onSubmit={handleSubmit}>
+    <form className="gene-keyword-search gene-study-keyword-search form-horizontal" onSubmit={handleSubmit}>
       <div className="input-group">
+        <div className="input-group-append">
+          <Button type="submit">
+            <FontAwesomeIcon icon={faSearch} />
+          </Button>
+        </div>
         <CreatableSelect
           components={{ DropdownIndicator: null }}
           inputValue={inputText}
@@ -109,11 +114,12 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
           onBlur={syncGeneArrayToInputText}
           placeholder={'Genes (e.g. "PTEN NF2")'}
         />
-        <div className="input-group-append">
-          <Button type="submit">
-            <FontAwesomeIcon icon={faSearch} />
-          </Button>
-        </div>
+        <Button type="button"
+          className="btn-icon fa-lg"
+          data-toggle="tooltip"
+          title="Upload a list of genes to search from a file">
+          <FontAwesomeIcon icon={faFileUpload} />
+        </Button>
       </div>
 
       <Modal

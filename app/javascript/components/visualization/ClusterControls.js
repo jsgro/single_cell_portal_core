@@ -99,14 +99,6 @@ export default function ClusterControls({
   const annotationOptions = getAnnotationOptions(annotationList, dataParams.cluster)
   const subsampleOptions = getSubsampleOptions(annotationList, dataParams.cluster)
 
-  // override the default of interior scrollbars on the menu
-  const customSelectStyle = {
-    control: provided => ({
-      ...provided,
-      borderColor: '#4d72aa'
-    })
-  }
-
   let shownAnnotation = _clone(dataParams.annotation)
   // for user annotations, we have to match the given id to a name to show the name in the dropdown
   if (dataParams.annotation && dataParams.annotation.scope === 'user') {
@@ -139,7 +131,7 @@ export default function ClusterControls({
             subsample: getDefaultSubsampleForCluster(annotationList, cluster.value),
             consensus: dataParams.consensus
           })}
-          styles={customSelectStyle}
+          styles={clusterSelectStyle}
         />
       </div>
       <div className="form-group">
@@ -154,7 +146,7 @@ export default function ClusterControls({
             subsample: dataParams.subsample,
             consensus: dataParams.consensus
           })}
-          styles={customSelectStyle}/>
+          styles={clusterSelectStyle}/>
       </div>
       <div className="form-group">
         <label>Subsampling</label>
@@ -169,7 +161,7 @@ export default function ClusterControls({
             subsample: subsample.value,
             consensus: dataParams.consensus
           })}
-          styles={customSelectStyle}/>
+          styles={clusterSelectStyle}/>
       </div>
       { showConsensus &&
         <div className="form-group">
@@ -186,7 +178,7 @@ export default function ClusterControls({
               subsample: dataParams.subsample,
               consensus: consensus.value
             })}
-            styles={customSelectStyle}/>
+            styles={clusterSelectStyle}/>
         </div>
       }
     </div>
@@ -198,3 +190,11 @@ const consensusPopover = (
     Selecting one of the "violin" options will combine expression scores of multiple genes for each cell using the selected metric.
   </Popover>
 )
+
+/** custom styling for cluster control-style select */
+export const clusterSelectStyle = {
+  control: provided => ({
+    ...provided,
+    borderColor: '#4d72aa'
+  })
+}

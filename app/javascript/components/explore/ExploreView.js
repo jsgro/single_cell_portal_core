@@ -7,6 +7,7 @@ import { faCaretLeft, faCaretRight, faLink } from '@fortawesome/free-solid-svg-i
 import _clone from 'lodash/clone'
 
 import ClusterControls from 'components/visualization/ClusterControls'
+import SpatialSelector from './SpatialSelector'
 import CreateAnnotation from './CreateAnnotation'
 import PlotDisplayControls, { defaultRenderParams } from 'components/visualization/PlotDisplayControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
@@ -33,7 +34,7 @@ function buildDataParamsFromQuery(query) {
     }
   }
 
-  const paramList = ['cluster', 'subsample', 'consensus', 'spatialFiles', 'genes', 'tab']
+  const paramList = ['cluster', 'subsample', 'consensus', 'spatialGroups', 'genes', 'tab']
   paramList.forEach(param => {
     if (queryParams[param] && queryParams[param].length) {
       dataParams.userSpecified[param] = true
@@ -43,7 +44,7 @@ function buildDataParamsFromQuery(query) {
   dataParams.annotation = annotation
   dataParams.subsample = queryParams.subsample ? queryParams.subsample : ''
   dataParams.consensus = queryParams.consensus ? queryParams.consensus : null
-  dataParams.spatialFiles = queryParams.spatialFiles ? queryParams.spatialFiles.split(',') : []
+  dataParams.spatialGroups = queryParams.spatialGroups ? queryParams.spatialGroups.split(',') : []
   dataParams.genes = geneParamToArray(queryParams.genes)
   dataParams.heatmapRowCentering = queryParams.rowCentered ? queryParams.rowCentered : DEFAULT_ROW_CENTERING
   return dataParams
@@ -56,7 +57,7 @@ function buildQueryFromParams(dataParams, renderParams) {
     annotation: getIdentifierForAnnotation(dataParams.annotation),
     genes: geneArrayToParam(dataParams.genes),
     consensus: dataParams.consensus,
-    spatialFiles: dataParams.spatialFiles.join(','),
+    spatialGroups: dataParams.spatialGroups.join(','),
     rowCentered: dataParams.heatmapRowCentering,
     tab: renderParams.tab,
     scatterColor: renderParams.scatterColor,
@@ -107,6 +108,11 @@ function RoutableExploreTab({ studyAccession }) {
   if (exploreInfo && !dataParams.cluster) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
     controlDataParams = Object.assign(controlDataParams, getDefaultClusterParams(exploreInfo.annotationList))
+  }
+
+  let hasSpatialGroups = false
+  if (exploreInfo) {
+    hasSpatialGroups = exploreInfo.spatialGroupNames.length > 0
   }
 
   /** in the event a component takes an action which updates the list of annotations available
@@ -202,6 +208,11 @@ function RoutableExploreTab({ studyAccession }) {
             preloadedAnnotationList={exploreInfo ? exploreInfo.annotationList : null}
             fetchAnnotationList={false}
             showConsensus={dataParams.genes.length > 1}/>
+          { hasSpatialGroups &&
+            <SpatialSelector spatialGroupNames={exploreInfo.spatialGroupNames}
+              dataParams={dataParams}
+              updateDataParams={updateDataParams}/>
+          }
           <CreateAnnotation
             isSelecting={isCellSelecting}
             setIsSelecting={setIsCellSelecting}
