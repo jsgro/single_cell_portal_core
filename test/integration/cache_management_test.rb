@@ -34,6 +34,10 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
       get api_v1_study_cluster_path(study_id: study.accession, annotation_name: cell_annotation[:name],
                                     annotation_type: cell_annotation[:type], annotation_scope: 'cluster',
                                     cluster_name: cluster.name), as: :json
+      get api_v1_study_expression_path(study_id: study.accession, annotation_name: cell_annotation[:name],
+                                       annotation_type: cell_annotation[:type], annotation_scope: 'cluster',
+                                       cluster_name: cluster.name, consensus: 'mean', genes: genes.join(','),
+                                       data_type: 'violin')
 
       # construct various cache keys for direct lookup (cannot lookup via regex)
       v_expression_cache_key = "views/localhost/single_cell/study/#{study.accession}/#{study.url_safe_name}/render_gene_expression_plots/#{gene}_#{cluster_name}_#{annotation}_violin.js"
@@ -44,7 +48,7 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
       annot_query_cache_key = "views/localhost/single_cell/study/#{study.accession}/#{study.url_safe_name}/annotation_query_#{cluster_name}_#{annotation}.js"
       study_clusters_key = "_single_cell_api_v1_studies_#{study.accession}_clusters_"
       study_cluster_key = "#{study_clusters_key}#{cluster_underscore}_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}"
-
+      expression_mean_key = "_single_cell_api_v1_studies_#{study.accession}_expression_violin_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}_consensus_mean_genes_#{genes.join(',')}_data_type_violin"
       assert Rails.cache.exist?(v_expression_cache_key), "Did not find matching gene expression cache entry at #{v_expression_cache_key}"
       assert Rails.cache.exist?(v_set_expression_cache_key), "Did not find matching gene set expression cache entry at #{v_set_expression_cache_key}"
       assert Rails.cache.exist?(b_expression_cache_key), "Did not find matching gene expression cache entry at #{b_expression_cache_key}"
@@ -53,6 +57,7 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
       assert Rails.cache.exist?(annot_query_cache_key), "Did not find matching annotation query cache entry at #{annot_query_cache_key}"
       assert Rails.cache.exist?(study_clusters_key), "Did not find matching API clusters cache entry at #{study_clusters_key}"
       assert Rails.cache.exist?(study_cluster_key), "Did not find matching API single cluster cache entry at #{study_cluster_key}"
+      assert Rails.cache.exist?(expression_mean_key), "Did not find matching API expression mean cache entry at #{expression_mean_key}"
 
       # load removal keys via associated study files
       expression_file_cache_key = expression_file.cache_removal_key
@@ -76,4 +81,34 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  test 'should remove extraneous percent characters from cache paths' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
+    cluster = study.cluster_groups.first
+    cluster_underscore = cluster.name.split.join('_')
+    study_clusters_key = "_single_cell_api_v1_studies_#{study.accession}_clusters_"
+    cell_annotation = cluster.cell_annotations.sample
+    sanitized_cache_path = "#{study_clusters_key}#{cluster_underscore}_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_foo_bar_cluster_name_#{cluster_underscore}"
+    genes = study.genes.map(&:name)
+    sanitized_expression_path = "_single_cell_api_v1_studies_#{study.accession}_expression_violin_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}_consensus_mean_genes_#{genes.join(',')}_data_type_violin"
+
+    # make request with extra parameter with % sign
+    get api_v1_study_cluster_path(study_id: study.accession, annotation_name: cell_annotation[:name],
+                                  annotation_type: cell_annotation[:type], annotation_scope: 'cluster',
+                                  cluster_name: cluster.name, foo: "%bar%"), as: :json
+    assert_response :success
+    assert Rails.cache.exist?(sanitized_cache_path)
+
+    # put % sign in gene list
+    get api_v1_study_expression_path(study_id: study.accession, annotation_name: cell_annotation[:name],
+                                     annotation_type: cell_annotation[:type], annotation_scope: 'cluster',
+                                     cluster_name: cluster.name, consensus: 'mean', genes: genes.join(',%'),
+                                     data_type: 'violin')
+
+    assert_response :success
+    assert Rails.cache.exist?(sanitized_expression_path)
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
 end

@@ -44,8 +44,8 @@ class BulkDownloadService
       end
       manifest_path = RequestUtils.get_base_url + Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)
       include_dirs = directory_files.any?
-      manifest_config += "url=#{manifest_path}?auth_code=#{totat[:totat]}&include_dirs=#{include_dirs}\n"
-      manifest_config += "output=#{study.accession}/file_supplemental_info.tsv"
+      manifest_config += "url=\"#{manifest_path}?auth_code=#{totat[:totat]}&include_dirs=#{include_dirs}\"\n"
+      manifest_config += "output=\"#{study.accession}/file_supplemental_info.tsv\""
       curl_configs << manifest_config
     end
     curl_configs.join("\n\n")

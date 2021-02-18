@@ -160,6 +160,7 @@ class StudiesController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "#{Time.zone.now}: error syncing ACLs in workspace bucket #{@study.firecloud_workspace} due to error: #{e.message}"
       redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]), alert: "We were unable to sync with your workspace bucket due to an error: #{view_context.simple_format(e.message)}" and return
     end
@@ -178,6 +179,7 @@ class StudiesController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "#{Time.zone.now}: error syncing files in workspace bucket #{@study.firecloud_workspace} due to error: #{e.message}"
       redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]), alert: "We were unable to sync with your workspace bucket due to an error: #{view_context.simple_format(e.message)}" and return
     end
@@ -335,6 +337,7 @@ class StudiesController < ApplicationController
           rescue => e
             error_context = ErrorTracker.format_extra_context(@study, {params: params, analysis_metadata: metadata_attr})
             ErrorTracker.report_exception(e, current_user, error_context)
+            MetricsService.report_error(e, request, current_user, @study)
             logger.error "Unable to create analysis metadatum for #{params[:submission_id]}: #{e.class.name}:: #{e.message}"
           end
         end
@@ -344,6 +347,7 @@ class StudiesController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]), alert: "We were unable to sync the outputs from submission #{params[:submission_id]} due to the following error: #{e.message}"
     end
   end
@@ -412,6 +416,7 @@ class StudiesController < ApplicationController
         rescue => e
           error_context = ErrorTracker.format_extra_context(@study, {params: params})
           ErrorTracker.report_exception(e, current_user, error_context)
+          MetricsService.report_error(e, request, current_user, @study)
           logger.error "#{Time.zone.now} unable to delete workspace: #{@study.firecloud_workspace}; #{e.message}"
           redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]), alert: "We were unable to delete your study due to: #{view_context.simple_format(e.message)}.<br /><br />No files or database records have been deleted.  Please try again later" and return
         end
@@ -477,6 +482,7 @@ class StudiesController < ApplicationController
         existing_file = StudyFile.find(study_file.id)
         if existing_file
           ErrorTracker.report_exception(e, current_user, params.to_unsafe_hash)
+          MetricsService.report_error(e, request, current_user, @study)
           logger.error("do_upload Failed: Existing file for #{study_file.id} -- type:#{existing_file.file_type} name:#{existing_file.name}")
         end
         render json: { file: { name: study_file.upload_file_name, errors: study_file.errors.full_messages.join(", ") } }, status: 422 and return
@@ -766,6 +772,7 @@ class StudiesController < ApplicationController
         rescue => e
           error_context = ErrorTracker.format_extra_context(@study, {params: params})
           ErrorTracker.report_exception(e, current_user, error_context)
+          MetricsService.report_error(e, request, current_user, @study)
           logger.error "#{Time.zone.now}: error in deleting #{@study_file.upload_file_name} from workspace: #{@study.firecloud_workspace}; #{e.message}"
           redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
                       alert: "We were unable to delete #{@study_file.upload_file_name} due to an error: #{view_context.simple_format(e.message)}.  Please try again later."
@@ -948,6 +955,7 @@ class StudiesController < ApplicationController
         rescue => e
           error_context = ErrorTracker.format_extra_context(@study, {params: params})
           ErrorTracker.report_exception(e, current_user, error_context)
+          MetricsService.report_error(e, request, current_user, @study)
           respond_to do |format|
             format.js {render action: 'sync_action_fail'}
           end
@@ -1133,6 +1141,7 @@ class StudiesController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       Rails.logger.error "Error setting user projects for #{current_user.email}: #{e.message}"
     end
   end

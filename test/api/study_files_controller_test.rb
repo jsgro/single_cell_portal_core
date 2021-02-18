@@ -46,6 +46,13 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
         assert json[attribute] == value, "Attribute mismatch: #{attribute} is incorrect, expected #{value} but found #{json[attribute.to_s]}"
       end
     end
+
+    # ensure other users cannot access study_file
+    other_user = User.find_by(email: 'sharing.user@gmail.com')
+    sign_in_and_update other_user
+    execute_http_request(:get, api_v1_study_study_file_path(study_id: @study.id, id: @study_file.id), user: other_user)
+    assert_response 403
+
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
@@ -107,5 +114,25 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:post, parse_api_v1_study_study_file_path(study_id: @study.id, id: @study_file.id))
     assert_response 204
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  test 'should enforce edit access restrictions on study files' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}!"
+
+    other_user = User.find_by(email: 'sharing.user@gmail.com')
+    sign_in_and_update other_user
+    description = "This is the updated description with random seed #{@random_seed}"
+    update_attributes = {
+      study_file: {
+        description: description
+      }
+    }
+    execute_http_request(:patch, api_v1_study_study_file_path(study_id: @study.id, id: @study_file.id.to_s),
+                         request_payload: update_attributes, user: other_user)
+    assert_response 403
+    @study_file.reload
+    refute @study_file.description == description
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name}! succcessful!"
   end
 end
