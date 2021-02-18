@@ -106,7 +106,7 @@ class FileParseServiceTest < ActiveSupport::TestCase
 
     # don't use factory bot as we want to test parsing logic
     @coordinate_file = StudyFile.create(file_type: 'Coordinate Labels', name: 'coordinate_labels_2.txt', study_id: @basic_study.id,
-                                    upload: File.open(Rails.root.join('test', 'test_data', 'coordinate_labels_1.txt')),
+                                    upload: File.open(Rails.root.join('test', 'test_data', 'coordinate_labels_2.txt')),
                                     options: {cluster_file_id: @cluster_file.id.to_s})
 
     # simulate "failed" upload by queuing cluster file for deletion
