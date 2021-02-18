@@ -130,8 +130,8 @@ class FileParseService
         elsif bundled_types.include?(study_file.file_type)
           parent_file_id = study_file.options.with_indifferent_access[options_key]
           parent_file = StudyFile.find_by(id: parent_file_id)
-          # parent file may or may not be present, so check first
-          if parent_file.present?
+          # parent file may or may not be present, or queued for deletion, so check first
+          if parent_file.present? && !parent_file.queued_for_deletion
             study_file_bundle = StudyFileBundle.initialize_from_parent(study, parent_file)
             study_file_bundle.add_files(study_file)
           end

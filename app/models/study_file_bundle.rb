@@ -10,6 +10,8 @@ class StudyFileBundle
 
   # allowed bundle types
   BUNDLE_TYPES = ['MM Coordinate Matrix', 'BAM', 'Cluster']
+  # file types that must be bundled to be valid
+  REQUIRE_BUNDLE = ['MM Coordinate Matrix', 'BAM', 'BAM Index', 'Coordinate Labels', '10X Genes File', '10X Barcodes File']
   # required keys for file list
   FILE_LIST_KEYS = %w(name file_type)
   # child file type requirements by bundle type
@@ -17,6 +19,13 @@ class StudyFileBundle
       'MM Coordinate Matrix' => ['10X Genes File', '10X Barcodes File'],
       'BAM' => ['BAM Index'],
       'Cluster' => ['Coordinate Labels']
+  }
+  # parent file type requirements by child file type
+  CHILD_REQUIREMENTS = {
+    '10X Genes File' => 'MM Coordinate Matrix',
+    '10X Barcodes File' => 'MM Coordinate Matrix',
+    'BAM Index' => 'BAM',
+    'Coordinate Labels' => 'Cluster'
   }
   PARSEABLE_BUNDLE_REQUIREMENTS = BUNDLE_REQUIREMENTS.dup.keep_if {|k,v| k != 'BAM'}
   FILE_ARRAY_ATTRIBUTES = {
