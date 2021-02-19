@@ -117,9 +117,11 @@ export default function ScatterPlot({
         data-testid={graphElementId}
       >
       </div>
-      { clusterData && clusterData.description &&
-        <p className="help-block text-center">{ clusterData.description }</p>
-      }
+      <p className="help-block text-center">
+        { clusterData && clusterData.description &&
+          <span>clusterData.description</span>
+        }
+      </p>
 
       {
         isLoading &&
