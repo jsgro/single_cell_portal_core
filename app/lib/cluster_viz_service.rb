@@ -45,8 +45,15 @@ class ClusterVizService
 
   # helper method to load spatial coordinate group names
   def self.load_spatial_options(study)
-    spatial_file_ids = StudyFile.where(study: study, is_spatial: true, file_type: 'Cluster').pluck(:id)
-    ClusterGroup.where(study: study, :study_file_id.in => spatial_file_ids).pluck(:name)
+    spatial_file_info = StudyFile.where(study: study, is_spatial: true, file_type: 'Cluster')
+                                 .pluck(:name, :spatial_cluster_associations).to_h
+    associated_clusters = StudyFile.where(study: study, :id.in => spatial_file_info.map{ |si| si[1] }.flatten.uniq)
+                                   .pluck(:id, :name)
+                                   .map{ |a| [a[0].to_s, a[1]] }.to_h
+    spatial_file_info.map do |cluster|
+      associated_cluster_names = cluster[1].map{ |id| associated_clusters[id] }
+      { name: cluster[0], associated_clusters: associated_cluster_names }
+    end
   end
 
   # return an array of values to use for subsampling dropdown scaled to number of cells in study

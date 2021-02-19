@@ -122,7 +122,7 @@ export default function ClusterControls({
   return (
     <div className="cluster-controls">
       <div className="form-group">
-        <label>Load cluster</label>
+        <label>Clustering</label>
         <Select options={clusterOptions}
           value={{ label: dataParams.cluster, value: dataParams.cluster }}
           onChange={cluster => setDataParams({
@@ -135,7 +135,7 @@ export default function ClusterControls({
         />
       </div>
       <div className="form-group">
-        <label>Select annotation</label>
+        <label>Annotation</label>
         <Select options={annotationOptions}
           value={shownAnnotation}
           getOptionLabel={annotation => annotation.name}

@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faReply } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 
 import StudyGeneField from './StudyGeneField'
 import ScatterPlot from 'components/visualization/ScatterPlot'
@@ -16,8 +16,11 @@ const tabList = [
   { key: 'scatter', label: 'Scatter' },
   { key: 'distribution', label: 'Distribution' },
   { key: 'dotplot', label: 'Dot Plot' },
-  { key: 'heatmap', label: 'Heatmap' }
+  { key: 'heatmap', label: 'Heatmap' },
+  { key: 'spatial', label: 'Spatial' }
 ]
+
+const ideogramHeight = 140
 
 /**
  * Renders the gene search box and the tab selection
@@ -35,8 +38,8 @@ const tabList = [
  */
 export default function ExploreDisplayTabs(
   {
-    studyAccession, exploreInfo, dataParams, controlDataParams, renderParams, showDataParams,
-    updateDataParams, updateRenderParams, isCellSelecting, plotPointsSelected
+    studyAccession, exploreInfo, dataParams, controlDataParams, renderParams,
+    updateDataParams, updateRenderParams, isCellSelecting, plotPointsSelected, showViewOptionsControls
   }
 ) {
   const isMultiGene = dataParams.genes.length > 1
@@ -58,10 +61,6 @@ export default function ExploreDisplayTabs(
     enabledTabs = ['cluster']
   }
 
-  let shownTab = renderParams.tab
-  if (!enabledTabs.includes(shownTab)) {
-    shownTab = enabledTabs[0]
-  }
   // dataParams object without genes specified, to pass to cluster comparison plots
   const referencePlotDataParams = _clone(dataParams)
   referencePlotDataParams.genes = []
@@ -93,20 +92,48 @@ export default function ExploreDisplayTabs(
 
   // Handle spatial transcriptomics data
   let hasSpatialGroups = false
-  let spatialDataParams = null
-  let spatialReferencePlotDataParams = null
+  let hasSelectedSpatialGroup = false
+  let spatialDataParamsArray = []
+  const spatialRefPlotDataParamsArray = []
   if (exploreInfo) {
-    hasSpatialGroups = exploreInfo.spatialGroupNames.length > 0
+    hasSpatialGroups = exploreInfo.spatialGroups.length > 0
 
-    // TODO (SCP-3040): Implement mapping of spatial and cluster groups
-    const spatialGroup = exploreInfo.spatialGroupNames[0]
-    spatialDataParams = _clone(dataParams)
-    spatialDataParams.cluster = spatialGroup
-    spatialReferencePlotDataParams = _clone(spatialDataParams)
-    spatialReferencePlotDataParams.genes = []
+    if (dataParams.spatialGroups[0]) {
+      hasSelectedSpatialGroup = true
+
+      if (isMultiGene) {
+        const refPlotDataParams = _clone(dataParams)
+        refPlotDataParams.cluster = dataParams.spatialGroups[0]
+        refPlotDataParams.genes = []
+        spatialRefPlotDataParamsArray.push(refPlotDataParams)
+        // for each gene, create a dataParams object that can be used to generate the spatial plot
+        // for that gene
+        spatialDataParamsArray = dataParams.genes.map(gene => {
+          const geneSpatialParams = _clone(refPlotDataParams)
+          geneSpatialParams.genes = [gene]
+          return geneSpatialParams
+        })
+      } else {
+        // for each selected spatial group,
+        dataParams.spatialGroups.forEach(group => {
+          const geneSpatialParams = _clone(dataParams)
+          geneSpatialParams.cluster = group
+          spatialDataParamsArray.push(geneSpatialParams)
+          const spatialRefParams = _clone(geneSpatialParams)
+          spatialRefParams.genes = []
+          spatialRefPlotDataParamsArray.push(spatialRefParams)
+        })
+      }
+    }
+    if (hasSpatialGroups && isMultiGene) {
+      enabledTabs.push('spatial')
+    }
   }
 
-  const ideogramHeight = 140
+  let shownTab = renderParams.tab
+  if (!enabledTabs.includes(shownTab)) {
+    shownTab = enabledTabs[0]
+  }
   let showRelatedGenesIdeogram = false
   let currentTaxon = null
   let searchedGene = null
@@ -120,17 +147,25 @@ export default function ExploreDisplayTabs(
   }
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
-  function getPlotRect(
-    { numColumns=1, numRows=1, verticalPad=225, horizontalPad=80 } = {}
-  ) {
+  function getPlotDimensions({
+    numColumns=1,
+    numRows=1,
+    verticalPad=225,
+    horizontalPad=80
+  }) {
     // Get width, and account for expanding "View Options" after page load
-    const baseWidth = $(`.${plotContainerClass}`).actual('width')
+    let baseWidth = $(window).width()
+    if (showViewOptionsControls) {
+      baseWidth = Math.round(baseWidth * 10 / 12)
+    }
     let width = (baseWidth - horizontalPad) / numColumns
 
     // Get height
     // Height of screen viewport, minus fixed-height elements above gallery
-    const galleryHeight = $(window).height() - verticalPad - ideogramHeight
-
+    let galleryHeight = $(window).height() - verticalPad
+    if (showRelatedGenesIdeogram) {
+      galleryHeight -= ideogramHeight
+    }
     let height = galleryHeight
     if (numRows > 1) {
       // Fill as much gallery height as possible, but show tip of next row
@@ -161,7 +196,7 @@ export default function ExploreDisplayTabs(
               title="Return to cluster view"
               data-toggle="tooltip"
               data-analytics-name="back-to-cluster-view">
-              <FontAwesomeIcon icon={faReply}/>
+              <FontAwesomeIcon icon={faArrowLeft}/>
             </button>
           </div>
         </div>
@@ -194,32 +229,39 @@ export default function ExploreDisplayTabs(
           { enabledTabs.includes('cluster') &&
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
               <div className="row">
-                <div className={hasSpatialGroups ? 'col-md-6' : 'col-md-12'}>
+                <div className={hasSelectedSpatialGroup ? 'col-md-6' : 'col-md-12'}>
                   <ScatterPlot
                     studyAccession={studyAccession}
                     dataParams={dataParams}
                     renderParams={renderParams}
-                    showDataParams={showDataParams}
                     updateRenderParams={updateRenderParams}
-                    dimensionsFn={getPlotRect}
-                    numColumns={hasSpatialGroups ? 2 : 1}
+                    dimensions={getPlotDimensions({ numColumns: hasSelectedSpatialGroup ? 2 : 1 })}
                     isCellSelecting={isCellSelecting}
                     plotPointsSelected={plotPointsSelected}
                   />
                 </div>
-                <div className={hasSpatialGroups ? 'col-md-6' : 'hidden'}>
-                  { hasSpatialGroups &&
-                    <ScatterPlot
-                      studyAccession={studyAccession}
-                      dataParams={spatialDataParams}
-                      renderParams={renderParams}
-                      showDataParams={showDataParams}
-                      updateRenderParams={updateRenderParams}
-                      dimensionsFn={getPlotRect}
-                      numColumns={2}
-                      isCellSelecting={isCellSelecting}
-                      plotPointsSelected={plotPointsSelected}
-                    />
+                <div className={hasSelectedSpatialGroup ? 'col-md-6' : 'hidden'}>
+                  { hasSelectedSpatialGroup &&
+                    spatialRefPlotDataParamsArray.slice(0, 5).map((params, index) =>
+                      <div key={params.cluster}>
+                        <h5>{params.cluster}</h5>
+                        <ScatterPlot
+                          studyAccession={studyAccession}
+                          dataParams={params}
+                          renderParams={renderParams}
+                          updateRenderParams={updateRenderParams}
+                          dimensions={getPlotDimensions({ numColumns: 2 })}
+                          isCellSelecting={isCellSelecting}
+                          plotPointsSelected={plotPointsSelected}
+                        />
+                      </div>
+                    )
+                  }
+                  { (hasSelectedSpatialGroup && spatialRefPlotDataParamsArray.length > 5) &&
+                    <div className="detail">
+                      Only the first five selected spatial groups are shown.
+                      Deselect some spatial groups to see the remainder
+                    </div>
                   }
                 </div>
               </div>
@@ -233,10 +275,12 @@ export default function ExploreDisplayTabs(
                     studyAccession={studyAccession}
                     dataParams={dataParams}
                     renderParams={renderParams}
-                    showDataParams={showDataParams}
                     updateRenderParams={updateRenderParams}
-                    dimensionsFn={getPlotRect}
-                    numColumns={2}
+                    dimensions={getPlotDimensions({
+                      numColumns: 2,
+                      numRows: hasSelectedSpatialGroup ? 2 : 1,
+                      showRelatedGenesIdeogram
+                    })}
                     isCellSelecting={isCellSelecting}
                     plotPointsSelected={plotPointsSelected}
                   />
@@ -246,48 +290,95 @@ export default function ExploreDisplayTabs(
                     studyAccession={studyAccession}
                     dataParams={referencePlotDataParams}
                     renderParams={renderParams}
-                    showDataParams={showDataParams}
                     updateRenderParams={updateRenderParams}
-                    dimensionsFn={getPlotRect}
+                    dimensions={getPlotDimensions({
+                      numColumns: 2,
+                      numRows: hasSelectedSpatialGroup ? 2 : 1,
+                      showRelatedGenesIdeogram
+                    })}
                     plotOptions= {{ showlegend: false }}
-                    numColumns={2}
                     isCellSelecting={isCellSelecting}
                     plotPointsSelected={plotPointsSelected}
                   />
                 </div>
               </div>
-              { hasSpatialGroups &&
-                <div className="row">
-                  <div className="col-md-6">
-                    <ScatterPlot
-                      studyAccession={studyAccession}
-                      dataParams={spatialDataParams}
-                      renderParams={renderParams}
-                      showDataParams={showDataParams}
-                      updateRenderParams={updateRenderParams}
-                      dimensionsFn={getPlotRect}
-                      numColumns={2}
-                      numRows={2}
-                      isCellSelecting={isCellSelecting}
-                      plotPointsSelected={plotPointsSelected}
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <ScatterPlot
-                      studyAccession={studyAccession}
-                      dataParams={spatialReferencePlotDataParams}
-                      renderParams={renderParams}
-                      showDataParams={showDataParams}
-                      updateRenderParams={updateRenderParams}
-                      dimensionsFn={getPlotRect}
-                      numColumns={2}
-                      numRows={2}
-                      isCellSelecting={isCellSelecting}
-                      plotPointsSelected={plotPointsSelected}
-                    />
-                  </div>
+              { hasSelectedSpatialGroup &&
+                spatialRefPlotDataParamsArray.slice(0, 3).map((params, index) =>
+                  <div key={index} className="row">
+                    <div className="col-md-6">
+                      <ScatterPlot
+                        studyAccession={studyAccession}
+                        dataParams={spatialDataParamsArray[index]}
+                        renderParams={renderParams}
+                        updateRenderParams={updateRenderParams}
+                        dimensions={getPlotDimensions({ numColumns: 2, numRows: 2, showRelatedGenesIdeogram })}
+                        isCellSelecting={isCellSelecting}
+                        plotPointsSelected={plotPointsSelected}
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <ScatterPlot
+                        studyAccession={studyAccession}
+                        dataParams={params}
+                        renderParams={renderParams}
+                        updateRenderParams={updateRenderParams}
+                        dimensions={getPlotDimensions({ numColumns: 2, numRows: 2, showRelatedGenesIdeogram })}
+                        isCellSelecting={isCellSelecting}
+                        plotPointsSelected={plotPointsSelected}
+                      />
+                    </div>
+                  </div>)
+              }
+              { (hasSelectedSpatialGroup && spatialRefPlotDataParamsArray.length > 5) &&
+                <div className="detail">
+                  Spatial plots are only rendered for the first three selected spatial groups.<br/>
+                  Deselect some groups to see the others
                 </div>
               }
+            </div>
+          }
+          { enabledTabs.includes('spatial') &&
+            <div className={shownTab === 'spatial' ? '' : 'hidden'}>
+              <div className="row">
+                <div className="col-md-10 col-md-offset-1">
+                  { hasSelectedSpatialGroup && <ScatterPlot
+                    studyAccession={studyAccession}
+                    dataParams={spatialRefPlotDataParamsArray[0]}
+                    renderParams={renderParams}
+                    updateRenderParams={updateRenderParams}
+                    dimensions={getPlotDimensions({ numColumns: 1, numRows: 2 })}
+                    isCellSelecting={isCellSelecting}
+                    plotPointsSelected={plotPointsSelected}
+                  /> }
+                  { !hasSelectedSpatialGroup &&
+                    <span>
+                      Choose a spatial group using the control under View Options
+                      to view spatially-oriented gene expression
+                    </span>
+                  }
+                </div>
+              </div>
+              <div className="row">
+                { spatialDataParamsArray.map((spgDataParams, index) => {
+                  return <div key={index} className="col-md-6">
+                    <ScatterPlot
+                      studyAccession={studyAccession}
+                      dataParams={spgDataParams}
+                      renderParams={renderParams}
+                      updateRenderParams={updateRenderParams}
+                      dimensions={getPlotDimensions({ numColumns: 2, numRows: 2 })}
+                      isCellSelecting={isCellSelecting}
+                      plotPointsSelected={plotPointsSelected}
+                    />
+                  </div>
+                })}
+                { (hasSelectedSpatialGroup && spatialDataParamsArray.length > 5) &&
+                  <div className="detail">
+                    Spatial plots are only rendered for the first 5 searched genes.<br/>
+                    Remove some genes from your search to see plots for the others.
+                  </div>
+                }
+              </div>
             </div>
           }
           { enabledTabs.includes('distribution') &&
@@ -306,7 +397,7 @@ export default function ExploreDisplayTabs(
                 studyAccession={studyAccession}
                 dataParams={controlDataParams}
                 annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}
-                dimensionsFn={getPlotRect}/>
+                dimensions={getPlotDimensions({})}/>
             </div>
           }
           { enabledTabs.includes('heatmap') &&
@@ -316,7 +407,7 @@ export default function ExploreDisplayTabs(
                 dataParams={controlDataParams}
                 renderParams={renderParams}
                 genes={dataParams.genes}
-                dimensionsFn={getPlotRect}/>
+                dimensions={getPlotDimensions({})}/>
             </div>
           }
         </div>
@@ -336,3 +427,4 @@ function DotPlotTab({ studyAccession, dataParams, annotations, widthFunc }) {
     widthFunc={widthFunc}
   />)
 }
+

@@ -4,14 +4,14 @@ import Select from 'react-select'
 import { clusterSelectStyle } from 'components/visualization/ClusterControls'
 
 /** takes the server response and returns cluster options suitable for react-select */
-function getSpatialOptions(spatialGroupNames) {
-  const clusterList = spatialGroupNames ? spatialGroupNames : []
-  return clusterList.map(name => {return { label: name, value: name }})
+function getSpatialOptions(spatialGroups) {
+  const clusterList = spatialGroups ? spatialGroups : []
+  return clusterList.map(group => {return { label: group.name, value: group.name }})
 }
 
 /** component for displaying a spatial group selector */
-export default function SpatialSelector({ dataParams, updateDataParams, spatialGroupNames }) {
-  const options = getSpatialOptions(spatialGroupNames)
+export default function SpatialSelector({ dataParams, updateDataParams, spatialGroups }) {
+  const options = getSpatialOptions(spatialGroups)
   return (
     <div className="form-group">
       <label>Spatial Groups</label>
@@ -22,9 +22,11 @@ export default function SpatialSelector({ dataParams, updateDataParams, spatialG
           cluster: dataParams.cluster,
           subsample: dataParams.value,
           consensus: dataParams.consensus,
-          spatialGroups: selectedOpts.map(opt => opt.value)
+          spatialGroups: selectedOpts ? selectedOpts.map(opt => opt.value) : []
         })}
         isMulti={true}
+        isClearable={false}
+        isSearchable={false}
         styles={clusterSelectStyle}/>
     </div>
   )

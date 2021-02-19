@@ -634,7 +634,6 @@ class StudiesController < ApplicationController
     if cluster_id_array.present? && cluster_id_array.count > 0
       params["study_file"]["spatial_cluster_associations"] = cluster_id_array[0].split(' ')
     end
-    byebug
     @study_file = StudyFile.find_by(study_id: study_file_params[:study_id], _id: study_file_params[:_id])
     @selector = params[:selector]
     @partial = params[:partial]

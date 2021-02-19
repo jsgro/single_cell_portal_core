@@ -30,12 +30,15 @@ export function getIdentifierForAnnotation(annotation) {
 
 
 /** extracts default parameters from an annotationList of the type returned by the explore API */
-export function getDefaultClusterParams(annotationList) {
-  return {
-    cluster: annotationList.default_cluster,
+export function getDefaultClusterParams(annotationList, spatialGroups) {
+  const defaultCluster = annotationList.default_cluster
+  const clusterParams = {
+    cluster: defaultCluster,
     annotation: annotationKeyProperties(annotationList.default_annotation),
-    subsample: getDefaultSubsampleForCluster(annotationList, annotationList.default_cluster)
+    subsample: getDefaultSubsampleForCluster(annotationList, annotationList.default_cluster),
+    spatialGroups: getDefaultSpatialGroupsForCluster(defaultCluster, spatialGroups)
   }
+  return clusterParams
 }
 
 /** returns the first annotation for the given cluster */
@@ -51,6 +54,19 @@ export function getDefaultAnnotationForCluster(annotationList, clusterName, curr
   } else {
     return annotationList.annotations[0]
   }
+}
+
+/** return an array of names of the spatial files associated with a given cluster */
+export function getDefaultSpatialGroupsForCluster(clusterName, spatialGroups) {
+  const defaultGroups = []
+  if (clusterName.length > 0 && spatialGroups && spatialGroups.length) {
+    spatialGroups.forEach(group => {
+      if (group.associated_clusters.includes(clusterName)) {
+        defaultGroups.push(group.name)
+      }
+    })
+  }
+  return defaultGroups
 }
 
 /** finds the corresponding entry in annotationList for the given annotation,

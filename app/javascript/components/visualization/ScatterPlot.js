@@ -20,7 +20,7 @@ export const defaultScatterColor = 'Reds'
   * See ExploreView.js for the full specification of the dataParams object
   */
 export default function ScatterPlot({
-  studyAccession, dataParams, renderParams, showDataParams, dimensionsFn, plotOptions,
+  studyAccession, dataParams, renderParams, dimensions, plotOptions,
   updateRenderParams, numColumns=1, numRows=1, isCellSelecting=false, plotPointsSelected
 }) {
   const [isLoading, setIsLoading] = useState(false)
@@ -35,7 +35,7 @@ export default function ScatterPlot({
 
     // Get Plotly layout
     const layout = getPlotlyLayout(clusterResponse, plotOptions)
-    const { width, height } = dimensionsFn({ numColumns, numRows })
+    const { width, height } = dimensions
     layout.width = width
     layout.height = height
 
@@ -102,12 +102,12 @@ export default function ScatterPlot({
   useUpdateLayoutEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
-      console.log('updating height')
-      const { width, height } = dimensionsFn({ numColumns, numRows })
+      console.log('updating plotly dimensions')
+      const { width, height } = dimensions
       const layoutUpdate = { width, height }
       window.Plotly.relayout(graphElementId, layoutUpdate)
     }
-  }, [showDataParams])
+  }, [dimensions.width, dimensions.height])
 
   return (
     <div className="plot">

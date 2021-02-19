@@ -12,7 +12,7 @@ import CreateAnnotation from './CreateAnnotation'
 import PlotDisplayControls, { defaultRenderParams } from 'components/visualization/PlotDisplayControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { stringifyQuery, fetchExplore, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
-import { getDefaultClusterParams, getIdentifierForAnnotation } from 'lib/cluster-utils'
+import { getDefaultClusterParams, getIdentifierForAnnotation, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
 import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
 
 /** converts query string parameters into the dataParams objet */
@@ -96,7 +96,7 @@ function buildRenderParamsFromQuery(query) {
 function RoutableExploreTab({ studyAccession }) {
   const [exploreInfo, setExploreInfo] = useState(null)
   const location = useLocation()
-  const [showDataParams, setShowDataParams] = useState(true)
+  const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
   const [isCellSelecting, setIsCellSelecting] = useState(false)
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
   const dataParams = buildDataParamsFromQuery(location.search)
@@ -104,15 +104,21 @@ function RoutableExploreTab({ studyAccession }) {
   const tabContainerEl = useRef(null)
 
 
+  // we keep a separate 'controlDataParams' object that updates after defaults are fetched from the server
+  // this is kept separate so that the graphs do not see the change in cluster name from '' to
+  // '<<default cluster>>' as a change that requires a re-fetch from the server
   let controlDataParams = _clone(dataParams)
   if (exploreInfo && !dataParams.cluster) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
-    controlDataParams = Object.assign(controlDataParams, getDefaultClusterParams(exploreInfo.annotationList))
+    controlDataParams = Object.assign(controlDataParams,
+      getDefaultClusterParams(exploreInfo.annotationList, exploreInfo.spatialGroups))
+
+    dataParams.spatialGroups = controlDataParams.spatialGroups
   }
 
   let hasSpatialGroups = false
   if (exploreInfo) {
-    hasSpatialGroups = exploreInfo.spatialGroupNames.length > 0
+    hasSpatialGroups = exploreInfo.spatialGroups.length > 0
   }
 
   /** in the event a component takes an action which updates the list of annotations available
@@ -124,7 +130,11 @@ function RoutableExploreTab({ studyAccession }) {
 
   /** Merges the received update into the dataParams, and updates the page URL if need */
   function updateDataParams(newOptions, wasUserSpecified=true) {
+    if (newOptions.cluster && !newOptions.spatialGroups) {
+      newOptions.spatialGroups = getDefaultSpatialGroupsForCluster(newOptions.cluster, exploreInfo.spatialGroups)
+    }
     const mergedOpts = Object.assign({}, dataParams, newOptions)
+
     const newRenderParams = _clone(renderParams)
     if (wasUserSpecified) {
       // this is just default params being fetched from the server, so don't change the url
@@ -137,6 +147,7 @@ function RoutableExploreTab({ studyAccession }) {
         delete newRenderParams.userSpecified.tab
       }
     }
+
     const query = buildQueryFromParams(mergedOpts, newRenderParams)
     // view options settings should not add history entries
     // e.g. when a user hits 'back', it shouldn't undo their cluster selection,
@@ -170,7 +181,7 @@ function RoutableExploreTab({ studyAccession }) {
 
   /** Handle clicks on "View Options" toggler element */
   function handleViewOptionsClick() {
-    setShowDataParams(!showDataParams)
+    setShowViewOptionsControls(!showViewOptionsControls)
   }
 
   useEffect(() => {
@@ -178,9 +189,9 @@ function RoutableExploreTab({ studyAccession }) {
   }, [studyAccession])
 
   // Toggle "View Options" panel
-  const dataParamsIcon = showDataParams ? faCaretRight : faCaretLeft
+  const dataParamsIcon = showViewOptionsControls ? faCaretRight : faCaretLeft
   let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden view-options', 'closed']
-  if (showDataParams) {
+  if (showViewOptionsControls) {
     [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2 view-options', 'open']
   }
 
@@ -193,7 +204,7 @@ function RoutableExploreTab({ studyAccession }) {
             dataParams={dataParams}
             controlDataParams={controlDataParams}
             renderParams={renderParams}
-            showDataParams={showDataParams}
+            showViewOptionsControls={showViewOptionsControls}
             updateDataParams={updateDataParams}
             updateRenderParams={updateRenderParams}
             exploreInfo={exploreInfo}
@@ -209,8 +220,8 @@ function RoutableExploreTab({ studyAccession }) {
             fetchAnnotationList={false}
             showConsensus={dataParams.genes.length > 1}/>
           { hasSpatialGroups &&
-            <SpatialSelector spatialGroupNames={exploreInfo.spatialGroupNames}
-              dataParams={dataParams}
+            <SpatialSelector spatialGroups={exploreInfo.spatialGroups}
+              dataParams={controlDataParams}
               updateDataParams={updateDataParams}/>
           }
           <CreateAnnotation
@@ -226,7 +237,10 @@ function RoutableExploreTab({ studyAccession }) {
             updateRenderParams={updateRenderParams}
             dataParams={controlDataParams}
             updateDataParams={updateDataParams}/>
-          <button onClick={copyLink} className="action" data-toggle="tooltip" title="copy a link to this visualization to the clipboard">
+          <button onClick={copyLink}
+            className="action"
+            data-toggle="tooltip"
+            title="copy a link to this visualization to the clipboard">
             Copy link <FontAwesomeIcon icon={faLink}/>
           </button>
         </div>
