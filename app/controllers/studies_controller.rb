@@ -260,8 +260,8 @@ class StudiesController < ApplicationController
     @unsynced_directories = @study.directory_listings.unsynced
 
     # split directories into primary data types and 'others'
-    @unsynced_primary_data_dirs = @unsynced_directories.select {|dir| dir.file_type == 'fastq'}
-    @unsynced_other_dirs = @unsynced_directories.select {|dir| dir.file_type != 'fastq'}
+    @unsynced_primary_data_dirs = @unsynced_directories.select {|dir| DirectoryListing::PRIMARY_DATA_TYPES.include?(dir.file_type)}
+    @unsynced_other_dirs = @unsynced_directories.select {|dir| !DirectoryListing::PRIMARY_DATA_TYPES.include?(dir.file_type)}
 
     # now determine if we have study_files that have been 'orphaned' (cannot find a corresponding bucket file)
     @orphaned_study_files = @study_files - @synced_study_files
@@ -1223,19 +1223,18 @@ class StudiesController < ApplicationController
 
     # next update map of existing files to determine what can be grouped together in a directory listing
     @file_extension_map = DirectoryListing.create_extension_map(files, @file_extension_map)
-
     files.each do |file|
       # check first if file type is in file map in a group larger than 10 (or 20 for text files)
-      file_extension = DirectoryListing.file_extension(file.name)
+      file_type = DirectoryListing.file_type_from_extension(file.name)
       directory_name = DirectoryListing.get_folder_name(file.name)
-      if @file_extension_map.has_key?(directory_name) && !@file_extension_map[directory_name][file_extension].nil? &&
-          @file_extension_map[directory_name][file_extension] >= DirectoryListing::MIN_SIZE
-        process_directory_listing_file(file, file_extension)
+      if @file_extension_map.has_key?(directory_name) && !@file_extension_map.dig(directory_name, file_type).nil? &&
+          @file_extension_map.dig(directory_name, file_type) >= DirectoryListing::MIN_SIZE
+        process_directory_listing_file(file, file_type)
       else
-        # we are now dealing with singleton files or fastqs, so process accordingly (making sure to ignore directories)
-        if DirectoryListing::PRIMARY_DATA_TYPES.any? {|ext| file_extension.include?(ext)} && !file.name.end_with?('/')
-          # process fastq file into appropriate directory listing
-          process_directory_listing_file(file, 'fastq')
+        # we are now dealing with singleton files or sequence data, so process accordingly (making sure to ignore directories)
+        if DirectoryListing::PRIMARY_DATA_TYPES.any? {|ext| file_type.include?(ext)} && !file.name.end_with?('/')
+          # process sequence data file into appropriate directory listing
+          process_directory_listing_file(file, file_type)
         else
           # make sure file is not actually a folder by checking its size
           if file.size > 0
