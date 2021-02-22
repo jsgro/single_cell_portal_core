@@ -13,6 +13,14 @@ export const DISTRIBUTION_PLOT_OPTIONS = [
 ]
 export const defaultDistributionPlot = DISTRIBUTION_PLOT_OPTIONS[0].value
 
+export const DISTRIBUTION_POINTS_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'All', value: 'all' },
+  { label: 'Outliers', value: 'outliers' },
+  { label: 'Suspected outliers', value: 'suspectedoutliers' }
+]
+export const defaultDistributionPoints = DISTRIBUTION_POINTS_OPTIONS[0].value
+
 /** displays a violin plot of expression data for the given gene and study
  * @param studyAccession {String} the study accession
  * @param genes {Array[String]} array of gene names
@@ -56,7 +64,10 @@ export default function StudyViolinPlot({
     if (!distributionPlot) {
       distributionPlot = defaultDistributionPlot
     }
-    renderViolinPlot(graphElementId, results, { plotType: distributionPlot })
+    renderViolinPlot(graphElementId, results, {
+      plotType: distributionPlot,
+      showPoints: renderParams.distributionPoints
+    })
     if (setAnnotationList) {
       setAnnotationList(results.annotation_list)
     }
@@ -83,9 +94,13 @@ export default function StudyViolinPlot({
   useUpdateEffect(() => {
     // Don't try to update the if the data hasn't loaded yet
     if (!isLoading && studyGeneNames.length > 0) {
-      window.Plotly.restyle(graphElementId, { type: renderParams.distributionPlot })
+      window.Plotly.restyle(graphElementId, {
+        type: renderParams.distributionPlot,
+        points: renderParams.distributionPoints,
+        boxpoints: renderParams.distributionPoints
+      })
     }
-  }, [renderParams.distributionPlot])
+  }, [renderParams.distributionPlot, renderParams.distributionPoints])
 
   const isCollapsedView = ['mean', 'median'].indexOf(dataParams.consensus) >= 0
   return (
@@ -117,20 +132,19 @@ export default function StudyViolinPlot({
 
 
 /** Formats expression data for Plotly, draws violin (or box) plot */
-function renderViolinPlot(target, results, { plotType }) {
-  const traceData = getViolinPropsWrapper(results, plotType)
+function renderViolinPlot(target, results, { plotType, showPoints }) {
+  const traceData = getViolinPropsWrapper(results, plotType, showPoints)
   const expressionData = [...traceData[0]]
   const expressionLayout = traceData[1]
   window.Plotly.newPlot(target, expressionData, expressionLayout)
 }
 
 /** Convenience wrapper for getViolinProps */
-function getViolinPropsWrapper(rawPlot, plotType) {
+function getViolinPropsWrapper(rawPlot, plotType, showPoints) {
   // The code below is heavily borrowed from legacy application.js
   const dataArray = parseResultsToArray(rawPlot)
-  const jitter = rawPlot.values_jitter ? rawPlot.values_jitter : ''
   const traceData = getViolinProps(
-    dataArray, rawPlot.rendered_cluster, jitter, rawPlot.y_axis_title, plotType
+    dataArray, rawPlot.rendered_cluster, showPoints, rawPlot.y_axis_title, plotType
   )
   return traceData
 }
@@ -147,7 +161,7 @@ function getViolinPropsWrapper(rawPlot, plotType) {
  * returning [plotly data object, plotly layout object]
 */
 function getViolinProps(
-  arr, title, jitter='all', expressionLabel, plotType='violin'
+  arr, title, showPoints='none', expressionLabel, plotType='violin'
 ) {
   let data = []
   for (let x = 0; x < arr.length; x++) {
@@ -157,8 +171,8 @@ function getViolinProps(
     const name = arr[x][0]
 
     // Replace the none selection with bool false for plotly
-    if (jitter === '') {
-      jitter = false
+    if (showPoints === 'none' || !showPoints) {
+      showPoints = false
     }
 
     // Check if there is a distribution before adding trace
@@ -168,7 +182,7 @@ function getViolinProps(
         type: 'violin',
         name,
         y: dist,
-        points: jitter,
+        points: showPoints,
         pointpos: 0,
         jitter: 0.85,
         spanmode: 'hard',
@@ -197,7 +211,7 @@ function getViolinProps(
         type: 'box',
         name,
         y: dist,
-        boxpoints: jitter,
+        boxpoints: showPoints,
         marker: {
           color: getColorBrewerColor(x),
           size: 2,

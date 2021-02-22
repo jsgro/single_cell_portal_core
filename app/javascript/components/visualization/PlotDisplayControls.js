@@ -5,7 +5,7 @@ import Select from 'react-select'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretRight, faCaretDown } from '@fortawesome/free-solid-svg-icons'
 import { SCATTER_COLOR_OPTIONS } from 'components/visualization/ScatterPlot'
-import { DISTRIBUTION_PLOT_OPTIONS } from 'components/visualization/StudyViolinPlot'
+import { DISTRIBUTION_PLOT_OPTIONS, DISTRIBUTION_POINTS_OPTIONS} from 'components/visualization/StudyViolinPlot'
 import { ROW_CENTERING_OPTIONS, FIT_OPTIONS } from 'components/visualization/Heatmap'
 
 export const defaultRenderParams = {
@@ -20,7 +20,7 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
   const [showHeatmap, setShowHeatmap] = useState(false)
   const [showDistribution, setShowDistribution] = useState(false)
 
-  const scatterColorValue = renderParams.scatterColor ? renderParams.scatterColor : ' '
+  const scatterColorValue = renderParams.scatterColor ? renderParams.scatterColor : ''
   let distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS.find(opt => opt.value === renderParams.distributionPlot)
   if (!distributionPlotValue) {
     distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS[0]
@@ -32,6 +32,11 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
   let heatmapFitValue = FIT_OPTIONS.find(opt => opt.value === renderParams.heatmapFit)
   if (!heatmapFitValue) {
     heatmapFitValue = FIT_OPTIONS[0]
+  }
+
+  let distributionPointsValue = DISTRIBUTION_POINTS_OPTIONS.find(opt => opt.value === renderParams.distributionPoints)
+  if (!distributionPointsValue) {
+    distributionPointsValue = DISTRIBUTION_POINTS_OPTIONS[0]
   }
   return (
     <div className="render-controls">
@@ -79,6 +84,13 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
               clearable={false}
               isSearchable={false}
               onChange={option => updateRenderParams({ distributionPlot: option.value })}/>
+            <label htmlFor="distribution-plot-picker">Data points </label>
+            <Select name="distribution-points-picker"
+              options={DISTRIBUTION_POINTS_OPTIONS}
+              value={distributionPointsValue}
+              clearable={false}
+              isSearchable={false}
+              onChange={option => updateRenderParams({ distributionPoints: option.value })}/>
           </Panel.Body>
         </Panel.Collapse>
       </Panel>
