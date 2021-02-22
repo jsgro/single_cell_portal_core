@@ -23,9 +23,9 @@ import 'jquery-ui/ui/effects/effect-highlight'
 import igv from '@single-cell-portal/igv'
 import morpheus from 'morpheus-app'
 import Ideogram from 'ideogram'
-import Select from 'react-select'
-import checkMissingAuthToken from 'lib/user-auth-tokens'
+import Plotly from 'plotly.js-dist'
 
+import checkMissingAuthToken from 'lib/user-auth-tokens'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
 import HomePageContent from 'components/HomePageContent'
 import Covid19PageContent from 'components/covid19/Covid19PageContent'
@@ -90,6 +90,7 @@ window.SCP.exploreDefault = exploreDefault
 window.SCP.exploreSingle = exploreSingle
 window.SCP.renderClusterAssociationSelect = renderClusterAssociationSelect
 window.SCP.renderExploreView = renderExploreView
+window.Plotly = Plotly
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code

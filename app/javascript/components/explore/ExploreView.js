@@ -95,12 +95,12 @@ function buildRenderParamsFromQuery(query) {
  */
 function RoutableExploreTab({ studyAccession }) {
   const [exploreInfo, setExploreInfo] = useState(null)
-  const location = useLocation()
+  const routerLocation = useLocation()
   const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
   const [isCellSelecting, setIsCellSelecting] = useState(false)
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
-  const dataParams = buildDataParamsFromQuery(location.search)
-  const renderParams = buildRenderParamsFromQuery(location.search)
+  const dataParams = buildDataParamsFromQuery(routerLocation.search)
+  const renderParams = buildRenderParamsFromQuery(routerLocation.search)
   const tabContainerEl = useRef(null)
 
 
@@ -170,8 +170,8 @@ function RoutableExploreTab({ studyAccession }) {
   }
 
   /** copies the url to the clipboard */
-  function copyLink() {
-    navigator.clipboard.writeText(window.location.href)
+  function copyLink(routerLocation) {
+    navigator.clipboard.writeText(routerLocation.href)
   }
 
   /** handler for when the user selects points in a plotly scatter graph */
@@ -237,7 +237,7 @@ function RoutableExploreTab({ studyAccession }) {
             updateRenderParams={updateRenderParams}
             dataParams={controlDataParams}
             updateDataParams={updateDataParams}/>
-          <button onClick={copyLink}
+          <button onClick={() => copyLink(routerLocation)}
             className="action"
             data-toggle="tooltip"
             title="copy a link to this visualization to the clipboard">
@@ -246,7 +246,7 @@ function RoutableExploreTab({ studyAccession }) {
         </div>
       </div>
       <a className={`action view-options-toggle ${optionsLinkClass}`}
-        onClick={() => handleViewOptionsClick()}>
+        onClick={handleViewOptionsClick}>
         <FontAwesomeIcon className="fa-lg" icon={dataParamsIcon}/> View Options
       </a>
     </div>

@@ -4,9 +4,9 @@ import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
 
 import { fetchCluster } from 'lib/scp-api'
-import { setMarkerColors } from 'lib/scatter-plot'
-import { labelFont } from 'lib/plot'
+import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { useUpdateLayoutEffect } from 'hooks/useUpdate'
+import PlotTitle from './PlotTitle'
 
 export const SCATTER_COLOR_OPTIONS = [
   'Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu', 'Reds', 'Blues', 'Picnic',
@@ -20,7 +20,7 @@ export const defaultScatterColor = 'Reds'
   * See ExploreView.js for the full specification of the dataParams object
   */
 export default function ScatterPlot({
-  studyAccession, dataParams, renderParams, dimensions, plotOptions,
+  studyAccession, dataParams, renderParams, dimensions,
   updateRenderParams, numColumns=1, numRows=1, isCellSelecting=false, plotPointsSelected
 }) {
   const [isLoading, setIsLoading] = useState(false)
@@ -29,32 +29,22 @@ export default function ScatterPlot({
 
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
-    if (clusterResponse.annotParams.type === 'group' && !clusterResponse.gene) {
-      clusterResponse.data = setMarkerColors(clusterResponse.data)
-    }
+
 
     // Get Plotly layout
-    const layout = getPlotlyLayout(clusterResponse, plotOptions)
+    const layout = getPlotlyLayout(clusterResponse)
     const { width, height } = dimensions
     layout.width = width
     layout.height = height
-
-    // Set color scale
-    let scatterColor = renderParams.scatterColor
-    if (!scatterColor) {
-      scatterColor = clusterResponse.data[0].marker.colorscale
-    }
-    if (!scatterColor) {
-      scatterColor = defaultScatterColor
-    }
-    clusterResponse.data[0].marker.colorscale = scatterColor
-
+    formatMarkerColors(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
+    formatHoverLabels(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
+    const dataScatterColor = processTraceScatterColor(clusterResponse.data, renderParams.scatterColor)
     window.Plotly.newPlot(graphElementId, clusterResponse.data, layout)
     $(`#${graphElementId}`).off('plotly_selected')
     $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
 
-    if (scatterColor !== renderParams.scatterColor) {
-      updateRenderParams({ scatterColor })
+    if (dataScatterColor !== renderParams.scatterColor) {
+      updateRenderParams({ scatterColor: dataScatterColor })
     }
     setClusterData(clusterResponse)
     setIsLoading(false)
@@ -111,15 +101,21 @@ export default function ScatterPlot({
 
   return (
     <div className="plot">
+      { clusterData &&
+        <PlotTitle
+          cluster={clusterData.cluster}
+          annotation={clusterData.annotParams.name}
+          gene={clusterData.gene}/>
+      }
       <div
         className="scatter-graph"
         id={graphElementId}
         data-testid={graphElementId}
       >
       </div>
-      <p className="help-block text-center">
+      <p className="help-block">
         { clusterData && clusterData.description &&
-          <span>clusterData.description</span>
+          <span>{clusterData.description}</span>
         }
       </p>
 
@@ -135,6 +131,44 @@ export default function ScatterPlot({
   )
 }
 
+/** add trace marker colors to group annotations */
+function formatMarkerColors(data, annotationType, gene) {
+  if (annotationType === 'group' && !gene) {
+    data.forEach((trace, i) => {
+      trace.marker.color = getColorBrewerColor(i)
+    })
+  }
+}
+
+/** makes the data trace attributes (cells, trace name) available via hover text */
+function formatHoverLabels(data, annotationType, gene) {
+  const groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{data.name}<extra></extra>'
+  data.forEach(trace => {
+    if (annotationType === 'numeric' || gene) {
+      trace.text = trace.annotations
+      trace.hovertemplate = `(%{x}, %{y})<br>%{text}<br>${trace.marker.colorbar.title}: %{marker.color}<extra></extra>`
+    } else {
+      trace.text = trace.cells
+      trace.hovertemplate = groupHoverTemplate
+    }
+  })
+}
+
+/** sets the scatter color on the given races.  If no color is sspecified, it reads the color from the data */
+function processTraceScatterColor(data, scatterColor) {
+  // Set color scale
+  if (!scatterColor) {
+    scatterColor = data[0].marker.colorscale
+  }
+  if (!scatterColor) {
+    scatterColor = defaultScatterColor
+  }
+  if (data[0].marker) {
+    data[0].marker.colorscale = scatterColor
+  }
+  return scatterColor
+}
+
 /** Gets Plotly layout object for scatter plot */
 function getPlotlyLayout({
   axes,
@@ -143,7 +177,9 @@ function getPlotlyLayout({
   coordinateLabels,
   isAnnotatedScatter,
   is3d,
-  isCellSelecting=false
+  isCellSelecting=false,
+  gene,
+  annotParams
 }) {
   const layout = {
     hovermode: 'closest',
@@ -162,7 +198,9 @@ function getPlotlyLayout({
     })
     Object.assign(layout, props2d)
   }
-
+  if (!gene.length && annotParams && annotParams.name) {
+    layout.legend = { title: { text: annotParams.name } }
+  }
   return layout
 }
 

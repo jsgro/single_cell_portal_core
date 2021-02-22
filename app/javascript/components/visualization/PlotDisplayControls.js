@@ -47,7 +47,9 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
         </Panel.Heading>
         <Panel.Collapse>
           <Panel.Body>
-            <label htmlFor="colorscale-picker">Color profile</label>
+            <label htmlFor="colorscale-picker">Continuous color scale
+              <span className="detail"> (for numeric data)</span>
+            </label>
             <Select name="colorscale-picker"
               options={SCATTER_COLOR_OPTIONS.map(opt => ({ label: opt, value: opt }))}
               value={{ label: scatterColorValue, value: scatterColorValue }}

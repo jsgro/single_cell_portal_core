@@ -26,7 +26,6 @@ export default function SpatialSelector({ dataParams, updateDataParams, spatialG
         })}
         isMulti={true}
         isClearable={false}
-        isSearchable={false}
         styles={clusterSelectStyle}/>
     </div>
   )

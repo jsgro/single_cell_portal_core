@@ -131,6 +131,7 @@ module Api
           titles = ClusterVizService.load_axis_labels(cluster)
           coordinates = nil
           genes = RequestUtils.get_genes_from_param(study, url_params[:gene])
+
           if url_params[:gene].blank?
             # For "Clusters" tab in default view of Explore tab
             coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
@@ -158,7 +159,7 @@ module Api
             else
               # For "Scatter" tab
               if is_collapsed_view
-                coordinates = ExpressionVizService.load_gene_set_expression_boxplot_scores(study, genes, cluster, selected_annotation, consensus, subsample)
+                coordinates = ExpressionVizService.load_gene_set_expression_boxplot_scores(study, genes, cluster, annotation, consensus, subsample)
               else
                 coordinates = ExpressionVizService.load_expression_data_array_points(study, genes[0], cluster, annotation, subsample, y_axis_title, colorscale)
               end

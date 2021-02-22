@@ -101,7 +101,7 @@ export default function ExploreDisplayTabs(
     if (dataParams.spatialGroups[0]) {
       hasSelectedSpatialGroup = true
 
-      if (isMultiGene) {
+      if (isMultiGene && !dataParams.consensus) {
         const refPlotDataParams = _clone(dataParams)
         refPlotDataParams.cluster = dataParams.spatialGroups[0]
         refPlotDataParams.genes = []
@@ -125,8 +125,8 @@ export default function ExploreDisplayTabs(
         })
       }
     }
-    if (hasSpatialGroups && isMultiGene) {
-      enabledTabs.push('spatial')
+    if (hasSpatialGroups && isMultiGene && !dataParams.consensus) {
+      enabledTabs.unshift('spatial')
     }
   }
 
@@ -139,7 +139,8 @@ export default function ExploreDisplayTabs(
   let searchedGene = null
   if (
     exploreInfo &&
-    exploreInfo.taxonNames.length === 1 && dataParams.genes.length === 1
+    exploreInfo.taxonNames.length === 1 &&
+    dataParams.genes.length === 1
   ) {
     showRelatedGenesIdeogram = true
     currentTaxon = exploreInfo.taxonNames[0]
@@ -238,9 +239,6 @@ export default function ExploreDisplayTabs(
             <div className={shownTab === 'cluster' ? '' : 'hidden'}>
               <div className="row">
                 <div className={hasSelectedSpatialGroup ? 'col-md-6' : 'col-md-12'}>
-                  { hasSelectedSpatialGroup &&
-                    <PlotTitle cluster={controlDataParams.cluster} annotation={controlDataParams.annotation}/>
-                  }
                   <ScatterPlot
                     studyAccession={studyAccession}
                     dataParams={dataParams}
@@ -258,7 +256,6 @@ export default function ExploreDisplayTabs(
                   { hasSelectedSpatialGroup &&
                     spatialRefPlotDataParamsArray.slice(0, 5).map((params, index) =>
                       <div key={params.cluster}>
-                        <PlotTitle spatial={params.cluster} annotation={controlDataParams.annotation}/>
                         <ScatterPlot
                           studyAccession={studyAccession}
                           dataParams={params}
@@ -285,7 +282,6 @@ export default function ExploreDisplayTabs(
             <div className={shownTab === 'scatter' ? '' : 'hidden'}>
               <div className="row">
                 <div className="col-md-6">
-                  <PlotTitle gene={dataParams.genes[0]}/>
                   <ScatterPlot
                     studyAccession={studyAccession}
                     dataParams={dataParams}
@@ -302,7 +298,6 @@ export default function ExploreDisplayTabs(
                   />
                 </div>
                 <div className="col-md-6">
-                  <PlotTitle cluster={controlDataParams.cluster} annotation={controlDataParams.annotation}/>
                   <ScatterPlot
                     studyAccession={studyAccession}
                     dataParams={referencePlotDataParams}
@@ -314,7 +309,6 @@ export default function ExploreDisplayTabs(
                       hasTitle: true,
                       showRelatedGenesIdeogram
                     })}
-                    plotOptions= {{ showlegend: false }}
                     isCellSelecting={isCellSelecting}
                     plotPointsSelected={plotPointsSelected}
                   />
@@ -324,7 +318,6 @@ export default function ExploreDisplayTabs(
                 spatialRefPlotDataParamsArray.slice(0, 3).map((params, index) =>
                   <div key={index} className="row">
                     <div className="col-md-6">
-                      <PlotTitle spatial={params.cluster} gene={spatialDataParamsArray[index].genes[0]}/>
                       <ScatterPlot
                         studyAccession={studyAccession}
                         dataParams={spatialDataParamsArray[index]}
@@ -341,7 +334,6 @@ export default function ExploreDisplayTabs(
                       />
                     </div>
                     <div className="col-md-6">
-                      <PlotTitle spatial={params.cluster}/>
                       <ScatterPlot
                         studyAccession={studyAccession}
                         dataParams={params}
@@ -373,7 +365,6 @@ export default function ExploreDisplayTabs(
                 <div className="col-md-10 col-md-offset-1">
                   { hasSelectedSpatialGroup &&
                     <div>
-                      <PlotTitle cluster={controlDataParams.cluster} annotation={controlDataParams.annotation}/>
                       <ScatterPlot
                         studyAccession={studyAccession}
                         dataParams={spatialRefPlotDataParamsArray[0]}
@@ -396,7 +387,6 @@ export default function ExploreDisplayTabs(
               <div className="row">
                 { spatialDataParamsArray.map((spgDataParams, index) => {
                   return <div key={index} className="col-md-6">
-                    <PlotTitle spatial={spgDataParams.cluster} gene={spgDataParams.genes[0]}/>
                     <ScatterPlot
                       studyAccession={studyAccession}
                       dataParams={spgDataParams}
@@ -453,7 +443,7 @@ export default function ExploreDisplayTabs(
 }
 
 /** Renders a plot title for scatter plots */
-function PlotTitle({ cluster, annotation, gene, spatial }) {
+export function PlotTitle({ cluster, annotation, gene, spatial }) {
   let content
   if (spatial) {
     if (gene) {
@@ -462,7 +452,7 @@ function PlotTitle({ cluster, annotation, gene, spatial }) {
       content = <span className="cluster-title">{spatial} <span className="detail">(spatial)</span></span>
     }
   } else if (!gene) {
-    content = <span className="cluster-title">{cluster} <span className="detail">{annotation.name}</span></span>
+    content = <span className="cluster-title">{cluster}</span>
   } else {
     content = <span className="cluster-title">{gene} expression</span>
   }
