@@ -140,12 +140,14 @@
       const current_values = <%= current_values.to_json.html_safe %>
       window.SCP.renderClusterAssociationSelect(clusterAssnTarget, opts, current_values, isNew, pairedHiddenField)
     }
-    updateClusterAssnSelect()
 
-    $('form').on('change', '.is_spatial_true , .is_spatial_false', function() {
+    <% if User.feature_flag_for_instance(current_user, 'react_explore')  %>
       updateClusterAssnSelect()
-    })
 
+      $('form').on('change', '.is_spatial_true , .is_spatial_false', function() {
+        updateClusterAssnSelect()
+      })
+    <% end %>
 
     $(function() {
 

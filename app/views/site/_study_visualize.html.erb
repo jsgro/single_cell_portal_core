@@ -44,8 +44,10 @@
 </div>
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   window.SCP.studyAccession = '<%= @study.accession %>';
-
-  //window.SCP.exploreDefault();
-  window.SCP.renderExploreView(document.getElementById('study-visualize'), window.SCP.studyAccession)
+  <% if User.feature_flag_for_instance(current_user, 'react_explore')  %>
+    window.SCP.renderExploreView(document.getElementById('study-visualize'), window.SCP.studyAccession)
+  <% else %>
+    window.SCP.exploreDefault();
+  <% end %>
 
 </script>

@@ -62,6 +62,7 @@ function buildQueryFromParams(dataParams, renderParams) {
     tab: renderParams.tab,
     scatterColor: renderParams.scatterColor,
     distributionPlot: renderParams.distributionPlot,
+    distributionPoints: renderParams.distributionPoints,
     heatmapFit: renderParams.heatmapFit
   }
   // remove keys which were not user-specified
@@ -78,7 +79,7 @@ function buildRenderParamsFromQuery(query) {
   const queryParams = queryString.parse(query)
   const renderParams = _clone(defaultRenderParams)
   renderParams.userSpecified = {}
-  const urlProps = ['scatterColor', 'distributionPlot', 'tab', 'heatmapFit']
+  const urlProps = ['scatterColor', 'distributionPlot', 'distributionPoints', 'tab', 'heatmapFit']
   urlProps.forEach(optName => {
     if (queryParams[optName] && queryParams[optName].length) {
       renderParams[optName] = queryParams[optName]
