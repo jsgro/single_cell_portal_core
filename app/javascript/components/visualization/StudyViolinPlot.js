@@ -5,7 +5,10 @@ import _uniqueId from 'lodash/uniqueId'
 import _capitalize from 'lodash/capitalize'
 import { fetchExpressionViolin } from 'lib/scp-api'
 import { getColorBrewerColor, arrayMin, arrayMax, plotlyDefaultLineColor } from 'lib/plot'
+import Plotly from 'plotly.js-dist'
+
 import { useUpdateEffect } from 'hooks/useUpdate'
+
 
 export const DISTRIBUTION_PLOT_OPTIONS = [
   { label: 'Violin plot', value: 'violin' },
@@ -94,7 +97,7 @@ export default function StudyViolinPlot({
   useUpdateEffect(() => {
     // Don't try to update the if the data hasn't loaded yet
     if (!isLoading && studyGeneNames.length > 0) {
-      window.Plotly.restyle(graphElementId, {
+      Plotly.restyle(graphElementId, {
         type: renderParams.distributionPlot,
         points: renderParams.distributionPoints,
         boxpoints: renderParams.distributionPoints
@@ -136,7 +139,7 @@ function renderViolinPlot(target, results, { plotType, showPoints }) {
   const traceData = getViolinPropsWrapper(results, plotType, showPoints)
   const expressionData = [...traceData[0]]
   const expressionLayout = traceData[1]
-  window.Plotly.newPlot(target, expressionData, expressionLayout)
+  Plotly.newPlot(target, expressionData, expressionLayout)
 }
 
 /** Convenience wrapper for getViolinProps */

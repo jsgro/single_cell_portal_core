@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
+import Plotly from 'plotly.js-dist'
 
 import { fetchCluster } from 'lib/scp-api'
 import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { useUpdateLayoutEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
+
 
 export const SCATTER_COLOR_OPTIONS = [
   'Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu', 'Reds', 'Blues', 'Picnic',
@@ -37,7 +39,7 @@ export default function ScatterPlot({
     formatMarkerColors(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
     formatHoverLabels(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
     const dataScatterColor = processTraceScatterColor(clusterResponse.data, renderParams.scatterColor)
-    window.Plotly.newPlot(graphElementId, clusterResponse.data, layout)
+    Plotly.newPlot(graphElementId, clusterResponse.data, layout)
     $(`#${graphElementId}`).off('plotly_selected')
     $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
 
@@ -69,7 +71,7 @@ export default function ScatterPlot({
     if (clusterData && !isLoading) {
       console.log('updating color scale')
       const dataUpdate = { 'marker.colorscale': renderParams.scatterColor }
-      window.Plotly.update(graphElementId, dataUpdate)
+      Plotly.update(graphElementId, dataUpdate)
     }
   }, [renderParams.scatterColor])
 
@@ -81,7 +83,7 @@ export default function ScatterPlot({
       const newDragMode = getDragMode(isCellSelecting)
       window.Plotly.relayout(graphElementId, { dragmode: newDragMode })
       if (!isCellSelecting) {
-        window.Plotly.restyle(graphElementId, { selectedpoints: [null] })
+        Plotly.restyle(graphElementId, { selectedpoints: [null] })
       }
     }
   }, [isCellSelecting])
@@ -92,7 +94,7 @@ export default function ScatterPlot({
     if (clusterData && !isLoading) {
       const { width, height } = dimensions
       const layoutUpdate = { width, height }
-      window.Plotly.relayout(graphElementId, layoutUpdate)
+      Plotly.relayout(graphElementId, layoutUpdate)
     }
   }, [dimensions.width, dimensions.height])
 
