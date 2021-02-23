@@ -203,9 +203,9 @@ export function setMockOrigin(origin) {
 }
 
 /** Constructs and encodes URL parameters; omits those with no value */
-export function stringifyQuery(paramObj) {
+export function stringifyQuery(paramObj, sort) {
   // Usage and API: https://github.com/sindresorhus/query-string#usage
-  const options = { skipEmptyString: true, skipNull: true }
+  const options = { skipEmptyString: true, skipNull: true, sort }
   const stringified = queryString.stringify(paramObj, options)
   return `?${stringified}`
 }

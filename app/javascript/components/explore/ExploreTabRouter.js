@@ -77,7 +77,7 @@ function buildDataParamsFromQuery(query) {
     }
   }
 
-  const paramList = ['cluster', 'subsample', 'consensus', 'spatialGroups', 'genes', 'tab']
+  const paramList = ['cluster', 'subsample', 'consensus', 'spatialGroups', 'genes', 'tab', 'heatmapRowCentering']
   paramList.forEach(param => {
     if (queryParams[param] && queryParams[param].length) {
       dataParams.userSpecified[param] = true
@@ -89,7 +89,7 @@ function buildDataParamsFromQuery(query) {
   dataParams.consensus = queryParams.consensus ? queryParams.consensus : null
   dataParams.spatialGroups = queryParams.spatialGroups ? queryParams.spatialGroups.split(',') : []
   dataParams.genes = geneParamToArray(queryParams.genes)
-  dataParams.heatmapRowCentering = queryParams.rowCentered ? queryParams.rowCentered : DEFAULT_ROW_CENTERING
+  dataParams.heatmapRowCentering = queryParams.heatmapRowCentering ? queryParams.heatmapRowCentering : DEFAULT_ROW_CENTERING
   return dataParams
 }
 
@@ -98,10 +98,11 @@ function buildQueryFromParams(dataParams, renderParams) {
   const querySafeOptions = {
     cluster: dataParams.cluster,
     annotation: getIdentifierForAnnotation(dataParams.annotation),
+    subsample: dataParams.subsample,
     genes: geneArrayToParam(dataParams.genes),
     consensus: dataParams.consensus,
     spatialGroups: dataParams.spatialGroups.join(','),
-    rowCentered: dataParams.heatmapRowCentering,
+    heatmapRowCentering: dataParams.heatmapRowCentering,
     tab: renderParams.tab,
     scatterColor: renderParams.scatterColor,
     distributionPlot: renderParams.distributionPlot,
@@ -114,7 +115,15 @@ function buildQueryFromParams(dataParams, renderParams) {
       delete querySafeOptions[key]
     }
   })
-  return stringifyQuery(querySafeOptions)
+
+  return stringifyQuery(querySafeOptions, paramSorter)
+}
+
+const PARAM_LIST_ORDER = ['genes', 'cluster', 'spatialGroups', 'annotation', 'subsample', 'consensus', 'tab',
+  'scatterColor', 'distributionPlot', 'distributionPoints', 'heatmapFit', 'heatmapRowCentering']
+/** sort function for passing to stringify to ensure url params are specified in a user-friendly order */
+function paramSorter(a, b) {
+  return PARAM_LIST_ORDER.indexOf(a) - PARAM_LIST_ORDER.indexOf(b)
 }
 
 /** converts query string params into the renderParams object, which controls plot visualization customization */
