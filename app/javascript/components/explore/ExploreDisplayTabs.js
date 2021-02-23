@@ -49,8 +49,6 @@ export default function ExploreDisplayTabs(
   const plotContainerClass = 'explore-plot-tab-content'
   let enabledTabs = []
 
-
-
   if (isGene) {
     if (isMultiGene) {
       if (dataParams.consensus) {

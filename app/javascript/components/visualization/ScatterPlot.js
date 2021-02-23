@@ -29,8 +29,6 @@ export default function ScatterPlot({
 
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
-
-
     // Get Plotly layout
     const layout = getPlotlyLayout(clusterResponse)
     const { width, height } = dimensions

@@ -28,6 +28,7 @@ export default function DotPlot({ studyAccession, genes, dataParams, annotationV
     dataParams.annotation.scope,
     dataParams.annotation.type,
     dataParams.subsample)
+
   useEffect(() => {
     if (dataParams.annotation.name) {
       const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
@@ -42,10 +43,13 @@ export default function DotPlot({ studyAccession, genes, dataParams, annotationV
       })
       plotEvent.complete()
     }
-  }, [expressionValuesURL,
-      annotationCellValuesURL,
-      dataParams.annotation.name,
-      dataParams.annotation.scope])
+  }, [
+    expressionValuesURL,
+    annotationCellValuesURL,
+    dataParams.annotation.name,
+    dataParams.annotation.scope
+  ])
+
   return (
     <div>
       { dataParams.cluster &&
@@ -147,7 +151,7 @@ export function morpheusTabManager($target, dimensionsFn) {
     },
     setTabTitle: () => {},
     setActiveTab: () => {},
-    getWidth: () => { return dimensionsFn().width },
+    getWidth: () => {return dimensionsFn().width},
     getHeight: () => $target.height(),
     getTabCount: () => 1
   }

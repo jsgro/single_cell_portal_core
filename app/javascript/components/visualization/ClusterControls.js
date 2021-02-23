@@ -7,8 +7,10 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { fetchClusterOptions } from 'lib/scp-api'
-import { getDefaultSubsampleForCluster, annotationKeyProperties,
-  getDefaultAnnotationForCluster, getMatchedAnnotation } from 'lib/cluster-utils'
+import {
+  getDefaultSubsampleForCluster, annotationKeyProperties,
+  getDefaultAnnotationForCluster, getMatchedAnnotation
+} from 'lib/cluster-utils'
 
 export const emptyDataParams = {
   cluster: '',
@@ -22,8 +24,6 @@ const consensusOptions = [
   { label: 'Violin - Mean', value: 'mean' },
   { label: 'Violin - Median', value: 'median' }
 ]
-
-
 
 /** takes the server response and returns subsample options suitable for react-select */
 function getSubsampleOptions(annotationList, clusterName) {
@@ -99,7 +99,7 @@ export default function ClusterControls({
   const annotationOptions = getAnnotationOptions(annotationList, dataParams.cluster)
   const subsampleOptions = getSubsampleOptions(annotationList, dataParams.cluster)
 
-  let shownAnnotation = _clone(dataParams.annotation)
+  const shownAnnotation = _clone(dataParams.annotation)
   // for user annotations, we have to match the given id to a name to show the name in the dropdown
   if (dataParams.annotation && dataParams.annotation.scope === 'user') {
     const matchedAnnotation = getMatchedAnnotation(dataParams.annotation, preloadedAnnotationList)
@@ -126,7 +126,11 @@ export default function ClusterControls({
         <Select options={clusterOptions}
           value={{ label: dataParams.cluster, value: dataParams.cluster }}
           onChange={cluster => setDataParams({
-            annotation: annotationKeyProperties(getDefaultAnnotationForCluster(annotationList, cluster.name, dataParams.annotation)),
+            annotation: annotationKeyProperties(getDefaultAnnotationForCluster(
+              annotationList,
+              cluster.name,
+              dataParams.annotation
+            )),
             cluster: cluster.value,
             subsample: getDefaultSubsampleForCluster(annotationList, cluster.value),
             consensus: dataParams.consensus
@@ -187,7 +191,8 @@ export default function ClusterControls({
 
 const consensusPopover = (
   <Popover id="consensus-by-genes-helptext">
-    Selecting one of the "violin" options will combine expression scores of multiple genes for each cell using the selected metric.
+    Selecting one of the &quot;violin&quot; options will combine expression scores of multiple genes
+    for each cell using the selected metric.
   </Popover>
 )
 

@@ -73,6 +73,7 @@ function RoutableExploreTab({ studyAccession }) {
     setShowViewOptionsControls(!showViewOptionsControls)
   }
 
+  /** handles cluster selection to also populate the default spatial groups */
   function updateClusterDataParams(newParams) {
     if (newParams.cluster && !newParams.spatialGroups) {
       newParams.spatialGroups = getDefaultSpatialGroupsForCluster(newParams.cluster, exploreInfo.spatialGroups)

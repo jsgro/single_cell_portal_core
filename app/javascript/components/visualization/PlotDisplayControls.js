@@ -5,7 +5,7 @@ import Select from 'react-select'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretRight, faCaretDown } from '@fortawesome/free-solid-svg-icons'
 import { SCATTER_COLOR_OPTIONS } from 'components/visualization/ScatterPlot'
-import { DISTRIBUTION_PLOT_OPTIONS, DISTRIBUTION_POINTS_OPTIONS} from 'components/visualization/StudyViolinPlot'
+import { DISTRIBUTION_PLOT_OPTIONS, DISTRIBUTION_POINTS_OPTIONS } from 'components/visualization/StudyViolinPlot'
 import { ROW_CENTERING_OPTIONS, FIT_OPTIONS } from 'components/visualization/Heatmap'
 
 export const defaultRenderParams = {
