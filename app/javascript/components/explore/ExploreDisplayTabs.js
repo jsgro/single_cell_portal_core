@@ -179,7 +179,7 @@ export default function ExploreDisplayTabs(
     if (numRows > 1) {
       // Fill as much gallery height as possible, but show tip of next row
       // as an affordance that the gallery is vertically scrollable.
-      const secondRowTipHeight = 100
+      const secondRowTipHeight = 70
       height = height - secondRowTipHeight
     }
     // ensure aspect ratio isn't too distorted

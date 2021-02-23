@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import ReactDOM from 'react-dom'
-import { Router, navigate, useLocation } from '@reach/router'
-import * as queryString from 'query-string'
+import { Router } from '@reach/router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretLeft, faCaretRight, faLink } from '@fortawesome/free-solid-svg-icons'
 import _clone from 'lodash/clone'
@@ -9,85 +8,11 @@ import _clone from 'lodash/clone'
 import ClusterControls from 'components/visualization/ClusterControls'
 import SpatialSelector from './SpatialSelector'
 import CreateAnnotation from './CreateAnnotation'
-import PlotDisplayControls, { defaultRenderParams } from 'components/visualization/PlotDisplayControls'
+import PlotDisplayControls from 'components/visualization/PlotDisplayControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
-import { stringifyQuery, fetchExplore, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
-import { getDefaultClusterParams, getIdentifierForAnnotation, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
-import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
-
-/** converts query string parameters into the dataParams objet */
-function buildDataParamsFromQuery(query) {
-  const dataParams = {
-    userSpecified: {}
-  }
-  const queryParams = queryString.parse(query)
-  let annotation = {
-    name: '',
-    scope: '',
-    type: ''
-  }
-  if (queryParams.annotation) {
-    const [name, type, scope] = queryParams.annotation.split('--')
-    annotation = { name, type, scope }
-    if (name && name.length > 0) {
-      dataParams.userSpecified.annotation = true
-    }
-  }
-
-  const paramList = ['cluster', 'subsample', 'consensus', 'spatialGroups', 'genes', 'tab']
-  paramList.forEach(param => {
-    if (queryParams[param] && queryParams[param].length) {
-      dataParams.userSpecified[param] = true
-    }
-  })
-  dataParams.cluster = queryParams.cluster ? queryParams.cluster : ''
-  dataParams.annotation = annotation
-  dataParams.subsample = queryParams.subsample ? queryParams.subsample : ''
-  dataParams.consensus = queryParams.consensus ? queryParams.consensus : null
-  dataParams.spatialGroups = queryParams.spatialGroups ? queryParams.spatialGroups.split(',') : []
-  dataParams.genes = geneParamToArray(queryParams.genes)
-  dataParams.heatmapRowCentering = queryParams.rowCentered ? queryParams.rowCentered : DEFAULT_ROW_CENTERING
-  return dataParams
-}
-
-/** converts the params objects into a query string, inverse of build*ParamsFromQuery */
-function buildQueryFromParams(dataParams, renderParams) {
-  const querySafeOptions = {
-    cluster: dataParams.cluster,
-    annotation: getIdentifierForAnnotation(dataParams.annotation),
-    genes: geneArrayToParam(dataParams.genes),
-    consensus: dataParams.consensus,
-    spatialGroups: dataParams.spatialGroups.join(','),
-    rowCentered: dataParams.heatmapRowCentering,
-    tab: renderParams.tab,
-    scatterColor: renderParams.scatterColor,
-    distributionPlot: renderParams.distributionPlot,
-    distributionPoints: renderParams.distributionPoints,
-    heatmapFit: renderParams.heatmapFit
-  }
-  // remove keys which were not user-specified
-  Object.keys(querySafeOptions).forEach(key => {
-    if (!dataParams.userSpecified[key] && !renderParams.userSpecified[key]) {
-      delete querySafeOptions[key]
-    }
-  })
-  return stringifyQuery(querySafeOptions)
-}
-
-/** converts query string params into the renderParams object, which controls plot visualization customization */
-function buildRenderParamsFromQuery(query) {
-  const queryParams = queryString.parse(query)
-  const renderParams = _clone(defaultRenderParams)
-  renderParams.userSpecified = {}
-  const urlProps = ['scatterColor', 'distributionPlot', 'distributionPoints', 'tab', 'heatmapFit']
-  urlProps.forEach(optName => {
-    if (queryParams[optName] && queryParams[optName].length) {
-      renderParams[optName] = queryParams[optName]
-      renderParams.userSpecified[optName] = true
-    }
-  })
-  return renderParams
-}
+import { fetchExplore } from 'lib/scp-api'
+import useExploreTabRouter from './ExploreTabRouter'
+import { getDefaultClusterParams, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
 
 
 /**
@@ -96,14 +21,18 @@ function buildRenderParamsFromQuery(query) {
  */
 function RoutableExploreTab({ studyAccession }) {
   const [exploreInfo, setExploreInfo] = useState(null)
-  const routerLocation = useLocation()
   const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
   const [isCellSelecting, setIsCellSelecting] = useState(false)
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
-  const dataParams = buildDataParamsFromQuery(routerLocation.search)
-  const renderParams = buildRenderParamsFromQuery(routerLocation.search)
   const tabContainerEl = useRef(null)
 
+  const {
+    dataParams,
+    updateDataParams,
+    renderParams,
+    updateRenderParams,
+    routerLocation
+  } = useExploreTabRouter()
 
   // we keep a separate 'controlDataParams' object that updates after defaults are fetched from the server
   // this is kept separate so that the graphs do not see the change in cluster name from '' to
@@ -129,47 +58,6 @@ function RoutableExploreTab({ studyAccession }) {
     setExploreInfo(newExploreInfo)
   }
 
-  /** Merges the received update into the dataParams, and updates the page URL if need */
-  function updateDataParams(newOptions, wasUserSpecified=true) {
-    if (newOptions.cluster && !newOptions.spatialGroups) {
-      newOptions.spatialGroups = getDefaultSpatialGroupsForCluster(newOptions.cluster, exploreInfo.spatialGroups)
-    }
-    const mergedOpts = Object.assign({}, dataParams, newOptions)
-
-    const newRenderParams = _clone(renderParams)
-    if (wasUserSpecified) {
-      // this is just default params being fetched from the server, so don't change the url
-      Object.keys(newOptions).forEach(key => {
-        mergedOpts.userSpecified[key] = true
-      })
-      if (newOptions.consensus || newOptions.genes) {
-        // if the user does a gene search or changes the consensus, switch back to the default tab
-        delete newRenderParams.tab
-        delete newRenderParams.userSpecified.tab
-      }
-    }
-
-    const query = buildQueryFromParams(mergedOpts, newRenderParams)
-    // view options settings should not add history entries
-    // e.g. when a user hits 'back', it shouldn't undo their cluster selection,
-    // it should take them to the page they were on before they came to the explore tab
-    navigate(`${query}#study-visualize`, { replace: true })
-  }
-
-  /** Merges the received update into the renderParams, and updates the page URL if need */
-  function updateRenderParams(newOptions, wasUserSpecified=true) {
-    const mergedOpts = Object.assign({}, renderParams, newOptions)
-    if (wasUserSpecified) {
-      // this is just default params being fetched from the server, so don't change the url
-      Object.keys(newOptions).forEach(key => {
-        mergedOpts.userSpecified[key] = true
-      })
-    }
-    const query = buildQueryFromParams(dataParams, mergedOpts)
-    // view options settings should not add history entries
-    navigate(`${query}#study-visualize`, { replace: true })
-  }
-
   /** copies the url to the clipboard */
   function copyLink(routerLocation) {
     navigator.clipboard.writeText(routerLocation.href)
@@ -183,6 +71,13 @@ function RoutableExploreTab({ studyAccession }) {
   /** Handle clicks on "View Options" toggler element */
   function handleViewOptionsClick() {
     setShowViewOptionsControls(!showViewOptionsControls)
+  }
+
+  function updateClusterDataParams(newParams) {
+    if (newParams.cluster && !newParams.spatialGroups) {
+      newParams.spatialGroups = getDefaultSpatialGroupsForCluster(newParams.cluster, exploreInfo.spatialGroups)
+    }
+    updateDataParams(newParams)
   }
 
   useEffect(() => {
@@ -216,7 +111,7 @@ function RoutableExploreTab({ studyAccession }) {
 
           <ClusterControls studyAccession={studyAccession}
             dataParams={controlDataParams}
-            setDataParams={updateDataParams}
+            setDataParams={updateClusterDataParams}
             preloadedAnnotationList={exploreInfo ? exploreInfo.annotationList : null}
             fetchAnnotationList={false}
             showConsensus={dataParams.genes.length > 1}/>
