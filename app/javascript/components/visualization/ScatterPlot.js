@@ -92,7 +92,6 @@ export default function ScatterPlot({
   useUpdateLayoutEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
-      console.log('updating plotly dimensions')
       const { width, height } = dimensions
       const layoutUpdate = { width, height }
       window.Plotly.relayout(graphElementId, layoutUpdate)

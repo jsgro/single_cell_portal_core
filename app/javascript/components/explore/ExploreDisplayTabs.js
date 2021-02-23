@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
@@ -10,6 +10,7 @@ import DotPlot from 'components/visualization/DotPlot'
 import Heatmap from 'components/visualization/Heatmap'
 import { getAnnotationValues } from 'lib/cluster-utils'
 import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
+import useResizeEffect from 'hooks/useResizeEffect'
 
 const tabList = [
   { key: 'cluster', label: 'Cluster' },
@@ -42,10 +43,13 @@ export default function ExploreDisplayTabs(
     updateDataParams, updateRenderParams, isCellSelecting, plotPointsSelected, showViewOptionsControls
   }
 ) {
+  const [, setRenderForcer] = useState({})
   const isMultiGene = dataParams.genes.length > 1
   const isGene = dataParams.genes.length > 0
   const plotContainerClass = 'explore-plot-tab-content'
   let enabledTabs = []
+
+
 
   if (isGene) {
     if (isMultiGene) {
@@ -192,6 +196,12 @@ export default function ExploreDisplayTabs(
     return { width, height }
   }
 
+  /** on window resize call setRenderForcer, which is just trivial state to ensure a re-render
+   * ensuring that the plots get passed fresh dimensions */
+  useResizeEffect(() => {
+    setRenderForcer({})
+  }, 300)
+  console.log('rerendering ExploreDisplayTabs')
   return (
     <>
       <div className="row">
