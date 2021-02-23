@@ -155,7 +155,7 @@ export default function ExploreDisplayTabs(
   function getPlotDimensions({
     numColumns=1,
     numRows=1,
-    verticalPad=225,
+    verticalPad=250,
     horizontalPad=80,
     hasTitle=false
   }) {
@@ -202,6 +202,7 @@ export default function ExploreDisplayTabs(
     setRenderForcer({})
   }, 300)
   console.log('rerendering ExploreDisplayTabs')
+
   return (
     <>
       <div className="row">
@@ -256,7 +257,7 @@ export default function ExploreDisplayTabs(
                     updateRenderParams={updateRenderParams}
                     dimensions={getPlotDimensions({
                       numColumns: hasSelectedSpatialGroup ? 2 : 1,
-                      hasTitle: hasSelectedSpatialGroup
+                      hasTitle: true
                     })}
                     isCellSelecting={isCellSelecting}
                     plotPointsSelected={plotPointsSelected}
