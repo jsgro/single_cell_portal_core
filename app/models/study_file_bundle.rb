@@ -20,7 +20,9 @@ class StudyFileBundle
       'BAM' => ['BAM Index'],
       'Cluster' => ['Coordinate Labels']
   }
-  # parent file type requirements by child file type
+  # inverse of BUNDLE_REQUIREMENTS - this shows the required parent file type for each "bundled" file type
+  # this is used in the upload wizard for error handling when a user uploads a bundled file, but the parent
+  # has been deleted while the upload was in progress
   CHILD_REQUIREMENTS = {
     '10X Genes File' => 'MM Coordinate Matrix',
     '10X Barcodes File' => 'MM Coordinate Matrix',
