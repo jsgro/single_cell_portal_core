@@ -33,7 +33,7 @@ describe('dataParams are appropriately managed on the url', () => {
 
   /** This test validates that we are parsing data params on URL links in a certain way
     * This is IMPORTANT to make sure that we maintain URL consistency over time.
-    * e.g. if a user shares a ink to a certain cluster visualization, we want to be SURE
+    * e.g. if a user shares a link to a certain cluster visualization, we want to be SURE
     * that link stays stable.
     * So before making any updates to this test, please consult Devon and/or Vicky about the possible implications
     * of changing url parameters for our visualization */
