@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
+import Select from 'react-select'
 
 import StudyGeneField from './StudyGeneField'
 import ScatterPlot from 'components/visualization/ScatterPlot'
@@ -218,7 +219,7 @@ export default function ExploreDisplayTabs(
             </button>
           </div>
         </div>
-        <div className="col-md-6 col-md-offset-1">
+        <div className="col-md-4 col-md-offset-1">
           <ul className="nav nav-tabs" role="tablist" data-analytics-name="explore-default">
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label

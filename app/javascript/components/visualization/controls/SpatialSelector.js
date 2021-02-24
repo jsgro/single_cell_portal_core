@@ -1,7 +1,7 @@
 import React from 'react'
 import Select from 'react-select'
 
-import { clusterSelectStyle } from 'components/visualization/ClusterControls'
+import { clusterSelectStyle } from 'lib/cluster-utils'
 
 /** takes the server response and returns cluster options suitable for react-select */
 function getSpatialOptions(spatialGroups) {

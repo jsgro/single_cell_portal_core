@@ -4,10 +4,12 @@ import _clone from 'lodash/clone'
 import Study, { getByline } from 'components/search/results/Study'
 import DotPlot from 'components/visualization/DotPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
-import ClusterControls, { emptyDataParams } from 'components/visualization/ClusterControls'
+import ClusterSelector from 'components/visualization/controls/ClusterSelector'
+import AnnotationSelector from 'components/visualization/controls/AnnotationSelector'
+import SubsampleSelector from 'components/visualization/controls/SubsampleSelector'
+import ConsensusSelector from 'components/visualization/controls/ConsensusSelector'
 import { fetchClusterOptions } from 'lib/scp-api'
-import { getDefaultClusterParams, getAnnotationValues } from 'lib/cluster-utils'
-
+import { getDefaultClusterParams, getAnnotationValues, emptyDataParams } from 'lib/cluster-utils'
 
 
 /** Renders expression data for a study.  This assumes that the study has a 'gene_matches' property
@@ -27,8 +29,8 @@ export default function StudyGeneExpressions({ study }) {
   if (!study.gene_matches) {
     return <Study study={study}/>
   }
-
-  const showDotPlot = study.gene_matches.length > 1 && !dataParams.consensus
+  const isMultiGene = study.gene_matches.length > 1
+  const showDotPlot = isMultiGene && !dataParams.consensus
 
   if (!study.can_visualize_clusters) {
     studyRenderComponent = (
@@ -46,10 +48,14 @@ export default function StudyGeneExpressions({ study }) {
       annotationValues={annotationValues}/>
   } else {
     // render violin for single genes or collapsed
-    studyRenderComponent = <StudyViolinPlot studyAccession={study.accession} genes={study.gene_matches} dataParams={dataParams} setAnnotationList={setAnnotationList}/>
+    studyRenderComponent = <StudyViolinPlot
+      studyAccession={study.accession}
+      genes={study.gene_matches}
+      dataParams={dataParams}
+      setAnnotationList={setAnnotationList}/>
   }
 
-   useEffect(() => {
+  useEffect(() => {
     // if showing a dotplot, we need to fetch the annotation values to feed into morpheus
     if (showDotPlot) {
       fetchClusterOptions(study.accession).then(newAnnotationList => setAnnotationList(newAnnotationList))
@@ -79,13 +85,25 @@ export default function StudyGeneExpressions({ study }) {
           { studyRenderComponent }
         </div>
         <div className="col-md-2 graph-controls">
-          <ClusterControls
-            studyAccession={study.accession}
-            setDataParams={setDataParams}
-            dataParams={controlDataParams}
-            fetchAnnotationList={false}
-            showConsensus={study.gene_matches.length > 1}
-            preloadedAnnotationList={annotationList}/>
+          <div className="cluster-controls">
+            <ClusterSelector
+              annotationList={annotationList}
+              dataParams={controlDataParams}
+              updateDataParams={setDataParams}/>
+            <AnnotationSelector
+              annotationList={annotationList}
+              dataParams={controlDataParams}
+              updateDataParams={setDataParams}/>
+            <SubsampleSelector
+              annotationList={annotationList}
+              dataParams={controlDataParams}
+              updateDataParams={setDataParams}/>
+            { isMultiGene &&
+              <ConsensusSelector
+                dataParams={controlDataParams}
+                updateDataParams={setDataParams}/>
+            }
+          </div>
         </div>
       </div>
 

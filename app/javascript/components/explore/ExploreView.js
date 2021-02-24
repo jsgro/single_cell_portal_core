@@ -5,9 +5,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretLeft, faCaretRight, faLink } from '@fortawesome/free-solid-svg-icons'
 import _clone from 'lodash/clone'
 
-import ClusterControls from 'components/visualization/ClusterControls'
-import SpatialSelector from './SpatialSelector'
-import CreateAnnotation from './CreateAnnotation'
+import ClusterSelector from 'components/visualization/controls/ClusterSelector'
+import AnnotationSelector from 'components/visualization/controls/AnnotationSelector'
+import SubsampleSelector from 'components/visualization/controls/SubsampleSelector'
+import ConsensusSelector from 'components/visualization/controls/ConsensusSelector'
+import SpatialSelector from 'components/visualization/controls/SpatialSelector'
+import CreateAnnotation from 'components/visualization/controls/CreateAnnotation'
 import PlotDisplayControls from 'components/visualization/PlotDisplayControls'
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { fetchExplore } from 'lib/scp-api'
@@ -34,6 +37,8 @@ function RoutableExploreTab({ studyAccession }) {
     routerLocation
   } = useExploreTabRouter()
 
+  const annotationList = exploreInfo ? exploreInfo.annotationList : null
+
   // we keep a separate 'controlDataParams' object that updates after defaults are fetched from the server
   // this is kept separate so that the graphs do not see the change in cluster name from '' to
   // '<<default cluster>>' as a change that requires a re-fetch from the server
@@ -41,7 +46,7 @@ function RoutableExploreTab({ studyAccession }) {
   if (exploreInfo && !dataParams.cluster) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
     controlDataParams = Object.assign(controlDataParams,
-      getDefaultClusterParams(exploreInfo.annotationList, exploreInfo.spatialGroups))
+      getDefaultClusterParams(annotationList, exploreInfo.spatialGroups))
 
     dataParams.spatialGroups = controlDataParams.spatialGroups
   }
@@ -109,27 +114,40 @@ function RoutableExploreTab({ studyAccession }) {
             plotPointsSelected={plotPointsSelected}/>
         </div>
         <div className={controlPanelClass}>
-
-          <ClusterControls studyAccession={studyAccession}
-            dataParams={controlDataParams}
-            setDataParams={updateClusterDataParams}
-            preloadedAnnotationList={exploreInfo ? exploreInfo.annotationList : null}
-            fetchAnnotationList={false}
-            showConsensus={dataParams.genes.length > 1}/>
-          { hasSpatialGroups &&
-            <SpatialSelector spatialGroups={exploreInfo.spatialGroups}
+          <div className="cluster-controls">
+            <ClusterSelector
+              annotationList={annotationList}
+              dataParams={controlDataParams}
+              updateDataParams={updateClusterDataParams}
+              spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
+            {hasSpatialGroups &&
+              <SpatialSelector spatialGroups={exploreInfo.spatialGroups}
+                dataParams={controlDataParams}
+                updateDataParams={updateDataParams}/>
+            }
+            <AnnotationSelector
+              annotationList={annotationList}
               dataParams={controlDataParams}
               updateDataParams={updateDataParams}/>
-          }
-          <CreateAnnotation
-            isSelecting={isCellSelecting}
-            setIsSelecting={setIsCellSelecting}
-            annotationList={exploreInfo ? exploreInfo.annotationList : null}
-            currentPointsSelected={currentPointsSelected}
-            dataParams={controlDataParams}
-            updateDataParams={updateDataParams}
-            setAnnotationList={setAnnotationList}
-            studyAccession={studyAccession}/>
+            <CreateAnnotation
+              isSelecting={isCellSelecting}
+              setIsSelecting={setIsCellSelecting}
+              annotationList={exploreInfo ? exploreInfo.annotationList : null}
+              currentPointsSelected={currentPointsSelected}
+              dataParams={controlDataParams}
+              updateDataParams={updateDataParams}
+              setAnnotationList={setAnnotationList}
+              studyAccession={studyAccession}/>
+            <SubsampleSelector
+              annotationList={annotationList}
+              dataParams={controlDataParams}
+              updateDataParams={updateDataParams}/>
+            { dataParams.genes.length > 1 &&
+              <ConsensusSelector
+                dataParams={controlDataParams}
+                updateDataParams={updateDataParams}/>
+            }
+          </div>
           <PlotDisplayControls renderParams={renderParams}
             updateRenderParams={updateRenderParams}
             dataParams={controlDataParams}

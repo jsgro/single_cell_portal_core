@@ -2,6 +2,20 @@
  *  These live in a separate utility because multiple endpoints (explore, cluster, etc..)
  *  return annotationLists of the same basic structure */
 
+/** custom styling for cluster control-style select */
+export const clusterSelectStyle = {
+  control: provided => ({
+    ...provided,
+    borderColor: '#4d72aa'
+  })
+}
+
+export const emptyDataParams = {
+  cluster: '',
+  annotation: '',
+  subsample: '',
+  consensus: null
+}
 
 /** takes the server response and returns subsample default subsample for the cluster */
 export function getDefaultSubsampleForCluster(annotationList, clusterName) {
@@ -90,5 +104,5 @@ export function getMatchedAnnotation(annotation, annotationList) {
     })
     return matchedAnnotation
   }
-  return undefined
+  return null
 }
