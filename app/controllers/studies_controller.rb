@@ -602,7 +602,16 @@ class StudiesController < ApplicationController
   # parses happen in background to prevent UI blocking
   def parse
     @study_file = StudyFile.where(study_id: params[:id], upload_file_name: params[:file]).first
-    FileParseService.run_parse_job(@study_file, @study, current_user)
+    @status = FileParseService.run_parse_job(@study_file, @study, current_user)
+    # special handling for coordinate labels
+    if @study_file.file_type == 'Coordinate Labels' && @status[:status_code] == 412
+      # delete file and inform user of issue as this error is not recoverable
+      @file_name = @study_file.upload_file_name
+      @file_type = @study_file.file_type
+      @missing_file_type = StudyFileBundle::CHILD_REQUIREMENTS[@file_type]
+      DeleteQueueJob.new(@study_file).delay.perform
+      render 'deleted_bundle'
+    end
   end
 
   # method to download files if study is private, will create temporary signed_url after checking user quota
