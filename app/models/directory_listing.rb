@@ -12,7 +12,7 @@ class DirectoryListing
   include Swagger::Blocks
   include Rails.application.routes.url_helpers # for accessing download_file_path and download_private_file_path
 
-  PRIMARY_DATA_TYPES = %w(fq fastq).freeze
+  PRIMARY_DATA_TYPES = %w(fq fastq bam bai).freeze
   READ_PAIR_IDENTIFIERS = %w(_R1 _R2 _I1 _I2).freeze
   FILE_ARRAY_ATTRIBUTES = {
       name: 'String',
@@ -20,9 +20,14 @@ class DirectoryListing
       generation: 'String'
   }
   REQUIRED_ATTRIBUTES = %w(study_id name file_type files)
-  TAXON_REQUIRED_REGEX = /(fastq|fq)/
+  TAXON_REQUIRED_REGEX = /(fastq|fq|bam)/
   IGNORED_EXTENTIONS = %w(txt) # other file extentions to ignore
   MIN_SIZE = 10 # threshold of like file types required for creating DirectoryListing
+  COMPRESSION_SUFFIXES = %w(gz gzip zip tar)
+  # map of sequence file index extensions to their associated parent sequence file extension
+  SEQUENCE_IDX_BY_EXT = {
+    bai: 'bam'
+  }.with_indifferent_access
 
   belongs_to :study
   belongs_to :taxon, optional: true
@@ -122,7 +127,7 @@ class DirectoryListing
 
   # check if a directory_listing has a file
   def has_file?(filename)
-    !self.files.detect(filename).nil?
+    self.files.detect {|f| f[:name] == filename }.present?
   end
 
   # helper to generate correct urls for downloading fastq files
@@ -264,6 +269,19 @@ class DirectoryListing
       end
     end
     map
+  end
+
+  # get the file "type" from the file extension
+  # will group possible index files with their parent type
+  # will ignore any compression types and return base file type, if possible
+  def self.file_type_from_extension(filename)
+    ext = self.file_extension(filename)
+    sanitized_ext = ext.split('.').delete_if {|e| COMPRESSION_SUFFIXES.include?(e)}.join('.')
+    # fall back to extension if there is no base file type present, e.g. archive.zip, archive.tar.gz
+    if sanitized_ext.blank?
+      sanitized_ext = ext
+    end
+    SEQUENCE_IDX_BY_EXT[sanitized_ext].present? ? SEQUENCE_IDX_BY_EXT[sanitized_ext] : sanitized_ext
   end
 
   # helper to return file extension for a given filename
