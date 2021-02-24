@@ -104,7 +104,8 @@ export default function ScatterPlot({
         <PlotTitle
           cluster={clusterData.cluster}
           annotation={clusterData.annotParams.name}
-          gene={clusterData.gene}/>
+          gene={clusterData.gene}
+          consensus={clusterData.consensus}/>
       }
       <div
         className="scatter-graph"

@@ -386,10 +386,10 @@ export default function ExploreDisplayTabs(
                     </div>
                   }
                   { !hasSelectedSpatialGroup &&
-                    <span>
-                      Choose a spatial group using the control under View Options
-                      to view spatially-oriented gene expression
-                    </span>
+                    <div className="message-text">
+                      <span>To view spatially-oriented gene expression,
+                      use the &quot;Spatial Groups&quot; control in View Options</span>
+                    </div>
                   }
                 </div>
               </div>

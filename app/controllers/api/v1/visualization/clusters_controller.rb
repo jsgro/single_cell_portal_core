@@ -159,7 +159,7 @@ module Api
             else
               # For "Scatter" tab
               if is_collapsed_view
-                coordinates = ExpressionVizService.load_gene_set_expression_boxplot_scores(study, genes, cluster, annotation, consensus, subsample)
+                coordinates = ExpressionVizService.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample, y_axis_title, colorscale)
               else
                 coordinates = ExpressionVizService.load_expression_data_array_points(study, genes[0], cluster, annotation, subsample, y_axis_title, colorscale)
               end
@@ -191,8 +191,9 @@ module Api
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
             "coordinateLabels": coordinate_labels,
             "cluster": cluster.name,
-            "gene": genes.map {|g| g['name']}.join(' ,'),
-            "annotParams": annotation
+            "gene": genes.map {|g| g['name']}.join(', '),
+            "annotParams": annotation,
+            "consensus": consensus
           }
         end
       end
