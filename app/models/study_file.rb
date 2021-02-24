@@ -83,7 +83,7 @@ class StudyFile
   field :z_axis_min, type: Integer
   field :z_axis_max, type: Integer
   field :is_spatial, type: Boolean, default: false
-  # for cluster files, the ids of spatial files that correspond to this file for default display
+  # for spatial files, the ids of cluster files that correspond to this file for default display
   field :spatial_cluster_associations, type: Array, default: []
   field :queued_for_deletion, type: Boolean, default: false
   field :remote_location, type: String, default: ''

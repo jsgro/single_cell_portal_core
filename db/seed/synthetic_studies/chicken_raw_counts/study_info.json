@@ -30,13 +30,14 @@
     {
       "type": "Cluster",
       "filename": "raw2_chicken_40_cells_4_genes.cluster.txt",
-      "name": "cluster"
+      "name": "X cluster"
     },
     {
       "type": "Cluster",
       "filename": "raw2_chicken_40_cells_4_genes.spatial.txt",
       "name": "spatial_letters",
-      "is_spatial": true
+      "is_spatial": true,
+      "spatial_cluster_associations": ["X cluster"]
     },
     {
       "type": "Cluster",
@@ -47,6 +48,12 @@
       "type": "Cluster",
       "filename": "spatial_square.txt",
       "name": "spatial_square",
+      "is_spatial": true
+    },
+    {
+      "type": "Cluster",
+      "filename": "spatial_zigzag.txt",
+      "name": "spatial_zigzag",
       "is_spatial": true
     }
   ]
