@@ -133,11 +133,11 @@ class FileParseServiceTest < ActiveSupport::TestCase
     current_wait = 0
     interval = 10
     sleep interval
-    while !gene_list_file.parsed?
-      puts "After #{current_wait} seconds, #{gene_list_file.name} is #{gene_list_file.parse_status}"
+    while !gene_list.parsed?
+      puts "After #{current_wait} seconds, #{gene_list.name} is #{gene_list.parse_status}"
       sleep interval
       current_wait += interval
-      gene_list_file.reload
+      gene_list.reload
       if current_wait >= max_wait
         break
       end
