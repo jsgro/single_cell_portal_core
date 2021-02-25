@@ -24,24 +24,14 @@ function getAnnotationOptions(annotationList, clusterName) {
 }
 
 
-/** renders cluster, annotation, and (optionally) subsample and consensus controls for a study
-    by default, this control will handle fetching the dropdown options from the server.
-    If those options have already been fetched (or will be retrieved as part of a call already
-    being made, 'fetchAnnotationList' can be set to fale, and then a preloadedAnnotationList
-    can be provided
-
-    studyAccession: the study accesion
-    showConsensus: whether to show the consensus ('View as') dropdown
-    showSubsample: whether to show the subsample dropdown
-    preloadedAnnotationList: the results of a call to scpApi/fetchClusterOptions (or equivalent).
-      Only needs to be specified if fetchAnnotionList is false
-    fetchAnnotationList=true: whether this component should handle populating dropdown options
-    dataParams,
-    setDataParams
-    )
-
+/**
+  Renders an annotation selector.  Handles automatically updating the annotation and subsample when
+   the cluster is changed.
+    annotationList: the results of a call to scpApi/fetchClusterOptions (or equivalent).
+    dataParams: an object specifying cluster, annotation, and subsample selections
+    updateDataParams: update function for dataParams
   */
-export default function ClusterControls({
+export default function AnnotationControl({
   annotationList,
   dataParams,
   updateDataParams
@@ -69,12 +59,7 @@ export default function ClusterControls({
         value={shownAnnotation}
         getOptionLabel={annotation => annotation.name}
         getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
-        onChange={annotation => updateDataParams({
-          annotation,
-          cluster: dataParams.cluster,
-          subsample: dataParams.subsample,
-          consensus: dataParams.consensus
-        })}
+        onChange={annotation => updateDataParams({ annotation })}
         styles={clusterSelectStyle}/>
     </div>
   )

@@ -9,7 +9,11 @@ function getSpatialOptions(spatialGroups) {
   return clusterList.map(group => {return { label: group.name, value: group.name }})
 }
 
-/** component for displaying a spatial group selector */
+/** component for displaying a spatial group selector
+  @param spatialGroups: an array of spatial clusters, each with a 'name' property.
+  @param dataParams: an object specifying a spatialGroups property as an array of string names
+  @param updateDataParams: update function for dataParams
+*/
 export default function SpatialSelector({ dataParams, updateDataParams, spatialGroups }) {
   const options = getSpatialOptions(spatialGroups)
   return (
@@ -18,10 +22,6 @@ export default function SpatialSelector({ dataParams, updateDataParams, spatialG
       <Select options={options}
         value={dataParams.spatialGroups.map(name => ({ label: name, value: name }))}
         onChange={selectedOpts => updateDataParams({
-          annotation: dataParams.annotation,
-          cluster: dataParams.cluster,
-          subsample: dataParams.value,
-          consensus: dataParams.consensus,
           spatialGroups: selectedOpts ? selectedOpts.map(opt => opt.value) : []
         })}
         isMulti={true}

@@ -15,7 +15,8 @@ const consensusOptions = [
 ]
 
 /**
- * renders a consensus parameter chooser
+  @param dataParams: an object specifying cluster, annotation, and subsample selections
+  @param updateDataParams: update function for dataParams
  */
 export default function ConsensusSelector({
   dataParams,

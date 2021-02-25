@@ -37,7 +37,7 @@ function getSubsampleOptions(annotationList, clusterName) {
     )
 
   */
-export default function ClusterControls({
+export default function SubsampleSelector({
   annotationList,
   dataParams,
   updateDataParams
