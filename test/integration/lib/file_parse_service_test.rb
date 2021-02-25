@@ -132,15 +132,17 @@ class FileParseServiceTest < ActiveSupport::TestCase
     max_wait = 60
     current_wait = 0
     interval = 10
-    precomputed_score = @basic_study.precomputed_scores.by_name(gene_list_name)
-    while precomputed_score.nil?
+    sleep interval
+    while !gene_list_file.parsed?
+      puts "After #{current_wait} seconds, #{gene_list_file.name} is #{gene_list_file.parse_status}"
       sleep interval
       current_wait += interval
-      precomputed_score = @basic_study.precomputed_scores.by_name(gene_list_name)
+      gene_list_file.reload
       if current_wait >= max_wait
         break
       end
     end
+    precomputed_score = @basic_study.precomputed_scores.by_name(gene_list_name)
     assert precomputed_score.present?
   end
 
