@@ -7,6 +7,13 @@ import { stringifyQuery, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
 import { getIdentifierForAnnotation } from 'lib/cluster-utils'
 import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
 
+export const emptyDataParams = {
+  cluster: '',
+  annotation: '',
+  subsample: '',
+  consensus: null
+}
+
 /**
  * manages view options and basic layout for the explore tab
  * this component handles calling the api explore endpoint to get view options (clusters, etc..) for the study
@@ -54,6 +61,12 @@ export default function useExploreTabRouter() {
     // view options settings should not add history entries
     navigate(`${query}#study-visualize`, { replace: true })
   }
+
+  // this hook is provided so that non-react parts of the study-overview page can link
+  // to visualizations without requiring a page reload.
+  // e.g. 'browse in genome' for BAM files
+  window.SCP.updateExploreRenderParams = updateRenderParams
+
 
   return { dataParams, updateDataParams, renderParams, updateRenderParams, routerLocation }
 }
@@ -107,7 +120,8 @@ function buildQueryFromParams(dataParams, renderParams) {
     scatterColor: renderParams.scatterColor,
     distributionPlot: renderParams.distributionPlot,
     distributionPoints: renderParams.distributionPoints,
-    heatmapFit: renderParams.heatmapFit
+    heatmapFit: renderParams.heatmapFit,
+    bamFileName: renderParams.bamFileName
   }
   // remove keys which were not user-specified
   Object.keys(querySafeOptions).forEach(key => {
@@ -120,7 +134,7 @@ function buildQueryFromParams(dataParams, renderParams) {
 }
 
 const PARAM_LIST_ORDER = ['genes', 'cluster', 'spatialGroups', 'annotation', 'subsample', 'consensus', 'tab',
-  'scatterColor', 'distributionPlot', 'distributionPoints', 'heatmapFit', 'heatmapRowCentering']
+  'scatterColor', 'distributionPlot', 'distributionPoints', 'heatmapFit', 'heatmapRowCentering', 'bamFileName']
 /** sort function for passing to stringify to ensure url params are specified in a user-friendly order */
 function paramSorter(a, b) {
   return PARAM_LIST_ORDER.indexOf(a) - PARAM_LIST_ORDER.indexOf(b)
@@ -131,7 +145,7 @@ function buildRenderParamsFromQuery(query) {
   const queryParams = queryString.parse(query)
   const renderParams = _clone(defaultRenderParams)
   renderParams.userSpecified = {}
-  const urlProps = ['scatterColor', 'distributionPlot', 'distributionPoints', 'tab', 'heatmapFit']
+  const urlProps = ['scatterColor', 'distributionPlot', 'distributionPoints', 'tab', 'heatmapFit', 'bamFileName']
   urlProps.forEach(optName => {
     if (queryParams[optName] && queryParams[optName].length) {
       renderParams[optName] = queryParams[optName]

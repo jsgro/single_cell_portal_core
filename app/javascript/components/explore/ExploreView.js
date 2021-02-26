@@ -23,9 +23,13 @@ import { getDefaultClusterParams, getDefaultSpatialGroupsForCluster } from 'lib/
  * this component handles calling the api explore endpoint to get view options (clusters, etc..) for the study
  */
 function RoutableExploreTab({ studyAccession }) {
+  // stores the basic study overview data from the server, used to determine what views are available
   const [exploreInfo, setExploreInfo] = useState(null)
+  // tracks whetehr the view options controls are open or closed
   const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
+  // whether the user is in lass-select mode for selecting points for an annotation
   const [isCellSelecting, setIsCellSelecting] = useState(false)
+  // a plotly points_selected event
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
   const tabContainerEl = useRef(null)
 

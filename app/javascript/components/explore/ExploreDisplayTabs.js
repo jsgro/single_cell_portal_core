@@ -2,13 +2,13 @@ import React, { useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
-import Select from 'react-select'
 
 import StudyGeneField from './StudyGeneField'
 import ScatterPlot from 'components/visualization/ScatterPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import DotPlot from 'components/visualization/DotPlot'
 import Heatmap from 'components/visualization/Heatmap'
+import GenomeView from './GenomeView'
 import { getAnnotationValues } from 'lib/cluster-utils'
 import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
 import useResizeEffect from 'hooks/useResizeEffect'
@@ -19,7 +19,8 @@ const tabList = [
   { key: 'distribution', label: 'Distribution' },
   { key: 'dotplot', label: 'Dot Plot' },
   { key: 'heatmap', label: 'Heatmap' },
-  { key: 'spatial', label: 'Spatial' }
+  { key: 'spatial', label: 'Spatial' },
+  { key: 'genome', label: 'Genome' }
 ]
 
 const ideogramHeight = 140
@@ -48,21 +49,9 @@ export default function ExploreDisplayTabs(
   const isMultiGene = dataParams.genes.length > 1
   const isGene = dataParams.genes.length > 0
   const plotContainerClass = 'explore-plot-tab-content'
-  let enabledTabs = []
-
-  if (isGene) {
-    if (isMultiGene) {
-      if (dataParams.consensus) {
-        enabledTabs = ['scatter', 'distribution', 'dotplot']
-      } else {
-        enabledTabs = ['dotplot', 'heatmap']
-      }
-    } else {
-      enabledTabs = ['scatter', 'distribution']
-    }
-  } else {
-    enabledTabs = ['cluster']
-  }
+  const hasSpatialGroups = exploreInfo && exploreInfo.spatialGroups.length > 0
+  const hasGenomeFiles = exploreInfo && exploreInfo.bamBundleList.length > 0
+  const enabledTabs = getEnabledTabs(isGene, isMultiGene, hasSpatialGroups, !!dataParams.consensus, hasGenomeFiles)
 
   // dataParams object without genes specified, to pass to cluster comparison plots
   const referencePlotDataParams = _clone(dataParams)
@@ -94,13 +83,10 @@ export default function ExploreDisplayTabs(
   }
 
   // Handle spatial transcriptomics data
-  let hasSpatialGroups = false
   let hasSelectedSpatialGroup = false
   let spatialDataParamsArray = []
   const spatialRefPlotDataParamsArray = []
   if (exploreInfo) {
-    hasSpatialGroups = exploreInfo.spatialGroups.length > 0
-
     if (dataParams.spatialGroups[0]) {
       hasSelectedSpatialGroup = true
 
@@ -127,9 +113,6 @@ export default function ExploreDisplayTabs(
           spatialRefPlotDataParamsArray.push(spatialRefParams)
         })
       }
-    }
-    if (hasSpatialGroups && isMultiGene && !dataParams.consensus) {
-      enabledTabs.unshift('spatial')
     }
   }
 
@@ -446,27 +429,43 @@ export default function ExploreDisplayTabs(
                 dimensions={getPlotDimensions({})}/>
             </div>
           }
+          { enabledTabs.includes('genome') &&
+            <div className={shownTab === 'genome' ? '' : 'hidden'}>
+              <GenomeView
+                studyAccession={studyAccession}
+                bamFileName={renderParams.bamFileName}
+                isVisible={shownTab === 'genome'}
+                dimensions={getPlotDimensions({})}/>
+            </div>
+          }
         </div>
       </div>
     </>
   )
 }
 
-/** Renders a plot title for scatter plots */
-export function PlotTitle({ cluster, annotation, gene, spatial }) {
-  let content
-  if (spatial) {
-    if (gene) {
-      content = <span className="cluster-title">{spatial} <span className="detail">{gene} expression</span></span>
+/** return an array of the tabs that should be shown, given the dataParams and exploreInfo */
+function getEnabledTabs(isGene, isMultiGene, hasSpatialGroups, isConsensus, hasGenomeFiles) {
+  let enabledTabs = []
+  if (isGene) {
+    if (isMultiGene) {
+      if (isConsensus) {
+        enabledTabs = ['scatter', 'distribution', 'dotplot']
+      } else if (hasSpatialGroups) {
+        enabledTabs = ['spatial', 'dotplot', 'heatmap']
+      } else {
+        enabledTabs = ['dotplot', 'heatmap']
+      }
     } else {
-      content = <span className="cluster-title">{spatial} <span className="detail">(spatial)</span></span>
+      enabledTabs = ['scatter', 'distribution']
     }
-  } else if (!gene) {
-    content = <span className="cluster-title">{cluster}</span>
   } else {
-    content = <span className="cluster-title">{gene} expression</span>
+    enabledTabs = ['cluster']
   }
-  return <h5 className="plot-title">{ content } </h5>
+  if (hasGenomeFiles) {
+    enabledTabs.push('genome')
+  }
+  return enabledTabs
 }
 
 /** renders the dot plot tab for multi gene searches */

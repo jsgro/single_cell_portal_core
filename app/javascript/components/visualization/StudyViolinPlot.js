@@ -61,8 +61,6 @@ export default function StudyViolinPlot({
     let distributionPlot = results.plotType
     if (renderParams.distributionPlot) {
       distributionPlot = renderParams.distributionPlot
-    } else {
-      distributionPlot = results.plotType
     }
     if (!distributionPlot) {
       distributionPlot = defaultDistributionPlot

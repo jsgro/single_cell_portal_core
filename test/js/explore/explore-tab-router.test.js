@@ -42,7 +42,7 @@ describe('dataParams are appropriately managed on the url', () => {
     routerNav.mockImplementation(() => {})
     const locationMock = jest.spyOn(Reach, 'useLocation')
     let urlString = '?genes=agpat2,apoe&cluster=foo&annotation=bar--group--study&subsample=1000'
-    urlString += '&spatialGroups=square,circle&consensus=mean&heatmapRowCentering=z-score'
+    urlString += '&spatialGroups=square,circle&consensus=mean&heatmapRowCentering=z-score&bamFileName=sample1.bam'
     locationMock.mockImplementation(() => ({ search: urlString }))
 
     const { dataParams, updateDataParams } = useExploreTabRouter()
@@ -54,6 +54,7 @@ describe('dataParams are appropriately managed on the url', () => {
       spatialGroups: ['square', 'circle'],
       consensus: 'mean',
       heatmapRowCentering: 'z-score',
+      bamFileName: 'sample1.bam',
       userSpecified: {
         annotation: true,
         cluster: true,
@@ -67,7 +68,7 @@ describe('dataParams are appropriately managed on the url', () => {
 
     updateDataParams({ spatialGroups: ['triangle'] })
     let expectedUrlString = '?genes=agpat2%2Capoe&cluster=foo&spatialGroups=triangle&annotation=bar--group--study&subsample=1000'
-    expectedUrlString += '&consensus=mean&heatmapRowCentering=z-score#study-visualize'
+    expectedUrlString += '&consensus=mean&heatmapRowCentering=z-score&bamFileName=sample1.bam#study-visualize'
     expect(routerNav).toHaveBeenLastCalledWith(expectedUrlString, { replace: true })
   })
 })
