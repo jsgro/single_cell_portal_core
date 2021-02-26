@@ -266,7 +266,6 @@ class SiteController < ApplicationController
         if @study.update(study_params)
           # invalidate caches as a precaution
           CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
-          set_study_default_options
           if @study.initialized?
             @cluster = @study.default_cluster
             @options = ClusterVizService.load_cluster_group_options(@study)
@@ -274,18 +273,14 @@ class SiteController < ApplicationController
             set_selected_annotation
           end
 
-          @study_files = @study.study_files.non_primary_data.sort_by(&:name)
-          @primary_study_files = @study.study_files.by_type('Fastq')
-          @directories = @study.directory_listings.are_synced
-          @primary_data = @study.directory_listings.primary_data
-          @other_data = @study.directory_listings.non_primary_data
-
           # double check on download availability: first, check if administrator has disabled downloads
           # then check if FireCloud is available and disable download links if either is true
           @allow_downloads = ApplicationController.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
-        else
-          set_study_default_options
         end
+        set_firecloud_permissions(@study.detached?)
+        set_study_permissions(@study.detached?)
+        set_study_default_options
+        set_study_download_options
       else
         set_study_default_options
         @alert = 'You do not have permission to perform that action.'
@@ -305,31 +300,24 @@ class SiteController < ApplicationController
   # load single study and view top-level clusters
   def study
     @study.update(view_count: @study.view_count + 1)
-    @study_files = @study.study_files.non_primary_data.sort_by(&:name)
-    @primary_study_files = @study.study_files.primary_data
-    @directories = @study.directory_listings.are_synced
-    @primary_data = @study.directory_listings.primary_data
-    @other_data = @study.directory_listings.non_primary_data
     @unique_genes = @study.unique_genes
     @taxons = @study.expressed_taxon_names
 
+    # set general state of study to enable various tabs in UI
     # double check on download availability: first, check if administrator has disabled downloads
     # then check individual statuses to see what to enable/disable
     # if the study is 'detached', then everything is set to false by default
     set_firecloud_permissions(@study.detached?)
     set_study_permissions(@study.detached?)
     set_study_default_options
+    set_study_download_options
+
     # load options and annotations
     if @study.can_visualize_clusters?
       @options = ClusterVizService.load_cluster_group_options(@study)
       @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
       # call set_selected_annotation manually
       set_selected_annotation
-    end
-
-    if @study.has_download_agreement?
-      @download_agreement = @study.download_agreement
-      @user_accepted_agreement = @download_agreement.user_accepted?(current_user)
     end
 
     # only populate if study has ideogram results & is not 'detached'
@@ -1233,6 +1221,21 @@ class SiteController < ApplicationController
       error_context = ErrorTracker.format_extra_context(@study)
       ErrorTracker.report_exception(e, current_user, error_context)
       MetricsService.report_error(e, request, current_user, @study)
+    end
+  end
+
+  # set all file download variables for study_download tab
+  def set_study_download_options
+    @study_files = @study.study_files.non_primary_data.sort_by(&:name)
+    @primary_study_files = @study.study_files.primary_data
+    @directories = @study.directory_listings.are_synced
+    @primary_data = @study.directory_listings.primary_data
+    @other_data = @study.directory_listings.non_primary_data
+
+    # load download agreement/user acceptance, if present
+    if @study.has_download_agreement?
+      @download_agreement = @study.download_agreement
+      @user_accepted_agreement = @download_agreement.user_accepted?(current_user)
     end
   end
 
