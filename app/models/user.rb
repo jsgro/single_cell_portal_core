@@ -158,7 +158,7 @@ class User
       end
     else
       Rails.logger.error "#{Time.zone.now}: Unable to generate access token for user #{self.email} due to missing refresh token"
-      nil
+      {} # default empty value to prevent NoMethodError for nil object when using empty token
     end
   end
 
