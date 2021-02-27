@@ -62,12 +62,6 @@ export default function useExploreTabRouter() {
     navigate(`${query}#study-visualize`, { replace: true })
   }
 
-  // this hook is provided so that non-react parts of the study-overview page can link
-  // to visualizations without requiring a page reload.
-  // e.g. 'browse in genome' for BAM files
-  window.SCP.updateExploreRenderParams = updateRenderParams
-
-
   return { dataParams, updateDataParams, renderParams, updateRenderParams, routerLocation }
 }
 

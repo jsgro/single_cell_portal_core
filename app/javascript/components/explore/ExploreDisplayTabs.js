@@ -435,7 +435,7 @@ export default function ExploreDisplayTabs(
                 studyAccession={studyAccession}
                 bamFileName={renderParams.bamFileName}
                 isVisible={shownTab === 'genome'}
-                dimensions={getPlotDimensions({})}/>
+                updateRenderParams={updateRenderParams}/>
             </div>
           }
         </div>

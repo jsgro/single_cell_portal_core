@@ -8,10 +8,10 @@ import { fetchBamFileInfo } from 'lib/scp-api'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 /** Component for displaying IGV for any bam/bai files provided with the study */
-function GenomeView({ studyAccession, bamFileName, isVisible, dimensions }) {
+function GenomeView({ studyAccession, bamFileName, isVisible, updateRenderParams }) {
   const [isLoading, setIsLoading] = useState(false)
   const [bamFileList, setBamFileList] = useState(null)
-  const [igvInitializedFiles, setIgvInitializedFiles] = useState("")
+  const [igvInitializedFiles, setIgvInitializedFiles] = useState('')
   const [igvContainerId] = useState(_uniqueId('study-igv-'))
 
   useEffect(() => {
@@ -39,8 +39,9 @@ function GenomeView({ studyAccession, bamFileName, isVisible, dimensions }) {
         listToShow = listToShow.filter(file => file.name === bamFileName)
       }
       const fileNamesToShow = listToShow.map(file => file.name).join(',')
-      // we only want to render igv when this tab is visible, but we don't want to rerender
-      // every time the user toggles.  So we track what the last files are that we initialized
+      // we only want to render igv when this tab is visible (igv can't draw itself to hidden panels)
+      // but we don't want to rerender every time the user toggles.
+      // So we track what the last files are that we initialized
       // IGV with, and only rerender if they are different.
       if (igvInitializedFiles !== fileNamesToShow) {
         initializeIgv(igvContainerId, listToShow, bamFileList.gtfFiles)
@@ -48,6 +49,28 @@ function GenomeView({ studyAccession, bamFileName, isVisible, dimensions }) {
       setIgvInitializedFiles(fileNamesToShow)
     }
   }, [fileListString, bamFileName, isVisible])
+
+  /** handle clicks on the download 'browse in genome' buttons
+   * This should get refactored when/if we migrate the other study-overview tabs to react
+  */
+  useEffect(() => {
+    $(document).on('click', '.bam-browse-genome', e => {
+      $('#study-visualize-nav > a').click()
+      const selectedBam = $(e.target).attr('data-filename')
+      updateRenderParams({ bamFileName: selectedBam, tab: 'genome' })
+    })
+    $(document).on('click', '#study-visualize-nav > a', () => {
+      // IGV doesn't handle rendering to hidden divs. So for edge cases where this renders but is not shown
+      // (e.g. someone is viewing the genome tab, then navigates to summary tab, then reloads the page)
+      // we trigger a resize event so that IGV will know to redraw itself
+      if (isVisible) {
+        window.dispatchEvent(new Event('resize'))
+      }
+    })
+    return () => {
+      $(document).off('click', '.bam-browse-genome')
+    }
+  }, [])
 
   return <div>
     { isLoading &&

@@ -36,10 +36,6 @@ $(document).on('click', '.bam-browse-genome', function(e) {
     selectedBams[thisBam] = 1
   }
 
-  if (window.SCP.updateExploreRenderParams) {
-    window.SCP.updateExploreRenderParams({ bamFileName: selectedBam, tab: 'genome' })
-  }
-
   $('#study-visualize-nav > a').click()
   $('#genome-tab-nav > a').click()
 })
