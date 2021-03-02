@@ -225,6 +225,7 @@ class ExpressionVizService
     # will check if there are more than SUBSAMPLE_THRESHOLD cells present in the cluster, and subsample accordingly
     # values hash will be assembled differently depending on annotation scope (cluster-based is array, study-based is a hash)
     cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
+
     if annotation[:scope] == 'cluster'
       annotations = cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
       cells.each_with_index do |cell, index|

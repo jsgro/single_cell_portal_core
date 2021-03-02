@@ -68,7 +68,6 @@ async function renderSingleGenePlots(study, gene) {
     // only show ideogram for single gene queries
     window.showRelatedGenesIdeogram()
   }
-
 }
 
 /** Listen for events, and update view accordingly */

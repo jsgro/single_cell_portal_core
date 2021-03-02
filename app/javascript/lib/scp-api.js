@@ -42,6 +42,17 @@ export function studyNameAsUrlParam(studyName) {
   return studyName.toLowerCase().replace(/ /g, '-').replace(/[^0-9a-z-]/gi, '')
 }
 
+/** convert a gene param string to an array of individual gene names */
+export function geneParamToArray(genes) {
+  return genes ? genes.split(',') : []
+}
+
+/** convert a gene array to a gene param string */
+export function geneArrayToParam(genes) {
+  return genes ? genes.join(',') : ''
+}
+
+
 /** Configure an `init` for `fetch` to use POST, and respect any mocking  */
 function defaultPostInit(mock=false) {
   let init = defaultInit
@@ -116,6 +127,7 @@ export async function createUserAnnotation(
   let message = ''
   let annotations = {}
   let errorType = null
+  let newAnnotations = []
 
   // Consider refactoring this when migrating user-annotations.js to
   // React, so components share more error handling logic and UI
@@ -134,11 +146,12 @@ export async function createUserAnnotation(
     // Parse JSON of successful response
     message = jsonOrResponse.message
     annotations = jsonOrResponse.annotations
+    newAnnotations = jsonOrResponse.annotationList
   }
 
   logCreateUserAnnotation()
 
-  return { message, annotations, errorType }
+  return { message, annotations, errorType, newAnnotations }
 }
 
 /**
@@ -190,9 +203,9 @@ export function setMockOrigin(origin) {
 }
 
 /** Constructs and encodes URL parameters; omits those with no value */
-function stringifyQuery(paramObj) {
+export function stringifyQuery(paramObj, sort) {
   // Usage and API: https://github.com/sindresorhus/query-string#usage
-  const options = { skipEmptyString: true, skipNull: true }
+  const options = { skipEmptyString: true, skipNull: true, sort }
   const stringified = queryString.stringify(paramObj, options)
   return `?${stringified}`
 }
@@ -231,7 +244,7 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  *
  * @param {String} studyAccession Study accession
  * @param {String} cluster Name of cluster, as defined at upload
- * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
+ * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study", or object with name,type, and scope properties
  * @param {String} subsample Subsampling threshold, e.g. 100000
  * @param {String} consensus Statistic to use for consensus, e.g. "mean"
  * @param {Boolean} isAnnotatedScatter If showing "Annotated scatter" plot.
@@ -246,7 +259,13 @@ export async function fetchCluster(
   isAnnotatedScatter=null, mock=false
 ) {
   // Digest full annotation name to enable easy validation in API
-  const [annotName, annotType, annotScope] = annotation.split('--')
+  let [annotName, annotType, annotScope] = [annotation.name, annotation.type, annotation.scope]
+  if (annotName == undefined) {
+    [annotName, annotType, annotScope] = annotation.split('--')
+  }
+  if (Array.isArray(gene)) {
+    gene = gene.join(',')
+  }
   // eslint-disable-next-line camelcase
   const is_annotated_scatter = isAnnotatedScatter
   const paramObj = {
@@ -260,7 +279,7 @@ export async function fetchCluster(
   }
 
   const params = stringifyQuery(paramObj)
-  if (!cluster) {
+  if (!cluster || cluster === '') {
     cluster = '_default'
   }
   const apiUrl = `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
@@ -377,12 +396,16 @@ export function getAnnotationCellValuesURL(studyAccession, clusterName, annotati
  * @param {Array} genes List of gene names to get expression data for
  *
  */
-export function getExpressionHeatmapURL(studyAccession, genes, cluster, annotation, subsample) {
+export function getExpressionHeatmapURL({
+  studyAccession, genes, cluster,
+  annotation, subsample, heatmapRowCentering
+}) {
   const paramObj = {
     cluster,
     annotation,
     subsample,
-    genes: genes.join(','),
+    genes: geneArrayToParam(genes),
+    row_centered: heatmapRowCentering,
     url_safe_token: getURLSafeAccessToken()
   }
   const path = `/studies/${studyAccession}/expression/heatmap${stringifyQuery(paramObj)}`

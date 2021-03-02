@@ -74,14 +74,18 @@ module Api
           else
             cluster = nil
           end
-
+          spatial_group_options = ClusterVizService.load_spatial_options(@study)
           explore_props = {
             cluster: cluster,
             taxonNames: @study.expressed_taxon_names,
             inferCNVIdeogramFiles: ideogram_files,
             uniqueGenes: @study.unique_genes,
+            annotationList: AnnotationVizService.get_study_annotation_options(@study, current_api_user),
             clusterGroupNames: ClusterVizService.load_cluster_group_options(@study),
-            spatialGroupNames: ClusterVizService.load_spatial_options(@study),
+            # spatialGroupNames is for legacy compatibility -- it should be removed once
+            # the react refactor is no longer feature-flagged
+            spatialGroupNames: spatial_group_options.map { |opt| opt[:name] },
+            spatialGroups: spatial_group_options,
             clusterPointAlpha: @study.default_cluster_point_alpha
           }
 

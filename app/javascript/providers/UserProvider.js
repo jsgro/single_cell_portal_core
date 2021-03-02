@@ -13,6 +13,11 @@ export function getAccessToken() {
   return ('SCP' in window) ? window.SCP.userAccessToken : 'test'
 }
 
+/** returns true if the current user is logged in */
+export function isUserLoggedIn() {
+  return !!getAccessToken()
+}
+
 /**
   * Returns a scope-limited access token that can be used as a URL param
   * window.SCP is not available when running via Jest tests,
@@ -59,8 +64,10 @@ export default function UserProvider({ user, children }) {
   userState.updateFeatureFlags = updateFeatureFlags
   userState.accessToken = getAccessToken()
   userState.isAnonymous = !userState.accessToken
-  userState.featureFlagsWithDefaults = userState.featureFlagsWithDefaults ? userState.featureFlagsWithDefaults : getFeatureFlagsWithDefaults()
+  userState.featureFlagsWithDefaults = userState.featureFlagsWithDefaults ?
+    userState.featureFlagsWithDefaults : getFeatureFlagsWithDefaults()
 
+  /** update the user's feature flags on the server */
   async function updateFeatureFlags(updatedFlags) {
     const mergedFlags = Object.assign({}, userState.featureFlagsWithDefaults, updatedFlags)
     const updatedUser = Object.assign({}, userState)

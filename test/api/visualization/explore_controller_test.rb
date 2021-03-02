@@ -56,7 +56,7 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     assert_equal ['clusterA.txt'], json['clusterGroupNames']
-    assert_equal ['spatialA.txt'], json['spatialGroupNames']
+    assert_equal [{"name" => 'spatialA.txt', "associated_clusters" => []}], json['spatialGroups']
 
     execute_http_request(:get, api_v1_study_explore_path(@empty_study))
     assert_equal [], json['clusterGroupNames']

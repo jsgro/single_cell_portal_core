@@ -7,12 +7,12 @@
   "files": [
     {
       "type": "Metadata",
-      "filename": "raw2_chicken_40_cells_4_genes.metadata.txt",
-      "use_metadata_convention": false
+      "filename": "metadata.txt",
+      "use_metadata_convention": true
     },
     {
       "type": "Expression Matrix",
-      "filename": "raw2_chicken_40_cells_4_genes.processed_dense.txt",
+      "filename": "raw2_chicken_40_cells_4_genes.raw_dense.txt",
       "species_scientific_name": "Gallus gallus",
       "expression_file_info": {
         "is_raw_counts": true,
@@ -23,14 +23,37 @@
       }
     },
     {
+      "type": "Expression Matrix",
+      "filename": "raw2_chicken_40_cells_4_genes.processed_dense.txt",
+      "species_scientific_name": "Gallus gallus"
+    },
+    {
       "type": "Cluster",
       "filename": "raw2_chicken_40_cells_4_genes.cluster.txt",
-      "name": "cluster"
+      "name": "X cluster"
     },
     {
       "type": "Cluster",
       "filename": "raw2_chicken_40_cells_4_genes.spatial.txt",
-      "name": "spatial",
+      "name": "spatial_letters",
+      "is_spatial": true,
+      "spatial_cluster_associations": ["X cluster"]
+    },
+    {
+      "type": "Cluster",
+      "filename": "cluster_square.txt",
+      "name": "cluster_square"
+    },
+    {
+      "type": "Cluster",
+      "filename": "spatial_square.txt",
+      "name": "spatial_square",
+      "is_spatial": true
+    },
+    {
+      "type": "Cluster",
+      "filename": "spatial_zigzag.txt",
+      "name": "spatial_zigzag",
       "is_spatial": true
     }
   ]

@@ -90,7 +90,12 @@ module Api
             "User Annotation: '#{params[:name]}' successfully saved.  " +
             "You can now view this annotation via the \"Annotations\" dropdown."
 
-          render json: {message: message, annotations: annotations}
+          render json: {
+            message: message,
+            annotations: annotations, # annotation list suitable for updating non-React study explore tab
+            # annotation list for updating React study explore tab
+            annotationList: AnnotationVizService.available_annotations(@study, cluster: nil, current_user: current_api_user)
+          }
 
         # Handle errors in saving user annotation
         rescue ArgumentError => e

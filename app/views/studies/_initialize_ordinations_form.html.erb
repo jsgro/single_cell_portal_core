@@ -6,20 +6,24 @@
   <%= hidden_field_tag :partial, 'initialize_ordinations_form' %>
   <%= hidden_field_tag :filename_to_upload, '', class: 'filename-to-upload' %>
   <%= f.hidden_field :study_file_bundle_id %>
+  <%= f.hidden_field :spatial_cluster_associations, {class: 'hidden spatial_cluster_associations', multiple: true} %>
   <% if User.feature_flag_for_instance(current_user, 'spatial_transcriptomics') %>
     <div class="form-group row">
-      <div class="col-sm-12">
+      <div class="col-sm-4" >
         <%= f.label :is_spatial, 'Coordinate data type: ' %><br/>
         <%= f.label :is_spatial_false, {for: "is_spatial_false_#{study_file._id}"} do %>
-          <%= f.radio_button :is_spatial, false, {id: "is_spatial_false_#{study_file._id}"} %>
+          <%= f.radio_button :is_spatial, false, {id: "is_spatial_false_#{study_file._id}", class: "is_spatial_false"}  %>
           Clustering
         <% end %>
         &nbsp;
         <%= f.label :is_spatial_true, {for: "is_spatial_true_#{study_file._id}"} do %>
-          <%= f.radio_button :is_spatial, true, {id: "is_spatial_true_#{study_file._id}"} %>
+          <%= f.radio_button :is_spatial, true, {id: "is_spatial_true_#{study_file._id}", class: "is_spatial_true"} %>
           Spatial transcriptomics positions
         <% end %>
 
+      </div>
+      <div class="col-sm-8">
+        <div class="spatial_associations_select"></div>
       </div>
     </div>
   <% end %>
@@ -74,10 +78,10 @@
     </div>
   </div>
 	<div class="form-group row">
-		<div class="col-sm-4">
-			<%= f.label :file_type %><br />
-			<%= f.text_field :file_type, readonly: true, class: 'form-control file-type' %>
-		</div>
+    <div class="col-sm-4">
+      <%= f.label :file_type %><br />
+      <%= f.text_field :file_type, readonly: true, class: 'form-control file-type' %>
+    </div>
 		<div class="col-sm-5 upload-field">
       <% if !study_file.upload_file_name.nil? %>
         <p><label>Link to file </label><br /><%= render partial: '/layouts/download_link', locals: {study: @study, study_file: study_file} %></p>
@@ -109,8 +113,9 @@
 		</table>
 	</div>
 	<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-
-    $("#ordinations_form_<%= study_file._id %>").find('.upload-clusters').click(function() {
+    console.log("#ordinations_form_<%= study_file._id %>")
+    var ordsFormSelector = "#ordinations_form_<%= study_file._id %>"
+    $(ordsFormSelector).find('.upload-clusters').click(function() {
         if ($("#ordinations_form_<%= study_file._id %>").find('#study_file_name').val() == '') {
             alert('You must provide a name for this cluster before uploading a file.');
             return false;
@@ -118,16 +123,35 @@
     });
 
     // validate uniqueness of names before submit
-    validateUnique("#ordinations_form_<%= study_file._id %>", '.cluster-name');
+    validateUnique(ordsFormSelector, '.cluster-name');
 
     // sanitize cluster names on change
-    $("#ordinations_form_<%= study_file._id %>").on('change', '.cluster-name', function() {
-        validateName($(this).val(), $("#ordinations_form_<%= study_file._id %> .cluster-name"));
+    $(ordsFormSelector).on('change', '.cluster-name', function() {
+        validateName($(this).val(), $(`${ordsFormSelector} .cluster-name`));
     });
 
-		$(function() {
+    function updateClusterAssnSelect() {
+      const clusterAssnTarget = $(`${ordsFormSelector} .spatial_associations_select`)[0]
+      const pairedHiddenField = $(`${ordsFormSelector} .spatial_cluster_associations`)[0]
+      const isNew = <%= study_file.new_record? %>
+      <% opts =  @study.study_files.where(file_type: 'Cluster', is_spatial: false).map {|f| {label: f.name, value: f.id.to_s}}
+         current_values = study_file.spatial_cluster_associations.map {|aid| opts.find {|opt| opt[:value] == aid }} %>
+      const opts = <%= opts.to_json.html_safe %>
+      const current_values = <%= current_values.to_json.html_safe %>
+      window.SCP.renderClusterAssociationSelect(clusterAssnTarget, opts, current_values, isNew, pairedHiddenField)
+    }
 
-			$('#ordinations_form_<%= study_file._id %>').fileupload({
+    <% if User.feature_flag_for_instance(current_user, 'react_explore')  %>
+      updateClusterAssnSelect()
+
+      $('form').on('change', '.is_spatial_true , .is_spatial_false', function() {
+        updateClusterAssnSelect()
+      })
+    <% end %>
+
+    $(function() {
+
+			$(ordsFormSelector).fileupload({
 				url: "<%= upload_study_path(@study._id) %>",
 				maxChunkSize: 10000000,
 				type: 'PATCH',
@@ -136,8 +160,8 @@
 					  fileUploading = true;
 					  var that = this;
 					  var fileName = data.files[0].name.replace(/ /g, '_');
-            $('#ordinations_form_<%= study_file._id %> .filename-to-upload').val(fileName);
-            canUpload = validateCandidateUpload("#ordinations_form_<%= study_file._id %>", fileName, $('.initialize_ordinations_form .filename-to-upload'));
+            $(`${ordsFormSelector} .filename-to-upload`).val(fileName);
+            canUpload = validateCandidateUpload(ordsFormSelector, fileName, $('.initialize_ordinations_form .filename-to-upload'));
             if ( canUpload ) {
                 $.getJSON("<%= resume_upload_study_path %>", {file: fileName}, function (result) {
                     var file = result.file;
@@ -150,7 +174,7 @@
                     }
                 });
             } else {
-                $('#ordinations_form_<%= study_file._id %> .filename-to-upload').val('');
+                $(`${ordsFormSelector} .filename-to-upload`).val('');
             }
 				},
 				chunkdone: function(e, data) {
@@ -176,7 +200,7 @@
                           file: fileName,
                           modal_target: '#ordinations-parse-<%= study_file._id %>-modal',
                           partial: 'initialize_ordinations_form',
-                          selector: "#ordinations_form_<%= study_file._id %>"
+                          selector: ordsFormSelector
                       },
                       dataType: 'script'
                   });

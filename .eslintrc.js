@@ -58,6 +58,7 @@ module.exports = {
         'key-spacing': 'warn',
         'keyword-spacing': 'warn',
         'lines-between-class-members': 'warn',
+        'max-len': ['error', { 'code': 120 }],
         'multiline-comment-style': 'off',
         'no-lonely-if': 'warn',
         'no-multi-assign': 'warn',

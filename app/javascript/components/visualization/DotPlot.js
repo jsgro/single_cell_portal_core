@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import _uniqueId from 'lodash/uniqueId'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faDna } from '@fortawesome/free-solid-svg-icons'
 
 import { log, startPendingEvent } from 'lib/metrics-api'
 import { getColorBrewerColor } from 'lib/plot'
 import DotPlotLegend from './DotPlotLegend'
+import { getAnnotationCellValuesURL, getExpressionHeatmapURL } from 'lib/scp-api'
 
 export const dotPlotColorScheme = {
   // Blue, purple, red.  These red and blue hues are accessible, per WCAG.
@@ -13,32 +16,70 @@ export const dotPlotColorScheme = {
   values: [0, 0.5, 1]
 }
 
-/** renders a morpheus powered dotPlot for the given URL paths and annotation */
-export default function DotPlot({ expressionValuesURL, annotationCellValuesURL, annotation }) {
+/** renders a morpheus powered dotPlot for the given URL paths and annotation
+  * Note that this has a lot in common with Heatmap.js.  they are separate for now
+  * as their display capabilities may diverge (esp. since DotPlot is used in global gene search)
+  * @param cluster {string} the name of the cluster, or blank/null for the study's default
+  * @param annotation {obj} an object with name, type, and scope attributes
+  * @param subsample {string} a string for the subsampel to be retrieved.
+  * @param consensus {string} for multi-gene expression plots
+  * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
+  */
+export default function DotPlot({
+  studyAccession, genes=[], cluster, annotation={},
+  subsample, annotationValues, dimensions
+}) {
   const [graphId] = useState(_uniqueId('dotplot-'))
+  const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster })
+  const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
+    cluster,
+    annotation.name,
+    annotation.scope,
+    annotation.type,
+    subsample)
+
+  let dimensionsFn = null
+  if (dimensions?.width) {
+    dimensionsFn = () => dimensions.width
+  }
+
   useEffect(() => {
-    const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
-    log('dot-plot:initialize')
-    renderDotPlot(
-      `#${graphId}`,
-      expressionValuesURL,
-      annotationCellValuesURL,
-      annotation,
-      '',
-      450
-    )
-    plotEvent.complete()
-  }, [expressionValuesURL, annotationCellValuesURL, annotation.name, annotation.scope])
+    if (annotation.name) {
+      const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
+      log('dot-plot:initialize')
+      renderDotPlot({
+        target: `#${graphId}`,
+        expressionValuesURL,
+        annotationCellValuesURL,
+        annotationName: annotation.name,
+        annotationValues,
+        dimensionsFn
+      })
+      plotEvent.complete()
+    }
+  }, [
+    expressionValuesURL,
+    annotationCellValuesURL,
+    annotation.name,
+    annotation.scope
+  ])
+
   return (
     <div>
-      <div id={graphId} className="dotplot-graph"></div>
-      <DotPlotLegend/>
+      { cluster &&
+      <>
+        <div id={graphId} className="dotplot-graph"></div>
+        <DotPlotLegend/>
+      </> }
+      { !cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </div>
   )
 }
 
 /** Render Morpheus dot plot */
-function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotHeight=450) {
+function renderDotPlot(
+  { target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues, dimensionsFn }
+) {
   const $target = $(target)
   $target.empty()
 
@@ -49,7 +90,7 @@ function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotH
       collapse_method: 'Mean',
       shape: 'circle',
       collapse: ['Columns'],
-      collapse_to_fields: [annotation.name],
+      collapse_to_fields: [annotationName],
       pass_expression: '>',
       pass_value: '0',
       percentile: '100',
@@ -59,57 +100,30 @@ function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotH
 
   const config = {
     shape: 'circle',
-    dataset: dataPath,
+    dataset: expressionValuesURL,
     el: $target,
     menu: null,
     colorScheme: {
       scalingMode: 'relative'
     },
     focus: null,
-    // We implement our own trivial tab manager as it seems to be the only way
-    // (after 2+ hours of digging) to prevent morpheus auto-scrolling
-    // to the heatmap once it's rendered
-    tabManager: {
-      add: (options) => {
-        $target.empty()
-        $target.append(options.$el)
-        return {id: $target.attr('id'), $panel: $target}
-      },
-      setTabTitle: () => {},
-      setActiveTab: () => {},
-      getWidth: () => $target.width(),
-      getHeight: () => $target.height(),
-      getTabCount: () => 1
-    },
+    tabManager: morpheusTabManager($target, dimensionsFn),
     tools
   }
 
-  // Fit rows, columns, or both to screen
-  if (fitType === 'cols') {
-    config.columnSize = 'fit'
-  } else if (fitType === 'rows') {
-    config.rowSize = 'fit'
-  } else if (fitType === 'both') {
-    config.columnSize = 'fit'
-    config.rowSize = 'fit'
-  } else {
-    config.columnSize = null
-    config.rowSize = null
-  }
-
   // Load annotations if specified
-  if (annotPath !== '') {
+  if (annotationCellValuesURL !== '') {
     config.columnAnnotations = [{
-      file: annotPath,
+      file: annotationCellValuesURL,
       datasetField: 'id',
       fileField: 'NAME',
-      include: [annotation.name]
+      include: [annotationName]
     }]
     config.columnSortBy = [
-      { field: annotation.name, order: 0 }
+      { field: annotationName, order: 0 }
     ]
     config.columns = [
-      { field: annotation.name, display: 'text' }
+      { field: annotationName, display: 'text' }
     ]
     config.rows = [
       { field: 'id', display: 'text' }
@@ -117,13 +131,13 @@ function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotH
 
     // Create mapping of selected annotations to colorBrewer colors
     const annotColorModel = {}
-    annotColorModel[annotation.name] = {}
-    const sortedAnnots = annotation['values'].sort()
+    annotColorModel[annotationName] = {}
+    const sortedAnnots = annotationValues.sort()
 
     // Calling % 27 will always return to the beginning of colorBrewerSet
     // once we use all 27 values
     $(sortedAnnots).each((index, annot) => {
-      annotColorModel[annotation.name][annot] = getColorBrewerColor(index)
+      annotColorModel[annotationName][annot] = getColorBrewerColor(index)
     })
     config.columnColorModel = annotColorModel
   }
@@ -132,4 +146,27 @@ function renderDotPlot(target, dataPath, annotPath, annotation, fitType='', dotH
 
   // Instantiate dot plot and embed in DOM element
   new window.morpheus.HeatMap(config)
+}
+
+/** return a trivial tab manager that handles focus and sizing
+ * We implement our own trivial tab manager as it seems to be the only way
+ * (after 2+ hours of digging) to prevent morpheus auto-scrolling
+ * to a heatmap once it's rendered
+ */
+export function morpheusTabManager($target, dimensionsFn) {
+  if (!dimensionsFn) {
+    dimensionsFn = () => $target.width()
+  }
+  return {
+    add: options => {
+      $target.empty()
+      $target.append(options.$el)
+      return { id: $target.attr('id'), $panel: $target }
+    },
+    setTabTitle: () => {},
+    setActiveTab: () => {},
+    getWidth: () => {return dimensionsFn().width},
+    getHeight: () => $target.height(),
+    getTabCount: () => 1
+  }
 }

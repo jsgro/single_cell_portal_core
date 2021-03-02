@@ -77,6 +77,7 @@ class SyntheticStudyPopulator
         use_metadata_convention: finfo['use_metadata_convention'] ? true : false,
         status: study.detached ? 'new' : 'uploading',
         study: study
+
       }
 
       study_file_params.merge!(process_genomic_file_params(finfo))
@@ -105,6 +106,14 @@ class SyntheticStudyPopulator
           throw "No cluster file with name #{finfo['cluster_file_name']} to match coordinate labels"
         end
         study_file_params[:options] = {'cluster_file_id' => matching_cluster_file.id.to_s}
+      end
+
+      if finfo['spatial_cluster_associations'].present?
+        # look up the ids for the associations
+        # note that this requires the associated file to have already been added
+        study_file_params[:spatial_cluster_associations] = finfo['spatial_cluster_associations'].map do |cluster_file_name|
+          StudyFile.find_by!(study: study, name: cluster_file_name).id.to_s
+        end
       end
 
       study_file = StudyFile.create!(study_file_params)

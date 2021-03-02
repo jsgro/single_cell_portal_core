@@ -477,7 +477,8 @@ h6,
 
 .detail {
   font-style: italic;
-  color: #888;
+  color: #777;
+  font-weight: normal;
 }
 
 .flexbox {
@@ -497,6 +498,11 @@ h6,
   }
   margin-top: 1em;
   font-size: 14px;
+}
+
+.message-text {
+	text-align: center;
+	padding: 3em;
 }
 
 

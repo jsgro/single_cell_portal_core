@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { logError } from 'lib/metrics-api'
-/* convert to readable message  e.g.
+/** convert to readable message  e.g.
  * "foobar is not defined    in ResultsPanel (at HomePageContent.js:22)"
  */
 function readableErrorMessage(error, info) {
@@ -12,22 +12,25 @@ function readableErrorMessage(error, info) {
   return error.message + info.componentStack.split('\n')[1]
 }
 
-/*
+/**
  * See https://reactjs.org/docs/error-boundaries.html
  * note that this must be a class component
  * as hooks do not support componentDidCatch yet
  */
 export default class ErrorBoundary extends Component {
+  /** initialize to a non-error state */
   constructor(props) {
     super(props)
     this.state = { error: null }
   }
 
+  /** log an error, and then update the display to show the error */
   componentDidCatch(error, info) {
     logError(readableErrorMessage(error, info))
     this.setState({ error, info })
   }
 
+  /** show an error if one exists, otherwise show the component */
   render() {
     if (this.state.error) {
       // consider using node_env to decide whether or not to render the full trace
@@ -43,7 +46,7 @@ export default class ErrorBoundary extends Component {
     return this.props.children
   }
 }
-// HOC for wrapping arbitrary components in error boundaries
+/** HOC for wrapping arbitrary components in error boundaries */
 export function withErrorBoundary(Component) {
   return function SafeWrappedComponent(props) {
     return (
