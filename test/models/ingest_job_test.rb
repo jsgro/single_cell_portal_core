@@ -144,4 +144,28 @@ class IngestJobTest < ActiveSupport::TestCase
       assert_equal expected_outputs, job_analytics
     end
   end
+
+  test 'should limit size when reading error logfile for email' do
+    job = IngestJob.new(study: @basic_study, study_file: @basic_study_exp_file, user: @user, action: :ingest_expression)
+    file_location = @basic_study_exp_file.bucket_location
+    output_length = 1024
+
+    # test both with & without range and assert limit is enforced
+    [nil, (0...100)].each do |range|
+      output = StringIO.new(SecureRandom.alphanumeric(output_length))
+      mock = Minitest::Mock.new
+      mock.expect :workspace_file_exists?, true, [@basic_study.bucket_id, file_location]
+      mock.expect :execute_gcloud_method, output, [:read_workspace_file, 0, @basic_study.bucket_id, file_location]
+      ApplicationController.stub :firecloud_client, mock do
+        contents = job.read_parse_logfile(file_location, delete_on_read: false, range: range)
+        mock.verify
+        expected_size = range.present? ? range.last: output_length
+        assert_equal expected_size, contents.size
+        # ensure correct bytes are returned
+        output.rewind
+        expected_output = range.present? ? output.read[range] : output.read
+        assert_equal expected_output, contents
+      end
+    end
+  end
 end
