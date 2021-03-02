@@ -502,14 +502,16 @@ class IngestJob
   # * *params*
   #   - +filepath+ (String) => relative path of file to read in bucket
   #   - +delete_on_read+ (Boolean) => T/F to remove logfile from bucket after reading, defaults to true
+  #   - +range+ (Range) => Byte range to read from file
   #
   # * *returns*
   #   - (String) => Contents of file
-  def read_parse_logfile(filepath, delete_on_read: true)
+  def read_parse_logfile(filepath, delete_on_read: true, range: nil)
     if ApplicationController.firecloud_client.workspace_file_exists?(self.study.bucket_id, filepath)
       file_contents = ApplicationController.firecloud_client.execute_gcloud_method(:read_workspace_file, 0, self.study.bucket_id, filepath)
       ApplicationController.firecloud_client.execute_gcloud_method(:delete_workspace_file, 0, self.study.bucket_id, filepath) if delete_on_read
-      file_contents.read
+      # read file range manually since GCS download requests don't honor range parameter apparently
+      range.present? ? file_contents.read[range] : file_contents.read
     end
   end
 
@@ -674,7 +676,8 @@ class IngestJob
       error_contents = self.read_parse_logfile(self.user_error_filepath)
       message_body = "<p>'#{self.study_file.upload_file_name}' has failed during parsing.</p>"
     when :dev
-      error_contents = self.read_parse_logfile(self.dev_error_filepath, delete_on_read: false)
+      # only read first megabyte of error log to avoid email delivery failure
+      error_contents = self.read_parse_logfile(self.dev_error_filepath, delete_on_read: false, range: 0..1.megabyte)
       message_body = "<p>The file '#{self.study_file.upload_file_name}' uploaded by #{self.user.email} to #{self.study.accession} failed to ingest.</p>"
       message_body += "<p>A copy of this file can be found at #{self.generate_bucket_browser_tag}</p>"
       message_body += "<p>Detailed logs and PAPI events as follows:"
