@@ -88,7 +88,7 @@ function GenomeView({ studyAccession, bamFileName, isVisible, updateExploreParam
     <div>
       <div id={igvContainerId}></div>
     </div>
-    { bamFileName && bamFileList?.length > 1 &&
+    { bamFileName && bamFileList?.bamAndBaiFiles?.length > 1 &&
       <a className="action" onClick={showAllFiles}>See all sequence files for this study</a>
     }
   </div>
@@ -102,21 +102,18 @@ export default SafeGenomeView
  * Get tracks for selected BAM files, to show sequencing reads
  */
 function getBamTracks(bamAndBaiFiles) {
-  let bam; let bamTrack; let i; let bamFileName
+  let bam; let bamTrack; let i;
 
   const bamTracks = []
 
   for (i = 0; i < bamAndBaiFiles.length; i++) {
     bam = bamAndBaiFiles[i]
 
-    // Extracts BAM file name from its GCS API URL
-    bamFileName = bam.url.split('/o/')[1].split('?')[0]
-
     bamTrack = {
       url: bam.url,
       indexURL: bam.indexUrl,
       oauthToken: window.accessToken,
-      label: bamFileName
+      label: bam.name
     }
     bamTracks.push(bamTrack)
   }
@@ -157,6 +154,7 @@ function initializeIgv(containerId, bamAndBaiFiles, gtfFiles) {
   delete igv.browser
 
   const igvContainer = document.getElementById(containerId)
+  igvContainer.innerHTML = ''
 
   const genomeId = bamAndBaiFiles[0].genomeAssembly
 
