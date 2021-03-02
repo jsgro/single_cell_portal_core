@@ -22,8 +22,10 @@ function CreateAnnotation({
   annotationList,
   setAnnotationList,
   studyAccession,
-  dataParams,
-  updateDataParams
+  cluster,
+  annotation,
+  subsample,
+  updateClusterParams
 }) {
   const [showControl, setShowControl] = useState(false)
   const [isLoading, setIsLoading] = useState(!!annotationList)
@@ -36,7 +38,7 @@ function CreateAnnotation({
   const messages = validationMessages(userLabels, annotationName, annotationList ? annotationList.annotations : {})
   const isCreateEnabled = messages.length === 0
 
-  /** handle the use3r updating the name of one of the annotations */
+  /** handle the user updating the name of one of the annotations */
   function setLabelName(name, annotIndex) {
     const newUserAnnots = userLabels.map((annot, index) => {
       return {
@@ -62,16 +64,16 @@ function CreateAnnotation({
         message: `User Annotation: ${annotationName} successfully saved`,
         footer: 'You can now view this annotation via the "Annotations" dropdown.'
       })
-      setAnnotationList(Object.assign({}, annotationList, { annotations: newAnnotations }))
+      setAnnotationList({ ...annotationList, annotations: newAnnotations })
       const newAnnotation = newAnnotations.find(a => a.name === annotationName && a.scope === 'user')
-      updateDataParams({ // set the user-created annotation as the currently selected one
+      updateClusterParams({ // set the user-created annotation as the currently selected one
         annotation: {
           name: newAnnotation.id,
           type: 'group',
           scope: 'user'
         },
-        cluster: dataParams.cluster,
-        subsample: dataParams.subsample
+        cluster,
+        subsample
       })
     } else {
       setResponseModalContent({
@@ -96,18 +98,18 @@ function CreateAnnotation({
         values: selection.cells.join(',')
       }
     })
-    let attachedAnnotation = dataParams.annotation
+    let attachedAnnotation = annotation
     if (attachedAnnotation.scope === 'user') {
       // user annotations have to be bound to a non-user created annotation, so if the current shown
       // annotation is a user-defined one, attach this to the cluster default instead
-      attachedAnnotation = getDefaultAnnotationForCluster(annotationList, dataParams.cluster)
+      attachedAnnotation = getDefaultAnnotationForCluster(annotationList, cluster)
     }
     setIsLoading(true)
     createUserAnnotation(
       studyAccession,
-      dataParams.cluster,
+      cluster,
       getIdentifierForAnnotation(attachedAnnotation),
-      dataParams.subsample,
+      subsample,
       annotationName,
       selectionPayload
     ).then(handleCreateResponse)

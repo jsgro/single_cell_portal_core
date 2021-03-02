@@ -9,7 +9,7 @@ import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { useUpdateLayoutEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
 
-
+// sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
   'Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu', 'Reds', 'Blues', 'Picnic',
   'Rainbow', 'Portland', 'Jet', 'Hot', 'Blackbody', 'Earth', 'Electric', 'Viridis', 'Cividis'
@@ -18,12 +18,23 @@ export const SCATTER_COLOR_OPTIONS = [
 export const defaultScatterColor = 'Reds'
 
 
-/** Renders the appropriate scatter plot for the given study and dataParams
-  * See ExploreView.js for the full specification of the dataParams object
+/** Renders the appropriate scatter plot for the given study and params
+  * @param studyAccession {string} e.g. 'SCP213'
+  * @param cluster {string} the name of the cluster, or blank/null for the study's default
+  * @param annotation {obj} an object with name, type, and scope attributes
+  * @param subsample {string} a string for the subsampel to be retrieved.
+  * @param consensus {string} for multi-gene expression plots
+  * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
+  *   this is useful for rendering to hidden divs
+  * @param updateScatterColor {function} function for updating the scatter color -- will be called if no
+  *   scatterColor is specified, but the retrieved graph data does specify a scatter color
+  * @param isCellSelecting whether plotly's lasso selection tool is enabled
+  * @plotPointsSelected {function} callback for when a user selects points on the plot, which corresponds
+  *   to the plotly "points_selected" event
   */
 export default function ScatterPlot({
-  studyAccession, dataParams, renderParams, dimensions,
-  updateRenderParams, numColumns=1, numRows=1, isCellSelecting=false, plotPointsSelected
+  studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
+  updateScatterColor, isCellSelecting=false, plotPointsSelected
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
@@ -38,13 +49,13 @@ export default function ScatterPlot({
     layout.height = height
     formatMarkerColors(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
     formatHoverLabels(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
-    const dataScatterColor = processTraceScatterColor(clusterResponse.data, renderParams.scatterColor)
+    const dataScatterColor = processTraceScatterColor(clusterResponse.data, scatterColor)
     Plotly.newPlot(graphElementId, clusterResponse.data, layout)
     $(`#${graphElementId}`).off('plotly_selected')
     $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
 
-    if (dataScatterColor !== renderParams.scatterColor) {
-      updateRenderParams({ scatterColor: dataScatterColor })
+    if (dataScatterColor !== scatterColor) {
+      updateScatterColor(dataScatterColor)
     }
     setClusterData(clusterResponse)
     setIsLoading(false)
@@ -54,26 +65,22 @@ export default function ScatterPlot({
   useEffect(() => {
     setIsLoading(true)
     fetchCluster(studyAccession,
-      dataParams.cluster,
-      dataParams.annotation ? dataParams.annotation : '',
-      dataParams.subsample,
-      dataParams.consensus,
-      dataParams.genes).then(handleResponse)
-  }, [dataParams.cluster,
-    dataParams.annotation.name,
-    dataParams.subsample,
-    dataParams.consensus,
-    dataParams.genes.join(',')])
+      cluster,
+      annotation ? annotation : '',
+      subsample,
+      consensus,
+      genes).then(handleResponse)
+  }, [cluster, annotation.name, subsample, consensus, genes.join(',')])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateLayoutEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
       console.log('updating color scale')
-      const dataUpdate = { 'marker.colorscale': renderParams.scatterColor }
+      const dataUpdate = { 'marker.colorscale': scatterColor }
       Plotly.update(graphElementId, dataUpdate)
     }
-  }, [renderParams.scatterColor])
+  }, [scatterColor])
 
   // Handles cell select mode updates
   useUpdateLayoutEffect(() => {

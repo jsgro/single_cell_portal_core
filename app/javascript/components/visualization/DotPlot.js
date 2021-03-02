@@ -18,26 +18,40 @@ export const dotPlotColorScheme = {
 
 /** renders a morpheus powered dotPlot for the given URL paths and annotation
   * Note that this has a lot in common with Heatmap.js.  they are separate for now
-  * as their display capabilities may diverge (esp. since DotPlot is used in global gene search)*/
-export default function DotPlot({ studyAccession, genes, dataParams, annotationValues, dimensionsFn }) {
+  * as their display capabilities may diverge (esp. since DotPlot is used in global gene search)
+  * @param cluster {string} the name of the cluster, or blank/null for the study's default
+  * @param annotation {obj} an object with name, type, and scope attributes
+  * @param subsample {string} a string for the subsampel to be retrieved.
+  * @param consensus {string} for multi-gene expression plots
+  * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
+  */
+export default function DotPlot({
+  studyAccession, genes=[], cluster, annotation={},
+  subsample, annotationValues, dimensions
+}) {
   const [graphId] = useState(_uniqueId('dotplot-'))
-  const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster: dataParams.cluster })
+  const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster })
   const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
-    dataParams.cluster,
-    dataParams.annotation.name,
-    dataParams.annotation.scope,
-    dataParams.annotation.type,
-    dataParams.subsample)
+    cluster,
+    annotation.name,
+    annotation.scope,
+    annotation.type,
+    subsample)
+
+  let dimensionsFn = null
+  if (dimensions?.width) {
+    dimensionsFn = () => dimensions.width
+  }
 
   useEffect(() => {
-    if (dataParams.annotation.name) {
+    if (annotation.name) {
       const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
       log('dot-plot:initialize')
       renderDotPlot({
         target: `#${graphId}`,
         expressionValuesURL,
         annotationCellValuesURL,
-        annotationName: dataParams.annotation.name,
+        annotationName: annotation.name,
         annotationValues,
         dimensionsFn
       })
@@ -46,18 +60,18 @@ export default function DotPlot({ studyAccession, genes, dataParams, annotationV
   }, [
     expressionValuesURL,
     annotationCellValuesURL,
-    dataParams.annotation.name,
-    dataParams.annotation.scope
+    annotation.name,
+    annotation.scope
   ])
 
   return (
     <div>
-      { dataParams.cluster &&
+      { cluster &&
       <>
         <div id={graphId} className="dotplot-graph"></div>
         <DotPlotLegend/>
       </> }
-      { !dataParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+      { !cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </div>
   )
 }

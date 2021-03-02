@@ -16,13 +16,13 @@ import { getDefaultClusterParams, getAnnotationValues, emptyDataParams } from 'l
     to inform which genes to show data for
   */
 export default function StudyGeneExpressions({ study }) {
-  const [dataParams, setDataParams] = useState(_clone(emptyDataParams))
+  const [clusterParams, setClusterParams] = useState(_clone(emptyDataParams))
   const [annotationList, setAnnotationList] = useState(null)
-  let controlDataParams = _clone(dataParams)
+  let controlClusterParams = _clone(clusterParams)
 
-  if (annotationList && !dataParams.cluster) {
+  if (annotationList && !clusterParams.cluster) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
-    controlDataParams = Object.assign(controlDataParams, getDefaultClusterParams(annotationList))
+    controlClusterParams = Object.assign(controlClusterParams, getDefaultClusterParams(annotationList))
   }
 
   let studyRenderComponent
@@ -30,7 +30,7 @@ export default function StudyGeneExpressions({ study }) {
     return <Study study={study}/>
   }
   const isMultiGene = study.gene_matches.length > 1
-  const showDotPlot = isMultiGene && !dataParams.consensus
+  const showDotPlot = isMultiGene && !clusterParams.consensus
 
   if (!study.can_visualize_clusters) {
     studyRenderComponent = (
@@ -41,18 +41,25 @@ export default function StudyGeneExpressions({ study }) {
     )
   } else if (showDotPlot) {
     // render dotPlot for multigene searches that are not collapsed
-    const annotationValues = getAnnotationValues(controlDataParams.annotation, annotationList)
+    const annotationValues = getAnnotationValues(controlClusterParams.annotation, annotationList)
     studyRenderComponent = <DotPlot studyAccession={study.accession}
       genes={study.gene_matches}
-      dataParams={controlDataParams}
+      {...controlClusterParams}
       annotationValues={annotationValues}/>
   } else {
     // render violin for single genes or collapsed
     studyRenderComponent = <StudyViolinPlot
       studyAccession={study.accession}
       genes={study.gene_matches}
-      dataParams={dataParams}
+      {...clusterParams}
       setAnnotationList={setAnnotationList}/>
+  }
+
+  /** handles cluster selection to also populate the default spatial groups */
+  function updateClusterParams(newParams) {
+    // if the user updates any cluster params, store all of them in the URL so we don't end up with
+    // broken urls in the event of a default cluster/annotation changes
+    setClusterParams(Object.assign({}, controlClusterParams, newParams))
   }
 
   useEffect(() => {
@@ -88,20 +95,20 @@ export default function StudyGeneExpressions({ study }) {
           <div className="cluster-controls">
             <ClusterSelector
               annotationList={annotationList}
-              dataParams={controlDataParams}
-              updateDataParams={setDataParams}/>
+              {...controlClusterParams}
+              updateClusterParams={updateClusterParams}/>
             <AnnotationSelector
               annotationList={annotationList}
-              dataParams={controlDataParams}
-              updateDataParams={setDataParams}/>
+              {...controlClusterParams}
+              updateClusterParams={updateClusterParams}/>
             <SubsampleSelector
               annotationList={annotationList}
-              dataParams={controlDataParams}
-              updateDataParams={setDataParams}/>
+              {...controlClusterParams}
+              updateClusterParams={updateClusterParams}/>
             { isMultiGene &&
               <ConsensusSelector
-                dataParams={controlDataParams}
-                updateDataParams={setDataParams}/>
+                {...controlClusterParams}
+                updateConsensus={consensus => updateClusterParams({ consensus })}/>
             }
           </div>
         </div>

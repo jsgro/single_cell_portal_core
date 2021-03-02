@@ -8,7 +8,7 @@ import { fetchBamFileInfo } from 'lib/scp-api'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 /** Component for displaying IGV for any bam/bai files provided with the study */
-function GenomeView({ studyAccession, bamFileName, isVisible, updateRenderParams }) {
+function GenomeView({ studyAccession, bamFileName, isVisible, updateExploreParams }) {
   const [isLoading, setIsLoading] = useState(false)
   const [bamFileList, setBamFileList] = useState(null)
   const [igvInitializedFiles, setIgvInitializedFiles] = useState('')
@@ -57,7 +57,7 @@ function GenomeView({ studyAccession, bamFileName, isVisible, updateRenderParams
     $(document).on('click', '.bam-browse-genome', e => {
       $('#study-visualize-nav > a').click()
       const selectedBam = $(e.target).attr('data-filename')
-      updateRenderParams({ bamFileName: selectedBam, tab: 'genome' })
+      updateExploreParams({ bamFileName: selectedBam, tab: 'genome' })
     })
     $(document).on('click', '#study-visualize-nav > a', () => {
       // IGV doesn't handle rendering to hidden divs. So for edge cases where this renders but is not shown
@@ -72,6 +72,11 @@ function GenomeView({ studyAccession, bamFileName, isVisible, updateRenderParams
     }
   }, [])
 
+  /** show the full list of files, rather than the specific selected one */
+  function showAllFiles() {
+    updateExploreParams({ bamFileName: '' })
+  }
+
   return <div>
     { isLoading &&
       <FontAwesomeIcon
@@ -83,6 +88,9 @@ function GenomeView({ studyAccession, bamFileName, isVisible, updateRenderParams
     <div>
       <div id={igvContainerId}></div>
     </div>
+    { bamFileName && bamFileList?.length > 1 &&
+      <a className="action" onClick={showAllFiles}>See all sequence files for this study</a>
+    }
   </div>
 }
 
