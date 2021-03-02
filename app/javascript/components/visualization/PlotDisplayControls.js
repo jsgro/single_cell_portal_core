@@ -8,33 +8,33 @@ import { SCATTER_COLOR_OPTIONS } from 'components/visualization/ScatterPlot'
 import { DISTRIBUTION_PLOT_OPTIONS, DISTRIBUTION_POINTS_OPTIONS } from 'components/visualization/StudyViolinPlot'
 import { ROW_CENTERING_OPTIONS, FIT_OPTIONS } from 'components/visualization/Heatmap'
 
-export const defaultRenderParams = {
+export const defaultExploreParams = {
   scatterColor: undefined,
   distributionPlot: undefined,
   heatmapFit: undefined
 }
 
 /** the graph customization controls for the exlore tab */
-export default function RenderControls({ renderParams, updateRenderParams, dataParams, updateDataParams }) {
+export default function RenderControls({ exploreParams, updateExploreParams }) {
   const [showScatter, setShowScatter] = useState(false)
   const [showHeatmap, setShowHeatmap] = useState(false)
   const [showDistribution, setShowDistribution] = useState(false)
 
-  const scatterColorValue = renderParams.scatterColor ? renderParams.scatterColor : ''
-  let distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS.find(opt => opt.value === renderParams.distributionPlot)
+  const scatterColorValue = exploreParams.scatterColor ? exploreParams.scatterColor : ''
+  let distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS.find(opt => opt.value === exploreParams.distributionPlot)
   if (!distributionPlotValue) {
     distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS[0]
   }
-  let heatmapRowCenteringValue = ROW_CENTERING_OPTIONS.find(opt => opt.value === dataParams.heatmapRowCentering)
+  let heatmapRowCenteringValue = ROW_CENTERING_OPTIONS.find(opt => opt.value === exploreParams.heatmapRowCentering)
   if (!heatmapRowCenteringValue) {
     heatmapRowCenteringValue = ROW_CENTERING_OPTIONS[0]
   }
-  let heatmapFitValue = FIT_OPTIONS.find(opt => opt.value === renderParams.heatmapFit)
+  let heatmapFitValue = FIT_OPTIONS.find(opt => opt.value === exploreParams.heatmapFit)
   if (!heatmapFitValue) {
     heatmapFitValue = FIT_OPTIONS[0]
   }
 
-  let distributionPointsValue = DISTRIBUTION_POINTS_OPTIONS.find(opt => opt.value === renderParams.distributionPoints)
+  let distributionPointsValue = DISTRIBUTION_POINTS_OPTIONS.find(opt => opt.value === exploreParams.distributionPoints)
   if (!distributionPointsValue) {
     distributionPointsValue = DISTRIBUTION_POINTS_OPTIONS[0]
   }
@@ -59,7 +59,7 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
               options={SCATTER_COLOR_OPTIONS.map(opt => ({ label: opt, value: opt }))}
               value={{ label: scatterColorValue, value: scatterColorValue }}
               clearable={false}
-              onChange={option => updateRenderParams({ scatterColor: option.value })}/>
+              onChange={option => updateExploreParams({ scatterColor: option.value })}/>
           </Panel.Body>
         </Panel.Collapse>
       </Panel>
@@ -83,14 +83,14 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
               value={distributionPlotValue}
               clearable={false}
               isSearchable={false}
-              onChange={option => updateRenderParams({ distributionPlot: option.value })}/>
+              onChange={option => updateExploreParams({ distributionPlot: option.value })}/>
             <label htmlFor="distribution-plot-picker">Data points </label>
             <Select name="distribution-points-picker"
               options={DISTRIBUTION_POINTS_OPTIONS}
               value={distributionPointsValue}
               clearable={false}
               isSearchable={false}
-              onChange={option => updateRenderParams({ distributionPoints: option.value })}/>
+              onChange={option => updateExploreParams({ distributionPoints: option.value })}/>
           </Panel.Body>
         </Panel.Collapse>
       </Panel>
@@ -114,14 +114,14 @@ export default function RenderControls({ renderParams, updateRenderParams, dataP
               value={heatmapRowCenteringValue}
               clearable={false}
               isSearchable={false}
-              onChange={option => updateDataParams({ heatmapRowCentering: option.value })}/>
+              onChange={option => updateExploreParams({ heatmapRowCentering: option.value })}/>
             <label htmlFor="fit-picker">Fit options </label>
             <Select name="fit-picker"
               options={FIT_OPTIONS}
               value={heatmapFitValue}
               clearable={false}
               isSearchable={false}
-              onChange={option => updateRenderParams({ heatmapFit: option.value })}/>
+              onChange={option => updateExploreParams({ heatmapFit: option.value })}/>
           </Panel.Body>
         </Panel.Collapse>
       </Panel>

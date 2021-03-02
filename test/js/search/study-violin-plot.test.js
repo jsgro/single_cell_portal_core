@@ -6,7 +6,6 @@ import { render, waitForElementToBeRemoved, screen } from '@testing-library/reac
 import { enableFetchMocks } from 'jest-fetch-mock'
 
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
-import {emptyRenderParams} from 'components/visualization/ClusterControls'
 import Plotly from 'plotly.js-dist'
 
 const fs = require('fs')
@@ -32,8 +31,8 @@ describe('Violin plot in global gene search', () => {
 
     render(<StudyViolinPlot studyAccession={study.accession}
       genes={study.gene_matches}
-      renderParams={emptyRenderParams}
-      dataParams={{cluster: '', annotation: {name: '', type: '', scope: ''}}}
+      cluster=''
+      annotation={{name: '', type: '', scope: ''}}
     />)
 
     await waitForElementToBeRemoved(() => screen.getByTestId('study-violin-1-loading-icon'))

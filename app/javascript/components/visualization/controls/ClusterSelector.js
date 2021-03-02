@@ -29,15 +29,18 @@ function getClusterOptions(annotationList, spatialGroups) {
 /**
   Renders a cluster selector.  Handles automatically updating the annotation and subsample when
    the cluster is changed.
-    annotationList: the results of a call to scpApi/fetchClusterOptions (or equivalent).
-    dataParams: an object specifying cluster, annotation, and subsample selections
-    updateDataParams: update function for dataParams
+    @param annotationList: the results of a call to scpApi/fetchClusterOptions (or equivalent).
+    @param spatialGroups: the list of spatialGroups from exploreInfo
+    @param cluster: the name of the cluster selected
+    @param annotation: object specifying name, type and scope
+    @param updateClusterParams: update function that accepts changes to cluster, annotation, and/or subsample properties
   */
 export default function ClusterSelector({
   annotationList,
   spatialGroups,
-  dataParams,
-  updateDataParams
+  cluster,
+  annotation,
+  updateClusterParams
 }) {
   if (!annotationList) {
     annotationList = { default_cluster: null, default_annotation: null, annotations: [] }
@@ -49,15 +52,15 @@ export default function ClusterSelector({
     <div className="form-group">
       <label>Clustering</label>
       <Select options={clusterOptions}
-        value={{ label: dataParams.cluster, value: dataParams.cluster }}
-        onChange={cluster => updateDataParams({
+        value={{ label: cluster, value: cluster }}
+        onChange={newCluster => updateClusterParams({
           annotation: annotationKeyProperties(getDefaultAnnotationForCluster(
             annotationList,
-            cluster.name,
-            dataParams.annotation
+            newCluster.value,
+            annotation
           )),
-          cluster: cluster.value,
-          subsample: getDefaultSubsampleForCluster(annotationList, cluster.value)
+          cluster: newCluster.value,
+          subsample: getDefaultSubsampleForCluster(annotationList, newCluster.value)
         })}
         styles={clusterSelectStyle}
       />

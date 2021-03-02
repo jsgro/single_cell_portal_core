@@ -27,16 +27,19 @@ export const defaultDistributionPoints = DISTRIBUTION_POINTS_OPTIONS[0].value
 /** displays a violin plot of expression data for the given gene and study
  * @param studyAccession {String} the study accession
  * @param genes {Array[String]} array of gene names
- * @param dataParams {Object} object specifying cluster, annotation, subsample and consensus
- *   this is typically maintained by ClusterControls
- * @param renderParams {Object} object specifying plot type, annotations, and whetehr to render points
- *   this is ttypically maintained by RenderControls
+ * @param cluster {string} the name of the cluster, or blank/null for the study's default
+ * @param annotation {obj} an object with name, type, and scope attributes
+ * @param subsample {string} a string for the subsampel to be retrieved.
+ * @param consensus {string} for multi-gene expression plots
+ * @param distributionPlot {string} 'box' or 'violin' for the plot type (default is violin)
+ * @param distributionPoints {string} 'none' 'all' 'suspectedoutliers' or 'outliers'
  * @param setAnnotationList {function} for global gene search and other places where a single call is used to
  *   fetch both the default expression data and the cluster menu options, a function that will be
  *   called with the annotationList returned by that call.
   */
 export default function StudyViolinPlot({
-  studyAccession, genes, dataParams, renderParams={}, updateRenderParams, setAnnotationList
+  studyAccession, genes, cluster, annotation, subsample, consensus, distributionPlot, distributionPoints,
+  updateDistributionPlot, setAnnotationList
 }) {
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
@@ -49,46 +52,44 @@ export default function StudyViolinPlot({
     const results = await fetchExpressionViolin(
       studyAccession,
       genes,
-      dataParams.cluster,
-      dataParams.annotation.name,
-      dataParams.annotation.type,
-      dataParams.annotation.scope,
-      dataParams.subsample,
-      dataParams.consensus
+      cluster,
+      annotation.name,
+      annotation.type,
+      annotation.scope,
+      subsample,
+      consensus
     )
     setIsLoading(false)
     setStudyGeneNames(results.gene_names)
-    let distributionPlot = results.plotType
-    if (renderParams.distributionPlot) {
-      distributionPlot = renderParams.distributionPlot
+    let distributionPlotToUse = results.plotType
+    if (distributionPlot) {
+      distributionPlotToUse = distributionPlot
     }
-    if (!distributionPlot) {
-      distributionPlot = defaultDistributionPlot
+    if (!distributionPlotToUse) {
+      distributionPlotToUse = defaultDistributionPlot
     }
     renderViolinPlot(graphElementId, results, {
-      plotType: distributionPlot,
-      showPoints: renderParams.distributionPoints
+      plotType: distributionPlotToUse,
+      showPoints: distributionPoints
     })
     if (setAnnotationList) {
       setAnnotationList(results.annotation_list)
     }
-    if (updateRenderParams) {
-      updateRenderParams({ distributionPlot }, false)
+    if (updateDistributionPlot) {
+      updateDistributionPlot(distributionPlotToUse)
     }
   }
   /** handles fetching the expression data (and menu option data) from the server */
   useEffect(() => {
-    if (!isLoading && dataParams.isUserUpdated !== false) {
-      loadData()
-    }
+    loadData()
   }, [ // do a load from the server if any of the paramenters passed to fetchExpressionViolin have changed
     studyAccession,
     genes[0],
-    dataParams.cluster,
-    dataParams.annotation.name,
-    dataParams.annotation.scope,
-    dataParams.subsample,
-    dataParams.consensus
+    cluster,
+    annotation.name,
+    annotation.scope,
+    subsample,
+    consensus
   ])
 
   // useEffect for handling render param re-renders
@@ -96,14 +97,14 @@ export default function StudyViolinPlot({
     // Don't try to update the if the data hasn't loaded yet
     if (!isLoading && studyGeneNames.length > 0) {
       Plotly.restyle(graphElementId, {
-        type: renderParams.distributionPlot,
-        points: renderParams.distributionPoints,
-        boxpoints: renderParams.distributionPoints
+        type: distributionPlot,
+        points: distributionPoints,
+        boxpoints: distributionPoints
       })
     }
-  }, [renderParams.distributionPlot, renderParams.distributionPoints])
+  }, [distributionPlot, distributionPoints])
 
-  const isCollapsedView = ['mean', 'median'].indexOf(dataParams.consensus) >= 0
+  const isCollapsedView = ['mean', 'median'].indexOf(consensus) >= 0
   return (
     <div className="plot">
       <div
@@ -124,7 +125,7 @@ export default function StudyViolinPlot({
        sometimes render a zero to the page*/}
       { isCollapsedView && studyGeneNames.length > 0 &&
         <div className="text-center">
-          <span>{_capitalize(dataParams.consensus)} expression of {studyGeneNames.join(', ')}</span>
+          <span>{_capitalize(consensus)} expression of {studyGeneNames.join(', ')}</span>
         </div>
       }
     </div>

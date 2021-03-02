@@ -24,62 +24,76 @@ export const FIT_OPTIONS = [
 ]
 export const DEFAULT_FIT = ''
 
-/** renders a morpheus powered heatmap for the given params */
-export default function Heatmap({ studyAccession, genes, dataParams, renderParams={}, dimensionsFn }) {
+/** renders a morpheus powered heatmap for the given params
+  * @param genes {Array[String]} array of gene names
+  * @param cluster {string} the name of the cluster, or blank/null for the study's default
+  * @param annotation {obj} an object with name, type, and scope attributes
+  * @param subsample {string} a string for the subsampel to be retrieved.
+*/
+export default function Heatmap({
+  studyAccession, genes=[], cluster, annotation={}, subsample, heatmapFit, heatmapRowCentering, dimensions
+}) {
   const [graphId] = useState(_uniqueId('heatmap-'))
   const morpheusHeatmap = useRef(null)
   const expressionValuesURL = getExpressionHeatmapURL({
     studyAccession,
     genes,
-    cluster: dataParams.cluster,
-    heatmapRowCentering: dataParams.heatmapRowCentering
+    cluster,
+    heatmapRowCentering
   })
   const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
-    dataParams.cluster,
-    dataParams.annotation.name,
-    dataParams.annotation.scope,
-    dataParams.annotation.type,
-    dataParams.subsample)
+    cluster,
+    annotation.name,
+    annotation.scope,
+    annotation.type,
+    subsample)
+
+  let dimensionsFn = null
+  if (dimensions.width) {
+    dimensionsFn = () => dimensions.width
+  }
 
   useEffect(() => {
-    if (dataParams.cluster) {
+    // we can't render until we know what the cluster is, since morpheus requires the annotation name
+    if (cluster) {
       const plotEvent = startPendingEvent('plot:heatmap', window.SCP.getLogPlotProps())
       log('heatmap:initialize')
       morpheusHeatmap.current = renderHeatmap({
         target: `#${graphId}`,
         expressionValuesURL,
         annotationCellValuesURL,
-        annotationName: dataParams.annotation.name,
+        annotationName: annotation.name,
         dimensionsFn,
-        fit: renderParams.heatmapFit,
-        rowCentering: dataParams.heatmapRowCentering
+        fit: heatmapFit,
+        rowCentering: heatmapRowCentering
       })
       plotEvent.complete()
     }
   }, [
-    studyAccession, genes.join(','),
-    dataParams.cluster,
-    dataParams.annotation.name,
-    dataParams.annotation.scope,
-    dataParams.heatmapRowCentering
+    studyAccession,
+    genes.join(','),
+    cluster,
+    annotation.name,
+    annotation.scope,
+    heatmapRowCentering
   ])
 
   useUpdateEffect(() => {
     if (morpheusHeatmap.current && morpheusHeatmap.current.fitToWindow) {
-      const fit = renderParams.heatmapFit
+      const fit = heatmapFit
       morpheusHeatmap.current.fitToWindow({
         fitRows: fit === 'rows' || fit === 'both',
         fitColumns: fit === 'cols' || fit === 'both',
         repaint: true
       })
     }
-  }, [renderParams.heatmapFit])
+  }, [heatmapFit])
 
   return (
     <div className="plot">
-      { dataParams.cluster &&
+      { cluster &&
         <div id={graphId} className="heatmap-graph" style={{ minWidth: '80vw' }}></div> }
-      { !dataParams.cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+      { !cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </div>
   )
 }

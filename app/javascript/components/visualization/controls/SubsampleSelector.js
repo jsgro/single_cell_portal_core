@@ -20,47 +20,35 @@ function getSubsampleOptions(annotationList, clusterName) {
 }
 
 
-/** renders cluster, annotation, and (optionally) subsample and consensus controls for a study
-    by default, this control will handle fetching the dropdown options from the server.
-    If those options have already been fetched (or will be retrieved as part of a call already
-    being made, 'fetchAnnotationList' can be set to fale, and then a preloadedAnnotationList
-    can be provided
-
-    studyAccession: the study accesion
-    showConsensus: whether to show the consensus ('View as') dropdown
-    showSubsample: whether to show the subsample dropdown
-    preloadedAnnotationList: the results of a call to scpApi/fetchClusterOptions (or equivalent).
-      Only needs to be specified if fetchAnnotionList is false
-    fetchAnnotationList=true: whether this component should handle populating dropdown options
-    dataParams,
-    setDataParams
-    )
-
+/**
+  Renders a subsample selector.
+    @param annotationList: the results of a call to scpApi/fetchClusterOptions (or equivalent).
+    @param cluster: the name of the cluster selected
+    @param subsample: the current subsample selected
+    @param updateClusterParams: update function that accepts changes to cluster, annotation, and/or subsample properties
   */
 export default function SubsampleSelector({
   annotationList,
-  dataParams,
-  updateDataParams
+  cluster,
+  subsample,
+  updateClusterParams
 }) {
   if (!annotationList) {
     annotationList = { default_cluster: null, default_annotation: null, annotations: [] }
   }
 
-  const subsampleOptions = getSubsampleOptions(annotationList, dataParams.cluster)
+  const subsampleOptions = getSubsampleOptions(annotationList, cluster)
 
   return (
     <div className="form-group">
       <label>Subsampling</label>
       <Select options={subsampleOptions}
         value={{
-          label: dataParams.subsample == '' ? 'All Cells' : dataParams.subsample,
-          value: dataParams.subsample
+          label: subsample == '' ? 'All Cells' : subsample,
+          value: subsample
         }}
-        onChange={subsample => updateDataParams({
-          annotation: dataParams.annotation,
-          cluster: dataParams.cluster,
-          subsample: subsample.value,
-          consensus: dataParams.consensus
+        onChange={newSubsample => updateClusterParams({
+          subsample: newSubsample.value
         })}
         styles={clusterSelectStyle}/>
     </div>

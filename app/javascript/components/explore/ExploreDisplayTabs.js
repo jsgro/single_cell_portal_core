@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
-import Select from 'react-select'
 
 import StudyGeneField from './StudyGeneField'
 import ScatterPlot from 'components/visualization/ScatterPlot'
@@ -40,19 +39,19 @@ const ideogramHeight = 140
  */
 export default function ExploreDisplayTabs(
   {
-    studyAccession, exploreInfo, dataParams, controlDataParams, renderParams,
-    updateDataParams, updateRenderParams, isCellSelecting, plotPointsSelected, showViewOptionsControls
+    studyAccession, exploreInfo, exploreParams, controlExploreParams, updateExploreParams,
+    isCellSelecting, plotPointsSelected, showViewOptionsControls
   }
 ) {
   const [, setRenderForcer] = useState({})
-  const isMultiGene = dataParams.genes.length > 1
-  const isGene = dataParams.genes.length > 0
+  const isMultiGene = exploreParams.genes.length > 1
+  const isGene = exploreParams.genes.length > 0
   const plotContainerClass = 'explore-plot-tab-content'
   let enabledTabs = []
 
   if (isGene) {
     if (isMultiGene) {
-      if (dataParams.consensus) {
+      if (exploreParams.consensus) {
         enabledTabs = ['scatter', 'distribution', 'dotplot']
       } else {
         enabledTabs = ['dotplot', 'heatmap']
@@ -64,11 +63,11 @@ export default function ExploreDisplayTabs(
     enabledTabs = ['cluster']
   }
 
-  // dataParams object without genes specified, to pass to cluster comparison plots
-  const referencePlotDataParams = _clone(dataParams)
+  // exploreParams object without genes specified, to pass to cluster comparison plots
+  const referencePlotDataParams = _clone(exploreParams)
   referencePlotDataParams.genes = []
 
-  /** helper function so that StudyGeneField doesn't have to see the full dataParams object */
+  /** helper function so that StudyGeneField doesn't have to see the full exploreParams object */
   function searchGenes(genes, logProps) {
     const trigger = logProps ? logProps.type : 'clear'
 
@@ -90,7 +89,7 @@ export default function ExploreDisplayTabs(
     // TODO: Log study gene search, to not break existing analytics
     // Avoid logging `clear` trigger; it is not a search
 
-    updateDataParams({ genes })
+    updateExploreParams({ genes })
   }
 
   // Handle spatial transcriptomics data
@@ -101,25 +100,25 @@ export default function ExploreDisplayTabs(
   if (exploreInfo) {
     hasSpatialGroups = exploreInfo.spatialGroups.length > 0
 
-    if (dataParams.spatialGroups[0]) {
+    if (exploreParams.spatialGroups[0]) {
       hasSelectedSpatialGroup = true
 
-      if (isMultiGene && !dataParams.consensus) {
-        const refPlotDataParams = _clone(dataParams)
-        refPlotDataParams.cluster = dataParams.spatialGroups[0]
+      if (isMultiGene && !exploreParams.consensus) {
+        const refPlotDataParams = _clone(exploreParams)
+        refPlotDataParams.cluster = exploreParams.spatialGroups[0]
         refPlotDataParams.genes = []
         spatialRefPlotDataParamsArray.push(refPlotDataParams)
         // for each gene, create a dataParams object that can be used to generate the spatial plot
         // for that gene
-        spatialDataParamsArray = dataParams.genes.map(gene => {
+        spatialDataParamsArray = exploreParams.genes.map(gene => {
           const geneSpatialParams = _clone(refPlotDataParams)
           geneSpatialParams.genes = [gene]
           return geneSpatialParams
         })
       } else {
         // for each selected spatial group,
-        dataParams.spatialGroups.forEach(group => {
-          const geneSpatialParams = _clone(dataParams)
+        exploreParams.spatialGroups.forEach(group => {
+          const geneSpatialParams = _clone(exploreParams)
           geneSpatialParams.cluster = group
           spatialDataParamsArray.push(geneSpatialParams)
           const spatialRefParams = _clone(geneSpatialParams)
@@ -128,12 +127,12 @@ export default function ExploreDisplayTabs(
         })
       }
     }
-    if (hasSpatialGroups && isMultiGene && !dataParams.consensus) {
+    if (hasSpatialGroups && isMultiGene && !exploreParams.consensus) {
       enabledTabs.unshift('spatial')
     }
   }
 
-  let shownTab = renderParams.tab
+  let shownTab = exploreParams.tab
   if (!enabledTabs.includes(shownTab)) {
     shownTab = enabledTabs[0]
   }
@@ -143,11 +142,11 @@ export default function ExploreDisplayTabs(
   if (
     exploreInfo &&
     exploreInfo.taxonNames.length === 1 &&
-    dataParams.genes.length === 1
+    exploreParams.genes.length === 1
   ) {
     showRelatedGenesIdeogram = true
     currentTaxon = exploreInfo.taxonNames[0]
-    searchedGene = dataParams.genes[0]
+    searchedGene = exploreParams.genes[0]
   }
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
@@ -195,6 +194,11 @@ export default function ExploreDisplayTabs(
     return { width, height }
   }
 
+  /** helper function for Scatter plot color updates */
+  function updateScatterColor(color) {
+    updateExploreParams({ scatterColor: color }, false)
+  }
+
   /** on window resize call setRenderForcer, which is just trivial state to ensure a re-render
    * ensuring that the plots get passed fresh dimensions */
   useResizeEffect(() => {
@@ -207,7 +211,7 @@ export default function ExploreDisplayTabs(
       <div className="row">
         <div className="col-md-5">
           <div className="flexbox">
-            <StudyGeneField genes={dataParams.genes}
+            <StudyGeneField genes={exploreParams.genes}
               searchGenes={searchGenes}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
             <button className={isGene ? 'action fa-lg' : 'hidden'}
@@ -219,13 +223,13 @@ export default function ExploreDisplayTabs(
             </button>
           </div>
         </div>
-        <div className="col-md-4 col-md-offset-1">
+        <div className="col-md-5 col-md-offset-1">
           <ul className="nav nav-tabs" role="tablist" data-analytics-name="explore-default">
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
                 <li key={tabKey} role="presentation" className={`study-nav ${tabKey === shownTab ? 'active' : ''}`}>
-                  <a onClick={() => updateRenderParams({ tab: tabKey })}>{label}</a>
+                  <a onClick={() => updateExploreParams({ tab: tabKey })}>{label}</a>
                 </li>
               )
             })}
@@ -251,9 +255,8 @@ export default function ExploreDisplayTabs(
                 <div className={hasSelectedSpatialGroup ? 'col-md-6' : 'col-md-12'}>
                   <ScatterPlot
                     studyAccession={studyAccession}
-                    dataParams={dataParams}
-                    renderParams={renderParams}
-                    updateRenderParams={updateRenderParams}
+                    {...exploreParams}
+                    updateScatterColor={updateScatterColor}
                     dimensions={getPlotDimensions({
                       numColumns: hasSelectedSpatialGroup ? 2 : 1,
                       hasTitle: true
@@ -268,9 +271,8 @@ export default function ExploreDisplayTabs(
                       <div key={params.cluster}>
                         <ScatterPlot
                           studyAccession={studyAccession}
-                          dataParams={params}
-                          renderParams={renderParams}
-                          updateRenderParams={updateRenderParams}
+                          {...params}
+                          updateScatterColor={updateScatterColor}
                           dimensions={getPlotDimensions({ numColumns: 2, hasTitle: true })}
                           isCellSelecting={isCellSelecting}
                           plotPointsSelected={plotPointsSelected}
@@ -294,9 +296,8 @@ export default function ExploreDisplayTabs(
                 <div className="col-md-6">
                   <ScatterPlot
                     studyAccession={studyAccession}
-                    dataParams={dataParams}
-                    renderParams={renderParams}
-                    updateRenderParams={updateRenderParams}
+                    {...exploreParams}
+                    updateScatterColor={updateScatterColor}
                     dimensions={getPlotDimensions({
                       numColumns: 2,
                       numRows: hasSelectedSpatialGroup ? 2 : 1,
@@ -310,9 +311,8 @@ export default function ExploreDisplayTabs(
                 <div className="col-md-6">
                   <ScatterPlot
                     studyAccession={studyAccession}
-                    dataParams={referencePlotDataParams}
-                    renderParams={renderParams}
-                    updateRenderParams={updateRenderParams}
+                    {...referencePlotDataParams}
+                    updateScatterColor={updateScatterColor}
                     dimensions={getPlotDimensions({
                       numColumns: 2,
                       numRows: hasSelectedSpatialGroup ? 2 : 1,
@@ -330,9 +330,8 @@ export default function ExploreDisplayTabs(
                     <div className="col-md-6">
                       <ScatterPlot
                         studyAccession={studyAccession}
-                        dataParams={spatialDataParamsArray[index]}
-                        renderParams={renderParams}
-                        updateRenderParams={updateRenderParams}
+                        {...spatialDataParamsArray[index]}
+                        updateScatterColor={updateScatterColor}
                         dimensions={getPlotDimensions({
                           numColumns: 2,
                           numRows: 2,
@@ -346,9 +345,8 @@ export default function ExploreDisplayTabs(
                     <div className="col-md-6">
                       <ScatterPlot
                         studyAccession={studyAccession}
-                        dataParams={params}
-                        renderParams={renderParams}
-                        updateRenderParams={updateRenderParams}
+                        {...params}
+                        updateScatterColor={updateScatterColor}
                         dimensions={getPlotDimensions({
                           numColumns: 2,
                           numRows: 2,
@@ -377,9 +375,8 @@ export default function ExploreDisplayTabs(
                     <div>
                       <ScatterPlot
                         studyAccession={studyAccession}
-                        dataParams={spatialRefPlotDataParamsArray[0]}
-                        renderParams={renderParams}
-                        updateRenderParams={updateRenderParams}
+                        {...spatialRefPlotDataParamsArray[0]}
+                        updateScatterColor={updateScatterColor}
                         dimensions={getPlotDimensions({ numColumns: 1, numRows: 2, hasTitle: true })}
                         isCellSelecting={isCellSelecting}
                         plotPointsSelected={plotPointsSelected}
@@ -399,9 +396,8 @@ export default function ExploreDisplayTabs(
                   return <div key={index} className="col-md-6">
                     <ScatterPlot
                       studyAccession={studyAccession}
-                      dataParams={spgDataParams}
-                      renderParams={renderParams}
-                      updateRenderParams={updateRenderParams}
+                      {...spgDataParams}
+                      updateScatterColor={updateScatterColor}
                       dimensions={getPlotDimensions({ numColumns: 2, numRows: 2, hasTitle: true })}
                       isCellSelecting={isCellSelecting}
                       plotPointsSelected={plotPointsSelected}
@@ -421,28 +417,28 @@ export default function ExploreDisplayTabs(
             <div className={shownTab === 'distribution' ? '' : 'hidden'}>
               <StudyViolinPlot
                 studyAccession={studyAccession}
-                dataParams={dataParams}
-                renderParams={renderParams}
-                updateRenderParams={updateRenderParams}
-                genes={dataParams.genes}/>
+                updateDistributionPlot={distributionPlot => updateExploreParams({ distributionPlot }, false)}
+                {...exploreParams}/>
             </div>
           }
           { enabledTabs.includes('dotplot') &&
             <div className={shownTab === 'dotplot' ? '' : 'hidden'}>
-              <DotPlotTab
+              <DotPlot
                 studyAccession={studyAccession}
-                dataParams={controlDataParams}
-                annotations={exploreInfo ? exploreInfo.annotationList.annotations : null}
-                dimensions={getPlotDimensions({})}/>
+                {...controlExploreParams}
+                annotationValues={getAnnotationValues(
+                  controlExploreParams?.annotation,
+                  controlExploreParams?.annotationList?.annotations
+                )}
+                dimensions={getPlotDimensions({})}
+              />
             </div>
           }
           { enabledTabs.includes('heatmap') &&
             <div className={shownTab === 'heatmap' ? '' : 'hidden'}>
               <Heatmap
                 studyAccession={studyAccession}
-                dataParams={controlDataParams}
-                renderParams={renderParams}
-                genes={dataParams.genes}
+                {...controlExploreParams}
                 dimensions={getPlotDimensions({})}/>
             </div>
           }
@@ -468,16 +464,3 @@ export function PlotTitle({ cluster, annotation, gene, spatial }) {
   }
   return <h5 className="plot-title">{ content } </h5>
 }
-
-/** renders the dot plot tab for multi gene searches */
-function DotPlotTab({ studyAccession, dataParams, annotations, widthFunc }) {
-  const annotationValues = getAnnotationValues(dataParams.annotation, annotations)
-  return (<DotPlot
-    studyAccession={studyAccession}
-    dataParams={dataParams}
-    genes={dataParams.genes}
-    annotationValues={annotationValues}
-    widthFunc={widthFunc}
-  />)
-}
-

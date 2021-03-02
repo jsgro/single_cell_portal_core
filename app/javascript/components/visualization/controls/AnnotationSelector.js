@@ -25,27 +25,29 @@ function getAnnotationOptions(annotationList, clusterName) {
 
 
 /**
-  Renders an annotation selector.  Handles automatically updating the annotation and subsample when
+  Renders an annotation selector.
    the cluster is changed.
-    annotationList: the results of a call to scpApi/fetchClusterOptions (or equivalent).
-    dataParams: an object specifying cluster, annotation, and subsample selections
-    updateDataParams: update function for dataParams
+    @param annotationList: the results of a call to scpApi/fetchClusterOptions (or equivalent).
+    @param cluster: the name of the cluster selected
+    @param annotation: object specifying name, type and scope
+    @param updateClusterParams: update function that accepts changes to cluster, annotation, and/or subsample properties
   */
 export default function AnnotationControl({
   annotationList,
-  dataParams,
-  updateDataParams
+  cluster,
+  annotation,
+  updateClusterParams
 }) {
   if (!annotationList) {
     annotationList = { default_cluster: null, default_annotation: null, annotations: [] }
   }
 
-  const annotationOptions = getAnnotationOptions(annotationList, dataParams.cluster)
+  const annotationOptions = getAnnotationOptions(annotationList, cluster)
 
-  const shownAnnotation = _clone(dataParams.annotation)
+  const shownAnnotation = _clone(annotation)
   // for user annotations, we have to match the given id to a name to show the name in the dropdown
-  if (dataParams.annotation && dataParams.annotation.scope === 'user') {
-    const matchedAnnotation = getMatchedAnnotation(dataParams.annotation, annotationList)
+  if (annotation && annotation.scope === 'user') {
+    const matchedAnnotation = getMatchedAnnotation(annotation, annotationList)
     if (matchedAnnotation) {
       shownAnnotation.name = matchedAnnotation.name
       shownAnnotation.id = matchedAnnotation.id
@@ -59,7 +61,7 @@ export default function AnnotationControl({
         value={shownAnnotation}
         getOptionLabel={annotation => annotation.name}
         getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
-        onChange={annotation => updateDataParams({ annotation })}
+        onChange={newAnnotation => updateClusterParams({ annotation: newAnnotation })}
         styles={clusterSelectStyle}/>
     </div>
   )

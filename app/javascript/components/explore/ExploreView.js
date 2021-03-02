@@ -2,13 +2,13 @@ import React, { useState, useRef, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { Router } from '@reach/router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCaretLeft, faCaretRight, faLink } from '@fortawesome/free-solid-svg-icons'
+import { faCaretDown, faCaretUp, faLink } from '@fortawesome/free-solid-svg-icons'
 import _clone from 'lodash/clone'
 
 import ClusterSelector from 'components/visualization/controls/ClusterSelector'
 import AnnotationSelector from 'components/visualization/controls/AnnotationSelector'
 import SubsampleSelector from 'components/visualization/controls/SubsampleSelector'
-import ConsensusSelector from 'components/visualization/controls/ConsensusSelector'
+import { ExploreConsensusSelector } from 'components/visualization/controls/ConsensusSelector'
 import SpatialSelector from 'components/visualization/controls/SpatialSelector'
 import CreateAnnotation from 'components/visualization/controls/CreateAnnotation'
 import PlotDisplayControls from 'components/visualization/PlotDisplayControls'
@@ -33,26 +33,23 @@ function RoutableExploreTab({ studyAccession }) {
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
   const tabContainerEl = useRef(null)
 
-  const {
-    dataParams,
-    updateDataParams,
-    renderParams,
-    updateRenderParams,
-    routerLocation
-  } = useExploreTabRouter()
+  const { exploreParams, updateExploreParams, routerLocation } = useExploreTabRouter()
 
   const annotationList = exploreInfo ? exploreInfo.annotationList : null
 
-  // we keep a separate 'controlDataParams' object that updates after defaults are fetched from the server
+  // we keep a separate 'controlExploreParams' object that updates after defaults are fetched from the server
   // this is kept separate so that the graphs do not see the change in cluster name from '' to
   // '<<default cluster>>' as a change that requires a re-fetch from the server
-  let controlDataParams = _clone(dataParams)
-  if (exploreInfo && !dataParams.cluster) {
+  let controlExploreParams = _clone(exploreParams)
+  if (exploreInfo && !exploreParams.cluster) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
-    controlDataParams = Object.assign(controlDataParams,
+    controlExploreParams = Object.assign(controlExploreParams,
       getDefaultClusterParams(annotationList, exploreInfo.spatialGroups))
-
-    dataParams.spatialGroups = controlDataParams.spatialGroups
+    if (!exploreParams.userSpecified['spatialGroups']) {
+      exploreParams.spatialGroups = controlExploreParams.spatialGroups
+    } else {
+      controlExploreParams.spatialGroups = exploreParams.spatialGroups
+    }
   }
 
   let hasSpatialGroups = false
@@ -83,11 +80,18 @@ function RoutableExploreTab({ studyAccession }) {
   }
 
   /** handles cluster selection to also populate the default spatial groups */
-  function updateClusterDataParams(newParams) {
+  function updateClusterParams(newParams) {
     if (newParams.cluster && !newParams.spatialGroups) {
       newParams.spatialGroups = getDefaultSpatialGroupsForCluster(newParams.cluster, exploreInfo.spatialGroups)
     }
-    updateDataParams(newParams)
+    // if the user updates any cluster params, store all of them in the URL so we don't end up with
+    // broken urls in the event of a default cluster/annotation changes
+    const updateParams = {}
+    const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
+    clusterParamNames.forEach(param => {
+      updateParams[param] = param in newParams ? newParams[param] : controlExploreParams[param]
+    })
+    updateExploreParams(updateParams)
   }
 
   useEffect(() => {
@@ -95,7 +99,7 @@ function RoutableExploreTab({ studyAccession }) {
   }, [studyAccession])
 
   // Toggle "View Options" panel
-  const dataParamsIcon = showViewOptionsControls ? faCaretRight : faCaretLeft
+  const viewOptionsIcon = showViewOptionsControls ? faCaretUp : faCaretDown
   let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden view-options', 'closed']
   if (showViewOptionsControls) {
     [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2 view-options', 'open']
@@ -107,12 +111,10 @@ function RoutableExploreTab({ studyAccession }) {
       <div className="row">
         <div className={mainViewClass} ref={tabContainerEl}>
           <ExploreDisplayTabs studyAccession={studyAccession}
-            dataParams={dataParams}
-            controlDataParams={controlDataParams}
-            renderParams={renderParams}
+            exploreParams={exploreParams}
+            controlExploreParams={controlExploreParams}
             showViewOptionsControls={showViewOptionsControls}
-            updateDataParams={updateDataParams}
-            updateRenderParams={updateRenderParams}
+            updateExploreParams={updateExploreParams}
             exploreInfo={exploreInfo}
             isCellSelecting={isCellSelecting}
             plotPointsSelected={plotPointsSelected}/>
@@ -121,41 +123,45 @@ function RoutableExploreTab({ studyAccession }) {
           <div className="cluster-controls">
             <ClusterSelector
               annotationList={annotationList}
-              dataParams={controlDataParams}
-              updateDataParams={updateClusterDataParams}
+              cluster={controlExploreParams.cluster}
+              annotation={controlExploreParams.annotation}
+              updateClusterParams={updateClusterParams}
               spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
             {hasSpatialGroups &&
-              <SpatialSelector spatialGroups={exploreInfo.spatialGroups}
-                dataParams={controlDataParams}
-                updateDataParams={updateDataParams}/>
+              <SpatialSelector allSpatialGroups={exploreInfo.spatialGroups}
+                spatialGroups={controlExploreParams.spatialGroups}
+                updateSpatialGroups={spatialGroups => updateClusterParams({ spatialGroups })}/>
             }
             <AnnotationSelector
               annotationList={annotationList}
-              dataParams={controlDataParams}
-              updateDataParams={updateDataParams}/>
+              cluster={controlExploreParams.cluster}
+              annotation={controlExploreParams.annotation}
+              updateClusterParams={updateClusterParams}/>
             <CreateAnnotation
               isSelecting={isCellSelecting}
               setIsSelecting={setIsCellSelecting}
               annotationList={exploreInfo ? exploreInfo.annotationList : null}
               currentPointsSelected={currentPointsSelected}
-              dataParams={controlDataParams}
-              updateDataParams={updateDataParams}
+              cluster={controlExploreParams.cluster}
+              annotation={controlExploreParams.annotation}
+              subsample={controlExploreParams.subsample}
+              updateClusterParams={updateClusterParams}
               setAnnotationList={setAnnotationList}
               studyAccession={studyAccession}/>
             <SubsampleSelector
               annotationList={annotationList}
-              dataParams={controlDataParams}
-              updateDataParams={updateDataParams}/>
-            { dataParams.genes.length > 1 &&
-              <ConsensusSelector
-                dataParams={controlDataParams}
-                updateDataParams={updateDataParams}/>
+              cluster={controlExploreParams.cluster}
+              subsample={controlExploreParams.subsample}
+              updateClusterParams={updateClusterParams}/>
+            { exploreParams.genes.length > 1 &&
+              <ExploreConsensusSelector
+                consensus={controlExploreParams.consensus}
+                updateConsensus={consensus => updateExploreParams({ consensus })}/>
             }
           </div>
-          <PlotDisplayControls renderParams={renderParams}
-            updateRenderParams={updateRenderParams}
-            dataParams={controlDataParams}
-            updateDataParams={updateDataParams}/>
+          <PlotDisplayControls
+            exploreParams={controlExploreParams}
+            updateExploreParams={updateExploreParams}/>
           <button onClick={() => copyLink(routerLocation)}
             className="action"
             data-toggle="tooltip"
@@ -166,7 +172,7 @@ function RoutableExploreTab({ studyAccession }) {
       </div>
       <a className={`action view-options-toggle ${optionsLinkClass}`}
         onClick={handleViewOptionsClick}>
-        <FontAwesomeIcon className="fa-lg" icon={dataParamsIcon}/> View Options
+        View Options <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/>
       </a>
     </div>
   )
