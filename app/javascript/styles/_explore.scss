@@ -29,6 +29,11 @@
 	}
 	.legendtitletext {
 	}
+
+	.icon-button {
+		margin-left: 1em;
+		margin-right: 1em;
+	}
 }
 
 .explore-plot-tab-content {
@@ -100,4 +105,8 @@
 .react-switch {
   vertical-align: middle;
   margin-left: 4px;
+}
+
+#gene-list-upload {
+	display: none;
 }
