@@ -61,6 +61,7 @@ export default function StudyViolinPlot({
     )
     setIsLoading(false)
     setStudyGeneNames(results.gene_names)
+
     let distributionPlotToUse = results.plotType
     if (distributionPlot) {
       distributionPlotToUse = distributionPlot

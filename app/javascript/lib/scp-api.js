@@ -224,6 +224,18 @@ export async function fetchExplore(studyAccession, mock=false) {
 }
 
 /**
+* Returns bam file information for the study, suitable for passing to IGV
+*
+* @param {String} studyAccession Study accession
+*/
+export async function fetchBamFileInfo(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/explore/bam_file_info`
+  const [exploreInit] =
+    await scpApi(apiUrl, defaultInit(), mock, false)
+  return exploreInit
+}
+
+/**
  * Get all study-wide and cluster annotations for a study
  *
  * See definition: app/controllers/api/v1/visualization/explore_controller.rb

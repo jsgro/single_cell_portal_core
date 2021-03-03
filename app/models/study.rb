@@ -1400,6 +1400,7 @@ class Study
 
     bam_files.each do |bam_file|
       bams << {
+          'name' => bam_file.name,
           'url' => bam_file.api_url,
           'indexUrl' => bam_file.bundled_files.first.api_url,
           'genomeAssembly' => bam_file.genome_assembly_name,

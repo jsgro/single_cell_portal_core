@@ -75,10 +75,13 @@ module Api
             cluster = nil
           end
           spatial_group_options = ClusterVizService.load_spatial_options(@study)
+          bam_bundle_list = @study.study_file_bundles.where(bundle_type: 'BAM').pluck(:original_file_list)
+
           explore_props = {
             cluster: cluster,
             taxonNames: @study.expressed_taxon_names,
             inferCNVIdeogramFiles: ideogram_files,
+            bamBundleList: bam_bundle_list,
             uniqueGenes: @study.unique_genes,
             annotationList: AnnotationVizService.get_study_annotation_options(@study, current_api_user),
             clusterGroupNames: ClusterVizService.load_cluster_group_options(@study),
@@ -127,6 +130,13 @@ module Api
 
         def cluster_options
           render json: AnnotationVizService.get_study_annotation_options(@study, current_api_user)
+        end
+
+        def bam_file_info
+          render json: {
+            bamAndBaiFiles: @study.get_bam_files,
+            gtfFiles: @study.get_genome_annotations_by_assembly
+          }
         end
       end
 
