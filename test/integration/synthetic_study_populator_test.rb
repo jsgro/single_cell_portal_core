@@ -51,7 +51,7 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
     populated_study = Study.find_by(name: SYNTH_STUDY_INFO[:name])
 
     assert_not_nil populated_study
-    assert_equal 5, populated_study.study_files.count
+    assert_equal 9, populated_study.study_files.count
     assert_equal 'Metadata', populated_study.study_files.first.file_type
     assert_not_nil populated_study.study_detail.full_description
 
@@ -69,7 +69,8 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
     seconds_slept = 0
     sleep wait_interval
     seconds_slept += wait_interval
-    until @study.study_files.pluck(:parse_status).all? {|status| ['parsed', 'failed'].include?(status)}
+    until @study.study_files.where(:file_type.in => StudyFile::PARSEABLE_TYPES)
+                            .pluck(:parse_status).all? {|status| ['parsed', 'failed'].include?(status)}
       puts "checking for parse completion after #{seconds_slept} seconds"
       @study.study_files.each do |file|
         print "#{file.upload_file_name} is #{file.parse_status}; "
@@ -87,7 +88,7 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
     puts "All parse jobs completed!"
 
     # validate success
-    @study.study_files.each do |study_file|
+    @study.study_files.where(:file_type.in => StudyFile::PARSEABLE_TYPES).each do |study_file|
       study_file.reload
       assert study_file.parsed?, "#{study_file.upload_file_name} is not parsed"
       refute study_file.queued_for_deletion, "#{study_file.upload_file_name} has failed parsing, object is queued for deletion"
