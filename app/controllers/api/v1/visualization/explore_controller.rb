@@ -102,7 +102,7 @@ module Api
             ]
             key :summary, 'Basic study visualization information'
             key :description, 'Returns overview of visualization properties for the given study'
-            key :operationId, 'api_v1_studies_explore_cluster_options_path'
+            key :operationId, 'cluster_options_api_v1_studies_explore_path'
             parameter do
               key :name, :study_id
               key :in, :path
