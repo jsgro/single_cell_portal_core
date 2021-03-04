@@ -56,6 +56,24 @@
   }
 }
 
+.gene-study-keyword-search.gene-keyword-search {
+	button {
+    border-radius: 15px 0px 0px  15px;
+  }
+  .gene-keyword-search-input > div {
+    border-radius: 0px 15px 15px 0px;
+  }
+  .btn-icon {
+  	background: none;
+		svg {
+		  color: $action-color;
+		}
+		//margin-left: -45px;
+		z-index: 10;
+  	border-radius: 0 0 0 0;
+  }
+}
+
 .gene-keyword-search .input-group {
   display: flex;
   width: 600px;
@@ -63,4 +81,11 @@
 
 .gene-keyword-search-input {
   flex: 1;
+}
+
+.study-explore .gene-keyword-search {
+	width: 100%;
+	.input-group {
+		width: 100%;
+	}
 }

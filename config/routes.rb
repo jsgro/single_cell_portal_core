@@ -39,9 +39,13 @@ Rails.application.routes.draw do
             post 'sync', to: 'studies#sync_study'
             get 'manifest', to: 'studies#generate_manifest'
           end
-          get 'explore', to: 'visualization/explore#show'
-          get 'explore/cluster_options', to: 'visualization/explore#cluster_options'
 
+          resource :explore, controller: 'visualization/explore', only: [:show] do
+            member do
+              get 'cluster_options'
+              get 'bam_file_info'
+            end
+          end
           resources :expression, controller: 'visualization/expression', only: [:show], param: :data_type
           resources :clusters, controller: 'visualization/clusters',
                                only: [:show, :index],

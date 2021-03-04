@@ -25,6 +25,7 @@ FactoryBot.define do
     # create a study but mark as detached, so a Terra workspace is not created
     factory :detached_study do
       detached { true }
+      bucket_id { SecureRandom.alphanumeric(16) } # needed to prevent test errors when mocking/stubbing GCS calls
     end
   end
 end

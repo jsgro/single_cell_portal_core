@@ -13,7 +13,7 @@ class SyntheticStudyPopulator
 
   # populates the synthetic study specified in the given folder (e.g. ./db/seed/synthetic_studies/blood)
   # destroys any existing studies and workspace data corresponding to that study
-  def self.populate(synthetic_study_folder, user: User.first, detached: false)
+  def self.populate(synthetic_study_folder, user: User.first, detached: false, update_files: false)
     if (synthetic_study_folder.exclude?('/'))
       synthetic_study_folder = DEFAULT_SYNTHETIC_STUDY_PATH.join(synthetic_study_folder).to_s
     end
@@ -21,7 +21,7 @@ class SyntheticStudyPopulator
     study_config = JSON.parse(study_info_file)
 
     puts("Populating synthetic study from #{synthetic_study_folder}")
-    study = create_study(study_config, user, detached)
+    study = create_study(study_config, user, detached, update_files)
     add_files(study, study_config, synthetic_study_folder, user)
     study
   end
@@ -42,9 +42,12 @@ class SyntheticStudyPopulator
 
   private
 
-  def self.create_study(study_config, user, detached)
+  def self.create_study(study_config, user, detached, update)
     existing_study = Study.find_by(name: study_config['study']['name'])
     if existing_study
+      if (update)
+        return existing_study
+      end
       puts("Destroying Study #{existing_study.name}, id #{existing_study.id}")
       if !existing_study.detached
         existing_study.destroy_and_remove_workspace
@@ -79,56 +82,95 @@ class SyntheticStudyPopulator
         study: study
       }
 
-      study_file_params.merge!(process_genomic_file_params(finfo))
-      study_file_params.merge!(process_coordinate_file_params(finfo))
-
-      if study_file_params[:file_type] == 'Expression Matrix'
-        exp_finfo_params = finfo['expression_file_info']
-        if exp_finfo_params.present?
-          exp_file_info = ExpressionFileInfo.new(
-            is_raw_counts: exp_finfo_params['is_raw_counts'] ? true : false,
-            units: exp_finfo_params['units'],
-            biosample_input_type: exp_finfo_params['biosample_input_type'],
-            library_preparation_protocol: exp_finfo_params['library_preparation_protocol'],
-            modality: exp_finfo_params['modality']
-          )
-          study_file_params['expression_file_info'] = exp_file_info
-        end
-      end
-
-      if study_file_params[:file_type] == 'Coordinate Labels'
-        if !finfo['cluster_file_name']
-          throw 'Coordinate label files must specify a cluster_file_name'
-        end
-        matching_cluster_file = StudyFile.find_by(name: finfo['cluster_file_name'], study: study)
-        if matching_cluster_file.nil?
-          throw "No cluster file with name #{finfo['cluster_file_name']} to match coordinate labels"
-        end
-        study_file_params[:options] = {'cluster_file_id' => matching_cluster_file.id.to_s}
-      end
+      study_file_params.merge!(process_genomic_file_params(study, finfo))
+      study_file_params.merge!(process_coordinate_file_params(study, finfo))
+      study_file_params.merge!(process_expression_file_params(study, finfo))
+      study_file_params.merge!(process_label_file_params(study, finfo))
+      study_file_params.merge!(process_sequence_file_params(study, finfo))
 
       study_file = StudyFile.create!(study_file_params)
       # the status has to be 'uploading' when created so the file gets pulled into the workspace
       # after creation, we want it to be uploaded so that, e.g. bundles can create
       study_file.update(status: 'uploaded')
-
-      if !study.detached
+      if !study.detached && study_file.parseable?
         FileParseService.run_parse_job(study_file, study, user)
+      else
+        # make sure we still create needed bundled for unparsed files (e.g. bam/bai files)
+        FileParseService.create_bundle_from_file_options(study_file, study)
+        if !study.detached
+          study.send_to_firecloud(study_file)
+        end
       end
     end
   end
 
+  def self.process_expression_file_params(study, file_info)
+    exp_params = {}
+    if file_info['type'] == 'Expression Matrix'
+      exp_finfo_params = file_info['expression_file_info']
+      if exp_finfo_params.present?
+        exp_file_info = ExpressionFileInfo.new(
+          is_raw_counts: exp_finfo_params['is_raw_counts'] ? true : false,
+          units: exp_finfo_params['units'],
+          biosample_input_type: exp_finfo_params['biosample_input_type'],
+          library_preparation_protocol: exp_finfo_params['library_preparation_protocol'],
+          modality: exp_finfo_params['modality']
+        )
+        exp_params['expression_file_info'] = exp_file_info
+      end
+    end
+    exp_params
+  end
+
+  def self.process_label_file_params(study, file_info)
+    params = {}
+    if file_info['type'] == 'Coordinate Labels'
+      if !file_info['cluster_file_name']
+        throw 'Coordinate label files must specify a cluster_file_name'
+      end
+      matching_cluster_file = StudyFile.find_by(name: file_info['cluster_file_name'], study: study)
+      if matching_cluster_file.nil?
+        throw "No cluster file with name #{file_info['cluster_file_name']} to match coordinate labels"
+      end
+      params[:options] = {'cluster_file_id' => matching_cluster_file.id.to_s}
+    end
+    params
+  end
+
+  def self.process_sequence_file_params(study, file_info)
+    params = {}
+    if file_info['type'] == 'BAM Index'
+      if !file_info['bam_file_name']
+        throw 'BAM index files must specify a bam_file_name'
+      end
+      matching_bam_file = StudyFile.find_by(name: file_info['bam_file_name'], study: study)
+      if matching_bam_file.nil?
+        throw "No BAM file with name #{file_info['bam_file_name']} to match bai file"
+      end
+      params[:options] = {'bam_id' => matching_bam_file.id.to_s}
+    end
+    params
+  end
+
+
   # process coordinate/cluster arguments, return a hash of params suitable for passing to a StudyFile constructor
-  def self.process_coordinate_file_params(file_info)
+  def self.process_coordinate_file_params(study, file_info)
     params = {}
     if !file_info['is_spatial'].nil?
       params[:is_spatial] = file_info['is_spatial']
+    end
+    if file_info['spatial_cluster_associations'].present?
+      # look up the ids for the associations
+      # note that this requires the associated file to have already been added
+      params[:spatial_cluster_associations] = file_info['spatial_cluster_associations'].map do |cluster_file_name|
+        StudyFile.find_by!(study: study, name: cluster_file_name).id.to_s
+      end
     end
     params
   end
 
   # process species/annotation arguments, return a hash of params suitable for passing to a StudyFile constructor
-  def self.process_genomic_file_params(file_info)
+  def self.process_genomic_file_params(study, file_info)
     params = {}
     taxon_id = nil
     if file_info['species_scientific_name'].present?

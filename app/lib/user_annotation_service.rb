@@ -17,7 +17,6 @@ class UserAnnotationService
   def self.create_user_annotation(study, name,
     user_data_arrays_attributes, cluster_name, loaded_annotation,
     subsample_threshold, current_user)
-
     # Parameters to log for any errors
     user_annotation_params = {
       study: study, name: name, cluster_name: cluster_name,

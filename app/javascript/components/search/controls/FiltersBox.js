@@ -74,7 +74,7 @@ export default function FiltersBox({ facet, selection, setSelection, filters, se
    * Update search context with applied facets upon clicking "Apply"
    */
   function handleApplyClick() {
-    if (!canApply) return
+    if (!canApply) {return}
     if (facet.type === 'number' &&
         appliedSelection.length === 0 &&
         selection.length === 0) {

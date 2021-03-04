@@ -95,7 +95,7 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
                           cells: ['Q', 'E', 'D']
                       })
     loaded_option = ClusterVizService.load_spatial_options(@study)
-    assert_equal [spatial_name], loaded_option
+    assert_equal [{name: 'spatial.txt', associated_clusters: []}], loaded_option
   end
 
   test 'should load subsampling options' do

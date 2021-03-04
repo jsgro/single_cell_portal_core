@@ -1,0 +1,7 @@
+$('<%= params[:modal_target]%>').modal('hide');
+$('<%= params[:selector] %>').remove();
+
+$('#generic-update-target').html("<%= j(render partial: '/layouts/generic_update_modal') %>");
+$('#generic-update-modal-title').html("<span class='text-danger'>Upload of <%= @file_name %> cancelled</span>");
+$('#generic-update-modal-body').html("<%= j(render partial: 'deleted_bundle_message', locals: {file_name: @file_name, file_type: @file_type, missing_file_type: @missing_file_type})%>");
+$("#generic-update-modal").modal("show");

@@ -74,14 +74,21 @@ module Api
           else
             cluster = nil
           end
+          spatial_group_options = ClusterVizService.load_spatial_options(@study)
+          bam_bundle_list = @study.study_file_bundles.where(bundle_type: 'BAM').pluck(:original_file_list)
 
           explore_props = {
             cluster: cluster,
             taxonNames: @study.expressed_taxon_names,
             inferCNVIdeogramFiles: ideogram_files,
+            bamBundleList: bam_bundle_list,
             uniqueGenes: @study.unique_genes,
+            annotationList: AnnotationVizService.get_study_annotation_options(@study, current_api_user),
             clusterGroupNames: ClusterVizService.load_cluster_group_options(@study),
-            spatialGroupNames: ClusterVizService.load_spatial_options(@study),
+            # spatialGroupNames is for legacy compatibility -- it should be removed once
+            # the react refactor is no longer feature-flagged
+            spatialGroupNames: spatial_group_options.map { |opt| opt[:name] },
+            spatialGroups: spatial_group_options,
             clusterPointAlpha: @study.default_cluster_point_alpha
           }
 
@@ -95,7 +102,7 @@ module Api
             ]
             key :summary, 'Basic study visualization information'
             key :description, 'Returns overview of visualization properties for the given study'
-            key :operationId, 'api_v1_studies_explore_cluster_options_path'
+            key :operationId, 'cluster_options_api_v1_studies_explore_path'
             parameter do
               key :name, :study_id
               key :in, :path
@@ -123,6 +130,13 @@ module Api
 
         def cluster_options
           render json: AnnotationVizService.get_study_annotation_options(@study, current_api_user)
+        end
+
+        def bam_file_info
+          render json: {
+            bamAndBaiFiles: @study.get_bam_files,
+            gtfFiles: @study.get_genome_annotations_by_assembly
+          }
         end
       end
 

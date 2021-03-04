@@ -195,7 +195,7 @@ export function renderViolinPlot(target, results) {
 export function resizeViolinPlot() {
   const rawPlot = violinPlots[0]
   if (!rawPlot) {
-    return;  // this can happen if resize is called as the graph is being redrawn
+    return // this can happen if resize is called as the graph is being redrawn
   }
   const title = rawPlot.rendered_cluster
   const expressionLabel = rawPlot.y_axis_title

@@ -110,7 +110,9 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       self.project = project
       # user.token_for_api_call will retrieve valid access token to use, if present
       self.access_token = user.token_for_api_call
-      self.expires_at = self.access_token['expires_at']
+      # set a default timeout if no token was retrieved; this prevents errors when attempting requests, although
+      # the request will most likely fail with a 401, which is expected
+      self.expires_at = self.access_token['expires_at'].present? ? self.access_token['expires_at'] : Time.now.in_time_zone + 1.hour
 
       # use user-defined project instead of portal default
       # if no keyfile is present, use environment variables

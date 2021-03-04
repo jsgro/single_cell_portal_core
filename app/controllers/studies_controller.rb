@@ -260,8 +260,8 @@ class StudiesController < ApplicationController
     @unsynced_directories = @study.directory_listings.unsynced
 
     # split directories into primary data types and 'others'
-    @unsynced_primary_data_dirs = @unsynced_directories.select {|dir| dir.file_type == 'fastq'}
-    @unsynced_other_dirs = @unsynced_directories.select {|dir| dir.file_type != 'fastq'}
+    @unsynced_primary_data_dirs = @unsynced_directories.select {|dir| DirectoryListing::PRIMARY_DATA_TYPES.include?(dir.file_type)}
+    @unsynced_other_dirs = @unsynced_directories.select {|dir| !DirectoryListing::PRIMARY_DATA_TYPES.include?(dir.file_type)}
 
     # now determine if we have study_files that have been 'orphaned' (cannot find a corresponding bucket file)
     @orphaned_study_files = @study_files - @synced_study_files
@@ -602,7 +602,16 @@ class StudiesController < ApplicationController
   # parses happen in background to prevent UI blocking
   def parse
     @study_file = StudyFile.where(study_id: params[:id], upload_file_name: params[:file]).first
-    FileParseService.run_parse_job(@study_file, @study, current_user)
+    @status = FileParseService.run_parse_job(@study_file, @study, current_user)
+    # special handling for coordinate labels
+    if @study_file.file_type == 'Coordinate Labels' && @status[:status_code] == 412
+      # delete file and inform user of issue as this error is not recoverable
+      @file_name = @study_file.upload_file_name
+      @file_type = @study_file.file_type
+      @missing_file_type = StudyFileBundle::CHILD_REQUIREMENTS[@file_type]
+      DeleteQueueJob.new(@study_file).delay.perform
+      render 'deleted_bundle'
+    end
   end
 
   # method to download files if study is private, will create temporary signed_url after checking user quota
@@ -628,6 +637,12 @@ class StudiesController < ApplicationController
   # update an existing study file via upload wizard; cannot be called until file is uploaded, so there is no create
   # if adding an external fastq file link, will create entry from scratch to update
   def update_study_file
+    # rails renders out the array as a space delimited string in a hidden field, but doesn't
+    # expect it back in the same format, so we have to parse the field for it
+    cluster_id_array = params["study_file"]["spatial_cluster_associations"]
+    if cluster_id_array.present? && cluster_id_array.count > 0
+      params["study_file"]["spatial_cluster_associations"] = cluster_id_array[0].split(' ')
+    end
     @study_file = StudyFile.find_by(study_id: study_file_params[:study_id], _id: study_file_params[:_id])
     @selector = params[:selector]
     @partial = params[:partial]
@@ -1069,6 +1084,7 @@ class StudiesController < ApplicationController
                                        :remote_location, :description, :file_type, :status, :human_fastq_url, :human_data, :use_metadata_convention,
                                        :cluster_type, :generation, :x_axis_label, :y_axis_label, :z_axis_label, :x_axis_min, :x_axis_max,
                                        :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :is_spatial, :taxon_id, :genome_assembly_id, :study_file_bundle_id,
+                                       spatial_cluster_associations: [],
                                        options: [:cluster_group_id, :cluster_file_id, :font_family, :font_size, :font_color,
                                                  :matrix_id, :submission_id, :bam_id, :analysis_name, :visualization_name,
                                                  :cluster_name, :annotation_name],
@@ -1223,19 +1239,18 @@ class StudiesController < ApplicationController
 
     # next update map of existing files to determine what can be grouped together in a directory listing
     @file_extension_map = DirectoryListing.create_extension_map(files, @file_extension_map)
-
     files.each do |file|
       # check first if file type is in file map in a group larger than 10 (or 20 for text files)
-      file_extension = DirectoryListing.file_extension(file.name)
+      file_type = DirectoryListing.file_type_from_extension(file.name)
       directory_name = DirectoryListing.get_folder_name(file.name)
-      if @file_extension_map.has_key?(directory_name) && !@file_extension_map[directory_name][file_extension].nil? &&
-          @file_extension_map[directory_name][file_extension] >= DirectoryListing::MIN_SIZE
-        process_directory_listing_file(file, file_extension)
+      if @file_extension_map.has_key?(directory_name) && !@file_extension_map.dig(directory_name, file_type).nil? &&
+          @file_extension_map.dig(directory_name, file_type) >= DirectoryListing::MIN_SIZE
+        process_directory_listing_file(file, file_type)
       else
-        # we are now dealing with singleton files or fastqs, so process accordingly (making sure to ignore directories)
-        if DirectoryListing::PRIMARY_DATA_TYPES.any? {|ext| file_extension.include?(ext)} && !file.name.end_with?('/')
-          # process fastq file into appropriate directory listing
-          process_directory_listing_file(file, 'fastq')
+        # we are now dealing with singleton files or sequence data, so process accordingly (making sure to ignore directories)
+        if DirectoryListing::PRIMARY_DATA_TYPES.any? {|ext| file_type.include?(ext)} && !file.name.end_with?('/')
+          # process sequence data file into appropriate directory listing
+          process_directory_listing_file(file, file_type)
         else
           # make sure file is not actually a folder by checking its size
           if file.size > 0
