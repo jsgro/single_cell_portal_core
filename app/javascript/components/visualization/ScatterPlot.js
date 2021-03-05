@@ -8,6 +8,7 @@ import { fetchCluster } from 'lib/scp-api'
 import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { useUpdateLayoutEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
+import { log } from 'lib/metrics-api'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
@@ -51,8 +52,6 @@ export default function ScatterPlot({
     formatHoverLabels(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
     const dataScatterColor = processTraceScatterColor(clusterResponse.data, scatterColor)
     Plotly.newPlot(graphElementId, clusterResponse.data, layout)
-    $(`#${graphElementId}`).off('plotly_selected')
-    $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
 
     if (dataScatterColor !== scatterColor) {
       updateScatterColor(dataScatterColor)
@@ -104,6 +103,17 @@ export default function ScatterPlot({
       Plotly.relayout(graphElementId, layoutUpdate)
     }
   }, [dimensions.width, dimensions.height])
+
+  useEffect(() => {
+    $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
+    $(`#${graphElementId}`).on('plotly_legendclick', logLegendClick)
+    $(`#${graphElementId}`).on('plotly_legenddoubleclick', logLegendDoubleClick)
+    return () => {
+      $(`#${graphElementId}`).off('plotly_selected', plotPointsSelected)
+      $(`#${graphElementId}`).off('plotly_legendclick', logLegendClick)
+      $(`#${graphElementId}`).off('plotly_legenddoubleclick', logLegendDoubleClick)
+    }
+  }, [])
 
   return (
     <div className="plot">
@@ -295,3 +305,21 @@ function getDragMode(isCellSelecting) {
   return isCellSelecting ? 'lasso' : 'lasso, select'
 }
 
+
+let currentClickCall = null
+
+/** we don't want to fire two single click events for a double click, so
+ * we wait until we've confirmed a click isn't a double click before logging it.
+ * Unfortunately (despite the docs indicating otherwise), there doesn't seem to be
+ * a way of getting the text of the clicked annotation
+ */
+function logLegendClick(event) {
+  clearTimeout(currentClickCall)
+  currentClickCall = setTimeout(() => log('click:scatterlegend:single'), 300)
+}
+
+/** log a double-click on a plotly graph legend */
+function logLegendDoubleClick(event) {
+  clearTimeout(currentClickCall)
+  log('click:scatterlegend:double')
+}
