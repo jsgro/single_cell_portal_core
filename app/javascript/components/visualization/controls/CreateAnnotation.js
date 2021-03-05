@@ -215,9 +215,17 @@ function CreateAnnotation({
                   {messages.map((msg, index) => <li key={index}>{msg}</li>)}
                 </ul>
                 <div>
-                  <button className="btn btn-primary" disabled={!isCreateEnabled} onClick={handleCreate}>Create</button>
+                  <button
+                    className="btn btn-primary"
+                    disabled={!isCreateEnabled}
+                    data-analytics-name="create-annotation-create"
+                    onClick={handleCreate}>Create</button>
                   &nbsp;
-                  <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
+                  <button
+                    className="btn btn-secondary"
+                    data-analytics-name="create-annotation-cancel"
+                    onClick={handleCancel}>Cancel
+                  </button>
                 </div>
                 <br/>
                 <a className="action" href="/single_cell/user_annotations" target="_blank" data-toggle="tooltip"
@@ -279,7 +287,7 @@ function UserLabelInput({ annotation, index, setName, deleteLabel }) {
         { !annotation.isRemainder &&
           <button onClick={() => deleteLabel(index)}
             className="delete-icon"
-            data-analytics-name="user-annotation-cancel"
+            data-analytics-name="user-annotation-delete-label"
             title="delete this label">
             <FontAwesomeIcon icon={faTimes}/>
           </button> }
