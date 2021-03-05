@@ -58,7 +58,7 @@ class FileParseService
                               persist_on_fail: persist_on_fail)
           job.delay.push_remote_and_launch_ingest
         else
-          study.delay.send_to_firecloud(study_file)
+          study.delay.send_to_firecloud(study_file) if study_file.is_local?
           return self.missing_bundled_file(study_file)
         end
       when /10X/
