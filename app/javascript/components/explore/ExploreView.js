@@ -189,6 +189,7 @@ export default function ExploreTab({ studyAccession }) {
 
 /** convenience function for rendering this in a non-React part of the application */
 export function renderExploreView(target, studyAccession) {
+  ReactDOM.unmountComponentAtNode(target)
   ReactDOM.render(
     <ExploreTab studyAccession={studyAccession}/>,
     target
