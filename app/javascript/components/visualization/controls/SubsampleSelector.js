@@ -68,6 +68,9 @@ const consensusPopover = (
     Take a representative subsample of the current clusters
     (<a href='https://github.com/broadinstitute/single_cell_portal/wiki/Subsampling-Cluster-Files'
       rel="noreferrer" target='_blank'>learn more</a>).
-    Choosing all cells may dramatically increase rendering time for studies with many cells.
+    <br/>
+    <span className="detail">
+      Choosing &quot;All cells&quot; may dramatically increase rendering time for studies with >100K cells.
+    </span>
   </Popover>
 )
