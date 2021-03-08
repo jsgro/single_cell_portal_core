@@ -121,8 +121,10 @@ module Api
             return nil
           end
 
-          subsample = url_params[:subsample].blank? ? nil : url_params[:subsample].to_i
+          subsample = get_selected_subsample_threshold(url_params[:subsample], cluster)
           consensus = url_params[:consensus].blank? ? nil : url_params[:consensus]
+
+
 
           colorscale = url_params[:colorscale].blank? ? 'Reds' : url_params[:colorscale]
 
@@ -193,8 +195,22 @@ module Api
             "cluster": cluster.name,
             "gene": genes.map {|g| g['name']}.join(', '),
             "annotParams": annotation,
+            "subsample": subsample.nil? ? 'all' : subsample,
             "consensus": consensus
           }
+        end
+
+        def self.get_selected_subsample_threshold(param, cluster)
+          subsample = nil
+          if param.blank?
+            # default to the smallest subsampling threshold
+            subsample = ClusterVizService.subsampling_options(cluster).min
+          elsif param == 'all'
+            subsample = nil
+          else
+            subsample = param.to_i
+          end
+          subsample
         end
       end
     end

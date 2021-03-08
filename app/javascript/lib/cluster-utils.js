@@ -19,7 +19,11 @@ export const emptyDataParams = {
 
 /** takes the server response and returns subsample default subsample for the cluster */
 export function getDefaultSubsampleForCluster(annotationList, clusterName) {
-  return '' // for now, default is always all cells
+  const subsampleOptions = annotationList.subsample_thresholds[clusterName]
+  if (subsampleOptions?.length) {
+    return subsampleOptions[0]
+  }
+  return 'all'
 }
 
 
