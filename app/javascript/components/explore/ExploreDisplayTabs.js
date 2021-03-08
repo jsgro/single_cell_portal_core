@@ -46,8 +46,8 @@ export default function ExploreDisplayTabs(
   }
 ) {
   const [, setRenderForcer] = useState({})
-  const isMultiGene = exploreParams.genes.length > 1
-  const isGene = exploreParams.genes.length > 0
+  const isMultiGene = exploreParams.genes.length > 1 || exploreParams?.geneList?.length > 0
+  const isGene = exploreParams.genes.length > 0 || exploreParams?.geneList?.length > 0
   const plotContainerClass = 'explore-plot-tab-content'
   const hasSpatialGroups = exploreInfo && exploreInfo.spatialGroups.length > 0
   const hasGenomeFiles = exploreInfo && exploreInfo.bamBundleList.length > 0

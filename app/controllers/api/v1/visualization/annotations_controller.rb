@@ -127,6 +127,13 @@ module Api
               key :type, :string
             end
             parameter do
+              key :name, :gene_list
+              key :in, :query
+              key :description, 'Name of gene list (overrides other parameters)'
+              key :required, false
+              key :type, :string
+            end
+            parameter do
               key :name, :annotation_type
               key :in, :query
               key :description, 'Type of annotation. One of "group" or "numeric".'
@@ -148,12 +155,17 @@ module Api
         end
 
         def cell_values
-          annotation = self.class.get_selected_annotation(@study, params)
-          cell_cluster = @study.cluster_groups.by_name(params[:cluster])
-          if cell_cluster.nil?
-            cell_cluster = @study.default_cluster
+          if params[:gene_list]
+            gene_list = @study.precomputed_scores.by_name(params[:gene_list])
+            render plain: gene_list.cluster_values_tsv
+          else
+            annotation = self.class.get_selected_annotation(@study, params)
+            cell_cluster = @study.cluster_groups.by_name(params[:cluster])
+            if cell_cluster.nil?
+              cell_cluster = @study.default_cluster
+            end
+            render plain: AnnotationVizService.annotation_cell_values_tsv(@study, cell_cluster, annotation)
           end
-          render plain: AnnotationVizService.annotation_cell_values_tsv(@study, cell_cluster, annotation)
         end
 
         # parses the url params to identify the selected cluster

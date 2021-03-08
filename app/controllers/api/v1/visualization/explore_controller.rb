@@ -83,6 +83,7 @@ module Api
             inferCNVIdeogramFiles: ideogram_files,
             bamBundleList: bam_bundle_list,
             uniqueGenes: @study.unique_genes,
+            geneLists: @study.precomputed_scores.pluck(:name),
             annotationList: AnnotationVizService.get_study_annotation_options(@study, current_api_user),
             clusterGroupNames: ClusterVizService.load_cluster_group_options(@study),
             # spatialGroupNames is for legacy compatibility -- it should be removed once

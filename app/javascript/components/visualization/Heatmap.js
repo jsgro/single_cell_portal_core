@@ -29,9 +29,10 @@ export const DEFAULT_FIT = ''
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
   * @param annotation {obj} an object with name, type, and scope attributes
   * @param subsample {string} a string for the subsampel to be retrieved.
-*/
+  * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
+ */
 export default function Heatmap({
-  studyAccession, genes=[], cluster, annotation={}, subsample, heatmapFit, heatmapRowCentering, dimensions
+  studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit, heatmapRowCentering, dimensions
 }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
   const morpheusHeatmap = useRef(null)
@@ -39,14 +40,16 @@ export default function Heatmap({
     studyAccession,
     genes,
     cluster,
-    heatmapRowCentering
+    heatmapRowCentering,
+    geneList
   })
   const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
     cluster,
     annotation.name,
     annotation.scope,
     annotation.type,
-    subsample)
+    subsample,
+    geneList)
 
   let dimensionsFn = null
   if (dimensions.width) {

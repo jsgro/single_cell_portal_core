@@ -61,19 +61,22 @@ module Api
 
         # this is intended to provide morpheus compatibility, so it returns plain text, instead of json
         def render_heatmap
-          cluster = ClusterVizService.get_cluster_group(@study, params)
+          if params[:gene_list]
+            gene_list = @study.precomputed_scores.by_name(params[:gene_list])
+            expression_data = gene_list&.to_gct
+          else
+            cluster = ClusterVizService.get_cluster_group(@study, params)
 
-          collapse_by = params[:row_centered]
-          genes = RequestUtils.get_genes_from_param(@study, params[:genes])
+            collapse_by = params[:row_centered]
+            genes = RequestUtils.get_genes_from_param(@study, params[:genes])
 
-          expression_data = ExpressionVizService.get_morpheus_text_data(
+            expression_data = ExpressionVizService.get_morpheus_text_data(
               genes: genes, cluster: cluster, collapse_by: collapse_by, file_type: :gct
-          )
+            )
+          end
 
           render plain: expression_data, status: 200
         end
-
-
       end
     end
   end

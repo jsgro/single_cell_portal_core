@@ -16,7 +16,7 @@ import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { fetchExplore } from 'lib/scp-api'
 import useExploreTabRouter from './ExploreTabRouter'
 import { getDefaultClusterParams, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
-
+import GeneListSelector from 'components/visualization/controls/GeneListSelector'
 
 /**
  * manages view options and basic layout for the explore tab
@@ -27,7 +27,7 @@ function RoutableExploreTab({ studyAccession }) {
   const [exploreInfo, setExploreInfo] = useState(null)
   // tracks whetehr the view options controls are open or closed
   const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
-  // whether the user is in lass-select mode for selecting points for an annotation
+  // whether the user is in lasso-select mode for selecting points for an annotation
   const [isCellSelecting, setIsCellSelecting] = useState(false)
   // a plotly points_selected event
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
@@ -94,6 +94,12 @@ function RoutableExploreTab({ studyAccession }) {
     updateExploreParams(updateParams)
   }
 
+  /** handles gene list selection */
+  function updateGeneList(geneList) {
+    console.log('calling updateGeneList with ' + geneList)
+    updateExploreParams({ geneList: geneList })
+  }
+
   useEffect(() => {
     fetchExplore(studyAccession).then(result => setExploreInfo(result))
   }, [studyAccession])
@@ -153,6 +159,13 @@ function RoutableExploreTab({ studyAccession }) {
               cluster={controlExploreParams.cluster}
               subsample={controlExploreParams.subsample}
               updateClusterParams={updateClusterParams}/>
+
+            { exploreInfo?.geneLists?.length > 0 &&
+              <GeneListSelector
+                  geneList={controlExploreParams.geneList}
+                  studyGeneLists={exploreInfo.geneLists}
+                  updateGeneList={updateGeneList}/>
+            }
             { exploreParams.genes.length > 1 &&
               <ExploreConsensusSelector
                 consensus={controlExploreParams.consensus}

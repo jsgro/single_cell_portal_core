@@ -83,6 +83,7 @@ function buildExploreParamsFromQuery(query) {
     exploreParams.spatialGroups = queryParams.spatialGroups ? queryParams.spatialGroups.split(',') : []
   }
   exploreParams.genes = geneParamToArray(queryParams.genes)
+  exploreParams.geneList = queryParams.geneList ? queryParams.geneList : ''
   exploreParams.heatmapRowCentering = queryParams.heatmapRowCentering ?
     queryParams.heatmapRowCentering :
     DEFAULT_ROW_CENTERING
@@ -105,6 +106,7 @@ function buildQueryFromParams(exploreParams) {
     subsample: exploreParams.subsample,
     genes: geneArrayToParam(exploreParams.genes),
     consensus: exploreParams.consensus,
+    geneList: exploreParams.geneList,
     spatialGroups: exploreParams.spatialGroups.join(','),
     heatmapRowCentering: exploreParams.heatmapRowCentering,
     tab: exploreParams.tab,
@@ -128,8 +130,9 @@ function buildQueryFromParams(exploreParams) {
   return stringifyQuery(querySafeOptions, paramSorter)
 }
 
-const PARAM_LIST_ORDER = ['genes', 'cluster', 'spatialGroups', 'annotation', 'subsample', 'consensus', 'tab',
-  'scatterColor', 'distributionPlot', 'distributionPoints', 'heatmapFit', 'heatmapRowCentering', 'bamFileName']
+/** controls list in which query string params are rendered into URL bar */
+const PARAM_LIST_ORDER = ['geneList', 'genes', 'cluster', 'spatialGroups', 'annotation', 'subsample', 'consensus',
+  'tab', 'scatterColor', 'distributionPlot', 'distributionPoints', 'heatmapFit', 'heatmapRowCentering', 'bamFileName']
 /** sort function for passing to stringify to ensure url params are specified in a user-friendly order */
 function paramSorter(a, b) {
   return PARAM_LIST_ORDER.indexOf(a) - PARAM_LIST_ORDER.indexOf(b)
