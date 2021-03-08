@@ -65,7 +65,7 @@ export default function SubsampleSelector({
 
 const consensusPopover = (
   <Popover id="explore-subsampling-helptext">
-    Take a representative subsample of the current clusters
+    Show a representative subsample of the current clusters
     (<a href='https://github.com/broadinstitute/single_cell_portal/wiki/Subsampling-Cluster-Files'
       rel="noreferrer" target='_blank'>learn more</a>).
     <br/>
