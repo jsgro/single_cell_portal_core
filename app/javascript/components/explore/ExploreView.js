@@ -101,9 +101,9 @@ function RoutableExploreTab({ studyAccession }) {
 
   // Toggle "View Options" panel
   const viewOptionsIcon = showViewOptionsControls ? faCaretUp : faCaretDown
-  let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden view-options', 'closed']
+  let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden view-options']
   if (showViewOptionsControls) {
-    [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2 view-options', 'open']
+    [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2 view-options']
   }
 
   return (
@@ -120,7 +120,14 @@ function RoutableExploreTab({ studyAccession }) {
             isCellSelecting={isCellSelecting}
             plotPointsSelected={plotPointsSelected}/>
         </div>
+        <div className="col-sm-12 mobile-view-options">
+          <a className={`action view-options-toggle ${optionsLinkClass}`}
+            onClick={handleViewOptionsClick}>
+            View Options <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/>
+          </a>
+        </div>
         <div className={controlPanelClass}>
+
           <div className="cluster-controls">
             <ClusterSelector
               annotationList={annotationList}
@@ -171,10 +178,12 @@ function RoutableExploreTab({ studyAccession }) {
           </button>
         </div>
       </div>
-      <a className={`action view-options-toggle ${optionsLinkClass}`}
-        onClick={handleViewOptionsClick}>
-        View Options <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/>
-      </a>
+      <div className="desktop-view-options">
+        <a className={`action view-options-toggle ${optionsLinkClass}`}
+          onClick={handleViewOptionsClick}>
+          View Options <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/>
+        </a>
+      </div>
     </div>
   )
 }
