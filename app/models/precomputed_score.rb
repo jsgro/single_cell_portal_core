@@ -50,7 +50,7 @@ class PrecomputedScore
 
 	# render a plain tsv file for use in Morpheus for rendering dot plots/heatmaps (controls column rendering)
 	def cluster_values_tsv
-		headers = ['Name', self.name].join("\t")
+		headers = ['NAME', self.name].join("\t")
 		# since the "cluster" value is both the column name & value, create a nested array with repeated values
 		rows = []
 		self.clusters.each do |cluster_name|
