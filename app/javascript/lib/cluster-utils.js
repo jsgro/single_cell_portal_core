@@ -21,7 +21,10 @@ export const emptyDataParams = {
 export function getDefaultSubsampleForCluster(annotationList, clusterName) {
   const subsampleOptions = annotationList.subsample_thresholds[clusterName]
   if (subsampleOptions?.length) {
-    return subsampleOptions[0]
+    const defaultSubsample = Math.max(subsampleOptions.filter(opt => opt <= 10000))
+    if (defaultSubsample === 10000) {
+      return 10000
+    }
   }
   return 'all'
 }

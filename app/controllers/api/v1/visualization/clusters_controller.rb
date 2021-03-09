@@ -203,8 +203,8 @@ module Api
         def self.get_selected_subsample_threshold(param, cluster)
           subsample = nil
           if param.blank?
-            # default to the smallest subsampling threshold
-            subsample = ClusterVizService.subsampling_options(cluster).min
+            # default to largest threshold available that is <10K
+            subsample = ClusterVizService.default_subsampling(cluster)
           elsif param == 'all'
             subsample = nil
           else
