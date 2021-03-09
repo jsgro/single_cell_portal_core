@@ -194,7 +194,7 @@ export default function ExploreDisplayTabs(
   return (
     <>
       <div className="row">
-        <div className="col-md-5">
+        <div className="col-md-6">
           <div className="flexbox">
             <StudyGeneField genes={exploreParams.genes}
               searchGenes={searchGenes}
