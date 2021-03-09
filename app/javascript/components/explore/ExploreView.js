@@ -16,7 +16,7 @@ import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { fetchExplore } from 'lib/scp-api'
 import useExploreTabRouter from './ExploreTabRouter'
 import { getDefaultClusterParams, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
-
+import { log } from 'lib/metrics-api'
 
 /**
  * manages view options and basic layout for the explore tab
@@ -71,6 +71,7 @@ function RoutableExploreTab({ studyAccession }) {
 
   /** handler for when the user selects points in a plotly scatter graph */
   function plotPointsSelected(points) {
+    log('select:scatter:cells')
     setCurrentPointsSelected(points)
   }
 
