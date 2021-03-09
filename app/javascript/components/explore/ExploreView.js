@@ -81,12 +81,15 @@ function RoutableExploreTab({ studyAccession }) {
 
   /** handles cluster selection to also populate the default spatial groups */
   function updateClusterParams(newParams) {
+
     if (newParams.cluster && !newParams.spatialGroups) {
       newParams.spatialGroups = getDefaultSpatialGroupsForCluster(newParams.cluster, exploreInfo.spatialGroups)
     }
     // if the user updates any cluster params, store all of them in the URL so we don't end up with
     // broken urls in the event of a default cluster/annotation changes
-    const updateParams = {}
+    // also, unset any gene lists as we're about to re-render the explore tab and having gene list selected will show
+    // the wrong tabs
+    const updateParams = {geneList: ''}
     const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
     clusterParamNames.forEach(param => {
       updateParams[param] = param in newParams ? newParams[param] : controlExploreParams[param]
@@ -96,7 +99,6 @@ function RoutableExploreTab({ studyAccession }) {
 
   /** handles gene list selection */
   function updateGeneList(geneList) {
-    console.log('calling updateGeneList with ' + geneList)
     updateExploreParams({ geneList: geneList })
   }
 

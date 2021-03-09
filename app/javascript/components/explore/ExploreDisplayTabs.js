@@ -46,12 +46,13 @@ export default function ExploreDisplayTabs(
   }
 ) {
   const [, setRenderForcer] = useState({})
-  const isMultiGene = exploreParams.genes.length > 1 || exploreParams?.geneList?.length > 0
-  const isGene = exploreParams.genes.length > 0 || exploreParams?.geneList?.length > 0
+  const isGeneList =  exploreParams?.geneList?.length > 0
+  const isMultiGene = exploreParams.genes.length > 1
+  const isGene = exploreParams.genes.length > 0
   const plotContainerClass = 'explore-plot-tab-content'
   const hasSpatialGroups = exploreInfo && exploreInfo.spatialGroups.length > 0
   const hasGenomeFiles = exploreInfo && exploreInfo.bamBundleList.length > 0
-  const enabledTabs = getEnabledTabs(isGene, isMultiGene, hasSpatialGroups, !!exploreParams.consensus, hasGenomeFiles)
+  const enabledTabs = getEnabledTabs(isGeneList, isGene, isMultiGene, hasSpatialGroups, !!exploreParams.consensus, hasGenomeFiles)
 
 
   // exploreParams object without genes specified, to pass to cluster comparison plots
@@ -80,7 +81,8 @@ export default function ExploreDisplayTabs(
     // TODO: Log study gene search, to not break existing analytics
     // Avoid logging `clear` trigger; it is not a search
 
-    updateExploreParams({ genes })
+    // also unset any selected gene lists
+    updateExploreParams({ genes, geneList: '' })
   }
 
   // Handle spatial transcriptomics data
@@ -127,7 +129,8 @@ export default function ExploreDisplayTabs(
   if (
     exploreInfo &&
     exploreInfo.taxonNames.length === 1 &&
-    exploreParams.genes.length === 1
+    exploreParams.genes.length === 1 &&
+    !isGeneList
   ) {
     showRelatedGenesIdeogram = true
     currentTaxon = exploreInfo.taxonNames[0]
@@ -199,7 +202,7 @@ export default function ExploreDisplayTabs(
             <StudyGeneField genes={exploreParams.genes}
               searchGenes={searchGenes}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-            <button className={isGene ? 'action fa-lg' : 'hidden'}
+            <button className={isGene || isGeneList ? 'action fa-lg' : 'hidden'} // show if this is gene search || gene list
               onClick={() => searchGenes([])}
               title="Return to cluster view"
               data-toggle="tooltip"
@@ -443,22 +446,26 @@ export default function ExploreDisplayTabs(
 }
 
 /** return an array of the tabs that should be shown, given the dataParams and exploreInfo */
-function getEnabledTabs(isGene, isMultiGene, hasSpatialGroups, isConsensus, hasGenomeFiles) {
+function getEnabledTabs(isGeneList, isGene, isMultiGene, hasSpatialGroups, isConsensus, hasGenomeFiles) {
   let enabledTabs = []
-  if (isGene) {
-    if (isMultiGene) {
-      if (isConsensus) {
-        enabledTabs = ['scatter', 'distribution', 'dotplot']
-      } else if (hasSpatialGroups) {
-        enabledTabs = ['spatial', 'dotplot', 'heatmap']
+  if (isGeneList) {
+    enabledTabs = ['heatmap']
+  } else {
+    if (isGene) {
+      if (isMultiGene) {
+        if (isConsensus) {
+          enabledTabs = ['scatter', 'distribution', 'dotplot']
+        } else if (hasSpatialGroups) {
+          enabledTabs = ['spatial', 'dotplot', 'heatmap']
+        } else {
+          enabledTabs = ['dotplot', 'heatmap']
+        }
       } else {
-        enabledTabs = ['dotplot', 'heatmap']
+        enabledTabs = ['scatter', 'distribution']
       }
     } else {
-      enabledTabs = ['scatter', 'distribution']
+      enabledTabs = ['cluster']
     }
-  } else {
-    enabledTabs = ['cluster']
   }
   if (hasGenomeFiles) {
     enabledTabs.push('genome')

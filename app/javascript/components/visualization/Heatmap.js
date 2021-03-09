@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna, faArrowsAltV, faArrowsAltH, faArrowsAlt } from '@fortawesome/free-solid-svg-icons'
 
 import { log, startPendingEvent } from 'lib/metrics-api'
-import { getExpressionHeatmapURL, getAnnotationCellValuesURL } from 'lib/scp-api'
+import {getExpressionHeatmapURL, getAnnotationCellValuesURL, getGeneListColsURL} from 'lib/scp-api'
 import { morpheusTabManager } from './DotPlot'
 import { useUpdateEffect } from 'hooks/useUpdate'
 
@@ -43,13 +43,18 @@ export default function Heatmap({
     heatmapRowCentering,
     geneList
   })
-  const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
-    cluster,
-    annotation.name,
-    annotation.scope,
-    annotation.type,
-    subsample,
-    geneList)
+  let annotationCellValuesURL
+  // determine where we get our column headers from
+  if (!geneList) {
+    annotationCellValuesURL = getAnnotationCellValuesURL({studyAccession,
+      cluster,
+      annotationName: annotation.name,
+      annotationScope: annotation.scope,
+      annotationType: annotation.type,
+      subsample})
+  } else {
+    annotationCellValuesURL = getGeneListColsURL({studyAccession, geneList})
+  }
 
   let dimensionsFn = null
   if (dimensions.width) {
@@ -65,7 +70,7 @@ export default function Heatmap({
         target: `#${graphId}`,
         expressionValuesURL,
         annotationCellValuesURL,
-        annotationName: annotation.name,
+        annotationName: !geneList ? annotation.name : geneList,
         dimensionsFn,
         fit: heatmapFit,
         rowCentering: heatmapRowCentering
@@ -78,7 +83,8 @@ export default function Heatmap({
     cluster,
     annotation.name,
     annotation.scope,
-    heatmapRowCentering
+    heatmapRowCentering,
+    geneList
   ])
 
   useUpdateEffect(() => {

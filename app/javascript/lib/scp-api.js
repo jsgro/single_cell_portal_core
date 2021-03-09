@@ -386,12 +386,11 @@ export async function fetchAnnotation(studyAccession, clusterName, annotationNam
 }
 
 /** Get URL for a Morpheus-suitable annotation values file */
-export function getAnnotationCellValuesURL(studyAccession, clusterName, annotationName, annotationScope, annotationType, geneList, mock=false) {
+export function getAnnotationCellValuesURL({studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false}) {
   const paramObj = {
     cluster: clusterName,
     annotation_scope: annotationScope,
     annotation_type: annotationType,
-    gene_list: geneList,
     url_safe_token: getURLSafeAccessToken()
   }
   annotationName = annotationName ? annotationName : '_default'
@@ -399,6 +398,11 @@ export function getAnnotationCellValuesURL(studyAccession, clusterName, annotati
   return getFullUrl(apiUrl)
 }
 
+/** get URL for Morpheus-suitable annotation values file for a gene list */
+export function getGeneListColsURL({studyAccession, geneList}) {
+  const apiUrl = `/studies/${studyAccession}/annotations/gene_lists/${encodeURIComponent(geneList)}`
+  return getFullUrl(apiUrl)
+}
 
 /**
  * Returns an URL for fetching heatmap expression data for genes in a study

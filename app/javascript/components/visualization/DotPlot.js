@@ -22,23 +22,21 @@ export const dotPlotColorScheme = {
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
   * @param annotation {obj} an object with name, type, and scope attributes
   * @param subsample {string} a string for the subsample to be retrieved.
-  * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
   * @param consensus {string} for multi-gene expression plots
   * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
   */
 export default function DotPlot({
   studyAccession, genes=[], cluster, annotation={},
-  subsample, geneList, annotationValues, dimensions
+  subsample, annotationValues, dimensions
 }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
-  const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster, geneList })
-  const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
+  const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster })
+  const annotationCellValuesURL = getAnnotationCellValuesURL({studyAccession,
     cluster,
-    annotation.name,
-    annotation.scope,
-    annotation.type,
-    subsample,
-    geneList)
+    annotationName: annotation.name,
+    annotationScope: annotation.scope,
+    annotationType: annotation.type,
+    subsample})
 
   let dimensionsFn = null
   if (dimensions?.width) {
