@@ -29,10 +29,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
 
   let enteredGeneArray = []
   if (genes) {
-    enteredGeneArray = genes.map(geneName => ({
-      label: geneName,
-      value: geneName
-    }))
+    enteredGeneArray = getOptionsFromGenes(genes)
   }
 
   /** the search control tracks two state variables
@@ -80,48 +77,60 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
     }
   }
 
+  /** handles a user selecting a gene list file to use */
+  function readGeneListFile(file) {
+    const fileReader = new FileReader()
+    fileReader.onloadend = () => {
+      const newGenes = fileReader.result.trim().split(/[\s,]+/)
+      searchGenes(newGenes)
+    }
+    fileReader.readAsText(file)
+  }
+
   useEffect(() => {
     if (genes.join(',') !== geneArray.map(opt => opt.label).join(',')) {
       // the genes have been updated elsewhere -- resync
-      setGeneArray([])
+      setGeneArray(getOptionsFromGenes(genes))
       setInputText('')
     }
   }, [genes.join(',')])
 
   return (
     <form className="gene-keyword-search gene-study-keyword-search form-horizontal" onSubmit={handleSubmit}>
-      <div className="input-group">
-        <div className="input-group-append">
-          <Button type="submit">
-            <FontAwesomeIcon icon={faSearch} />
-          </Button>
+      <div className="flexbox align-center">
+        <div className="input-group">
+          <div className="input-group-append">
+            <Button type="submit">
+              <FontAwesomeIcon icon={faSearch} />
+            </Button>
+          </div>
+          <CreatableSelect
+            components={{ DropdownIndicator: null }}
+            inputValue={inputText}
+            value={geneArray}
+            className="gene-keyword-search-input"
+            isClearable
+            isMulti
+            isValidNewOption={() => false}
+            noOptionsMessage={() => (inputText.length > 1 ? 'No matching genes' : 'Type to search...')}
+            options={geneOptions}
+            onChange={value => setGeneArray(value ? value : [])}
+            onInputChange={inputValue => setInputText(inputValue)}
+            onKeyDown={handleKeyDown}
+            // the default blur behavior removes any entered free text,
+            // we want to instead auto-convert entered free text to a gene tag
+            onBlur={syncGeneArrayToInputText}
+            placeholder={'Genes (e.g. "PTEN NF2")'}
+          />
         </div>
-        <CreatableSelect
-          components={{ DropdownIndicator: null }}
-          inputValue={inputText}
-          value={geneArray}
-          className="gene-keyword-search-input"
-          isClearable
-          isMulti
-          isValidNewOption={() => false}
-          noOptionsMessage={() => (inputText.length > 1 ? 'No matching genes' : 'Type to search...')}
-          options={geneOptions}
-          onChange={value => setGeneArray(value ? value : [])}
-          onInputChange={inputValue => setInputText(inputValue)}
-          onKeyDown={handleKeyDown}
-          // the default blur behavior removes any entered free text,
-          // we want to instead auto-convert entered free text to a gene tag
-          onBlur={syncGeneArrayToInputText}
-          placeholder={'Genes (e.g. "PTEN NF2")'}
-        />
-        <Button type="button"
-          className="btn-icon fa-lg"
+        <label htmlFor="gene-list-upload"
           data-toggle="tooltip"
+          className="icon-button"
           title="Upload a list of genes to search from a file">
-          <FontAwesomeIcon icon={faFileUpload} />
-        </Button>
+          <input id="gene-list-upload" type="file" onChange={e => readGeneListFile(e.target.files[0])}/>
+          <FontAwesomeIcon className="action fa-lg" icon={faFileUpload} />
+        </label>
       </div>
-
       <Modal
         show={showEmptySearchModal}
         onHide={() => {setShowEmptySearchModal(false)}}
@@ -131,6 +140,15 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
           Enter at least one gene to search
         </Modal.Body>
       </Modal>
+
     </form>
   )
+}
+
+/** takes an array of gene name strings, and returns options suitable for react-select */
+function getOptionsFromGenes(genes) {
+  return genes.map(geneName => ({
+    label: geneName,
+    value: geneName
+  }))
 }

@@ -485,6 +485,10 @@ h6,
   display: flex;
 }
 
+.align-center {
+	align-items: center;
+}
+
 /* Override bootstrap styles to SCP colors */
 .alert.alert-info {
   color: $action-color;

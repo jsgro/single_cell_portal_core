@@ -17,6 +17,7 @@ import { fetchExplore } from 'lib/scp-api'
 import useExploreTabRouter from './ExploreTabRouter'
 import { getDefaultClusterParams, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
 import GeneListSelector from 'components/visualization/controls/GeneListSelector'
+import { log } from 'lib/metrics-api'
 
 /**
  * manages view options and basic layout for the explore tab
@@ -71,6 +72,7 @@ function RoutableExploreTab({ studyAccession }) {
 
   /** handler for when the user selects points in a plotly scatter graph */
   function plotPointsSelected(points) {
+    log('select:scatter:cells')
     setCurrentPointsSelected(points)
   }
 
@@ -108,9 +110,9 @@ function RoutableExploreTab({ studyAccession }) {
 
   // Toggle "View Options" panel
   const viewOptionsIcon = showViewOptionsControls ? faCaretUp : faCaretDown
-  let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden view-options', 'closed']
+  let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden view-options']
   if (showViewOptionsControls) {
-    [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2 view-options', 'open']
+    [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2 view-options']
   }
 
   return (
@@ -127,7 +129,14 @@ function RoutableExploreTab({ studyAccession }) {
             isCellSelecting={isCellSelecting}
             plotPointsSelected={plotPointsSelected}/>
         </div>
+        <div className="col-sm-12 mobile-view-options">
+          <a className={`action view-options-toggle ${optionsLinkClass}`}
+            onClick={handleViewOptionsClick}>
+            View Options <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/>
+          </a>
+        </div>
         <div className={controlPanelClass}>
+
           <div className="cluster-controls">
             <ClusterSelector
               annotationList={annotationList}
@@ -185,10 +194,12 @@ function RoutableExploreTab({ studyAccession }) {
           </button>
         </div>
       </div>
-      <a className={`action view-options-toggle ${optionsLinkClass}`}
-        onClick={handleViewOptionsClick}>
-        View Options <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/>
-      </a>
+      <div className="desktop-view-options">
+        <a className={`action view-options-toggle ${optionsLinkClass}`}
+          onClick={handleViewOptionsClick}>
+          View Options <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/>
+        </a>
+      </div>
     </div>
   )
 }
@@ -204,6 +215,7 @@ export default function ExploreTab({ studyAccession }) {
 
 /** convenience function for rendering this in a non-React part of the application */
 export function renderExploreView(target, studyAccession) {
+  ReactDOM.unmountComponentAtNode(target)
   ReactDOM.render(
     <ExploreTab studyAccession={studyAccession}/>,
     target

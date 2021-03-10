@@ -145,7 +145,11 @@ class IngestJob
           if !matrix_cells || matrix_genes.empty?
             # return false if matrix hasn't validated, unless the other matrix was uploaded after this file
             # this is to prevent multiple matrix files queueing up and blocking each other from initiating PAPI jobs
-            return false unless matrix_file.created_at > self.study_file.created_at
+            # also, a timeout 24 hours is added to prevent all matrix files from queueing infinitely if one
+            # fails to launch an ingest job for some reason
+            if matrix_file.created_at < self.study_file.created_at && matrix_file.created_at > 24.hours.ago
+              return false
+            end
           end
         end
       end
