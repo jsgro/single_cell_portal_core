@@ -117,7 +117,7 @@ function renderHeatmap({
     // We implement our own trivial tab manager as it seems to be the only way
     // (after 2+ hours of digging) to prevent morpheus auto-scrolling
     // to the heatmap once it's rendered
-    tabManager: morpheusTabManager($target, dimensionsFn)
+    tabManager: morpheusTabManager($target)
   }
 
   // Fit rows, columns, or both to screen
@@ -145,6 +145,7 @@ function renderHeatmap({
       { field: annotationName, order: 0 }
     ]
     config.columns = [
+      { field: 'id', display: 'text'},
       { field: annotationName, display: 'text' }
     ]
     config.rows = [
