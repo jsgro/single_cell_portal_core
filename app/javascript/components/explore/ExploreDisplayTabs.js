@@ -442,10 +442,11 @@ export default function ExploreDisplayTabs(
 /** return an array of the tabs that should be shown, given the exploreParams and exploreInfo */
 export function getEnabledTabs(exploreInfo, exploreParams) {
   let isGeneList =  !!exploreParams.geneList
-  let isMultiGene = exploreParams.genes.length > 1
-  let isGene = exploreParams.genes.length > 0
-  let hasSpatialGroups = exploreInfo && exploreInfo.spatialGroups.length > 0
-  let hasGenomeFiles = exploreInfo && exploreInfo.bamBundleList.length > 0
+  let isMultiGene = exploreParams?.genes?.length > 1
+  let isGene = exploreParams?.genes?.length > 0
+  let isConsensus = !!exploreParams.consensus
+  let hasSpatialGroups = exploreInfo && exploreInfo?.spatialGroups?.length > 0
+  let hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
   let enabledTabs = []
   if (isGeneList) {
     enabledTabs = ['heatmap']
