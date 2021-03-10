@@ -146,7 +146,7 @@ function renderHeatmap({
     ]
     config.columns = [
       { field: 'id', display: 'text'},
-      { field: annotationName, display: 'text' }
+      { field: annotationName, display: 'color' }
     ]
     config.rows = [
       { field: 'id', display: 'text' }
