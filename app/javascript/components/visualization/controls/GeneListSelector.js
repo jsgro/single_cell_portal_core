@@ -29,15 +29,17 @@ export default function GeneListSelector({
   }
   const geneListOptions = getGeneListOptions(studyGeneLists)
   return (
-      <div className="form-group">
-        <label>Gene Lists</label>
-        <Select
-            value={{
-              label: geneList === '' ? 'None' : geneList,
-              value: geneList
-            }}
-            options={geneListOptions}
-            styles={clusterSelectStyle}
-            onChange={newGeneList => updateGeneList(newGeneList.value)}/>
-      </div>)
+    <div className="form-group">
+      <label>Gene Lists</label>
+      <Select
+        value={{
+          label: geneList === '' ? 'None' : geneList,
+          value: geneList
+        }}
+        options={geneListOptions}
+        styles={clusterSelectStyle}
+        onChange={newGeneList => updateGeneList(newGeneList.value)}
+      />
+    </div>
+  )
 }
