@@ -29,6 +29,11 @@
 	}
 	.legendtitletext {
 	}
+
+	.icon-button {
+		margin-left: 1em;
+		margin-right: 1em;
+	}
 }
 
 .explore-plot-tab-content {
@@ -61,7 +66,6 @@
 	}
 }
 
-
 .explore-plot-tab-content {
 	background: #fff;
 }
@@ -70,9 +74,27 @@
 	border: none;
 	background: none;
 	font-weight: bold;
+}
+
+.desktop-view-options {
 	position: absolute;
 	top: 10px;
 	right: 2em;
+}
+
+.mobile-view-options {
+	display: none;
+}
+
+@media (max-width: 991.98px) {
+	.mobile-view-options {
+		display: block;
+		text-align: center;
+		padding-top: 1em;
+	}
+	.desktop-view-options {
+		display: none;
+	}
 }
 
 
@@ -100,4 +122,8 @@
 .react-switch {
   vertical-align: middle;
   margin-left: 4px;
+}
+
+#gene-list-upload {
+	display: none;
 }

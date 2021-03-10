@@ -58,6 +58,11 @@ class IngestJobTest < ActiveSupport::TestCase
     refute queued_job.can_launch_ingest?,
            "Should not be able to launch ingest job of queued parse but can_launch_ingest? returned true"
 
+    # show that after 24 hours the job can launch (simulating a failed ingest launch that blocks other parses)
+    @basic_study_exp_file.update_attributes!(created_at: 25.hours.ago)
+    assert queued_job.can_launch_ingest?,
+           "Should be able to launch ingest job of queued parse after 24 hours but can_launch_ingest? returned false"
+
     # simulate new matrix is "older" by backdating created_at by 1 week
     @other_matrix.update_attributes!(created_at: 1.week.ago.in_time_zone)
     backdated_job = IngestJob.new(study: @basic_study, study_file: @other_matrix, action: :ingest_expression)
