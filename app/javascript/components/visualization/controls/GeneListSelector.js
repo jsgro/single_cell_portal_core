@@ -3,9 +3,12 @@ import Select from 'react-select'
 
 import { clusterSelectStyle } from 'lib/cluster-utils'
 
+// value to render in select menu if user has not selected a gene list
+const noneSelected = "None selected..."
+
 /** takes the server response and returns subsample options suitable for react-select */
 function getGeneListOptions(studyGeneLists) {
-  let geneListObjects = [{label: 'None', value: ''}]
+  let geneListObjects = [{label: noneSelected, value: ''}]
   geneListObjects = geneListObjects.concat(studyGeneLists.map(geneList => {
     return { label: geneList, value: geneList }
   }))
@@ -33,7 +36,7 @@ export default function GeneListSelector({
       <label>Gene Lists</label>
       <Select
         value={{
-          label: geneList === '' ? 'None' : geneList,
+          label: geneList === '' ? noneSelected : geneList,
           value: geneList
         }}
         options={geneListOptions}
