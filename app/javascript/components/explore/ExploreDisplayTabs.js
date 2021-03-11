@@ -400,6 +400,7 @@ export default function ExploreDisplayTabs(
               <StudyViolinPlot
                 studyAccession={studyAccession}
                 updateDistributionPlot={distributionPlot => updateExploreParams({ distributionPlot }, false)}
+                dimensions={getPlotDimensions({})}
                 {...exploreParams}/>
             </div>
           }

@@ -27,7 +27,7 @@ export const dotPlotColorScheme = {
   */
 export default function DotPlot({
   studyAccession, genes=[], cluster, annotation={},
-  subsample, annotationValues, dimensions
+  subsample, annotationValues
 }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
   const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster })
@@ -38,11 +38,6 @@ export default function DotPlot({
     annotationType: annotation.type,
     subsample})
 
-  let dimensionsFn = null
-  if (dimensions?.width) {
-    dimensionsFn = () => dimensions.width
-  }
-
   useEffect(() => {
     if (annotation.name) {
       const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
@@ -52,8 +47,7 @@ export default function DotPlot({
         expressionValuesURL,
         annotationCellValuesURL,
         annotationName: annotation.name,
-        annotationValues,
-        dimensionsFn
+        annotationValues
       })
       plotEvent.complete()
     }
@@ -78,7 +72,7 @@ export default function DotPlot({
 
 /** Render Morpheus dot plot */
 function renderDotPlot(
-  { target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues, dimensionsFn }
+  { target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues }
 ) {
   const $target = $(target)
   $target.empty()
@@ -107,7 +101,7 @@ function renderDotPlot(
       scalingMode: 'relative'
     },
     focus: null,
-    tabManager: morpheusTabManager($target, dimensionsFn),
+    tabManager: morpheusTabManager($target),
     tools
   }
 
@@ -153,10 +147,7 @@ function renderDotPlot(
  * (after 2+ hours of digging) to prevent morpheus auto-scrolling
  * to a heatmap once it's rendered
  */
-export function morpheusTabManager($target, dimensionsFn) {
-  if (!dimensionsFn) {
-    dimensionsFn = () => $target.width()
-  }
+export function morpheusTabManager($target) {
   return {
     add: options => {
       $target.empty()
@@ -165,8 +156,8 @@ export function morpheusTabManager($target, dimensionsFn) {
     },
     setTabTitle: () => {},
     setActiveTab: () => {},
-    getWidth: () => {return dimensionsFn().width},
-    getHeight: () => $target.height(),
+    getWidth: () => $target.actual('width'),
+    getHeight: () => $target.actual('height'),
     getTabCount: () => 1
   }
 }

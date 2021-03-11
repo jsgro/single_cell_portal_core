@@ -32,7 +32,7 @@ export const DEFAULT_FIT = ''
   * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
  */
 export default function Heatmap({
-  studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit, heatmapRowCentering, dimensions
+  studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit, heatmapRowCentering
 }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
   const morpheusHeatmap = useRef(null)
@@ -56,11 +56,6 @@ export default function Heatmap({
     annotationCellValuesURL = getGeneListColsURL({studyAccession, geneList})
   }
 
-  let dimensionsFn = null
-  if (dimensions.width) {
-    dimensionsFn = () => dimensions.width
-  }
-
   useEffect(() => {
     // we can't render until we know what the cluster is, since morpheus requires the annotation name
     if (cluster) {
@@ -71,7 +66,6 @@ export default function Heatmap({
         expressionValuesURL,
         annotationCellValuesURL,
         annotationName: !geneList ? annotation.name : geneList,
-        dimensionsFn,
         fit: heatmapFit,
         rowCentering: heatmapRowCentering
       })
@@ -90,11 +84,15 @@ export default function Heatmap({
   useUpdateEffect(() => {
     if (morpheusHeatmap.current && morpheusHeatmap.current.fitToWindow) {
       const fit = heatmapFit
-      morpheusHeatmap.current.fitToWindow({
-        fitRows: fit === 'rows' || fit === 'both',
-        fitColumns: fit === 'cols' || fit === 'both',
-        repaint: true
-      })
+      if (fit === '') {
+        morpheusHeatmap.current.resetZoom()
+      } else {
+        morpheusHeatmap.current.fitToWindow({
+          fitRows: fit === 'rows' || fit === 'both',
+          fitColumns: fit === 'cols' || fit === 'both',
+          repaint: true
+        })
+      }
     }
   }, [heatmapFit])
 
@@ -110,7 +108,7 @@ export default function Heatmap({
 /** Render Morpheus heatmap */
 function renderHeatmap({
   target, expressionValuesURL, annotationCellValuesURL, annotationName,
-  dimensionsFn, fit, rowCentering
+  fit, rowCentering
 }) {
   const $target = $(target)
   $target.empty()
@@ -126,7 +124,7 @@ function renderHeatmap({
     // We implement our own trivial tab manager as it seems to be the only way
     // (after 2+ hours of digging) to prevent morpheus auto-scrolling
     // to the heatmap once it's rendered
-    tabManager: morpheusTabManager($target, dimensionsFn)
+    tabManager: morpheusTabManager($target)
   }
 
   // Fit rows, columns, or both to screen
@@ -137,6 +135,9 @@ function renderHeatmap({
   } else if (fit === 'both') {
     config.columnSize = 'fit'
     config.rowSize = 'fit'
+  } else if (fit === 'none') {
+    config.columnSize = null
+    config.rowSize = null
   } else {
     config.columnSize = null
     config.rowSize = null
@@ -154,7 +155,8 @@ function renderHeatmap({
       { field: annotationName, order: 0 }
     ]
     config.columns = [
-      { field: annotationName, display: 'text' }
+      { field: 'id', display: 'text'},
+      { field: annotationName, display: 'color' }
     ]
     config.rows = [
       { field: 'id', display: 'text' }
