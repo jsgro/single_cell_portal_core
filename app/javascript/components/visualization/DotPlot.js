@@ -27,7 +27,7 @@ export const dotPlotColorScheme = {
   */
 export default function DotPlot({
   studyAccession, genes=[], cluster, annotation={},
-  subsample, annotationValues, dimensions
+  subsample, annotationValues
 }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
   const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster })
