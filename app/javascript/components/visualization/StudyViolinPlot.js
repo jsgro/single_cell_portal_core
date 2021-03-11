@@ -7,7 +7,7 @@ import { fetchExpressionViolin } from 'lib/scp-api'
 import { getColorBrewerColor, arrayMin, arrayMax, plotlyDefaultLineColor } from 'lib/plot'
 import Plotly from 'plotly.js-dist'
 
-import { useUpdateEffect } from 'hooks/useUpdate'
+import { useUpdateEffect, useUpdateLayoutEffect } from 'hooks/useUpdate'
 
 
 export const DISTRIBUTION_PLOT_OPTIONS = [
@@ -39,7 +39,7 @@ export const defaultDistributionPoints = DISTRIBUTION_POINTS_OPTIONS[0].value
   */
 export default function StudyViolinPlot({
   studyAccession, genes, cluster, annotation, subsample, consensus, distributionPlot, distributionPoints,
-  updateDistributionPlot, setAnnotationList
+  updateDistributionPlot, setAnnotationList, dimensions
 }) {
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
@@ -100,6 +100,16 @@ export default function StudyViolinPlot({
       updateViolinPlot(graphElementId, distributionPlot, distributionPoints)
     }
   }, [distributionPlot, distributionPoints])
+
+  // Adjusts width and height of plots upon toggle of "View Options"
+  useUpdateEffect(() => {
+    // Don't update if the graph hasn't loaded yet
+    if (!isLoading && studyGeneNames.length > 0) {
+      const { width, height } = dimensions
+      const layoutUpdate = { width, height }
+      Plotly.relayout(graphElementId, layoutUpdate)
+    }
+  }, [dimensions.width, dimensions.height])
 
   const isCollapsedView = ['mean', 'median'].indexOf(consensus) >= 0
   return (
