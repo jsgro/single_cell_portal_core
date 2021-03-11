@@ -26,7 +26,8 @@ module Api
               'Visualization'
             ]
             key :summary, 'Get expression-based plot data for visualization'
-            key :description, 'Get expression-based plot data for use in visualization.  Supports violin/heatmap/dot plots'
+            key :description, "Get expression-based plot data for use in visualization.  Supports violin/heatmap/dot plots." \
+                              "\n\n<strong>NOTE: This endpoint may change frequently, so use with care.</strong>"
             key :operationId, 'study_visualization_expression_show'
             parameter do
               key :name, :accession

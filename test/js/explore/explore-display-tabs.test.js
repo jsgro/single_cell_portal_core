@@ -13,15 +13,6 @@ jest.mock('components/visualization/RelatedGenesIdeogram', () => {
 
 import { getEnabledTabs } from 'components/explore/ExploreDisplayTabs'
 
-// function to wrap test assertions
-function assertTabConfig(exploreInfo, exploreParams, expectedResults) {
-  const {enabledTabs, isGeneList, isGene, isMultiGene} = getEnabledTabs(exploreInfo, exploreParams)
-  expect(enabledTabs).toEqual(expectedResults.enabledTabs)
-  expect(isGeneList).toEqual(expectedResults.isGeneList)
-  expect(isGene).toEqual(expectedResults.isGene)
-  expect(isMultiGene).toEqual(expectedResults.isMultiGene)
-}
-
 describe("explore tabs are activated based on study info and parameters", () => {
   it('should enable cluster tab', async () => {
     // mock exploreInfo from study
@@ -54,7 +45,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
       isMultiGene: false
     }
 
-    assertTabConfig(exploreInfo, exploreParams, expectedResults)
+    expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 
   it('should enable cluster and genome tab', async () => {
@@ -93,7 +84,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
       isMultiGene: false
     }
 
-    assertTabConfig(exploreInfo, exploreParams, expectedResults)
+    expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 
   it('should enable heatmap tab for gene lists', async () => {
@@ -125,7 +116,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
       isMultiGene: false
     }
 
-    assertTabConfig(exploreInfo, exploreParams, expectedResults)
+    expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 
   it ('should enable scatter/distribution tabs when searching one gene', async () => {
@@ -161,7 +152,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
       isMultiGene: false
     }
 
-    assertTabConfig(exploreInfo, exploreParams, expectedResults)
+    expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 
   it ('should enable dotplot/heatmap tabs when searching multiple genes', async () => {
@@ -197,7 +188,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
       isMultiGene: true
     }
 
-    assertTabConfig(exploreInfo, exploreParams, expectedResults)
+    expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 
   it ('should enable spatial/dotplot/heatmap tabs when searching multiple genes', async () => {
@@ -238,7 +229,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
       isMultiGene: true
     }
 
-    assertTabConfig(exploreInfo, exploreParams, expectedResults)
+    expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 
   it ('should enable scatter/distribution/dotplot tabs when searching multiple genes w/ consensus', async () => {
@@ -276,6 +267,6 @@ describe("explore tabs are activated based on study info and parameters", () => 
       isMultiGene: true
     }
 
-    assertTabConfig(exploreInfo, exploreParams, expectedResults)
+    expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 })
