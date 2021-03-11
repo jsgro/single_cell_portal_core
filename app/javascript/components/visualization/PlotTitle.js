@@ -1,7 +1,7 @@
 import React from 'react'
 
 /** Renders a plot title for scatter plots */
-export default function PlotTitle({ cluster, annotation, gene, consensus }) {
+export default function PlotTitle({ cluster, annotation, gene, consensus, subsample }) {
   let contentString = cluster
   let detailString = ''
   if (gene) {
@@ -12,6 +12,9 @@ export default function PlotTitle({ cluster, annotation, gene, consensus }) {
     } else {
       contentString = `${gene} - expression`
     }
+  }
+  if (subsample && subsample !== 'all') {
+    detailString += ` subsample[${subsample}]`
   }
   return <h5 className="plot-title">
     <span className="cluster-title">{contentString} </span>

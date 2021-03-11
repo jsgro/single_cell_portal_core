@@ -121,6 +121,7 @@ export default function ScatterPlot({
         <PlotTitle
           cluster={clusterData.cluster}
           annotation={clusterData.annotParams.name}
+          subsample={clusterData.subsample}
           gene={clusterData.gene}
           consensus={clusterData.consensus}/>
       }
