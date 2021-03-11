@@ -21,7 +21,7 @@ export const dotPlotColorScheme = {
   * as their display capabilities may diverge (esp. since DotPlot is used in global gene search)
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
   * @param annotation {obj} an object with name, type, and scope attributes
-  * @param subsample {string} a string for the subsampel to be retrieved.
+  * @param subsample {string} a string for the subsample to be retrieved.
   * @param consensus {string} for multi-gene expression plots
   * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
   */
@@ -31,12 +31,12 @@ export default function DotPlot({
 }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
   const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster })
-  const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
+  const annotationCellValuesURL = getAnnotationCellValuesURL({studyAccession,
     cluster,
-    annotation.name,
-    annotation.scope,
-    annotation.type,
-    subsample)
+    annotationName: annotation.name,
+    annotationScope: annotation.scope,
+    annotationType: annotation.type,
+    subsample})
 
   useEffect(() => {
     if (annotation.name) {

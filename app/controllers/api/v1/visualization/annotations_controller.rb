@@ -127,6 +127,13 @@ module Api
               key :type, :string
             end
             parameter do
+              key :name, :gene_list
+              key :in, :query
+              key :description, 'Name of gene list (overrides other parameters)'
+              key :required, false
+              key :type, :string
+            end
+            parameter do
               key :name, :annotation_type
               key :in, :query
               key :description, 'Type of annotation. One of "group" or "numeric".'
@@ -154,6 +161,40 @@ module Api
             cell_cluster = @study.default_cluster
           end
           render plain: AnnotationVizService.annotation_cell_values_tsv(@study, cell_cluster, annotation)
+        end
+
+        swagger_path '/studies/{accession}/annotations/gene_lists/{gene_list}' do
+          operation :get do
+            key :tags, [
+              'Visualization'
+            ]
+            key :summary, 'Get column values for an gene list for a study'
+            key :description, 'Get column values for a gene list.  Useful for heatmaps.'
+            key :operationId, 'study_annotation_gene_list_path'
+            parameter do
+              key :name, :accession
+              key :in, :path
+              key :description, 'Study accession number (e.g. SCPXXX)'
+              key :required, true
+              key :type, :string
+            end
+            parameter do
+              key :name, :gene_list
+              key :in, :path
+              key :description, 'Name of gene list'
+              key :required, true
+              key :type, :string
+            end
+            response 200 do
+              key :description, '2-column TSV of column header names from the gene list file.  Column headers are NAME (the cell name) and the name of the gene list'
+            end
+            extend SwaggerResponses::StudyControllerResponses
+          end
+        end
+
+        def gene_list
+          gene_list = @study.precomputed_scores.by_name(params[:gene_list])
+          render plain: gene_list.cluster_values_tsv
         end
 
         # parses the url params to identify the selected cluster

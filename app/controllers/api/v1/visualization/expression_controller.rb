@@ -19,6 +19,82 @@ module Api
         # by the SCP UI.
         # We agreed that there would be no swagger docs for this endpoint, as it is not intended
         # to be used other than by the SCP UI, and may change dramatically
+
+        swagger_path '/studies/{accession}/expression/{data_type}' do
+          operation :get do
+            key :tags, [
+              'Visualization'
+            ]
+            key :summary, 'Get expression-based plot data for visualization'
+            key :description, "Get expression-based plot data for use in visualization.  Supports violin/heatmap/dot plots." \
+                              "\n\n<strong>NOTE: This endpoint may change frequently, so use with care.</strong>"
+            key :operationId, 'study_visualization_expression_show'
+            parameter do
+              key :name, :accession
+              key :in, :path
+              key :description, 'Study accession number (e.g. SCPXXX)'
+              key :required, true
+              key :type, :string
+            end
+            parameter do
+              key :name, :data_type
+              key :in, :path
+              key :description, 'Type of plot data requested'
+              key :required, true
+              key :type, :string
+              key :enum, %w(violin heatmap)
+            end
+            parameter do
+              key :name, :cluster
+              key :in, :query
+              key :description, 'Name of requested cluster (optional)'
+              key :required, false
+              key :type, :string
+            end
+            parameter do
+              key :name, :genes
+              key :in, :query
+              key :description, 'List of requested genes (optional)'
+              key :required, false
+              key :type, :string
+            end
+            parameter do
+              key :name, :annotation_name
+              key :in, :query
+              key :description, 'Name of requested annotation (optional, can pass "_default" for default annotation)'
+              key :required, false
+              key :type, :string
+            end
+            parameter do
+              key :name, :annotation_type
+              key :in, :query
+              key :description, 'Type of requested annotation (optional)'
+              key :required, false
+              key :type, :string
+              key :enum, %w(group numeric)
+            end
+            parameter do
+              key :name, :annotation_scope
+              key :in, :query
+              key :description, 'Scope of requested annotation (optional)'
+              key :required, false
+              key :type, :string
+              key :enum, %w(study cluster user)
+            end
+            parameter do
+              key :name, :gene_list
+              key :in, :query
+              key :description, 'Name of gene list (optional)'
+              key :required, false
+              key :type, :string
+            end
+            response 200 do
+              key :description, 'JSON plot data to be fed to JS visualization'
+            end
+            extend SwaggerResponses::StudyControllerResponses
+          end
+        end
+
         def show
           if (!@study.has_expression_data? || !@study.can_visualize_clusters?)
             render(json: {error: "Study #{@study.accession} does not support expression rendering"}, status: 400) and return
@@ -61,19 +137,22 @@ module Api
 
         # this is intended to provide morpheus compatibility, so it returns plain text, instead of json
         def render_heatmap
-          cluster = ClusterVizService.get_cluster_group(@study, params)
+          if params[:gene_list]
+            gene_list = @study.precomputed_scores.by_name(params[:gene_list])
+            expression_data = gene_list&.to_gct
+          else
+            cluster = ClusterVizService.get_cluster_group(@study, params)
 
-          collapse_by = params[:row_centered]
-          genes = RequestUtils.get_genes_from_param(@study, params[:genes])
+            collapse_by = params[:row_centered]
+            genes = RequestUtils.get_genes_from_param(@study, params[:genes])
 
-          expression_data = ExpressionVizService.get_morpheus_text_data(
+            expression_data = ExpressionVizService.get_morpheus_text_data(
               genes: genes, cluster: cluster, collapse_by: collapse_by, file_type: :gct
-          )
+            )
+          end
 
           render plain: expression_data, status: 200
         end
-
-
       end
     end
   end

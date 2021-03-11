@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna, faArrowsAltV, faArrowsAltH, faArrowsAlt } from '@fortawesome/free-solid-svg-icons'
 
 import { log, startPendingEvent } from 'lib/metrics-api'
-import { getExpressionHeatmapURL, getAnnotationCellValuesURL } from 'lib/scp-api'
+import {getExpressionHeatmapURL, getAnnotationCellValuesURL, getGeneListColsURL} from 'lib/scp-api'
 import { morpheusTabManager } from './DotPlot'
 import { useUpdateEffect } from 'hooks/useUpdate'
 
@@ -29,9 +29,10 @@ export const DEFAULT_FIT = ''
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
   * @param annotation {obj} an object with name, type, and scope attributes
   * @param subsample {string} a string for the subsampel to be retrieved.
-*/
+  * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
+ */
 export default function Heatmap({
-  studyAccession, genes=[], cluster, annotation={}, subsample, heatmapFit, heatmapRowCentering
+  studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit, heatmapRowCentering
 }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
   const morpheusHeatmap = useRef(null)
@@ -39,14 +40,21 @@ export default function Heatmap({
     studyAccession,
     genes,
     cluster,
-    heatmapRowCentering
+    heatmapRowCentering,
+    geneList
   })
-  const annotationCellValuesURL = getAnnotationCellValuesURL(studyAccession,
-    cluster,
-    annotation.name,
-    annotation.scope,
-    annotation.type,
-    subsample)
+  let annotationCellValuesURL
+  // determine where we get our column headers from
+  if (!geneList) {
+    annotationCellValuesURL = getAnnotationCellValuesURL({studyAccession,
+      cluster,
+      annotationName: annotation.name,
+      annotationScope: annotation.scope,
+      annotationType: annotation.type,
+      subsample})
+  } else {
+    annotationCellValuesURL = getGeneListColsURL({studyAccession, geneList})
+  }
 
   useEffect(() => {
     // we can't render until we know what the cluster is, since morpheus requires the annotation name
@@ -57,7 +65,7 @@ export default function Heatmap({
         target: `#${graphId}`,
         expressionValuesURL,
         annotationCellValuesURL,
-        annotationName: annotation.name,
+        annotationName: !geneList ? annotation.name : geneList,
         fit: heatmapFit,
         rowCentering: heatmapRowCentering
       })
@@ -69,7 +77,8 @@ export default function Heatmap({
     cluster,
     annotation.name,
     annotation.scope,
-    heatmapRowCentering
+    heatmapRowCentering,
+    geneList
   ])
 
   useUpdateEffect(() => {

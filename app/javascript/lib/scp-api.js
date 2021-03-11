@@ -386,7 +386,7 @@ export async function fetchAnnotation(studyAccession, clusterName, annotationNam
 }
 
 /** Get URL for a Morpheus-suitable annotation values file */
-export function getAnnotationCellValuesURL(studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false) {
+export function getAnnotationCellValuesURL({studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false}) {
   const paramObj = {
     cluster: clusterName,
     annotation_scope: annotationScope,
@@ -398,6 +398,11 @@ export function getAnnotationCellValuesURL(studyAccession, clusterName, annotati
   return getFullUrl(apiUrl)
 }
 
+/** get URL for Morpheus-suitable annotation values file for a gene list */
+export function getGeneListColsURL({studyAccession, geneList}) {
+  const apiUrl = `/studies/${studyAccession}/annotations/gene_lists/${encodeURIComponent(geneList)}`
+  return getFullUrl(apiUrl)
+}
 
 /**
  * Returns an URL for fetching heatmap expression data for genes in a study
@@ -405,12 +410,13 @@ export function getAnnotationCellValuesURL(studyAccession, clusterName, annotati
  * A URL generator rather than a fetch funtion is provided as morpheus needs a URL string
  *
  * @param {String} studyAccession study accession
+ * @param {String} geneList: name of gene list to load (overrides cluster/annotation/subsample values)
  * @param {Array} genes List of gene names to get expression data for
  *
  */
 export function getExpressionHeatmapURL({
   studyAccession, genes, cluster,
-  annotation, subsample, heatmapRowCentering
+  annotation, subsample, heatmapRowCentering, geneList
 }) {
   const paramObj = {
     cluster,
@@ -418,7 +424,8 @@ export function getExpressionHeatmapURL({
     subsample,
     genes: geneArrayToParam(genes),
     row_centered: heatmapRowCentering,
-    url_safe_token: getURLSafeAccessToken()
+    url_safe_token: getURLSafeAccessToken(),
+    gene_list: geneList
   }
   const path = `/studies/${studyAccession}/expression/heatmap${stringifyQuery(paramObj)}`
   return getFullUrl(path)
