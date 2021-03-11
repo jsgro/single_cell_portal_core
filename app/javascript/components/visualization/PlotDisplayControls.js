@@ -4,7 +4,7 @@ import Select from 'react-select'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretRight, faCaretDown } from '@fortawesome/free-solid-svg-icons'
-import { SCATTER_COLOR_OPTIONS } from 'components/visualization/ScatterPlot'
+import { SCATTER_COLOR_OPTIONS, defaultScatterColor } from 'components/visualization/ScatterPlot'
 import { DISTRIBUTION_PLOT_OPTIONS, DISTRIBUTION_POINTS_OPTIONS } from 'components/visualization/StudyViolinPlot'
 import { ROW_CENTERING_OPTIONS, FIT_OPTIONS } from 'components/visualization/Heatmap'
 
@@ -20,7 +20,7 @@ export default function RenderControls({ exploreParams, updateExploreParams }) {
   const [showHeatmap, setShowHeatmap] = useState(false)
   const [showDistribution, setShowDistribution] = useState(false)
 
-  const scatterColorValue = exploreParams.scatterColor ? exploreParams.scatterColor : ''
+  const scatterColorValue = exploreParams.scatterColor ? exploreParams.scatterColor : defaultScatterColor
   let distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS.find(opt => opt.value === exploreParams.distributionPlot)
   if (!distributionPlotValue) {
     distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS[0]

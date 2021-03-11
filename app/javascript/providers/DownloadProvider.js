@@ -32,14 +32,14 @@ export default function DownloadProvider({ children }) {
 
   // Update the size if results are loaded and the accession list has changed
   let currentAccessions = []
-  if (studyContext.results && studyContext.results.matchingAccessions) {
+  if (studyContext?.results?.matchingAccessions) {
     currentAccessions = studyContext.results.matchingAccessions
   }
   useEffect(() => {
     if (!studyContext.isLoading && studyContext.isLoaded && hasSearchParams(studyContext.params)) {
       updateDownloadSize(studyContext.results)
     }
-  }, [currentAccessions])
+  }, [currentAccessions.join(',')])
 
   return (
     <DownloadContext.Provider value={downloadState}>

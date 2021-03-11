@@ -6,7 +6,7 @@ import Plotly from 'plotly.js-dist'
 
 import { fetchCluster } from 'lib/scp-api'
 import { labelFont, getColorBrewerColor } from 'lib/plot'
-import { useUpdateLayoutEffect } from 'hooks/useUpdate'
+import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
 import { log } from 'lib/metrics-api'
 
@@ -72,7 +72,7 @@ export default function ScatterPlot({
   }, [cluster, annotation.name, subsample, consensus, genes.join(',')])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
-  useUpdateLayoutEffect(() => {
+  useUpdateEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
       console.log('updating color scale')
@@ -82,7 +82,7 @@ export default function ScatterPlot({
   }, [scatterColor])
 
   // Handles cell select mode updates
-  useUpdateLayoutEffect(() => {
+  useUpdateEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
       console.log('updating drag mode')
@@ -95,7 +95,7 @@ export default function ScatterPlot({
   }, [isCellSelecting])
 
   // Adjusts width and height of plots upon toggle of "View Options"
-  useUpdateLayoutEffect(() => {
+  useUpdateEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
       const { width, height } = dimensions

@@ -1,6 +1,12 @@
 
 # class to populate synthetic studies from files.
 # See db/seed/synthetic_studies for examples of the file formats
+#
+# to use this on the staging server, you must be logged into the console as the app user
+# otherwise files will not be uploaded
+# sudo -E -u app -H bin/rails c -e staging
+#
+
 class SyntheticStudyPopulator
   DEFAULT_SYNTHETIC_STUDY_PATH = Rails.root.join('db', 'seed', 'synthetic_studies')
   # populates all studies defined in db/seed/synthetic_studies
