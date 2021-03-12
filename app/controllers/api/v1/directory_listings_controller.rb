@@ -277,6 +277,7 @@ module Api
           head 204
         rescue => e
           ErrorTracker.report_exception(e, current_api_user, params.to_unsafe_hash)
+          MetricsService.report_error(e, request, current_api_user, @study)
           render json: {error: e.message}, status: 500
         end
       end

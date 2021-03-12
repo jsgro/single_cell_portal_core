@@ -33,8 +33,11 @@ class StudyFile
   ASSEMBLY_REQUIRED_TYPES = ['BAM', 'Ideogram Annotations']
   GZIP_MAGIC_NUMBER = "\x1f\x8b".force_encoding(Encoding::ASCII_8BIT)
   REQUIRED_ATTRIBUTES = %w(file_type name)
+  # allowed bulk download file types
+  # 'Expression' covers dense & sparse matrix files
+  # 'None' is used when only bulk downloading a single directory_listing folder
   BULK_DOWNLOAD_TYPES = ['Expression', 'Metadata', 'Cluster', 'Coordinate Labels', 'Fastq', 'BAM', 'Documentation',
-                         'Other', 'Analysis Output', 'Ideogram Annotations']
+                         'Other', 'Analysis Output', 'Ideogram Annotations', 'None']
 
   # Constants for scoping values for AnalysisParameter inputs/outputs
   ASSOCIATED_MODEL_METHOD = %w(gs_url name upload_file_name bucket_location)
@@ -80,6 +83,8 @@ class StudyFile
   field :z_axis_min, type: Integer
   field :z_axis_max, type: Integer
   field :is_spatial, type: Boolean, default: false
+  # for spatial files, the ids of cluster files that correspond to this file for default display
+  field :spatial_cluster_associations, type: Array, default: []
   field :queued_for_deletion, type: Boolean, default: false
   field :remote_location, type: String, default: ''
   field :options, type: Hash, default: {}
@@ -651,6 +656,10 @@ class StudyFile
 
   def parsing?
     self.parse_status == 'parsing'
+  end
+
+  def unparsed?
+    self.parse_status == 'unparsed'
   end
 
   # determine whether we have all necessary files to parse this file.  Mainly applies to MM Coordinate Matrices and associated 10X files

@@ -15,3 +15,7 @@ end
 def get_file_count_from_response(response)
   response.values.map {|entry| entry[:total_files]}.reduce(&:+)
 end
+
+def get_file_size_from_response(response)
+  response.values.map {|entry| entry[:total_bytes]}.reduce(&:+)
+end

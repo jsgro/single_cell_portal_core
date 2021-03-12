@@ -69,12 +69,18 @@ class IngestJob
         Rails.logger.error log_message
         raise RuntimeError.new(log_message)
       else
-        Rails.logger.info "Remote found for #{file_identifier}, launching Ingest job"
-        submission = ApplicationController.papi_client.run_pipeline(study_file: self.study_file, user: self.user, action: self.action)
-        Rails.logger.info "Ingest run initiated: #{submission.name}, queueing Ingest poller"
-        IngestJob.new(pipeline_name: submission.name, study: self.study, study_file: self.study_file,
-                      user: self.user, action: self.action, reparse: self.reparse,
-                      persist_on_fail: self.persist_on_fail).poll_for_completion
+        if self.can_launch_ingest?
+          Rails.logger.info "Remote found for #{file_identifier}, launching Ingest job"
+          submission = ApplicationController.papi_client.run_pipeline(study_file: self.study_file, user: self.user, action: self.action)
+          Rails.logger.info "Ingest run initiated: #{submission.name}, queueing Ingest poller"
+          IngestJob.new(pipeline_name: submission.name, study: self.study, study_file: self.study_file,
+                        user: self.user, action: self.action, reparse: self.reparse,
+                        persist_on_fail: self.persist_on_fail).poll_for_completion
+        else
+          run_at = 2.minutes.from_now
+          Rails.logger.info "Remote found for #{file_identifier} but ingest gated by other parse jobs, queuing another check for #{run_at}"
+          self.delay(run_at: run_at).push_remote_and_launch_ingest
+        end
       end
     rescue => e
       Rails.logger.error "Error in launching ingest of #{file_identifier}: #{e.class.name}:#{e.message}"
@@ -118,12 +124,63 @@ class IngestJob
     is_pushed
   end
 
+  # Determine if a file is ready to be ingested.  This mainly validates that other concurrent parses for the same study
+  # will not interfere with validation for this current run
+  #
+  # * *returns*
+  #   - (Boolean) => T/F if file can launch PAPI ingest job
+  def can_launch_ingest?
+    case self.study_file.file_type
+    when /Matrix/
+      # expression matrices currently cannot be ingested in parallel due to constraints around validating cell names
+      # this block ensures that all other matrices have all cell names ingested and at least one gene entry, which
+      # ensures the matrix has validated
+      other_matrix_files = StudyFile.where(study_id: self.study.id, file_type: /Matrix/, :id.ne => self.study_file.id)
+      # only check other matrix files of the same type, as this is what will be checked when validating
+      similar_matrix_files = other_matrix_files.select {|matrix| matrix.is_raw_counts_file? == self.study_file.is_raw_counts_file?}
+      similar_matrix_files.each do |matrix_file|
+        if matrix_file.parsing?
+          matrix_cells = self.study.expression_matrix_cells(matrix_file)
+          matrix_genes = Gene.where(study_id: self.study.id, study_file_id: matrix_file.id)
+          if !matrix_cells || matrix_genes.empty?
+            # return false if matrix hasn't validated, unless the other matrix was uploaded after this file
+            # this is to prevent multiple matrix files queueing up and blocking each other from initiating PAPI jobs
+            # also, a timeout 24 hours is added to prevent all matrix files from queueing infinitely if one
+            # fails to launch an ingest job for some reason
+            if matrix_file.created_at < self.study_file.created_at && matrix_file.created_at > 24.hours.ago
+              return false
+            end
+          end
+        end
+      end
+      true
+    else
+      # no other file types currently are gated for launching ingest
+      true
+    end
+  end
+
   # Patch for using with Delayed::Job.  Returns true to mimic an ActiveRecord instance
   #
   # * *returns*
   #   - True::TrueClass
   def persisted?
     true
+  end
+
+  # Get all instance variables associated with job
+  #
+  # * *returns*
+  #   - (Hash) => Hash of all instance variables
+  def attributes
+    {
+      study: self.study,
+      study_file: self.study_file,
+      user: self.user,
+      action: self.action,
+      reparse: self.reparse,
+      persist_on_fail: self.persist_on_fail
+    }
   end
 
   # Return an updated reference to this ingest run in PAPI
@@ -206,15 +263,23 @@ class IngestJob
     command_line.chomp("\n")
   end
 
+  # Get the first & last event timestamps to compute runtime
+  #
+  # * *returns*
+  #   - (Array<DateTime>) => Array of initial and terminal timestamps from PAPI events
+  def get_runtime_timestamps
+    events = self.events
+    start_time = DateTime.parse(events.first['timestamp'])
+    completion_time = DateTime.parse(events.last['timestamp'])
+    [start_time, completion_time]
+  end
+
   # Get the total runtime of parsing from event timestamps
   #
   # * *returns*
   #   - (String) => Text representation of total elapsed time
   def get_total_runtime
-    events = self.events
-    start_time = DateTime.parse(events.first['timestamp'])
-    completion_time = DateTime.parse(events.last['timestamp'])
-    TimeDifference.between(start_time, completion_time).humanize
+    TimeDifference.between(*self.get_runtime_timestamps).humanize
   end
 
    # Get the total runtime of parsing from event timestamps, in milliseconds
@@ -222,10 +287,7 @@ class IngestJob
   # * *returns*
   #   - (Integer) => Total elapsed time in milliseconds
   def get_total_runtime_ms
-    events = self.events
-    start_time = DateTime.parse(events.first['timestamp'])
-    completion_time = DateTime.parse(events.last['timestamp'])
-    (TimeDifference.between(start_time, completion_time).in_seconds * 1000).to_i
+    (TimeDifference.between(*self.get_runtime_timestamps).in_seconds * 1000).to_i
   end
 
   # Launch a background polling process.  Will check for completion, and if the pipeline has not completed
@@ -247,10 +309,12 @@ class IngestJob
       SingleCellMailer.notify_user_parse_complete(self.user.email, subject, message, self.study).deliver_now
       self.set_study_state_after_ingest
       self.study_file.invalidate_cache_by_file_type # clear visualization caches for file
+      self.log_to_mixpanel
     elsif self.done? && self.failed?
       Rails.logger.error "IngestJob poller: #{self.pipeline_name} has failed."
       # log errors to application log for inspection
       self.log_error_messages
+      self.log_to_mixpanel # log before queuing file for deletion to preserve properties
       self.create_study_file_copy
       self.study_file.update(parse_status: 'failed')
       DeleteQueueJob.new(self.study_file).delay.perform
@@ -442,18 +506,90 @@ class IngestJob
   # * *params*
   #   - +filepath+ (String) => relative path of file to read in bucket
   #   - +delete_on_read+ (Boolean) => T/F to remove logfile from bucket after reading, defaults to true
+  #   - +range+ (Range) => Byte range to read from file
   #
   # * *returns*
   #   - (String) => Contents of file
-  def read_parse_logfile(filepath, delete_on_read: true)
+  def read_parse_logfile(filepath, delete_on_read: true, range: nil)
     if ApplicationController.firecloud_client.workspace_file_exists?(self.study.bucket_id, filepath)
       file_contents = ApplicationController.firecloud_client.execute_gcloud_method(:read_workspace_file, 0, self.study.bucket_id, filepath)
       ApplicationController.firecloud_client.execute_gcloud_method(:delete_workspace_file, 0, self.study.bucket_id, filepath) if delete_on_read
-      file_contents.read
+      # read file range manually since GCS download requests don't honor range parameter apparently
+      range.present? ? file_contents.read[range] : file_contents.read
     end
   end
 
-  # generates parse completion email body, and logs analytics to Mixpanel
+  # gather statistics about this run to report to Mixpanel
+  #
+  # * *returns*
+  #   - (Hash) => Hash of job statistics to use with IngestJob#log_to_mixpanel
+  def get_job_analytics
+    file_type = self.study_file.file_type
+    # Event properties to log to Mixpanel.
+    # Mixpanel uses camelCase for props; snake_case would degrade Mixpanel UX.
+    job_props = {
+      perfTime: self.get_total_runtime_ms, # Latency in milliseconds
+      fileType: file_type,
+      fileSize: self.study_file.upload_file_size,
+      action: self.action,
+      studyAccession: self.study.accession,
+      jobStatus: self.failed? ? 'failed' : 'success'
+    }
+
+    case file_type
+    when /Matrix/
+      # since genes are not ingested for raw counts matrices, report number of cells ingested
+      cells = self.study.expression_matrix_cells(self.study_file)
+      cell_count = cells.present? ? cells.count : 0
+      job_props.merge!({:numCells => cell_count})
+      if !self.study_file.is_raw_counts_file?
+        genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
+        job_props.merge!({:numGenes => genes})
+      end
+    when 'Metadata'
+      use_metadata_convention = self.study_file.use_metadata_convention
+      job_props.merge!({useMetadataConvention: use_metadata_convention})
+      if use_metadata_convention
+        project_name = 'alexandria_convention' # hard-coded is fine for now, consider implications if we get more projects
+        current_schema_version = get_latest_schema_version(project_name)
+        job_props.merge!(
+          {
+            metadataConvention: project_name,
+            schemaVersion: current_schema_version
+          }
+        )
+      end
+    when 'Cluster'
+      cluster = ClusterGroup.find_by(study_id: self.study.id, study_file_id: self.study_file.id)
+      job_props.merge!({metadataFilePresent: self.study.metadata_file.present?})
+      # must make sure cluster is present, as parse failures may result in no data having been stored
+      if self.action == :ingest_cluster && cluster.present?
+        cluster_type = cluster.cluster_type
+        cluster_points = cluster.points
+        can_subsample = cluster.can_subsample?
+        job_props.merge!(
+          {
+            clusterType: cluster_type,
+            numClusterPoints: cluster_points,
+            canSubsample: can_subsample
+          }
+        )
+      end
+    end
+    job_props.with_indifferent_access
+  end
+
+  # logs analytics to Mixpanel
+  #
+  # * *yields*
+  #  - MetricsService.log => reports output of IngestJob#get_job_analytics to Mixpanel via Bard
+  def log_to_mixpanel
+    mixpanel_log_props = self.get_job_analytics
+    # log job properties to Mixpanel
+    MetricsService.log('ingest', mixpanel_log_props, self.user)
+  end
+
+  # generates parse completion email body
   #
   # * *returns*
   #   - (Array) => List of message strings to print in a completion email
@@ -462,43 +598,24 @@ class IngestJob
 
     message = ["Total parse time: #{self.get_total_runtime}"]
 
-    # Event properties to log to Mixpanel.
-    # Mixpanel uses camelCase for props; snake_case would degrade Mixpanel UX.
-    mixpanel_log_props = {
-      perfTime: self.get_total_runtime_ms, # Latency in milliseconds
-      fileType: file_type,
-      fileSize: self.study_file.upload_file_size,
-      action: self.action,
-      studyAccession: self.study.accession
-    }
-
     case file_type
     when /Matrix/
       # since genes are not ingested for raw counts matrices, report number of cells ingested
       if self.study_file.is_raw_counts_file?
         cells = self.study.expression_matrix_cells(self.study_file).count
         message << "Cells ingested: #{cells}"
-        mixpanel_log_props.merge!({:numCells => cells})
       else
         genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
         message << "Gene-level entries created: #{genes}"
-        mixpanel_log_props.merge!({:numGenes => genes})
       end
     when 'Metadata'
       use_metadata_convention = self.study_file.use_metadata_convention
-      mixpanel_log_props.merge!({
-        useMetadataConvention: use_metadata_convention,
-      })
       if use_metadata_convention
         project_name = 'alexandria_convention' # hard-coded is fine for now, consider implications if we get more projects
         current_schema_version = get_latest_schema_version(project_name)
         schema_url = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention'
         message << "This metadata file was validated against the latest <a href='#{schema_url}'>Metadata Convention</a>"
         message << "Convention version: <strong>#{project_name}/#{current_schema_version}</strong>"
-        mixpanel_log_props.merge!({
-          metadataConvention: project_name,
-          schemaVersion: current_schema_version
-        })
       end
       cell_metadata = CellMetadatum.where(study_id: self.study.id, study_file_id: self.study_file.id)
       message << "Entries created:"
@@ -530,21 +647,11 @@ class IngestJob
           message << "You will receive an additional email once this has completed."
           message << "While subsamples are being computed, you will not be able to remove this cluster file or your metadata file."
         end
-
-        mixpanel_log_props.merge!({
-          clusterType: cluster_type,
-          numClusterPoints: cluster_points,
-          canSubsample: can_subsample,
-          metadataFilePresent: metadata_file_present
-        })
       else
         message << "Subsampling has completed for #{cluster.name}"
         message << "Subsamples generated: #{cluster.subsample_thresholds_required.join(', ')}"
       end
     end
-
-    MetricsService.log('ingest', mixpanel_log_props, user)
-
     message
   end
 
@@ -573,7 +680,8 @@ class IngestJob
       error_contents = self.read_parse_logfile(self.user_error_filepath)
       message_body = "<p>'#{self.study_file.upload_file_name}' has failed during parsing.</p>"
     when :dev
-      error_contents = self.read_parse_logfile(self.dev_error_filepath, delete_on_read: false)
+      # only read first megabyte of error log to avoid email delivery failure
+      error_contents = self.read_parse_logfile(self.dev_error_filepath, delete_on_read: false, range: 0..1.megabyte)
       message_body = "<p>The file '#{self.study_file.upload_file_name}' uploaded by #{self.user.email} to #{self.study.accession} failed to ingest.</p>"
       message_body += "<p>A copy of this file can be found at #{self.generate_bucket_browser_tag}</p>"
       message_body += "<p>Detailed logs and PAPI events as follows:"

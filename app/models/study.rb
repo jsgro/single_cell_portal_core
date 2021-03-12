@@ -60,6 +60,11 @@ class Study
     def valid
       where(queued_for_deletion: false, :generation.ne => nil).to_a
     end
+
+    # includes links to external data which do not reside in the workspace bucket
+    def downloadable
+      where(queued_for_deletion: false).any_of({:generation.ne => nil}, {:human_fastq_url.ne => nil})
+    end
   end
 
   has_many :study_file_bundles, dependent: :destroy do
@@ -188,7 +193,7 @@ class Study
   has_one :study_accession
 
   # External Resource links
-  has_many :external_resources, as: :resource_links, dependent: :delete
+  has_many :external_resources, as: :resource_links, dependent: :destroy
 
   # Study Detail (full html description)
   has_one :study_detail, dependent: :delete
@@ -530,6 +535,22 @@ class Study
       items do
         key :title, 'StudyFile'
         key '$ref', 'SiteStudyFile'
+      end
+    end
+    property :directory_listings do
+      key :type, :array
+      key :description, 'Available Directories of files for bulk download'
+      items do
+        key :title, 'DirectoryListing'
+        key '$ref', 'DirectoryListingDownload'
+      end
+    end
+    property :external_resources do
+      key :type, :array
+      key :description, 'Available external resource links'
+      items do
+        key :title, 'ExternalResource'
+        key '$ref', :ExternalResourceInput
       end
     end
   end
@@ -1379,6 +1400,7 @@ class Study
 
     bam_files.each do |bam_file|
       bams << {
+          'name' => bam_file.name,
           'url' => bam_file.api_url,
           'indexUrl' => bam_file.bundled_files.first.api_url,
           'genomeAssembly' => bam_file.genome_assembly_name,

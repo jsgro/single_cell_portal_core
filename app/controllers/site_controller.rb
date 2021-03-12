@@ -121,7 +121,7 @@ class SiteController < ApplicationController
                                                                 scpbr: params[:scpbr])) and return
     else
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
-                  alert: 'Study not found.  Please check the name and try again.' and return
+                  alert: "You either do not have permission to perform that action, or #{params[:identifier]} does not exist." and return
     end
   end
 
@@ -266,7 +266,6 @@ class SiteController < ApplicationController
         if @study.update(study_params)
           # invalidate caches as a precaution
           CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
-          set_study_default_options
           if @study.initialized?
             @cluster = @study.default_cluster
             @options = ClusterVizService.load_cluster_group_options(@study)
@@ -274,18 +273,14 @@ class SiteController < ApplicationController
             set_selected_annotation
           end
 
-          @study_files = @study.study_files.non_primary_data.sort_by(&:name)
-          @primary_study_files = @study.study_files.by_type('Fastq')
-          @directories = @study.directory_listings.are_synced
-          @primary_data = @study.directory_listings.primary_data
-          @other_data = @study.directory_listings.non_primary_data
-
           # double check on download availability: first, check if administrator has disabled downloads
           # then check if FireCloud is available and disable download links if either is true
           @allow_downloads = ApplicationController.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
-        else
-          set_study_default_options
         end
+        set_firecloud_permissions(@study.detached?)
+        set_study_permissions(@study.detached?)
+        set_study_default_options
+        set_study_download_options
       else
         set_study_default_options
         @alert = 'You do not have permission to perform that action.'
@@ -305,31 +300,24 @@ class SiteController < ApplicationController
   # load single study and view top-level clusters
   def study
     @study.update(view_count: @study.view_count + 1)
-    @study_files = @study.study_files.non_primary_data.sort_by(&:name)
-    @primary_study_files = @study.study_files.primary_data
-    @directories = @study.directory_listings.are_synced
-    @primary_data = @study.directory_listings.primary_data
-    @other_data = @study.directory_listings.non_primary_data
     @unique_genes = @study.unique_genes
     @taxons = @study.expressed_taxon_names
 
+    # set general state of study to enable various tabs in UI
     # double check on download availability: first, check if administrator has disabled downloads
     # then check individual statuses to see what to enable/disable
     # if the study is 'detached', then everything is set to false by default
     set_firecloud_permissions(@study.detached?)
     set_study_permissions(@study.detached?)
     set_study_default_options
+    set_study_download_options
+
     # load options and annotations
     if @study.can_visualize_clusters?
       @options = ClusterVizService.load_cluster_group_options(@study)
       @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
       # call set_selected_annotation manually
       set_selected_annotation
-    end
-
-    if @study.has_download_agreement?
-      @download_agreement = @study.download_agreement
-      @user_accepted_agreement = @download_agreement.user_accepted?(current_user)
     end
 
     # only populate if study has ideogram results & is not 'detached'
@@ -736,95 +724,6 @@ class SiteController < ApplicationController
 
   end
 
-  # Method to create user annotations from box or lasso selection
-  def create_user_annotations
-
-    # Data name is an array of the values of labels
-    @data_names = []
-
-    #Error handling block to create annotation
-    begin
-      # Get the label values and push to data names
-      user_annotation_params[:user_data_arrays_attributes].keys.each do |key|
-        user_annotation_params[:user_data_arrays_attributes][key][:values] =  user_annotation_params[:user_data_arrays_attributes][key][:values].split(',')
-        @data_names.push(user_annotation_params[:user_data_arrays_attributes][key][:name].strip )
-      end
-
-      # Create the annotation
-      @user_annotation = UserAnnotation.new(user_id: user_annotation_params[:user_id], study_id: user_annotation_params[:study_id],
-                                            cluster_group_id: user_annotation_params[:cluster_group_id],
-                                            values: @data_names, name: user_annotation_params[:name],
-                                            source_resolution: user_annotation_params[:subsample_threshold].present? ? user_annotation_params[:subsample_threshold].to_i : nil)
-
-      # override cluster setter to use the current selected cluster, needed for reloading
-      @cluster = @user_annotation.cluster_group
-
-      # Error handling, save the annotation and handle exceptions
-      if @user_annotation.save
-        # Method call to create the user data arrays for this annotation
-        @user_annotation.initialize_user_data_arrays(user_annotation_params[:user_data_arrays_attributes], user_annotation_params[:subsample_annotation],user_annotation_params[:subsample_threshold], user_annotation_params[:loaded_annotation])
-
-        # Reset the annotations in the dropdowns to include this new annotation
-        @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-        @options = ClusterVizService.load_cluster_group_options(@study)
-
-        # No need for an alert, only a message saying successfully created
-        @alert = nil
-        @notice = "User Annotation: '#{@user_annotation.name}' successfully saved. You may now view this annotation via the annotations dropdown."
-
-        # Update the dropdown partial
-        render 'update_user_annotations'
-      else
-        # If there was an error saving, reload and alert the use something broke
-        @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-        @options = ClusterVizService.load_cluster_group_options(@study)
-        @notice = nil
-        @alert = 'The following errors prevented the annotation from being saved: ' + @user_annotation.errors.full_messages.join(',')
-        logger.error "Creating user annotation of params: #{user_annotation_params}, unable to save user annotation with errors #{@user_annotation.errors.full_messages.join(', ')}"
-        render 'update_user_annotations'
-      end
-        # More error handling, this is if can't save user annotation
-    rescue Mongoid::Errors::InvalidValue => e
-      sanitized_params = user_annotation_params.dup
-      sanitized_params.delete(:user_data_arrays_attributes) # remove data_arrays attributes due to size
-      error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
-      ErrorTracker.report_exception(e, current_user, error_context)
-      # If an invalid value was somehow passed through the form, and couldn't save the annotation
-      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-      @options = ClusterVizService.load_cluster_group_options(@study)
-      @notice = nil
-      @alert = 'The following errors prevented the annotation from being saved: ' + 'Invalid data type submitted. (' + e.problem + '. ' + e.resolution + ')'
-      logger.error "Creating user annotation of params: #{user_annotation_params}, invalid value of #{e.message}"
-      render 'update_user_annotations'
-
-    rescue NoMethodError => e
-      sanitized_params = user_annotation_params.dup
-      sanitized_params.delete(:user_data_arrays_attributes) # remove data_arrays attributes due to size
-      error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
-      ErrorTracker.report_exception(e, current_user, error_context)
-      # If something is nil and can't have a method called on it, respond with an alert
-      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-      @options = ClusterVizService.load_cluster_group_options(@study)
-      @notice = nil
-      @alert = 'The following errors prevented the annotation from being saved: ' + e.message
-      logger.error "Creating user annotation of params: #{user_annotation_params}, no method error #{e.message}"
-      render 'update_user_annotations'
-
-    rescue => e
-      sanitized_params = user_annotation_params.dup
-      sanitized_params.delete(:user_data_arrays_attributes) # remove data_arrays attributes due to size
-      error_context = ErrorTracker.format_extra_context(@study, {params: sanitized_params})
-      ErrorTracker.report_exception(e, current_user, error_context)
-      # If a generic unexpected error occurred and couldn't save the annotation
-      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-      @options = ClusterVizService.load_cluster_group_options(@study)
-      @notice = nil
-      @alert = 'An unexpected error prevented the annotation from being saved: ' + e.message
-      logger.error "Creating user annotation of params: #{user_annotation_params}, unexpected error #{e.message}"
-      render 'update_user_annotations'
-    end
-  end
-
   ###
   #
   # WORKFLOW METHODS
@@ -895,6 +794,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "Error retrieving workspace samples for #{study.name}; #{e.message}"
       render json: []
     end
@@ -947,6 +847,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.info "Error saving workspace entities: #{e.message}"
       @alert = "An error occurred while trying to save your sample information: #{view_context.simple_format(e.message)}"
       render action: :notice
@@ -974,6 +875,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "Error deleting workspace entities: #{e.message}"
       @alert = "An error occurred while trying to delete your sample information: #{view_context.simple_format(e.message)}"
       render action: :notice
@@ -1028,6 +930,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "Unable to submit workflow #{@analysis_configuration.identifier} in #{@study.firecloud_workspace} due to: #{e.message}"
       @alert = "We were unable to submit your workflow due to an error: #{e.message}"
       render action: :notice
@@ -1042,6 +945,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "Unable to load workspace submission #{params[:submission_id]} in #{@study.firecloud_workspace} due to: #{e.message}"
       render js: "alert('We were unable to load the requested submission due to an error: #{e.message}')"
     end
@@ -1056,6 +960,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       @alert = "Unable to abort submission #{@submission_id} due to an error: #{e.message}"
       render action: :notice
     end
@@ -1091,6 +996,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       @alert = "Unable to retrieve submission #{@submission_id} error messages due to: #{e.message}"
       render action: :notice
     end
@@ -1113,6 +1019,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       @alert = "Unable to retrieve submission #{@submission_id} outputs due to: #{e.message}"
       render action: :notice
     end
@@ -1141,6 +1048,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       @alert = "An error occurred trying to load submission '#{params[:submission_id]}': #{e.message}"
       render action: :notice
     end
@@ -1177,6 +1085,7 @@ class SiteController < ApplicationController
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "Unable to remove submission #{params[:submission_id]} files from #{@study.firecloud_workspace} due to: #{e.message}"
       @alert = "Unable to delete the outputs for #{params[:submission_id]} due to the following error: #{e.message}"
       render action: :notice
@@ -1222,7 +1131,8 @@ class SiteController < ApplicationController
     @study = Study.find_by(accession: params[:accession])
         # redirect if study is not found
     if @study.nil?
-      redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: 'Study not found.  Please check the name and try again.' and return
+      redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
+                  alert: "You either do not have permission to perform that action, or #{params[:accession]} does not exist." and return
     end
         #Check if current url_safe_name matches model
     unless @study.url_safe_name == params[:study_name]
@@ -1239,7 +1149,13 @@ class SiteController < ApplicationController
 
   def set_selected_annotation
     annot_params = ExpressionVizService.parse_annotation_legacy_params(@study, params)
-    @selected_annotation = AnnotationVizService.get_selected_annotation(@study, @cluster, annot_params[:name], annot_params[:type], annot_params[:scope])
+    @selected_annotation = AnnotationVizService.get_selected_annotation(
+      @study,
+      cluster: @cluster,
+      annot_name: annot_params[:name],
+      annot_type: annot_params[:type],
+      annot_scope: annot_params[:scope]
+    )
   end
 
   def set_workspace_samples
@@ -1279,6 +1195,7 @@ class SiteController < ApplicationController
       logger.error "Error checking FireCloud API status: #{e.class.name} -- #{e.message}"
       error_context = ErrorTracker.format_extra_context(@study, {firecloud_status: api_status})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
     end
   end
 
@@ -1303,6 +1220,22 @@ class SiteController < ApplicationController
       logger.error "Error setting study permissions: #{e.class.name} -- #{e.message}"
       error_context = ErrorTracker.format_extra_context(@study)
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
+    end
+  end
+
+  # set all file download variables for study_download tab
+  def set_study_download_options
+    @study_files = @study.study_files.non_primary_data.sort_by(&:name)
+    @primary_study_files = @study.study_files.primary_data
+    @directories = @study.directory_listings.are_synced
+    @primary_data = @study.directory_listings.primary_data
+    @other_data = @study.directory_listings.non_primary_data
+
+    # load download agreement/user acceptance, if present
+    if @study.has_download_agreement?
+      @download_agreement = @study.download_agreement
+      @user_accepted_agreement = @download_agreement.user_accepted?(current_user)
     end
   end
 
@@ -1382,7 +1315,7 @@ class SiteController < ApplicationController
   # check if a study is 'detached' from a workspace
   def check_study_detached
     if @study.detached?
-      @alert = 'We were unable to complete your request as the study is question is detached from the workspace (maybe the workspace was deleted?)'
+      @alert = "We were unable to complete your request as #{@study.accession} is detached from the workspace (maybe the workspace was deleted?)"
       respond_to do |format|
         format.js {render js: "alert('#{@alert}');"}
         format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: @alert and return}

@@ -115,6 +115,7 @@ class ApplicationController < ActionController::Base
   # rescue from an invalid csrf token (if user logged out in another window, or some kind of spoofing attack)
   def invalid_csrf(exception)
     ErrorTracker.report_exception(exception, current_user, {request_url: request.url, params: params.to_unsafe_hash})
+    MetricsService.report_error(e, request, current_user, @study)
     @alert = "We're sorry, but the change you wanted was rejected by the server."
     respond_to do |format|
       format.html {render template: '/layouts/422', status: 422}
@@ -140,7 +141,8 @@ class ApplicationController < ActionController::Base
 
   # merge in extra parameters on redirects as necessary
   def merge_default_redirect_params(redirect_route, extra_params={})
-    merged_redirect_url = redirect_route.dup
+    # handle case where request.referrer is nil
+    merged_redirect_url = redirect_route.present? ? redirect_route.dup : site_path.dup
     extra_params.each do |key, value|
       if value.present?
         if redirect_route.include?('?')
@@ -161,30 +163,22 @@ class ApplicationController < ActionController::Base
     uri.scheme == 'https' && ValidationTools::GCS_HOSTNAMES.include?(uri.hostname) && parsed_query.keys == ValidationTools::SIGNED_URL_KEYS
   end
 
-  def handle_401
-    respond_to do |format|
-      format.html {redirect_to new_user_session_path, alert: 'Your session has expired.'}
-      format.js {render js: "alert('Your session has expired; Please log in again')"}
-    end
-  end
-
   # helper method to check all conditions before allowing a user to download file
   # verifies user permissions, study availability, and download agreements, as well as external services
   def verify_file_download_permissions(study)
     # default alert messages for redirect
     redirect_messages = {
-        invalid_permission: 'You do not have permission to perform that action.',
-        not_authenticated: 'You must be signed in to download data.',
-        study_not_found: 'The study you requested was not found.',
-        detached: 'We were unable to complete your request as the study is question is detached from the workspace (maybe the workspace was deleted?)',
-        embargoed: "You may not download any data from this study until #{study.embargo.try(:to_s, :long)}."
+        invalid_permission: "You either do not have permission to perform that action, or #{study.accession} does not exist.",
+        not_authenticated: "You must be signed in to download data from #{study.accession}.",
+        detached: "We were unable to complete your request as #{study.accession} is detached from the workspace (maybe the workspace was deleted?)",
+        embargoed: "You may not download any data from #{study.accession} until #{study.embargo.try(:to_s, :long)}."
     }
     # store redirect_url and message for later
     redirect_parameters = {}
 
     if study.nil?
       redirect_parameters[:url] = site_path
-      redirect_parameters[:message_key] = :study_not_found
+      redirect_parameters[:message_key] = :invalid_permission
     elsif !user_signed_in?
       redirect_parameters[:url] = site_path
       redirect_parameters[:message_key] = :not_authenticated
@@ -223,6 +217,10 @@ class ApplicationController < ActionController::Base
     begin
       # get filesize and make sure the user is under their quota
       requested_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, params[:filename])
+      if params[:filename].blank?
+        redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
+                      alert: "We are unable to process your download in #{study.accession} because there is no file name provided." and return
+      end
       if requested_file.present?
         filesize = requested_file.size
         user_quota = current_user.daily_download_quota + filesize
@@ -240,20 +238,32 @@ class ApplicationController < ActionController::Base
           redirect_to @signed_url
         else
           redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
-                      alert: 'We are unable to process your download.  Please try again later.' and return
+                      alert: "We are unable to process your download for #{study.accession}:#{params[:filename]}.  Please try again later." and return
         end
       else
         # send notification to the study owner that file is missing (if notifications turned on)
         SingleCellMailer.user_download_fail_notification(study, params[:filename]).deliver_now
         redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
-                    alert: 'The file you requested is currently not available.  Please contact the study owner if you require access to this file.' and return
+                    alert: "#{study.accession}:#{params[:filename]} could not be found.  Please contact the study owner if you require access to this file." and return
       end
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
+      MetricsService.report_error(e, request, current_user, @study)
       logger.error "#{Time.zone.now}: error generating signed url for #{params[:filename]}; #{e.message}"
       redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
-                  alert: "We were unable to download the file #{params[:filename]} do to an error: #{view_context.simple_format(e.message)}" and return
+                  alert: "We were unable to download the file #{study.accession}:#{params[:filename]} do to an error: #{view_context.simple_format(e.message)}" and return
+    end
+  end
+
+  # generic exception handling for reporting to Mixpanel/Sentry
+  rescue_from Exception do |exception|
+    MetricsService.report_error(exception, request, current_user, @study)
+    error_context = ErrorTracker.format_extra_context(@study, {params: params})
+    ErrorTracker.report_exception(exception, current_user, error_context)
+    respond_to do |format|
+      format.html { render '/error_pages/500', layout: 'application', status: 500 }
+      format.json { render json: {error: exception.message}, status: 500}
     end
   end
 

@@ -12,6 +12,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
 
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
+    @user_2 = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @study = FactoryBot.create(:study,
                                name_prefix: "Test Studies API",
                                user: @user,
@@ -19,7 +20,6 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
                                test_array: @@studies_to_clean)
     sign_in_and_update @user
   end
-
 
   test 'should get index' do
     execute_http_request(:get, api_v1_studies_path)
@@ -40,6 +40,11 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
         assert json[attribute] == value, "Attribute mismatch: #{attribute} is incorrect, expected #{value} but found #{json[attribute.to_s]}"
       end
     end
+
+    # ensure other users cannot access study
+    sign_in_and_update(@user_2)
+    execute_http_request(:get, api_v1_study_path(@study), user: @user_2)
+    assert_response 403
   end
 
   # create, update & delete tested together to use new object rather than main testing study
@@ -154,5 +159,17 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
 
     assert StudiesController::HIDDEN_FILE_REGEX.match('/whatever/metadata.txt').nil?
     assert StudiesController::HIDDEN_FILE_REGEX.match('metadata.txt').nil?
+  end
+
+  test 'should enforce edit access restrictions on studies' do
+    # auth as other user
+    sign_in_and_update(@user_2)
+    update_attributes = {
+      study: {
+        public: false
+      }
+    }
+    execute_http_request(:patch, api_v1_study_path(id: @study.id.to_s), request_payload: update_attributes, user: @user_2)
+    assert_response 403
   end
 end

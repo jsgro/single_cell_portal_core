@@ -1,9 +1,17 @@
 require "test_helper"
 
 class UserTest < ActiveSupport::TestCase
-  def setup
-    @user = User.first
 
+  include Minitest::Hooks
+  include TestInstrumentor
+  include SelfCleaningSuite
+
+  before(:all) do
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    @user.update(registered_for_firecloud: true) # for billing projects test
+    @existing_access_token = @user.access_token
+    @existing_api_token = @user.api_access_token
+    @user.update_last_access_at!
     @billing_projects = [
         {'creationStatus'=>'Ready', 'projectName'=>'lab-billing-project', 'role'=>'User'},
         {'creationStatus'=>'Ready', 'projectName'=>'my-billing-project', 'role'=>'Owner'},
@@ -11,9 +19,13 @@ class UserTest < ActiveSupport::TestCase
     ]
   end
 
-  test 'should time out token after inactivity' do
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
+  teardown do
+    # reset user tokens
+    @user.update(access_token: @existing_access_token, api_access_token: @existing_api_token)
+    @user.update_last_access_at!
+  end
 
+  test 'should time out token after inactivity' do
     @user.update_last_access_at!
     last_access = @user.api_access_token[:last_access_at]
     now = Time.now.in_time_zone(@user.get_token_timezone(:api_access_token))
@@ -26,15 +38,9 @@ class UserTest < ActiveSupport::TestCase
     @user.reload
     assert @user.api_access_token_timed_out?,
            "API access token should have timed out, #{invalid_access} is outside #{User.timeout_in} seconds of #{now}"
-    # clean up
-    @user.update_last_access_at!
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   test 'should check billing project ownership' do
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # assert user is 'Owner', using mock as we have no actual user in Terra or OAuth token to make API call
     mock = Minitest::Mock.new
     mock.expect :get_billing_projects, @billing_projects
@@ -56,20 +62,25 @@ class UserTest < ActiveSupport::TestCase
       negative_mock.verify
       refute is_owner, "Did not correctly return false for ownership of #{project}: #{@billing_projects}"
     end
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   test 'should assign and use metrics_uuid' do
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     uuid = @user.get_metrics_uuid
     @user.reload # gotcha for refreshing in-memory user object
     assert_equal uuid, @user.metrics_uuid, "Metrics UUID was not assigned correctly; #{uuid} != #{@user.metrics_uuid}"
     assigned_uuid = @user.get_metrics_uuid
     @user.reload
     assert_equal assigned_uuid, @user.metrics_uuid, "Metrics UUID has changed; #{assigned_uuid} != #{@user.metrics_uuid}"
+  end
 
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
+  test 'should return empty access token after timeout/logout' do
+    assert_equal @existing_access_token.dig(:access_token), @user.valid_access_token.dig(:access_token)
+    assert_equal @existing_api_token.dig(:access_token), @user.token_for_api_call.dig(:access_token)
+
+    # clear tokens to test default response
+    @user.update(access_token: nil, api_access_token: nil)
+    empty_response = {}
+    assert_equal empty_response, @user.valid_access_token
+    assert_equal empty_response, @user.token_for_api_call
   end
 end

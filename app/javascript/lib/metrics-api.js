@@ -70,7 +70,7 @@ export function logClick(event) {
   // Don't log programmatically-triggered events,
   // e.g. trigger('click') via jQuery
 
-  if (typeof event.isTrigger !== 'undefined') return
+  if (typeof event.isTrigger !== 'undefined') {return}
 
   const target = $(event.target)
   // we use closest() so we don't lose clicks on, e.g. icons within a link/button
@@ -137,7 +137,7 @@ function logClickButton(target) {
  * From https://stackoverflow.com/a/15061155
  */
 function getLabelsForElement(element) {
-  if (metricsApiMock === true) return [] // Needed for metrics-api.test.js
+  if (metricsApiMock === true) {return []} // Needed for metrics-api.test.js
 
   let labels
   const id = element.id

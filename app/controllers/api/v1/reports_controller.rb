@@ -8,7 +8,7 @@ module Api
       before_action :authenticate_api_user!
 
       def show
-        if !current_api_user.acts_like_reporter?
+        if !current_api_user.admin?
           head 403 and return
         end
 

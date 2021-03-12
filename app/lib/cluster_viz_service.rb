@@ -44,23 +44,49 @@ class ClusterVizService
   end
 
   # helper method to load spatial coordinate group names
+  # return an array of hashes with spatial file names and associated_clusters  specified, where associated_clusters is the names of
+  # the clusters
   def self.load_spatial_options(study)
-    spatial_file_ids = StudyFile.where(study: study, is_spatial: true, file_type: 'Cluster').pluck(:id)
-    ClusterGroup.where(study: study, :study_file_id.in => spatial_file_ids).pluck(:name)
+    # grab all the spatial files for this study, and create a name=>associations hash
+    spatial_file_info = StudyFile.where(study: study, is_spatial: true, file_type: 'Cluster')
+                                 .pluck(:name, :spatial_cluster_associations).to_h
+    # now grab any non spatial cluster files for the study that had ids specified in the spatial_cluster_associations above
+    # and put them in an id=>name hash
+    associated_clusters = StudyFile.where(study: study, :id.in => spatial_file_info.map{ |si| si[1] }.flatten.uniq)
+                                   .pluck(:id, :name)
+                                   .map{ |a| [a[0].to_s, a[1]] }.to_h
+    # now return an array of objects with names and associated cluster names
+    spatial_file_info.map do |cluster|
+      associated_cluster_names = cluster[1].map{ |id| associated_clusters[id] }
+      { name: cluster[0], associated_clusters: associated_cluster_names }
+    end
   end
 
   # return an array of values to use for subsampling dropdown scaled to number of cells in study
   # only options allowed are 1000, 10000, 20000, and 100000
   # will only provide options if subsampling has completed for a cluster
-  def self.subsampling_options(cluster, user=nil)
+  def self.subsampling_options(cluster)
+    num_points = cluster.points
     if cluster.is_subsampling?
       []
     else
-      if User.feature_flag_for_instance(user, 'mock_viz_retrieval')
+       if User.feature_flag_for_instance(user, 'mock_viz_retrieval')
         return [1000, 2000, 10000, 50000, 100000, 200000, 300000, 500000, 1000000, 2000000, 3000000, 5000000, 6000000, 7000000, 10000000]
       else
-        return ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < cluster.points}
+        return ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < num_points}
       end
+    end
+  end
+
+  # return an array of values to use for subsampling dropdown scaled to number of cells in study
+  # only options allowed are 1000, 10000, 20000, and 100000
+  # will only provide options if subsampling has completed for a cluster
+  def self.default_subsampling(cluster)
+    num_points = cluster.points
+    if num_points < 10000
+      return nil
+    else
+      ClusterGroup::SUBSAMPLE_THRESHOLDS.select{|val| val <= 10000}.max
     end
   end
 

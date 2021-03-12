@@ -58,7 +58,7 @@ class FileParseService
                               persist_on_fail: persist_on_fail)
           job.delay.push_remote_and_launch_ingest
         else
-          study.delay.send_to_firecloud(study_file)
+          study.delay.send_to_firecloud(study_file) if study_file.is_local?
           return self.missing_bundled_file(study_file)
         end
       when /10X/
@@ -130,8 +130,8 @@ class FileParseService
         elsif bundled_types.include?(study_file.file_type)
           parent_file_id = study_file.options.with_indifferent_access[options_key]
           parent_file = StudyFile.find_by(id: parent_file_id)
-          # parent file may or may not be present, so check first
-          if parent_file.present?
+          # parent file may or may not be present, or queued for deletion, so check first
+          if parent_file.present? && !parent_file.queued_for_deletion
             study_file_bundle = StudyFileBundle.initialize_from_parent(study, parent_file)
             study_file_bundle.add_files(study_file)
           end
@@ -155,7 +155,7 @@ class FileParseService
     Rails.logger.info "Cleaning up all ingest pipeline artifacts older than #{cutoff_date}"
     Study.where(queued_for_deletion: false, detached: false).each do |study|
       Rails.logger.info "Checking #{study.accession}:#{study.bucket_id}"
-      study.delete_ingest_artifacts(cutoff_date)
+      delete_ingest_artifacts(study, cutoff_date)
     end
   end
 

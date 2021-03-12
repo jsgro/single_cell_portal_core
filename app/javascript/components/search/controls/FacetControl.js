@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons'
+import _kebabCase from 'lodash/kebabCase'
 
 import FiltersBoxSearchable from './FiltersBoxSearchable'
 import { StudySearchContext } from 'providers/StudySearchProvider'
@@ -8,7 +9,7 @@ import { getDisplayNameForFacet } from 'providers/SearchFacetProvider'
 import { SearchSelectionContext, getSelectionForFacet } from 'providers/SearchSelectionProvider'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import useCloseableModal from 'hooks/closeableModal'
-import _kebabCase from 'lodash/kebabCase'
+
 
 /**
  * Button for facets, and associated functions

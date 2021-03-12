@@ -12,7 +12,8 @@ import * as queryString from 'query-string'
 
 import { getAccessToken, getURLSafeAccessToken } from 'providers/UserProvider'
 import {
-  logSearch, logDownloadAuthorization, mapFiltersForLogging
+  logSearch, logDownloadAuthorization, logCreateUserAnnotation,
+  mapFiltersForLogging
 } from './scp-api-metrics'
 
 // If true, returns mock data for all API responses.  Only for dev.
@@ -41,8 +42,31 @@ export function studyNameAsUrlParam(studyName) {
   return studyName.toLowerCase().replace(/ /g, '-').replace(/[^0-9a-z-]/gi, '')
 }
 
+/** convert a gene param string to an array of individual gene names */
+export function geneParamToArray(genes) {
+  return genes ? genes.split(',') : []
+}
+
+/** convert a gene array to a gene param string */
+export function geneArrayToParam(genes) {
+  return genes ? genes.join(',') : ''
+}
+
+
+/** Configure an `init` for `fetch` to use POST, and respect any mocking  */
+function defaultPostInit(mock=false) {
+  let init = defaultInit
+  if (mock === false && globalMock === false) {
+    init = Object.assign({}, defaultInit(), {
+      method: 'POST'
+    })
+  }
+
+  return init
+}
+
 /**
- * Get a one-time authorization code for download, and its lifetime in seconds
+ * Create and return a one-time authorization code for download
  *
  * TODO:
  * - Update API to use "expires_in" instead of "time_interval"
@@ -58,18 +82,76 @@ export function studyNameAsUrlParam(studyName) {
  * fetchAuthCode(true)
  */
 export async function fetchAuthCode(mock=false) {
-  let init = defaultInit
-  if (mock === false && globalMock === false) {
-    init = Object.assign({}, defaultInit(), {
-      method: 'POST'
-    })
-  }
+  const init = defaultPostInit(mock)
 
   const [authCode, perfTime] = await scpApi('/search/auth_code', init, mock)
 
   logDownloadAuthorization(perfTime)
 
   return authCode
+}
+
+/**
+* Create user annotation
+*
+* A "user annotation" is a named object of arrays.  Each item has a label
+* (`name`) and cell names (`values`).  Signed-in users can create these
+* custom annotations in the Explore tab of the Study Overview page.
+*
+* See user-annotations.js for more context.
+*
+* @param {String} studyAccession Study accession, e.g. SCP123
+* @param {String} cluster Name of cluster, as defined at upload
+* @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
+* @param {String} subsample Subsampling threshold, e.g. 100000
+* @param {String} userAnnotationName Name of new annotation
+* @param {Object} selections User selections for new annotation.
+*    Each selection has a label (`name`) and list of cell names (`values`).
+*    See `prepareForApi` in `user-annotations.js` for details.
+*/
+export async function createUserAnnotation(
+  studyAccession, cluster, annotation, subsample,
+  userAnnotationName, selections, mock=false
+) {
+  const init = defaultPostInit(mock)
+
+  init.body = JSON.stringify({
+    name: userAnnotationName,
+    user_data_arrays_attributes: selections,
+    cluster, annotation, subsample
+  })
+
+  const apiUrl = `/studies/${studyAccession}/user_annotations`
+  const [jsonOrResponse, perfTime] = await scpApi(apiUrl, init, mock)
+
+  let message = ''
+  let annotations = {}
+  let errorType = null
+  let newAnnotations = []
+
+  // Consider refactoring this when migrating user-annotations.js to
+  // React, so components share more error handling logic and UI
+  if (jsonOrResponse.ok === false) {
+    const json = await jsonOrResponse.json()
+    message = json.error
+    const status = jsonOrResponse.status
+    if (status === 400) {
+      errorType = 'user'
+    } else if (status === 500) {
+      errorType = 'server'
+    } else {
+      errorType = 'other'
+    }
+  } else {
+    // Parse JSON of successful response
+    message = jsonOrResponse.message
+    annotations = jsonOrResponse.annotations
+    newAnnotations = jsonOrResponse.annotationList
+  }
+
+  logCreateUserAnnotation()
+
+  return { message, annotations, errorType, newAnnotations }
 }
 
 /**
@@ -121,9 +203,9 @@ export function setMockOrigin(origin) {
 }
 
 /** Constructs and encodes URL parameters; omits those with no value */
-function stringifyQuery(paramObj) {
+export function stringifyQuery(paramObj, sort) {
   // Usage and API: https://github.com/sindresorhus/query-string#usage
-  const options = { skipEmptyString: true, skipNull: true }
+  const options = { skipEmptyString: true, skipNull: true, sort }
   const stringified = queryString.stringify(paramObj, options)
   return `?${stringified}`
 }
@@ -138,6 +220,18 @@ export async function fetchExplore(studyAccession, mock=false) {
   const [exploreInit] =
     await scpApi(apiUrl, defaultInit(), mock, false)
 
+  return exploreInit
+}
+
+/**
+* Returns bam file information for the study, suitable for passing to IGV
+*
+* @param {String} studyAccession Study accession
+*/
+export async function fetchBamFileInfo(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/explore/bam_file_info`
+  const [exploreInit] =
+    await scpApi(apiUrl, defaultInit(), mock, false)
   return exploreInit
 }
 
@@ -162,7 +256,7 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  *
  * @param {String} studyAccession Study accession
  * @param {String} cluster Name of cluster, as defined at upload
- * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
+ * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study", or object with name,type, and scope properties
  * @param {String} subsample Subsampling threshold, e.g. 100000
  * @param {String} consensus Statistic to use for consensus, e.g. "mean"
  * @param {Boolean} isAnnotatedScatter If showing "Annotated scatter" plot.
@@ -177,7 +271,13 @@ export async function fetchCluster(
   isAnnotatedScatter=null, mock=false
 ) {
   // Digest full annotation name to enable easy validation in API
-  const [annotName, annotType, annotScope] = annotation.split('--')
+  let [annotName, annotType, annotScope] = [annotation.name, annotation.type, annotation.scope]
+  if (annotName == undefined) {
+    [annotName, annotType, annotScope] = annotation.split('--')
+  }
+  if (Array.isArray(gene)) {
+    gene = gene.join(',')
+  }
   // eslint-disable-next-line camelcase
   const is_annotated_scatter = isAnnotatedScatter
   const paramObj = {
@@ -191,7 +291,7 @@ export async function fetchCluster(
   }
 
   const params = stringifyQuery(paramObj)
-  if (!cluster) {
+  if (!cluster || cluster === '') {
     cluster = '_default'
   }
   const apiUrl = `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
@@ -285,8 +385,8 @@ export async function fetchAnnotation(studyAccession, clusterName, annotationNam
   return values
 }
 
-/** Get a url for retrieving a morpheus-suitable annotation values file */
-export function getAnnotationCellValuesURL(studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false) {
+/** Get URL for a Morpheus-suitable annotation values file */
+export function getAnnotationCellValuesURL({studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false}) {
   const paramObj = {
     cluster: clusterName,
     annotation_scope: annotationScope,
@@ -298,23 +398,34 @@ export function getAnnotationCellValuesURL(studyAccession, clusterName, annotati
   return getFullUrl(apiUrl)
 }
 
+/** get URL for Morpheus-suitable annotation values file for a gene list */
+export function getGeneListColsURL({studyAccession, geneList}) {
+  const apiUrl = `/studies/${studyAccession}/annotations/gene_lists/${encodeURIComponent(geneList)}`
+  return getFullUrl(apiUrl)
+}
 
 /**
- * Returns an url for fetching heatmap expression data for genes in a study
+ * Returns an URL for fetching heatmap expression data for genes in a study
  *
- * A url generator rather than a fetch funtion is provided as morpheus needs a URL string
+ * A URL generator rather than a fetch funtion is provided as morpheus needs a URL string
  *
  * @param {String} studyAccession study accession
+ * @param {String} geneList: name of gene list to load (overrides cluster/annotation/subsample values)
  * @param {Array} genes List of gene names to get expression data for
  *
  */
-export function getExpressionHeatmapURL(studyAccession, genes, cluster, annotation, subsample) {
+export function getExpressionHeatmapURL({
+  studyAccession, genes, cluster,
+  annotation, subsample, heatmapRowCentering, geneList
+}) {
   const paramObj = {
     cluster,
     annotation,
     subsample,
-    genes: genes.join(','),
-    url_safe_token: getURLSafeAccessToken()
+    genes: geneArrayToParam(genes),
+    row_centered: heatmapRowCentering,
+    url_safe_token: getURLSafeAccessToken(),
+    gene_list: geneList
   }
   const path = `/studies/${studyAccession}/expression/heatmap${stringifyQuery(paramObj)}`
   return getFullUrl(path)

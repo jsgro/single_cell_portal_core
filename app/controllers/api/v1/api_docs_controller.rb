@@ -98,6 +98,7 @@ module Api
           Taxon,
           AnalysisConfiguration,
           ExternalResource,
+          UserAnnotation,
           Api::V1::StudiesController,
           Api::V1::StudyFilesController,
           Api::V1::StudyFileBundlesController,
@@ -112,7 +113,9 @@ module Api
           Api::V1::SearchController,
           Api::V1::Visualization::ClustersController,
           Api::V1::Visualization::AnnotationsController,
-          Api::V1::Visualization::ExploreController
+          Api::V1::Visualization::ExpressionController,
+          Api::V1::Visualization::ExploreController,
+          Api::V1::UserAnnotationsController
       ].freeze
 
       def index

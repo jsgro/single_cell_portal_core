@@ -1,21 +1,39 @@
 #!/usr/bin/env ruby
 
 require 'json'
+require 'optparse'
 
-# Run the rails server in non-dockerized form
-# usage:
-# ruby rails_local_setup.rb <username>
-# This script must be run from the directory it lives in
-# you may also specify --no-tcell to run locally without tcell, which currently clutters the console with CSP warnings in development mode
+# Set up the environment for doing local development/testing outside of Docker
+# will export all secrets from vault for the current user and create configuration files
+#
+# usage: ruby rails_local_setup.rb [-e, --environment ENVIRONMENT] [-u, --username USERNAME]
 
-if ARGV[0].nil?
-  puts 'You must specify your username'
-  exit
-end
+# defaults
+username = `whoami`.chomp
+environment = 'development'
 
-exclude_tcell = ARGV.include?('--no-tcell')
+# options parsing
+OptionParser.new do |opts|
+  opts.banner = "rails_local_setup.rb: Set up the environment for doing local development/testing outside of Docker.\n" \
+                "Usage: ruby rails_local_setup.rb [-e, --environment ENVIRONMENT] [-u, --username USERNAME]:\n\nARGUMENTS:"
 
-username = ARGV[0]
+  opts.on("-u", "--username USERNAME", String, "Username for exporting vault secrets, defaults to #{username} on this machine") do |u|
+    username = u.strip
+    puts "USERNAME: #{username}"
+  end
+
+  opts.on("-e", "--environment ENVIRONMENT", String, "Set the rails environment (defaults to #{environment})") do |e|
+    environment = e.strip
+    puts "ENVIRONMENT: #{environment}"
+  end
+
+  opts.on("-h", "--help", "Prints this help") do
+    puts "\n#{opts}\n"
+    exit
+  end
+
+end.parse!
+
 source_file_string = "#!/bin/bash\n"
 source_file_string += "export NOT_DOCKERIZED=true\n"
 source_file_string += "export HOSTNAME=localhost\n"
@@ -26,7 +44,7 @@ read_only_service_account_path = "#{base_vault_path}/read_only_service_account.j
 service_account_path = "#{base_vault_path}/scp_service_account.json"
 
 # defaults
-PASSENGER_APP_ENV = "development"
+PASSENGER_APP_ENV = environment
 CONFIG_DIR = File.expand_path('.') + "/config"
 
   # load raw secrets from vault
@@ -35,12 +53,7 @@ secret_string = `vault read -format=json #{vault_secret_path}`
 secret_data_hash = JSON.parse(secret_string)['data']
 
 secret_data_hash.each do |key, value|
-  # if tcell is excluded, set the related environment variables to empty -- this means tcell will not be active
-  if exclude_tcell && key.include?('TCELL')
-    source_file_string += "export #{key}=\n"
-  else
-    source_file_string += "export #{key}=#{value}\n"
-  end
+  source_file_string += "export #{key}=#{value}\n"
 end
 
 source_file_string += "export DATABASE_NAME=single_cell_portal_development\n"
@@ -65,10 +78,6 @@ source_file_string += "export READ_ONLY_SERVICE_ACCOUNT_KEY=#{CONFIG_DIR}/.read_
 
 puts 'Setting secret_key_base'
 source_file_string += "export SECRET_KEY_BASE=#{`openssl rand -hex 64`}\n"
-
-if exclude_tcell
-  puts "****\nYou are developing with TCell disabled--be sure to test that any third-party scripts or connection sources you add are also added to TCell\n****\n"
-end
 
 File.open("#{CONFIG_DIR}/secrets/.source_env.bash", 'w') { |file| file.write(source_file_string) }
 

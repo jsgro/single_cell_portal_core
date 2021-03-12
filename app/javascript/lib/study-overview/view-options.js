@@ -33,7 +33,7 @@ export function getAnnotParams() {
   return { name, type, scope }
 }
 
-/** Get HTML for dropdown menu for spatial files */
+/** Get HTML for "Spatial group" dropdown menu */
 function getSpatialDropdown(study) {
   const options = study.spatialGroupNames.map(name => {
     return `<option value="${name}">${name}</option>`
@@ -58,6 +58,43 @@ export function addSpatialDropdown(study) {
   }
 }
 
+/** Get HTML for a dropdown for a main view option */
+function getMainDropdown(domId, options, label) {
+  const select =
+    `<select name="${domId}" id="${domId}" class="form-control">${
+      options
+    }</select>`
+  return (
+    `<div class="form-group col-sm-4">` +
+      `<label for=${domId}>${label}</label><br/>${select}` +
+    `</div>`
+  )
+}
+
+/**
+ * Get HTML for "Selection annotation" drop-down menu
+ *
+ * @param {Object} annotations Annotations object.  Top keys are scopes
+ *   (e.g. 'Study-Wide') with values that are lists of annotation
+ *   <value, label> arrays.  `value` is a 3-part annotation identifier,
+ *   `label` is the user-facing name.
+ * @param {String} selectedOptionLabel Label of the selected option
+ */
+export function getAnnotationDropdown(annotations, selectedOptionLabel=null) {
+  const options = Object.keys(annotations).map(scope => {
+    const options = annotations[scope].map(([label, value]) => {
+      let selected = ''
+      if (selectedOptionLabel && selectedOptionLabel === label) {
+        selected = ' selected'
+      }
+      return `<option value="${value}"${selected}>${label}</option>`
+    })
+    return `<optgroup label="${scope}">${options}</optgroup>`
+  })
+
+  return getMainDropdown('annotation', options, 'Select annotation')
+}
+
 /**
  * Re-render a plot after a user selects a new cluster from the dropdown menu,
  * usually called from a complete() callback in an $.ajax() function
@@ -74,13 +111,13 @@ export function updateCluster(
 }
 
 /**
- * Event handler for changes to "Load cluster" menu.  Fetch new annotations,
+ * Event listener for changes to "Load cluster" menu.  Fetch new annotations,
  * then render dynamically-specified plots for selected cluster.
  *
  * @param {Function} callback Function to call after fetching new annots
  * @param {Array} callbackArgs List of arguments for `callback` function
  */
-function handleClusterMenuChange(callback, callbackArgs) {
+function addClusterMenuListener(callback, callbackArgs) {
   $(document).off('change', '#cluster')
   $(document).on('change', '#cluster', function() {
     const cluster = $(this).val() // eslint-disable-line
@@ -103,7 +140,7 @@ function handleClusterMenuChange(callback, callbackArgs) {
 }
 
 /** Handle menu changes for annotations, subsampling, and spatial groups */
-function handleOtherMenuChange(callback, callbackArgs) {
+function addOtherMenuListeners(callback, callbackArgs) {
   const menuSelectors = '#annotation, #subsample, #spatial-group'
   $(document).off('change', menuSelectors)
   $(document).on('change', menuSelectors, function() {
@@ -117,7 +154,7 @@ function handleOtherMenuChange(callback, callbackArgs) {
 }
 
 /**
- * Event handler for new selections in menus for:
+ * Event listener for new selections in menus for:
  *  - Load cluster
  *  - Select annotation
  *  - Subsampling threshold
@@ -126,9 +163,9 @@ function handleOtherMenuChange(callback, callbackArgs) {
  * @param {Function} callback Function to call after fetching new annots
  * @param {Array} callbackArgs List of arguments for `callback` function
  */
-export function handleMenuChange(callback, callbackArgs) {
-  handleClusterMenuChange(callback, callbackArgs)
-  handleOtherMenuChange(callback, callbackArgs)
+export function addMenuListeners(callback, callbackArgs) {
+  addClusterMenuListener(callback, callbackArgs)
+  addOtherMenuListeners(callback, callbackArgs)
 
   // Listener to redraw expression scatter with new color profile
   $('#colorscale').change(function() {

@@ -26,8 +26,9 @@ import { scatterPlot, resizeScatterPlots } from 'lib/scatter-plot'
 import { violinPlot, resizeViolinPlot } from 'lib/violin-plot'
 import { clearPlots } from 'lib/plot'
 import {
-  addSpatialDropdown, getMainViewOptions, getAnnotParams, handleMenuChange
+  addSpatialDropdown, getMainViewOptions, getAnnotParams, addMenuListeners
 } from 'lib/study-overview/view-options'
+import { closeUserAnnotationsForm } from 'lib/study-overview/user-annotations'
 
 /** Render violin and scatter plots for the Explore tab's single-gene view
  * this also handles multi-gene plots where the genes are collapsed by mean/median
@@ -67,11 +68,10 @@ async function renderSingleGenePlots(study, gene) {
     // only show ideogram for single gene queries
     window.showRelatedGenesIdeogram()
   }
-
 }
 
 /** Listen for events, and update view accordingly */
-function attachEventHandlers(study, gene) {
+function attachEventListeners(study, gene) {
   // resize listener
   $(window).off('resizeEnd') // Clear any existing handler
   $(window).on('resizeEnd', () => {
@@ -80,7 +80,7 @@ function attachEventHandlers(study, gene) {
     resizeViolinPlot()
   })
 
-  handleMenuChange(renderSingleGenePlots, [study, gene])
+  addMenuListeners(renderSingleGenePlots, [study, gene])
 }
 
 /** Initialize single-gene view for "Explore" tab in Study Overview */
@@ -94,9 +94,12 @@ export default async function exploreSingle() {
     gene = window.SCP.formatTerms($('#search_genes').val()).join(',')
   }
 
-  attachEventHandlers(study, gene)
+  attachEventListeners(study, gene)
 
   addSpatialDropdown(study)
 
   renderSingleGenePlots(study, gene)
+
+  closeUserAnnotationsForm()
+
 }

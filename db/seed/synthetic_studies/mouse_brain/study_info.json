@@ -37,6 +37,28 @@
       "type": "Coordinate Labels",
       "filename": "coordinate_labels.tsv",
       "cluster_file_name": "cluster.tsv"
+    },
+    {
+      "type": "BAM",
+      "filename": "sample1.bam",
+      "species_scientific_name": "Mus musculus",
+      "genome_assembly_name": "GRCm38"
+    },
+    {
+      "type": "BAM Index",
+      "filename": "sample1.bam.bai",
+      "bam_file_name": "sample1.bam"
+    },
+    {
+      "type": "BAM",
+      "filename": "sample2.bam",
+      "species_scientific_name": "Mus musculus",
+      "genome_assembly_name": "GRCm38"
+    },
+    {
+      "type": "BAM Index",
+      "filename": "sample2.bam.bai",
+      "bam_file_name": "sample2.bam"
     }
   ]
 }

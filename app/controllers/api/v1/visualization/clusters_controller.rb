@@ -118,16 +118,18 @@ module Api
         def self.get_cluster_viz_data(study, cluster, url_params)
           annot_params = AnnotationsController.get_annotation_params(url_params)
           annotation = AnnotationVizService.get_selected_annotation(study,
-                                                       cluster,
-                                                       annot_params[:name],
-                                                       annot_params[:type],
-                                                       annot_params[:scope])
+                                                       cluster: cluster,
+                                                       annot_name: annot_params[:name],
+                                                       annot_type: annot_params[:type],
+                                                       annot_scope: annot_params[:scope])
           if !annotation
             return nil
           end
 
-          subsample = url_params[:subsample].blank? ? nil : url_params[:subsample].to_i
+          subsample = get_selected_subsample_threshold(url_params[:subsample], cluster)
           consensus = url_params[:consensus].blank? ? nil : url_params[:consensus]
+
+
 
           colorscale = url_params[:colorscale].blank? ? 'Reds' : url_params[:colorscale]
 
@@ -136,6 +138,7 @@ module Api
           titles = ClusterVizService.load_axis_labels(cluster)
           coordinates = nil
           genes = RequestUtils.get_genes_from_param(study, url_params[:gene])
+
           if url_params[:gene].blank?
             # For "Clusters" tab in default view of Explore tab
             coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
@@ -163,7 +166,7 @@ module Api
             else
               # For "Scatter" tab
               if is_collapsed_view
-                coordinates = ExpressionVizService.load_gene_set_expression_boxplot_scores(study, genes, cluster, selected_annotation, consensus, subsample)
+                coordinates = ExpressionVizService.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample, y_axis_title, colorscale)
               else
                 coordinates = ExpressionVizService.load_expression_data_array_points(study, genes[0], cluster, annotation, subsample, y_axis_title, colorscale)
               end
@@ -196,8 +199,10 @@ module Api
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
             "coordinateLabels": coordinate_labels,
             "cluster": cluster.name,
-            "gene": genes.map {|g| g['name']}.join(' ,'),
-            "annotParams": annot_params
+            "gene": genes.map {|g| g['name']}.join(', '),
+            "annotParams": annotation,
+            "subsample": subsample.nil? ? 'all' : subsample,
+            "consensus": consensus
           }
           response_obj
         end
@@ -257,6 +262,19 @@ module Api
             mock_response[:data] = data
             return mock_response.to_json
           end
+        end
+
+        def self.get_selected_subsample_threshold(param, cluster)
+          subsample = nil
+          if param.blank?
+            # default to largest threshold available that is <10K
+            subsample = ClusterVizService.default_subsampling(cluster)
+          elsif param == 'all'
+            subsample = nil
+          else
+            subsample = param.to_i
+          end
+          subsample
         end
       end
     end

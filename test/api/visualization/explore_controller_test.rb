@@ -39,14 +39,14 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:get, api_v1_study_explore_path(@basic_study), user: user2)
     assert_equal 403, response.status
 
-    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study), user: user2)
+    execute_http_request(:get, cluster_options_api_v1_study_explore_path(@basic_study), user: user2)
     assert_equal 403, response.status
 
     sign_in_and_update @user
     execute_http_request(:get, api_v1_study_explore_path(@basic_study))
     assert_equal 200, response.status
 
-    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study))
+    execute_http_request(:get, cluster_options_api_v1_study_explore_path(@basic_study))
     assert_equal 200, response.status
   end
 
@@ -56,7 +56,7 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     assert_equal ['clusterA.txt'], json['clusterGroupNames']
-    assert_equal ['spatialA.txt'], json['spatialGroupNames']
+    assert_equal [{"name" => 'spatialA.txt', "associated_clusters" => []}], json['spatialGroups']
 
     execute_http_request(:get, api_v1_study_explore_path(@empty_study))
     assert_equal [], json['clusterGroupNames']
@@ -64,7 +64,7 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
 
   test 'should get annotation listings' do
     sign_in_and_update @user
-    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@basic_study))
+    execute_http_request(:get, cluster_options_api_v1_study_explore_path(@basic_study))
     assert_response :success
 
     assert_equal 'clusterA.txt', json['default_cluster']
@@ -72,14 +72,14 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     assert_equal expected_annotations, json['annotations']
     assert_equal({"clusterA.txt"=>[], "spatialA.txt"=>[]}, json['subsample_thresholds'])
 
-    execute_http_request(:get, api_v1_study_explore_cluster_options_path(@empty_study))
+    execute_http_request(:get, cluster_options_api_v1_study_explore_path(@empty_study))
     assert_equal [], json['annotations']
   end
 
 
   test 'should handle invalid study id' do
     sign_in_and_update @user
-    execute_http_request(:get, api_v1_study_explore_cluster_options_path('SCP1234567'))
+    execute_http_request(:get, cluster_options_api_v1_study_explore_path('SCP1234567'))
     assert_equal 404, response.status
   end
 end

@@ -376,11 +376,7 @@ module ApplicationHelper
   end
 
   def get_page_name
-    page_name = "#{controller_name}-#{action_name}".gsub('_', '-')
-    if page_name == 'site-index'
-      page_name = 'root'
-    end
-    page_name
+    MetricsService.get_page_name(controller_name, action_name)
   end
 
   # helper to add a red * to a form field label

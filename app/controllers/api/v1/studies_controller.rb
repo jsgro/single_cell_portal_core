@@ -225,6 +225,7 @@ module Api
             rescue => e
               error_context = ErrorTracker.format_extra_context(@study, {params: params})
               ErrorTracker.report_exception(e, current_api_user, error_context)
+              MetricsService.report_error(e, request, current_api_user, @study)
               logger.error "#{Time.zone.now} unable to delete workspace: #{@study.firecloud_workspace}; #{e.message}"
               render json: {error: "Error deleting FireCloud workspace #{@study.firecloud_project}/#{@study.firecloud_workspace}: #{e.message}"}, status: 500
             end
@@ -405,6 +406,7 @@ module Api
         rescue => e
           error_context = ErrorTracker.format_extra_context(@study, {params: params})
           ErrorTracker.report_exception(e, current_api_user, error_context)
+          MetricsService.report_error(e, request, current_api_user, @study)
           logger.error "#{Time.zone.now}: error syncing files in workspace bucket #{@study.firecloud_workspace} due to error: #{e.message}"
           render json: {error: "Unable to sync with workspace bucket: #{view_context.simple_format(e.message)}"}, status: 500
         end
@@ -474,8 +476,8 @@ module Api
         @unsynced_directories = @study.directory_listings.unsynced
 
         # split directories into primary data types and 'others'
-        @unsynced_primary_data_dirs = @unsynced_directories.select {|dir| dir.file_type == 'fastq'}
-        @unsynced_other_dirs = @unsynced_directories.select {|dir| dir.file_type != 'fastq'}
+        @unsynced_primary_data_dirs = @unsynced_directories.select {|dir| DirectoryListing::PRIMARY_DATA_TYPES.include?(dir.file_type)}
+        @unsynced_other_dirs = @unsynced_directories.select {|dir| !DirectoryListing::PRIMARY_DATA_TYPES.include?(dir.file_type)}
 
         # now determine if we have study_files that have been 'orphaned' (cannot find a corresponding bucket file)
         @orphaned_study_files = @study_files - @synced_study_files
@@ -499,6 +501,13 @@ module Api
             key :in, :path
             key :description, 'ID of study to generate manifest'
             key :required, true
+            key :type, :string
+          end
+          parameter do
+            key :name, :include_dirs
+            key :in, :query
+            key :description, 'Include directory listings in manifest'
+            key :required, false
             key :type, :string
           end
           response 200 do
@@ -530,7 +539,8 @@ module Api
       end
 
       def generate_manifest
-        manifest_obj = BulkDownloadService.generate_study_files_tsv(@study)
+        include_dirs = params[:include_dirs] == 'true'
+        manifest_obj = BulkDownloadService.generate_study_files_tsv(@study, include_dirs)
         response.headers['Content-Disposition'] = 'attachment; filename=file_supplemental_info.tsv'
         render plain: manifest_obj
       end
@@ -601,16 +611,16 @@ module Api
 
         files.each do |file|
           # check first if file type is in file map in a group larger than 10 (or 20 for text files)
-          file_extension = DirectoryListing.file_extension(file.name)
+          file_type = DirectoryListing.file_type_from_extension(file.name)
           directory_name = DirectoryListing.get_folder_name(file.name)
-          max_size = file_extension == 'txt' ? 20 : 10
-          if @file_extension_map.has_key?(directory_name) && !@file_extension_map[directory_name][file_extension].nil? && @file_extension_map[directory_name][file_extension] >= max_size
-            process_directory_listing_file(file, file_extension)
+          if @file_extension_map.has_key?(directory_name) && !@file_extension_map.dig(directory_name, file_type).nil? &&
+            @file_extension_map.dig(directory_name, file_type) >= DirectoryListing::MIN_SIZE
+            process_directory_listing_file(file, file_type)
           else
-            # we are now dealing with singleton files or fastqs, so process accordingly (making sure to ignore directories)
-            if DirectoryListing::PRIMARY_DATA_TYPES.any? {|ext| file_extension.include?(ext)} && !file.name.end_with?('/')
+            # we are now dealing with singleton files or sequence data, so process accordingly (making sure to ignore directories)
+            if DirectoryListing::PRIMARY_DATA_TYPES.any? {|ext| file_type.include?(ext)} && !file.name.end_with?('/')
               # process fastq file into appropriate directory listing
-              process_directory_listing_file(file, 'fastq')
+              process_directory_listing_file(file, file_type)
             else
               # make sure file is not actually a folder by checking its size
               if file.size > 0
