@@ -244,19 +244,33 @@ module Api
               :annotParams=>{:name=>"biosample_id", :type=>"group", :scope=>"study"}
             }
             annot_size = num_cells / num_annots
-            data = num_annots.times.map do |i|
-              cells = annot_size.times.map {|ii| "gatc_gatc_gatc_c#{i}_#{ii}" }
-              {
-                x: annot_size.times.map { (((rand + 1) * (rand + 1)) * 17 + i * 14).round(3) },
-                y: annot_size.times.map { (rand * 140).round(3) },
-                cells: cells,
-                name: "cluster #{i} (#{annot_size} points)",
+            traced = true
+            if traced
+              data = num_annots.times.map do |i|
+                cells = annot_size.times.map {|ii| "gatc_gatc_gatc_c#{i}_#{ii}" }
+                {
+                  x: annot_size.times.map { (((rand + 1) * (rand + 1)) * 17 + i * 14).round(3) },
+                  y: annot_size.times.map { (rand * 140).round(3) },
+                  cells: cells,
+                  name: "cluster #{i} (#{annot_size} points)",
+                  type: 'scattergl',
+                  mode: 'markers',
+                  marker: {:size=>3, :line=>{:color=>"rgb(40,40,40)", :width=>0}},
+                  opacity: 1.0,
+                  text: cells.map {|c| "<b>#{c}</b><br>#{fake_annotations[i]}"},
+                  annotations: fake_annotations
+                }
+              end
+            else
+              data = {
+                x: num_cells.times.map { |n| (rand * 140).round(3) },
+                y: num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3) },
+                cells: num_cells.times.map {|n| "gatc_gatc_c#{n}" },
                 type: 'scattergl',
                 mode: 'markers',
-                marker: {:size=>3, :line=>{:color=>"rgb(40,40,40)", :width=>0}},
+                marker: {:size=>3, :width=>0},
                 opacity: 1.0,
-                text: cells.map {|c| "<b>#{c}</b><br>#{fake_annotations[i]}"},
-                annotations: fake_annotations
+                annotations: num_cells.times.map {|n| "annot_#{(n * num_annots / num_cells).floor}" }
               }
             end
             mock_response[:data] = data

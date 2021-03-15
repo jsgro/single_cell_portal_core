@@ -65,7 +65,7 @@ class ClusterVizService
   # return an array of values to use for subsampling dropdown scaled to number of cells in study
   # only options allowed are 1000, 10000, 20000, and 100000
   # will only provide options if subsampling has completed for a cluster
-  def self.subsampling_options(cluster)
+  def self.subsampling_options(cluster, user=nil)
     num_points = cluster.points
     if cluster.is_subsampling?
       []

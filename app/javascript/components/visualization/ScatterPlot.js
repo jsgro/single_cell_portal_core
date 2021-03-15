@@ -43,6 +43,8 @@ export default function ScatterPlot({
 
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
+    performance.mark('dataFetchEnd')
+    console.log(`dataFetch duration: ${performance.measure('total data fetch', 'dataFetchStarted', 'dataFetchEnd').duration}`)
     // Get Plotly layout
     const layout = getPlotlyLayout(clusterResponse)
     const { width, height } = dimensions
@@ -51,8 +53,9 @@ export default function ScatterPlot({
     formatMarkerColors(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
     formatHoverLabels(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
     const dataScatterColor = processTraceScatterColor(clusterResponse.data, scatterColor)
+    performance.mark('dataAssembled')
     Plotly.newPlot(graphElementId, clusterResponse.data, layout)
-
+    console.log(`plotly duration: ${performance.measure('plotly time', 'dataAssembled').duration}`)
     if (dataScatterColor !== scatterColor) {
       updateScatterColor(dataScatterColor)
     }
@@ -62,13 +65,15 @@ export default function ScatterPlot({
 
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
-    setIsLoading(true)
-    fetchCluster(studyAccession,
-      cluster,
-      annotation ? annotation : '',
-      subsample,
-      consensus,
-      genes).then(handleResponse)
+    // setIsLoading(true)
+    // performance.mark('dataFetchStarted')
+    // fetchCluster(studyAccession,
+    //   cluster,
+    //   annotation ? annotation : '',
+    //   subsample,
+    //   consensus,
+    //   genes).then(handleResponse)
+    makeFakePlot(graphElementId, subsample)
   }, [cluster, annotation.name, subsample, consensus, genes.join(',')])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
@@ -323,4 +328,50 @@ function logLegendClick(event) {
 function logLegendDoubleClick(event) {
   clearTimeout(currentClickCall)
   log('click:scatterlegend:double')
+}
+
+/** test groupby function */
+function makeFakePlot(target, subsample) {
+  const length = 1000000
+  const numGroups = 10
+  const isTraced = false
+
+  let data = {}
+  if (isTraced) {
+    data = []
+    const groupSize = length / numGroups
+    for (let i=0; i<numGroups; i++) {
+      let x = Array.from({ length: groupSize }, () => Math.round(Math.random() * 100, 3))
+      let y = Array.from({ length: groupSize }, (_, index) => Math.round(Math.random() * 10 + (i * 10)), 3)
+      let cells = Array.from({ length: groupSize }, (_, index) => `CELL_${index}`)
+      // let annots = Array.from({ length: groupSize }, (_, index) => `annot_${i}`)
+      data.push({
+        type: 'scattergl',
+        name: `annot_${i}`,
+        x,
+        y,
+        text: cells,
+        mode: 'markers'
+      })
+    }
+  } else {
+    const x = Array.from({ length }, () => Math.round(Math.random() * 100, 3))
+    const y = Array.from({ length }, (_, index) => Math.round(Math.random() * 10 + (index * (100 / length)), 3))
+    const cells = Array.from({ length }, (_, index) => `CELL_${index}`)
+    const annots = Array.from({ length }, (_, index) => `annot_${Math.floor(index / (length / numGroups))}`)
+    data = [{
+      type: 'scattergl',
+      x,
+      y,
+      text: cells,
+      mode: 'markers',
+      transforms: [{
+        type: 'groupby',
+        groups: annots
+      }]
+    }]
+  }
+  performance.mark('dataAssembled')
+  Plotly.newPlot(target, data)
+  console.log(`duration: ${performance.measure('plotly', 'dataAssembled').duration}`)
 }
