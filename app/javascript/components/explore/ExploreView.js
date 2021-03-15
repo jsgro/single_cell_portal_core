@@ -42,7 +42,7 @@ function RoutableExploreTab({ studyAccession }) {
   // this is kept separate so that the graphs do not see the change in cluster name from '' to
   // '<<default cluster>>' as a change that requires a re-fetch from the server
   let controlExploreParams = _clone(exploreParams)
-  if (exploreInfo && !exploreParams.cluster) {
+  if (exploreInfo && !exploreParams.cluster && exploreInfo.clusterGroupNames.length > 0) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
     controlExploreParams = Object.assign(controlExploreParams,
       getDefaultClusterParams(annotationList, exploreInfo.spatialGroups))

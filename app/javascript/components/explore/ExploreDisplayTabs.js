@@ -445,8 +445,10 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   let isMultiGene = exploreParams?.genes?.length > 1
   let isGene = exploreParams?.genes?.length > 0
   let isConsensus = !!exploreParams.consensus
+  let hasClusters = exploreInfo && exploreInfo.clusterGroupNames.length > 0
   let hasSpatialGroups = exploreInfo && exploreInfo?.spatialGroups?.length > 0
   let hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
+  let hasIdeogramOutputs = exploreInfo && Object.keys(exploreInfo?.inferCNVIdeogramFiles).length > 0
   let enabledTabs = []
   if (isGeneList) {
     enabledTabs = ['heatmap']
@@ -463,11 +465,11 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
       } else {
         enabledTabs = ['scatter', 'distribution']
       }
-    } else {
+    } else if (hasClusters) {
       enabledTabs = ['cluster']
     }
   }
-  if (hasGenomeFiles) {
+  if ( hasGenomeFiles || hasIdeogramOutputs ) {
     enabledTabs.push('genome')
   }
   return {enabledTabs, isGeneList, isGene, isMultiGene}
