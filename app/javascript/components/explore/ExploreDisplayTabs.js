@@ -11,6 +11,7 @@ import Heatmap from 'components/visualization/Heatmap'
 import GenomeView from './GenomeView'
 import { getAnnotationValues } from 'lib/cluster-utils'
 import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
+import InferCNVIdeogram from 'components/visualization/InferCNVIdeogram'
 import useResizeEffect from 'hooks/useResizeEffect'
 
 const tabList = [
@@ -20,7 +21,8 @@ const tabList = [
   { key: 'dotplot', label: 'Dot Plot' },
   { key: 'heatmap', label: 'Heatmap' },
   { key: 'spatial', label: 'Spatial' },
-  { key: 'genome', label: 'Genome' }
+  { key: 'genome', label: 'Genome' },
+  { key: 'infercnv-genome', label: 'Genome (inferCNV)' }
 ]
 
 const ideogramHeight = 140
@@ -47,7 +49,7 @@ export default function ExploreDisplayTabs(
 ) {
   const [, setRenderForcer] = useState({})
   const plotContainerClass = 'explore-plot-tab-content'
-  const {enabledTabs, isGeneList, isGene, isMultiGene} = getEnabledTabs(exploreInfo, exploreParams)
+  const {enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs} = getEnabledTabs(exploreInfo, exploreParams)
 
   // exploreParams object without genes specified, to pass to cluster comparison plots
   const referencePlotDataParams = _clone(exploreParams)
@@ -75,8 +77,8 @@ export default function ExploreDisplayTabs(
     // TODO: Log study gene search, to not break existing analytics
     // Avoid logging `clear` trigger; it is not a search
 
-    // also unset any selected gene lists
-    updateExploreParams({ genes, geneList: '' })
+    // also unset any selected gene lists or ideogram files
+    updateExploreParams({ genes, geneList: '', ideogramFileId: '' })
   }
 
   // Handle spatial transcriptomics data
@@ -196,7 +198,7 @@ export default function ExploreDisplayTabs(
             <StudyGeneField genes={exploreParams.genes}
               searchGenes={searchGenes}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-            <button className={isGene || isGeneList ? 'action fa-lg' : 'hidden'} // show if this is gene search || gene list
+            <button className={isGene || isGeneList || hasIdeogramOutputs ? 'action fa-lg' : 'hidden'} // show if this is gene search || gene list
               onClick={() => searchGenes([])}
               title="Return to cluster view"
               data-toggle="tooltip"
@@ -433,6 +435,16 @@ export default function ExploreDisplayTabs(
                 updateExploreParams={updateExploreParams}/>
             </div>
           }
+          { enabledTabs.includes('infercnv-genome') &&
+          <div className={shownTab === 'infercnv-genome' ? '' : 'hidden'}>
+            <InferCNVIdeogram
+              studyAccession={studyAccession}
+              ideogramFileId={exploreParams?.ideogramFileId}
+              inferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
+              isVisible={shownTab === 'infercnv-genome'}
+              updateExploreParams={updateExploreParams}/>
+          </div>
+          }
         </div>
       </div>
     </>
@@ -469,8 +481,11 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
       enabledTabs = ['cluster']
     }
   }
-  if ( hasGenomeFiles || hasIdeogramOutputs ) {
+  if ( hasGenomeFiles ) {
     enabledTabs.push('genome')
   }
-  return {enabledTabs, isGeneList, isGene, isMultiGene}
+  if ( hasIdeogramOutputs ) {
+    enabledTabs.push('infercnv-genome')
+  }
+  return {enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs}
 }

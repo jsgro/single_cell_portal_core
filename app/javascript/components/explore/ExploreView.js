@@ -18,6 +18,7 @@ import useExploreTabRouter from './ExploreTabRouter'
 import { getDefaultClusterParams, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
 import GeneListSelector from 'components/visualization/controls/GeneListSelector'
 import { log } from 'lib/metrics-api'
+import InferCNVIdeogramSelector from "components/visualization/controls/InferCNVIdeogramSelector";
 
 /**
  * manages view options and basic layout for the explore tab
@@ -91,7 +92,7 @@ function RoutableExploreTab({ studyAccession }) {
     // broken urls in the event of a default cluster/annotation changes
     // also, unset any gene lists as we're about to re-render the explore tab and having gene list selected will show
     // the wrong tabs
-    const updateParams = {geneList: ''}
+    const updateParams = {geneList: '', ideogramFileId: ''}
     const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
     clusterParamNames.forEach(param => {
       updateParams[param] = param in newParams ? newParams[param] : controlExploreParams[param]
@@ -102,6 +103,11 @@ function RoutableExploreTab({ studyAccession }) {
   /** handles gene list selection */
   function updateGeneList(geneList) {
     updateExploreParams({ geneList: geneList })
+  }
+
+  // handles updating inferCNV/ideogram selection
+  function updateInferCNVIdeogramFile(annotationFile) {
+    updateExploreParams( { ideogramFileId: annotationFile })
   }
 
   useEffect(() => {
@@ -181,6 +187,13 @@ function RoutableExploreTab({ studyAccession }) {
               <ExploreConsensusSelector
                 consensus={controlExploreParams.consensus}
                 updateConsensus={consensus => updateExploreParams({ consensus })}/>
+            }
+            { !!exploreInfo?.inferCNVIdeogramFiles &&
+                <InferCNVIdeogramSelector
+                  inferCNVIdeogramFile={controlExploreParams.ideogramFileId}
+                  studyInferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
+                  updateInferCNVIdeogramFile={updateInferCNVIdeogramFile}
+                />
             }
           </div>
           <PlotDisplayControls

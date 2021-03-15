@@ -4,7 +4,8 @@
  * Show an Ideogram heatmap instance using output from an inferCNV workflow
  */
 
-import React, { useEffect } from 'react'
+import React, {useEffect, useState} from 'react'
+import _uniqueId from 'lodash/uniqueId'
 
 import Ideogram from 'ideogram'
 
@@ -25,6 +26,28 @@ const legend = [{
     { name: 'High', color: '#F00' }
   ]
 }]
+
+export default function InferCNVIdeogram({studyAccession, ideogramFileId, inferCNVIdeogramFiles, isVisible, updateExploreParams }) {
+  const [inferCNVIdeogramFileList, setinferCNVIdeogramFileList] = useState(null)
+  const [ideogramContainerId] = useState(_uniqueId('study-infercnv-ideogram-'))
+
+  const inferCNVIdeogramFile = inferCNVIdeogramFiles[ideogramFileId]
+  useEffect(() => {
+    if ( !!inferCNVIdeogramFile && isVisible ) {
+      let ideogramAnnotsFile = inferCNVIdeogramFile.ideogram_settings.annotationsPath
+      let ideogramOrganism = inferCNVIdeogramFile.ideogram_settings.organism
+      let ideogramAssembly = inferCNVIdeogramFile.ideogram_settings.assembly
+      initializeIdeogram(ideogramAnnotsFile, ideogramOrganism, ideogramAssembly, ideogramContainerId)
+    }
+  }, [ideogramFileId])
+
+  return <div id="ideogram-container">
+    <div id={ideogramContainerId}>
+      <ul id="tracks-to-display">
+      </ul>
+    </div>
+  </div>
+}
 
 /** Get ideogram heatmap tracks selected via checkbox */
 function getSelectedTracks() {
@@ -223,9 +246,9 @@ function warnIdeogramOfNumericCluster() {
 }
 
 /** Initialize ideogram to visualize genomic heatmap from inferCNV  */
-function initializeIdeogram(url) {
-  if (typeof window.ideogram !== 'undefined') {
-    delete window.ideogram
+function initializeIdeogram(url, organism, assembly, domTarget) {
+  if (typeof window.inferCNVIdeogram !== 'undefined') {
+    delete window.inferCNVIdeogram
     $('#tracks-to-display').html('')
     $('#_ideogramOuterWrap').html('')
   }
@@ -233,9 +256,9 @@ function initializeIdeogram(url) {
   $('#ideogramWarning, #ideogramTitle').remove()
 
   ideoConfig = {
-    container: '#ideogram-container',
-    organism: window.ideogramInferCnvSettings.organism.toLowerCase(),
-    assembly: window.ideogramInferCnvSettings.assembly,
+    container: '#' + domTarget,
+    organism: organism.toLowerCase(),
+    assembly: assembly,
     annotationsPath: url,
     annotationsLayout: 'heatmap',
     legend,
@@ -250,9 +273,7 @@ function initializeIdeogram(url) {
   }
 
   inferCNVIdeogram = new Ideogram(ideoConfig)
-
-  // Log Ideogram.js initialization in Google Analytics
-  ga('send', 'event', 'ideogram', 'initialize')
+  window.inferCNVIdeogram = inferCNVIdeogram
 
   window.SCP.log('ideogram:initialize')
 }
