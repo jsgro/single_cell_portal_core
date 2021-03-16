@@ -386,7 +386,7 @@ export async function fetchAnnotation(studyAccession, clusterName, annotationNam
 }
 
 /** Get URL for a Morpheus-suitable annotation values file */
-export function getAnnotationCellValuesURL({studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false}) {
+export function getAnnotationCellValuesURL({ studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false }) {
   const paramObj = {
     cluster: clusterName,
     annotation_scope: annotationScope,
@@ -399,7 +399,7 @@ export function getAnnotationCellValuesURL({studyAccession, clusterName, annotat
 }
 
 /** get URL for Morpheus-suitable annotation values file for a gene list */
-export function getGeneListColsURL({studyAccession, geneList}) {
+export function getGeneListColsURL({ studyAccession, geneList }) {
   const apiUrl = `/studies/${studyAccession}/annotations/gene_lists/${encodeURIComponent(geneList)}`
   return getFullUrl(apiUrl)
 }

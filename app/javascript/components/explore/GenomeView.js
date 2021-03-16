@@ -102,7 +102,7 @@ export default SafeGenomeView
  * Get tracks for selected BAM files, to show sequencing reads
  */
 function getBamTracks(bamAndBaiFiles) {
-  let bam; let bamTrack; let i;
+  let bam; let bamTrack; let i
 
   const bamTracks = []
 

@@ -62,7 +62,7 @@ function StudyViolinPlot({
       subsample,
       consensus
     )
-    if (checkScpApiResponse(results, () => Plotly.purge(graphElementId), setShowError, setErrorContent )) {
+    if (checkScpApiResponse(results, () => Plotly.purge(graphElementId), setShowError, setErrorContent)) {
       setStudyGeneNames(results.gene_names)
       let distributionPlotToUse = results.plotType
       if (distributionPlot) {

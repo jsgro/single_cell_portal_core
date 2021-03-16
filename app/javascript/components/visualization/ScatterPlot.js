@@ -45,7 +45,7 @@ export function ScatterPlot({
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
-    if (checkScpApiResponse(clusterResponse, () => Plotly.purge(graphElementId), setShowError, setErrorContent )) {
+    if (checkScpApiResponse(clusterResponse, () => Plotly.purge(graphElementId), setShowError, setErrorContent)) {
       // Get Plotly layout
       const layout = getPlotlyLayout(clusterResponse)
       const { width, height } = dimensions

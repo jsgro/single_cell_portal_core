@@ -47,7 +47,7 @@ export default function ExploreDisplayTabs(
 ) {
   const [, setRenderForcer] = useState({})
   const plotContainerClass = 'explore-plot-tab-content'
-  const {enabledTabs, isGeneList, isGene, isMultiGene} = getEnabledTabs(exploreInfo, exploreParams)
+  const { enabledTabs, isGeneList, isGene, isMultiGene } = getEnabledTabs(exploreInfo, exploreParams)
 
   // exploreParams object without genes specified, to pass to cluster comparison plots
   const referencePlotDataParams = _clone(exploreParams)
@@ -442,34 +442,32 @@ export default function ExploreDisplayTabs(
 
 /** return an array of the tabs that should be shown, given the exploreParams and exploreInfo */
 export function getEnabledTabs(exploreInfo, exploreParams) {
-  let isGeneList =  !!exploreParams.geneList
-  let isMultiGene = exploreParams?.genes?.length > 1
-  let isGene = exploreParams?.genes?.length > 0
-  let isConsensus = !!exploreParams.consensus
-  let hasSpatialGroups = exploreInfo && exploreInfo?.spatialGroups?.length > 0
-  let hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
+  const isGeneList = !!exploreParams.geneList
+  const isMultiGene = exploreParams?.genes?.length > 1
+  const isGene = exploreParams?.genes?.length > 0
+  const isConsensus = !!exploreParams.consensus
+  const hasSpatialGroups = exploreInfo && exploreInfo?.spatialGroups?.length > 0
+  const hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
   let enabledTabs = []
   if (isGeneList) {
     enabledTabs = ['heatmap']
-  } else {
-    if (isGene) {
-      if (isMultiGene) {
-        if (isConsensus) {
-          enabledTabs = ['scatter', 'distribution', 'dotplot']
-        } else if (hasSpatialGroups) {
-          enabledTabs = ['spatial', 'dotplot', 'heatmap']
-        } else {
-          enabledTabs = ['dotplot', 'heatmap']
-        }
+  } else if (isGene) {
+    if (isMultiGene) {
+      if (isConsensus) {
+        enabledTabs = ['scatter', 'distribution', 'dotplot']
+      } else if (hasSpatialGroups) {
+        enabledTabs = ['spatial', 'dotplot', 'heatmap']
       } else {
-        enabledTabs = ['scatter', 'distribution']
+        enabledTabs = ['dotplot', 'heatmap']
       }
     } else {
-      enabledTabs = ['cluster']
+      enabledTabs = ['scatter', 'distribution']
     }
+  } else {
+    enabledTabs = ['cluster']
   }
   if (hasGenomeFiles) {
     enabledTabs.push('genome')
   }
-  return {enabledTabs, isGeneList, isGene, isMultiGene}
+  return { enabledTabs, isGeneList, isGene, isMultiGene }
 }

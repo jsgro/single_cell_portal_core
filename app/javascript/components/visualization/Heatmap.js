@@ -50,14 +50,16 @@ function Heatmap({
   let annotationCellValuesURL
   // determine where we get our column headers from
   if (!geneList) {
-    annotationCellValuesURL = getAnnotationCellValuesURL({studyAccession,
+    annotationCellValuesURL = getAnnotationCellValuesURL({
+      studyAccession,
       cluster,
       annotationName: annotation.name,
       annotationScope: annotation.scope,
       annotationType: annotation.type,
-      subsample})
+      subsample
+    })
   } else {
-    annotationCellValuesURL = getGeneListColsURL({studyAccession, geneList})
+    annotationCellValuesURL = getGeneListColsURL({ studyAccession, geneList })
   }
 
   useEffect(() => {
@@ -168,7 +170,7 @@ function renderHeatmap({
       { field: annotationName, order: 0 }
     ]
     config.columns = [
-      { field: 'id', display: 'text'},
+      { field: 'id', display: 'text' },
       { field: annotationName, display: 'color' }
     ]
     config.rows = [
