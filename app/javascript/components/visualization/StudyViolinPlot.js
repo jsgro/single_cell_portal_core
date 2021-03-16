@@ -41,7 +41,7 @@ export const defaultDistributionPoints = DISTRIBUTION_POINTS_OPTIONS[0].value
   */
 function StudyViolinPlot({
   studyAccession, genes, cluster, annotation, subsample, consensus, distributionPlot, distributionPoints,
-  updateDistributionPlot, setAnnotationList, dimensions
+  updateDistributionPlot, setAnnotationList, dimensions={}
 }) {
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
