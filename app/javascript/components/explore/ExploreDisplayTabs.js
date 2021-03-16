@@ -212,7 +212,7 @@ export default function ExploreDisplayTabs(
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
-                <li key={tabKey} role="presentation" className={`study-nav ${tabKey === shownTab ? 'active' : ''}`}>
+                <li key={tabKey} role="presentation" className={`study-nav ${tabKey === shownTab ? 'active' : ''} ${tabKey}-tab-anchor`}>
                   <a onClick={() => updateExploreParams({ tab: tabKey })}>{label}</a>
                 </li>
               )
@@ -440,9 +440,7 @@ export default function ExploreDisplayTabs(
             <InferCNVIdeogram
               studyAccession={studyAccession}
               ideogramFileId={exploreParams?.ideogramFileId}
-              inferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
-              isVisible={shownTab === 'infercnv-genome'}
-              updateExploreParams={updateExploreParams}/>
+              inferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}/>
           </div>
           }
         </div>
@@ -460,7 +458,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   let hasClusters = exploreInfo && exploreInfo.clusterGroupNames.length > 0
   let hasSpatialGroups = exploreInfo && exploreInfo?.spatialGroups?.length > 0
   let hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
-  let hasIdeogramOutputs = exploreInfo && Object.keys(exploreInfo?.inferCNVIdeogramFiles).length > 0
+  let hasIdeogramOutputs = !!exploreInfo?.inferCNVIdeogramFiles
   let enabledTabs = []
   if (isGeneList) {
     enabledTabs = ['heatmap']

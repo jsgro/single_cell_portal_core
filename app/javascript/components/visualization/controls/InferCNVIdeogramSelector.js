@@ -22,7 +22,7 @@ function getMatchedIdeogramOption(ideogramFile, studyInferCNVIdeogramFiles) {
     })
     return matchedOption
   }
-  return null
+  return {label: noneSelected, value: ''}
 }
 
 /**

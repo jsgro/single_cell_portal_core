@@ -107,7 +107,7 @@ function RoutableExploreTab({ studyAccession }) {
 
   // handles updating inferCNV/ideogram selection
   function updateInferCNVIdeogramFile(annotationFile) {
-    updateExploreParams( { ideogramFileId: annotationFile })
+    updateExploreParams( { ideogramFileId: annotationFile, tab: 'infercnv-genome' })
   }
 
   useEffect(() => {

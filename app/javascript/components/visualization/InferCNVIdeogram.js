@@ -27,19 +27,27 @@ const legend = [{
   ]
 }]
 
-export default function InferCNVIdeogram({studyAccession, ideogramFileId, inferCNVIdeogramFiles, isVisible, updateExploreParams }) {
-  const [inferCNVIdeogramFileList, setinferCNVIdeogramFileList] = useState(null)
+export default function InferCNVIdeogram({studyAccession, ideogramFileId, inferCNVIdeogramFiles}) {
   const [ideogramContainerId] = useState(_uniqueId('study-infercnv-ideogram-'))
 
   const inferCNVIdeogramFile = inferCNVIdeogramFiles[ideogramFileId]
   useEffect(() => {
-    if ( !!inferCNVIdeogramFile && isVisible ) {
-      let ideogramAnnotsFile = inferCNVIdeogramFile.ideogram_settings.annotationsPath
-      let ideogramOrganism = inferCNVIdeogramFile.ideogram_settings.organism
-      let ideogramAssembly = inferCNVIdeogramFile.ideogram_settings.assembly
-      initializeIdeogram(ideogramAnnotsFile, ideogramOrganism, ideogramAssembly, ideogramContainerId)
+    if ( !!inferCNVIdeogramFile ) {
+      setInitializeIdeogram(inferCNVIdeogramFile, ideogramContainerId)
+    } else {
+      removeIdeogram();
     }
   }, [ideogramFileId])
+
+  useEffect(() => {
+    if ( !ideogramFileId && Object.entries(inferCNVIdeogramFiles).length > 0 ) {
+      // find the first ideogram annotations file and pre-render since Ideogram can render on a hidden div
+      let firstIdeogramFile = Object.entries(inferCNVIdeogramFiles)[0][1]
+      if (!!firstIdeogramFile) {
+        setInitializeIdeogram(firstIdeogramFile, ideogramContainerId)
+      }
+    }
+  }, [inferCNVIdeogramFiles])
 
   return <div id="ideogram-container">
     <div id={ideogramContainerId}>
@@ -47,6 +55,14 @@ export default function InferCNVIdeogram({studyAccession, ideogramFileId, inferC
       </ul>
     </div>
   </div>
+}
+
+/** Setter for initializeIdeogram params */
+function setInitializeIdeogram(ideogramFileConfig, ideogramContainerId) {
+  let ideogramAnnotsFile = ideogramFileConfig.ideogram_settings.annotationsPath
+  let ideogramOrganism = ideogramFileConfig.ideogram_settings.organism
+  let ideogramAssembly = ideogramFileConfig.ideogram_settings.assembly
+  initializeIdeogram(ideogramAnnotsFile, ideogramOrganism, ideogramAssembly, ideogramContainerId)
 }
 
 /** Get ideogram heatmap tracks selected via checkbox */
@@ -240,17 +256,21 @@ function warnIdeogramOfNumericCluster() {
     `cell annotation ("${cellAnnot}").` +
     `</div>`
 
+  removeIdeogram();
+  $('#ideogram-container').append(warning)
+}
+
+// remove the ideogram DOM element from the page
+function removeIdeogram() {
   $('#tracks-to-display, #_ideogramOuterWrap').html('')
   $('#ideogramWarning, #ideogramTitle').remove()
-  $('#ideogram-container').append(warning)
 }
 
 /** Initialize ideogram to visualize genomic heatmap from inferCNV  */
 function initializeIdeogram(url, organism, assembly, domTarget) {
   if (typeof window.inferCNVIdeogram !== 'undefined') {
     delete window.inferCNVIdeogram
-    $('#tracks-to-display').html('')
-    $('#_ideogramOuterWrap').html('')
+    removeIdeogram()
   }
 
   $('#ideogramWarning, #ideogramTitle').remove()
