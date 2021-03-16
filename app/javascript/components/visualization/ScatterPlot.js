@@ -9,6 +9,8 @@ import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
 import { log } from 'lib/metrics-api'
+import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
@@ -33,30 +35,32 @@ export const defaultScatterColor = 'Reds'
   * @plotPointsSelected {function} callback for when a user selects points on the plot, which corresponds
   *   to the plotly "points_selected" event
   */
-export default function ScatterPlot({
+export function ScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
   updateScatterColor, isCellSelecting=false, plotPointsSelected
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
-
+  const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
-    // Get Plotly layout
-    const layout = getPlotlyLayout(clusterResponse)
-    const { width, height } = dimensions
-    layout.width = width
-    layout.height = height
-    formatMarkerColors(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
-    formatHoverLabels(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
-    const dataScatterColor = processTraceScatterColor(clusterResponse.data, scatterColor)
-    Plotly.newPlot(graphElementId, clusterResponse.data, layout)
-
-    if (dataScatterColor !== scatterColor) {
-      updateScatterColor(dataScatterColor)
+    if (checkScpApiResponse(clusterResponse, () => Plotly.purge(graphElementId), setShowError, setErrorContent )) {
+      // Get Plotly layout
+      const layout = getPlotlyLayout(clusterResponse)
+      const { width, height } = dimensions
+      layout.width = width
+      layout.height = height
+      formatMarkerColors(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
+      formatHoverLabels(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
+      const dataScatterColor = processTraceScatterColor(clusterResponse.data, scatterColor)
+      Plotly.newPlot(graphElementId, clusterResponse.data, layout)
+      if (dataScatterColor !== scatterColor) {
+        updateScatterColor(dataScatterColor)
+      }
+      setClusterData(clusterResponse)
+      setShowError(false)
     }
-    setClusterData(clusterResponse)
     setIsLoading(false)
   }
 
@@ -117,6 +121,7 @@ export default function ScatterPlot({
 
   return (
     <div className="plot">
+      { ErrorComponent }
       { clusterData &&
         <PlotTitle
           cluster={clusterData.cluster}
@@ -148,6 +153,10 @@ export default function ScatterPlot({
     </div>
   )
 }
+
+const SafeScatterPlot = withErrorBoundary(ScatterPlot)
+export default SafeScatterPlot
+
 
 /** add trace marker colors to group annotations */
 function formatMarkerColors(data, annotationType, gene) {

@@ -40,6 +40,7 @@ import exploreDefault from 'lib/study-overview/explore-default'
 import exploreSingle from 'lib/study-overview/explore-single'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
+import { addCustomMorpheusErrorHandling } from 'lib/error-message'
 
 // Stub, for later
 // import exploreMultipleGenes from 'lib/study-overview/explore-multiple-genes'
@@ -78,6 +79,7 @@ window.$ = $
 window.jQuery = $
 window.Spinner = Spinner
 window.morpheus = morpheus
+
 window.igv = igv
 window.Ideogram = Ideogram
 window.getViolinProps = getViolinProps

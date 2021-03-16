@@ -4,9 +4,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna, faArrowsAltV, faArrowsAltH, faArrowsAlt } from '@fortawesome/free-solid-svg-icons'
 
 import { log, startPendingEvent } from 'lib/metrics-api'
-import {getExpressionHeatmapURL, getAnnotationCellValuesURL, getGeneListColsURL} from 'lib/scp-api'
+import { getExpressionHeatmapURL, getAnnotationCellValuesURL, getGeneListColsURL } from 'lib/scp-api'
 import { morpheusTabManager } from './DotPlot'
 import { useUpdateEffect } from 'hooks/useUpdate'
+import useErrorMessage, { morpheusErrorHandler } from 'lib/error-message'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 export const ROW_CENTERING_OPTIONS = [
   { label: 'None', value: '' },
@@ -31,7 +33,7 @@ export const DEFAULT_FIT = ''
   * @param subsample {string} a string for the subsampel to be retrieved.
   * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
  */
-export default function Heatmap({
+function Heatmap({
   studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit, heatmapRowCentering
 }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
@@ -43,6 +45,8 @@ export default function Heatmap({
     heatmapRowCentering,
     geneList
   })
+  const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
+
   let annotationCellValuesURL
   // determine where we get our column headers from
   if (!geneList) {
@@ -61,13 +65,16 @@ export default function Heatmap({
     if (cluster) {
       const plotEvent = startPendingEvent('plot:heatmap', window.SCP.getLogPlotProps())
       log('heatmap:initialize')
+      setShowError(false)
       morpheusHeatmap.current = renderHeatmap({
         target: `#${graphId}`,
         expressionValuesURL,
         annotationCellValuesURL,
         annotationName: !geneList ? annotation.name : geneList,
         fit: heatmapFit,
-        rowCentering: heatmapRowCentering
+        rowCentering: heatmapRowCentering,
+        setShowError,
+        setErrorContent
       })
       plotEvent.complete()
     }
@@ -98,6 +105,7 @@ export default function Heatmap({
 
   return (
     <div className="plot">
+      { ErrorComponent }
       { cluster &&
         <div id={graphId} className="heatmap-graph" style={{ minWidth: '80vw' }}></div> }
       { !cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
@@ -105,10 +113,14 @@ export default function Heatmap({
   )
 }
 
+
+const SafeHeatmap = withErrorBoundary(Heatmap)
+export default SafeHeatmap
+
 /** Render Morpheus heatmap */
 function renderHeatmap({
   target, expressionValuesURL, annotationCellValuesURL, annotationName,
-  fit, rowCentering
+  fit, rowCentering, setShowError, setErrorContent
 }) {
   const $target = $(target)
   $target.empty()
@@ -117,6 +129,7 @@ function renderHeatmap({
     dataset: expressionValuesURL,
     el: $target,
     menu: null,
+    error: morpheusErrorHandler($target, setShowError, setErrorContent),
     colorScheme: {
       scalingMode: rowCentering !== '' ? 'fixed' : 'relative'
     },
