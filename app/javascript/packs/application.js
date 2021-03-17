@@ -41,21 +41,13 @@ import exploreSingle from 'lib/study-overview/explore-single'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
 
-// Stub, for later
-// import exploreMultipleGenes from 'lib/study-overview/explore-multiple-genes'
-
 
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI
   logPageView()
 
-  $(document).on('click', 'body', event => {
-    logClick(event)
-  })
-
-  $(document).on('change', 'select', event => {
-    logMenuChange(event)
-  })
+  $(document).on('click', 'body', logClick)
+  $(document).on('change', 'select', logMenuChange)
 
   if (document.getElementById('home-page-content')) {
     ReactDOM.render(
@@ -78,6 +70,7 @@ window.$ = $
 window.jQuery = $
 window.Spinner = Spinner
 window.morpheus = morpheus
+
 window.igv = igv
 window.Ideogram = Ideogram
 window.getViolinProps = getViolinProps

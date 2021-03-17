@@ -5,6 +5,8 @@ import Button from 'react-bootstrap/lib/Button'
 import Modal from 'react-bootstrap/lib/Modal'
 import CreatableSelect from 'react-select/creatable'
 
+import { log } from 'lib/metrics-api'
+
 
 /** renders the gene text input
   * This shares a lot of logic with search/genes/GeneKeyword, but is kept as a separate component for
@@ -100,7 +102,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
       <div className="flexbox align-center">
         <div className="input-group">
           <div className="input-group-append">
-            <Button type="submit">
+            <Button type="submit" data-analytics-name="gene-search-submit">
               <FontAwesomeIcon icon={faSearch} />
             </Button>
           </div>
@@ -114,7 +116,14 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
             isValidNewOption={() => false}
             noOptionsMessage={() => (inputText.length > 1 ? 'No matching genes' : 'Type to search...')}
             options={geneOptions}
-            onChange={value => setGeneArray(value ? value : [])}
+            onChange={value => {
+              // react-select doesn't expose the actual click events, so we deduce the kind
+              // of operation based on whether it lengthened or shortened the list
+              const newValue = value ? value : []
+              const actionName = value.length > geneArray.length ? 'add' : 'remove'
+              log('input:change', { text: `study-gene-search:${actionName}` })
+              setGeneArray(newValue)
+            }}
             onInputChange={inputValue => setInputText(inputValue)}
             onKeyDown={handleKeyDown}
             // the default blur behavior removes any entered free text,
