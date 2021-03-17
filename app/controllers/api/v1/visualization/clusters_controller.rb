@@ -105,7 +105,7 @@ module Api
           begin
             viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
           rescue ArgumentError => e
-            render json: {error: e.message}, status: 422 and return
+            render json: {error: e.message}, status: 404 and return
           end
           render json: viz_data
         end
