@@ -18,6 +18,9 @@ let adjustedExpressionThreshold
 let chrMargin
 let expressionThreshold
 
+// default minimum size of chromosomes in ideogram
+const minChrHeight = 64
+
 const legend = [{
   name: 'Expression level',
   rows: [
@@ -27,24 +30,24 @@ const legend = [{
   ]
 }]
 
-export default function InferCNVIdeogram({studyAccession, ideogramFileId, inferCNVIdeogramFiles}) {
+export default function InferCNVIdeogram({studyAccession, ideogramFileId, inferCNVIdeogramFiles, showViewOptionsControls}) {
   const [ideogramContainerId] = useState(_uniqueId('study-infercnv-ideogram-'))
 
   const inferCNVIdeogramFile = inferCNVIdeogramFiles[ideogramFileId]
   useEffect(() => {
     if ( !!inferCNVIdeogramFile ) {
-      setInitializeIdeogram(inferCNVIdeogramFile, ideogramContainerId)
+      setInitializeIdeogram(inferCNVIdeogramFile, ideogramContainerId, showViewOptionsControls)
     } else {
       removeIdeogram();
     }
-  }, [ideogramFileId])
+  }, [ideogramFileId, showViewOptionsControls])
 
   useEffect(() => {
     if ( !ideogramFileId && Object.entries(inferCNVIdeogramFiles).length > 0 ) {
       // find the first ideogram annotations file and pre-render since Ideogram can render on a hidden div
       let firstIdeogramFile = Object.entries(inferCNVIdeogramFiles)[0][1]
       if (!!firstIdeogramFile) {
-        setInitializeIdeogram(firstIdeogramFile, ideogramContainerId)
+        setInitializeIdeogram(firstIdeogramFile, ideogramContainerId, showViewOptionsControls)
       }
     }
   }, [inferCNVIdeogramFiles])
@@ -58,11 +61,11 @@ export default function InferCNVIdeogram({studyAccession, ideogramFileId, inferC
 }
 
 /** Setter for initializeIdeogram params */
-function setInitializeIdeogram(ideogramFileConfig, ideogramContainerId) {
+function setInitializeIdeogram(ideogramFileConfig, ideogramContainerId, showViewOptionsControls) {
   let ideogramAnnotsFile = ideogramFileConfig.ideogram_settings.annotationsPath
   let ideogramOrganism = ideogramFileConfig.ideogram_settings.organism
   let ideogramAssembly = ideogramFileConfig.ideogram_settings.assembly
-  initializeIdeogram(ideogramAnnotsFile, ideogramOrganism, ideogramAssembly, ideogramContainerId)
+  initializeIdeogram(ideogramAnnotsFile, ideogramOrganism, ideogramAssembly, ideogramContainerId, showViewOptionsControls)
 }
 
 /** Get ideogram heatmap tracks selected via checkbox */
@@ -243,8 +246,6 @@ function createTrackFilters() {
 
 /**
  * Note ideogram is unavailable for this numeric cluster
- *
- * Used in render_cluster.js.erb
  */
 function warnIdeogramOfNumericCluster() {
   const cluster = $('#cluster option:selected').val()
@@ -266,13 +267,28 @@ function removeIdeogram() {
   $('#ideogramWarning, #ideogramTitle').remove()
 }
 
+/**
+ * dynamically compute a chromosome height based on available display area
+ * accounts for state of the view options panel via showViewOptionsControls
+ * this is somewhat crude and is optimized for 15" laptops but looks generally fine on bigger monitors
+ */
+export function getChrHeight(showViewOptionsControls) {
+  let heatmapSize = parseInt($('.explore-plot-tab-content').actual('width'))
+  if (!!showViewOptionsControls) {
+    heatmapSize = heatmapSize - parseInt($('.view-options').actual('width'))
+  }
+  let chrHeight = parseInt( heatmapSize / 17 )
+  return chrHeight < minChrHeight ? minChrHeight : chrHeight
+}
+
 /** Initialize ideogram to visualize genomic heatmap from inferCNV  */
-function initializeIdeogram(url, organism, assembly, domTarget) {
+function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsControls) {
   if (typeof window.inferCNVIdeogram !== 'undefined') {
     delete window.inferCNVIdeogram
     removeIdeogram()
   }
 
+  let chrHeight = getChrHeight(showViewOptionsControls)
   $('#ideogramWarning, #ideogramTitle').remove()
 
   ideoConfig = {
@@ -286,7 +302,7 @@ function initializeIdeogram(url, organism, assembly, domTarget) {
     debug: true,
     rotatable: false,
     chrMargin: 10,
-    chrHeight: 80,
+    chrHeight: chrHeight,
     annotationHeight: 20,
     geometry: 'collinear',
     orientation: 'horizontal'

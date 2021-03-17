@@ -440,7 +440,9 @@ export default function ExploreDisplayTabs(
             <InferCNVIdeogram
               studyAccession={studyAccession}
               ideogramFileId={exploreParams?.ideogramFileId}
-              inferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}/>
+              inferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
+              showViewOptionsControls={showViewOptionsControls}
+            />
           </div>
           }
         </div>
