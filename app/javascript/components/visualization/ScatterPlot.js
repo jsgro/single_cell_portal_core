@@ -332,9 +332,9 @@ function logLegendDoubleClick(event) {
 
 /** test groupby function */
 function makeFakePlot(target, subsample) {
-  const length = 1000000
+  const length = subsample
   const numGroups = 10
-  const isTraced = false
+  const isTraced = true
 
   let data = {}
   if (isTraced) {
