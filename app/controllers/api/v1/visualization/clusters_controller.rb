@@ -102,9 +102,10 @@ module Api
               render json: {error: "No cluster named #{cluster_name} could be found"}, status: 404 and return
             end
           end
-          viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
-          if viz_data.nil?
-            render json: {error: 'Annotation could not be found'}, status: 404 and return
+          begin
+            viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
+          rescue ArgumentError => e
+            render json: {error: e.message}, status: 404 and return
           end
           render json: viz_data
         end
@@ -118,7 +119,7 @@ module Api
                                                        annot_type: annot_params[:type],
                                                        annot_scope: annot_params[:scope])
           if !annotation
-            return nil
+            raise ArgumentError, "Annotation #{annot_params[:annot_name]} could not be found"
           end
 
           subsample = get_selected_subsample_threshold(url_params[:subsample], cluster)
@@ -141,6 +142,10 @@ module Api
               range = ClusterVizService.set_range(cluster, coordinates.values)
             end
           else
+            if genes.count == 0
+              # all searched genes do not exist in this study
+              raise ArgumentError, "No genes in this study matched your search"
+            end
             # For single-gene view of Explore tab (or collapsed multi-gene)
             is_collapsed_view = genes.length > 1 && consensus.present?
             y_axis_title = ExpressionVizService.load_expression_axis_title(study)
