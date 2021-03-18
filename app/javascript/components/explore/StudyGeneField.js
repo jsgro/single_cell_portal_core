@@ -102,9 +102,10 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
         actionName = 'remove'
         geneDiff = _differenceBy(geneArray, newArray, 'value')
       }
-      log('input:change', {
-        text: `study-gene-search:${actionName}`,
-        changedGenes: geneDiff.map(item => item.value).join(',')
+      log('change:multiselect', {
+        text: geneDiff.map(item => item.value).join(','),
+        action: actionName,
+        type: 'gene'
       })
     } catch (err) {
       // no-op, we just don't want logging fails to break the application
