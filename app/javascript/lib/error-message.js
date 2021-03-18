@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-
+import React, { useState, useEffect } from 'react'
+import { log } from 'lib/metrics-api'
 
 /** 
   * Hook for enabling the conditional display an error message.
@@ -16,6 +16,11 @@ export default function useErrorMessage() {
       { errorContent }
     </div>
   }
+  useEffect(() => {
+    if (showError) {
+      log('error-message', { text: errorContent })
+    }
+  }, [errorContent])
   return {
     showError, setShowError, setErrorContent, ErrorComponent
   }

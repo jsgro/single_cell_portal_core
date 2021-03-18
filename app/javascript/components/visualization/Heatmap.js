@@ -33,7 +33,7 @@ export const DEFAULT_FIT = ''
   * @param subsample {string} a string for the subsampel to be retrieved.
   * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
  */
-function Heatmap({
+function RawHeatmap({
   studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit, heatmapRowCentering
 }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
@@ -116,8 +116,8 @@ function Heatmap({
 }
 
 
-const SafeHeatmap = withErrorBoundary(Heatmap)
-export default SafeHeatmap
+const Heatmap = withErrorBoundary(RawHeatmap)
+export default Heatmap
 
 /** Render Morpheus heatmap */
 function renderHeatmap({

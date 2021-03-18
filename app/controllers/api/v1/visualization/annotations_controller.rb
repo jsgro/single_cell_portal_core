@@ -160,6 +160,7 @@ module Api
           if cell_cluster.nil?
             cell_cluster = @study.default_cluster
           end
+
           render plain: AnnotationVizService.annotation_cell_values_tsv(@study, cell_cluster, annotation)
         end
 

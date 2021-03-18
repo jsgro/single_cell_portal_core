@@ -39,7 +39,7 @@ export const defaultDistributionPoints = DISTRIBUTION_POINTS_OPTIONS[0].value
  *   fetch both the default expression data and the cluster menu options, a function that will be
  *   called with the annotationList returned by that call.
   */
-function StudyViolinPlot({
+function RawStudyViolinPlot({
   studyAccession, genes, cluster, annotation, subsample, consensus, distributionPlot, distributionPoints,
   updateDistributionPlot, setAnnotationList, dimensions={}
 }) {
@@ -62,7 +62,8 @@ function StudyViolinPlot({
       subsample,
       consensus
     )
-    if (checkScpApiResponse(results, () => Plotly.purge(graphElementId), setShowError, setErrorContent)) {
+    const apiOk = checkScpApiResponse(results, () => Plotly.purge(graphElementId), setShowError, setErrorContent)
+    if (apiOk) {
       setStudyGeneNames(results.gene_names)
       let distributionPlotToUse = results.plotType
       if (distributionPlot) {
@@ -145,8 +146,8 @@ function StudyViolinPlot({
   )
 }
 
-const SafeStudyViolinPlot = withErrorBoundary(StudyViolinPlot)
-export default SafeStudyViolinPlot
+const StudyViolinPlot = withErrorBoundary(RawStudyViolinPlot)
+export default StudyViolinPlot
 
 
 /** Formats expression data for Plotly, draws violin (or box) plot */

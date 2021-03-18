@@ -35,7 +35,7 @@ export const defaultScatterColor = 'Reds'
   * @plotPointsSelected {function} callback for when a user selects points on the plot, which corresponds
   *   to the plotly "points_selected" event
   */
-export function ScatterPlot({
+function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
   updateScatterColor, isCellSelecting=false, plotPointsSelected
 }) {
@@ -45,8 +45,11 @@ export function ScatterPlot({
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
-   const apiOK = checkScpApiResponse(clusterResponse, () => Plotly.purge(graphElementId), setShowError, setErrorContent)
-    if (apiOK) {
+    const apiOk = checkScpApiResponse(clusterResponse,
+      () => Plotly.purge(graphElementId),
+      setShowError,
+      setErrorContent)
+    if (apiOk) {
       // Get Plotly layout
       const layout = getPlotlyLayout(clusterResponse)
       const { width, height } = dimensions
@@ -155,8 +158,8 @@ export function ScatterPlot({
   )
 }
 
-const SafeScatterPlot = withErrorBoundary(ScatterPlot)
-export default SafeScatterPlot
+const ScatterPlot = withErrorBoundary(RawScatterPlot)
+export default ScatterPlot
 
 
 /** add trace marker colors to group annotations */

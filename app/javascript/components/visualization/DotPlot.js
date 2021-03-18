@@ -27,7 +27,7 @@ export const dotPlotColorScheme = {
   * @param consensus {string} for multi-gene expression plots
   * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
   */
-function DotPlot({
+function RawDotPlot({
   studyAccession, genes=[], cluster, annotation={},
   subsample, annotationValues
 }) {
@@ -79,8 +79,8 @@ function DotPlot({
   )
 }
 
-const SafeDotPlot = withErrorBoundary(DotPlot)
-export default SafeDotPlot
+const DotPlot = withErrorBoundary(RawDotPlot)
+export default DotPlot
 
 /** Render Morpheus dot plot */
 function renderDotPlot({
