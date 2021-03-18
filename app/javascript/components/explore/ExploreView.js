@@ -84,7 +84,6 @@ function RoutableExploreTab({ studyAccession }) {
 
   /** handles cluster selection to also populate the default spatial groups */
   function updateClusterParams(newParams) {
-
     if (newParams.cluster && !newParams.spatialGroups) {
       newParams.spatialGroups = getDefaultSpatialGroupsForCluster(newParams.cluster, exploreInfo.spatialGroups)
     }
@@ -102,7 +101,7 @@ function RoutableExploreTab({ studyAccession }) {
 
   /** handles gene list selection */
   function updateGeneList(geneList) {
-    updateExploreParams({ geneList: geneList })
+    updateExploreParams({ geneList })
   }
 
   // handles updating inferCNV/ideogram selection
@@ -179,9 +178,9 @@ function RoutableExploreTab({ studyAccession }) {
 
             { exploreInfo?.geneLists?.length > 0 &&
               <GeneListSelector
-                  geneList={controlExploreParams.geneList}
-                  studyGeneLists={exploreInfo.geneLists}
-                  updateGeneList={updateGeneList}/>
+                geneList={controlExploreParams.geneList}
+                studyGeneLists={exploreInfo.geneLists}
+                updateGeneList={updateGeneList}/>
             }
             { exploreParams.genes.length > 1 &&
               <ExploreConsensusSelector

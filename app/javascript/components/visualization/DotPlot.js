@@ -7,6 +7,8 @@ import { log, startPendingEvent } from 'lib/metrics-api'
 import { getColorBrewerColor } from 'lib/plot'
 import DotPlotLegend from './DotPlotLegend'
 import { getAnnotationCellValuesURL, getExpressionHeatmapURL } from 'lib/scp-api'
+import useErrorMessage, { morpheusErrorHandler } from 'lib/error-message'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 export const dotPlotColorScheme = {
   // Blue, purple, red.  These red and blue hues are accessible, per WCAG.
@@ -25,35 +27,35 @@ export const dotPlotColorScheme = {
   * @param consensus {string} for multi-gene expression plots
   * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
   */
-export default function DotPlot({
+function RawDotPlot({
   studyAccession, genes=[], cluster, annotation={},
-  subsample, annotationValues, dimensions
+  subsample, annotationValues
 }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
+  const { ErrorComponent, showError, setShowError, setErrorContent } = useErrorMessage()
   const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster })
-  const annotationCellValuesURL = getAnnotationCellValuesURL({studyAccession,
+  const annotationCellValuesURL = getAnnotationCellValuesURL({
+    studyAccession,
     cluster,
     annotationName: annotation.name,
     annotationScope: annotation.scope,
     annotationType: annotation.type,
-    subsample})
-
-  let dimensionsFn = null
-  if (dimensions?.width) {
-    dimensionsFn = () => dimensions.width
-  }
+    subsample
+  })
 
   useEffect(() => {
     if (annotation.name) {
       const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
       log('dot-plot:initialize')
+      setShowError(false)
       renderDotPlot({
         target: `#${graphId}`,
         expressionValuesURL,
         annotationCellValuesURL,
         annotationName: annotation.name,
         annotationValues,
-        dimensionsFn
+        setErrorContent,
+        setShowError
       })
       plotEvent.complete()
     }
@@ -66,20 +68,25 @@ export default function DotPlot({
 
   return (
     <div>
+      { ErrorComponent }
       { cluster &&
       <>
         <div id={graphId} className="dotplot-graph"></div>
-        <DotPlotLegend/>
+        { !showError && <DotPlotLegend/> }
       </> }
       { !cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </div>
   )
 }
 
+const DotPlot = withErrorBoundary(RawDotPlot)
+export default DotPlot
+
 /** Render Morpheus dot plot */
-function renderDotPlot(
-  { target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues, dimensionsFn }
-) {
+function renderDotPlot({
+  target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues,
+  setShowError, setErrorContent
+}) {
   const $target = $(target)
   $target.empty()
 
@@ -103,11 +110,12 @@ function renderDotPlot(
     dataset: expressionValuesURL,
     el: $target,
     menu: null,
+    error: morpheusErrorHandler($target, setShowError, setErrorContent),
     colorScheme: {
       scalingMode: 'relative'
     },
     focus: null,
-    tabManager: morpheusTabManager($target, dimensionsFn),
+    tabManager: morpheusTabManager($target),
     tools
   }
 
@@ -153,10 +161,7 @@ function renderDotPlot(
  * (after 2+ hours of digging) to prevent morpheus auto-scrolling
  * to a heatmap once it's rendered
  */
-export function morpheusTabManager($target, dimensionsFn) {
-  if (!dimensionsFn) {
-    dimensionsFn = () => $target.width()
-  }
+export function morpheusTabManager($target) {
   return {
     add: options => {
       $target.empty()
@@ -165,8 +170,8 @@ export function morpheusTabManager($target, dimensionsFn) {
     },
     setTabTitle: () => {},
     setActiveTab: () => {},
-    getWidth: () => {return dimensionsFn().width},
-    getHeight: () => $target.height(),
+    getWidth: () => $target.actual('width'),
+    getHeight: () => $target.actual('height'),
     getTabCount: () => 1
   }
 }

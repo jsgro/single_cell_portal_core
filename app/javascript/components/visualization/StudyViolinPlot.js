@@ -8,6 +8,8 @@ import { getColorBrewerColor, arrayMin, arrayMax, plotlyDefaultLineColor } from 
 import Plotly from 'plotly.js-dist'
 
 import { useUpdateEffect } from 'hooks/useUpdate'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
+import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
 
 
 export const DISTRIBUTION_PLOT_OPTIONS = [
@@ -37,14 +39,15 @@ export const defaultDistributionPoints = DISTRIBUTION_POINTS_OPTIONS[0].value
  *   fetch both the default expression data and the cluster menu options, a function that will be
  *   called with the annotationList returned by that call.
   */
-export default function StudyViolinPlot({
+function RawStudyViolinPlot({
   studyAccession, genes, cluster, annotation, subsample, consensus, distributionPlot, distributionPoints,
-  updateDistributionPlot, setAnnotationList
+  updateDistributionPlot, setAnnotationList, dimensions={}
 }) {
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
   const [studyGeneNames, setStudyGeneNames] = useState([])
   const [graphElementId] = useState(_uniqueId('study-violin-'))
+  const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
   /** gets expression data from the server */
   async function loadData() {
@@ -59,26 +62,29 @@ export default function StudyViolinPlot({
       subsample,
       consensus
     )
+    const apiOk = checkScpApiResponse(results, () => Plotly.purge(graphElementId), setShowError, setErrorContent)
+    if (apiOk) {
+      setStudyGeneNames(results.gene_names)
+      let distributionPlotToUse = results.plotType
+      if (distributionPlot) {
+        distributionPlotToUse = distributionPlot
+      }
+      if (!distributionPlotToUse) {
+        distributionPlotToUse = defaultDistributionPlot
+      }
+      renderViolinPlot(graphElementId, results, {
+        plotType: distributionPlotToUse,
+        showPoints: distributionPoints
+      })
+      if (setAnnotationList) {
+        setAnnotationList(results.annotation_list)
+      }
+      if (updateDistributionPlot) {
+        updateDistributionPlot(distributionPlotToUse)
+      }
+      setShowError(false)
+    }
     setIsLoading(false)
-    setStudyGeneNames(results.gene_names)
-
-    let distributionPlotToUse = results.plotType
-    if (distributionPlot) {
-      distributionPlotToUse = distributionPlot
-    }
-    if (!distributionPlotToUse) {
-      distributionPlotToUse = defaultDistributionPlot
-    }
-    renderViolinPlot(graphElementId, results, {
-      plotType: distributionPlotToUse,
-      showPoints: distributionPoints
-    })
-    if (setAnnotationList) {
-      setAnnotationList(results.annotation_list)
-    }
-    if (updateDistributionPlot) {
-      updateDistributionPlot(distributionPlotToUse)
-    }
   }
   /** handles fetching the expression data (and menu option data) from the server */
   useEffect(() => {
@@ -97,17 +103,24 @@ export default function StudyViolinPlot({
   useUpdateEffect(() => {
     // Don't try to update the if the data hasn't loaded yet
     if (!isLoading && studyGeneNames.length > 0) {
-      Plotly.restyle(graphElementId, {
-        type: distributionPlot,
-        points: distributionPoints,
-        boxpoints: distributionPoints
-      })
+      updateViolinPlot(graphElementId, distributionPlot, distributionPoints)
     }
   }, [distributionPlot, distributionPoints])
+
+  // Adjusts width and height of plots upon toggle of "View Options"
+  useUpdateEffect(() => {
+    // Don't update if the graph hasn't loaded yet
+    if (!isLoading && studyGeneNames.length > 0) {
+      const { width, height } = dimensions
+      const layoutUpdate = { width, height }
+      Plotly.relayout(graphElementId, layoutUpdate)
+    }
+  }, [dimensions.width, dimensions.height])
 
   const isCollapsedView = ['mean', 'median'].indexOf(consensus) >= 0
   return (
     <div className="plot">
+      { ErrorComponent }
       <div
         className="expression-graph"
         id={graphElementId}
@@ -133,45 +146,40 @@ export default function StudyViolinPlot({
   )
 }
 
+const StudyViolinPlot = withErrorBoundary(RawStudyViolinPlot)
+export default StudyViolinPlot
+
 
 /** Formats expression data for Plotly, draws violin (or box) plot */
 function renderViolinPlot(target, results, { plotType, showPoints }) {
-  const traceData = getViolinPropsWrapper(results, plotType, showPoints)
-  const expressionData = [...traceData[0]]
-  const expressionLayout = traceData[1]
-  Plotly.newPlot(target, expressionData, expressionLayout)
+  const traceData = getViolinTraces(results.values, showPoints, plotType)
+  const layout = getViolinLayout(results.rendered_cluster, results.y_axis_title)
+  Plotly.newPlot(target, traceData, layout)
 }
 
-/** Convenience wrapper for getViolinProps */
-function getViolinPropsWrapper(rawPlot, plotType, showPoints) {
-  // The code below is heavily borrowed from legacy application.js
-  const dataArray = parseResultsToArray(rawPlot)
-  const traceData = getViolinProps(
-    dataArray, rawPlot.rendered_cluster, showPoints, rawPlot.y_axis_title, plotType
-  )
-  return traceData
+/** changes visual style of the plot without re-fetching data */
+function updateViolinPlot(target, plotType, showPoints) {
+  const existingData = document.getElementById(target).data.reduce((map, obj) => {
+    map[obj.name] = obj
+    return map
+  }, {})
+  const traceData = getViolinTraces(existingData, showPoints, plotType)
+  Plotly.react(target, traceData, target.layout)
 }
 
 /**
  * Creates Plotly traces and layout for violin plots and box plots
  *
- * Takes an array of arrays and returns the data array of traces and the
- * layout variable.  More specifically, this will:
- *
- * Iterate through the formatted array
- * [[name_of_trace, expression_data]...]
- * and create the response plotly objects,
- * returning [plotly data object, plotly layout object]
+ * takes a 'values' object which should correspond to the 'values' field of a call
+ * to expression_controller/violin.  { <name>: { y: [<<data>>]}}
 */
-function getViolinProps(
-  arr, title, showPoints='none', expressionLabel, plotType='violin'
+function getViolinTraces(
+  resultValues, showPoints='none', plotType='violin'
 ) {
-  let data = []
-  for (let x = 0; x < arr.length; x++) {
+  const data = Object.entries(resultValues).map(([traceName, traceData], index) => {
     // Plotly violin trace creation, adding to master array
     // get inputs for plotly violin creation
-    const dist = arr[x][1]
-    const name = arr[x][0]
+    const dist = traceData.y
 
     // Replace the none selection with bool false for plotly
     if (showPoints === 'none' || !showPoints) {
@@ -181,9 +189,9 @@ function getViolinProps(
     // Check if there is a distribution before adding trace
     if (arrayMax(dist) !== arrayMin(dist) && plotType === 'violin') {
       // Make a violin plot if there is a distribution
-      data = data.concat([{
+      return {
         type: 'violin',
-        name,
+        name: traceName,
         y: dist,
         points: showPoints,
         pointpos: 0,
@@ -199,7 +207,7 @@ function getViolinProps(
           color: '#000000',
           opacity: 0.8
         },
-        fillcolor: getColorBrewerColor(x),
+        fillcolor: getColorBrewerColor(index),
         line: {
           color: '#000000',
           width: 1.5
@@ -207,29 +215,26 @@ function getViolinProps(
         meanline: {
           visible: false
         }
-      }])
+      }
     } else {
       // Make a boxplot for data with no distribution
-      data = data.concat([{
+      return {
         type: 'box',
-        name,
+        name: traceName,
         y: dist,
         boxpoints: showPoints,
         marker: {
-          color: getColorBrewerColor(x),
+          color: getColorBrewerColor(index),
           size: 2,
           line: {
             color: plotlyDefaultLineColor
           }
         },
         boxmean: true
-      }])
+      }
     }
-  }
-
-  const layout = getViolinLayout(title, expressionLabel)
-
-  return [data, layout]
+  })
+  return data
 }
 
 /** Get Plotly layout for violin plot */
@@ -256,13 +261,3 @@ function getViolinLayout(title, expressionLabel) {
     autosize: true
   }
 }
-
-
-/** copied from legacy application.js */
-function parseResultsToArray(results) {
-  const keys = Object.keys(results.values)
-  return keys.sort().map(key => {
-    return [key, results.values[key].y]
-  })
-}
-

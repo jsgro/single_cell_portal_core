@@ -102,9 +102,10 @@ module Api
               render json: {error: "No cluster named #{cluster_name} could be found"}, status: 404 and return
             end
           end
-          viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
-          if viz_data.nil?
-            render json: {error: 'Annotation could not be found'}, status: 404 and return
+          begin
+            viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
+          rescue ArgumentError => e
+            render json: {error: e.message}, status: 404 and return
           end
           render json: viz_data
         end
@@ -118,11 +119,13 @@ module Api
                                                        annot_type: annot_params[:type],
                                                        annot_scope: annot_params[:scope])
           if !annotation
-            return nil
+            raise ArgumentError, "Annotation #{annot_params[:annot_name]} could not be found"
           end
 
-          subsample = url_params[:subsample].blank? ? nil : url_params[:subsample].to_i
+          subsample = get_selected_subsample_threshold(url_params[:subsample], cluster)
           consensus = url_params[:consensus].blank? ? nil : url_params[:consensus]
+
+
 
           colorscale = url_params[:colorscale].blank? ? 'Reds' : url_params[:colorscale]
 
@@ -139,6 +142,10 @@ module Api
               range = ClusterVizService.set_range(cluster, coordinates.values)
             end
           else
+            if genes.count == 0
+              # all searched genes do not exist in this study
+              raise ArgumentError, "No genes in this study matched your search"
+            end
             # For single-gene view of Explore tab (or collapsed multi-gene)
             is_collapsed_view = genes.length > 1 && consensus.present?
             y_axis_title = ExpressionVizService.load_expression_axis_title(study)
@@ -193,8 +200,22 @@ module Api
             "cluster": cluster.name,
             "gene": genes.map {|g| g['name']}.join(', '),
             "annotParams": annotation,
+            "subsample": subsample.nil? ? 'all' : subsample,
             "consensus": consensus
           }
+        end
+
+        def self.get_selected_subsample_threshold(param, cluster)
+          subsample = nil
+          if param.blank?
+            # default to largest threshold available that is <10K
+            subsample = ClusterVizService.default_subsampling(cluster)
+          elsif param == 'all'
+            subsample = nil
+          else
+            subsample = param.to_i
+          end
+          subsample
         end
       end
     end

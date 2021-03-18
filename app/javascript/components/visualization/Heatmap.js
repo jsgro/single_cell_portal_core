@@ -4,9 +4,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna, faArrowsAltV, faArrowsAltH, faArrowsAlt } from '@fortawesome/free-solid-svg-icons'
 
 import { log, startPendingEvent } from 'lib/metrics-api'
-import {getExpressionHeatmapURL, getAnnotationCellValuesURL, getGeneListColsURL} from 'lib/scp-api'
+import { getExpressionHeatmapURL, getAnnotationCellValuesURL, getGeneListColsURL } from 'lib/scp-api'
 import { morpheusTabManager } from './DotPlot'
 import { useUpdateEffect } from 'hooks/useUpdate'
+import useErrorMessage, { morpheusErrorHandler } from 'lib/error-message'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 export const ROW_CENTERING_OPTIONS = [
   { label: 'None', value: '' },
@@ -31,8 +33,8 @@ export const DEFAULT_FIT = ''
   * @param subsample {string} a string for the subsampel to be retrieved.
   * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
  */
-export default function Heatmap({
-  studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit, heatmapRowCentering, dimensions
+function RawHeatmap({
+  studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit, heatmapRowCentering
 }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
   const morpheusHeatmap = useRef(null)
@@ -43,22 +45,21 @@ export default function Heatmap({
     heatmapRowCentering,
     geneList
   })
+  const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
+
   let annotationCellValuesURL
   // determine where we get our column headers from
   if (!geneList) {
-    annotationCellValuesURL = getAnnotationCellValuesURL({studyAccession,
+    annotationCellValuesURL = getAnnotationCellValuesURL({
+      studyAccession,
       cluster,
       annotationName: annotation.name,
       annotationScope: annotation.scope,
       annotationType: annotation.type,
-      subsample})
+      subsample
+    })
   } else {
-    annotationCellValuesURL = getGeneListColsURL({studyAccession, geneList})
-  }
-
-  let dimensionsFn = null
-  if (dimensions.width) {
-    dimensionsFn = () => dimensions.width
+    annotationCellValuesURL = getGeneListColsURL({ studyAccession, geneList })
   }
 
   useEffect(() => {
@@ -66,14 +67,16 @@ export default function Heatmap({
     if (cluster) {
       const plotEvent = startPendingEvent('plot:heatmap', window.SCP.getLogPlotProps())
       log('heatmap:initialize')
+      setShowError(false)
       morpheusHeatmap.current = renderHeatmap({
         target: `#${graphId}`,
         expressionValuesURL,
         annotationCellValuesURL,
         annotationName: !geneList ? annotation.name : geneList,
-        dimensionsFn,
         fit: heatmapFit,
-        rowCentering: heatmapRowCentering
+        rowCentering: heatmapRowCentering,
+        setShowError,
+        setErrorContent
       })
       plotEvent.complete()
     }
@@ -90,16 +93,21 @@ export default function Heatmap({
   useUpdateEffect(() => {
     if (morpheusHeatmap.current && morpheusHeatmap.current.fitToWindow) {
       const fit = heatmapFit
-      morpheusHeatmap.current.fitToWindow({
-        fitRows: fit === 'rows' || fit === 'both',
-        fitColumns: fit === 'cols' || fit === 'both',
-        repaint: true
-      })
+      if (fit === '') {
+        morpheusHeatmap.current.resetZoom()
+      } else {
+        morpheusHeatmap.current.fitToWindow({
+          fitRows: fit === 'rows' || fit === 'both',
+          fitColumns: fit === 'cols' || fit === 'both',
+          repaint: true
+        })
+      }
     }
   }, [heatmapFit])
 
   return (
     <div className="plot">
+      { ErrorComponent }
       { cluster &&
         <div id={graphId} className="heatmap-graph" style={{ minWidth: '80vw' }}></div> }
       { !cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
@@ -107,10 +115,14 @@ export default function Heatmap({
   )
 }
 
+
+const Heatmap = withErrorBoundary(RawHeatmap)
+export default Heatmap
+
 /** Render Morpheus heatmap */
 function renderHeatmap({
   target, expressionValuesURL, annotationCellValuesURL, annotationName,
-  dimensionsFn, fit, rowCentering
+  fit, rowCentering, setShowError, setErrorContent
 }) {
   const $target = $(target)
   $target.empty()
@@ -119,6 +131,7 @@ function renderHeatmap({
     dataset: expressionValuesURL,
     el: $target,
     menu: null,
+    error: morpheusErrorHandler($target, setShowError, setErrorContent),
     colorScheme: {
       scalingMode: rowCentering !== '' ? 'fixed' : 'relative'
     },
@@ -126,7 +139,7 @@ function renderHeatmap({
     // We implement our own trivial tab manager as it seems to be the only way
     // (after 2+ hours of digging) to prevent morpheus auto-scrolling
     // to the heatmap once it's rendered
-    tabManager: morpheusTabManager($target, dimensionsFn)
+    tabManager: morpheusTabManager($target)
   }
 
   // Fit rows, columns, or both to screen
@@ -137,6 +150,9 @@ function renderHeatmap({
   } else if (fit === 'both') {
     config.columnSize = 'fit'
     config.rowSize = 'fit'
+  } else if (fit === 'none') {
+    config.columnSize = null
+    config.rowSize = null
   } else {
     config.columnSize = null
     config.rowSize = null
@@ -154,7 +170,8 @@ function renderHeatmap({
       { field: annotationName, order: 0 }
     ]
     config.columns = [
-      { field: annotationName, display: 'text' }
+      { field: 'id', display: 'text' },
+      { field: annotationName, display: 'color' }
     ]
     config.rows = [
       { field: 'id', display: 'text' }

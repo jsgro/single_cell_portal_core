@@ -402,6 +402,7 @@ export default function ExploreDisplayTabs(
               <StudyViolinPlot
                 studyAccession={studyAccession}
                 updateDistributionPlot={distributionPlot => updateExploreParams({ distributionPlot }, false)}
+                dimensions={getPlotDimensions({})}
                 {...exploreParams}/>
             </div>
           }
@@ -453,33 +454,30 @@ export default function ExploreDisplayTabs(
 
 /** return an array of the tabs that should be shown, given the exploreParams and exploreInfo */
 export function getEnabledTabs(exploreInfo, exploreParams) {
-  let isGeneList =  !!exploreParams.geneList
-  let isMultiGene = exploreParams?.genes?.length > 1
-  let isGene = exploreParams?.genes?.length > 0
-  let isConsensus = !!exploreParams.consensus
-  let hasClusters = exploreInfo && exploreInfo.clusterGroupNames.length > 0
-  let hasSpatialGroups = exploreInfo && exploreInfo?.spatialGroups?.length > 0
-  let hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
-  let hasIdeogramOutputs = !!exploreInfo?.inferCNVIdeogramFiles
+  const isGeneList = !!exploreParams.geneList
+  const isMultiGene = exploreParams?.genes?.length > 1
+  const isGene = exploreParams?.genes?.length > 0
+  const isConsensus = !!exploreParams.consensus
+  const hasSpatialGroups = exploreInfo && exploreInfo?.spatialGroups?.length > 0
+  const hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
+  const hasIdeogramOutputs = !!exploreInfo?.inferCNVIdeogramFiles
   let enabledTabs = []
   if (isGeneList) {
     enabledTabs = ['heatmap']
-  } else {
-    if (isGene) {
-      if (isMultiGene) {
-        if (isConsensus) {
-          enabledTabs = ['scatter', 'distribution', 'dotplot']
-        } else if (hasSpatialGroups) {
-          enabledTabs = ['spatial', 'dotplot', 'heatmap']
-        } else {
-          enabledTabs = ['dotplot', 'heatmap']
-        }
+  } else if (isGene) {
+    if (isMultiGene) {
+      if (isConsensus) {
+        enabledTabs = ['scatter', 'distribution', 'dotplot']
+      } else if (hasSpatialGroups) {
+        enabledTabs = ['spatial', 'dotplot', 'heatmap']
       } else {
-        enabledTabs = ['scatter', 'distribution']
+        enabledTabs = ['dotplot', 'heatmap']
       }
-    } else if (hasClusters) {
-      enabledTabs = ['cluster']
+    } else {
+      enabledTabs = ['scatter', 'distribution']
     }
+  } else if (hasClusters) {
+      enabledTabs = ['cluster']
   }
   if ( hasGenomeFiles ) {
     enabledTabs.push('genome')
@@ -487,5 +485,5 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   if ( hasIdeogramOutputs ) {
     enabledTabs.push('infercnv-genome')
   }
-  return {enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs}
+  return { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs }
 }
