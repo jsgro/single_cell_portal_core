@@ -11,6 +11,12 @@ jest.mock('components/visualization/RelatedGenesIdeogram', () => {
   }
 })
 
+jest.mock('components/visualization/InferCNVIdeogram', () => {
+  return {
+    Ideogram: jest.fn(() => mockPromise)
+  }
+})
+
 import { getEnabledTabs } from 'components/explore/ExploreDisplayTabs'
 
 describe("explore tabs are activated based on study info and parameters", () => {
@@ -19,7 +25,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     const exploreInfo = {
       cluster: 'foo',
       taxonNames: ['Homo sapiens'],
-      inferCNVIdeogramFiles: [],
+      inferCNVIdeogramFiles: null,
       bamBundleList: [],
       uniqueGenes: ['Agpat2', 'Apoe', 'Gad1', 'Gad2'],
       geneLists: [],
@@ -42,7 +48,8 @@ describe("explore tabs are activated based on study info and parameters", () => 
       enabledTabs: ['cluster'],
       isGeneList: false,
       isGene: false,
-      isMultiGene: false
+      isMultiGene: false,
+      hasIdeogramOutputs: false
     }
 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
@@ -53,7 +60,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     const exploreInfo = {
       cluster: 'foo',
       taxonNames: ['Homo sapiens'],
-      inferCNVIdeogramFiles: [],
+      inferCNVIdeogramFiles: null,
       bamBundleList: [
         {"name": "sample1.bam", "file_type": "BAM"},
         {"name": "sample1.bam.bai", "file_type": "BAM Index"}
@@ -81,7 +88,8 @@ describe("explore tabs are activated based on study info and parameters", () => 
       enabledTabs: ['cluster', 'genome'],
       isGeneList: false,
       isGene: false,
-      isMultiGene: false
+      isMultiGene: false,
+      hasIdeogramOutputs: false
     }
 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
@@ -92,7 +100,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     const exploreInfo = {
       cluster: 'foo',
       taxonNames: ['Homo sapiens'],
-      inferCNVIdeogramFiles: [],
+      inferCNVIdeogramFiles: null,
       bamBundleList: [],
       uniqueGenes: ['Agpat2', 'Apoe', 'Gad1', 'Gad2'],
       geneLists: ['Gene List 1', 'Gene List 2'],
@@ -113,7 +121,8 @@ describe("explore tabs are activated based on study info and parameters", () => 
       enabledTabs: ['heatmap'],
       isGeneList: true,
       isGene: false,
-      isMultiGene: false
+      isMultiGene: false,
+      hasIdeogramOutputs: false
     }
 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
@@ -123,7 +132,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     const exploreInfo = {
       cluster: 'foo',
       taxonNames: ['Homo sapiens'],
-      inferCNVIdeogramFiles: [],
+      inferCNVIdeogramFiles: null,
       bamBundleList: [],
       uniqueGenes: ['Agpat2', 'Apoe', 'Gad1', 'Gad2'],
       geneLists: [],
@@ -149,7 +158,8 @@ describe("explore tabs are activated based on study info and parameters", () => 
       enabledTabs: ['scatter', 'distribution'],
       isGeneList: false,
       isGene: true,
-      isMultiGene: false
+      isMultiGene: false,
+      hasIdeogramOutputs: false
     }
 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
@@ -159,7 +169,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     const exploreInfo = {
       cluster: 'foo',
       taxonNames: ['Homo sapiens'],
-      inferCNVIdeogramFiles: [],
+      inferCNVIdeogramFiles: null,
       bamBundleList: [],
       uniqueGenes: ['Agpat2', 'Apoe', 'Gad1', 'Gad2'],
       geneLists: [],
@@ -185,7 +195,8 @@ describe("explore tabs are activated based on study info and parameters", () => 
       enabledTabs: ['dotplot', 'heatmap'],
       isGeneList: false,
       isGene: true,
-      isMultiGene: true
+      isMultiGene: true,
+      hasIdeogramOutputs: false
     }
 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
@@ -195,7 +206,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     const exploreInfo = {
       cluster: 'foo',
       taxonNames: ['Homo sapiens'],
-      inferCNVIdeogramFiles: [],
+      inferCNVIdeogramFiles: null,
       bamBundleList: [],
       uniqueGenes: ['Agpat2', 'Apoe', 'Gad1', 'Gad2'],
       geneLists: [],
@@ -226,7 +237,8 @@ describe("explore tabs are activated based on study info and parameters", () => 
       enabledTabs: ['spatial', 'dotplot', 'heatmap'],
       isGeneList: false,
       isGene: true,
-      isMultiGene: true
+      isMultiGene: true,
+      hasIdeogramOutputs: false
     }
 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
@@ -236,7 +248,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     const exploreInfo = {
       cluster: 'foo',
       taxonNames: ['Homo sapiens'],
-      inferCNVIdeogramFiles: [],
+      inferCNVIdeogramFiles: null,
       bamBundleList: [],
       uniqueGenes: ['Agpat2', 'Apoe', 'Gad1', 'Gad2'],
       geneLists: [],
@@ -264,7 +276,52 @@ describe("explore tabs are activated based on study info and parameters", () => 
       enabledTabs: ['scatter', 'distribution', 'dotplot'],
       isGeneList: false,
       isGene: true,
-      isMultiGene: true
+      isMultiGene: true,
+      hasIdeogramOutputs: false
+    }
+
+    expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
+  })
+
+  it ('should enable infercnv-genome tab when selecting Ideogram annotations', async () => {
+    const ideogramOpts = {
+      "604fc5c4e241391a8ff93271": {
+        "cluster": "foo",
+        "annotation": "bar--group--study",
+        "display": "Observations: foo",
+        "ideogram_settings": {
+          "organism": "human",
+          "assembly": "GRCh38",
+          "annotationsPath": "https://www.googleapis.com/storage/v1/b/my-bucket/o/ideogram_exp_means__Observations--foo--group--study.json?alt=media"
+        }
+      }
+    }
+    const exploreInfo = {
+      taxonNames: ['Homo sapiens'],
+      inferCNVIdeogramFiles: ideogramOpts,
+      bamBundleList: [],
+      uniqueGenes: ['Agpat2', 'Apoe', 'Gad1', 'Gad2'],
+      geneLists: [],
+      annotationList: [],
+      clusterGroupNames: [],
+      spatialGroupNames: [],
+      spatialGroups: [],
+      clusterPointAlpha: 1.0
+    }
+
+    const exploreParams = {
+      ideogramFileId: Object.keys(ideogramOpts)[0],
+      userSpecified: {
+        ideogramFileId: true
+      }
+    }
+
+    const expectedResults = {
+      enabledTabs: ['infercnv-genome'],
+      isGeneList: false,
+      isGene: false,
+      isMultiGene: false,
+      hasIdeogramOutputs: true
     }
 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))

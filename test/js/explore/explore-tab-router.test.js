@@ -41,6 +41,7 @@ describe('dataParams are appropriately managed on the url', () => {
     const locationMock = jest.spyOn(Reach, 'useLocation')
     let urlString = '?geneList=My%20List&genes=agpat2,apoe&cluster=foo&annotation=bar--group--study&subsample=1000'
     urlString += '&spatialGroups=square,circle&consensus=mean&heatmapRowCentering=z-score&bamFileName=sample1.bam'
+    urlString += '&ideogramFileId=604fc5c4e241391a8ff93271'
     locationMock.mockImplementation(() => ({ search: urlString }))
 
     const { exploreParams, updateExploreParams } = useExploreTabRouter()
@@ -54,6 +55,7 @@ describe('dataParams are appropriately managed on the url', () => {
       spatialGroups: ['square', 'circle'],
       consensus: 'mean',
       heatmapRowCentering: 'z-score',
+      ideogramFileId: '604fc5c4e241391a8ff93271',
       distributionPlot: '',
       distributionPoints: '',
       heatmapFit: '',
@@ -68,13 +70,14 @@ describe('dataParams are appropriately managed on the url', () => {
         geneList: true,
         spatialGroups: true,
         subsample: true,
-        heatmapRowCentering: true
+        heatmapRowCentering: true,
+        ideogramFileId: true
       }
     })
 
     updateExploreParams({ spatialGroups: ['triangle'] })
     let expectedUrlString = '?geneList=My%20List&genes=agpat2%2Capoe&cluster=foo&spatialGroups=triangle&annotation=bar--group--study&subsample=1000'
-    expectedUrlString += '&consensus=mean&heatmapRowCentering=z-score&bamFileName=sample1.bam#study-visualize'
+    expectedUrlString += '&consensus=mean&heatmapRowCentering=z-score&bamFileName=sample1.bam&ideogramFileId=604fc5c4e241391a8ff93271#study-visualize'
     expect(routerNav).toHaveBeenLastCalledWith(expectedUrlString, { replace: true })
   })
 })
