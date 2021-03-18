@@ -105,7 +105,8 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
       log('change:multiselect', {
         text: geneDiff.map(item => item.value).join(','),
         action: actionName,
-        type: 'gene'
+        type: 'gene',
+        numPreviousGenes: geneArray.length
       })
     } catch (err) {
       // no-op, we just don't want logging fails to break the application
