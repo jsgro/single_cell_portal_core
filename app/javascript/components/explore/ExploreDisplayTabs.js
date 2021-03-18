@@ -458,6 +458,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   const isMultiGene = exploreParams?.genes?.length > 1
   const isGene = exploreParams?.genes?.length > 0
   const isConsensus = !!exploreParams.consensus
+  const hasClusters = exploreInfo && exploreInfo.clusterGroupNames.length > 0
   const hasSpatialGroups = exploreInfo && exploreInfo?.spatialGroups?.length > 0
   const hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
   const hasIdeogramOutputs = !!exploreInfo?.inferCNVIdeogramFiles
