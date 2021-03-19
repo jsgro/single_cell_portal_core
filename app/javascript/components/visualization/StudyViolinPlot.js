@@ -87,9 +87,9 @@ export default function StudyViolinPlot({
 
     log(`plot:${distributionPlotToUse}`, {
       genes,
-      'perfTime': perfTimeFull,
+      'perfTime': Math.round(perfTimeFull),
       'perfTime:backend': perfTime,
-      'perfTime:frontend': perfTimeFrontend
+      'perfTime:frontend': Math.round(perfTimeFrontend)
     })
 
     if (setAnnotationList) {
