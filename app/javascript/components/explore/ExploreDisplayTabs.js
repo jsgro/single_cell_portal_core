@@ -49,7 +49,7 @@ export default function ExploreDisplayTabs(
 ) {
   const [, setRenderForcer] = useState({})
   const plotContainerClass = 'explore-plot-tab-content'
-  const {enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs} = getEnabledTabs(exploreInfo, exploreParams)
+  const { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs } = getEnabledTabs(exploreInfo, exploreParams)
 
   // exploreParams object without genes specified, to pass to cluster comparison plots
   const referencePlotDataParams = _clone(exploreParams)
@@ -478,12 +478,12 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
       enabledTabs = ['scatter', 'distribution']
     }
   } else if (hasClusters) {
-      enabledTabs = ['cluster']
+    enabledTabs = ['cluster']
   }
-  if ( hasGenomeFiles ) {
+  if (hasGenomeFiles) {
     enabledTabs.push('genome')
   }
-  if ( hasIdeogramOutputs ) {
+  if (hasIdeogramOutputs) {
     enabledTabs.push('infercnv-genome')
   }
   return { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs }

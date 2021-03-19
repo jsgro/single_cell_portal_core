@@ -4,15 +4,15 @@ import Select from 'react-select'
 import { clusterSelectStyle } from 'lib/cluster-utils'
 
 // value to render in select menu if user has not selected a gene list
-const noneSelected = "None selected..."
+const noneSelected = 'None selected...'
 
 /** takes the server response and returns inferCNV/ideogram options suitable for react-select */
 function getInferCNVIdeogramOptions(studyInferCNVIdeogramFiles) {
-  let inferCNVSelectOpts = []
+  const inferCNVSelectOpts = []
   for (const [fileId, ideogramOptions] of Object.entries(studyInferCNVIdeogramFiles)) {
-    inferCNVSelectOpts.push({label: ideogramOptions.display, value: fileId})
+    inferCNVSelectOpts.push({ label: ideogramOptions.display, value: fileId })
   }
-  return [{label: noneSelected, value: ''}].concat(inferCNVSelectOpts)
+  return [{ label: noneSelected, value: '' }].concat(inferCNVSelectOpts)
 }
 
 function getMatchedIdeogramOption(ideogramFile, studyInferCNVIdeogramFiles) {
@@ -22,7 +22,7 @@ function getMatchedIdeogramOption(ideogramFile, studyInferCNVIdeogramFiles) {
     })
     return matchedOption
   }
-  return {label: noneSelected, value: ''}
+  return { label: noneSelected, value: '' }
 }
 
 /**
@@ -40,7 +40,7 @@ export default function InferCNVIdeogramSelector({
     return <></>
   }
   const inferCNVIdeogramOptions = getInferCNVIdeogramOptions(studyInferCNVIdeogramFiles)
-  let matchedIdeogramOption = getMatchedIdeogramOption(inferCNVIdeogramFile, inferCNVIdeogramOptions)
+  const matchedIdeogramOption = getMatchedIdeogramOption(inferCNVIdeogramFile, inferCNVIdeogramOptions)
   return (
     <div className="form-group">
       <label>Ideogram Files</label>
