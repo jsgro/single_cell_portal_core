@@ -272,8 +272,6 @@ export function log(name, props={}) {
     props['studyAccession'] = window.SCP.currentStudyAccession
   }
 
-  console.log('in log')
-
   checkForTriggeredPendingEvent(name, props)
 
   if ('SCP' in window && 'featuredSpace' in window.SCP) {
