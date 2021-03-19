@@ -4,6 +4,9 @@ import { faSearch, faFileUpload } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
 import Modal from 'react-bootstrap/lib/Modal'
 import CreatableSelect from 'react-select/creatable'
+import _differenceBy from 'lodash/differenceBy'
+
+import { log } from 'lib/metrics-api'
 
 
 /** renders the gene text input
@@ -53,12 +56,12 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
 
   /** Converts any current typed free text to a gene array entry */
   function syncGeneArrayToInputText() {
-    const inputTextTrimmed = inputText.trim().replace(/,/g, '')
-    if (!inputTextTrimmed) {
+    const inputTextValues = inputText.trim().split(/[\s,]+/)
+    if (!inputTextValues.length || !inputTextValues[0].length) {
       return geneArray
     }
-    const newGeneArray = [...geneArray, { label: inputTextTrimmed, value: inputTextTrimmed }]
-
+    const newGeneArray = geneArray.concat(inputTextValues.map(gene => ({ label: gene, value: gene })))
+    logGeneArrayChange(newGeneArray)
     setInputText(' ')
     setGeneArray(newGeneArray)
     return newGeneArray
@@ -87,6 +90,38 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
     fileReader.readAsText(file)
   }
 
+  /** send analytics on how the gene search input changed */
+  function logGeneArrayChange(newArray) {
+    try {
+      let actionName = ''
+      let geneDiff = []
+      if (newArray.length > geneArray.length) {
+        actionName = 'add'
+        geneDiff = _differenceBy(newArray, geneArray, 'value')
+      } else {
+        actionName = 'remove'
+        geneDiff = _differenceBy(geneArray, newArray, 'value')
+      }
+      log('change:multiselect', {
+        text: geneDiff.map(item => item.value).join(','),
+        action: actionName,
+        type: 'gene',
+        numPreviousGenes: geneArray.length
+      })
+    } catch (err) {
+      // no-op, we just don't want logging fails to break the application
+    }
+  }
+
+  /** handles the change event corresponding a a user adding or clearing one or more genes */
+  function handleSelectChange(value) {
+    // react-select doesn't expose the actual click events, so we deduce the kind
+    // of operation based on whether it lengthened or shortened the list
+    const newValue = value ? value : []
+    logGeneArrayChange(newValue)
+    setGeneArray(newValue)
+  }
+
   useEffect(() => {
     if (genes.join(',') !== geneArray.map(opt => opt.label).join(',')) {
       // the genes have been updated elsewhere -- resync
@@ -100,7 +135,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
       <div className="flexbox align-center">
         <div className="input-group">
           <div className="input-group-append">
-            <Button type="submit">
+            <Button type="submit" data-analytics-name="gene-search-submit">
               <FontAwesomeIcon icon={faSearch} />
             </Button>
           </div>
@@ -114,13 +149,22 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
             isValidNewOption={() => false}
             noOptionsMessage={() => (inputText.length > 1 ? 'No matching genes' : 'Type to search...')}
             options={geneOptions}
-            onChange={value => setGeneArray(value ? value : [])}
+            onChange={handleSelectChange}
             onInputChange={inputValue => setInputText(inputValue)}
             onKeyDown={handleKeyDown}
             // the default blur behavior removes any entered free text,
             // we want to instead auto-convert entered free text to a gene tag
             onBlur={syncGeneArrayToInputText}
             placeholder={'Genes (e.g. "PTEN NF2")'}
+            styles={{
+              // if more genes are entered than fit, use a vertical scrollbar
+              // this is probably not optimal UX, but good enough for first release and monitoring
+              valueContainer: (provided, state) => ({
+                ...provided,
+                maxHeight: '32px',
+                overflow: 'auto'
+              })
+            }}
           />
         </div>
         <label htmlFor="gene-list-upload"
