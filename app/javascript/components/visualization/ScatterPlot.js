@@ -175,9 +175,13 @@ function formatMarkerColors(data, annotationType, gene) {
 function formatHoverLabels(data, annotationType, gene) {
   const groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{data.name}<extra></extra>'
   data.forEach(trace => {
+    trace.text = trace.cells
     if (annotationType === 'numeric' || gene) {
-      trace.text = trace.annotations
-      trace.hovertemplate = `(%{x}, %{y})<br>%{text}<br>${trace.marker.colorbar.title}: %{marker.color}<extra></extra>`
+      // use the 'meta' property so annotations are exposed to the hover template
+      // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
+      trace.meta = trace.annotations
+      trace.hovertemplate = `(%{x}, %{y})<br>%{text} (%{meta})<br>
+        ${trace.marker.colorbar.title}: %{marker.color}<extra></extra>`
     } else {
       trace.text = trace.cells
       trace.hovertemplate = groupHoverTemplate
