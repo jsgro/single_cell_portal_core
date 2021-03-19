@@ -103,7 +103,11 @@ function RawStudyViolinPlot({
   useUpdateEffect(() => {
     // Don't try to update the if the data hasn't loaded yet
     if (!isLoading && studyGeneNames.length > 0) {
-      updateViolinPlot(graphElementId, distributionPlot, distributionPoints)
+      setIsLoading(true)
+      setTimeout(() => {
+        updateViolinPlot(graphElementId, distributionPlot, distributionPoints)
+        setIsLoading(false)
+      }, 0)
     }
   }, [distributionPlot, distributionPoints])
 
