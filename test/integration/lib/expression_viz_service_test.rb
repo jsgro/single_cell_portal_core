@@ -24,6 +24,18 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
                                                   {name: 'Category', type: 'group', values: ['bar', 'bar', 'baz']},
                                                   {name: 'Intensity', type: 'numeric', values: [1.1, 2.2, 3.3]}
                                               ])
+
+    @study_cluster_file_2 = FactoryBot.create(:cluster_file,
+                                              name: 'cluster_2.txt', study: @basic_study,
+                                              cell_input: {
+                                                x: [1, 2, 3],
+                                                y: [4, 5, 6],
+                                                cells: ['A', 'B', 'C']
+                                              },
+                                              annotation_input: [
+                                                {name: 'Blanks', type: 'group', values: ['bar', 'bar', '']}
+                                              ])
+
     @basic_study_exp_file = FactoryBot.create(:study_file,
                                                   name: 'dense.txt',
                                                   file_type: 'Expression Matrix',
@@ -97,7 +109,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     )
     expected_values = %w(dog cat)
     assert_equal expected_values, rendered_data[:values].keys
-    expected_annotations = %w(Category disease Intensity species).sort
+    expected_annotations = %w(Category disease Intensity species Blanks).sort
     loaded_annotations = rendered_data[:annotation_list][:annotations].map{|a| a[:name]}.sort
     assert_equal expected_annotations, loaded_annotations
     assert_equal cluster.name, rendered_data[:rendered_cluster]
@@ -205,6 +217,19 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     expected_output = {
         dog: {y: [0.0, 1.5], cells: %w(A C), annotations: [], name: 'dog'},
         cat: {y: [3.0], cells: %w(B), annotations: [], name: 'cat'}
+    }
+    assert_equal expected_output.with_indifferent_access, violin_data.with_indifferent_access
+  end
+
+  test 'should load violin plot data with blank annotations' do
+    gene = @basic_study.genes.by_name_or_id('PTEN', @basic_study.expression_matrix_files.pluck(:id))
+    cluster = @basic_study.cluster_groups.by_name('cluster_2.txt')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: 'Blanks', annot_type: 'group', annot_scope: 'cluster')
+    violin_data = ExpressionVizService.load_expression_boxplot_data_array_scores(@basic_study, gene, cluster, annotation)
+    # cells A & B belong to 'bar', and cell C belongs to the blank label
+    expected_output = {
+      bar: {y: [0.0, 3.0], cells: %w(A B), annotations: [], name: 'bar'},
+      "#{AnnotationVizService::MISSING_VALUE_LABEL}": {y: [1.5], cells: %w(C), annotations: [], name: AnnotationVizService::MISSING_VALUE_LABEL}
     }
     assert_equal expected_output.with_indifferent_access, violin_data.with_indifferent_access
   end
