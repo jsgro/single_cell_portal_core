@@ -18,6 +18,7 @@ import useExploreTabRouter from './ExploreTabRouter'
 import { getDefaultClusterParams, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
 import GeneListSelector from 'components/visualization/controls/GeneListSelector'
 import { log } from 'lib/metrics-api'
+import InferCNVIdeogramSelector from "components/visualization/controls/InferCNVIdeogramSelector";
 
 /**
  * manages view options and basic layout for the explore tab
@@ -42,7 +43,7 @@ function RoutableExploreTab({ studyAccession }) {
   // this is kept separate so that the graphs do not see the change in cluster name from '' to
   // '<<default cluster>>' as a change that requires a re-fetch from the server
   let controlExploreParams = _clone(exploreParams)
-  if (exploreInfo && !exploreParams.cluster) {
+  if (exploreInfo && !exploreParams.cluster && exploreInfo.clusterGroupNames.length > 0) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
     controlExploreParams = Object.assign(controlExploreParams,
       getDefaultClusterParams(annotationList, exploreInfo.spatialGroups))
@@ -83,7 +84,6 @@ function RoutableExploreTab({ studyAccession }) {
 
   /** handles cluster selection to also populate the default spatial groups */
   function updateClusterParams(newParams) {
-
     if (newParams.cluster && !newParams.spatialGroups) {
       newParams.spatialGroups = getDefaultSpatialGroupsForCluster(newParams.cluster, exploreInfo.spatialGroups)
     }
@@ -91,7 +91,7 @@ function RoutableExploreTab({ studyAccession }) {
     // broken urls in the event of a default cluster/annotation changes
     // also, unset any gene lists as we're about to re-render the explore tab and having gene list selected will show
     // the wrong tabs
-    const updateParams = {geneList: ''}
+    const updateParams = {geneList: '', ideogramFileId: ''}
     const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
     clusterParamNames.forEach(param => {
       updateParams[param] = param in newParams ? newParams[param] : controlExploreParams[param]
@@ -101,7 +101,12 @@ function RoutableExploreTab({ studyAccession }) {
 
   /** handles gene list selection */
   function updateGeneList(geneList) {
-    updateExploreParams({ geneList: geneList })
+    updateExploreParams({ geneList })
+  }
+
+  // handles updating inferCNV/ideogram selection
+  function updateInferCNVIdeogramFile(annotationFile) {
+    updateExploreParams( { ideogramFileId: annotationFile, tab: 'infercnv-genome' })
   }
 
   useEffect(() => {
@@ -173,14 +178,21 @@ function RoutableExploreTab({ studyAccession }) {
 
             { exploreInfo?.geneLists?.length > 0 &&
               <GeneListSelector
-                  geneList={controlExploreParams.geneList}
-                  studyGeneLists={exploreInfo.geneLists}
-                  updateGeneList={updateGeneList}/>
+                geneList={controlExploreParams.geneList}
+                studyGeneLists={exploreInfo.geneLists}
+                updateGeneList={updateGeneList}/>
             }
             { exploreParams.genes.length > 1 &&
               <ExploreConsensusSelector
                 consensus={controlExploreParams.consensus}
                 updateConsensus={consensus => updateExploreParams({ consensus })}/>
+            }
+            { !!exploreInfo?.inferCNVIdeogramFiles &&
+                <InferCNVIdeogramSelector
+                  inferCNVIdeogramFile={controlExploreParams.ideogramFileId}
+                  studyInferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
+                  updateInferCNVIdeogramFile={updateInferCNVIdeogramFile}
+                />
             }
           </div>
           <PlotDisplayControls

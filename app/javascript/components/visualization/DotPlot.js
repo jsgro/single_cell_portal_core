@@ -7,6 +7,8 @@ import { log } from 'lib/metrics-api'
 import { getColorBrewerColor } from 'lib/plot'
 import DotPlotLegend from './DotPlotLegend'
 import { getAnnotationCellValuesURL, getExpressionHeatmapURL } from 'lib/scp-api'
+import useErrorMessage, { morpheusErrorHandler } from 'lib/error-message'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 export const dotPlotColorScheme = {
   // Blue, purple, red.  These red and blue hues are accessible, per WCAG.
@@ -25,11 +27,12 @@ export const dotPlotColorScheme = {
   * @param consensus {string} for multi-gene expression plots
   * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
   */
-export default function DotPlot({
+function RawDotPlot({
   studyAccession, genes=[], cluster, annotation={},
   subsample, annotationValues
 }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
+  const { ErrorComponent, showError, setShowError, setErrorContent } = useErrorMessage()
   const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster })
   const annotationCellValuesURL = getAnnotationCellValuesURL({
     studyAccession,
@@ -45,12 +48,15 @@ export default function DotPlot({
       performance.mark(`perfTimeStart-${graphId}`)
 
       log('dot-plot:initialize')
+      setShowError(false)
       renderDotPlot({
         target: `#${graphId}`,
         expressionValuesURL,
         annotationCellValuesURL,
         annotationName: annotation.name,
-        annotationValues
+        annotationValues,
+        setErrorContent,
+        setShowError
       })
     }
   }, [
@@ -62,20 +68,25 @@ export default function DotPlot({
 
   return (
     <div>
+      { ErrorComponent }
       { cluster &&
       <>
         <div id={graphId} className="dotplot-graph"></div>
-        <DotPlotLegend/>
+        { !showError && <DotPlotLegend/> }
       </> }
       { !cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
     </div>
   )
 }
 
+const DotPlot = withErrorBoundary(RawDotPlot)
+export default DotPlot
+
 /** Render Morpheus dot plot */
-function renderDotPlot(
-  { target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues }
-) {
+function renderDotPlot({
+  target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues,
+  setShowError, setErrorContent
+}) {
   const $target = $(target)
   $target.empty()
 
@@ -99,6 +110,7 @@ function renderDotPlot(
     dataset: expressionValuesURL,
     el: $target,
     menu: null,
+    error: morpheusErrorHandler($target, setShowError, setErrorContent),
     colorScheme: {
       scalingMode: 'relative'
     },

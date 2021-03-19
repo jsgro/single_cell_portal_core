@@ -8,7 +8,9 @@ import { getColorBrewerColor, arrayMin, arrayMax, plotlyDefaultLineColor } from 
 import Plotly from 'plotly.js-dist'
 import { log } from 'lib/metrics-api'
 
-import { useUpdateEffect, useUpdateLayoutEffect } from 'hooks/useUpdate'
+import { useUpdateEffect } from 'hooks/useUpdate'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
+import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
 
 
 export const DISTRIBUTION_PLOT_OPTIONS = [
@@ -38,14 +40,15 @@ export const defaultDistributionPoints = DISTRIBUTION_POINTS_OPTIONS[0].value
  *   fetch both the default expression data and the cluster menu options, a function that will be
  *   called with the annotationList returned by that call.
   */
-export default function StudyViolinPlot({
+function RawStudyViolinPlot({
   studyAccession, genes, cluster, annotation, subsample, consensus, distributionPlot, distributionPoints,
-  updateDistributionPlot, setAnnotationList, dimensions
+  updateDistributionPlot, setAnnotationList, dimensions={}
 }) {
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
   const [studyGeneNames, setStudyGeneNames] = useState([])
   const [graphElementId] = useState(_uniqueId('study-violin-'))
+  const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
   /** gets expression data from the server */
   async function loadData() {
@@ -60,44 +63,47 @@ export default function StudyViolinPlot({
       subsample,
       consensus
     )
+    const apiOk = checkScpApiResponse(results, () => Plotly.purge(graphElementId), setShowError, setErrorContent)
+    if (apiOk) {
+      setStudyGeneNames(results.gene_names)
+      let distributionPlotToUse = results.plotType
+      if (distributionPlot) {
+        distributionPlotToUse = distributionPlot
+      }
+      if (!distributionPlotToUse) {
+        distributionPlotToUse = defaultDistributionPlot
+      }
+
+      const start = `perfTimeFrontendStart-${graphElementId}`
+      performance.mark(start)
+
+      renderViolinPlot(graphElementId, results, {
+        plotType: distributionPlotToUse,
+        showPoints: distributionPoints
+      })
+
+      const end = `perfTimeFrontendEnd-${graphElementId}`
+      performance.mark(end)
+      const perfTimeFrontend = performance.measure(graphElementId, start, end).duration
+
+      const perfTimeFull = perfTime + perfTimeFrontend
+
+      log(`plot:${distributionPlotToUse}`, {
+        genes,
+        'perfTime': Math.round(perfTimeFull),
+        'perfTime:backend': perfTime,
+        'perfTime:frontend': Math.round(perfTimeFrontend)
+      })
+
+      if (setAnnotationList) {
+        setAnnotationList(results.annotation_list)
+      }
+      if (updateDistributionPlot) {
+        updateDistributionPlot(distributionPlotToUse)
+      }
+      setShowError(false)
+    }
     setIsLoading(false)
-    setStudyGeneNames(results.gene_names)
-
-    let distributionPlotToUse = results.plotType
-    if (distributionPlot) {
-      distributionPlotToUse = distributionPlot
-    }
-    if (!distributionPlotToUse) {
-      distributionPlotToUse = defaultDistributionPlot
-    }
-
-    const start = `perfTimeFrontendStart-${graphElementId}`
-    performance.mark(start)
-
-    renderViolinPlot(graphElementId, results, {
-      plotType: distributionPlotToUse,
-      showPoints: distributionPoints
-    })
-
-    const end = `perfTimeFrontendEnd-${graphElementId}`
-    performance.mark(end)
-    const perfTimeFrontend = performance.measure(graphElementId, start, end).duration
-
-    const perfTimeFull = perfTime + perfTimeFrontend
-
-    log(`plot:${distributionPlotToUse}`, {
-      genes,
-      'perfTime': Math.round(perfTimeFull),
-      'perfTime:backend': perfTime,
-      'perfTime:frontend': Math.round(perfTimeFrontend)
-    })
-
-    if (setAnnotationList) {
-      setAnnotationList(results.annotation_list)
-    }
-    if (updateDistributionPlot) {
-      updateDistributionPlot(distributionPlotToUse)
-    }
   }
   /** handles fetching the expression data (and menu option data) from the server */
   useEffect(() => {
@@ -133,6 +139,7 @@ export default function StudyViolinPlot({
   const isCollapsedView = ['mean', 'median'].indexOf(consensus) >= 0
   return (
     <div className="plot">
+      { ErrorComponent }
       <div
         className="expression-graph"
         id={graphElementId}
@@ -157,6 +164,9 @@ export default function StudyViolinPlot({
     </div>
   )
 }
+
+const StudyViolinPlot = withErrorBoundary(RawStudyViolinPlot)
+export default StudyViolinPlot
 
 
 /** Formats expression data for Plotly, draws violin (or box) plot */

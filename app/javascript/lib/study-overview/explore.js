@@ -35,7 +35,7 @@ async function exploreScatterPlotsHorizontal(study, gene) {
 
   scatterPlot(apiParams, props)
 
-  const annotDisplayName = $("#annotation option:selected").text();
+  const annotDisplayName = $('#annotation option:selected').text()
 
   apiParams.gene = null
   props.selector = `${baseSelector} .row > div:nth-child(2)`

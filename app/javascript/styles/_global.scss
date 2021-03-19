@@ -754,6 +754,11 @@ ul.pager li.dimmed {
   }
 }
 
+.error-boundary {
+	padding: 0.5em;
+	border-radius: 5px;
+}
+
 // Overridding some default CKEditor styles to allow for larger editor windows by default
 
 .ck-editor__editable {

@@ -706,6 +706,13 @@ class IngestJob
       message_body += "</ul>"
     end
 
+    if self.study_file.file_type == 'Metadata'
+      faq_link = "https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Validation-Errors-FAQ"
+      message_body += "<h3>Common Errors for Metadata Files</h3>"
+      message_body += "<p>You can view a list of common metadata validation errors and solutions on our wiki: "
+      message_body += "<a href='#{faq_link}'>#{faq_link}</a></p>"
+    end
+
     message_body += "<h3>Job Details</h3>"
     message_body += "<p>Study Accession: <strong>#{self.study.accession}</strong></p>"
     message_body += "<p>Study File ID: <strong>#{self.study_file.id}</strong></p>"

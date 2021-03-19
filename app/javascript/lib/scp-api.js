@@ -373,7 +373,9 @@ export async function fetchAnnotations(studyAccession, mock=false) {
  * @param {String} studyAccession Study accession
  * @param {String} annotationName
  */
-export async function fetchAnnotation(studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false) {
+export async function fetchAnnotation(
+  studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false
+) {
   const paramObj = {
     cluster: clusterName,
     annotation_scope: annotationScope,
@@ -386,9 +388,11 @@ export async function fetchAnnotation(studyAccession, clusterName, annotationNam
 }
 
 /** Get URL for a Morpheus-suitable annotation values file */
-export function getAnnotationCellValuesURL({ studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false }) {
+export function getAnnotationCellValuesURL(
+  { studyAccession, cluster, annotationName, annotationScope, annotationType, mock=false }
+) {
   const paramObj = {
-    cluster: clusterName,
+    cluster,
     annotation_scope: annotationScope,
     annotation_type: annotationType,
     url_safe_token: getURLSafeAccessToken()

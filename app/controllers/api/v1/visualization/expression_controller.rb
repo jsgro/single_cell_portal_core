@@ -119,7 +119,11 @@ module Api
           subsample = ClustersController.get_selected_subsample_threshold(params[:subsample], cluster)
           genes = RequestUtils.get_genes_from_param(@study, params[:genes])
           if genes.empty?
-            render json: {error: 'You must supply at least one gene'}, status: 422
+            if params[:genes].empty?
+              render json: {error: 'You must supply at least one gene'}, status: 400
+            else
+              render json: {error: 'No genes in this study matched your search'}, status: 404
+            end
           else
             render_data = ExpressionVizService.get_global_expression_render_data(
               study: @study,

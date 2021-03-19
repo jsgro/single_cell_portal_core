@@ -9,6 +9,8 @@ import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
 import { log } from 'lib/metrics-api'
+import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
@@ -33,59 +35,67 @@ export const defaultScatterColor = 'Reds'
   * @plotPointsSelected {function} callback for when a user selects points on the plot, which corresponds
   *   to the plotly "points_selected" event
   */
-export default function ScatterPlot({
+function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
   updateScatterColor, isCellSelecting=false, plotPointsSelected
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
-
+  const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
     const [scatter, perfTime] = clusterResponse
 
-    // Get Plotly layout
-    const layout = getPlotlyLayout(scatter)
-    const { width, height } = dimensions
-    layout.width = width
-    layout.height = height
-    formatMarkerColors(scatter.data, scatter.annotParams.type, scatter.gene)
-    formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene)
-    const dataScatterColor = processTraceScatterColor(scatter.data, scatterColor)
+    const apiOk = checkScpApiResponse(scatter,
+      () => Plotly.purge(graphElementId),
+      setShowError,
+      setErrorContent)
 
-    const start = `perfTimeFrontendStart-${graphElementId}`
-    performance.mark(start)
+    if (apiOk) {
+      // Get Plotly layout
+      const layout = getPlotlyLayout(scatter)
+      const { width, height } = dimensions
+      layout.width = width
+      layout.height = height
+      formatMarkerColors(scatter.data, scatter.annotParams.type, scatter.gene)
+      formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene)
+      const dataScatterColor = processTraceScatterColor(scatter.data, scatterColor)
 
-    Plotly.newPlot(graphElementId, scatter.data, layout)
+      const start = `perfTimeFrontendStart-${graphElementId}`
+      performance.mark(start)
 
-    const end = `perfTimeFrontendEnd-${graphElementId}`
-    performance.mark(end)
-    const perfTimeFrontend = performance.measure(graphElementId, start, end).duration
+      Plotly.newPlot(graphElementId, scatter.data, layout)
 
-    const perfTimeFull = perfTime + perfTimeFrontend
+      const end = `perfTimeFrontendEnd-${graphElementId}`
+      performance.mark(end)
+      const perfTimeFrontend = performance.measure(graphElementId, start, end).duration
 
-    const perfLogProps = {
-      'perfTime:backend': perfTime, // Time for API call
-      'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
-      'perfTime': Math.round(perfTimeFull), // Time from API call *start* to plot render end,
-      'numPoints': scatter.numPoints, // How many cells are we plotting?
-      'gene': scatter.gene,
-      'is3D': scatter.is3D,
-      'layout:width': width, // Pixel width of graph
-      'layout:height': height, // Pixel height of graph
-      'numAnnotSelections': scatter.annotParams.values.length,
-      'annotName': scatter.annotParams.name,
-      'annotType': scatter.annotParams.type,
-      'annotScope': scatter.annotParams.scope
+      const perfTimeFull = perfTime + perfTimeFrontend
+
+      const perfLogProps = {
+        'perfTime:backend': perfTime, // Time for API call
+        'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
+        'perfTime': Math.round(perfTimeFull), // Time from API call *start* to plot render end,
+        'numPoints': scatter.numPoints, // How many cells are we plotting?
+        'gene': scatter.gene,
+        'is3D': scatter.is3D,
+        'layout:width': width, // Pixel width of graph
+        'layout:height': height, // Pixel height of graph
+        'numAnnotSelections': scatter.annotParams.values.length,
+        'annotName': scatter.annotParams.name,
+        'annotType': scatter.annotParams.type,
+        'annotScope': scatter.annotParams.scope
+      }
+
+      log('plot:scatter', perfLogProps)
+
+      if (dataScatterColor !== scatterColor) {
+        updateScatterColor(dataScatterColor)
+      }
+      setClusterData(scatter)
+      setShowError(false)
     }
-
-    log('plot:scatter', perfLogProps)
-
-    if (dataScatterColor !== scatterColor) {
-      updateScatterColor(dataScatterColor)
-    }
-    setClusterData(scatter)
     setIsLoading(false)
   }
 
@@ -146,6 +156,7 @@ export default function ScatterPlot({
 
   return (
     <div className="plot">
+      { ErrorComponent }
       { clusterData &&
         <PlotTitle
           cluster={clusterData.cluster}
@@ -177,6 +188,10 @@ export default function ScatterPlot({
     </div>
   )
 }
+
+const ScatterPlot = withErrorBoundary(RawScatterPlot)
+export default ScatterPlot
+
 
 /** add trace marker colors to group annotations */
 function formatMarkerColors(data, annotationType, gene) {
