@@ -33,6 +33,17 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
                                                   cells: ['D', 'E', 'F']
                                               })
 
+    @study_cluster_file_3 = FactoryBot.create(:cluster_file,
+                                              name: 'cluster_3.txt', study: @study,
+                                              cell_input: {
+                                                x: [1, 2, 3],
+                                                y: [4, 5, 6],
+                                                cells: ['D', 'E', 'F']
+                                              },
+                                              annotation_input: [
+                                                {name: 'Blanks', type: 'group', values: ['bar', 'bar', '']}
+                                              ])
+
     @study_metadata_file = FactoryBot.create(:metadata_file,
                                              name: 'metadata.txt', study: @study,
                                              cell_input: ['A', 'B', 'C'],
@@ -122,6 +133,19 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation)
     assert_equal metadata.values.sort, coordinates.keys.sort
     trace_attributes = [:x, :y, :z, :cells, :annotations, :name]
+    coordinates.each do |name, trace|
+      trace_attributes.each do |attribute|
+        assert trace.try(:[], attribute).present?, "Did not find any values for #{name}:#{attribute}"
+      end
+    end
+  end
+
+  test 'should load cluster coordinates with blank annotations' do
+    cluster = @study.cluster_groups.by_name('cluster_3.txt')
+    annotation = AnnotationVizService.get_selected_annotation(@study, cluster: cluster, annot_name: 'Blanks', annot_type: 'group', annot_scope: 'cluster')
+    coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation)
+    assert_equal annotation[:values].sort, coordinates.keys.sort
+    trace_attributes = [:x, :y, :cells, :annotations, :name]
     coordinates.each do |name, trace|
       trace_attributes.each do |attribute|
         assert trace.try(:[], attribute).present?, "Did not find any values for #{name}:#{attribute}"

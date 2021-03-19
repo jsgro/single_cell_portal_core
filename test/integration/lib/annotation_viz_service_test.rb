@@ -20,6 +20,11 @@ class AnnotationVizServiceTest < ActiveSupport::TestCase
                                                   {name: 'Fizziness', type: 'group', values: ['high', 'low', 'medium']},
                                                   {name: 'Buzziness', type: 'group', values: ['large', 'medium', 'small']}
                                               ])
+    @basic_study_cluster_file3 = FactoryBot.create(:cluster_file,
+                                                   name: 'cluster_3.txt', study: @basic_study,
+                                                   annotation_input: [
+                                                     {name: 'Blanks', type: 'group', values: ['foo', 'foo', '']}
+                                                   ])
     @basic_study_exp_file = FactoryBot.create(:study_file,
                                                   name: 'dense.txt',
                                                   file_type: 'Expression Matrix',
@@ -79,12 +84,20 @@ class AnnotationVizServiceTest < ActiveSupport::TestCase
 
   test 'available annotations returns the available annotations' do
     annots = AnnotationVizService.available_annotations(@basic_study)
-    assert_equal ["species", "disease", "Category", "Intensity", "Fizziness", "Buzziness"], annots.map { |a| a[:name] }
-    assert_equal [nil, nil, "cluster_1.txt", "cluster_1.txt", "cluster_2.txt", "cluster_2.txt"], annots.map { |a| a[:cluster_name] }
+    assert_equal ["species", "disease", "Category", "Intensity", "Fizziness", "Buzziness", "Blanks"], annots.map { |a| a[:name] }
+    assert_equal [nil, nil, "cluster_1.txt", "cluster_1.txt", "cluster_2.txt", "cluster_2.txt", "cluster_3.txt"], annots.map { |a| a[:cluster_name] }
 
     # if a cluster is specified, returns the study wide and annotations specific to that cluster
     cluster = @basic_study.cluster_groups.find_by(name: 'cluster_1.txt')
     annots = AnnotationVizService.available_annotations(@basic_study, cluster: cluster)
     assert_equal ["species", "disease", "Category", "Intensity"], annots.map { |a| a[:name] }
+  end
+
+  test 'should sanitize blank values from annotation arrays' do
+    blank_cluster = @basic_study.cluster_groups.find_by(name: 'cluster_3.txt')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: blank_cluster, annot_name: 'Blanks',
+                                                          annot_type: 'group', annot_scope: 'cluster')
+    assert_equal 'Blanks', annotation[:name]
+    assert_equal  ['foo', AnnotationVizService::MISSING_VALUE_LABEL], annotation[:values]
   end
 end
