@@ -210,6 +210,7 @@ class ClusterVizService
   # uses cluster_group model and loads annotation for both group & numeric plots
   # data values are pulled from associated data_array entries for each axis and annotation/text value
   def self.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, colorscale=nil)
+    Rails.logger.info "raw annotation: #{annotation}"
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     x_array = cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
@@ -234,8 +235,11 @@ class ClusterVizService
       # for study-wide annotations, load from study_metadata values instead of cluster-specific annotations
       metadata_obj = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
       annotation_hash = metadata_obj.cell_annotations
-      annotation[:values] = annotation_hash.values
+      annotation[:values] = AnnotationVizService.sanitize_values_array(metadata_obj.values, annotation[:type])
     end
+    annotation_array = AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
+    Rails.logger.info "annotation array: #{annotation_array}"
+    Rails.logger.info "annotation[:values]: #{annotation[:values]}"
     coordinates = {}
     if annotation[:type] == 'numeric'
       text_array = []
@@ -301,9 +305,6 @@ class ClusterVizService
             coordinates[annotation_value][:z] << z_array[index]
           end
         end
-        coordinates.each do |key, data|
-          data[:name] << " (#{data[:x].size} points)"
-        end
       else
         cells.each_with_index do |cell, index|
           if annotation_hash.has_key?(cell)
@@ -318,15 +319,15 @@ class ClusterVizService
             end
           end
         end
-        coordinates.each do |key, data|
-          data[:name] << " (#{data[:x].size} points)"
-        end
 
       end
-
     end
-    # gotcha to remove entries in case a particular annotation value comes up blank since this is study-wide
+    # gotcha to remove entries in case a particular annotation value comes up blank
     coordinates.delete_if {|key, data| data[:x].empty?}
+    coordinates.each do |key, data|
+      existing_name = data[:name].dup
+      data[:name] = "#{existing_name} (#{data[:x].size} points)"
+    end
     coordinates
   end
 end
