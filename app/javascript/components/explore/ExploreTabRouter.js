@@ -1,9 +1,11 @@
+import { useEffect } from 'react'
 import { navigate, useLocation } from '@reach/router'
 import * as queryString from 'query-string'
 
 import { stringifyQuery, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
 import { getIdentifierForAnnotation } from 'lib/cluster-utils'
 import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
+import { log } from 'lib/metrics-api'
 
 export const emptyDataParams = {
   cluster: '',
@@ -13,7 +15,19 @@ export const emptyDataParams = {
 }
 
 const SPATIAL_GROUPS_EMPTY = '--'
+// because we only allow a single ExploreTabRouter component we can track global state here, instead
+// of useRef, which would trigger a rerender
+let isInitialLoad = true
 
+/** send the user-level event log for a study gene search */
+function logGeneSearch(genes, trigger) {
+  log('search', {
+    type: 'gene',
+    context: 'study',
+    trigger,
+    genes
+  })
+}
 /**
  * manages view options and basic layout for the explore tab
  * this component handles calling the api explore endpoint to get view options (clusters, etc..) for the study
@@ -22,7 +36,10 @@ export default function useExploreTabRouter() {
   const routerLocation = useLocation()
   const exploreParams = buildExploreParamsFromQuery(routerLocation.search)
 
-
+  if (isInitialLoad && exploreParams.genes.length > 0) {
+    logGeneSearch(exploreParams.genes, 'url')
+  }
+  isInitialLoad = false
   /** Merges the received update into the exploreParams, and updates the page URL if need */
   function updateExploreParams(newOptions, wasUserSpecified=true) {
     const mergedOpts = Object.assign({}, exploreParams, newOptions)
@@ -36,6 +53,9 @@ export default function useExploreTabRouter() {
         delete mergedOpts.tab
         delete mergedOpts.userSpecified.tab
       }
+      if (newOptions?.genes?.length > 0) {
+        logGeneSearch(exploreParams.genes, 'submit')
+      }
     }
 
     const query = buildQueryFromParams(mergedOpts)
@@ -45,7 +65,13 @@ export default function useExploreTabRouter() {
     navigate(`${query}#study-visualize`, { replace: true })
   }
 
-
+  useEffect(() => {
+    // this cleanup isn't strictly necessary now, but if we ever start linking to gene searches
+    // within SCP, or not reloading the page when going from search results to explore, it will be needed
+    return function cleanup() {
+      isInitialLoad = true
+    }
+  })
   return { exploreParams, updateExploreParams, routerLocation }
 }
 
