@@ -74,6 +74,7 @@ class ExpressionVizService
       )
       cells.each_with_index do |cell, index|
         values[annotations[index]][:y] << gene['scores'][cell].to_f.round(4)
+        values[annotations[index]][:cells] << cell
       end
     elsif annotation[:scope] == 'user'
       # for user annotations, we have to load by id as names may not be unique to clusters
@@ -86,6 +87,7 @@ class ExpressionVizService
       cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
       cells.each_with_index do |cell, index|
         values[annotations[index]][:y] << gene['scores'][cell].to_f.round(4)
+        values[annotations[index]][:cells] << cell
       end
     else
       # since annotations are in a hash format, subsampling isn't necessary as we're going to retrieve values by key lookup
