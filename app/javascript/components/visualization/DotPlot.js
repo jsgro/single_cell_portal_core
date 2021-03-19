@@ -3,7 +3,7 @@ import _uniqueId from 'lodash/uniqueId'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 
-import { log, startPendingEvent } from 'lib/metrics-api'
+import { log } from 'lib/metrics-api'
 import { getColorBrewerColor } from 'lib/plot'
 import DotPlotLegend from './DotPlotLegend'
 import { getAnnotationCellValuesURL, getExpressionHeatmapURL } from 'lib/scp-api'
@@ -31,16 +31,19 @@ export default function DotPlot({
 }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
   const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster })
-  const annotationCellValuesURL = getAnnotationCellValuesURL({studyAccession,
+  const annotationCellValuesURL = getAnnotationCellValuesURL({
+    studyAccession,
     cluster,
     annotationName: annotation.name,
     annotationScope: annotation.scope,
     annotationType: annotation.type,
-    subsample})
+    subsample
+  })
 
   useEffect(() => {
     if (annotation.name) {
-      const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
+      performance.mark(`perfTimeStart-${graphId}`)
+
       log('dot-plot:initialize')
       renderDotPlot({
         target: `#${graphId}`,
@@ -49,7 +52,6 @@ export default function DotPlot({
         annotationName: annotation.name,
         annotationValues
       })
-      plotEvent.complete()
     }
   }, [
     expressionValuesURL,
@@ -102,7 +104,10 @@ function renderDotPlot(
     },
     focus: null,
     tabManager: morpheusTabManager($target),
-    tools
+    tools,
+    loadedCallback() {
+      logMorpheusPerfTime(target, 'dotplot')
+    }
   }
 
   // Load annotations if specified
@@ -160,4 +165,15 @@ export function morpheusTabManager($target) {
     getHeight: () => $target.actual('height'),
     getTabCount: () => 1
   }
+}
+
+/** Log performance timing for Morpheus dot plots and heatmaps */
+export function logMorpheusPerfTime(target, plotType) {
+  const graphId = target.slice(1) // e.g. #dotplot-1 -> dotplot-1
+  const start = `perfTimeStart-${graphId}`
+  const end = `perfTimeEnd-${graphId}`
+  performance.mark(end)
+  const perfTime = Math.round(performance.measure(graphId, start, end).duration)
+
+  log(`plot:${plotType}`, { perfTime })
 }

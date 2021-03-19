@@ -249,7 +249,7 @@ export async function violinPlot(plotId, study, gene, consensus) {
 
   const { name, type, scope } = getAnnotParams()
 
-  const rawPlot = await fetchExpressionViolin(
+  const [rawPlot] = await fetchExpressionViolin(
     study.accession, gene, cluster, name, type, scope, subsample, consensus
   )
   rawPlot.plotId = plotId

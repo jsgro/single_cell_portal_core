@@ -3,9 +3,9 @@ import _uniqueId from 'lodash/uniqueId'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna, faArrowsAltV, faArrowsAltH, faArrowsAlt } from '@fortawesome/free-solid-svg-icons'
 
-import { log, startPendingEvent } from 'lib/metrics-api'
-import {getExpressionHeatmapURL, getAnnotationCellValuesURL, getGeneListColsURL} from 'lib/scp-api'
-import { morpheusTabManager } from './DotPlot'
+import { log } from 'lib/metrics-api'
+import { getExpressionHeatmapURL, getAnnotationCellValuesURL, getGeneListColsURL } from 'lib/scp-api'
+import { morpheusTabManager, logMorpheusPerfTime } from './DotPlot'
 import { useUpdateEffect } from 'hooks/useUpdate'
 
 export const ROW_CENTERING_OPTIONS = [
@@ -46,20 +46,23 @@ export default function Heatmap({
   let annotationCellValuesURL
   // determine where we get our column headers from
   if (!geneList) {
-    annotationCellValuesURL = getAnnotationCellValuesURL({studyAccession,
+    annotationCellValuesURL = getAnnotationCellValuesURL({
+      studyAccession,
       cluster,
       annotationName: annotation.name,
       annotationScope: annotation.scope,
       annotationType: annotation.type,
-      subsample})
+      subsample
+    })
   } else {
-    annotationCellValuesURL = getGeneListColsURL({studyAccession, geneList})
+    annotationCellValuesURL = getGeneListColsURL({ studyAccession, geneList })
   }
 
   useEffect(() => {
     // we can't render until we know what the cluster is, since morpheus requires the annotation name
     if (cluster) {
-      const plotEvent = startPendingEvent('plot:heatmap', window.SCP.getLogPlotProps())
+      performance.mark(`perfTimeStart-${graphId}`)
+
       log('heatmap:initialize')
       morpheusHeatmap.current = renderHeatmap({
         target: `#${graphId}`,
@@ -69,7 +72,6 @@ export default function Heatmap({
         fit: heatmapFit,
         rowCentering: heatmapRowCentering
       })
-      plotEvent.complete()
     }
   }, [
     studyAccession,
@@ -124,7 +126,10 @@ function renderHeatmap({
     // We implement our own trivial tab manager as it seems to be the only way
     // (after 2+ hours of digging) to prevent morpheus auto-scrolling
     // to the heatmap once it's rendered
-    tabManager: morpheusTabManager($target)
+    tabManager: morpheusTabManager($target),
+    loadedCallback() {
+      logMorpheusPerfTime(target, 'heatmap')
+    }
   }
 
   // Fit rows, columns, or both to screen
@@ -155,7 +160,7 @@ function renderHeatmap({
       { field: annotationName, order: 0 }
     ]
     config.columns = [
-      { field: 'id', display: 'text'},
+      { field: 'id', display: 'text' },
       { field: annotationName, display: 'color' }
     ]
     config.rows = [

@@ -345,9 +345,9 @@ export async function fetchExpressionViolin(
   const apiUrl = `/studies/${studyAccession}/expression/violin${stringifyQuery(paramObj)}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  const [violin] = await scpApi(apiUrl, defaultInit(), mock, false)
+  const [violin, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
 
-  return violin
+  return [violin, perfTime]
 }
 
 
@@ -407,7 +407,7 @@ export function getGeneListColsURL({ studyAccession, geneList }) {
 /**
  * Returns an URL for fetching heatmap expression data for genes in a study
  *
- * A URL generator rather than a fetch funtion is provided as morpheus needs a URL string
+ * A URL generator rather than a fetch function is provided as Morpheus needs a URL string
  *
  * @param {String} studyAccession study accession
  * @param {String} geneList: name of gene list to load (overrides cluster/annotation/subsample values)
