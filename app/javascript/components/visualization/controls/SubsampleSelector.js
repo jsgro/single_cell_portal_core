@@ -16,7 +16,8 @@ function getSubsampleOptions(annotationList, clusterName) {
       clusterSubsamples = []
     }
     subsampleOptions = subsampleOptions.concat(clusterSubsamples.map(num => {
-      return { label: `${num}`, value: num }
+      // convert everything to strings to make the comparisons easier
+      return { label: `${num}`, value: `${num}` }
     }))
   }
   subsampleOptions.push({ label: 'All Cells', value: 'all' })
@@ -52,8 +53,8 @@ export default function SubsampleSelector({
       </label>
       <Select options={subsampleOptions}
         value={{
-          label: subsample == 'all' ? 'All Cells' : subsample,
-          value: subsample
+          label: subsample == 'all' ? 'All Cells' : `${subsample}`,
+          value: `${subsample}`
         }}
         onChange={newSubsample => updateClusterParams({
           subsample: newSubsample.value
