@@ -759,6 +759,15 @@ ul.pager li.dimmed {
 	border-radius: 5px;
 }
 
+.dot-plot-legend-container {
+  margin-top: 1em;
+  width: 400px;
+  height: 70px;
+  text {
+    font-size: 0.9em;
+  }
+}
+
 // Overridding some default CKEditor styles to allow for larger editor windows by default
 
 .ck-editor__editable {
