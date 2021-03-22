@@ -11,6 +11,7 @@ import Heatmap from 'components/visualization/Heatmap'
 import GenomeView from './GenomeView'
 import { getAnnotationValues } from 'lib/cluster-utils'
 import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
+import InferCNVIdeogram from 'components/visualization/InferCNVIdeogram'
 import useResizeEffect from 'hooks/useResizeEffect'
 
 const tabList = [
@@ -20,7 +21,8 @@ const tabList = [
   { key: 'dotplot', label: 'Dot Plot' },
   { key: 'heatmap', label: 'Heatmap' },
   { key: 'spatial', label: 'Spatial' },
-  { key: 'genome', label: 'Genome' }
+  { key: 'genome', label: 'Genome' },
+  { key: 'infercnv-genome', label: 'Genome (inferCNV)' }
 ]
 
 const ideogramHeight = 140
@@ -46,13 +48,8 @@ export default function ExploreDisplayTabs(
   }
 ) {
   const [, setRenderForcer] = useState({})
-  const isMultiGene = exploreParams.genes.length > 1
-  const isGene = exploreParams.genes.length > 0
   const plotContainerClass = 'explore-plot-tab-content'
-  const hasSpatialGroups = exploreInfo && exploreInfo.spatialGroups.length > 0
-  const hasGenomeFiles = exploreInfo && exploreInfo.bamBundleList.length > 0
-  const enabledTabs = getEnabledTabs(isGene, isMultiGene, hasSpatialGroups, !!exploreParams.consensus, hasGenomeFiles)
-
+  const { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs } = getEnabledTabs(exploreInfo, exploreParams)
 
   // exploreParams object without genes specified, to pass to cluster comparison plots
   const referencePlotDataParams = _clone(exploreParams)
@@ -60,27 +57,8 @@ export default function ExploreDisplayTabs(
 
   /** helper function so that StudyGeneField doesn't have to see the full exploreParams object */
   function searchGenes(genes, logProps) {
-    const trigger = logProps ? logProps.type : 'clear'
-
-    // Properties logged for all gene searches from Study Overview
-    const defaultLogProps = {
-      type: 'gene',
-      context: 'study',
-      genes,
-      numGenes: genes.length,
-      trigger, // "submit", "click", or "click-related-genes"
-      speciesList: exploreInfo.taxonNames
-    }
-
-    // Merge log props from custom event
-    if (trigger === 'click-related-genes') {
-      Object.assign(logProps, defaultLogProps)
-    }
-
-    // TODO: Log study gene search, to not break existing analytics
-    // Avoid logging `clear` trigger; it is not a search
-
-    updateExploreParams({ genes })
+    // also unset any selected gene lists or ideogram files
+    updateExploreParams({ genes, geneList: '', ideogramFileId: '' })
   }
 
   // Handle spatial transcriptomics data
@@ -127,7 +105,8 @@ export default function ExploreDisplayTabs(
   if (
     exploreInfo &&
     exploreInfo.taxonNames.length === 1 &&
-    exploreParams.genes.length === 1
+    exploreParams.genes.length === 1 &&
+    !isGeneList
   ) {
     showRelatedGenesIdeogram = true
     currentTaxon = exploreInfo.taxonNames[0]
@@ -194,12 +173,12 @@ export default function ExploreDisplayTabs(
   return (
     <>
       <div className="row">
-        <div className="col-md-5">
+        <div className="col-md-6">
           <div className="flexbox">
             <StudyGeneField genes={exploreParams.genes}
               searchGenes={searchGenes}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-            <button className={isGene ? 'action fa-lg' : 'hidden'}
+            <button className={isGene || isGeneList || hasIdeogramOutputs ? 'action fa-lg' : 'hidden'} // show if this is gene search || gene list
               onClick={() => searchGenes([])}
               title="Return to cluster view"
               data-toggle="tooltip"
@@ -213,7 +192,7 @@ export default function ExploreDisplayTabs(
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
-                <li key={tabKey} role="presentation" className={`study-nav ${tabKey === shownTab ? 'active' : ''}`}>
+                <li key={tabKey} role="presentation" className={`study-nav ${tabKey === shownTab ? 'active' : ''} ${tabKey}-tab-anchor`}>
                   <a onClick={() => updateExploreParams({ tab: tabKey })}>{label}</a>
                 </li>
               )
@@ -403,6 +382,7 @@ export default function ExploreDisplayTabs(
               <StudyViolinPlot
                 studyAccession={studyAccession}
                 updateDistributionPlot={distributionPlot => updateExploreParams({ distributionPlot }, false)}
+                dimensions={getPlotDimensions({})}
                 {...exploreParams}/>
             </div>
           }
@@ -436,16 +416,36 @@ export default function ExploreDisplayTabs(
                 updateExploreParams={updateExploreParams}/>
             </div>
           }
+          { enabledTabs.includes('infercnv-genome') &&
+          <div className={shownTab === 'infercnv-genome' ? '' : 'hidden'}>
+            <InferCNVIdeogram
+              studyAccession={studyAccession}
+              ideogramFileId={exploreParams?.ideogramFileId}
+              inferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
+              showViewOptionsControls={showViewOptionsControls}
+            />
+          </div>
+          }
         </div>
       </div>
     </>
   )
 }
 
-/** return an array of the tabs that should be shown, given the dataParams and exploreInfo */
-function getEnabledTabs(isGene, isMultiGene, hasSpatialGroups, isConsensus, hasGenomeFiles) {
+/** return an array of the tabs that should be shown, given the exploreParams and exploreInfo */
+export function getEnabledTabs(exploreInfo, exploreParams) {
+  const isGeneList = !!exploreParams.geneList
+  const isMultiGene = exploreParams?.genes?.length > 1
+  const isGene = exploreParams?.genes?.length > 0
+  const isConsensus = !!exploreParams.consensus
+  const hasClusters = exploreInfo && exploreInfo.clusterGroupNames.length > 0
+  const hasSpatialGroups = exploreInfo && exploreInfo?.spatialGroups?.length > 0
+  const hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
+  const hasIdeogramOutputs = !!exploreInfo?.inferCNVIdeogramFiles
   let enabledTabs = []
-  if (isGene) {
+  if (isGeneList) {
+    enabledTabs = ['heatmap']
+  } else if (isGene) {
     if (isMultiGene) {
       if (isConsensus) {
         enabledTabs = ['scatter', 'distribution', 'dotplot']
@@ -457,11 +457,14 @@ function getEnabledTabs(isGene, isMultiGene, hasSpatialGroups, isConsensus, hasG
     } else {
       enabledTabs = ['scatter', 'distribution']
     }
-  } else {
+  } else if (hasClusters) {
     enabledTabs = ['cluster']
   }
   if (hasGenomeFiles) {
     enabledTabs.push('genome')
   }
-  return enabledTabs
+  if (hasIdeogramOutputs) {
+    enabledTabs.push('infercnv-genome')
+  }
+  return { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs }
 }

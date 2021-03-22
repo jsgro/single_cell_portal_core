@@ -6,8 +6,11 @@ import Plotly from 'plotly.js-dist'
 
 import { fetchCluster } from 'lib/scp-api'
 import { labelFont, getColorBrewerColor } from 'lib/plot'
-import { useUpdateLayoutEffect } from 'hooks/useUpdate'
+import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
+import { log } from 'lib/metrics-api'
+import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
@@ -32,32 +35,65 @@ export const defaultScatterColor = 'Reds'
   * @plotPointsSelected {function} callback for when a user selects points on the plot, which corresponds
   *   to the plotly "points_selected" event
   */
-export default function ScatterPlot({
+function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
   updateScatterColor, isCellSelecting=false, plotPointsSelected
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
-
+  const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
-    // Get Plotly layout
-    const layout = getPlotlyLayout(clusterResponse)
-    const { width, height } = dimensions
-    layout.width = width
-    layout.height = height
-    formatMarkerColors(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
-    formatHoverLabels(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
-    const dataScatterColor = processTraceScatterColor(clusterResponse.data, scatterColor)
-    Plotly.newPlot(graphElementId, clusterResponse.data, layout)
-    $(`#${graphElementId}`).off('plotly_selected')
-    $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
+    const [scatter, perfTime] = clusterResponse
 
-    if (dataScatterColor !== scatterColor) {
-      updateScatterColor(dataScatterColor)
+    const apiOk = checkScpApiResponse(scatter,
+      () => Plotly.purge(graphElementId),
+      setShowError,
+      setErrorContent)
+
+    if (apiOk) {
+      // Get Plotly layout
+      const layout = getPlotlyLayout(scatter)
+      const { width, height } = dimensions
+      layout.width = width
+      layout.height = height
+      formatMarkerColors(scatter.data, scatter.annotParams.type, scatter.gene)
+      formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene)
+      const dataScatterColor = processTraceScatterColor(scatter.data, scatterColor)
+
+      const perfTimeFrontendStart = performance.now()
+
+      Plotly.newPlot(graphElementId, scatter.data, layout)
+
+      const perfTimeFrontend = performance.now() - perfTimeFrontendStart
+
+      const perfTimeFull = perfTime + perfTimeFrontend
+
+      const perfLogProps = {
+        'perfTime:backend': perfTime, // Time for API call
+        'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
+        'perfTime': Math.round(perfTimeFull), // Time from API call *start* to plot render end,
+        'numPoints': scatter.numPoints, // How many cells are we plotting?
+        genes,
+        'gene': scatter.gene,
+        'is3D': scatter.is3D,
+        'layout:width': width, // Pixel width of graph
+        'layout:height': height, // Pixel height of graph
+        'numAnnotSelections': scatter.annotParams.values.length,
+        'annotName': scatter.annotParams.name,
+        'annotType': scatter.annotParams.type,
+        'annotScope': scatter.annotParams.scope
+      }
+
+      log('plot:scatter', perfLogProps)
+
+      if (dataScatterColor !== scatterColor) {
+        updateScatterColor(dataScatterColor)
+      }
+      setClusterData(scatter)
+      setShowError(false)
     }
-    setClusterData(clusterResponse)
     setIsLoading(false)
   }
 
@@ -73,7 +109,7 @@ export default function ScatterPlot({
   }, [cluster, annotation.name, subsample, consensus, genes.join(',')])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
-  useUpdateLayoutEffect(() => {
+  useUpdateEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
       console.log('updating color scale')
@@ -83,7 +119,7 @@ export default function ScatterPlot({
   }, [scatterColor])
 
   // Handles cell select mode updates
-  useUpdateLayoutEffect(() => {
+  useUpdateEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
       console.log('updating drag mode')
@@ -96,7 +132,7 @@ export default function ScatterPlot({
   }, [isCellSelecting])
 
   // Adjusts width and height of plots upon toggle of "View Options"
-  useUpdateLayoutEffect(() => {
+  useUpdateEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
       const { width, height } = dimensions
@@ -105,12 +141,25 @@ export default function ScatterPlot({
     }
   }, [dimensions.width, dimensions.height])
 
+  useEffect(() => {
+    $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
+    $(`#${graphElementId}`).on('plotly_legendclick', logLegendClick)
+    $(`#${graphElementId}`).on('plotly_legenddoubleclick', logLegendDoubleClick)
+    return () => {
+      $(`#${graphElementId}`).off('plotly_selected', plotPointsSelected)
+      $(`#${graphElementId}`).off('plotly_legendclick', logLegendClick)
+      $(`#${graphElementId}`).off('plotly_legenddoubleclick', logLegendDoubleClick)
+    }
+  }, [])
+
   return (
     <div className="plot">
+      { ErrorComponent }
       { clusterData &&
         <PlotTitle
           cluster={clusterData.cluster}
           annotation={clusterData.annotParams.name}
+          subsample={clusterData.subsample}
           gene={clusterData.gene}
           consensus={clusterData.consensus}/>
       }
@@ -138,6 +187,10 @@ export default function ScatterPlot({
   )
 }
 
+const ScatterPlot = withErrorBoundary(RawScatterPlot)
+export default ScatterPlot
+
+
 /** add trace marker colors to group annotations */
 function formatMarkerColors(data, annotationType, gene) {
   if (annotationType === 'group' && !gene) {
@@ -151,9 +204,13 @@ function formatMarkerColors(data, annotationType, gene) {
 function formatHoverLabels(data, annotationType, gene) {
   const groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{data.name}<extra></extra>'
   data.forEach(trace => {
+    trace.text = trace.cells
     if (annotationType === 'numeric' || gene) {
-      trace.text = trace.annotations
-      trace.hovertemplate = `(%{x}, %{y})<br>%{text}<br>${trace.marker.colorbar.title}: %{marker.color}<extra></extra>`
+      // use the 'meta' property so annotations are exposed to the hover template
+      // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
+      trace.meta = trace.annotations
+      trace.hovertemplate = `(%{x}, %{y})<br>%{text} (%{meta})<br>
+        ${trace.marker.colorbar.title}: %{marker.color}<extra></extra>`
     } else {
       trace.text = trace.cells
       trace.hovertemplate = groupHoverTemplate
@@ -295,3 +352,21 @@ function getDragMode(isCellSelecting) {
   return isCellSelecting ? 'lasso' : 'lasso, select'
 }
 
+
+let currentClickCall = null
+
+/** we don't want to fire two single click events for a double click, so
+ * we wait until we've confirmed a click isn't a double click before logging it.
+ * Unfortunately (despite the docs indicating otherwise), there doesn't seem to be
+ * a way of getting the text of the clicked annotation
+ */
+function logLegendClick(event) {
+  clearTimeout(currentClickCall)
+  currentClickCall = setTimeout(() => log('click:scatterlegend:single'), 300)
+}
+
+/** log a double-click on a plotly graph legend */
+function logLegendDoubleClick(event) {
+  clearTimeout(currentClickCall)
+  log('click:scatterlegend:double')
+}

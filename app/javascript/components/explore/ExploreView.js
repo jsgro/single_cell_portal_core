@@ -16,7 +16,9 @@ import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { fetchExplore } from 'lib/scp-api'
 import useExploreTabRouter from './ExploreTabRouter'
 import { getDefaultClusterParams, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
-
+import GeneListSelector from 'components/visualization/controls/GeneListSelector'
+import { log } from 'lib/metrics-api'
+import InferCNVIdeogramSelector from 'components/visualization/controls/InferCNVIdeogramSelector'
 
 /**
  * manages view options and basic layout for the explore tab
@@ -27,7 +29,7 @@ function RoutableExploreTab({ studyAccession }) {
   const [exploreInfo, setExploreInfo] = useState(null)
   // tracks whetehr the view options controls are open or closed
   const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
-  // whether the user is in lass-select mode for selecting points for an annotation
+  // whether the user is in lasso-select mode for selecting points for an annotation
   const [isCellSelecting, setIsCellSelecting] = useState(false)
   // a plotly points_selected event
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
@@ -41,7 +43,7 @@ function RoutableExploreTab({ studyAccession }) {
   // this is kept separate so that the graphs do not see the change in cluster name from '' to
   // '<<default cluster>>' as a change that requires a re-fetch from the server
   let controlExploreParams = _clone(exploreParams)
-  if (exploreInfo && !exploreParams.cluster) {
+  if (exploreInfo && !exploreParams.cluster && exploreInfo.clusterGroupNames.length > 0) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
     controlExploreParams = Object.assign(controlExploreParams,
       getDefaultClusterParams(annotationList, exploreInfo.spatialGroups))
@@ -71,6 +73,7 @@ function RoutableExploreTab({ studyAccession }) {
 
   /** handler for when the user selects points in a plotly scatter graph */
   function plotPointsSelected(points) {
+    log('select:scatter:cells')
     setCurrentPointsSelected(points)
   }
 
@@ -86,12 +89,24 @@ function RoutableExploreTab({ studyAccession }) {
     }
     // if the user updates any cluster params, store all of them in the URL so we don't end up with
     // broken urls in the event of a default cluster/annotation changes
-    const updateParams = {}
+    // also, unset any gene lists as we're about to re-render the explore tab and having gene list selected will show
+    // the wrong tabs
+    const updateParams = { geneList: '', ideogramFileId: '' }
     const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
     clusterParamNames.forEach(param => {
       updateParams[param] = param in newParams ? newParams[param] : controlExploreParams[param]
     })
     updateExploreParams(updateParams)
+  }
+
+  /** handles gene list selection */
+  function updateGeneList(geneList) {
+    updateExploreParams({ geneList })
+  }
+
+  // handles updating inferCNV/ideogram selection
+  function updateInferCNVIdeogramFile(annotationFile) {
+    updateExploreParams({ ideogramFileId: annotationFile, tab: 'infercnv-genome' })
   }
 
   useEffect(() => {
@@ -100,9 +115,9 @@ function RoutableExploreTab({ studyAccession }) {
 
   // Toggle "View Options" panel
   const viewOptionsIcon = showViewOptionsControls ? faCaretUp : faCaretDown
-  let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden view-options', 'closed']
+  let [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-12', 'hidden view-options']
   if (showViewOptionsControls) {
-    [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2 view-options', 'open']
+    [mainViewClass, controlPanelClass, optionsLinkClass] = ['col-md-10', 'col-md-2 view-options']
   }
 
   return (
@@ -119,7 +134,14 @@ function RoutableExploreTab({ studyAccession }) {
             isCellSelecting={isCellSelecting}
             plotPointsSelected={plotPointsSelected}/>
         </div>
+        <div className="col-sm-12 mobile-view-options">
+          <a className={`action view-options-toggle ${optionsLinkClass}`}
+            onClick={handleViewOptionsClick}>
+            View Options <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/>
+          </a>
+        </div>
         <div className={controlPanelClass}>
+
           <div className="cluster-controls">
             <ClusterSelector
               annotationList={annotationList}
@@ -153,10 +175,24 @@ function RoutableExploreTab({ studyAccession }) {
               cluster={controlExploreParams.cluster}
               subsample={controlExploreParams.subsample}
               updateClusterParams={updateClusterParams}/>
+
+            { exploreInfo?.geneLists?.length > 0 &&
+              <GeneListSelector
+                geneList={controlExploreParams.geneList}
+                studyGeneLists={exploreInfo.geneLists}
+                updateGeneList={updateGeneList}/>
+            }
             { exploreParams.genes.length > 1 &&
               <ExploreConsensusSelector
                 consensus={controlExploreParams.consensus}
                 updateConsensus={consensus => updateExploreParams({ consensus })}/>
+            }
+            { !!exploreInfo?.inferCNVIdeogramFiles &&
+                <InferCNVIdeogramSelector
+                  inferCNVIdeogramFile={controlExploreParams.ideogramFileId}
+                  studyInferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
+                  updateInferCNVIdeogramFile={updateInferCNVIdeogramFile}
+                />
             }
           </div>
           <PlotDisplayControls
@@ -170,10 +206,12 @@ function RoutableExploreTab({ studyAccession }) {
           </button>
         </div>
       </div>
-      <a className={`action view-options-toggle ${optionsLinkClass}`}
-        onClick={handleViewOptionsClick}>
-        View Options <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/>
-      </a>
+      <div className="desktop-view-options">
+        <a className={`action view-options-toggle ${optionsLinkClass}`}
+          onClick={handleViewOptionsClick}>
+          View Options <FontAwesomeIcon className="fa-lg" icon={viewOptionsIcon}/>
+        </a>
+      </div>
     </div>
   )
 }
@@ -189,6 +227,7 @@ export default function ExploreTab({ studyAccession }) {
 
 /** convenience function for rendering this in a non-React part of the application */
 export function renderExploreView(target, studyAccession) {
+  ReactDOM.unmountComponentAtNode(target)
   ReactDOM.render(
     <ExploreTab studyAccession={studyAccession}/>,
     target

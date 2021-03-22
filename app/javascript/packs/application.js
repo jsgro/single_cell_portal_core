@@ -41,21 +41,12 @@ import exploreSingle from 'lib/study-overview/explore-single'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
 
-// Stub, for later
-// import exploreMultipleGenes from 'lib/study-overview/explore-multiple-genes'
-
-
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI
   logPageView()
 
-  $(document).on('click', 'body', event => {
-    logClick(event)
-  })
-
-  $(document).on('change', 'select', event => {
-    logMenuChange(event)
-  })
+  $(document).on('click', 'body', logClick)
+  $(document).on('change', 'select', logMenuChange)
 
   if (document.getElementById('home-page-content')) {
     ReactDOM.render(
@@ -78,6 +69,7 @@ window.$ = $
 window.jQuery = $
 window.Spinner = Spinner
 window.morpheus = morpheus
+
 window.igv = igv
 window.Ideogram = Ideogram
 window.getViolinProps = getViolinProps
@@ -91,6 +83,12 @@ window.SCP.exploreSingle = exploreSingle
 window.SCP.renderClusterAssociationSelect = renderClusterAssociationSelect
 window.SCP.renderExploreView = renderExploreView
 window.Plotly = Plotly
+
+// Remove the block below only after launching React Explore refactor
+import { getScatterPlots } from 'lib/scatter-plot'
+import userAnnotations from 'lib/study-overview/user-annotations'
+window.SCP.getScatterPlots = getScatterPlots
+window.SCP.userAnnotations = userAnnotations
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code

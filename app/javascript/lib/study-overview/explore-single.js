@@ -101,5 +101,4 @@ export default async function exploreSingle() {
   renderSingleGenePlots(study, gene)
 
   closeUserAnnotationsForm()
-
 }

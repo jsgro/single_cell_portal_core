@@ -274,7 +274,7 @@ export async function scatterPlot(apiParams, props) {
   $('#search_annotation').val(annotation)
   $('#gene_set_annotation').val(annotation)
 
-  const fetchedData = await fetchCluster(
+  const [fetchedData] = await fetchCluster(
     accession, cluster, annotation, subsample, null, gene, isAnnotatedScatter
   )
   const rawPlot = Object.assign(fetchedData, props)

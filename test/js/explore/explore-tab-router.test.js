@@ -1,6 +1,19 @@
 import * as Reach from '@reach/router'
+import React from 'react'
+import { mount } from 'enzyme';
 
 import useExploreTabRouter from 'components/explore/ExploreTabRouter'
+
+/** useExploreTabRouter has useEffects, so we can't test it as a pure JS function
+ * so we have this mock component which puts the return values of useExploreTabRouter
+ * onto a passed-in object so they can be accessed for testing
+ */
+function FakeRouterComponent({testObj}) {
+  const { exploreParams, updateExploreParams } = useExploreTabRouter()
+  testObj.exploreParams = exploreParams
+  testObj.updateExploreParams = updateExploreParams
+  return <span>Mock</span>
+}
 
 describe('dataParams are appropriately managed on the url', () => {
   it('provides empty cluster params from a blank url', async () => {
@@ -9,11 +22,13 @@ describe('dataParams are appropriately managed on the url', () => {
     const locationMock = jest.spyOn(Reach, 'useLocation')
     locationMock.mockImplementation(() => ({ search: '' }))
 
-    const { exploreParams, updateExploreParams } = useExploreTabRouter()
-    expect(exploreParams.cluster).toEqual('')
-    expect(exploreParams.annotation).toEqual({ name: '', type: '', scope: '' })
+    const testObj = {}
+    const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
 
-    updateExploreParams({ cluster: 'foo' })
+    expect(testObj.exploreParams.cluster).toEqual('')
+    expect(testObj.exploreParams.annotation).toEqual({ name: '', type: '', scope: '' })
+
+    testObj.updateExploreParams({ cluster: 'foo' })
     expect(routerNav).toHaveBeenLastCalledWith('?cluster=foo#study-visualize', { replace: true })
   })
 
@@ -22,12 +37,13 @@ describe('dataParams are appropriately managed on the url', () => {
     routerNav.mockImplementation(() => {})
     const locationMock = jest.spyOn(Reach, 'useLocation')
     locationMock.mockImplementation(() => ({ search: '?cluster=foo&annotation=bar--group--study' }))
+    const testObj = {}
+    const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
 
-    const { exploreParams, updateExploreParams } = useExploreTabRouter()
-    expect(exploreParams.cluster).toEqual('foo')
-    expect(exploreParams.annotation).toEqual({ name: 'bar', type: 'group', scope: 'study' })
+    expect(testObj.exploreParams.cluster).toEqual('foo')
+    expect(testObj.exploreParams.annotation).toEqual({ name: 'bar', type: 'group', scope: 'study' })
 
-    updateExploreParams({ annotation: { name: 'bar2', type: 'numeric', scope: 'user' } })
+    testObj.updateExploreParams({ annotation: { name: 'bar2', type: 'numeric', scope: 'user' } })
     expect(routerNav).toHaveBeenLastCalledWith('?cluster=foo&annotation=bar2--numeric--user#study-visualize', { replace: true })
   })
 
@@ -39,20 +55,24 @@ describe('dataParams are appropriately managed on the url', () => {
     const routerNav = jest.spyOn(Reach, 'navigate')
     routerNav.mockImplementation(() => {})
     const locationMock = jest.spyOn(Reach, 'useLocation')
-    let urlString = '?genes=agpat2,apoe&cluster=foo&annotation=bar--group--study&subsample=1000'
+    let urlString = '?geneList=My%20List&genes=agpat2,apoe&cluster=foo&annotation=bar--group--study&subsample=1000'
     urlString += '&spatialGroups=square,circle&consensus=mean&heatmapRowCentering=z-score&bamFileName=sample1.bam'
+    urlString += '&ideogramFileId=604fc5c4e241391a8ff93271'
     locationMock.mockImplementation(() => ({ search: urlString }))
+    const testObj = {}
+    const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
 
-    const { exploreParams, updateExploreParams } = useExploreTabRouter()
-    expect(exploreParams).toEqual({
+    expect(testObj.exploreParams).toEqual({
       cluster: 'foo',
       genes: ['agpat2', 'apoe'],
+      geneList: 'My List',
       bamFileName: 'sample1.bam',
       annotation: { name: 'bar', type: 'group', scope: 'study' },
       subsample: '1000',
       spatialGroups: ['square', 'circle'],
       consensus: 'mean',
       heatmapRowCentering: 'z-score',
+      ideogramFileId: '604fc5c4e241391a8ff93271',
       distributionPlot: '',
       distributionPoints: '',
       heatmapFit: '',
@@ -64,15 +84,17 @@ describe('dataParams are appropriately managed on the url', () => {
         cluster: true,
         consensus: true,
         genes: true,
+        geneList: true,
         spatialGroups: true,
         subsample: true,
-        heatmapRowCentering: true
+        heatmapRowCentering: true,
+        ideogramFileId: true
       }
     })
 
-    updateExploreParams({ spatialGroups: ['triangle'] })
-    let expectedUrlString = '?genes=agpat2%2Capoe&cluster=foo&spatialGroups=triangle&annotation=bar--group--study&subsample=1000'
-    expectedUrlString += '&consensus=mean&heatmapRowCentering=z-score&bamFileName=sample1.bam#study-visualize'
+    testObj.updateExploreParams({ spatialGroups: ['triangle'] })
+    let expectedUrlString = '?geneList=My%20List&genes=agpat2%2Capoe&cluster=foo&spatialGroups=triangle&annotation=bar--group--study&subsample=1000'
+    expectedUrlString += '&consensus=mean&heatmapRowCentering=z-score&bamFileName=sample1.bam&ideogramFileId=604fc5c4e241391a8ff93271#study-visualize'
     expect(routerNav).toHaveBeenLastCalledWith(expectedUrlString, { replace: true })
   })
 })

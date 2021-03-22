@@ -42,13 +42,14 @@ base_vault_path = "secret/kdux/scp/development/#{username}"
 vault_secret_path = "#{base_vault_path}/scp_config.json"
 read_only_service_account_path = "#{base_vault_path}/read_only_service_account.json"
 service_account_path = "#{base_vault_path}/scp_service_account.json"
+mongo_user_path = "#{base_vault_path}/mongo/user"
 
 # defaults
 PASSENGER_APP_ENV = environment
 CONFIG_DIR = File.expand_path('.') + "/config"
 
   # load raw secrets from vault
-puts 'Processing secret parameters from vault'
+puts 'Processing secret parameters from Vault'
 secret_string = `vault read -format=json #{vault_secret_path}`
 secret_data_hash = JSON.parse(secret_string)['data']
 
@@ -56,9 +57,12 @@ secret_data_hash.each do |key, value|
   source_file_string += "export #{key}=#{value}\n"
 end
 
+mongo_user_string = `vault read -format=json #{mongo_user_path}`
+mongo_user_hash = JSON.parse(mongo_user_string)['data']
+
 source_file_string += "export DATABASE_NAME=single_cell_portal_development\n"
-source_file_string += "export MONGODB_USERNAME=#{secret_data_hash['MONGODB_ADMIN_USER']}\n"
-source_file_string += "export MONGODB_PASSWORD=#{secret_data_hash['MONGODB_ADMIN_PASSWORD']}\n"
+source_file_string += "export MONGODB_USERNAME=#{mongo_user_hash['username']}\n"
+source_file_string += "export MONGODB_PASSWORD=#{mongo_user_hash['password']}\n"
 source_file_string += "export DATABASE_HOST=#{secret_data_hash['MONGO_LOCALHOST']}\n"
 
 puts 'Processing service account info'

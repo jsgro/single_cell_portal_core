@@ -485,6 +485,10 @@ h6,
   display: flex;
 }
 
+.align-center {
+	align-items: center;
+}
+
 /* Override bootstrap styles to SCP colors */
 .alert.alert-info {
   color: $action-color;
@@ -747,6 +751,20 @@ ul.pager li.dimmed {
   }
   to {
     transform: rotateY(-360deg);
+  }
+}
+
+.error-boundary {
+	padding: 0.5em;
+	border-radius: 5px;
+}
+
+.dot-plot-legend-container {
+  margin-top: 1em;
+  width: 400px;
+  height: 70px;
+  text {
+    font-size: 0.9em;
   }
 }
 

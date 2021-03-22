@@ -66,10 +66,23 @@ class ClusterVizService
   # only options allowed are 1000, 10000, 20000, and 100000
   # will only provide options if subsampling has completed for a cluster
   def self.subsampling_options(cluster)
+    num_points = cluster.points
     if cluster.is_subsampling?
       []
     else
-      ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < cluster.points}
+      ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < num_points}
+    end
+  end
+
+  # return an array of values to use for subsampling dropdown scaled to number of cells in study
+  # only options allowed are 1000, 10000, 20000, and 100000
+  # will only provide options if subsampling has completed for a cluster
+  def self.default_subsampling(cluster)
+    num_points = cluster.points
+    if num_points < 10000
+      return nil
+    else
+      ClusterGroup::SUBSAMPLE_THRESHOLDS.select{|val| val <= 10000}.max
     end
   end
 
