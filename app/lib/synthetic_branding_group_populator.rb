@@ -59,8 +59,9 @@ class SyntheticBrandingGroupPopulator
     image_info = branding_group_config.dig('images')
     # dynamically assign image files
     image_info.each do |attribute_name, filename|
-      image_file = File.open(Rails.root.join('test', 'test_data', 'branding_groups', filename))
-      branding_group.send("#{attribute_name}=", image_file)
+      File.open(Rails.root.join('test', 'test_data', 'branding_groups', filename)) do |image_file|
+        branding_group.send("#{attribute_name}=", image_file)
+      end
     end
     puts "Saving branding group #{branding_group.name}"
     branding_group.save!

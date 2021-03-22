@@ -45,9 +45,11 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
   test 'should only run cleanup job 3 times on error' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    file = File.open(Rails.root.join('test', 'test_data', 'table_1.xlsx'))
-    study_file = StudyFile.create!(study_id: @study.id, file_type: 'Other', upload: file)
-    @study.send_to_firecloud(study_file)
+    File.open(Rails.root.join('test', 'test_data', 'table_1.xlsx')) do |file|
+      study_file = StudyFile.create!(study_id: @study.id, file_type: 'Other', upload: file)
+      @study.send_to_firecloud(study_file)
+    end
+
     remote = ApplicationController.firecloud_client.get_workspace_file(@study.bucket_id, study_file.bucket_location)
     assert remote.present?, "File did not push to study bucket, no remote found"
 
