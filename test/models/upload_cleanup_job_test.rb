@@ -47,7 +47,7 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
 
     File.open(Rails.root.join('test', 'test_data', 'table_1.xlsx')) do |file|
       @study_file = StudyFile.create!(study_id: @study.id, file_type: 'Other', upload: file)
-      @study.send_to_firecloud(study_file)
+      @study.send_to_firecloud(@study_file)
     end
 
     remote = ApplicationController.firecloud_client.get_workspace_file(@study.bucket_id, @study_file.bucket_location)
