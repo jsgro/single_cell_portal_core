@@ -3,7 +3,7 @@ import _uniqueId from 'lodash/uniqueId'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 
-import { log, startPendingEvent } from 'lib/metrics-api'
+import { log } from 'lib/metrics-api'
 import { getColorBrewerColor } from 'lib/plot'
 import DotPlotLegend from './DotPlotLegend'
 import { getAnnotationCellValuesURL, getExpressionHeatmapURL } from 'lib/scp-api'
@@ -45,7 +45,8 @@ function RawDotPlot({
 
   useEffect(() => {
     if (annotation.name) {
-      const plotEvent = startPendingEvent('plot:dot', window.SCP.getLogPlotProps())
+      performance.mark(`perfTimeStart-${graphId}`)
+
       log('dot-plot:initialize')
       setShowError(false)
       renderDotPlot({
@@ -55,9 +56,9 @@ function RawDotPlot({
         annotationName: annotation.name,
         annotationValues,
         setErrorContent,
-        setShowError
+        setShowError,
+        genes
       })
-      plotEvent.complete()
     }
   }, [
     expressionValuesURL,
@@ -85,7 +86,7 @@ export default DotPlot
 /** Render Morpheus dot plot */
 function renderDotPlot({
   target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues,
-  setShowError, setErrorContent
+  setShowError, setErrorContent, genes
 }) {
   const $target = $(target)
   $target.empty()
@@ -116,7 +117,8 @@ function renderDotPlot({
     },
     focus: null,
     tabManager: morpheusTabManager($target),
-    tools
+    tools,
+    loadedCallback: () => logMorpheusPerfTime(target, 'dotplot', genes)
   }
 
   // Load annotations if specified
@@ -174,4 +176,15 @@ export function morpheusTabManager($target) {
     getHeight: () => $target.actual('height'),
     getTabCount: () => 1
   }
+}
+
+/** Log performance timing for Morpheus dot plots and heatmaps */
+export function logMorpheusPerfTime(target, plotType, genes) {
+  const graphId = target.slice(1) // e.g. #dotplot-1 -> dotplot-1
+  performance.measure(graphId, `perfTimeStart-${graphId}`)
+  const perfTime = Math.round(
+    performance.getEntriesByName(graphId)[0].duration
+  )
+
+  log(`plot:${plotType}`, { perfTime, genes })
 }
