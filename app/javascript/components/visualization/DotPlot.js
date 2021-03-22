@@ -118,9 +118,7 @@ function renderDotPlot({
     focus: null,
     tabManager: morpheusTabManager($target),
     tools,
-    loadedCallback() {
-      logMorpheusPerfTime(target, 'dotplot', genes)
-    }
+    loadedCallback: () => logMorpheusPerfTime(target, 'dotplot', genes)
   }
 
   // Load annotations if specified

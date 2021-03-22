@@ -141,9 +141,7 @@ function renderHeatmap({
     // (after 2+ hours of digging) to prevent morpheus auto-scrolling
     // to the heatmap once it's rendered
     tabManager: morpheusTabManager($target),
-    loadedCallback() {
-      logMorpheusPerfTime(target, 'heatmap', genes)
-    }
+    loadedCallback: () => logMorpheusPerfTime(target, 'heatmap', genes)
   }
 
   // Fit rows, columns, or both to screen
