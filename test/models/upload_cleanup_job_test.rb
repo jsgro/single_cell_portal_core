@@ -46,21 +46,21 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     File.open(Rails.root.join('test', 'test_data', 'table_1.xlsx')) do |file|
-      study_file = StudyFile.create!(study_id: @study.id, file_type: 'Other', upload: file)
+      @study_file = StudyFile.create!(study_id: @study.id, file_type: 'Other', upload: file)
       @study.send_to_firecloud(study_file)
     end
 
-    remote = ApplicationController.firecloud_client.get_workspace_file(@study.bucket_id, study_file.bucket_location)
+    remote = ApplicationController.firecloud_client.get_workspace_file(@study.bucket_id, @study_file.bucket_location)
     assert remote.present?, "File did not push to study bucket, no remote found"
 
     # to cause errors in UploadCleanupJobs, remove file from bucket as this will cause UploadCleanupJob to retry later
     remote.delete
-    new_remote = ApplicationController.firecloud_client.get_workspace_file(@study.bucket_id, study_file.bucket_location)
+    new_remote = ApplicationController.firecloud_client.get_workspace_file(@study.bucket_id, @study_file.bucket_location)
     refute new_remote.present?, "Delete did not succeed, found remote: #{new_remote}"
 
     # now find delayed_job instance for UploadCleanupJob for this file for each retry and assert only 3 attempts are made
     0.upto(UploadCleanupJob::MAX_RETRIES).each do |retry_count|
-      cleanup_jobs = DelayedJobAccessor.find_jobs_by_handler_type(UploadCleanupJob, study_file)
+      cleanup_jobs = DelayedJobAccessor.find_jobs_by_handler_type(UploadCleanupJob, @study_file)
       # make sure we're getting the latest job, as the previous may not have fully cleared out of the queue
       latest_job = cleanup_jobs.sort_by(&:created_at).last
       job_handler = DelayedJobAccessor.dump_job_handler(latest_job)
@@ -74,13 +74,13 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
       end
     end
     sleep 5 # give queue a chance to fully clear
-    cleanup_jobs = DelayedJobAccessor.find_jobs_by_handler_type(UploadCleanupJob, study_file)
+    cleanup_jobs = DelayedJobAccessor.find_jobs_by_handler_type(UploadCleanupJob, @study_file)
     refute cleanup_jobs.any?, "Should not have found any cleanup jobs for file but found #{cleanup_jobs.size}"
 
     # clean up
-    study_file.update(remote_location: nil)
-    ApplicationController.firecloud_client.delete_workspace_file(@study.bucket_id, study_file.bucket_location)
-    study_file.destroy
+    @study_file.update(remote_location: nil)
+    ApplicationController.firecloud_client.delete_workspace_file(@study.bucket_id, @study_file.bucket_location)
+    @study_file.destroy
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
