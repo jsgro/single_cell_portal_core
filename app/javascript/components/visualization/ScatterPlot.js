@@ -75,6 +75,7 @@ function RawScatterPlot({
         'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
         'perfTime': Math.round(perfTimeFull), // Time from API call *start* to plot render end,
         'numPoints': scatter.numPoints, // How many cells are we plotting?
+        genes,
         'gene': scatter.gene,
         'is3D': scatter.is3D,
         'layout:width': width, // Pixel width of graph
