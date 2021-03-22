@@ -13,6 +13,7 @@
 
 import React, { useEffect } from 'react'
 
+import { logStudyGeneSearch } from 'lib/metrics-api'
 import Ideogram from 'ideogram'
 
 /** Handle clicks on Ideogram annotations */
@@ -29,8 +30,8 @@ function onClickAnnot(annot) {
   })
 
   event['type'] = 'click-related-genes'
-
-  ideogram.SCP.searchGenes([annot.name], event)
+  logStudyGeneSearch('click-related-genes', null, null, props)
+  ideogram.SCP.searchGenes([annot.name])
 }
 
 /**

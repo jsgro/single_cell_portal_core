@@ -3,9 +3,9 @@ import _uniqueId from 'lodash/uniqueId'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna, faArrowsAltV, faArrowsAltH, faArrowsAlt } from '@fortawesome/free-solid-svg-icons'
 
-import { log, startPendingEvent } from 'lib/metrics-api'
+import { log } from 'lib/metrics-api'
 import { getExpressionHeatmapURL, getAnnotationCellValuesURL, getGeneListColsURL } from 'lib/scp-api'
-import { morpheusTabManager } from './DotPlot'
+import { morpheusTabManager, logMorpheusPerfTime } from './DotPlot'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import useErrorMessage, { morpheusErrorHandler } from 'lib/error-message'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
@@ -65,7 +65,8 @@ function RawHeatmap({
   useEffect(() => {
     // we can't render until we know what the cluster is, since morpheus requires the annotation name
     if (cluster) {
-      const plotEvent = startPendingEvent('plot:heatmap', window.SCP.getLogPlotProps())
+      performance.mark(`perfTimeStart-${graphId}`)
+
       log('heatmap:initialize')
       setShowError(false)
       morpheusHeatmap.current = renderHeatmap({
@@ -76,9 +77,9 @@ function RawHeatmap({
         fit: heatmapFit,
         rowCentering: heatmapRowCentering,
         setShowError,
-        setErrorContent
+        setErrorContent,
+        genes
       })
-      plotEvent.complete()
     }
   }, [
     studyAccession,
@@ -122,7 +123,7 @@ export default Heatmap
 /** Render Morpheus heatmap */
 function renderHeatmap({
   target, expressionValuesURL, annotationCellValuesURL, annotationName,
-  fit, rowCentering, setShowError, setErrorContent
+  fit, rowCentering, setShowError, setErrorContent, genes
 }) {
   const $target = $(target)
   $target.empty()
@@ -139,7 +140,8 @@ function renderHeatmap({
     // We implement our own trivial tab manager as it seems to be the only way
     // (after 2+ hours of digging) to prevent morpheus auto-scrolling
     // to the heatmap once it's rendered
-    tabManager: morpheusTabManager($target)
+    tabManager: morpheusTabManager($target),
+    loadedCallback: () => logMorpheusPerfTime(target, 'heatmap', genes)
   }
 
   // Fit rows, columns, or both to screen

@@ -1,9 +1,11 @@
+import { useEffect } from 'react'
 import { navigate, useLocation } from '@reach/router'
 import * as queryString from 'query-string'
 
 import { stringifyQuery, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
 import { getIdentifierForAnnotation } from 'lib/cluster-utils'
 import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
+import { logStudyGeneSearch } from 'lib/metrics-api'
 
 export const emptyDataParams = {
   cluster: '',
@@ -13,6 +15,9 @@ export const emptyDataParams = {
 }
 
 const SPATIAL_GROUPS_EMPTY = '--'
+// because we only allow a single ExploreTabRouter component we can track global state here, instead
+// of useRef, which would trigger a rerender
+let isInitialLoad = true
 
 /**
  * manages view options and basic layout for the explore tab
@@ -22,6 +27,11 @@ export default function useExploreTabRouter() {
   const routerLocation = useLocation()
   const exploreParams = buildExploreParamsFromQuery(routerLocation.search)
 
+  if (isInitialLoad && exploreParams.genes.length > 0) {
+    // note that we can't pass the species list because we don't know it yet.
+    logStudyGeneSearch(exploreParams.genes, 'url')
+  }
+  isInitialLoad = false
 
   /** Merges the received update into the exploreParams, and updates the page URL if need */
   function updateExploreParams(newOptions, wasUserSpecified=true) {
@@ -45,7 +55,13 @@ export default function useExploreTabRouter() {
     navigate(`${query}#study-visualize`, { replace: true })
   }
 
-
+  useEffect(() => {
+    // this cleanup isn't strictly necessary now, but if we ever start linking to gene searches
+    // within SCP, or not reloading the page when going from search results to explore, it will be needed
+    return function cleanup() {
+      isInitialLoad = true
+    }
+  })
   return { exploreParams, updateExploreParams, routerLocation }
 }
 

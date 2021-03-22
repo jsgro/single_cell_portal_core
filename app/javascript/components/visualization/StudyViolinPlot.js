@@ -6,6 +6,7 @@ import _capitalize from 'lodash/capitalize'
 import { fetchExpressionViolin } from 'lib/scp-api'
 import { getColorBrewerColor, arrayMin, arrayMax, plotlyDefaultLineColor } from 'lib/plot'
 import Plotly from 'plotly.js-dist'
+import { log } from 'lib/metrics-api'
 
 import { useUpdateEffect } from 'hooks/useUpdate'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
@@ -52,7 +53,7 @@ function RawStudyViolinPlot({
   /** gets expression data from the server */
   async function loadData() {
     setIsLoading(true)
-    const results = await fetchExpressionViolin(
+    const [results, perfTime] = await fetchExpressionViolin(
       studyAccession,
       genes,
       cluster,
@@ -72,10 +73,25 @@ function RawStudyViolinPlot({
       if (!distributionPlotToUse) {
         distributionPlotToUse = defaultDistributionPlot
       }
+
+      const perfTimeFrontendStart = performance.now()
+
       renderViolinPlot(graphElementId, results, {
         plotType: distributionPlotToUse,
         showPoints: distributionPoints
       })
+
+      const perfTimeFrontend = performance.now() - perfTimeFrontendStart
+
+      const perfTimeFull = perfTime + perfTimeFrontend
+
+      log(`plot:${distributionPlotToUse}`, {
+        genes,
+        'perfTime': Math.round(perfTimeFull),
+        'perfTime:backend': perfTime,
+        'perfTime:frontend': Math.round(perfTimeFrontend)
+      })
+
       if (setAnnotationList) {
         setAnnotationList(results.annotation_list)
       }

@@ -6,7 +6,7 @@ import Modal from 'react-bootstrap/lib/Modal'
 import CreatableSelect from 'react-select/creatable'
 import _differenceBy from 'lodash/differenceBy'
 
-import { log } from 'lib/metrics-api'
+import { log, logStudyGeneSearch } from 'lib/metrics-api'
 
 
 /** renders the gene text input
@@ -47,8 +47,12 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
     event.preventDefault()
     const newGeneArray = syncGeneArrayToInputText()
     if (newGeneArray && newGeneArray.length) {
-      if (!event) {event = { type: 'clear' }}
-      searchGenes(newGeneArray.map(g => g.value), event.type)
+      const genesToSearch = newGeneArray.map(g => g.value)
+      if (event) {
+        // this was not a 'clear'
+        logStudyGeneSearch(genesToSearch, 'submit')
+      }
+      searchGenes(genesToSearch)
     } else {
       setShowEmptySearchModal(true)
     }

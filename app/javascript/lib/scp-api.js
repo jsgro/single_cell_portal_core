@@ -297,9 +297,9 @@ export async function fetchCluster(
   const apiUrl = `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  const [scatter] = await scpApi(apiUrl, defaultInit(), mock, false)
+  const [scatter, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
 
-  return scatter
+  return [scatter, perfTime]
 }
 
 /**
@@ -345,9 +345,9 @@ export async function fetchExpressionViolin(
   const apiUrl = `/studies/${studyAccession}/expression/violin${stringifyQuery(paramObj)}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  const [violin] = await scpApi(apiUrl, defaultInit(), mock, false)
+  const [violin, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
 
-  return violin
+  return [violin, perfTime]
 }
 
 
@@ -373,7 +373,9 @@ export async function fetchAnnotations(studyAccession, mock=false) {
  * @param {String} studyAccession Study accession
  * @param {String} annotationName
  */
-export async function fetchAnnotation(studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false) {
+export async function fetchAnnotation(
+  studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false
+) {
   const paramObj = {
     cluster: clusterName,
     annotation_scope: annotationScope,
@@ -386,7 +388,9 @@ export async function fetchAnnotation(studyAccession, clusterName, annotationNam
 }
 
 /** Get URL for a Morpheus-suitable annotation values file */
-export function getAnnotationCellValuesURL({ studyAccession, cluster, annotationName, annotationScope, annotationType, mock=false }) {
+export function getAnnotationCellValuesURL(
+  { studyAccession, cluster, annotationName, annotationScope, annotationType, mock=false }
+) {
   const paramObj = {
     cluster,
     annotation_scope: annotationScope,
@@ -407,7 +411,7 @@ export function getGeneListColsURL({ studyAccession, geneList }) {
 /**
  * Returns an URL for fetching heatmap expression data for genes in a study
  *
- * A URL generator rather than a fetch funtion is provided as morpheus needs a URL string
+ * A URL generator rather than a fetch function is provided as Morpheus needs a URL string
  *
  * @param {String} studyAccession study accession
  * @param {String} geneList: name of gene list to load (overrides cluster/annotation/subsample values)

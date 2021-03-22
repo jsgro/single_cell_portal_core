@@ -45,24 +45,53 @@ function RawScatterPlot({
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
-    const apiOk = checkScpApiResponse(clusterResponse,
+    const [scatter, perfTime] = clusterResponse
+
+    const apiOk = checkScpApiResponse(scatter,
       () => Plotly.purge(graphElementId),
       setShowError,
       setErrorContent)
+
     if (apiOk) {
       // Get Plotly layout
-      const layout = getPlotlyLayout(clusterResponse)
+      const layout = getPlotlyLayout(scatter)
       const { width, height } = dimensions
       layout.width = width
       layout.height = height
-      formatMarkerColors(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
-      formatHoverLabels(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
-      const dataScatterColor = processTraceScatterColor(clusterResponse.data, scatterColor)
-      Plotly.newPlot(graphElementId, clusterResponse.data, layout)
+      formatMarkerColors(scatter.data, scatter.annotParams.type, scatter.gene)
+      formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene)
+      const dataScatterColor = processTraceScatterColor(scatter.data, scatterColor)
+
+      const perfTimeFrontendStart = performance.now()
+
+      Plotly.newPlot(graphElementId, scatter.data, layout)
+
+      const perfTimeFrontend = performance.now() - perfTimeFrontendStart
+
+      const perfTimeFull = perfTime + perfTimeFrontend
+
+      const perfLogProps = {
+        'perfTime:backend': perfTime, // Time for API call
+        'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
+        'perfTime': Math.round(perfTimeFull), // Time from API call *start* to plot render end,
+        'numPoints': scatter.numPoints, // How many cells are we plotting?
+        genes,
+        'gene': scatter.gene,
+        'is3D': scatter.is3D,
+        'layout:width': width, // Pixel width of graph
+        'layout:height': height, // Pixel height of graph
+        'numAnnotSelections': scatter.annotParams.values.length,
+        'annotName': scatter.annotParams.name,
+        'annotType': scatter.annotParams.type,
+        'annotScope': scatter.annotParams.scope
+      }
+
+      log('plot:scatter', perfLogProps)
+
       if (dataScatterColor !== scatterColor) {
         updateScatterColor(dataScatterColor)
       }
-      setClusterData(clusterResponse)
+      setClusterData(scatter)
       setShowError(false)
     }
     setIsLoading(false)
