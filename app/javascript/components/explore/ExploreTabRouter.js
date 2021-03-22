@@ -5,7 +5,7 @@ import * as queryString from 'query-string'
 import { stringifyQuery, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
 import { getIdentifierForAnnotation } from 'lib/cluster-utils'
 import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
-import { log } from 'lib/metrics-api'
+import { logStudyGeneSearch } from 'lib/metrics-api'
 
 export const emptyDataParams = {
   cluster: '',
@@ -19,15 +19,6 @@ const SPATIAL_GROUPS_EMPTY = '--'
 // of useRef, which would trigger a rerender
 let isInitialLoad = true
 
-/** send the user-level event log for a study gene search */
-function logGeneSearch(genes, trigger) {
-  log('search', {
-    type: 'gene',
-    context: 'study',
-    trigger,
-    genes
-  })
-}
 /**
  * manages view options and basic layout for the explore tab
  * this component handles calling the api explore endpoint to get view options (clusters, etc..) for the study
@@ -37,9 +28,11 @@ export default function useExploreTabRouter() {
   const exploreParams = buildExploreParamsFromQuery(routerLocation.search)
 
   if (isInitialLoad && exploreParams.genes.length > 0) {
-    logGeneSearch(exploreParams.genes, 'url')
+    // note that we can't pass the species list because we don't know it yet.
+    logStudyGeneSearch(exploreParams.genes, 'url')
   }
   isInitialLoad = false
+
   /** Merges the received update into the exploreParams, and updates the page URL if need */
   function updateExploreParams(newOptions, wasUserSpecified=true) {
     const mergedOpts = Object.assign({}, exploreParams, newOptions)
@@ -52,9 +45,6 @@ export default function useExploreTabRouter() {
         // if the user does a gene search or changes the consensus, switch back to the default tab
         delete mergedOpts.tab
         delete mergedOpts.userSpecified.tab
-      }
-      if (newOptions?.genes?.length > 0) {
-        logGeneSearch(exploreParams.genes, 'submit')
       }
     }
 

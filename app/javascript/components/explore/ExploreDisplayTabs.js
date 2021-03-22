@@ -57,26 +57,6 @@ export default function ExploreDisplayTabs(
 
   /** helper function so that StudyGeneField doesn't have to see the full exploreParams object */
   function searchGenes(genes, logProps) {
-    const trigger = logProps ? logProps.type : 'clear'
-
-    // Properties logged for all gene searches from Study Overview
-    const defaultLogProps = {
-      type: 'gene',
-      context: 'study',
-      genes,
-      numGenes: genes.length,
-      trigger, // "submit", "click", or "click-related-genes"
-      speciesList: exploreInfo.taxonNames
-    }
-
-    // Merge log props from custom event
-    if (trigger === 'click-related-genes') {
-      Object.assign(logProps, defaultLogProps)
-    }
-
-    // TODO: Log study gene search, to not break existing analytics
-    // Avoid logging `clear` trigger; it is not a search
-
     // also unset any selected gene lists or ideogram files
     updateExploreParams({ genes, geneList: '', ideogramFileId: '' })
   }
