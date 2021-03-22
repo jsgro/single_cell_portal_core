@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 
 import StudyGeneField from './StudyGeneField'
-import ScatterPlot from 'components/visualization/ScatterPlot'
+import ScatterTab from './ScatterTab'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import DotPlot from 'components/visualization/DotPlot'
 import Heatmap from 'components/visualization/Heatmap'
@@ -15,7 +15,6 @@ import InferCNVIdeogram from 'components/visualization/InferCNVIdeogram'
 import useResizeEffect from 'hooks/useResizeEffect'
 
 const tabList = [
-  { key: 'cluster', label: 'Cluster' },
   { key: 'scatter', label: 'Scatter' },
   { key: 'distribution', label: 'Distribution' },
   { key: 'dotplot', label: 'Dot Plot' },
@@ -61,40 +60,6 @@ export default function ExploreDisplayTabs(
     updateExploreParams({ genes, geneList: '', ideogramFileId: '' })
   }
 
-  // Handle spatial transcriptomics data
-  let hasSelectedSpatialGroup = false
-  let spatialDataParamsArray = []
-  const spatialRefPlotDataParamsArray = []
-  if (exploreInfo) {
-    if (exploreParams.spatialGroups[0]) {
-      hasSelectedSpatialGroup = true
-
-      if (isMultiGene && !exploreParams.consensus) {
-        const refPlotDataParams = _clone(exploreParams)
-        refPlotDataParams.cluster = exploreParams.spatialGroups[0]
-        refPlotDataParams.genes = []
-        spatialRefPlotDataParamsArray.push(refPlotDataParams)
-        // for each gene, create a dataParams object that can be used to generate the spatial plot
-        // for that gene
-        spatialDataParamsArray = exploreParams.genes.map(gene => {
-          const geneSpatialParams = _clone(refPlotDataParams)
-          geneSpatialParams.genes = [gene]
-          return geneSpatialParams
-        })
-      } else {
-        // for each selected spatial group,
-        exploreParams.spatialGroups.forEach(group => {
-          const geneSpatialParams = _clone(exploreParams)
-          geneSpatialParams.cluster = group
-          spatialDataParamsArray.push(geneSpatialParams)
-          const spatialRefParams = _clone(geneSpatialParams)
-          spatialRefParams.genes = []
-          spatialRefPlotDataParamsArray.push(spatialRefParams)
-        })
-      }
-    }
-  }
-
   let shownTab = exploreParams.tab
   if (!enabledTabs.includes(shownTab)) {
     shownTab = enabledTabs[0]
@@ -115,8 +80,8 @@ export default function ExploreDisplayTabs(
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
   function getPlotDimensions({
-    numColumns=1,
-    numRows=1,
+    isTwoColumn=false,
+    isMultiRow=false,
     verticalPad=250,
     horizontalPad=80,
     hasTitle=false
@@ -126,7 +91,7 @@ export default function ExploreDisplayTabs(
     if (showViewOptionsControls) {
       baseWidth = Math.round(baseWidth * 10 / 12)
     }
-    let width = (baseWidth - horizontalPad) / numColumns
+    let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
 
     // Get height
     // Height of screen viewport, minus fixed-height elements above gallery
@@ -138,7 +103,7 @@ export default function ExploreDisplayTabs(
       galleryHeight -= 20
     }
     let height = galleryHeight
-    if (numRows > 1) {
+    if (isMultiRow) {
       // Fill as much gallery height as possible, but show tip of next row
       // as an affordance that the gallery is vertically scrollable.
       const secondRowTipHeight = 70
@@ -156,11 +121,6 @@ export default function ExploreDisplayTabs(
     width = Math.max(width, 200)
 
     return { width, height }
-  }
-
-  /** helper function for Scatter plot color updates */
-  function updateScatterColor(color) {
-    updateExploreParams({ scatterColor: color }, false)
   }
 
   /** on window resize call setRenderForcer, which is just trivial state to ensure a re-render
@@ -213,168 +173,21 @@ export default function ExploreDisplayTabs(
               searchGenes={searchGenes}
             />
           }
-          { enabledTabs.includes('cluster') &&
-            <div className={shownTab === 'cluster' ? '' : 'hidden'}>
-              <div className="row">
-                <div className={hasSelectedSpatialGroup ? 'col-md-6' : 'col-md-12'}>
-                  <ScatterPlot
-                    studyAccession={studyAccession}
-                    {...exploreParams}
-                    updateScatterColor={updateScatterColor}
-                    dimensions={getPlotDimensions({
-                      numColumns: hasSelectedSpatialGroup ? 2 : 1,
-                      hasTitle: true
-                    })}
-                    isCellSelecting={isCellSelecting}
-                    plotPointsSelected={plotPointsSelected}
-                  />
-                </div>
-                <div className={hasSelectedSpatialGroup ? 'col-md-6' : 'hidden'}>
-                  { hasSelectedSpatialGroup &&
-                    spatialRefPlotDataParamsArray.slice(0, 5).map((params, index) =>
-                      <div key={params.cluster}>
-                        <ScatterPlot
-                          studyAccession={studyAccession}
-                          {...params}
-                          updateScatterColor={updateScatterColor}
-                          dimensions={getPlotDimensions({ numColumns: 2, hasTitle: true })}
-                          isCellSelecting={isCellSelecting}
-                          plotPointsSelected={plotPointsSelected}
-                        />
-                      </div>
-                    )
-                  }
-                  { (hasSelectedSpatialGroup && spatialRefPlotDataParamsArray.length > 5) &&
-                    <div className="detail">
-                      Only the first five selected spatial groups are shown.
-                      Deselect some spatial groups to see the remainder
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
-          }
           { enabledTabs.includes('scatter') &&
             <div className={shownTab === 'scatter' ? '' : 'hidden'}>
-              <div className="row">
-                <div className="col-md-6">
-                  <ScatterPlot
-                    studyAccession={studyAccession}
-                    {...exploreParams}
-                    updateScatterColor={updateScatterColor}
-                    dimensions={getPlotDimensions({
-                      numColumns: 2,
-                      numRows: hasSelectedSpatialGroup ? 2 : 1,
-                      hasTitle: true,
-                      showRelatedGenesIdeogram
-                    })}
-                    isCellSelecting={isCellSelecting}
-                    plotPointsSelected={plotPointsSelected}
-                  />
-                </div>
-                <div className="col-md-6">
-                  <ScatterPlot
-                    studyAccession={studyAccession}
-                    {...referencePlotDataParams}
-                    updateScatterColor={updateScatterColor}
-                    dimensions={getPlotDimensions({
-                      numColumns: 2,
-                      numRows: hasSelectedSpatialGroup ? 2 : 1,
-                      hasTitle: true,
-                      showRelatedGenesIdeogram
-                    })}
-                    isCellSelecting={isCellSelecting}
-                    plotPointsSelected={plotPointsSelected}
-                  />
-                </div>
-              </div>
-              { hasSelectedSpatialGroup &&
-                spatialRefPlotDataParamsArray.slice(0, 3).map((params, index) =>
-                  <div key={index} className="row">
-                    <div className="col-md-6">
-                      <ScatterPlot
-                        studyAccession={studyAccession}
-                        {...spatialDataParamsArray[index]}
-                        updateScatterColor={updateScatterColor}
-                        dimensions={getPlotDimensions({
-                          numColumns: 2,
-                          numRows: 2,
-                          hasTitle: true,
-                          showRelatedGenesIdeogram
-                        })}
-                        isCellSelecting={isCellSelecting}
-                        plotPointsSelected={plotPointsSelected}
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <ScatterPlot
-                        studyAccession={studyAccession}
-                        {...params}
-                        updateScatterColor={updateScatterColor}
-                        dimensions={getPlotDimensions({
-                          numColumns: 2,
-                          numRows: 2,
-                          hasTitle: true,
-                          showRelatedGenesIdeogram
-                        })}
-                        isCellSelecting={isCellSelecting}
-                        plotPointsSelected={plotPointsSelected}
-                      />
-                    </div>
-                  </div>)
-              }
-              { (hasSelectedSpatialGroup && spatialRefPlotDataParamsArray.length > 5) &&
-                <div className="detail">
-                  Spatial plots are only rendered for the first three selected spatial groups.<br/>
-                  Deselect some groups to see the others
-                </div>
-              }
-            </div>
-          }
-          { enabledTabs.includes('spatial') &&
-            <div className={shownTab === 'spatial' ? '' : 'hidden'}>
-              <div className="row">
-                <div className="col-md-10 col-md-offset-1">
-                  { hasSelectedSpatialGroup &&
-                    <div>
-                      <ScatterPlot
-                        studyAccession={studyAccession}
-                        {...spatialRefPlotDataParamsArray[0]}
-                        updateScatterColor={updateScatterColor}
-                        dimensions={getPlotDimensions({ numColumns: 1, numRows: 2, hasTitle: true })}
-                        isCellSelecting={isCellSelecting}
-                        plotPointsSelected={plotPointsSelected}
-                      />
-                    </div>
-                  }
-                  { !hasSelectedSpatialGroup &&
-                    <div className="message-text">
-                      <span>To view spatially-oriented gene expression,
-                      use the &quot;Spatial Groups&quot; control in View Options</span>
-                    </div>
-                  }
-                </div>
-              </div>
-              <div className="row">
-                { spatialDataParamsArray.map((spgDataParams, index) => {
-                  return <div key={index} className="col-md-6">
-                    <ScatterPlot
-                      studyAccession={studyAccession}
-                      {...spgDataParams}
-                      updateScatterColor={updateScatterColor}
-                      dimensions={getPlotDimensions({ numColumns: 2, numRows: 2, hasTitle: true })}
-                      isCellSelecting={isCellSelecting}
-                      plotPointsSelected={plotPointsSelected}
-                    />
-                  </div>
-                })}
-                { (hasSelectedSpatialGroup && spatialDataParamsArray.length > 5) &&
-                  <div className="detail">
-                    Spatial plots are only rendered for the first 5 searched genes.<br/>
-                    Remove some genes from your search to see plots for the others.
-                  </div>
-                }
-              </div>
+              <ScatterTab
+                {...{
+                  studyAccession,
+                  exploreParams,
+                  updateExploreParams,
+                  exploreInfo,
+                  isGeneList,
+                  isGene,
+                  isMultiGene,
+                  isCellSelecting,
+                  plotPointsSelected,
+                  getPlotDimensions
+                }}/>
             </div>
           }
           { enabledTabs.includes('distribution') &&
@@ -432,7 +245,10 @@ export default function ExploreDisplayTabs(
   )
 }
 
-/** return an array of the tabs that should be shown, given the exploreParams and exploreInfo */
+/**
+  * return an array of the tab names that should be shown, given the exploreParams and exploreInfo
+  * (note that the export is for test availability -- this funtion is not intended to be used elsewhere
+  */
 export function getEnabledTabs(exploreInfo, exploreParams) {
   const isGeneList = !!exploreParams.geneList
   const isMultiGene = exploreParams?.genes?.length > 1
@@ -450,7 +266,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
       if (isConsensus) {
         enabledTabs = ['scatter', 'distribution', 'dotplot']
       } else if (hasSpatialGroups) {
-        enabledTabs = ['spatial', 'dotplot', 'heatmap']
+        enabledTabs = ['scatter', 'dotplot', 'heatmap']
       } else {
         enabledTabs = ['dotplot', 'heatmap']
       }
@@ -458,7 +274,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
       enabledTabs = ['scatter', 'distribution']
     }
   } else if (hasClusters) {
-    enabledTabs = ['cluster']
+    enabledTabs = ['scatter']
   }
   if (hasGenomeFiles) {
     enabledTabs.push('genome')
