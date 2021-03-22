@@ -56,7 +56,8 @@ function RawDotPlot({
         annotationName: annotation.name,
         annotationValues,
         setErrorContent,
-        setShowError
+        setShowError,
+        genes
       })
     }
   }, [
@@ -85,7 +86,7 @@ export default DotPlot
 /** Render Morpheus dot plot */
 function renderDotPlot({
   target, expressionValuesURL, annotationCellValuesURL, annotationName, annotationValues,
-  setShowError, setErrorContent
+  setShowError, setErrorContent, genes
 }) {
   const $target = $(target)
   $target.empty()
@@ -118,7 +119,7 @@ function renderDotPlot({
     tabManager: morpheusTabManager($target),
     tools,
     loadedCallback() {
-      logMorpheusPerfTime(target, 'dotplot')
+      logMorpheusPerfTime(target, 'dotplot', genes)
     }
   }
 
@@ -180,12 +181,12 @@ export function morpheusTabManager($target) {
 }
 
 /** Log performance timing for Morpheus dot plots and heatmaps */
-export function logMorpheusPerfTime(target, plotType) {
+export function logMorpheusPerfTime(target, plotType, genes) {
   const graphId = target.slice(1) // e.g. #dotplot-1 -> dotplot-1
-  const start = `perfTimeStart-${graphId}`
-  const end = `perfTimeEnd-${graphId}`
-  performance.mark(end)
-  const perfTime = Math.round(performance.measure(graphId, start, end).duration)
+  performance.measure(graphId, `perfTimeStart-${graphId}`)
+  const perfTime = Math.round(
+    performance.getEntriesByName(graphId)[0].duration
+  )
 
-  log(`plot:${plotType}`, { perfTime })
+  log(`plot:${plotType}`, { perfTime, genes })
 }

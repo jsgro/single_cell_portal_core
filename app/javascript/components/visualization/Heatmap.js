@@ -77,7 +77,8 @@ function RawHeatmap({
         fit: heatmapFit,
         rowCentering: heatmapRowCentering,
         setShowError,
-        setErrorContent
+        setErrorContent,
+        genes
       })
     }
   }, [
@@ -122,7 +123,7 @@ export default Heatmap
 /** Render Morpheus heatmap */
 function renderHeatmap({
   target, expressionValuesURL, annotationCellValuesURL, annotationName,
-  fit, rowCentering, setShowError, setErrorContent
+  fit, rowCentering, setShowError, setErrorContent, genes
 }) {
   const $target = $(target)
   $target.empty()
@@ -141,7 +142,7 @@ function renderHeatmap({
     // to the heatmap once it's rendered
     tabManager: morpheusTabManager($target),
     loadedCallback() {
-      logMorpheusPerfTime(target, 'heatmap')
+      logMorpheusPerfTime(target, 'heatmap', genes)
     }
   }
 

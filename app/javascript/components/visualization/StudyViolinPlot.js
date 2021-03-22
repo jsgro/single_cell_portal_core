@@ -74,17 +74,14 @@ function RawStudyViolinPlot({
         distributionPlotToUse = defaultDistributionPlot
       }
 
-      const start = `perfTimeFrontendStart-${graphElementId}`
-      performance.mark(start)
+      const perfTimeFrontendStart = performance.now()
 
       renderViolinPlot(graphElementId, results, {
         plotType: distributionPlotToUse,
         showPoints: distributionPoints
       })
 
-      const end = `perfTimeFrontendEnd-${graphElementId}`
-      performance.mark(end)
-      const perfTimeFrontend = performance.measure(graphElementId, start, end).duration
+      const perfTimeFrontend = performance.now() - perfTimeFrontendStart
 
       const perfTimeFull = perfTime + perfTimeFrontend
 

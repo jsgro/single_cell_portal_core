@@ -62,14 +62,11 @@ function RawScatterPlot({
       formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene)
       const dataScatterColor = processTraceScatterColor(scatter.data, scatterColor)
 
-      const start = `perfTimeFrontendStart-${graphElementId}`
-      performance.mark(start)
+      const perfTimeFrontendStart = performance.now()
 
       Plotly.newPlot(graphElementId, scatter.data, layout)
 
-      const end = `perfTimeFrontendEnd-${graphElementId}`
-      performance.mark(end)
-      const perfTimeFrontend = performance.measure(graphElementId, start, end).duration
+      const perfTimeFrontend = performance.now() - perfTimeFrontendStart
 
       const perfTimeFull = perfTime + perfTimeFrontend
 
