@@ -166,16 +166,16 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
                                       cluster: cluster,
                                       annotation: annotation)
     mock = Minitest::Mock.new
-    api_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/o/#{filename}?alt=media"
-    mock.expect :execute_gcloud_method, , [:get_workspace_file, Integer, String, String]
-    mock.expect :execute_gcloud_method, api_url, [:generate_api_url, Integer, String, String]
+    api_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/o/#{filename}"
+    mock.expect :execute_gcloud_method, api_url, [:generate_api_url, Integer, study.bucket_id, filename]
     ApplicationController.stub :firecloud_client, mock do
       ideogram_output = ExpressionVizService.get_infercnv_ideogram_files(study)
+      mock.verify
       assert_equal 1, ideogram_output.size
       ideogram_opts = ideogram_output[ideogram_file.id.to_s]
       assert_equal ideogram_opts[:cluster], cluster.name
       assert_equal annotation, ideogram_opts[:annotation]
-      assert_equal api_url, ideogram_opts[:annotationsPath]
+      assert_equal api_url + '?alt=media', ideogram_opts.dig(:ideogram_settings, :annotationsPath)
     end
   end
 
