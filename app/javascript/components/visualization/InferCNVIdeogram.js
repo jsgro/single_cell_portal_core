@@ -4,7 +4,7 @@
  * Show an Ideogram heatmap instance using output from an inferCNV workflow
  */
 
-import React, {useEffect, useState} from 'react'
+import React, { useEffect, useState } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 
 import Ideogram from 'ideogram'
@@ -30,23 +30,23 @@ const legend = [{
   ]
 }]
 
-export default function InferCNVIdeogram({studyAccession, ideogramFileId, inferCNVIdeogramFiles, showViewOptionsControls}) {
+export default function InferCNVIdeogram({ studyAccession, ideogramFileId, inferCNVIdeogramFiles, showViewOptionsControls }) {
   const [ideogramContainerId] = useState(_uniqueId('study-infercnv-ideogram-'))
 
   const inferCNVIdeogramFile = inferCNVIdeogramFiles[ideogramFileId]
   useEffect(() => {
-    if ( !!inferCNVIdeogramFile ) {
+    if (inferCNVIdeogramFile) {
       setInitializeIdeogram(inferCNVIdeogramFile, ideogramContainerId, showViewOptionsControls)
     } else {
-      removeIdeogram();
+      removeIdeogram()
     }
   }, [ideogramFileId, showViewOptionsControls])
 
   useEffect(() => {
-    if ( !ideogramFileId && Object.entries(inferCNVIdeogramFiles).length > 0 ) {
+    if (!ideogramFileId && Object.entries(inferCNVIdeogramFiles).length > 0) {
       // find the first ideogram annotations file and pre-render since Ideogram can render on a hidden div
-      let firstIdeogramFile = Object.entries(inferCNVIdeogramFiles)[0][1]
-      if (!!firstIdeogramFile) {
+      const firstIdeogramFile = Object.entries(inferCNVIdeogramFiles)[0][1]
+      if (firstIdeogramFile) {
         setInitializeIdeogram(firstIdeogramFile, ideogramContainerId, showViewOptionsControls)
       }
     }
@@ -62,9 +62,9 @@ export default function InferCNVIdeogram({studyAccession, ideogramFileId, inferC
 
 /** Setter for initializeIdeogram params */
 function setInitializeIdeogram(ideogramFileConfig, ideogramContainerId, showViewOptionsControls) {
-  let ideogramAnnotsFile = ideogramFileConfig.ideogram_settings.annotationsPath
-  let ideogramOrganism = ideogramFileConfig.ideogram_settings.organism
-  let ideogramAssembly = ideogramFileConfig.ideogram_settings.assembly
+  const ideogramAnnotsFile = ideogramFileConfig.ideogram_settings.annotationsPath
+  const ideogramOrganism = ideogramFileConfig.ideogram_settings.organism
+  const ideogramAssembly = ideogramFileConfig.ideogram_settings.assembly
   initializeIdeogram(ideogramAnnotsFile, ideogramOrganism, ideogramAssembly, ideogramContainerId, showViewOptionsControls)
 }
 
@@ -194,8 +194,8 @@ function addThresholdControl() {
 /** Handle updates to slider controls for ideogram display */
 function ideoRangeChangeEventHandler(event) {
   const id = event.target.id
-  if (id === 'expressionThreshold') updateThreshold(event)
-  if (id === 'chrMargin') updateMargin(event)
+  if (id === 'expressionThreshold') {updateThreshold(event)}
+  if (id === 'chrMargin') {updateMargin(event)}
 }
 
 /** Add sliders to adjust ideogram display */
@@ -214,7 +214,7 @@ function createTrackFilters() {
   addIdeoRangeControls()
 
   // Only apply this function once
-  if (document.querySelector('#filter_1')) return
+  if (document.querySelector('#filter_1')) {return}
   listItems = ''
   const trackLabels = inferCNVIdeogram.rawAnnots.keys.slice(6)
   const displayedTracks = inferCNVIdeogram.config.annotationsDisplayedTracks
@@ -257,7 +257,7 @@ function warnIdeogramOfNumericCluster() {
     `cell annotation ("${cellAnnot}").` +
     `</div>`
 
-  removeIdeogram();
+  removeIdeogram()
   $('#ideogram-container').append(warning)
 }
 
@@ -274,10 +274,10 @@ function removeIdeogram() {
  */
 export function getChrHeight(showViewOptionsControls) {
   let heatmapSize = parseInt($('.explore-plot-tab-content').actual('width'))
-  if (!!showViewOptionsControls) {
+  if (showViewOptionsControls) {
     heatmapSize = heatmapSize - parseInt($('.view-options').actual('width'))
   }
-  let chrHeight = parseInt( heatmapSize / 17 )
+  const chrHeight = parseInt(heatmapSize / 17)
   return chrHeight < minChrHeight ? minChrHeight : chrHeight
 }
 
@@ -288,13 +288,13 @@ function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsC
     removeIdeogram()
   }
 
-  let chrHeight = getChrHeight(showViewOptionsControls)
+  const chrHeight = getChrHeight(showViewOptionsControls)
   $('#ideogramWarning, #ideogramTitle').remove()
 
   ideoConfig = {
-    container: '#' + domTarget,
+    container: `#${domTarget}`,
     organism: organism.toLowerCase(),
-    assembly: assembly,
+    assembly,
     annotationsPath: url,
     annotationsLayout: 'heatmap',
     legend,
@@ -302,7 +302,7 @@ function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsC
     debug: true,
     rotatable: false,
     chrMargin: 10,
-    chrHeight: chrHeight,
+    chrHeight,
     annotationHeight: 20,
     geometry: 'collinear',
     orientation: 'horizontal'

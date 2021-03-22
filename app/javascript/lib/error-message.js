@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { log } from 'lib/metrics-api'
 
-/** 
+/**
   * Hook for enabling the conditional display an error message.
-  * In the event of an error, the returned ErrorComponent can be placed in the component's markup, 
+  * In the event of an error, the returned ErrorComponent can be placed in the component's markup,
   * and will be displayed with the content from setErrorContent if setShowError is called with true.
   */
 export default function useErrorMessage() {
