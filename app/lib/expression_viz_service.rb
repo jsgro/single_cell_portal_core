@@ -68,18 +68,26 @@ class ExpressionVizService
     cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
     if annotation[:scope] == 'cluster'
       # we can take a subsample of the same size for the annotations since the sort order is non-stochastic (i.e. the indices chosen are the same every time for all arrays)
-      annotations = cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
+      annotations = AnnotationVizService.sanitize_values_array(
+        cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation),
+        annotation[:type]
+      )
       cells.each_with_index do |cell, index|
         values[annotations[index]][:y] << gene['scores'][cell].to_f.round(4)
+        values[annotations[index]][:cells] << cell
       end
     elsif annotation[:scope] == 'user'
       # for user annotations, we have to load by id as names may not be unique to clusters
       user_annotation = UserAnnotation.find(annotation[:id])
       subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotations = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
+      annotations = AnnotationVizService.sanitize_values_array(
+        user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation),
+        'group'
+      )
       cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
       cells.each_with_index do |cell, index|
         values[annotations[index]][:y] << gene['scores'][cell].to_f.round(4)
+        values[annotations[index]][:cells] << cell
       end
     else
       # since annotations are in a hash format, subsampling isn't necessary as we're going to retrieve values by key lookup
@@ -119,6 +127,7 @@ class ExpressionVizService
       metadata_obj = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
       annotation_hash = metadata_obj.cell_annotations
     end
+    annotation_array = AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
     values = {}
     values[:all] = {x: [], y: [], cells: [], annotations: [], text: [], marker: {size: study.default_cluster_point_size,
       line: { color: 'rgb(40,40,40)', width: study.show_cluster_point_borders? ? 0.5 : 0}}}
@@ -177,6 +186,7 @@ class ExpressionVizService
       metadata_obj = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
       annotation_hash = metadata_obj.cell_annotations
     end
+    annotation_array = AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
     expression = {}
     expression[:all] = {
         x: x_array,
@@ -227,7 +237,10 @@ class ExpressionVizService
     cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
 
     if annotation[:scope] == 'cluster'
-      annotations = cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
+      annotations = AnnotationVizService.sanitize_values_array(
+        cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation),
+        annotation[:type]
+      )
       cells.each_with_index do |cell, index|
         values[annotations[index]][:annotations] << annotations[index]
         case consensus
@@ -243,7 +256,10 @@ class ExpressionVizService
       # for user annotations, we have to load by id as names may not be unique to clusters
       user_annotation = UserAnnotation.find(annotation[:id])
       subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotations = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
+      annotations = AnnotationVizService.sanitize_values_array(
+        user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation),
+        'group'
+      )
       cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
       cells.each_with_index do |cell, index|
         values[annotations[index]][:annotations] << annotations[index]
@@ -307,6 +323,7 @@ class ExpressionVizService
       metadata_obj = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
       annotation_hash = metadata_obj.cell_annotations
     end
+    annotation_array = AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
     cells.each_with_index do |cell, index|
       annotation_value = annotation[:scope] == 'cluster' ? annotation_array[index] : annotation_hash[cell]
       if !annotation_value.nil?
@@ -357,6 +374,7 @@ class ExpressionVizService
       metadata_obj = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
       annotation_hash = metadata_obj.cell_annotations
     end
+    annotation_array = AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
     expression = {}
     expression[:all] = {
         x: x_array,
@@ -393,7 +411,8 @@ class ExpressionVizService
     expression
   end
 
-  # method to initialize containers for plotly by annotation values
+  # method to initialize con
+  # tainers for plotly by annotation values
   def self.initialize_plotly_objects_by_annotation(annotation)
     values = {}
     annotation[:values].each do |value|
