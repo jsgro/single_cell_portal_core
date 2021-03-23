@@ -1,6 +1,18 @@
 import React from 'react'
 import { dotPlotColorScheme } from './DotPlot'
+import { Popover, OverlayTrigger } from 'react-bootstrap'
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import _uniqueId from 'lodash/uniqueId'
+
+const consensusPopover = (
+  <Popover id="explore-subsampling-helptext">
+    Scaling is relative to the each gene's expression for all cells in each
+    annotation selection, i.e. cells associated with the each column label in
+    the dot plot.
+  </Popover>
+)
+
 
 /** renders an svg legend for a dotplot with color and size indicators */
 export default function DotPlotLegend() {
@@ -49,12 +61,10 @@ export default function DotPlotLegend() {
         <text x={colorBarWidth / 2 - 7} y={numberYPos}>0.5</text>
         <text x={colorBarWidth - 5} y={numberYPos}>1</text>
         <rect fill="#CC0088" width="3" height="10" x={colorBarWidth / 2} y={numberYPos - 20} ry="2"/>
-        <text x="-22" y={labelTextYPos}>Scaled mean expression</text>
-        <circle cx="130" cy="47" r="8" fill="#aeaeae"></circle>
-        <a id="dot-plot-scaling-link" xlinkHref="https://github.com/broadinstitute/single_cell_portal/wiki/dot-plots-detail#scaled-mean-expression" style={{ textDecoration: 'none' }} target="_blank">
-          <text x="130" y="52" textAnchor="middle" fill="white" fontSize="" fontFamily="Arial" dy="">?</text>
-        </a>
-        {nonzeroNote}
+        <text id="scaled-mean-expression-legend" x="-22" y={labelTextYPos}>Scaled mean expression</text>
+        <OverlayTrigger trigger="click" rootClose placement="top" overlay={consensusPopover}>
+          <FontAwesomeIcon className="action" icon={faInfoCircle} transform="shrink-12 left-16 down-2" />
+        </OverlayTrigger>
       </g>
     </svg>
   )
