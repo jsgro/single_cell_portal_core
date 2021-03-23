@@ -68,12 +68,25 @@
 
 .explore-plot-tab-content {
 	background: #fff;
+	border-right: 1px solid #ccc;
 }
 
 .view-options-toggle {
-	border: none;
-	background: none;
+	padding: 1em 0em;
 	font-weight: bold;
+
+	button {
+		float: right;
+		background: none;
+		font-weight: normal;
+	}
+}
+
+.view-options-toggle-on {
+	position: absolute;
+	top: -36px;
+	right: 0px;
+	padding: 0.5em;
 }
 
 .desktop-view-options {

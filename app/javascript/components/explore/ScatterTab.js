@@ -1,5 +1,7 @@
 import React from 'react'
 
+import ScatterPlot from 'components/visualization/ScatterPlot'
+
 /**
   * renders the scatter tab.  Handles 6 permutations: (spatial / noSpatial) x (no / single / multigene)
   */

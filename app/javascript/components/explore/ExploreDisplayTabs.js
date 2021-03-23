@@ -1,15 +1,24 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect  } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
+import { faCaretDown, faCaretUp, faLink, faArrowLeft, faCog, faTimes } from '@fortawesome/free-solid-svg-icons'
 
 import StudyGeneField from './StudyGeneField'
+import ClusterSelector from 'components/visualization/controls/ClusterSelector'
+import AnnotationSelector from 'components/visualization/controls/AnnotationSelector'
+import SubsampleSelector from 'components/visualization/controls/SubsampleSelector'
+import { ExploreConsensusSelector } from 'components/visualization/controls/ConsensusSelector'
+import SpatialSelector from 'components/visualization/controls/SpatialSelector'
+import CreateAnnotation from 'components/visualization/controls/CreateAnnotation'
+import PlotDisplayControls from 'components/visualization/PlotDisplayControls'
+import GeneListSelector from 'components/visualization/controls/GeneListSelector'
+import InferCNVIdeogramSelector from 'components/visualization/controls/InferCNVIdeogramSelector'
 import ScatterTab from './ScatterTab'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import DotPlot from 'components/visualization/DotPlot'
 import Heatmap from 'components/visualization/Heatmap'
 import GenomeView from './GenomeView'
-import { getAnnotationValues } from 'lib/cluster-utils'
+import { getAnnotationValues, getDefaultClusterParams, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
 import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from 'components/visualization/InferCNVIdeogram'
 import useResizeEffect from 'hooks/useResizeEffect'
@@ -40,13 +49,14 @@ const ideogramHeight = 140
  * @param {Object} dataParams  object with cluster, annotation, and other viewing properties specified.
  * @param { Function } updateDataParams function for passing updates to the dataParams object
  */
-export default function ExploreDisplayTabs(
-  {
-    studyAccession, exploreInfo, exploreParams, controlExploreParams, updateExploreParams,
-    isCellSelecting, plotPointsSelected, showViewOptionsControls
-  }
-) {
+export default function ExploreDisplayTabs({ studyAccession, exploreInfo, exploreParams, updateExploreParams }) {
   const [, setRenderForcer] = useState({})
+    // tracks whetehr the view options controls are open or closed
+  const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
+  // whether the user is in lasso-select mode for selecting points for an annotation
+  const [isCellSelecting, setIsCellSelecting] = useState(false)
+  // a plotly points_selected event
+  const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
   const plotContainerClass = 'explore-plot-tab-content'
   const { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs } = getEnabledTabs(exploreInfo, exploreParams)
 
@@ -77,6 +87,80 @@ export default function ExploreDisplayTabs(
     currentTaxon = exploreInfo.taxonNames[0]
     searchedGene = exploreParams.genes[0]
   }
+  const showClusterControls = !(['genome', 'infercnv-genome'].includes(shownTab))
+
+  const annotationList = exploreInfo ? exploreInfo.annotationList : null
+
+  // we keep a separate 'controlExploreParams' object that updates after defaults are fetched from the server
+  // this is kept separate so that the graphs do not see the change in cluster name from '' to
+  // '<<default cluster>>' as a change that requires a re-fetch from the server
+  let controlExploreParams = _clone(exploreParams)
+  if (exploreInfo && !exploreParams.cluster && exploreInfo.clusterGroupNames.length > 0) {
+    // if the user hasn't specified anything yet, but we have the study defaults, use those
+    controlExploreParams = Object.assign(controlExploreParams,
+      getDefaultClusterParams(annotationList, exploreInfo.spatialGroups))
+    if (!exploreParams.userSpecified['spatialGroups']) {
+      exploreParams.spatialGroups = controlExploreParams.spatialGroups
+    } else {
+      controlExploreParams.spatialGroups = exploreParams.spatialGroups
+    }
+  }
+
+  let hasSpatialGroups = false
+  if (exploreInfo) {
+    hasSpatialGroups = exploreInfo.spatialGroups.length > 0
+  }
+
+  /** in the event a component takes an action which updates the list of annotations available
+    * e.g. by creating a user annotation, this updates the list */
+  function setAnnotationList(newAnnotationList) {
+    const newExploreInfo = Object.assign({}, exploreInfo, { annotationList: newAnnotationList })
+    setExploreInfo(newExploreInfo)
+  }
+
+  /** copies the url to the clipboard */
+  function copyLink(routerLocation) {
+    navigator.clipboard.writeText(routerLocation.href)
+  }
+
+  /** handler for when the user selects points in a plotly scatter graph */
+  function plotPointsSelected(points) {
+    log('select:scatter:cells')
+    setCurrentPointsSelected(points)
+  }
+
+  /** Handle clicks on "View Options" toggler element */
+  function toggleViewOptions() {
+    setShowViewOptionsControls(!showViewOptionsControls)
+  }
+
+  /** handles cluster selection to also populate the default spatial groups */
+  function updateClusterParams(newParams) {
+    if (newParams.cluster && !newParams.spatialGroups) {
+      newParams.spatialGroups = getDefaultSpatialGroupsForCluster(newParams.cluster, exploreInfo.spatialGroups)
+    }
+    // if the user updates any cluster params, store all of them in the URL so we don't end up with
+    // broken urls in the event of a default cluster/annotation changes
+    // also, unset any gene lists as we're about to re-render the explore tab and having gene list selected will show
+    // the wrong tabs
+    const updateParams = { geneList: '', ideogramFileId: '' }
+    const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
+    clusterParamNames.forEach(param => {
+      updateParams[param] = param in newParams ? newParams[param] : controlExploreParams[param]
+    })
+    updateExploreParams(updateParams)
+  }
+
+  /** handles gene list selection */
+  function updateGeneList(geneList) {
+    updateExploreParams({ geneList })
+  }
+
+  // handles updating inferCNV/ideogram selection
+  function updateInferCNVIdeogramFile(annotationFile) {
+    updateExploreParams({ ideogramFileId: annotationFile, tab: 'infercnv-genome' })
+  }
+
 
   /** Get width and height available for plot components, since they may be first rendered hidden */
   function getPlotDimensions({
@@ -128,12 +212,11 @@ export default function ExploreDisplayTabs(
   useResizeEffect(() => {
     setRenderForcer({})
   }, 300)
-  console.log('rerendering ExploreDisplayTabs')
 
   return (
     <>
       <div className="row">
-        <div className="col-md-6">
+        <div className="col-md-5">
           <div className="flexbox">
             <StudyGeneField genes={exploreParams.genes}
               searchGenes={searchGenes}
@@ -147,7 +230,7 @@ export default function ExploreDisplayTabs(
             </button>
           </div>
         </div>
-        <div className="col-md-5 col-md-offset-1">
+        <div className="col-md-4 col-md-offset-1">
           <ul className="nav nav-tabs" role="tablist" data-analytics-name="explore-default">
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
@@ -161,84 +244,163 @@ export default function ExploreDisplayTabs(
         </div>
       </div>
 
-      <div className="row">
-        <div className="explore-plot-tab-content">
-          { showRelatedGenesIdeogram &&
-            <RelatedGenesIdeogram
-              gene={searchedGene}
-              taxon={currentTaxon}
-              target={`.${plotContainerClass}`}
-              height={ideogramHeight}
-              genesInScope={exploreInfo.uniqueGenes}
-              searchGenes={searchGenes}
-            />
-          }
-          { enabledTabs.includes('scatter') &&
-            <div className={shownTab === 'scatter' ? '' : 'hidden'}>
-              <ScatterTab
-                {...{
-                  studyAccession,
-                  exploreParams,
-                  updateExploreParams,
-                  exploreInfo,
-                  isGeneList,
-                  isGene,
-                  isMultiGene,
-                  isCellSelecting,
-                  plotPointsSelected,
-                  getPlotDimensions
-                }}/>
-            </div>
-          }
-          { enabledTabs.includes('distribution') &&
-            <div className={shownTab === 'distribution' ? '' : 'hidden'}>
-              <StudyViolinPlot
+      <div className="row explore-tab-content">
+        <div className={showViewOptionsControls ? 'col-md-10' : 'col-md-12'}>
+          <div className="explore-plot-tab-content row">
+            { showRelatedGenesIdeogram &&
+              <RelatedGenesIdeogram
+                gene={searchedGene}
+                taxon={currentTaxon}
+                target={`.${plotContainerClass}`}
+                height={ideogramHeight}
+                genesInScope={exploreInfo.uniqueGenes}
+                searchGenes={searchGenes}
+              />
+            }
+            { !showViewOptionsControls &&
+              <button className="action view-options-toggle view-options-toggle-on" onClick={toggleViewOptions}>
+                <FontAwesomeIcon className="fa-lg" icon={faCog}/>
+              </button>
+            }
+            { enabledTabs.includes('scatter') &&
+              <div className={shownTab === 'scatter' ? '' : 'hidden'}>
+                <ScatterTab
+                  {...{
+                    studyAccession,
+                    exploreParams,
+                    updateExploreParams,
+                    exploreInfo,
+                    isGeneList,
+                    isGene,
+                    isMultiGene,
+                    isCellSelecting,
+                    plotPointsSelected,
+                    getPlotDimensions
+                  }}/>
+              </div>
+            }
+            { enabledTabs.includes('distribution') &&
+              <div className={shownTab === 'distribution' ? '' : 'hidden'}>
+                <StudyViolinPlot
+                  studyAccession={studyAccession}
+                  updateDistributionPlot={distributionPlot => updateExploreParams({ distributionPlot }, false)}
+                  dimensions={getPlotDimensions({})}
+                  {...exploreParams}/>
+              </div>
+            }
+            { enabledTabs.includes('dotplot') &&
+              <div className={shownTab === 'dotplot' ? '' : 'hidden'}>
+                <DotPlot
+                  studyAccession={studyAccession}
+                  {...controlExploreParams}
+                  annotationValues={getAnnotationValues(
+                    controlExploreParams?.annotation,
+                    controlExploreParams?.annotationList?.annotations
+                  )}
+                  dimensions={getPlotDimensions({})}
+                />
+              </div>
+            }
+            { enabledTabs.includes('heatmap') &&
+              <div className={shownTab === 'heatmap' ? '' : 'hidden'}>
+                <Heatmap
+                  studyAccession={studyAccession}
+                  {...controlExploreParams}
+                  dimensions={getPlotDimensions({})}/>
+              </div>
+            }
+            { enabledTabs.includes('genome') &&
+              <div className={shownTab === 'genome' ? '' : 'hidden'}>
+                <GenomeView
+                  studyAccession={studyAccession}
+                  bamFileName={exploreParams.bamFileName}
+                  isVisible={shownTab === 'genome'}
+                  updateExploreParams={updateExploreParams}/>
+              </div>
+            }
+            { enabledTabs.includes('infercnv-genome') &&
+            <div className={shownTab === 'infercnv-genome' ? '' : 'hidden'}>
+              <InferCNVIdeogram
                 studyAccession={studyAccession}
-                updateDistributionPlot={distributionPlot => updateExploreParams({ distributionPlot }, false)}
-                dimensions={getPlotDimensions({})}
-                {...exploreParams}/>
-            </div>
-          }
-          { enabledTabs.includes('dotplot') &&
-            <div className={shownTab === 'dotplot' ? '' : 'hidden'}>
-              <DotPlot
-                studyAccession={studyAccession}
-                {...controlExploreParams}
-                annotationValues={getAnnotationValues(
-                  controlExploreParams?.annotation,
-                  controlExploreParams?.annotationList?.annotations
-                )}
-                dimensions={getPlotDimensions({})}
+                ideogramFileId={exploreParams?.ideogramFileId}
+                inferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
+                showViewOptionsControls={showViewOptionsControls}
               />
             </div>
-          }
-          { enabledTabs.includes('heatmap') &&
-            <div className={shownTab === 'heatmap' ? '' : 'hidden'}>
-              <Heatmap
-                studyAccession={studyAccession}
-                {...controlExploreParams}
-                dimensions={getPlotDimensions({})}/>
-            </div>
-          }
-          { enabledTabs.includes('genome') &&
-            <div className={shownTab === 'genome' ? '' : 'hidden'}>
-              <GenomeView
-                studyAccession={studyAccession}
-                bamFileName={exploreParams.bamFileName}
-                isVisible={shownTab === 'genome'}
-                updateExploreParams={updateExploreParams}/>
-            </div>
-          }
-          { enabledTabs.includes('infercnv-genome') &&
-          <div className={shownTab === 'infercnv-genome' ? '' : 'hidden'}>
-            <InferCNVIdeogram
-              studyAccession={studyAccession}
-              ideogramFileId={exploreParams?.ideogramFileId}
-              inferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
-              showViewOptionsControls={showViewOptionsControls}
-            />
+            }
           </div>
-          }
+        </div>
+        <div className={showViewOptionsControls ? 'col-md-2 ' : 'hidden'}>
+          <div className="view-options-toggle">
+            <FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS
+            <button className="action" onClick={toggleViewOptions}>
+              <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
+            </button>
+          </div>
+          <div>
+            <div className={showClusterControls ? '' : 'hidden'}>
+              <ClusterSelector
+                annotationList={annotationList}
+                cluster={controlExploreParams.cluster}
+                annotation={controlExploreParams.annotation}
+                updateClusterParams={updateClusterParams}
+                spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
+              {hasSpatialGroups &&
+                <SpatialSelector allSpatialGroups={exploreInfo.spatialGroups}
+                  spatialGroups={controlExploreParams.spatialGroups}
+                  updateSpatialGroups={spatialGroups => updateClusterParams({ spatialGroups })}/>
+              }
+              <AnnotationSelector
+                annotationList={annotationList}
+                cluster={controlExploreParams.cluster}
+                annotation={controlExploreParams.annotation}
+                updateClusterParams={updateClusterParams}/>
+              <CreateAnnotation
+                isSelecting={isCellSelecting}
+                setIsSelecting={setIsCellSelecting}
+                annotationList={exploreInfo ? exploreInfo.annotationList : null}
+                currentPointsSelected={currentPointsSelected}
+                cluster={controlExploreParams.cluster}
+                annotation={controlExploreParams.annotation}
+                subsample={controlExploreParams.subsample}
+                updateClusterParams={updateClusterParams}
+                setAnnotationList={setAnnotationList}
+                studyAccession={studyAccession}/>
+              <SubsampleSelector
+                annotationList={annotationList}
+                cluster={controlExploreParams.cluster}
+                subsample={controlExploreParams.subsample}
+                updateClusterParams={updateClusterParams}/>
+            </div>
+            { exploreInfo?.geneLists?.length > 0 &&
+              <GeneListSelector
+                geneList={controlExploreParams.geneList}
+                studyGeneLists={exploreInfo.geneLists}
+                updateGeneList={updateGeneList}/>
+            }
+            { exploreParams.genes.length > 1 &&
+              <ExploreConsensusSelector
+                consensus={controlExploreParams.consensus}
+                updateConsensus={consensus => updateExploreParams({ consensus })}/>
+            }
+            { !!exploreInfo?.inferCNVIdeogramFiles &&
+                <InferCNVIdeogramSelector
+                  inferCNVIdeogramFile={controlExploreParams.ideogramFileId}
+                  studyInferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
+                  updateInferCNVIdeogramFile={updateInferCNVIdeogramFile}
+                />
+            }
+          </div>
+          <PlotDisplayControls
+            shownTab={shownTab}
+            exploreParams={controlExploreParams}
+            updateExploreParams={updateExploreParams}/>
+          <button onClick={() => copyLink(routerLocation)}
+            className="action"
+            data-toggle="tooltip"
+            title="copy a link to this visualization to the clipboard">
+            Get link <FontAwesomeIcon icon={faLink}/>
+          </button>
         </div>
       </div>
     </>
