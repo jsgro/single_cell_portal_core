@@ -214,24 +214,6 @@ export function logError(text) {
   log('error', props)
 }
 
-export function logStudyGeneSearch(genes, trigger, speciesList, otherProps) {
-  // Properties logged for all gene searches from Study Overview
-  const logProps = {
-    type: 'gene',
-    context: 'study',
-    genes,
-    numGenes: genes.length,
-    trigger, // "submit", "click", or "click-related-genes"
-    speciesList
-  }
-
-  // Merge log props from custom event
-  if (otherProps) {
-    Object.assign(logProps, otherProps)
-  }
-  log('search', logProps)
-}
-
 /**
  * Removes study name from URL, as it might have identifying information.
  * Terra UI omits workspace name in logs; this follows that precedent.
@@ -333,6 +315,7 @@ export function log(name, props={}) {
 /**
  Initializes an event to log later (usually on completion of an async process)
  Handles measuring duration of the event.
+
  @param {String} name: the name of the event
  @param {} props: the props to pass along with the event.  This function
   automatically handles computing and adding 'perfTime' properties to the

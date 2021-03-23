@@ -67,7 +67,15 @@ export function PropsGeneSearchProvider(props) {
     // reset the scroll in case they scrolled down to read prior results
     window.scrollTo(0, 0)
 
-    const results = await fetchSearch(
+    if (isInitialLoad) {
+      // Log how long it takes from starting page load until completing first plot
+      startPendingEvent('user-action:search',
+        { type: 'gene' },
+        'plot:',
+        true)
+    }
+
+    const [results, perfTime] = await fetchSearch(
       // Ensures event properties include "type": "gene" in search logging.
       'gene',
       {

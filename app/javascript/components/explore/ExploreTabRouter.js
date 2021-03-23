@@ -5,7 +5,7 @@ import * as queryString from 'query-string'
 import { stringifyQuery, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
 import { getIdentifierForAnnotation } from 'lib/cluster-utils'
 import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
-import { logStudyGeneSearch } from 'lib/metrics-api'
+import { logStudyGeneSearch, startPendingEvent } from 'lib/metrics-api'
 
 export const emptyDataParams = {
   cluster: '',
@@ -27,9 +27,17 @@ export default function useExploreTabRouter() {
   const routerLocation = useLocation()
   const exploreParams = buildExploreParamsFromQuery(routerLocation.search)
 
-  if (isInitialLoad && exploreParams.genes.length > 0) {
-    // note that we can't pass the species list because we don't know it yet.
-    logStudyGeneSearch(exploreParams.genes, 'url')
+  if (isInitialLoad) {
+    // Log how long it takes from starting page load until completing first plot
+    startPendingEvent('user-action:page:view:site-study',
+      { speciesList: window.SCP.taxons },
+      'plot:',
+      true)
+
+    if (exploreParams.genes.length > 0) {
+      // note that we can't pass the species list because we don't know it yet.
+      logStudyGeneSearch(exploreParams.genes, 'url')
+    }
   }
   isInitialLoad = false
 

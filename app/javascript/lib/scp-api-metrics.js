@@ -71,8 +71,28 @@ function getFriendlyFilterListByFacet(facets) {
   return filterListByFacet
 }
 
+/** Log searches done on Study Overview page */
+export function logStudyGeneSearch(genes, trigger, speciesList, otherProps) {
+  // Properties logged for all gene searches from Study Overview
+  const logProps = {
+    type: 'gene',
+    context: 'study',
+    genes,
+    numGenes: genes.length,
+    trigger, // "submit", "click", "url", or "click-related-genes"
+    speciesList
+  }
+
+  // Merge log props from custom event
+  if (otherProps) {
+    Object.assign(logProps, otherProps)
+  }
+
+  log('search', logProps)
+}
+
 /**
- * Log study search metrics.  Might support gene, cell search in future.
+ * Log global search metrics, i.e. searches from home page.
  */
 export function logSearch(type, searchParams, perfTime) {
   searchNumber += 1
