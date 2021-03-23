@@ -50,6 +50,10 @@ export default function DotPlotLegend() {
         <text x={colorBarWidth - 5} y={numberYPos}>1</text>
         <rect fill="#CC0088" width="3" height="10" x={colorBarWidth / 2} y={numberYPos - 20} ry="2"/>
         <text x="-22" y={labelTextYPos}>Scaled mean expression</text>
+        <circle cx="130" cy="47" r="8" fill="#aeaeae"></circle>
+        <a id="dot-plot-scaling-link" xlinkHref="https://github.com/broadinstitute/single_cell_portal/wiki/dot-plots-detail#scaled-mean-expression" style={{ textDecoration: 'none' }} target="_blank">
+          <text x="130" y="52" textAnchor="middle" fill="white" fontSize="" fontFamily="Arial" dy="">?</text>
+        </a>
         {nonzeroNote}
       </g>
     </svg>

@@ -59,7 +59,10 @@ function getLegendSvg(rects) {
       <g id="dp-legend-color" transform="translate(200, 0)">
         ${rects}
         <text x="-40" y="50">Scaled mean expression</text>
-        ${nonzeroNote}
+        <circle cx="125" cy="45" r="8" fill="#aeaeae"></circle>
+        <a id="dot-plot-scaling-link" xlink:href="https://github.com/broadinstitute/single_cell_portal/wiki/dot-plots-detail#scaled-mean-expression" style="text-decoration: none" target="_blank">
+          <text x="125" y="50" text-anchor="middle" fill="white" font-size="" font-family="Arial" dy="">?</text>
+        </a>
       </g>
     <svg>`
   )
