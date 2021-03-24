@@ -623,7 +623,7 @@ export default async function scpApi(
   if (response.ok) {
     if (toJson) {
       const json = await response.json()
-      perfTime['json'] = Math.round(performance.now() - perfTimeBackendTimestamp)
+      perfTime['json'] = performance.now() - perfTimeBackendTimestamp
       // Converts API's snake_case to JS-preferrable camelCase,
       // for easy destructuring assignment.
       if (camelCase) {

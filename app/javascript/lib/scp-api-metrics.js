@@ -195,6 +195,28 @@ export function getLogPlotProps() {
   return logProps
 }
 
+/** Log Plotly plot performance: scatter, violin, and box plots */
+export function logPlotPerfTime(type, perfTime, props) {
+  const perfTimePlot = performance.now() - perfTime['plotStart']
+
+  const perfTimeFrontend = perfTimePlot + perfTime['json']
+
+  const perfTimeBackend = perfTime['backend']
+  const perfTimeFull = perfTimeBackend + perfTimeFrontend
+
+  const perfLogProps = {
+    'perfTime:backend': perfTimeBackend, // Time for API call
+    'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
+    'perfTime:frontend:plot': Math.round(perfTimePlot), // Time from start to end of plot render call
+    'perfTime:frontend:json': Math.round(perfTime['json']), // Time to parse JSON
+    'perfTime': Math.round(perfTimeFull) // Time from API call *start* to plot render end
+  }
+
+  const mergedProps = Object.assign(props, perfLogProps)
+
+  log(`plot:${type}`, mergedProps)
+}
+
 /**
  * Log when a download is authorized.
  * This is our best web-client-side methodology for measuring downloads.

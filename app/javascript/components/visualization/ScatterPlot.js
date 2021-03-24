@@ -11,6 +11,7 @@ import PlotTitle from './PlotTitle'
 import { log } from 'lib/metrics-api'
 import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
+import { logPlotPerfTime } from 'lib/scp-api-metrics'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
@@ -62,24 +63,7 @@ function RawScatterPlot({
       formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene)
       const dataScatterColor = processTraceScatterColor(scatter.data, scatterColor)
 
-      const perfTimeBackend = perfTime['backend']
-
-      const perfTimePlotStart = performance.now()
-
-      Plotly.newPlot(graphElementId, scatter.data, layout)
-
-      const perfTimePlot = performance.now() - perfTimePlotStart
-
-      const perfTimeFrontend = perfTimePlot + perfTime['json']
-
-      const perfTimeFull = perfTimeBackend + perfTimeFrontend
-
-      const perfLogProps = {
-        'perfTime:backend': perfTimeBackend, // Time for API call
-        'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
-        'perfTime:frontend:plot': Math.round(perfTimePlot), // Time from start to end of plot render call
-        'perfTime:frontend:json': Math.round(perfTime['json']), // Time to parse JSON
-        'perfTime': Math.round(perfTimeFull), // Time from API call *start* to plot render end,
+      const plotLogProps = {
         'numPoints': scatter.numPoints, // How many cells are we plotting?
         genes,
         'gene': scatter.gene,
@@ -91,8 +75,11 @@ function RawScatterPlot({
         'annotType': scatter.annotParams.type,
         'annotScope': scatter.annotParams.scope
       }
+      perfTime['plotStart'] = performance.now()
 
-      log('plot:scatter', perfLogProps)
+      Plotly.newPlot(graphElementId, scatter.data, layout)
+
+      logPlotPerfTime('scatter', perfTime, plotLogProps)
 
       if (dataScatterColor !== scatterColor) {
         updateScatterColor(dataScatterColor)

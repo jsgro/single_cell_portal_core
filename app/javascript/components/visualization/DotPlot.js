@@ -186,5 +186,6 @@ export function logMorpheusPerfTime(target, plotType, genes) {
     performance.getEntriesByName(graphId)[0].duration
   )
 
-  log(`plot:${plotType}`, { perfTime, genes })
+  const numGenes = genes.length
+  log(`plot:${plotType}`, { perfTime, genes, numGenes })
 }
