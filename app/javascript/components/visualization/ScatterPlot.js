@@ -70,7 +70,7 @@ function RawScatterPlot({
         'is3D': scatter.is3D,
         'layout:width': width, // Pixel width of graph
         'layout:height': height, // Pixel height of graph
-        'numAnnotSelections': scatter.annotParams.values.length,
+        'numAnnotLabels': scatter.annotParams.values.length,
         'annotName': scatter.annotParams.name,
         'annotType': scatter.annotParams.type,
         'annotScope': scatter.annotParams.scope
