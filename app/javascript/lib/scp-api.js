@@ -616,11 +616,12 @@ export default async function scpApi(
   const response = await fetch(fullPath, init).catch(error => error)
 
   // Milliseconds taken to fetch data from API
-  const perfTime = Math.round(performance.now() - perfTimeStart)
+  let perfTime = Math.round(performance.now() - perfTimeStart)
 
   if (response.ok) {
     if (toJson) {
       const json = await response.json()
+      perfTime = Math.round(performance.now() - perfTimeStart)
       // Converts API's snake_case to JS-preferrable camelCase,
       // for easy destructuring assignment.
       if (camelCase) {

@@ -112,7 +112,6 @@ function RawScatterPlot({
   useUpdateEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
-      console.log('updating color scale')
       const dataUpdate = { 'marker.colorscale': scatterColor }
       Plotly.update(graphElementId, dataUpdate)
     }
