@@ -12,6 +12,7 @@ require "action_view/railtie"
 # require "action_cable/engine"
 require "sprockets/railtie"
 require "rails/test_unit/railtie"
+require_relative '../lib/remote_ip_logger'
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -26,10 +27,13 @@ module SingleCellPortal
     config.eager_load_paths << Rails.root.join('lib')
     config.autoload_paths << Rails.root.join('app/lib')
     config.eager_load_paths << Rails.root.join('app/lib')
+    config.autoload_paths << Rails.root.join('app/middlewares')
+    config.eager_load_paths << Rails.root.join('app/middlewares')
 
     config.time_zone = 'Eastern Time (US & Canada)'
 
     config.middleware.use Rack::Deflater
+    config.middleware.insert_after ActionDispatch::RemoteIp, RemoteIpLogger
 
     # Docker image for file parsing via scp-ingest-pipeline
     config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.10.1'
