@@ -66,8 +66,17 @@
 	}
 }
 
-.explore-plot-tab-content {
+.explore-tab-content {
 	background: #fff;
+	button {
+		background: #fff;
+	}
+	.panel {
+		border: none;
+	}
+}
+
+.explore-plot-tab-content {
 	border-right: 1px solid #ccc;
 }
 
@@ -84,9 +93,11 @@
 
 .view-options-toggle-on {
 	position: absolute;
-	top: -36px;
-	right: 0px;
+	top: 0px;
+	right: 1px;
 	padding: 0.5em;
+	background: #fff;
+	z-index: 30;
 }
 
 .desktop-view-options {
@@ -117,18 +128,11 @@
 }
 
 .render-controls {
+	border-radius: 5px;
+	border: 1px solid #bbb;
+	margin-bottom: 1em;
 	.panel {
-		border: none;
-		border-radius: 5px;
-		background: #fff;
-		box-shadow: none;
-		margin-bottom: 10px;
-	}
-	.panel-heading {
-	  cursor: pointer;
-		background: #ddd;
-		border-radius: 5px;
-		padding: 5px 15px;
+		margin-bottom: 0px;
 	}
 }
 

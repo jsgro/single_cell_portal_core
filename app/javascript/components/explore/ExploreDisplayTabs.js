@@ -259,7 +259,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
             }
             { !showViewOptionsControls &&
               <button className="action view-options-toggle view-options-toggle-on" onClick={toggleViewOptions}>
-                <FontAwesomeIcon className="fa-lg" icon={faCog}/>
+                OPTIONS <FontAwesomeIcon className="fa-lg" icon={faCog}/>
               </button>
             }
             { enabledTabs.includes('scatter') &&
