@@ -13,6 +13,8 @@ require "action_view/railtie"
 require "sprockets/railtie"
 require "rails/test_unit/railtie"
 
+require_relative '../lib/x_forwarded_for_logger'
+
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
@@ -30,8 +32,9 @@ module SingleCellPortal
     config.time_zone = 'Eastern Time (US & Canada)'
 
     config.middleware.use Rack::Deflater
+    config.middleware.insert_after ActionDispatch::RemoteIp, XForwardedForLogger
 
-    # Docker image for file parsing via scp-ingest-pipeline
+                                   # Docker image for file parsing via scp-ingest-pipeline
     config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.10.1'
 
     # Settings in config/environments/* take precedence over those specified here.
