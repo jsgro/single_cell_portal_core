@@ -5,7 +5,7 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import _uniqueId from 'lodash/uniqueId'
 
-const consensusPopover = (
+const scaledPopover = (
   <Popover id="scaled-mean-expression-helptext">
     Scaling is relative to the each gene's expression for all cells in each
     annotation selection, i.e. cells associated with each column label in
@@ -62,7 +62,7 @@ export default function DotPlotLegend() {
         <text x={colorBarWidth - 5} y={numberYPos}>1</text>
         <rect fill="#CC0088" width="3" height="10" x={colorBarWidth / 2} y={numberYPos - 20} ry="2"/>
         <text x="-22" y={labelTextYPos}>Scaled mean expression</text>
-        <OverlayTrigger trigger="click" rootClose placement="top" overlay={consensusPopover}>
+        <OverlayTrigger trigger="click" rootClose placement="top" overlay={scaledPopover}>
           <FontAwesomeIcon className="action" icon={faInfoCircle} transform="shrink-12 left-16 down-3" />
         </OverlayTrigger>
       </g>
