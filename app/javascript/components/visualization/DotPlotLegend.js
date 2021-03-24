@@ -8,7 +8,7 @@ import _uniqueId from 'lodash/uniqueId'
 const consensusPopover = (
   <Popover id="explore-subsampling-helptext">
     Scaling is relative to the each gene's expression for all cells in each
-    annotation selection, i.e. cells associated with the each column label in
+    annotation selection, i.e. cells associated with each column label in
     the dot plot.
   </Popover>
 )
@@ -63,7 +63,7 @@ export default function DotPlotLegend() {
         <rect fill="#CC0088" width="3" height="10" x={colorBarWidth / 2} y={numberYPos - 20} ry="2"/>
         <text id="scaled-mean-expression-legend" x="-22" y={labelTextYPos}>Scaled mean expression</text>
         <OverlayTrigger trigger="click" rootClose placement="top" overlay={consensusPopover}>
-          <FontAwesomeIcon className="action" icon={faInfoCircle} transform="shrink-12 left-16 down-2" />
+          <FontAwesomeIcon className="action" icon={faInfoCircle} transform="shrink-12 left-16 down-3" />
         </OverlayTrigger>
       </g>
     </svg>
