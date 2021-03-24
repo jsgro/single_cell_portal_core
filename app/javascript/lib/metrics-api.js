@@ -82,9 +82,19 @@ export function logClick(event) {
   } else if (target.closest('input').length) {
     logClickInput(target.closest('input')[0])
   } else {
+    logClickSvg(target.closest('.logged-svg')[0])
     // Perhaps uncomment when Mixpanel quota increases
     // logClickOther(target)
   }
+}
+
+/** Log clicks on SVG element of analytics interest */
+export function logClickSvg(target) {
+  const props = {
+    classList: getClassListAsArray(target),
+    id: target.id
+  }
+  log('click:svg', props)
 }
 
 /**
@@ -100,13 +110,18 @@ function getNameForClickTarget(target) {
   return targetName
 }
 
+/** Convert DOM classList to array, for easy exploration in Mixpanel */
+function getClassListAsArray(target) {
+  return 'classList' in target? Array.from(target.classList) : []
+}
+
 /**
  * Log click on link, i.e. anchor (<a ...) tag
  */
 export function logClickLink(target) {
   const props = {
     text: getNameForClickTarget(target),
-    classList: 'classList' in target? Array.from(target.classList) : [],
+    classList: getClassListAsArray(target),
     id: target.id
   }
   // Check if target is a tab that's not a part of a menu

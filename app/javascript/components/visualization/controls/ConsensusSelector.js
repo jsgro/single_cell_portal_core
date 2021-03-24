@@ -63,7 +63,7 @@ export function ExploreConsensusSelector({
     <div className="form-group">
       <label>
         <OverlayTrigger trigger="click" rootClose placement="top" overlay={exploreConsensusPopover}>
-          <span>Collapse genes by <FontAwesomeIcon className="action" icon={faInfoCircle}/></span>
+          <span>Collapse genes by <FontAwesomeIcon id="consensus-help-icon" className="action logged-svg" icon={faInfoCircle}/></span>
         </OverlayTrigger>
       </label>
       <Select options={exploreConsensusOptions}
