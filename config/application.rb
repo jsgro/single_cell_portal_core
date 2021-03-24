@@ -26,8 +26,6 @@ module SingleCellPortal
     config.eager_load_paths << Rails.root.join('lib')
     config.autoload_paths << Rails.root.join('app/lib')
     config.eager_load_paths << Rails.root.join('app/lib')
-    config.autoload_paths << Rails.root.join('app/middlewares')
-    config.eager_load_paths << Rails.root.join('app/middlewares')
 
     config.time_zone = 'Eastern Time (US & Canada)'
 
