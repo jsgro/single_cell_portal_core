@@ -7,7 +7,7 @@ import _uniqueId from 'lodash/uniqueId'
 
 const scaledPopover = (
   <Popover id="scaled-mean-expression-helptext">
-    Scaling is relative to the each gene's expression for all cells in each
+    Scaling is relative to each gene's expression across all cells in a given
     annotation selection, i.e. cells associated with each column label in
     the dot plot.
   </Popover>
