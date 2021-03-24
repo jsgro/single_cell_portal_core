@@ -34,7 +34,7 @@ module SingleCellPortal
     config.middleware.use Rack::Deflater
     config.middleware.insert_after ActionDispatch::RemoteIp, XForwardedForLogger
 
-                                   # Docker image for file parsing via scp-ingest-pipeline
+    # Docker image for file parsing via scp-ingest-pipeline
     config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.10.1'
 
     # Settings in config/environments/* take precedence over those specified here.
