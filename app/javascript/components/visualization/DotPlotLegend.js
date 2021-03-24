@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import _uniqueId from 'lodash/uniqueId'
 
 const consensusPopover = (
-  <Popover id="explore-subsampling-helptext">
+  <Popover id="scaled-mean-expression-helptext">
     Scaling is relative to the each gene's expression for all cells in each
     annotation selection, i.e. cells associated with each column label in
     the dot plot.
@@ -61,7 +61,7 @@ export default function DotPlotLegend() {
         <text x={colorBarWidth / 2 - 7} y={numberYPos}>0.5</text>
         <text x={colorBarWidth - 5} y={numberYPos}>1</text>
         <rect fill="#CC0088" width="3" height="10" x={colorBarWidth / 2} y={numberYPos - 20} ry="2"/>
-        <text id="scaled-mean-expression-legend" x="-22" y={labelTextYPos}>Scaled mean expression</text>
+        <text x="-22" y={labelTextYPos}>Scaled mean expression</text>
         <OverlayTrigger trigger="click" rootClose placement="top" overlay={consensusPopover}>
           <FontAwesomeIcon className="action" icon={faInfoCircle} transform="shrink-12 left-16 down-3" />
         </OverlayTrigger>
