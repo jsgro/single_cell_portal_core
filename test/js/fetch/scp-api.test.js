@@ -32,7 +32,7 @@ describe('JavaScript client for SCP REST API', () => {
     const [authCode, perfTime] =
       await scpApi('/search/auth_code', defaultInit(), true)
 
-    expect(Number.isInteger(perfTime)).toEqual(true);
-    expect(perfTime).toBeGreaterThan(0);
+    expect(Number.isInteger(perfTime.backend)).toEqual(true);
+    expect(perfTime.backend).toBeGreaterThan(0);
   });
 })

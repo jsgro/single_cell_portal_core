@@ -31,7 +31,6 @@ export default function useExploreTabRouter() {
   if (isInitialLoad) {
     // Log how long it takes from starting page load until completing first plot
     startPendingEvent('user-action:page:view:site-study',
-      { speciesList: window.SCP.taxons },
       'plot:',
       true)
 

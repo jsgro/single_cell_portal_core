@@ -83,12 +83,13 @@ function RawStudyViolinPlot({
 
       const perfTimeFrontend = performance.now() - perfTimeFrontendStart
 
-      const perfTimeFull = perfTime + perfTimeFrontend
+      const perfTimeBackend = perfTime.backend
+      const perfTimeFull = perfTimeBackend + perfTimeFrontend
 
       log(`plot:${distributionPlotToUse}`, {
         genes,
         'perfTime': Math.round(perfTimeFull),
-        'perfTime:backend': perfTime,
+        'perfTime:backend': Math.round(perfTime.backend),
         'perfTime:frontend': Math.round(perfTimeFrontend)
       })
 
