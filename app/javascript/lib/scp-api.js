@@ -615,13 +615,15 @@ export default async function scpApi(
 
   const response = await fetch(fullPath, init).catch(error => error)
 
-  // Milliseconds taken to fetch data from API
-  let perfTime = Math.round(performance.now() - perfTimeStart)
+  // Milliseconds taken to fetch data from API (Time to last byte)
+  const perfTimeBackendTimestamp = performance.now()
+  const perfTimeBackendDuration = Math.round(perfTimeBackendTimestamp - perfTimeStart)
+  const perfTime = { 'backend': perfTimeBackendDuration }
 
   if (response.ok) {
     if (toJson) {
       const json = await response.json()
-      perfTime = Math.round(performance.now() - perfTimeStart)
+      perfTime['json'] = Math.round(performance.now() - perfTimeBackendTimestamp)
       // Converts API's snake_case to JS-preferrable camelCase,
       // for easy destructuring assignment.
       if (camelCase) {

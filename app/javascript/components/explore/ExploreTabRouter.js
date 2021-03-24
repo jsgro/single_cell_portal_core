@@ -5,7 +5,8 @@ import * as queryString from 'query-string'
 import { stringifyQuery, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
 import { getIdentifierForAnnotation } from 'lib/cluster-utils'
 import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
-import { logStudyGeneSearch, startPendingEvent } from 'lib/metrics-api'
+import { startPendingEvent } from 'lib/metrics-api'
+import { logStudyGeneSearch } from 'lib/scp-api-metrics'
 
 export const emptyDataParams = {
   cluster: '',

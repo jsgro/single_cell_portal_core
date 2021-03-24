@@ -62,17 +62,23 @@ function RawScatterPlot({
       formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene)
       const dataScatterColor = processTraceScatterColor(scatter.data, scatterColor)
 
-      const perfTimeFrontendStart = performance.now()
+      const perfTimeBackend = perfTime['backend']
+
+      const perfTimePlotStart = performance.now()
 
       Plotly.newPlot(graphElementId, scatter.data, layout)
 
-      const perfTimeFrontend = performance.now() - perfTimeFrontendStart
+      const perfTimePlot = performance.now() - perfTimePlotStart
 
-      const perfTimeFull = perfTime + perfTimeFrontend
+      const perfTimeFrontend = perfTimePlot + perfTime['json']
+
+      const perfTimeFull = perfTimeBackend + perfTimeFrontend
 
       const perfLogProps = {
-        'perfTime:backend': perfTime, // Time for API call
+        'perfTime:backend': perfTimeBackend, // Time for API call
         'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
+        'perfTime:frontend:plot': Math.round(perfTimePlot), // Time from start to end of plot render call
+        'perfTime:frontend:json': Math.round(perfTime['json']), // Time to parse JSON
         'perfTime': Math.round(perfTimeFull), // Time from API call *start* to plot render end,
         'numPoints': scatter.numPoints, // How many cells are we plotting?
         genes,

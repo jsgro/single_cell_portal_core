@@ -13,7 +13,7 @@
 
 import React, { useEffect } from 'react'
 
-import { logStudyGeneSearch } from 'lib/metrics-api'
+import { logStudyGeneSearch } from 'lib/scp-api-metrics'
 import Ideogram from 'ideogram'
 
 /** Handle clicks on Ideogram annotations */
