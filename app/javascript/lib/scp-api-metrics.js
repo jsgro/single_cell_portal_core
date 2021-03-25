@@ -72,7 +72,7 @@ function getFriendlyFilterListByFacet(facets) {
 }
 
 /** Log searches done on Study Overview page */
-export function logStudyGeneSearch(genes, trigger, speciesList, otherProps) {
+function logStudyGeneSearch(genes, trigger, speciesList, otherProps) {
   // Properties logged for all gene searches from Study Overview
   const logProps = {
     type: 'gene',
@@ -91,10 +91,8 @@ export function logStudyGeneSearch(genes, trigger, speciesList, otherProps) {
   log('search', logProps)
 }
 
-/**
- * Log global search metrics, i.e. searches from home page.
- */
-export function logSearch(type, searchParams, perfTime) {
+/** Log global search metrics, i.e. searches from home page. */
+function logGlobalSearch(type, searchParams, perfTime) {
   searchNumber += 1
   if (searchNumber < 3) {
     // This prevents over-reporting searches.
@@ -125,9 +123,9 @@ export function logSearch(type, searchParams, perfTime) {
 
   const simpleProps = {
     terms, numTerms, genes, numGenes, page, preset,
-    facetList, numFacets, numFilters,
-    perfTime,
-    type, context: 'global'
+    facetList, numFacets, numFilters, type,
+    'perfTime': perfTime['backend'],
+    'context': 'global'
   }
   const props = Object.assign(simpleProps, filterListByFacet)
 
@@ -147,6 +145,17 @@ export function logSearch(type, searchParams, perfTime) {
     'send', 'event', gaEventCategory, 'study-search',
     'num-terms', numTerms
   )
+}
+
+/**
+ * Log global search metrics, i.e. searches from home page.
+ */
+export function logSearch(type, context, searchParams, perfTime, trigger) {
+  if (context === 'global') {
+    logGlobalSearch(type, searchParams, perfTime)
+  } else {
+    logStudyGeneSearch(searchParams.genes, trigger, perfTime)
+  }
 }
 
 /**
