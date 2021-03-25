@@ -15,9 +15,6 @@ export const emptyDataParams = {
 }
 
 const SPATIAL_GROUPS_EMPTY = '--'
-// because we only allow a single ExploreTabRouter component we can track global state here, instead
-// of useRef, which would trigger a rerender
-let isInitialLoad = true
 
 /**
  * manages view options and basic layout for the explore tab
@@ -26,12 +23,6 @@ let isInitialLoad = true
 export default function useExploreTabRouter() {
   const routerLocation = useLocation()
   const exploreParams = buildExploreParamsFromQuery(routerLocation.search)
-
-  if (isInitialLoad && exploreParams.genes.length > 0) {
-    // note that we can't pass the species list because we don't know it yet.
-    logStudyGeneSearch(exploreParams.genes, 'url')
-  }
-  isInitialLoad = false
 
   /** Merges the received update into the exploreParams, and updates the page URL if need */
   function updateExploreParams(newOptions, wasUserSpecified=true) {
@@ -56,12 +47,13 @@ export default function useExploreTabRouter() {
   }
 
   useEffect(() => {
-    // this cleanup isn't strictly necessary now, but if we ever start linking to gene searches
-    // within SCP, or not reloading the page when going from search results to explore, it will be needed
-    return function cleanup() {
-      isInitialLoad = true
+    // if this is the first render, and there are already genes specified, that means they came
+    // from the url directly
+    if (exploreParams.genes.length > 0) {
+      // note that we can't pass the species list because we don't know it yet.
+      logStudyGeneSearch(exploreParams.genes, 'url')
     }
-  })
+  }, [])
   return { exploreParams, updateExploreParams, routerLocation }
 }
 
