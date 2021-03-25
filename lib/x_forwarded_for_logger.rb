@@ -3,7 +3,7 @@
 # logs entire X-Forwarded-For header on requests, if present.  This is because Rails only returns the last IP address
 # reported in various headers as it considers this to be the most authoritative, and least likely to be spoofed.  Since
 # GCP reports the load balancer IP last, this is what always shows up in the logs.  This class will log the entire
-# header value to the application log before logging the request as norma, which will mirror the behavior of nginx when
+# header value to the application log before logging the request as normal, which will mirror the behavior of nginx when
 # using real_ip_header and $proxy_add_x_forwarded_for.
 #
 # More info:
