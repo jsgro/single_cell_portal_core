@@ -65,7 +65,7 @@ export default function DotPlotLegend() {
         <OverlayTrigger trigger="click" rootClose placement="right" overlay={scaledPopover}>
           <FontAwesomeIcon
             data-analytics-name="scaled-mean-expression-help-icon"
-            className="action logged-svg help-icon"
+            className="action log-click help-icon"
             icon={faInfoCircle}
             transform="shrink-12 left-16 down-3" />
         </OverlayTrigger>

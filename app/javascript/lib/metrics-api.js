@@ -81,21 +81,18 @@ export function logClick(event) {
     logClickButton(target.closest('button')[0])
   } else if (target.closest('input').length) {
     logClickInput(target.closest('input')[0])
-  } else if (target.closest('.logged-svg').length > 0) {
-    logClickSvg(target.closest('.logged-svg')[0])
-  } else {
-    // Perhaps uncomment when Mixpanel quota increases
-    // logClickOther(target)
+  } else if (target.closest('.log-click').length > 0) {
+    logClickOther(target.closest('.log-click')[0])
   }
 }
 
 /** Log clicks on SVG element of analytics interest */
-export function logClickSvg(target) {
+export function logClickOther(target) {
   const props = {
-    'classList': getClassListAsArray(target),
-    'analytics-name': getNameForClickTarget(target)
+    classList: getClassListAsArray(target),
+    text: getNameForClickTarget(target)
   }
-  log('click:svg', props)
+  log('click:other', props)
 }
 
 /**
@@ -195,17 +192,6 @@ function logClickInput(target) {
 
   // Google Analytics fallback: remove once Bard and Mixpanel are ready for SCP
   ga('send', 'event', 'click', element) // eslint-disable-line no-undef
-}
-
-/**
- * Log clicks on elements that are not otherwise classified
- */
-function logClickOther(target) { // eslint-disable-line no-unused-vars
-  const props = { text: target.text }
-  log('click:other', props)
-
-  // Google Analytics fallback: remove once Bard and Mixpanel are ready for SCP
-  ga('send', 'event', 'click', 'other') // eslint-disable-line no-undef
 }
 
 /** Log text of selected option when dropdown menu (i.e., select) changes */
