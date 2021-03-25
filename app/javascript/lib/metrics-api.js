@@ -163,17 +163,24 @@ function getLabelsForElement(element) {
  * Log click on input by type, e.g. text, number, checkbox
  */
 function logClickInput(target) {
-  const domLabels = getLabelsForElement(target)
+  let props
+  if (target.type === 'radio') {
+    const id = 'id' in target ? target.id : ''
+    const inputName = target.name
+    const value = target.value
+    props = { id, 'input-name': inputName, value }
+  } else {
+    const domLabels = getLabelsForElement(target)
 
-  // User-facing label
-  const label = domLabels.length > 0 ? getNameForClickTarget(domLabels[0]) : ''
+    // User-facing label
+    const label = domLabels.length > 0 ? getNameForClickTarget(domLabels[0]) : ''
 
-  const props = { label }
+    props = { label }
 
-  if (target.type === 'submit') {
-    props.text = target.value
+    if (target.type === 'submit') {
+      props.text = target.value
+    }
   }
-
   const element = `input-${target.type}`
   log(`click:${element}`, props)
 
