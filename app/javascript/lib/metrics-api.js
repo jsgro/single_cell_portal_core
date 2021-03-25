@@ -81,8 +81,9 @@ export function logClick(event) {
     logClickButton(target.closest('button')[0])
   } else if (target.closest('input').length) {
     logClickInput(target.closest('input')[0])
-  } else {
+  } else if (target.closest('.logged-svg').length > 0) {
     logClickSvg(target.closest('.logged-svg')[0])
+  } else {
     // Perhaps uncomment when Mixpanel quota increases
     // logClickOther(target)
   }
@@ -91,8 +92,8 @@ export function logClick(event) {
 /** Log clicks on SVG element of analytics interest */
 export function logClickSvg(target) {
   const props = {
-    classList: getClassListAsArray(target),
-    id: target.id
+    'classList': getClassListAsArray(target),
+    'analytics-name': getNameForClickTarget(target)
   }
   log('click:svg', props)
 }

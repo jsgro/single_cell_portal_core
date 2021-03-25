@@ -48,7 +48,7 @@ export default function SubsampleSelector({
     <div className="form-group">
       <label>
         <OverlayTrigger trigger="click" rootClose placement="top" overlay={subsamplingPopover}>
-          <span>Subsampling <FontAwesomeIcon id="subsampling-help-icon" className="action logged-svg" icon={faInfoCircle}/></span>
+          <span>Subsampling <FontAwesomeIcon data-analytics-name="subsampling-help-icon" className="action logged-svg help-icon" icon={faInfoCircle}/></span>
         </OverlayTrigger>
       </label>
       <Select options={subsampleOptions}

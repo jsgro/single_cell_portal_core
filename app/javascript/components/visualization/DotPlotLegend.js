@@ -63,7 +63,11 @@ export default function DotPlotLegend() {
         <rect fill="#CC0088" width="3" height="10" x={colorBarWidth / 2} y={numberYPos - 20} ry="2"/>
         <text x="-22" y={labelTextYPos}>Scaled mean expression</text>
         <OverlayTrigger trigger="click" rootClose placement="right" overlay={scaledPopover}>
-          <FontAwesomeIcon id="scaled-mean-expression-help-icon" className="action logged-svg" icon={faInfoCircle} transform="shrink-12 left-16 down-3" />
+          <FontAwesomeIcon
+            data-analytics-name="scaled-mean-expression-help-icon"
+            className="action logged-svg help-icon"
+            icon={faInfoCircle}
+            transform="shrink-12 left-16 down-3" />
         </OverlayTrigger>
       </g>
     </svg>
