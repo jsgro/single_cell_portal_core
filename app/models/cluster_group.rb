@@ -12,6 +12,7 @@ class ClusterGroup
   field :cluster_type, type: String
   field :cell_annotations, type: Array
   field :domain_ranges, type: Hash
+  field :points, type: Integer
   # subsampling flags
   # :subsampled => whether subsampling has completed
   # :is_subsampling => whether subsampling has been initiated
@@ -83,11 +84,6 @@ class ClusterGroup
         data_array.values
       end
     end
-  end
-
-  # return number of points in cluster_group, use x axis as all cluster_groups must have either x or y
-  def points
-    self.concatenate_data_arrays('x', 'coordinates').count
   end
 
   def is_3d?
@@ -354,6 +350,12 @@ class ClusterGroup
       # check if there are any data arrays belonging to this cluster that have a subsample threshold & annotation
       !self.find_subsampled_data_arrays.any?
     end
+  end
+
+  # set the point count for a cluster_group
+  def set_point_count
+    points = self.concatenate_data_arrays('x', 'coordinates').count
+    self.update!(points: points)
   end
 
   ##

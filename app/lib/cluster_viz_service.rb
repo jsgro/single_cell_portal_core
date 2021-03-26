@@ -210,7 +210,6 @@ class ClusterVizService
   # uses cluster_group model and loads annotation for both group & numeric plots
   # data values are pulled from associated data_array entries for each axis and annotation/text value
   def self.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, colorscale=nil)
-    Rails.logger.info "raw annotation: #{annotation}"
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     x_array = cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
@@ -238,8 +237,6 @@ class ClusterVizService
       annotation[:values] = AnnotationVizService.sanitize_values_array(metadata_obj.values, annotation[:type])
     end
     annotation_array = AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
-    Rails.logger.info "annotation array: #{annotation_array}"
-    Rails.logger.info "annotation[:values]: #{annotation[:values]}"
     coordinates = {}
     if annotation[:type] == 'numeric'
       text_array = []
