@@ -31,7 +31,7 @@ function onClickAnnot(annot) {
 
   otherProps['trigger'] = 'click-related-genes'
   logStudyGeneSearch([annot.name], null, null, otherProps)
-  ideogram.SCP.searchGenes([annot.name])
+  ideogram.SCP.searchGenes([annot.name], null, false)
 }
 
 /**
