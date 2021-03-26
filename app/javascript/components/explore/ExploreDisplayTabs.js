@@ -56,9 +56,9 @@ export default function ExploreDisplayTabs(
   referencePlotDataParams.genes = []
 
   /** helper function so that StudyGeneField doesn't have to see the full exploreParams object */
-  function searchGenes(genes, logProps, wasUserSpecified=true) {
+  function searchGenes(genes) {
     // also unset any selected gene lists or ideogram files
-    updateExploreParams({ genes, geneList: '', ideogramFileId: '' }, wasUserSpecified)
+    updateExploreParams({ genes, geneList: '', ideogramFileId: '' })
   }
 
   // Handle spatial transcriptomics data

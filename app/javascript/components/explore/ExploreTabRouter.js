@@ -32,8 +32,11 @@ export default function useExploreTabRouter() {
       Object.keys(newOptions).forEach(key => {
         mergedOpts.userSpecified[key] = true
       })
-      if (newOptions.consensus || newOptions.genes) {
-        // if the user does a gene search or changes the consensus, switch back to the default tab
+      // if the user does a gene search from the cluster view,
+      // or if they've switched to/from consensus view
+      // reset the tab to the default
+      if (mergedOpts.tab === 'cluster' && newOptions.genes ||
+          !!newOptions.consensus != !!exploreParams.consensus) {
         delete mergedOpts.tab
         delete mergedOpts.userSpecified.tab
       }
