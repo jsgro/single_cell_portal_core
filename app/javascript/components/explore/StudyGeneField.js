@@ -21,11 +21,8 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
     // Autocomplete when user starts typing
     if (inputText && inputText.length > 0) {
       const lowerCaseInput = inputText.toLowerCase()
-      geneOptions = allGenes.filter(geneName => {
+      geneOptions = getOptionsFromGenes(allGenes.filter(geneName => {
         return geneName.toLowerCase().includes(lowerCaseInput)
-      }).map(geneName => ({
-        label: geneName,
-        value: geneName
       }))
     }
   }
@@ -167,6 +164,11 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
                 ...provided,
                 maxHeight: '32px',
                 overflow: 'auto'
+              }),
+              menuList: (provided, state) => ({
+                ...provided,
+                zIndex: 999,
+                background: '#fff'
               })
             }}
           />

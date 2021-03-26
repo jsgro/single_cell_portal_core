@@ -23,14 +23,14 @@ function onClickAnnot(annot) {
 
   // Enable merge of related-genes log props into search log props
   // This helps profile the numerator of click-through-rate
-  const event = {}
+  const otherProps = {}
   const props = getRelatedGenesAnalytics(ideogram)
   Object.entries(props).forEach(([key, value]) => {
-    event[`relatedGenes:${key}`] = value
+    otherProps[`relatedGenes:${key}`] = value
   })
 
-  event['type'] = 'click-related-genes'
-  logStudyGeneSearch('click-related-genes', null, null, props)
+  otherProps['trigger'] = 'click-related-genes'
+  logStudyGeneSearch([annot.name], null, null, otherProps)
   ideogram.SCP.searchGenes([annot.name])
 }
 
