@@ -142,7 +142,7 @@ class FileParseServiceTest < ActiveSupport::TestCase
         break
       end
     end
-    precomputed_score = @basic_study.precomputed_scores.by_name(gene_list_name)
+    precomputed_score = @basic_study.precomputed_scores.find_by(name: gene_list_name)
     assert precomputed_score.present?
   end
 
