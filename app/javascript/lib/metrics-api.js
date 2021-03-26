@@ -165,7 +165,7 @@ function getLabelsForElement(element) {
 function logClickInput(target) {
   let props
   if (target.type === 'radio') {
-    const id = 'id' in target ? target.id : ''
+    const id = target.id
     const inputName = target.name
     const value = target.value
     props = { id, 'input-name': inputName, value }
