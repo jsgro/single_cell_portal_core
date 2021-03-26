@@ -6,7 +6,9 @@
 #   cities = City.create([{ name: 'Chicago' }, { name: 'Copenhagen' }])
 #   Mayor.create(name: 'Emanuel', city: cities.first)
 #
-@random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+File.open(Rails.root.join('.random_seed')) do |file|
+  @random_seed = file.read.strip
+end
 user_access_token = {access_token: 'test-api-token', expires_in: 3600, expires_at: Time.zone.now + 1.hour}
 user_2_access_token = {access_token: 'test-api-token-2', expires_in: 3600, expires_at: Time.zone.now + 1.hour}
 user = User.find_or_initialize_by(email:'testing.user@gmail.com')
@@ -50,11 +52,12 @@ example_files = {
     }
 }
 example_files.values.each do |file_attributes|
-  upload = File.open(File.join(file_attributes[:path]))
-  file_attributes.delete(:path)
-  file_attributes[:upload] = upload
-  study_file = StudyFile.create!(file_attributes)
-  study.send_to_firecloud(study_file)
+  File.open(File.join(file_attributes[:path])) do |upload|
+    file_attributes.delete(:path)
+    file_attributes[:upload] = upload
+    study_file = StudyFile.create!(file_attributes)
+    study.send_to_firecloud(study_file)
+  end
 end
 study.reload
 expression_file = study.expression_matrix_files.first
@@ -138,10 +141,12 @@ DirectoryListing.create!(name: 'fastq', file_type: 'fastq',
 api_study = Study.create!(name: "API Test Study #{@random_seed}", data_dir: 'api_test_study', user_id: user.id,
                           firecloud_project: ENV['PORTAL_NAMESPACE'])
 StudyShare.create!(email: 'fake.email@gmail.com', permission: 'Reviewer', study_id: api_study.id)
-api_cluster_file = StudyFile.create!(name: 'cluster_example.txt', upload: File.open(Rails.root.join('test', 'test_data', 'cluster_example.txt')),
-                  study_id: api_study.id, file_type: 'Cluster')
-# push file to bucket for use in API download tests
-api_study.send_to_firecloud(api_cluster_file)
+File.open(Rails.root.join('test', 'test_data', 'cluster_example.txt')) do |upload|
+  api_cluster_file = StudyFile.create!(name: 'cluster_example.txt', upload: upload,
+                                       study_id: api_study.id, file_type: 'Cluster')
+  # push file to bucket for use in API download tests
+  api_study.send_to_firecloud(api_cluster_file)
+end
 StudyFile.create(study_id: api_study.id, name: 'SRA Study for housing fastq data', description: 'SRA Study for housing fastq data',
                  file_type: 'Fastq', status: 'uploaded', human_fastq_url: 'https://www.ncbi.nlm.nih.gov/sra/ERX4159348[accn]')
 DirectoryListing.create!(name: 'csvs', file_type: 'csv', files: [{name: 'foo.csv', size: 100, generation: '12345'}],

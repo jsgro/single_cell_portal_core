@@ -122,18 +122,18 @@ if [[ "$TEST_FILEPATH" == "" ]]; then
   fi
 fi
 
-# configure and invoke rake command for rails tests
+# configure and invoke command for rails tests
 if [[ "$MATCHING_TESTS" != "" ]] && [[ "$TEST_FILEPATH" != "" ]]; then
-  RAILS_ENV=test bundle exec bin/rake test TEST="$TEST_FILEPATH" TESTOPTS=" -n $MATCHING_TESTS"
+  RAILS_ENV=test bin/rails test TEST_FILEPATH -n $MATCHING_TESTS
 elif [[ "$TEST_FILEPATH" != "" ]]; then
-  RAILS_ENV=test bundle exec bin/rake test TEST="$TEST_FILEPATH"
+  RAILS_ENV=test bin/rails test $TEST_FILEPATH
 else
-  RAILS_ENV=test bundle exec bin/rake test
+  RAILS_ENV=test bin/rails test
 fi
 code=$?
 if [[ $code -ne 0 ]]; then
   RETURN_CODE=$code
-  first_test_to_fail=${first_test_to_fail-"rake test"}
+  first_test_to_fail=${first_test_to_fail-"rails test"}
   ((FAILED_COUNT++))
 fi
 if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
