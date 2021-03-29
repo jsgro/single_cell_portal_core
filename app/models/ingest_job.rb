@@ -352,6 +352,7 @@ class IngestJob
       self.study.delay.set_gene_count
     when 'Cluster'
       self.set_study_default_options
+      self.set_cluster_point_count
       self.launch_subsample_jobs
       self.set_subsampling_flags
     end
@@ -387,6 +388,17 @@ class IngestJob
     end
     Rails.logger.info "Setting default options in #{self.study.name}: #{self.study.default_options}"
     self.study.save
+  end
+
+  # set the point count on a cluster group after successful ingest
+  #
+  # * *yields*
+  #   - sets the :points attribute on a ClusterGroup
+  def set_cluster_point_count
+    cluster_group = ClusterGroup.find_by(study_id: self.study.id, study_file_id: self.study_file.id)
+    Rails.logger.info "Setting point count on #{cluster_group.name}:#{cluster_group.id}"
+    cluster_group.set_point_count!
+    Rails.logger.info "Point count on #{cluster_group.name}:#{cluster_group.id} set to #{cluster_group.points}"
   end
 
   # Set the study "initialized" attribute if all main models are populated
