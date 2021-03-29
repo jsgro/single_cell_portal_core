@@ -104,6 +104,9 @@ cluster_cat_array.save!
 cluster_int_array = cluster.data_arrays.build(name: 'Intensity', cluster_name: cluster.name, array_type: 'annotations', array_index: 1,
                                     study_id: study.id, values: intensity_array, study_file_id: cluster_file.id)
 cluster_int_array.save!
+# set point count on cluster after arrays are saved
+cluster.set_point_count!
+
 cell_metadata_1 = CellMetadatum.create!(name: 'Label', annotation_type: 'group', study_id: study.id,
                                         values: metadata_label_array.uniq, study_file_id: metadata_file.id)
 cell_metadata_2 = CellMetadatum.create!(name: 'Score', annotation_type: 'numeric', study_id: study.id,

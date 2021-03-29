@@ -304,12 +304,12 @@ class IngestJob
       self.study_file.bundled_files.each { |sf| sf.update(parse_status: 'parsed') }
       self.study.reload # refresh cached instance of study
       self.study_file.reload # refresh cached instance of study_file
-      subject = "#{self.study_file.file_type} file: '#{self.study_file.upload_file_name}' has completed parsing"
-      message = self.generate_success_email_array
-      SingleCellMailer.notify_user_parse_complete(self.user.email, subject, message, self.study).deliver_now
       self.set_study_state_after_ingest
       self.study_file.invalidate_cache_by_file_type # clear visualization caches for file
       self.log_to_mixpanel
+      subject = "#{self.study_file.file_type} file: '#{self.study_file.upload_file_name}' has completed parsing"
+      message = self.generate_success_email_array
+      SingleCellMailer.notify_user_parse_complete(self.user.email, subject, message, self.study).deliver_now
     elsif self.done? && self.failed?
       Rails.logger.error "IngestJob poller: #{self.pipeline_name} has failed."
       # log errors to application log for inspection
@@ -351,6 +351,7 @@ class IngestJob
     when /Matrix/
       self.study.delay.set_gene_count
     when 'Cluster'
+      self.set_cluster_point_count
       self.set_study_default_options
       self.launch_subsample_jobs
       self.set_subsampling_flags
@@ -387,6 +388,16 @@ class IngestJob
     end
     Rails.logger.info "Setting default options in #{self.study.name}: #{self.study.default_options}"
     self.study.save
+  end
+
+  # set the point count on a cluster group after successful ingest
+  #
+  # * *yields*
+  #   - sets the :points attribute on a ClusterGroup
+  def set_cluster_point_count
+    cluster_group = ClusterGroup.find_by(study_id: self.study.id, study_file_id: self.study_file.id)
+    cluster_group.set_point_count!
+    Rails.logger.info "Point count on #{cluster_group.name}:#{cluster_group.id} set to #{cluster_group.points}"
   end
 
   # Set the study "initialized" attribute if all main models are populated
