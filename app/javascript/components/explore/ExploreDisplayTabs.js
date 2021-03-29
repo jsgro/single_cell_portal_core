@@ -65,7 +65,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
   referencePlotDataParams.genes = []
 
   /** helper function so that StudyGeneField doesn't have to see the full exploreParams object */
-  function searchGenes(genes, logProps) {
+  function searchGenes(genes) {
     // also unset any selected gene lists or ideogram files
     updateExploreParams({ genes, geneList: '', ideogramFileId: '' })
   }

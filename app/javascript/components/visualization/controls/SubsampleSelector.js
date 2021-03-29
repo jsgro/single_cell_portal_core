@@ -47,8 +47,8 @@ export default function SubsampleSelector({
   return (
     <div className="form-group">
       <label>
-        <OverlayTrigger trigger="click" rootClose placement="top" overlay={consensusPopover}>
-          <span>Subsampling <FontAwesomeIcon className="action" icon={faInfoCircle}/></span>
+        <OverlayTrigger trigger="click" rootClose placement="top" overlay={subsamplingPopover}>
+          <span>Subsampling <FontAwesomeIcon data-analytics-name="subsampling-help-icon" className="action log-click help-icon" icon={faInfoCircle}/></span>
         </OverlayTrigger>
       </label>
       <Select options={subsampleOptions}
@@ -64,7 +64,7 @@ export default function SubsampleSelector({
   )
 }
 
-const consensusPopover = (
+const subsamplingPopover = (
   <Popover id="explore-subsampling-helptext">
     Show a representative subsample of the current clusters
     (<a href='https://github.com/broadinstitute/single_cell_portal/wiki/Subsampling-Cluster-Files'

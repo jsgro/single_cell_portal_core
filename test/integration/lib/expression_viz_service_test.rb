@@ -153,7 +153,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
 
   test 'should load ideogram outputs' do
     # we need a non-detached study, so create one
-    study = FactoryBot.create(:study, name: "Ideogram Study #{SecureRandom.uuid}", test_array: @@studies_to_clean)
+    study = FactoryBot.create(:detached_study, name: "Ideogram Study #{SecureRandom.uuid}", test_array: @@studies_to_clean)
 
     cluster_file = FactoryBot.create(:cluster_file,
                                      name: 'cluster_1.txt', study: study,
@@ -168,7 +168,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
                                      annotation_input: [
                                          {name: 'Category', type: 'group', values: ['bar', 'bar', 'baz']}
                                      ])
-    study.update(default_options: {cluster: cluster_file.name, annotation: 'Category--group--cluster'})
+    study.update(default_options: {cluster: cluster_file.name, annotation: 'Category--group--cluster'}, detached: false)
     cluster = study.default_cluster
     annotation = study.default_annotation
     filename = 'ideogram_annotations.json'
@@ -177,12 +177,18 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
                                       name: filename,
                                       cluster: cluster,
                                       annotation: annotation)
-
-    ideogram_output = ExpressionVizService.get_infercnv_ideogram_files(study)
-    assert_equal 1, ideogram_output.size
-    ideogram_opts = ideogram_output[ideogram_file.id.to_s]
-    assert_equal ideogram_opts[:cluster], cluster.name
-    assert_equal annotation, ideogram_opts[:annotation]
+    mock = Minitest::Mock.new
+    api_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/o/#{filename}"
+    mock.expect :execute_gcloud_method, api_url, [:generate_api_url, Integer, study.bucket_id, filename]
+    ApplicationController.stub :firecloud_client, mock do
+      ideogram_output = ExpressionVizService.get_infercnv_ideogram_files(study)
+      mock.verify
+      assert_equal 1, ideogram_output.size
+      ideogram_opts = ideogram_output[ideogram_file.id.to_s]
+      assert_equal ideogram_opts[:cluster], cluster.name
+      assert_equal annotation, ideogram_opts[:annotation]
+      assert_equal api_url + '?alt=media', ideogram_opts.dig(:ideogram_settings, :annotationsPath)
+    end
   end
 
   test 'should load expression axis label' do

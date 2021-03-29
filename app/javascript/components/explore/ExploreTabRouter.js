@@ -7,17 +7,8 @@ import { getIdentifierForAnnotation } from 'lib/cluster-utils'
 import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
 import { logStudyGeneSearch } from 'lib/metrics-api'
 
-export const emptyDataParams = {
-  cluster: '',
-  annotation: '',
-  subsample: '',
-  consensus: null
-}
 
 const SPATIAL_GROUPS_EMPTY = '--'
-// because we only allow a single ExploreTabRouter component we can track global state here, instead
-// of useRef, which would trigger a rerender
-let isInitialLoad = true
 
 /**
  * manages view options and basic layout for the explore tab
@@ -27,42 +18,44 @@ export default function useExploreTabRouter() {
   const routerLocation = useLocation()
   const exploreParams = buildExploreParamsFromQuery(routerLocation.search)
 
-  if (isInitialLoad && exploreParams.genes.length > 0) {
-    // note that we can't pass the species list because we don't know it yet.
-    logStudyGeneSearch(exploreParams.genes, 'url')
-  }
-  isInitialLoad = false
-
-  /** Merges the received update into the exploreParams, and updates the page URL if need */
-  function updateExploreParams(newOptions, wasUserSpecified=true) {
-    const mergedOpts = Object.assign({}, exploreParams, newOptions)
-    if (wasUserSpecified) {
-      // this is just default params being fetched from the server, so don't change the url
-      Object.keys(newOptions).forEach(key => {
-        mergedOpts.userSpecified[key] = true
-      })
-      if (newOptions.consensus || newOptions.genes) {
-        // if the user does a gene search or changes the consensus, switch back to the default tab
-        delete mergedOpts.tab
-        delete mergedOpts.userSpecified.tab
-      }
-    }
-
-    const query = buildQueryFromParams(mergedOpts)
-    // view options settings should not add history entries
-    // e.g. when a user hits 'back', it shouldn't undo their cluster selection,
-    // it should take them to the page they were on before they came to the explore tab
-    navigate(`${query}#study-visualize`, { replace: true })
-  }
-
   useEffect(() => {
-    // this cleanup isn't strictly necessary now, but if we ever start linking to gene searches
-    // within SCP, or not reloading the page when going from search results to explore, it will be needed
-    return function cleanup() {
-      isInitialLoad = true
+    // if this is the first render, and there are already genes specified, that means they came
+    // from the url directly
+    if (exploreParams.genes.length > 0) {
+      // note that we can't pass the species list because we don't know it yet.
+      logStudyGeneSearch(exploreParams.genes, 'url')
     }
-  })
+  }, [])
   return { exploreParams, updateExploreParams, routerLocation }
+}
+
+
+/** Merges the received update into the exploreParams, and updates the page URL if need */
+function updateExploreParams(newOptions, wasUserSpecified=true) {
+  // rebuild the params from the actual URL to avoid races
+  const search = location.search
+  const currentParams = buildExploreParamsFromQuery(search)
+  const mergedOpts = Object.assign({}, currentParams, newOptions)
+  if (wasUserSpecified) {
+    // this is just default params being fetched from the server, so don't change the url
+    Object.keys(newOptions).forEach(key => {
+      mergedOpts.userSpecified[key] = true
+    })
+    // if the user does a gene search from the cluster view,
+    // or if they've switched to/from consensus view
+    // reset the tab to the default
+    if (mergedOpts.tab === 'cluster' && newOptions.genes ||
+        !!newOptions.consensus != !!currentParams.consensus) {
+      delete mergedOpts.tab
+      delete mergedOpts.userSpecified.tab
+    }
+  }
+
+  const query = buildQueryFromParams(mergedOpts)
+  // view options settings should not add history entries
+  // e.g. when a user hits 'back', it shouldn't undo their cluster selection,
+  // it should take them to the page they were on before they came to the explore tab
+  navigate(`${query}#study-visualize`, { replace: true })
 }
 
 /** converts query string parameters into the dataParams objet */

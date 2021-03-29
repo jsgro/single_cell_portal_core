@@ -77,34 +77,34 @@ class SyntheticStudyPopulator
   def self.add_files(study, study_config, synthetic_study_folder, user)
     file_infos = study_config['files']
     file_infos.each do |finfo|
-      infile = File.open("#{synthetic_study_folder}/#{finfo['filename']}")
+      File.open("#{synthetic_study_folder}/#{finfo['filename']}") do |infile|
+        study_file_params = {
+          file_type: finfo['type'],
+          name: finfo['name'] ? finfo['name'] : finfo['filename'],
+          upload: infile,
+          use_metadata_convention: finfo['use_metadata_convention'] ? true : false,
+          status: study.detached ? 'new' : 'uploading',
+          study: study
+        }
 
-      study_file_params = {
-        file_type: finfo['type'],
-        name: finfo['name'] ? finfo['name'] : finfo['filename'],
-        upload: infile,
-        use_metadata_convention: finfo['use_metadata_convention'] ? true : false,
-        status: study.detached ? 'new' : 'uploading',
-        study: study
-      }
+        study_file_params.merge!(process_genomic_file_params(study, finfo))
+        study_file_params.merge!(process_coordinate_file_params(study, finfo))
+        study_file_params.merge!(process_expression_file_params(study, finfo))
+        study_file_params.merge!(process_label_file_params(study, finfo))
+        study_file_params.merge!(process_sequence_file_params(study, finfo))
 
-      study_file_params.merge!(process_genomic_file_params(study, finfo))
-      study_file_params.merge!(process_coordinate_file_params(study, finfo))
-      study_file_params.merge!(process_expression_file_params(study, finfo))
-      study_file_params.merge!(process_label_file_params(study, finfo))
-      study_file_params.merge!(process_sequence_file_params(study, finfo))
-
-      study_file = StudyFile.create!(study_file_params)
-      # the status has to be 'uploading' when created so the file gets pulled into the workspace
-      # after creation, we want it to be uploaded so that, e.g. bundles can create
-      study_file.update(status: 'uploaded')
-      if !study.detached && study_file.parseable?
-        FileParseService.run_parse_job(study_file, study, user)
-      else
-        # make sure we still create needed bundled for unparsed files (e.g. bam/bai files)
-        FileParseService.create_bundle_from_file_options(study_file, study)
-        if !study.detached
-          study.send_to_firecloud(study_file)
+        study_file = StudyFile.create!(study_file_params)
+        # the status has to be 'uploading' when created so the file gets pulled into the workspace
+        # after creation, we want it to be uploaded so that, e.g. bundles can create
+        study_file.update(status: 'uploaded')
+        if !study.detached && study_file.parseable?
+          FileParseService.run_parse_job(study_file, study, user)
+        else
+          # make sure we still create needed bundled for unparsed files (e.g. bam/bai files)
+          FileParseService.create_bundle_from_file_options(study_file, study)
+          if !study.detached
+            study.send_to_firecloud(study_file)
+          end
         end
       end
     end

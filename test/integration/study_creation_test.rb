@@ -122,6 +122,10 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
 
     assert_equal initial_bq_row_count + 30, get_bq_row_count(study)
 
+    # check that the cluster_group set the point count
+    cluster_group = study.cluster_groups.first
+    assert_equal 30, cluster_group.points
+
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 

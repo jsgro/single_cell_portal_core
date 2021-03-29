@@ -12,6 +12,7 @@ class ClusterGroup
   field :cluster_type, type: String
   field :cell_annotations, type: Array
   field :domain_ranges, type: Hash
+  field :points, type: Integer
   # subsampling flags
   # :subsampled => whether subsampling has completed
   # :is_subsampling => whether subsampling has been initiated
@@ -83,11 +84,6 @@ class ClusterGroup
         data_array.values
       end
     end
-  end
-
-  # return number of points in cluster_group, use x axis as all cluster_groups must have either x or y
-  def points
-    self.concatenate_data_arrays('x', 'coordinates').count
   end
 
   def is_3d?
@@ -356,11 +352,24 @@ class ClusterGroup
     end
   end
 
+  # set the point count for a cluster_group and return value
+  def set_point_count!
+    points = self.concatenate_data_arrays('x', 'coordinates').count
+    self.update!(points: points)
+    self.points
+  end
+
   ##
   #
   # CLASS INSTANCE METHODS
   #
   ##
+
+  def self.set_all_point_counts!
+    self.all.each do |cluster|
+      cluster.set_point_count!
+    end
+  end
 
   def self.generate_new_data_arrays
     start_time = Time.zone.now

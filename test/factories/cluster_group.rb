@@ -66,6 +66,7 @@ FactoryBot.define do
                             values: annotation[:values],
                             study_file: evaluator.study_file)
         end
+        cluster.set_point_count!
       end
     end
   end

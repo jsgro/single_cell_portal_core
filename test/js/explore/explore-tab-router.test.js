@@ -15,6 +15,17 @@ function FakeRouterComponent({testObj}) {
   return <span>Mock</span>
 }
 
+/** useExploreTabRouter reads the location.search to merge update params, so we need to mock it
+  * here.  We also mock pathname since that is used in metrics-api */
+function mockWindowLocationSearch(searchString) {
+  delete global.window.location
+  global.window = Object.create(window)
+  global.window.location = {
+    search: searchString,
+    pathname: '/single_cell/mock'
+  }
+}
+
 describe('dataParams are appropriately managed on the url', () => {
   it('provides empty cluster params from a blank url', async () => {
     const routerNav = jest.spyOn(Reach, 'navigate')
@@ -35,8 +46,11 @@ describe('dataParams are appropriately managed on the url', () => {
   it('provides cluster params from a url with a cluster', async () => {
     const routerNav = jest.spyOn(Reach, 'navigate')
     routerNav.mockImplementation(() => {})
+    const searchString = '?cluster=foo&annotation=bar--group--study'
     const locationMock = jest.spyOn(Reach, 'useLocation')
-    locationMock.mockImplementation(() => ({ search: '?cluster=foo&annotation=bar--group--study' }))
+    locationMock.mockImplementation(() => ({ search: searchString }))
+    mockWindowLocationSearch(searchString)
+
     const testObj = {}
     const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
 
@@ -59,6 +73,8 @@ describe('dataParams are appropriately managed on the url', () => {
     urlString += '&spatialGroups=square,circle&consensus=mean&heatmapRowCentering=z-score&bamFileName=sample1.bam'
     urlString += '&ideogramFileId=604fc5c4e241391a8ff93271'
     locationMock.mockImplementation(() => ({ search: urlString }))
+    mockWindowLocationSearch(urlString)
+
     const testObj = {}
     const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
 
