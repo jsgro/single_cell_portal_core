@@ -56,7 +56,7 @@ export default function ExploreDisplayTabs(
   referencePlotDataParams.genes = []
 
   /** helper function so that StudyGeneField doesn't have to see the full exploreParams object */
-  function searchGenes(genes, logProps) {
+  function searchGenes(genes) {
     // also unset any selected gene lists or ideogram files
     updateExploreParams({ genes, geneList: '', ideogramFileId: '' })
   }
@@ -168,7 +168,6 @@ export default function ExploreDisplayTabs(
   useResizeEffect(() => {
     setRenderForcer({})
   }, 300)
-  console.log('rerendering ExploreDisplayTabs')
 
   return (
     <>
