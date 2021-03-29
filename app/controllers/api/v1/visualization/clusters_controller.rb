@@ -125,9 +125,13 @@ module Api
           subsample = get_selected_subsample_threshold(url_params[:subsample], cluster)
           consensus = url_params[:consensus].blank? ? nil : url_params[:consensus]
 
-
-
-          colorscale = url_params[:colorscale].blank? ? 'Reds' : url_params[:colorscale]
+          colorscale = url_params[:colorscale]
+          if colorscale.blank?
+            colorscale = study.default_color_profile
+            if colorscale.blank?
+              colorscale = 'Reds'
+            end
+          end
 
           is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
 

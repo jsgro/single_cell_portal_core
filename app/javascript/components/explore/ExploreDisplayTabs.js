@@ -49,7 +49,7 @@ const ideogramHeight = 140
  * @param {Object} dataParams  object with cluster, annotation, and other viewing properties specified.
  * @param { Function } updateDataParams function for passing updates to the dataParams object
  */
-export default function ExploreDisplayTabs({ studyAccession, exploreInfo, exploreParams, updateExploreParams }) {
+export default function ExploreDisplayTabs({ studyAccession, exploreInfo, exploreParams, updateExploreParams, exploreParamsWithDefaults }) {
   const [, setRenderForcer] = useState({})
     // tracks whetehr the view options controls are open or closed
   const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
@@ -91,21 +91,6 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
 
   const annotationList = exploreInfo ? exploreInfo.annotationList : null
 
-  // we keep a separate 'controlExploreParams' object that updates after defaults are fetched from the server
-  // this is kept separate so that the graphs do not see the change in cluster name from '' to
-  // '<<default cluster>>' as a change that requires a re-fetch from the server
-  let controlExploreParams = _clone(exploreParams)
-  if (exploreInfo && !exploreParams.cluster && exploreInfo.clusterGroupNames.length > 0) {
-    // if the user hasn't specified anything yet, but we have the study defaults, use those
-    controlExploreParams = Object.assign(controlExploreParams,
-      getDefaultClusterParams(annotationList, exploreInfo.spatialGroups))
-    if (!exploreParams.userSpecified['spatialGroups']) {
-      exploreParams.spatialGroups = controlExploreParams.spatialGroups
-    } else {
-      controlExploreParams.spatialGroups = exploreParams.spatialGroups
-    }
-  }
-
   let hasSpatialGroups = false
   if (exploreInfo) {
     hasSpatialGroups = exploreInfo.spatialGroups.length > 0
@@ -146,7 +131,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
     const updateParams = { geneList: '', ideogramFileId: '' }
     const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
     clusterParamNames.forEach(param => {
-      updateParams[param] = param in newParams ? newParams[param] : controlExploreParams[param]
+      updateParams[param] = param in newParams ? newParams[param] :  exploreParamsWithDefaults[param]
     })
     updateExploreParams(updateParams)
   }
@@ -292,10 +277,10 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
               <div className={shownTab === 'dotplot' ? '' : 'hidden'}>
                 <DotPlot
                   studyAccession={studyAccession}
-                  {...controlExploreParams}
+                  {... exploreParamsWithDefaults}
                   annotationValues={getAnnotationValues(
-                    controlExploreParams?.annotation,
-                    controlExploreParams?.annotationList?.annotations
+                     exploreParamsWithDefaults?.annotation,
+                     exploreParamsWithDefaults?.annotationList?.annotations
                   )}
                   dimensions={getPlotDimensions({})}
                 />
@@ -305,7 +290,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
               <div className={shownTab === 'heatmap' ? '' : 'hidden'}>
                 <Heatmap
                   studyAccession={studyAccession}
-                  {...controlExploreParams}
+                  {... exploreParamsWithDefaults}
                   dimensions={getPlotDimensions({})}/>
               </div>
             }
@@ -341,51 +326,51 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
             <div className={showClusterControls ? '' : 'hidden'}>
               <ClusterSelector
                 annotationList={annotationList}
-                cluster={controlExploreParams.cluster}
-                annotation={controlExploreParams.annotation}
+                cluster={ exploreParamsWithDefaults.cluster}
+                annotation={ exploreParamsWithDefaults.annotation}
                 updateClusterParams={updateClusterParams}
                 spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
               {hasSpatialGroups &&
                 <SpatialSelector allSpatialGroups={exploreInfo.spatialGroups}
-                  spatialGroups={controlExploreParams.spatialGroups}
+                  spatialGroups={ exploreParamsWithDefaults.spatialGroups}
                   updateSpatialGroups={spatialGroups => updateClusterParams({ spatialGroups })}/>
               }
               <AnnotationSelector
                 annotationList={annotationList}
-                cluster={controlExploreParams.cluster}
-                annotation={controlExploreParams.annotation}
+                cluster={ exploreParamsWithDefaults.cluster}
+                annotation={ exploreParamsWithDefaults.annotation}
                 updateClusterParams={updateClusterParams}/>
               <CreateAnnotation
                 isSelecting={isCellSelecting}
                 setIsSelecting={setIsCellSelecting}
                 annotationList={exploreInfo ? exploreInfo.annotationList : null}
                 currentPointsSelected={currentPointsSelected}
-                cluster={controlExploreParams.cluster}
-                annotation={controlExploreParams.annotation}
-                subsample={controlExploreParams.subsample}
+                cluster={ exploreParamsWithDefaults.cluster}
+                annotation={ exploreParamsWithDefaults.annotation}
+                subsample={ exploreParamsWithDefaults.subsample}
                 updateClusterParams={updateClusterParams}
                 setAnnotationList={setAnnotationList}
                 studyAccession={studyAccession}/>
               <SubsampleSelector
                 annotationList={annotationList}
-                cluster={controlExploreParams.cluster}
-                subsample={controlExploreParams.subsample}
+                cluster={ exploreParamsWithDefaults.cluster}
+                subsample={ exploreParamsWithDefaults.subsample}
                 updateClusterParams={updateClusterParams}/>
             </div>
             { exploreInfo?.geneLists?.length > 0 &&
               <GeneListSelector
-                geneList={controlExploreParams.geneList}
+                geneList={ exploreParamsWithDefaults.geneList}
                 studyGeneLists={exploreInfo.geneLists}
                 updateGeneList={updateGeneList}/>
             }
             { exploreParams.genes.length > 1 &&
               <ExploreConsensusSelector
-                consensus={controlExploreParams.consensus}
+                consensus={ exploreParamsWithDefaults.consensus}
                 updateConsensus={consensus => updateExploreParams({ consensus })}/>
             }
             { !!exploreInfo?.inferCNVIdeogramFiles &&
                 <InferCNVIdeogramSelector
-                  inferCNVIdeogramFile={controlExploreParams.ideogramFileId}
+                  inferCNVIdeogramFile={ exploreParamsWithDefaults.ideogramFileId}
                   studyInferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
                   updateInferCNVIdeogramFile={updateInferCNVIdeogramFile}
                 />
@@ -393,7 +378,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
           </div>
           <PlotDisplayControls
             shownTab={shownTab}
-            exploreParams={controlExploreParams}
+            exploreParams={ exploreParamsWithDefaults}
             updateExploreParams={updateExploreParams}/>
           <button onClick={() => copyLink(routerLocation)}
             className="action"

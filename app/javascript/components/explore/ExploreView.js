@@ -1,8 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { Router } from '@reach/router'
+import _clone from 'lodash/clone'
 
 import ExploreDisplayTabs from './ExploreDisplayTabs'
+import { getDefaultClusterParams } from 'lib/cluster-utils'
+
 import { fetchExplore } from 'lib/scp-api'
 import useExploreTabRouter from './ExploreTabRouter'
 import { log } from 'lib/metrics-api'
@@ -15,20 +18,45 @@ function RoutableExploreTab({ studyAccession }) {
   const [exploreInfo, setExploreInfo] = useState(null)
   const { exploreParams, updateExploreParams, routerLocation } = useExploreTabRouter()
 
+  const annotationList = exploreInfo ? exploreInfo.annotationList : null
+
+  // we keep a separate 'exploreParamsWithDefaults' object that updates after defaults are fetched from the server
+  // this is kept separate so that the graphs do not see the change in cluster name from '' to
+  // '<<default cluster>>' as a change that requires a re-fetch from the server
+  const exploreParamsWithDefaults = createExploreParamsWithDefaults(exploreParams, exploreInfo)
+
   useEffect(() => {
     fetchExplore(studyAccession).then(result => setExploreInfo(result))
   }, [studyAccession])
-
-
 
   return (
     <div className="study-explore">
       <ExploreDisplayTabs studyAccession={studyAccession}
         exploreParams={exploreParams}
+        exploreParamsWithDefaults={exploreParamsWithDefaults}
         updateExploreParams={updateExploreParams}
         exploreInfo={exploreInfo}/>
     </div>
   )
+}
+
+/** returns a clone of exploreParams with appropriate defaults from exploreInfo merged in */
+function createExploreParamsWithDefaults(exploreParams, exploreInfo) {
+  let controlExploreParams = _clone(exploreParams)
+  if (exploreInfo && !exploreParams.cluster && exploreInfo.clusterGroupNames.length > 0) {
+    // if the user hasn't specified anything yet, but we have the study defaults, use those
+    controlExploreParams = Object.assign(controlExploreParams,
+      getDefaultClusterParams(exploreInfo.annotationList, exploreInfo.spatialGroups))
+    if (!exploreParams.userSpecified['spatialGroups']) {
+      exploreParams.spatialGroups = controlExploreParams.spatialGroups
+    } else {
+      controlExploreParams.spatialGroups = exploreParams.spatialGroups
+    }
+  }
+  if (!exploreParams.userSpecified['scatterColor'] && exploreInfo?.defaultColorProfile) {
+    controlExploreParams.scatterColor = exploreInfo.defaultColorProfile
+  }
+  return controlExploreParams
 }
 
 /** wraps the explore tab in a Router object so it can use React hooks for routable parameters */
