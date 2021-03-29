@@ -352,10 +352,11 @@ class ClusterGroup
     end
   end
 
-  # set the point count for a cluster_group
-  def set_point_count
+  # set the point count for a cluster_group and return value
+  def set_point_count!
     points = self.concatenate_data_arrays('x', 'coordinates').count
     self.update!(points: points)
+    self.points
   end
 
   ##
@@ -363,6 +364,12 @@ class ClusterGroup
   # CLASS INSTANCE METHODS
   #
   ##
+
+  def self.set_all_point_counts!
+    self.all.each do |cluster|
+      cluster.set_point_count!
+    end
+  end
 
   def self.generate_new_data_arrays
     start_time = Time.zone.now
