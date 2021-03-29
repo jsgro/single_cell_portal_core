@@ -221,7 +221,7 @@ function createExploreParamsWithDefaults(exploreParams, exploreInfo) {
       controlExploreParams.spatialGroups = exploreParams.spatialGroups
     }
   }
-  if (!exploreParams.userSpecified['scatterColor'] && exploreInfo?.defaultColorProfile) {
+  if (!exploreParams.userSpecified['scatterColor'] && exploreInfo?.colorProfile) {
     controlExploreParams.scatterColor = exploreInfo.defaultColorProfile
   }
   return controlExploreParams

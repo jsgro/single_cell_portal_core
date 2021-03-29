@@ -66,7 +66,7 @@ function RawStudyViolinPlot({
     const apiOk = checkScpApiResponse(results, () => Plotly.purge(graphElementId), setShowError, setErrorContent)
     if (apiOk) {
 
-      distributionPlotToUse = distributionPlot
+      let distributionPlotToUse = distributionPlot
       if (!distributionPlotToUse) {
         distributionPlotToUse = defaultDistributionPlot
       }
