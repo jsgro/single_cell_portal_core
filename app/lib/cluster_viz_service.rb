@@ -237,6 +237,7 @@ class ClusterVizService
       annotation[:values] = AnnotationVizService.sanitize_values_array(metadata_obj.values, annotation[:type])
     end
     annotation_array = AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
+
     coordinates = {}
     if annotation[:type] == 'numeric'
       text_array = []
