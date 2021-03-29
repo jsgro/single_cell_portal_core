@@ -396,7 +396,6 @@ class IngestJob
   #   - sets the :points attribute on a ClusterGroup
   def set_cluster_point_count
     cluster_group = ClusterGroup.find_by(study_id: self.study.id, study_file_id: self.study_file.id)
-    Rails.logger.info "Setting point count on #{cluster_group.name}:#{cluster_group.id}"
     cluster_group.set_point_count!
     Rails.logger.info "Point count on #{cluster_group.name}:#{cluster_group.id} set to #{cluster_group.points}"
   end
