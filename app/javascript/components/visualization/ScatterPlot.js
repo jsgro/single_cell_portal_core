@@ -29,15 +29,13 @@ export const defaultScatterColor = 'Reds'
   * @param consensus {string} for multi-gene expression plots
   * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
   *   this is useful for rendering to hidden divs
-  * @param updateScatterColor {function} function for updating the scatter color -- will be called if no
-  *   scatterColor is specified, but the retrieved graph data does specify a scatter color
   * @param isCellSelecting whether plotly's lasso selection tool is enabled
   * @plotPointsSelected {function} callback for when a user selects points on the plot, which corresponds
   *   to the plotly "points_selected" event
   */
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
-  updateScatterColor, isCellSelecting=false, plotPointsSelected
+   isCellSelecting=false, plotPointsSelected
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
@@ -88,9 +86,6 @@ function RawScatterPlot({
 
       log('plot:scatter', perfLogProps)
 
-      if (dataScatterColor !== scatterColor) {
-        updateScatterColor(dataScatterColor)
-      }
       setClusterData(scatter)
       setShowError(false)
     }
@@ -112,7 +107,6 @@ function RawScatterPlot({
   useUpdateEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
-      console.log('updating color scale')
       const dataUpdate = { 'marker.colorscale': scatterColor }
       Plotly.update(graphElementId, dataUpdate)
     }
@@ -122,7 +116,6 @@ function RawScatterPlot({
   useUpdateEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
-      console.log('updating drag mode')
       const newDragMode = getDragMode(isCellSelecting)
       window.Plotly.relayout(graphElementId, { dragmode: newDragMode })
       if (!isCellSelecting) {

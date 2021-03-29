@@ -66,10 +66,7 @@ function RawStudyViolinPlot({
     const apiOk = checkScpApiResponse(results, () => Plotly.purge(graphElementId), setShowError, setErrorContent)
     if (apiOk) {
 
-      let distributionPlotToUse = results.plotType
-      if (distributionPlot) {
-        distributionPlotToUse = distributionPlot
-      }
+      distributionPlotToUse = distributionPlot
       if (!distributionPlotToUse) {
         distributionPlotToUse = defaultDistributionPlot
       }
@@ -94,9 +91,6 @@ function RawStudyViolinPlot({
       setStudyGeneNames(results.gene_names)
       if (setAnnotationList) {
         setAnnotationList(results.annotation_list)
-      }
-      if (updateDistributionPlot) {
-        updateDistributionPlot(distributionPlotToUse)
       }
       setShowError(false)
     }
