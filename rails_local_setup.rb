@@ -80,9 +80,6 @@ readonly_hash = JSON.parse(readonly_string)['data']
 File.open("#{CONFIG_DIR}/.read_only_service_account.json", 'w') { |file| file.write(readonly_hash.to_json) }
 source_file_string += "export READ_ONLY_SERVICE_ACCOUNT_KEY=#{CONFIG_DIR}/.read_only_service_account.json\n"
 
-puts 'Setting secret_key_base'
-source_file_string += "export SECRET_KEY_BASE=#{`openssl rand -hex 64`}\n"
-
 File.open("#{CONFIG_DIR}/secrets/.source_env.bash", 'w') { |file| file.write(source_file_string) }
 
 puts "Load Complete!\n  Run the command below to load the environment variables you need into your shell\n\nsource config/secrets/.source_env.bash\n\n"
