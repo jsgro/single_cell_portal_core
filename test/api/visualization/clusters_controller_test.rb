@@ -24,7 +24,8 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
                                                      y: [7, 5, 3],
                                                      cells: ['A', 'B', 'C']
                                                   },
-                                                  annotation_input: [{name: 'foo', type: 'group', values: ['bar', 'bar', 'baz']}])
+                                                  annotation_input: [{name: 'foo', type: 'group', values: ['bar', 'bar', 'baz']},
+                                                                     {name: 'intensity', type: 'numeric', values: [1, 2, 5]}])
 
     @basic_study_metadata_file = FactoryBot.create(:metadata_file,
                                                    name: 'metadata.txt',
@@ -73,6 +74,17 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
     assert_equal false, json['is3D']
     bar_data = json['data'].find{|d| d['name'] == 'bar (2 points)'}
     assert_equal [1, 4], bar_data['x']
+  end
+
+  test 'show should handle numeric clusters' do
+    sign_in_and_update @user
+    execute_http_request(:get, api_v1_study_cluster_path(@basic_study, 'clusterA.txt', {annotation_name: 'intensity', annotation_scope: 'cluster', annotation_type: 'numeric'}))
+    assert_equal 'Reds', json['data'][0]['marker']['colorscale']
+    @basic_study.update!({default_options: {color_profile: 'Portland'}})
+    # since we're going to send a duplicate request, clear the API cache so we can get fresh results
+    CacheRemovalJob.new(@basic_study.id).perform
+    execute_http_request(:get, api_v1_study_cluster_path(@basic_study, 'clusterA.txt', {annotation_name: 'intensity', annotation_scope: 'cluster', annotation_type: 'numeric'}))
+    assert_equal 'Portland', json['data'][0]['marker']['colorscale']
   end
 
   test 'should load clusters with slashes in name' do
