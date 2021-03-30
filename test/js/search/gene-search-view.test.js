@@ -50,4 +50,23 @@ describe('Gene search page landing', () => {
     const wrapperText = wrapper.find('.study-gene-result').text()
     expect(wrapperText.indexOf('This study contains agpat2 in expression data')).toBeGreaterThan(0)
   })
+
+  it('shows gene results when multigene query is loaded', async () => {
+    const searchState = emptySearch
+    searchState.isLoaded = true
+    searchState.results = {studies: [{name: 'foo', description: 'bar', gene_matches: ['agpat2', 'farsa']}]}
+    const wrapper = mount((
+      <UserContext.Provider value={{featureFlagsWithDefaults: {gene_study_filter: false}}}>
+        <PropsStudySearchProvider searchParams={{terms: '', facets:{}, page: 1}}>
+          <GeneSearchContext.Provider  value={searchState}>
+            <GeneSearchView/>
+          </GeneSearchContext.Provider>
+        </PropsStudySearchProvider>
+      </UserContext.Provider>
+    ))
+
+    expect(wrapper.find(Study)).toHaveLength(0)
+    const wrapperText = wrapper.find('.study-gene-result').text()
+    expect(wrapperText.indexOf('This study contains agpat2, farsa in expression data')).toBeGreaterThan(0)
+  })
 })

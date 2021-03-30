@@ -19,6 +19,7 @@ class ApiSiteControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
     reset_user_tokens
     study = Study.find_by(name: "API Test Study #{@random_seed}")
     study.update(public: true, detached: false)

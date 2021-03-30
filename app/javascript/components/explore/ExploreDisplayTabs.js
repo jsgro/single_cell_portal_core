@@ -158,11 +158,6 @@ export default function ExploreDisplayTabs(
     return { width, height }
   }
 
-  /** helper function for Scatter plot color updates */
-  function updateScatterColor(color) {
-    updateExploreParams({ scatterColor: color }, false)
-  }
-
   /** on window resize call setRenderForcer, which is just trivial state to ensure a re-render
    * ensuring that the plots get passed fresh dimensions */
   useResizeEffect(() => {
@@ -219,7 +214,6 @@ export default function ExploreDisplayTabs(
                   <ScatterPlot
                     studyAccession={studyAccession}
                     {...exploreParams}
-                    updateScatterColor={updateScatterColor}
                     dimensions={getPlotDimensions({
                       numColumns: hasSelectedSpatialGroup ? 2 : 1,
                       hasTitle: true
@@ -235,7 +229,6 @@ export default function ExploreDisplayTabs(
                         <ScatterPlot
                           studyAccession={studyAccession}
                           {...params}
-                          updateScatterColor={updateScatterColor}
                           dimensions={getPlotDimensions({ numColumns: 2, hasTitle: true })}
                           isCellSelecting={isCellSelecting}
                           plotPointsSelected={plotPointsSelected}
@@ -260,7 +253,6 @@ export default function ExploreDisplayTabs(
                   <ScatterPlot
                     studyAccession={studyAccession}
                     {...exploreParams}
-                    updateScatterColor={updateScatterColor}
                     dimensions={getPlotDimensions({
                       numColumns: 2,
                       numRows: hasSelectedSpatialGroup ? 2 : 1,
@@ -275,7 +267,6 @@ export default function ExploreDisplayTabs(
                   <ScatterPlot
                     studyAccession={studyAccession}
                     {...referencePlotDataParams}
-                    updateScatterColor={updateScatterColor}
                     dimensions={getPlotDimensions({
                       numColumns: 2,
                       numRows: hasSelectedSpatialGroup ? 2 : 1,
@@ -294,7 +285,6 @@ export default function ExploreDisplayTabs(
                       <ScatterPlot
                         studyAccession={studyAccession}
                         {...spatialDataParamsArray[index]}
-                        updateScatterColor={updateScatterColor}
                         dimensions={getPlotDimensions({
                           numColumns: 2,
                           numRows: 2,
@@ -309,7 +299,6 @@ export default function ExploreDisplayTabs(
                       <ScatterPlot
                         studyAccession={studyAccession}
                         {...params}
-                        updateScatterColor={updateScatterColor}
                         dimensions={getPlotDimensions({
                           numColumns: 2,
                           numRows: 2,
@@ -339,7 +328,6 @@ export default function ExploreDisplayTabs(
                       <ScatterPlot
                         studyAccession={studyAccession}
                         {...spatialRefPlotDataParamsArray[0]}
-                        updateScatterColor={updateScatterColor}
                         dimensions={getPlotDimensions({ numColumns: 1, numRows: 2, hasTitle: true })}
                         isCellSelecting={isCellSelecting}
                         plotPointsSelected={plotPointsSelected}
@@ -360,7 +348,6 @@ export default function ExploreDisplayTabs(
                     <ScatterPlot
                       studyAccession={studyAccession}
                       {...spgDataParams}
-                      updateScatterColor={updateScatterColor}
                       dimensions={getPlotDimensions({ numColumns: 2, numRows: 2, hasTitle: true })}
                       isCellSelecting={isCellSelecting}
                       plotPointsSelected={plotPointsSelected}

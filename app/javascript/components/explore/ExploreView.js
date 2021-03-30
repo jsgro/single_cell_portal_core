@@ -42,22 +42,14 @@ function RoutableExploreTab({ studyAccession }) {
   // we keep a separate 'controlExploreParams' object that updates after defaults are fetched from the server
   // this is kept separate so that the graphs do not see the change in cluster name from '' to
   // '<<default cluster>>' as a change that requires a re-fetch from the server
-  let controlExploreParams = _clone(exploreParams)
-  if (exploreInfo && !exploreParams.cluster && exploreInfo.clusterGroupNames.length > 0) {
-    // if the user hasn't specified anything yet, but we have the study defaults, use those
-    controlExploreParams = Object.assign(controlExploreParams,
-      getDefaultClusterParams(annotationList, exploreInfo.spatialGroups))
-    if (!exploreParams.userSpecified['spatialGroups']) {
-      exploreParams.spatialGroups = controlExploreParams.spatialGroups
-    } else {
-      controlExploreParams.spatialGroups = exploreParams.spatialGroups
-    }
-  }
+  const controlExploreParams = createExploreParamsWithDefaults(exploreParams, exploreInfo)
 
   let hasSpatialGroups = false
   if (exploreInfo) {
     hasSpatialGroups = exploreInfo.spatialGroups.length > 0
   }
+
+
 
   /** in the event a component takes an action which updates the list of annotations available
     * e.g. by creating a user annotation, this updates the list */
@@ -214,6 +206,25 @@ function RoutableExploreTab({ studyAccession }) {
       </div>
     </div>
   )
+}
+
+/** returns a clone of exploreParams with appropriate defaults from exploreInfo merged in */
+function createExploreParamsWithDefaults(exploreParams, exploreInfo) {
+  let controlExploreParams = _clone(exploreParams)
+  if (exploreInfo && !exploreParams.cluster && exploreInfo.clusterGroupNames.length > 0) {
+    // if the user hasn't specified anything yet, but we have the study defaults, use those
+    controlExploreParams = Object.assign(controlExploreParams,
+      getDefaultClusterParams(exploreInfo.annotationList, exploreInfo.spatialGroups))
+    if (!exploreParams.userSpecified['spatialGroups']) {
+      exploreParams.spatialGroups = controlExploreParams.spatialGroups
+    } else {
+      controlExploreParams.spatialGroups = exploreParams.spatialGroups
+    }
+  }
+  if (!exploreParams.userSpecified['scatterColor'] && exploreInfo?.colorProfile) {
+    controlExploreParams.scatterColor = exploreInfo.defaultColorProfile
+  }
+  return controlExploreParams
 }
 
 /** wraps the explore tab in a Router object so it can use React hooks for routable parameters */

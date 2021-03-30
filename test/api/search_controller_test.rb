@@ -26,6 +26,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
   # reset known commonly used objects to initial states to prevent failures breaking other tests
   teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
     reset_user_tokens
     api_study = Study.find_by(name: /API/)
     api_study.update!(description: '', public: true)
