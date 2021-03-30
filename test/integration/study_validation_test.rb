@@ -202,7 +202,6 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
       assert element.attr('class').to_str.include?('disabled'), "Did not disable downloads tab for reviewer: '#{element.attr('class')}'"
     end
 
-
     # ensure direct call to download is still disabled
     get download_private_file_path(accession: study.accession, study_name: study.url_safe_name, filename: 'README.txt')
     follow_redirect!
