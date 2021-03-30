@@ -2,6 +2,7 @@ import React from 'react'
 import { useTable, usePagination } from 'react-table'
 
 import PagingControl from './PagingControl'
+import ErrorBoundary from 'lib/ErrorBoundary'
 
 // define these outside the render loop so they don't cause rerender loops
 // if they ever need to be dynamic, make sure to use useMemo
@@ -71,7 +72,9 @@ export default function StudyResults({ results, changePage, StudyComponent }) {
                 {row.cells.map(cell => {
                   return (
                     <td key {...cell.getCellProps()}>
-                      <StudyComponent study={cell.value}/>
+                      <ErrorBoundary>
+                        <StudyComponent study={cell.value}/>
+                      </ErrorBoundary>
                     </td>
                   )
                 })}
