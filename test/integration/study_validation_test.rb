@@ -127,39 +127,6 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
-  # test 'should fail all local parse jobs' do
-  #   puts "#{File.basename(__FILE__)}: #{self.method_name}"
-  #   study_name = "Validation Local Parse Failure Study #{@random_seed}"
-  #   study_params = {
-  #       study: {
-  #           name: study_name,
-  #           user_id: @test_user.id
-  #       }
-  #   }
-  #   post studies_path, params: study_params
-  #   follow_redirect!
-  #   assert_response 200, "Did not redirect to upload successfully"
-  #   study = Study.find_by(name: study_name)
-  #   assert study.present?, "Study did not successfully save"
-  #
-  #   # bad marker gene list
-  #   file_params = {study_file: {name: 'Bad Test Gene List', file_type: 'Gene List', study_id: study.id.to_s}}
-  #   perform_study_file_upload('marker_1_gene_list_bad.txt', file_params, study.id)
-  #   assert_response 200, "Gene list upload failed: #{@response.code}"
-  #   assert study.study_files.where(file_type: 'Gene List').size == 1,
-  #          "Gene list failed to associate, found #{study.study_files.where(file_type: 'Gene List').size} files"
-  #   gene_list_file = study.study_files.where(file_type: 'Gene List').first
-  #   # this parse has a duplicate gene, which will not throw an error - it is caught internally
-  #   ParseUtils.initialize_precomputed_scores(study, gene_list_file, @test_user)
-  #   # we have to reload the study because it will have a cached reference to the precomputed_score due to the nature of the parse
-  #   study.reload
-  #   assert study.study_files.where(file_type: 'Gene List').size == 0,
-  #          "Found #{study.study_files.where(file_type: 'Gene List').size} gene list files when should have found 0"
-  #   assert study.precomputed_scores.size == 0, "Found #{study.precomputed_scores.size} precomputed scores when should have found 0"
-  #
-  #   puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
-  # end
-
   test 'should prevent changing firecloud attributes' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
     study_name = "Validation FireCloud Attribute Test #{@random_seed}"
