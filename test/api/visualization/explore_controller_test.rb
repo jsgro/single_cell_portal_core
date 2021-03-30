@@ -33,6 +33,10 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
                                      test_array: @@studies_to_clean)
   end
 
+  teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
+  end
+
   test 'should enforce view permissions' do
     user2 =  FactoryBot.create(:api_user, test_array: @@users_to_clean)
     sign_in_and_update user2

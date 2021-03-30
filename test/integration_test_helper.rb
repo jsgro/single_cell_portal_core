@@ -4,6 +4,9 @@ ENV["RAILS_ENV"] = "test"
 require File.expand_path("../../config/environment", __FILE__)
 require "rails/test_help"
 
+# from https://github.com/omniauth/omniauth/wiki/Integration-Testing
+OmniAuth.config.test_mode = true
+
 # upload a large file (i.e. > 10MB) from the test_data directory to a study
 # simulates chunked upload by streaming file in 10MB chunks and then uploading in series
 def perform_chunked_study_file_upload(filename, study_file_params, study_id)

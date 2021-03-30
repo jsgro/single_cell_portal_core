@@ -12,6 +12,7 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
   end
 
   def teardown
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
     # reset public permission
     @study.update(public: true)
   end
