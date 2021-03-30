@@ -4,6 +4,9 @@ ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 require 'rails/test_help'
 
+# from https://github.com/omniauth/omniauth/wiki/Integration-Testing
+OmniAuth.config.test_mode = true
+
 module Requests
   module JsonHelpers
     # parse a response body as JSON
