@@ -62,7 +62,7 @@ function RawScatterPlot({
 
       const perfTimeFrontendStart = performance.now()
 
-      Plotly.newPlot(graphElementId, scatter.data, layout)
+      Plotly.react(graphElementId, scatter.data, layout)
 
       const perfTimeFrontend = performance.now() - perfTimeFrontendStart
 
@@ -134,14 +134,16 @@ function RawScatterPlot({
     }
   }, [dimensions.width, dimensions.height])
 
+
   useEffect(() => {
     $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
     $(`#${graphElementId}`).on('plotly_legendclick', logLegendClick)
     $(`#${graphElementId}`).on('plotly_legenddoubleclick', logLegendDoubleClick)
     return () => {
-      $(`#${graphElementId}`).off('plotly_selected', plotPointsSelected)
-      $(`#${graphElementId}`).off('plotly_legendclick', logLegendClick)
-      $(`#${graphElementId}`).off('plotly_legenddoubleclick', logLegendDoubleClick)
+      $(`#${graphElementId}`).off('plotly_selected')
+      $(`#${graphElementId}`).off('plotly_legendclick')
+      $(`#${graphElementId}`).off('plotly_legenddoubleclick')
+      Plotly.purge(graphElementId)
     }
   }, [])
 
