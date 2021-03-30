@@ -21,6 +21,10 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     sign_in_and_update @user
   end
 
+  teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
+  end
+
   test 'should get index' do
     execute_http_request(:get, api_v1_studies_path)
     assert_response :success

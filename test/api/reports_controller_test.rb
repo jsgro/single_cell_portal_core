@@ -14,6 +14,10 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     @admin_user =  FactoryBot.create(:api_user, admin: true, test_array: @@users_to_clean)
   end
 
+  teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
+  end
+
   test 'access control enforced' do
     sign_in_and_update @user
     execute_http_request(:get, api_v1_report_path('studies'), user: @user)

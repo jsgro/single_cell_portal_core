@@ -21,6 +21,7 @@ class StudySharesControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
     reset_user_tokens
   end
 

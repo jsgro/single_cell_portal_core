@@ -15,6 +15,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
     reset_user_tokens
     # remove all validation studies
     Study.where(name: /Validation/).destroy_all

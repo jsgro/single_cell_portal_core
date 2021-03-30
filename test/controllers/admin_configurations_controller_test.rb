@@ -10,6 +10,7 @@ class AdminConfigurationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def teardown
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
     User.find_by(email: 'test_flags_user@gmail.com').destroy
   end
 

@@ -32,7 +32,7 @@ module Requests
     def sign_in_and_update(user)
       OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
         :provider => 'google_oauth2',
-        :uid => '123545',
+        :uid => user.uid,
         :email => user.email
       })
       sign_in user
