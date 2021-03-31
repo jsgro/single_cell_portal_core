@@ -138,10 +138,6 @@ echo "*** LOCALIZING USER ASSETS ***"
 /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV "UserAssetService.delay.localize_assets_from_remote"
 echo "*** COMPLETED ***"
 
-echo "*** CLEARING CACHED USER OAUTH TOKENS ***"
-/home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV "User.update_all(refresh_token: nil, access_token: nil, api_access_token: nil)"
-echo "*** COMPLETED ***"
-
 echo "*** ADDING REPORTING CRONS ***"
 (crontab -u app -l ; echo "5 0 * * Sun . /home/app/.cron_env ; cd /home/app/webapp/; /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV \"ReportTimePoint.weekly_returning_users\" >> /home/app/webapp/log/cron_out.log 2>&1") | crontab -u app -
 (crontab -u app -l ; echo "@daily . /home/app/.cron_env ; cd /home/app/webapp/; /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV \"AnalysisSubmission.update_running_submissions\" >> /home/app/webapp/log/cron_out.log 2>&1") | crontab -u app -
