@@ -12,6 +12,10 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
   end
 
+  teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
+  end
+
   test 'create default testing study' do
 
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
@@ -121,6 +125,10 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     assert_equal 1, share_count, "did not find correct number of study shares"
 
     assert_equal initial_bq_row_count + 30, get_bq_row_count(study)
+
+    # check that the cluster_group set the point count
+    cluster_group = study.cluster_groups.first
+    assert_equal 30, cluster_group.points
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

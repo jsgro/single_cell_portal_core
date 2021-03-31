@@ -499,7 +499,7 @@ class ParseUtils
         begin
           Rails.logger.info "Found remote version of #{marker_file.upload_file_name}: #{remote.name} (#{remote.generation})"
           run_at = 15.seconds.from_now
-          Delayed::Job.enqueue(UploadCleanupJob.new(study, metadata_file, 0), run_at: run_at)
+          Delayed::Job.enqueue(UploadCleanupJob.new(study, marker_file, 0), run_at: run_at)
           Rails.logger.info "Cleanup job for #{marker_file.upload_file_name}:#{marker_file.id} scheduled for #{run_at}"
         rescue => e
           ErrorTracker.report_exception(e, user, error_context)

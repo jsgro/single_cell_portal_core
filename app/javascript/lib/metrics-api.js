@@ -81,10 +81,18 @@ export function logClick(event) {
     logClickButton(target.closest('button')[0])
   } else if (target.closest('input').length) {
     logClickInput(target.closest('input')[0])
-  } else {
-    // Perhaps uncomment when Mixpanel quota increases
-    // logClickOther(target)
+  } else if (target.closest('.log-click').length > 0) {
+    logClickOther(target.closest('.log-click')[0])
   }
+}
+
+/** Log clicks on SVG element of analytics interest */
+export function logClickOther(target) {
+  const props = {
+    classList: getClassListAsArray(target),
+    text: getNameForClickTarget(target)
+  }
+  log('click:other', props)
 }
 
 /**
@@ -100,13 +108,18 @@ function getNameForClickTarget(target) {
   return targetName
 }
 
+/** Convert DOM classList to array, for easy exploration in Mixpanel */
+function getClassListAsArray(target) {
+  return 'classList' in target? Array.from(target.classList) : []
+}
+
 /**
  * Log click on link, i.e. anchor (<a ...) tag
  */
 export function logClickLink(target) {
   const props = {
     text: getNameForClickTarget(target),
-    classList: 'classList' in target? Array.from(target.classList) : [],
+    classList: getClassListAsArray(target),
     id: target.id
   }
   // Check if target is a tab that's not a part of a menu
@@ -163,33 +176,29 @@ function getLabelsForElement(element) {
  * Log click on input by type, e.g. text, number, checkbox
  */
 function logClickInput(target) {
-  const domLabels = getLabelsForElement(target)
+  let props
+  if (target.type === 'radio') {
+    const id = target.id
+    const inputName = target.name
+    const value = target.value
+    props = { id, 'input-name': inputName, value }
+  } else {
+    const domLabels = getLabelsForElement(target)
 
-  // User-facing label
-  const label = domLabels.length > 0 ? getNameForClickTarget(domLabels[0]) : ''
+    // User-facing label
+    const label = domLabels.length > 0 ? getNameForClickTarget(domLabels[0]) : ''
 
-  const props = { label }
+    props = { label }
 
-  if (target.type === 'submit') {
-    props.text = target.value
+    if (target.type === 'submit') {
+      props.text = target.value
+    }
   }
-
   const element = `input-${target.type}`
   log(`click:${element}`, props)
 
   // Google Analytics fallback: remove once Bard and Mixpanel are ready for SCP
   ga('send', 'event', 'click', element) // eslint-disable-line no-undef
-}
-
-/**
- * Log clicks on elements that are not otherwise classified
- */
-function logClickOther(target) { // eslint-disable-line no-unused-vars
-  const props = { text: target.text }
-  log('click:other', props)
-
-  // Google Analytics fallback: remove once Bard and Mixpanel are ready for SCP
-  ga('send', 'event', 'click', 'other') // eslint-disable-line no-undef
 }
 
 /** Log text of selected option when dropdown menu (i.e., select) changes */

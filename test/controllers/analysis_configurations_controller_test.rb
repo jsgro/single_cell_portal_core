@@ -10,6 +10,10 @@ class AnalysisConfigurationsControllerTest < ActionDispatch::IntegrationTest
     sign_in @test_user
   end
 
+  teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
+  end
+
   test 'should get index page' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 

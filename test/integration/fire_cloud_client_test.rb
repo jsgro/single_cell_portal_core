@@ -579,6 +579,8 @@ class FireCloudClientTest < ActiveSupport::TestCase
     puts 'downloading file...'
     # load study for place to download files to
     @study = Study.first
+    # ensure download path is available in case it did not get created
+    @study.make_data_dir
     downloaded_file = @fire_cloud_client.execute_gcloud_method(:download_workspace_file, 0, workspace['bucketName'], file.name, @study.data_store_path)
     assert downloaded_file.present?, 'Did not download local copy of file'
     assert downloaded_file.to_path == File.join(@study.data_store_path, file.name), "Did not download #{file.name} to #{@study.data_store_path}, downloaded file is at #{downloaded_file.to_path}"

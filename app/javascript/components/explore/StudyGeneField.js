@@ -19,13 +19,10 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
   let geneOptions = []
   if (allGenes) {
     // Autocomplete when user starts typing
-    if (inputText && inputText.length > 0) {
+    if (inputText && inputText.length > 1) {
       const lowerCaseInput = inputText.toLowerCase()
-      geneOptions = allGenes.filter(geneName => {
+      geneOptions = getOptionsFromGenes(allGenes.filter(geneName => {
         return geneName.toLowerCase().includes(lowerCaseInput)
-      }).map(geneName => ({
-        label: geneName,
-        value: geneName
       }))
     }
   }
@@ -64,7 +61,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
     if (!inputTextValues.length || !inputTextValues[0].length) {
       return geneArray
     }
-    const newGeneArray = geneArray.concat(inputTextValues.map(gene => ({ label: gene, value: gene })))
+    const newGeneArray = geneArray.concat(getOptionsFromGenes(inputTextValues))
     logGeneArrayChange(newGeneArray)
     setInputText(' ')
     setGeneArray(newGeneArray)
@@ -167,6 +164,11 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
                 ...provided,
                 maxHeight: '32px',
                 overflow: 'auto'
+              }),
+              menuList: (provided, state) => ({
+                ...provided,
+                zIndex: 999,
+                background: '#fff'
               })
             }}
           />

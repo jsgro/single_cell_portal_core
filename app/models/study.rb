@@ -1059,7 +1059,7 @@ class Study
           scope: 'cluster'
         }
       elsif self.cell_metadata.any?
-        metadatum = self.cell_metadata.first
+        metadatum = self.cell_metadata.keep_if {|meta| meta.can_visualize?}.first
         annot_params = {
           name: metadatum.name,
           type: metadatum.annotation_type,

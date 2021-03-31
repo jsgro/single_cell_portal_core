@@ -4,6 +4,9 @@ ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 require 'rails/test_help'
 
+# from https://github.com/omniauth/omniauth/wiki/Integration-Testing
+OmniAuth.config.test_mode = true
+
 module Requests
   module JsonHelpers
     # parse a response body as JSON
@@ -29,7 +32,7 @@ module Requests
     def sign_in_and_update(user)
       OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
         :provider => 'google_oauth2',
-        :uid => '123545',
+        :uid => user.uid,
         :email => user.email
       })
       sign_in user

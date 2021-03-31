@@ -1,6 +1,9 @@
 class AnnotationVizService
   # set of utility methods used for interacting with annotation data
 
+  # global label for dealing with blank/nil group-based annotation values
+  MISSING_VALUE_LABEL = '--Unspecified--'.freeze
+
   # Retrieves an object representing the selected annotation. If nil is passed for the last four
   # arguments, it will get the study's default annotation instead
   # Params:
@@ -68,13 +71,13 @@ class AnnotationVizService
   def self.populate_annotation_by_class(source:, scope:, type:)
     if source.is_a?(CellMetadatum)
       annotation = {name: source.name, type: source.annotation_type,
-                    scope: 'study', values: source.values.to_a,
+                    scope: 'study', values: sanitize_values_array(source.values.to_a, type),
                     identifier: "#{source.name}--#{type}--#{scope}"}
     elsif source.is_a?(UserAnnotation)
-      annotation = {name: source.name, type: type, scope: scope, values: source.values.to_a,
+      annotation = {name: source.name, type: type, scope: scope, values: sanitize_values_array(source.values.to_a, type),
                     identifier: "#{source.id}--#{type}--#{scope}", id: source.id}
     elsif source.is_a?(Hash)
-      annotation = {name: source[:name], type: type, scope: scope, values: source[:values].to_a,
+      annotation = {name: source[:name], type: type, scope: scope, values: sanitize_values_array(source[:values].to_a, type),
                     identifier: "#{source[:name]}--#{type}--#{scope}"}
     end
     annotation
@@ -99,7 +102,7 @@ class AnnotationVizService
       name: user_annotation.name,
       id: user_annotation.id.to_s,
       type: 'group', # all user annotations are group
-      values: user_annotation.values,
+      values: sanitize_values_array(user_annotation.values, 'group'),
       scope: 'user',
       cluster_name: cluster.name
     }
@@ -114,7 +117,7 @@ class AnnotationVizService
       {
         name: annot.name,
         type: annot.annotation_type,
-        values: annot.values,
+        values: sanitize_values_array(annot.values, annot.annotation_type),
         scope: 'study'
       }
     end
@@ -147,15 +150,32 @@ class AnnotationVizService
       study_annotations = study.cell_metadata_values(annotation[:name], annotation[:type])
       annotations = []
       cells.each do |cell|
-        annotations << study_annotations[cell]
+        annotation_value = study_annotations[cell]
+        annotations << annotation_value
       end
     end
+    # sanitize annotation values
+    sanitized_annotations = AnnotationVizService.sanitize_values_array(annotations, annotation[:type])
     # assemble rows of data
     rows = []
     cells.each_with_index do |cell, index|
-      rows << [cell, annotations[index]].join("\t")
+      rows << [cell, sanitized_annotations[index]].join("\t")
     end
     headers = ['NAME', annotation[:name]]
     [headers.join("\t"), rows.join("\n")].join("\n")
+  end
+
+  # sanitizes an array of values to replace blank/missing values with a pre-defined label
+  # prevents breaking various kinds of visualization due to values not being defined
+  #
+  # * *params*
+  #   - +value+ (Array) => values array to sanitize
+  #   - +annotation_type+ (String) => type of array, either "group" or "numeric"
+  #
+  # * *returns*
+  #   - (Array) => sanitized output array if "group", otherwise input array
+  def self.sanitize_values_array(values, annotation_type)
+    return values if annotation_type == 'numeric'
+    values.map {|value| value.blank? ? MISSING_VALUE_LABEL : value }
   end
 end

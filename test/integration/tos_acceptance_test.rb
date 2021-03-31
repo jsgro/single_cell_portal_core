@@ -10,6 +10,7 @@ class TosAcceptanceTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
     User.find_by(email: 'needs.acceptance@gmail.com').destroy
   end
 

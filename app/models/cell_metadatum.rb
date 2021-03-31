@@ -44,7 +44,10 @@ class CellMetadatum
   # concatenate all the necessary data_array objects and construct a hash of cell names => expression values
   def cell_annotations
     cells = self.study.all_cells_array
-    annot_values = self.concatenate_data_arrays(self.name, 'annotations')
+    # replace blank/nil values with default missing label
+    annot_values = AnnotationVizService.sanitize_values_array(
+      self.concatenate_data_arrays(self.name, 'annotations'), self.annotation_type
+    )
     Hash[cells.zip(annot_values)]
   end
 

@@ -1,5 +1,6 @@
 language: ruby
 dist: bionic
+arch: amd64
 rvm:
   - 2.6.6
 install:

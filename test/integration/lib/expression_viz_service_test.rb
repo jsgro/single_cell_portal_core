@@ -24,6 +24,18 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
                                                   {name: 'Category', type: 'group', values: ['bar', 'bar', 'baz']},
                                                   {name: 'Intensity', type: 'numeric', values: [1.1, 2.2, 3.3]}
                                               ])
+
+    @study_cluster_file_2 = FactoryBot.create(:cluster_file,
+                                              name: 'cluster_2.txt', study: @basic_study,
+                                              cell_input: {
+                                                x: [1, 2, 3],
+                                                y: [4, 5, 6],
+                                                cells: ['A', 'B', 'C']
+                                              },
+                                              annotation_input: [
+                                                {name: 'Blanks', type: 'group', values: ['bar', 'bar', '']}
+                                              ])
+
     @basic_study_exp_file = FactoryBot.create(:study_file,
                                                   name: 'dense.txt',
                                                   file_type: 'Expression Matrix',
@@ -97,7 +109,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     )
     expected_values = %w(dog cat)
     assert_equal expected_values, rendered_data[:values].keys
-    expected_annotations = %w(Category disease Intensity species).sort
+    expected_annotations = %w(Category disease Intensity species Blanks).sort
     loaded_annotations = rendered_data[:annotation_list][:annotations].map{|a| a[:name]}.sort
     assert_equal expected_annotations, loaded_annotations
     assert_equal cluster.name, rendered_data[:rendered_cluster]
@@ -141,7 +153,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
 
   test 'should load ideogram outputs' do
     # we need a non-detached study, so create one
-    study = FactoryBot.create(:study, name: "Ideogram Study #{SecureRandom.uuid}", test_array: @@studies_to_clean)
+    study = FactoryBot.create(:detached_study, name: "Ideogram Study #{SecureRandom.uuid}", test_array: @@studies_to_clean)
 
     cluster_file = FactoryBot.create(:cluster_file,
                                      name: 'cluster_1.txt', study: study,
@@ -156,7 +168,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
                                      annotation_input: [
                                          {name: 'Category', type: 'group', values: ['bar', 'bar', 'baz']}
                                      ])
-    study.update(default_options: {cluster: cluster_file.name, annotation: 'Category--group--cluster'})
+    study.update(default_options: {cluster: cluster_file.name, annotation: 'Category--group--cluster'}, detached: false)
     cluster = study.default_cluster
     annotation = study.default_annotation
     filename = 'ideogram_annotations.json'
@@ -165,12 +177,18 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
                                       name: filename,
                                       cluster: cluster,
                                       annotation: annotation)
-
-    ideogram_output = ExpressionVizService.get_infercnv_ideogram_files(study)
-    assert_equal 1, ideogram_output.size
-    ideogram_opts = ideogram_output[ideogram_file.id.to_s]
-    assert_equal ideogram_opts[:cluster], cluster.name
-    assert_equal annotation, ideogram_opts[:annotation]
+    mock = Minitest::Mock.new
+    api_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/o/#{filename}"
+    mock.expect :execute_gcloud_method, api_url, [:generate_api_url, Integer, study.bucket_id, filename]
+    ApplicationController.stub :firecloud_client, mock do
+      ideogram_output = ExpressionVizService.get_infercnv_ideogram_files(study)
+      mock.verify
+      assert_equal 1, ideogram_output.size
+      ideogram_opts = ideogram_output[ideogram_file.id.to_s]
+      assert_equal ideogram_opts[:cluster], cluster.name
+      assert_equal annotation, ideogram_opts[:annotation]
+      assert_equal api_url + '?alt=media', ideogram_opts.dig(:ideogram_settings, :annotationsPath)
+    end
   end
 
   test 'should load expression axis label' do
@@ -205,6 +223,19 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     expected_output = {
         dog: {y: [0.0, 1.5], cells: %w(A C), annotations: [], name: 'dog'},
         cat: {y: [3.0], cells: %w(B), annotations: [], name: 'cat'}
+    }
+    assert_equal expected_output.with_indifferent_access, violin_data.with_indifferent_access
+  end
+
+  test 'should load violin plot data with blank annotations' do
+    gene = @basic_study.genes.by_name_or_id('PTEN', @basic_study.expression_matrix_files.pluck(:id))
+    cluster = @basic_study.cluster_groups.by_name('cluster_2.txt')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: 'Blanks', annot_type: 'group', annot_scope: 'cluster')
+    violin_data = ExpressionVizService.load_expression_boxplot_data_array_scores(@basic_study, gene, cluster, annotation)
+    # cells A & B belong to 'bar', and cell C belongs to the blank label
+    expected_output = {
+      bar: {y: [0.0, 3.0], cells: %w(A B), annotations: [], name: 'bar'},
+      "#{AnnotationVizService::MISSING_VALUE_LABEL}": {y: [1.5], cells: %w(C), annotations: [], name: AnnotationVizService::MISSING_VALUE_LABEL}
     }
     assert_equal expected_output.with_indifferent_access, violin_data.with_indifferent_access
   end

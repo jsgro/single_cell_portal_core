@@ -1,6 +1,18 @@
 import React from 'react'
 import { dotPlotColorScheme } from './DotPlot'
+import { Popover, OverlayTrigger } from 'react-bootstrap'
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import _uniqueId from 'lodash/uniqueId'
+
+const scaledPopover = (
+  <Popover id="scaled-mean-expression-helptext">
+    Scaling is relative to each gene's expression across all cells in a given
+    annotation selection, i.e. cells associated with each column label in
+    the dot plot.
+  </Popover>
+)
+
 
 /** renders an svg legend for a dotplot with color and size indicators */
 export default function DotPlotLegend() {
@@ -50,7 +62,13 @@ export default function DotPlotLegend() {
         <text x={colorBarWidth - 5} y={numberYPos}>1</text>
         <rect fill="#CC0088" width="3" height="10" x={colorBarWidth / 2} y={numberYPos - 20} ry="2"/>
         <text x="-22" y={labelTextYPos}>Scaled mean expression</text>
-        {nonzeroNote}
+        <OverlayTrigger trigger="click" rootClose placement="right" overlay={scaledPopover}>
+          <FontAwesomeIcon
+            data-analytics-name="scaled-mean-expression-help-icon"
+            className="action log-click help-icon"
+            icon={faInfoCircle}
+            transform="shrink-12 left-16 down-3" />
+        </OverlayTrigger>
       </g>
     </svg>
   )
