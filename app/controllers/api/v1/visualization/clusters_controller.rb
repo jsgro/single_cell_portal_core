@@ -249,6 +249,8 @@ module Api
               data = num_annots.times.map do |i|
                 cells = annot_size.times.map {|ii| "gatc_gatc_gatc_c#{i}_#{ii}" }
                 {
+                  # x: annot_size.times.map { (((rand + 1) * (rand + 1)) * 17 + i * 14).round(3) }.pack('f*'),
+                  # y: annot_size.times.map { (rand * 140).round(3) }.pack('f*'),
                   x: annot_size.times.map { (((rand + 1) * (rand + 1)) * 17 + i * 14).round(3) },
                   y: annot_size.times.map { (rand * 140).round(3) },
                   cells: cells,
@@ -263,8 +265,10 @@ module Api
               end
             else
               data = {
+                # x: (num_cells.times.map { |n| (rand * 140).round(3) }).pack('f*'),
+                # y: (num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3)}).pack('f*'),
                 x: num_cells.times.map { |n| (rand * 140).round(3) },
-                y: num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3) },
+                y: num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3)},
                 cells: num_cells.times.map {|n| "gatc_gatc_c#{n}" },
                 type: 'scattergl',
                 mode: 'markers',
@@ -273,6 +277,7 @@ module Api
                 annotations: num_cells.times.map {|n| "annot_#{(n * num_annots / num_cells).floor}" }
               }
             end
+            Rails.logger.info "data #{data}"
             mock_response[:data] = data
             return mock_response.to_json
           end
