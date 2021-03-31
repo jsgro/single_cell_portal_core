@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect  } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCaretDown, faCaretUp, faLink, faArrowLeft, faCog, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faCaretDown, faCaretUp, faLink, faArrowLeft, faCog, faTimes, faDna } from '@fortawesome/free-solid-svg-icons'
 
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from 'components/visualization/controls/ClusterSelector'
@@ -22,8 +22,10 @@ import { getAnnotationValues, getDefaultClusterParams, getDefaultSpatialGroupsFo
 import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from 'components/visualization/InferCNVIdeogram'
 import useResizeEffect from 'hooks/useResizeEffect'
+import { log } from 'lib/metrics-api'
 
 const tabList = [
+  { key: 'loading', label: 'loading...' },
   { key: 'scatter', label: 'Scatter' },
   { key: 'distribution', label: 'Distribution' },
   { key: 'dotplot', label: 'Dot Plot' },
@@ -313,6 +315,11 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
               />
             </div>
             }
+            { enabledTabs.includes('loading') &&
+            <div className={shownTab === 'loading' ? '' : 'hidden'}>
+              <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
+            </div>
+            }
           </div>
         </div>
         <div className={showViewOptionsControls ? 'col-md-2 ' : 'hidden'}>
@@ -340,7 +347,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
                 cluster={ exploreParamsWithDefaults.cluster}
                 annotation={ exploreParamsWithDefaults.annotation}
                 updateClusterParams={updateClusterParams}/>
-              <CreateAnnotation
+              { shownTab === 'scatter' && <CreateAnnotation
                 isSelecting={isCellSelecting}
                 setIsSelecting={setIsCellSelecting}
                 annotationList={exploreInfo ? exploreInfo.annotationList : null}
@@ -351,6 +358,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
                 updateClusterParams={updateClusterParams}
                 setAnnotationList={setAnnotationList}
                 studyAccession={studyAccession}/>
+              }
               <SubsampleSelector
                 annotationList={annotationList}
                 cluster={ exploreParamsWithDefaults.cluster}
@@ -405,7 +413,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   const hasSpatialGroups = exploreInfo && exploreInfo?.spatialGroups?.length > 0
   const hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
   const hasIdeogramOutputs = !!exploreInfo?.inferCNVIdeogramFiles
-  let enabledTabs = []
+  let enabledTabs = ['loading']
   if (isGeneList) {
     enabledTabs = ['heatmap']
   } else if (isGene) {

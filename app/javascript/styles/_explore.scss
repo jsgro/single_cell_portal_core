@@ -1,5 +1,8 @@
 .study-explore {
 	position: relative;
+	min-height: 70vh;
+	display: flex;
+	flex-direction: column;
 	.gene-load-spinner {
     position: absolute;
     top: 40%;
@@ -36,11 +39,25 @@
 	}
 }
 
-.explore-plot-tab-content {
-	min-height: 50vh;
+
+.explore-tab-content {
+	background: #fff;
+	flex-grow: 1;
+	
+	button.action {
+		background: #fff;
+	}
+	.panel {
+		border: none;
+	}
 }
 
+
 .create-annotation-control {
+	.panel-collapse.in {
+		border: 1px solid #bbb;
+		border-radius: 5px;
+	}
 	label {
 		font-weight: normal;
 	}
@@ -66,19 +83,11 @@
 	}
 }
 
-.explore-tab-content {
-	background: #fff;
-	button {
-		background: #fff;
-	}
-	.panel {
-		border: none;
-	}
-}
-
 .explore-plot-tab-content {
 	border-right: 1px solid #ccc;
+	min-height: 70vh;
 }
+
 
 .view-options-toggle {
 	padding: 1em 0em;
