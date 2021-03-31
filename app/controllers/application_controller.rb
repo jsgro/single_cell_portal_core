@@ -1,4 +1,5 @@
 
+
 class ApplicationController < ActionController::Base
 
   ###
@@ -257,13 +258,15 @@ class ApplicationController < ActionController::Base
   end
 
   # generic exception handling for reporting to Mixpanel/Sentry
-  rescue_from Exception do |exception|
-    MetricsService.report_error(exception, request, current_user, @study)
-    error_context = ErrorTracker.format_extra_context(@study, {params: params})
-    ErrorTracker.report_exception(exception, current_user, error_context)
-    respond_to do |format|
-      format.html { render '/error_pages/500', layout: 'application', status: 500 }
-      format.json { render json: {error: exception.message}, status: 500}
+  if !Rails.env.development? # Show stack trace for template errors in dev
+    rescue_from Exception do |exception|
+      MetricsService.report_error(exception, request, current_user, @study)
+      error_context = ErrorTracker.format_extra_context(@study, {params: params})
+      ErrorTracker.report_exception(exception, current_user, error_context)
+      respond_to do |format|
+        format.html { render '/error_pages/500', layout: 'application', status: 500 }
+        format.json { render json: {error: exception.message}, status: 500}
+      end
     end
   end
 
