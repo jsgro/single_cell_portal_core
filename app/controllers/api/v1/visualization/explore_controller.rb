@@ -91,7 +91,7 @@ module Api
             spatialGroupNames: spatial_group_options.map { |opt| opt[:name] },
             spatialGroups: spatial_group_options,
             clusterPointAlpha: @study.default_cluster_point_alpha,
-            defaultColorProfile: @study.default_color_profile
+            colorProfile: @study.default_color_profile
           }
 
           render json: explore_props

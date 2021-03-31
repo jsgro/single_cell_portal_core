@@ -37,6 +37,10 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
                                                    ])
   end
 
+  teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
+  end
+
   test 'enforces view permissions' do
     user2 = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     sign_in_and_update user2
@@ -82,7 +86,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'Reds', json['data'][0]['marker']['colorscale']
     @basic_study.update!({default_options: {color_profile: 'Portland'}})
     # since we're going to send a duplicate request, clear the API cache so we can get fresh results
-    Rails.cache.clear
+    CacheRemovalJob.new(@basic_study.id).perform
     execute_http_request(:get, api_v1_study_cluster_path(@basic_study, 'clusterA.txt', {annotation_name: 'intensity', annotation_scope: 'cluster', annotation_type: 'numeric'}))
     assert_equal 'Portland', json['data'][0]['marker']['colorscale']
   end

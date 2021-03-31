@@ -12,6 +12,10 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
   end
 
+  teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
+  end
+
   test 'create default testing study' do
 
     puts "#{File.basename(__FILE__)}: #{self.method_name}"

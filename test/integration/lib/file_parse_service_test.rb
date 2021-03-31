@@ -119,33 +119,6 @@ class FileParseServiceTest < ActiveSupport::TestCase
     assert_nil @coordinate_file.study_file_bundle
   end
 
-  test 'should parse gene list file' do
-    gene_list_name = 'Test Gene List'
-    gene_list_file = File.open(Rails.root.join('test', 'test_data', 'marker_1_gene_list.txt'))
-    gene_list = StudyFile.create(study_id: @basic_study.id, upload: gene_list_file, file_type: 'Gene List',
-                                 name: gene_list_name)
-    job_status = FileParseService.run_parse_job(gene_list, @basic_study, @user)
-    assert_equal 204, job_status[:status_code]
-    gene_list_file.close
-
-    # wait until parse is done and assert precomputed_score entry was inserted
-    max_wait = 60
-    current_wait = 0
-    interval = 10
-    sleep interval
-    while !gene_list.parsed?
-      puts "After #{current_wait} seconds, #{gene_list.name} is #{gene_list.parse_status}"
-      sleep interval
-      current_wait += interval
-      gene_list.reload
-      if current_wait >= max_wait
-        break
-      end
-    end
-    precomputed_score = @basic_study.precomputed_scores.find_by(name: gene_list_name)
-    assert precomputed_score.present?
-  end
-
   # TODO: once SCP-2765 is completed, test that all genes/values are parsed from mtx bundle
   # this will replace the deprecated 'should parse valid mtx bundle' from study_validation_test.rb
   test 'should store all genes and expression values from mtx parse' do

@@ -64,7 +64,7 @@ export default function StudyGeneExpressions({ study }) {
 
   useEffect(() => {
     // if showing a dotplot, we need to fetch the annotation values to feed into morpheus
-    if (showDotPlot) {
+    if (study.can_visualize_clusters && showDotPlot) {
       fetchClusterOptions(study.accession).then(newAnnotationList => setAnnotationList(newAnnotationList))
     }
   }, [study.accession])
@@ -88,30 +88,32 @@ export default function StudyGeneExpressions({ study }) {
         }
       </div>
       <div className="row graph-container">
-        <div className="col-md-10">
+        <div className={study.can_visualize_clusters ? 'col-md-10' : 'col-md-12'}>
           { studyRenderComponent }
         </div>
-        <div className="col-md-2 graph-controls">
-          <div className="cluster-controls">
-            <ClusterSelector
-              annotationList={annotationList}
-              {...controlClusterParams}
-              updateClusterParams={updateClusterParams}/>
-            <AnnotationSelector
-              annotationList={annotationList}
-              {...controlClusterParams}
-              updateClusterParams={updateClusterParams}/>
-            <SubsampleSelector
-              annotationList={annotationList}
-              {...controlClusterParams}
-              updateClusterParams={updateClusterParams}/>
-            { isMultiGene &&
-              <ConsensusSelector
+        { study.can_visualize_clusters &&
+          <div className="col-md-2 graph-controls">
+            <div className="cluster-controls">
+              <ClusterSelector
+                annotationList={annotationList}
                 {...controlClusterParams}
-                updateConsensus={consensus => updateClusterParams({ consensus })}/>
-            }
+                updateClusterParams={updateClusterParams}/>
+              <AnnotationSelector
+                annotationList={annotationList}
+                {...controlClusterParams}
+                updateClusterParams={updateClusterParams}/>
+              <SubsampleSelector
+                annotationList={annotationList}
+                {...controlClusterParams}
+                updateClusterParams={updateClusterParams}/>
+              { isMultiGene &&
+                <ConsensusSelector
+                  {...controlClusterParams}
+                  updateConsensus={consensus => updateClusterParams({ consensus })}/>
+              }
+            </div>
           </div>
-        </div>
+        }
       </div>
 
     </div>

@@ -10,6 +10,10 @@ class TaxonsControllerTest < ActionDispatch::IntegrationTest
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
   end
 
+  teardown do
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
+  end
+
   test 'should create new taxon then update and delete' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
     get taxons_path

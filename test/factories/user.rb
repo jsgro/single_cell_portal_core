@@ -10,6 +10,7 @@ FactoryBot.define do
       test_array { nil }
     end
     email { "test.user.#{random_seed}@test.edu" }
+    uid { rand(10000..99999) }
     password { "test_password" }
     metrics_uuid { SecureRandom.uuid }
     after(:create) do |user, evaluator|
