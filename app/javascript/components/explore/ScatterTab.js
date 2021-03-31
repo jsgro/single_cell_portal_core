@@ -3,7 +3,7 @@ import React from 'react'
 import ScatterPlot from 'components/visualization/ScatterPlot'
 
 /**
-  * renders the scatter tab.  Handles 6 permutations: (spatial / noSpatial) x (no / single / multigene)
+  * renders the scatter tab.  Handles 6 permutations: (spatial / noSpatial) X (no / single / multigene)
   */
 export default function ScatterTab({
   exploreInfo, exploreParams, updateExploreParams, studyAccession, isGene, isMultiGene,
@@ -42,21 +42,27 @@ export default function ScatterTab({
       // overlaid over the spatial plot, then the spatial-cluster plot
       scatterParams.push({ ...exploreParams })
       scatterParams.push({ ...exploreParams, genes: [] })
-      scatterParams.push({ ...exploreParams, cluster: exploreParams.spatialGroups[0]})
-      scatterParams.push({ ...exploreParams, cluster: exploreParams.spatialGroups[0], genes: []})
+      // show a row for each spatial group selected
+      exploreParams.spatialGroups.slice(0, 3).forEach(spatialGroup => {
+        scatterParams.push({ ...exploreParams, cluster: spatialGroup})
+        scatterParams.push({ ...exploreParams, cluster: spatialGroup, genes: []})
+      })
     } else {
+      // for single-gene non-spatial, show the expression plot and the cluster plot
       scatterParams.push({ ...exploreParams })
       scatterParams.push({ ...exploreParams, genes: [] })
     }
   } else {
-    // just showing clusters
+    // no gene search, just showing clusters
     if (isSpatial) {
+      // for spatial non-gene, show the cluster, and then a plot for each spatial cluster
       scatterParams.push({ ...exploreParams })
       exploreParams.spatialGroups.forEach(spatialGroup => {
         scatterParams.push({ ...exploreParams, cluster: spatialGroup })
       })
     } else {
       isTwoColumn = false
+      // for non-spatial non-gene, just show the cluster
       scatterParams.push({ ...exploreParams })
     }
   }
