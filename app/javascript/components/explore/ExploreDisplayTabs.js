@@ -17,6 +17,7 @@ import useResizeEffect from 'hooks/useResizeEffect'
 const tabList = [
   { key: 'cluster', label: 'Cluster' },
   { key: 'scatter', label: 'Scatter' },
+  { key: 'annotatedScatter', label: 'Annotated Scatter' },
   { key: 'distribution', label: 'Distribution' },
   { key: 'dotplot', label: 'Dot Plot' },
   { key: 'heatmap', label: 'Heatmap' },
@@ -363,6 +364,23 @@ export default function ExploreDisplayTabs(
               </div>
             </div>
           }
+          { enabledTabs.includes('annotatedScatter') &&
+            <div className={shownTab === 'annotatedScatter' ? '' : 'hidden'}>
+              <ScatterPlot
+                studyAccession={studyAccession}
+                {...exploreParams}
+                isAnnotatedScatter={true}
+                dimensions={getPlotDimensions({
+                  numColumns: 1,
+                  numRows: hasSelectedSpatialGroup ? 2 : 1,
+                  hasTitle: true,
+                  showRelatedGenesIdeogram
+                })}
+                isCellSelecting={isCellSelecting}
+                plotPointsSelected={plotPointsSelected}
+              />
+            </div>
+          }
           { enabledTabs.includes('distribution') &&
             <div className={shownTab === 'distribution' ? '' : 'hidden'}>
               <StudyViolinPlot
@@ -441,7 +459,12 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
         enabledTabs = ['dotplot', 'heatmap']
       }
     } else {
-      enabledTabs = ['scatter', 'distribution']
+      if (exploreParams.annotation.type === 'numeric') {
+        enabledTabs = ['scatter', 'annotatedScatter']
+      } else {
+        enabledTabs = ['scatter', 'distribution']
+      }
+
     }
   } else if (hasClusters) {
     enabledTabs = ['cluster']
