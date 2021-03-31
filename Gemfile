@@ -45,6 +45,8 @@ group :development, :test do
   gem 'puma'
   gem 'rubocop', require: false
   gem 'rubocop-rails', require: false
+  gem 'ruby-prof'
+  gem 'ruby-prof-flamegraph'
 end
 
 group :test do
@@ -64,7 +66,6 @@ gem 'bootstrap-sass', :git => 'https://github.com/twbs/bootstrap-sass'
 gem 'font-awesome-sass', git: 'https://github.com/FortAwesome/font-awesome-sass'
 gem 'mongoid'
 gem 'bson_ext'
-gem 'ruby-prof'
 gem 'delayed_job'
 gem 'delayed_job_mongoid'
 gem 'daemons'

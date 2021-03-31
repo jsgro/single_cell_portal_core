@@ -382,6 +382,8 @@ GEM
       rack (>= 1.1)
       rubocop (>= 0.87.0)
     ruby-prof (0.17.0)
+    ruby-prof-flamegraph (0.3.0)
+      ruby-prof (~> 0.13)
     ruby-progressbar (1.9.0)
     ruby_dep (1.5.0)
     ruby_native_statistics (0.10.1)
@@ -529,6 +531,7 @@ DEPENDENCIES
   rubocop
   rubocop-rails
   ruby-prof
+  ruby-prof-flamegraph
   ruby_native_statistics
   rubyzip
   sass-rails (~> 5.0, >= 5.0.6)
