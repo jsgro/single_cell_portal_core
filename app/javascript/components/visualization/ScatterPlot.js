@@ -35,7 +35,7 @@ export const defaultScatterColor = 'Reds'
   */
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
-   isCellSelecting=false, plotPointsSelected
+   isAnnotatedScatter=false, isCellSelecting=false, plotPointsSelected
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
@@ -57,12 +57,12 @@ function RawScatterPlot({
       layout.width = width
       layout.height = height
       formatMarkerColors(scatter.data, scatter.annotParams.type, scatter.gene)
-      formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene)
+      formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene, isAnnotatedScatter)
       const dataScatterColor = processTraceScatterColor(scatter.data, scatterColor)
 
       const perfTimeFrontendStart = performance.now()
 
-      Plotly.newPlot(graphElementId, scatter.data, layout)
+      Plotly.react(graphElementId, scatter.data, layout)
 
       const perfTimeFrontend = performance.now() - perfTimeFrontendStart
 
@@ -100,8 +100,9 @@ function RawScatterPlot({
       annotation ? annotation : '',
       subsample,
       consensus,
-      genes).then(handleResponse)
-  }, [cluster, annotation.name, subsample, consensus, genes.join(',')])
+      genes,
+      isAnnotatedScatter).then(handleResponse)
+  }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
@@ -134,14 +135,16 @@ function RawScatterPlot({
     }
   }, [dimensions.width, dimensions.height])
 
+
   useEffect(() => {
     $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
     $(`#${graphElementId}`).on('plotly_legendclick', logLegendClick)
     $(`#${graphElementId}`).on('plotly_legenddoubleclick', logLegendDoubleClick)
     return () => {
-      $(`#${graphElementId}`).off('plotly_selected', plotPointsSelected)
-      $(`#${graphElementId}`).off('plotly_legendclick', logLegendClick)
-      $(`#${graphElementId}`).off('plotly_legenddoubleclick', logLegendDoubleClick)
+      $(`#${graphElementId}`).off('plotly_selected')
+      $(`#${graphElementId}`).off('plotly_legendclick')
+      $(`#${graphElementId}`).off('plotly_legenddoubleclick')
+      Plotly.purge(graphElementId)
     }
   }, [])
 
@@ -194,11 +197,11 @@ function formatMarkerColors(data, annotationType, gene) {
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */
-function formatHoverLabels(data, annotationType, gene) {
+function formatHoverLabels(data, annotationType, gene, isAnnotatedScatter) {
   const groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{data.name}<extra></extra>'
   data.forEach(trace => {
     trace.text = trace.cells
-    if (annotationType === 'numeric' || gene) {
+    if (!isAnnotatedScatter && (annotationType === 'numeric' || gene)) {
       // use the 'meta' property so annotations are exposed to the hover template
       // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
       trace.meta = trace.annotations

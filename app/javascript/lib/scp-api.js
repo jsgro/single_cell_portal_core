@@ -279,7 +279,7 @@ export async function fetchCluster(
     gene = gene.join(',')
   }
   // eslint-disable-next-line camelcase
-  const is_annotated_scatter = isAnnotatedScatter
+  const is_annotated_scatter = isAnnotatedScatter ? true : ''
   const paramObj = {
     annotation_name: annotName,
     annotation_type: annotType,

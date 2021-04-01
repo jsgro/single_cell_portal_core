@@ -45,7 +45,7 @@ function updateExploreParams(newOptions, wasUserSpecified=true) {
     // or if they've switched to/from consensus view
     // reset the tab to the default
     if (mergedOpts.tab === 'cluster' && newOptions.genes ||
-        !!newOptions.consensus != !!currentParams.consensus) {
+        newOptions.consensus && !!newOptions.consensus != !!currentParams.consensus) {
       delete mergedOpts.tab
       delete mergedOpts.userSpecified.tab
     }
