@@ -302,6 +302,45 @@ export async function fetchCluster(
   return scatter
 }
 
+/** Experimental binary replacement for fetchCluster */
+export async function fetchScatterCoordinates(
+  studyAccession, cluster, annotation, subsample, consensus, gene=null,
+  isAnnotatedScatter=null, mock=false
+) {
+  // Digest full annotation name to enable easy validation in API
+  let [annotName, annotType, annotScope] = [annotation.name, annotation.type, annotation.scope]
+  if (annotName == undefined) {
+    [annotName, annotType, annotScope] = annotation.split('--')
+  }
+  if (Array.isArray(gene)) {
+    gene = gene.join(',')
+  }
+  // eslint-disable-next-line camelcase
+  const is_annotated_scatter = isAnnotatedScatter
+  const paramObj = {
+    annotation_name: annotName,
+    annotation_type: annotType,
+    annotation_scope: annotScope,
+    subsample,
+    consensus,
+    gene,
+    is_annotated_scatter
+  }
+
+  const init = Object.assign({ responseType: 'arraybuffer' }, defaultInit())
+
+  const params = stringifyQuery(paramObj)
+  if (!cluster || cluster === '') {
+    cluster = '_default'
+  }
+  const apiUrl = `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
+  // don't camelcase the keys since those can be cluster names,
+  // so send false for the 4th argument
+  const [scatter] = await scpApi(apiUrl, init, mock, false, false)
+
+  return scatter
+}
+
 /**
  * Returns an object with violin plot expression data for a gene in a study
  *
@@ -386,7 +425,7 @@ export async function fetchAnnotation(studyAccession, clusterName, annotationNam
 }
 
 /** Get URL for a Morpheus-suitable annotation values file */
-export function getAnnotationCellValuesURL({studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false}) {
+export function getAnnotationCellValuesURL({ studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false }) {
   const paramObj = {
     cluster: clusterName,
     annotation_scope: annotationScope,
@@ -399,7 +438,7 @@ export function getAnnotationCellValuesURL({studyAccession, clusterName, annotat
 }
 
 /** get URL for Morpheus-suitable annotation values file for a gene list */
-export function getGeneListColsURL({studyAccession, geneList}) {
+export function getGeneListColsURL({ studyAccession, geneList }) {
   const apiUrl = `/studies/${studyAccession}/annotations/gene_lists/${encodeURIComponent(geneList)}`
   return getFullUrl(apiUrl)
 }

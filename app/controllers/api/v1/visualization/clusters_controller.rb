@@ -89,6 +89,7 @@ module Api
         end
 
         def show
+          Rails.logger.info "In clusters_controller.rb"
           cluster = nil
           if params[:cluster_name] == '_default' || params[:cluster_name].empty?
             cluster = @study.default_cluster
@@ -104,7 +105,9 @@ module Api
           end
           viz_data = nil
           if User.feature_flag_for_instance(current_api_user, 'mock_viz_retrieval')
-            render plain: self.class.get_fixed_size_response(params[:subsample].to_i, current_api_user) and return
+            Rails.logger.info "in show for mock_viz_retrieval"
+            # render plain: self.class.get_fixed_size_response(params[:subsample].to_i, current_api_user) and return
+            send_data self.class.get_fixed_size_response_binary(params[:subsample].to_i, current_api_user), :disposition => 'inline' and return
           else
             viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
           end
@@ -205,6 +208,18 @@ module Api
             "consensus": consensus
           }
           response_obj
+        end
+
+        def self.get_fixed_size_response_binary(num_cells, user)
+          num_annots = 10
+          num_cells = 1000
+          annot_size = num_cells / num_annots
+          # return annot_size.times.map { (((rand + 1) * (rand + 1)) * 17 + i * 14).round(3) }.pack(f*)
+          # return num_cells.times.map { |n| (rand * 140).round(3) }.pack(f*)
+          data = num_cells.times.map { |n| (rand * 140).round(3) }.pack('f*')
+          Rails.logger.info "data:"
+          Rails.logger.info data
+          return data
         end
 
         # returns a string that can be immmediately passed to the front end for cluster visualization

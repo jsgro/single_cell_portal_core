@@ -4,7 +4,7 @@ import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
 import Plotly from 'plotly.js-dist'
 
-import { fetchCluster } from 'lib/scp-api'
+import { fetchCluster, fetchScatterCoordinates } from 'lib/scp-api'
 import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
@@ -41,10 +41,25 @@ export default function ScatterPlot({
   const [clusterData, setClusterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
 
+  /** Decode binary data, and construct scatter `data` object for Plotly */
+  function getScatterData(binaryData) {
+    console.log('binaryData')
+    console.log(binaryData)
+  }
+
   /** Process scatter plot data fetched from server */
-  function handleResponse(clusterResponse) {
+  function handleResponse(clusterResponse, isBinary=false) {
+    console.log('isBinary')
+    console.log(isBinary)
     performance.mark('dataFetchEnd')
     console.log(`dataFetch duration: ${performance.measure('total data fetch', 'dataFetchStarted', 'dataFetchEnd').duration}`)
+
+
+    if (isBinary) {
+      console.log('clusterResponse', clusterResponse)
+      getScatterData(clusterResponse)
+    }
+
     // Get Plotly layout
     const layout = getPlotlyLayout(clusterResponse)
     const { width, height } = dimensions
@@ -65,15 +80,23 @@ export default function ScatterPlot({
 
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
-    // setIsLoading(true)
-    // performance.mark('dataFetchStarted')
+    setIsLoading(true)
+    performance.mark('dataFetchStarted')
     // fetchCluster(studyAccession,
     //   cluster,
     //   annotation ? annotation : '',
     //   subsample,
     //   consensus,
     //   genes).then(handleResponse)
-    makeFakePlot(graphElementId, subsample)
+    fetchScatterCoordinates(studyAccession,
+      cluster,
+      annotation ? annotation : '',
+      subsample,
+      consensus,
+      genes).then(clusterResponse => {
+      handleResponse(clusterResponse, true)
+    })
+    // makeFakePlot(graphElementId, subsample)
   }, [cluster, annotation.name, subsample, consensus, genes.join(',')])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
@@ -341,9 +364,11 @@ function makeFakePlot(target, subsample) {
     data = []
     const groupSize = length / numGroups
     for (let i=0; i<numGroups; i++) {
-      let x = Array.from({ length: groupSize }, () => Math.round(Math.random() * 100, 3))
-      let y = Array.from({ length: groupSize }, (_, index) => Math.round(Math.random() * 10 + (i * 10)), 3)
-      let cells = Array.from({ length: groupSize }, (_, index) => `CELL_${index}`)
+      // const x = Array.from({ length: groupSize }, () => Math.round(Math.random() * 100, 3))
+      // const y = Array.from({ length: groupSize }, (_, index) => Math.round(Math.random() * 10 + (i * 10)), 3)
+      const x = new Float32Array(Array.from({ length: groupSize }, () => Math.round(Math.random() * 100, 3)))
+      const y = new Float32Array(Array.from({ length: groupSize }, (_, index) => Math.round(Math.random() * 10 + (i * 10)), 3))
+      const cells = Array.from({ length: groupSize }, (_, index) => `CELL_${index}`)
       // let annots = Array.from({ length: groupSize }, (_, index) => `annot_${i}`)
       data.push({
         type: 'scattergl',
@@ -355,8 +380,10 @@ function makeFakePlot(target, subsample) {
       })
     }
   } else {
-    const x = Array.from({ length }, () => Math.round(Math.random() * 100, 3))
-    const y = Array.from({ length }, (_, index) => Math.round(Math.random() * 10 + (index * (100 / length)), 3))
+    // const x = Array.from({ length }, () => Math.round(Math.random() * 100, 3))
+    // const y = Array.from({ length }, (_, index) => Math.round(Math.random() * 10 + (index * (100 / length)), 3))
+    const x = new Float32Array(Array.from({ length }, () => Math.round(Math.random() * 100, 3)))
+    const y = new Float32Array(Array.from({ length }, (_, index) => Math.round(Math.random() * 10 + (index * (100 / length)), 3)))
     const cells = Array.from({ length }, (_, index) => `CELL_${index}`)
     const annots = Array.from({ length }, (_, index) => `annot_${Math.floor(index / (length / numGroups))}`)
     data = [{
