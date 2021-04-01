@@ -35,6 +35,27 @@ const defaultExploreInfo =  {
 }
 
 describe("explore tabs are activated based on study info and parameters", () => {
+  it('should show the loading tab while waiting for the explore info', async () => {
+    const exploreInfo = null
+    const exploreParams = {
+      cluster: 'foo', // request params loading only a cluster
+      annotation: { name: 'bar', type: 'group', scope: 'study' },
+      userSpecified: {
+        annotation: true,
+        cluster: true
+      }
+    }
+    const expectedResults = {
+      enabledTabs: ['loading'],
+      isGeneList: false,
+      isGene: false,
+      isMultiGene: false,
+      hasIdeogramOutputs: false
+    }
+
+    expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
+  })
+
   it('should enable cluster tab', async () => {
     const exploreInfo = defaultExploreInfo
     const exploreParams = {
