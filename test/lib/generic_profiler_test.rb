@@ -55,44 +55,39 @@ class GenericProfilerTest < ActiveSupport::TestCase
     @test_seed = SecureRandom.hex(6)
   end
 
-  # helper to ensure all expected reports were written
-  def validate_all_reports(base_filename)
-    html_report_path = Rails.root.join('tmp', 'profiling', @test_seed, base_filename + '.html')
-    calls_output_path = Rails.root.join('tmp', 'profiling', @test_seed, base_filename + '.calls.txt')
-    flamegraph_svg_path = Rails.root.join('tmp', 'profiling', @test_seed, base_filename + '.svg')
-    [html_report_path, calls_output_path, flamegraph_svg_path].each do |report_path|
-      assert File.exists?(report_path)
+  test 'should profile method' do
+    base_filename = "get_selected_annotation_test"
+    profile_results = GenericProfiler.profile(AnnotationVizService, :get_selected_annotation, @test_seed,
+                                              base_filename, @basic_study)
+    assert profile_results.any?
+    profile_results.each do |profile_path|
+      assert File.exists? profile_path
     end
   end
 
-  test 'should profile method' do
-    base_filename = "get_selected_annotation_test"
-    profile_results = GenericProfiler.profile(AnnotationVizService, :get_selected_annotation, [@basic_study],
-                                              random_seed: @test_seed, base_filename: base_filename)
-    assert profile_results.present?
-    assert profile_results.is_a?(RubyProf::Profile)
-    validate_all_reports(base_filename)
-  end
-
   test 'should profile clustering methods' do
-    base_filename = "get_cluster_viz_data_all"
-    GenericProfiler.profile_clustering(@basic_study.accession, random_seed: @test_seed)
-    validate_all_reports(base_filename)
+    profile_results = GenericProfiler.profile_clustering(@basic_study.accession, random_seed: @test_seed)
+    assert profile_results.any?
+    profile_results.each do |profile_path|
+      assert File.exists? profile_path
+    end
   end
 
   test 'should profile gene expression methods' do
     # test violin
     gene_name = 'PTEN'
-    GenericProfiler.profile_expression(@basic_study.accession, genes: gene_name, random_seed: @test_seed)
-    %w(get_genes_from_param_PTEN_all get_global_expression_render_data_PTEN_all).each do |base_filename|
-      validate_all_reports(base_filename)
+    violin_results = GenericProfiler.profile_expression(@basic_study.accession, genes: gene_name, random_seed: @test_seed)
+    assert violin_results.any?
+    violin_results.each do |profile_path|
+      assert File.exists? profile_path
     end
 
     # test heatmap
     gene_names = 'PTEN,AGPAT2'
-    GenericProfiler.profile_expression(@basic_study.accession, genes: gene_names, plot_type: 'heatmap', random_seed: @test_seed)
-    %w(get_genes_from_param_PTEN_AGPAT2_all get_morpheus_text_data_PTEN_AGPAT2_all).each do |base_filename|
-      validate_all_reports(base_filename)
+    heatmap_results = GenericProfiler.profile_expression(@basic_study.accession, genes: gene_names, plot_type: 'heatmap', random_seed: @test_seed)
+    assert heatmap_results.any?
+    heatmap_results.each do |profile_path|
+      assert File.exists? profile_path
     end
   end
 end
