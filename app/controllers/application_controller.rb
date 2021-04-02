@@ -1,7 +1,7 @@
 
 class ApplicationController < ActionController::Base
 
-  include Concerns::RealIpLogger
+  include RealIpLogger
 
   ###
   #
