@@ -6,6 +6,7 @@ module Api
       include ActionController::MimeResponds
       include Concerns::IngestAware
       include Concerns::Authenticator
+      include ::Concerns::RealIpLogger
 
       rescue_from ActionController::ParameterMissing do |exception|
         MetricsService.report_error(exception, request, current_api_user, @study)

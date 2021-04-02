@@ -1,6 +1,8 @@
 
 class ApplicationController < ActionController::Base
 
+  include Concerns::RealIpLogger
+
   ###
   #
   # These are methods that are not specific to any one controller and are inherited into all
