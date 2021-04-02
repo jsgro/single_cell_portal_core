@@ -663,6 +663,12 @@ export default async function scpApi(
       } else {
         return [json, perfTime]
       }
+    } else if (init.responseType === 'arraybuffer') {
+      const arrayBuffer = await response.arrayBuffer()
+      console.log('arrayBuffer', arrayBuffer)
+      performance.measure('data received to arrayBuffer returned', 'fetch_returned')
+      performance.mark('arrayBuffer_returned')
+      return [arrayBuffer, perfTime]
     } else {
       return [response, perfTime]
     }

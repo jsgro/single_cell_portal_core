@@ -42,39 +42,75 @@ export default function ScatterPlot({
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
 
   /** Decode binary data, and construct scatter `data` object for Plotly */
-  function getScatterData(binaryData) {
-    console.log('binaryData')
-    console.log(binaryData)
+  function getBinaryScatterData(data) {
+    // console.log('binaryData')
+    // console.log(binaryData)
+    const divisor = 2
+    // if (is3d) {divisor = 3}
+
+    const bytesPerDigit = 4 // For 32-bit float
+
+    const numPoints = (data.byteLength / bytesPerDigit) / divisor
+    console.log('numPoints')
+    console.log(numPoints)
+
+    // Incoming data is a 1D array that encodes a 2D array.
+    // Input is 1D because ArrayBuffer only efficiently supports 1D arrays.
+    // We concatenate arrays for each dimension into that 1D array.
+    //
+    // E.g. [1, 3, 5, 2, 4, 6]
+    // encodes:
+    // x = [1, 3, 5]
+    // y = [2, 4, 6]
+    // const x = new Float32Array(binaryData, 0, numPoints)
+    // const y = new Float32Array(binaryData, numPoints*bytesPerDigit, numPoints)
+
+    const x = new Float32Array(data, 0, numPoints)
+    const y = new Float32Array(data, numPoints*bytesPerDigit, numPoints)
+
+    const scatterData = {
+      x,
+      y,
+      type: 'scatter',
+      mode: 'markers'
+      // marker: { size: 3, width: 3 },
+      // opacity: 1.0
+      // annotations: num_cells.times.map {|n| "annot_#{(n * num_annots / num_cells).floor}" }
+    }
+
+    return scatterData
   }
 
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse, isBinary=false) {
-    console.log('isBinary')
-    console.log(isBinary)
     performance.mark('dataFetchEnd')
     console.log(`dataFetch duration: ${performance.measure('total data fetch', 'dataFetchStarted', 'dataFetchEnd').duration}`)
 
+    const scatterData = getBinaryScatterData(clusterResponse)
+    // const scatterData = getJsonScatterData(clusterResponse)
 
-    if (isBinary) {
-      console.log('clusterResponse', clusterResponse)
-      getScatterData(clusterResponse)
-    }
+    // if (isBinary) {
+    // console.log('clusterResponse', clusterResponse)
+    // clusterResponse.data = getScatterData(clusterResponse)
+    // }
 
     // Get Plotly layout
-    const layout = getPlotlyLayout(clusterResponse)
-    const { width, height } = dimensions
-    layout.width = width
-    layout.height = height
-    formatMarkerColors(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
-    formatHoverLabels(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
-    const dataScatterColor = processTraceScatterColor(clusterResponse.data, scatterColor)
+    // const layout = getPlotlyLayout(clusterResponse)
+    // const { width, height } = dimensions
+    // layout.width = width
+    // layout.height = height
+    // formatMarkerColors(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
+    // formatHoverLabels(clusterResponse.data, clusterResponse.annotParams.type, clusterResponse.gene)
+    // const dataScatterColor = processTraceScatterColor(clusterResponse.data, scatterColor)
     performance.mark('dataAssembled')
-    Plotly.newPlot(graphElementId, clusterResponse.data, layout)
+    // Plotly.newPlot(graphElementId, clusterResponse.data, layout)
+
+    Plotly.newPlot(graphElementId, [scatterData])
     console.log(`plotly duration: ${performance.measure('plotly time', 'dataAssembled').duration}`)
-    if (dataScatterColor !== scatterColor) {
-      updateScatterColor(dataScatterColor)
-    }
-    setClusterData(clusterResponse)
+    // if (dataScatterColor !== scatterColor) {
+    //   updateScatterColor(dataScatterColor)
+    // }
+    // setClusterData(clusterResponse)
     setIsLoading(false)
   }
 

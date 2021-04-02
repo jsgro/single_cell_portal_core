@@ -212,13 +212,36 @@ module Api
 
         def self.get_fixed_size_response_binary(num_cells, user)
           num_annots = 10
-          num_cells = 1000
+          num_cells = 1000000
           annot_size = num_cells / num_annots
-          # return annot_size.times.map { (((rand + 1) * (rand + 1)) * 17 + i * 14).round(3) }.pack(f*)
-          # return num_cells.times.map { |n| (rand * 140).round(3) }.pack(f*)
-          data = num_cells.times.map { |n| (rand * 140).round(3) }.pack('f*')
-          Rails.logger.info "data:"
-          Rails.logger.info data
+
+          x = num_cells.times.map { |n| (rand * 140).round(3) }
+          y = num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3)}
+          # x = [1.001, 3.001, 5.001]
+          # y = [2.001, 4.001, 6.001]
+          data = []
+
+          # This approach might enable streaming renders, as coordinates for each point are adjacent
+          # x.each_index { |i| data.push(x[i], y[i]) } # [1, 2, 3, 4, 5, 6]
+
+          # This approach precludes streaming render, but eases client-side reassembly
+          data = x.concat(y) # [1, 3, 5, 2, 4, 6].  We'd avoid the assignment after this experiment.
+
+          # Converts to a binary-encoded list of 32-bit floats (single-precision, native format)
+          # https://apidock.com/ruby/Array/pack
+          data = data.pack('f*')
+
+
+          # y = num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3)}.pack('f*')
+          # x = num_cells.times.map { |n| (rand * 140).round(3) }
+          # y = num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3)}
+
+          # data = {
+          #   :x=> x,
+          #   :y => y
+          # }
+          # Rails.logger.info "data:"
+          # Rails.logger.info data
           return data
         end
 
