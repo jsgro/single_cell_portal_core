@@ -1,8 +1,6 @@
 module RealIpLogger
   ##
-  # real_ip_logger.rb: logs the actual client IP address set by the nginx X-Real-Ip header, instead of load balancer ip
-  # see http://nginx.org/en/docs/http/ngx_http_realip_module.html for more info on associated nginx module
-  # and webapp.conf for configuration
+  # real_ip_logger.rb: logs the actual client IP address set by the nginx X-Forwarded-For header, instead of load balancer ip
   ##
 
   extend ActiveSupport::Concern
