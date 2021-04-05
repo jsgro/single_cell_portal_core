@@ -107,7 +107,8 @@ module Api
           if User.feature_flag_for_instance(current_api_user, 'mock_viz_retrieval')
             Rails.logger.info "in show for mock_viz_retrieval"
             # render plain: self.class.get_fixed_size_response(params[:subsample].to_i, current_api_user) and return
-            send_data self.class.get_fixed_size_response_binary(params[:subsample].to_i, current_api_user), :disposition => 'inline' and return
+            # send_data self.class.get_fixed_size_response_binary(params[:subsample].to_i, current_api_user), :disposition => 'inline' and return
+            render json: self.class.get_fixed_size_response_json(params[:subsample].to_i, current_api_user) and return
           else
             viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
           end
@@ -217,6 +218,8 @@ module Api
 
           x = num_cells.times.map { |n| (rand * 140).round(3) }
           y = num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3)}
+
+          # E.g.:
           # x = [1.001, 3.001, 5.001]
           # y = [2.001, 4.001, 6.001]
           data = []
@@ -231,17 +234,22 @@ module Api
           # https://apidock.com/ruby/Array/pack
           data = data.pack('f*')
 
+          return data
+        end
 
-          # y = num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3)}.pack('f*')
-          # x = num_cells.times.map { |n| (rand * 140).round(3) }
-          # y = num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3)}
+        def self.get_fixed_size_response_json(num_cells, user)
+          num_annots = 10
+          num_cells = 1000000
+          annot_size = num_cells / num_annots
 
-          # data = {
-          #   :x=> x,
-          #   :y => y
-          # }
-          # Rails.logger.info "data:"
-          # Rails.logger.info data
+          x = num_cells.times.map { |n| (rand * 140).round(3) }
+          y = num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3)}
+
+          data = {
+            :x=> x,
+            :y => y
+          }
+
           return data
         end
 

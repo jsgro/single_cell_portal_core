@@ -19,6 +19,8 @@ export const SCATTER_COLOR_OPTIONS = [
 export const defaultScatterColor = 'Reds'
 
 
+performance.setResourceTimingBufferSize(300)
+
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
@@ -81,13 +83,42 @@ export default function ScatterPlot({
     return scatterData
   }
 
+  /** Decode JSON data, and construct scatter `data` object for Plotly */
+  function getJsonScatterData(data) {
+    const numPoints = data.x.length + data.y.length
+    console.log('numPoints')
+    console.log(numPoints)
+
+    const x = data.x
+    const y = data.y
+
+    const scatterData = {
+      x,
+      y,
+      type: 'scatter',
+      mode: 'markers'
+      // marker: { size: 3, width: 3 },
+      // opacity: 1.0
+      // annotations: num_cells.times.map {|n| "annot_#{(n * num_annots / num_cells).floor}" }
+    }
+
+    console.log('scatterData')
+    console.log(scatterData)
+
+    return scatterData
+  }
+
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse, isBinary=false) {
     performance.mark('dataFetchEnd')
     console.log(`dataFetch duration: ${performance.measure('total data fetch', 'dataFetchStarted', 'dataFetchEnd').duration}`)
 
-    const scatterData = getBinaryScatterData(clusterResponse)
-    // const scatterData = getJsonScatterData(clusterResponse)
+    let scatterData
+    if (isBinary) {
+      scatterData = getBinaryScatterData(clusterResponse)
+    } else {
+      scatterData = getJsonScatterData(clusterResponse)
+    }
 
     // if (isBinary) {
     // console.log('clusterResponse', clusterResponse)
@@ -118,20 +149,24 @@ export default function ScatterPlot({
   useEffect(() => {
     setIsLoading(true)
     performance.mark('dataFetchStarted')
-    // fetchCluster(studyAccession,
-    //   cluster,
-    //   annotation ? annotation : '',
-    //   subsample,
-    //   consensus,
-    //   genes).then(handleResponse)
-    fetchScatterCoordinates(studyAccession,
+    fetchCluster(studyAccession,
       cluster,
       annotation ? annotation : '',
       subsample,
       consensus,
       genes).then(clusterResponse => {
-      handleResponse(clusterResponse, true)
+      handleResponse(clusterResponse, false)
     })
+
+    // // Remove comments to test binary transmissions
+    // fetchScatterCoordinates(studyAccession,
+    //   cluster,
+    //   annotation ? annotation : '',
+    //   subsample,
+    //   consensus,
+    //   genes).then(clusterResponse => {
+    //   handleResponse(clusterResponse, true)
+    // })
     // makeFakePlot(graphElementId, subsample)
   }, [cluster, annotation.name, subsample, consensus, genes.join(',')])
 

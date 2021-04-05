@@ -633,6 +633,14 @@ function getFullUrl(path, mock=false) {
   return fullPath
 }
 
+/** Record milliseconds to transmit data, i.e. TTLB - TTFB */
+function printTransmitTime(fullPath) {
+  const url = location.origin + fullPath
+  const perfEntry = performance.getEntriesByName(url).slice(-1)[0] // Get most recent call of this URL
+  const transmitTime = perfEntry.responseEnd - perfEntry.responseStart
+  console.log(`Milliseconds to transmit ${url}: ${transmitTime}`)
+}
+
 /**
  * Client for SCP REST API.  Less fetch boilerplate, easier mocks.
  *
@@ -648,13 +656,17 @@ export default async function scpApi(
   const fullPath = getFullUrl(path, mock)
 
   const response = await fetch(fullPath, init).catch(error => error)
+
   performance.mark('fetch_returned')
   // Milliseconds taken to fetch data from API
   const perfTime = Math.round(performance.now() - perfTimeStart)
   if (response.ok) {
     if (toJson) {
       const json = await response.json()
-      performance.measure('data received to json returned', 'fetch_returned')
+
+      printTransmitTime(fullPath)
+      console.log(`parse duration: ${performance.measure('data received to json returned', 'fetch_returned').duration}`)
+
       performance.mark('json_returned')
       // Converts API's snake_case to JS-preferrable camelCase,
       // for easy destructuring assignment.
@@ -665,8 +677,8 @@ export default async function scpApi(
       }
     } else if (init.responseType === 'arraybuffer') {
       const arrayBuffer = await response.arrayBuffer()
-      console.log('arrayBuffer', arrayBuffer)
-      performance.measure('data received to arrayBuffer returned', 'fetch_returned')
+      printTransmitTime(fullPath)
+      console.log(`parse duration: ${performance.measure('data received to arrayBuffer returned', 'fetch_returned').duration}`)
       performance.mark('arrayBuffer_returned')
       return [arrayBuffer, perfTime]
     } else {
