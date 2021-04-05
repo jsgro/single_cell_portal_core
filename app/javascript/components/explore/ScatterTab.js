@@ -63,7 +63,7 @@ export default function ScatterTab({
 
 /** returns an array of params objects suitable for passing into ScatterPlot components
  * (one for each plot).  Also returns layout variables
- * This Handles 6 permutations: (spatial / noSpatial) X (no / single / multigene)
+ * This handles 6 permutations: (spatial / noSpatial) X (no / single / multigene)
  */
 export function getScatterParams(exploreInfo, exploreParams, isGene, isMultiGene) {
   let isTwoColumn = true
@@ -96,7 +96,7 @@ export function getScatterParams(exploreInfo, exploreParams, isGene, isMultiGene
     }
   } else if (isGene) {
     if (isSpatial) {
-      // for single-gene spatial, show the gene expression and reference cluster, then the expresion
+      // for single-gene spatial, show the gene expression and reference cluster, then the expression
       // overlaid over the spatial plot, then the spatial-cluster plot
       scatterParams.push({ ...exploreParams })
       scatterParams.push({ ...exploreParams, genes: [] })
