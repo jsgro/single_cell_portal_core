@@ -14,8 +14,6 @@ module RealIpLogger
   def log_real_ip
     real_ip = request.headers['HTTP_X_REAL_IP']
     Rails.logger.info "Real client IP: #{real_ip} for #{request.method} #{request.fullpath}" if real_ip.present?
-    x_headers = request.headers.keys.select {|key| key.start_with?('HTTP_X_')}
-    Rails.logger.info "X Header names: #{x_headers}"
   ensure
     yield # regardless of any issues/errors, request will always execute and render a response
   end
