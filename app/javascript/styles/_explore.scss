@@ -1,5 +1,8 @@
 .study-explore {
 	position: relative;
+	min-height: 70vh;
+	display: flex;
+	flex-direction: column;
 	.gene-load-spinner {
     position: absolute;
     top: 40%;
@@ -36,11 +39,25 @@
 	}
 }
 
-.explore-plot-tab-content {
-	min-height: 50vh;
+
+.explore-tab-content {
+	background: #fff;
+	flex-grow: 1;
+	
+	button.action {
+		background: #fff;
+	}
+	.panel {
+		border: none;
+	}
 }
 
+
 .create-annotation-control {
+	.panel-collapse.in {
+		border: 1px solid #bbb;
+		border-radius: 5px;
+	}
 	label {
 		font-weight: normal;
 	}
@@ -67,13 +84,29 @@
 }
 
 .explore-plot-tab-content {
-	background: #fff;
+	border-right: 1px solid #ccc;
+	min-height: 70vh;
 }
 
+
 .view-options-toggle {
-	border: none;
-	background: none;
+	padding: 1em 0em;
 	font-weight: bold;
+
+	button {
+		float: right;
+		background: none;
+		font-weight: normal;
+	}
+}
+
+.view-options-toggle-on {
+	position: absolute;
+	top: 0px;
+	right: 1px;
+	padding: 0.5em;
+	background: #fff;
+	z-index: 30;
 }
 
 .desktop-view-options {
@@ -104,18 +137,11 @@
 }
 
 .render-controls {
+	border-radius: 5px;
+	border: 1px solid #bbb;
+	margin-bottom: 1em;
 	.panel {
-		border: none;
-		border-radius: 5px;
-		background: #fff;
-		box-shadow: none;
-		margin-bottom: 10px;
-	}
-	.panel-heading {
-	  cursor: pointer;
-		background: #ddd;
-		border-radius: 5px;
-		padding: 5px 15px;
+		margin-bottom: 0px;
 	}
 }
 
