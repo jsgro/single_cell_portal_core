@@ -3,7 +3,9 @@
     "name" : "Human Research Group",
     "tag_line": "Synthetic branding group containing only human synthetic studies",
     "background_color": "lightgray",
-    "facet_list": ["organ", "disease"]
+    "facet_list": ["organ", "disease"],
+    "external_link_url": "https://en.wikipedia.org/wiki/Human",
+    "external_link_description": "Human wiki"
   },
   "images": {
     "splash_image": "SCP-logo-invert.png"
