@@ -172,6 +172,7 @@ export function morpheusTabManager($target) {
     },
     setTabTitle: () => {},
     setActiveTab: () => {},
+    getActiveTabId: () => {},
     getWidth: () => $target.actual('width'),
     getHeight: () => $target.actual('height'),
     getTabCount: () => 1
