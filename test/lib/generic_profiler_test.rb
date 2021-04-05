@@ -52,13 +52,10 @@ class GenericProfilerTest < ActiveSupport::TestCase
       annotation: 'species--group--study'
     }
     @basic_study.update(default_options: defaults)
-    @test_seed = SecureRandom.hex(6)
   end
 
   test 'should profile method' do
-    base_filename = "get_selected_annotation_test"
-    profile_results = GenericProfiler.profile(AnnotationVizService, :get_selected_annotation, @test_seed,
-                                              base_filename, @basic_study)
+    profile_results = GenericProfiler.profile(AnnotationVizService, :get_selected_annotation, SecureRandom.hex(4), @basic_study)
     assert profile_results.any?
     profile_results.each do |profile_path|
       assert File.exists? profile_path
@@ -66,7 +63,7 @@ class GenericProfilerTest < ActiveSupport::TestCase
   end
 
   test 'should profile clustering methods' do
-    profile_results = GenericProfiler.profile_clustering(@basic_study.accession, random_seed: @test_seed)
+    profile_results = GenericProfiler.profile_clustering(@basic_study.accession)
     assert profile_results.any?
     profile_results.each do |profile_path|
       assert File.exists? profile_path
@@ -76,7 +73,7 @@ class GenericProfilerTest < ActiveSupport::TestCase
   test 'should profile gene expression methods' do
     # test violin
     gene_name = 'PTEN'
-    violin_results = GenericProfiler.profile_expression(@basic_study.accession, genes: gene_name, random_seed: @test_seed)
+    violin_results = GenericProfiler.profile_expression(@basic_study.accession, genes: gene_name)
     assert violin_results.any?
     violin_results.each do |profile_path|
       assert File.exists? profile_path
@@ -84,10 +81,25 @@ class GenericProfilerTest < ActiveSupport::TestCase
 
     # test heatmap
     gene_names = 'PTEN,AGPAT2'
-    heatmap_results = GenericProfiler.profile_expression(@basic_study.accession, genes: gene_names, plot_type: 'heatmap', random_seed: @test_seed)
+    heatmap_results = GenericProfiler.profile_expression(@basic_study.accession, genes: gene_names, plot_type: 'heatmap')
     assert heatmap_results.any?
     heatmap_results.each do |profile_path|
       assert File.exists? profile_path
     end
+  end
+
+  test 'should write arguments file' do
+    args = [@basic_study, 'some value', foo: 'bar', bing: 'baz']
+    random_seed = SecureRandom.hex(4)
+    test_dir = random_seed + '_test'
+    GenericProfiler.write_args_list(test_dir, random_seed, *args)
+    filename = "#{random_seed}_arguments.txt"
+    args_filepath = Rails.root.join(GenericProfiler::PROFILE_BASEDIR, test_dir, filename)
+    assert File.exists?(args_filepath)
+    args_file = File.open(args_filepath).read
+    assert args_file.include?(@basic_study.name)
+    assert args_file.include?('"some value"')
+    assert args_file.include?('foo: "bar"')
+    assert args_file.include?('bing: "baz"')
   end
 end

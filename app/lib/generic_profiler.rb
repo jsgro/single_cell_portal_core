@@ -8,6 +8,7 @@ class GenericProfiler
   EXPRESSION_PLOT_TYPES = %w(violin heatmap).freeze
   CONSENSUS_TYPES = [nil, 'mean', 'median'].freeze
   FLAMEGRAPH_PATH = Rails.root.join('lib', 'assets', 'perl', 'flamegraph.pl').freeze
+  PROFILE_BASEDIR = Rails.root.join('tmp', 'profiling')
 
   # generic profiling method - handles actual RubyProf.profile call and writing of reports
   # can be used to profile any method, whether both SCP-derived or native Ruby; works with both class methods & instance methods
@@ -15,6 +16,7 @@ class GenericProfiler
   # * *params*
   #   - +prof_object+ (Object) => object to run method from, can be a class or an instance of a class
   #   - +prof_method+ (Symbol) => method to call on +prof_object+
+  #   - +report_dir+ (String) => random dirname for controlling where reports are written
   #   - +arguments+ (Array) => positional/keyword arguments to pass to +prof_method+
   #
   # * *returns*
@@ -22,12 +24,14 @@ class GenericProfiler
   #
   # * *raises*
   #   - (ArgumentError) => if :arguments is not a Hash or Array
-  def self.profile(prof_object, prof_method, *arguments)
-    base_filename = set_base_filename(prof_object, prof_method, arguments)
-    random_seed = SecureRandom.hex(8)
-    puts "Profiling #{prof_object}##{prof_method} with #{arguments.size} argument(s)"
-    profile = RubyProf.profile { prof_object.send(prof_method, arguments) }
-    write_profiler_reports(profile, base_filename, random_seed)
+  def self.profile(prof_object, prof_method, report_dir, *arguments)
+    base_filename = set_base_filename(prof_object, prof_method)
+    profile_seed = SecureRandom.hex(4)
+    formatted_filename = "#{profile_seed}_#{base_filename}"
+    puts "Profiling #{prof_object}##{prof_method} (#{profile_seed}) with #{arguments.size} argument(s)"
+    write_args_list(report_dir, profile_seed, *arguments)
+    profile = RubyProf.profile { prof_object.send(prof_method, *arguments) }
+    write_profiler_reports(profile, formatted_filename, report_dir)
   end
 
   # write out profiler reports & images
@@ -35,6 +39,7 @@ class GenericProfiler
   # * *params*
   #   - +profile+ (RubyProf::Profile) => profiler results
   #   - +base_filename+ (String) => basename of report files (missing extension)
+  #   - +report_dir+ (String) => random dirname for controlling where reports are written
   #
   # * *yields*
   #   - (RubyProf::GraphHtmlPrinter) => html profile report
@@ -43,10 +48,9 @@ class GenericProfiler
   #
   # * *returns*
   #   - (Array<Pathname>) => Array of filepaths to all yielded reports
-  def self.write_profiler_reports(profile, base_filename, random_seed)
+  def self.write_profiler_reports(profile, base_filename, report_dir)
     puts "Profiling complete, writing reports"
-    reports_basepath = Rails.root.join('tmp', 'profiling', random_seed)
-    FileUtils.mkdir_p(reports_basepath) unless Dir.exists?(reports_basepath)
+    reports_basepath = make_profile_dir(report_dir)
     html_filepath = Rails.root.join(reports_basepath, base_filename + '.html')
     flamegraph_filepath = Rails.root.join(reports_basepath, base_filename + '.calls.txt')
     File.open(html_filepath, 'w+') do |file|
@@ -61,8 +65,27 @@ class GenericProfiler
     end
     flamegraph_svg_path = Rails.root.join(reports_basepath, base_filename + '.svg')
     puts "creating flamegraph SVG from #{flamegraph_filepath}"
-    system("#{FLAMEGRAPH_PATH} #{flamegraph_filepath} --countname=ms > #{flamegraph_svg_path}")
+    system("#{FLAMEGRAPH_PATH} #{flamegraph_filepath} --countname=ms --title #{base_filename} > #{flamegraph_svg_path}")
     [html_filepath, flamegraph_filepath, flamegraph_svg_path]
+  end
+
+  # write out text file with all arguments from profiling run, for provenance
+  #
+  # * *params*
+  #   - +report_dir+ (String) => random dirname for controlling where reports are written
+  #   - +profile_seed+ (String) => random seed corresponding to a profiling run (for matching arg lists)
+  #   - +args+ (Array) => list of arguments to write
+  #
+  # * *yields*
+  #   - (File) => text file of argument list
+  def self.write_args_list(report_dir, profile_seed, *args)
+    reports_basepath = make_profile_dir(report_dir)
+    File.open(Rails.root.join(reports_basepath, "#{profile_seed}_arguments.txt"), 'w+') do |arguments_file|
+      puts "ARGUMENTS:\n"
+      args.each do |arg|
+        write_single_argument(arguments_file, arg)
+      end
+    end
   end
 
   ##
@@ -76,9 +99,6 @@ class GenericProfiler
   # * *params*
   #   - +study_accession+ (String) => accession of study to use, preferably w/ >= 1M cells
   #
-  # * *yields*
-  #   - (RubyProf::GraphHtmlPrinter) => While profiling, individual reports will print to files and display paths in console
-  #
   # * *returns*
   #   - (Array<Pathname>) => Array of filepaths to all yielded reports
   #
@@ -86,6 +106,7 @@ class GenericProfiler
   #   - (ArgumentError) => if study/cluster/annotation are not present
   def self.profile_clustering(study_accession)
     validate_cluster_args(study_accession)
+    profile_dir = SecureRandom.hex(4)
     reports = []
     study = Study.find_by(accession: study_accession)
     cluster = study.default_cluster
@@ -95,11 +116,11 @@ class GenericProfiler
       subsample_threshold = bm_threshold == :all ? nil : bm_threshold
       annotation_name, annotation_type, annotation_scope = annotation.split('--')
       url_params = {
-        annotation_name: annotation_name, annotation_type: annotation_type, annotation_scope: annotation_scope,
+        annot_name: annotation_name, annot_type: annotation_type, annot_scope: annotation_scope,
         subsample: subsample_threshold
       }
       reports += profile(
-        Api::V1::Visualization::ClustersController, :get_cluster_viz_data, study, cluster, url_params
+        Api::V1::Visualization::ClustersController, :get_cluster_viz_data, profile_dir, study, cluster, url_params
       )
     end
     reports
@@ -115,9 +136,6 @@ class GenericProfiler
   #   - +plot_type+ (String) => plot type, either violin or heatmap, defaults to violin
   #   - +consensus+ (String) => 'collapse by' measurement: mean or median, or nil to omit consensus collapse
   #
-  # * *yields*
-  #   - (RubyProf::GraphHtmlPrinter) => While profiling, individual reports will print to files and display paths in console
-  #
   # * *returns*
   #   - (Array<Pathname>) => Array of filepaths to all yielded reports
   #
@@ -128,6 +146,7 @@ class GenericProfiler
     study = Study.find_by(accession: study_accession)
     validate_expression_args(study, genes, plot_type, consensus)
     reports = []
+    profile_dir = SecureRandom.hex(4)
     requested_genes = genes.blank? ? study.genes.sample.name : genes
     cluster = study.default_cluster
     annotation_name, annotation_type, annotation_scope = study.default_annotation.split('--')
@@ -141,19 +160,19 @@ class GenericProfiler
       subsample_threshold = bm_threshold == :all ? nil : bm_threshold
       # profile loading genes, then actually load them to pass downstream
       reports += profile(
-        RequestUtils, :get_genes_from_param, study, requested_genes
+        RequestUtils, :get_genes_from_param, profile_dir, study, requested_genes
       )
       study_genes = RequestUtils.get_genes_from_param(study, requested_genes)
       case plot_type
       when 'violin'
         reports += profile(
-          ExpressionVizService, :get_global_expression_render_data,
+          ExpressionVizService, :get_global_expression_render_data, profile_dir,
           study: study, cluster: cluster, genes: study_genes, subsample: subsample_threshold,
            selected_annotation: annotation, consensus: consensus, boxpoints: 'all', current_user: study.user
         )
       when 'heatmap'
         reports += profile(
-          ExpressionVizService, :get_morpheus_text_data, study: study, cluster: cluster,
+          ExpressionVizService, :get_morpheus_text_data, profile_dir, study: study, cluster: cluster,
           genes: study_genes, file_type: :gct, selected_annotation: annotation, collapse_by: nil
         )
       end
@@ -185,36 +204,27 @@ class GenericProfiler
     true
   end
 
+  # create scratch dir for profiling results
+  def self.make_profile_dir(report_dir)
+    reports_basepath = Rails.root.join(PROFILE_BASEDIR, report_dir)
+    FileUtils.mkdir_p(reports_basepath) unless Dir.exists?(reports_basepath)
+    reports_basepath
+  end
+
   # set the base filename for reports
   # includes object & method name, as well as formatted args list
-  def self.set_base_filename(object, method_name, *args)
+  def self.set_base_filename(object, method_name)
     object_name = get_object_name(object)
-    arg_list = format_arg_list(args)
-    "#{object_name}##{method_name}_ARGS_#{arg_list}"
+    "#{object_name}##{method_name}"
   end
 
   # get a formatted "name" for set_base_filename
-  # will try to use :accession or :name first, and after that will try a series of fallbacks to format object
-  # will recursively iterate through hashes/arrays as needed
+  # will try to use :accession first for studies, and after that will try a series of fallbacks to format object name
   def self.get_object_name(object)
     if object.respond_to?(:accession)
       object.accession
-    elsif object.respond_to?(:name)
-      object.name.gsub(/\s/, '-')
-    elsif object.is_a?(Hash)
-      arg_list = ""
-      object.each_pair do |key, value|
-        arg_list += "#{key}_#{get_object_name(value)}_"
-      end
-      arg_list
-    elsif object.respond_to?(:each)
-      arg_list = ""
-      object.each do |value|
-        arg_list += "#{get_object_name(value)}_"
-      end
-      arg_list
     elsif object.is_a?(Class)
-      object.to_s
+      object.to_s.gsub(/\W/, '-')
     elsif object.is_a?(String)
       object.gsub(/\s/, '-')
     else
@@ -222,13 +232,22 @@ class GenericProfiler
     end
   end
 
-  # get a string to use as part of filename w/ all param values
-  def self.format_arg_list(args)
-    args.map {|arg| get_object_name(arg)}.join('_').chomp('_')
-  end
-
   # split gene names on space/comma
   def self.extract_gene_names(gene_string)
     gene_string.split(/\s|,/)
+  end
+
+  def self.write_single_argument(file_handler, arg)
+    if arg.is_a?(Hash)
+      arg.each_pair do |key, value|
+        arg_val = "#{key}: #{value.inspect}"
+        puts arg_val
+        file_handler.write("####\n#{arg_val}\n")
+      end
+    else
+      arg_val = arg.inspect
+      puts arg_val
+      file_handler.write("####\n#{arg_val}\n")
+    end
   end
 end
