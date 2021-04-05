@@ -85,7 +85,7 @@ export default function ScatterPlot({
 
   /** Decode JSON data, and construct scatter `data` object for Plotly */
   function getJsonScatterData(data) {
-    const numPoints = data.x.length + data.y.length
+    const numPoints = data.x.length
     console.log('numPoints')
     console.log(numPoints)
 
@@ -102,17 +102,11 @@ export default function ScatterPlot({
       // annotations: num_cells.times.map {|n| "annot_#{(n * num_annots / num_cells).floor}" }
     }
 
-    console.log('scatterData')
-    console.log(scatterData)
-
     return scatterData
   }
 
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse, isBinary=false) {
-    performance.mark('dataFetchEnd')
-    console.log(`dataFetch duration: ${performance.measure('total data fetch', 'dataFetchStarted', 'dataFetchEnd').duration}`)
-
     let scatterData
     if (isBinary) {
       scatterData = getBinaryScatterData(clusterResponse)
@@ -148,7 +142,6 @@ export default function ScatterPlot({
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     setIsLoading(true)
-    performance.mark('dataFetchStarted')
     fetchCluster(studyAccession,
       cluster,
       annotation ? annotation : '',
