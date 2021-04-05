@@ -8,7 +8,6 @@ class GenericProfiler
   EXPRESSION_PLOT_TYPES = %w(violin heatmap).freeze
   CONSENSUS_TYPES = [nil, 'mean', 'median'].freeze
   FLAMEGRAPH_PATH = Rails.root.join('lib', 'assets', 'perl', 'flamegraph.pl').freeze
-  ARG_SANITIZER = /::alpha::/
 
   # generic profiling method - handles actual RubyProf.profile call and writing of reports
   # can be used to profile any method, whether both SCP-derived or native Ruby; works with both class methods & instance methods
@@ -162,14 +161,9 @@ class GenericProfiler
     reports
   end
 
-  def self.set_base_filename(object, method_name, *args)
-    object_name = get_object_name(object)
-    arg_list = args.map {|arg| get_object_name(arg)}.join('_')
-    "#{object_name}##{method_name}_#{arg_list}"
-  end
-
   private
 
+  # validate arguments for :profile_clustering and :profile_expression
   def self.validate_cluster_args(study_accession)
     study = Study.find_by(accession: study_accession)
     raise ArgumentError.new("#{study_accession} is not valid") if study.nil?
@@ -179,6 +173,7 @@ class GenericProfiler
     true
   end
 
+  # validate arguments for :profile_expression
   def self.validate_expression_args(study, genes, plot_type, consensus)
     raise ArgumentError.new("#{study.accession} has no gene expression data") if study.genes.empty?
     raise ArgumentError.new("#{plot_type} is not a valid plot type") if !EXPRESSION_PLOT_TYPES.include?(plot_type)
@@ -190,15 +185,49 @@ class GenericProfiler
     true
   end
 
+  # set the base filename for reports
+  # includes object & method name, as well as formatted args list
+  def self.set_base_filename(object, method_name, *args)
+    object_name = get_object_name(object)
+    arg_list = format_arg_list(args)
+    "#{object_name}##{method_name}_ARGS_#{arg_list}"
+  end
+
+  # get a formatted "name" for set_base_filename
+  # will try to use :accession or :name first, and after that will try a series of fallbacks to format object
+  # will recursively iterate through hashes/arrays as needed
   def self.get_object_name(object)
-    name = object.is_a?(Class) ? object.to_s : object.class.name
-    name.gsub(/[^0-9a-z]/i, '')
+    if object.respond_to?(:accession)
+      object.accession
+    elsif object.respond_to?(:name)
+      object.name.gsub(/\s/, '-')
+    elsif object.is_a?(Hash)
+      arg_list = ""
+      object.each_pair do |key, value|
+        arg_list += "#{key}_#{get_object_name(value)}_"
+      end
+      arg_list
+    elsif object.respond_to?(:each)
+      arg_list = ""
+      object.each do |value|
+        arg_list += "#{get_object_name(value)}_"
+      end
+      arg_list
+    elsif object.is_a?(Class)
+      object.to_s
+    elsif object.is_a?(String)
+      object.gsub(/\s/, '-')
+    else
+      object.class.name
+    end
   end
 
-  def self.sanitize_arg_list(args)
-    args.map(&:to_s).gsub(/[^0-9a-z]/i, '_')
+  # get a string to use as part of filename w/ all param values
+  def self.format_arg_list(args)
+    args.map {|arg| get_object_name(arg)}.join('_').chomp('_')
   end
 
+  # split gene names on space/comma
   def self.extract_gene_names(gene_string)
     gene_string.split(/\s|,/)
   end
