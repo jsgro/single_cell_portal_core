@@ -175,6 +175,10 @@ class GenericProfiler
           ExpressionVizService, :get_morpheus_text_data, profile_dir, study: study, cluster: cluster,
           genes: study_genes, file_type: :gct, selected_annotation: annotation, collapse_by: nil
         )
+        reports += profile(
+          AnnotationVizService, :annotation_cell_values_tsv, profile_dir, study, cluster,
+          annotation
+        )
       end
     end
     reports
