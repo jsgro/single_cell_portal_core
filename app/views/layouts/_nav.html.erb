@@ -17,8 +17,11 @@
 	<div class="collapse navbar-collapse" id="scp-navbar-dropdown-collapse">
 		<%= render partial: '/layouts/breadcrumbs' %>
 		<ul class="nav navbar-nav pull-right">
-			<li class='dropdown'><%= scp_link_to "<span class='fas fa-question-circle'></span> Help <span class='caret'></span>".html_safe, "#", class: "dropdown-toggle", "data-toggle" => "dropdown" %>
+			<li class='dropdown'><%= scp_link_to "<span class='fas fa-question-circle'></span> Help & Resources <span class='caret'></span>".html_safe, "#", class: "dropdown-toggle", "data-toggle" => "dropdown" %>
 				<ul class="dropdown-menu dropdown-menu-right">
+          <% if @selected_branding_group.present? && @selected_branding_group.external_link_url %>
+            <li><%= link_to "<span class='fas fa-fw fa-globe'></span> ".html_safe + @selected_branding_group.external_link_description.html_safe, @selected_branding_group.external_link_url, target: '_blank', class: 'check-upload' %></li>
+          <% end %>
           <li><%= scp_link_to "<span class='fas fa-fw fa-lock'></span> Privacy Policy".html_safe, privacy_policy_path, class: 'check-upload' %></li>
           <li><%= scp_link_to "<span class='fas fa-fw fa-balance-scale'></span> Terms of Service".html_safe, terms_of_service_path, class: 'check-upload' %></li>
           <li><%= link_to "<span class='fas fa-fw fa-info-circle'></span> Documentation/Wiki".html_safe, 'https://github.com/broadinstitute/single_cell_portal/wiki', target: '_blank' %></li>

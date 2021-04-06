@@ -11,6 +11,8 @@ class BrandingGroup
   field :font_family, type: String, default: 'Helvetica Neue, sans-serif'
   field :font_color, type: String, default: '#333333'
   field :feature_flags, type: Hash, default: {}
+  field :external_link_url, type: String
+  field :external_link_description, type: String
 
   # list of facets to show for this branding group (will restrict to only provided identifiers, if present)
   field :facet_list, type: Array, default: []
