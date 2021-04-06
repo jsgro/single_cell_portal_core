@@ -107,8 +107,8 @@ module Api
           if User.feature_flag_for_instance(current_api_user, 'mock_viz_retrieval')
             Rails.logger.info "in show for mock_viz_retrieval"
             # render plain: self.class.get_fixed_size_response(params[:subsample].to_i, current_api_user) and return
-            # send_data self.class.get_fixed_size_response_binary(params[:subsample].to_i, current_api_user), :disposition => 'inline' and return
-            render json: self.class.get_fixed_size_response_json(params[:subsample].to_i, current_api_user) and return
+            send_data self.class.get_fixed_size_response_binary(params[:subsample].to_i, current_api_user), :disposition => 'inline' and return
+            # render json: self.class.get_fixed_size_response_json(params[:subsample].to_i, current_api_user) and return
           else
             viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
           end
@@ -213,7 +213,8 @@ module Api
 
         def self.get_fixed_size_response_binary(num_cells, user)
           num_annots = 10
-          num_cells = 1000000
+          # num_cells = 1000000
+          num_cells = 5
           annot_size = num_cells / num_annots
 
           x = num_cells.times.map { |n| (rand * 140).round(3) }

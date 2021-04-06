@@ -18,6 +18,7 @@ export const SCATTER_COLOR_OPTIONS = [
 
 export const defaultScatterColor = 'Reds'
 
+const fetchBinary = true
 
 performance.setResourceTimingBufferSize(300)
 
@@ -73,8 +74,9 @@ export default function ScatterPlot({
     const scatterData = {
       x,
       y,
-      type: 'scatter',
-      mode: 'markers'
+      type: 'scattergl',
+      mode: 'markers',
+      marker: { color: [255, 0, 0, 1] }
       // marker: { size: 3, width: 3 },
       // opacity: 1.0
       // annotations: num_cells.times.map {|n| "annot_#{(n * num_annots / num_cells).floor}" }
@@ -95,8 +97,9 @@ export default function ScatterPlot({
     const scatterData = {
       x,
       y,
-      type: 'scatter',
-      mode: 'markers'
+      type: 'scattergl',
+      mode: 'markers',
+      marker: { color: [255, 0, 0, 1] }
       // marker: { size: 3, width: 3 },
       // opacity: 1.0
       // annotations: num_cells.times.map {|n| "annot_#{(n * num_annots / num_cells).floor}" }
@@ -142,24 +145,26 @@ export default function ScatterPlot({
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     setIsLoading(true)
-    fetchCluster(studyAccession,
-      cluster,
-      annotation ? annotation : '',
-      subsample,
-      consensus,
-      genes).then(clusterResponse => {
-      handleResponse(clusterResponse, false)
-    })
 
-    // // Remove comments to test binary transmissions
-    // fetchScatterCoordinates(studyAccession,
-    //   cluster,
-    //   annotation ? annotation : '',
-    //   subsample,
-    //   consensus,
-    //   genes).then(clusterResponse => {
-    //   handleResponse(clusterResponse, true)
-    // })
+    if (!fetchBinary) {
+      fetchCluster(studyAccession,
+        cluster,
+        annotation ? annotation : '',
+        subsample,
+        consensus,
+        genes).then(clusterResponse => {
+        handleResponse(clusterResponse, false)
+      })
+    } else {
+      fetchScatterCoordinates(studyAccession,
+        cluster,
+        annotation ? annotation : '',
+        subsample,
+        consensus,
+        genes).then(clusterResponse => {
+        handleResponse(clusterResponse, true)
+      })
+    }
     // makeFakePlot(graphElementId, subsample)
   }, [cluster, annotation.name, subsample, consensus, genes.join(',')])
 

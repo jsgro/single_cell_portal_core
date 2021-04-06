@@ -327,7 +327,10 @@ export async function fetchScatterCoordinates(
     is_annotated_scatter
   }
 
-  const init = Object.assign({ responseType: 'arraybuffer' }, defaultInit())
+  const init = Object.assign(defaultInit(), {
+    responseType: 'arraybuffer'
+    // headers: { Accept: 'application/octet-stream' }
+  })
 
   const params = stringifyQuery(paramObj)
   if (!cluster || cluster === '') {
