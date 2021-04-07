@@ -9,10 +9,6 @@
 import Plotly from 'plotly.js-dist'
 
 import { plot, getColorBrewerColor } from 'lib/plot'
-import {
-  getMainViewOptions, getAnnotParams
-} from 'lib/study-overview/view-options'
-import { fetchExpressionViolin } from 'lib/scp-api'
 
 // To consider: dedup this copy with the one that exists in application.js.
 const plotlyDefaultLineColor = 'rgb(40, 40, 40)'
@@ -238,25 +234,4 @@ export function updateDataPoints(mode) {
     }
   })
   Plotly.react('box-plot', expressionData)
-}
-
-/** Load expression data and draw violin (or box) plot */
-export async function violinPlot(plotId, study, gene, consensus) {
-  const plotDom = document.getElementById(plotId)
-  const spinner = new Spinner(window.opts).spin(plotDom)
-
-  const { cluster, subsample } = getMainViewOptions(0)
-
-  const { name, type, scope } = getAnnotParams()
-
-  const [rawPlot] = await fetchExpressionViolin(
-    study.accession, gene, cluster, name, type, scope, subsample, consensus
-  )
-  rawPlot.plotId = plotId
-  rawPlot.plotType = $('#plot_type').val()
-  violinPlots.push(rawPlot)
-
-  renderViolinPlot(plotId, rawPlot)
-
-  spinner.stop()
 }

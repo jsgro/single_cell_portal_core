@@ -36,8 +36,6 @@ import { getLogPlotProps } from 'lib/scp-api-metrics'
 import { formatTerms } from 'providers/StudySearchProvider'
 import getViolinProps from 'lib/violin-plot'
 import * as ScpApi from 'lib/scp-api'
-import exploreDefault from 'lib/study-overview/explore-default'
-import exploreSingle from 'lib/study-overview/explore-single'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
 
@@ -78,17 +76,9 @@ window.SCP.startPendingEvent = startPendingEvent
 window.SCP.getLogPlotProps = getLogPlotProps
 window.SCP.formatTerms = formatTerms
 window.SCP.API = ScpApi
-window.SCP.exploreDefault = exploreDefault
-window.SCP.exploreSingle = exploreSingle
 window.SCP.renderClusterAssociationSelect = renderClusterAssociationSelect
 window.SCP.renderExploreView = renderExploreView
 window.Plotly = Plotly
-
-// Remove the block below only after launching React Explore refactor
-import { getScatterPlots } from 'lib/scatter-plot'
-import userAnnotations from 'lib/study-overview/user-annotations'
-window.SCP.getScatterPlots = getScatterPlots
-window.SCP.userAnnotations = userAnnotations
 
 /*
  * For down the road, when we use ES6 imports in SCP JS app code
