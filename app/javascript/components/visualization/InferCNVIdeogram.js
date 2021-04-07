@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 import Ideogram from 'ideogram'
 
-import { log } from 'api/metrics-api'
+import { log } from 'lib/metrics-api'
 
 /* eslint-disable no-unused-vars */
 

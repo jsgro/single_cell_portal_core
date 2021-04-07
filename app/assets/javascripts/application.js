@@ -21,12 +21,8 @@
 //= require jquery_nested_form
 //= require bootstrap-sprockets
 //= require jquery.actual.min
-//= require echarts.min
-//= require echarts-gl.min
 //= require papaparse.min
-//= require tsne
 //= require StackBlur
-//= require morpheus-external-r
 //= require jquery.stickyPanel
 //= require clipboard.min
 //= require ckeditor
@@ -35,10 +31,6 @@ var fileUploading = false;
 var PAGE_RENDERED = false;
 var OPEN_MODAL = '';
 var UNSAFE_CHARACTERS = /[\;\/\?\:\@\=\&\'\"\<\>\#\%\{\}\|\\\^\~\[\]\`]/g;
-
-// Minimum width of plot + legend
-// Addresses https://github.com/broadinstitute/single_cell_portal/issues/20
-var minPlotAreaWidth = 700;
 
 // 1: open, -1: closed.
 // Upon clicking nav toggle, state multiples by -1, toggling this register value
@@ -154,82 +146,6 @@ $(document).on('hidden.bs.modal', function(e) {
     OPEN_MODAL = '';
 });
 
-// scpPlotsDidRender fires after the view-specific data has been retrieved and plotted.
-// This event means that the page is ready for user interaction.
-$(document).on('scpPlotsDidRender', function() {
-
-  // Ensures that plot scrolls and doesn't get truncated at right when viewport is very horizontally narrow.
-  // Not declared in static CSS because "overflow-x: visible" is needed for proper display of loading icon.
-  $('#render-target .tab-content > div > div').css('overflow-x', 'auto');
-});
-
-function restoreExploreMenusState() {
-
-  var leftIsClosed = !$('#search-omnibar-menu-icon').hasClass('open'),
-      rightIsClosed = !$('#view-options-nav').parent().hasClass('active');
-
-  if (exploreMenusToggleState.left === 1 && leftIsClosed) {
-    toggleSearchPanel();
-  }
-  if (exploreMenusToggleState.right === 1 && rightIsClosed) {
-    toggleViewOptionsPanel();
-  }
-}
-
-function toggleViewOptionsPanel() {
-  // Expand View Options menu
-  $('.row-offcanvas').toggleClass('active');
-  $('#render-target').toggleClass('right-menu-open');
-
-  // Contract main content area to make room View Options menu
-  $('.row-offcanvas > .nav-tabs, .row-offcanvas > .tab-content')
-    .toggleClass('contracted-for-sidebar');
-
-  // Re-render Plotly to use available space
-  $(window).trigger('resizeEnd');
-}
-
-
-function toggleSearchPanel() {
-  var searchParent = $('#search-parent'),
-      menuIcon = $('#search-omnibar-menu-icon');
-
-  if (searchParent.is(':visible')) {
-    // Search options panel is open, so close it.
-    searchParent.hide();
-    $('#render-target').addClass('col-md-13').removeClass('col-md-10 left-menu-open');
-    menuIcon.removeClass('open');
-  } else {
-    // Search options panel is closed, so open it.
-    searchParent.show();
-    $('#render-target').removeClass('col-md-13').addClass('col-md-10 left-menu-open');
-    menuIcon.addClass('open');
-  }
-
-  $(window).trigger('resizeEnd');
-}
-
-// Toggle "View Options" menu panel in Explore tab
-$(document).on('click', '#view-option-link', function(e) {
-  e.preventDefault();
-  toggleViewOptionsPanel();
-  exploreMenusToggleState.right *= -1;
-});
-
-
-// Toggles search panel upon clicking burger menu to left of "Search genes"
-$(document).on('click', '#search-omnibar-menu i', function(e) {
-  toggleSearchPanel();
-  exploreMenusToggleState.left *= -1; // toggle menu state register
-});
-
-
-// When a change in made in the Explore tab's "Enhance Gene Search" panel,
-// do a search with the newly-specified options.
-$(document).on('change', '#panel-genes-search input, #panel-genes-search select', function() {
-  $('#perform-gene-search').click();
-});
-
 // split a string on spaces/commas, used for extractLast()
 function split(val) {
     return val.split(/[\s,]/);
@@ -240,76 +156,6 @@ function extractLast(term) {
     sanitizedTerm = term.trim().replace(/,$/, ''); // remove trailing whitespace/comma to prevent returning all results
     return split(sanitizedTerm).pop();
 }
-
-var keydownIsFromAutocomplete = false;
-
-/**
- * Sets up autocomplete, e.g. for gene search, using a pre-populated list of values.
- *
- * @param selector: DOM selector for form element
- * @param entities: Array of pre-populated values to search
- **/
-function initializeAutocomplete(selector) {
-
-    var jqObject = $(selector);
-    jqObject.on("keydown", function(event) {
-        if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete("instance").menu.active) {
-            // allow user to select terms with TAB key
-            event.preventDefault();
-        }
-    }).autocomplete(
-        {
-            source: function(request, response) {
-                // delegate back to autocomplete, but extract the last term
-                response(
-                    $.ui.autocomplete.filter(window.SCP.uniqueGenes, extractLast(request.term))
-                );
-            },
-            minLength: 2,
-            focus: function() {
-                // prevent value inserted on focus
-                return false;
-            },
-            open: function() {
-                // options menu is open, so prevent ENTER from submitting search
-                keydownIsFromAutocomplete = true;
-            },
-            close: function() {
-                // if menu is closed, then enable ENTER to submit and fire events
-                keydownIsFromAutocomplete = false;
-            },
-            select: function(event, ui) {
-                var terms = split(this.value);
-                // remove the current input
-                terms.pop();
-                // check if user has added more that 50 genes, in which case alert and remove the last term
-                if (terms.length - 1 > window.MAX_GENE_SEARCH) {
-                    console.log('Too many genes selected, aborting autocomplete');
-                    alert(window.MAX_GENE_SEARCH_MSG);
-                } else {
-                    // add the selected item
-                    terms.push(ui.item.value);
-                    terms.push("");
-                }
-                this.value = terms.join(" ");
-                // set to false to let autocomplete know that a term has been selected and the next ENTER
-                // keydown will submit search values
-                keydownIsFromAutocomplete = false;
-                return false;
-            },
-            response: function(event, ui) {
-                // show 'No matches found' message
-                if (ui.content.length === 0) {
-                    ui.content.push({label: 'No matches in this study', value: ''});
-                    return ui;
-                }
-            }
-        }
-    )
-}
-
-// used for calculating size of plotly graphs to maintain square aspect ratio
-var SCATTER_RATIO = 0.75;
 
 function elementVisible(element) {
     return $(element).is(":visible");
@@ -491,11 +337,6 @@ function enableDefaultActions() {
         // use HTML5 history API to update the url without reloading the DOM
         history.pushState('', document.title, href);
     });
-
-  // Remove styling set in scpPlotsDidRender
-  $('#render-target .tab-content > div').attr('style', '');
-
-  restoreExploreMenusState();
 
 }
 
@@ -1015,23 +856,6 @@ $(document).ajaxError(function (e, xhr, settings) {
         location.href = url;
     }
 });
-
-// preserve the state of gene search beyond page reload (in case user needs to sign in)
-function preserveGeneSearch() {
-    console.log('preserving search state');
-    // construct a gene expression URL to load after action is completed
-    var searchUrl = window.location.origin + window.location.pathname + '/gene_expression';
-    var urlParams = getRenderUrlParams();
-    var genes = $('#search_genes').val().split(' ');
-    if (genes.length === 1) {
-        searchUrl += '/' + genes[0] + '?'
-    } else {
-        searchUrl += '?search%5Bgenes%5D=' + genes.join('+') + '&';
-    }
-    searchUrl += urlParams + window.location.hash;
-    localStorage.setItem('previous-search-url', searchUrl);
-    console.log('search form saved');
-}
 
 // reopen current tab on page refresh
 function reopenUiTab(navTarget) {

@@ -26,10 +26,8 @@ import checkMissingAuthToken from 'lib/user-auth-tokens'
 import HomePageContent from 'components/HomePageContent'
 import Covid19PageContent from 'components/covid19/Covid19PageContent'
 import {
-  logPageView, logClick, logMenuChange, startPendingEvent, log
+  logPageView, logClick, logMenuChange, log
 } from 'lib/metrics-api'
-import { getLogPlotProps } from 'lib/scp-api-metrics'
-import { formatTerms } from 'providers/StudySearchProvider'
 import * as ScpApi from 'lib/scp-api'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
@@ -63,7 +61,6 @@ window.jQuery = $
 window.Spinner = Spinner
 
 window.SCP.log = log
-window.SCP.startPendingEvent = startPendingEvent
 window.SCP.API = ScpApi
 window.SCP.renderClusterAssociationSelect = renderClusterAssociationSelect
 window.SCP.renderExploreView = renderExploreView
