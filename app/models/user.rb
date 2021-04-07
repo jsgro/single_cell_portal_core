@@ -211,6 +211,17 @@ class User
     end
   end
 
+  # get an access token that can be used to stream a GCS storage object directly to the client
+  # uses SAM pet service accounts to issue token on user's behalf by adding the
+  # https://www.googleapis.com/auth/devstorage.read_only scope to the token
+  # will return nil if user is not registered for Terra as API call would return 401
+  def token_for_storage_object(project=FireCloudClient::PORTAL_NAMESPACE)
+    if self.refresh_token.present? && self.registered_for_firecloud
+      client = FireCloudClient.new(self, project)
+      client.get_pet_service_account_token(project)
+    end
+  end
+
   ###
   #
   # OTHER AUTHENTICATION METHODS
