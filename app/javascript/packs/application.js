@@ -34,7 +34,6 @@ import {
 } from 'lib/metrics-api'
 import { getLogPlotProps } from 'lib/scp-api-metrics'
 import { formatTerms } from 'providers/StudySearchProvider'
-import getViolinProps from 'lib/violin-plot'
 import * as ScpApi from 'lib/scp-api'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
