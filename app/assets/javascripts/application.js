@@ -29,11 +29,6 @@
 //= require morpheus-external-r
 //= require jquery.stickyPanel
 //= require clipboard.min
-//= require scp-igv
-//= require scp-infercnv-ideogram
-//= require scp-related-genes-ideogram
-//= require scp-dot-plot
-//= require scp-heatmap
 //= require ckeditor
 
 var fileUploading = false;
