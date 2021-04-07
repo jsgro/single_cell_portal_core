@@ -17,7 +17,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   # base url for all API calls
   BASE_URL = 'https://api.firecloud.org'
   # default auth scopes
-  GOOGLE_SCOPES = %w(https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-billing.readonly https://www.googleapis.com/auth/devstorage.read_only)
+  GOOGLE_SCOPES = %w(https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email)
   # constant used for retry loops in process_firecloud_request and execute_gcloud_method
   MAX_RETRY_COUNT = 5
   # constant used for incremental backoffs on retries (in seconds); ignored when running unit/integration test suite
@@ -1338,6 +1338,26 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   # NOTE: the FireCloudClient instance calling these methods must be initialized using a User object
   # for authentication purposes, otherwise downstream calls will return 403
   ##
+
+  # create a new instance of FireCloudClient, but use a pet service account keyfile
+  # will only work with users that have been registered in Terra
+  #
+  # * *params*
+  #   - +user+: (User) => User object from which access tokens are generated
+  #   - +project+: (String) => Default GCP Project to use (can be overridden by other parameters)
+  #
+  # * *return*
+  #   - +FireCloudClient+ instance, or nil if user has not registered with Terra
+  def self.new_with_pet_sa(user, project)
+    # create a temporary client in order to retrieve the user's pet service account keyfile
+    tmp_client = self.new(user, project)
+    if tmp_client.registered?
+      pet_service_account_json = tmp_client.get_pet_service_account_key(project)
+      self.new(user, project, pet_service_account_json)
+    else
+      nil
+    end
+  end
 
   # issue an access_token for a user's pet service account in the requested project
   #
