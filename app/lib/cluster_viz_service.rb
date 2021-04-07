@@ -95,7 +95,6 @@ class ClusterVizService
         x: data[:x],
         y: data[:y],
         cells: data[:cells],
-        text: data[:text],
         name: data[:name],
         type: plot_type,
         mode: 'markers',
