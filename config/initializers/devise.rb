@@ -242,7 +242,7 @@ Devise.setup do |config|
 
 
   config.omniauth :google_oauth2, ENV['OAUTH_CLIENT_ID'], ENV['OAUTH_CLIENT_SECRET'],
-                  prompt: 'consent', access_type: 'offline',
+                  access_type: 'offline',
                   scope: FireCloudClient::GOOGLE_SCOPES.join(' '),
                   :client_options => {:ssl => {:ca_file => '/etc/pki/tls/certs/ca-bundle.crt'} },
                   skip_jwt: Rails.env.development? ? true : false
