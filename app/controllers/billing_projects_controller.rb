@@ -204,7 +204,7 @@ class BillingProjectsController < ApplicationController
   # create client scoped to current user
   def create_firecloud_client
     project_name = params[:project_name].present? ? params[:project_name] : 'single-cell-portal'
-    @fire_cloud_client = FireCloudClient.new_with_pet_sa(current_user, project_name)
+    @fire_cloud_client = FireCloudClient.new(current_user, project_name)
   end
 
   # load portal service account email for use in view (we don't want to display this in the portal)

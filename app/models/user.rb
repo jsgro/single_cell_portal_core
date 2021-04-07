@@ -33,7 +33,7 @@ class User
   # :confirmable, :lockable, :timeoutable and :omniauthable,
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable, :timeoutable,
-         :omniauthable, :omniauth_providers => [:google_oauth2]
+         :omniauthable, :omniauth_providers => [:google, :google_billing]
 
   validates_format_of :email, :with => Devise.email_regexp, message: 'is not a valid email address.'
 

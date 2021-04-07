@@ -241,9 +241,17 @@ Devise.setup do |config|
   # config.omniauth :github, 'APP_ID', 'APP_SECRET', scope: 'user,public_repo'
 
 
-  config.omniauth :google_oauth2, ENV['OAUTH_CLIENT_ID'], ENV['OAUTH_CLIENT_SECRET'],
-                  prompt: 'consent', access_type: 'offline',
+  config.omniauth :google, ENV['OAUTH_CLIENT_ID'], ENV['OAUTH_CLIENT_SECRET'],
+                  name: 'google', prompt: 'consent', access_type: 'offline',
                   scope: FireCloudClient::GOOGLE_SCOPES.join(' '),
+                  strategy_class: OmniAuth::Strategies::GoogleOauth2,
+                  :client_options => {:ssl => {:ca_file => '/etc/pki/tls/certs/ca-bundle.crt'} },
+                  skip_jwt: Rails.env.development? ? true : false
+
+  config.omniauth :google_billing, ENV['OAUTH_CLIENT_ID'], ENV['OAUTH_CLIENT_SECRET'],
+                  name: 'google_billing', prompt: 'consent', access_type: 'offline',
+                  scope: FireCloudClient::GOOGLE_SCOPES.join(' ') + ' https://www.googleapis.com/auth/cloud-billing.readonly',
+                  strategy_class: OmniAuth::Strategies::GoogleOauth2,
                   :client_options => {:ssl => {:ca_file => '/etc/pki/tls/certs/ca-bundle.crt'} },
                   skip_jwt: Rails.env.development? ? true : false
 
