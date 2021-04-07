@@ -20,10 +20,6 @@ import 'jquery-ui/ui/widgets/autocomplete'
 import 'jquery-ui/ui/widgets/sortable'
 import 'jquery-ui/ui/widgets/dialog'
 import 'jquery-ui/ui/effects/effect-highlight'
-import igv from '@single-cell-portal/igv'
-import morpheus from 'morpheus-app'
-import Ideogram from 'ideogram'
-import Plotly from 'plotly.js-dist'
 
 import checkMissingAuthToken from 'lib/user-auth-tokens'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
@@ -65,21 +61,9 @@ window.SCP = window.SCP ? window.SCP : {}
 window.$ = $
 window.jQuery = $
 window.Spinner = Spinner
-window.morpheus = morpheus
 
-window.igv = igv
-window.Ideogram = Ideogram
-window.getViolinProps = getViolinProps
 window.SCP.log = log
 window.SCP.startPendingEvent = startPendingEvent
-window.SCP.getLogPlotProps = getLogPlotProps
-window.SCP.formatTerms = formatTerms
 window.SCP.API = ScpApi
 window.SCP.renderClusterAssociationSelect = renderClusterAssociationSelect
 window.SCP.renderExploreView = renderExploreView
-window.Plotly = Plotly
-
-/*
- * For down the road, when we use ES6 imports in SCP JS app code
- * export {$, jQuery, ClassicEditor, Spinner, morpheus, igv, Ideogram};
- */

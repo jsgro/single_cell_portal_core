@@ -6,8 +6,9 @@
 
 import React, { useEffect, useState } from 'react'
 import _uniqueId from 'lodash/uniqueId'
-
 import Ideogram from 'ideogram'
+
+import { log } from 'api/metrics-api'
 
 /* eslint-disable no-unused-vars */
 
@@ -30,6 +31,7 @@ const legend = [{
   ]
 }]
 
+/** InferCNV Ideogram component */
 export default function InferCNVIdeogram({ studyAccession, ideogramFileId, inferCNVIdeogramFiles, showViewOptionsControls }) {
   const [ideogramContainerId] = useState(_uniqueId('study-infercnv-ideogram-'))
 
@@ -311,6 +313,6 @@ function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsC
   inferCNVIdeogram = new Ideogram(ideoConfig)
   window.inferCNVIdeogram = inferCNVIdeogram
 
-  window.SCP.log('ideogram:initialize')
+  log('ideogram:initialize')
 }
 

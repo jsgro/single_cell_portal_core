@@ -4,6 +4,7 @@ import { faDna } from '@fortawesome/free-solid-svg-icons'
 import igv from '@single-cell-portal/igv'
 import _uniqueId from 'lodash/uniqueId'
 
+import { log } from 'lib/metrics-api'
 import { fetchBamFileInfo } from 'lib/scp-api'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 
@@ -226,7 +227,7 @@ function initializeIgv(containerId, bamAndBaiFiles, gtfFiles) {
 
   // Log igv.js initialization in Google Analytics
   ga('send', 'event', 'igv', 'initialize')
-  window.SCP.log('igv:initialize')
+  log('igv:initialize')
 }
 
 
