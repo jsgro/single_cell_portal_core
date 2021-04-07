@@ -1,4 +1,4 @@
-class RemoveSpatialFeatureFlag < Mongoid::Migration
+class RemoveGeneStudyFilterFlag < Mongoid::Migration
   # mirror of FeatureFlag.rb, so this migration won't error if that class is renamed/altered
   class FeatureFlagMigrator
     include Mongoid::Document
