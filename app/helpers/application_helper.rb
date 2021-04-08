@@ -349,7 +349,9 @@ module ApplicationHelper
   def get_read_access_token(study, user)
     if study.public? && ApplicationController.read_only_firecloud_client.present?
       ApplicationController.read_only_firecloud_client.valid_access_token["access_token"]
-    elsif user.present?
+    elsif user.present? && user.registered_for_firecloud
+      user.token_for_storage_object
+    else
       user.valid_access_token.try(:[], :access_token)
     end
   end
