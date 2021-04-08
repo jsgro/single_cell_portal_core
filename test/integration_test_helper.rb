@@ -10,9 +10,9 @@ OmniAuth.config.test_mode = true
 # upload a large file (i.e. > 10MB) from the test_data directory to a study
 # simulates chunked upload by streaming file in 10MB chunks and then uploading in series
 def perform_chunked_study_file_upload(filename, study_file_params, study_id)
+  source_file = File.open(Rails.root.join('test', 'test_data', filename))
   begin
     upload_response = nil
-    source_file = File.open(Rails.root.join('test', 'test_data', filename))
     while chunk = source_file.read(10.megabytes)
       file_upload = Rack::Test::UploadedFile.new(StringIO.new(chunk), original_filename: filename) # mock original_filename header
       study_file_params[:study_file].merge!(upload: file_upload)
@@ -20,21 +20,21 @@ def perform_chunked_study_file_upload(filename, study_file_params, study_id)
     end
     upload_response
   ensure
-    source_file.try(:close)
-    file_upload.try(:unlink)
+    source_file.close
+    file_upload.unlink if file_upload.present?
   end
 end
 
 # upload a file from the test_data directory to a study
 def perform_study_file_upload(filename, study_file_params, study_id)
+  source_file = File.open(Rails.root.join('test', 'test_data', filename))
+  file_upload = Rack::Test::UploadedFile.new(source_file)
   begin
-    source_file = File.open(Rails.root.join('test', 'test_data', filename))
-    file_upload = Rack::Test::UploadedFile.new(source_file)
     study_file_params[:study_file].merge!(upload: file_upload)
     patch "/single_cell/studies/#{study_id}/upload", params: study_file_params, headers: {'Content-Type' => 'multipart/form-data'}
   ensure
-    source_file.try(:close)
-    file_upload.try(:unlink)
+    source_file.close
+    file_upload.unlink if file_upload.present?
   end
 end
 
