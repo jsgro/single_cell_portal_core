@@ -104,7 +104,7 @@
   padding-left: 25px;
   position: relative;
   margin-top: -108px; /* negative value of footer height */
-  height: 108px;
+  min-height: 108px;
   clear:both;
   p {
     font-size: 14px;
