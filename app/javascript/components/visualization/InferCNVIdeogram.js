@@ -267,20 +267,6 @@ function removeIdeogram() {
   $('#ideogramWarning, #ideogramTitle').remove()
 }
 
-/**
- * dynamically compute a chromosome height based on available display area
- * accounts for state of the view options panel via showViewOptionsControls
- * this is somewhat crude and is optimized for 15" laptops but looks generally fine on bigger monitors
- */
-export function getChrHeight(showViewOptionsControls) {
-  let heatmapSize = parseInt($('.explore-plot-tab-content').actual('width'))
-  if (showViewOptionsControls) {
-    heatmapSize = heatmapSize - parseInt($('.view-options').actual('width'))
-  }
-  const chrHeight = parseInt(heatmapSize / 17)
-  return chrHeight < minChrHeight ? minChrHeight : chrHeight
-}
-
 /** Initialize ideogram to visualize genomic heatmap from inferCNV  */
 function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsControls) {
   if (typeof window.inferCNVIdeogram !== 'undefined') {
@@ -288,7 +274,7 @@ function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsC
     removeIdeogram()
   }
 
-  const chrHeight = getChrHeight(showViewOptionsControls)
+  const chrHeight = showViewOptionsControls ? 64 : 80
   $('#ideogramWarning, #ideogramTitle').remove()
 
   ideoConfig = {
