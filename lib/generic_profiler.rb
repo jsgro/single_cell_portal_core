@@ -53,20 +53,32 @@ class GenericProfiler
     reports_basepath = make_profile_dir(report_dir)
     html_filepath = Rails.root.join(reports_basepath, base_filename + '.html')
     flamegraph_filepath = Rails.root.join(reports_basepath, base_filename + '.calls.txt')
-    File.open(html_filepath, 'w+') do |file|
-      puts "writing HTML results to #{html_filepath}"
-      printer = RubyProf::GraphHtmlPrinter.new(profile)
-      printer.print(file)
-    end
-    File.open(flamegraph_filepath, 'w+') do |file|
-      puts "writing FlameGraph results to #{flamegraph_filepath}"
-      printer = RubyProf::FlameGraphPrinter.new(profile)
-      printer.print(file)
-    end
+    puts "writing HTML results to #{html_filepath}"
+    write_report(html_filepath, RubyProf::GraphHtmlPrinter.new(profile))
+    puts "writing FlameGraph results to #{flamegraph_filepath}"
+    write_report(flamegraph_filepath, RubyProf::FlameGraphPrinter.new(profile))
     flamegraph_svg_path = Rails.root.join(reports_basepath, base_filename + '.svg')
     puts "creating flamegraph SVG from #{flamegraph_filepath}"
     system("#{FLAMEGRAPH_PATH} #{flamegraph_filepath} --countname=ms --title #{base_filename} > #{flamegraph_svg_path}")
     [html_filepath, flamegraph_filepath, flamegraph_svg_path]
+  end
+
+  # write a single report to specified path
+  # will ensure closure to avoid issues during testsing regarding file handlers & garbage collection
+  #
+  # * *params*
+  #   - +report_path+ (String, Pathname) => path to specified report to be written
+  #   - +printer+ (RubyProf::AbstractPrinter) => any RubyProf printer class instance
+  #
+  # * *yields*
+  #   - (File) => report file of requested type at specified path
+  def self.write_report(report_path, printer)
+    begin
+      report = File.new(report_path, 'w+')
+      printer.print(report)
+    ensure
+      report.close
+    end
   end
 
   # write out text file with all arguments from profiling run, for provenance
