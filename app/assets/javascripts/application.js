@@ -27,7 +27,7 @@
 //= require clipboard.min
 //= require ckeditor
 
-// TODO: Add dependencies to upstream, then use Morpheus via import
+// TODO (SCP-3249): Modernize Morpheus, then remove this
 //= require morpheus-external-r
 
 var fileUploading = false;
