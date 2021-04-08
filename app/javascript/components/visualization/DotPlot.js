@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
-import morpheus from 'morpheus-app'
 
 import { log } from 'lib/metrics-api'
 import { getColorBrewerColor } from 'lib/plot'

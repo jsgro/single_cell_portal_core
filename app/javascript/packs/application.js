@@ -20,6 +20,7 @@ import 'jquery-ui/ui/widgets/autocomplete'
 import 'jquery-ui/ui/widgets/sortable'
 import 'jquery-ui/ui/widgets/dialog'
 import 'jquery-ui/ui/effects/effect-highlight'
+import morpheus from 'morpheus-app'
 
 import checkMissingAuthToken from 'lib/user-auth-tokens'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
@@ -59,6 +60,7 @@ window.SCP = window.SCP ? window.SCP : {}
 window.$ = $
 window.jQuery = $
 window.Spinner = Spinner
+window.morpheus = morpheus
 
 window.SCP.log = log
 window.SCP.API = ScpApi
