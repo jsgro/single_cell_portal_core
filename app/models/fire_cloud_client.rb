@@ -16,8 +16,12 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
 
   # base url for all API calls
   BASE_URL = 'https://api.firecloud.org'
-  # default auth scopes
-  GOOGLE_SCOPES = %w(https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email)
+  # default auth scopes for client tokens
+  GOOGLE_SCOPES = %w(
+    https://www.googleapis.com/auth/userinfo.profile
+    https://www.googleapis.com/auth/userinfo.email
+    https://www.googleapis.com/auth/devstorage.read_only
+  )
   # constant used for retry loops in process_firecloud_request and execute_gcloud_method
   MAX_RETRY_COUNT = 5
   # constant used for incremental backoffs on retries (in seconds); ignored when running unit/integration test suite
@@ -1369,10 +1373,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   def get_pet_service_account_token(project_name)
     path = "https://sam.dsde-prod.broadinstitute.org/api/google/v1/user/petServiceAccount/#{project_name}/token"
     # normal scopes, plus RO access for storage objects (removes unnecessary billing scope from GOOGLE_SCOPES)
-    scopes = %w(https://www.googleapis.com/auth/userinfo.email
-                https://www.googleapis.com/auth/userinfo.profile
-                https://www.googleapis.com/auth/devstorage.read_only).to_json
-    token = process_firecloud_request(:post, path, scopes)
+    token = process_firecloud_request(:post, path, GOOGLE_SCOPES.to_json)
     token.gsub(/\"/, '') # gotcha for removing escaped quotes in response body
   end
 
