@@ -64,7 +64,7 @@ class GenericProfiler
   end
 
   # write a single report to specified path
-  # will ensure closure to avoid issues during testsing regarding file handlers & garbage collection
+  # will ensure closure to avoid issues during tests regarding file handlers & garbage collection
   #
   # * *params*
   #   - +report_path+ (String, Pathname) => path to specified report to be written

@@ -21,7 +21,6 @@ def perform_chunked_study_file_upload(filename, study_file_params, study_id)
     upload_response
   ensure
     source_file.close
-    file_upload.unlink if file_upload.present?
   end
 end
 
