@@ -184,7 +184,10 @@
     </div>
     <div class="footer-text-block pull-left left-border-0-5">
       <%= scp_link_to 'Privacy Policy', privacy_policy_path %>
+      &nbsp;
+      <%= scp_link_to "Terms of Service".html_safe, terms_of_service_path %>
     </div>
+
   <% if @selected_branding_group.present? %>
     <div class="footer-text-block">
       <%= link_to "<i class='fas fa-chevron-circle-left fa-fw'></i> Return to Single Cell Portal".html_safe, site_path %>
