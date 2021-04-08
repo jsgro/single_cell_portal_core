@@ -21,13 +21,11 @@ describe('Gene search page landing', () => {
     searchState.isLoaded = true
     searchState.results = {studies: [{name: 'foo', description: 'bar'}]}
     const wrapper = mount((
-      <UserContext.Provider value={{featureFlagsWithDefaults: {gene_study_filter: false}}}>
-        <PropsStudySearchProvider searchParams={{terms: '', facets:{}, page: 1}}>
-          <GeneSearchContext.Provider value={searchState}>
-            <GeneSearchView/>
-          </GeneSearchContext.Provider>
-        </PropsStudySearchProvider>
-      </UserContext.Provider>
+      <PropsStudySearchProvider searchParams={{terms: '', facets:{}, page: 1}}>
+        <GeneSearchContext.Provider value={searchState}>
+          <GeneSearchView/>
+        </GeneSearchContext.Provider>
+      </PropsStudySearchProvider>
     ))
     expect(wrapper.find(Study)).toHaveLength(1)
   })
@@ -37,13 +35,11 @@ describe('Gene search page landing', () => {
     searchState.isLoaded = true
     searchState.results = {studies: [{name: 'foo', description: 'bar', gene_matches: ['agpat2']}]}
     const wrapper = mount((
-      <UserContext.Provider value={{featureFlagsWithDefaults: {gene_study_filter: false}}}>
-        <PropsStudySearchProvider searchParams={{terms: '', facets:{}, page: 1}}>
-          <GeneSearchContext.Provider  value={searchState}>
-            <GeneSearchView/>
-          </GeneSearchContext.Provider>
-        </PropsStudySearchProvider>
-      </UserContext.Provider>
+      <PropsStudySearchProvider searchParams={{terms: '', facets:{}, page: 1}}>
+        <GeneSearchContext.Provider  value={searchState}>
+          <GeneSearchView/>
+        </GeneSearchContext.Provider>
+      </PropsStudySearchProvider>
     ))
 
     expect(wrapper.find(Study)).toHaveLength(0)
@@ -56,13 +52,11 @@ describe('Gene search page landing', () => {
     searchState.isLoaded = true
     searchState.results = {studies: [{name: 'foo', description: 'bar', gene_matches: ['agpat2', 'farsa']}]}
     const wrapper = mount((
-      <UserContext.Provider value={{featureFlagsWithDefaults: {gene_study_filter: false}}}>
-        <PropsStudySearchProvider searchParams={{terms: '', facets:{}, page: 1}}>
-          <GeneSearchContext.Provider  value={searchState}>
-            <GeneSearchView/>
-          </GeneSearchContext.Provider>
-        </PropsStudySearchProvider>
-      </UserContext.Provider>
+      <PropsStudySearchProvider searchParams={{terms: '', facets:{}, page: 1}}>
+        <GeneSearchContext.Provider  value={searchState}>
+          <GeneSearchView/>
+        </GeneSearchContext.Provider>
+      </PropsStudySearchProvider>
     ))
 
     expect(wrapper.find(Study)).toHaveLength(0)
