@@ -27,6 +27,9 @@
 //= require clipboard.min
 //= require ckeditor
 
+// TODO: Add dependencies to upstream, then use Morpheus via import
+//= require morpheus-external-r
+
 var fileUploading = false;
 var PAGE_RENDERED = false;
 var OPEN_MODAL = '';
