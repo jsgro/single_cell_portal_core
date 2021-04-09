@@ -1,8 +1,8 @@
 class SiteController < ApplicationController
   ###
   #
-  # This is the main public controller for the portal.  All data viewing/rendering is handled here, including creating
-  # UserAnnotations and submitting workflows.
+  # This is the main public controller for the portal.  All ERB template-based
+  # data viewing/rendering is handled here, including submitting workflows.
   #
   ###
 
@@ -14,18 +14,14 @@ class SiteController < ApplicationController
 
   respond_to :html, :js, :json
 
-  before_action :set_study, except: [:index, :search, :legacy_study, :get_viewable_studies, :search_all_genes, :privacy_policy, :terms_of_service,
+  before_action :set_study, except: [:index, :search, :legacy_study, :get_viewable_studies, :privacy_policy, :terms_of_service,
                                      :view_workflow_wdl, :log_action, :get_taxon, :get_taxon_assemblies, :covid19]
-  before_action :set_cluster_group, only: [:study, :view_gene_expression, :view_gene_set_expression,
-                                           :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap, :expression_query,
-                                           :annotation_query, :get_new_annotations, :annotation_values, :show_user_annotations_form]
-  before_action :set_selected_annotation, only: [:view_gene_expression, :view_gene_set_expression,
-                                                 :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap, :annotation_query,
-                                                 :annotation_values, :show_user_annotations_form]
-  before_action :load_precomputed_options, only: [:study, :update_study_settings, :view_gene_expression, :view_gene_set_expression,
-                                                  :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap]
-  before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :search_all_genes, :privacy_policy,
-                                                  :terms_of_service, :search, :precomputed_results, :expression_query, :annotation_query, :view_workflow_wdl,
+  before_action :set_cluster_group, only: [:study, :expression_query, :annotation_query,
+                                          :get_new_annotations, :annotation_values, :show_user_annotations_form]
+  before_action :set_selected_annotation, only: [:annotation_query, :annotation_values, :show_user_annotations_form]
+  before_action :load_precomputed_options, only: [:study, :update_study_settings]
+  before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :privacy_policy,
+                                                  :terms_of_service, :expression_query, :annotation_query, :view_workflow_wdl,
                                                   :log_action, :get_workspace_samples, :update_workspace_samples,
                                                   :get_workflow_options, :get_taxon, :get_taxon_assemblies, :covid19, :record_download_acceptance]
   before_action :check_compute_permissions, only: [:get_fastq_files, :get_workspace_samples, :update_workspace_samples,
@@ -39,9 +35,8 @@ class SiteController < ApplicationController
                                               :get_submission_outputs, :delete_submission_files, :get_submission_metadata]
 
   # caching
-  caches_action :expression_query, :annotation_query, :precomputed_results,
+  caches_action :expression_query, :annotation_query,
                 cache_path: :set_cache_path
-  COLORSCALE_THEMES = %w(Greys YlGnBu Greens YlOrRd Bluered RdBu Reds Blues Picnic Rainbow Portland Jet Hot Blackbody Earth Electric Viridis Cividis)
 
   ###
   #
@@ -51,15 +46,6 @@ class SiteController < ApplicationController
 
   # view study overviews/descriptions
   def index
-    # set study order
-    case params[:order]
-      when 'recent'
-        @order = :created_at.desc
-      when 'popular'
-        @order = :view_count.desc
-      else
-        @order = [:view_order.asc, :name.asc]
-    end
 
     # load viewable studies in requested order
     @viewable = Study.viewable(current_user).order_by(@order)
@@ -77,17 +63,6 @@ class SiteController < ApplicationController
       @cell_count = 0
     end
 
-    page_num = RequestUtils.sanitize_page_param(params[:page])
-    # if search params are present, filter accordingly
-    if !params[:search_terms].blank?
-      search_terms = sanitize_search_values(params[:search_terms])
-      # determine if search values contain possible study accessions
-      possible_accessions = StudyAccession.sanitize_accessions(search_terms.split)
-      @studies = @viewable.any_of({:$text => {:$search => search_terms}}, {:accession.in => possible_accessions}).
-          paginate(page: page_num, per_page: Study.per_page)
-    else
-      @studies = @viewable.paginate(page: page_num, per_page: Study.per_page)
-    end
   end
 
   def covid
@@ -186,8 +161,6 @@ class SiteController < ApplicationController
   # load single study and view top-level clusters
   def study
     @study.update(view_count: @study.view_count + 1)
-    @unique_genes = @study.unique_genes
-    @taxons = @study.expressed_taxon_names
 
     # set general state of study to enable various tabs in UI
     # double check on download availability: first, check if administrator has disabled downloads
@@ -197,30 +170,6 @@ class SiteController < ApplicationController
     set_study_permissions(@study.detached?)
     set_study_default_options
     set_study_download_options
-
-    # load options and annotations
-    if @study.can_visualize_clusters?
-      @options = ClusterVizService.load_cluster_group_options(@study)
-      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-      # call set_selected_annotation manually
-      set_selected_annotation
-    end
-
-    # only populate if study has ideogram results & is not 'detached'
-    if @study.has_analysis_outputs?('infercnv', 'ideogram.js') && !@study.detached?
-      @ideogram_files = {}
-      @study.get_analysis_outputs('infercnv', 'ideogram.js').each do |file|
-        opts = file.options.with_indifferent_access # allow lookup by string or symbol
-        cluster_name = opts[:cluster_name]
-        annotation_name = opts[:annotation_name].split('--').first
-        @ideogram_files[file.id.to_s] = {
-            cluster: cluster_name,
-            annotation: opts[:annotation_name],
-            display: "#{cluster_name}: #{annotation_name}",
-            ideogram_settings: @study.get_ideogram_infercnv_settings(cluster_name, opts[:annotation_name])
-        }
-      end
-    end
 
     if @allow_firecloud_access && @user_can_compute
       # load list of previous submissions
