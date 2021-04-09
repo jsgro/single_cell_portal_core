@@ -37,11 +37,6 @@ export function defaultInit() {
   }
 }
 
-/** Sluggify study name */
-export function studyNameAsUrlParam(studyName) {
-  return studyName.toLowerCase().replace(/ /g, '-').replace(/[^0-9a-z-]/gi, '')
-}
-
 /** convert a gene param string to an array of individual gene names */
 export function geneParamToArray(genes) {
   return genes ? genes.split(',') : []
@@ -348,43 +343,6 @@ export async function fetchExpressionViolin(
   const [violin, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
 
   return [violin, perfTime]
-}
-
-
-/**
- * Get all study-wide and cluster annotations for a study
- *
- * See definition: app/controllers/api/v1/visualization/annotations_controller.rb
- *
- * @param {String} studyAccession Study accession
- * @param {Boolean} mock
- */
-export async function fetchAnnotations(studyAccession, mock=false) {
-  const apiUrl = `/studies/${studyAccession}/annotations`
-  const [values] = await scpApi(apiUrl, defaultInit(), mock, false)
-  return values
-}
-
-/**
- * Get a single annotation for a study
- *
- * See definition: app/controllers/api/v1/visualization/annotations_controller.rb
- *
- * @param {String} studyAccession Study accession
- * @param {String} annotationName
- */
-export async function fetchAnnotation(
-  studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false
-) {
-  const paramObj = {
-    cluster: clusterName,
-    annotation_scope: annotationScope,
-    annotation_type: annotationType
-  }
-  annotationName = annotationName ? annotationName : '_default'
-  const apiUrl = `/studies/${studyAccession}/annotations/${encodeURIComponent(annotationName)}${stringifyQuery(paramObj)}`
-  const [values] = await scpApi(apiUrl, defaultInit(), mock)
-  return values
 }
 
 /** Get URL for a Morpheus-suitable annotation values file */

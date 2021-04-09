@@ -412,8 +412,6 @@ var plotlyLabelFont = {
     color: '#333'
 };
 
-var plotlyDefaultLineColor = 'rgb(40, 40, 40)';
-
 // clear out text area in a form
 function clearForm(target) {
     $('#' + target).val("");
