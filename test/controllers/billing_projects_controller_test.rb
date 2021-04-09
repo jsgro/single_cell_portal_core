@@ -26,17 +26,22 @@ class BillingProjectsControllerTest < ActionDispatch::IntegrationTest
     # mock user authenticating with cloud-billing scope
     auth_as_user(@test_user, :google_billing)
 
-    billing_projects_mock = Minitest::Mock.new
-
-    # mock all service/permission checks that happen when loading billing projects page
-    billing_projects_mock.expect :services_available?, true, [FireCloudClient::THURLOE_SERVICE]
-    billing_projects_mock.expect :storage_issuer, String
-    billing_projects_mock.expect :get_billing_accounts, []
-    billing_projects_mock.expect :get_billing_projects, []
-    FireCloudClient.stub :new, billing_projects_mock do
-      get billing_projects_path
-      assert_response 200
-      billing_projects_mock.verify
+    # double mock is required as stubbing FireCloudClient.new can occasionally cause a MockExpectationError depending on
+    # the order in which test suites are executed during a full CI test run
+    thurloe_mock = Minitest::Mock.new
+    thurloe_mock.expect :services_available?, true, [FireCloudClient::THURLOE_SERVICE]
+    ApplicationController.stub :firecloud_client, thurloe_mock do
+      # mock all service/permission checks that happen when loading billing projects page
+      billing_projects_mock = Minitest::Mock.new
+      billing_projects_mock.expect :storage_issuer, String
+      billing_projects_mock.expect :get_billing_accounts, []
+      billing_projects_mock.expect :get_billing_projects, []
+      FireCloudClient.stub :new, billing_projects_mock do
+        get billing_projects_path
+        assert_response 200
+        billing_projects_mock.verify
+      end
+      thurloe_mock.verify
     end
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
