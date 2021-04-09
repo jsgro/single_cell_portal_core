@@ -38,6 +38,8 @@ class SiteController < ApplicationController
   caches_action :expression_query, :annotation_query,
                 cache_path: :set_cache_path
 
+                COLORSCALE_THEMES = %w(Greys YlGnBu Greens YlOrRd Bluered RdBu Reds Blues Picnic Rainbow Portland Jet Hot Blackbody Earth Electric Viridis Cividis)
+
   ###
   #
   # HOME & SEARCH METHODS
