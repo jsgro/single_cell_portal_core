@@ -149,17 +149,6 @@ $(document).on('hidden.bs.modal', function(e) {
     OPEN_MODAL = '';
 });
 
-// split a string on spaces/commas, used for extractLast()
-function split(val) {
-    return val.split(/[\s,]/);
-}
-
-// extract last term from a string of autocomplete entries
-function extractLast(term) {
-    sanitizedTerm = term.trim().replace(/,$/, ''); // remove trailing whitespace/comma to prevent returning all results
-    return split(sanitizedTerm).pop();
-}
-
 function elementVisible(element) {
     return $(element).is(":visible");
 }
@@ -412,10 +401,7 @@ var plotlyLabelFont = {
     color: '#333'
 };
 
-// clear out text area in a form
-function clearForm(target) {
-    $('#' + target).val("");
-}
+var plotlyDefaultLineColor = 'rgb(40, 40, 40)';
 
 // set error state on blank text boxes or selects
 function setErrorOnBlank(selector) {
