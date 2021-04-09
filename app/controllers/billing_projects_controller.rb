@@ -17,11 +17,12 @@ class BillingProjectsController < ApplicationController
 
   respond_to :html, :js, :json
   before_action :authenticate_user!
-  before_action :check_firecloud_registration
-  before_action :check_firecloud_status
-  before_action :create_firecloud_client
-  before_action :check_project_permissions, except: [:index, :create]
-  before_action :load_service_account, except: [:new_user, :create_user, :delete_user, :storage_estimate]
+  before_action :check_user_provider, except: :access_request
+  before_action :check_firecloud_registration, except: :access_request
+  before_action :check_firecloud_status, except: :access_request
+  before_action :create_firecloud_client, except: :access_request
+  before_action :check_project_permissions, except: [:index, :create, :access_request]
+  before_action :load_service_account, except: [:new_user, :create_user, :delete_user, :storage_estimate, :access_request]
 
   ##
   #
@@ -45,6 +46,12 @@ class BillingProjectsController < ApplicationController
           members: project['role'] == 'Owner' ?  @fire_cloud_client.get_billing_project_members(project_name) : nil
       }
     end
+  end
+
+  # since we can't redirect to a POST, we must render a page asking for the user to re-authenticate w/ billing scope
+  # this page has link with :POST link
+  def access_request
+
   end
 
   # create a firecloud billing project
@@ -218,6 +225,13 @@ class BillingProjectsController < ApplicationController
   # AUTH/PERMISSON CHECKS
   #
   ##
+
+  def check_user_provider
+    # when authenticating with cloud-billing.readonly scope, user.provider will be set to 'google_billing'
+    if user_signed_in? && current_user.provider != 'google_billing'
+      redirect_to billing_projects_access_request_path and return
+    end
+  end
 
   # make sure a user is registered for firecloud before showing billing information
   def check_firecloud_registration

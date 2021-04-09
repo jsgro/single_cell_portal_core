@@ -122,13 +122,13 @@ class User
                          password_confirmation: password,
                          uid: uid,
                          provider: provider)
-
-    elsif user.provider.nil? || user.uid.nil?
-      # update info if account was originally local but switching to Google auth
-      user.update(provider: provider, uid: uid)
     end
+    user.update(uid: uid) if user.uid.nil?
+    # update provider so we can track whether this user has authenticated with basic or extended scopes
+    # basic scopes will show up as "google", extended (i.e. cloud-billing.readonly) will show up as "google_billing"
+    user.update(provider: provider)
     # store refresh token
-    if !access_token.credentials.refresh_token.nil?
+    if access_token.credentials.refresh_token.present?
       user.update(refresh_token: access_token.credentials.refresh_token)
     end
     user
