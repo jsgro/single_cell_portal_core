@@ -37,7 +37,7 @@ class AnnotationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    OmniAuth.config.mock_auth[:google_oauth2] = nil
+    OmniAuth.config.mock_auth[:google] = nil
   end
 
   test 'methods should check view permissions' do

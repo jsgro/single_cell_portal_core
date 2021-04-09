@@ -11,8 +11,8 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
     @user = User.first
     @study = Study.find_by(name: "API Test Study #{@random_seed}")
     @study_file = @study.study_files.first
-    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
-                                                                           :provider => 'google_oauth2',
+    OmniAuth.config.mock_auth[:google] = OmniAuth::AuthHash.new({
+                                                                           :provider => 'google',
                                                                            :uid => '123545',
                                                                            :email => 'testing.user@gmail.com'
                                                                        })
@@ -21,7 +21,7 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    OmniAuth.config.mock_auth[:google_oauth2] = nil
+    OmniAuth.config.mock_auth[:google] = nil
     reset_user_tokens
   end
 

@@ -37,10 +37,11 @@ def initiate_study_file_parse(filename, study_id)
 end
 
 # configure omniauth response for a given user
-def auth_as_user(user)
-  OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
-                                                                         :provider => 'google_oauth2',
+def auth_as_user(user, provider=:google)
+  OmniAuth.config.mock_auth[provider] = OmniAuth::AuthHash.new({
+                                                                         :provider => provider.to_s,
                                                                          :uid => user.uid,
                                                                          :email => user.email
                                                                      })
+  user.update(provider: provider.to_s)
 end
