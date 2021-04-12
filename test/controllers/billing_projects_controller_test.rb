@@ -30,10 +30,10 @@ class BillingProjectsControllerTest < ActionDispatch::IntegrationTest
     # the order in which test suites are executed during a full CI test run
     thurloe_mock = Minitest::Mock.new
     thurloe_mock.expect :services_available?, true, [FireCloudClient::THURLOE_SERVICE]
+    thurloe_mock.expect :storage_issuer, String
     ApplicationController.stub :firecloud_client, thurloe_mock do
       # mock all service/permission checks that happen when loading billing projects page
       billing_projects_mock = Minitest::Mock.new
-      billing_projects_mock.expect :storage_issuer, String
       billing_projects_mock.expect :get_billing_accounts, []
       billing_projects_mock.expect :get_billing_projects, []
       FireCloudClient.stub :new, billing_projects_mock do
