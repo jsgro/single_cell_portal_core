@@ -32,12 +32,5 @@ class ExpressionControllerTest < ActionDispatch::IntegrationTest
     sign_in_and_update @user
     execute_http_request(:get, api_v1_study_expression_path(@basic_study, 'heatmap'), user: @user)
     assert_equal 400, response.status # response is 400 since study is non-visualizable
-
-    # test url_safe_token capability
-    get api_v1_study_expression_path(@basic_study, 'heatmap', params: {url_safe_token: @user.authentication_token})
-    assert_equal 400, response.status # response is 400 since study is non-visualizable
-
-    get api_v1_study_expression_path(@basic_study, 'heatmap', params: {url_safe_token: 'garbage'})
-    assert_equal 401, response.status
   end
 end
