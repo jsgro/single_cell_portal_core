@@ -50,9 +50,9 @@ class BulkDownloadService
     end
     byebug
     MetricsService.log('file-download:curl-config', {
-      num_files: study_files.count,
-      num_studies: studies.count,
-      study_accesions: studies.map(&:accession)
+      numFiles: study_files.count,
+      numStudies: studies.count,
+      studyAccesions: studies.map(&:accession)
     }, user)
     curl_configs.join("\n\n")
   end
