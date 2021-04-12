@@ -2,3 +2,81 @@
   window.SCP.studyAccession = '<%= @study.accession %>';
   window.SCP.renderExploreView(document.getElementById('study-visualize'), window.SCP.studyAccession)
 </script>
+
+
+<% if @study.has_analysis_outputs?('infercnv', 'ideogram.js') or @study.has_bam_files? %>
+  <!--
+  TODO (SCP-3258): Migrate genome visualization scaffold from ERB/Rails to API/React
+
+  Minimal DOM scaffolding and server-side data for genomic visualizations.
+  See partials referenced below and scp-igv.js for larger bodies of code.
+  -->
+  <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+    if (typeof accessToken === 'undefined') {
+      window.accessToken = '<%= get_read_access_token(@study, current_user) %>';
+    }
+  </script>
+  <% if @study.has_analysis_outputs?('infercnv', 'ideogram.js') and action_name == 'study' %>
+    <div id="ideogram-container" style="margin-top: 12px">
+      <div id="filters-container">
+        <ul id="tracks-to-display">
+        </ul>
+      </div>
+      <!-- Ideogram goes here -->
+    </div>
+    <style>
+      /** TODO: Migrate this to SCSS as part of SCP-3258 **/
+      #tracks-to-display {
+        list-style-type: none;
+        float: left;
+        padding-left: 20px;
+      }
+
+      #tracks-to-display label {
+        font-weight: normal;
+        position: relative;
+        top: 1px;
+      }
+
+      #tracks-to-display input {
+        margin-right: 5px;
+      }
+
+      #_ideogramLegend {
+        position: relative;
+        left: 20px;
+      }
+
+      #ideogramTitle {
+        margin-left: 110px;
+      }
+    </style>
+    <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+      // Intercept requests to add bearer token, enabling direct load of files from GCS
+      // This was needed to load genome visualization data from GCS.
+      //
+      // TODO (SCP-2451): Remove monkey patching of fetch
+      var originalFetch = window.fetch;
+      window.fetch = function () {
+        if (arguments[0].includes('https://www.googleapis.com')) {
+          var myHeaders = new Headers({
+            'Authorization': 'Bearer ' + accessToken
+          });
+          arguments[1] = {headers: myHeaders};
+        }
+        return originalFetch.apply(this, arguments)
+      };
+    </script>
+  <% end %>
+
+  <% if @study.has_bam_files? %>
+    <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+    if (typeof bamAndBaiFiles === 'undefined') {
+      window.bamAndBaiFiles = <%= raw @study.get_bam_files.to_json %>;
+      window.gtfFiles = <%= raw @study.get_genome_annotations_by_assembly.to_json %>;
+    }
+    </script>
+    <div id="igv-container">
+    </div>
+  <% end %>
+<% end %>

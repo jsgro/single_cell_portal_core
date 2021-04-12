@@ -20,8 +20,6 @@ module.exports = {
         'd3': 'readonly',
         'Spinner': 'readonly',
         'morpheus': 'readonly',
-        'igv': 'readonly',
-        'Ideogram': 'readonly',
         'ga': 'readonly',
         'bamAndBaiFiles': 'readonly'
     },
