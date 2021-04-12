@@ -70,14 +70,14 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
             value={distributionPlotValue}
             clearable={false}
             isSearchable={false}
-            onChange={option => updateExploreParams({ distributionPlot: option.value })}/>
+            onChange={option => updateExploreParams({ distributionPlot: option.value, distributionPoints: distributionPointsValue.value })}/>
           <label htmlFor="distribution-plot-picker">Data points </label>
           <Select name="distribution-points-picker"
             options={DISTRIBUTION_POINTS_OPTIONS}
             value={distributionPointsValue}
             clearable={false}
             isSearchable={false}
-            onChange={option => updateExploreParams({ distributionPoints: option.value })}/>
+            onChange={option => updateExploreParams({distributionPlot: distributionPlotValue.value, distributionPoints: option.value })}/>
         </Panel.Body>
       </Panel>
       <Panel className={shownTab === 'heatmap' ? '' : 'hidden'}>
