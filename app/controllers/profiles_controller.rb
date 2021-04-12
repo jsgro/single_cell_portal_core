@@ -13,6 +13,8 @@ class ProfilesController < ApplicationController
     check_profile_access
   end
 
+  before_action :check_firecloud_registration, only: :update_firecloud_profile
+
   def show
     @study_shares = StudyShare.where(email: @user.email)
     @studies = Study.where(user_id: @user.id)
@@ -27,10 +29,6 @@ class ProfilesController < ApplicationController
           if @fire_cloud_profile.respond_to?("#{attribute['key']}=")
             @fire_cloud_profile.send("#{attribute['key']}=", attribute['value'])
           end
-        end
-        # patch to make sure that email gets set if user has not registered yet
-        if @fire_cloud_profile.email.blank?
-          @fire_cloud_profile.email = current_user.email
         end
       rescue => e
         ErrorTracker.report_exception(e, current_user, params.to_unsafe_hash)
@@ -123,6 +121,12 @@ class ProfilesController < ApplicationController
   def check_profile_access
     if current_user.email != @user.email
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: 'You do not have permission to perform that action.' and return
+    end
+  end
+
+  def check_firecloud_registration
+    unless current_user.registered_for_firecloud
+      redirect_to view_profile_path(current_user.id), alert: 'You may not update your Terra profile until you have registered with Terra.' and return
     end
   end
 
