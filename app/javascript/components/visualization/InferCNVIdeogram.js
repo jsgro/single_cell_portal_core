@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 
 import Ideogram from 'ideogram'
+import { profileWarning } from 'lib/study-overview/terra-profile-warning'
 
 /* eslint-disable no-unused-vars */
 
@@ -272,6 +273,10 @@ function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsC
   if (typeof window.inferCNVIdeogram !== 'undefined') {
     delete window.inferCNVIdeogram
     removeIdeogram()
+  }
+
+  if (window.accessToken === '') {
+    $('#' + domTarget).parent().append(profileWarning);
   }
 
   const chrHeight = showViewOptionsControls ? 64 : 80

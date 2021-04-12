@@ -352,7 +352,7 @@ module ApplicationHelper
     elsif user.present? && user.registered_for_firecloud
       user.token_for_storage_object
     else
-      user.valid_access_token.try(:[], :access_token)
+      nil # there is no 'safe' token that will work
     end
   end
 

@@ -6,6 +6,7 @@ import _uniqueId from 'lodash/uniqueId'
 
 import { fetchBamFileInfo } from 'lib/scp-api'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
+import { profileWarning } from 'lib/study-overview/terra-profile-warning'
 
 /** Component for displaying IGV for any bam/bai files provided with the study */
 function GenomeView({ studyAccession, bamFileName, isVisible, updateExploreParams }) {
@@ -32,6 +33,11 @@ function GenomeView({ studyAccession, bamFileName, isVisible, updateExploreParam
   // re-render IGV any time the listing of bamFiles changes
   useEffect(() => {
     if (bamFileList && bamFileList.bamAndBaiFiles.length && isVisible) {
+      // show profile warning from non-existent token due to incomplete Terra registration
+      if (window.accessToken === '') {
+        $('#' + igvContainerId).parent().append(profileWarning)
+      }
+
       let listToShow = bamFileList.bamAndBaiFiles
       if (bamFileName) {
         // if the user has specified a particular file name (likely because they are coming from the study download tab)
@@ -222,7 +228,6 @@ function initializeIgv(containerId, bamAndBaiFiles, gtfFiles) {
   }
 
   igv.createBrowser(igvContainer, igvOptions)
-
 
   // Log igv.js initialization in Google Analytics
   ga('send', 'event', 'igv', 'initialize')
