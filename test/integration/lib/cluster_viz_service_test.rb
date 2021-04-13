@@ -243,4 +243,12 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     computed_aspect = ClusterVizService.compute_aspect_ratios(cluster.domain_ranges)
     assert_equal expected_aspect, computed_aspect
   end
+
+  # ensure default value for cluster_group.points will prevent NoMethodError when getting subsampling options
+  # before cluster_group.set_point_count! is called at the end of successful ingest
+  test 'should fallback to default points for new cluster' do
+    new_cluster = @study.cluster_groups.build(name: 'New Cluster', cluster_type: '2d')
+    assert_empty ClusterVizService.subsampling_options(new_cluster)
+    assert_nil ClusterVizService.default_subsampling(new_cluster)
+  end
 end
