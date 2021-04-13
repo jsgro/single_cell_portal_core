@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 
 import Ideogram from 'ideogram'
+import { getReadAccessToken, userHasTerraProfile } from "providers/UserProvider";
 import { profileWarning } from 'lib/study-overview/terra-profile-warning'
 
 /* eslint-disable no-unused-vars */
@@ -49,7 +50,7 @@ export default function InferCNVIdeogram({ studyAccession, ideogramFileId, infer
     if (!ideogramFileId && Object.entries(inferCNVIdeogramFiles).length > 0) {
       // find the first ideogram annotations file and pre-render since Ideogram can render on a hidden div
       const firstIdeogramFile = Object.entries(inferCNVIdeogramFiles)[0][1]
-      if (window.accessToken === '') {
+      if (!userHasTerraProfile()) {
         setShowProfileWarning(true)
       }
       if (firstIdeogramFile) {
@@ -298,7 +299,8 @@ function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsC
     chrHeight,
     annotationHeight: 20,
     geometry: 'collinear',
-    orientation: 'horizontal'
+    orientation: 'horizontal',
+    accessToken: getReadAccessToken()
   }
 
   inferCNVIdeogram = new Ideogram(ideoConfig)

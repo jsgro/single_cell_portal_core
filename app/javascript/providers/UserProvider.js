@@ -13,9 +13,24 @@ export function getAccessToken() {
   return ('SCP' in window) ? window.SCP.userAccessToken : 'test'
 }
 
+/**
+ * Returns the current read-access token for the user
+ * This token is specifically for genome visualizations like IGV and Ideogram
+ * as they both require streaming a GCS object directly to the client
+ * This token needs the devstorage.readonly OAuth scope, which is returned
+ * from ApplicationHelper#get_read_access_token and stored in the window.SCP object
+ */
+export function getReadAccessToken() {
+  return ('SCP' in window) ? window.SCP.readOnlyToken : 'test'
+}
+
 /** returns true if the current user is logged in */
 export function isUserLoggedIn() {
   return !!getAccessToken()
+}
+
+export function userHasTerraProfile() {
+  return !!isUserLoggedIn() && !!getReadAccessToken()
 }
 
 /**

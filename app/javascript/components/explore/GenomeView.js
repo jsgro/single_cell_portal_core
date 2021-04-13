@@ -6,6 +6,7 @@ import _uniqueId from 'lodash/uniqueId'
 
 import { fetchBamFileInfo } from 'lib/scp-api'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
+import { getReadAccessToken, userHasTerraProfile } from "providers/UserProvider";
 import { profileWarning } from 'lib/study-overview/terra-profile-warning'
 
 /** Component for displaying IGV for any bam/bai files provided with the study */
@@ -35,7 +36,7 @@ function GenomeView({ studyAccession, bamFileName, isVisible, updateExploreParam
   useEffect(() => {
     if (bamFileList && bamFileList.bamAndBaiFiles.length && isVisible) {
       // show profile warning from non-existent token due to incomplete Terra registration
-      if (window.accessToken === '') {
+      if (!userHasTerraProfile()) {
         setShowProfileWarning(true)
       }
 
@@ -120,7 +121,7 @@ function getBamTracks(bamAndBaiFiles) {
     bamTrack = {
       url: bam.url,
       indexURL: bam.indexUrl,
-      oauthToken: window.accessToken,
+      oauthToken: getReadAccessToken(),
       label: bam.name
     }
     bamTracks.push(bamTrack)
@@ -147,7 +148,7 @@ function getGenesTrack(gtfFiles, genome, genesTrackName) {
     order: 0,
     visibilityWindow: 300000000,
     displayMode: 'EXPANDED',
-    oauthToken: window.accessToken // Assigned in _genome.html.erb
+    oauthToken: getReadAccessToken()
   }
 
   return genesTrack
