@@ -14,6 +14,7 @@ function GenomeView({ studyAccession, bamFileName, isVisible, updateExploreParam
   const [bamFileList, setBamFileList] = useState(null)
   const [igvInitializedFiles, setIgvInitializedFiles] = useState('')
   const [igvContainerId] = useState(_uniqueId('study-igv-'))
+  const [showProfileWarning, setShowProfileWarning] = useState(false)
 
   useEffect(() => {
     // go get the bam file anmes and urls from the server.
@@ -35,7 +36,7 @@ function GenomeView({ studyAccession, bamFileName, isVisible, updateExploreParam
     if (bamFileList && bamFileList.bamAndBaiFiles.length && isVisible) {
       // show profile warning from non-existent token due to incomplete Terra registration
       if (window.accessToken === '') {
-        $('#' + igvContainerId).parent().append(profileWarning)
+        setShowProfileWarning(true)
       }
 
       let listToShow = bamFileList.bamAndBaiFiles
@@ -97,6 +98,7 @@ function GenomeView({ studyAccession, bamFileName, isVisible, updateExploreParam
     { bamFileName && bamFileList?.bamAndBaiFiles?.length > 1 &&
       <a className="action" onClick={showAllFiles}>See all sequence files for this study</a>
     }
+    { showProfileWarning && profileWarning }
   </div>
 }
 

@@ -16,6 +16,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
 
   # base url for all API calls
   BASE_URL = 'https://api.firecloud.org'
+  BASE_SAM_SERVICE_URL = 'https://sam.dsde-prod.broadinstitute.org'
   # default auth scopes for client tokens
   GOOGLE_SCOPES = %w(
     https://www.googleapis.com/auth/userinfo.profile
@@ -1352,7 +1353,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   #
   # * *return*
   #   - +FireCloudClient+ instance, or nil if user has not registered with Terra
-  def self.new_with_pet_sa(user, project)
+  def self.new_with_pet_account(user, project)
     # create a temporary client in order to retrieve the user's pet service account keyfile
     tmp_client = self.new(user, project)
     if tmp_client.registered?
@@ -1371,7 +1372,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   # * *returns*
   #   - +String+ pet service account OAuth2 access_token
   def get_pet_service_account_token(project_name)
-    path = "https://sam.dsde-prod.broadinstitute.org/api/google/v1/user/petServiceAccount/#{project_name}/token"
+    path = BASE_SAM_SERVICE_URL + "/api/google/v1/user/petServiceAccount/#{project_name}/token"
     # normal scopes, plus RO access for storage objects (removes unnecessary billing scope from GOOGLE_SCOPES)
     token = process_firecloud_request(:post, path, GOOGLE_SCOPES.to_json)
     token.gsub(/\"/, '') # gotcha for removing escaped quotes in response body
@@ -1387,7 +1388,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   # * *returns*
   #   - +Hash+ parsed contents of pet service account JSON keyfile
   def get_pet_service_account_key(project_name)
-    path = "https://sam.dsde-prod.broadinstitute.org/api/google/v1/user/petServiceAccount/#{project_name}/key"
+    path = BASE_SAM_SERVICE_URL + "/api/google/v1/user/petServiceAccount/#{project_name}/key"
     process_firecloud_request(:get, path)
   end
 

@@ -33,8 +33,10 @@ const legend = [{
 
 export default function InferCNVIdeogram({ studyAccession, ideogramFileId, inferCNVIdeogramFiles, showViewOptionsControls }) {
   const [ideogramContainerId] = useState(_uniqueId('study-infercnv-ideogram-'))
-
+  const [showProfileWarning, setShowProfileWarning] = useState(false)
   const inferCNVIdeogramFile = inferCNVIdeogramFiles[ideogramFileId]
+
+
   useEffect(() => {
     if (inferCNVIdeogramFile) {
       setInitializeIdeogram(inferCNVIdeogramFile, ideogramContainerId, showViewOptionsControls)
@@ -47,6 +49,9 @@ export default function InferCNVIdeogram({ studyAccession, ideogramFileId, infer
     if (!ideogramFileId && Object.entries(inferCNVIdeogramFiles).length > 0) {
       // find the first ideogram annotations file and pre-render since Ideogram can render on a hidden div
       const firstIdeogramFile = Object.entries(inferCNVIdeogramFiles)[0][1]
+      if (window.accessToken === '') {
+        setShowProfileWarning(true)
+      }
       if (firstIdeogramFile) {
         setInitializeIdeogram(firstIdeogramFile, ideogramContainerId, showViewOptionsControls)
       }
@@ -58,6 +63,7 @@ export default function InferCNVIdeogram({ studyAccession, ideogramFileId, infer
       <ul id="tracks-to-display">
       </ul>
     </div>
+    { showProfileWarning && profileWarning }
   </div>
 }
 
@@ -273,10 +279,6 @@ function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsC
   if (typeof window.inferCNVIdeogram !== 'undefined') {
     delete window.inferCNVIdeogram
     removeIdeogram()
-  }
-
-  if (window.accessToken === '') {
-    $('#' + domTarget).parent().append(profileWarning);
   }
 
   const chrHeight = showViewOptionsControls ? 64 : 80

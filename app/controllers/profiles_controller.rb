@@ -126,7 +126,11 @@ class ProfilesController < ApplicationController
 
   def check_firecloud_registration
     unless current_user.registered_for_firecloud
-      redirect_to view_profile_path(current_user.id), alert: 'You may not update your Terra profile until you have registered with Terra.' and return
+      terra_link = view_context.link_to('registered with Terra',
+                                        'https://support.terra.bio/hc/en-us/articles/360028235911-How-to-register-for-a-Terra-account',
+                                        target: :_blank)
+      alert = "You may not update your Terra profile until you have #{terra_link}"
+      redirect_to view_profile_path(current_user.id), alert: alert and return
     end
   end
 
