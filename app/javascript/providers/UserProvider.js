@@ -29,6 +29,10 @@ export function isUserLoggedIn() {
   return !!getAccessToken()
 }
 
+/**
+ * returns true if the signed-in user has completed their Terra profile by
+ * checking if a pet service account token has been issued via getReadAccessToken
+ */
 export function userHasTerraProfile() {
   return !!isUserLoggedIn() && !!getReadAccessToken()
 }
