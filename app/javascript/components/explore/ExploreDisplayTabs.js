@@ -54,7 +54,7 @@ const ideogramHeight = 140
  */
 export default function ExploreDisplayTabs({ studyAccession, exploreInfo, exploreParams, updateExploreParams, exploreParamsWithDefaults }) {
   const [, setRenderForcer] = useState({})
-  // tracks whetehr the view options controls are open or closed
+  // tracks whether the view options controls are open or closed
   const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
   // whether the user is in lasso-select mode for selecting points for an annotation
   const [isCellSelecting, setIsCellSelecting] = useState(false)
