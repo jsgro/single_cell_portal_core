@@ -60,6 +60,7 @@ class ExpressionFileInfo
                                 'SeqFISH+',
                                 'Slide-seq',
                                 'smFISH',
+                                'STARmap', # Note WIP for EFO term: https://broadinstitute.zendesk.com/agent/tickets/139334
                                 # single cell ChIP-seq assays
                                 'Drop-ChIP']
   validates :library_preparation_protocol, inclusion: {in: LIBRARY_PREPARATION_VALUES}
