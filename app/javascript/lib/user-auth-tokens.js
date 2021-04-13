@@ -1,5 +1,5 @@
+/** error handling for auth errors when getting user access tokens */
 export default function checkMissingAuthToken() {
-  // error handling for auth errors when getting user access tokens
   if (window.SCP.userAccessToken === '' && window.SCP.userSignedIn) {
     const errorTitle = 'Please sign in again'
     const errorText = '<p class="text-danger">There appears to be an issue with your session - ' +
@@ -15,3 +15,4 @@ export default function checkMissingAuthToken() {
     $('#generic-modal').modal('show')
   }
 }
+

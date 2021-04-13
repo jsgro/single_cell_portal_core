@@ -161,7 +161,7 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     transformed_coords = ClusterVizService.transform_coordinates(coordinates, @study, cluster, annotation)
     assert_equal coordinates.keys.size, transformed_coords.size,
                  "Did not find correct number of traces; expected #{coordinates.keys.size} but found #{transformed_coords.size}"
-    expected_keys = [:x, :y, :cells, :text, :name, :type, :mode, :marker, :opacity, :annotations, :z, :textposition].sort
+    expected_keys = [:x, :y, :cells, :name, :type, :mode, :marker, :opacity, :annotations, :z, :textposition].sort
     transformed_coords.each do |trace|
       keys = trace.keys.sort
       assert_equal expected_keys, keys

@@ -1,52 +1,82 @@
-<div class="row">
-  <div class="col-md-2" id="search-target">
-    <%= render partial: 'search_options' %>
-  </div>
-  <div class="col-md-13" id="render-target">
-    <div class="row-offcanvas row-offcanvas-right">
-      <div id="view-options-nav"><a href="#view-options" id="view-option-link" data-toggle="offcanvas"><i class="fas fa-cog" aria-hidden="true"></i> View Options </a></div>
-      <ul class="nav nav-tabs" role="tablist" id="view-tabs" data-analytics-name="explore-default">
-        <% if @study.can_visualize_clusters? %>
-          <li role="presentation" class="study-nav active" id="scatter-tab-nav"><a href="#scatter-tab" data-toggle="tab">Clusters </a></li>
-        <% end %>
-        <% if @study.can_visualize_genome_data? %>
-          <li role="presentation" class="study-nav<%= !@study.can_visualize_clusters? ? ' active' : nil %>" id="genome-tab-nav">
-            <a href="#genome-tab" data-toggle="tab">Genome </a>
-          </li>
-        <% end %>
-      </ul>
-      <%= render partial: 'view_options' %>
-      <div class="tab-content">
-        <% if @study.can_visualize_clusters? %>
-          <div class="tab-pane active" id="scatter-tab" role="tabpanel">
-            <div class="panel panel-default no-top-border">
-              <div id="scatter-plots" class="panel-collapse collapse in">
-                <div class="panel-body">
-                </div>
-              </div>
-            </div>
-          </div>
-        <% end %>
-        <% if @study.can_visualize_genome_data? %>
-          <div class="tab-pane<%= !@study.can_visualize_clusters? ? ' active' : nil%>" id="genome-tab" role="tabpanel" >
-            <div class="panel panel-default no-top-border">
-              <div id="genome-container" class="panel-collapse collapse in">
-                <div style="padding: 15px 30px;">
-                  <%= render partial: '/site/genome/genome' %>
-                </div>
-              </div>
-            </div>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-</div>
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   window.SCP.studyAccession = '<%= @study.accession %>';
-  <% if User.feature_flag_for_instance(current_user, 'react_explore')  %>
-    window.SCP.renderExploreView(document.getElementById('study-visualize'), window.SCP.studyAccession)
-  <% else %>
-    window.SCP.exploreDefault();
-  <% end %>
+  window.SCP.renderExploreView(document.getElementById('study-visualize'), window.SCP.studyAccession)
 </script>
+
+
+<% if @study.has_analysis_outputs?('infercnv', 'ideogram.js') or @study.has_bam_files? %>
+  <!--
+  TODO (SCP-3258): Migrate genome visualization scaffold from ERB/Rails to API/React
+
+  Minimal DOM scaffolding and server-side data for genomic visualizations.
+  See partials referenced below and scp-igv.js for larger bodies of code.
+  -->
+  <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+    if (typeof accessToken === 'undefined') {
+      window.accessToken = '<%= get_read_access_token(@study, current_user) %>';
+    }
+  </script>
+  <% if @study.has_analysis_outputs?('infercnv', 'ideogram.js') and action_name == 'study' %>
+    <div id="ideogram-container" style="margin-top: 12px">
+      <div id="filters-container">
+        <ul id="tracks-to-display">
+        </ul>
+      </div>
+      <!-- Ideogram goes here -->
+    </div>
+    <style>
+      /** TODO: Migrate this to SCSS as part of SCP-3258 **/
+      #tracks-to-display {
+        list-style-type: none;
+        float: left;
+        padding-left: 20px;
+      }
+
+      #tracks-to-display label {
+        font-weight: normal;
+        position: relative;
+        top: 1px;
+      }
+
+      #tracks-to-display input {
+        margin-right: 5px;
+      }
+
+      #_ideogramLegend {
+        position: relative;
+        left: 20px;
+      }
+
+      #ideogramTitle {
+        margin-left: 110px;
+      }
+    </style>
+    <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+      // Intercept requests to add bearer token, enabling direct load of files from GCS
+      // This was needed to load genome visualization data from GCS.
+      //
+      // TODO (SCP-2451): Remove monkey patching of fetch
+      var originalFetch = window.fetch;
+      window.fetch = function () {
+        if (arguments[0].includes('https://www.googleapis.com')) {
+          var myHeaders = new Headers({
+            'Authorization': 'Bearer ' + accessToken
+          });
+          arguments[1] = {headers: myHeaders};
+        }
+        return originalFetch.apply(this, arguments)
+      };
+    </script>
+  <% end %>
+
+  <% if @study.has_bam_files? %>
+    <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+    if (typeof bamAndBaiFiles === 'undefined') {
+      window.bamAndBaiFiles = <%= raw @study.get_bam_files.to_json %>;
+      window.gtfFiles = <%= raw @study.get_genome_annotations_by_assembly.to_json %>;
+    }
+    </script>
+    <div id="igv-container">
+    </div>
+  <% end %>
+<% end %>

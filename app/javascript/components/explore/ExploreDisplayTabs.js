@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect  } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretDown, faCaretUp, faLink, faArrowLeft, faCog, faTimes, faDna } from '@fortawesome/free-solid-svg-icons'
@@ -54,7 +54,7 @@ const ideogramHeight = 140
  */
 export default function ExploreDisplayTabs({ studyAccession, exploreInfo, exploreParams, updateExploreParams, exploreParamsWithDefaults }) {
   const [, setRenderForcer] = useState({})
-    // tracks whetehr the view options controls are open or closed
+  // tracks whether the view options controls are open or closed
   const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
   // whether the user is in lasso-select mode for selecting points for an annotation
   const [isCellSelecting, setIsCellSelecting] = useState(false)
@@ -134,7 +134,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
     const updateParams = { geneList: '', ideogramFileId: '' }
     const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
     clusterParamNames.forEach(param => {
-      updateParams[param] = param in newParams ? newParams[param] :  exploreParamsWithDefaults[param]
+      updateParams[param] = param in newParams ? newParams[param] : exploreParamsWithDefaults[param]
     })
     updateExploreParams(updateParams)
   }
@@ -319,8 +319,10 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
                 <GenomeView
                   studyAccession={studyAccession}
                   bamFileName={exploreParams.bamFileName}
+                  uniqueGenes={exploreInfo.uniqueGenes}
                   isVisible={shownTab === 'genome'}
-                  updateExploreParams={updateExploreParams}/>
+                  updateExploreParams={updateExploreParams}
+                />
               </div>
             }
             { enabledTabs.includes('infercnv-genome') &&
@@ -351,52 +353,52 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
             <div className={showClusterControls ? '' : 'hidden'}>
               <ClusterSelector
                 annotationList={annotationList}
-                cluster={ exploreParamsWithDefaults.cluster}
-                annotation={ exploreParamsWithDefaults.annotation}
+                cluster={exploreParamsWithDefaults.cluster}
+                annotation={exploreParamsWithDefaults.annotation}
                 updateClusterParams={updateClusterParams}
                 spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
               {hasSpatialGroups &&
                 <SpatialSelector allSpatialGroups={exploreInfo.spatialGroups}
-                  spatialGroups={ exploreParamsWithDefaults.spatialGroups}
+                  spatialGroups={exploreParamsWithDefaults.spatialGroups}
                   updateSpatialGroups={spatialGroups => updateClusterParams({ spatialGroups })}/>
               }
               <AnnotationSelector
                 annotationList={annotationList}
-                cluster={ exploreParamsWithDefaults.cluster}
-                annotation={ exploreParamsWithDefaults.annotation}
+                cluster={exploreParamsWithDefaults.cluster}
+                annotation={exploreParamsWithDefaults.annotation}
                 updateClusterParams={updateClusterParams}/>
               { shownTab === 'scatter' && <CreateAnnotation
                 isSelecting={isCellSelecting}
                 setIsSelecting={setIsCellSelecting}
                 annotationList={exploreInfo ? exploreInfo.annotationList : null}
                 currentPointsSelected={currentPointsSelected}
-                cluster={ exploreParamsWithDefaults.cluster}
-                annotation={ exploreParamsWithDefaults.annotation}
-                subsample={ exploreParamsWithDefaults.subsample}
+                cluster={exploreParamsWithDefaults.cluster}
+                annotation={exploreParamsWithDefaults.annotation}
+                subsample={exploreParamsWithDefaults.subsample}
                 updateClusterParams={updateClusterParams}
                 setAnnotationList={setAnnotationList}
                 studyAccession={studyAccession}/>
               }
               <SubsampleSelector
                 annotationList={annotationList}
-                cluster={ exploreParamsWithDefaults.cluster}
-                subsample={ exploreParamsWithDefaults.subsample}
+                cluster={exploreParamsWithDefaults.cluster}
+                subsample={exploreParamsWithDefaults.subsample}
                 updateClusterParams={updateClusterParams}/>
             </div>
             { exploreInfo?.geneLists?.length > 0 &&
               <GeneListSelector
-                geneList={ exploreParamsWithDefaults.geneList}
+                geneList={exploreParamsWithDefaults.geneList}
                 studyGeneLists={exploreInfo.geneLists}
                 updateGeneList={updateGeneList}/>
             }
             { exploreParams.genes.length > 1 &&
               <ExploreConsensusSelector
-                consensus={ exploreParamsWithDefaults.consensus}
+                consensus={exploreParamsWithDefaults.consensus}
                 updateConsensus={consensus => updateExploreParams({ consensus })}/>
             }
             { !!exploreInfo?.inferCNVIdeogramFiles &&
                 <InferCNVIdeogramSelector
-                  inferCNVIdeogramFile={ exploreParamsWithDefaults.ideogramFileId}
+                  inferCNVIdeogramFile={exploreParamsWithDefaults.ideogramFileId}
                   studyInferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
                   updateInferCNVIdeogramFile={updateInferCNVIdeogramFile}
                 />
@@ -404,7 +406,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
           </div>
           <PlotDisplayControls
             shownTab={shownTab}
-            exploreParams={ exploreParamsWithDefaults}
+            exploreParams={exploreParamsWithDefaults}
             updateExploreParams={updateExploreParams}/>
           <button onClick={() => copyLink(routerLocation)}
             className="action"
@@ -444,13 +446,10 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
       } else {
         enabledTabs = ['dotplot', 'heatmap']
       }
+    } else if (exploreParams.annotation.type === 'numeric') {
+      enabledTabs = ['scatter', 'annotatedScatter']
     } else {
-      if (exploreParams.annotation.type === 'numeric') {
-        enabledTabs = ['scatter', 'annotatedScatter']
-      } else {
-        enabledTabs = ['scatter', 'distribution']
-      }
-
+      enabledTabs = ['scatter', 'distribution']
     }
   } else if (hasClusters) {
     enabledTabs = ['scatter']

@@ -21,29 +21,19 @@
 //= require jquery_nested_form
 //= require bootstrap-sprockets
 //= require jquery.actual.min
-//= require echarts.min
-//= require echarts-gl.min
 //= require papaparse.min
-//= require tsne
 //= require StackBlur
-//= require morpheus-external-r
 //= require jquery.stickyPanel
 //= require clipboard.min
-//= require scp-igv
-//= require scp-infercnv-ideogram
-//= require scp-related-genes-ideogram
-//= require scp-dot-plot
-//= require scp-heatmap
 //= require ckeditor
+
+// TODO (SCP-3249): Modernize Morpheus, then remove this
+//= require morpheus-external-r
 
 var fileUploading = false;
 var PAGE_RENDERED = false;
 var OPEN_MODAL = '';
 var UNSAFE_CHARACTERS = /[\;\/\?\:\@\=\&\'\"\<\>\#\%\{\}\|\\\^\~\[\]\`]/g;
-
-// Minimum width of plot + legend
-// Addresses https://github.com/broadinstitute/single_cell_portal/issues/20
-var minPlotAreaWidth = 700;
 
 // 1: open, -1: closed.
 // Upon clicking nav toggle, state multiples by -1, toggling this register value
@@ -159,201 +149,9 @@ $(document).on('hidden.bs.modal', function(e) {
     OPEN_MODAL = '';
 });
 
-// scpPlotsDidRender fires after the view-specific data has been retrieved and plotted.
-// This event means that the page is ready for user interaction.
-$(document).on('scpPlotsDidRender', function() {
-
-  // Ensures that plot scrolls and doesn't get truncated at right when viewport is very horizontally narrow.
-  // Not declared in static CSS because "overflow-x: visible" is needed for proper display of loading icon.
-  $('#render-target .tab-content > div > div').css('overflow-x', 'auto');
-});
-
-function restoreExploreMenusState() {
-
-  var leftIsClosed = !$('#search-omnibar-menu-icon').hasClass('open'),
-      rightIsClosed = !$('#view-options-nav').parent().hasClass('active');
-
-  if (exploreMenusToggleState.left === 1 && leftIsClosed) {
-    toggleSearchPanel();
-  }
-  if (exploreMenusToggleState.right === 1 && rightIsClosed) {
-    toggleViewOptionsPanel();
-  }
-}
-
-function toggleViewOptionsPanel() {
-  // Expand View Options menu
-  $('.row-offcanvas').toggleClass('active');
-  $('#render-target').toggleClass('right-menu-open');
-
-  // Contract main content area to make room View Options menu
-  $('.row-offcanvas > .nav-tabs, .row-offcanvas > .tab-content')
-    .toggleClass('contracted-for-sidebar');
-
-  // Re-render Plotly to use available space
-  $(window).trigger('resizeEnd');
-}
-
-
-function toggleSearchPanel() {
-  var searchParent = $('#search-parent'),
-      menuIcon = $('#search-omnibar-menu-icon');
-
-  if (searchParent.is(':visible')) {
-    // Search options panel is open, so close it.
-    searchParent.hide();
-    $('#render-target').addClass('col-md-13').removeClass('col-md-10 left-menu-open');
-    menuIcon.removeClass('open');
-  } else {
-    // Search options panel is closed, so open it.
-    searchParent.show();
-    $('#render-target').removeClass('col-md-13').addClass('col-md-10 left-menu-open');
-    menuIcon.addClass('open');
-  }
-
-  $(window).trigger('resizeEnd');
-}
-
-// Toggle "View Options" menu panel in Explore tab
-$(document).on('click', '#view-option-link', function(e) {
-  e.preventDefault();
-  toggleViewOptionsPanel();
-  exploreMenusToggleState.right *= -1;
-});
-
-
-// Toggles search panel upon clicking burger menu to left of "Search genes"
-$(document).on('click', '#search-omnibar-menu i', function(e) {
-  toggleSearchPanel();
-  exploreMenusToggleState.left *= -1; // toggle menu state register
-});
-
-
-// When a change in made in the Explore tab's "Enhance Gene Search" panel,
-// do a search with the newly-specified options.
-$(document).on('change', '#panel-genes-search input, #panel-genes-search select', function() {
-  $('#perform-gene-search').click();
-});
-
-// split a string on spaces/commas, used for extractLast()
-function split(val) {
-    return val.split(/[\s,]/);
-}
-
-// extract last term from a string of autocomplete entries
-function extractLast(term) {
-    sanitizedTerm = term.trim().replace(/,$/, ''); // remove trailing whitespace/comma to prevent returning all results
-    return split(sanitizedTerm).pop();
-}
-
-var keydownIsFromAutocomplete = false;
-
-/**
- * Sets up autocomplete, e.g. for gene search, using a pre-populated list of values.
- *
- * @param selector: DOM selector for form element
- * @param entities: Array of pre-populated values to search
- **/
-function initializeAutocomplete(selector) {
-
-    var jqObject = $(selector);
-    jqObject.on("keydown", function(event) {
-        if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete("instance").menu.active) {
-            // allow user to select terms with TAB key
-            event.preventDefault();
-        }
-    }).autocomplete(
-        {
-            source: function(request, response) {
-                // delegate back to autocomplete, but extract the last term
-                response(
-                    $.ui.autocomplete.filter(window.SCP.uniqueGenes, extractLast(request.term))
-                );
-            },
-            minLength: 2,
-            focus: function() {
-                // prevent value inserted on focus
-                return false;
-            },
-            open: function() {
-                // options menu is open, so prevent ENTER from submitting search
-                keydownIsFromAutocomplete = true;
-            },
-            close: function() {
-                // if menu is closed, then enable ENTER to submit and fire events
-                keydownIsFromAutocomplete = false;
-            },
-            select: function(event, ui) {
-                var terms = split(this.value);
-                // remove the current input
-                terms.pop();
-                // check if user has added more that 50 genes, in which case alert and remove the last term
-                if (terms.length - 1 > window.MAX_GENE_SEARCH) {
-                    console.log('Too many genes selected, aborting autocomplete');
-                    alert(window.MAX_GENE_SEARCH_MSG);
-                } else {
-                    // add the selected item
-                    terms.push(ui.item.value);
-                    terms.push("");
-                }
-                this.value = terms.join(" ");
-                // set to false to let autocomplete know that a term has been selected and the next ENTER
-                // keydown will submit search values
-                keydownIsFromAutocomplete = false;
-                return false;
-            },
-            response: function(event, ui) {
-                // show 'No matches found' message
-                if (ui.content.length === 0) {
-                    ui.content.push({label: 'No matches in this study', value: ''});
-                    return ui;
-                }
-            }
-        }
-    )
-}
-
-// used for calculating size of plotly graphs to maintain square aspect ratio
-var SCATTER_RATIO = 0.75;
-
 function elementVisible(element) {
     return $(element).is(":visible");
 }
-
-function paginateStudies(totalPages, order, searchString, project) {
-
-    var target = document.getElementById("pagination");
-    var spinner = new Spinner(paginationOpts).spin(target);
-    var page = parseInt($($(".study-panel").slice(-1)[0]).attr("data-page")) + 1;
-    var dataParams = {};
-    dataParams["page"] = page;
-    if (order !== "") {
-        dataParams["order"] = order;
-    }
-    if (searchString !== "") {
-        dataParams["search_terms"] = searchString;
-    }
-    if (project !== "") {
-        dataParams["scpbr"] = project;
-    }
-    $("#pagination").fadeOut("fast", function() {
-            $.ajax({
-                url: "/single_cell",
-                data: dataParams,
-                dataType: "script",
-                type: "GET",
-                success: function(data){
-                    spinner.stop();
-                    if ( dataParams["page"] < totalPages ) {
-                        $("#pagination").fadeIn("fast");
-                        $(window).bind('scroll', bindScroll);
-                    }
-                }
-            });
-        }
-    );
-}
-
 
 // used for keeping track of position in wizard
 var completed = {
@@ -497,11 +295,6 @@ function enableDefaultActions() {
         history.pushState('', document.title, href);
     });
 
-  // Remove styling set in scpPlotsDidRender
-  $('#render-target .tab-content > div').attr('style', '');
-
-  restoreExploreMenusState();
-
 }
 
 function enableHoverPopovers(selector='[data-toggle="popover"]') {
@@ -526,30 +319,6 @@ function enableHoverPopovers(selector='[data-toggle="popover"]') {
 var stickyOptions = {
     topPadding: 85
 };
-
-// eweitz 2018-02-08: We removed the 'view-fullscreen' button that calls this last month.  Do we still need this?
-// toggle the Search/View options panel
-function toggleSearch() {
-    $('#search-target').toggleClass('col-md-3 hidden');
-    $('#render-target').toggleClass('col-md-9 col-md-12');
-    $('#search-options-panel').toggleClass('hidden');
-    $('#show-search-options').toggleClass('hidden');
-    if ( $('#show-search-options').css('display') === 'none' ) {
-        $('#show-search-options').tooltip('hide');
-    }
-
-    // trigger resizeEnd to re-render Plotly to use available space
-    $(window).trigger('resize');
-    if ($('#panel-selection').is(':visible')) {
-        if ($('#search-target').is(":visible")) {
-            $('#search-parent').stickyPanel(stickyOptions)
-        } else {
-            if ($('#search-parent').data("stickyPanel.state") !== 'undefined') {
-                $('#search-parent').stickyPanel('unstick')
-            }
-        }
-    }
-}
 
 // functions to show loading modals with spinners
 // callback function will execute after modal completes opening
@@ -618,72 +387,6 @@ function showMessageModal(notice=null, alert=null) {
     }
 }
 
-// Propagate changes from the View Options sidebar to the Search Genes form.
-function updateSearchGeneParams() {
-
-  // Get values from control elements in View Options sidebar
-  var cluster = $('#cluster').val();
-  var annotation = $('#annotation').val();
-  var consensus = $('#search_consensus').val();
-  var subsample = $('#subsample').val();
-  var plot_type = $('#plot_type').val() === undefined ? 'violin' : $('#plot_type').val();
-  var jitter = $('#jitter').val() === undefined ? 'all' : $('#jitter').val();
-  var boxpoints = $('#boxpoints_select').val() === undefined ? 'all' : $('#boxpoints_select').val();
-  var heatmap_size = $('#heatmap');
-  var heatmap_row_centering = $('#heatmap_row_centering').val();
-  var heatmap_size = parseInt($('#heatmap_size').val());
-
-  // These 'search_foo' values exist in hidden form elements in '#search-genes-input'
-  $("#search_cluster").val(cluster);
-  $("#search_annotation").val(''); // clear value first
-  $("#search_annotation").val(annotation);
-  $('#search_plot_type').val(plot_type);
-  $('#search_jitter').val(jitter);
-  $('#search_boxpoints').val(boxpoints);
-  $('#search_heatmap_row_centering').val(heatmap_row_centering);
-  $('#search_heatmap_size').val(heatmap_size);
-  $('#search_subsample').val(subsample);
-}
-
-
-// Gets URL parameters needed for each "render" call, e.g. no-gene, single-gene, multi-gene
-function getRenderUrlParams() {
-
-  // Get values from control elements in View Options sidebar
-  var cluster = $('#cluster').val();
-  var annotation = $('#annotation').val();
-  var consensus = $('#search_consensus').val();
-  var subsample = $('#subsample').val();
-  var plot_type = $('#plot_type').val() === undefined ? 'violin' : $('#plot_type').val();
-  var boxpoints = $('#boxpoints_select').val() === undefined ? 'all' : $('#boxpoints_select').val();
-  var heatmap_row_centering = $('#heatmap_row_centering').val();
-  var heatmap_size = parseInt($('#heatmap_size').val());
-  var color_profile = $('#colorscale').val();
-
-  var urlParams =
-    'cluster=' + cluster +
-    '&annotation=' + annotation +
-    '&boxpoints=' + boxpoints +
-    '&consensus=' + consensus +
-    '&subsample=' + subsample +
-    '&plot_type=' + plot_type +
-    '&heatmap_row_centering=' + heatmap_row_centering +
-    '&heatmap_size=' + heatmap_size +
-    '&colorscale=' + color_profile;
-
-  urlParams = urlParams.replace('%', '%25');
-
-  return urlParams;
-}
-
-// Handles changes in View Options for 'Heatmap' view
-$(document).on('change', '#heatmap_row_centering, #annotation', function() {
-  updateSearchGeneParams();
-});
-$(document).on('click', '#resize-heatmap', function() {
-  updateSearchGeneParams();
-});
-
 // default title font settings for axis titles in plotly
 var plotlyTitleFont = {
     family: 'Helvetica Neue',
@@ -699,19 +402,6 @@ var plotlyLabelFont = {
 };
 
 var plotlyDefaultLineColor = 'rgb(40, 40, 40)';
-
-// default scatter plot colors, a combination of colorbrewer sets 1-3 with tweaks to the yellow members
-//
-// Only use this in legacy ERB templates.  For new JS, use
-// `getColorBrewerColor`a standard convenience method exported from lib/plot.js
-var colorBrewerSet = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#a65628", "#f781bf", "#999999",
-    "#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854", "#ffd92f", "#e5c494", "#b3b3b3", "#8dd3c7",
-    "#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f"];
-
-// clear out text area in a form
-function clearForm(target) {
-    $('#' + target).val("");
-}
 
 // set error state on blank text boxes or selects
 function setErrorOnBlank(selector) {
@@ -763,27 +453,6 @@ function toggleFastqFields(target, state) {
     nameField.parent().effect('highlight', 1200);
     fastqField.effect('highlight', 1200);
 }
-
-// function to toggle all traces in a Plotly div
-function togglePlotlyTraces(div) {
-    console.log('toggling all traces in ' + div);
-    var plotlyData = document.getElementById(div).data;
-    var visibility = plotlyData[0].visible;
-
-    // if visibility is undefined or true, that means it is visible and we want to set this to 'legendonly'
-    // when visibility === 'legendonly', we can set this back to true to show all traces
-    if( visibility === undefined || visibility === true) {
-        visibility = 'legendonly';
-    } else {
-        visibility = true
-    }
-
-    Plotly.restyle(div, 'visible', visibility);
-    // toggle class of toggle glyph
-    $('#toggle-traces').children().toggleClass('fa-toggle-on fa-toggle-off');
-    console.log('toggle complete in ' + div + '; visibility now ' + visibility);
-}
-
 
 // function to return a plotly histogram data object from an array of input values
 function formatPlotlyHistogramData(valuesHash, offset) {
@@ -1005,13 +674,6 @@ function gatherFilesByType(fileType) {
     return matchingfiles;
 }
 
-// garbage collector to clear the search animation on global gene search (in case no results are found)
-window.clearGeneSearchLoading = function() {
-    console.log('Clearing global gene search message');
-    $('#wrap').data('spinner').stop();
-    $('#gene-search-results-count').html($('.gene-panel').length);
-};
-
 // force login on ajax 401
 $(document).ajaxError(function (e, xhr, settings) {
     if (xhr.status === 401) {
@@ -1021,49 +683,12 @@ $(document).ajaxError(function (e, xhr, settings) {
     }
 });
 
-// preserve the state of gene search beyond page reload (in case user needs to sign in)
-function preserveGeneSearch() {
-    console.log('preserving search state');
-    // construct a gene expression URL to load after action is completed
-    var searchUrl = window.location.origin + window.location.pathname + '/gene_expression';
-    var urlParams = getRenderUrlParams();
-    var genes = $('#search_genes').val().split(' ');
-    if (genes.length === 1) {
-        searchUrl += '/' + genes[0] + '?'
-    } else {
-        searchUrl += '?search%5Bgenes%5D=' + genes.join('+') + '&';
-    }
-    searchUrl += urlParams + window.location.hash;
-    localStorage.setItem('previous-search-url', searchUrl);
-    console.log('search form saved');
-}
-
 // reopen current tab on page refresh
 function reopenUiTab(navTarget) {
     var tab = window.location.hash;
     if (tab !== '') {
         $(navTarget + ' a[href="' + tab + '"]').tab('show');
     }
-}
-
-// re-render a plot after a user selects a new cluster from the dropdown menu, usually called from a complete() callback
-// in an $.ajax() function
-function renderWithNewCluster(updateStatusText, renderCallback, setAnnotation=true) {
-    if (updateStatusText === 'success') {
-        if (setAnnotation) {
-            var an = $('#annotation').val();
-            $('#search_annotation').val(an);
-            $('#gene_set_annotation').val(an);
-        }
-        renderCallback();
-    }
-}
-
-// extract out identifier for global gene search by trimming off last -cluster, -annotation, or -subsample
-function extractIdentifierFromId(domId) {
-    var idParts = domId.split('-');
-    idParts.pop();
-    return idParts.join('-');
 }
 
 // append a list of options to a select menu dynamically when file_type is changed on sync_study view

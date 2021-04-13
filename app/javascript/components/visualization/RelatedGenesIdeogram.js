@@ -13,7 +13,7 @@
 
 import React, { useEffect } from 'react'
 
-import { logStudyGeneSearch } from 'lib/metrics-api'
+import { logStudyGeneSearch, log } from 'lib/metrics-api'
 import Ideogram from 'ideogram'
 
 /** Handle clicks on Ideogram annotations */
@@ -103,7 +103,7 @@ function onWillShowAnnotTooltip(annot) {
   // technical artifact that is not worth analyzing.
   if (props) {
     props = conformAnalytics(props, ideogram)
-    window.SCP.log('ideogram:related-genes:tooltip', props)
+    log('ideogram:related-genes:tooltip', props)
   }
 
   return annot
@@ -125,7 +125,7 @@ function onPlotRelatedGenes() {
   const ideogram = this // eslint-disable-line
   const props = getRelatedGenesAnalytics(ideogram)
 
-  window.SCP.log('ideogram:related-genes', props)
+  log('ideogram:related-genes', props)
 }
 
 /**
