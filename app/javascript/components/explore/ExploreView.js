@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { Router } from '@reach/router'
 import _clone from 'lodash/clone'
@@ -8,7 +8,6 @@ import { getDefaultClusterParams } from 'lib/cluster-utils'
 
 import { fetchExplore } from 'lib/scp-api'
 import useExploreTabRouter from './ExploreTabRouter'
-import { log } from 'lib/metrics-api'
 
 /**
  * manages the url params and fetching the basic study info that determines what options to show
@@ -17,8 +16,6 @@ function RoutableExploreTab({ studyAccession }) {
   // stores the basic study overview data from the server, used to determine what views are available
   const [exploreInfo, setExploreInfo] = useState(null)
   const { exploreParams, updateExploreParams, routerLocation } = useExploreTabRouter()
-
-  const annotationList = exploreInfo ? exploreInfo.annotationList : null
 
   // we keep a separate 'exploreParamsWithDefaults' object that updates after defaults are fetched from the server
   // this is kept separate so that the graphs do not see the change in cluster name from '' to

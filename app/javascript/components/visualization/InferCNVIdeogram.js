@@ -6,10 +6,11 @@
 
 import React, { useEffect, useState } from 'react'
 import _uniqueId from 'lodash/uniqueId'
-
 import Ideogram from 'ideogram'
 import { getReadAccessToken, userHasTerraProfile } from "providers/UserProvider";
 import { profileWarning } from 'lib/study-overview/terra-profile-warning'
+
+import { log } from 'lib/metrics-api'
 
 /* eslint-disable no-unused-vars */
 
@@ -32,6 +33,7 @@ const legend = [{
   ]
 }]
 
+/** InferCNV Ideogram component */
 export default function InferCNVIdeogram({ studyAccession, ideogramFileId, inferCNVIdeogramFiles, showViewOptionsControls }) {
   const [ideogramContainerId] = useState(_uniqueId('study-infercnv-ideogram-'))
   const [showProfileWarning, setShowProfileWarning] = useState(false)
@@ -306,6 +308,6 @@ function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsC
   inferCNVIdeogram = new Ideogram(ideoConfig)
   window.inferCNVIdeogram = inferCNVIdeogram
 
-  window.SCP.log('ideogram:initialize')
+  log('ideogram:initialize')
 }
 

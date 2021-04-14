@@ -48,6 +48,11 @@ class BulkDownloadService
       manifest_config += "output=\"#{study.accession}/file_supplemental_info.tsv\""
       curl_configs << manifest_config
     end
+    MetricsService.log('file-download:curl-config', {
+      numFiles: study_files.count,
+      numStudies: studies.count,
+      studyAccesions: studies.map(&:accession)
+    }, user)
     curl_configs.join("\n\n")
   end
 

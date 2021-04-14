@@ -1,8 +1,8 @@
 class SiteController < ApplicationController
   ###
   #
-  # This is the main public controller for the portal.  All data viewing/rendering is handled here, including creating
-  # UserAnnotations and submitting workflows.
+  # This is the main public controller for the portal.  All ERB template-based
+  # data viewing/rendering is handled here, including submitting workflows.
   #
   ###
 
@@ -14,21 +14,14 @@ class SiteController < ApplicationController
 
   respond_to :html, :js, :json
 
-  before_action :set_study, except: [:index, :search, :legacy_study, :get_viewable_studies, :search_all_genes, :privacy_policy, :terms_of_service,
+  before_action :set_study, except: [:index, :search, :legacy_study, :get_viewable_studies, :privacy_policy, :terms_of_service,
                                      :view_workflow_wdl, :log_action, :get_taxon, :get_taxon_assemblies, :covid19]
-  before_action :set_cluster_group, only: [:study, :render_gene_expression_plots, :render_global_gene_expression_plots,
-                                           :render_gene_set_expression_plots, :view_gene_expression, :view_gene_set_expression,
-                                           :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap, :expression_query,
-                                           :annotation_query, :get_new_annotations, :annotation_values, :show_user_annotations_form]
-  before_action :set_selected_annotation, only: [:render_gene_expression_plots, :render_global_gene_expression_plots,
-                                                 :render_gene_set_expression_plots, :view_gene_expression, :view_gene_set_expression,
-                                                 :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap, :annotation_query,
-                                                 :annotation_values, :show_user_annotations_form]
-  before_action :load_precomputed_options, only: [:study, :update_study_settings, :render_gene_expression_plots,
-                                                  :render_gene_set_expression_plots, :view_gene_expression, :view_gene_set_expression,
-                                                  :view_gene_expression_heatmap, :view_precomputed_gene_expression_heatmap]
-  before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :search_all_genes, :render_global_gene_expression_plots, :privacy_policy,
-                                                  :terms_of_service, :search, :precomputed_results, :expression_query, :annotation_query, :view_workflow_wdl,
+  before_action :set_cluster_group, only: [:study, :expression_query, :annotation_query,
+                                          :get_new_annotations, :annotation_values, :show_user_annotations_form]
+  before_action :set_selected_annotation, only: [:annotation_query, :annotation_values, :show_user_annotations_form]
+  before_action :load_precomputed_options, only: [:study, :update_study_settings]
+  before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :privacy_policy,
+                                                  :terms_of_service, :expression_query, :annotation_query, :view_workflow_wdl,
                                                   :log_action, :get_workspace_samples, :update_workspace_samples,
                                                   :get_workflow_options, :get_taxon, :get_taxon_assemblies, :covid19, :record_download_acceptance]
   before_action :check_compute_permissions, only: [:get_fastq_files, :get_workspace_samples, :update_workspace_samples,
@@ -42,10 +35,10 @@ class SiteController < ApplicationController
                                               :get_submission_outputs, :delete_submission_files, :get_submission_metadata]
 
   # caching
-  caches_action :render_gene_expression_plots, :render_gene_set_expression_plots, :render_global_gene_expression_plots,
-                :expression_query, :annotation_query, :precomputed_results,
+  caches_action :expression_query, :annotation_query,
                 cache_path: :set_cache_path
-  COLORSCALE_THEMES = %w(Greys YlGnBu Greens YlOrRd Bluered RdBu Reds Blues Picnic Rainbow Portland Jet Hot Blackbody Earth Electric Viridis Cividis)
+
+                COLORSCALE_THEMES = %w(Greys YlGnBu Greens YlOrRd Bluered RdBu Reds Blues Picnic Rainbow Portland Jet Hot Blackbody Earth Electric Viridis Cividis)
 
   ###
   #
@@ -55,15 +48,6 @@ class SiteController < ApplicationController
 
   # view study overviews/descriptions
   def index
-    # set study order
-    case params[:order]
-      when 'recent'
-        @order = :created_at.desc
-      when 'popular'
-        @order = :view_count.desc
-      else
-        @order = [:view_order.asc, :name.asc]
-    end
 
     # load viewable studies in requested order
     @viewable = Study.viewable(current_user).order_by(@order)
@@ -81,35 +65,10 @@ class SiteController < ApplicationController
       @cell_count = 0
     end
 
-    page_num = RequestUtils.sanitize_page_param(params[:page])
-    # if search params are present, filter accordingly
-    if !params[:search_terms].blank?
-      search_terms = sanitize_search_values(params[:search_terms])
-      # determine if search values contain possible study accessions
-      possible_accessions = StudyAccession.sanitize_accessions(search_terms.split)
-      @studies = @viewable.any_of({:$text => {:$search => search_terms}}, {:accession.in => possible_accessions}).
-          paginate(page: page_num, per_page: Study.per_page)
-    else
-      @studies = @viewable.paginate(page: page_num, per_page: Study.per_page)
-    end
   end
 
   def covid
     # nothing for now
-  end
-
-  # search for matching studies
-  def search
-    params[:search_terms] = sanitize_search_values(params[:search_terms])
-    # use built-in MongoDB text index (supports quoting terms & case sensitivity)
-    @studies = Study.where({'$text' => {'$search' => params[:search_terms]}})
-
-    # restrict to branding group if present
-    if @selected_branding_group.present?
-      @studies = @studies.where(branding_group_id: @selected_branding_group.id)
-    end
-
-    render 'index'
   end
 
   # legacy method to load a study by url_safe_name, or simply by accession
@@ -133,61 +92,6 @@ class SiteController < ApplicationController
 
   end
 
-  # redirect handler to determine which gene expression method to render
-  def search_genes
-    @terms = parse_search_terms(:genes)
-    # limit gene search for performance reasons
-    if @terms.size > StudySearchService::MAX_GENE_SEARCH
-      @terms = @terms.take(StudySearchService::MAX_GENE_SEARCH)
-      search_message = StudySearchService::MAX_GENE_SEARCH_MSG
-    end
-    # grab saved params for loaded cluster, boxpoints mode, annotations, consensus and other view settings
-    cluster = params[:search][:cluster]
-    annotation = params[:search][:annotation]
-    boxpoints = params[:search][:boxpoints]
-    consensus = params[:search][:consensus]
-    subsample = params[:search][:subsample]
-    plot_type = params[:search][:plot_type]
-    heatmap_row_centering = params[:search][:heatmap_row_centering]
-    heatmap_size = params[:search][:heatmap_size]
-    colorscale = params[:search][:colorscale]
-
-    # if only one gene was searched for, make an attempt to load it and redirect to correct page
-    if @terms.size == 1
-      # do a quick presence check to make sure the gene exists before trying to load
-      file_ids = load_study_expression_matrix_ids(@study.id)
-      if !Gene.study_has_gene?(study_id: @study.id, expr_matrix_ids: file_ids, gene_name: @terms.first)
-        redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
-                    alert: "No matches found for: #{@terms.first}." and return
-      else
-        redirect_to merge_default_redirect_params(view_gene_expression_path(accession: @study.accession, study_name: @study.url_safe_name, gene: @terms.first,
-                                                                            cluster: cluster, annotation: annotation, consensus: consensus,
-                                                                            subsample: subsample, plot_type: plot_type,
-                                                                            boxpoints: boxpoints, heatmap_row_centering: heatmap_row_centering,
-                                                                            heatmap_size: heatmap_size, colorscale: colorscale),
-                                                  scpbr: params[:scpbr])  and return
-      end
-    end
-
-    # else, determine which view to load (heatmaps vs. violin/scatter)
-    if !consensus.blank?
-      redirect_to merge_default_redirect_params(view_gene_set_expression_path(accession: @study.accession, study_name: @study.url_safe_name,
-                                                                              search: {genes: @terms.join(' ')},
-                                                                              cluster: cluster, annotation: annotation,
-                                                                              consensus: consensus, subsample: subsample,
-                                                                              plot_type: plot_type,  boxpoints: boxpoints,
-                                                                              heatmap_row_centering: heatmap_row_centering,
-                                                                              heatmap_size: heatmap_size, colorscale: colorscale),
-                                                scpbr: params[:scpbr]), notice: search_message
-    else
-      redirect_to merge_default_redirect_params(view_gene_expression_heatmap_path(accession: @study.accession, study_name: @study.url_safe_name,
-                                                                                  search: {genes: @terms.join(' ')}, cluster: cluster,
-                                                                                  annotation: annotation, plot_type: plot_type,
-                                                                                  boxpoints: boxpoints, heatmap_row_centering: heatmap_row_centering,
-                                                                                  heatmap_size: heatmap_size, colorscale: colorscale),
-                                                scpbr: params[:scpbr]), notice: search_message
-    end
-  end
 
   def get_viewable_studies
     @studies = Study.viewable(current_user)
@@ -199,47 +103,6 @@ class SiteController < ApplicationController
     page_num = RequestUtils.sanitize_page_param(params[:page])
     # restrict studies to initialized only
     @studies = @studies.where(initialized: true).paginate(page: page_num, per_page: Study.per_page)
-  end
-
-  # global gene search, will return a list of studies that contain the requested gene(s)
-  # results will be visualized on a per-gene basis (not merged)
-  def search_all_genes
-    # set study
-    @study = Study.find(params[:id])
-    if check_xhr_view_permissions
-      # parse and sanitize gene terms
-      delim = params[:search][:genes].include?(',') ? ',' : ' '
-      raw_genes = params[:search][:genes].split(delim)
-      @genes = sanitize_search_values(raw_genes).split(',').map(&:strip)
-      # limit gene search for performance reasons
-      if @genes.size > StudySearchService::MAX_GENE_SEARCH
-        @genes = @genes.take(StudySearchService::MAX_GENE_SEARCH)
-      end
-      @results = []
-      if !@study.initialized?
-        head 422
-      else
-        matrix_ids = @study.expression_matrix_files.map(&:id)
-        @genes.each do |gene|
-          # determine if study contains requested gene
-          matches = @study.genes.any_of({name: gene, :study_file_id.in => matrix_ids},
-                                        {searchable_name: gene.downcase, :study_file_id.in => matrix_ids},
-                                        {gene_id: gene, :study_file.in => matrix_ids})
-          if matches.present?
-            matches.each do |match|
-              # gotcha where you can have duplicate genes that came from different matrices - ignore these as data is merged on load
-              if @results.detect {|r| r.study == match.study && r.searchable_name == match.searchable_name}
-                next
-              else
-                @results << match
-              end
-            end
-          end
-        end
-      end
-    else
-      head 403
-    end
   end
 
   ###
@@ -300,8 +163,6 @@ class SiteController < ApplicationController
   # load single study and view top-level clusters
   def study
     @study.update(view_count: @study.view_count + 1)
-    @unique_genes = @study.unique_genes
-    @taxons = @study.expressed_taxon_names
 
     # set general state of study to enable various tabs in UI
     # double check on download availability: first, check if administrator has disabled downloads
@@ -311,30 +172,6 @@ class SiteController < ApplicationController
     set_study_permissions(@study.detached?)
     set_study_default_options
     set_study_download_options
-
-    # load options and annotations
-    if @study.can_visualize_clusters?
-      @options = ClusterVizService.load_cluster_group_options(@study)
-      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-      # call set_selected_annotation manually
-      set_selected_annotation
-    end
-
-    # only populate if study has ideogram results & is not 'detached'
-    if @study.has_analysis_outputs?('infercnv', 'ideogram.js') && !@study.detached?
-      @ideogram_files = {}
-      @study.get_analysis_outputs('infercnv', 'ideogram.js').each do |file|
-        opts = file.options.with_indifferent_access # allow lookup by string or symbol
-        cluster_name = opts[:cluster_name]
-        annotation_name = opts[:annotation_name].split('--').first
-        @ideogram_files[file.id.to_s] = {
-            cluster: cluster_name,
-            annotation: opts[:annotation_name],
-            display: "#{cluster_name}: #{annotation_name}",
-            ideogram_settings: @study.get_ideogram_infercnv_settings(cluster_name, opts[:annotation_name])
-        }
-      end
-    end
 
     if @allow_firecloud_access && @user_can_compute
       # load list of previous submissions
@@ -362,340 +199,6 @@ class SiteController < ApplicationController
         format.js
       end
     end
-  end
-
-  ## GENE-BASED
-
-  # render violin and scatter plots for parent clusters or a particular sub cluster
-  def view_gene_expression
-    @options = ClusterVizService.load_cluster_group_options(@study)
-    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-    @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
-    @y_axis_title = ExpressionVizService.load_expression_axis_title(@study)
-
-    @gene = params[:gene]
-
-    if @study.expressed_taxon_names.length > 1
-      @gene_taxons = @study.infer_taxons(@gene)
-    else
-      @gene_taxons = @study.expressed_taxon_names
-    end
-
-    if request.format == 'text/html'
-      # only set this check on full page loads (happens if user was not signed in but then clicked the 'genome' tab)
-      set_firecloud_permissions(@study.detached?)
-      @user_can_edit = @study.can_edit?(current_user)
-      @user_can_compute = @study.can_compute?(current_user)
-      @user_can_download = @study.can_download?(current_user)
-    end
-  end
-
-  # re-renders plots when changing cluster selection
-  def render_gene_expression_plots
-    subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
-    @gene = @study.genes.by_name_or_id(params[:gene], @study.expression_matrix_files.map(&:id))
-    @y_axis_title = ExpressionVizService.load_expression_axis_title(@study)
-    # depending on annotation type selection, set up necessary partial names to use in rendering
-    if @selected_annotation[:type] == 'group'
-      @values = ExpressionVizService.load_expression_boxplot_data_array_scores(@study, @gene, @cluster,
-                                                                               @selected_annotation, subsample)
-      if params[:plot_type] == 'box'
-        @values_box_type = 'box'
-      else
-        @values_box_type = 'violin'
-        @values_jitter = params[:boxpoints]
-      end
-      @top_plot_partial = 'expression_plots_view'
-      @top_plot_plotly = 'expression_plots_plotly'
-      @top_plot_layout = 'expression_box_layout'
-    else
-      @values = ExpressionVizService.load_annotation_based_data_array_scatter(@study, @gene, @cluster, @selected_annotation,
-                                                                              subsample, @y_axis_title)
-      @top_plot_partial = 'expression_annotation_plots_view'
-      @top_plot_plotly = 'expression_annotation_plots_plotly'
-      @top_plot_layout = 'expression_annotation_scatter_layout'
-      @annotation_scatter_range = ClusterVizService.set_range(@cluster, @values.values)
-    end
-    @expression = ExpressionVizService.load_expression_data_array_points(@study, @gene, @cluster, @selected_annotation,
-                                                                         subsample, @y_axis_title, params[:colorscale])
-    @options = ClusterVizService.load_cluster_group_options(@study)
-    @range = ClusterVizService.set_range(@cluster,[@expression[:all]])
-    @coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, @cluster, @selected_annotation, subsample)
-    if @cluster.has_coordinate_labels?
-      @coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(@cluster)
-    end
-    @static_range = ClusterVizService.set_range(@cluster, @coordinates.values)
-    if @cluster.is_3d? && @cluster.has_range?
-      @expression_aspect = ClusterVizService.compute_aspect_ratios(@range)
-      @static_aspect = ClusterVizService.compute_aspect_ratios(@static_range)
-    end
-    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-
-    # load default color profile if necessary
-    if params[:annotation] == @study.default_annotation && @study.default_annotation_type == 'numeric' && !@study.default_color_profile.nil?
-      @expression[:all][:marker][:colorscale] = @study.default_color_profile
-      @coordinates[:all][:marker][:colorscale] = @study.default_color_profile
-    end
-  end
-
-  # renders gene expression plots, but from global gene search. uses default annotations on first render, but takes URL parameters after that
-  def render_global_gene_expression_plots
-    if check_xhr_view_permissions
-      subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
-      @gene = @study.genes.by_name_or_id(params[:gene], @study.expression_matrix_files.map(&:id))
-      @identifier = params[:identifier] # unique identifer for each plot for namespacing JS variables/functions (@gene.id)
-      @target = 'study-' + @study.id + '-gene-' + @identifier
-      @y_axis_title = ExpressionVizService.load_expression_axis_title(@study)
-      if @selected_annotation[:type] == 'group'
-        @values = ExpressionVizService.load_expression_boxplot_data_array_scores(@study, @gene, @cluster,
-                                                                                 @selected_annotation, subsample)
-        @values_jitter = params[:boxpoints]
-      else
-        @values = ExpressionVizService.load_annotation_based_data_array_scatter(@study, @gene, @cluster, @selected_annotation,
-                                                                                subsample, @y_axis_title)
-      end
-      @options = ClusterVizService.load_cluster_group_options(@study)
-      @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-    else
-      head 403
-    end
-  end
-
-  # view set of genes (scores averaged) as box and scatter plots
-  # works for both a precomputed list (study supplied) or a user query
-  def view_gene_set_expression
-    # first check if there is a user-supplied gene list to view as consensus
-    # call search_expression_scores to return values not found
-
-    terms = params[:gene_set].blank? && !params[:consensus].blank? ? parse_search_terms(:genes) : @study.precomputed_scores.by_name(params[:gene_set]).gene_list
-    @genes, @not_found = search_expression_scores(terms, @study.id)
-
-    consensus = params[:consensus].nil? ? 'Mean ' : params[:consensus].capitalize + ' '
-    @gene_list = @genes.map{|gene| gene['name']}.join(' ')
-    @y_axis_title = consensus + ' ' + ExpressionVizService.load_expression_axis_title(@study)
-    # depending on annotation type selection, set up necessary partial names to use in rendering
-    @options = ClusterVizService.load_cluster_group_options(@study)
-    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-    @top_plot_partial = @selected_annotation[:type] == 'group' ? 'expression_plots_view' : 'expression_annotation_plots_view'
-
-    if @genes.size > 5
-      @main_genes, @other_genes = divide_genes_for_header
-    end
-    # make sure we found genes, otherwise redirect back to base view
-    if @genes.empty?
-      redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]), alert: "None of the requested genes were found: #{terms.join(', ')}"
-    else
-      render 'view_gene_expression'
-    end
-  end
-
-  # re-renders plots when changing cluster selection
-  def render_gene_set_expression_plots
-    # first check if there is a user-supplied gene list to view as consensus
-    # call load expression scores since we know genes exist already from view_gene_set_expression
-
-    terms = params[:gene_set].blank? ? parse_search_terms(:genes) : @study.precomputed_scores.by_name(params[:gene_set]).gene_list
-    @genes = load_expression_scores(terms)
-    subsample = params[:subsample].blank? ? nil : params[:subsample].to_i
-    consensus = params[:consensus].nil? ? 'Mean ' : params[:consensus].capitalize + ' '
-    @gene_list = @genes.map{|gene| gene['gene']}.join(' ')
-    dotplot_genes, dotplot_not_found = search_expression_scores(terms, @study.id)
-    @dotplot_gene_list = dotplot_genes.map{|gene| gene['name']}.join(' ')
-    @y_axis_title = consensus + ' ' + ExpressionVizService.load_expression_axis_title(@study)
-    # depending on annotation type selection, set up necessary partial names to use in rendering
-    if @selected_annotation[:type] == 'group'
-      @values = ExpressionVizService.load_gene_set_expression_boxplot_scores(@study, @genes, @cluster, @selected_annotation,
-                                                                             params[:consensus], subsample)
-      if params[:plot_type] == 'box'
-        @values_box_type = 'box'
-      else
-        @values_box_type = 'violin'
-        @values_jitter = params[:jitter]
-      end
-      @top_plot_partial = 'expression_plots_view'
-      @top_plot_plotly = 'expression_plots_plotly'
-      @top_plot_layout = 'expression_box_layout'
-    else
-      @values = ExpressionVizService.load_gene_set_annotation_based_scatter(@study, @genes, @cluster, @selected_annotation,
-                                                                            params[:consensus], subsample, @y_axis_title)
-      @top_plot_partial = 'expression_annotation_plots_view'
-      @top_plot_plotly = 'expression_annotation_plots_plotly'
-      @top_plot_layout = 'expression_annotation_scatter_layout'
-      @annotation_scatter_range = ClusterVizService.set_range(@cluster, @values.values)
-    end
-    # load expression scatter using main gene expression values
-    @expression = ExpressionVizService.load_gene_set_expression_data_arrays(@study, @genes, @cluster, @selected_annotation,
-                                                                            params[:consensus], subsample, @y_axis_title,
-                                                                            params[:colorscale])
-    @expression[:all][:marker][:cmin], @expression[:all][:marker][:cmax] = RequestUtils.get_minmax(@expression[:all][:marker][:color])
-
-    # load static cluster reference plot
-    @coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, @cluster, @selected_annotation, subsample)
-    # set up options, annotations and ranges
-    @options = ClusterVizService.load_cluster_group_options(@study)
-    @range = ClusterVizService.set_range(@cluster,[@expression[:all]])
-    @static_range = ClusterVizService.set_range(@cluster, @coordinates.values)
-
-    if @cluster.is_3d? && @cluster.has_range?
-      @expression_aspect = ClusterVizService.compute_aspect_ratios(@range)
-      @static_aspect = ClusterVizService.compute_aspect_ratios(@static_range)
-    end
-
-    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-
-    if @genes.size > 5
-      @main_genes, @other_genes = divide_genes_for_header
-    end
-
-    # load default color profile if necessary
-    if params[:annotation] == @study.default_annotation && @study.default_annotation_type == 'numeric' && !@study.default_color_profile.nil?
-      @expression[:all][:marker][:colorscale] = @study.default_color_profile
-      @coordinates[:all][:marker][:colorscale] = @study.default_color_profile
-    end
-
-    render 'render_gene_expression_plots'
-  end
-
-  # view genes in Morpheus as heatmap
-  def view_gene_expression_heatmap
-    # parse and divide up genes
-    terms = parse_search_terms(:genes)
-    @genes, @not_found = search_expression_scores(terms, @study.id)
-    @gene_list = @genes.map{|gene| gene['name']}.join(' ')
-    # load dropdown options
-    @options = ClusterVizService.load_cluster_group_options(@study)
-    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-    if @genes.size > 5
-      @main_genes, @other_genes = divide_genes_for_header
-    end
-    # make sure we found genes, otherwise redirect back to base view
-    if @genes.empty?
-      redirect_to merge_default_redirect_params(view_study_path(accession: @study.accession, study_name: @study.url_safe_name), scpbr: params[:scpbr]), alert: "None of the requested genes were found: #{terms.join(', ')}"
-    end
-  end
-
-  # load data in gct form to render in Morpheus, preserving query order
-  def expression_query
-    if check_xhr_view_permissions
-      terms = parse_search_terms(:genes)
-      @genes = load_expression_scores(terms)
-      @headers = ["Name", "Description"]
-      @cells = @cluster.concatenate_data_arrays('text', 'cells')
-      @cols = @cells.size
-      @cells.each do |cell|
-        @headers << cell
-      end
-
-      @rows = []
-      @genes.each do |gene|
-        row = [gene['name'], ""]
-        case params[:row_centered]
-          when 'z-score'
-            vals = Gene.z_score(gene['scores'], @cells)
-            row += vals
-          when 'robust-z-score'
-            vals = Gene.robust_z_score(gene['scores'], @cells)
-            row += vals
-          else
-            @cells.each do |cell|
-              row << gene['scores'][cell].to_f
-            end
-        end
-        @rows << row.join("\t")
-      end
-      @data = ['#1.2', [@rows.size, @cols].join("\t"), @headers.join("\t"), @rows.join("\n")].join("\n")
-
-      send_data @data, type: 'text/plain'
-    else
-      head 403
-    end
-  end
-
-  # load annotations in tsv format for Morpheus
-  def annotation_query
-    if check_xhr_view_permissions
-      @cells = @cluster.concatenate_data_arrays('text', 'cells')
-      if @selected_annotation[:scope] == 'cluster'
-        @annotations = @cluster.concatenate_data_arrays(@selected_annotation[:name], 'annotations')
-      else
-        study_annotations = @study.cell_metadata_values(@selected_annotation[:name], @selected_annotation[:type])
-        @annotations = []
-        @cells.each do |cell|
-          @annotations << study_annotations[cell]
-        end
-      end
-      # assemble rows of data
-      @rows = []
-      @cells.each_with_index do |cell, index|
-        @rows << [cell, @annotations[index]].join("\t")
-      end
-      @headers = ['NAME', @selected_annotation[:name]]
-      @data = [@headers.join("\t"), @rows.join("\n")].join("\n")
-      send_data @data, type: 'text/plain'
-    else
-      head 403
-    end
-  end
-
-  # dynamically reload cluster-based annotations list when changing clusters
-  def get_new_annotations
-    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
-    @target = params[:target].blank? ? nil : params[:target] + '-'
-    # used to match value of previous annotation with new values
-    @flattened_annotations = @cluster_annotations.values.map {|coll| coll.map(&:last)}.flatten
-  end
-
-  # return JSON representation of selected annotation
-  def annotation_values
-    render json: @selected_annotation.to_json
-  end
-
-  ## GENELIST-BASED
-
-  # load precomputed data in gct form to render in Morpheus
-  def precomputed_results
-    if check_xhr_view_permissions
-      @precomputed_score = @study.precomputed_scores.by_name(params[:precomputed])
-
-      @headers = ["Name", "Description"]
-      @precomputed_score.clusters.each do |cluster|
-        @headers << cluster
-      end
-      @rows = []
-      @precomputed_score.gene_scores.each do |score_row|
-        score_row.each do |gene, scores|
-          row = [gene, ""]
-          mean = 0.0
-          if params[:row_centered] == '1'
-            mean = scores.values.inject(0) {|sum, x| sum += x} / scores.values.size
-          end
-          @precomputed_score.clusters.each do |cluster|
-            row << scores[cluster].to_f - mean
-          end
-          @rows << row.join("\t")
-        end
-      end
-      @data = ['#1.2', [@rows.size, @precomputed_score.clusters.size].join("\t"), @headers.join("\t"), @rows.join("\n")].join("\n")
-
-      send_data @data, type: 'text/plain', filename: 'query.gct'
-    else
-      head 403
-    end
-  end
-
-  # redirect to show precomputed marker gene results
-  def search_precomputed_results
-    redirect_to merge_default_redirect_params(view_precomputed_gene_expression_heatmap_path(accession: params[:accession],
-                                                                                            study_name: params[:study_name],
-                                                                                            precomputed: params[:expression]),
-                                              scpbr: params[:scpbr])
-  end
-
-  # view all genes as heatmap in morpheus, will pull from pre-computed gct file
-  def view_precomputed_gene_expression_heatmap
-    @precomputed_score = @study.precomputed_scores.by_name(params[:precomputed])
-    @options = ClusterVizService.load_cluster_group_options(@study)
-    @cluster_annotations = ClusterVizService.load_cluster_group_annotations(@study, @cluster, current_user)
   end
 
   ###

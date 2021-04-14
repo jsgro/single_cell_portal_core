@@ -4,13 +4,14 @@ import { faDna } from '@fortawesome/free-solid-svg-icons'
 import igv from '@single-cell-portal/igv'
 import _uniqueId from 'lodash/uniqueId'
 
+import { log } from 'lib/metrics-api'
 import { fetchBamFileInfo } from 'lib/scp-api'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { getReadAccessToken, userHasTerraProfile } from "providers/UserProvider";
 import { profileWarning } from 'lib/study-overview/terra-profile-warning'
 
-/** Component for displaying IGV for any bam/bai files provided with the study */
-function GenomeView({ studyAccession, bamFileName, isVisible, updateExploreParams }) {
+/** Component for displaying IGV for any BAM/BAI files provided with the study */
+function GenomeView({ studyAccession, bamFileName, uniqueGenes, isVisible, updateExploreParams }) {
   const [isLoading, setIsLoading] = useState(false)
   const [bamFileList, setBamFileList] = useState(null)
   const [igvInitializedFiles, setIgvInitializedFiles] = useState('')
@@ -18,7 +19,7 @@ function GenomeView({ studyAccession, bamFileName, isVisible, updateExploreParam
   const [showProfileWarning, setShowProfileWarning] = useState(false)
 
   useEffect(() => {
-    // go get the bam file anmes and urls from the server.
+    // Get the BAM file names and urls from the server.
     setIsLoading(true)
     fetchBamFileInfo(studyAccession).then(result => {
       setBamFileList(result)
@@ -52,7 +53,7 @@ function GenomeView({ studyAccession, bamFileName, isVisible, updateExploreParam
       // So we track what the last files are that we initialized
       // IGV with, and only rerender if they are different.
       if (igvInitializedFiles !== fileNamesToShow) {
-        initializeIgv(igvContainerId, listToShow, bamFileList.gtfFiles)
+        initializeIgv(igvContainerId, listToShow, bamFileList.gtfFiles, uniqueGenes)
       }
       setIgvInitializedFiles(fileNamesToShow)
     }
@@ -157,7 +158,7 @@ function getGenesTrack(gtfFiles, genome, genesTrackName) {
 /**
  * Instantiates and renders igv.js widget on the page
  */
-function initializeIgv(containerId, bamAndBaiFiles, gtfFiles) {
+function initializeIgv(containerId, bamAndBaiFiles, gtfFiles, uniqueGenes) {
   // Bail if already displayed
 
   delete igv.browser
@@ -209,10 +210,10 @@ function initializeIgv(containerId, bamAndBaiFiles, gtfFiles) {
   if (queriedGenes.length > 0) {
     // The user searched within a study for one or multiple genes
     locus = [queriedGenes.first().text()]
-  } else if (window.SCP.uniqueGenes.length > 0) {
+  } else if (uniqueGenes.length > 0) {
     // The user is viewing the default cluster plot, so select
     // their first in their matrix
-    locus = [window.SCP.uniqueGenes[0]]
+    locus = [uniqueGenes[0]]
   } else {
     // Rarely, users will upload BAMs and *not* matrices.  This accounts for
     // that case.
@@ -234,7 +235,7 @@ function initializeIgv(containerId, bamAndBaiFiles, gtfFiles) {
 
   // Log igv.js initialization in Google Analytics
   ga('send', 'event', 'igv', 'initialize')
-  window.SCP.log('igv:initialize')
+  log('igv:initialize')
 }
 
 
