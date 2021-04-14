@@ -18,15 +18,6 @@ export function isUserLoggedIn() {
   return !!getAccessToken()
 }
 
-/**
-  * Returns a scope-limited access token that can be used as a URL param
-  * window.SCP is not available when running via Jest tests,
-  * so default such cases to a string "test"
-  */
-export function getURLSafeAccessToken() {
-  return ('SCP' in window) ? window.SCP.URLSafeAccessToken : 'test'
-}
-
 /** Returns the feature flags with defaults for the current user */
 export function getFeatureFlagsWithDefaults() {
   // for now, read it off the home page.  Eventually, this will want to be an API call
