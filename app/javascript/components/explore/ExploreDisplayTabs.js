@@ -391,7 +391,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
                 studyGeneLists={exploreInfo.geneLists}
                 updateGeneList={updateGeneList}/>
             }
-            { exploreParams.genes.length > 1 &&
+            { exploreParams.genes.length > 1 && !['genome', 'infercnv-genome'].includes(shownTab) &&
               <ExploreConsensusSelector
                 consensus={exploreParamsWithDefaults.consensus}
                 updateConsensus={consensus => updateExploreParams({ consensus })}/>
