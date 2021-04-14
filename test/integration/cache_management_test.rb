@@ -48,7 +48,6 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
       refute Rails.cache.exist?(study_clusters_key), "Did not delete matching API clusters cache entry at #{study_clusters_key}"
       refute Rails.cache.exist?(study_cluster_key), "Did not delete matching API single cluster cache entry at #{study_cluster_key}"
       CacheRemovalJob.new(study.url_safe_name).perform
-      refute Rails.cache.exist?(annot_query_cache_key), "Did not delete matching annotation query cache entry at #{annot_query_cache_key}"
       puts "#{annotation} tests pass!"
     end
 
