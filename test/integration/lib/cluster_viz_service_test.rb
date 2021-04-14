@@ -248,6 +248,7 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
   # before cluster_group.set_point_count! is called at the end of successful ingest
   test 'should fallback to default points for new cluster' do
     new_cluster = @study.cluster_groups.build(name: 'New Cluster', cluster_type: '2d')
+    assert_equal 0, new_cluster.points
     assert_empty ClusterVizService.subsampling_options(new_cluster)
     assert_nil ClusterVizService.default_subsampling(new_cluster)
   end
