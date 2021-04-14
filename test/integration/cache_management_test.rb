@@ -14,7 +14,6 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
     cluster = study.cluster_groups.first
     cluster_name = cluster.name.split.join('-')
     cluster_underscore = cluster.name.split.join('_') # for API cache paths
-    expression_file = study.expression_matrix_file('expression_matrix_example.txt')
     genes = study.genes.map(&:name)
     gene = genes.sample
     genes_hash = Digest::SHA256.hexdigest genes.sort.join
@@ -23,8 +22,6 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
       puts "Testing with annotation: #{annotation}"
 
       # get various actions subject to caching
-      get expression_query_path(accession: study.accession, study_name: study.url_safe_name, cluster: cluster.name, annotation: annotation, search: {genes: genes.join(' ')} ), xhr: true
-      get annotation_query_path(accession: study.accession, study_name: study.url_safe_name, annotation: annotation, cluster: cluster.name), xhr: true
       get api_v1_study_explore_path(study_id: study.accession), as: :json
       get api_v1_study_clusters_path(study_id: study.accession), as: :json
       get api_v1_study_cluster_path(study_id: study.accession, annotation_name: cell_annotation[:name],
@@ -36,29 +33,21 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
                                        data_type: 'violin')
 
       # construct various cache keys for direct lookup (cannot lookup via regex)
-      exp_query_cache_key = "views/localhost/single_cell/study/#{study.accession}/#{study.url_safe_name}/expression_query_#{cluster_name}_#{annotation}__#{genes_hash}.js"
-      annot_query_cache_key = "views/localhost/single_cell/study/#{study.accession}/#{study.url_safe_name}/annotation_query_#{cluster_name}_#{annotation}.js"
       study_clusters_key = "_single_cell_api_v1_studies_#{study.accession}_clusters_"
       study_cluster_key = "#{study_clusters_key}#{cluster_underscore}_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}"
       expression_mean_key = "_single_cell_api_v1_studies_#{study.accession}_expression_violin_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}_consensus_mean_genes_#{genes.join(',')}_data_type_violin"
-      assert Rails.cache.exist?(exp_query_cache_key), "Did not find matching expression query cache entry at #{exp_query_cache_key}"
-      assert Rails.cache.exist?(annot_query_cache_key), "Did not find matching annotation query cache entry at #{annot_query_cache_key}"
       assert Rails.cache.exist?(study_clusters_key), "Did not find matching API clusters cache entry at #{study_clusters_key}"
       assert Rails.cache.exist?(study_cluster_key), "Did not find matching API single cluster cache entry at #{study_cluster_key}"
       assert Rails.cache.exist?(expression_mean_key), "Did not find matching API expression mean cache entry at #{expression_mean_key}"
 
       # load removal keys via associated study files
-      expression_file_cache_key = expression_file.cache_removal_key
       api_removal_key = "_single_cell_api_v1_studies_#{study.accession}"
 
       # clear caches individually and assert removals
-      CacheRemovalJob.new(expression_file_cache_key).perform
-      refute Rails.cache.exist?(exp_query_cache_key), "Did not delete matching expression query cache entry at #{exp_query_cache_key}"
       CacheRemovalJob.new(api_removal_key).perform
       refute Rails.cache.exist?(study_clusters_key), "Did not delete matching API clusters cache entry at #{study_clusters_key}"
       refute Rails.cache.exist?(study_cluster_key), "Did not delete matching API single cluster cache entry at #{study_cluster_key}"
       CacheRemovalJob.new(study.url_safe_name).perform
-      refute Rails.cache.exist?(annot_query_cache_key), "Did not delete matching annotation query cache entry at #{annot_query_cache_key}"
       puts "#{annotation} tests pass!"
     end
 

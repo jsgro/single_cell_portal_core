@@ -71,7 +71,7 @@ export default function StudyResults({ results, changePage, StudyComponent }) {
               <tr {...row.getRowProps(getRowProps(row))}>
                 {row.cells.map(cell => {
                   return (
-                    <td key {...cell.getCellProps()}>
+                    <td key={true} {...cell.getCellProps()}>
                       <ErrorBoundary>
                         <StudyComponent study={cell.value}/>
                       </ErrorBoundary>
