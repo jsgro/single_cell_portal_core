@@ -7,7 +7,7 @@ import _uniqueId from 'lodash/uniqueId'
 
 const scaledPopover = (
   <Popover id="scaled-mean-expression-helptext">
-    Scaling is relative to each gene's expression across all cells in a given
+    Scaling is relative to each gene&apos;s expression across all cells in a given
     annotation selection, i.e. cells associated with each column label in
     the dot plot.
   </Popover>
@@ -27,7 +27,7 @@ export default function DotPlotLegend() {
   // legend until we can clarify.
   //
   // const nonzeroNote = '<text x="9" y="66">(non-zero)</text>';
-  const nonzeroNote = ''
+
   const gradientId = _uniqueId('dotPlotGrad-')
   const colorBarWidth = 100
   const numberYPos = 30

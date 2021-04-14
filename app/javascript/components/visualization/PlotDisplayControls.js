@@ -1,9 +1,7 @@
-import React, { useState } from 'react'
+import React from 'react'
 import Panel from 'react-bootstrap/lib/Panel'
 import Select from 'react-select'
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCaretRight, faCaretDown } from '@fortawesome/free-solid-svg-icons'
 import { SCATTER_COLOR_OPTIONS, defaultScatterColor } from 'components/visualization/ScatterPlot'
 import { DISTRIBUTION_PLOT_OPTIONS, DISTRIBUTION_POINTS_OPTIONS } from 'components/visualization/StudyViolinPlot'
 import { ROW_CENTERING_OPTIONS, FIT_OPTIONS } from 'components/visualization/Heatmap'
@@ -16,10 +14,6 @@ export const defaultExploreParams = {
 
 /** the graph customization controls for the exlore tab */
 export default function RenderControls({ shownTab, exploreParams, updateExploreParams }) {
-  const [showScatter, setShowScatter] = useState(false)
-  const [showHeatmap, setShowHeatmap] = useState(false)
-  const [showDistribution, setShowDistribution] = useState(false)
-
   const scatterColorValue = exploreParams.scatterColor ? exploreParams.scatterColor : defaultScatterColor
   let distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS.find(opt => opt.value === exploreParams.distributionPlot)
   if (!distributionPlotValue) {
@@ -70,14 +64,20 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
             value={distributionPlotValue}
             clearable={false}
             isSearchable={false}
-            onChange={option => updateExploreParams({ distributionPlot: option.value, distributionPoints: distributionPointsValue.value })}/>
+            onChange={option => updateExploreParams({
+              distributionPlot: option.value,
+              distributionPoints: distributionPointsValue.value
+            })}/>
           <label htmlFor="distribution-plot-picker">Data points </label>
           <Select name="distribution-points-picker"
             options={DISTRIBUTION_POINTS_OPTIONS}
             value={distributionPointsValue}
             clearable={false}
             isSearchable={false}
-            onChange={option => updateExploreParams({ distributionPlot: distributionPlotValue.value, distributionPoints: option.value })}/>
+            onChange={option => updateExploreParams({
+              distributionPlot: distributionPlotValue.value,
+              distributionPoints: option.value
+            })}/>
         </Panel.Body>
       </Panel>
       <Panel className={shownTab === 'heatmap' ? '' : 'hidden'}>

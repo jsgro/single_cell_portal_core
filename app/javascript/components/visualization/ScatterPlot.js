@@ -58,7 +58,7 @@ function RawScatterPlot({
       layout.height = height
       formatMarkerColors(scatter.data, scatter.annotParams.type, scatter.gene)
       formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene, isAnnotatedScatter)
-      const dataScatterColor = processTraceScatterColor(scatter.data, scatterColor)
+      processTraceScatterColor(scatter.data, scatterColor)
 
       const perfTimeFrontendStart = performance.now()
 

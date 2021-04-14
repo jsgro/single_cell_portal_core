@@ -32,7 +32,9 @@ function RoutableExploreTab({ studyAccession }) {
         exploreParams={exploreParams}
         exploreParamsWithDefaults={exploreParamsWithDefaults}
         updateExploreParams={updateExploreParams}
-        exploreInfo={exploreInfo}/>
+        routerLocation={routerLocation}
+        exploreInfo={exploreInfo}
+        setExploreInfo={setExploreInfo}/>
     </div>
   )
 }

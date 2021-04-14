@@ -46,30 +46,44 @@ export function shortenDescription(textDescription, term) {
   // Check if there are matches outside of the descriptionCharacterLimit
   if (matchedIndices.some(matchedIndex => matchedIndex >= descriptionCharacterLimit)) {
     // Find matches occur outside descriptionCharacterLimit
-    const matchesOutSidedescriptionCharacterLimit = matchedIndices.filter(matchedIndex => matchedIndex>descriptionCharacterLimit)
+    const matchesOutSidedescriptionCharacterLimit = matchedIndices.filter(matchedIndex =>
+      matchedIndex > descriptionCharacterLimit
+    )
 
     const firstIndex = matchesOutSidedescriptionCharacterLimit[0]
     // Find matches that fit within the n+descriptionCharacterLimit
     const ranges = matchesOutSidedescriptionCharacterLimit.filter(index => index < descriptionCharacterLimit+firstIndex)
     // Determine where start and end index to ensure matched keywords are included
-    const start = ((matchedIndices.length- matchesOutSidedescriptionCharacterLimit.length)*(lengthOfHighlightTag+term.length)) +firstIndex
+    const start = ((matchedIndices.length - matchesOutSidedescriptionCharacterLimit.length) *
+      (lengthOfHighlightTag+term.length)) + firstIndex
     const end = start + descriptionCharacterLimit + (ranges.length*(lengthOfHighlightTag+term.length))
     const descriptionText = styledText.slice(start-100, end)
     const displayedStudyDescription = { __html: descriptionText }
     // Determine if there are matches to display in summary paragraph
-    const amountOfMatchesInSummaryWordLimit = matchedIndices.filter(matchedIndex => matchedIndex <= summaryWordLimit).length
+    const amountOfMatchesInSummaryWordLimit = matchedIndices.filter(matchedIndex =>
+      matchedIndex <= summaryWordLimit).length
     if (amountOfMatchesInSummaryWordLimit>0) {
       //  Need to recaluculate index positions because added html changes size of textDescription
       const beginningTextIndex= (amountOfMatchesInSummaryWordLimit *(lengthOfHighlightTag+term.length))
       const displayedBeginningText = { __html: styledText.slice(0, beginningTextIndex+summaryWordLimit) }
-      return <><span className = 'openingText' dangerouslySetInnerHTML={displayedBeginningText}></span> <span className="detail">... </span><span className = 'studyDescription' dangerouslySetInnerHTML={displayedStudyDescription}></span>{suffixTag}</>
+      return <>
+        <span className = 'openingText' dangerouslySetInnerHTML={displayedBeginningText}></span>
+        <span className="detail">... </span>
+        <span className = 'studyDescription' dangerouslySetInnerHTML={displayedStudyDescription}></span>{suffixTag}
+      </>
     }
     const displayedBeginningText = styledText.slice(0, summaryWordLimit)
-    return <><span className = 'openingText'>{displayedBeginningText} </span><span className="detail">... </span> <span className = 'studyDescription' dangerouslySetInnerHTML={displayedStudyDescription}></span>{suffixTag}</>
+    return <>
+      <span className = 'openingText'>{displayedBeginningText} </span>
+      <span className="detail">... </span>
+      <span className = 'studyDescription' dangerouslySetInnerHTML={displayedStudyDescription}></span>{suffixTag}
+    </>
   }
   const displayedStudyDescription = { __html: styledText.slice(0, descriptionCharacterLimit) }
   if (textDescription.length>descriptionCharacterLimit) {
-    return <><span className = 'studyDescription' dangerouslySetInnerHTML={displayedStudyDescription}></span>{suffixTag}</>
+    return <>
+      <span className = 'studyDescription' dangerouslySetInnerHTML={displayedStudyDescription}></span>{suffixTag}
+    </>
   } else {
     return <><span className = 'studyDescription' dangerouslySetInnerHTML={displayedStudyDescription}></span></>
   }
@@ -90,10 +104,10 @@ function facetMatchBadges(study) {
   if (!matches) {
     return <></>
   }
-  const matched_keys = Object.keys(matches)
+  const matchedKeys = Object.keys(matches)
     .filter(key => key != 'facet_search_weight')
   return (<>
-    { matched_keys.map((key, index) => {
+    { matchedKeys.map((key, index) => {
       const helpText = `Metadata match for ${key}`
       return (
         <span key={index}
@@ -116,14 +130,15 @@ function facetMatchBadges(study) {
 
 /* displays a brief summary of a study, with a link to the study page */
 export default function Study({ study }) {
-  const term_matches = study.term_matches
-  const studyTitle= highlightText(study.name, term_matches).styledText
-  const studyDescription = formatDescription(study.description, term_matches)
+  const termMatches = study.term_matches
+  const studyTitle= highlightText(study.name, termMatches).styledText
+  const studyDescription = formatDescription(study.description, termMatches)
   const displayStudyTitle = { __html: studyTitle }
 
   let inferredBadge = <></>
   if (study.inferred_match) {
-    const helpText = `${study.term_matches.join(', ')} was not found in study metadata, only in study title or description`
+    const helpText = `${study.termMatches.join(', ')} was not found in study metadata,
+     only in study title or description`
     inferredBadge = <span className="badge soft-badge" data-toggle="tooltip" title={helpText}>text match only</span>
   }
 

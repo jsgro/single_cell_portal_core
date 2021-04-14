@@ -223,6 +223,7 @@ export function logError(text) {
   log('error', props)
 }
 
+/** log a search from the study explore tab */
 export function logStudyGeneSearch(genes, trigger, speciesList, otherProps) {
   // Properties logged for all gene searches from Study Overview
   const logProps = {

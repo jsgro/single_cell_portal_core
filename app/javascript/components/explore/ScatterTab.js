@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 
 import ScatterPlot from 'components/visualization/ScatterPlot'
 
@@ -18,7 +18,7 @@ export default function ScatterTab({
   // maintain the map of plotly contexts to the params that generated the corresponding visualization
   const plotlyContextMap = useRef({})
 
-  const { scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol, isSpatial } = getScatterParams(
+  const { scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol } = getScatterParams(
     exploreInfo, exploreParams, isGene, isMultiGene
   )
 
