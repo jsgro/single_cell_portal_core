@@ -19,8 +19,10 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     @user = User.from_omniauth(request.env["omniauth.auth"])
 
     begin
-      validate_scopes_from_params
+      provider = request.env["omniauth.auth"].dig('provider')
+      self.class.validate_scopes_from_params(params, provider)
     rescue SecurityError => e
+      sign_out @user if @user.present?
       head 400 and return
     end
 
@@ -46,8 +48,10 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     @user = User.from_omniauth(request.env["omniauth.auth"])
 
     begin
-      validate_scopes_from_params
+      provider = request.env["omniauth.auth"].dig('provider')
+      self.class.validate_scopes_from_params(params, provider)
     rescue SecurityError => e
+      sign_out @user if @user.present?
       head 400 and return
     end
 
@@ -68,21 +72,17 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     end
   end
 
-  private
-
   # compare the granted scopes from the OAuth callback against those configured for the provider
   # if extra scopes have been granted (through spoofing or direct editing of the request redirect before consenting)
   # then raise a SecurityError and halt execution
-  def validate_scopes_from_params
+  def self.validate_scopes_from_params(params, provider)
     requested_scopes = params[:scope].split
-    provider = request.env["omniauth.auth"].dig('provider')
     configured_scopes = provider == 'google_billing' ? EXTENDED_GOOGLE_SCOPES : BASIC_GOOGLE_SCOPES
     requested_scopes.each do |scope|
       # trim auth URL off of name for comparison
       scope_name = scope.starts_with?('https://www.googleapis.com/auth/') ? scope.split('/').last : scope
       if !configured_scopes.include?(scope_name)
         error_message = "Invalid scope requested in OAuth callback: #{scope_name}, not configured for #{provider}: #{configured_scopes}"
-        sign_out @user if @user.present?
         Rails.logger.error error_message
         raise SecurityError.new(error_message)
       end
