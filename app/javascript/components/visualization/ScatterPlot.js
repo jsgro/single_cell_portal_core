@@ -35,7 +35,7 @@ export const defaultScatterColor = 'Reds'
   */
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
-   isAnnotatedScatter=false, isCellSelecting=false, plotPointsSelected
+  isAnnotatedScatter=false, isCellSelecting=false, plotPointsSelected
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)

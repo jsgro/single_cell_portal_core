@@ -6,7 +6,7 @@ import ScatterPlot from 'components/visualization/ScatterPlot'
 // and chrome by defualt allows up to 32 simultaneous webgl contexts
 // so 8 plotly graphs will consume 24 contexts, leaving 8 more, for, e.g., a
 // distribution graph
-const PLOTLY_CONTEXT_NAMES = ['A', 'B' ,'C', 'D', 'E', 'F', 'G', 'H']
+const PLOTLY_CONTEXT_NAMES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 const MAX_PLOTS = PLOTLY_CONTEXT_NAMES.length
 /**
   * renders the scatter tab.
@@ -18,7 +18,7 @@ export default function ScatterTab({
   // maintain the map of plotly contexts to the params that generated the corresponding visualization
   const plotlyContextMap = useRef({})
 
-  const {scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol, isSpatial} = getScatterParams(
+  const { scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol, isSpatial } = getScatterParams(
     exploreInfo, exploreParams, isGene, isMultiGene
   )
 
@@ -90,7 +90,7 @@ export function getScatterParams(exploreInfo, exploreParams, isGene, isMultiGene
       // for non-spatial multigene, show each gene, with the cluster as the second plot
       isMultiRow = true
       exploreParams.genes.forEach((gene, index) => {
-        scatterParams.push({ ...exploreParams, genes:  [exploreParams.genes[index]] })
+        scatterParams.push({ ...exploreParams, genes: [exploreParams.genes[index]] })
         if (index === 0) {
           scatterParams.push({ ...exploreParams, genes: [] })
         }
@@ -104,8 +104,8 @@ export function getScatterParams(exploreInfo, exploreParams, isGene, isMultiGene
       scatterParams.push({ ...exploreParams, genes: [] })
       // show a row for each spatial group selected
       exploreParams.spatialGroups.forEach(spatialGroup => {
-        scatterParams.push({ ...exploreParams, cluster: spatialGroup})
-        scatterParams.push({ ...exploreParams, cluster: spatialGroup, genes: []})
+        scatterParams.push({ ...exploreParams, cluster: spatialGroup })
+        scatterParams.push({ ...exploreParams, cluster: spatialGroup, genes: [] })
       })
     } else {
       // for single-gene non-spatial, show the expression plot and the cluster plot
@@ -128,7 +128,7 @@ export function getScatterParams(exploreInfo, exploreParams, isGene, isMultiGene
       scatterParams.push({ ...exploreParams })
     }
   }
-  return {scatterParams: scatterParams.slice(0, MAX_PLOTS), isTwoColumn, isMultiRow, firstRowSingleCol, isSpatial}
+  return { scatterParams: scatterParams.slice(0, MAX_PLOTS), isTwoColumn, isMultiRow, firstRowSingleCol, isSpatial }
 }
 
 

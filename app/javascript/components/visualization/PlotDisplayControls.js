@@ -77,7 +77,7 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
             value={distributionPointsValue}
             clearable={false}
             isSearchable={false}
-            onChange={option => updateExploreParams({distributionPlot: distributionPlotValue.value, distributionPoints: option.value })}/>
+            onChange={option => updateExploreParams({ distributionPlot: distributionPlotValue.value, distributionPoints: option.value })}/>
         </Panel.Body>
       </Panel>
       <Panel className={shownTab === 'heatmap' ? '' : 'hidden'}>
