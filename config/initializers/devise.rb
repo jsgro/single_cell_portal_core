@@ -240,30 +240,15 @@ Devise.setup do |config|
   # up on your models and hooks.
   # config.omniauth :github, 'APP_ID', 'APP_SECRET', scope: 'user,public_repo'
 
-  # Google OAuth2 Scopes
-  # basic scopes are user profile & email, do not require user consent to request during auth handshake
-  BASIC_GOOGLE_SCOPES = %w(
-    https://www.googleapis.com/auth/userinfo.profile
-    https://www.googleapis.com/auth/userinfo.email
-  )
-
-  # extended scopes add cloud-billing.readonly which requires user consent
-  # these are only requested when users attempt to visit the "My Billing Projects" page
-  EXTENDED_GOOGLE_SCOPES = %w(
-    https://www.googleapis.com/auth/userinfo.profile
-    https://www.googleapis.com/auth/userinfo.email
-    https://www.googleapis.com/auth/cloud-billing.readonly
-  )
   config.omniauth :google, ENV['OAUTH_CLIENT_ID'], ENV['OAUTH_CLIENT_SECRET'],
                   name: 'google', prompt: 'consent', access_type: 'offline',
-                  scope: BASIC_GOOGLE_SCOPES.join(' '),
                   strategy_class: OmniAuth::Strategies::GoogleOauth2,
                   :client_options => {:ssl => {:ca_file => '/etc/pki/tls/certs/ca-bundle.crt'} },
                   skip_jwt: Rails.env.development? ? true : false
 
   config.omniauth :google_billing, ENV['OAUTH_CLIENT_ID'], ENV['OAUTH_CLIENT_SECRET'],
                   name: 'google_billing', prompt: 'consent', access_type: 'offline',
-                  scope: EXTENDED_GOOGLE_SCOPES.join(' '),
+                  scope: Users::OmniauthCallbacksController::EXTENDED_GOOGLE_SCOPES.join(' '),
                   strategy_class: OmniAuth::Strategies::GoogleOauth2,
                   :client_options => {:ssl => {:ca_file => '/etc/pki/tls/certs/ca-bundle.crt'} },
                   skip_jwt: Rails.env.development? ? true : false
