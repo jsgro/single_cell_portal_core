@@ -73,11 +73,15 @@ class GenericProfiler
   # * *yields*
   #   - (File) => report file of requested type at specified path
   def self.write_report(report_path, printer)
+    report = File.new(report_path, 'w+')
     begin
-      report = File.new(report_path, 'w+')
       printer.print(report)
+    rescue Errno::ENOENT => e
+      # this rescue is mainly for test stability
+      puts "error writing report: #{e.message}"
     ensure
       report.close
+      report
     end
   end
 
