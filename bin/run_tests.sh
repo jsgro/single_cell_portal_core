@@ -138,7 +138,7 @@ if [[ $code -ne 0 ]]; then
 fi
 if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
   echo "uploading all coverage data to codecov"
-  bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN
+  bash <(curl -s https://raw.githubusercontent.com/broadinstitute/codecov-bash-uploader/main/codecov-verified.bash)
 fi
 
 clean_up
