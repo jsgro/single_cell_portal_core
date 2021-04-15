@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCaretDown, faCaretUp, faLink, faArrowLeft, faCog, faTimes, faDna } from '@fortawesome/free-solid-svg-icons'
+import { faLink, faArrowLeft, faCog, faTimes, faDna } from '@fortawesome/free-solid-svg-icons'
 
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from 'components/visualization/controls/ClusterSelector'
@@ -14,11 +14,12 @@ import PlotDisplayControls from 'components/visualization/PlotDisplayControls'
 import GeneListSelector from 'components/visualization/controls/GeneListSelector'
 import InferCNVIdeogramSelector from 'components/visualization/controls/InferCNVIdeogramSelector'
 import ScatterTab from './ScatterTab'
+import ScatterPlot from 'components/visualization/ScatterPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import DotPlot from 'components/visualization/DotPlot'
 import Heatmap from 'components/visualization/Heatmap'
 import GenomeView from './GenomeView'
-import { getAnnotationValues, getDefaultClusterParams, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
+import { getAnnotationValues, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
 import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from 'components/visualization/InferCNVIdeogram'
 import useResizeEffect from 'hooks/useResizeEffect'
@@ -52,7 +53,10 @@ const ideogramHeight = 140
  * @param {Object} dataParams  object with cluster, annotation, and other viewing properties specified.
  * @param { Function } updateDataParams function for passing updates to the dataParams object
  */
-export default function ExploreDisplayTabs({ studyAccession, exploreInfo, exploreParams, updateExploreParams, exploreParamsWithDefaults }) {
+export default function ExploreDisplayTabs({
+  studyAccession, exploreInfo, setExploreInfo, exploreParams, updateExploreParams,
+  exploreParamsWithDefaults, routerLocation
+}) {
   const [, setRenderForcer] = useState({})
   // tracks whether the view options controls are open or closed
   const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
@@ -61,7 +65,9 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
   // a plotly points_selected event
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
   const plotContainerClass = 'explore-plot-tab-content'
-  const { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs } = getEnabledTabs(exploreInfo, exploreParams)
+  const {
+    enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs
+  } = getEnabledTabs(exploreInfo, exploreParams)
 
   // exploreParams object without genes specified, to pass to cluster comparison plots
   const referencePlotDataParams = _clone(exploreParams)
@@ -144,7 +150,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
     updateExploreParams({ geneList })
   }
 
-  // handles updating inferCNV/ideogram selection
+  /** handles updating inferCNV/ideogram selection */
   function updateInferCNVIdeogramFile(annotationFile) {
     updateExploreParams({ ideogramFileId: annotationFile, tab: 'infercnv-genome' })
   }
@@ -209,7 +215,8 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
             <StudyGeneField genes={exploreParams.genes}
               searchGenes={searchGenes}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-            <button className={isGene || isGeneList || hasIdeogramOutputs ? 'action fa-lg' : 'hidden'} // show if this is gene search || gene list
+            { /* show if this is gene search || gene list */ }
+            <button className={isGene || isGeneList || hasIdeogramOutputs ? 'action fa-lg' : 'hidden'}
               onClick={() => searchGenes([])}
               title="Return to cluster view"
               data-toggle="tooltip"
@@ -223,7 +230,9 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
-                <li key={tabKey} role="presentation" className={`study-nav ${tabKey === shownTab ? 'active' : ''} ${tabKey}-tab-anchor`}>
+                <li key={tabKey}
+                  role="presentation"
+                  className={`study-nav ${tabKey === shownTab ? 'active' : ''} ${tabKey}-tab-anchor`}>
                   <a onClick={() => updateExploreParams({ tab: tabKey })}>{label}</a>
                 </li>
               )
@@ -258,7 +267,7 @@ export default function ExploreDisplayTabs({ studyAccession, exploreInfo, explor
                   isAnnotatedScatter={true}
                   dimensions={getPlotDimensions({
                     numColumns: 1,
-                    numRows: hasSelectedSpatialGroup ? 2 : 1,
+                    numRows: exploreParams?.spatialGroups.length ? 2 : 1,
                     hasTitle: true,
                     showRelatedGenesIdeogram
                   })}

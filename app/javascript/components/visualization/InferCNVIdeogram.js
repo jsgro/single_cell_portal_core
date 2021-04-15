@@ -32,7 +32,9 @@ const legend = [{
 }]
 
 /** InferCNV Ideogram component */
-export default function InferCNVIdeogram({ studyAccession, ideogramFileId, inferCNVIdeogramFiles, showViewOptionsControls }) {
+export default function InferCNVIdeogram({
+  studyAccession, ideogramFileId, inferCNVIdeogramFiles, showViewOptionsControls
+}) {
   const [ideogramContainerId] = useState(_uniqueId('study-infercnv-ideogram-'))
 
   const inferCNVIdeogramFile = inferCNVIdeogramFiles[ideogramFileId]
@@ -67,7 +69,8 @@ function setInitializeIdeogram(ideogramFileConfig, ideogramContainerId, showView
   const ideogramAnnotsFile = ideogramFileConfig.ideogram_settings.annotationsPath
   const ideogramOrganism = ideogramFileConfig.ideogram_settings.organism
   const ideogramAssembly = ideogramFileConfig.ideogram_settings.assembly
-  initializeIdeogram(ideogramAnnotsFile, ideogramOrganism, ideogramAssembly, ideogramContainerId, showViewOptionsControls)
+  initializeIdeogram(ideogramAnnotsFile, ideogramOrganism, ideogramAssembly,
+    ideogramContainerId, showViewOptionsControls)
 }
 
 /** Get ideogram heatmap tracks selected via checkbox */
@@ -263,7 +266,7 @@ function warnIdeogramOfNumericCluster() {
   $('#ideogram-container').append(warning)
 }
 
-// remove the ideogram DOM element from the page
+/** remove the ideogram DOM element from the page */
 function removeIdeogram() {
   $('#tracks-to-display, #_ideogramOuterWrap').html('')
   $('#ideogramWarning, #ideogramTitle').remove()

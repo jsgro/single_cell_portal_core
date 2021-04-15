@@ -25,10 +25,8 @@ const railStyle = {
  * TODO (SCP-2201):
  * - Support unit-less numerical facets, e.g. bmi, number_of_reads
  * - Support rate units, e.g. small_molecule_perturbation__concentration
+ * props.selection should be an array of [min,max,unit]
  */
-/*
-  * props.selection should be an array of [min,max,unit]
-  */
 export default function FilterSlider(props) {
   const facet = props.facet
 
@@ -62,7 +60,7 @@ export default function FilterSlider(props) {
     propsUnit = facet.unit
   }
 
-
+  /** handle user interaction with the slider */
   function handleUpdate(update) {
     if ('min' in update) {
       propsRange[0] = update.min

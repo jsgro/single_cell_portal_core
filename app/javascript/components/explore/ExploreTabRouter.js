@@ -144,7 +144,8 @@ function buildQueryFromParams(exploreParams) {
 
 /** controls list in which query string params are rendered into URL bar */
 const PARAM_LIST_ORDER = ['geneList', 'genes', 'cluster', 'spatialGroups', 'annotation', 'subsample', 'consensus',
-  'tab', 'scatterColor', 'distributionPlot', 'distributionPoints', 'heatmapFit', 'heatmapRowCentering', 'bamFileName', 'ideogramFileId']
+  'tab', 'scatterColor', 'distributionPlot', 'distributionPoints',
+  'heatmapFit', 'heatmapRowCentering', 'bamFileName', 'ideogramFileId']
 /** sort function for passing to stringify to ensure url params are specified in a user-friendly order */
 function paramSorter(a, b) {
   return PARAM_LIST_ORDER.indexOf(a) - PARAM_LIST_ORDER.indexOf(b)
