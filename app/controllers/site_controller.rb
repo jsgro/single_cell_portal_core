@@ -19,7 +19,6 @@ class SiteController < ApplicationController
   before_action :set_cluster_group, only: [:study, :expression_query, :annotation_query,
                                           :get_new_annotations, :annotation_values, :show_user_annotations_form]
   before_action :set_selected_annotation, only: [:annotation_query, :annotation_values, :show_user_annotations_form]
-  before_action :load_precomputed_options, only: [:study, :update_study_settings]
   before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :privacy_policy,
                                                   :terms_of_service, :expression_query, :annotation_query, :view_workflow_wdl,
                                                   :log_action, :get_workspace_samples, :update_workspace_samples,
@@ -90,19 +89,6 @@ class SiteController < ApplicationController
 
   def terms_of_service
 
-  end
-
-
-  def get_viewable_studies
-    @studies = Study.viewable(current_user)
-
-    # restrict to branding group if present
-    if @selected_branding_group.present?
-      @studies = @studies.where(branding_group_id: @selected_branding_group.id)
-    end
-    page_num = RequestUtils.sanitize_page_param(params[:page])
-    # restrict studies to initialized only
-    @studies = @studies.where(initialized: true).paginate(page: page_num, per_page: Study.per_page)
   end
 
   ###
@@ -797,24 +783,6 @@ class SiteController < ApplicationController
     end
   end
 
-  # check permissions manually on AJAX call via authentication token
-  def check_xhr_view_permissions
-    unless @study.public?
-      if params[:request_user_token].nil?
-        return false
-      else
-        request_user_id, auth_token = params[:request_user_token].split(':')
-        request_user = User.find_by(id: request_user_id, authentication_token: auth_token)
-        unless !request_user.nil? && @study.can_view?(request_user)
-          return false
-        end
-      end
-      return true
-    else
-      return true
-    end
-  end
-
   # check if a study is 'detached' from a workspace
   def check_study_detached
     if @study.detached?
@@ -825,120 +793,6 @@ class SiteController < ApplicationController
         format.json {render json: {error: @alert}, status: 410}
       end
     end
-  end
-
-  ###
-  #
-  # SEARCH SUB METHODS
-  #
-  ###
-
-  # load expression matrix ids for optimized search speed
-  def load_study_expression_matrix_ids(study_id)
-    StudyFile.where(study_id: study_id, :file_type.in => ['Expression Matrix', 'MM Coordinate Matrix']).map(&:id)
-  end
-
-  # generic search term parser
-  def parse_search_terms(key)
-    terms = params[:search][key]
-    sanitized_terms = sanitize_search_values(terms)
-    if sanitized_terms.is_a?(Array)
-      sanitized_terms.map(&:strip)
-    else
-      sanitized_terms.split(/[\n\s,]/).map(&:strip)
-    end
-  end
-
-  # generic expression score getter, preserves order and discards empty matches
-  def load_expression_scores(terms)
-    genes = []
-    matrix_ids = load_study_expression_matrix_ids(@study.id)
-    terms.each do |term|
-      matches = @study.genes.by_name_or_id(term, matrix_ids)
-      unless matches.empty?
-        genes << matches
-      end
-    end
-    genes
-  end
-
-  # search genes and save terms not found.  does not actually load expression scores to improve search speed,
-  # but rather just matches gene names if possible.  to load expression values, use load_expression_scores
-  def search_expression_scores(terms, study_id)
-    genes = []
-    not_found = []
-    file_ids = load_study_expression_matrix_ids(study_id)
-    terms.each do |term|
-      if Gene.study_has_gene?(study_id: study_id, expr_matrix_ids: file_ids, gene_name: term)
-        genes << {'name' => term}
-      else
-        not_found << {'name' => term}
-      end
-    end
-    [genes, not_found]
-  end
-
-  # load best-matching gene (if possible)
-  def load_best_gene_match(matches, search_term)
-    # iterate through all matches to see if there is an exact match
-    matches.each do |match|
-      if match['name'] == search_term
-        return match
-      end
-    end
-    # go through a second time to see if there is a case-insensitive match by looking at searchable_gene
-    # this is done after a complete iteration to ensure that there wasn't an exact match available
-    matches.each do |match|
-      if match['searchable_name'] == search_term.downcase
-        return match
-      end
-    end
-  end
-
-  # sanitize search values
-  def sanitize_search_values(terms)
-    RequestUtils.sanitize_search_terms(terms)
-  end
-
-  ###
-  #
-  # MISCELLANEOUS SUB METHODS
-  #
-  ###
-
-  # defaults for annotation fonts
-  def annotation_font
-    {
-        family: 'Helvetica Neue',
-        size: 10,
-        color: '#333'
-    }
-  end
-
-  # parse gene list into 2 other arrays for formatting the header responsively
-  def divide_genes_for_header
-    main = @genes[0..4]
-    more = @genes[5..@genes.size - 1]
-    [main, more]
-  end
-
-  # load all precomputed options for a study
-  def load_precomputed_options
-    @precomputed = @study.precomputed_scores.map(&:name)
-  end
-
-  # retrieve axis labels from cluster coordinates file (if provided)
-  def load_axis_labels
-    coordinates_file = @cluster.study_file
-    {
-        x: coordinates_file.x_axis_label.blank? ? 'X' : coordinates_file.x_axis_label,
-        y: coordinates_file.y_axis_label.blank? ? 'Y' : coordinates_file.y_axis_label,
-        z: coordinates_file.z_axis_label.blank? ? 'Z' : coordinates_file.z_axis_label
-    }
-  end
-
-  def load_expression_axis_title
-    @study.default_expression_label
   end
 
   # create a unique hex digest of a list of genes for use in set_cache_path
