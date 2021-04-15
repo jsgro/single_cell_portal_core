@@ -76,8 +76,12 @@ class GenericProfiler
     begin
       report = File.new(report_path, 'w+')
       printer.print(report)
+    rescue Errno::ENOENT => e
+      # this rescue is mainly for test stability
+      puts "error writing report: #{e.message}"
+      report_path
     ensure
-      report.close
+      report.try(:close)
     end
   end
 
