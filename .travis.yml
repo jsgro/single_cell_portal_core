@@ -4,7 +4,7 @@ arch: amd64
 rvm:
   - 2.6.6
 install:
-  - gem install travis
+  - gem install puma
 branches:
   only:
     - master
