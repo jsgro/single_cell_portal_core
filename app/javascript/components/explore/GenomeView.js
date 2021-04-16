@@ -7,6 +7,8 @@ import _uniqueId from 'lodash/uniqueId'
 import { log } from 'lib/metrics-api'
 import { fetchBamFileInfo } from 'lib/scp-api'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
+import { getReadOnlyToken, userHasTerraProfile } from "providers/UserProvider";
+import { profileWarning } from 'lib/study-overview/terra-profile-warning'
 
 /** Component for displaying IGV for any BAM/BAI files provided with the study */
 function GenomeView({ studyAccession, bamFileName, uniqueGenes, isVisible, updateExploreParams }) {
@@ -14,6 +16,7 @@ function GenomeView({ studyAccession, bamFileName, uniqueGenes, isVisible, updat
   const [bamFileList, setBamFileList] = useState(null)
   const [igvInitializedFiles, setIgvInitializedFiles] = useState('')
   const [igvContainerId] = useState(_uniqueId('study-igv-'))
+  const [showProfileWarning, setShowProfileWarning] = useState(false)
 
   useEffect(() => {
     // Get the BAM file names and urls from the server.
@@ -33,6 +36,11 @@ function GenomeView({ studyAccession, bamFileName, uniqueGenes, isVisible, updat
   // re-render IGV any time the listing of bamFiles changes
   useEffect(() => {
     if (bamFileList && bamFileList.bamAndBaiFiles.length && isVisible) {
+      // show profile warning from non-existent token due to incomplete Terra registration
+      if (!userHasTerraProfile()) {
+        setShowProfileWarning(true)
+      }
+
       let listToShow = bamFileList.bamAndBaiFiles
       if (bamFileName) {
         // if the user has specified a particular file name (likely because they are coming from the study download tab)
@@ -92,6 +100,7 @@ function GenomeView({ studyAccession, bamFileName, uniqueGenes, isVisible, updat
     { bamFileName && bamFileList?.bamAndBaiFiles?.length > 1 &&
       <a className="action" onClick={showAllFiles}>See all sequence files for this study</a>
     }
+    { showProfileWarning && profileWarning }
   </div>
 }
 
@@ -113,7 +122,7 @@ function getBamTracks(bamAndBaiFiles) {
     bamTrack = {
       url: bam.url,
       indexURL: bam.indexUrl,
-      oauthToken: window.accessToken,
+      oauthToken: getReadOnlyToken(),
       label: bam.name
     }
     bamTracks.push(bamTrack)
@@ -140,7 +149,7 @@ function getGenesTrack(gtfFiles, genome, genesTrackName) {
     order: 0,
     visibilityWindow: 300000000,
     displayMode: 'EXPANDED',
-    oauthToken: window.accessToken // Assigned in _genome.html.erb
+    oauthToken: getReadOnlyToken()
   }
 
   return genesTrack
@@ -223,7 +232,6 @@ function initializeIgv(containerId, bamAndBaiFiles, gtfFiles, uniqueGenes) {
   }
 
   igv.createBrowser(igvContainer, igvOptions)
-
 
   // Log igv.js initialization in Google Analytics
   ga('send', 'event', 'igv', 'initialize')

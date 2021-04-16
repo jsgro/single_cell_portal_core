@@ -1,0 +1,25 @@
+<h1 class="text-center">Additional Access Required</h1>
+<div id='billing-access-request'>
+  <p><big>
+    To manage your Terra billing projects, Single Cell Portal needs to know your Google Cloud Platform billing account
+    names.  This is mediated by Google, so please re-authenticate and grant that access to Single Cell Portal.</big>
+  </p>
+  <p><big>
+    <u>Single Cell Portal will not be granted access to make billing requests for you, nor to manage your billing
+      accounts.</u>  This is simply a request to see billing account names.
+  </big>
+  </p>
+  <p><big>
+    To continue, please click the "Sign In and Grant Access" button below and complete signing in, or you may decline
+    and return to the home page.</big>
+  </p>
+
+  <p class="text-center">
+    <%= link_to 'Sign In and Grant Access', user_google_billing_omniauth_authorize_path, method: :post, class: 'btn btn-lg btn-success' %>
+  </p>
+
+  <p class="text-center">
+    <%= link_to 'Return to Home Page', site_path, method: :post, class: 'btn btn-default' %>
+  </p>
+</div>
+

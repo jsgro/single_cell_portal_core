@@ -13,9 +13,37 @@ export function getAccessToken() {
   return ('SCP' in window) ? window.SCP.userAccessToken : 'test'
 }
 
+/**
+ * Returns the current read-only access token for the user
+ * This token is specifically for genome visualizations like IGV and Ideogram
+ * as they both require streaming a GCS object directly to the client
+ * This token needs the devstorage.read_only OAuth scope, which is returned
+ * from ApplicationHelper#get_read_access_token and stored in the window.SCP object
+ */
+export function getReadOnlyToken() {
+  return ('SCP' in window) ? window.SCP.readOnlyToken : 'test'
+}
+
 /** returns true if the current user is logged in */
 export function isUserLoggedIn() {
   return !!getAccessToken()
+}
+
+/**
+ * returns true if the signed-in user has completed their Terra profile by
+ * checking if a pet service account token has been issued via getReadOnlyToken
+ */
+export function userHasTerraProfile() {
+  return !!isUserLoggedIn() && !!getReadOnlyToken()
+}
+
+/**
+  * Returns a scope-limited access token that can be used as a URL param
+  * window.SCP is not available when running via Jest tests,
+  * so default such cases to a string "test"
+  */
+export function getURLSafeAccessToken() {
+  return ('SCP' in window) ? window.SCP.URLSafeAccessToken : 'test'
 }
 
 /** Returns the feature flags with defaults for the current user */

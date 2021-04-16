@@ -33,7 +33,7 @@ class User
   # :confirmable, :lockable, :timeoutable and :omniauthable,
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable, :timeoutable,
-         :omniauthable, :omniauth_providers => [:google_oauth2]
+         :omniauthable, :omniauth_providers => [:google, :google_billing]
 
   validates_format_of :email, :with => Devise.email_regexp, message: 'is not a valid email address.'
 
@@ -119,13 +119,13 @@ class User
                          password_confirmation: password,
                          uid: uid,
                          provider: provider)
-
-    elsif user.provider.nil? || user.uid.nil?
-      # update info if account was originally local but switching to Google auth
-      user.update(provider: provider, uid: uid)
     end
+    user.update(uid: uid) if user.uid.nil?
+    # update provider so we can track whether this user has authenticated with basic or extended scopes
+    # basic scopes will show up as "google", extended (i.e. cloud-billing.readonly) will show up as "google_billing"
+    user.update(provider: provider)
     # store refresh token
-    if !access_token.credentials.refresh_token.nil?
+    if access_token.credentials.refresh_token.present?
       user.update(refresh_token: access_token.credentials.refresh_token)
     end
     user
@@ -205,6 +205,17 @@ class User
       self.api_access_token
     else
       self.valid_access_token
+    end
+  end
+
+  # get an access token that can be used to stream a GCS storage object directly to the client
+  # uses SAM pet service accounts to issue token on user's behalf by adding the
+  # https://www.googleapis.com/auth/devstorage.read_only scope to the token
+  # will return nil if user is not registered for Terra as API call would return 401
+  def token_for_storage_object(project=FireCloudClient::PORTAL_NAMESPACE)
+    if self.refresh_token.present? && self.registered_for_firecloud
+      client = FireCloudClient.new(self, project)
+      client.get_pet_service_account_token(project)
     end
   end
 
