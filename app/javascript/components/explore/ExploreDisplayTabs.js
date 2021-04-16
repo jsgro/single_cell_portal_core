@@ -214,7 +214,8 @@ export default function ExploreDisplayTabs({
           <div className="flexbox">
             <StudyGeneField genes={exploreParams.genes}
               searchGenes={searchGenes}
-              allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
+              allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}
+              speciesList={exploreInfo ? exploreInfo.taxonNames : []}/>
             { /* show if this is gene search || gene list */ }
             <button className={isGene || isGeneList || hasIdeogramOutputs ? 'action fa-lg' : 'hidden'}
               onClick={() => searchGenes([])}
@@ -252,6 +253,7 @@ export default function ExploreDisplayTabs({
                 height={ideogramHeight}
                 genesInScope={exploreInfo.uniqueGenes}
                 searchGenes={searchGenes}
+                speciesList={exploreInfo.speciesList}
               />
             }
             { !showViewOptionsControls &&

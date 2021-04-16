@@ -58,7 +58,7 @@ function updateExploreParams(newOptions, wasUserSpecified=true) {
   navigate(`${query}#study-visualize`, { replace: true })
 }
 
-/** converts query string parameters into the dataParams objet */
+/** converts query string parameters into the dataParams object */
 function buildExploreParamsFromQuery(query) {
   const exploreParams = {
     userSpecified: {}

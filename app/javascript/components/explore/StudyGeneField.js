@@ -13,7 +13,7 @@ import { log, logStudyGeneSearch } from 'lib/metrics-api'
   * This shares a lot of logic with search/genes/GeneKeyword, but is kept as a separate component for
   * now, as the need for autocomplete raises additional complexity
   */
-export default function StudyGeneField({ genes, searchGenes, allGenes }) {
+export default function StudyGeneField({ genes, searchGenes, allGenes, speciesList }) {
   const [inputText, setInputText] = useState('')
 
   let geneOptions = []
@@ -47,7 +47,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes }) {
       const genesToSearch = newGeneArray.map(g => g.value)
       if (event) {
         // this was not a 'clear'
-        logStudyGeneSearch(genesToSearch, 'submit')
+        logStudyGeneSearch(genesToSearch, 'submit', speciesList)
       }
       searchGenes(genesToSearch)
     } else {
