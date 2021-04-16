@@ -15,6 +15,7 @@ function getInferCNVIdeogramOptions(studyInferCNVIdeogramFiles) {
   return [{ label: noneSelected, value: '' }].concat(inferCNVSelectOpts)
 }
 
+/** find the matching option to a given filename string */
 function getMatchedIdeogramOption(ideogramFile, studyInferCNVIdeogramFiles) {
   if (ideogramFile && studyInferCNVIdeogramFiles) {
     const matchedOption = studyInferCNVIdeogramFiles.find(a => {

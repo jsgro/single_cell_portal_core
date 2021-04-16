@@ -12,7 +12,7 @@ class ClusterGroup
   field :cluster_type, type: String
   field :cell_annotations, type: Array
   field :domain_ranges, type: Hash
-  field :points, type: Integer
+  field :points, type: Integer, default: 0
   # subsampling flags
   # :subsampled => whether subsampling has completed
   # :is_subsampling => whether subsampling has been initiated

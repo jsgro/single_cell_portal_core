@@ -5,7 +5,7 @@ class TosAcceptanceTest < ActionDispatch::IntegrationTest
 
   setup do
     @test_user = User.create(email: 'needs.acceptance@gmail.com', password:'password', uid: '54321',
-                             registered_for_firecloud: true, authentication_token: Devise.friendly_token(32))
+                             registered_for_firecloud: true)
     auth_as_user(@test_user)
   end
 

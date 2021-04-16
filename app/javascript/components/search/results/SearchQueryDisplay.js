@@ -6,7 +6,9 @@ import { SearchSelectionContext } from 'providers/SearchSelectionProvider'
 import Button from 'react-bootstrap/lib/Button'
 import _flatten from 'lodash/flatten'
 
-
+/** joins texts by wrapping them in a span with itemClass className, and then
+ * inserting spans with the joinText
+ */
 function formattedJoinedList(itemTexts, itemClass, joinText) {
   return itemTexts.map((text, index) => {
     return (
@@ -24,6 +26,7 @@ const orFacets = [['cell_type', 'cell_type__custom'], ['organ', 'organ_region']]
 const leadingOrFacets = orFacets.map(f => f[0])
 const trailingOrFacets = orFacets.map(f => f[1])
 
+/** returns a <span> containing text summarizing the facet filters */
 function formatFacet(facet, index, numFacets, facets) {
   let facetContent
   if (Array.isArray(facet.filters)) {
@@ -79,6 +82,9 @@ export const ClearAllButton = () => {
     <Button onClick = {clearSearch}>Clear All</Button>)
 }
 
+/** displays a summary of an executed search.
+ * e.g. (Text contains (stomach)) AND (Metadata contains (organ: brain))
+ */
 export default function SearchQueryDisplay({ terms, facets }) {
   const hasFacets = facets && facets.length > 0
   const hasTerms = terms && terms.length > 0
@@ -105,7 +111,9 @@ export default function SearchQueryDisplay({ terms, facets }) {
         </>)
       }
     }
-    const facetElements = sortedFacets.map((facet, index) => formatFacet(facet, index, sortedFacets.length, sortedFacets))
+    const facetElements = sortedFacets.map((facet, index) =>
+      formatFacet(facet, index, sortedFacets.length, sortedFacets)
+    )
     facetsDisplay = <FacetContainer>Metadata contains {facetElements}</FacetContainer>
   }
   if (hasTerms) {
@@ -119,7 +127,9 @@ export default function SearchQueryDisplay({ terms, facets }) {
   }
   return (
     <div className="search-query">
-      <FontAwesomeIcon icon={faSearch} />: <span className="query-text">{termsDisplay}{facetsDisplay}</span> <ClearAllButton/>
+      <FontAwesomeIcon icon={faSearch}/>: <span className="query-text">
+        {termsDisplay}{facetsDisplay}
+      </span> <ClearAllButton/>
     </div>
   )
 }

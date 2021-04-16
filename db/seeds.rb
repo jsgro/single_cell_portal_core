@@ -13,8 +13,7 @@ user_access_token = {access_token: 'test-api-token', expires_in: 3600, expires_a
 user_2_access_token = {access_token: 'test-api-token-2', expires_in: 3600, expires_at: Time.zone.now + 1.hour}
 user = User.find_or_initialize_by(email:'testing.user@gmail.com')
 user.update!(password:'password', admin: true, uid: '12345', metrics_uuid: SecureRandom.uuid, 
-             api_access_token: user_access_token, access_token: user_access_token, registered_for_firecloud: true,
-             authentication_token: Devise.friendly_token(32))
+             api_access_token: user_access_token, access_token: user_access_token, registered_for_firecloud: true)
 user_2 = User.find_or_initialize_by(email: 'sharing.user@gmail.com')
 user_2.update!(password: 'password', uid: '67890',
                api_access_token: user_2_access_token, access_token: user_2_access_token, metrics_uuid: SecureRandom.uuid)

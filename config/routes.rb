@@ -255,8 +255,6 @@ Rails.application.routes.draw do
     post 'study/:accession/:study_name/download_acceptance', to: 'site#record_download_acceptance', as: :record_download_acceptance
 
     # base actions
-    get 'search', to: 'site#search', as: :search
-    post 'get_viewable_studies', to: 'site#get_viewable_studies', as: :get_viewable_studies
     get 'log_action', to: 'site#log_action', as: :log_action
     get 'privacy_policy', to: 'site#privacy_policy', as: :privacy_policy
     get 'terms_of_service', to: 'site#terms_of_service', as: :terms_of_service

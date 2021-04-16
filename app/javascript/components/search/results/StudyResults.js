@@ -49,6 +49,7 @@ export default function StudyResults({ results, changePage, StudyComponent }) {
       canNextPage={canNextPage}/>
   }
 
+  /** assign special CSS class to matches that were inferred search results */
   function getRowProps(row) {
     const studyClass = row.values.study.inferred_match ? 'inferred-match result-row' : 'result-row'
     return { className: studyClass }

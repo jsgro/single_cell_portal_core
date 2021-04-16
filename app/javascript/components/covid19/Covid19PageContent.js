@@ -40,6 +40,7 @@ function CovidPageContainer() {
   )
 }
 
+/** shows the covid-19 search, which is notable for not displaying the recent/popular buttons */
 function CovidPageSearchContent() {
   const studySearchState = useContext(StudySearchContext)
   return (<>
