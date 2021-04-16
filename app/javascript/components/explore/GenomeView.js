@@ -246,13 +246,12 @@ function initializeIgv(containerId, bamAndBaiFiles, gtfFiles, uniqueGenes) {
 const originalGetKnownGenomes = igv.GenomeUtils.getKnownGenomes
 igv.GenomeUtils.getKnownGenomes = function() {
   return originalGetKnownGenomes.apply(this).then(reference => {
-    let key
     const newRef = {}
     newRef['GRCm38'] = reference['mm10'] // Fix name
-    for (key in reference) {
+    Object.keys(reference).forEach(key => {
       delete reference[key].tracks
       newRef[key] = reference[key]
-    }
+    })
     return newRef
   })
 }

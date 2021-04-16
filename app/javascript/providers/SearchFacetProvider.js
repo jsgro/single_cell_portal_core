@@ -1,7 +1,7 @@
-import React, { useContext, useState } from 'react'
+import React, { useState } from 'react'
 import { fetchFacets } from 'lib/scp-api'
 
-/*
+/**
  * this may evolve into something more sophisticated, or with actual
  * message keys, but for now it just converts snake case to word case
  * see https://broadworkbench.atlassian.net/browse/SCP-2108
@@ -10,22 +10,21 @@ export function getDisplayNameForFacet(facetId) {
   return facetId.replace(/__|_/gi, ' ')
 }
 
+/** context for the list of facets loaded from the server */
 export const SearchFacetContext = React.createContext({
   facets: [],
   isLoading: false,
   isLoaded: false
 })
 
-export function useContextSearchFacet() {
-  return useContext(SearchFacetContext)
-}
-
+/** component which handles fetching search facets from the server and attaching them to a context */
 export default function SearchFacetProvider(props) {
   const [facetState, setFacetState] = useState({
     facets: [],
     isLoading: false,
     isLoaded: false
   })
+  /** fetch the facet list from the server */
   async function updateFacets() {
     setFacetState({
       facets: [],

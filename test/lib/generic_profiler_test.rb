@@ -102,4 +102,14 @@ class GenericProfilerTest < ActiveSupport::TestCase
     assert args_file.include?('foo: "bar"')
     assert args_file.include?('bing: "baz"')
   end
+  
+  test 'should capture error when writing report' do
+    non_existent_file = Rails.root.join('does', 'not', 'exist.txt')
+    profile = RubyProf.profile { puts "test" }
+    printer = RubyProf::FlatPrinter.new(profile)
+
+    # write_report should capture the error when trying to write to the non-existent filepath and still return
+    report = GenericProfiler.write_report(non_existent_file, printer)
+    refute report.exist?
+  end
 end

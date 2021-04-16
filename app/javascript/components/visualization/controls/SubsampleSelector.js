@@ -48,7 +48,9 @@ export default function SubsampleSelector({
     <div className="form-group">
       <label>
         <OverlayTrigger trigger="click" rootClose placement="top" overlay={subsamplingPopover}>
-          <span>Subsampling <FontAwesomeIcon data-analytics-name="subsampling-help-icon" className="action log-click help-icon" icon={faInfoCircle}/></span>
+          <span>Subsampling <FontAwesomeIcon data-analytics-name="subsampling-help-icon"
+            className="action log-click help-icon" icon={faInfoCircle}/>
+          </span>
         </OverlayTrigger>
       </label>
       <Select options={subsampleOptions}
@@ -71,7 +73,7 @@ const subsamplingPopover = (
       rel="noreferrer" target='_blank'>learn more</a>).
     <br/>
     <span className="detail">
-      Choosing &quot;All cells&quot; may dramatically increase rendering time for studies with >100K cells.
+      Choosing &quot;All cells&quot; may dramatically increase rendering time for studies with &gt;100K cells.
     </span>
   </Popover>
 )
