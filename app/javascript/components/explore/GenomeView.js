@@ -7,7 +7,7 @@ import _uniqueId from 'lodash/uniqueId'
 import { log } from 'lib/metrics-api'
 import { fetchBamFileInfo } from 'lib/scp-api'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
-import { getReadAccessToken, userHasTerraProfile } from "providers/UserProvider";
+import { getReadOnlyToken, userHasTerraProfile } from "providers/UserProvider";
 import { profileWarning } from 'lib/study-overview/terra-profile-warning'
 
 /** Component for displaying IGV for any BAM/BAI files provided with the study */
@@ -122,7 +122,7 @@ function getBamTracks(bamAndBaiFiles) {
     bamTrack = {
       url: bam.url,
       indexURL: bam.indexUrl,
-      oauthToken: getReadAccessToken(),
+      oauthToken: getReadOnlyToken(),
       label: bam.name
     }
     bamTracks.push(bamTrack)
@@ -149,7 +149,7 @@ function getGenesTrack(gtfFiles, genome, genesTrackName) {
     order: 0,
     visibilityWindow: 300000000,
     displayMode: 'EXPANDED',
-    oauthToken: getReadAccessToken()
+    oauthToken: getReadOnlyToken()
   }
 
   return genesTrack

@@ -14,13 +14,13 @@ export function getAccessToken() {
 }
 
 /**
- * Returns the current read-access token for the user
+ * Returns the current read-only access token for the user
  * This token is specifically for genome visualizations like IGV and Ideogram
  * as they both require streaming a GCS object directly to the client
- * This token needs the devstorage.readonly OAuth scope, which is returned
+ * This token needs the devstorage.read_only OAuth scope, which is returned
  * from ApplicationHelper#get_read_access_token and stored in the window.SCP object
  */
-export function getReadAccessToken() {
+export function getReadOnlyToken() {
   return ('SCP' in window) ? window.SCP.readOnlyToken : 'test'
 }
 
@@ -31,10 +31,10 @@ export function isUserLoggedIn() {
 
 /**
  * returns true if the signed-in user has completed their Terra profile by
- * checking if a pet service account token has been issued via getReadAccessToken
+ * checking if a pet service account token has been issued via getReadOnlyToken
  */
 export function userHasTerraProfile() {
-  return !!isUserLoggedIn() && !!getReadAccessToken()
+  return !!isUserLoggedIn() && !!getReadOnlyToken()
 }
 
 /**

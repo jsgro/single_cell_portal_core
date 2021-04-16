@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 import Ideogram from 'ideogram'
-import { getReadAccessToken, userHasTerraProfile } from "providers/UserProvider";
+import { getReadOnlyToken, userHasTerraProfile } from "providers/UserProvider";
 import { profileWarning } from 'lib/study-overview/terra-profile-warning'
 
 import { log } from 'lib/metrics-api'
@@ -302,7 +302,7 @@ function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsC
     annotationHeight: 20,
     geometry: 'collinear',
     orientation: 'horizontal',
-    accessToken: getReadAccessToken()
+    accessToken: getReadOnlyToken()
   }
 
   inferCNVIdeogram = new Ideogram(ideoConfig)
