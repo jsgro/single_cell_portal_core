@@ -11,7 +11,6 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     @user = User.from_omniauth(request.env["omniauth.auth"])
 
     if @user.persisted?
-      @user.update(authentication_token: Devise.friendly_token(32))
       @user.generate_access_token
       # update a user's FireCloud status
       @user.delay.update_firecloud_status

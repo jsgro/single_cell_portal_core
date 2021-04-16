@@ -18,6 +18,7 @@ module Api
           {controller: 'reports', action: 'show'},
           {controller: 'expression', action: 'show'},
           {controller: 'annotations', action: 'cell_values'},
+          {controller: 'annotations', action: 'gene_list'},
           {controller: 'studies', action: 'generate_manifest'}
         ]
         def authenticate_api_user!

@@ -59,9 +59,6 @@ class User
   field :uid,       type: String
   field :provider,  type: String
 
-  # token auth for AJAX calls
-  field :authentication_token, type: String
-
   # Google OAuth refresh token fields
   field :refresh_token, type: Mongoid::EncryptedString
   field :access_token, type: Hash # from Google OAuth callback
