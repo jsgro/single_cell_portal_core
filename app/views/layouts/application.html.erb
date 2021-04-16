@@ -186,13 +186,13 @@
       <%= scp_link_to 'Privacy Policy', privacy_policy_path %>
       &nbsp;
       <%= scp_link_to "Terms of Service".html_safe, terms_of_service_path %>
+      &nbsp;
+      <% if @selected_branding_group.present? %>
+        <%= link_to "<i class='fas fa-chevron-circle-left fa-fw'></i> Return to Single Cell Portal".html_safe, site_path %>
+      <% end %>
     </div>
+    <div class="clearfix"></div>
 
-  <% if @selected_branding_group.present? %>
-    <div class="footer-text-block">
-      <%= link_to "<i class='fas fa-chevron-circle-left fa-fw'></i> Return to Single Cell Portal".html_safe, site_path %>
-    </div>
-  <% end %>
 </div>
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
 
