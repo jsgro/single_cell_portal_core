@@ -56,9 +56,7 @@ const helpModalContent = (<div>
  * showCommonButtons defaults to true
  */
 export default function SearchPanel({
-  showCommonButtons,
   advancedSearchDefault,
-  keywordPrompt,
   searchOnLoad
 }) {
   // Note: This might become  a Higher-Order Component (HOC).
@@ -81,9 +79,6 @@ export default function SearchPanel({
 
   let searchButtons = <></>
   let downloadButtons = <></>
-  if (showCommonButtons !== false) {
-    searchButtons = <CommonSearchButtons/>
-  }
 
   /** pop a modal if first-time click, otherwise just enable the extra filters */
   function handleMoreFiltersClick() {
@@ -105,6 +100,8 @@ export default function SearchPanel({
       data-analytics-name="search-help">
       <FontAwesomeIcon icon={faQuestionCircle} />
     </a>
+  } else {
+    searchButtons = <CommonSearchButtons/>
   }
 
   useEffect(() => {
@@ -139,7 +136,7 @@ export default function SearchPanel({
       selectionContext.updateSelection({ terms: '' }, true)
     }
   }
-
+  const keywordPrompt = searchState.params.preset === 'covid19' ? 'Search COVID-19 studies' : undefined
   return (
     <div id='search-panel'>
       <KeywordSearch keywordPrompt={keywordPrompt}/>

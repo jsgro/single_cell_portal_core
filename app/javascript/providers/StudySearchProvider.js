@@ -166,13 +166,13 @@ export function buildParamsFromQuery(query, preset) {
  * StudySearchContext and rendering children.
  * The routing is all via query params
  */
-export default function StudySearchProvider(props) {
+export default function StudySearchProvider({ children }) {
   const location = useLocation()
-  const searchParams = buildParamsFromQuery(location.search, props.preset)
-
+  const preset = location.pathname.includes('covid19') ? 'covid19' : ''
+  const searchParams = buildParamsFromQuery(location.search, preset)
   return (
     <PropsStudySearchProvider searchParams={searchParams}>
-      {props.children}
+      {children}
     </PropsStudySearchProvider>
   )
 }
