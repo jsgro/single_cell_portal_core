@@ -137,7 +137,7 @@ export default function Study({ study }) {
 
   let inferredBadge = <></>
   if (study.inferred_match) {
-    const helpText = `${study.termMatches.join(', ')} was not found in study metadata,
+    const helpText = `${termMatches.join(', ')} was not found in study metadata,
      only in study title or description`
     inferredBadge = <span className="badge soft-badge" data-toggle="tooltip" title={helpText}>text match only</span>
   }
