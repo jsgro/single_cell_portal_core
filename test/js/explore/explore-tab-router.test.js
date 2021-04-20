@@ -50,6 +50,7 @@ describe('dataParams are appropriately managed on the url', () => {
     const locationMock = jest.spyOn(Reach, 'useLocation')
     locationMock.mockImplementation(() => ({ search: searchString }))
     mockWindowLocationSearch(searchString)
+
     const testObj = {}
     const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
 
@@ -73,6 +74,7 @@ describe('dataParams are appropriately managed on the url', () => {
     urlString += '&ideogramFileId=604fc5c4e241391a8ff93271'
     locationMock.mockImplementation(() => ({ search: urlString }))
     mockWindowLocationSearch(urlString)
+
     const testObj = {}
     const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
 

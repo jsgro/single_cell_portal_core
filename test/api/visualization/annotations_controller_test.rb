@@ -37,7 +37,7 @@ class AnnotationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    OmniAuth.config.mock_auth[:google_oauth2] = nil
+    OmniAuth.config.mock_auth[:google] = nil
   end
 
   test 'methods should check view permissions' do
@@ -55,13 +55,6 @@ class AnnotationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_and_update @user
     execute_http_request(:get, api_v1_study_annotations_path(@basic_study, 'foo'), user: @user)
     assert_equal 200, response.status
-
-    # test url_safe_token capability
-    get cell_values_api_v1_study_annotation_path(@basic_study, 'foo', params: {url_safe_token: @user.authentication_token})
-    assert_equal 200, response.status
-
-    get cell_values_api_v1_study_annotation_path(@basic_study, 'foo', params: {url_safe_token: 'garbage'})
-    assert_equal 401, response.status
   end
 
   test 'index should return list of annotations' do

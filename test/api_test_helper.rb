@@ -30,14 +30,13 @@ module Requests
 
     # sign in the user and also update their last_active
     def sign_in_and_update(user)
-      OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
-        :provider => 'google_oauth2',
+      OmniAuth.config.mock_auth[:google] = OmniAuth::AuthHash.new({
+        :provider => 'google',
         :uid => user.uid,
         :email => user.email
       })
       sign_in user
       user.update_last_access_at!
-      user.update(authentication_token: Devise.friendly_token(32))
     end
   end
 end

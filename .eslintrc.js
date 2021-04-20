@@ -20,9 +20,6 @@ module.exports = {
         'd3': 'readonly',
         'Spinner': 'readonly',
         'morpheus': 'readonly',
-        'igv': 'readonly',
-        'Ideogram': 'readonly',
-        'getViolinProps': 'readonly',
         'ga': 'readonly',
         'bamAndBaiFiles': 'readonly'
     },
@@ -60,7 +57,7 @@ module.exports = {
         'lines-between-class-members': 'warn',
         'max-len': ['error', { 'code': 120 }],
         'multiline-comment-style': 'off',
-        'no-lonely-if': 'warn',
+        'no-lonely-if': 'off',
         'no-multi-assign': 'warn',
         'no-multiple-empty-lines': 'warn',
         'no-trailing-spaces': 'warn',

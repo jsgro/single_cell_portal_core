@@ -6,8 +6,11 @@
 
 import React, { useEffect, useState } from 'react'
 import _uniqueId from 'lodash/uniqueId'
-
 import Ideogram from 'ideogram'
+import { getReadOnlyToken, userHasTerraProfile } from "providers/UserProvider";
+import { profileWarning } from 'lib/study-overview/terra-profile-warning'
+
+import { log } from 'lib/metrics-api'
 
 /* eslint-disable no-unused-vars */
 
@@ -30,10 +33,15 @@ const legend = [{
   ]
 }]
 
-export default function InferCNVIdeogram({ studyAccession, ideogramFileId, inferCNVIdeogramFiles, showViewOptionsControls }) {
+/** InferCNV Ideogram component */
+export default function InferCNVIdeogram({
+  studyAccession, ideogramFileId, inferCNVIdeogramFiles, showViewOptionsControls
+}) {
   const [ideogramContainerId] = useState(_uniqueId('study-infercnv-ideogram-'))
-
+  const [showProfileWarning, setShowProfileWarning] = useState(false)
   const inferCNVIdeogramFile = inferCNVIdeogramFiles[ideogramFileId]
+
+
   useEffect(() => {
     if (inferCNVIdeogramFile) {
       setInitializeIdeogram(inferCNVIdeogramFile, ideogramContainerId, showViewOptionsControls)
@@ -46,6 +54,9 @@ export default function InferCNVIdeogram({ studyAccession, ideogramFileId, infer
     if (!ideogramFileId && Object.entries(inferCNVIdeogramFiles).length > 0) {
       // find the first ideogram annotations file and pre-render since Ideogram can render on a hidden div
       const firstIdeogramFile = Object.entries(inferCNVIdeogramFiles)[0][1]
+      if (!userHasTerraProfile()) {
+        setShowProfileWarning(true)
+      }
       if (firstIdeogramFile) {
         setInitializeIdeogram(firstIdeogramFile, ideogramContainerId, showViewOptionsControls)
       }
@@ -57,6 +68,7 @@ export default function InferCNVIdeogram({ studyAccession, ideogramFileId, infer
       <ul id="tracks-to-display">
       </ul>
     </div>
+    { showProfileWarning && profileWarning }
   </div>
 }
 
@@ -65,7 +77,8 @@ function setInitializeIdeogram(ideogramFileConfig, ideogramContainerId, showView
   const ideogramAnnotsFile = ideogramFileConfig.ideogram_settings.annotationsPath
   const ideogramOrganism = ideogramFileConfig.ideogram_settings.organism
   const ideogramAssembly = ideogramFileConfig.ideogram_settings.assembly
-  initializeIdeogram(ideogramAnnotsFile, ideogramOrganism, ideogramAssembly, ideogramContainerId, showViewOptionsControls)
+  initializeIdeogram(ideogramAnnotsFile, ideogramOrganism, ideogramAssembly,
+    ideogramContainerId, showViewOptionsControls)
 }
 
 /** Get ideogram heatmap tracks selected via checkbox */
@@ -261,24 +274,10 @@ function warnIdeogramOfNumericCluster() {
   $('#ideogram-container').append(warning)
 }
 
-// remove the ideogram DOM element from the page
+/** remove the ideogram DOM element from the page */
 function removeIdeogram() {
   $('#tracks-to-display, #_ideogramOuterWrap').html('')
   $('#ideogramWarning, #ideogramTitle').remove()
-}
-
-/**
- * dynamically compute a chromosome height based on available display area
- * accounts for state of the view options panel via showViewOptionsControls
- * this is somewhat crude and is optimized for 15" laptops but looks generally fine on bigger monitors
- */
-export function getChrHeight(showViewOptionsControls) {
-  let heatmapSize = parseInt($('.explore-plot-tab-content').actual('width'))
-  if (showViewOptionsControls) {
-    heatmapSize = heatmapSize - parseInt($('.view-options').actual('width'))
-  }
-  const chrHeight = parseInt(heatmapSize / 17)
-  return chrHeight < minChrHeight ? minChrHeight : chrHeight
 }
 
 /** Initialize ideogram to visualize genomic heatmap from inferCNV  */
@@ -288,7 +287,7 @@ function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsC
     removeIdeogram()
   }
 
-  const chrHeight = getChrHeight(showViewOptionsControls)
+  const chrHeight = showViewOptionsControls ? 64 : 80
   $('#ideogramWarning, #ideogramTitle').remove()
 
   ideoConfig = {
@@ -305,12 +304,13 @@ function initializeIdeogram(url, organism, assembly, domTarget, showViewOptionsC
     chrHeight,
     annotationHeight: 20,
     geometry: 'collinear',
-    orientation: 'horizontal'
+    orientation: 'horizontal',
+    accessToken: getReadOnlyToken()
   }
 
   inferCNVIdeogram = new Ideogram(ideoConfig)
   window.inferCNVIdeogram = inferCNVIdeogram
 
-  window.SCP.log('ideogram:initialize')
+  log('ideogram:initialize')
 }
 

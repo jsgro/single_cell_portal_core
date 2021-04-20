@@ -69,6 +69,16 @@
       <% end %>
     </div>
   </div>
+  <div class="row">
+    <div class="col-md-12">
+      <%= f.label :external_link_url, 'External Link URL' %>
+      <%= f.text_field :external_link_url, class: 'form-control' %>
+      <br/>
+      <%= f.label :external_link_description, 'External Link Description' %>
+      <%= f.text_field :external_link_description, class: 'form-control' %>
+    </div>
+  </div>
+  <br/>
 
   <div class="form-group">
     <%= f.submit nil, class: 'btn btn-lg btn-success', id: 'save-branding-group' %>

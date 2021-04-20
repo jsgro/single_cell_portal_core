@@ -347,10 +347,12 @@ module ApplicationHelper
 	# Return an access token for viewing GCS objects client side, depending on study privacy
 	# Context: https://github.com/broadinstitute/single_cell_portal_core/pull/239
   def get_read_access_token(study, user)
-    if study.public? && ApplicationController.read_only_firecloud_client.present?
+    if study.present? && study.public? && ApplicationController.read_only_firecloud_client.present?
       ApplicationController.read_only_firecloud_client.valid_access_token["access_token"]
-    elsif user.present?
-      user.valid_access_token.try(:[], :access_token)
+    elsif user.present? && user.registered_for_firecloud
+      user.token_for_storage_object
+    else
+      nil # there is no 'safe' token that will work as user has no Terra profile
     end
   end
 
@@ -359,16 +361,6 @@ module ApplicationHelper
     if user.present?
       user.valid_access_token.try(:[], :access_token)
     end
-  end
-
-   # Return a scope-limited access token that can be used in URLs (e.g. in urls passed to Morpheus)
-   # this is different than a totat in that it can be re-used
-  def get_url_safe_access_token(user)
-    token = ''
-    if user.present?
-      token = user.authentication_token
-    end
-    token
   end
 
   def pluralize_without_count(count, noun, text=nil)

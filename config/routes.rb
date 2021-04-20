@@ -149,6 +149,7 @@ Rails.application.routes.draw do
 
     # firecloud billing project actions
     get 'billing_projects', to: 'billing_projects#index', as: :billing_projects
+    get 'billing_projects/access_request', to: 'billing_projects#access_request', as: :billing_projects_access_request
     post 'billing_projects/create', to: 'billing_projects#create', as: :create_billing_project
     get 'billing_projects/:project_name', to: 'billing_projects#show_users', as: :show_billing_project_users
     get 'billing_projects/:project_name/new_user', to: 'billing_projects#new_user', as: :new_billing_project_user
@@ -222,28 +223,8 @@ Rails.application.routes.draw do
     get 'study/:accession/:study_name', to: 'site#study', as: :view_study
     get 'study/:accession/:study_name/edit_study_description', to: 'site#edit_study_description', as: :edit_study_description
     match 'study/:accession/:study_name/update_settings', to: 'site#update_study_settings', via: [:post, :patch], as: :update_study_settings
-    get 'study/:accession/:study_name/get_new_annotations', to: 'site#get_new_annotations', as: :get_new_annotations
-    post 'study/:accession/:study_name/search', to: 'site#search_genes', as: :search_genes
-    get 'study/:accession/:study_name/gene_expression/:gene/', to: 'site#view_gene_expression', as: :view_gene_expression,
-        constraints: {gene: /.*/}
-    get 'study/:accession/:study_name/render_gene_expression_plots/:gene/', to: 'site#render_gene_expression_plots',
-        as: :render_gene_expression_plots, constraints: {gene: /.*/}
-    get 'study/:accession/:study_name/render_global_gene_expression_plots/:gene/', to: 'site#render_global_gene_expression_plots',
-        as: :render_global_gene_expression_plots, constraints: {gene: /.*/}
-    get 'study/:accession/:study_name/gene_expression', to: 'site#view_gene_expression_heatmap', as: :view_gene_expression_heatmap
-    get 'study/:accession/:study_name/gene_set_expression', to: 'site#view_gene_set_expression', as: :view_gene_set_expression
-    get 'study/:accession/:study_name/render_gene_set_expression_plots', to: 'site#render_gene_set_expression_plots',
-        as: :render_gene_set_expression_plots
-    get 'study/:accession/:study_name/expression_query', to: 'site#expression_query', as: :expression_query
-    get 'study/:accession/:study_name/annotation_query', to: 'site#annotation_query', as: :annotation_query
-    get 'study/:accession/:study_name/annotation_values', to: 'site#annotation_values', as: :annotation_values
-    post 'study/:accession/:study_name/precomputed_gene_expression', to: 'site#search_precomputed_results', as: :search_precomputed_results
-    get 'study/:accession/:study_name/precomputed_gene_expression', to: 'site#view_precomputed_gene_expression_heatmap',
-        as: :view_precomputed_gene_expression_heatmap
-    get 'study/:accession/:study_name/precomputed_results', to: 'site#precomputed_results', as: :precomputed_results
 
     # user annotation actions
-    post 'study/:accession/:study_name/create_user_annotations', to: 'site#create_user_annotations', as: :create_user_annotations
     get 'study/:accession/:study_name/show_user_annotations_form', to: 'site#show_user_annotations_form', as: :show_user_annotations_form
 
     # workflow actions
@@ -274,9 +255,6 @@ Rails.application.routes.draw do
     post 'study/:accession/:study_name/download_acceptance', to: 'site#record_download_acceptance', as: :record_download_acceptance
 
     # base actions
-    get 'search', to: 'site#search', as: :search
-    post 'get_viewable_studies', to: 'site#get_viewable_studies', as: :get_viewable_studies
-    post 'search_all_genes', to: 'site#search_all_genes', as: :search_all_genes
     get 'log_action', to: 'site#log_action', as: :log_action
     get 'privacy_policy', to: 'site#privacy_policy', as: :privacy_policy
     get 'terms_of_service', to: 'site#terms_of_service', as: :terms_of_service

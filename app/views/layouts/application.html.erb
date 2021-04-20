@@ -19,7 +19,6 @@
       // load the max number of gene searches and corresponding error message.
       window.MAX_GENE_SEARCH = <%= StudySearchService::MAX_GENE_SEARCH %>;
       window.MAX_GENE_SEARCH_MSG = '<%= StudySearchService::MAX_GENE_SEARCH_MSG %>';
-      window.SCP.uniqueGenes = <%= @unique_genes.present? ? raw(@unique_genes) : [] %>;
 
       window.SCP.gaTrackingId = '<%= ENV['GA_TRACKING_ID'] %>';
       window.SCP.analyticsPageName = '<%= get_page_name %>';
@@ -33,7 +32,8 @@
       }
 
       window.SCP.userAccessToken = '<%= get_user_access_token(current_user) %>';
-      window.SCP.URLSafeAccessToken = '<%= get_url_safe_access_token(current_user) %>'
+      window.SCP.getReadAccessToken = '<%= get_read_access_token(@study, current_user) %>';
+      window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
       window.SCP.userSignedIn = <%= user_signed_in? %>;
       window.SCP.environment = '<%= Rails.env %>';
 
@@ -184,12 +184,15 @@
     </div>
     <div class="footer-text-block pull-left left-border-0-5">
       <%= scp_link_to 'Privacy Policy', privacy_policy_path %>
+      &nbsp;
+      <%= scp_link_to "Terms of Service".html_safe, terms_of_service_path %>
+      &nbsp;
+      <% if @selected_branding_group.present? %>
+        <%= link_to "<i class='fas fa-chevron-circle-left fa-fw'></i> Return to Single Cell Portal".html_safe, site_path %>
+      <% end %>
     </div>
-  <% if @selected_branding_group.present? %>
-    <div class="footer-text-block">
-      <%= link_to "<i class='fas fa-chevron-circle-left fa-fw'></i> Return to Single Cell Portal".html_safe, site_path %>
-    </div>
-  <% end %>
+    <div class="clearfix"></div>
+
 </div>
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
 

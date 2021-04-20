@@ -11,15 +11,15 @@ module Api
           {controller: 'search', action: 'bulk_download'},
           {controller: 'studies', action: 'generate_manifest'}
         ]
-        URL_SAFE_TOKEN_ALLOWED_ACTIONS = [
-          {controller: 'expression', action: 'show'},
-          {controller: 'annotations', action: 'cell_values'}
-        ]
         # these are API actions that we allow logged-in site users to access using
         # regular rails session validation & csrf protection, which can be useful
         # to save from having to put a token in a URL
         COOKIE_ALLOWED_ACTIONS = [
-          {controller: 'reports', action: 'show'}
+          {controller: 'reports', action: 'show'},
+          {controller: 'expression', action: 'show'},
+          {controller: 'annotations', action: 'cell_values'},
+          {controller: 'annotations', action: 'gene_list'},
+          {controller: 'studies', action: 'generate_manifest'}
         ]
         def authenticate_api_user!
           head 401 unless api_user_signed_in?
@@ -69,24 +69,12 @@ module Api
                 user.update_last_access_at!
                 return user
               end
-            else
-              if URL_SAFE_TOKEN_ALLOWED_ACTIONS.include?({controller: controller_name, action: action_name})
-                return find_user_from_url_safe_token
-              end
             end
           end
           nil
         end
 
         private
-
-        def find_user_from_url_safe_token
-          if params[:url_safe_token].present?
-            url_safe_token = params[:url_safe_token]
-            return User.find_by(authentication_token: url_safe_token)
-          end
-          nil
-        end
 
         def find_user_from_totat
           # check for a valid totat/action

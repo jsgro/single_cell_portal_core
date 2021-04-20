@@ -161,7 +161,7 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     transformed_coords = ClusterVizService.transform_coordinates(coordinates, @study, cluster, annotation)
     assert_equal coordinates.keys.size, transformed_coords.size,
                  "Did not find correct number of traces; expected #{coordinates.keys.size} but found #{transformed_coords.size}"
-    expected_keys = [:x, :y, :cells, :text, :name, :type, :mode, :marker, :opacity, :annotations, :z, :textposition].sort
+    expected_keys = [:x, :y, :cells, :name, :type, :mode, :marker, :opacity, :annotations, :z, :textposition].sort
     transformed_coords.each do |trace|
       keys = trace.keys.sort
       assert_equal expected_keys, keys
@@ -242,5 +242,14 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     expected_aspect = {mode: 'cube', x: 1.0, y: 1.0, z: 1.0}
     computed_aspect = ClusterVizService.compute_aspect_ratios(cluster.domain_ranges)
     assert_equal expected_aspect, computed_aspect
+  end
+
+  # ensure default value for cluster_group.points will prevent NoMethodError when getting subsampling options
+  # before cluster_group.set_point_count! is called at the end of successful ingest
+  test 'should fallback to default points for new cluster' do
+    new_cluster = @study.cluster_groups.build(name: 'New Cluster', cluster_type: '2d')
+    assert_equal 0, new_cluster.points
+    assert_empty ClusterVizService.subsampling_options(new_cluster)
+    assert_nil ClusterVizService.default_subsampling(new_cluster)
   end
 end

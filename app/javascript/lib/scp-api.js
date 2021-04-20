@@ -10,7 +10,7 @@ import camelcaseKeys from 'camelcase-keys'
 import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
 
-import { getAccessToken, getURLSafeAccessToken } from 'providers/UserProvider'
+import { getAccessToken } from 'providers/UserProvider'
 import {
   logSearch, logDownloadAuthorization, logCreateUserAnnotation,
   mapFiltersForLogging
@@ -35,11 +35,6 @@ export function defaultInit() {
     method: 'GET',
     headers
   }
-}
-
-/** Sluggify study name */
-export function studyNameAsUrlParam(studyName) {
-  return studyName.toLowerCase().replace(/ /g, '-').replace(/[^0-9a-z-]/gi, '')
 }
 
 /** convert a gene param string to an array of individual gene names */
@@ -122,7 +117,7 @@ export async function createUserAnnotation(
   })
 
   const apiUrl = `/studies/${studyAccession}/user_annotations`
-  const [jsonOrResponse, perfTime] = await scpApi(apiUrl, init, mock)
+  const [jsonOrResponse] = await scpApi(apiUrl, init, mock)
 
   let message = ''
   let annotations = {}
@@ -169,7 +164,7 @@ export async function fetchFacets(mock=false) {
     path = `${path}?scpbr=${brandingGroup}`
   }
 
-  const [facets, perfTime] = await scpApi(path, defaultInit(), mock)
+  const [facets] = await scpApi(path, defaultInit(), mock)
 
   mapFiltersForLogging(facets, true)
 
@@ -249,6 +244,7 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
   return values
 }
 
+
 /**
  * Returns an object with scatter plot data for a cluster in a study
  *
@@ -256,7 +252,8 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  *
  * @param {String} studyAccession Study accession
  * @param {String} cluster Name of cluster, as defined at upload
- * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study", or object with name,type, and scope properties
+ * @param {String} annotation Full annotation name,
+     e.g. "CLUSTER--group--study", or object with name,type, and scope properties
  * @param {String} subsample Subsampling threshold, e.g. 100000
  * @param {String} consensus Statistic to use for consensus, e.g. "mean"
  * @param {Boolean} isAnnotatedScatter If showing "Annotated scatter" plot.
@@ -264,7 +261,8 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  * @param {Boolean} mock If using mock data.  Helps development, tests.
  *
  * Example:
- * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
+ * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/
+     Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
  */
 export async function fetchCluster(
   studyAccession, cluster, annotation, subsample, consensus, gene=null,
@@ -350,43 +348,6 @@ export async function fetchExpressionViolin(
   return [violin, perfTime]
 }
 
-
-/**
- * Get all study-wide and cluster annotations for a study
- *
- * See definition: app/controllers/api/v1/visualization/annotations_controller.rb
- *
- * @param {String} studyAccession Study accession
- * @param {Boolean} mock
- */
-export async function fetchAnnotations(studyAccession, mock=false) {
-  const apiUrl = `/studies/${studyAccession}/annotations`
-  const [values] = await scpApi(apiUrl, defaultInit(), mock, false)
-  return values
-}
-
-/**
- * Get a single annotation for a study
- *
- * See definition: app/controllers/api/v1/visualization/annotations_controller.rb
- *
- * @param {String} studyAccession Study accession
- * @param {String} annotationName
- */
-export async function fetchAnnotation(
-  studyAccession, clusterName, annotationName, annotationScope, annotationType, mock=false
-) {
-  const paramObj = {
-    cluster: clusterName,
-    annotation_scope: annotationScope,
-    annotation_type: annotationType
-  }
-  annotationName = annotationName ? annotationName : '_default'
-  const apiUrl = `/studies/${studyAccession}/annotations/${encodeURIComponent(annotationName)}${stringifyQuery(paramObj)}`
-  const [values] = await scpApi(apiUrl, defaultInit(), mock)
-  return values
-}
-
 /** Get URL for a Morpheus-suitable annotation values file */
 export function getAnnotationCellValuesURL(
   { studyAccession, cluster, annotationName, annotationScope, annotationType, mock=false }
@@ -394,11 +355,11 @@ export function getAnnotationCellValuesURL(
   const paramObj = {
     cluster,
     annotation_scope: annotationScope,
-    annotation_type: annotationType,
-    url_safe_token: getURLSafeAccessToken()
+    annotation_type: annotationType
   }
   annotationName = annotationName ? annotationName : '_default'
-  const apiUrl = `/studies/${studyAccession}/annotations/${encodeURIComponent(annotationName)}/cell_values${stringifyQuery(paramObj)}`
+  let apiUrl = `/studies/${studyAccession}/annotations/${encodeURIComponent(annotationName)}`
+  apiUrl += `/cell_values${stringifyQuery(paramObj)}`
   return getFullUrl(apiUrl)
 }
 
@@ -428,14 +389,13 @@ export function getExpressionHeatmapURL({
     subsample,
     genes: geneArrayToParam(genes),
     row_centered: heatmapRowCentering,
-    url_safe_token: getURLSafeAccessToken(),
     gene_list: geneList
   }
   const path = `/studies/${studyAccession}/expression/heatmap${stringifyQuery(paramObj)}`
   return getFullUrl(path)
 }
 
-
+/** update a current user (such as setting their feature flags) */
 export async function updateCurrentUser(updatedUser, mock=false) {
   const init = Object.assign({}, defaultInit(), {
     method: 'PATCH',
@@ -472,7 +432,7 @@ export async function fetchFacetFilters(facet, query, mock=false) {
 
   const pathAndQueryString = `/search/facet_filters${queryString}`
 
-  const [filters, perfTime] = await scpApi(pathAndQueryString, defaultInit(), mock)
+  const [filters] = await scpApi(pathAndQueryString, defaultInit(), mock)
   mapFiltersForLogging(filters)
 
   return filters
@@ -498,7 +458,7 @@ export async function fetchDownloadSize(accessions, fileTypes, mock=false) {
   const fileTypesString = fileTypes.join(',')
   const queryString = `?accessions=${accessions}&file_types=${fileTypesString}`
   const pathAndQueryString = `/search/bulk_download_size/${queryString}`
-  const [size, perfTime] = await scpApi(pathAndQueryString, defaultInit(), mock)
+  const [size] = await scpApi(pathAndQueryString, defaultInit(), mock)
   return size
 }
 

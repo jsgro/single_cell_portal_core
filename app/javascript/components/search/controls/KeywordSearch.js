@@ -25,10 +25,12 @@ export default function KeywordSearch({ keywordPrompt }) {
     selectionContext.performSearch()
   }
 
+  /** handle typing in the search box */
   function handleKeywordChange(newValue) {
     selectionContext.updateSelection({ terms: newValue })
   }
 
+  /** handle a user pressing the 'x' to clear the field */
   function handleClear() {
     inputField.current.focus()
     selectionContext.updateSelection({ terms: '' }, true)

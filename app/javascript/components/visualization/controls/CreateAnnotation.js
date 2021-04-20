@@ -28,7 +28,7 @@ function CreateAnnotation({
   updateClusterParams
 }) {
   const [showControl, setShowControl] = useState(false)
-  const [isLoading, setIsLoading] = useState(!!annotationList)
+  const [isLoading, setIsLoading] = useState(!annotationList)
   const [userLabels, setUserLabels] = useState([])
   const [annotationName, setAnnotationName] = useState('')
   const [plotlyTarget, setPlotlyTarget] = useState(null)

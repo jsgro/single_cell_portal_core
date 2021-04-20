@@ -16,8 +16,13 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
 
   # base url for all API calls
   BASE_URL = 'https://api.firecloud.org'
-  # default auth scopes
-  GOOGLE_SCOPES = %w(https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-billing.readonly https://www.googleapis.com/auth/devstorage.read_only)
+  BASE_SAM_SERVICE_URL = 'https://sam.dsde-prod.broadinstitute.org'
+  # default auth scopes for client tokens
+  GOOGLE_SCOPES = %w(
+    https://www.googleapis.com/auth/userinfo.profile
+    https://www.googleapis.com/auth/userinfo.email
+    https://www.googleapis.com/auth/devstorage.read_only
+  )
   # constant used for retry loops in process_firecloud_request and execute_gcloud_method
   MAX_RETRY_COUNT = 5
   # constant used for incremental backoffs on retries (in seconds); ignored when running unit/integration test suite
@@ -1330,6 +1335,61 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
     else
       raise RuntimeError.new("Invalid billing account role: #{role}; must be a member of '#{BILLING_PROJECT_ROLES.join(', ')}'")
     end
+  end
+
+  ##
+  # PET SERVICE ACCOUNT METHODS
+  # these methods reference the SAM API directly for issuing pet service account tokens/json keyfiles
+  # NOTE: the FireCloudClient instance calling these methods must be initialized using a User object
+  # for authentication purposes, otherwise downstream calls will return 403
+  ##
+
+  # create a new instance of FireCloudClient, but use a pet service account keyfile
+  # will only work with users that have been registered in Terra
+  #
+  # * *params*
+  #   - +user+: (User) => User object from which access tokens are generated
+  #   - +project+: (String) => Default GCP Project to use (can be overridden by other parameters)
+  #
+  # * *return*
+  #   - +FireCloudClient+ instance, or nil if user has not registered with Terra
+  def self.new_with_pet_account(user, project)
+    # create a temporary client in order to retrieve the user's pet service account keyfile
+    tmp_client = self.new(user, project)
+    if tmp_client.registered?
+      pet_service_account_json = tmp_client.get_pet_service_account_key(project)
+      self.new(user, project, pet_service_account_json)
+    else
+      nil
+    end
+  end
+
+  # issue an access_token for a user's pet service account in the requested project
+  #
+  # * *params*
+  #   - +project_name+ (String) => Name of a FireCloud billing project in which pet service account resides
+  #
+  # * *returns*
+  #   - +String+ pet service account OAuth2 access_token
+  def get_pet_service_account_token(project_name)
+    path = BASE_SAM_SERVICE_URL + "/api/google/v1/user/petServiceAccount/#{project_name}/token"
+    # normal scopes, plus RO access for storage objects (removes unnecessary billing scope from GOOGLE_SCOPES)
+    token = process_firecloud_request(:post, path, GOOGLE_SCOPES.to_json)
+    token.gsub(/\"/, '') # gotcha for removing escaped quotes in response body
+  end
+
+  # get JSON keyfile contents for a user's pet service account in the requested project
+  # response from this API call can be passed to FireCloudClient.new(user, project_name, service_account_contents)
+  # to create an instance of FireCloudClient that is able to call GCS methods as the user in the request project
+  #
+  # * *params*
+  #   - +project_name+ (String) => Name of a FireCloud billing project in which pet service account resides
+  #
+  # * *returns*
+  #   - +Hash+ parsed contents of pet service account JSON keyfile
+  def get_pet_service_account_key(project_name)
+    path = BASE_SAM_SERVICE_URL + "/api/google/v1/user/petServiceAccount/#{project_name}/key"
+    process_firecloud_request(:get, path)
   end
 
   #######

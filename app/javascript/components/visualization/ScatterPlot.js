@@ -35,7 +35,7 @@ export const defaultScatterColor = 'Reds'
   */
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
-   isAnnotatedScatter=false, isCellSelecting=false, plotPointsSelected
+  isAnnotatedScatter=false, isCellSelecting=false, plotPointsSelected
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [clusterData, setClusterData] = useState(null)
@@ -58,7 +58,7 @@ function RawScatterPlot({
       layout.height = height
       formatMarkerColors(scatter.data, scatter.annotParams.type, scatter.gene)
       formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene, isAnnotatedScatter)
-      const dataScatterColor = processTraceScatterColor(scatter.data, scatterColor)
+      processTraceScatterColor(scatter.data, scatterColor)
 
       const perfTimeFrontendStart = performance.now()
 

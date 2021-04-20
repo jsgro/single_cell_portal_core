@@ -104,7 +104,7 @@
   padding-left: 25px;
   position: relative;
   margin-top: -108px; /* negative value of footer height */
-  height: 108px;
+  min-height: 108px;
   clear:both;
   p {
     font-size: 14px;
@@ -155,4 +155,9 @@
 .scp-help-text {
   font-size: 18px;
   font-weight: 300;
+}
+
+#billing-access-request {
+  width: 800px;
+  margin: 0px auto;
 }
