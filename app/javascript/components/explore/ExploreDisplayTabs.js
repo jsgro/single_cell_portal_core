@@ -253,7 +253,7 @@ export default function ExploreDisplayTabs({
                 height={ideogramHeight}
                 genesInScope={exploreInfo.uniqueGenes}
                 searchGenes={searchGenes}
-                speciesList={exploreInfo.speciesList}
+                speciesList={exploreInfo.taxonNames}
               />
             }
             { !showViewOptionsControls &&

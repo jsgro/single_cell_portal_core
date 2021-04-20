@@ -40,14 +40,14 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
   const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
 
   /** handles a user submitting a gene search */
-  function handleSubmit(event) {
+  function handleSearch(event) {
     event.preventDefault()
     const newGeneArray = syncGeneArrayToInputText()
     if (newGeneArray && newGeneArray.length) {
       const genesToSearch = newGeneArray.map(g => g.value)
-      if (event) {
-        // this was not a 'clear'
-        logStudyGeneSearch(genesToSearch, 'submit', speciesList)
+      if (event) { // this was not a 'clear'
+        const trigger = event.type // 'click' or 'submit'
+        logStudyGeneSearch(genesToSearch, trigger, speciesList)
       }
       searchGenes(genesToSearch)
     } else {
@@ -132,11 +132,11 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
   }, [genes.join(',')])
 
   return (
-    <form className="gene-keyword-search gene-study-keyword-search form-horizontal" onSubmit={handleSubmit}>
+    <form className="gene-keyword-search gene-study-keyword-search form-horizontal" onSubmit={handleSearch}>
       <div className="flexbox align-center">
         <div className="input-group">
           <div className="input-group-append">
-            <Button type="submit" data-analytics-name="gene-search-submit">
+            <Button type="button" data-analytics-name="gene-search-submit" onClick={handleSearch}>
               <FontAwesomeIcon icon={faSearch} />
             </Button>
           </div>
