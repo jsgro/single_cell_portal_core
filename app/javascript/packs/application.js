@@ -45,11 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
       <HomePageContent />, document.getElementById('home-page-content')
     )
   }
-  if (document.getElementById('covid19-page-content')) {
-    ReactDOM.render(
-      <Covid19PageContent />, document.getElementById('covid19-page-content')
-    )
-  }
   checkMissingAuthToken()
 })
 

@@ -72,7 +72,8 @@ export function PropsGeneSearchProvider(props) {
       'gene',
       {
         page: searchParams.page,
-        genes: searchParams.genes
+        genes: searchParams.genes,
+        preset: searchParams.preset
       }
     )
 
@@ -122,12 +123,13 @@ export function buildParamsFromQuery(query, preset) {
  * GeneSearchContext and rendering children.
  * The routing is all via query params
  */
-export default function GeneSearchProvider(props) {
+export default function GeneSearchProvider({ children }) {
   const location = useLocation()
-  const searchParams = buildParamsFromQuery(location.search, props.preset)
+  const preset = location.pathname.includes('covid19') ? 'covid19' : ''
+  const searchParams = buildParamsFromQuery(location.search, preset)
   return (
     <PropsGeneSearchProvider searchParams={searchParams}>
-      {props.children}
+      {children}
     </PropsGeneSearchProvider>
   )
 }
