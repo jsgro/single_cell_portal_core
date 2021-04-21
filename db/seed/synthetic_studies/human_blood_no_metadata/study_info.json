@@ -1,0 +1,8 @@
+{
+  "study": {
+    "name": "Human Blood Study with no metadata",
+    "description": "Some studies do not have metadata at all, much less convention compliant data.  We sought to identify whether those studies could be found correctly via faceted or regular search.  This study in particular should appear for searches on blood.  It should also appear on searches for Homo sapiens. We found the presence of this study in those search results was positively correlated with the correct functioning of inferred search, and text search more generally </p>",
+    "data_dir": "test"
+  },
+  "files": []
+}
