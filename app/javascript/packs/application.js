@@ -25,7 +25,6 @@ import morpheus from 'morpheus-app'
 import checkMissingAuthToken from 'lib/user-auth-tokens'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
 import HomePageContent from 'components/HomePageContent'
-import Covid19PageContent from 'components/covid19/Covid19PageContent'
 import {
   logPageView, logClick, logMenuChange, log
 } from 'lib/metrics-api'
