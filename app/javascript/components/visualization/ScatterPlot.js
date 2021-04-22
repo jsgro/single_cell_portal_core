@@ -52,17 +52,26 @@ function RawScatterPlot({
 
     if (apiOk) {
       // Get Plotly layout
-      const layout = getPlotlyLayout(scatter)
-      const { width, height } = dimensions
-      layout.width = width
-      layout.height = height
-      formatMarkerColors(scatter.data, scatter.annotParams.type, scatter.gene)
-      formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene, isAnnotatedScatter)
-      processTraceScatterColor(scatter.data, scatterColor)
+      const layout = getPlotlyLayout(dimensions, scatter)
+      const plotlyTraces = getPlotlyTraces({
+        data: scatter.data,
+        annotName: scatter.annotParams.name,
+        annotType: scatter.annotParams.type,
+        annotValues: scatter.annotParams.values,
+        gene: scatter.gene,
+        isAnnotatedScatter: scatter.isAnnotatedScatter,
+        scatterColor,
+        dataScatterColor: scatter.scatterColor,
+        pointOpacity: scatter.defaultPointOpacity,
+        pointSize: scatter.pointSize,
+        showPointBorders: scatter.showClusterPointBorders,
+        annotRange: scatter.data.annotationRange,
+        is3D: scatter.is3D
+      })
 
       const perfTimeFrontendStart = performance.now()
 
-      Plotly.react(graphElementId, scatter.data, layout)
+      Plotly.react(graphElementId, plotlyTraces, layout)
 
       const perfTimeFrontend = performance.now() - perfTimeFrontendStart
 
@@ -76,8 +85,8 @@ function RawScatterPlot({
         genes,
         'gene': scatter.gene,
         'is3D': scatter.is3D,
-        'layout:width': width, // Pixel width of graph
-        'layout:height': height, // Pixel height of graph
+        'layout:width': dimensions.width, // Pixel width of graph
+        'layout:height': dimensions.height, // Pixel height of graph
         'numAnnotSelections': scatter.annotParams.values.length,
         'annotName': scatter.annotParams.name,
         'annotType': scatter.annotParams.type,
@@ -187,50 +196,96 @@ const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
 
-/** add trace marker colors to group annotations */
-function formatMarkerColors(data, annotationType, gene) {
-  if (annotationType === 'group' && !gene) {
-    data.forEach((trace, i) => {
-      trace.marker.color = getColorBrewerColor(i)
-    })
+/** get the array of plotly traces for plotting */
+function getPlotlyTraces({
+  data,
+  annotType,
+  annotName,
+  annotValues,
+  annotRange,
+  gene,
+  isAnnotatedScatter,
+  scatterColor,
+  dataScatterColor,
+  pointOpacity,
+  pointSize,
+  showPointBorders,
+  is3D
+}) {
+  const trace = {
+    type: 'scattergl',
+    mode: 'markers',
+    x: data.x,
+    y: data.y,
+    annotations: data.annotations,
+    cells: data.cells,
+    opacity: pointOpacity ? pointOpacity : 1
   }
+  if (is3D) {
+    trace.z = data.z
+  }
+
+  addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter)
+  const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
+  if (annotType === 'group' && !gene) {
+    trace.transforms = [{
+      type: 'groupby',
+      groups: data.annotations,
+      styles: annotValues.map((val, index) => {
+        return {
+          target: val,
+          value: { marker: {
+            color: getColorBrewerColor(index),
+            size: pointSize,
+            name: val + 'fooo',
+            title: val + ' foooo'
+          } }
+        }
+      })
+    }]
+  } else {
+    trace.marker = {
+      colorscale: appliedScatterColor,
+      cmin: annotRange.min,
+      cmax: annotRange.max,
+      color: data.annotations,
+      colorbar: { title: annotName, titleside: 'right' },
+      showscale: true,
+      line: { color: 'rgb(40,40,40)', width: 0 },
+      size: pointSize
+    }
+  }
+  return [trace]
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */
-function formatHoverLabels(data, annotationType, gene, isAnnotatedScatter) {
-  const groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{data.name}<extra></extra>'
-  data.forEach(trace => {
-    trace.text = trace.cells
-    if (!isAnnotatedScatter && (annotationType === 'numeric' || gene)) {
-      // use the 'meta' property so annotations are exposed to the hover template
-      // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
-      trace.meta = trace.annotations
-      trace.hovertemplate = `(%{x}, %{y})<br>%{text} (%{meta})<br>
-        ${trace.marker.colorbar.title}: %{marker.color}<extra></extra>`
-    } else {
-      trace.text = trace.cells
-      trace.hovertemplate = groupHoverTemplate
-    }
-  })
+function addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter) {
+  let groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{meta}<extra></extra>'
+  trace.text = trace.cells
+  // use the 'meta' property so annotations are exposed to the hover template
+  // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
+  trace.meta = trace.annotations
+  if (!isAnnotatedScatter && (annotType === 'numeric' || gene)) {
+    groupHoverTemplate = `(%{x}, %{y})<br>%{text} (%{meta})<br>
+      ${annotName}: %{marker.color}<extra></extra>`
+  }
+  trace.hovertemplate = groupHoverTemplate
 }
 
 /** sets the scatter color on the given races.  If no color is sspecified, it reads the color from the data */
-function processTraceScatterColor(data, scatterColor) {
+function getScatterColorToApply(dataScatterColor, scatterColor) {
   // Set color scale
   if (!scatterColor) {
-    scatterColor = data[0].marker.colorscale
+    scatterColor = dataScatterColor
   }
   if (!scatterColor) {
     scatterColor = defaultScatterColor
-  }
-  if (data[0].marker) {
-    data[0].marker.colorscale = scatterColor
   }
   return scatterColor
 }
 
 /** Gets Plotly layout object for scatter plot */
-function getPlotlyLayout({
+function getPlotlyLayout({ width, height }={}, {
   axes,
   domainRanges,
   hasCoordinateLabels,
@@ -261,6 +316,8 @@ function getPlotlyLayout({
   if (!gene.length && annotParams && annotParams.name) {
     layout.legend = { title: { text: annotParams.name } }
   }
+  layout.width = width
+  layout.height = height
   return layout
 }
 
