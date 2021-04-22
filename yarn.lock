@@ -14366,6 +14366,18 @@ wbuf@^1.1.0, wbuf@^1.7.3:
   dependencies:
     minimalistic-assert "^1.0.0"
 
+web-vitals-reporter@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/web-vitals-reporter/-/web-vitals-reporter-1.0.0.tgz#d6c7f71318320bc1446402742cddf378a155b714"
+  integrity sha512-7XmkVg7ce/jQjBovYzFs8ekRCgBdha+gQaE0Fg0wHGJdyj25nKZxqdEHcw998ytfls9d8eDly/mF8Cwd0f8BlQ==
+  dependencies:
+    web-vitals "^1.0.1"
+
+web-vitals@^1.0.1, web-vitals@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/web-vitals/-/web-vitals-1.1.1.tgz#2df535e3355fb7fbe34787b44b736e270e539377"
+  integrity sha512-jYOaqu01Ny1NvMwJ3dBJDUOJ2PGWknZWH4AUnvFOscvbdHMERIKT2TlgiAey5rVyfOePG7so2JcXXZdSnBvioQ==
+
 webidl-conversions@^4.0.2:
   version "4.0.2"
   resolved "https://registry.npmjs.org/webidl-conversions/-/webidl-conversions-4.0.2.tgz"
