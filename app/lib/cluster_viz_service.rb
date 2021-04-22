@@ -216,19 +216,9 @@ class ClusterVizService
     x_array = []
     y_array = []
     z_array = []
-    if include_coords && annotation[:scope] != 'user'
-      x_array = cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-      y_array = cluster.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-      z_array = cluster.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-    end
-    cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = []
-    annotation_hash = {}
-    # Construct the arrays based on scope
-    if annotation[:scope] == 'cluster'
-      annotation_array = cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
+    cells = []
+
+    if annotation[:scope] == 'user'
       user_annotation = UserAnnotation.find(annotation[:id])
       subsample_annotation = user_annotation.formatted_annotation_identifier
       annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
@@ -239,17 +229,21 @@ class ClusterVizService
       end
       cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
     else
-      # for study-wide annotations, load from study_metadata values instead of cluster-specific annotations
-      metadata_obj = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-      annotation_array = cells.map { |cell| annotation_hash[cell] }
+      if include_coords
+        x_array = cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
+        y_array = cluster.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
+        z_array = cluster.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
+      end
+      cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
     end
-    annotation_array = AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
+
+    annotation_array = get_annotation_values_array(cluster, annotation, cells, subsample_annotation, subsample_threshold)
 
     viz_data = {
       annotations: annotation_array,
       cells: cells,
     }
+
     if include_coords
       viz_data[:x] = x_array
       viz_data[:y] = y_array
@@ -257,6 +251,7 @@ class ClusterVizService
         viz_data[:z] = z_array
       end
     end
+
     if annotation[:type] == 'numeric'
       text_array = []
       color_array = []
@@ -264,7 +259,28 @@ class ClusterVizService
       min, max = RequestUtils.get_minmax(annotation_array)
       viz_data[:annotationRange] = {max: max, min: min}
     end
-    viz_data
 
+    viz_data
+  end
+
+  # returns an array of the values for the given annotation, sorted by the cells of the given cells array
+  def self.get_annotation_values_array(cluster, annotation, cells, subsample_annotation, subsample_threshold)
+    annotation_array = []
+    # Construct the arrays based on scope
+    if annotation[:scope] == 'cluster'
+      annotation_array = cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
+    elsif annotation[:scope] == 'user'
+      # for user annotations, we have to load by id as names may not be unique to clusters
+      user_annotation = UserAnnotation.find(annotation[:id])
+      subsample_annotation = user_annotation.formatted_annotation_identifier
+      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
+    else
+      # for study-wide annotations, load from study_metadata values instead of cluster-specific annotations
+      metadata_obj = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
+      annotation_hash = metadata_obj.cell_annotations
+      annotation_array = cells.map { |cell| annotation_hash[cell] }
+    end
+    annotation_array = AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
+    annotation_array
   end
 end

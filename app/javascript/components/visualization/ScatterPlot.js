@@ -54,6 +54,7 @@ function RawScatterPlot({
       // Get Plotly layout
       const layout = getPlotlyLayout(dimensions, scatter)
       const plotlyTraces = getPlotlyTraces({
+        axes: scatter.axes,
         data: scatter.data,
         annotName: scatter.annotParams.name,
         annotType: scatter.annotParams.type,
@@ -66,6 +67,7 @@ function RawScatterPlot({
         pointSize: scatter.pointSize,
         showPointBorders: scatter.showClusterPointBorders,
         annotRange: scatter.data.annotationRange,
+        expressionRange: scatter.data.expressionRange,
         is3D: scatter.is3D
       })
 
@@ -198,11 +200,13 @@ export default ScatterPlot
 
 /** get the array of plotly traces for plotting */
 function getPlotlyTraces({
+  axes,
   data,
   annotType,
   annotName,
   annotValues,
   annotRange,
+  expressionRange,
   gene,
   isAnnotatedScatter,
   scatterColor,
@@ -225,7 +229,7 @@ function getPlotlyTraces({
     trace.z = data.z
   }
 
-  addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter)
+  addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter, axes)
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
   if (annotType === 'group' && !gene) {
     trace.transforms = [{
@@ -236,20 +240,21 @@ function getPlotlyTraces({
           target: val,
           value: { marker: {
             color: getColorBrewerColor(index),
-            size: pointSize,
-            name: val + 'fooo',
-            title: val + ' foooo'
+            size: pointSize
           } }
         }
       })
     }]
   } else {
+    const colors = gene ? data.expression : data.annotations
+    const usedRange = gene ? expressionRange : annotRange
+    const title = gene ? axes.titles.magnitude : annotName
     trace.marker = {
       colorscale: appliedScatterColor,
-      cmin: annotRange.min,
-      cmax: annotRange.max,
-      color: data.annotations,
-      colorbar: { title: annotName, titleside: 'right' },
+      cmin: usedRange.min,
+      cmax: usedRange.max,
+      color: colors,
+      colorbar: { title, titleside: 'right' },
       showscale: true,
       line: { color: 'rgb(40,40,40)', width: 0 },
       size: pointSize
@@ -259,15 +264,18 @@ function getPlotlyTraces({
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */
-function addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter) {
+function addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter, axes) {
   let groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{meta}<extra></extra>'
   trace.text = trace.cells
   // use the 'meta' property so annotations are exposed to the hover template
   // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
   trace.meta = trace.annotations
   if (!isAnnotatedScatter && (annotType === 'numeric' || gene)) {
-    groupHoverTemplate = `(%{x}, %{y})<br>%{text} (%{meta})<br>
-      ${annotName}: %{marker.color}<extra></extra>`
+    let bottomRowLabel = annotName
+    if (gene) {
+      bottomRowLabel = axes.titles.magnitude
+    }
+    groupHoverTemplate = `(%{x}, %{y})<br>%{text} (%{meta})<br>${bottomRowLabel}: %{marker.color}<extra></extra>`
   }
   trace.hovertemplate = groupHoverTemplate
 }

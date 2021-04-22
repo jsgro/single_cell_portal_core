@@ -178,7 +178,7 @@ module Api
             end
             # For single-gene view of Explore tab (or collapsed multi-gene)
             is_collapsed_view = genes.length > 1 && consensus.present?
-            y_axis_title = ExpressionVizService.load_expression_axis_title(study)
+            titles[:magnitude] = ExpressionVizService.load_expression_axis_title(study)
 
             if is_annotated_scatter
               # For "Annotated scatter" tab, shown in first tab for numeric annotations
@@ -191,14 +191,14 @@ module Api
               range = ClusterVizService.set_range(cluster, plot_data.values)
               titles = {
                 x: annot_params[:name],
-                y: y_axis_title
+                y: titles[:magnitude]
               }
             else
               # For "Scatter" tab
               if is_collapsed_view
                 plot_data = ExpressionVizService.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample, y_axis_title, colorscale)
               else
-                plot_data = ExpressionVizService.load_expression_data_array_points(study, genes[0], cluster, annotation, subsample, y_axis_title, colorscale)
+                plot_data = ExpressionVizService.load_expression_data_array_points(study, genes[0], cluster, annotation, subsample)
               end
             end
           end
