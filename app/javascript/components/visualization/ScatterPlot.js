@@ -118,7 +118,7 @@ function RawScatterPlot({
     // Don't try to update the color if the graph hasn't loaded yet
     if (clusterData && !isLoading) {
       const newDragMode = getDragMode(isCellSelecting)
-      window.Plotly.relayout(graphElementId, { dragmode: newDragMode })
+      Plotly.relayout(graphElementId, { dragmode: newDragMode })
       if (!isCellSelecting) {
         Plotly.restyle(graphElementId, { selectedpoints: [null] })
       }

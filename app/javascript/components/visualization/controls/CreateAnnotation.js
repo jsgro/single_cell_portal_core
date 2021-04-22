@@ -169,11 +169,14 @@ function CreateAnnotation({
     setPlotlyTarget(target)
   }, [currentPointsSelected])
 
-  let createButton = (<button className="action" onClick={handlePanelToggle}>
+  let createButton = (<button className="action"
+    data-analytics-name="toggle-create-annotation"
+    onClick={handlePanelToggle}>
     <FontAwesomeIcon icon={showControl ? faMinus : faPlus}/> Create annotation
   </button>)
   if (!isUserLoggedIn()) {
     createButton = <button className="action"
+      data-analytics-name="toggle-create-annotation-signedout"
       data-toggle="tooltip"
       title="You must sign in to create custom annotations">
       <FontAwesomeIcon icon={faPlus}/> Create annotation
