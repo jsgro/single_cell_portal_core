@@ -129,6 +129,34 @@ export function logSearch(type, searchParams, perfTime) {
   )
 }
 
+/** Logs scatter plot metrics */
+export function logScatterPlot(perfTimes, plotData) {
+  const { perfTime, perfTimeFrontendStart } = perfTimes
+  const { scatter, genes, width, height } = plotData
+
+  const perfTimeFrontend = performance.now() - perfTimeFrontendStart
+
+  const perfTimeFull = perfTime + perfTimeFrontend
+
+  const perfLogProps = {
+    'perfTime:backend': perfTime, // Time for API call
+    'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
+    'perfTime': Math.round(perfTimeFull), // Time from API call *start* to plot render end,
+    'numPoints': scatter.numPoints, // How many cells are we plotting?
+    genes,
+    'gene': scatter.gene,
+    'is3D': scatter.is3D,
+    'layout:width': width, // Pixel width of graph
+    'layout:height': height, // Pixel height of graph
+    'numAnnotSelections': scatter.annotParams.values.length,
+    'annotName': scatter.annotParams.name,
+    'annotType': scatter.annotParams.type,
+    'annotScope': scatter.annotParams.scope
+  }
+
+  log('plot:scatter', perfLogProps)
+}
+
 /**
  * Log create user annotation metrics
  */
