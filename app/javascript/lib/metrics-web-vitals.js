@@ -2,7 +2,7 @@
  * @fileoverview Functions to log web vitals to Bard / Mixpanel
  */
 
-import { getLCP, getFID, getCLS } from 'web-vitals'
+import { getTTFB, getFCP, getLCP, getFID, getCLS } from 'web-vitals'
 
 import { log } from './metrics-api'
 
@@ -121,15 +121,22 @@ export function createWebVitalsBardReporter() {
  * Logs web vitals, performance metrics for page view UX, to Bard / Mixpanel
  *
  * Includes:
+ *  - TTFB: time to first byte, a very early page load event
+ *  - FCP: first contentful paint, when users gets first visual feedback
+ *  - LCP: largest contentful paint, a middle measure perceived load time
+ *  - FID: first input delay, when user can first interact (e.g. click)
  *  - CLS: cumulative layout shift, measures visual stability
- *  - FID: first input delay, measures interactivity
- *  - LCP: largest content paint, measures perceived load time
  *  - Hardware stats on connection speed, # CPUs, memory
+ *
+ * LCP, FID, and CLS are the core web vitals.
+ * TTFB and FCP are useful supplements.
  */
 export function logWebVitals() {
   const logWebVitalToBard = createWebVitalsBardReporter()
 
-  getCLS(logWebVitalToBard)
-  getFID(logWebVitalToBard)
+  getTTFB(logWebVitalToBard)
+  getFCP(logWebVitalToBard)
   getLCP(logWebVitalToBard)
+  getFID(logWebVitalToBard)
+  getCLS(logWebVitalToBard)
 }
