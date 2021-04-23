@@ -4,14 +4,15 @@
  * This module provides functions for tracking generic events (e.g. clicks),
  * as well as generic a logging function that integrates with Bard / Mixpanel.
  */
+import _find from 'lodash/find'
+import _remove from 'lodash/remove'
+import $ from 'jquery'
+import { getDefaultProperties } from '@databiosphere/bard-client'
 
 import { getAccessToken } from 'providers/UserProvider'
 import { getBrandingGroup } from 'lib/scp-api'
 import getSCPContext from 'providers/SCPContextProvider'
-import { getDefaultProperties } from '@databiosphere/bard-client'
-import _find from 'lodash/find'
-import _remove from 'lodash/remove'
-import $ from 'jquery'
+import { logWebVitals, hardwareStats } from './metrics-web-vitals'
 
 let metricsApiMock = false
 
@@ -29,6 +30,7 @@ const bardDomainsByEnv = {
   production: 'https://terra-bard-prod.appspot.com'
 }
 
+
 // Disable ESLint for this assignment to ensure
 // `pendingEvents` uses `let`, not `const`
 let pendingEvents = [] // eslint-disable-line
@@ -44,6 +46,10 @@ if (env != 'test') {
   // To consider: Replace SCP-specific userId with DSP-wide userId
   userId = window.SCP.userId
   registeredForTerra = window.SCP.registeredForTerra
+}
+
+if (!metricsApiMock) {
+  logWebVitals()
 }
 
 /**
@@ -289,13 +295,16 @@ function getAnalyticsPageName() {
  * @param {String} name
  * @param {Object} props
  */
-export function log(name, props={}) {
+export function log(name, props={}, useBeacon=false) {
   props = Object.assign(props, {
     appId: 'single-cell-portal',
     appPath: getAnalyticsPageName(),
     appFullPath: getAppFullPath(),
     env
   }, getDefaultProperties())
+
+  props['timeSincePageLoad'] = Math.round(performance.now())
+
   if (window.SCP && window.SCP.currentStudyAccession) {
     props['studyAccession'] = window.SCP.currentStudyAccession
   }
@@ -311,9 +320,11 @@ export function log(name, props={}) {
   props['brand'] = brandingGroup ? brandingGroup : ''
   props['registeredForTerra'] = registeredForTerra
 
-  let init = Object.assign({}, defaultInit)
+  if ('perfTime' in props) {
+    props = Object.assign(props, hardwareStats)
+  }
 
-  props['timeSincePageLoad'] = Math.round(performance.now())
+  let init = Object.assign({}, defaultInit)
 
   if (getAccessToken() === '' || !registeredForTerra) {
     // User is unauthenticated, unregistered, anonymous,
@@ -335,7 +346,6 @@ export function log(name, props={}) {
   init = Object.assign(init, body)
 
   if ('SCP' in window || metricsApiMock) {
-    // Skips fetch during test, unless explicitly testing Metrics API
     fetch(`${bardDomain}/api/event`, init)
   }
 }

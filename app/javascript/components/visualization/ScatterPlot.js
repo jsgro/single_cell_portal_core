@@ -66,7 +66,6 @@ function RawScatterPlot({
 
       const perfTimes = { perfTime, perfTimeFrontendStart }
       const plotData = { scatter, genes, width, height }
-
       logScatterPlot(perfTimes, plotData)
 
       setClusterData(scatter)

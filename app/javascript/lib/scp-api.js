@@ -10,10 +10,6 @@ import camelcaseKeys from 'camelcase-keys'
 import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
 
-
-import { getCLS, getFID, getLCP } from 'web-vitals'
-import { createApiReporter, getDeviceInfo } from 'web-vitals-reporter'
-
 import { getAccessToken } from 'providers/UserProvider'
 import {
   logSearch, logDownloadAuthorization, logCreateUserAnnotation,
@@ -24,15 +20,6 @@ import {
 let globalMock = false
 
 const defaultBasePath = '/single_cell/api/v1'
-
-
-// Init report callback with information about the browser.
-const sendToAnalytics = createApiReporter('/analytics', { initial: getDeviceInfo() })
-
-// Setup web-vitals
-getLCP(sendToAnalytics)
-getFID(sendToAnalytics)
-getCLS(sendToAnalytics)
 
 /** Get default `init` object for SCP API fetches */
 export function defaultInit() {
