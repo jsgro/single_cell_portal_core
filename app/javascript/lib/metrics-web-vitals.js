@@ -92,7 +92,7 @@ export function createWebVitalsBardReporter() {
   // should be the last call to capture latest CLS
   setTimeout(() => {
     // Safari does not fire "visibilitychange" on the tab close
-    // So we have 2 options: loose Safari data, or loose LCP/CLS that depends on "visibilitychange" logic.
+    // So we have 2 options: lose Safari data, or loose LCP/CLS that depends on "visibilitychange" logic.
     // Current solution: if LCP/CLS supported, use `onHidden` otherwise, use `pagehide` to fire the callback in the end.
     //
     // More details: https://github.com/treosh/web-vitals-reporter/issues/3
