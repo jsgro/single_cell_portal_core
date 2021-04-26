@@ -4,6 +4,7 @@ FactoryBot.define do
     upload_file_name { name }
     factory :metadata_file do
       file_type { 'Metadata' }
+      parse_status { 'parsed' }
       transient do
         # cell_input is an array of all cell names
         # e.g.  ['cellA', 'cellB', 'cellC']
@@ -35,6 +36,7 @@ FactoryBot.define do
       # using this factory to create a sample cluster file with cells and annotations takes ~1.5 seconds
       # a cluster file without cells and annotations takes ~0.5secods
       file_type { 'Cluster' }
+      parse_status { 'parsed' }
       is_spatial { false }
       transient do
         # cell_input is a hash of three (or 4) arrays: cells, x and y and z
@@ -62,6 +64,7 @@ FactoryBot.define do
     end
     factory :expression_file do
       file_type { 'Expression Matrix' }
+      parse_status { 'parsed' }
       transient do
         # expression_input is a hash of gene names to expression values
         # expression values should be an array of arrays, where each sub array is a cellName->value pair
@@ -82,6 +85,7 @@ FactoryBot.define do
     end
     factory :coordinate_label_file do
       file_type { 'Coordinate Labels' }
+      parse_status { 'parsed' }
       transient do
         # label input is used for coordinate-based annotations
         label_input {}
