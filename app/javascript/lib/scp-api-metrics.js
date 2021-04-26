@@ -130,10 +130,10 @@ export function logSearch(type, searchParams, perfTime) {
 }
 
 /** Logs scatter plot metrics */
-export function logScatterPlot(perfTimes, plotData) {
-  const { perfTime, perfTimeFrontendStart } = perfTimes
-  const { scatter, genes, width, height } = plotData
-
+export function logScatterPlot(
+  { perfTime, perfTimeFrontendStart },
+  { scatter, genes, width, height }
+) {
   const perfTimeFrontend = performance.now() - perfTimeFrontendStart
 
   const perfTimeFull = perfTime + perfTimeFrontend
