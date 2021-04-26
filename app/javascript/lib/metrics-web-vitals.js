@@ -59,8 +59,6 @@ function round(val, precision = 0) {
  * @return {(metric: Metric) => void}
  */
 export function createWebVitalsBardReporter() {
-  console.log('in logWebVitalsToBard 0')
-
   let isSent = false
   let isCalled = false
   let result = {}
@@ -98,7 +96,8 @@ export function createWebVitalsBardReporter() {
     // Current solution: if LCP/CLS supported, use `onHidden` otherwise, use `pagehide` to fire the callback in the end.
     //
     // More details: https://github.com/treosh/web-vitals-reporter/issues/3
-    const supportedEntryTypes = (PerformanceObserver && PerformanceObserver.supportedEntryTypes) || []
+    const supportedEntryTypes =
+      (typeof PerformanceObserver !== 'undefined' && PerformanceObserver.supportedEntryTypes) || []
     const isLatestVisibilityChangeSupported = supportedEntryTypes.indexOf('layout-shift') !== -1
 
     if (isLatestVisibilityChangeSupported) {
