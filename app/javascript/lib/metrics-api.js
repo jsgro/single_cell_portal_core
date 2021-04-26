@@ -295,7 +295,7 @@ function getAnalyticsPageName() {
  * @param {String} name
  * @param {Object} props
  */
-export function log(name, props={}, useBeacon=false) {
+export function log(name, props={}) {
   props = Object.assign(props, {
     appId: 'single-cell-portal',
     appPath: getAnalyticsPageName(),

@@ -74,10 +74,10 @@ export function createWebVitalsBardReporter() {
     isSent = true
 
     if (typeof navigator === 'undefined') {return}
-    return log('web-vitals', result, true)
+    return log('web-vitals', result)
   }
 
-
+  /** Round metric value as appropriate */
   const mapMetric = function(metric) {
     const isWebVital = ['FCP', 'TTFB', 'LCP', 'CLS', 'FID'].indexOf(metric.name) !== -1
     return { [metric.name]: isWebVital ? round(metric.value, metric.name === 'CLS' ? 4 : 0) : metric.value }
