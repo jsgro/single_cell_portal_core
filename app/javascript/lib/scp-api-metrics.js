@@ -129,19 +129,40 @@ export function logSearch(type, searchParams, perfTime) {
   )
 }
 
-/** Logs scatter plot metrics */
-export function logScatterPlot(
-  { perfTime, perfTimeFrontendStart },
-  { scatter, genes, width, height }
-) {
+/** Calculates generic performance timing metrics for visualizations */
+function calculatePerfTimes(perfTime, perfTimeFrontendStart) {
   const perfTimeFrontend = performance.now() - perfTimeFrontendStart
 
   const perfTimeFull = perfTime + perfTimeFrontend
 
-  const perfLogProps = {
+  return {
     'perfTime:backend': perfTime, // Time for API call
     'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
-    'perfTime': Math.round(perfTimeFull), // Time from API call *start* to plot render end,
+    'perfTime': Math.round(perfTimeFull) // Time from API call *start* to plot render end
+  }
+}
+
+/** Logs violin plot metrics */
+export function logViolinPlot(
+  { genes, plotType, showPoints },
+  { perfTime, perfTimeFrontendStart }
+) {
+  const perfTimeProps = calculatePerfTimes(perfTime, perfTimeFrontendStart)
+
+  let props = { genes, plotType, showPoints }
+  props = Object.assign(props, perfTimeProps)
+
+  log('plot:violin', props)
+}
+
+/** Logs scatter plot metrics */
+export function logScatterPlot(
+  { scatter, genes, width, height },
+  { perfTime, perfTimeFrontendStart }
+) {
+  const perfTimeProps = calculatePerfTimes(perfTime, perfTimeFrontendStart)
+
+  let props = {
     'numPoints': scatter.numPoints, // How many cells are we plotting?
     genes,
     'gene': scatter.gene,
@@ -154,7 +175,9 @@ export function logScatterPlot(
     'annotScope': scatter.annotParams.scope
   }
 
-  log('plot:scatter', perfLogProps)
+  props = Object.assign(props, perfTimeProps)
+
+  log('plot:scatter', props)
 }
 
 /**

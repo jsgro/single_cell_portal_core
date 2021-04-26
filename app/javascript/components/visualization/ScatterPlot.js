@@ -64,9 +64,10 @@ function RawScatterPlot({
 
       Plotly.react(graphElementId, scatter.data, layout)
 
-      const perfTimes = { perfTime, perfTimeFrontendStart }
-      const plotData = { scatter, genes, width, height }
-      logScatterPlot(perfTimes, plotData)
+      logScatterPlot(
+        { scatter, genes, width, height },
+        { perfTime, perfTimeFrontendStart }
+      )
 
       setClusterData(scatter)
       setShowError(false)
