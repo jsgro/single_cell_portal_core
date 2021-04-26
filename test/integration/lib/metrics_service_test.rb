@@ -17,7 +17,7 @@ class MetricsServiceTest < ActiveSupport::TestCase
   end
 
   teardown do
-    User.find_by(email: 'bard.user@gmail.com').destroy
+    User.where(email: /bard\.user/).destroy_all
   end
 
   test 'should log to Mixpanel via Bard' do
@@ -51,7 +51,7 @@ class MetricsServiceTest < ActiveSupport::TestCase
     # These expected arguments are the main thing we are testing.
     expected_args = {
       url: "https://terra-bard-dev.appspot.com/api/event",
-      headers: {:Authorization=>"Bearer ", :"Content-Type"=>"application/json"},
+      headers: {'Authorization' => "Bearer ", "Content-Type" => "application/json"},
       payload: {event: event, properties: expected_output_props}.to_json,
       method: "POST"
     }
@@ -80,7 +80,7 @@ class MetricsServiceTest < ActiveSupport::TestCase
     # These expected arguments are the main thing we are testing.
     expected_args = {
       url: "https://terra-bard-dev.appspot.com/api/identify",
-      headers: {Authorization: "Bearer ", "Content-Type": "application/json"},
+      headers: {"Authorization" => "Bearer ", "Content-Type" => "application/json"},
       payload: {anonId: anon_id}.to_json,
       method: "POST"
     }
@@ -138,7 +138,7 @@ class MetricsServiceTest < ActiveSupport::TestCase
 
     expected_args = {
       url: 'https://terra-bard-dev.appspot.com/api/event',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type' => 'application/json'},
       payload: {event: 'error', properties: expected_output_props}.to_json,
       method: 'POST'
     }
@@ -184,6 +184,60 @@ class MetricsServiceTest < ActiveSupport::TestCase
     expected_output = 'root'
     root_page_name = MetricsService.get_page_name(controller_name, action_name)
     assert_equal expected_output, root_page_name
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
+  # this test ensures that we configure auth headers correctly based on a user's Terra registration status
+  # POSTs to Bard w/ users who are not registered that contain the Authorization: Bearer token will respond 503
+  # and will not log activity, which leads to missing analytics in Mixpanel
+  test 'should remove auth headers for non-Terra users' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    unregistered_user = User.create(
+      email: 'bard.user.2@gmail.com',
+      password: 'password',
+      uid: '98765',
+      access_token: {
+        access_token: 'bar',
+        expires_at: DateTime.new(3000, 1, 1),
+        expires_in: 3600
+      },
+      registered_for_firecloud: false,
+      metrics_uuid: SecureRandom.uuid
+    )
+    event = 'fake-event'
+    input_props = {
+      foo: 'bar',
+      bing: 'baz'
+    }
+
+    expected_output_props = input_props.merge(
+      {
+        appId: "single-cell-portal",
+        env: "test",
+        registeredForTerra: false,
+        distinct_id: unregistered_user.metrics_uuid,
+        authenticated: false
+      }
+    )
+
+    # As input into RestClient::Request.execute.
+    # These expected arguments are the main thing we are testing.
+    expected_args = {
+      url: "https://terra-bard-dev.appspot.com/api/event",
+      headers: {"Content-Type" => "application/json"},
+      payload: {event: event, properties: expected_output_props}.to_json,
+      method: "POST"
+    }
+
+    # Mock network traffic to/from Bard, the DSP service proxying Mixpanel
+    mock = Minitest::Mock.new
+    mock.expect :call, mock, [expected_args] # Mock `execute` call (request)
+    RestClient::Request.stub :execute, mock do
+      MetricsService.log(event, input_props, unregistered_user)
+      mock.verify
+    end
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
