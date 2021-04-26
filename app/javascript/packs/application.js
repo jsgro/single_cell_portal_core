@@ -26,7 +26,7 @@ import checkMissingAuthToken from 'lib/user-auth-tokens'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
 import HomePageContent from 'components/HomePageContent'
 import {
-  logPageView, logClick, logMenuChange, log
+  logPageView, logClick, logMenuChange, setupWebVitalsLogging, log
 } from 'lib/metrics-api'
 import * as ScpApi from 'lib/scp-api'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
@@ -38,6 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $(document).on('click', 'body', logClick)
   $(document).on('change', 'select', logMenuChange)
+
+  setupWebVitalsLogging()
 
   if (document.getElementById('home-page-content')) {
     ReactDOM.render(

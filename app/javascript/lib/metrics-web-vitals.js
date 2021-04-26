@@ -67,8 +67,6 @@ export function createWebVitalsBardReporter() {
     if (isSent) {return} // data is already sent
     if (!isCalled) {return} // no data collected
 
-    result.duration = performance.now()
-
     result = Object.assign(result, hardwareStats)
 
     isSent = true
@@ -117,7 +115,9 @@ export function createWebVitalsBardReporter() {
 }
 
 /**
- * Logs web vitals, performance metrics for page view UX, to Bard / Mixpanel
+ * Sets up logging for web vitals and client hardware to Bard / Mixpanel
+ *
+ * Web vitals are performance metrics for page view UX.
  *
  * Includes:
  *  - TTFB: time to first byte, a very early page load event
@@ -130,7 +130,8 @@ export function createWebVitalsBardReporter() {
  * LCP, FID, and CLS are the core web vitals.
  * TTFB and FCP are useful supplements.
  */
-export function logWebVitals() {
+export function initializeWebVitalsLogging() {
+  console.log('in initialize')
   const logWebVitalToBard = createWebVitalsBardReporter()
 
   getTTFB(logWebVitalToBard)
@@ -138,4 +139,6 @@ export function logWebVitals() {
   getLCP(logWebVitalToBard)
   getFID(logWebVitalToBard)
   getCLS(logWebVitalToBard)
+
+  console.log('end initialize')
 }
