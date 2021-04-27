@@ -26,7 +26,7 @@ const defaultInit = {
 
 const bardDomainsByEnv = {
   development: 'https://terra-bard-dev.appspot.com',
-  staging: 'https://terra-bard-alpha.appspot.com',
+  staging: 'https://terra-bard-dev.appspot.com',
   production: 'https://terra-bard-prod.appspot.com'
 }
 
