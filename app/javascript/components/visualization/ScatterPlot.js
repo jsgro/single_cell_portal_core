@@ -38,7 +38,7 @@ function RawScatterPlot({
   isAnnotatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
 }) {
   const [isLoading, setIsLoading] = useState(false)
-  const [clusterData, setClusterData] = useState(null)
+  const [scatterData, setScatterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
@@ -88,6 +88,13 @@ function RawScatterPlot({
       const perfTimeFrontendStart = performance.now()
 
       Plotly.react(graphElementId, plotlyTraces, layout)
+      sortLegend({
+        graphElementId,
+        annotValues: scatter.annotParams.values,
+        isAnnotatedScatter,
+        annotType: scatter.annotParams.type,
+        gene: scatter.gene
+      })
 
       const perfTimeFrontend = performance.now() - perfTimeFrontendStart
 
@@ -112,7 +119,7 @@ function RawScatterPlot({
 
       log('plot:scatter', perfLogProps)
 
-      setClusterData(scatter)
+      setScatterData(scatter)
       setShowError(false)
     }
     setIsLoading(false)
@@ -149,7 +156,7 @@ function RawScatterPlot({
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
-    if (clusterData && !isLoading) {
+    if (scatterData && !isLoading) {
       const dataUpdate = { 'marker.colorscale': scatterColor }
       Plotly.update(graphElementId, dataUpdate)
     }
@@ -158,7 +165,7 @@ function RawScatterPlot({
   // Handles cell select mode updates
   useUpdateEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
-    if (clusterData && !isLoading) {
+    if (scatterData && !isLoading) {
       const newDragMode = getDragMode(isCellSelecting)
       window.Plotly.relayout(graphElementId, { dragmode: newDragMode })
       if (!isCellSelecting) {
@@ -170,7 +177,7 @@ function RawScatterPlot({
   // Adjusts width and height of plots upon toggle of "View Options"
   useUpdateEffect(() => {
     // Don't update if the graph hasn't loaded yet
-    if (clusterData && !isLoading) {
+    if (scatterData && !isLoading) {
       const { width, height } = dimensions
       const layoutUpdate = { width, height }
       Plotly.relayout(graphElementId, layoutUpdate)
@@ -193,13 +200,13 @@ function RawScatterPlot({
   return (
     <div className="plot">
       { ErrorComponent }
-      { clusterData &&
+      { scatterData &&
         <PlotTitle
-          cluster={clusterData.cluster}
-          annotation={clusterData.annotParams.name}
-          subsample={clusterData.subsample}
-          gene={clusterData.gene}
-          consensus={clusterData.consensus}/>
+          cluster={scatterData.cluster}
+          annotation={scatterData.annotParams.name}
+          subsample={scatterData.subsample}
+          gene={scatterData.gene}
+          consensus={scatterData.consensus}/>
       }
       <div
         className="scatter-graph"
@@ -208,8 +215,8 @@ function RawScatterPlot({
       >
       </div>
       <p className="help-block">
-        { clusterData && clusterData.description &&
-          <span>{clusterData.description}</span>
+        { scatterData && scatterData.description &&
+          <span>{scatterData.description}</span>
         }
       </p>
 
@@ -263,16 +270,20 @@ function getPlotlyTraces({
   addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter, axes)
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
   if (annotType === 'group' && !gene) {
+    const traceCounts = countOccurences(data.annotations)
     trace.transforms = [{
       type: 'groupby',
       groups: data.annotations,
       styles: annotValues.map((val, index) => {
         return {
           target: val,
-          value: { marker: {
-            color: getColorBrewerColor(index),
-            size: pointSize
-          } }
+          value: {
+            name: `${val} (${traceCounts[val]} points)`,
+            marker: {
+              color: getColorBrewerColor(index),
+              size: pointSize
+            }
+          }
         }
       })
     }]
@@ -294,13 +305,52 @@ function getPlotlyTraces({
   return [trace]
 }
 
+/** return a hash of value=>count for the passed-in array
+    This i actually surprisingly quick even for large arrays, but we'd rather we
+    didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612s
+*/
+function countOccurences(array) {
+  return array.reduce((acc, curr) => {
+    if (!acc[curr]) {
+      acc[curr] = 1
+    } else {
+      acc[curr] += 1
+    }
+    return acc
+  }, {})
+}
+
+/** sorts the scatter plot legend alphabetically
+  this is super-hacky in that it relies a lot on plotly internal classnames and styling implementation
+  it should only be used as a last resort if https://github.com/plotly/plotly.js/pull/5591
+  is not included in Plotly
+ */
+function sortLegend({ graphElementId, annotValues, isAnnotatedScatter, annotType, gene }) {
+  if (isAnnotatedScatter || annotType === 'numeric' || gene) {
+    return
+  }
+  const legendTitleRegex = /(.*) \(\d+ points\)/
+  const sortedValues = [...annotValues].sort((a, b) => a.localeCompare(b))
+  const legendTraces = Array.from(document.querySelectorAll(`#${graphElementId} .legend .traces`))
+  const legendNames = legendTraces.map(traceEl => {
+    return traceEl.textContent.match(legendTitleRegex)[1]
+  })
+  const legendTransforms = legendTraces.map(traceEl => traceEl.getAttribute('transform'))
+
+  legendNames.forEach((traceName, index) => {
+    // for each trace, change its transform to the one corresponding to its desired sort order
+    const desiredIndex = sortedValues.findIndex(val => val === traceName)
+    legendTraces[index].setAttribute('transform', legendTransforms[desiredIndex])
+  })
+}
+
 /** makes the data trace attributes (cells, trace name) available via hover text */
 function addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter, axes) {
-  let groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{meta}<extra></extra>'
   trace.text = trace.cells
   // use the 'meta' property so annotations are exposed to the hover template
   // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
   trace.meta = trace.annotations
+  let groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{meta}<extra></extra>'
   if (!isAnnotatedScatter && (annotType === 'numeric' || gene)) {
     let bottomRowLabel = annotName
     if (gene) {
@@ -353,7 +403,10 @@ function getPlotlyLayout({ width, height }={}, {
     Object.assign(layout, props2d)
   }
   if (!gene.length && annotParams && annotParams.name) {
-    layout.legend = { title: { text: annotParams.name } }
+    layout.legend = {
+      itemsizing: 'constant',
+      title: { text: annotParams.name }
+    }
   }
   layout.width = width
   layout.height = height
