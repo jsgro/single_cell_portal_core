@@ -127,13 +127,6 @@ module Api
               key :type, :string
             end
             parameter do
-              key :name, :gene_list
-              key :in, :query
-              key :description, 'Name of gene list (overrides other parameters)'
-              key :required, false
-              key :type, :string
-            end
-            parameter do
               key :name, :annotation_type
               key :in, :query
               key :description, 'Type of annotation. One of "group" or "numeric".'
