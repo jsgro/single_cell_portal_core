@@ -467,19 +467,15 @@ export async function fetchDownloadSize(accessions, fileTypes, mock=false) {
  *
  * Docs: https:///singlecell.broadinstitute.org/single_cell/api/swagger_docs/v1#!/Search/search
  *
- * @param {String} type Type of query to perform (study- or cell-based)
+ * @param {String} type Type of query to perform ("study" or "gene")
  * @param {Object} searchParams  Search parameters, including
  *   @param {String} terms Searched keywords
  *   @param {Object} facets Applied facets and filters
  *   @param {Integer} page Page in search results
  *   @param {String} order Results ordering field
- *   @param {String} preset_search Query preset (e.g. 'covid19')
+ *   @param {String} preset_search Query preset (e.g. "covid19")
  * @param {Boolean} mock If using mock data
  * @returns {Promise} Promise object containing camel-cased data from API
- *
- * @example
- *
- * fetchSearch('study', 'tuberculosis');
  */
 export async function fetchSearch(type, searchParams, mock=false) {
   const path = `/search?${buildSearchQueryString(type, searchParams)}`
