@@ -50,7 +50,6 @@ if (env != 'test') {
 
 /** Initializes any logging that  */
 export function setupPageTransitionLog() {
-  console.log('in setup')
   if (!metricsApiMock) {
     setupWebVitalsLog()
   }
