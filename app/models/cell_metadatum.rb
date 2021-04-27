@@ -53,13 +53,10 @@ class CellMetadatum
 
   # concatenate data arrays of a given name/type in order
   def concatenate_data_arrays(array_name, array_type)
-    data_arrays = DataArray.where(name: array_name, array_type: array_type, linear_data_type: 'CellMetadatum',
-                                  linear_data_id: self.id).order(:array_index => 'asc')
-    all_values = []
-    data_arrays.each do |array|
-      all_values += array.values
-    end
-    all_values
+    query = {name: array_name, array_type: array_type, linear_data_type: 'CellMetadatum', linear_data_id: self.id,
+             study_id: self.study_id, study_file_id: self.study_file_id, cluster_group_id: nil,
+             cluster_name: self.study_file.upload_file_name, subsample_threshold: nil, subsample_annotation: nil}
+    DataArray.where(query).order(:array_index => 'asc').pluck(:values).reduce([], :+)
   end
 
   # create dropdown menu value for annotation select
