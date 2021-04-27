@@ -35,8 +35,8 @@ class MetricsService
   def self.get_default_headers(user)
     access_token = user.token_for_api_call
     {
-      'Authorization': "Bearer #{access_token.present? ? access_token.dig('access_token') : nil }",
-      'Content-Type': 'application/json'
+      'Authorization' => "Bearer #{access_token.present? ? access_token.dig('access_token') : nil }",
+      'Content-Type' => 'application/json'
     }
   end
 
@@ -68,7 +68,7 @@ class MetricsService
     user.update(metrics_uuid: user_id) if user_id != user.metrics_uuid
 
     post_body = {
-      'anonId': user_id
+      'anonId' => user_id
     }.to_json
 
     params = {
@@ -79,7 +79,6 @@ class MetricsService
 
     # only post to /identify if user is registered, otherwise Bard responds 503 due to upstream errors in SAM
     self.post_to_bard(params, user) if user.registered_for_firecloud
-
   end
 
   # Log metrics to Mixpanel via Bard web service
@@ -113,7 +112,7 @@ class MetricsService
       props['authenticated'] = true
     end
 
-    post_body = {'event': name, 'properties': props}.to_json
+    post_body = {'event' => name, 'properties' => props}.to_json
 
     params = {
       url: BARD_ROOT + '/api/event',
@@ -122,7 +121,6 @@ class MetricsService
     }
 
     self.post_to_bard(params, user)
-
   end
 
   # Log error metrics to Mixpanel via Bard web service
@@ -176,18 +174,18 @@ class MetricsService
     end
 
     headers = {
-      'Content-Type': 'application/json'
+      'Content-Type' => 'application/json'
     }
 
     # configure properties/headers depending on user presence
     if user.present?
       props.merge!({ authenticated: true, registeredForTerra: user.registered_for_firecloud })
-      headers.merge!({'Authorization': "Bearer #{user.token_for_api_call.dig('access_token')}"})
+      headers.merge!({'Authorization' => "Bearer #{user.token_for_api_call.dig('access_token')}"})
     else
       props.merge!({ authenticated: false, distinct_id: request.cookies['user_id'] })
     end
 
-    post_body = {'event': 'error', 'properties': props}.to_json
+    post_body = {'event' => 'error', 'properties' => props}.to_json
 
     params = {
       url: BARD_ROOT + '/api/event',
