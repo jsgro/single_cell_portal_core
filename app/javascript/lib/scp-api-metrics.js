@@ -129,6 +129,57 @@ export function logSearch(type, searchParams, perfTime) {
   )
 }
 
+/** Calculates generic performance timing metrics for visualizations */
+function calculatePerfTimes(perfTime, perfTimeFrontendStart) {
+  const perfTimeFrontend = performance.now() - perfTimeFrontendStart
+
+  const perfTimeFull = perfTime + perfTimeFrontend
+
+  return {
+    'perfTime:backend': perfTime, // Time for API call
+    'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
+    'perfTime': Math.round(perfTimeFull) // Time from API call *start* to plot render end
+  }
+}
+
+/** Logs violin plot metrics */
+export function logViolinPlot(
+  { genes, plotType, showPoints },
+  { perfTime, perfTimeFrontendStart }
+) {
+  const perfTimeProps = calculatePerfTimes(perfTime, perfTimeFrontendStart)
+
+  let props = { genes, plotType, showPoints }
+  props = Object.assign(props, perfTimeProps)
+
+  log('plot:violin', props)
+}
+
+/** Logs scatter plot metrics */
+export function logScatterPlot(
+  { scatter, genes, width, height },
+  { perfTime, perfTimeFrontendStart }
+) {
+  const perfTimeProps = calculatePerfTimes(perfTime, perfTimeFrontendStart)
+
+  let props = {
+    'numPoints': scatter.numPoints, // How many cells are we plotting?
+    genes,
+    'gene': scatter.gene,
+    'is3D': scatter.is3D,
+    'layout:width': width, // Pixel width of graph
+    'layout:height': height, // Pixel height of graph
+    'numAnnotSelections': scatter.annotParams.values.length,
+    'annotName': scatter.annotParams.name,
+    'annotType': scatter.annotParams.type,
+    'annotScope': scatter.annotParams.scope
+  }
+
+  props = Object.assign(props, perfTimeProps)
+
+  log('plot:scatter', props)
+}
+
 /**
  * Log create user annotation metrics
  */
