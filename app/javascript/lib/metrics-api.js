@@ -12,7 +12,7 @@ import { getDefaultProperties } from '@databiosphere/bard-client'
 import { getAccessToken } from 'providers/UserProvider'
 import { getBrandingGroup } from 'lib/scp-api'
 import getSCPContext from 'providers/SCPContextProvider'
-import { initializeWebVitalsLogging, hardwareStats } from './metrics-web-vitals'
+import { setupWebVitalsLog, hardwareStats } from './metrics-web-vitals'
 
 let metricsApiMock = false
 
@@ -48,11 +48,11 @@ if (env != 'test') {
   registeredForTerra = window.SCP.registeredForTerra
 }
 
-/** Initializes logging for web vitals, if appropriate */
-export function setupWebVitalsLogging() {
+/** Initializes any logging that  */
+export function setupPageTransitionLog() {
   console.log('in setup')
   if (!metricsApiMock) {
-    initializeWebVitalsLogging()
+    setupWebVitalsLog()
   }
 }
 

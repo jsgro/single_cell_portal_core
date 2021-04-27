@@ -48,8 +48,7 @@ function round(val, precision = 0) {
 }
 
 /**
- * Create Web Vitals Bard reporter, that accepts `Metric` values and sends it
- * to Bard using `navigator.sendBeacon`.
+ * Create Web Vitals Bard reporter, that accepts `Metric` values that are logged to Bard.
  *
  * The function is called only once per page load.
  *
@@ -130,8 +129,7 @@ export function createWebVitalsBardReporter() {
  * LCP, FID, and CLS are the core web vitals.
  * TTFB and FCP are useful supplements.
  */
-export function initializeWebVitalsLogging() {
-  console.log('in initialize')
+export function setupWebVitalsLog() {
   const logWebVitalToBard = createWebVitalsBardReporter()
 
   getTTFB(logWebVitalToBard)
@@ -139,6 +137,4 @@ export function initializeWebVitalsLogging() {
   getLCP(logWebVitalToBard)
   getFID(logWebVitalToBard)
   getCLS(logWebVitalToBard)
-
-  console.log('end initialize')
 }
