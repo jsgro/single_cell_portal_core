@@ -564,14 +564,19 @@ function getFullUrl(path, mock=false) {
 export default async function scpApi(
   path, init, mock=false, camelCase=true, toJson=true
 ) {
-  const perfTimeStart = performance.now()
-
   const fullPath = getFullUrl(path, mock)
+
+  const perfTimeStart = performance.now()
 
   const response = await fetch(fullPath, init).catch(error => error)
 
   // Milliseconds taken to fetch data from API
-  const perfTime = Math.round(performance.now() - perfTimeStart)
+  const legacyPerfTime = Math.round(performance.now() - perfTimeStart)
+
+  const perfTime = {
+    legacyPerfTime,
+    url
+  }
 
   if (response.ok) {
     if (toJson) {

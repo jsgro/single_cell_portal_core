@@ -72,7 +72,7 @@ function getFriendlyFilterListByFacet(facets) {
 }
 
 /**
- * Log study search metrics.  Might support gene, cell search in future.
+ * Log global study search metrics, one type of search done on home page
  */
 export function logSearch(type, searchParams, perfTime) {
   searchNumber += 1
@@ -130,14 +130,29 @@ export function logSearch(type, searchParams, perfTime) {
 }
 
 /** Calculates generic performance timing metrics for visualizations */
-function calculatePerfTimes(perfTime, perfTimeFrontendStart) {
-  const perfTimeFrontend = performance.now() - perfTimeFrontendStart
+function calculatePerfTimes(perfTime) {
+  // const perfTimeFrontend = performance.now() - perfTimeFrontendStart
 
-  const perfTimeFull = perfTime + perfTimeFrontend
+  // const perfTimeFull = perfTime + perfTimeFrontend
 
-  return {
-    'perfTime:backend': perfTime, // Time for API call
+  // return {
+  //   'perfTime:backend': perfTime, // Time for API call
+  //   'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
+  //   'perfTime': Math.round(perfTimeFull) // Time from API call *start* to plot render end
+  // }
+
+  const perfTimePlot = performance.now() - perfTime['plotStart']
+
+  const perfTimeFrontend = perfTimePlot + perfTime['json']
+
+  const perfTimeBackend = perfTime['backend']
+  const perfTimeFull = perfTimeBackend + perfTimeFrontend
+
+  const perfLogProps = {
+    'perfTime:backend': perfTimeBackend, // Time for API call
     'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
+    'perfTime:frontend:plot': Math.round(perfTimePlot), // Time from start to end of plot render call
+    'perfTime:frontend:parse': Math.round(perfTime['json']), // Time to parse JSON
     'perfTime': Math.round(perfTimeFull) // Time from API call *start* to plot render end
   }
 }
