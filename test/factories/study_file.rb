@@ -120,5 +120,21 @@ FactoryBot.define do
         }
       }
     end
+    factory :gene_list do
+      file_type { 'Gene List' }
+      parse_status { 'parsed' }
+      transient do
+        list_name {}
+        clusters_input {}
+        gene_scores_input {}
+      end
+      after(:create) do |file, evaluator|
+        FactoryBot.create(:precomputed_score,
+                          name: evaluator.list_name,
+                          clusters: evaluator.clusters_input,
+                          gene_scores: evaluator.gene_scores_input,
+                          study_file: file)
+      end
+    end
   end
 end
