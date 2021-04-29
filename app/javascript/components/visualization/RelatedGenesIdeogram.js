@@ -29,8 +29,9 @@ function onClickAnnot(annot) {
     otherProps[`relatedGenes:${key}`] = value
   })
 
-  otherProps['trigger'] = 'click-related-genes'
-  logStudyGeneSearch([annot.name], null, null, otherProps)
+  const trigger = 'click-related-genes'
+  const speciesList = ideogram.SCP.speciesList
+  logStudyGeneSearch([annot.name], trigger, speciesList, otherProps)
   ideogram.SCP.searchGenes([annot.name])
 }
 
@@ -134,7 +135,7 @@ function onPlotRelatedGenes() {
  * This is only done in the context of single-gene search in Study Overview
  */
 export default function RelatedGenesIdeogram({
-  gene, taxon, target, height, genesInScope, searchGenes
+  gene, taxon, target, height, genesInScope, searchGenes, speciesList
 }) {
   const verticalPad = 40 // Total top and bottom padding
 
@@ -161,7 +162,7 @@ export default function RelatedGenesIdeogram({
       Ideogram.initRelatedGenes(ideoConfig, genesInScope)
 
     // Extend ideogram with custom SCP function to search genes
-    window.ideogram.SCP = { searchGenes }
+    window.ideogram.SCP = { searchGenes, speciesList }
   }, [gene])
 
   return (

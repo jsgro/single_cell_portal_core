@@ -7063,10 +7063,10 @@ identity-obj-proxy@3.0.0:
   dependencies:
     harmony-reflect "^1.4.6"
 
-ideogram@1.28.0:
-  version "1.28.0"
-  resolved "https://registry.npmjs.org/ideogram/-/ideogram-1.28.0.tgz"
-  integrity sha512-xUvQX6ozPIEx5gHdKU+gWGPKkl2gFK0OK3bnm1FM2X7+qf8bestilnJea8dC9unhLMacd9l48s1DvF+InJW++w==
+ideogram@1.29.0:
+  version "1.29.0"
+  resolved "https://registry.yarnpkg.com/ideogram/-/ideogram-1.29.0.tgz#65d0d44bf679f9a4dc4127f37f673fa8723e1735"
+  integrity sha512-ycshKSGctAF5dxRNrbU+Q8gTtdvpNiIw6vJ4smYvYT+mTCfSPhC0oeIpvz6VsByo2X/JPLs261DH9LSzsFaJ3A==
   dependencies:
     crossfilter2 "1.5.2"
     d3-array "^2.8.0"
@@ -14365,6 +14365,11 @@ wbuf@^1.1.0, wbuf@^1.7.3:
   integrity sha512-O84QOnr0icsbFGLS0O3bI5FswxzRr8/gHwWkDlQFskhSPryQXvrTMxjxGP4+iWYoauLoBvfDpkrOauZ+0iZpDA==
   dependencies:
     minimalistic-assert "^1.0.0"
+
+web-vitals@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/web-vitals/-/web-vitals-1.1.1.tgz#2df535e3355fb7fbe34787b44b736e270e539377"
+  integrity sha512-jYOaqu01Ny1NvMwJ3dBJDUOJ2PGWknZWH4AUnvFOscvbdHMERIKT2TlgiAey5rVyfOePG7so2JcXXZdSnBvioQ==
 
 webidl-conversions@^4.0.2:
   version "4.0.2"

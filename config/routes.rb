@@ -59,7 +59,9 @@ Rails.application.routes.draw do
               get 'cell_values', to: 'visualization/annotations#cell_values'
             end
           end
-          get get 'annotations/gene_lists/:gene_list', to: 'visualization/annotations#gene_list'
+          get 'annotations/gene_lists/:gene_list', to: 'visualization/annotations#gene_list',
+              constraints: { gene_list: /[^\/]+/ },
+              as: :annotations_gene_list
 
           resources :user_annotations, only: [:create], params: :accession
         end
@@ -260,6 +262,7 @@ Rails.application.routes.draw do
     get 'terms_of_service', to: 'site#terms_of_service', as: :terms_of_service
 
     get 'covid19', to: 'site#covid19'
+    get 'covid19/*path', to: 'site#covid19'
 
     get '/', to: 'site#index', as: :site
     post '/', to: 'site#index'

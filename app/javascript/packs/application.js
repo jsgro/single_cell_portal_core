@@ -25,9 +25,8 @@ import morpheus from 'morpheus-app'
 import checkMissingAuthToken from 'lib/user-auth-tokens'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
 import HomePageContent from 'components/HomePageContent'
-import Covid19PageContent from 'components/covid19/Covid19PageContent'
 import {
-  logPageView, logClick, logMenuChange, log
+  logPageView, logClick, logMenuChange, setupPageTransitionLog, log
 } from 'lib/metrics-api'
 import * as ScpApi from 'lib/scp-api'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
@@ -40,14 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
   $(document).on('click', 'body', logClick)
   $(document).on('change', 'select', logMenuChange)
 
+  setupPageTransitionLog()
+
   if (document.getElementById('home-page-content')) {
     ReactDOM.render(
       <HomePageContent />, document.getElementById('home-page-content')
-    )
-  }
-  if (document.getElementById('covid19-page-content')) {
-    ReactDOM.render(
-      <Covid19PageContent />, document.getElementById('covid19-page-content')
     )
   }
   checkMissingAuthToken()

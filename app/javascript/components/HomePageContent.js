@@ -26,24 +26,25 @@ const LinkableSearchTabs = function(props) {
   // we can't use the regular ReachRouter methods for link highlighting
   // since the Reach router doesn't own the home path
   const location = useLocation()
-  const showGenesTab = location.pathname.startsWith('/single_cell/app/genes')
+  const basePath = location.pathname.includes('covid19') ? '/single_cell/covid19' : '/single_cell'
+  const showGenesTab = location.pathname.includes('/app/genes')
   const queryParams = queryString.parse(location.search)
   // the queryParams object does not support the more typical hasOwnProperty test
   const advancedSearchDefault = ('advancedSearch' in queryParams)
   return (
     <div>
       <nav className="nav search-links" data-analytics-name="search" role="tablist">
-        <Link to={`/single_cell/app/studies${location.search}`}
+        <Link to={`${basePath}/app/studies${location.search}`}
           className={showGenesTab ? '' : 'active'}>
           <span className="fas fa-book"></span> Search Studies
         </Link>
-        <Link to={`/single_cell/app/genes${location.search}`}
+        <Link to={`${basePath}/app/genes${location.search}`}
           className={showGenesTab ? 'active' : ''}>
           <span className="fas fa-dna"></span> Search Genes
         </Link>
       </nav>
       <div className="tab-content top-pad">
-        <Router basepath="/single_cell">
+        <Router basepath={basePath}>
           <GeneSearchView path="app/genes"/>
           <StudySearchView advancedSearchDefault={advancedSearchDefault} default/>
         </Router>
