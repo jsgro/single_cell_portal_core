@@ -188,7 +188,7 @@ class ClusterVizService
       raw_values = []
 
       domain_keys.each do |domain|
-        if coordinate_data[domain_key]
+        if coordinate_data[domain]
           domain_range = RequestUtils.get_minmax(coordinate_data[domain])
           # RequestUtils.get_minmax will discard NaN/nil values that were ingested
           # only add domain range to list if we have a valid minmax
@@ -209,7 +209,7 @@ class ClusterVizService
   # generic method to populate data structure to render a cluster scatter plot
   # uses cluster_group model and loads annotation for both group & numeric plots
   # data values are pulled from associated data_array entries for each axis and annotation/text value
-  def self.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_coords=true, include_cells=true)
+  def self.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_coords: true, include_cells: true, include_annotations: true)
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
 
@@ -217,11 +217,11 @@ class ClusterVizService
     y_array = []
     z_array = []
     cells = []
+    annotation_array = []
 
     if annotation[:scope] == 'user'
       user_annotation = UserAnnotation.find(annotation[:id])
       subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
       if include_coords
         x_array = user_annotation.concatenate_user_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
         y_array = user_annotation.concatenate_user_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
@@ -240,12 +240,22 @@ class ClusterVizService
       end
     end
 
-    annotation_array = get_annotation_values_array(study, cluster, annotation, cells, subsample_annotation, subsample_threshold)
+    viz_data = {}
+    if include_annotations
+      annotation_array = get_annotation_values_array(study, cluster, annotation, cells, subsample_annotation, subsample_threshold)
+      viz_data = { annotations: annotation_array }
 
-    viz_data = { annotations: annotation_array }
+      if annotation[:type] == 'numeric'
+        # account for NaN when computing min/max
+        min, max = RequestUtils.get_minmax(annotation_array)
+        viz_data[:annotationRange] = {max: max, min: min}
+      end
+    end
+
     if include_cells
       viz_data[:cells] = cells
     end
+
     if include_coords
       viz_data[:x] = x_array
       viz_data[:y] = y_array
@@ -254,20 +264,14 @@ class ClusterVizService
       end
     end
 
-    if annotation[:type] == 'numeric'
-      text_array = []
-      color_array = []
-      # account for NaN when computing min/max
-      min, max = RequestUtils.get_minmax(annotation_array)
-      viz_data[:annotationRange] = {max: max, min: min}
-    end
-
     viz_data
   end
+
 
   # returns an array of the values for the given annotation, sorted by the cells of the given cells array
   def self.get_annotation_values_array(study, cluster, annotation, cells, subsample_annotation, subsample_threshold)
     annotation_array = []
+    annotation_hash = {}
     # Construct the arrays based on scope
     if annotation[:scope] == 'cluster'
       annotation_array = cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)

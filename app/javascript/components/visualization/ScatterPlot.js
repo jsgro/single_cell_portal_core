@@ -62,7 +62,7 @@ function RawScatterPlot({
           scatter.data[key] = cachedData[key]
         })
       } else {
-        if (!dataCache.hasScatterData(studyAccession, cluster) && !includes) {
+        if (dataCache && !dataCache.hasScatterData(studyAccession, cluster) && !includes) {
           dataCache.addScatterData(studyAccession, cluster, scatter.data)
         }
       }
@@ -129,9 +129,10 @@ function RawScatterPlot({
   useEffect(() => {
     setIsLoading(true)
     let cachedData = null
-    const coordinatesInCache = dataCache.hasScatterData(studyAccession, cluster)
+    const dataIsCached = dataCache?.hasScatterData(studyAccession, cluster)
     let includes = null
-    if (coordinatesInCache) {
+    // we don't cache anything for annotated scatter since the coordinates are different per annotation/gene
+    if (dataIsCached && !isAnnotatedScatter) {
       if (genes.length) {
         includes = 'expression'
       } else {
@@ -288,18 +289,20 @@ function getPlotlyTraces({
       })
     }]
   } else {
+    trace.marker = {
+      line: { color: 'rgb(40,40,40)', width: 0 },
+      size: pointSize
+    }
     const colors = gene ? data.expression : data.annotations
     const usedRange = gene ? expressionRange : annotRange
     const title = gene ? axes.titles.magnitude : annotName
-    trace.marker = {
-      colorscale: appliedScatterColor,
-      cmin: usedRange.min,
-      cmax: usedRange.max,
-      color: colors,
-      colorbar: { title, titleside: 'right' },
-      showscale: true,
-      line: { color: 'rgb(40,40,40)', width: 0 },
-      size: pointSize
+    if (!isAnnotatedScatter) {
+      trace.showscale = true
+      trace.colorscale = appliedScatterColor
+      trace.cmin = usedRange.min
+      trace.cmax = usedRange.max
+      trace.color = colors
+      trace.colorbar = { title, titleside: 'right' }
     }
   }
   return [trace]
