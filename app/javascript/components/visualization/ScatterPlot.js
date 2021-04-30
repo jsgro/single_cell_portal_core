@@ -43,7 +43,7 @@ function RawScatterPlot({
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
-    const [scatter, perfTime] = clusterResponse
+    const [scatter, perfTimes] = clusterResponse
 
     const apiOk = checkScpApiResponse(scatter,
       () => Plotly.purge(graphElementId),
@@ -60,13 +60,13 @@ function RawScatterPlot({
       formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene, isAnnotatedScatter)
       processTraceScatterColor(scatter.data, scatterColor)
 
-      const perfTimeFrontendStart = performance.now()
+      perfTimes.plotStart = performance.now()
 
       Plotly.react(graphElementId, scatter.data, layout)
 
       logScatterPlot(
         { scatter, genes, width, height },
-        { perfTime, perfTimeFrontendStart }
+        perfTimes
       )
 
       setClusterData(scatter)

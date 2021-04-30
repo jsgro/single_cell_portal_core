@@ -54,7 +54,7 @@ function RawStudyViolinPlot({
   /** gets expression data from the server */
   async function loadData() {
     setIsLoading(true)
-    const [results, perfTime] = await fetchExpressionViolin(
+    const [results, perfTimes] = await fetchExpressionViolin(
       studyAccession,
       genes,
       cluster,
@@ -71,7 +71,7 @@ function RawStudyViolinPlot({
         distributionPlotToUse = defaultDistributionPlot
       }
 
-      const perfTimeFrontendStart = performance.now()
+      perfTimes.plotStart = performance.now()
 
       renderViolinPlot(graphElementId, results, {
         plotType: distributionPlotToUse,
@@ -80,7 +80,7 @@ function RawStudyViolinPlot({
 
       logViolinPlot(
         { genes, distributionPlotToUse, distributionPoints },
-        { perfTime, perfTimeFrontendStart }
+        perfTimes
       )
       setStudyGeneNames(results.gene_names)
       if (setAnnotationList) {

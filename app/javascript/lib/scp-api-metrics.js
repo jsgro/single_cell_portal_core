@@ -74,7 +74,7 @@ function getFriendlyFilterListByFacet(facets) {
 /**
  * Log global study search metrics, one type of search done on home page
  */
-export function logSearch(type, searchParams, perfTime) {
+export function logSearch(type, searchParams, perfTimes) {
   searchNumber += 1
   if (searchNumber < 3) {
     // This prevents over-reporting searches.
@@ -129,40 +129,47 @@ export function logSearch(type, searchParams, perfTime) {
   )
 }
 
+/** perfTime helper: round all values in an object. */
+function roundValues(props) {
+  console.log('props', props)
+  Object.keys(props).forEach(key => {
+    props[key] = Math.round(props[key])
+  })
+  return props
+}
+
 /** Calculates generic performance timing metrics for visualizations */
-function calculatePerfTimes(perfTime) {
-  // const perfTimeFrontend = performance.now() - perfTimeFrontendStart
+function calculatePerfTimes(perfTimes) {
+  console.log('perfTime', perfTimes)
 
-  // const perfTimeFull = perfTime + perfTimeFrontend
+  const perfTimePlot = performance.now() - perfTimes.plotStart
 
-  // return {
-  //   'perfTime:backend': perfTime, // Time for API call
-  //   'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
-  //   'perfTime': Math.round(perfTimeFull) // Time from API call *start* to plot render end
-  // }
+  const perfTimeFrontend = perfTimePlot + perfTimes.parse
 
-  const perfTimePlot = performance.now() - perfTime['plotStart']
-
-  const perfTimeFrontend = perfTimePlot + perfTime['json']
-
-  const perfTimeBackend = perfTime['backend']
+  const perfTimeBackend = perfTimes.legacy
   const perfTimeFull = perfTimeBackend + perfTimeFrontend
 
-  const perfLogProps = {
+  const perfProps = roundValues({
     'perfTime:backend': perfTimeBackend, // Time for API call
-    'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
-    'perfTime:frontend:plot': Math.round(perfTimePlot), // Time from start to end of plot render call
-    'perfTime:frontend:parse': Math.round(perfTime['json']), // Time to parse JSON
-    'perfTime': Math.round(perfTimeFull) // Time from API call *start* to plot render end
-  }
+    'perfTime:frontend': perfTimeFrontend, // Time from API call *end* to plot render end
+    'perfTime:frontend:plot': perfTimePlot, // Time from start to end of plot render call
+    'perfTime:frontend:parse': perfTimes.parse, // Time to parse JSON
+    'perTime:full': perfTimeFull,
+    'perfTime': perfTimes.legacy, // Time from API call *start* to plot render end
+    'perfTime:legacy': perfTimes.legacy
+  })
+
+  console.log('perfProps', perfProps)
+
+  return perfProps
 }
 
 /** Logs violin plot metrics */
 export function logViolinPlot(
   { genes, plotType, showPoints },
-  { perfTime, perfTimeFrontendStart }
+  perfTimes
 ) {
-  const perfTimeProps = calculatePerfTimes(perfTime, perfTimeFrontendStart)
+  const perfTimeProps = calculatePerfTimes(perfTimes)
 
   let props = { genes, plotType, showPoints }
   props = Object.assign(props, perfTimeProps)
@@ -173,9 +180,9 @@ export function logViolinPlot(
 /** Logs scatter plot metrics */
 export function logScatterPlot(
   { scatter, genes, width, height },
-  { perfTime, perfTimeFrontendStart }
+  perfTimes
 ) {
-  const perfTimeProps = calculatePerfTimes(perfTime, perfTimeFrontendStart)
+  const perfTimeProps = calculatePerfTimes(perfTimes)
 
   let props = {
     'numPoints': scatter.numPoints, // How many cells are we plotting?
@@ -245,7 +252,7 @@ export function getLogPlotProps() {
  * Log when a download is authorized.
  * This is our best web-client-side methodology for measuring downloads.
  */
-export function logDownloadAuthorization(perfTime) {
+export function logDownloadAuthorization(perfTimes) {
   const props = { perfTime }
   log('download-authorization', props)
   ga('send', 'event', 'advanced-search', 'download-authorization') // eslint-disable-line no-undef, max-len
