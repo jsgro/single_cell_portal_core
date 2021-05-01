@@ -1252,8 +1252,8 @@ class Study
   def all_cells_array
     if self.metadata_file&.parsed? # nil-safed via &
       query = {name: 'All Cells', array_type: 'cells', linear_data_type: 'Study', linear_data_id: self.id,
-               cluster_name: self.metadata_file.upload_file_name, study_id: self.id, study_file_id: self.metadata_file.id,
-               cluster_group_id: nil, subsample_annotation: nil, subsample_threshold: nil}
+               study_id: self.id, study_file_id: self.metadata_file.id, cluster_group_id: nil, subsample_annotation: nil,
+               subsample_threshold: nil}
       DataArray.where(query).order(:array_index => 'asc').pluck(:values).reduce([], :+)
     else
       self.all_expression_matrix_cells
@@ -1273,8 +1273,7 @@ class Study
   # return the cells found in a single expression matrix
   def expression_matrix_cells(study_file)
     arrays = DataArray.where(name: "#{study_file.upload_file_name} Cells", array_type: 'cells', linear_data_type: 'Study',
-                             linear_data_id: self.id, study_file_id: study_file.id, cluster_group_id: nil,
-                             cluster_name: study_file.upload_file_name, subsample_annotation: nil,
+                             linear_data_id: self.id, study_file_id: study_file.id, cluster_group_id: nil, subsample_annotation: nil,
                              subsample_threshold: nil).order(:array_index => 'asc')
     arrays.pluck(:values).reduce([], :+)
   end
