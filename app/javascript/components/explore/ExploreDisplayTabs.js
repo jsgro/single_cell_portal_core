@@ -458,7 +458,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
         enabledTabs = ['dotplot', 'heatmap']
       }
     } else if (exploreParams.annotation.type === 'numeric') {
-      enabledTabs = ['scatter', 'annotatedScatter']
+      enabledTabs = ['annotatedScatter', 'scatter']
     } else {
       enabledTabs = ['scatter', 'distribution']
     }
