@@ -73,22 +73,37 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
   test 'show should return visualization information' do
     sign_in_and_update @user
     execute_http_request(:get, api_v1_study_cluster_path(@basic_study, 'clusterA.txt'))
-    assert_equal 3, json['numPoints']
-    assert_equal ["bar (2 points)", "baz (1 points)"], json['data'].map{|d| d['name']}
-    assert_equal false, json['is3D']
-    bar_data = json['data'].find{|d| d['name'] == 'bar (2 points)'}
-    assert_equal [1, 4], bar_data['x']
+    assert_equal(json, {
+      "data"=>{
+        "annotations"=>["bar", "bar", "baz"],
+        "cells"=>["A", "B", "C"],
+        "x"=>[1, 4, 6],
+        "y"=>[7, 5, 3]
+      },
+      "pointSize"=>3,
+      "showClusterPointBorders"=>false,
+      "description"=>nil,
+      "is3D"=>false,
+      "isSubsampled"=>false,
+      "isAnnotatedScatter"=>false,
+      "numPoints"=>3,
+      "domainRanges"=>nil,
+      "axes"=>{"titles"=>{"x"=>"X", "y"=>"Y", "z"=>"Z"}, "ranges"=>nil, "aspects"=>nil},
+      "hasCoordinateLabels"=>false,
+      "coordinateLabels"=>[],
+      "defaultPointOpacity"=>1.0,
+      "cluster"=>"clusterA.txt",
+      "gene"=>"",
+      "annotParams"=>{"name"=>"foo", "type"=>"group", "scope"=>"cluster", "values"=>["bar", "baz"], "identifier"=>"foo--group--cluster"},
+      "subsample"=>"all",
+      "consensus"=>nil})
   end
 
   test 'show should handle numeric clusters' do
     sign_in_and_update @user
     execute_http_request(:get, api_v1_study_cluster_path(@basic_study, 'clusterA.txt', {annotation_name: 'intensity', annotation_scope: 'cluster', annotation_type: 'numeric'}))
-    assert_equal 'Reds', json['data'][0]['marker']['colorscale']
-    @basic_study.update!({default_options: {color_profile: 'Portland'}})
-    # since we're going to send a duplicate request, clear the API cache so we can get fresh results
-    CacheRemovalJob.new(@basic_study.id).perform
-    execute_http_request(:get, api_v1_study_cluster_path(@basic_study, 'clusterA.txt', {annotation_name: 'intensity', annotation_scope: 'cluster', annotation_type: 'numeric'}))
-    assert_equal 'Portland', json['data'][0]['marker']['colorscale']
+
+    assert_equal({"max"=>5, "min"=>1}, json['data']['annotationRange'])
   end
 
   test 'should load clusters with slashes in name' do
@@ -115,9 +130,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:get, url)
     assert_response :success
     assert_equal 4, json['numPoints']
-    expected_annotations = ["bar (3 points)", "baz (1 points)"]
-    loaded_annotations = json['data'].map {|d| d['name'] }
-    assert_equal expected_annotations, loaded_annotations
+    assert_equal ['bar', 'bar', 'baz', 'bar'], json['data']['annotations']
 
     # assert that non-encoded cluster names do not load correct cluster
     # using path helper here results in cluster_name not being decoded properly by clusters_controller.rb

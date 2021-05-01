@@ -42,7 +42,7 @@ function RawScatterPlot({
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
-  function handleResponse(clusterResponse, includes, cachedData) {
+  function handleResponse(clusterResponse, fields, cachedData) {
     const [scatter, perfTime] = clusterResponse
 
     const apiOk = checkScpApiResponse(scatter,
@@ -54,7 +54,7 @@ function RawScatterPlot({
       // Get Plotly layout
       if (cachedData) {
         const mergeKeys = ['x', 'y', 'z', 'cells']
-        if (includes != 'annotation') {
+        if (fields != 'annotation') {
           mergeKeys.push('annotations')
         }
         // merge the coordinate and cell data into the scatter
@@ -62,7 +62,7 @@ function RawScatterPlot({
           scatter.data[key] = cachedData[key]
         })
       } else {
-        if (dataCache && !dataCache.hasScatterData(studyAccession, cluster) && !includes) {
+        if (dataCache && !dataCache.hasScatterData(studyAccession, cluster) && !fields) {
           dataCache.addScatterData(studyAccession, cluster, scatter.data)
         }
       }
@@ -130,13 +130,13 @@ function RawScatterPlot({
     setIsLoading(true)
     let cachedData = null
     const dataIsCached = dataCache?.hasScatterData(studyAccession, cluster)
-    let includes = null
+    let fields = null
     // we don't cache anything for annotated scatter since the coordinates are different per annotation/gene
     if (dataIsCached && !isAnnotatedScatter) {
       if (genes.length) {
-        includes = 'expression'
+        fields = 'expression'
       } else {
-        includes = 'annotation'
+        fields = 'annotation'
       }
       cachedData = dataCache.getScatterData(studyAccession, cluster)
     }
@@ -147,10 +147,10 @@ function RawScatterPlot({
       subsample,
       consensus,
       gene: genes,
-      includes,
+      fields,
       isAnnotatedScatter
     }).then(response => {
-      handleResponse(response, includes, cachedData)
+      handleResponse(response, fields, cachedData)
     })
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 

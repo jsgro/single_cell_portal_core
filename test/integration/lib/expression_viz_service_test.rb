@@ -147,7 +147,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
       consensus: 'nil',
       current_user: @user
     )
-    assert_equal [1.1, 2.2, 3.3], rendered_data[:values][:all][:x]
+    assert_equal [1.1, 2.2, 3.3], rendered_data[:values][:x]
   end
 
 
@@ -246,13 +246,10 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     cluster = @basic_study.default_cluster
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: 'Intensity', annot_type: 'numeric', annot_scope: 'cluster')
     scatter_data = ExpressionVizService.load_annotation_based_data_array_scatter(@basic_study, gene, cluster, annotation,
-                                                                                 nil, @basic_study.default_expression_label)
-    expected_x_data = [1.1, 2.2, 3.3]
-    expected_exp_data = [0.0, 3.0, 1.5]
-    expected_cells = %w(A B C)
-    assert_equal expected_x_data, scatter_data[:all][:x]
-    assert_equal expected_exp_data, scatter_data[:all][:y]
-    assert_equal expected_cells, scatter_data[:all][:cells]
+                                                                                 nil)
+    assert_equal([1.1, 2.2, 3.3], scatter_data[:x])
+    assert_equal([0.0, 3.0, 1.5], scatter_data[:y])
+    assert_equal(%w(A B C), scatter_data[:cells])
   end
 
   # test normal scatter plot with expression values overlaid, instead of annotations
@@ -263,18 +260,12 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     annot_name, annot_type, annot_scope = default_annot.split('--')
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
     expression_scatter = ExpressionVizService.load_expression_data_array_points(@basic_study, gene, cluster, annotation,
-                                                                                nil, @basic_study.default_expression_label,
-                                                                                'Blues')
-    expected_x_data = cluster.concatenate_data_arrays('x', 'coordinates')
-    expected_y_data = cluster.concatenate_data_arrays('y', 'coordinates')
-    expected_z_data = cluster.concatenate_data_arrays('z', 'coordinates')
-    expected_exp_data = [0.0, 3.0, 1.5]
-    assert_equal expected_x_data, expression_scatter[:all][:x]
-    assert_equal expected_y_data, expression_scatter[:all][:y]
-    assert_equal expected_z_data, expression_scatter[:all][:z]
-    assert_equal expected_exp_data, expression_scatter[:all][:marker][:color]
-    assert_equal @basic_study.default_expression_label, expression_scatter[:all][:marker][:colorbar][:title]
-    assert_equal 'Blues', expression_scatter[:all][:marker][:colorscale]
+                                                                                nil)
+    assert_equal(cluster.concatenate_data_arrays('x', 'coordinates'), expression_scatter[:x])
+    assert_equal(cluster.concatenate_data_arrays('y', 'coordinates'), expression_scatter[:y])
+    assert_equal(cluster.concatenate_data_arrays('z', 'coordinates'), expression_scatter[:z])
+    assert_equal([0.0, 3.0, 1.5], expression_scatter[:expression])
+    assert_equal({:min=>0.0, :max=>3.0}, expression_scatter[:expressionRange])
   end
 
   test 'should load gene set violin plots' do
@@ -300,17 +291,14 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     cluster = @basic_study.default_cluster
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: 'Intensity', annot_type: 'numeric', annot_scope: 'cluster')
     gene_set_annot_scatter = ExpressionVizService.load_gene_set_annotation_based_scatter(
-        @basic_study, genes, cluster, annotation, 'mean', nil, @basic_study.default_expression_label
+        @basic_study, genes, cluster, annotation, 'mean'
     )
 
     # mean of values for scores across both genes for each cell
     # A: [0, 0].mean (0), B: [0, 3].mean (1.5), C: [1,8].mean (4.75)
-    expected_exp_data = [0.0, 1.5, 4.75]
-    expected_x_data = [1.1, 2.2, 3.3]
-    expected_cells = %w(A B C)
-    assert_equal expected_x_data, gene_set_annot_scatter[:all][:x]
-    assert_equal expected_exp_data, gene_set_annot_scatter[:all][:y]
-    assert_equal expected_cells, gene_set_annot_scatter[:all][:cells]
+    assert_equal([1.1, 2.2, 3.3], gene_set_annot_scatter[:x])
+    assert_equal([0.0, 1.5, 4.75], gene_set_annot_scatter[:y])
+    assert_equal(%w(A B C), gene_set_annot_scatter[:cells])
   end
 
   # test normal scatter plot with gene set expression values overlaid (collapsed by metric), instead of annotations
@@ -320,23 +308,16 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
-    gene_set_exp_statter = ExpressionVizService.load_gene_set_expression_data_arrays(
-        @basic_study, genes, cluster, annotation, 'mean', nil,
-        @basic_study.default_expression_label, 'Blues'
+    gene_set_exp_scatter = ExpressionVizService.load_gene_set_expression_data_arrays(
+        @basic_study, genes, cluster, annotation, 'mean'
     )
 
     # mean of values for scores across both genes for each cell
     # A: [0, 0].mean (0), B: [0, 3].mean (1.5), C: [1,8].mean (4.75)
-    expected_exp_data = [0.0, 1.5, 4.75]
-    expected_x_data = cluster.concatenate_data_arrays('x', 'coordinates')
-    expected_y_data = cluster.concatenate_data_arrays('y', 'coordinates')
-    expected_z_data = cluster.concatenate_data_arrays('z', 'coordinates')
-    assert_equal expected_x_data, gene_set_exp_statter[:all][:x]
-    assert_equal expected_y_data, gene_set_exp_statter[:all][:y]
-    assert_equal expected_z_data, gene_set_exp_statter[:all][:z]
-    assert_equal expected_exp_data, gene_set_exp_statter[:all][:marker][:color]
-    assert_equal @basic_study.default_expression_label, gene_set_exp_statter[:all][:marker][:colorbar][:title]
-    assert_equal 'Blues', gene_set_exp_statter[:all][:marker][:colorscale]
+    assert_equal(cluster.concatenate_data_arrays('x', 'coordinates'), gene_set_exp_scatter[:x])
+    assert_equal(cluster.concatenate_data_arrays('y', 'coordinates'), gene_set_exp_scatter[:y])
+    assert_equal(cluster.concatenate_data_arrays('z', 'coordinates'), gene_set_exp_scatter[:z])
+    assert_equal([0.0, 1.5, 4.75], gene_set_exp_scatter[:expression])
   end
 
   test 'should collapse by mean/median for gene expression values' do

@@ -19,7 +19,7 @@ class ExpressionVizService
 
       render_data[:values_jitter] = boxpoints
     else
-      render_data[:values] = load_annotation_based_data_array_scatter(study, genes[0], cluster, selected_annotation, subsample, render_data[:y_axis_title])
+      render_data[:values] = load_annotation_based_data_array_scatter(study, genes[0], cluster, selected_annotation, subsample)
     end
     render_data[:gene_names] = genes.map{ |g| g['name'] }
     render_data[:annotation_list] = AnnotationVizService.get_study_annotation_options(study, current_user)
@@ -214,7 +214,7 @@ class ExpressionVizService
 
   # method to load a 2-d scatter of selected numeric annotation vs. gene set expression
   # will support a variety of consensus modes (default is mean)
-  def self.load_gene_set_annotation_based_scatter(study, genes, cluster, annotation, consensus, subsample_threshold=nil, y_axis_title)
+  def self.load_gene_set_annotation_based_scatter(study, genes, cluster, annotation, consensus, subsample_threshold=nil)
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     viz_data = {
@@ -250,9 +250,9 @@ class ExpressionVizService
   # uses data_array as source for each axis
   # will support a variety of consensus modes (default is mean)
   def self.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample_threshold=nil, expression_only=false)
-    viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, !expression_only, !expression_only)
+    viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_coords: !expression_only)
 
-    viz_data[:expression] = cells.map do |cell|
+    viz_data[:expression] = viz_data[:cells].map do |cell|
       if consensus == 'median'
         expression_score = calculate_median(genes, cell)
       else

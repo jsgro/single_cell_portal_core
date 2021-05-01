@@ -106,9 +106,9 @@ module Api
               key :type, :string
             end
             parameter do
-              key :name, :includes
+              key :name, :fields
               key :in, :query
-              key :description, 'Specify specific return inclusions. "coordinates", "expression", "annotation", "cells" (blank returns everything)'
+              key :description, 'Specify fields to include in the response. "coordinates", "expression", "annotation", "cells" (blank returns everything)'
               key :type, :string
             end
             response 200 do
@@ -155,12 +155,12 @@ module Api
           subsample = get_selected_subsample_threshold(url_params[:subsample], cluster)
           consensus = url_params[:consensus].blank? ? nil : url_params[:consensus]
 
-          default_data_includes = ['coordinates', 'expression', 'annotation', 'cells']
-          data_includes = url_params[:includes].blank? ? default_data_includes : url_params[:includes].split(',')
-          include_coordinates = data_includes.include?('coordinates')
-          include_expression = data_includes.include?('expression')
-          include_annotation = data_includes.include?('annotation')
-          include_cells = data_includes.include?('cells')
+          default_data_fields = ['coordinates', 'expression', 'annotation', 'cells']
+          data_fields = url_params[:fields].blank? ? default_data_fields : url_params[:fields].split(',')
+          include_coordinates = data_fields.include?('coordinates')
+          include_expression = data_fields.include?('expression')
+          include_annotation = data_fields.include?('annotation')
+          include_cells = data_fields.include?('cells')
 
           colorscale = url_params[:colorscale]
           if colorscale.blank?

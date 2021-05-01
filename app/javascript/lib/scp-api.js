@@ -266,7 +266,7 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  */
 export async function fetchCluster({
   studyAccession, cluster, annotation, subsample, consensus, gene=null,
-  isAnnotatedScatter=null, includes, mock=false
+  isAnnotatedScatter=null, fields, mock=false
 }) {
   // Digest full annotation name to enable easy validation in API
   let [annotName, annotType, annotScope] = [annotation.name, annotation.type, annotation.scope]
@@ -285,7 +285,7 @@ export async function fetchCluster({
     subsample,
     consensus,
     gene,
-    includes,
+    fields,
     is_annotated_scatter
   }
   const params = stringifyQuery(paramObj)
