@@ -214,8 +214,14 @@ class User
   # will return nil if user is not registered for Terra as API call would return 401
   def token_for_storage_object(project=FireCloudClient::PORTAL_NAMESPACE)
     if self.refresh_token.present? && self.registered_for_firecloud
-      client = FireCloudClient.new(self, project)
-      client.get_pet_service_account_token(project)
+      begin
+        client = FireCloudClient.new(self, project)
+        client.get_pet_service_account_token(project)
+      rescue RuntimeError => e
+        # returning nil here will be caught at the UI level and show an error message
+        # see UserProvider.js -> getReadOnlyToken() and userHasTerraProfile()
+        nil
+      end
     end
   end
 
