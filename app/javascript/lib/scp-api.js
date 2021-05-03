@@ -551,7 +551,7 @@ function getFullUrl(path, mock=false) {
   if (mock) {
     fullPath += '.json' // e.g. /mock_data/search/auth_code.json
   } else {
-    fullPath = `${location.origin}/${fullPath}`
+    fullPath = `${location.origin}${fullPath}`
   }
   return fullPath
 }
@@ -575,12 +575,10 @@ export default async function scpApi(
   // Milliseconds taken to fetch data from API
   // Suboptimal, but retained until at least Q4 2021 for continuity.
   // Use `perfTimeFull` for closest measure of user-perceived duration.
-  const responseEnd = performance.now()
-  const legacyPerfTime = responseEnd - perfTimeStart
+  const legacyPerfTime = performance.now() - perfTimeStart
 
   const perfTimes = {
     url,
-    responseEnd,
     legacy: legacyPerfTime
   }
 

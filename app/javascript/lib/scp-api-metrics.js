@@ -138,7 +138,7 @@ function roundValues(props) {
 }
 
 /** Calculates generic performance timing metrics for visualizations */
-function calculatePerfTimes(perfTimes) {
+export function calculatePerfTimes(perfTimes) {
   console.log('perfTime', perfTimes)
 
   const now = performance.now()
@@ -164,7 +164,7 @@ function calculatePerfTimes(perfTimes) {
   const uncompressedSize = perfEntry.decodedBodySize
   const compressionBytesDiff = uncompressedSize - compressedSize
 
-  const perfProps = roundValues({
+  const rawPerfProps = {
     // Server timing
     'perfTime:backend': backend, // Time for API call
 
@@ -188,13 +188,27 @@ function calculatePerfTimes(perfTimes) {
     // To answer questions about data sizes and compression
     'perfTime:data:compressed-size': compressedSize, // Encoded size in bytes
     'perfTime:data:uncompressed-size': uncompressedSize, // Decoded size in bytes
-    'perfTime:data:compression-bytes-diff': compressionBytesDiff // Absolute amount compressed
-  })
+    'perfTime:data:compression-bytes-diff': 'asdf' // compressionBytesDiff // Absolute amount compressed
+  }
+
+  const perfProps = roundValues(Object.assign({}, rawPerfProps))
 
   let compressionRatio = uncompressedSize / compressedSize
   // Round to 2 digits, e.g. "3.44".  Number.EPSILON ensures numbers like 1.005 round correctly.
   compressionRatio = Math.round((compressionRatio + Number.EPSILON) * 100) / 100
   perfProps['perfTime:data:compression-ratio'] = compressionRatio // Relative amount compressed
+
+
+  // Accounts for `null`, '', 'non-empty string', etc.
+  const errorKeys = Object.keys(rawPerfProps).filter(k => isNaN(parseFloat(rawPerfProps[k])))
+  if (errorKeys.length > 0) {
+    console.log('errorKeys', errorKeys)
+    const specifics = errorKeys.map(k => `${k}: ${rawPerfProps[k]}\n`)
+    throw Error(
+      `Not all expected perfTime values are numbers:\n
+      ${specifics}`
+    )
+  }
 
   perfProps.url = perfTimes.url
 
