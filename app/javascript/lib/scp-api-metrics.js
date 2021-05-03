@@ -106,7 +106,7 @@ export function logSearch(type, searchParams, perfTimes) {
   const simpleProps = {
     terms, numTerms, genes, numGenes, page, preset,
     facetList, numFacets, numFilters,
-    perfTime,
+    perfTimes,
     type, context: 'global'
   }
   const props = Object.assign(simpleProps, filterListByFacet)
@@ -131,7 +131,6 @@ export function logSearch(type, searchParams, perfTimes) {
 
 /** perfTime helper: round all values in an object. */
 function roundValues(props) {
-  console.log('props', props)
   Object.keys(props).forEach(key => {
     props[key] = Math.round(props[key])
   })
@@ -142,22 +141,62 @@ function roundValues(props) {
 function calculatePerfTimes(perfTimes) {
   console.log('perfTime', perfTimes)
 
-  const perfTimePlot = performance.now() - perfTimes.plotStart
+  const now = performance.now()
 
-  const perfTimeFrontend = perfTimePlot + perfTimes.parse
+  const plot = now - perfTimes.plotStart
 
-  const perfTimeBackend = perfTimes.legacy
-  const perfTimeFull = perfTimeBackend + perfTimeFrontend
+  const perfEntry =
+    performance.getEntriesByType('resource')
+      .filter(entry => entry.name === perfTimes.url)[0]
+
+  console.log('perfEntry', perfEntry)
+
+  const transfer = perfEntry.responseEnd - perfEntry.responseStart
+
+  const frontend = now - perfEntry.responseStart
+  const frontendOther = frontend - plot - perfTimes.parse - transfer
+
+  const backend = perfEntry.responseStart - perfEntry.requestStart
+
+  const full = now - perfEntry.startTime
+
+  const compressedSize = perfEntry.encodedBodySize
+  const uncompressedSize = perfEntry.decodedBodySize
+  const compressionBytesDiff = uncompressedSize - compressedSize
 
   const perfProps = roundValues({
-    'perfTime:backend': perfTimeBackend, // Time for API call
-    'perfTime:frontend': perfTimeFrontend, // Time from API call *end* to plot render end
-    'perfTime:frontend:plot': perfTimePlot, // Time from start to end of plot render call
+    // Server timing
+    'perfTime:backend': backend, // Time for API call
+
+    // Client timing
+    'perfTime:frontend': frontend, // Time from API call *end* to plot render end
+    'perfTime:frontend:plot': plot, // Time from start to end of plot render call
+    'perfTime:frontend:transfer': transfer, // Time client took to download data from server
     'perfTime:frontend:parse': perfTimes.parse, // Time to parse JSON
-    'perTime:full': perfTimeFull,
-    'perfTime': perfTimes.legacy, // Time from API call *start* to plot render end
-    'perfTime:legacy': perfTimes.legacy
+    'perfTime:frontend:other': frontendOther, // Total frontend time - accounted segments
+
+    // Server + client timing
+    'perfTime:full': full, // Time from API call *start* to plot render end
+
+    // Less precise, less inclusive times.  Retained for continuity.
+    //
+    // Old `perfTime` was measured from API request start to response end, but
+    // less precisely than using browsers' PerformanceEntry API.
+    'perfTime': perfTimes.legacy,
+    'perfTime:legacy': perfTimes.legacy,
+
+    // To answer questions about data sizes and compression
+    'perfTime:data:compressed-size': compressedSize, // Encoded size in bytes
+    'perfTime:data:uncompressed-size': uncompressedSize, // Decoded size in bytes
+    'perfTime:data:compression-bytes-diff': compressionBytesDiff // Absolute amount compressed
   })
+
+  let compressionRatio = uncompressedSize / compressedSize
+  // Round to 2 digits, e.g. "3.44".  Number.EPSILON ensures numbers like 1.005 round correctly.
+  compressionRatio = Math.round((compressionRatio + Number.EPSILON) * 100) / 100
+  perfProps['perfTime:data:compression-ratio'] = compressionRatio // Relative amount compressed
+
+  perfProps.url = perfTimes.url
 
   console.log('perfProps', perfProps)
 

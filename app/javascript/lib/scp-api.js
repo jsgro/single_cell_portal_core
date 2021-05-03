@@ -557,19 +557,6 @@ function getFullUrl(path, mock=false) {
 }
 
 /**
- * Shorthand for getting difference between times.
- * Intentionally not rounded.
- */
-function timeDiff(time) {
-  return performance.now() - time
-}
-
-/** Get part of URL before path.  Used for performance loggiing. */
-function getBaseUrl() {
-
-}
-
-/**
  * Client for SCP REST API.  Less fetch boilerplate, easier mocks.
  *
  * @param {String} path Relative path for API endpoint, e.g. /search/auth_code
@@ -581,22 +568,27 @@ export default async function scpApi(
 ) {
   const url = getFullUrl(path, mock)
 
-  const legacyPerfTimeStart = performance.now()
+  const perfTimeStart = performance.now()
 
   const response = await fetch(url, init).catch(error => error)
 
   // Milliseconds taken to fetch data from API
   // Suboptimal, but retained until at least Q4 2021 for continuity.
   // Use `perfTimeFull` for closest measure of user-perceived duration.
-  const legacyPerfTime = timeDiff(legacyPerfTimeStart)
+  const responseEnd = performance.now()
+  const legacyPerfTime = responseEnd - perfTimeStart
 
-  const perfTimes = { legacyPerfTime, url }
+  const perfTimes = {
+    url,
+    responseEnd,
+    legacy: legacyPerfTime
+  }
 
   if (response.ok) {
     if (toJson) {
       const jsonPerfTimeStart = performance.now()
       const json = await response.json()
-      perfTimes.parse = timeDiff(jsonPerfTimeStart)
+      perfTimes.parse = performance.now() - jsonPerfTimeStart
       // Converts API's snake_case to JS-preferrable camelCase,
       // for easy destructuring assignment.
       if (camelCase) {
