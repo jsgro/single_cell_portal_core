@@ -19,7 +19,7 @@ export const SCATTER_COLOR_OPTIONS = [
 ]
 
 export const defaultScatterColor = 'Reds'
-
+window.Plotly = Plotly
 
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
@@ -49,58 +49,8 @@ function RawScatterPlot({
       () => Plotly.purge(graphElementId),
       setShowError,
       setErrorContent)
-
     if (apiOk) {
-      // Get Plotly layout
-      if (cachedData) {
-        const mergeKeys = ['x', 'y', 'z', 'cells']
-        if (fields != 'annotation') {
-          mergeKeys.push('annotations')
-        }
-        // merge the coordinate and cell data into the scatter
-        mergeKeys.forEach(key => {
-          scatter.data[key] = cachedData[key]
-        })
-      } else {
-        if (dataCache && !dataCache.hasScatterData(studyAccession, cluster) && !fields) {
-          dataCache.addScatterData(studyAccession, cluster, scatter.data)
-        }
-      }
-      const layout = getPlotlyLayout(dimensions, scatter)
-      const plotlyTraces = getPlotlyTraces({
-        axes: scatter.axes,
-        data: scatter.data,
-        annotName: scatter.annotParams.name,
-        annotType: scatter.annotParams.type,
-        annotValues: scatter.annotParams.values,
-        gene: scatter.gene,
-        isAnnotatedScatter: scatter.isAnnotatedScatter,
-        scatterColor,
-        dataScatterColor: scatter.scatterColor,
-        pointOpacity: scatter.defaultPointOpacity,
-        pointSize: scatter.pointSize,
-        showPointBorders: scatter.showClusterPointBorders,
-        annotRange: scatter.data.annotationRange,
-        expressionRange: scatter.data.expressionRange,
-        is3D: scatter.is3D
-      })
-
-      const perfTimeFrontendStart = performance.now()
-
-      Plotly.react(graphElementId, plotlyTraces, layout)
-      sortLegend({
-        graphElementId,
-        annotValues: scatter.annotParams.values,
-        isAnnotatedScatter,
-        annotType: scatter.annotParams.type,
-        gene: scatter.gene
-      })
-
-      logScatterPlot(
-        { scatter, genes, width, height },
-        { perfTime, perfTimeFrontendStart }
-      )
-
+      renderPlot({scatter, fields, cachedData, isAnnotatedScatter})
       setScatterData(scatter)
       setShowError(false)
     }
@@ -219,6 +169,59 @@ const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
 
+function renderPlot({scatter, fields, cachedData, isAnnotatedScatter}) {
+
+  // Get Plotly layout
+  if (cachedData) {
+    const mergeKeys = ['x', 'y', 'z', 'cells']
+    if (fields != 'annotation') {
+      mergeKeys.push('annotations')
+    }
+    // merge the coordinate and cell data into the scatter
+    mergeKeys.forEach(key => {
+      scatter.data[key] = cachedData[key]
+    })
+  } else {
+    if (dataCache && !dataCache.hasScatterData(studyAccession, cluster) && !fields) {
+      dataCache.addScatterData(studyAccession, cluster, scatter.data)
+    }
+  }
+  const layout = getPlotlyLayout(dimensions, scatter)
+  const plotlyTraces = getPlotlyTraces({
+    axes: scatter.axes,
+    data: scatter.data,
+    annotName: scatter.annotParams.name,
+    annotType: scatter.annotParams.type,
+    annotValues: scatter.annotParams.values,
+    gene: scatter.gene,
+    isAnnotatedScatter: scatter.isAnnotatedScatter,
+    scatterColor,
+    dataScatterColor: scatter.scatterColor,
+    pointOpacity: scatter.defaultPointOpacity,
+    pointSize: scatter.pointSize,
+    showPointBorders: scatter.showClusterPointBorders,
+    annotRange: scatter.data.annotationRange,
+    expressionRange: scatter.data.expressionRange,
+    is3D: scatter.is3D
+  })
+
+  const perfTimeFrontendStart = performance.now()
+
+  Plotly.react(graphElementId, plotlyTraces, layout)
+  sortLegend({
+    graphElementId,
+    annotValues: scatter.annotParams.values,
+    isAnnotatedScatter,
+    annotType: scatter.annotParams.type,
+    gene: scatter.gene
+  })
+
+  logScatterPlot(
+    { scatter, genes, width: dimensions.width, height: dimensions.height },
+    { perfTime, perfTimeFrontendStart }
+  )
+}
+
 /** get the array of plotly traces for plotting */
 function getPlotlyTraces({
   axes,
@@ -250,7 +253,7 @@ function getPlotlyTraces({
     trace.z = data.z
   }
 
-  addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter, axes)
+
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
   if (annotType === 'group' && !gene) {
     const traceCounts = countOccurences(data.annotations)
@@ -279,14 +282,17 @@ function getPlotlyTraces({
     const usedRange = gene ? expressionRange : annotRange
     const title = gene ? axes.titles.magnitude : annotName
     if (!isAnnotatedScatter) {
-      trace.showscale = true
-      trace.colorscale = appliedScatterColor
-      trace.cmin = usedRange.min
-      trace.cmax = usedRange.max
-      trace.color = colors
-      trace.colorbar = { title, titleside: 'right' }
+      Object.assign(trace.marker, {
+        showscale: true,
+        colorscale: appliedScatterColor,
+        cmin: usedRange.min,
+        cmax: usedRange.max,
+        color: colors,
+        colorbar: { title, titleside: 'right' }
+      })
     }
   }
+  addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter, axes)
   return [trace]
 }
 
@@ -308,7 +314,7 @@ function countOccurences(array) {
 /** sorts the scatter plot legend alphabetically
   this is super-hacky in that it relies a lot on plotly internal classnames and styling implementation
   it should only be used as a last resort if https://github.com/plotly/plotly.js/pull/5591
-  is not included in Plotly
+  is not included in Plotly soon
  */
 function sortLegend({ graphElementId, annotValues, isAnnotatedScatter, annotType, gene }) {
   if (isAnnotatedScatter || annotType === 'numeric' || gene) {
@@ -336,11 +342,13 @@ function addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter, ax
   // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
   trace.meta = trace.annotations
   let groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{meta}<extra></extra>'
-  if (!isAnnotatedScatter && (annotType === 'numeric' || gene)) {
-    let bottomRowLabel = annotName
-    if (gene) {
-      bottomRowLabel = axes.titles.magnitude
-    }
+  if (isAnnotatedScatter) {
+    // for annotated scatter, just show coordinates and cell name
+    groupHoverTemplate = `(%{x}, %{y})<br>%{text}`
+  } else if (annotType === 'numeric' || gene) {
+    // this is a graph with a continuous color scale
+    // the bottom row of the hover will either be the expression value, or the annotation value
+    let bottomRowLabel = gene ? axes.titles.magnitude : annotName
     groupHoverTemplate = `(%{x}, %{y})<br>%{text} (%{meta})<br>${bottomRowLabel}: %{marker.color}<extra></extra>`
   }
   trace.hovertemplate = groupHoverTemplate
@@ -361,7 +369,7 @@ function getScatterColorToApply(dataScatterColor, scatterColor) {
 /** Gets Plotly layout object for scatter plot */
 function getPlotlyLayout({ width, height }={}, {
   axes,
-  domainRanges,
+  clusterSpecifiedRanges,
   hasCoordinateLabels,
   coordinateLabels,
   isAnnotatedScatter,
@@ -380,7 +388,7 @@ function getPlotlyLayout({ width, height }={}, {
   } else {
     const props2d = get2DScatterProps({
       axes,
-      domainRanges,
+      clusterSpecifiedRanges,
       hasCoordinateLabels,
       coordinateLabels,
       isAnnotatedScatter
@@ -401,7 +409,7 @@ function getPlotlyLayout({ width, height }={}, {
 /** Gets Plotly layout object for two-dimensional scatter plot */
 function get2DScatterProps({
   axes,
-  domainRanges,
+  clusterSpecifiedRanges,
   hasCoordinateLabels,
   coordinateLabels,
   isAnnotatedScatter
@@ -409,8 +417,8 @@ function get2DScatterProps({
   const { titles } = axes
 
   const layout = {
-    xaxis: { title: titles.x },
-    yaxis: { title: titles.y }
+    xaxis: { title: titles.x, range: axes?.ranges?.x },
+    yaxis: { title: titles.y, range: axes?.ranges?.y }
   }
 
   if (isAnnotatedScatter === false) {
@@ -426,15 +434,16 @@ function get2DScatterProps({
   }
 
   // if user has supplied a range, set that, otherwise let Plotly autorange
-  if (domainRanges) {
-    layout.xaxis.range = domainRanges.x
-    layout.yaxis.range = domainRanges.y
+  if (clusterSpecifiedRanges) {
+    layout.xaxis.range = clusterSpecifiedRanges.x
+    layout.yaxis.range = clusterSpecifiedRanges.y
   } else {
     layout.xaxis.autorange = true
     layout.yaxis.autorange = true
   }
 
-  if (hasCoordinateLabels) {
+  if (hasCoordinateLabels && !isAnnotatedScatter) {
+    // don't show coordinate labels on annotated scatters, since the axes are different
     layout.annotations = coordinateLabels
   }
 
@@ -448,7 +457,7 @@ const baseCamera = {
 }
 
 /** Gets Plotly layout scene props for 3D scatter plot */
-export function get3DScatterProps({ domainRanges, axes }) {
+export function get3DScatterProps({ clusterSpecifiedRanges, axes }) {
   const { titles, ranges, aspects } = axes
 
   const scene = {
@@ -459,7 +468,7 @@ export function get3DScatterProps({ domainRanges, axes }) {
     zaxis: { title: titles.z, autorange: true, showticklabels: false }
   }
 
-  if (domainRanges) {
+  if (clusterSpecifiedRanges) {
     scene.xaxis.autorange = false
     scene.xaxis.range = ranges.x
     scene.yaxis.autorange = false

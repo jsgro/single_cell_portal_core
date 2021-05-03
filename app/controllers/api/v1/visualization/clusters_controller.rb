@@ -179,9 +179,6 @@ module Api
           if url_params[:gene].blank?
             # For "Clusters" tab in default view of Explore tab
             plot_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, include_coords: include_coordinates, include_cells: include_cells)
-            if cluster.is_3d? && include_coordinates
-              range = ClusterVizService.get_range(cluster, plot_data)
-            end
           else
             if genes.count == 0
               # all searched genes do not exist in this study
@@ -199,7 +196,6 @@ module Api
                 plot_data = ExpressionVizService.load_annotation_based_data_array_scatter(
                   study, genes[0], cluster, annotation, subsample)
               end
-              range = ClusterVizService.get_range(cluster, plot_data)
               titles = {
                 x: annot_params[:name],
                 y: titles[:magnitude]
@@ -220,7 +216,6 @@ module Api
 
           axes_full = {
             titles: titles,
-            ranges: range,
             aspects: aspect
           }
 
@@ -228,13 +223,13 @@ module Api
           {
             "data": plot_data,
             "pointSize": study.default_cluster_point_size,
+            "clusterSpecifiedRanges": cluster.domain_ranges,
             "showClusterPointBorders": study.show_cluster_point_borders?,
             "description": cluster.study_file.description,
             "is3D": cluster.is_3d?,
             "isSubsampled": cluster.subsampled?,
             "isAnnotatedScatter": is_annotated_scatter,
             "numPoints": cluster.points,
-            "domainRanges": cluster.domain_ranges,
             "axes": axes_full,
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
             "coordinateLabels": coordinate_labels,

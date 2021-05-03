@@ -174,38 +174,6 @@ class ClusterVizService
     aspect
   end
 
-  # set the range for a plotly scatter, will default to data-defined if cluster hasn't defined its own ranges
-  # dynamically determines range based on inputs & available axes
-  def self.get_range(cluster, coordinate_data)
-    # select coordinate axes from inputs
-    domain_keys = [:x, :y, :z]
-    range = Hash[domain_keys.zip]
-    if cluster.has_range?
-      # use study-provided range if available
-      range = cluster.domain_ranges
-    else
-      # take the minmax of each domain across all groups, then the global minmax
-      raw_values = []
-
-      domain_keys.each do |domain|
-        if coordinate_data[domain]
-          domain_range = RequestUtils.get_minmax(coordinate_data[domain])
-          # RequestUtils.get_minmax will discard NaN/nil values that were ingested
-          # only add domain range to list if we have a valid minmax
-          raw_values << domain_range if domain_range.any?
-        end
-      end
-      aggregate_range = raw_values.flatten.minmax
-      # add 2% padding to range
-      padding = (aggregate_range.first - aggregate_range.last) * 0.02
-      absolute_range = [aggregate_range.first + padding, aggregate_range.last - padding]
-      range[:x] = absolute_range
-      range[:y] = absolute_range
-      range[:z] = absolute_range
-    end
-    range
-  end
-
   # generic method to populate data structure to render a cluster scatter plot
   # uses cluster_group model and loads annotation for both group & numeric plots
   # data values are pulled from associated data_array entries for each axis and annotation/text value

@@ -194,24 +194,6 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test 'should compute range for coordinates' do
-    cluster = @study.default_cluster
-    metadata = @study.cell_metadata.by_name_and_type('species', 'group')
-    annotation = {name: metadata.name, type: metadata.annotation_type, scope: 'study'}
-    coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation)
-
-    # range of 1 to 9, plus 2% padding of total extent of range. i.e padding =  8 * .02, or .16
-    # therefore domain_range = [1 - padding, 9 + padding]
-    domain_range = [0.84, 9.16]
-    expected_range = {
-        x: domain_range,
-        y: domain_range,
-        z: domain_range
-    }
-    calculated_range = ClusterVizService.get_range(cluster, coordinates)
-    assert_equal expected_range, calculated_range
-  end
-
   test 'should compute aspect ratio for predefined range' do
     cluser_file_with_range = 'cluster_ranged.txt'
     FactoryBot.create(:cluster_file,
