@@ -23,6 +23,7 @@ module.exports = {
         'ga': 'readonly',
         'bamAndBaiFiles': 'readonly'
     },
+    'parser': 'babel-eslint',
     'parserOptions': {
         'ecmaFeatures': {
             'jsx': true
@@ -50,7 +51,9 @@ module.exports = {
         'eol-last': 'warn',
         'func-call-spacing': 'warn',
         // 'implicit-arrow-linebreak': 'warn',
-        'indent': ['warn', 2, { 'SwitchCase': 1, 'CallExpression': { 'arguments': 1 } }],
+        'indent': ['warn', 2, { 'SwitchCase': 1, 'CallExpression': { 'arguments': 1 },
+          "ignoredNodes": ["TemplateLiteral"]
+         }],
         'key-spacing': 'warn',
         'keyword-spacing': 'warn',
         'lines-between-class-members': 'warn',
@@ -88,7 +91,7 @@ module.exports = {
         'prefer-rest-params': 'warn',
         'prefer-spread': 'warn',
         'rest-spread-spacing': 'warn',
-        'template-curly-spacing': 'warn',
+        'template-curly-spacing': 'off',
         // React
         'react/prop-types': 'off',
         'react/jsx-key': 'off',
