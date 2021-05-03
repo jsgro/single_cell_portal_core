@@ -34,6 +34,34 @@ class AnnotationsControllerTest < ActionDispatch::IntegrationTest
                                                      {name: 'species', type: 'group', values: ['dog', 'cat', 'dog']},
                                                      {name: 'disease', type: 'group', values: ['none', 'none', 'measles']}
                                                    ])
+
+    marker_cluster_list = %w(Cluster1 Cluster2 Cluster3)
+    @gene_list_file = FactoryBot.create(:gene_list,
+                                       study: @basic_study,
+                                       name: 'marker_gene_list.txt',
+                                       list_name: 'Marker List 1',
+                                       clusters_input: marker_cluster_list,
+                                       gene_scores_input: [
+                                         {
+                                           'PTEN' => Hash[marker_cluster_list.zip([1,2,3])]
+                                         },
+                                         {
+                                           'AGPAT2' => Hash[marker_cluster_list.zip([4,5,6])]
+                                         }
+                                       ])
+    @gene_list_file_2 = FactoryBot.create(:gene_list,
+                                         study: @basic_study,
+                                         name: 'marker_gene_list_2.txt',
+                                         list_name: 'gene_list.with.periods',
+                                         clusters_input: marker_cluster_list,
+                                         gene_scores_input: [
+                                           {
+                                             'APOE' => Hash[marker_cluster_list.zip([9,8,7])]
+                                           },
+                                           {
+                                             'ACTA2' => Hash[marker_cluster_list.zip([6,5,4])]
+                                           }
+                                         ])
   end
 
   teardown do
@@ -92,5 +120,16 @@ class AnnotationsControllerTest < ActionDispatch::IntegrationTest
                                                                            annotation_type: 'group',
                                                                            cluster: 'clusterA.txt'}))
     assert_equal json, "NAME\tfoo\nA\tbar\nB\tbar\nC\tbaz"
+  end
+
+  test 'should load gene list by name' do
+    sign_in_and_update @user
+    # normal request
+    execute_http_request(:get, api_v1_study_annotations_gene_list_path(@basic_study, 'Marker List 1'))
+    assert_response :success
+
+    # request w/ periods in name
+    execute_http_request(:get, api_v1_study_annotations_gene_list_path(@basic_study, 'gene_list.with.periods'))
+    assert_response :success
   end
 end

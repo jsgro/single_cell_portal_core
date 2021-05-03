@@ -11,6 +11,7 @@ import { log } from 'lib/metrics-api'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
+import { logViolinPlot } from 'lib/scp-api-metrics'
 
 
 export const DISTRIBUTION_PLOT_OPTIONS = [
@@ -77,16 +78,10 @@ function RawStudyViolinPlot({
         showPoints: distributionPoints
       })
 
-      const perfTimeFrontend = performance.now() - perfTimeFrontendStart
-
-      const perfTimeFull = perfTime + perfTimeFrontend
-
-      log(`plot:${distributionPlotToUse}`, {
-        genes,
-        'perfTime': Math.round(perfTimeFull),
-        'perfTime:backend': perfTime,
-        'perfTime:frontend': Math.round(perfTimeFrontend)
-      })
+      logViolinPlot(
+        { genes, distributionPlotToUse, distributionPoints },
+        { perfTime, perfTimeFrontendStart }
+      )
       setStudyGeneNames(results.gene_names)
       if (setAnnotationList) {
         setAnnotationList(results.annotation_list)

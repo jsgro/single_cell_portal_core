@@ -18,6 +18,8 @@ FactoryBot.define do
     cluster_name { cluster_group.try(:name) || study_file.try(:name) }
     cluster_group_id { cluster_group.try(:id) }
     linear_data_id { cluster_group.try(:id) || gene.try(:id) || cell_metadatum.try(:id) || study.id }
+    subsample_threshold { nil }
+    subsample_annotation { nil }
     linear_data_type do
       if cluster_group_id
         'ClusterGroup'

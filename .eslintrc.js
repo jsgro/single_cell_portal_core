@@ -23,7 +23,6 @@ module.exports = {
         'ga': 'readonly',
         'bamAndBaiFiles': 'readonly'
     },
-    'parser': 'babel-eslint',
     'parserOptions': {
         'ecmaFeatures': {
             'jsx': true

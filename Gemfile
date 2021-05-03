@@ -45,8 +45,6 @@ group :development, :test do
   gem 'puma'
   gem 'rubocop', require: false
   gem 'rubocop-rails', require: false
-  gem 'ruby-prof'
-  gem 'ruby-prof-flamegraph'
 end
 
 group :test do
@@ -96,3 +94,5 @@ gem 'time_difference'
 gem 'tcell_agent'
 gem 'sys-filesystem', require: 'sys/filesystem'
 gem 'browser'
+gem 'ruby-prof'
+gem 'ruby-prof-flamegraph'

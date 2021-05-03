@@ -5,10 +5,10 @@ import _uniqueId from 'lodash/uniqueId'
 import Plotly from 'plotly.js-dist'
 
 import { fetchCluster } from 'lib/scp-api'
+import { logScatterPlot } from 'lib/scp-api-metrics'
 import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
-import { log } from 'lib/metrics-api'
 import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 
@@ -96,28 +96,10 @@ function RawScatterPlot({
         gene: scatter.gene
       })
 
-      const perfTimeFrontend = performance.now() - perfTimeFrontendStart
-
-      const perfTimeFull = perfTime + perfTimeFrontend
-
-      const perfLogProps = {
-        'perfTime:backend': perfTime, // Time for API call
-        'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
-        'perfTime': Math.round(perfTimeFull), // Time from API call *start* to plot render end,
-        'numPoints': scatter.numPoints, // How many cells are we plotting?
-        genes,
-        'gene': scatter.gene,
-        'is3D': scatter.is3D,
-        'layout:width': dimensions.width, // Pixel width of graph
-        'layout:height': dimensions.height, // Pixel height of graph
-        'numAnnotSelections': scatter.annotParams.values.length,
-        'annotName': scatter.annotParams.name,
-        'annotType': scatter.annotParams.type,
-        'annotScope': scatter.annotParams.scope,
-        includes
-      }
-
-      log('plot:scatter', perfLogProps)
+      logScatterPlot(
+        { scatter, genes, width, height },
+        { perfTime, perfTimeFrontendStart }
+      )
 
       setScatterData(scatter)
       setShowError(false)
@@ -168,7 +150,7 @@ function RawScatterPlot({
     // Don't try to update the color if the graph hasn't loaded yet
     if (scatterData && !isLoading) {
       const newDragMode = getDragMode(isCellSelecting)
-      window.Plotly.relayout(graphElementId, { dragmode: newDragMode })
+      Plotly.relayout(graphElementId, { dragmode: newDragMode })
       if (!isCellSelecting) {
         Plotly.restyle(graphElementId, { selectedpoints: [null] })
       }
