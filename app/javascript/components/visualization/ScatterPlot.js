@@ -6,6 +6,7 @@ import Plotly from 'plotly.js-dist'
 
 import { fetchCluster } from 'lib/scp-api'
 import { logScatterPlot } from 'lib/scp-api-metrics'
+import { log } from 'lib/metrics-api'
 import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
@@ -42,7 +43,7 @@ function RawScatterPlot({
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
-  function handleResponse(clusterResponse, fields, cachedData) {
+  function handleResponse(clusterResponse) {
     const [scatter, perfTime] = clusterResponse
 
     const apiOk = checkScpApiResponse(scatter,
@@ -50,7 +51,43 @@ function RawScatterPlot({
       setShowError,
       setErrorContent)
     if (apiOk) {
-      renderPlot({scatter, fields, cachedData, isAnnotatedScatter})
+      if (dataCache) {
+        dataCache.applyCache(studyAccession, scatter)
+      }
+      const layout = getPlotlyLayout(dimensions, scatter)
+      const plotlyTraces = getPlotlyTraces({
+        axes: scatter.axes,
+        data: scatter.data,
+        annotName: scatter.annotParams.name,
+        annotType: scatter.annotParams.type,
+        annotValues: scatter.annotParams.values,
+        gene: scatter.gene,
+        isAnnotatedScatter: scatter.isAnnotatedScatter,
+        scatterColor,
+        dataScatterColor: scatter.scatterColor,
+        pointOpacity: scatter.defaultPointOpacity,
+        pointSize: scatter.pointSize,
+        showPointBorders: scatter.showClusterPointBorders,
+        annotRange: scatter.data.annotationRange,
+        expressionRange: scatter.data.expressionRange,
+        is3D: scatter.is3D
+      })
+
+      const perfTimeFrontendStart = performance.now()
+
+      Plotly.react(graphElementId, plotlyTraces, layout)
+      sortLegend({
+        graphElementId,
+        annotValues: scatter.annotParams.values,
+        isAnnotatedScatter,
+        annotType: scatter.annotParams.type,
+        gene: scatter.gene
+      })
+
+      logScatterPlot(
+        { scatter, genes, width: dimensions.width, height: dimensions.height },
+        { perfTime, perfTimeFrontendStart }
+      )
       setScatterData(scatter)
       setShowError(false)
     }
@@ -60,17 +97,9 @@ function RawScatterPlot({
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     setIsLoading(true)
-    let cachedData = null
-    const dataIsCached = dataCache?.hasScatterData(studyAccession, cluster)
     let fields = null
-    // we don't cache anything for annotated scatter since the coordinates are different per annotation/gene
-    if (dataIsCached && !isAnnotatedScatter) {
-      if (genes.length) {
-        fields = 'expression'
-      } else {
-        fields = 'annotation'
-      }
-      cachedData = dataCache.getScatterData(studyAccession, cluster)
+    if (dataCache) {
+      fields = dataCache.getFieldsToRequest(studyAccession, cluster, genes, isAnnotatedScatter)
     }
     fetchCluster({
       studyAccession,
@@ -81,9 +110,7 @@ function RawScatterPlot({
       gene: genes,
       fields,
       isAnnotatedScatter
-    }).then(response => {
-      handleResponse(response, fields, cachedData)
-    })
+    }).then(handleResponse)
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
@@ -168,59 +195,6 @@ function RawScatterPlot({
 const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
-
-function renderPlot({scatter, fields, cachedData, isAnnotatedScatter}) {
-
-  // Get Plotly layout
-  if (cachedData) {
-    const mergeKeys = ['x', 'y', 'z', 'cells']
-    if (fields != 'annotation') {
-      mergeKeys.push('annotations')
-    }
-    // merge the coordinate and cell data into the scatter
-    mergeKeys.forEach(key => {
-      scatter.data[key] = cachedData[key]
-    })
-  } else {
-    if (dataCache && !dataCache.hasScatterData(studyAccession, cluster) && !fields) {
-      dataCache.addScatterData(studyAccession, cluster, scatter.data)
-    }
-  }
-  const layout = getPlotlyLayout(dimensions, scatter)
-  const plotlyTraces = getPlotlyTraces({
-    axes: scatter.axes,
-    data: scatter.data,
-    annotName: scatter.annotParams.name,
-    annotType: scatter.annotParams.type,
-    annotValues: scatter.annotParams.values,
-    gene: scatter.gene,
-    isAnnotatedScatter: scatter.isAnnotatedScatter,
-    scatterColor,
-    dataScatterColor: scatter.scatterColor,
-    pointOpacity: scatter.defaultPointOpacity,
-    pointSize: scatter.pointSize,
-    showPointBorders: scatter.showClusterPointBorders,
-    annotRange: scatter.data.annotationRange,
-    expressionRange: scatter.data.expressionRange,
-    is3D: scatter.is3D
-  })
-
-  const perfTimeFrontendStart = performance.now()
-
-  Plotly.react(graphElementId, plotlyTraces, layout)
-  sortLegend({
-    graphElementId,
-    annotValues: scatter.annotParams.values,
-    isAnnotatedScatter,
-    annotType: scatter.annotParams.type,
-    gene: scatter.gene
-  })
-
-  logScatterPlot(
-    { scatter, genes, width: dimensions.width, height: dimensions.height },
-    { perfTime, perfTimeFrontendStart }
-  )
-}
 
 /** get the array of plotly traces for plotting */
 function getPlotlyTraces({
@@ -348,7 +322,7 @@ function addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter, ax
   } else if (annotType === 'numeric' || gene) {
     // this is a graph with a continuous color scale
     // the bottom row of the hover will either be the expression value, or the annotation value
-    let bottomRowLabel = gene ? axes.titles.magnitude : annotName
+    const bottomRowLabel = gene ? axes.titles.magnitude : annotName
     groupHoverTemplate = `(%{x}, %{y})<br>%{text} (%{meta})<br>${bottomRowLabel}: %{marker.color}<extra></extra>`
   }
   trace.hovertemplate = groupHoverTemplate
@@ -384,7 +358,7 @@ function getPlotlyLayout({ width, height }={}, {
     dragmode: getDragMode(isCellSelecting)
   }
   if (is3d) {
-    layout.scene = get3DScatterProps({ domainRanges, axes })
+    layout.scene = get3DScatterProps({ clusterSpecifiedRanges, axes })
   } else {
     const props2d = get2DScatterProps({
       axes,

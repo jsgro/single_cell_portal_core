@@ -31,8 +31,6 @@ function RawDotPlot({
   studyAccession, genes=[], cluster, annotation={},
   subsample, annotationValues
 }) {
-
-
   const [graphId] = useState(_uniqueId('dotplot-'))
   const { ErrorComponent, showError, setShowError, setErrorContent } = useErrorMessage()
   const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster })
