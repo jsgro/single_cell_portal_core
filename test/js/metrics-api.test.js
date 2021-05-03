@@ -86,6 +86,7 @@ describe('Library for client-side usage analytics', () => {
       done()
     })
   })
+
   it('logs classList and id when link is clicked', done => {
     // Spy on `fetch()` and its contingent methods like `json()`,
     // because we want to intercept the outgoing request
