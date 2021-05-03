@@ -162,7 +162,8 @@ class StudiesController < ApplicationController
       ErrorTracker.report_exception(e, current_user, error_context)
       MetricsService.report_error(e, request, current_user, @study)
       logger.error "#{Time.zone.now}: error syncing ACLs in workspace bucket #{@study.firecloud_workspace} due to error: #{e.message}"
-      redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]), alert: "We were unable to sync with your workspace bucket due to an error: #{view_context.simple_format(e.message)}" and return
+      redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]),
+                  alert: "We were unable to sync with your workspace bucket due to an error: #{view_context.simple_format(e.message)}.  #{ZENDESK_CONTACT}" and return
     end
 
     # begin determining sync status with study_files and primary or other data
@@ -181,7 +182,8 @@ class StudiesController < ApplicationController
       ErrorTracker.report_exception(e, current_user, error_context)
       MetricsService.report_error(e, request, current_user, @study)
       logger.error "#{Time.zone.now}: error syncing files in workspace bucket #{@study.firecloud_workspace} due to error: #{e.message}"
-      redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]), alert: "We were unable to sync with your workspace bucket due to an error: #{view_context.simple_format(e.message)}" and return
+      redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]),
+                  alert: "We were unable to sync with your workspace bucket due to an error: #{view_context.simple_format(e.message)}.  #{ZENDESK_CONTACT}" and return
     end
 
     files_to_remove = []
@@ -348,7 +350,9 @@ class StudiesController < ApplicationController
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
       ErrorTracker.report_exception(e, current_user, error_context)
       MetricsService.report_error(e, request, current_user, @study)
-      redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]), alert: "We were unable to sync the outputs from submission #{params[:submission_id]} due to the following error: #{e.message}"
+      redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
+                  alert: "We were unable to sync the outputs from submission #{params[:submission_id]} due to the " \
+                         "following error: #{e.message}.  #{ZENDESK_CONTACT}"
     end
   end
 
@@ -418,7 +422,9 @@ class StudiesController < ApplicationController
           ErrorTracker.report_exception(e, current_user, error_context)
           MetricsService.report_error(e, request, current_user, @study)
           logger.error "#{Time.zone.now} unable to delete workspace: #{@study.firecloud_workspace}; #{e.message}"
-          redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]), alert: "We were unable to delete your study due to: #{view_context.simple_format(e.message)}.<br /><br />No files or database records have been deleted.  Please try again later" and return
+          redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]),
+                      alert: "We were unable to delete your study due to: #{view_context.simple_format(e.message)}.<br />" \
+                             "<br />No files or database records have been deleted.  Please try again later.  #{ZENDESK_CONTACT}" and return
         end
       end
 
@@ -438,7 +444,8 @@ class StudiesController < ApplicationController
         format.json { head :no_content }
       end
     else
-      redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]), alert: 'You do not have permission to perform that action' and return
+      redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]),
+                  alert: "You do not have permission to perform that action.  #{ZENDESK_CONTACT}" and return
     end
   end
 
@@ -790,7 +797,8 @@ class StudiesController < ApplicationController
           MetricsService.report_error(e, request, current_user, @study)
           logger.error "#{Time.zone.now}: error in deleting #{@study_file.upload_file_name} from workspace: #{@study.firecloud_workspace}; #{e.message}"
           redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
-                      alert: "We were unable to delete #{@study_file.upload_file_name} due to an error: #{view_context.simple_format(e.message)}.  Please try again later."
+                      alert: "We were unable to delete #{@study_file.upload_file_name} due to an error: " \
+                             "#{view_context.simple_format(e.message)}.  Please try again later.  #{ZENDESK_CONTACT}"
         end
         changes = ["Study file deleted: #{@study_file.upload_file_name}"]
         if @study.study_shares.any?
@@ -1170,7 +1178,7 @@ class StudiesController < ApplicationController
 
   def check_edit_permissions
     if !user_signed_in? || !@study.can_edit?(current_user)
-      alert = 'You do not have permission to perform that action.'
+      alert = "You do not have permission to perform that action.  #{ZENDESK_CONTACT}"
       respond_to do |format|
         format.js {render js: "alert('#{alert}')" and return}
         format.html {redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]),
@@ -1182,7 +1190,7 @@ class StudiesController < ApplicationController
   # check on FireCloud API status and respond accordingly
   def check_firecloud_status
     unless ApplicationController.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE)
-      alert = 'Study workspaces are temporarily unavailable, so we cannot complete your request.  Please try again later.'
+      alert = "Study workspaces are temporarily unavailable, so we cannot complete your request.  Please try again later.  #{ZENDESK_CONTACT}"
       respond_to do |format|
         format.js {render js: "$('.modal').modal('hide'); alert('#{alert}')" and return}
         format.html {redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]),
@@ -1196,7 +1204,8 @@ class StudiesController < ApplicationController
   def check_study_detached
     if @study.detached
       redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
-                  alert: "We were unable to complete your request as the study is question is detached from the workspace (maybe the workspace was deleted?)" and return
+                  alert: "We were unable to complete your request as the study is question is detached from the workspace " \
+                         "(maybe the workspace was deleted?).  #{ZENDESK_CONTACT}" and return
 
     end
   end

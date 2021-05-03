@@ -104,6 +104,15 @@ export function logClickOther(target) {
   log('click:other', props)
 }
 
+/** Log copy events, such as copying the SCP Zendesk support email */
+export function logCopy(event) {
+  const props = {
+    text: getNameForClickTarget(event.target),
+    id: event.target.id
+  }
+  log('copy', props)
+}
+
 /**
   * If the element itself has a data-analytics-name, use that as the name
   * this allows names to be specified for elements that do not have text (e.g. icon buttons)
