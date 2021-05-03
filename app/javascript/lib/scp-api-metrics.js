@@ -178,17 +178,17 @@ export function calculatePerfTimes(perfTimes) {
     // Server + client timing
     'perfTime:full': full, // Time from API call *start* to plot render end
 
-    // Less precise, less inclusive times.  Retained for continuity.
-    //
-    // Old `perfTime` was measured from API request start to response end, but
-    // less precisely than using browsers' PerformanceEntry API.
+    // Less precise, less complete times.  Retained for continuity.
+    // Old `perfTime` was measured from API request start to response end,
+    // which is very incomplete (lacks client times!) and less precise than
+    // using browsers' PerformanceEntry API.
     'perfTime': perfTimes.legacy,
     'perfTime:legacy': perfTimes.legacy,
 
     // To answer questions about data sizes and compression
     'perfTime:data:compressed-size': compressedSize, // Encoded size in bytes
     'perfTime:data:uncompressed-size': uncompressedSize, // Decoded size in bytes
-    'perfTime:data:compression-bytes-diff': 'asdf' // compressionBytesDiff // Absolute amount compressed
+    'perfTime:data:compression-bytes-diff': compressionBytesDiff // compressionBytesDiff // Absolute amount compressed
   }
 
   const perfProps = roundValues(Object.assign({}, rawPerfProps))
