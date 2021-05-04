@@ -215,10 +215,7 @@ export function logViolinPlot(
   { genes, plotType, showPoints },
   perfTimes
 ) {
-  const perfTimeProps = calculatePerfTimes(perfTimes)
-
-  let props = { genes, plotType, showPoints }
-  props = Object.assign(props, perfTimeProps)
+  const props = { genes, plotType, showPoints, perfTimes }
 
   log('plot:violin', props)
 }
@@ -228,9 +225,7 @@ export function logScatterPlot(
   { scatter, genes, width, height },
   perfTimes
 ) {
-  const perfTimeProps = calculatePerfTimes(perfTimes)
-
-  let props = {
+  const props = {
     'numPoints': scatter.numPoints, // How many cells are we plotting?
     genes,
     'gene': scatter.gene,
@@ -240,10 +235,9 @@ export function logScatterPlot(
     'numAnnotSelections': scatter.annotParams.values.length,
     'annotName': scatter.annotParams.name,
     'annotType': scatter.annotParams.type,
-    'annotScope': scatter.annotParams.scope
+    'annotScope': scatter.annotParams.scope,
+    perfTimes
   }
-
-  props = Object.assign(props, perfTimeProps)
 
   log('plot:scatter', props)
 }
