@@ -205,7 +205,7 @@ export function calculatePerfTimes(perfTimes) {
     )
   }
 
-  perfProps.url = perfTimes.url
+  perfProps['perfTime:url'] = perfTimes.url
 
   return perfProps
 }
