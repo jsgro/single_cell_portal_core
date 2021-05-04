@@ -71,12 +71,14 @@ function RawStudyViolinPlot({
         distributionPlotToUse = defaultDistributionPlot
       }
 
-      perfTimes.plotStart = performance.now()
+      const startTime = performance.now()
 
       renderViolinPlot(graphElementId, results, {
         plotType: distributionPlotToUse,
         showPoints: distributionPoints
       })
+
+      perfTimes.plot = performance.now() - startTime
 
       logViolinPlot(
         { genes, distributionPlotToUse, distributionPoints },

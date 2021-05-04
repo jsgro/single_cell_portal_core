@@ -60,9 +60,11 @@ function RawScatterPlot({
       formatHoverLabels(scatter.data, scatter.annotParams.type, scatter.gene, isAnnotatedScatter)
       processTraceScatterColor(scatter.data, scatterColor)
 
-      perfTimes.plotStart = performance.now()
+      const startTime = performance.now()
 
       Plotly.react(graphElementId, scatter.data, layout)
+
+      perfTimes.plot = performance.now() - startTime
 
       logScatterPlot(
         { scatter, genes, width, height },
