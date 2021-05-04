@@ -8,6 +8,10 @@ import { enableFetchMocks } from 'jest-fetch-mock'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import Plotly from 'plotly.js-dist'
 
+jest.mock('lib/scp-api-metrics', () => ({
+  logViolinPlot: jest.fn()
+}))
+
 const fs = require('fs')
 
 enableFetchMocks()
@@ -26,8 +30,8 @@ describe('Violin plot in global gene search', () => {
 
   it('configures Plotly violin plot', async() => {
     fetch.mockResponseOnce(violins)
-    const mockPlot = jest.spyOn(Plotly, 'newPlot');
-    mockPlot.mockImplementation(() => {});
+    const mockPlot = jest.spyOn(Plotly, 'newPlot')
+    mockPlot.mockImplementation(() => {})
 
     render(<StudyViolinPlot studyAccession={study.accession}
       genes={study.gene_matches}

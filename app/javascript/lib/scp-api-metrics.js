@@ -299,7 +299,7 @@ export function getLogPlotProps() {
  * This is our best web-client-side methodology for measuring downloads.
  */
 export function logDownloadAuthorization(perfTimes) {
-  const props = { perfTime }
+  const props = { perfTimes }
   log('download-authorization', props)
   ga('send', 'event', 'advanced-search', 'download-authorization') // eslint-disable-line no-undef, max-len
 }
