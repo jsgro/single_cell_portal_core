@@ -32,9 +32,12 @@ describe('JavaScript client for SCP REST API', () => {
     const [authCode, perfTimes] =
       await scpApi('/search/auth_code', defaultInit(), true)
 
-    const perfTime = perfTimes.perfTime
+    const perfTime = perfTimes.legacy
 
-    expect(Number.isInteger(perfTime)).toEqual(true);
+    const perfTimeIsFloat =
+      !Number.isInteger(perfTime) && (parseFloat(perfTime) === perfTime)
+
+    expect(perfTimeIsFloat).toEqual(true);
     expect(perfTime).toBeGreaterThan(0);
   });
 })
