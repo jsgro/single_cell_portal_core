@@ -161,18 +161,8 @@ export function calculatePerfTimes(perfTimes) {
   const compressionBytesDiff = uncompressedSize - compressedSize
 
   const rawPerfProps = {
-    // Server timing
-    'perfTime:backend': backend, // Time for API call
-
-    // Client timing
-    'perfTime:frontend': frontend, // Time from API call *end* to plot render end
-    'perfTime:frontend:plot': plot, // Time from start to end of plot render call
-    'perfTime:frontend:transfer': transfer, // Time client took to download data from server
-    'perfTime:frontend:parse': perfTimes.parse, // Time to parse JSON
-    'perfTime:frontend:other': frontendOther, // Total frontend time - accounted segments
-
     // Server + client timing
-    'perfTime:full': full, // Time from API call *start* to plot render end
+    'perfTime:full': full, // Time from API call start to plot render end
 
     // Less precise, less complete times.  Retained for continuity.
     // Old `perfTime` was measured from API request start to response end,
@@ -181,10 +171,20 @@ export function calculatePerfTimes(perfTimes) {
     'perfTime': perfTimes.legacy,
     'perfTime:legacy': perfTimes.legacy,
 
+    // Server timing
+    'perfTime:backend': backend, // Time for server to process request
+
+    // Client timing
+    'perfTime:frontend': frontend, // Time from API call response start to plot render end
+    'perfTime:frontend:plot': plot, // Time from start to end of plot render call
+    'perfTime:frontend:transfer': transfer, // Time client took to download data from server
+    'perfTime:frontend:parse': perfTimes.parse, // Time to parse response body (currently only JSON)
+    'perfTime:frontend:other': frontendOther, // Total frontend time - accounted segments
+
     // To answer questions about data sizes and compression
-    'perfTime:data:compressed-size': compressedSize, // Encoded size in bytes
-    'perfTime:data:uncompressed-size': uncompressedSize, // Decoded size in bytes
-    'perfTime:data:compression-bytes-diff': compressionBytesDiff // compressionBytesDiff // Absolute amount compressed
+    'perfTime:data:compressed-size': compressedSize, // Encoded response body size in bytes
+    'perfTime:data:uncompressed-size': uncompressedSize, // Decoded response body size in bytes
+    'perfTime:data:compression-bytes-diff': compressionBytesDiff // Absolute amount compressed
   }
 
   const perfProps = roundValues(Object.assign({}, rawPerfProps))
