@@ -29,8 +29,10 @@ describe('JavaScript client for SCP REST API', () => {
 
   it('includes perfTime in return from scpApi', async () => {
 
-    const [authCode, perfTime] =
+    const [authCode, perfTimes] =
       await scpApi('/search/auth_code', defaultInit(), true)
+
+    const perfTime = perfTimes.perfTime
 
     expect(Number.isInteger(perfTime)).toEqual(true);
     expect(perfTime).toBeGreaterThan(0);
