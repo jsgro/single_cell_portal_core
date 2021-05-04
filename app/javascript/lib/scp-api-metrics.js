@@ -139,8 +139,6 @@ function roundValues(props) {
 
 /** Calculates generic performance timing metrics for visualizations */
 export function calculatePerfTimes(perfTimes) {
-  console.log('perfTime', perfTimes)
-
   const now = performance.now()
 
   const plot = now - perfTimes.plotStart
@@ -148,8 +146,6 @@ export function calculatePerfTimes(perfTimes) {
   const perfEntry =
     performance.getEntriesByType('resource')
       .filter(entry => entry.name === perfTimes.url)[0]
-
-  console.log('perfEntry', perfEntry)
 
   const transfer = perfEntry.responseEnd - perfEntry.responseStart
 
@@ -202,7 +198,6 @@ export function calculatePerfTimes(perfTimes) {
   // Accounts for `null`, '', 'non-empty string', etc.
   const errorKeys = Object.keys(rawPerfProps).filter(k => isNaN(parseFloat(rawPerfProps[k])))
   if (errorKeys.length > 0) {
-    console.log('errorKeys', errorKeys)
     const specifics = errorKeys.map(k => `${k}: ${rawPerfProps[k]}\n`)
     throw Error(
       `Not all expected perfTime values are numbers:\n
@@ -211,8 +206,6 @@ export function calculatePerfTimes(perfTimes) {
   }
 
   perfProps.url = perfTimes.url
-
-  console.log('perfProps', perfProps)
 
   return perfProps
 }
