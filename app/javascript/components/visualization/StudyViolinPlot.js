@@ -6,7 +6,6 @@ import _capitalize from 'lodash/capitalize'
 import { fetchExpressionViolin } from 'lib/scp-api'
 import { getColorBrewerColor, arrayMin, arrayMax, plotlyDefaultLineColor } from 'lib/plot'
 import Plotly from 'plotly.js-dist'
-import { log } from 'lib/metrics-api'
 
 import { useUpdateEffect } from 'hooks/useUpdate'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
