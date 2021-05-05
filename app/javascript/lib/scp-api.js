@@ -542,7 +542,7 @@ export function getBrandingGroup() {
 }
 
 /** Get full URL for a given including any extension (or a mocked URL) */
-function getFullUrl(path, mock=false) {
+export function getFullUrl(path, mock=false) {
   if (globalMock) {
     mock = true
   }
