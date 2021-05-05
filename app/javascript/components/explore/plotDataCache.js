@@ -52,7 +52,7 @@ const FIELDS = {
     },
     merge: (entry, scatter) => {
       const key = getExpressionKey(scatter.genes, scatter.consensus)
-      cacheEntry.expression[key] = scatter.data.expression ? scatter.data.expression : entry.expression[key]
+      entry.expression[key] = scatter.data.expression ? scatter.data.expression : entry.expression[key]
       scatter.data.expression = entry.expression[key]
     }
   },
@@ -81,14 +81,25 @@ export function newCache() {
 
 
   /** adds the data for a given study/clusterName, overwriting any previous entry */
-  cache._mergeClusterResponse = (accession, clusterResponse) => {
+  cache._mergeClusterResponse = (accession, clusterResponse, requestedCluster, requestedAnnotation, requestedSubsample) => {
     const scatter = clusterResponse[0]
     const cacheEntry = cache._getEntry(accession, scatter.cluster, scatter.subsample)
+
+    if (scatter.cluster != requestedCluster || requestedSubsample !== scatter.subsample) {
+      cache._putEntry(accession, requestedCluster, requestedSubsample, cacheEntry)
+    }
+    if (scatter.isPureCache) {
+      // we need the response cluster/subsample to mimic what actually came from the server for the graphs
+      // to render correctly
+      scatter.annotParams = cacheEntry.clusterProps.annotParams
+      scatter.cluster = cacheEntry.clusterProps.cluster
+      scatter.subsample = cacheEntry.clusterProps.subsample
+    }
     FIELDS.clusterProps.merge(cacheEntry, scatter)
     FIELDS.cellsAndCoords.merge(cacheEntry, scatter)
     FIELDS.annotation.merge(cacheEntry, scatter)
     if (scatter.genes.length) {
-      FIELDS.annotation.merge(cacheEntry, scatter)
+      FIELDS.expression.merge(cacheEntry, scatter)
     }
     return clusterResponse
   }
@@ -106,6 +117,12 @@ export function newCache() {
       }
     }
     return cache.entries[key]
+  }
+
+  /** get the data for a given study/cluster */
+  cache._putEntry = (accession, clusterName, subsample, entry) => {
+    const key = getKey(accession, clusterName, subsample)
+    cache.entries[key] = entry
   }
 
   cache.clear = () => {
@@ -180,7 +197,9 @@ export function newCache() {
           consensus,
           cluster,
           subsample,
-          data: {}
+          annotParams: annotation,
+          data: {},
+          isPureCache: true
         }, -1
       ])
     }
@@ -189,7 +208,7 @@ export function newCache() {
     return Promise.all(promises).then(resultArray => {
       let mergedResult = null
       resultArray.forEach(result => {
-        mergedResult = cache._mergeClusterResponse(studyAccession, result)
+        mergedResult = cache._mergeClusterResponse(studyAccession, result, cluster, annotation, subsample)
       })
       return mergedResult
     })
