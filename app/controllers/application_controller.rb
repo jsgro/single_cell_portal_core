@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
   include RealIpLogger
 
   # Error modal contact message
-  SCP_SUPPORT_EMAIL = "If this error persists and you require assistance, please contact support at:<br /><br />" \
+  SCP_SUPPORT_EMAIL = "If this error persists, please contact support at:<br /><br />" \
                       "<a href='mailto:scp-support@broadinstitute.zendesk.com' data-analytics-name='scp-support-email' " \
                       "class='no-wrap'>scp-support@broadinstitute.zendesk.com</a>"
 
