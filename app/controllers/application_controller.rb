@@ -4,9 +4,9 @@ class ApplicationController < ActionController::Base
   include RealIpLogger
 
   # Error modal contact message
-  ZENDESK_CONTACT = "If this error persists and you require assistance, please contact support at " \
-                    "<a href='mailto:scp-support@broadinstitute.zendesk.com' id='zendesk-alert-email'>" \
-                    "scp-support@broadinstitute.zendesk.com</a>."
+  SCP_SUPPORT_EMAIL = "If this error persists and you require assistance, please contact support at:<br /><br />" \
+                      "<a href='mailto:scp-support@broadinstitute.zendesk.com' data-analytics-name='scp-support-email' " \
+                      "class='no-wrap'>scp-support@broadinstitute.zendesk.com</a>"
 
   ###
   #
@@ -76,14 +76,14 @@ class ApplicationController < ActionController::Base
   # auth action for portal admins
   def authenticate_admin
     unless current_user.admin?
-      redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: "You do not have permission to access that page.  #{ZENDESK_CONTACT}" and return
+      redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: "You do not have permission to access that page.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
   # auth action for portal reporters
   def authenticate_reporter
     unless current_user.acts_like_reporter?
-      redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: "You do not have permission to access that page.  #{ZENDESK_CONTACT}" and return
+      redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: "You do not have permission to access that page.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
@@ -102,7 +102,7 @@ class ApplicationController < ActionController::Base
     redirect = request.referrer.nil? ? site_path : request.referrer
     access = AdminConfiguration.firecloud_access_enabled?
     if !access
-      redirect_to merge_default_redirect_params(redirect, scpbr: params[:scpbr]), alert: "Study access has been temporarily disabled by the site adminsitrator.  #{ZENDESK_CONTACT}" and return
+      redirect_to merge_default_redirect_params(redirect, scpbr: params[:scpbr]), alert: "Study access has been temporarily disabled by the site adminsitrator.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
@@ -207,7 +207,7 @@ class ApplicationController < ActionController::Base
 
     if redirect_parameters.any?
       redirect_to merge_default_redirect_params(redirect_parameters[:url], scpbr: params[:scpbr]),
-                  alert: redirect_messages.dig(redirect_parameters[:message_key]) + "  #{ZENDESK_CONTACT}" and return
+                  alert: redirect_messages.dig(redirect_parameters[:message_key]) + "  #{SCP_SUPPORT_EMAIL}" and return
     end
 
     # next check if downloads have been disabled by administrator, this will abort the download
@@ -226,7 +226,7 @@ class ApplicationController < ActionController::Base
       requested_file = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, params[:filename])
       if params[:filename].blank?
         redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
-                      alert: "We are unable to process your download in #{study.accession} because there is no file name provided.  #{ZENDESK_CONTACT}" and return
+                      alert: "We are unable to process your download in #{study.accession} because there is no file name provided.  #{SCP_SUPPORT_EMAIL}" and return
       end
       if requested_file.present?
         filesize = requested_file.size
@@ -237,7 +237,7 @@ class ApplicationController < ActionController::Base
           current_user.update(daily_download_quota: user_quota)
         else
           redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
-                      alert: "You have exceeded your current daily download quota.  You must wait until tomorrow to download this file.  #{ZENDESK_CONTACT}" and return
+                      alert: "You have exceeded your current daily download quota.  You must wait until tomorrow to download this file.  #{SCP_SUPPORT_EMAIL}" and return
         end
         # redirect directly to file to trigger download
         # validate that the signed_url is in fact the correct URL - it must be a GCS lin
@@ -245,13 +245,13 @@ class ApplicationController < ActionController::Base
           redirect_to @signed_url
         else
           redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
-                      alert: "We are unable to process your download for #{study.accession}:#{params[:filename]}.  Please try again later.  #{ZENDESK_CONTACT}" and return
+                      alert: "We are unable to process your download for #{study.accession}:#{params[:filename]}.  Please try again later.  #{SCP_SUPPORT_EMAIL}" and return
         end
       else
         # send notification to the study owner that file is missing (if notifications turned on)
         SingleCellMailer.user_download_fail_notification(study, params[:filename]).deliver_now
         redirect_to merge_default_redirect_params(view_study_path(accession: study.accession, study_name: study.url_safe_name), scpbr: params[:scpbr]),
-                    alert: "#{study.accession}:#{params[:filename]} could not be found.  Please contact the study owner if you require access to this file.  #{ZENDESK_CONTACT}" and return
+                    alert: "#{study.accession}:#{params[:filename]} could not be found.  Please contact the study owner if you require access to this file.  #{SCP_SUPPORT_EMAIL}" and return
       end
     rescue => e
       error_context = ErrorTracker.format_extra_context(@study, {params: params})
@@ -260,7 +260,7 @@ class ApplicationController < ActionController::Base
       logger.error "#{Time.zone.now}: error generating signed url for #{params[:filename]}; #{e.message}."
       redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
                   alert: "We were unable to download the file #{study.accession}:#{params[:filename]} do to an error: " \
-                         "#{view_context.simple_format(e.message)}.  #{ZENDESK_CONTACT}" and return
+                         "#{view_context.simple_format(e.message)}.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 

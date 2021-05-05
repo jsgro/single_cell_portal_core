@@ -68,7 +68,7 @@ class BillingProjectsController < ApplicationController
       ErrorTracker.report_exception(e, current_user, params.to_unsafe_hash)
       logger.error "Unable to create new billing project #{project_name} due to error: #{e.message}"
       redirect_to merge_default_redirect_params(billing_projects_path, scpbr: params[:scpbr]),
-                  alert: "We were unable to create your new project due to the following error: #{e.message}.  #{ZENDESK_CONTACT}" and return
+                  alert: "We were unable to create your new project due to the following error: #{e.message}.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
@@ -87,7 +87,7 @@ class BillingProjectsController < ApplicationController
       ErrorTracker.report_exception(e, current_user, params.to_unsafe_hash)
       logger.error "Unable to add #{email} to #{params[:project_name]} due to error: #{e.message}"
       redirect_to merge_default_redirect_params(new_billing_project_user_path, scpbr: params[:scpbr]),
-                  alert: "We were unable to add #{email} to #{params[:project_name]} due to the following error: #{e.message}.  #{ZENDESK_CONTACT}" and return
+                  alert: "We were unable to add #{email} to #{params[:project_name]} due to the following error: #{e.message}.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
@@ -103,7 +103,7 @@ class BillingProjectsController < ApplicationController
       logger.error "Unable to remove #{email} from #{params[:project_name]} due to error: #{e.message}"
       redirect_to merge_default_redirect_params(billing_projects_path, scpbr: params[:scpbr]),
                   alert: "We were unable to remove #{email} from #{params[:project_name]} due to the following error: " \
-                         "#{e.message}'.  #{ZENDESK_CONTACT}" and return
+                         "#{e.message}'.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
@@ -240,7 +240,7 @@ class BillingProjectsController < ApplicationController
   # make sure a user is registered for firecloud before showing billing information
   def check_firecloud_registration
     unless current_user.registered_for_firecloud
-      alert = "You must complete your FireCloud registration before viewing your available billing projects.  #{ZENDESK_CONTACT}"
+      alert = "You must complete your FireCloud registration before viewing your available billing projects.  #{SCP_SUPPORT_EMAIL}"
       redirect_to view_profile_path(current_user.id) + '#profile-firecloud', alert: alert and return
     end
   end
@@ -250,14 +250,14 @@ class BillingProjectsController < ApplicationController
     projects = @fire_cloud_client.get_billing_projects
     unless projects.map {|project| project['projectName']}.include?(params[:project_name])
       redirect_to merge_default_redirect_params(billing_projects_path, scpbr: params[:scpbr]),
-                  alert: "You do not have permission to perform that action.  #{ZENDESK_CONTACT}" and return
+                  alert: "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
   # check on FireCloud API status and respond accordingly
   def check_firecloud_status
     unless ApplicationController.firecloud_client.services_available?(FireCloudClient::THURLOE_SERVICE)
-      alert = "Billing projects are temporarily unavailable, so we cannot complete your request.  Please try again later.  #{ZENDESK_CONTACT}"
+      alert = "Billing projects are temporarily unavailable, so we cannot complete your request.  Please try again later.  #{SCP_SUPPORT_EMAIL}"
       respond_to do |format|
         format.js {render js: "$('.modal').modal('hide'); alert('#{alert}')" and return}
         format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),

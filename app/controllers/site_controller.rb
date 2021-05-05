@@ -79,7 +79,7 @@ class SiteController < ApplicationController
                                                                 scpbr: params[:scpbr])) and return
     else
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
-                  alert: "You either do not have permission to perform that action, or #{params[:identifier]} does not exist.  #{ZENDESK_CONTACT}" and return
+                  alert: "You either do not have permission to perform that action, or #{params[:identifier]} does not exist.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
@@ -621,7 +621,7 @@ class SiteController < ApplicationController
         # redirect if study is not found
     if @study.nil?
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
-                  alert: "You either do not have permission to perform that action, or #{params[:accession]} does not exist.  #{ZENDESK_CONTACT}" and return
+                  alert: "You either do not have permission to perform that action, or #{params[:accession]} does not exist.  #{SCP_SUPPORT_EMAIL}" and return
     end
         #Check if current url_safe_name matches model
     unless @study.url_safe_name == params[:study_name]
@@ -753,7 +753,7 @@ class SiteController < ApplicationController
       if (!user_signed_in? && !@study.public?)
         authenticate_user!
       elsif (user_signed_in? && !@study.can_view?(current_user))
-        alert = "You do not have permission to perform that action.  #{ZENDESK_CONTACT}"
+        alert = "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}"
         respond_to do |format|
           format.js {render js: "alert('#{alert}')" and return}
           format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return}
@@ -766,7 +766,7 @@ class SiteController < ApplicationController
   def check_compute_permissions
     if ApplicationController.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE)
       if !user_signed_in? || !@study.can_compute?(current_user)
-        @alert = "You do not have permission to perform that action.  #{ZENDESK_CONTACT}"
+        @alert = "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}"
         respond_to do |format|
           format.js {render action: :notice}
           format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: @alert and return}
@@ -774,7 +774,7 @@ class SiteController < ApplicationController
         end
       end
     else
-      @alert = "Compute services are currently unavailable - please check back later.  #{ZENDESK_CONTACT}"
+      @alert = "Compute services are currently unavailable - please check back later.  #{SCP_SUPPORT_EMAIL}"
       respond_to do |format|
         format.js {render action: :notice}
         format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: @alert and return}
@@ -787,7 +787,7 @@ class SiteController < ApplicationController
   def check_study_detached
     if @study.detached?
       @alert = "We were unable to complete your request as #{@study.accession} is detached from the workspace " \
-               "(maybe the workspace was deleted?).  #{ZENDESK_CONTACT}"
+               "(maybe the workspace was deleted?).  #{SCP_SUPPORT_EMAIL}"
       respond_to do |format|
         format.js {render js: "alert('#{@alert}');"}
         format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: @alert and return}

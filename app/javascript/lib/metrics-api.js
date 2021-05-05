@@ -108,9 +108,20 @@ export function logClickOther(target) {
 export function logCopy(event) {
   const props = {
     text: getNameForClickTarget(event.target),
+    classList: getClassListAsArray(event.target),
     id: event.target.id
   }
   log('copy', props)
+}
+
+/** Log contextmenu events, such right-click to "Save target as" or "Copy email address" */
+export function logContextMenu(event) {
+  const props = {
+    text: getNameForClickTarget(event.target),
+    classList: getClassListAsArray(event.target),
+    id: event.target.id
+  }
+  log('contextmenu', props)
 }
 
 /**

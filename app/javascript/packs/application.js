@@ -26,7 +26,7 @@ import checkMissingAuthToken from 'lib/user-auth-tokens'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'
 import HomePageContent from 'components/HomePageContent'
 import {
-  logPageView, logClick, logMenuChange, setupPageTransitionLog, log, logCopy
+  logPageView, logClick, logMenuChange, setupPageTransitionLog, log, logCopy, logContextMenu
 } from 'lib/metrics-api'
 import * as ScpApi from 'lib/scp-api'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $(document).on('copy', 'body', logCopy)
   // contextmenu event is to handle when users use context menu "copy email address" instead of cmd+C copy event as
   // this does not emit the copy event
-  $(document).on('contextmenu', '#zendesk-alert-email', logCopy)
+  $(document).on('contextmenu', 'body', logContextMenu)
 
   setupPageTransitionLog()
 

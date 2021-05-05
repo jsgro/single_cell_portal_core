@@ -107,7 +107,7 @@ class ProfilesController < ApplicationController
     else
       sign_out @user
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
-                  alert: "You must accept the Terms of Use in order to sign in.  #{ZENDESK_CONTACT}" and return
+                  alert: "You must accept the Terms of Use in order to sign in.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
@@ -122,7 +122,7 @@ class ProfilesController < ApplicationController
   def check_profile_access
     if current_user.email != @user.email
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
-                  alert: "You do not have permission to perform that action.  #{ZENDESK_CONTACT}" and return
+                  alert: "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
@@ -131,7 +131,7 @@ class ProfilesController < ApplicationController
       terra_link = view_context.link_to('registered with Terra',
                                         'https://support.terra.bio/hc/en-us/articles/360028235911-How-to-register-for-a-Terra-account',
                                         target: :_blank)
-      alert = "You may not update your Terra profile until you have #{terra_link}.  #{ZENDESK_CONTACT}"
+      alert = "You may not update your Terra profile until you have #{terra_link}.  #{SCP_SUPPORT_EMAIL}"
       redirect_to view_profile_path(current_user.id), alert: alert and return
     end
   end
