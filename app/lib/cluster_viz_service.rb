@@ -212,12 +212,6 @@ class ClusterVizService
     if include_annotations
       annotation_array = get_annotation_values_array(study, cluster, annotation, cells, subsample_annotation, subsample_threshold)
       viz_data = { annotations: annotation_array }
-
-      if annotation[:type] == 'numeric'
-        # account for NaN when computing min/max
-        min, max = RequestUtils.get_minmax(annotation_array)
-        viz_data[:annotationRange] = {max: max, min: min}
-      end
     end
 
     if include_cells

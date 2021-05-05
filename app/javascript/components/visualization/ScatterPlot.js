@@ -51,9 +51,6 @@ function RawScatterPlot({
       setShowError,
       setErrorContent)
     if (apiOk) {
-      if (dataCache) {
-        dataCache.applyCache(studyAccession, scatter)
-      }
       const layout = getPlotlyLayout(dimensions, scatter)
       const plotlyTraces = getPlotlyTraces({
         axes: scatter.axes,
@@ -61,15 +58,13 @@ function RawScatterPlot({
         annotName: scatter.annotParams.name,
         annotType: scatter.annotParams.type,
         annotValues: scatter.annotParams.values,
-        gene: scatter.gene,
+        genes: scatter.genes,
         isAnnotatedScatter: scatter.isAnnotatedScatter,
         scatterColor,
         dataScatterColor: scatter.scatterColor,
         pointOpacity: scatter.defaultPointOpacity,
         pointSize: scatter.pointSize,
         showPointBorders: scatter.showClusterPointBorders,
-        annotRange: scatter.data.annotationRange,
-        expressionRange: scatter.data.expressionRange,
         is3D: scatter.is3D
       })
 
@@ -97,20 +92,28 @@ function RawScatterPlot({
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     setIsLoading(true)
-    let fields = null
     if (dataCache) {
-      fields = dataCache.getFieldsToRequest(studyAccession, cluster, genes, isAnnotatedScatter)
+      dataCache.fetchCluster({
+        studyAccession,
+        cluster,
+        annotation: annotation ? annotation : '',
+        subsample,
+        consensus,
+        genes,
+        isAnnotatedScatter
+      }).then(handleResponse)
+    } else {
+      fetchCluster({
+        studyAccession,
+        cluster,
+        annotation: annotation ? annotation : '',
+        subsample,
+        consensus,
+        genes,
+        isAnnotatedScatter
+      }).then(handleResponse)
     }
-    fetchCluster({
-      studyAccession,
-      cluster,
-      annotation: annotation ? annotation : '',
-      subsample,
-      consensus,
-      gene: genes,
-      fields,
-      isAnnotatedScatter
-    }).then(handleResponse)
+
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
@@ -165,7 +168,7 @@ function RawScatterPlot({
           cluster={scatterData.cluster}
           annotation={scatterData.annotParams.name}
           subsample={scatterData.subsample}
-          gene={scatterData.gene}
+          genes={scatterData.genes}
           consensus={scatterData.consensus}/>
       }
       <div
@@ -203,9 +206,7 @@ function getPlotlyTraces({
   annotType,
   annotName,
   annotValues,
-  annotRange,
-  expressionRange,
-  gene,
+  genes,
   isAnnotatedScatter,
   scatterColor,
   dataScatterColor,
@@ -215,7 +216,7 @@ function getPlotlyTraces({
   is3D
 }) {
   const trace = {
-    type: 'scattergl',
+    type: is3D ? 'scatter3d' : 'scattergl',
     mode: 'markers',
     x: data.x,
     y: data.y,
@@ -229,7 +230,7 @@ function getPlotlyTraces({
 
 
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
-  if (annotType === 'group' && !gene) {
+  if (annotType === 'group' && !genes.length) {
     const traceCounts = countOccurences(data.annotations)
     trace.transforms = [{
       type: 'groupby',
@@ -252,21 +253,24 @@ function getPlotlyTraces({
       line: { color: 'rgb(40,40,40)', width: 0 },
       size: pointSize
     }
-    const colors = gene ? data.expression : data.annotations
-    const usedRange = gene ? expressionRange : annotRange
-    const title = gene ? axes.titles.magnitude : annotName
+    const colors = genes.length ? data.expression : data.annotations
+    const title = genes.length ? axes.titles.magnitude : annotName
     if (!isAnnotatedScatter) {
       Object.assign(trace.marker, {
         showscale: true,
         colorscale: appliedScatterColor,
-        cmin: usedRange.min,
-        cmax: usedRange.max,
         color: colors,
         colorbar: { title, titleside: 'right' }
       })
+      // if expression values are all zero, set max/min manually so the zeros still look like zero
+      // see SCP-2957
+      if (genes.length && !colors.some(val => val !== 0)) {
+        trace.marker.cmin = 0
+        trace.marker.cmax = 1
+      }
     }
   }
-  addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter, axes)
+  addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, axes)
   return [trace]
 }
 
@@ -310,7 +314,7 @@ function sortLegend({ graphElementId, annotValues, isAnnotatedScatter, annotType
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */
-function addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter, axes) {
+function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, axes) {
   trace.text = trace.cells
   // use the 'meta' property so annotations are exposed to the hover template
   // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
@@ -319,10 +323,10 @@ function addHoverLabel(trace, annotName, annotType, gene, isAnnotatedScatter, ax
   if (isAnnotatedScatter) {
     // for annotated scatter, just show coordinates and cell name
     groupHoverTemplate = `(%{x}, %{y})<br>%{text}`
-  } else if (annotType === 'numeric' || gene) {
+  } else if (annotType === 'numeric' || genes.length) {
     // this is a graph with a continuous color scale
     // the bottom row of the hover will either be the expression value, or the annotation value
-    const bottomRowLabel = gene ? axes.titles.magnitude : annotName
+    const bottomRowLabel = genes.length ? axes.titles.magnitude : annotName
     groupHoverTemplate = `(%{x}, %{y})<br>%{text} (%{meta})<br>${bottomRowLabel}: %{marker.color}<extra></extra>`
   }
   trace.hovertemplate = groupHoverTemplate
@@ -347,9 +351,9 @@ function getPlotlyLayout({ width, height }={}, {
   hasCoordinateLabels,
   coordinateLabels,
   isAnnotatedScatter,
-  is3d,
+  is3D,
   isCellSelecting=false,
-  gene,
+  genes,
   annotParams
 }) {
   const layout = {
@@ -357,7 +361,7 @@ function getPlotlyLayout({ width, height }={}, {
     font: labelFont,
     dragmode: getDragMode(isCellSelecting)
   }
-  if (is3d) {
+  if (is3D) {
     layout.scene = get3DScatterProps({ clusterSpecifiedRanges, axes })
   } else {
     const props2d = get2DScatterProps({
@@ -369,7 +373,7 @@ function getPlotlyLayout({ width, height }={}, {
     })
     Object.assign(layout, props2d)
   }
-  if (!gene.length && annotParams && annotParams.name) {
+  if (!genes.length && annotParams && annotParams.name) {
     layout.legend = {
       itemsizing: 'constant',
       title: { text: annotParams.name }

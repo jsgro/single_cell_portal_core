@@ -265,16 +265,16 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
      Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
  */
 export async function fetchCluster({
-  studyAccession, cluster, annotation, subsample, consensus, gene=null,
-  isAnnotatedScatter=null, fields, mock=false
+  studyAccession, cluster, annotation, subsample, consensus, genes=null,
+  isAnnotatedScatter=null, fields=[], mock=false
 }) {
   // Digest full annotation name to enable easy validation in API
   let [annotName, annotType, annotScope] = [annotation.name, annotation.type, annotation.scope]
   if (annotName == undefined) {
     [annotName, annotType, annotScope] = annotation.split('--')
   }
-  if (Array.isArray(gene)) {
-    gene = gene.join(',')
+  if (Array.isArray(genes)) {
+    genes = genes.join(',')
   }
   // eslint-disable-next-line camelcase
   const is_annotated_scatter = isAnnotatedScatter ? true : ''
@@ -284,8 +284,8 @@ export async function fetchCluster({
     annotation_scope: annotScope,
     subsample,
     consensus,
-    gene,
-    fields,
+    gene: genes,
+    fields: fields.join(','),
     is_annotated_scatter
   }
   const params = stringifyQuery(paramObj)

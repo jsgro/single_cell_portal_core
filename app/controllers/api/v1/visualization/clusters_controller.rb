@@ -173,10 +173,14 @@ module Api
           is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
 
           titles = ClusterVizService.load_axis_labels(cluster)
+          if !url_params[:gene].blank?
+            titles[:magnitude] = ExpressionVizService.load_expression_axis_title(study)
+          end
+
           plot_data = nil
           genes = RequestUtils.get_genes_from_param(study, url_params[:gene])
 
-          if url_params[:gene].blank?
+          if url_params[:gene].blank? || !include_expression
             # For "Clusters" tab in default view of Explore tab
             plot_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, include_coords: include_coordinates, include_cells: include_cells)
           else
@@ -186,7 +190,6 @@ module Api
             end
             # For single-gene view of Explore tab (or collapsed multi-gene)
             is_collapsed_view = genes.length > 1 && consensus.present?
-            titles[:magnitude] = ExpressionVizService.load_expression_axis_title(study)
 
             if is_annotated_scatter
               # For "Annotated scatter" tab, shown in first tab for numeric annotations
@@ -235,7 +238,7 @@ module Api
             "coordinateLabels": coordinate_labels,
             "defaultPointOpacity": study.default_cluster_point_alpha,
             "cluster": cluster.name,
-            "gene": genes.map {|g| g['name']}.join(', '),
+            "genes": genes.map {|g| g['name']},
             "annotParams": annotation,
             "subsample": subsample.nil? ? 'all' : subsample,
             "consensus": consensus

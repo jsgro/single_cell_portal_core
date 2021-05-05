@@ -130,8 +130,6 @@ class ExpressionVizService
     viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_annotations: !expression_only, include_coords: !expression_only)
 
     viz_data[:expression] = viz_data[:cells].map { |cell| gene['scores'][cell].to_f.round(4) }
-    emin, emax = RequestUtils.get_minmax(viz_data[:expression])
-    viz_data[:expressionRange] = {min: emin, max: emax}
 
     if expression_only
       viz_data.delete(:annotations)

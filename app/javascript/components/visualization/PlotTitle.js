@@ -1,16 +1,16 @@
 import React from 'react'
 
 /** Renders a plot title for scatter plots */
-export default function PlotTitle({ cluster, annotation, gene, consensus, subsample }) {
+export default function PlotTitle({ cluster, annotation, genes, consensus, subsample }) {
   let contentString = cluster
   let detailString = ''
-  if (gene) {
-    contentString = `${gene} - expression`
+  if (genes.length) {
+    const geneString = genes.join(', ')
     detailString = cluster
     if (consensus) {
-      contentString = `${gene} - ${consensus} expression`
+      contentString = `${geneString} - ${consensus} expression`
     } else {
-      contentString = `${gene} - expression`
+      contentString = `${geneString} - expression`
     }
   }
   if (subsample && subsample !== 'all') {
