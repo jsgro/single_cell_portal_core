@@ -18,6 +18,11 @@ export default function useExploreTabRouter() {
   const routerLocation = useLocation()
   const exploreParams = buildExploreParamsFromQuery(routerLocation.search)
 
+  /** reset to the default view for a study */
+  function clearExploreParams() {
+    navigate(`?#study-visualize`)
+  }
+
   useEffect(() => {
     // if this is the first render, and there are already genes specified, that means they came
     // from the url directly
@@ -26,7 +31,7 @@ export default function useExploreTabRouter() {
       logStudyGeneSearch(exploreParams.genes, 'url')
     }
   }, [])
-  return { exploreParams, updateExploreParams, routerLocation }
+  return { exploreParams, updateExploreParams, routerLocation, clearExploreParams }
 }
 
 
