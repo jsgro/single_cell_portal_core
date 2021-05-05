@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndoAlt } from '@fortawesome/free-solid-svg-icons'
+import { faLink, faArrowLeft, faCog, faTimes, faDna } from '@fortawesome/free-solid-svg-icons'
 
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from 'components/visualization/controls/ClusterSelector'
@@ -259,7 +259,7 @@ export default function ExploreDisplayTabs({
             { !showViewOptionsControls &&
               <button className="action view-options-toggle view-options-toggle-on"
                 onClick={toggleViewOptions}
-                data-analytics-name="explore-view-options-show">
+                data-analytics-name="view-options-show">
                 OPTIONS <FontAwesomeIcon className="fa-lg" icon={faCog}/>
               </button>
             }
@@ -360,15 +360,9 @@ export default function ExploreDisplayTabs({
             <FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS
             <button className="action"
               onClick={toggleViewOptions}
-              title="hide options"
-              data-analytics-name="explore-view-options-hide">
+              title="Hide options"
+              data-analytics-name="view-options-hide">
               <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
-            </button>
-            <button className="action"
-              onClick={clearExploreParams}
-              title="reset view options"
-              data-analytics-name="explore-view-options-reset">
-              <FontAwesomeIcon icon={faUndoAlt}/>
             </button>
           </div>
           <div>
@@ -435,6 +429,13 @@ export default function ExploreDisplayTabs({
             data-toggle="tooltip"
             title="copy a link to this visualization to the clipboard">
             Get link <FontAwesomeIcon icon={faLink}/>
+          </button>
+          <br/><br/>
+          <button className="action"
+            onClick={clearExploreParams}
+            title="reset all view options"
+            data-analytics-name="explore-view-options-reset">
+            Reset view
           </button>
         </div>
       </div>
