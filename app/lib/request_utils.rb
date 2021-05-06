@@ -19,15 +19,16 @@ class RequestUtils
 
   def self.get_cache_path(request_path, url_params)
     # transform / into _ to avoid encoding as %2f
-    sanitized_path = sanitize_value(request_path)
+    sanitized_path = sanitize_value_for_cache(request_path)
     # remove unwanted parameters from cache_key, as well as empty values
     # this simplifies base key into smaller value, e.g. _single_cell_api_v1_studies_SCP123_explore_
-    params_key = url_params.reject {|name, value| CACHE_PATH_BLACKLIST.include?(name) || value.empty?}.
+    # parameters must also be sorted by name to ensure cache paths are idempotent
+    params_key = url_params.reject {|name, value| CACHE_PATH_BLACKLIST.include?(name) || value.empty?}.sort_by {|k,v| k}.
       map do |parameter_name, parameter_value|
       if parameter_name == 'genes'
         "#{parameter_name}_#{construct_gene_list_hash(parameter_value)}"
       else
-        "#{parameter_name}_#{sanitize_value(parameter_value).split.join('_')}"
+        "#{parameter_name}_#{sanitize_value_for_cache(parameter_value).split.join('_')}"
       end
     end
     [sanitized_path, params_key].join('_')
@@ -36,7 +37,7 @@ class RequestUtils
   # create a unique hex digest of a list of genes for use in get_cache_key
   # this prevents long gene list queries from being split in the middle due to maximum filename length limits
   # and resulting in invalid % encoding issue when trying to clear selected cache entries
-  def construct_gene_list_hash(query_list)
+  def self.construct_gene_list_hash(query_list)
     genes = query_list.split(',').map {|gene| gene.strip.gsub(/(%|\/)/, '')}.sort.join
     Digest::SHA256.hexdigest genes
   end
@@ -47,7 +48,7 @@ class RequestUtils
 
   # remove url-encoded characters from request paths & parameter values
   # extra gsub at the end will catch any mangled encodings and trim them
-  def self.sanitize_value(value)
+  def self.sanitize_value_for_cache(value)
     value.gsub(PATH_REGEX, '_').gsub(/(%|\/)/, '')
   end
 
