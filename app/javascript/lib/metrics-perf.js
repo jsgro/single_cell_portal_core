@@ -166,6 +166,8 @@ export function calculatePerfTimes(perfTimes) {
 
   const full = now - perfEntry.startTime
 
+  const legacy = perfTimes.legacyBackend + plot
+
   const compressedSize = perfEntry.encodedBodySize
   const uncompressedSize = perfEntry.decodedBodySize
   const compressionBytesDiff = uncompressedSize - compressedSize
@@ -178,8 +180,8 @@ export function calculatePerfTimes(perfTimes) {
     // Old `perfTime` was measured from API request start to response end,
     // which is very incomplete (lacks client times!) and less precise than
     // using browsers' PerformanceEntry API.
-    'perfTime': perfTimes.legacy,
-    'perfTime:legacy': perfTimes.legacy,
+    'perfTime': legacy,
+    'perfTime:legacy': legacy,
 
     // Server timing
     'perfTime:backend': backend, // Time for server to process request
