@@ -1,10 +1,55 @@
-require 'rails/commands/server/server_command'
-
+# RequestUtils: helper class for dealing with request parameters, sanitizing input, and setting
+# cache paths on visualization requests
 class RequestUtils
+
+  # list of parameters to reject from :get_cache_key as they will be represented by request.path
+  # format is always :json and therefore unnecessary
+  CACHE_PATH_BLACKLIST = %w(controller action format study_id)
+
+  # character regex to convert into underscores (_) for cache path setting
+  PATH_REGEX =/(\/|%2C|%2F|%20|\?|&|=|\.|,|\s)/
 
   # load same sanitizer as ActionView for stripping html/js from inputs
   # using FullSanitizer as it is the most strict
   SANITIZER ||= Rails::Html::FullSanitizer.new
+
+  ##
+  # Cache path methods
+  ##
+
+  def self.get_cache_path(request_path, url_params)
+    # transform / into _ to avoid encoding as %2f
+    sanitized_path = sanitize_value(request_path)
+    # remove unwanted parameters from cache_key, as well as empty values
+    # this simplifies base key into smaller value, e.g. _single_cell_api_v1_studies_SCP123_explore_
+    params_key = url_params.reject {|name, value| CACHE_PATH_BLACKLIST.include?(name) || value.empty?}.
+      map do |parameter_name, parameter_value|
+      if parameter_name == 'genes'
+        "#{parameter_name}_#{construct_gene_list_hash(parameter_value)}"
+      else
+        "#{parameter_name}_#{sanitize_value(parameter_value).split.join('_')}"
+      end
+    end
+    [sanitized_path, params_key].join('_')
+  end
+
+  # create a unique hex digest of a list of genes for use in get_cache_key
+  # this prevents long gene list queries from being split in the middle due to maximum filename length limits
+  # and resulting in invalid % encoding issue when trying to clear selected cache entries
+  def construct_gene_list_hash(query_list)
+    genes = query_list.split(',').map {|gene| gene.strip.gsub(/(%|\/)/, '')}.sort.join
+    Digest::SHA256.hexdigest genes
+  end
+
+  ##
+  # Sanitizer methods
+  ##
+
+  # remove url-encoded characters from request paths & parameter values
+  # extra gsub at the end will catch any mangled encodings and trim them
+  def self.sanitize_value(value)
+    value.gsub(PATH_REGEX, '_').gsub(/(%|\/)/, '')
+  end
 
   # sanitizes a page param into an integer.  Will default to 1 if the value
   # is nil or otherwise can't be read
