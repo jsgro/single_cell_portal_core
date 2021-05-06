@@ -216,6 +216,7 @@ export function calculatePerfTimes(perfTimes) {
     )
     console.error(message)
     log('metrics-error', { message })
+    return perfTimes
   }
 
   perfProps['perfTime:url'] = perfTimes.url
