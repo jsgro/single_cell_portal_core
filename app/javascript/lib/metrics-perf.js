@@ -201,12 +201,6 @@ export function calculatePerfTimes(perfTimes) {
   if (perfTimes.plot) {
     rawPerfProps['perfTime:frontend:plot'] = perfTimes.plot
   }
-  const perfProps = roundValues(Object.assign({}, rawPerfProps))
-
-  let compressionRatio = uncompressedSize / compressedSize
-  // Round to 2 digits, e.g. "3.44".  Number.EPSILON ensures numbers like 1.005 round correctly.
-  compressionRatio = Math.round((compressionRatio + Number.EPSILON) * 100) / 100
-  perfProps['perfTime:data:compression-ratio'] = compressionRatio // Relative amount compressed
 
   // Accounts for `null`, '', 'non-empty string', etc.
   const errorKeys = Object.keys(rawPerfProps).filter(k => isNaN(parseFloat(rawPerfProps[k])))
@@ -218,8 +212,15 @@ export function calculatePerfTimes(perfTimes) {
     )
     console.error(message)
     log('metrics-error', { message })
-    return perfTimes
+    return perfTimes // Treat this call to calculatePerfTimes as a no-op
   }
+
+  const perfProps = roundValues(Object.assign({}, rawPerfProps))
+
+  let compressionRatio = uncompressedSize / compressedSize
+  // Round to 2 digits, e.g. "3.44".  Number.EPSILON ensures numbers like 1.005 round correctly.
+  compressionRatio = Math.round((compressionRatio + Number.EPSILON) * 100) / 100
+  perfProps['perfTime:data:compression-ratio'] = compressionRatio // Relative amount compressed
 
   perfProps['perfTime:url'] = perfTimes.url
 
