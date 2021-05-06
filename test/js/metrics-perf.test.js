@@ -11,7 +11,7 @@ describe('Helper library for client-side usage analytics', () => {
 
     const mockPerfTimes = {
       url: 'https://localhost:3000/single_cell/api/v1/studies/SCP42/clusters/_default?',
-      legacy: 1968.8150000353344,
+      legacyBackend: 1968.8150000353344,
       parse: 30,
       plotStart: 3000,
     }
