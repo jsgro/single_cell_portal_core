@@ -324,7 +324,11 @@ export function log(name, props={}) {
   props['registeredForTerra'] = registeredForTerra
 
   if ('perfTimes' in props) {
-    props = addPerfMetrics(props)
+    try {
+      props = addPerfMetrics(props)
+    } catch (e) {
+      console.error(e)
+    }
     delete props.perfTimes
   }
 
