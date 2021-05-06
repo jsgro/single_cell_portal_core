@@ -199,7 +199,6 @@ export function calculatePerfTimes(perfTimes) {
   if (perfTimes.plot) {
     rawPerfProps['perfTime:frontend:plot'] = perfTimes.plot
   }
-
   const perfProps = roundValues(Object.assign({}, rawPerfProps))
 
   let compressionRatio = uncompressedSize / compressedSize
@@ -211,10 +210,12 @@ export function calculatePerfTimes(perfTimes) {
   const errorKeys = Object.keys(rawPerfProps).filter(k => isNaN(parseFloat(rawPerfProps[k])))
   if (errorKeys.length > 0) {
     const specifics = errorKeys.map(k => `${k}: ${rawPerfProps[k]}\n`)
-    throw Error(
+    const message = (
       `Not all expected perfTime values are numbers:\n
       ${specifics}`
     )
+    console.error(message)
+    log('metrics-error', { message })
   }
 
   perfProps['perfTime:url'] = perfTimes.url
