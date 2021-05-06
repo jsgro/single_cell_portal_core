@@ -125,6 +125,9 @@ class SiteController < ApplicationController
           # double check on download availability: first, check if administrator has disabled downloads
           # then check if FireCloud is available and disable download links if either is true
           @allow_downloads = ApplicationController.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
+
+          # warm all default caches
+          ClusterCacheService.delay(queue: :cache).cache_study_defaults(@study)
         end
         set_firecloud_permissions(@study.detached?)
         set_study_permissions(@study.detached?)
