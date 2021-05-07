@@ -17,12 +17,16 @@ function getExpressionKey(gene, consensus) {
 const FIELDS = {
   cellsAndCoords: {
     getFromEntry: entry => entry.cellsAndCoords,
-    putInEntry: (entry, x, y, z, cells) => entry.cellsAndCoords = {x, y, z, cells},
+    putInEntry: (entry, cellsAndCoords) => entry.cellsAndCoords = cellsAndCoords,
     merge: (entry, scatter) => {
       const clusterFields = ['x', 'y', 'z', 'cells']
+      if (scatter.data.x) {
+        // remove the promise
+        entry.cellsAndCoords = {}
+      }
       clusterFields.forEach(field => {
-        entry[field] = scatter.data[field] ? scatter.data[field] : entry[field]
-        scatter.data[field] = entry[field]
+        entry.cellsAndCoords[field] = scatter.data[field] ? scatter.data[field] : entry.cellsAndCoords[field]
+        scatter.data[field] = entry.cellsAndCoords[field]
       })
     }
   },
@@ -36,9 +40,11 @@ const FIELDS = {
       entry.annotations[key] = annotations
     },
     merge: (entry, scatter) => {
-      const key = getAnnotationKey(scatter.annotParams.name, scatter.annotParams.scope)
-      entry.annotations[key] = scatter.data.annotations ? scatter.data.annotations : entry.annotations[key]
-      scatter.data.annotations = entry.annotations[key]
+      if (scatter.data.annotations) {
+        FIELDS.annotation.putInEntry(entry, scatter.annotParams.name, scatter.annotParams.scope, scatter.data.annotations)
+      } else {
+        scatter.data.annotations = FIELDS.annotation.getFromEntry(entry, scatter.annotParams.name, scatter.annotParams.scope)
+      }
     }
   },
   expression: {
@@ -51,9 +57,11 @@ const FIELDS = {
       entry.expression[key] = expression
     },
     merge: (entry, scatter) => {
-      const key = getExpressionKey(scatter.genes, scatter.consensus)
-      entry.expression[key] = scatter.data.expression ? scatter.data.expression : entry.expression[key]
-      scatter.data.expression = entry.expression[key]
+      if (scatter.data.expression) {
+        FIELDS.expression.putInEntry(entry, scatter.genes, scatter.consensus, scatter.data.expression)
+      } else {
+        scatter.data.expression = FIELDS.expression.getFromEntry(entry, scatter.genes, scatter.consensus)
+      }
     }
   },
   clusterProps: {
@@ -75,6 +83,7 @@ const FIELDS = {
 export function newCache() {
   const cache = {
     entries: {},
+    entryOrder: [],
     // we put the fetch cluster method here for ease of mocking in test cases
     apiFetchCluster: fetchCluster
   }
@@ -83,7 +92,7 @@ export function newCache() {
   /** adds the data for a given study/clusterName, overwriting any previous entry */
   cache._mergeClusterResponse = (accession, clusterResponse, requestedCluster, requestedAnnotation, requestedSubsample) => {
     const scatter = clusterResponse[0]
-    const cacheEntry = cache._getEntry(accession, scatter.cluster, scatter.subsample)
+    const cacheEntry = cache._findOrCreateEntry(accession, scatter.cluster, scatter.subsample)
 
     if (scatter.cluster != requestedCluster || requestedSubsample !== scatter.subsample) {
       cache._putEntry(accession, requestedCluster, requestedSubsample, cacheEntry)
@@ -98,24 +107,28 @@ export function newCache() {
     FIELDS.clusterProps.merge(cacheEntry, scatter)
     FIELDS.cellsAndCoords.merge(cacheEntry, scatter)
     FIELDS.annotation.merge(cacheEntry, scatter)
+
     if (scatter.genes.length) {
       FIELDS.expression.merge(cacheEntry, scatter)
     }
     return clusterResponse
   }
 
-  /** get the data for a given study/cluster */
-  cache._getEntry = (accession, clusterName, subsample) => {
+  /** get the data for a given study/cluster.  Returns a blank entry if none exists */
+  cache._findOrCreateEntry = (accession, clusterName, subsample) => {
     const key = getKey(accession, clusterName, subsample)
     if (!cache.entries[key]) {
       cache.entries[key] = {
         clusterProps: {},
-        cellsAndCoords: null,
+        cellsAndCoords: {},
         annotations: {},
         expression: {},
-        expressionRanges: {}
+        annotationTimestamps: [],
+        expressionTimestamps: [],
       }
     }
+    // fetching/creating the cache entry refreshes its date.
+    cache.entries[key].timestamp = Date.now()
     return cache.entries[key]
   }
 
@@ -125,38 +138,34 @@ export function newCache() {
     cache.entries[key] = entry
   }
 
-  cache.clear = () => {
-    cache.entries = {}
-  }
-
   /** based on cache contents and desired return values, returns a string suitable for the
     * 'fields' parameter of api/v1/visualization/clusters */
-  cache.getFieldsToRequest = ({
+  cache._getFieldsToRequest = ({
     studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter
   }) => {
     const fields = []
     const promises = []
     // we don't cache anything for annotated scatter since the coordinates are different per annotation/gene
     if (!isAnnotatedScatter) {
-      const cacheEntry = cache._getEntry(studyAccession, cluster, subsample)
+      const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
       const cachedCellsAndCoords = FIELDS.cellsAndCoords.getFromEntry(cacheEntry)
-      if (!cachedCellsAndCoords) {
+      if (!cachedCellsAndCoords.x) {
         fields.push('coordinates')
         fields.push('cells')
       } else if (cachedCellsAndCoords.then) {
-        promises.push(cacheEntry.cachedCellsAndCoords)
+        promises.push(cachedCellsAndCoords)
       }
       const cachedAnnotation = FIELDS.annotation.getFromEntry(cacheEntry, annotation.name, annotation.scope)
       if (!cachedAnnotation) {
         fields.push('annotation')
-      } else if (cachedAnnotation.then) {
+      } else if (cachedAnnotation.then && !promises.includes(cachedAnnotation)) {
         promises.push(cachedAnnotation)
       }
       if (genes.length) {
         const cachedExpression = FIELDS.expression.getFromEntry(cacheEntry, genes, consensus)
         if (!cachedExpression) {
           fields.push('expression')
-        } else if (cachedExpression.then) {
+        } else if (cachedExpression.then && !promises.includes(cachedExpression)) {
           promises.push(cachedExpression)
         }
       }
@@ -166,21 +175,26 @@ export function newCache() {
     return { fields, promises }
   }
 
+  cache.clearOld = ({cluster, annotation, subsample, consensus, genes, isAnnotatedScatter}) => {
+
+  }
+
   /** fetch the given cluster data, either form cache or the server, as appropriate
     * see fetchCluster in scp-api for parameter documentation
     * returns a promise */
   cache.fetchCluster = ({
     studyAccession, cluster, annotation, subsample, consensus, genes=[], isAnnotatedScatter=false
   }) => {
+    cache.clearOld(cluster, annotation, subsample, consensus, genes, isAnnotatedScatter)
     let apiCallPromise = null
-    const { fields, promises } = cache.getFieldsToRequest({
+    const { fields, promises } = cache._getFieldsToRequest({
       studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter
     })
     if (fields.length) {
       apiCallPromise = cache.apiFetchCluster({
         studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter, fields
       })
-      const cacheEntry = cache._getEntry(studyAccession, cluster, subsample)
+      const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
       if (fields.includes('coordinates')) {
         FIELDS.cellsAndCoords.putInEntry(cacheEntry, apiCallPromise)
       }
