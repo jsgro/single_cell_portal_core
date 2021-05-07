@@ -1,5 +1,3 @@
-require 'rails/commands/server/server_command'
-
 class RequestUtils
 
   # load same sanitizer as ActionView for stripping html/js from inputs

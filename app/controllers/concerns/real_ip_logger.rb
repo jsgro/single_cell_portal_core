@@ -16,4 +16,3 @@ module RealIpLogger
     yield # regardless of any issues/errors, request will always execute and render a response
   end
 end
-

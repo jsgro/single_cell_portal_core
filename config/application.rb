@@ -24,9 +24,6 @@ module SingleCellPortal
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 6.1
 
-    config.autoload_paths << Rails.root.join('lib')
-    config.eager_load_paths << Rails.root.join('lib')
-
     config.time_zone = 'Eastern Time (US & Canada)'
 
     config.middleware.use Rack::Deflater
