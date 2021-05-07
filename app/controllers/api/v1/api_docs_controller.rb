@@ -121,6 +121,14 @@ module Api
       def index
         render json: Swagger::Blocks.build_root_json(SWAGGERED_CLASSES)
       end
+
+      def swagger_ui
+
+      end
+
+      def oauth2_redirect
+
+      end
     end
   end
 end

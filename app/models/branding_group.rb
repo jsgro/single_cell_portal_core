@@ -1,7 +1,6 @@
 class BrandingGroup
   include Mongoid::Document
   include Mongoid::Timestamps
-  include Mongoid::Paperclip
   include FeatureFlaggable
 
   field :name, type: String
@@ -20,30 +19,37 @@ class BrandingGroup
   has_many :studies
   belongs_to :user
 
-  has_mongoid_attached_file :splash_image,
-                            :path => ":rails_root/public/single_cell/branding_groups/:id/:filename",
-                            :url => "/single_cell/branding_groups/:id/:filename"
+  field :splash_image_file_name, type: String
+  field :splash_image_file_size, type: Integer
+  field :footer_image_file_name, type: String
+  field :footer_image_file_size, type: Integer
+  field :banner_image_file_name, type: String
+  field :banner_image_file_size, type: Integer
 
-  validates_attachment :splash_image,
-                       content_type: { content_type: ['image/jpeg', 'image/jpg', 'image/png'] },
-                       size: { in: 0..10.megabytes }
-
-  has_mongoid_attached_file :footer_image,
-                            :path => ":rails_root/public/single_cell/branding_groups/:id/:filename",
-                            :url => "/single_cell/branding_groups/:id/:filename"
-
-  validates_attachment :footer_image,
-                       content_type: { content_type: ['image/jpeg', 'image/jpg', 'image/png'] },
-                       size: { in: 0..10.megabytes }
-
-
-  has_mongoid_attached_file :banner_image,
-                            :path => ":rails_root/public/single_cell/branding_groups/:id/:filename",
-                            :url => "/single_cell/branding_groups/:id/:filename"
-
-  validates_attachment :banner_image,
-                       content_type: { content_type: ['image/jpeg', 'image/jpg', 'image/png'] },
-                       size: { in: 0..10.megabytes }
+  # has_mongoid_attached_file :splash_image,
+  #                           :path => ":rails_root/public/single_cell/branding_groups/:id/:filename",
+  #                           :url => "/single_cell/branding_groups/:id/:filename"
+  #
+  # validates_attachment :splash_image,
+  #                      content_type: { content_type: ['image/jpeg', 'image/jpg', 'image/png'] },
+  #                      size: { in: 0..10.megabytes }
+  #
+  # has_mongoid_attached_file :footer_image,
+  #                           :path => ":rails_root/public/single_cell/branding_groups/:id/:filename",
+  #                           :url => "/single_cell/branding_groups/:id/:filename"
+  #
+  # validates_attachment :footer_image,
+  #                      content_type: { content_type: ['image/jpeg', 'image/jpg', 'image/png'] },
+  #                      size: { in: 0..10.megabytes }
+  #
+  #
+  # has_mongoid_attached_file :banner_image,
+  #                           :path => ":rails_root/public/single_cell/branding_groups/:id/:filename",
+  #                           :url => "/single_cell/branding_groups/:id/:filename"
+  #
+  # validates_attachment :banner_image,
+  #                      content_type: { content_type: ['image/jpeg', 'image/jpg', 'image/png'] },
+  #                      size: { in: 0..10.megabytes }
 
 
   validates_presence_of :name, :name_as_id, :user_id, :background_color, :font_family

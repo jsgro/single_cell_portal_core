@@ -1,13 +1,12 @@
 source 'https://rubygems.org'
+git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby '2.6.6'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '5.2.4.6'
+gem 'rails', '6.1.3.2'
 # Use SCSS for stylesheets
-gem 'sass-rails', '~> 5.0', '>= 5.0.6'
-# Use Uglifier as compressor for JavaScript assets
-gem 'uglifier', '>= 1.3.0'
+gem 'sass-rails', '>= 6'
 # Use CoffeeScript for .coffee assets and views
 gem 'coffee-rails'
 # See https://github.com/rails/execjs#readme for more supported runtimes
@@ -16,7 +15,7 @@ gem 'coffee-rails'
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.0'
+gem 'jbuilder', '~> 2.7'
 # bundle exec rake doc:rails generates the API under doc/api.
 gem 'sdoc', group: :doc
 
@@ -29,7 +28,7 @@ gem 'sdoc', group: :doc
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
-gem 'bootsnap', '>= 1.1.0', require: false
+gem 'bootsnap', '>= 1.4.4', require: false
 gem 'minitest-rails'
 gem 'minitest-reporters'
 
@@ -58,7 +57,6 @@ gem 'omniauth-rails_csrf_protection'
 gem 'googleauth'
 gem 'google-cloud-storage', require: 'google/cloud/storage'
 gem 'google-cloud-bigquery', require: 'google/cloud/bigquery'
-gem 'selenium-webdriver'
 gem 'jquery-ui-rails'
 gem 'bootstrap-sass', :git => 'https://github.com/twbs/bootstrap-sass'
 gem 'font-awesome-sass', git: 'https://github.com/FortAwesome/font-awesome-sass'
@@ -71,13 +69,10 @@ gem 'nested_form', git: 'https://github.com/ryanb/nested_form'
 gem 'jquery-datatables-rails', git: 'https://github.com/rweng/jquery-datatables-rails'
 gem 'truncate_html'
 gem 'jquery-fileupload-rails'
-gem 'mongoid-paperclip', :require => 'mongoid_paperclip', git: 'https://github.com/mrrooijen/mongoid-paperclip'
-gem 'non-stupid-digest-assets'
 gem 'will_paginate_mongoid'
 gem 'will_paginate'
 gem 'naturally'
 gem 'rest-client'
-gem 'actionpack-action_caching'
 gem 'mongoid-encrypted-fields'
 gem 'gibberish'
 gem 'parallel'
@@ -86,7 +81,6 @@ gem 'mongoid_rails_migrations'
 gem 'secure_headers'
 gem 'webpacker'
 gem 'swagger-blocks'
-gem 'swagger_ui_engine'
 gem 'sentry-raven'
 gem 'travis'
 gem 'rubyzip'
@@ -96,3 +90,5 @@ gem 'sys-filesystem', require: 'sys/filesystem'
 gem 'browser'
 gem 'ruby-prof'
 gem 'ruby-prof-flamegraph'
+gem 'carrierwave', '~> 2.0'
+gem 'carrierwave-mongoid', :require => 'carrierwave/mongoid'
