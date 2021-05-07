@@ -1,5 +1,3 @@
-require "active_support/concern"
-
 module DeviseSignOutPatch
   extend ActiveSupport::Concern
 
