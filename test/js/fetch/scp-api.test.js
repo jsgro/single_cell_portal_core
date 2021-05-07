@@ -2,8 +2,9 @@
 /* eslint-disable*/
 
 const fetch = require('node-fetch')
+import {mockPerformance} from './../mock-performance'
 import scpApi, {
-  fetchAuthCode, fetchFacetFilters, defaultInit
+  fetchAuthCode, fetchFacetFilters, defaultInit, getFullUrl
 } from 'lib/scp-api'
 
 describe('JavaScript client for SCP REST API', () => {
@@ -17,6 +18,8 @@ describe('JavaScript client for SCP REST API', () => {
   })
 
   it('returns `authCode` and `timeInterval` from fetchAuthCode', async () => {
+    const url = getFullUrl('/search/auth_code')
+    mockPerformance(url)
     const { authCode, timeInterval } = await fetchAuthCode()
     expect(authCode).toBe(123456)
     expect(timeInterval).toBe(1800)
@@ -27,12 +30,16 @@ describe('JavaScript client for SCP REST API', () => {
     expect(apiData.filters).toHaveLength(10)
   })
 
-  it('includes perfTime in return from scpApi', async () => {
-
-    const [authCode, perfTime] =
+  it('includes `perfTimes` in return from scpApi', async () => {
+    const [authCode, perfTimes] =
       await scpApi('/search/auth_code', defaultInit(), true)
 
-    expect(Number.isInteger(perfTime)).toEqual(true);
+    const perfTime = perfTimes.legacyBackend
+
+    const perfTimeIsFloat =
+      !Number.isInteger(perfTime) && (parseFloat(perfTime) === perfTime)
+
+    expect(perfTimeIsFloat).toEqual(true);
     expect(perfTime).toBeGreaterThan(0);
   });
 })

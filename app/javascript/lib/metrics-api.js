@@ -12,7 +12,7 @@ import { getDefaultProperties } from '@databiosphere/bard-client'
 import { getAccessToken } from 'providers/UserProvider'
 import { getBrandingGroup } from 'lib/scp-api'
 import getSCPContext from 'providers/SCPContextProvider'
-import { setupWebVitalsLog, hardwareStats } from './metrics-web-vitals'
+import { setupWebVitalsLog, addPerfMetrics } from './metrics-perf'
 
 let metricsApiMock = false
 
@@ -323,8 +323,13 @@ export function log(name, props={}) {
   props['brand'] = brandingGroup ? brandingGroup : ''
   props['registeredForTerra'] = registeredForTerra
 
-  if ('perfTime' in props) {
-    props = Object.assign(props, hardwareStats)
+  if ('perfTimes' in props) {
+    try {
+      props = addPerfMetrics(props)
+    } catch (e) {
+      console.error(e)
+    }
+    delete props.perfTimes
   }
 
   let init = Object.assign({}, defaultInit)

@@ -79,9 +79,9 @@ function defaultPostInit(mock=false) {
 export async function fetchAuthCode(mock=false) {
   const init = defaultPostInit(mock)
 
-  const [authCode, perfTime] = await scpApi('/search/auth_code', init, mock)
+  const [authCode, perfTimes] = await scpApi('/search/auth_code', init, mock)
 
-  logDownloadAuthorization(perfTime)
+  logDownloadAuthorization(perfTimes)
 
   return authCode
 }
@@ -295,9 +295,9 @@ export async function fetchCluster(
   const apiUrl = `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  const [scatter, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+  const [scatter, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
 
-  return [scatter, perfTime]
+  return [scatter, perfTimes]
 }
 
 /**
@@ -343,9 +343,9 @@ export async function fetchExpressionViolin(
   const apiUrl = `/studies/${studyAccession}/expression/violin${stringifyQuery(paramObj)}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  const [violin, perfTime] = await scpApi(apiUrl, defaultInit(), mock, false)
+  const [violin, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
 
-  return [violin, perfTime]
+  return [violin, perfTimes]
 }
 
 /** Get URL for a Morpheus-suitable annotation values file */
@@ -467,26 +467,22 @@ export async function fetchDownloadSize(accessions, fileTypes, mock=false) {
  *
  * Docs: https:///singlecell.broadinstitute.org/single_cell/api/swagger_docs/v1#!/Search/search
  *
- * @param {String} type Type of query to perform (study- or cell-based)
+ * @param {String} type Type of query to perform ("study" or "gene")
  * @param {Object} searchParams  Search parameters, including
  *   @param {String} terms Searched keywords
  *   @param {Object} facets Applied facets and filters
  *   @param {Integer} page Page in search results
  *   @param {String} order Results ordering field
- *   @param {String} preset_search Query preset (e.g. 'covid19')
+ *   @param {String} preset_search Query preset (e.g. "covid19")
  * @param {Boolean} mock If using mock data
  * @returns {Promise} Promise object containing camel-cased data from API
- *
- * @example
- *
- * fetchSearch('study', 'tuberculosis');
  */
 export async function fetchSearch(type, searchParams, mock=false) {
   const path = `/search?${buildSearchQueryString(type, searchParams)}`
 
-  const [searchResults, perfTime] = await scpApi(path, defaultInit(), mock)
+  const [searchResults, perfTimes] = await scpApi(path, defaultInit(), mock)
 
-  logSearch(type, searchParams, perfTime)
+  logSearch(type, searchParams, perfTimes)
 
   return searchResults
 }
@@ -546,7 +542,7 @@ export function getBrandingGroup() {
 }
 
 /** Get full URL for a given including any extension (or a mocked URL) */
-function getFullUrl(path, mock=false) {
+export function getFullUrl(path, mock=false) {
   if (globalMock) {
     mock = true
   }
@@ -554,6 +550,8 @@ function getFullUrl(path, mock=false) {
   let fullPath = basePath + path
   if (mock) {
     fullPath += '.json' // e.g. /mock_data/search/auth_code.json
+  } else {
+    fullPath = `${location.origin}${fullPath}`
   }
   return fullPath
 }
@@ -568,28 +566,37 @@ function getFullUrl(path, mock=false) {
 export default async function scpApi(
   path, init, mock=false, camelCase=true, toJson=true
 ) {
+  const url = getFullUrl(path, mock)
+
   const perfTimeStart = performance.now()
 
-  const fullPath = getFullUrl(path, mock)
-
-  const response = await fetch(fullPath, init).catch(error => error)
+  const response = await fetch(url, init).catch(error => error)
 
   // Milliseconds taken to fetch data from API
-  const perfTime = Math.round(performance.now() - perfTimeStart)
+  // Suboptimal, but retained until at least Q4 2021 for continuity.
+  // Use `perfTimeFull` for closest measure of user-perceived duration.
+  const legacyBackendTime = performance.now() - perfTimeStart
+
+  const perfTimes = {
+    url,
+    legacyBackend: legacyBackendTime
+  }
 
   if (response.ok) {
     if (toJson) {
+      const jsonPerfTimeStart = performance.now()
       const json = await response.json()
+      perfTimes.parse = performance.now() - jsonPerfTimeStart
       // Converts API's snake_case to JS-preferrable camelCase,
       // for easy destructuring assignment.
       if (camelCase) {
-        return [camelcaseKeys(json), perfTime]
+        return [camelcaseKeys(json), perfTimes]
       } else {
-        return [json, perfTime]
+        return [json, perfTimes]
       }
     } else {
-      return [response, perfTime]
+      return [response, perfTimes]
     }
   }
-  return [response, perfTime]
+  return [response, perfTimes]
 }
