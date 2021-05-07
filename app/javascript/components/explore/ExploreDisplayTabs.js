@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLink, faArrowLeft, faCog, faTimes, faDna } from '@fortawesome/free-solid-svg-icons'
+import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
 
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from 'components/visualization/controls/ClusterSelector'
@@ -424,18 +424,18 @@ export default function ExploreDisplayTabs({
             shownTab={shownTab}
             exploreParams={exploreParamsWithDefaults}
             updateExploreParams={updateExploreParams}/>
-          <button onClick={() => copyLink(routerLocation)}
-            className="action"
-            data-toggle="tooltip"
-            title="copy a link to this visualization to the clipboard">
-            Get link <FontAwesomeIcon icon={faLink}/>
-          </button>
-          <br/><br/>
           <button className="action"
             onClick={clearExploreParams}
             title="reset all view options"
             data-analytics-name="explore-view-options-reset">
-            Reset view
+            <FontAwesomeIcon icon={faUndo}/> Reset view
+          </button>
+          <br/><br/>
+          <button onClick={() => copyLink(routerLocation)}
+            className="action"
+            data-toggle="tooltip"
+            title="copy a link to this visualization to the clipboard">
+            <FontAwesomeIcon icon={faLink}/> Get link
           </button>
         </div>
       </div>
