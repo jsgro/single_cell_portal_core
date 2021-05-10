@@ -738,7 +738,7 @@ class StudyFile
 
   # end path for a file when localizing during a parse
   def download_location
-    self.remote_location.blank? ? File.join(self.id, self.upload_file_name) : self.remote_location
+    self.remote_location.blank? ? File.join(self.id, 'original', self.upload_file_name) : self.remote_location
   end
 
   # for constructing a path to a file in a Google bucket

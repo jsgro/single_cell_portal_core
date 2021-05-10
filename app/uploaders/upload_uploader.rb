@@ -11,11 +11,15 @@ class UploadUploader < CarrierWave::Uploader::Base
   # Override the directory where uploaded files will be stored.
   # This is a sensible default for uploaders that are meant to be mounted:
   def store_dir
-    "data/#{model.data_dir}/#{model.id.to_s}"
+    Rails.root.join('data', model.data_dir, model.id.to_s)
   end
 
-  def cache_dir
-    "data/#{model.data_dir}/#{model.id.to_s}"
+  # store the file size & content-type when uploading a file
+  process :save_content_type_and_size_in_model
+
+  def save_content_type_and_size_in_model
+    model.upload_content_type = file.content_type if file.content_type
+    model.upload_file_size = model.upload_file_size.blank? ? file.size : model.upload_file_size += file.size
   end
 
   # Provide a default URL as a default if there hasn't been a file uploaded:
