@@ -22,6 +22,15 @@ class UploadUploader < CarrierWave::Uploader::Base
     model.upload_file_size = model.upload_file_size.blank? ? file.size : model.upload_file_size += file.size
   end
 
+  # set move_to_cache and move_to_store to true to perform a file move (i.e. mv file.txt), rather than copy
+  def move_to_cache
+    true
+  end
+
+  def move_to_store
+    true
+  end
+
   # Provide a default URL as a default if there hasn't been a file uploaded:
   # def default_url(*args)
   #   # For Rails 3.1+ asset pipeline compatibility:
