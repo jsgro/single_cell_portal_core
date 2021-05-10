@@ -14,6 +14,10 @@ class UploadUploader < CarrierWave::Uploader::Base
     Rails.root.join('data', model.data_dir, model.id.to_s)
   end
 
+  def cache_dir
+    Rails.root.join('tmp', 'uploads')
+  end
+
   # store the file size & content-type when uploading a file
   process :save_content_type_and_size_in_model
 
