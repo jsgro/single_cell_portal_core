@@ -482,7 +482,18 @@ class StudiesController < ApplicationController
     if study_file.nil?
       # don't use helper as we're about to mass-assign params
       study_file = @study.study_files.build
-      study_file.update!(study_file_params)
+      begin
+        study_file.update!(study_file_params)
+      rescue => e
+        logger.error "#{Time.zone.now} #{study_file.errors.full_messages.join(", ")}"
+        existing_file = StudyFile.find(study_file.id)
+        if existing_file
+          ErrorTracker.report_exception(e, current_user, params.to_unsafe_hash)
+          MetricsService.report_error(e, request, current_user, @study)
+          logger.error("do_upload Failed: Existing file for #{study_file.id} -- type:#{existing_file.file_type} name:#{existing_file.name}")
+        end
+        render json: { file: { name: study_file.upload_file_name, errors: study_file.errors.full_messages.join(", ") } }, status: 422 and return
+      end
       # determine if we need to create a study_file_bundle for the new study_file
       if StudyFileBundle::BUNDLE_TYPES.include?(study_file.file_type) && study_file.file_type != 'Cluster'
         matching_bundle = @study.study_file_bundles.detect {|bundle| bundle.bundle_type == study_file.file_type && bundle.parent == study_file}
