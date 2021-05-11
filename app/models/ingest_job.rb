@@ -388,7 +388,7 @@ class IngestJob
     end
     Rails.logger.info "Setting default options in #{self.study.name}: #{self.study.default_options}"
     self.study.save
-    # warm all default caches
+    # warm all default caches for this study
     ClusterCacheService.delay(queue: :cache).cache_study_defaults(self.study)
   end
 

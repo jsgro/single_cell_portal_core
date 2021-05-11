@@ -1,5 +1,5 @@
 ##
-# ClusterCacheService: class for pre-caching cluster visualization responses to speed up loading default responses
+# For pre-caching cluster visualization responses to speed up loading default responses
 ##
 class ClusterCacheService
   # return the output from a url_helper, such as api_v1_study_cluster_path(study, cluster_name)
@@ -9,7 +9,7 @@ class ClusterCacheService
   #   - +params+ (*Array) => request parameters, supports path-level and query string (as Hash), passed with splat (*)
   #
   # * *returns*
-  #   - (String) => String representation of request path with all parameters interpolated in
+  #   - (String) => Request path with all parameters interpolated in
   def self.format_request_path(route_name, *params)
     Rails.application.routes.url_helpers.send(route_name, *params)
   end
@@ -49,7 +49,7 @@ class ClusterCacheService
         Rails.cache.write(cache_path, viz_data.to_json)
       end
     else
-      Rails.logger.info "No defaults present for #{study.accession}; skipping"
+      Rails.logger.info "No defaults present for #{study.accession}; skip caching study defaults"
     end
   end
 end
