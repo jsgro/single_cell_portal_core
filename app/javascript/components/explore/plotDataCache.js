@@ -20,10 +20,6 @@ const FIELDS = {
     putInEntry: (entry, cellsAndCoords) => entry.cellsAndCoords = cellsAndCoords,
     merge: (entry, scatter) => {
       const clusterFields = ['x', 'y', 'z', 'cells']
-      if (scatter.data.x) {
-        // remove the promise
-        entry.cellsAndCoords = {}
-      }
       clusterFields.forEach(field => {
         entry.cellsAndCoords[field] = scatter.data[field] ? scatter.data[field] : entry.cellsAndCoords[field]
         scatter.data[field] = entry.cellsAndCoords[field]
@@ -37,6 +33,8 @@ const FIELDS = {
     },
     putInEntry: (entry, annotationName, annotationScope, annotations) => {
       const key = getAnnotationKey(annotationName, annotationScope)
+      // we only cache one annotation at a time, so for now, delete any others
+      entry.annotations = {}
       entry.annotations[key] = annotations
     },
     merge: (entry, scatter) => {
@@ -54,6 +52,8 @@ const FIELDS = {
     },
     putInEntry: (entry, genes, consensus, expression) => {
       const key = getExpressionKey(genes, consensus)
+      // we only cache one set of expression data at a time, so for now, delete any others
+      entry.expression = {}
       entry.expression[key] = expression
     },
     merge: (entry, scatter) => {
@@ -117,18 +117,17 @@ export function newCache() {
   /** get the data for a given study/cluster.  Returns a blank entry if none exists */
   cache._findOrCreateEntry = (accession, clusterName, subsample) => {
     const key = getKey(accession, clusterName, subsample)
+
     if (!cache.entries[key]) {
+      // we only cache one cluster/subsample at a time, so delete any others
+      cache.entries = {}
       cache.entries[key] = {
         clusterProps: {},
         cellsAndCoords: {},
         annotations: {},
-        expression: {},
-        annotationTimestamps: [],
-        expressionTimestamps: [],
+        expression: {}
       }
     }
-    // fetching/creating the cache entry refreshes its date.
-    cache.entries[key].timestamp = Date.now()
     return cache.entries[key]
   }
 
@@ -138,8 +137,9 @@ export function newCache() {
     cache.entries[key] = entry
   }
 
-  /** based on cache contents and desired return values, returns a string suitable for the
-    * 'fields' parameter of api/v1/visualization/clusters */
+  /** based on cache contents and desired return values, returns an array suitable for the 'fields' argument
+    * to fetchCluster in scp-api, and an array of promises for any in-flight requests relating to the needed data
+     */
   cache._getFieldsToRequest = ({
     studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter
   }) => {
