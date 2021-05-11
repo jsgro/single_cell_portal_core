@@ -197,6 +197,7 @@ class UserAssetService
   end
 
   # create a local directory in which to localize a remote asset to prevent Errno::ENOENT errors
+  #
   # * *params*
   #   - +pathname+ (Pathname) => Pathname of remote file
   #
@@ -207,6 +208,16 @@ class UserAssetService
     fullpath = RAILS_PUBLIC_PATH.join(parent_dir)
     FileUtils.mkdir_p(fullpath) unless Dir.exists?(fullpath)
     fullpath
+  end
+
+  # remove cached assets in remote bucket on deletion of parent record
+  #
+  # * *params*
+  #   - +remote_folder+ (Pathname, String) => remote bucket folder in which to remove all entries
+  def self.remove_assets_from_remote(remote_folder)
+    bucket = get_storage_bucket
+    files = bucket.files prefix: remote_folder.to_s
+    files.map {|file| file.delete } if files.present?
   end
 
   private

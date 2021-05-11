@@ -27,12 +27,14 @@ class UploadUploader < CarrierWave::Uploader::Base
   end
 
   # set move_to_cache and move_to_store to true to perform a file move (i.e. mv file.txt), rather than copy
+  # this is set to false in test environment to prevent moving test data files out of test/test_data that break
+  # any downstream seeds/test that require these files
   def move_to_cache
-    true
+    Rails.env.test? ? false : true
   end
 
   def move_to_store
-    true
+    Rails.env.test? ? false : true
   end
 
   # Provide a default URL as a default if there hasn't been a file uploaded:

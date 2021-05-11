@@ -31,11 +31,13 @@ class BrandingGroup
   mount_uploader :banner_image, BannerImageUploader, mount_on: :banner_image_file_name
   mount_uploader :footer_image, FooterImageUploader, mount_on: :footer_image_file_name
 
-  validates_presence_of :splash_image, :banner_image, :footer_image
-  validates_numericality_of :splash_image_file_size, :banner_image_file_size, :footer_image_file_size,
-                            less_than_or_equal_to: 10.megabytes
-  validates_inclusion_of :splash_image_content_type, :banner_image_content_type, :footer_image_content_type,
-                         in: %w(image/jpg image/jpeg image/png)
+  # carrierwave conditional validations
+  %w(splash_image banner_image footer_image).each do |image_attachment|
+    validates_numericality_of "#{image_attachment}_file_size".to_sym, less_than_or_equal_to: 10.megabytes,
+                              if: proc {|bg| bg.send(image_attachment).present?}
+    validates_inclusion_of "#{image_attachment}_content_type", in: %w(image/jpg image/jpeg image/png),
+                           if: proc {|bg| bg.send(image_attachment).present?}
+  end
 
   validates_presence_of :name, :name_as_id, :user_id, :background_color, :font_family
   validates_uniqueness_of :name
@@ -49,7 +51,7 @@ class BrandingGroup
                       message: ValidationTools::ALPHANUMERIC_EXTENDED_ERROR
 
   before_validation :set_name_as_id
-  before_destroy :remove_branding_association
+  before_destroy :remove_branding_association, :remove_cached_images
 
   # helper to return list of associated search facets
   def facets
@@ -67,5 +69,10 @@ class BrandingGroup
     self.studies.each do |study|
       study.update(branding_group_id: nil)
     end
+  end
+
+  # delete all cached images from UserAssetService::STORAGE_BUCKET_NAME when deleting a branding group
+  def remove_cached_images
+    UserAssetService.remove_assets_from_remote("branding_groups/#{self.id}")
   end
 end
