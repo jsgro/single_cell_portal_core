@@ -12,7 +12,7 @@ import { getDefaultProperties } from '@databiosphere/bard-client'
 import { getAccessToken } from 'providers/UserProvider'
 import { getBrandingGroup } from 'lib/scp-api'
 import getSCPContext from 'providers/SCPContextProvider'
-import { setupWebVitalsLog, hardwareStats } from './metrics-web-vitals'
+import { setupWebVitalsLog, addPerfMetrics } from './metrics-perf'
 
 let metricsApiMock = false
 
@@ -26,7 +26,7 @@ const defaultInit = {
 
 const bardDomainsByEnv = {
   development: 'https://terra-bard-dev.appspot.com',
-  staging: 'https://terra-bard-alpha.appspot.com',
+  staging: 'https://terra-bard-dev.appspot.com',
   production: 'https://terra-bard-prod.appspot.com'
 }
 
@@ -102,6 +102,26 @@ export function logClickOther(target) {
     text: getNameForClickTarget(target)
   }
   log('click:other', props)
+}
+
+/** Log copy events, such as copying the SCP Zendesk support email */
+export function logCopy(event) {
+  const props = {
+    text: getNameForClickTarget(event.target),
+    classList: getClassListAsArray(event.target),
+    id: event.target.id
+  }
+  log('copy', props)
+}
+
+/** Log contextmenu events, such right-click to "Save target as" or "Copy email address" */
+export function logContextMenu(event) {
+  const props = {
+    text: getNameForClickTarget(event.target),
+    classList: getClassListAsArray(event.target),
+    id: event.target.id
+  }
+  log('contextmenu', props)
 }
 
 /**
@@ -323,8 +343,13 @@ export function log(name, props={}) {
   props['brand'] = brandingGroup ? brandingGroup : ''
   props['registeredForTerra'] = registeredForTerra
 
-  if ('perfTime' in props) {
-    props = Object.assign(props, hardwareStats)
+  if ('perfTimes' in props) {
+    try {
+      props = addPerfMetrics(props)
+    } catch (e) {
+      console.error(e)
+    }
+    delete props.perfTimes
   }
 
   let init = Object.assign({}, defaultInit)

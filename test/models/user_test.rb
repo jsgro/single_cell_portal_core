@@ -21,7 +21,7 @@ class UserTest < ActiveSupport::TestCase
 
   teardown do
     # reset user tokens
-    @user.update(access_token: @existing_access_token, api_access_token: @existing_api_token)
+    @user.update(access_token: @existing_access_token, api_access_token: @existing_api_token, refresh_token: nil)
     @user.update_last_access_at!
   end
 
@@ -82,5 +82,17 @@ class UserTest < ActiveSupport::TestCase
     empty_response = {}
     assert_equal empty_response, @user.valid_access_token
     assert_equal empty_response, @user.token_for_api_call
+  end
+
+  test 'should handle errors when generating pet service account token' do
+    # assign mock refresh token first
+    @user.update(refresh_token: @user.access_token.dig('access_token'))
+
+    # user does not actually have a Terra profile which will throw an error
+    # RuntimeError should be handled and not raised here
+    assert_nothing_raised do
+      token = @user.token_for_storage_object('single-cell-portal')
+      assert_nil token
+    end
   end
 end

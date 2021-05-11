@@ -72,9 +72,9 @@ function getFriendlyFilterListByFacet(facets) {
 }
 
 /**
- * Log study search metrics.  Might support gene, cell search in future.
+ * Log global study search metrics, one type of search done on home page
  */
-export function logSearch(type, searchParams, perfTime) {
+export function logSearch(type, searchParams, perfTimes) {
   searchNumber += 1
   if (searchNumber < 3) {
     // This prevents over-reporting searches.
@@ -106,7 +106,7 @@ export function logSearch(type, searchParams, perfTime) {
   const simpleProps = {
     terms, numTerms, genes, numGenes, page, preset,
     facetList, numFacets, numFilters,
-    perfTime,
+    perfTimes,
     type, context: 'global'
   }
   const props = Object.assign(simpleProps, filterListByFacet)
@@ -129,28 +129,12 @@ export function logSearch(type, searchParams, perfTime) {
   )
 }
 
-/** Calculates generic performance timing metrics for visualizations */
-function calculatePerfTimes(perfTime, perfTimeFrontendStart) {
-  const perfTimeFrontend = performance.now() - perfTimeFrontendStart
-
-  const perfTimeFull = perfTime + perfTimeFrontend
-
-  return {
-    'perfTime:backend': perfTime, // Time for API call
-    'perfTime:frontend': Math.round(perfTimeFrontend), // Time from API call *end* to plot render end
-    'perfTime': Math.round(perfTimeFull) // Time from API call *start* to plot render end
-  }
-}
-
 /** Logs violin plot metrics */
 export function logViolinPlot(
   { genes, plotType, showPoints },
-  { perfTime, perfTimeFrontendStart }
+  perfTimes
 ) {
-  const perfTimeProps = calculatePerfTimes(perfTime, perfTimeFrontendStart)
-
-  let props = { genes, plotType, showPoints }
-  props = Object.assign(props, perfTimeProps)
+  const props = { genes, plotType, showPoints, perfTimes }
 
   log('plot:violin', props)
 }
@@ -158,11 +142,9 @@ export function logViolinPlot(
 /** Logs scatter plot metrics */
 export function logScatterPlot(
   { scatter, genes, width, height },
-  { perfTime, perfTimeFrontendStart }
+  perfTimes
 ) {
-  const perfTimeProps = calculatePerfTimes(perfTime, perfTimeFrontendStart)
-
-  let props = {
+  const props = {
     'numPoints': scatter.numPoints, // How many cells are we plotting?
     genes,
     'gene': scatter.gene,
@@ -172,10 +154,9 @@ export function logScatterPlot(
     'numAnnotSelections': scatter.annotParams.values.length,
     'annotName': scatter.annotParams.name,
     'annotType': scatter.annotParams.type,
-    'annotScope': scatter.annotParams.scope
+    'annotScope': scatter.annotParams.scope,
+    perfTimes
   }
-
-  props = Object.assign(props, perfTimeProps)
 
   log('plot:scatter', props)
 }
@@ -230,8 +211,8 @@ export function getLogPlotProps() {
  * Log when a download is authorized.
  * This is our best web-client-side methodology for measuring downloads.
  */
-export function logDownloadAuthorization(perfTime) {
-  const props = { perfTime }
+export function logDownloadAuthorization(perfTimes) {
+  const props = { perfTimes }
   log('download-authorization', props)
   ga('send', 'event', 'advanced-search', 'download-authorization') // eslint-disable-line no-undef, max-len
 }
