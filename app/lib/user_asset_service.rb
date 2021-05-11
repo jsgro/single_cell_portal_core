@@ -94,6 +94,10 @@ class UserAssetService
       sub_dirs.each do |sub_dir|
         current_dir = asset_path.join(sub_dir)
         files = get_directory_entries(current_dir)
+        if files.include?('original') # patch for new storage path in Carrierwave
+          current_dir = current_dir.join('original')
+          files = get_directory_entries(current_dir)
+        end
         local_files += files.map {|file| Pathname.new(current_dir).join(file)}
       end
     end

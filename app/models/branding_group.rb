@@ -28,10 +28,14 @@ class BrandingGroup
 
   # carrierwave settings
   mount_uploader :splash_image, SplashImageUploader, mount_on: :splash_image_file_name
-  mount_uploader :banner_image, SplashImageUploader, mount_on: :banner_image_file_name
-  mount_uploader :footer_image, SplashImageUploader, mount_on: :footer_image_file_name
+  mount_uploader :banner_image, BannerImageUploader, mount_on: :banner_image_file_name
+  mount_uploader :footer_image, FooterImageUploader, mount_on: :footer_image_file_name
 
   validates_presence_of :splash_image, :banner_image, :footer_image
+  validates_numericality_of :splash_image_file_size, :banner_image_file_size, :footer_image_file_size,
+                            less_than_or_equal_to: 10.megabytes
+  validates_inclusion_of :splash_image_content_type, :banner_image_content_type, :footer_image_content_type,
+                         in: %w(image/jpg image/jpeg image/png)
 
   validates_presence_of :name, :name_as_id, :user_id, :background_color, :font_family
   validates_uniqueness_of :name
