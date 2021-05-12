@@ -33,7 +33,7 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
       # construct various cache keys for direct lookup (cannot lookup via regex)
       study_clusters_key = "_single_cell_api_v1_studies_#{study.accession}_clusters_"
       study_cluster_key = "#{study_clusters_key}#{cluster_underscore}_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}"
-      expression_mean_key = "_single_cell_api_v1_studies_#{study.accession}_expression_violin_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}_consensus_mean_genes_#{genes_hash}_data_type_violin"
+      expression_mean_key = "_single_cell_api_v1_studies_#{study.accession}_expression_violin_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}_consensus_mean_data_type_violin_genes_#{genes_hash}"
       assert Rails.cache.exist?(study_clusters_key), "Did not find matching API clusters cache entry at #{study_clusters_key}"
       assert Rails.cache.exist?(study_cluster_key), "Did not find matching API single cluster cache entry at #{study_cluster_key}"
       assert Rails.cache.exist?(expression_mean_key), "Did not find matching API expression mean cache entry at #{expression_mean_key}"
@@ -60,10 +60,10 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
     cluster_underscore = cluster.name.split.join('_')
     study_clusters_key = "_single_cell_api_v1_studies_#{study.accession}_clusters_"
     cell_annotation = cluster.cell_annotations.sample
-    sanitized_cache_path = "#{study_clusters_key}#{cluster_underscore}_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_foo_bar_cluster_name_#{cluster_underscore}"
+    sanitized_cache_path = "#{study_clusters_key}#{cluster_underscore}_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}_foo_bar"
     genes = study.genes.map(&:name)
     genes_hash = Digest::SHA256.hexdigest genes.sort.join
-    sanitized_expression_path = "_single_cell_api_v1_studies_#{study.accession}_expression_violin_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}_consensus_mean_genes_#{genes_hash}_data_type_violin"
+    sanitized_expression_path = "_single_cell_api_v1_studies_#{study.accession}_expression_violin_annotation_name_#{cell_annotation[:name]}_annotation_scope_cluster_annotation_type_#{cell_annotation[:type]}_cluster_name_#{cluster_underscore}_consensus_mean_data_type_violin_genes_#{genes_hash}"
 
     # make request with extra parameter with % sign
     get api_v1_study_cluster_path(study_id: study.accession, annotation_name: cell_annotation[:name],
