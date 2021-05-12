@@ -4,7 +4,7 @@ class RequestUtils
 
   # list of parameters to reject from :get_cache_key as they will be represented by request.path
   # format is always :json and therefore unnecessary
-  CACHE_PATH_BLACKLIST = %w(controller action format study_id)
+  CACHE_PATH_EXCLUDE_LIST = %w(controller action format study_id)
 
   # character regex to convert into underscores (_) for cache path setting
   PATH_REGEX =/(\/|%2C|%2F|%20|\?|&|=|\.|,|\s)/
@@ -23,7 +23,7 @@ class RequestUtils
     # remove unwanted parameters from cache_key, as well as empty values
     # this simplifies base key into smaller value, e.g. _single_cell_api_v1_studies_SCP123_explore_
     # parameters must also be sorted by name to ensure cache paths are idempotent
-    params_key = url_params.reject {|name, value| CACHE_PATH_BLACKLIST.include?(name) || value.empty?}.sort_by {|k,v| k}.
+    params_key = url_params.reject {|name, value| CACHE_PATH_EXCLUDE_LIST.include?(name) || value.empty?}.sort_by {|k,v| k}.
       map do |parameter_name, parameter_value|
       if parameter_name == 'genes'
         "#{parameter_name}_#{construct_gene_list_hash(parameter_value)}"
