@@ -306,7 +306,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
 
     study = Study.find_by(name: "Testing Study #{@random_seed}")
     filename = "12_MB_file_with_space_in_filename 2.txt"
-    sanitized_filename = filename.gsub(/\s/, '_')
+    sanitized_filename = filename.gsub(/\s/, '+')
     file_params = {study_file: {file_type: 'Expression Matrix', study_id: study.id.to_s, name: sanitized_filename}}
     exp_matrix = File.open(Rails.root.join('test', 'test_data', filename))
     perform_chunked_study_file_upload(filename, file_params, study.id)
