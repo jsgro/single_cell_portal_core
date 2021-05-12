@@ -78,7 +78,7 @@ class BrandingGroupsController < ApplicationController
     @branding_group = BrandingGroup.find(params[:id])
   end
 
-  # Never trust parameters from the scary internet, only allow the white list through.
+  # Never trust parameters from the scary internet, only allow the permit list through.
   def branding_group_params
     params.require(:branding_group).permit(:name, :tag_line, :background_color, :font_family, :font_color, :user_id,
                                            :splash_image, :banner_image, :footer_image, :external_link_url, :external_link_description)

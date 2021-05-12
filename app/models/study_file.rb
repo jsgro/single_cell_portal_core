@@ -1216,7 +1216,7 @@ class StudyFile
   #
   ###
 
-  # strip whitespace from name if the file is a cluster or gene list (will cause problems when rendering)
+  # strip space from name if the file is a cluster or gene list (will cause problems when rendering)
   def sanitize_name
     if ['Gene List', 'Cluster'].include?(self.file_type)
       self.name.strip!

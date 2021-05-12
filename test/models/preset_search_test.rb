@@ -82,11 +82,11 @@ class PresetSearchTest < ActiveSupport::TestCase
     found_facet_error = @invalid_preset.errors.full_messages.first
     assert_equal expected_facet_error, found_facet_error, "Did not correctly find duplicated facets: #{found_facet_error}"
 
-    # non-existent studies in whitelist
+    # non-existent studies in accession list
     @invalid_preset.facet_filters = %w(disease:MONDO_0000001)
-    @invalid_preset.accession_whitelist = %w(SCP0)
+    @invalid_preset.accession_list = %w(SCP0)
     assert !@invalid_preset.valid?
-    expected_accession_error = 'Accession whitelist contains missing studies: SCP0'
+    expected_accession_error = 'Accession list contains missing studies: SCP0'
     found_accession_error = @invalid_preset.errors.full_messages.first
     assert_equal expected_accession_error, found_accession_error, "Did not correctly find missing studies: #{found_accession_error}"
 

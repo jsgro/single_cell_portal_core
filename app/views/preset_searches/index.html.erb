@@ -9,7 +9,7 @@
           <tr>
             <th>Name</th>
             <th>Identifier</th>
-            <th>Whitelist</th>
+            <th>Accession List</th>
             <th>Search Terms</th>
             <th>Facets</th>
             <th>Public?</th>
@@ -23,7 +23,7 @@
               <td><%= preset_search.name %></td>
               <td><%= preset_search.identifier %></td>
               <td>
-                <% preset_search.accession_whitelist.each do |accession| %>
+                <% preset_search.accession_list.each do |accession| %>
                   <span class="btn btn-default"><%= scp_link_to accession, legacy_study_path(identifier: accession), target: :_blank %></span>
                 <% end %>
               </td>

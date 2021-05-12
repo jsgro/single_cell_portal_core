@@ -38,7 +38,7 @@ class AdminConfiguration
 
   validate :manage_readonly_access
   validate :ensure_docker_image_present, if: proc {|attributes| attributes.config_type == INGEST_DOCKER_NAME}
-  before_validation :strip_whitespace, if: proc {|attributes| attributes.value_type == 'String'}
+  before_validation :strip_empty_space, if: proc {|attributes| attributes.value_type == 'String'}
 
   # really only used for IDs in the table...
   def url_safe_name
@@ -144,10 +144,10 @@ class AdminConfiguration
         @config_setting = 'ERROR'
     end
     unless @config_setting == 'ERROR'
-      Rails.logger.info "#{Time.zone.now}: setting access on all '#{FireCloudClient::COMPUTE_BLACKLIST.join(', ')}' studies to #{@config_setting}"
+      Rails.logger.info "#{Time.zone.now}: setting access on all '#{FireCloudClient::COMPUTE_DENYLIST.join(', ')}' studies to #{@config_setting}"
       # only use studies not queued for deletion; those have already had access revoked
       # also filter out studies not in default portal project - user-funded projects are exempt from access revocation
-      Study.not_in(queued_for_deletion: true).where(:firecloud_project.in => FireCloudClient::COMPUTE_BLACKLIST).each do |study|
+      Study.not_in(queued_for_deletion: true).where(:firecloud_project.in => FireCloudClient::COMPUTE_DENYLIST).each do |study|
         Rails.logger.info "#{Time.zone.now}: begin revoking access to study: #{study.name}"
         # first remove share access (only shares with FireCloud access, i.e. non-reviewers)
         shares = study.study_shares.non_reviewers
@@ -163,7 +163,7 @@ class AdminConfiguration
         ApplicationController.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, revoke_owner_acl)
         Rails.logger.info "#{Time.zone.now}: access revocation for #{study.name} complete"
       end
-      Rails.logger.info "#{Time.zone.now}: all '#{FireCloudClient::COMPUTE_BLACKLIST.join(', ')}' study access set to #{@config_setting}"
+      Rails.logger.info "#{Time.zone.now}: all '#{FireCloudClient::COMPUTE_DENYLIST.join(', ')}' study access set to #{@config_setting}"
     else
       Rails.logger.info "#{Time.zone.now}: invalid status setting: #{status}; aborting"
     end
@@ -171,10 +171,10 @@ class AdminConfiguration
 
   # method that re-enables access by restoring permissions to studies directly in FireCloud
   def self.enable_firecloud_access
-    Rails.logger.info "#{Time.zone.now}: restoring access to all '#{FireCloudClient::COMPUTE_BLACKLIST.join(', ')}' studies"
+    Rails.logger.info "#{Time.zone.now}: restoring access to all '#{FireCloudClient::COMPUTE_DENYLIST.join(', ')}' studies"
     # only use studies not queued for deletion; those have already had access revoked
     # also filter out studies not in default portal project - user-funded projects are exempt from access revocation
-    Study.not_in(queued_for_deletion: true).where(:firecloud_project.in => FireCloudClient::COMPUTE_BLACKLIST).each do |study|
+    Study.not_in(queued_for_deletion: true).where(:firecloud_project.in => FireCloudClient::COMPUTE_DENYLIST).each do |study|
       Rails.logger.info "#{Time.zone.now}: begin restoring access to study: #{study.name}"
       # first re-enable share access (to all non-reviewers)
       shares = study.study_shares.where(:permission.nin => %w(Reviewer)).to_a
@@ -195,7 +195,7 @@ class AdminConfiguration
       ApplicationController.firecloud_client.update_workspace_acl(study.firecloud_project, study.firecloud_workspace, restore_owner_acl)
       Rails.logger.info "#{Time.zone.now}: access restoration for #{study.name} complete"
     end
-    Rails.logger.info "#{Time.zone.now}: all '#{FireCloudClient::COMPUTE_BLACKLIST.join(', ')}' study access restored"
+    Rails.logger.info "#{Time.zone.now}: all '#{FireCloudClient::COMPUTE_DENYLIST.join(', ')}' study access restored"
   end
 
   # sends an email to all site administrators on startup notifying them of portal restart
@@ -329,7 +329,7 @@ class AdminConfiguration
     end
   end
 
-  def strip_whitespace
+  def strip_empty_space
     self.value.strip! if self.value.present?
   end
 end

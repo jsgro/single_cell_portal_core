@@ -73,16 +73,16 @@ class PresetSearchesController < ApplicationController
     @preset_search = PresetSearch.find(params[:id])
   end
 
-  # Never trust parameters from the scary internet, only allow the white list through.
+  # Never trust parameters from the scary internet, only allow the permit list through.
   def preset_search_params
-    params.require(:preset_search).permit(:name, :public, :accession_whitelist, :search_terms, :facet_filters)
+    params.require(:preset_search).permit(:name, :public, :accession_list, :search_terms, :facet_filters)
   end
 
   # convert text fields into arrays for saving
   # TODO: figure out a way to leverage this natively using array serialization w/ forms because this is gross as hell
   def serialize_preset_search_params
     form_params = preset_search_params.to_unsafe_hash
-    accessions = form_params[:accession_whitelist].blank? ? [] : form_params[:accession_whitelist].split.map(&:strip)
+    accessions = form_params[:accession_list].blank? ? [] : form_params[:accession_list].split.map(&:strip)
     facets = form_params[:facet_filters].blank? ? [] : form_params[:facet_filters].split('+').map(&:strip)
     terms = []
     if form_params[:search_terms].present? && form_params[:search_terms].include?("\"")
@@ -97,7 +97,7 @@ class PresetSearchesController < ApplicationController
       terms = form_params[:search_terms].split if form_params[:search_terms].present?
     end
     form_params[:search_terms] = terms.map(&:strip).delete_if(&:blank?)
-    form_params[:accession_whitelist] = accessions
+    form_params[:accession_list] = accessions
     form_params[:facet_filters] = facets
     form_params
   end

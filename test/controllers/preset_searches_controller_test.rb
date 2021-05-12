@@ -43,7 +43,7 @@ class PresetSearchesControllerTest < ActionDispatch::IntegrationTest
     preset_search_params = {
         preset_search: {
             name: 'My Preset Search',
-            accession_whitelist: study_accession,
+            accession_list: study_accession,
             search_terms: terms,
             facet_filters: facets
         }
@@ -53,8 +53,8 @@ class PresetSearchesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     @preset_search = PresetSearch.find_by(name: 'My Preset Search')
     assert @preset_search.present?, "Preset search did not get created"
-    assert_equal @preset_search.accession_whitelist, [study_accession],
-                 "Did not properly set whitelist: #{study_accession} is not in #{@preset_search.accession_whitelist}"
+    assert_equal @preset_search.accession_list, [study_accession],
+                 "Did not properly set accession list: #{study_accession} is not in #{@preset_search.accession_list}"
     assert_equal @preset_search.keyword_query_string, terms,
                  "Search terms not correctly set: #{@preset_search.keyword_query_string} != #{terms}"
     assert_equal @preset_search.facet_query_string, facets,
@@ -65,7 +65,7 @@ class PresetSearchesControllerTest < ActionDispatch::IntegrationTest
         preset_search: {
             search_terms: new_terms,
             facet_filters: facets,
-            accession_whitelist: study_accession
+            accession_list: study_accession
         }
     }
     patch preset_search_path(@preset_search), params: update_params
@@ -75,8 +75,8 @@ class PresetSearchesControllerTest < ActionDispatch::IntegrationTest
     assert @preset_search.present?, "Preset search did not get loaded"
     assert_equal @preset_search.keyword_query_string, new_terms,
                  "Search terms did not update: #{new_terms} is not in #{@preset_search.keyword_query_string}"
-    assert_equal @preset_search.accession_whitelist, [study_accession],
-                 "Accession whitelist changed when it shouldn't have; #{study_accession} is not in #{@preset_search.accession_whitelist}"
+    assert_equal @preset_search.accession_list, [study_accession],
+                 "Accession list changed when it shouldn't have; #{study_accession} is not in #{@preset_search.accession_list}"
     assert_equal @preset_search.facet_query_string, facets,
                  "Facets were changed when they shouldn't have; #{facets} != #{@preset_search.facet_query_string}"
 

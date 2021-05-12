@@ -452,9 +452,9 @@ class FireCloudClientTest < ActiveSupport::TestCase
     projects = @fire_cloud_client.get_billing_projects
     assert projects.any?, 'Did not find any billing projects'
 
-    # select a project (only valid projects, not in the compute blacklist)
+    # select a project (only valid projects, not in the compute denylist)
     project_name = projects.select {|p| p['creationStatus'] == 'Ready' &&
-        !FireCloudClient::COMPUTE_BLACKLIST.include?(p['projectName']) &&
+        !FireCloudClient::COMPUTE_DENYLIST.include?(p['projectName']) &&
         p['role'] == 'Owner'}.sample['projectName']
     assert project_name.present?, 'Did not select a billing project'
 

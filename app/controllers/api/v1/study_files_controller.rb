@@ -575,7 +575,7 @@ module Api
         head 403 unless @study.can_edit?(current_api_user)
       end
 
-      # study file params whitelist
+      # study file params list
       def study_file_params
         params.require(:study_file).permit(:_id, :study_id, :taxon_id, :genome_assembly_id, :study_file_bundle_id, :name,
                                            :upload, :upload_file_name, :upload_content_type, :upload_file_size, :remote_location,

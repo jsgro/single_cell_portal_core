@@ -53,7 +53,7 @@ module Api
           study_obj[:term_matches] = inferred_weight[:terms].keys
           study_obj[:term_search_weight] = inferred_weight[:total]
         end
-        if @preset_search.present? && @preset_search.accession_whitelist.include?(study.accession)
+        if @preset_search.present? && @preset_search.accession_list.include?(study.accession)
           study_obj[:preset_match] = true
         end
         if @gene_results.present?

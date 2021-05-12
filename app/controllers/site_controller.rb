@@ -728,7 +728,7 @@ class SiteController < ApplicationController
     end
   end
 
-  # whitelist parameters for updating studies on study settings tab (smaller list than in studies controller)
+  # permit parameters for updating studies on study settings tab (smaller list than in studies controller)
   def study_params
     params.require(:study).permit(:name, :description, :public, :embargo, :cell_count,
                                   :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails,
@@ -737,7 +737,7 @@ class SiteController < ApplicationController
                                   study_detail_attributes: [:id, :full_description])
   end
 
-  # whitelist parameters for creating custom user annotation
+  # permit parameters for creating custom user annotation
   def user_annotation_params
     params.require(:user_annotation).permit(:_id, :name, :study_id, :user_id, :cluster_group_id, :subsample_threshold,
                                             :loaded_annotation, :subsample_annotation, user_data_arrays_attributes: [:name, :values])
