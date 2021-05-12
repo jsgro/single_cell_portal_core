@@ -32,18 +32,16 @@ class ClusterCacheService
     annotation = study.default_annotation
     if cluster && annotation
       annotation_name, annotation_type, annotation_scope = annotation.split('--')
-      default_path = format_request_path(:api_v1_study_cluster_path, study.accession, '_default')
       # necessary for legacy cluster names that could contain slashes and other non URL-safe characters
-      sanitized_cluster_name = CGI.escape(cluster.name)
-      named_path = format_request_path(:api_v1_study_cluster_path,study.accession, sanitized_cluster_name)
+      sanitized_cluster_name = cluster.name.include?('/') ? CGI.escape(cluster.name) : cluster.name
       full_params = {
-        annotation_name: CGI.escape(annotation_name), annotation_scope: annotation_scope, annotation_type: annotation_type,
+        annotation_name: annotation_name, annotation_scope: annotation_scope, annotation_type: annotation_type,
         subsample: 'all', cluster_name: sanitized_cluster_name
       }
-      [default_path, named_path].each do |viz_request_path|
-        # specify '_default' for cluster_name to form correct cache path, otherwise use all parameters
-        url_params = viz_request_path.end_with?('_default') ? {cluster_name: '_default'} : full_params
-        cache_path = RequestUtils.get_cache_path(viz_request_path, url_params.with_indifferent_access)
+      default_params = {cluster_name: '_default'}
+      [default_params, full_params].each do |url_params|
+        path = format_request_path(:api_v1_study_cluster_path, study.accession, url_params[:cluster_name])
+        cache_path = RequestUtils.get_cache_path(path, url_params.with_indifferent_access)
         viz_data = Api::V1::Visualization::ClustersController.get_cluster_viz_data(study, cluster, url_params)
         Rails.logger.info "Pre-caching viz data for #{cache_path}"
         Rails.cache.write(cache_path, viz_data.to_json)
