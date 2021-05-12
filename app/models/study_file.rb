@@ -1216,9 +1216,16 @@ class StudyFile
     end
   end
 
-  # set filename and data_dir on create
+  # set name and data_dir on create
   def set_file_name_and_data_dir
-    self.name = self.upload_file_name if (self.upload.present? && self.name.blank?)
+    # use filename of uploaded file for "name" if upload object is present, or upload_file_name is being manually set
+    if self.name.blank?
+      if self.upload_file_name.present?
+        self.name = self.upload_file_name
+      elsif self.upload.present?
+        self.name = self.upload.file.filename
+      end
+    end
     self.data_dir = self.study.data_dir
   end
 
