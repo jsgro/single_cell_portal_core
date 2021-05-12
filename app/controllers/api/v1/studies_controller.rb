@@ -168,8 +168,9 @@ module Api
       def update
         if @study.update(study_params)
           if @study.previous_changes.keys.include?('name')
-            # if user renames a study, invalidate all caches
+            # if user renames a study, invalidate all visualization caches and repopulate default cache
             CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
+            ClusterCacheService.delay(queue: :cache).cache_study_defaults(@study)
           end
           render :show
         else

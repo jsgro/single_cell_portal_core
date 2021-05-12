@@ -26,7 +26,7 @@ module SingleCellPortal
 
     config.time_zone = 'Eastern Time (US & Canada)'
 
-    config.middleware.use Rack::Deflater
+    config.middleware.use Rack::Brotli
 
     # Docker image for file parsing via scp-ingest-pipeline
     config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.10.2'

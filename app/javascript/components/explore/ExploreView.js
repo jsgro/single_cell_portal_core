@@ -15,7 +15,7 @@ import useExploreTabRouter from './ExploreTabRouter'
 function RoutableExploreTab({ studyAccession }) {
   // stores the basic study overview data from the server, used to determine what views are available
   const [exploreInfo, setExploreInfo] = useState(null)
-  const { exploreParams, updateExploreParams, routerLocation } = useExploreTabRouter()
+  const { exploreParams, updateExploreParams, clearExploreParams, routerLocation } = useExploreTabRouter()
 
   // we keep a separate 'exploreParamsWithDefaults' object that updates after defaults are fetched from the server
   // this is kept separate so that the graphs do not see the change in cluster name from '' to
@@ -30,6 +30,7 @@ function RoutableExploreTab({ studyAccession }) {
     <div className="study-explore">
       <ExploreDisplayTabs studyAccession={studyAccession}
         exploreParams={exploreParams}
+        clearExploreParams={clearExploreParams}
         exploreParamsWithDefaults={exploreParamsWithDefaults}
         updateExploreParams={updateExploreParams}
         routerLocation={routerLocation}
