@@ -35,7 +35,8 @@ class BrandingGroup
   %w(splash_image banner_image footer_image).each do |image_attachment|
     validates_numericality_of "#{image_attachment}_file_size".to_sym, less_than_or_equal_to: 10.megabytes,
                               if: proc {|bg| bg.send(image_attachment).present?}
-    validates_inclusion_of "#{image_attachment}_content_type", in: %w(image/jpg image/jpeg image/png),
+    validates_inclusion_of "#{image_attachment}_content_type",
+                           in: %w(image/jpg image/jpeg image/png image/gif image/svg+xml),
                            if: proc {|bg| bg.send(image_attachment).present?}
   end
 
