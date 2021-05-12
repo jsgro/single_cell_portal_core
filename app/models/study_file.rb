@@ -580,14 +580,6 @@ class StudyFile
   before_validation   :set_file_name_and_data_dir, on: :create
   before_save         :sanitize_name
   after_save          :set_cluster_group_ranges, :set_options_by_file_type
-
-  # has_mongoid_attached_file :upload,
-  #                           :path => ":rails_root/data/:data_dir/:id/:filename",
-  #                           :url => ''
-  #
-  # # turning off validation to allow any kind of data file to be uploaded
-  # do_not_validate_attachment_file_type :upload
-
   validates_uniqueness_of :upload_file_name, scope: :study_id, unless: Proc.new {|f| f.human_data?}
   validates_presence_of :name
   validates_presence_of :human_fastq_url, if: proc {|f| f.human_data}
@@ -1224,16 +1216,9 @@ class StudyFile
     end
   end
 
-  # set filename and construct url safe name from study
+  # set filename and data_dir on create
   def set_file_name_and_data_dir
-    if self.upload_file_name.nil?
-      self.status = 'uploaded'
-      if self.name.nil?
-        self.name = ''
-      end
-    elsif (self.name.nil? || self.name.blank?) || (!self.new_record? && self.upload_file_name != self.name)
-      self.name = self.upload_file_name
-    end
+    self.name = self.upload_file_name if (self.upload.present? && self.name.blank?)
     self.data_dir = self.study.data_dir
   end
 
