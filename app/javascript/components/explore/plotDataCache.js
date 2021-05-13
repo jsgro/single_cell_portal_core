@@ -128,6 +128,7 @@ export function newCache() {
     const { fields, promises } = cache._getFieldsToRequest({
       studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter
     })
+
     if (fields.length) {
       apiCallPromise = fetchCluster({
         studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter, fields
@@ -232,11 +233,12 @@ export function newCache() {
     if (!isAnnotatedScatter) {
       const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
       const cachedCellsAndCoords = FIELDS.cellsAndCoords.getFromEntry(cacheEntry)
-      if (!cachedCellsAndCoords.x) {
+
+      if (cachedCellsAndCoords.then) {
+        promises.push(cachedCellsAndCoords)
+      } else if (!cachedCellsAndCoords.x) {
         fields.push('coordinates')
         fields.push('cells')
-      } else if (cachedCellsAndCoords.then) {
-        promises.push(cachedCellsAndCoords)
       }
       const cachedAnnotation = FIELDS.annotation.getFromEntry(cacheEntry, annotation.name, annotation.scope)
       if (!cachedAnnotation) {
