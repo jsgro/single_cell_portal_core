@@ -79,7 +79,7 @@ class SiteController < ApplicationController
                                                                 scpbr: params[:scpbr])) and return
     else
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
-                  alert: "You either do not have permission to perform that action, or #{params[:identifier]} does not exist." and return
+                  alert: "You either do not have permission to perform that action, or #{params[:identifier]} does not exist.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
@@ -125,6 +125,9 @@ class SiteController < ApplicationController
           # double check on download availability: first, check if administrator has disabled downloads
           # then check if FireCloud is available and disable download links if either is true
           @allow_downloads = ApplicationController.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
+
+          # warm all default caches for this study
+          ClusterCacheService.delay(queue: :cache).cache_study_defaults(@study)
         end
         set_firecloud_permissions(@study.detached?)
         set_study_permissions(@study.detached?)
@@ -621,7 +624,7 @@ class SiteController < ApplicationController
         # redirect if study is not found
     if @study.nil?
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
-                  alert: "You either do not have permission to perform that action, or #{params[:accession]} does not exist." and return
+                  alert: "You either do not have permission to perform that action, or #{params[:accession]} does not exist.  #{SCP_SUPPORT_EMAIL}" and return
     end
         #Check if current url_safe_name matches model
     unless @study.url_safe_name == params[:study_name]
@@ -753,7 +756,7 @@ class SiteController < ApplicationController
       if (!user_signed_in? && !@study.public?)
         authenticate_user!
       elsif (user_signed_in? && !@study.can_view?(current_user))
-        alert = 'You do not have permission to perform that action.'
+        alert = "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}"
         respond_to do |format|
           format.js {render js: "alert('#{alert}')" and return}
           format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return}
@@ -766,7 +769,7 @@ class SiteController < ApplicationController
   def check_compute_permissions
     if ApplicationController.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE)
       if !user_signed_in? || !@study.can_compute?(current_user)
-        @alert ='You do not have permission to perform that action.'
+        @alert = "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}"
         respond_to do |format|
           format.js {render action: :notice}
           format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: @alert and return}
@@ -774,7 +777,7 @@ class SiteController < ApplicationController
         end
       end
     else
-      @alert ='Compute services are currently unavailable - please check back later.'
+      @alert = "Compute services are currently unavailable - please check back later.  #{SCP_SUPPORT_EMAIL}"
       respond_to do |format|
         format.js {render action: :notice}
         format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: @alert and return}
@@ -786,7 +789,8 @@ class SiteController < ApplicationController
   # check if a study is 'detached' from a workspace
   def check_study_detached
     if @study.detached?
-      @alert = "We were unable to complete your request as #{@study.accession} is detached from the workspace (maybe the workspace was deleted?)"
+      @alert = "We were unable to complete your request as #{@study.accession} is detached from the workspace " \
+               "(maybe the workspace was deleted?).  #{SCP_SUPPORT_EMAIL}"
       respond_to do |format|
         format.js {render js: "alert('#{@alert}');"}
         format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: @alert and return}

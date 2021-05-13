@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLink, faArrowLeft, faCog, faTimes, faDna } from '@fortawesome/free-solid-svg-icons'
+import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
 
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from 'components/visualization/controls/ClusterSelector'
@@ -55,7 +55,7 @@ const ideogramHeight = 140
  */
 export default function ExploreDisplayTabs({
   studyAccession, exploreInfo, setExploreInfo, exploreParams, updateExploreParams,
-  exploreParamsWithDefaults, routerLocation
+  clearExploreParams, exploreParamsWithDefaults, routerLocation
 }) {
   const [, setRenderForcer] = useState({})
   // tracks whether the view options controls are open or closed
@@ -257,7 +257,9 @@ export default function ExploreDisplayTabs({
               />
             }
             { !showViewOptionsControls &&
-              <button className="action view-options-toggle view-options-toggle-on" onClick={toggleViewOptions}>
+              <button className="action view-options-toggle view-options-toggle-on"
+                onClick={toggleViewOptions}
+                data-analytics-name="view-options-show">
                 OPTIONS <FontAwesomeIcon className="fa-lg" icon={faCog}/>
               </button>
             }
@@ -356,7 +358,10 @@ export default function ExploreDisplayTabs({
         <div className={showViewOptionsControls ? 'col-md-2 ' : 'hidden'}>
           <div className="view-options-toggle">
             <FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS
-            <button className="action" onClick={toggleViewOptions}>
+            <button className="action"
+              onClick={toggleViewOptions}
+              title="Hide options"
+              data-analytics-name="view-options-hide">
               <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
             </button>
           </div>
@@ -419,11 +424,18 @@ export default function ExploreDisplayTabs({
             shownTab={shownTab}
             exploreParams={exploreParamsWithDefaults}
             updateExploreParams={updateExploreParams}/>
+          <button className="action"
+            onClick={clearExploreParams}
+            title="reset all view options"
+            data-analytics-name="explore-view-options-reset">
+            <FontAwesomeIcon icon={faUndo}/> Reset view
+          </button>
+          <br/><br/>
           <button onClick={() => copyLink(routerLocation)}
             className="action"
             data-toggle="tooltip"
             title="copy a link to this visualization to the clipboard">
-            Get link <FontAwesomeIcon icon={faLink}/>
+            <FontAwesomeIcon icon={faLink}/> Get link
           </button>
         </div>
       </div>
@@ -458,7 +470,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
         enabledTabs = ['dotplot', 'heatmap']
       }
     } else if (exploreParams.annotation.type === 'numeric') {
-      enabledTabs = ['scatter', 'annotatedScatter']
+      enabledTabs = ['annotatedScatter', 'scatter']
     } else {
       enabledTabs = ['scatter', 'distribution']
     }

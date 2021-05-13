@@ -1,8 +1,6 @@
 #!/bin/bash
 
 cd /home/app/webapp
-echo "*** CLEARING TMP CACHE ***"
-sudo -E -u app -H bin/rails RAILS_ENV=$PASSENGER_APP_ENV tmp:clear
 echo "*** COMPLETED ***"
 echo "*** ROLLING OVER LOGS ***"
 ruby /home/app/webapp/bin/cycle_logs.rb

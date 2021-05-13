@@ -147,7 +147,6 @@ export default function RelatedGenesIdeogram({
       chrHeight: height - verticalPad,
       chrLabelSize: 12,
       annotationHeight: 7,
-      showAnnotLabels: false,
       onClickAnnot,
       onPlotRelatedGenes,
       onWillShowAnnotTooltip,

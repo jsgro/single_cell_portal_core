@@ -104,6 +104,26 @@ export function logClickOther(target) {
   log('click:other', props)
 }
 
+/** Log copy events, such as copying the SCP Zendesk support email */
+export function logCopy(event) {
+  const props = {
+    text: getNameForClickTarget(event.target),
+    classList: getClassListAsArray(event.target),
+    id: event.target.id
+  }
+  log('copy', props)
+}
+
+/** Log contextmenu events, such right-click to "Save target as" or "Copy email address" */
+export function logContextMenu(event) {
+  const props = {
+    text: getNameForClickTarget(event.target),
+    classList: getClassListAsArray(event.target),
+    id: event.target.id
+  }
+  log('contextmenu', props)
+}
+
 /**
   * If the element itself has a data-analytics-name, use that as the name
   * this allows names to be specified for elements that do not have text (e.g. icon buttons)
