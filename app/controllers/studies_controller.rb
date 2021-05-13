@@ -475,8 +475,9 @@ class StudiesController < ApplicationController
     upload = get_upload
     # remove spaces and + (encoded whitespace character) from filename since this converted client-side,
     # but original_filename is unchanged in headers
+    # if this method is being called manually (like in a test) this may not have happened, so look for both filenames
     filename = upload.original_filename.gsub(/[\s\+]/, '_')
-    study_file = @study.study_files.detect {|sf| sf.upload_file_name == filename}
+    study_file = @study.study_files.detect {|sf| [filename, upload.original_filename].include? sf.upload_file_name}
     # If no file has been uploaded or the uploaded file has a different filename,
     # do a new upload from scratch
     if study_file.nil?
