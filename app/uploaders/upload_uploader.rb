@@ -23,7 +23,7 @@ class UploadUploader < CarrierWave::Uploader::Base
 
   def save_content_type_and_size_in_model
     model.upload_content_type = file.content_type if file.content_type
-    model.upload_file_size = model.upload_file_size.blank? ? file.size : model.upload_file_size += file.size
+    model.upload_file_size = model.upload_file_size.nil? ? file.size : model.upload_file_size += file.size
   end
 
   # set move_to_cache and move_to_store to true to perform a file move (i.e. mv file.txt), rather than copy
