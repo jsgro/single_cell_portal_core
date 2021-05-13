@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 
 import ScatterPlot from 'components/visualization/ScatterPlot'
-import { newCache } from './plotDataCache'
+
 // we allow 8 plotly contexts -- each plotly graph consumes 3 webgl contexts,
 // and chrome by defualt allows up to 32 simultaneous webgl contexts
 // so 8 plotly graphs will consume 24 contexts, leaving 8 more, for, e.g., a
@@ -13,11 +13,10 @@ const MAX_PLOTS = PLOTLY_CONTEXT_NAMES.length
   */
 export default function ScatterTab({
   exploreInfo, exploreParams, updateExploreParams, studyAccession, isGene, isMultiGene,
-  plotPointsSelected, isCellSelecting, getPlotDimensions
+  plotPointsSelected, isCellSelecting, getPlotDimensions, dataCache
 }) {
   // maintain the map of plotly contexts to the params that generated the corresponding visualization
   const plotlyContextMap = useRef({})
-  const [dataCache] = useState(newCache())
   const { scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol } = getScatterParams(
     exploreInfo, exploreParams, isGene, isMultiGene
   )

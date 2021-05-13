@@ -92,27 +92,17 @@ function RawScatterPlot({
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     setIsLoading(true)
-    if (dataCache) {
-      dataCache.fetchCluster({
-        studyAccession,
-        cluster,
-        annotation: annotation ? annotation : '',
-        subsample,
-        consensus,
-        genes,
-        isAnnotatedScatter
-      }).then(handleResponse)
-    } else {
-      fetchCluster({
-        studyAccession,
-        cluster,
-        annotation: annotation ? annotation : '',
-        subsample,
-        consensus,
-        genes,
-        isAnnotatedScatter
-      }).then(handleResponse)
-    }
+    // use a data cache if one has been provided, otherwise query scp-api directly
+    let fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
+    fetchMethod({
+      studyAccession,
+      cluster,
+      annotation: annotation ? annotation : '',
+      subsample,
+      consensus,
+      genes,
+      isAnnotatedScatter
+    }).then(handleResponse)
 
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
