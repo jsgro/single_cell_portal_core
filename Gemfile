@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 ruby '2.6.6'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '5.2.4.5'
+gem 'rails', '5.2.4.6'
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 5.0', '>= 5.0.6'
 # Use Uglifier as compressor for JavaScript assets
@@ -90,6 +90,7 @@ gem 'swagger_ui_engine'
 gem 'sentry-raven'
 gem 'travis'
 gem 'rubyzip'
+gem 'rack-brotli'
 gem 'time_difference'
 gem 'tcell_agent'
 gem 'sys-filesystem', require: 'sys/filesystem'

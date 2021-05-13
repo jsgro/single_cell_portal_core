@@ -32,9 +32,13 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
   if (!distributionPointsValue) {
     distributionPointsValue = DISTRIBUTION_POINTS_OPTIONS[0]
   }
+
+  const showScatter = shownTab === 'scatter' &&
+                      (exploreParams.annotation.type === 'numeric' || exploreParams.genes.length)
+
   return (
     <div className="render-controls">
-      <Panel className={shownTab === 'scatter' ? '' : 'hidden'}>
+      <Panel className={showScatter ? '' : 'hidden'}>
         <Panel.Heading>
           <Panel.Title>
             Scatter

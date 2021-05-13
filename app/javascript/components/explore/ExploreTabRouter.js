@@ -18,6 +18,7 @@ export default function useExploreTabRouter() {
   const routerLocation = useLocation()
   const exploreParams = buildExploreParamsFromQuery(routerLocation.search)
 
+  /** reset to the default view for a study */
   function clearExploreParams() {
     navigate(`?#study-visualize`)
   }

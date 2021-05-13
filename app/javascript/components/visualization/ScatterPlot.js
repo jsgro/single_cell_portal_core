@@ -44,7 +44,7 @@ function RawScatterPlot({
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
-    const [scatter, perfTime] = clusterResponse
+    const [scatter, perfTimes] = clusterResponse
 
     const apiOk = checkScpApiResponse(scatter,
       () => Plotly.purge(graphElementId),
@@ -68,7 +68,7 @@ function RawScatterPlot({
         is3D: scatter.is3D
       })
 
-      const perfTimeFrontendStart = performance.now()
+      const startTime = performance.now()
 
       Plotly.react(graphElementId, plotlyTraces, layout)
       sortLegend({
@@ -79,9 +79,11 @@ function RawScatterPlot({
         gene: scatter.gene
       })
 
+      perfTimes.plot = performance.now() - startTime
+
       logScatterPlot(
         { scatter, genes, width: dimensions.width, height: dimensions.height },
-        { perfTime, perfTimeFrontendStart }
+        perfTimes
       )
       setScatterData(scatter)
       setShowError(false)
