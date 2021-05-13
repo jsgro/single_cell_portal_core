@@ -29,7 +29,11 @@
         Ensure any updates to this ID are reflected in the ReactDOM.render call
         in app/javascript/packs/application.js
       #%>
-      <div id="home-page-content"></div>
+      <% if User.feature_flag_for_instance(current_user, 'cross_dataset_search') && @selected_branding_group.nil? %>
+        <div id="home-page-content-xds"></div>
+      <% else %>
+        <div id="home-page-content"></div>
+      <% end %>
     </div>
   </div>
 </div>

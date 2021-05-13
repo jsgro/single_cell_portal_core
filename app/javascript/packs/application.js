@@ -32,6 +32,9 @@ import * as ScpApi from 'lib/scp-api'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
 
+// Move from `components_xds` to `components` after UI refactor
+import HomePageContentXds from 'components_xds/HomePageContent'
+
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI
   logPageView()
@@ -49,7 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
     ReactDOM.render(
       <HomePageContent />, document.getElementById('home-page-content')
     )
+  } else if (document.getElementById('home-page-content-xds')) {
+    ReactDOM.render(
+      <HomePageContentXds />, document.getElementById('home-page-content-xds')
+    )
   }
+
   checkMissingAuthToken()
 })
 
