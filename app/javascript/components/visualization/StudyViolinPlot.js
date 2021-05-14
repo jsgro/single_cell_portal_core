@@ -186,7 +186,7 @@ function getViolinTraces(
   resultValues, showPoints='none', plotType='violin'
 ) {
   const data = Object.entries(resultValues).map(([traceName, traceData], index) => {
-    // Plotly violin trace creation, adding to master array
+    // Plotly violin trace creation, adding to main array
     // get inputs for plotly violin creation
     const dist = traceData.y
 

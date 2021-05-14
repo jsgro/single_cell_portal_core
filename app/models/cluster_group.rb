@@ -313,7 +313,7 @@ class ClusterGroup
       # or all values if requested_sample is larger than size of total values for group
       cells_taken = data[:x].size > requested_sample ? requested_sample : data[:x].size
       @cells_left -= cells_taken
-      # were done with this 'group', so remove from master list
+      # were done with this 'group', so remove from main list
       groups.delete(group)
       # recalculate num_per_group, unless last time
       unless index == group_order.size - 1

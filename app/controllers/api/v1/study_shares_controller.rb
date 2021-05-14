@@ -319,7 +319,7 @@ module Api
         head 403 unless @study.can_edit?(current_api_user)
       end
 
-      # study file params whitelist
+      # study file params list
       def study_share_params
         params.require(:study_share).permit(:id, :study_id, :email, :permission, :deliver_emails)
       end

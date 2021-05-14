@@ -473,7 +473,7 @@ class StudiesController < ApplicationController
   # method to perform chunked uploading of data
   def do_upload
     upload = get_upload
-    # remove spaces and + (encoded whitespace character) from filename since this converted client-side,
+    # remove spaces and + (encoded space character) from filename since this converted client-side,
     # but original_filename is unchanged in headers
     filename = upload.original_filename.gsub(/[\s\+]/, '_')
     study_file = @study.study_files.detect {|sf| sf.upload_file_name == filename}
@@ -1078,7 +1078,7 @@ class StudiesController < ApplicationController
     @study = Study.find(params[:id])
   end
 
-  # study params whitelist
+  # study params list
   def study_params
     params.require(:study).permit(:name, :description, :public, :user_id, :embargo, :use_existing_workspace, :firecloud_workspace,
                                   :firecloud_project, :branding_group_id, study_shares_attributes: [:id, :_destroy, :email, :permission],
@@ -1086,7 +1086,7 @@ class StudiesController < ApplicationController
                                   study_detail_attributes: [:id, :full_description])
   end
 
-  # study file params whitelist
+  # study file params list
   def study_file_params
     params.require(:study_file).permit(:_id, :study_id, :name, :upload, :upload_file_name, :upload_content_type, :upload_file_size,
                                        :remote_location, :description, :file_type, :status, :human_fastq_url, :human_data, :use_metadata_convention,

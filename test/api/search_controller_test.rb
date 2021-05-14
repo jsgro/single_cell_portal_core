@@ -438,21 +438,21 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should run preset search' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    # run whitelist only search
-    @preset_search = PresetSearch.create!(name: 'Preset Search Test', accession_whitelist: %w(SCP1))
-    whitelisted_study = Study.first
+    # run accession list only search
+    @preset_search = PresetSearch.create!(name: 'Preset Search Test', accession_list: %w(SCP1))
+    permitted_study = Study.first
     execute_http_request(:get, api_v1_search_path(type: 'study', preset_search: @preset_search.identifier))
     assert_response :success
-    whitelist_accessions = %w(SCP1)
-    assert json['matching_accessions'] == whitelist_accessions,
-           "Did not return correct studies for whitelisted preset search; expected #{whitelist_accessions} but found #{json['matching_accessions']}"
+    permitted_accessions = %w(SCP1)
+    assert json['matching_accessions'] == permitted_accessions,
+           "Did not return correct permitted studies for preset search; expected #{permitted_accessions} but found #{json['matching_accessions']}"
     found_preset = json['studies'].first
-    assert found_preset['accession'] == whitelisted_study.accession
-    assert found_preset['preset_match'], "Did not correctly mark whitelisted study as preset match; #{found_preset['preset_match']}"
+    assert found_preset['accession'] == permitted_study.accession
+    assert found_preset['preset_match'], "Did not correctly mark permitted study as preset match; #{found_preset['preset_match']}"
 
     # update to use user-search terms as well, include all studies to widen search
     all_accessions = Study.pluck(:accession)
-    @preset_search.update(accession_whitelist: all_accessions)
+    @preset_search.update(accession_list: all_accessions)
     @preset_search.reload
     search_terms = "\"API Test Study\""
     execute_http_request(:get, api_v1_search_path(type: 'study', preset_search: @preset_search.identifier, terms: search_terms))

@@ -567,7 +567,7 @@ module Api
         head 403 unless (@study.public || @study.can_view?(current_api_user))
       end
 
-      # study params whitelist
+      # study params list
       def study_params
         params.require(:study).permit(:name, :description, :public, :embargo, :use_existing_workspace, :firecloud_workspace,
                                       :firecloud_project, :branding_group_id, :cell_count, :gene_count, :view_order,

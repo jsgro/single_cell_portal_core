@@ -159,7 +159,7 @@ class AnalysisConfigurationsController < ApplicationController
       @analysis_parameter = AnalysisParameter.find_by(id: params[:analysis_parameter_id], analysis_configuration_id: params[:id])
     end
 
-    # Never trust parameters from the scary internet, only allow the white list through.
+    # Never trust parameters from the scary internet, only allow the permit list through.
     def analysis_configuration_params
       params.require(:analysis_configuration).permit(:namespace, :name, :snapshot, :configuration_namespace,
                                                      :configuration_name, :configuration_snapshot, :user_id, :description,
