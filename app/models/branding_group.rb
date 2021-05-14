@@ -27,9 +27,9 @@ class BrandingGroup
   field :banner_image_content_type, type: String
 
   # carrierwave settings
-  mount_uploader :splash_image, SplashImageUploader, mount_on: :splash_image_file_name
-  mount_uploader :banner_image, BannerImageUploader, mount_on: :banner_image_file_name
-  mount_uploader :footer_image, FooterImageUploader, mount_on: :footer_image_file_name
+  mount_uploader :splash_image, BrandingGroupImageUploader, mount_on: :splash_image_file_name
+  mount_uploader :banner_image, BrandingGroupImageUploader, mount_on: :banner_image_file_name
+  mount_uploader :footer_image, BrandingGroupImageUploader, mount_on: :footer_image_file_name
 
   # carrierwave conditional validations
   %w(splash_image banner_image footer_image).each do |image_attachment|
