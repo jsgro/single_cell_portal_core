@@ -13,6 +13,8 @@ module Api
         VALID_TYPE_VALUES = ['group', 'numeric']
         VALID_CONSENSUS_VALUES = ['mean', 'median']
 
+        DEFAULT_DATA_FIELDS = ['coordinates', 'expression', 'annotation', 'cells']
+
         before_action :set_current_api_user!
         before_action :set_study
         before_action :check_study_view_permission
@@ -155,8 +157,7 @@ module Api
           subsample = get_selected_subsample_threshold(url_params[:subsample], cluster)
           consensus = url_params[:consensus].blank? ? nil : url_params[:consensus]
 
-          default_data_fields = ['coordinates', 'expression', 'annotation', 'cells']
-          data_fields = url_params[:fields].blank? ? default_data_fields : url_params[:fields].split(',')
+          data_fields = url_params[:fields].blank? ? DEFAULT_DATA_FIELDS : url_params[:fields].split(',')
           include_coordinates = data_fields.include?('coordinates')
           include_expression = data_fields.include?('expression')
           include_annotation = data_fields.include?('annotation')
@@ -173,9 +174,7 @@ module Api
           is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
 
           titles = ClusterVizService.load_axis_labels(cluster)
-          if !url_params[:gene].blank?
-            titles[:magnitude] = ExpressionVizService.load_expression_axis_title(study)
-          end
+          titles[:magnitude] = ExpressionVizService.load_expression_axis_title(study)
 
           plot_data = nil
           genes = RequestUtils.get_genes_from_param(study, url_params[:gene])

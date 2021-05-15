@@ -156,7 +156,13 @@ export function calculatePerfTimes(perfTimes) {
   const perfEntry =
     performance.getEntriesByType('resource')
       .filter(entry => entry.name === perfTimes.url)[0]
-
+  if (!perfEntry) {
+    // this was a plot from cache
+    return {
+      'perfTime:frontend:plot': perfTimes.plot,
+      'perfTime:url': perfTimes.url
+    }
+  }
   const transfer = perfEntry.responseEnd - perfEntry.responseStart
 
   const frontend = now - perfEntry.responseStart
