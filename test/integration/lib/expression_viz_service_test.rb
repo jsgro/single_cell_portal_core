@@ -265,7 +265,6 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     assert_equal(cluster.concatenate_data_arrays('y', 'coordinates'), expression_scatter[:y])
     assert_equal(cluster.concatenate_data_arrays('z', 'coordinates'), expression_scatter[:z])
     assert_equal([0.0, 3.0, 1.5], expression_scatter[:expression])
-    assert_equal({:min=>0.0, :max=>3.0}, expression_scatter[:expressionRange])
   end
 
   test 'should load gene set violin plots' do

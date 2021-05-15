@@ -88,12 +88,12 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
       "isSubsampled"=>false,
       "isAnnotatedScatter"=>false,
       "numPoints"=>3,
-      "axes"=>{"titles"=>{"x"=>"X", "y"=>"Y", "z"=>"Z"}, "aspects"=>nil},
+      "axes"=>{"titles"=>{"x"=>"X", "y"=>"Y", "z"=>"Z", "magnitude" => "Expression"}, "aspects"=>nil},
       "hasCoordinateLabels"=>false,
       "coordinateLabels"=>[],
       "defaultPointOpacity"=>1.0,
       "cluster"=>"clusterA.txt",
-      "gene"=>"",
+      "genes"=>[],
       "annotParams"=>{"name"=>"foo", "type"=>"group", "scope"=>"cluster", "values"=>["bar", "baz"], "identifier"=>"foo--group--cluster"},
       "subsample"=>"all",
       "consensus"=>nil})
@@ -102,8 +102,8 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
   test 'show should handle numeric clusters' do
     sign_in_and_update @user
     execute_http_request(:get, api_v1_study_cluster_path(@basic_study, 'clusterA.txt', {annotation_name: 'intensity', annotation_scope: 'cluster', annotation_type: 'numeric'}))
-
-    assert_equal({"max"=>5, "min"=>1}, json['data']['annotationRange'])
+    assert_equal([1, 2, 5], json['data']['annotations'])
+    assert_equal('numeric', json['annotParams']['type'])
   end
 
   test 'should load clusters with slashes in name' do
