@@ -187,25 +187,20 @@ class ClusterVizService
     cells = []
     annotation_array = []
 
+    data_source = cluster
     if annotation[:scope] == 'user'
       user_annotation = UserAnnotation.find(annotation[:id])
       subsample_annotation = user_annotation.formatted_annotation_identifier
-      if include_coords
-        x_array = user_annotation.concatenate_user_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-        y_array = user_annotation.concatenate_user_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-        z_array = user_annotation.concatenate_user_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-      end
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    else
-      if include_coords
-        x_array = cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-        y_array = cluster.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-        z_array = cluster.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-      end
-      if include_cells || annotation[:scope] == 'study'
-        # for study annotations, we have to grab the cluster cells to match with the study-wide annotation
-        cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-      end
+      data_source =user_annotation
+    end
+    if include_coords
+      x_array = data_source.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
+      y_array = data_source.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
+      z_array = data_source.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
+    end
+    if include_cells || annotation[:scope] == 'study'
+      # for study annotations, we have to grab the cluster cells to match with the study-wide annotation
+      cells = data_source.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
     end
 
     viz_data = {}
