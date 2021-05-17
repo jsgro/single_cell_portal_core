@@ -1,4 +1,8 @@
-<!-- HTML for static distribution bundle build -->
+<!--
+  HTML for static distribution bundle build, from: https://github.com/swagger-api/swagger-ui/blob/master/dist/index.html
+  old swagger UI gem (swagger_ui_engine) does not work with Rails 6, and standalone HTML/JS reads from swagger-blocks
+  output without having to load another library.  CDN also reduces amount of front-end JS to compile on deployment.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
