@@ -76,7 +76,7 @@
 				add: function (e, data) {
 		  			fileUploading = true;
 	  				var that = this;
-  					var fileName = data.files[0].name.replace(/ /g, '_');
+  					var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
             $('#marker_genes_form_<%= study_file._id %> .filename-to-upload').val(fileName);
             canUpload = validateCandidateUpload("#marker_genes_form_<%= study_file._id %>", fileName, $('.initialize_marker_genes_form .filename-to-upload'));
             if ( canUpload ) {
@@ -99,7 +99,7 @@
 				},
 				done: function(e, data) {
           completeWizardStep('initialize_marker_genes_form_nav');
-					var fileName = data.files[0].name.replace(/ /g, '_');
+					var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
 					$.ajax({
 						  url: "<%= update_status_study_path %>",
 						  type: "PATCH",

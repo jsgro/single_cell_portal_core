@@ -476,7 +476,7 @@ class StudiesController < ApplicationController
     # remove spaces and + (encoded whitespace character) from filename since this converted client-side,
     # but original_filename is unchanged in headers
     # if this method is being called manually (like in a test) this may not have happened, so look for both filenames
-    filename = upload.original_filename.gsub(/[\s\+]/, '_')
+    filename = upload.original_filename.gsub(CarrierWave::SanitizedFile.sanitize_regexp, '_')
     study_file = @study.study_files.detect {|sf| [filename, upload.original_filename].include? sf.upload_file_name}
     # If no file has been uploaded or the uploaded file has a different filename,
     # do a new upload from scratch
