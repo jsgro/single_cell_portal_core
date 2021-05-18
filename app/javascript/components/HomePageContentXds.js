@@ -1,3 +1,3 @@
-export default function HomePageContent() {
+export default function HomePageContentXds() {
   return ('no-op: placeholder for cross dataset seearch UI')
 }
