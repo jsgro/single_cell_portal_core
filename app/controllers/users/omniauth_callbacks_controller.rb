@@ -1,13 +1,5 @@
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
-  # Google OAuth2 Scopes
-  # basic scopes are user profile, email, and openid, and do not require user consent to request during auth handshake
-  BASIC_GOOGLE_SCOPES = %w(email profile userinfo.email userinfo.profile openid)
-
-  # extended scopes add cloud-billing.readonly which requires user consent
-  # these are only requested when users attempt to visit the "My Billing Projects" page
-  EXTENDED_GOOGLE_SCOPES = BASIC_GOOGLE_SCOPES.dup + %w(cloud-billing.readonly)
-
   ###
   #
   # This is the OAuth2 endpoint for receiving callbacks from Google after successful authentication
@@ -75,7 +67,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   # then raise a SecurityError and halt execution
   def self.validate_scopes_from_params(params, provider)
     requested_scopes = params[:scope].split
-    configured_scopes = provider == 'google_billing' ? EXTENDED_GOOGLE_SCOPES : BASIC_GOOGLE_SCOPES
+    configured_scopes = provider == 'google_billing' ? SingleCellPortal::Application::EXTENDED_GOOGLE_SCOPES : SingleCellPortal::Application::BASIC_GOOGLE_SCOPES
     requested_scopes.each do |scope|
       # trim auth URL off of name for comparison
       scope_name = scope.starts_with?('https://www.googleapis.com/auth/') ? scope.split('/').last : scope

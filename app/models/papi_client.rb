@@ -1,5 +1,3 @@
-require 'google/apis/genomics_v2alpha1'
-
 ##
 # PapiClient: a lightweight wrapper around the Google Cloud Genomics V2 Alpha API for submitting/reporting
 # scp-ingest-service jobs to ingest user-uploaded data to Firestore

@@ -35,6 +35,12 @@ var PAGE_RENDERED = false;
 var OPEN_MODAL = '';
 var UNSAFE_CHARACTERS = /[\;\/\?\:\@\=\&\'\"\<\>\#\%\{\}\|\\\^\~\[\]\`]/g;
 
+/**
+ * regular expression to sanitize filename on upload; mimics the CarrierWave::SanitizedFile.sanitize_regexp
+ * value, which is /[^[:word:]\.\-\+]/ - since this doesn't translate to JS, we use the functionally equivalent form
+ */
+const FILENAME_SANITIZER = /[^\w\.\-\+]/g
+
 // 1: open, -1: closed.
 // Upon clicking nav toggle, state multiples by -1, toggling this register value
 var exploreMenusToggleState = {

@@ -16,13 +16,12 @@ class SiteController < ApplicationController
 
   before_action :set_study, except: [:index, :search, :legacy_study, :get_viewable_studies, :privacy_policy, :terms_of_service,
                                      :view_workflow_wdl, :log_action, :get_taxon, :get_taxon_assemblies, :covid19]
-  before_action :set_cluster_group, only: [:study, :expression_query, :annotation_query,
-                                          :get_new_annotations, :annotation_values, :show_user_annotations_form]
-  before_action :set_selected_annotation, only: [:annotation_query, :annotation_values, :show_user_annotations_form]
+  before_action :set_cluster_group, only: [:study, :show_user_annotations_form]
+  before_action :set_selected_annotation, only: [:show_user_annotations_form]
   before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :privacy_policy,
-                                                  :terms_of_service, :expression_query, :annotation_query, :view_workflow_wdl,
-                                                  :log_action, :get_workspace_samples, :update_workspace_samples,
-                                                  :get_workflow_options, :get_taxon, :get_taxon_assemblies, :covid19, :record_download_acceptance]
+                                                  :terms_of_service, :view_workflow_wdl, :log_action, :get_workspace_samples,
+                                                  :update_workspace_samples, :get_workflow_options, :get_taxon,
+                                                  :get_taxon_assemblies, :covid19, :record_download_acceptance]
   before_action :check_compute_permissions, only: [:get_fastq_files, :get_workspace_samples, :update_workspace_samples,
                                                    :delete_workspace_samples, :get_workspace_submissions, :create_workspace_submission,
                                                    :get_submission_workflow, :abort_submission_workflow, :get_submission_errors,
@@ -33,11 +32,7 @@ class SiteController < ApplicationController
                                               :get_submission_workflow, :abort_submission_workflow, :get_submission_errors,
                                               :get_submission_outputs, :delete_submission_files, :get_submission_metadata]
 
-  # caching
-  caches_action :expression_query, :annotation_query,
-                cache_path: :set_cache_path
-
-                COLORSCALE_THEMES = %w(Greys YlGnBu Greens YlOrRd Bluered RdBu Reds Blues Picnic Rainbow Portland Jet Hot Blackbody Earth Electric Viridis Cividis)
+  COLORSCALE_THEMES = %w(Greys YlGnBu Greens YlOrRd Bluered RdBu Reds Blues Picnic Rainbow Portland Jet Hot Blackbody Earth Electric Viridis Cividis)
 
   ###
   #
@@ -831,65 +826,6 @@ class SiteController < ApplicationController
       workflow_status = submission['workflowStatuses'].keys.first # this only works for single-workflow analyses
       analysis_submission.update(status: workflow_status)
       analysis_submission.delay.set_completed_on # run in background to avoid UI blocking
-    end
-  end
-
-  protected
-
-  # construct a path to store cache results based on query parameters
-  def set_cache_path
-    params_key = "_#{params[:cluster].to_s.split.join('-')}_#{params[:annotation]}"
-    case action_name
-    when 'render_gene_expression_plots'
-      unless params[:subsample].blank?
-        params_key += "_#{params[:subsample]}"
-      end
-      unless params[:boxpoints].blank?
-        params_key += "_#{params[:boxpoints]}"
-      end
-      params_key += "_#{params[:plot_type]}"
-      render_gene_expression_plots_url(accession: params[:accession], study_name: params[:study_name],
-                                       gene: params[:gene]) + params_key
-    when 'render_global_gene_expression_plots'
-      unless params[:subsample].blank?
-        params_key += "_#{params[:subsample]}"
-      end
-      unless params[:identifier].blank?
-        params_key += "_#{params[:identifier]}"
-      end
-      params_key += "_#{params[:plot_type]}"
-      render_global_gene_expression_plots_url(accession: params[:accession], study_name: params[:study_name],
-                                              gene: params[:gene]) + params_key
-    when 'render_gene_set_expression_plots'
-      unless params[:subsample].blank?
-        params_key += "_#{params[:subsample]}"
-      end
-      if params[:gene_set]
-        params_key += "_#{params[:gene_set].split.join('-')}"
-      else
-        gene_list = params[:search][:genes]
-        gene_key = construct_gene_list_hash(gene_list)
-        params_key += "_#{gene_key}"
-      end
-      params_key += "_#{params[:plot_type]}"
-      unless params[:consensus].blank?
-        params_key += "_#{params[:consensus]}"
-      end
-      unless params[:boxpoints].blank?
-        params_key += "_#{params[:boxpoints]}"
-      end
-      render_gene_set_expression_plots_url(accession: params[:accession], study_name: params[:study_name]) + params_key
-    when 'expression_query'
-      params_key += "_#{params[:row_centered]}"
-      gene_list = params[:search][:genes]
-      gene_key = construct_gene_list_hash(gene_list)
-      params_key += "_#{gene_key}"
-      expression_query_url(accession: params[:accession], study_name: params[:study_name]) + params_key
-    when 'annotation_query'
-      annotation_query_url(accession: params[:accession], study_name: params[:study_name]) + params_key
-    when 'precomputed_results'
-      precomputed_results_url(accession: params[:accession], study_name: params[:study_name],
-                              precomputed: params[:precomputed].split.join('-'))
     end
   end
 end

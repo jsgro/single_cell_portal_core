@@ -1,6 +1,4 @@
-
 class ApplicationController < ActionController::Base
-
   include RealIpLogger
 
   # Error modal contact message

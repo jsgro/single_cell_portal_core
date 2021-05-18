@@ -7,8 +7,8 @@
     <div class="bs-callout bs-callout-danger" id="study-errors-block">
       <h4><%= pluralize(@fire_cloud_profile.errors.count, "error") %> prohibited this profile from being saved:</h4>
       <ul>
-        <% @fire_cloud_profile.errors.keys.each do |key| %>
-          <li id="profile_error_<%= key %>"><%= @fire_cloud_profile.errors.full_messages_for(key).first %></li>
+        <% @fire_cloud_profile.errors.each do |error| %>
+          <li id="profile_error_<%= error.attribute %>"><%= error.full_message %></li>
         <% end %>
       </ul>
     </div>

@@ -40,7 +40,7 @@ class Study
   # associations and scopes
   belongs_to :user
   belongs_to :branding_group, optional: true
-  has_many :study_files, dependent: :delete do
+  has_many :study_files, dependent: :delete_all do
     def by_type(file_type)
       if file_type.is_a?(Array)
         where(queued_for_deletion: false, :file_type.in => file_type).to_a
@@ -187,7 +187,7 @@ class Study
   has_many :user_data_arrays
 
   # HCA metadata object
-  has_many :analysis_metadata, dependent: :delete
+  has_many :analysis_metadata, dependent: :delete_all
 
   # Study Accession
   has_one :study_accession
@@ -196,10 +196,10 @@ class Study
   has_many :external_resources, as: :resource_links, dependent: :destroy
 
   # Study Detail (full html description)
-  has_one :study_detail, dependent: :delete
+  has_one :study_detail, dependent: :delete_all
 
   # DownloadAgreement (extra user terms for downloading data)
-  has_one :download_agreement, dependent: :delete
+  has_one :download_agreement, dependent: :delete_all
 
   # field definitions
   field :name, type: String

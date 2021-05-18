@@ -248,7 +248,7 @@ Devise.setup do |config|
 
   config.omniauth :google_billing, ENV['OAUTH_CLIENT_ID'], ENV['OAUTH_CLIENT_SECRET'],
                   name: 'google_billing', prompt: 'consent', access_type: 'offline',
-                  scope: Users::OmniauthCallbacksController::EXTENDED_GOOGLE_SCOPES.join(' '),
+                  scope: SingleCellPortal::Application::EXTENDED_GOOGLE_SCOPES.join(' '),
                   strategy_class: OmniAuth::Strategies::GoogleOauth2,
                   :client_options => {:ssl => {:ca_file => '/etc/pki/tls/certs/ca-bundle.crt'} },
                   skip_jwt: Rails.env.development? ? true : false

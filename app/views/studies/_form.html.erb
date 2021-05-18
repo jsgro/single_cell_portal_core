@@ -3,8 +3,8 @@
 		<div class="bs-callout bs-callout-danger" id="study-errors-block">
 			<h4><%= pluralize(@study.errors.count, "error") %> prohibited this study from being saved:</h4>
 			<ul>
-				<% @study.errors.keys.each do |key| %>
-					<li id="study_error_<%= key %>"><%= @study.errors.full_messages_for(key).first %></li>
+				<% @study.errors.each do |error| %>
+					<li id="study_error_<%= error.attribute %>"><%= error.full_message %></li>
 				<% end %>
 			</ul>
 		</div>
