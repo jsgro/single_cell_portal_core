@@ -285,7 +285,7 @@ export function fetchClusterUrl({
 }) {
   // Digest full annotation name to enable easy validation in API
   let [annotName, annotType, annotScope] = [annotation.name, annotation.type, annotation.scope]
-  if (annotName == undefined) {
+  if (annotName == undefined && annotation.length) {
     [annotName, annotType, annotScope] = annotation.split('--')
   }
   if (Array.isArray(genes)) {

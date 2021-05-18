@@ -1,47 +1,47 @@
 import * as ScpApi from 'lib/scp-api'
 
 import _cloneDeep from 'lodash/cloneDeep'
-import { newCache } from 'components/explore/plotDataCache'
+import { createCache } from 'components/explore/plot-data-cache'
 
 // models a real response from api/v1/visualization/clusters
 const FETCH_CLUSTER_RESPONSE = {
-    "data": {
-        "annotations": ["foo", "bar"],
-        "cells": ['A', 'B'],
-        "x": [11, 14],
-        "y": [0, 1],
+    data: {
+        annotations: ['foo', 'bar'],
+        cells: ['A', 'B'],
+        x: [11, 14],
+        y: [0, 1],
     },
-    "pointSize": 3,
-    "userSpecifiedRanges": null,
-    "showClusterPointBorders": false,
-    "description": null,
-    "is3D": false,
-    "isSubsampled": false,
-    "isAnnotatedScatter": false,
-    "numPoints": 130,
-    "axes": {
-        "titles": {
-            "x": "X",
-            "y": "Y",
-            "z": "Z",
-            "magnitude": "Expression"
+    pointSize: 3,
+    userSpecifiedRanges: null,
+    showClusterPointBorders: false,
+    description: null,
+    is3D: false,
+    isSubsampled: false,
+    isAnnotatedScatter: false,
+    numPoints: 130,
+    axes: {
+        titles: {
+            x: 'X',
+            y: 'Y',
+            z: 'Z',
+            magnitude: 'Expression'
         },
-        "aspects": null
+        aspects: null
     },
-    "hasCoordinateLabels": false,
-    "coordinateLabels": [],
-    "pointAlpha": 1,
-    "cluster": "cluster.tsv",
-    "genes": [],
-    "annotParams": {
-        "name": "buzzwords",
-        "type": "group",
-        "scope": "study",
-        "values": ['foo', 'bar'],
-        "identifier": "biosample_id--group--study"
+    hasCoordinateLabels: false,
+    coordinateLabels: [],
+    pointAlpha: 1,
+    cluster: 'cluster.tsv',
+    genes: [],
+    annotParams: {
+        name: 'buzzwords',
+        type: 'group',
+        scope: 'study',
+        values: ['foo', 'bar'],
+        identifier: 'biosample_id--group--study'
     },
-    "subsample": "all",
-    "consensus": undefined
+    subsample: 'all',
+    consensus: null
 }
 
 const CACHE_PERF_PARAMS = {
@@ -53,19 +53,19 @@ const CACHE_PERF_PARAMS = {
 
 const ANNOTATION_ONLY_RESPONSE = _cloneDeep(FETCH_CLUSTER_RESPONSE)
 ANNOTATION_ONLY_RESPONSE.annotParams = {
-    "name": "species",
-    "type": "group",
-    "scope": "study",
-    "values": ['dog', 'cat'],
-    "identifier": "species--group--study"
+    name: 'species',
+    type: 'group',
+    scope: 'study',
+    values: ['dog', 'cat'],
+    identifier: 'species--group--study'
   }
 ANNOTATION_ONLY_RESPONSE.data = {
-  "annotations": ["cat", "dog"]
+  'annotations': ['cat', 'dog']
 }
 
 const EXPRESSION_ONLY_RESPONSE = _cloneDeep(ANNOTATION_ONLY_RESPONSE)
 EXPRESSION_ONLY_RESPONSE.data = {
-  "expression": [0.25, 2.3],
+  'expression': [0.25, 2.3],
 }
 EXPRESSION_ONLY_RESPONSE.genes = ['Apoe']
 
@@ -79,7 +79,7 @@ afterEach(() => {
 
 describe('Plot data cache', () => {
   it('caches a single cluster call for use when annotation and gene are changed', async () => {
-    const cache = newCache()
+    const cache = createCache()
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
     // pass in a clone of the response since it may get modified by the cache operations
     apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(FETCH_CLUSTER_RESPONSE), 230]))
@@ -91,14 +91,14 @@ describe('Plot data cache', () => {
       annotation: {}
     })
     const expectedApiParams = {
-      "annotation": {},
-      "cluster": "_default",
-      "consensus": undefined,
-      "fields": ["coordinates", "cells", "annotation"],
-      "genes": [],
-      "isAnnotatedScatter": false,
-      "studyAccession": "SCP1",
-      "subsample": undefined
+      annotation: {},
+      cluster: '_default',
+      consensus: undefined,
+      fields: ['coordinates', 'cells', 'annotation'],
+      genes: [],
+      isAnnotatedScatter: false,
+      studyAccession: 'SCP1',
+      subsample: undefined
     }
 
     expect(apiFetch).toHaveBeenLastCalledWith(expectedApiParams)
@@ -116,14 +116,14 @@ describe('Plot data cache', () => {
         }
       })
       const expectedNewAnnotParams = {
-        "annotation": {name: 'species', scope: 'study'},
-        "cluster": "_default",
-        "consensus": undefined,
-        "fields": ["annotation"],
-        "genes": [],
-        "isAnnotatedScatter": false,
-        "studyAccession": "SCP1",
-        "subsample": undefined
+        annotation: {name: 'species', scope: 'study'},
+        cluster: '_default',
+        consensus: undefined,
+        fields: ['annotation'],
+        genes: [],
+        isAnnotatedScatter: false,
+        studyAccession: 'SCP1',
+        subsample: undefined
       }
       expect(apiFetch).toHaveBeenLastCalledWith(expectedNewAnnotParams)
       return newAnnotFetch
@@ -149,14 +149,14 @@ describe('Plot data cache', () => {
         genes: ['Apoe']
       })
       const expectedNewGeneParams = {
-        "annotation": {name: 'species', scope: 'study'},
-        "cluster": "_default",
-        "consensus": undefined,
-        "fields": ["expression"],
-        "genes": ['Apoe'],
-        "isAnnotatedScatter": false,
-        "studyAccession": "SCP1",
-        "subsample": undefined
+        annotation: {name: 'species', scope: 'study'},
+        cluster: '_default',
+        consensus: undefined,
+        fields: ['expression'],
+        genes: ['Apoe'],
+        isAnnotatedScatter: false,
+        studyAccession: 'SCP1',
+        subsample: undefined
       }
       expect(apiFetch).toHaveBeenLastCalledWith(expectedNewGeneParams)
       return newGeneFetch
@@ -175,7 +175,7 @@ describe('Plot data cache', () => {
 
   // same test as above, but  for a case where the user changes the annotation before the original cluster call returns
   it('does not double-fetch cluster data, even when the cluster data has not yet been received', async () => {
-    const cache = newCache()
+    const cache = createCache()
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
     // pass in a clone of the response since it may get modified by the cache operations
     apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(FETCH_CLUSTER_RESPONSE), 230]))
@@ -197,14 +197,14 @@ describe('Plot data cache', () => {
 
      // it should still only fetch the annotation data, even though the cluster data has not yet arrived
      const expectedNewAnnotParams = {
-      "annotation": {name: 'species', scope: 'study'},
-      "cluster": "_default",
-      "consensus": undefined,
-      "fields": ["annotation"],
-      "genes": [],
-      "isAnnotatedScatter": false,
-      "studyAccession": "SCP1",
-      "subsample": undefined
+      annotation: {name: 'species', scope: 'study'},
+      cluster: '_default',
+      consensus: undefined,
+      fields: ['annotation'],
+      genes: [],
+      isAnnotatedScatter: false,
+      studyAccession: 'SCP1',
+      subsample: undefined
     }
 
     expect(apiFetch).toHaveBeenLastCalledWith(expectedNewAnnotParams)
@@ -226,7 +226,7 @@ describe('cache handles simultaneous gene/cluster plots', () => {
   // this test corresponds to the case wehre a user lands directly on the explore gene search page
   // either from a link, or by reloading the page while a gene search is displayed
   it('does not fetch any data for cluster if expression plot is made first', async () => {
-    const cache = newCache()
+    const cache = createCache()
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
     apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(CLUSTER_AND_EXPRESSION_RESPONSE), 230]))
 
@@ -234,18 +234,18 @@ describe('cache handles simultaneous gene/cluster plots', () => {
     const expressionFetchResult = cache.fetchCluster({
       studyAccession: 'SCP1',
       cluster: '_default',
-      "genes": ['Apoe'],
+      'genes': ['Apoe'],
       annotation: {}
     })
     const expectedApiParams = {
-      "annotation": {},
-      "cluster": "_default",
-      "consensus": undefined,
-      "fields": ["coordinates", "cells", "annotation", "expression"],
-      "genes": ['Apoe'],
-      "isAnnotatedScatter": false,
-      "studyAccession": "SCP1",
-      "subsample": undefined
+      annotation: {},
+      cluster: '_default',
+      consensus: undefined,
+      fields: ['coordinates', 'cells', 'annotation', 'expression'],
+      genes: ['Apoe'],
+      isAnnotatedScatter: false,
+      studyAccession: 'SCP1',
+      subsample: undefined
     }
     expect(apiFetch).toHaveBeenLastCalledWith(expectedApiParams)
     // do a request for the cluster plot
@@ -273,8 +273,9 @@ describe('cache handles simultaneous gene/cluster plots', () => {
       const expressionFetchResult2 = cache.fetchCluster({
         studyAccession: 'SCP1',
         cluster: 'cluster.tsv',
-        "genes": ['Apoe'],
+        genes: ['Apoe'],
         subsample: 'all',
+        consensus: null,
         annotation: {
           name: 'species',
           scope: 'study'
@@ -285,19 +286,20 @@ describe('cache handles simultaneous gene/cluster plots', () => {
           name: 'species',
           scope: 'study'
         },
-        "cluster": "cluster.tsv",
-        "consensus": undefined,
-        "fields": ["annotation"],
-        "genes": ['Apoe'],
-        "isAnnotatedScatter": false,
-        "studyAccession": "SCP1",
-        "subsample": 'all'
+        cluster: 'cluster.tsv',
+        consensus: null,
+        fields: ['annotation'],
+        genes: ['Apoe'],
+        isAnnotatedScatter: false,
+        studyAccession: 'SCP1',
+        subsample: 'all'
       }
       expect(apiFetch).toHaveBeenLastCalledWith(expectedApiParams)
 
       const clusterFetchResult2 = cache.fetchCluster({
         studyAccession: 'SCP1',
         cluster: 'cluster.tsv',
+        'consensus': null,
         annotation: {
           name: 'species',
           scope: 'study'

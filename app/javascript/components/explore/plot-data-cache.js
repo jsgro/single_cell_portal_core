@@ -39,20 +39,20 @@ import { fetchCluster, fetchClusterUrl } from 'lib/scp-api'
 
 
 /**
-  The FIELDS object is a collection of static helper methods, grouped by the field they help cache.
+  The Fields object is a collection of static helper methods, grouped by the field they help cache.
 
-   For each separate field that we cache, we define a property on FIELDS, with
+   For each separate field that we cache, we define a property on Fields, with
    get, put, and merge methods. Get and put are simple hash operations.
    Merge takes a server response object, and puts the relevant fields into the cache,
    or updates the response object with fields from the cache if they were not on the response object
    already
    */
-const FIELDS = {
+const Fields = {
   cellsAndCoords: {
     getFromEntry: entry => entry.cellsAndCoords,
     putInEntry: (entry, cellsAndCoords) => entry.cellsAndCoords = cellsAndCoords,
     addFieldsOrPromise: (entry, fields, promises) => {
-      const cachedCellsAndCoords = FIELDS.cellsAndCoords.getFromEntry(entry)
+      const cachedCellsAndCoords = Fields.cellsAndCoords.getFromEntry(entry)
       if (cachedCellsAndCoords.then) {
         promises.push(cachedCellsAndCoords)
       } else if (!cachedCellsAndCoords.x) {
@@ -85,7 +85,7 @@ const FIELDS = {
       entry.annotations[key] = annotations
     },
     addFieldsOrPromise: (entry, fields, promises, annotationName, annotationScope) => {
-      const cachedAnnotation = FIELDS.annotation.getFromEntry(entry, annotationName, annotationScope)
+      const cachedAnnotation = Fields.annotation.getFromEntry(entry, annotationName, annotationScope)
       if (!cachedAnnotation) {
         fields.push('annotation')
       } else if (cachedAnnotation.then && !promises.includes(cachedAnnotation)) {
@@ -94,9 +94,9 @@ const FIELDS = {
     },
     merge: (entry, scatter) => {
       if (scatter.data.annotations) {
-        FIELDS.annotation.putInEntry(entry, scatter.annotParams.name, scatter.annotParams.scope, scatter.data.annotations)
+        Fields.annotation.putInEntry(entry, scatter.annotParams.name, scatter.annotParams.scope, scatter.data.annotations)
       } else {
-        scatter.data.annotations = FIELDS.annotation.getFromEntry(entry, scatter.annotParams.name, scatter.annotParams.scope)
+        scatter.data.annotations = Fields.annotation.getFromEntry(entry, scatter.annotParams.name, scatter.annotParams.scope)
       }
     }
   },
@@ -113,7 +113,7 @@ const FIELDS = {
       entry.expression[key] = expression
     },
     addFieldsOrPromise: (entry, fields, promises, genes, consensus) => {
-      const cachedExpression = FIELDS.expression.getFromEntry(entry, genes, consensus)
+      const cachedExpression = Fields.expression.getFromEntry(entry, genes, consensus)
       if (!cachedExpression) {
         fields.push('expression')
       } else if (cachedExpression.then && !promises.includes(cachedExpression)) {
@@ -122,9 +122,9 @@ const FIELDS = {
     },
     merge: (entry, scatter) => {
       if (scatter.data.expression) {
-        FIELDS.expression.putInEntry(entry, scatter.genes, scatter.consensus, scatter.data.expression)
+        Fields.expression.putInEntry(entry, scatter.genes, scatter.consensus, scatter.data.expression)
       } else {
-        scatter.data.expression = FIELDS.expression.getFromEntry(entry, scatter.genes, scatter.consensus)
+        scatter.data.expression = Fields.expression.getFromEntry(entry, scatter.genes, scatter.consensus)
       }
     }
   },
@@ -149,7 +149,7 @@ const FIELDS = {
 /**
  * Get a fresh, empty cache.
  */
-export function newCache() {
+export function createCache() {
   const cache = {
     entries: {}
   }
@@ -171,13 +171,13 @@ export function newCache() {
       })
       const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
       if (fields.includes('coordinates')) {
-        FIELDS.cellsAndCoords.putInEntry(cacheEntry, apiCallPromise)
+        Fields.cellsAndCoords.putInEntry(cacheEntry, apiCallPromise)
       }
       if (fields.includes('annotation')) {
-        FIELDS.annotation.putInEntry(cacheEntry, annotation.name, annotation.scope, apiCallPromise)
+        Fields.annotation.putInEntry(cacheEntry, annotation.name, annotation.scope, apiCallPromise)
       }
       if (fields.includes('expression')) {
-        FIELDS.expression.putInEntry(cacheEntry, genes, consensus, apiCallPromise)
+        Fields.expression.putInEntry(cacheEntry, genes, consensus, apiCallPromise)
       }
     } else {
       apiCallPromise = Promise.resolve([
@@ -233,11 +233,11 @@ export function newCache() {
       scatter.cluster = cacheEntry.clusterProps.cluster
       scatter.subsample = cacheEntry.clusterProps.subsample
     }
-    FIELDS.clusterProps.merge(cacheEntry, scatter)
-    FIELDS.cellsAndCoords.merge(cacheEntry, scatter)
-    FIELDS.annotation.merge(cacheEntry, scatter)
+    Fields.clusterProps.merge(cacheEntry, scatter)
+    Fields.cellsAndCoords.merge(cacheEntry, scatter)
+    Fields.annotation.merge(cacheEntry, scatter)
     if (scatter.genes.length) {
-      FIELDS.expression.merge(cacheEntry, scatter)
+      Fields.expression.merge(cacheEntry, scatter)
     }
     return clusterResponse
   }
@@ -274,10 +274,10 @@ export function newCache() {
     // we don't cache anything for annotated scatter since the coordinates are different per annotation/gene
     if (!isAnnotatedScatter) {
       const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
-      FIELDS.cellsAndCoords.addFieldsOrPromise(cacheEntry, fields, promises)
-      FIELDS.annotation.addFieldsOrPromise(cacheEntry, fields, promises, annotation.name, annotation.scope)
+      Fields.cellsAndCoords.addFieldsOrPromise(cacheEntry, fields, promises)
+      Fields.annotation.addFieldsOrPromise(cacheEntry, fields, promises, annotation.name, annotation.scope)
       if (genes.length) {
-        FIELDS.expression.addFieldsOrPromise(cacheEntry, fields, promises, genes, consensus)
+        Fields.expression.addFieldsOrPromise(cacheEntry, fields, promises, genes, consensus)
       }
     } else {
       fields.push('coordinates')
