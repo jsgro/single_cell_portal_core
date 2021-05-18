@@ -24,7 +24,7 @@ const FETCH_CLUSTER_RESPONSE = {
             "x": "X",
             "y": "Y",
             "z": "Z",
-            magnitude: "Expression"
+            "magnitude": "Expression"
         },
         "aspects": null
     },
@@ -77,7 +77,7 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('cache caches basic cluster data', () => {
+describe('Plot data cache', () => {
   it('caches a single cluster call for use when annotation and gene are changed', async () => {
     const cache = newCache()
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
@@ -324,5 +324,4 @@ describe('cache handles simultaneous gene/cluster plots', () => {
     })
   })
 })
-
 

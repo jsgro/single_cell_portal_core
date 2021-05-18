@@ -86,19 +86,19 @@ module Api
             parameter do
               key :name, :annot_name
               key :in, :query
-              key :description, 'Name of the annotation to categorize the cluster data. (blank for default annotation)'
+              key :description, 'Name of the annotation to categorize the cluster data.  Blank for default annotation.'
               key :type, :string
             end
             parameter do
               key :name, :annot_type
               key :in, :query
-              key :description, 'Type of the annotation to retrieve--numeric or category.   (blank for default annotation)'
+              key :description, 'Type of the annotation to retrieve--numeric or category.  Blank for default annotation.'
               key :type, :string
             end
             parameter do
               key :name, :annot_scope
               key :in, :query
-              key :description, 'Scope of the annotation to retrieve--study or cluster.  (blank for default annotation)'
+              key :description, 'Scope of the annotation to retrieve--study or cluster.  Blank for default annotation.'
               key :type, :string
             end
             parameter do

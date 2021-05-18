@@ -154,7 +154,7 @@ export function newCache() {
     entries: {}
   }
 
-  /** fetch the given cluster data, either form cache or the server, as appropriate
+  /** fetch cluster data, either from cache or the server, as appropriate
   * see fetchCluster in scp-api for parameter documentation
   * returns a promise */
   cache.fetchCluster = ({
@@ -198,6 +198,7 @@ export function newCache() {
     }
     promises.push(apiCallPromise)
 
+    // Wait for completion of all promises for fetchCluster API calls, then merge them
     return Promise.all(promises).then(resultArray => {
       let mergedResult = null
       resultArray.forEach(result => {
@@ -218,9 +219,9 @@ export function newCache() {
     const scatter = clusterResponse[0]
     const cacheEntry = cache._findOrCreateEntry(accession, scatter.cluster, scatter.subsample)
 
-    if (scatter.cluster != requestedCluster || requestedSubsample !== scatter.subsample) {
+    if (scatter.cluster !== requestedCluster || scatter.subsample !== requestedSubsample) {
       // if the returned cluster name is different (likely because we requested '_default' and then
-      // got back the actual cluster name), also cache the response under the name of the requested name
+      // got back the actual cluster name), also cache the response under the requested name
       cache._putEntry(accession, requestedCluster, requestedSubsample, cacheEntry)
     }
     if (scatter.isPureCache) {
@@ -267,7 +268,7 @@ export function newCache() {
     studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter
   }) => {
     const fields = []
-    const promises = []
+    const promises = [] // API call promises
     // we don't cache anything for annotated scatter since the coordinates are different per annotation/gene
     if (!isAnnotatedScatter) {
       const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
