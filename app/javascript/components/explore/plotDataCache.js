@@ -2,7 +2,7 @@ import { fetchCluster } from 'lib/scp-api'
 
 /**
   Provides a transparent caching mechanism for calls to fetchCluster
-  For each call, it attempts to caches three separate things from the response:
+  For each call, it attempts to cache three separate things from the response:
     cellsAndCoords: the coordinates and cell names of the cluster
     annotations: an array of annotations
     expression: an array of expression values
@@ -11,7 +11,7 @@ import { fetchCluster } from 'lib/scp-api'
   Once the response from the server comes back, it handles merging in all the cached fields into the
   response.
 
-  For performance reasons, this always copies by referene -- (e.g. it never clones an array of coords)
+  For performance, this always copies by reference, e.g. it never clones an array of coordinates.
   This means, for example, that multiple plotly graphs will actually share underlying data structures.
   As far as I can tell, this is a good thing.  But this means extreme caution should be
   taken before modifying anything returned from a cache call, since it may be used
@@ -32,19 +32,19 @@ import { fetchCluster } from 'lib/scp-api'
 
   cache.fetchCluster({same params})  // will not have to go the server
 
-  cache.fetchCluster({same params, but differen annotation}) // will only fetch the annotation values
+  cache.fetchCluster({same params, but different annotation}) // will only fetch the annotation values
    // does not refetch the cells/coords
 
 */
 
 
 /**
-  The FIELDS object is a collection of static helper method, grouped by the field they help cache.
+  The FIELDS object is a collection of static helper methods, grouped by the field they help cache.
 
    For each separate field that we cache, we define a property on FIELDS, with
    get, put, and merge methods. Get and put are simple hash operations.
-   Merge takes a server response object, and put the relevant fields into the cache,
-   or update the response object with fields from the cache if they were not on the response object
+   Merge takes a server response object, and puts the relevant fields into the cache,
+   or updates the response object with fields from the cache if they were not on the response object
    already
    */
 const FIELDS = {
@@ -299,4 +299,3 @@ function getAnnotationKey(annotationName, annotationScope) {
 function getExpressionKey(gene, consensus) {
   return `${gene}-${consensus}`
 }
-

@@ -110,7 +110,7 @@ module Api
             parameter do
               key :name, :fields
               key :in, :query
-              key :description, 'Specify fields to include in the response. "coordinates", "expression", "annotation", "cells" (blank returns everything)'
+              key :description, 'Comma-delimited list of fields to include in response.  Valid fields: coordinates, expression, annotation, cells.  Blank returns all.'
               key :type, :string
             end
             response 200 do
