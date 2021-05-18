@@ -81,7 +81,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
         "y"=>[7, 5, 3]
       },
       "pointSize"=>3,
-      "clusterSpecifiedRanges"=>nil,
+      "userSpecifiedRanges"=>nil,
       "showClusterPointBorders"=>false,
       "description"=>nil,
       "is3D"=>false,
@@ -91,7 +91,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
       "axes"=>{"titles"=>{"x"=>"X", "y"=>"Y", "z"=>"Z", "magnitude" => "Expression"}, "aspects"=>nil},
       "hasCoordinateLabels"=>false,
       "coordinateLabels"=>[],
-      "defaultPointOpacity"=>1.0,
+      "pointAlpha"=>1.0,
       "cluster"=>"clusterA.txt",
       "genes"=>[],
       "annotParams"=>{"name"=>"foo", "type"=>"group", "scope"=>"cluster", "values"=>["bar", "baz"], "identifier"=>"foo--group--cluster"},

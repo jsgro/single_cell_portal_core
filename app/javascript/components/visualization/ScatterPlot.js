@@ -62,7 +62,7 @@ function RawScatterPlot({
         isAnnotatedScatter: scatter.isAnnotatedScatter,
         scatterColor,
         dataScatterColor: scatter.scatterColor,
-        pointOpacity: scatter.defaultPointOpacity,
+        pointOpacity: scatter.pointAlpha,
         pointSize: scatter.pointSize,
         showPointBorders: scatter.showClusterPointBorders,
         is3D: scatter.is3D
@@ -339,7 +339,7 @@ function getScatterColorToApply(dataScatterColor, scatterColor) {
 /** Gets Plotly layout object for scatter plot */
 function getPlotlyLayout({ width, height }={}, {
   axes,
-  clusterSpecifiedRanges,
+  userSpecifiedRanges,
   hasCoordinateLabels,
   coordinateLabels,
   isAnnotatedScatter,
@@ -354,11 +354,11 @@ function getPlotlyLayout({ width, height }={}, {
     dragmode: getDragMode(isCellSelecting)
   }
   if (is3D) {
-    layout.scene = get3DScatterProps({ clusterSpecifiedRanges, axes })
+    layout.scene = get3DScatterProps({ userSpecifiedRanges, axes })
   } else {
     const props2d = get2DScatterProps({
       axes,
-      clusterSpecifiedRanges,
+      userSpecifiedRanges,
       hasCoordinateLabels,
       coordinateLabels,
       isAnnotatedScatter
@@ -379,7 +379,7 @@ function getPlotlyLayout({ width, height }={}, {
 /** Gets Plotly layout object for two-dimensional scatter plot */
 function get2DScatterProps({
   axes,
-  clusterSpecifiedRanges,
+  userSpecifiedRanges,
   hasCoordinateLabels,
   coordinateLabels,
   isAnnotatedScatter
@@ -404,9 +404,9 @@ function get2DScatterProps({
   }
 
   // if user has supplied a range, set that, otherwise let Plotly autorange
-  if (clusterSpecifiedRanges) {
-    layout.xaxis.range = clusterSpecifiedRanges.x
-    layout.yaxis.range = clusterSpecifiedRanges.y
+  if (userSpecifiedRanges) {
+    layout.xaxis.range = userSpecifiedRanges.x
+    layout.yaxis.range = userSpecifiedRanges.y
   } else {
     layout.xaxis.autorange = true
     layout.yaxis.autorange = true
@@ -427,7 +427,7 @@ const baseCamera = {
 }
 
 /** Gets Plotly layout scene props for 3D scatter plot */
-export function get3DScatterProps({ clusterSpecifiedRanges, axes }) {
+export function get3DScatterProps({ userSpecifiedRanges, axes }) {
   const { titles, ranges, aspects } = axes
 
   const scene = {
@@ -438,7 +438,7 @@ export function get3DScatterProps({ clusterSpecifiedRanges, axes }) {
     zaxis: { title: titles.z, autorange: true, showticklabels: false }
   }
 
-  if (clusterSpecifiedRanges) {
+  if (userSpecifiedRanges) {
     scene.xaxis.autorange = false
     scene.xaxis.range = ranges.x
     scene.yaxis.autorange = false

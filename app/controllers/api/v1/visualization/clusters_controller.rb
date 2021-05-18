@@ -225,7 +225,7 @@ module Api
           {
             "data": plot_data,
             "pointSize": study.default_cluster_point_size,
-            "clusterSpecifiedRanges": cluster.domain_ranges,
+            "userSpecifiedRanges": cluster.domain_ranges,
             "showClusterPointBorders": study.show_cluster_point_borders?,
             "description": cluster.study_file.description,
             "is3D": cluster.is_3d?,

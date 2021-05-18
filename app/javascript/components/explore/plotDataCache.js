@@ -1,8 +1,8 @@
-import { fetchCluster } from 'lib/scp-api'
+import { fetchCluster, fetchClusterUrl } from 'lib/scp-api'
 
 /**
-  Provides a transparent caching mechanism for calls to fetchCluster
-  For each call, it attempts to cache three separate things from the response:
+  @fileoverview Transparent caching mechanism for calls to fetchCluster
+  For each call, it attempts to caches three separate things from the response:
     cellsAndCoords: the coordinates and cell names of the cluster
     annotations: an array of annotations
     expression: an array of expression values
@@ -137,8 +137,8 @@ const FIELDS = {
     getFromEntry: entry => entry.clusterProps,
     putInEntry: (entry, clusterProps) => entry.clusterProps = clusterProps,
     merge: (entry, scatter) => {
-      // clusterProps caches everything except the data and isPureCache properties
-      const { data, isPureCache, ...clusterProps } = scatter
+      // clusterProps caches everything except the data and allDataFromCache properties
+      const { data, allDataFromCache, ...clusterProps } = scatter
       Object.assign(entry.clusterProps, clusterProps)
       Object.assign(scatter, entry.clusterProps)
       return clusterProps
@@ -188,10 +188,12 @@ export function newCache() {
           subsample,
           annotParams: annotation,
           data: {},
-          isPureCache: true // set a flag indicating that no fresh request to the server was needed
+          allDataFromCache: true // set a flag indicating that no fresh request to the server was needed
         }, {
-          url: 'cache',
+          url: fetchClusterUrl({ studyAccession, cluster, annotation,
+            subsample, consensus, genes, isAnnotatedScatter }),
           legacyBackend: 0, // a backend time of zero since this request will never go to the server
+          isClientCache: true,
           parse: 0
         }
       ])
@@ -224,7 +226,7 @@ export function newCache() {
       // got back the actual cluster name), also cache the response under the requested name
       cache._putEntry(accession, requestedCluster, requestedSubsample, cacheEntry)
     }
-    if (scatter.isPureCache) {
+    if (scatter.allDataFromCache) {
       // we need the response cluster/subsample to mimic what actually came from the server for the graphs
       // to render correctly
       scatter.annotParams = cacheEntry.clusterProps.annotParams
@@ -291,7 +293,8 @@ function getKey(accession, cluster, subsample) {
   return `${accession}-${cluster}-${subsample}`
 }
 
-/** returns a key for the cache entry of a given annotation */
+/** returns a key for the cache entry of a given annotation.  Name is guaranteed to be unique and we just
+    add scope as an extra layer of safety/legibility */
 function getAnnotationKey(annotationName, annotationScope) {
   return `${annotationName}-${annotationScope}`
 }

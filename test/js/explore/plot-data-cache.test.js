@@ -12,7 +12,7 @@ const FETCH_CLUSTER_RESPONSE = {
         "y": [0, 1],
     },
     "pointSize": 3,
-    "clusterSpecifiedRanges": null,
+    "userSpecifiedRanges": null,
     "showClusterPointBorders": false,
     "description": null,
     "is3D": false,
@@ -30,7 +30,7 @@ const FETCH_CLUSTER_RESPONSE = {
     },
     "hasCoordinateLabels": false,
     "coordinateLabels": [],
-    "defaultPointOpacity": 1,
+    "pointAlpha": 1,
     "cluster": "cluster.tsv",
     "genes": [],
     "annotParams": {
@@ -262,7 +262,7 @@ describe('cache handles simultaneous gene/cluster plots', () => {
 
       return clusterFetchResult
     }).then(clusterResponse => {
-      const expectedResponse = {...FETCH_CLUSTER_RESPONSE, isPureCache: true}
+      const expectedResponse = {...FETCH_CLUSTER_RESPONSE, allDataFromCache: true}
       expect(clusterResponse[0].data).toEqual(FETCH_CLUSTER_RESPONSE.data)
       expect(clusterResponse[0].annotParams).toEqual(FETCH_CLUSTER_RESPONSE.annotParams)
 
