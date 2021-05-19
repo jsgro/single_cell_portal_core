@@ -75,7 +75,7 @@ function RawScatterPlot({
         graphElementId,
         isAnnotatedScatter,
         annotType: scatter.annotParams.type,
-        gene: scatter.gene
+        genes: scatter.genes
       })
 
       perfTimes.plot = performance.now() - startTime
@@ -135,6 +135,12 @@ function RawScatterPlot({
       const { width, height } = dimensions
       const layoutUpdate = { width, height }
       Plotly.relayout(graphElementId, layoutUpdate)
+      sortLegend({
+        graphElementId,
+        isAnnotatedScatter,
+        annotType: annotation.type,
+        genes: genes
+      })
     }
   }, [dimensions.width, dimensions.height])
 
@@ -285,8 +291,8 @@ function countOccurences(array) {
   it should only be used as a last resort if https://github.com/plotly/plotly.js/pull/5591
   is not included in Plotly soon
  */
-function sortLegend({ graphElementId, isAnnotatedScatter, annotType, gene }) {
-  if (isAnnotatedScatter || annotType === 'numeric' || gene) {
+function sortLegend({ graphElementId, isAnnotatedScatter, annotType, genes }) {
+  if (isAnnotatedScatter || annotType === 'numeric' || genes.length) {
     return
   }
   const legendTitleRegex = /(.*) \(\d+ points\)/
