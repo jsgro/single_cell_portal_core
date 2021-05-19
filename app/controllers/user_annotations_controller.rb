@@ -140,10 +140,10 @@ class UserAnnotationsController < ApplicationController
     types = ['TYPE', 'numeric', 'numeric', 'group']
     rows = []
 
-    annotation_array = @user_annotation.concatenate_user_data_arrays(@user_annotation.name ,'annotations')
-    x_array = @user_annotation.concatenate_user_data_arrays('x', 'coordinates')
-    y_array = @user_annotation.concatenate_user_data_arrays('y', 'coordinates')
-    cell_name_array = @user_annotation.concatenate_user_data_arrays('text', 'cells')
+    annotation_array = @user_annotation.concatenate_data_arrays(@user_annotation.name ,'annotations')
+    x_array = @user_annotation.concatenate_data_arrays('x', 'coordinates')
+    y_array = @user_annotation.concatenate_data_arrays('y', 'coordinates')
+    cell_name_array = @user_annotation.concatenate_data_arrays('text', 'cells')
 
     annotation_array.each_with_index do |annot, index|
       if annot != 'Undefined'

@@ -287,22 +287,23 @@ function countOccurences(array) {
   is not included in Plotly soon
  */
 function sortLegend({ graphElementId, annotValues, isAnnotatedScatter, annotType, gene }) {
-  if (isAnnotatedScatter || annotType === 'numeric' || gene) {
-    return
-  }
-  const legendTitleRegex = /(.*) \(\d+ points\)/
-  const sortedValues = [...annotValues].sort((a, b) => a.localeCompare(b))
-  const legendTraces = Array.from(document.querySelectorAll(`#${graphElementId} .legend .traces`))
-  const legendNames = legendTraces.map(traceEl => {
-    return traceEl.textContent.match(legendTitleRegex)[1]
-  })
-  const legendTransforms = legendTraces.map(traceEl => traceEl.getAttribute('transform'))
+  return
+  // if (isAnnotatedScatter || annotType === 'numeric' || gene) {
+  //   return
+  // }
+  // const legendTitleRegex = /(.*) \(\d+ points\)/
+  // const sortedValues = [...annotValues].sort((a, b) => a.localeCompare(b))
+  // const legendTraces = Array.from(document.querySelectorAll(`#${graphElementId} .legend .traces`))
+  // const legendNames = legendTraces.map(traceEl => {
+  //   return traceEl.textContent.match(legendTitleRegex)[1]
+  // })
+  // const legendTransforms = legendTraces.map(traceEl => traceEl.getAttribute('transform'))
 
-  legendNames.forEach((traceName, index) => {
-    // for each trace, change its transform to the one corresponding to its desired sort order
-    const desiredIndex = sortedValues.findIndex(val => val === traceName)
-    legendTraces[index].setAttribute('transform', legendTransforms[desiredIndex])
-  })
+  // legendNames.forEach((traceName, index) => {
+  //   // for each trace, change its transform to the one corresponding to its desired sort order
+  //   const desiredIndex = sortedValues.findIndex(val => val === traceName)
+  //   legendTraces[index].setAttribute('transform', legendTransforms[desiredIndex])
+  // })
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */

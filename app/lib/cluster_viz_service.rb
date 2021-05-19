@@ -236,14 +236,13 @@ class ClusterVizService
       # for user annotations, we have to load by id as names may not be unique to clusters
       user_annotation = UserAnnotation.find(annotation[:id])
       subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
+      annotation_array = user_annotation.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
     else
       # for study-wide annotations, load from study_metadata values instead of cluster-specific annotations
       metadata_obj = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
       annotation_hash = metadata_obj.cell_annotations
       annotation_array = cells.map { |cell| annotation_hash[cell] }
     end
-    annotation_array = AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
-    annotation_array
+    AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
   end
 end

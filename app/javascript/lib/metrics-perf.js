@@ -8,7 +8,9 @@ import { log } from './metrics-api'
 
 /** Client device memory, # CPUs, and Internet connection speed. */
 export const hardwareStats = getHardwareStats()
-
+/** we record the time taken by unexecuted steps as a very small negative number to make cumulative
+  * mixpanel analytics easier to run */
+export const STEP_NOT_NEEDED = -1
 /**
  * Get data on client device memory, # CPUs, and Internet connection speed.
  *
@@ -151,18 +153,38 @@ function roundValues(props) {
 export function calculatePerfTimes(perfTimes) {
   const now = performance.now()
 
+  if (perfTimes.isClientCache) {
+    const rawPerfProps = {
+      'perfTime:full': now - perfTimes.requestStart,
+      'perfTime': now - perfTimes.requestStart,
+      'perfTime:legacy': now - perfTimes.requestStart,
+
+      // Server timing
+      'perfTime:backend': STEP_NOT_NEEDED,
+
+      // Client timing
+      'perfTime:frontend': now - perfTimes.requestStart, // Time from API call response start to effect (e.g. plot) end
+      'perfTime:frontend:transfer': STEP_NOT_NEEDED,
+      'perfTime:frontend:parse': STEP_NOT_NEEDED,
+      // note that 'other' here is very likely to include the rendering of a different plot.
+      // if a plot is fully cached, that usually means two plots were requested, one of which is a subset of the other
+      // so, e.g. the cluster plot will wait until after the expression data is fetched, and then render itself
+      // based on a subset of that data
+      'perfTime:frontend:other': now - perfTimes.requestStart - perfTimes.plot,
+      'perfTime:frontend:plot': perfTimes.plot,
+      'cache': 'client'
+    }
+    const perfProps = roundValues(Object.assign({}, rawPerfProps))
+    perfProps['perfTime:url'] = perfTimes.url
+    return perfProps
+  }
+
   const plot = perfTimes.plot ? perfTimes.plot : 0
 
   const perfEntry =
     performance.getEntriesByType('resource')
       .filter(entry => entry.name === perfTimes.url)[0]
-  if (!perfEntry) {
-    // this was a plot from cache
-    return {
-      'perfTime:frontend:plot': perfTimes.plot,
-      'perfTime:url': perfTimes.url
-    }
-  }
+
   const transfer = perfEntry.responseEnd - perfEntry.responseStart
 
   const frontend = now - perfEntry.responseStart
