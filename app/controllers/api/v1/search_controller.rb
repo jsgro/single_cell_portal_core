@@ -174,12 +174,12 @@ module Api
         if @preset_search.present?
           params[:terms] = "#{@preset_search.keyword_query_string} #{params[:terms]}".strip
           @facets = @preset_search.matching_facets_and_filters if @preset_search.search_facets.any?
-          # if whitelist is provided, scope viewable to only those studies
-          if @preset_search.accession_whitelist.any?
-            sort_type = :whitelist if params[:terms].blank?
-            @whitelist = @preset_search.accession_whitelist
-            Rails.logger.info "Scoping search results to whitelisted preset search: #{@preset_search.name}: #{@whitelist}"
-            @viewable = @viewable.where(:accession.in => @whitelist)
+          # if accession list is provided, scope viewable to only those studies
+          if @preset_search.accession_list.any?
+            sort_type = :accession_list if params[:terms].blank?
+            @accession_list = @preset_search.accession_list
+            Rails.logger.info "Scoping search results to accessions from preset search: #{@preset_search.name}: #{@accession_list}"
+            @viewable = @viewable.where(:accession.in => @accession_list)
           end
         end
 
@@ -255,8 +255,8 @@ module Api
             end
             accession_index
           end
-        when :whitelist
-          @studies = @studies.sort_by {|study| @whitelist.index(study.accession) }
+        when :accession_list
+          @studies = @studies.sort_by {|study| @accession_list.index(study.accession) }
         when :facet
           @studies = @studies.sort_by {|study| -@studies_by_facet[study.accession][:facet_search_weight]}
         when :recent
@@ -273,8 +273,8 @@ module Api
         logger.info "Total matching accessions from all non-inferred searches: #{@matching_accessions}"
 
         # if a user ran a faceted search, attempt to infer results by converting filter display values to keywords
-        # Do not run inferred search if we have a preset search with a whitelist
-        if @facets.any? && @whitelist.nil?
+        # Do not run inferred search if we have a preset search with an accession list
+        if @facets.any? && @accession_list.nil?
           # preserve existing search terms, if present
           facets_to_keywords = @term_list.present? ? {keywords: @term_list.dup} : {}
           facets_to_keywords.merge!(self.class.convert_filters_for_inferred_search(facets: @facets))
@@ -674,7 +674,7 @@ module Api
       def self.extract_phrases_from_search(query_string:)
         terms = []
         query_string.split("\"").each do |substring|
-          # when splitting on double quotes, phrases will not have any leading/trailing whitespace
+          # when splitting on double quotes, phrases will not have any leading/trailing space
           # individual lists of terms will have one or the other, which is how we differentiate
           if substring.start_with?(' ') || substring.end_with?(' ')
             terms += substring.strip.split

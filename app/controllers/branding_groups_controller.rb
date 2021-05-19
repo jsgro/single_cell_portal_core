@@ -33,7 +33,7 @@ class BrandingGroupsController < ApplicationController
     respond_to do |format|
       if @branding_group.save
         # push all branding assets to remote to ensure consistency
-        UserAssetService.delay.push_assets_to_remote(asset_path: :branding_images)
+        UserAssetService.delay.push_assets_to_remote(asset_type: :branding_images)
         format.html { redirect_to merge_default_redirect_params(branding_group_path(@branding_group), scpbr: params[:scpbr]),
                                   notice: "Branding group '#{@branding_group.name}' was successfully created." }
         format.json { render :show, status: :created, location: @branding_group }
@@ -78,7 +78,7 @@ class BrandingGroupsController < ApplicationController
     @branding_group = BrandingGroup.find(params[:id])
   end
 
-  # Never trust parameters from the scary internet, only allow the white list through.
+  # Never trust parameters from the scary internet, only allow the permit list through.
   def branding_group_params
     params.require(:branding_group).permit(:name, :tag_line, :background_color, :font_family, :font_color, :user_id,
                                            :splash_image, :banner_image, :footer_image, :external_link_url, :external_link_description)

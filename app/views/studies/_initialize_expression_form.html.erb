@@ -100,7 +100,7 @@
 				add: function (e, data) {
 					fileUploading = true;
 					var that = this;
-					var fileName = data.files[0].name.replace(/ /g, '_');
+					var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
 					// auto-select MM Coordinate Matrix if applicable
           fileExt = fileName.split('.').slice(-1)[0];
           if (fileExt === 'mtx') {
@@ -132,7 +132,7 @@
 				},
 				done: function(e, data) {
           completeWizardStep('initialize_expression_form_nav');
-					var fileName = data.files[0].name.replace(/ /g, '_');
+					var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
 					$.ajax({
 						  url: "<%= update_status_study_path %>",
 						  type: "PATCH",

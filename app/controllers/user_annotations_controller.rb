@@ -186,8 +186,8 @@ class UserAnnotationsController < ApplicationController
     @user_annotation = UserAnnotation.find(params[:id])
   end
 
-  # Never trust parameters from the scary internet, only allow the white list through.
-  # whitelist parameters for creating custom user annotation
+  # Never trust parameters from the scary internet, only allow the permit list through.
+  # permit parameters for creating custom user annotation
   def user_annotation_params
     params.require(:user_annotation).permit(:_id, :name, :study_id, :user_id, :cluster_group_id, values: [],
                                             user_annotation_shares_attributes: [:id, :_destroy, :email, :permission])

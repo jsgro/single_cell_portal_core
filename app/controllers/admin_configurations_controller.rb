@@ -397,7 +397,7 @@ class AdminConfigurationsController < ApplicationController
     @admin_configuration = AdminConfiguration.find(params[:id])
   end
 
-  # Never trust parameters from the scary internet, only allow the white list through.
+  # Never trust parameters from the scary internet, only allow the permit list through.
   def admin_configuration_params
     params.require(:admin_configuration).permit(:config_type, :value_type, :value, :multiplier, configuration_options_attributes: [:id, :name, :value, :_destroy])
   end

@@ -1,6 +1,6 @@
 ##
 # PresetSearch: a collection for storing a "canned" query for a group of studies.  Will always prioritize the studies
-# included in the :accession_whitelist over other query results. :search_terms and :facet_filters are arrays of individual
+# included in the :accession_list over other query results. :search_terms and :facet_filters are arrays of individual
 # keyword/phrase or facet filters exactly as they would be passed to the search API
 #
 # examples of :search_terms and :facet_filters to find HIV human blood studies:
@@ -18,7 +18,7 @@ class PresetSearch
 
   field :name, type: String
   field :identifier, type: String
-  field :accession_whitelist, type: Array, default: []
+  field :accession_list, type: Array, default: []
   field :search_terms, type: Array, default: []
   field :facet_filters, type: Array, default: []
   field :public, type: Mongoid::Boolean, default: true
@@ -29,7 +29,7 @@ class PresetSearch
   before_validation :sanitize_array_attributes
   validate :ensure_search_terms_are_unique, if: proc {|attributes| attributes[:search_terms].any?}
   validate :ensure_facet_filters_are_unique, if: proc {|attributes| attributes[:facet_filters].any?}
-  validate :whitelisted_studies_exist
+  validate :permitted_studies_exist
   validate :can_return_results
 
   # format search terms into a query string to use with search API
@@ -61,12 +61,12 @@ class PresetSearch
     SearchFacet.where(:identifier.in => self.get_facet_identifiers)
   end
 
-  def study_whitelist
-    Study.where(:accession.in => self.accession_whitelist)
+  def study_list
+    Study.where(:accession.in => self.accession_list)
   end
 
   # helper for determining if this search does not contain keywords/facets
-  def whitelist_only?
+  def permitted_studies_only?
     self.facet_filters.empty? && self.search_terms.empty?
   end
 
@@ -95,7 +95,7 @@ class PresetSearch
   end
 
   def sanitize_array_attributes
-    self.accession_whitelist.reject!(&:blank?)
+    self.accession_list.reject!(&:blank?)
     self.search_terms.reject!(&:blank?)
     self.facet_filters.reject!(&:blank?)
   end
@@ -118,19 +118,19 @@ class PresetSearch
     end
   end
 
-  # validate that whitelisted studies exist on save
-  def whitelisted_studies_exist
-    unless self.study_whitelist.count == self.accession_whitelist.count
-      missing = (self.accession_whitelist - self.study_whitelist.pluck(:accession)).join(', ')
-      errors.add(:accession_whitelist, "contains missing studies: #{missing}")
+  # validate that permitted studies exist on save
+  def permitted_studies_exist
+    unless self.study_list.count == self.accession_list.count
+      missing = (self.accession_list - self.study_list.pluck(:accession)).join(', ')
+      errors.add(:accession_list, "contains missing studies: #{missing}")
     end
   end
 
-  # validate that this search has potential to return results; it must have an accession_whitelist, search_terms,
+  # validate that this search has potential to return results; it must have an accession_list, search_terms,
   # or facet_filters
   def can_return_results
-    if self.accession_whitelist.blank? && self.search_terms.empty? && self.facet_filters.empty?
-      errors.add(:base, "You must supply either search terms, facet filters, or an accession whitelist")
+    if self.accession_list.blank? && self.search_terms.empty? && self.facet_filters.empty?
+      errors.add(:base, "You must supply either search terms, facet filters, or an accession list")
     end
   end
 

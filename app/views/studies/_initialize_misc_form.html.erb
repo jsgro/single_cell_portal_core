@@ -60,7 +60,7 @@
 				add: function (e, data) {
 					  fileUploading = true;
 					  var that = this;
-					  var fileName = data.files[0].name.replace(/ /g, '_');
+					  var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
             $('#misc_form_<%= study_file._id %> .filename').val(fileName);
             canUpload = validateCandidateUpload("#misc_form_<%= study_file._id %>", fileName, $('.initialize_misc_form .filename'));
             if ( canUpload ) {
@@ -83,7 +83,7 @@
 					$(data.context).find('h1').html(perc + "% uploaded");
 				},
 				done: function(e, data) {
-					var fileName = data.files[0].name.replace(/ /g, '_');
+					var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
 					$.ajax({
 						  url: "<%= update_status_study_path %>",
 						  type: "PATCH",

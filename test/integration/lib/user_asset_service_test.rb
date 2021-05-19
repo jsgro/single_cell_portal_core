@@ -27,6 +27,17 @@ class UserAssetServiceTest < ActiveSupport::TestCase
     end
   end
 
+  # ensure directories are clear for each test to avoid issues w/ upstream/downstream tests
+  setup do
+    FileUtils.rm_rf Rails.root.join('public', 'single_cell', 'branding_groups')
+    FileUtils.rm_rf Rails.root.join('public', 'single_cell', 'ckeditor_assets')
+  end
+
+  teardown do
+    FileUtils.rm_rf Rails.root.join('public', 'single_cell', 'branding_groups')
+    FileUtils.rm_rf Rails.root.join('public', 'single_cell', 'ckeditor_assets')
+  end
+
   test 'should instantiate client' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
@@ -80,10 +91,6 @@ class UserAssetServiceTest < ActiveSupport::TestCase
     new_local_assets = UserAssetService.localize_assets_from_remote
     assert_equal local_assets.sort, new_local_assets.sort,
                  "Did not successfully localize remotes, #{new_local_assets.sort} != #{local_assets.sort}"
-
-    # clean up
-    FileUtils.rm_rf Rails.root.join('public', 'single_cell', 'branding_groups')
-    FileUtils.rm_rf Rails.root.join('public', 'single_cell', 'ckeditor_assets')
 
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end

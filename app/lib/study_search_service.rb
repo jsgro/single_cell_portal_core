@@ -33,7 +33,7 @@ class StudySearchService
     {  genes_by_study: genes_by_study, study_ids: study_ids.uniq }
   end
 
-  # takes a gene param string and returns a sanitized, whitespace-stripped array of terms
+  # takes a gene param string and returns a sanitized, leading/trailing space-stripped array of terms
   def self.sanitize_gene_params(genes)
     delimiter = genes.include?(',') ? ',' : ' '
     raw_genes = genes.split(delimiter)

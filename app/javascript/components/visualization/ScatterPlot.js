@@ -360,7 +360,8 @@ function getPlotlyLayout({ width, height }={}, {
     dragmode: getDragMode(isCellSelecting)
   }
   if (is3D) {
-    layout.scene = get3DScatterProps({ userSpecifiedRanges, axes })
+    layout.scene = get3DScatterProps({ userSpecifiedRanges, axes, hasCoordinateLabels,
+      coordinateLabels })
   } else {
     const props2d = get2DScatterProps({
       axes,
@@ -433,7 +434,8 @@ const baseCamera = {
 }
 
 /** Gets Plotly layout scene props for 3D scatter plot */
-export function get3DScatterProps({ userSpecifiedRanges, axes }) {
+export function get3DScatterProps({ userSpecifiedRanges, axes, hasCoordinateLabels,
+      coordinateLabels }) {
   const { titles, ranges, aspects } = axes
 
   const scene = {
@@ -457,6 +459,10 @@ export function get3DScatterProps({ userSpecifiedRanges, axes }) {
       y: aspects.y,
       z: aspects.z
     }
+  }
+
+  if (hasCoordinateLabels) {
+    scene.annotations = coordinateLabels
   }
 
   return scene

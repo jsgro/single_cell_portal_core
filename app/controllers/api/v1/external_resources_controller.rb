@@ -303,7 +303,7 @@ module Api
         head 403 unless @study.can_edit?(current_api_user)
       end
 
-      # study file params whitelist
+      # study file params list
       def external_resource_params
         params.require(:external_resource).permit(:id, :study_id, :title, :description, :url, :publication_url)
       end
