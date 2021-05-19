@@ -71,13 +71,12 @@ function RawScatterPlot({
       const startTime = performance.now()
 
       Plotly.react(graphElementId, plotlyTraces, layout)
-      // legend sorting disabled due to flakiness, see comment at top of the function
-      // sortLegend({
-      //   graphElementId,
-      //   isAnnotatedScatter,
-      //   annotType: scatter.annotParams.type,
-      //   gene: scatter.gene
-      // })
+      sortLegend({
+        graphElementId,
+        isAnnotatedScatter,
+        annotType: scatter.annotParams.type,
+        gene: scatter.gene
+      })
 
       perfTimes.plot = performance.now() - startTime
 
