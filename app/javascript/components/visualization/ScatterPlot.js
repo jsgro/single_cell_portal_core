@@ -221,7 +221,7 @@ function getPlotlyLayout({
   hasCoordinateLabels,
   coordinateLabels,
   isAnnotatedScatter,
-  is3d,
+  is3D,
   isCellSelecting=false,
   gene,
   annotParams
@@ -231,8 +231,9 @@ function getPlotlyLayout({
     font: labelFont,
     dragmode: getDragMode(isCellSelecting)
   }
-  if (is3d) {
-    layout.scene = get3DScatterProps({ domainRanges, axes })
+  if (is3D) {
+    layout.scene = get3DScatterProps({ domainRanges, axes, hasCoordinateLabels,
+      coordinateLabels })
   } else {
     const props2d = get2DScatterProps({
       axes,
@@ -299,7 +300,8 @@ const baseCamera = {
 }
 
 /** Gets Plotly layout scene props for 3D scatter plot */
-export function get3DScatterProps({ domainRanges, axes }) {
+export function get3DScatterProps({ domainRanges, axes, hasCoordinateLabels,
+      coordinateLabels }) {
   const { titles, ranges, aspects } = axes
 
   const scene = {
@@ -323,6 +325,10 @@ export function get3DScatterProps({ domainRanges, axes }) {
       y: aspects.y,
       z: aspects.z
     }
+  }
+
+  if (hasCoordinateLabels) {
+    scene.annotations = coordinateLabels
   }
 
   return scene
