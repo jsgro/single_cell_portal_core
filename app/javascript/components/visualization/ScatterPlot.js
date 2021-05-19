@@ -8,6 +8,7 @@ import { fetchCluster } from 'lib/scp-api'
 import { logScatterPlot } from 'lib/scp-api-metrics'
 import { log } from 'lib/metrics-api'
 import { labelFont, getColorBrewerColor } from 'lib/plot'
+import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
 import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
@@ -70,13 +71,12 @@ function RawScatterPlot({
       const startTime = performance.now()
 
       Plotly.react(graphElementId, plotlyTraces, layout)
-      // sortLegend({
-      //   graphElementId,
-      //   annotValues: scatter.annotParams.values,
-      //   isAnnotatedScatter,
-      //   annotType: scatter.annotParams.type,
-      //   gene: scatter.gene
-      // })
+      sortLegend({
+        graphElementId,
+        isAnnotatedScatter,
+        annotType: scatter.annotParams.type,
+        gene: scatter.gene
+      })
 
       perfTimes.plot = performance.now() - startTime
 
@@ -285,22 +285,29 @@ function countOccurences(array) {
   it should only be used as a last resort if https://github.com/plotly/plotly.js/pull/5591
   is not included in Plotly soon
  */
-function sortLegend({ graphElementId, annotValues, isAnnotatedScatter, annotType, gene }) {
+function sortLegend({ graphElementId, isAnnotatedScatter, annotType, gene }) {
   if (isAnnotatedScatter || annotType === 'numeric' || gene) {
     return
   }
   const legendTitleRegex = /(.*) \(\d+ points\)/
-  const sortedValues = [...annotValues].sort((a, b) => a.localeCompare(b))
+
   const legendTraces = Array.from(document.querySelectorAll(`#${graphElementId} .legend .traces`))
   const legendNames = legendTraces.map(traceEl => {
     return traceEl.textContent.match(legendTitleRegex)[1]
+  })
+  const sortedNames = [...legendNames].sort((a, b) => {
+    if (a === UNSPECIFIED_ANNOTATION_NAME) { return 1 }
+    if (b === UNSPECIFIED_ANNOTATION_NAME) { return -1 }
+    return a.localeCompare(b)
   })
   const legendTransforms = legendTraces.map(traceEl => traceEl.getAttribute('transform'))
 
   legendNames.forEach((traceName, index) => {
     // for each trace, change its transform to the one corresponding to its desired sort order
-    const desiredIndex = sortedValues.findIndex(val => val === traceName)
-    legendTraces[index].setAttribute('transform', legendTransforms[desiredIndex])
+    const desiredIndex = sortedNames.findIndex(val => val === traceName)
+    if (desiredIndex >= 0) {
+      legendTraces[index].setAttribute('transform', legendTransforms[desiredIndex])
+    }
   })
 }
 
