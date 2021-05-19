@@ -66,11 +66,13 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #
   # * *return*
   #   - +DateTime+ timestamp of new access token expiration
-  def refresh_access_token
+  def refresh_access_token!
+    Rails.logger.info "DataRepoClient token expired, refreshing access token"
     new_token = self.class.generate_access_token(self.service_account_credentials)
     new_expiry = Time.zone.now + new_token['expires_in']
     self.access_token = new_token
     self.expires_at = new_expiry
+    new_token
   end
 
   # check if an access_token is expired
@@ -86,7 +88,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   # * *return*
   #   - +Hash+ of access token
   def valid_access_token
-    self.access_token_expired? ? self.refresh_access_token : self.access_token
+    self.access_token_expired? ? self.refresh_access_token! : self.access_token
   end
 
   # get issuer of storage credentials
@@ -105,14 +107,10 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   def process_api_request(http_method, path, payload: nil, retry_count: 0)
     # Log API call for auditing/tracking purposes
     Rails.logger.info "Terra Data Repo API request (#{http_method.to_s.upcase}) #{path}"
-    # check for token expiry first before executing
-    if self.access_token_expired?
-      Rails.logger.info "DataRepoClient token expired, refreshing access token"
-      self.refresh_access_token
-    end
+
     # set default headers, appending application identifier including hostname for disambiguation
     headers = {
-      'Authorization' => "Bearer #{self.access_token['access_token']}",
+      'Authorization' => "Bearer #{self.valid_access_token['access_token']}",
       'Accept' => 'application/json',
       'x-app-id' => "single-cell-portal",
       'x-domain-id' => "#{ENV['HOSTNAME']}"
