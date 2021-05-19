@@ -57,7 +57,6 @@ function RawScatterPlot({
         data: scatter.data,
         annotName: scatter.annotParams.name,
         annotType: scatter.annotParams.type,
-        annotValues: scatter.annotParams.values,
         genes: scatter.genes,
         isAnnotatedScatter: scatter.isAnnotatedScatter,
         scatterColor,
@@ -71,13 +70,13 @@ function RawScatterPlot({
       const startTime = performance.now()
 
       Plotly.react(graphElementId, plotlyTraces, layout)
-      sortLegend({
-        graphElementId,
-        annotValues: scatter.annotParams.values,
-        isAnnotatedScatter,
-        annotType: scatter.annotParams.type,
-        gene: scatter.gene
-      })
+      // sortLegend({
+      //   graphElementId,
+      //   annotValues: scatter.annotParams.values,
+      //   isAnnotatedScatter,
+      //   annotType: scatter.annotParams.type,
+      //   gene: scatter.gene
+      // })
 
       perfTimes.plot = performance.now() - startTime
 
@@ -197,7 +196,6 @@ function getPlotlyTraces({
   data,
   annotType,
   annotName,
-  annotValues,
   genes,
   isAnnotatedScatter,
   scatterColor,
@@ -224,21 +222,22 @@ function getPlotlyTraces({
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
   if (annotType === 'group' && !genes.length) {
     const traceCounts = countOccurences(data.annotations)
+    const traceStyles = Object.keys(traceCounts).map((val, index) => {
+      return {
+        target: val,
+        value: {
+          name: `${val} (${traceCounts[val]} points)`,
+          marker: {
+            color: getColorBrewerColor(index),
+            size: pointSize
+          }
+        }
+      }
+    })
     trace.transforms = [{
       type: 'groupby',
       groups: data.annotations,
-      styles: annotValues.map((val, index) => {
-        return {
-          target: val,
-          value: {
-            name: `${val} (${traceCounts[val]} points)`,
-            marker: {
-              color: getColorBrewerColor(index),
-              size: pointSize
-            }
-          }
-        }
-      })
+      styles: traceStyles
     }]
   } else {
     trace.marker = {
@@ -287,23 +286,22 @@ function countOccurences(array) {
   is not included in Plotly soon
  */
 function sortLegend({ graphElementId, annotValues, isAnnotatedScatter, annotType, gene }) {
-  return
-  // if (isAnnotatedScatter || annotType === 'numeric' || gene) {
-  //   return
-  // }
-  // const legendTitleRegex = /(.*) \(\d+ points\)/
-  // const sortedValues = [...annotValues].sort((a, b) => a.localeCompare(b))
-  // const legendTraces = Array.from(document.querySelectorAll(`#${graphElementId} .legend .traces`))
-  // const legendNames = legendTraces.map(traceEl => {
-  //   return traceEl.textContent.match(legendTitleRegex)[1]
-  // })
-  // const legendTransforms = legendTraces.map(traceEl => traceEl.getAttribute('transform'))
+  if (isAnnotatedScatter || annotType === 'numeric' || gene) {
+    return
+  }
+  const legendTitleRegex = /(.*) \(\d+ points\)/
+  const sortedValues = [...annotValues].sort((a, b) => a.localeCompare(b))
+  const legendTraces = Array.from(document.querySelectorAll(`#${graphElementId} .legend .traces`))
+  const legendNames = legendTraces.map(traceEl => {
+    return traceEl.textContent.match(legendTitleRegex)[1]
+  })
+  const legendTransforms = legendTraces.map(traceEl => traceEl.getAttribute('transform'))
 
-  // legendNames.forEach((traceName, index) => {
-  //   // for each trace, change its transform to the one corresponding to its desired sort order
-  //   const desiredIndex = sortedValues.findIndex(val => val === traceName)
-  //   legendTraces[index].setAttribute('transform', legendTransforms[desiredIndex])
-  // })
+  legendNames.forEach((traceName, index) => {
+    // for each trace, change its transform to the one corresponding to its desired sort order
+    const desiredIndex = sortedValues.findIndex(val => val === traceName)
+    legendTraces[index].setAttribute('transform', legendTransforms[desiredIndex])
+  })
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */
