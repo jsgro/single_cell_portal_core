@@ -73,7 +73,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
   test 'show should return visualization information' do
     sign_in_and_update @user
     execute_http_request(:get, api_v1_study_cluster_path(@basic_study, 'clusterA.txt'))
-    assert_equal(json, {
+    assert_equal({
       "data"=>{
         "annotations"=>["bar", "bar", "baz"],
         "cells"=>["A", "B", "C"],
@@ -96,7 +96,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
       "genes"=>[],
       "annotParams"=>{"name"=>"foo", "type"=>"group", "scope"=>"cluster", "values"=>["bar", "baz"], "identifier"=>"foo--group--cluster"},
       "subsample"=>"all",
-      "consensus"=>nil})
+      "consensus"=>nil}, json)
   end
 
   test 'show should handle numeric clusters' do

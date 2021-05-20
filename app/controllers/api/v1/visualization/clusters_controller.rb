@@ -235,7 +235,7 @@ module Api
             "axes": axes_full,
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
             "coordinateLabels": coordinate_labels,
-            "defaultPointOpacity": study.default_cluster_point_alpha,
+            "pointAlpha": study.default_cluster_point_alpha,
             "cluster": cluster.name,
             "genes": genes.map {|g| g['name']},
             "annotParams": annotation,

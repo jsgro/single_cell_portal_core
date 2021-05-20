@@ -62,7 +62,7 @@ function RawScatterPlot({
         isAnnotatedScatter: scatter.isAnnotatedScatter,
         scatterColor,
         dataScatterColor: scatter.scatterColor,
-        pointOpacity: scatter.pointAlpha,
+        pointAlpha: scatter.pointAlpha,
         pointSize: scatter.pointSize,
         showPointBorders: scatter.showClusterPointBorders,
         is3D: scatter.is3D
@@ -206,7 +206,7 @@ function getPlotlyTraces({
   isAnnotatedScatter,
   scatterColor,
   dataScatterColor,
-  pointOpacity,
+  pointAlpha,
   pointSize,
   showPointBorders,
   is3D
@@ -218,7 +218,7 @@ function getPlotlyTraces({
     y: data.y,
     annotations: data.annotations,
     cells: data.cells,
-    opacity: pointOpacity ? pointOpacity : 1
+    opacity: pointAlpha ? pointAlpha : 1
   }
   if (is3D) {
     trace.z = data.z
