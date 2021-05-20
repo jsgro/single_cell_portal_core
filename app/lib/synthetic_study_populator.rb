@@ -20,15 +20,21 @@ class SyntheticStudyPopulator
   # populates the synthetic study specified in the given folder (e.g. ./db/seed/synthetic_studies/blood)
   # destroys any existing studies and workspace data corresponding to that study
   def self.populate(synthetic_study_folder, user: User.first, detached: false, update_files: false)
+    synthetic_study_path = synthetic_study_folder
     if (synthetic_study_folder.exclude?('/'))
-      synthetic_study_folder = DEFAULT_SYNTHETIC_STUDY_PATH.join(synthetic_study_folder).to_s
+      synthetic_study_path = DEFAULT_SYNTHETIC_STUDY_PATH.join(synthetic_study_folder).to_s
     end
-    study_info_file = File.read(synthetic_study_folder + '/study_info.json')
+    study_info_file = File.read(synthetic_study_path + '/study_info.json')
     study_config = JSON.parse(study_info_file)
 
-    puts("Populating synthetic study from #{synthetic_study_folder}")
+    # copy the files to a temp directory, since CarrierWave will delete them after upload
+    temp_file_dir = "/tmp/synthetic_studies/#{synthetic_study_folder}"
+    FileUtils.mkdir_p(temp_file_dir)
+    FileUtils.cp_r("#{synthetic_study_path}/.", temp_file_dir)
+
+    puts("Populating synthetic study from #{temp_file_dir}")
     study = create_study(study_config, user, detached, update_files)
-    add_files(study, study_config, synthetic_study_folder, user)
+    add_files(study, study_config, temp_file_dir, user)
     study
   end
 
