@@ -13,6 +13,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     begin
       provider = request.env["omniauth.auth"].dig('provider')
       self.class.validate_scopes_from_params(params, provider)
+      self.class.validate_host_header_on_callback(request.headers)
     rescue SecurityError => e
       sign_out @user if @user.present?
       head 400 and return
@@ -41,6 +42,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     begin
       provider = request.env["omniauth.auth"].dig('provider')
       self.class.validate_scopes_from_params(params, provider)
+      self.class.validate_host_header_on_callback(request.headers)
     rescue SecurityError => e
       sign_out @user if @user.present?
       head 400 and return
@@ -76,6 +78,16 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
         Rails.logger.error error_message
         raise SecurityError.new(error_message)
       end
+    end
+  end
+
+  # ensure that no host header injection has taken place
+  def self.validate_host_header_on_callback(headers)
+    host_header = headers['HTTP_HOST']&.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+    if host_header.present? && host_header != RequestUtils.get_hostname
+      error_message = "Invalid host header in callback: #{host_header}, does not match #{RequestUtils.get_hostname}"
+      Rails.logger.error error_message
+      raise SecurityError.new(error_message)
     end
   end
 end
