@@ -574,7 +574,7 @@ export default async function scpApi(
 
   // Milliseconds taken to fetch data from API
   // Suboptimal, but retained until at least Q4 2021 for continuity.
-  // Use `perfTimeFull` for closest measure of user-perceived duration.
+  // Use `perfTime:full` for closest measure of user-perceived duration.
   const legacyBackendTime = performance.now() - perfTimeStart
 
   const perfTimes = {

@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <HomePageContent />, document.getElementById('home-page-content')
     )
   }
+
   checkMissingAuthToken()
 })
 
