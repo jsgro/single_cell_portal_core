@@ -264,17 +264,32 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/
      Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
  */
-export async function fetchCluster(
-  studyAccession, cluster, annotation, subsample, consensus, gene=null,
-  isAnnotatedScatter=null, mock=false
-) {
+export async function fetchCluster({
+  studyAccession, cluster, annotation, subsample, consensus, genes=null,
+  isAnnotatedScatter=null, fields=[], mock=false
+}) {
+
+  const apiUrl = fetchClusterUrl({ studyAccession, cluster, annotation, subsample,
+    consensus, genes, isAnnotatedScatter, fields })
+  // don't camelcase the keys since those can be cluster names,
+  // so send false for the 4th argument
+  const [scatter, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return [scatter, perfTimes]
+}
+
+/** Helper function for returning a url for fetching cluster data.  See fetchCluster above for documentation */
+export function fetchClusterUrl({
+  studyAccession, cluster, annotation, subsample, consensus, genes=null,
+  isAnnotatedScatter=null, fields=[]
+}) {
   // Digest full annotation name to enable easy validation in API
   let [annotName, annotType, annotScope] = [annotation.name, annotation.type, annotation.scope]
-  if (annotName == undefined) {
+  if (annotName == undefined && annotation.length) {
     [annotName, annotType, annotScope] = annotation.split('--')
   }
-  if (Array.isArray(gene)) {
-    gene = gene.join(',')
+  if (Array.isArray(genes)) {
+    genes = genes.join(',')
   }
   // eslint-disable-next-line camelcase
   const is_annotated_scatter = isAnnotatedScatter ? true : ''
@@ -284,20 +299,15 @@ export async function fetchCluster(
     annotation_scope: annotScope,
     subsample,
     consensus,
-    gene,
+    gene: genes,
+    fields: fields.join(','),
     is_annotated_scatter
   }
-
   const params = stringifyQuery(paramObj)
   if (!cluster || cluster === '') {
     cluster = '_default'
   }
-  const apiUrl = `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
-  // don't camelcase the keys since those can be cluster names,
-  // so send false for the 4th argument
-  const [scatter, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
-
-  return [scatter, perfTimes]
+  return`/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
 }
 
 /**

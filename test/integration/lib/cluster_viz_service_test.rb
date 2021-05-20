@@ -130,44 +130,37 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     cluster = @study.default_cluster
     metadata = @study.cell_metadata.by_name_and_type('species', 'group')
     annotation = {name: metadata.name, type: metadata.annotation_type, scope: 'study'}
-    coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation)
-    assert_equal metadata.values.sort, coordinates.keys.sort
-    trace_attributes = [:x, :y, :z, :cells, :annotations, :name]
-    coordinates.each do |name, trace|
-      trace_attributes.each do |attribute|
-        assert trace.try(:[], attribute).present?, "Did not find any values for #{name}:#{attribute}"
-      end
-    end
+    viz_data = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation)
+
+    assert_equal [:annotations, :cells, :x, :y, :z], viz_data.keys.sort
+    assert_equal ["A", "B", "C"], viz_data[:cells]
+    assert_equal [1, 4, 6], viz_data[:x]
+    assert_equal [7, 5, 3], viz_data[:y]
+    assert_equal [2, 8, 9], viz_data[:z]
+    assert_equal ["dog", "cat", "dog"], viz_data[:annotations]
+  end
+
+  test 'should include/exclude specified fields' do
+    cluster = @study.default_cluster
+    metadata = @study.cell_metadata.by_name_and_type('species', 'group')
+    annotation = {name: metadata.name, type: metadata.annotation_type, scope: 'study'}
+    viz_data = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation, include_coords: false)
+    assert_equal [:annotations, :cells], viz_data.keys.sort
+    assert_equal ["A", "B", "C"], viz_data[:cells]
+    viz_data = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation, include_cells: false)
+    assert_equal [:annotations, :x, :y, :z], viz_data.keys.sort
+    assert_equal ["dog", "cat", "dog"], viz_data[:annotations]
+    viz_data = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation, include_annotations: false)
+    assert_equal [:cells, :x, :y, :z], viz_data.keys.sort
+    assert_equal [1, 4, 6], viz_data[:x]
   end
 
   test 'should load cluster coordinates with blank annotations' do
     cluster = @study.cluster_groups.by_name('cluster_3.txt')
     annotation = AnnotationVizService.get_selected_annotation(@study, cluster: cluster, annot_name: 'Blanks', annot_type: 'group', annot_scope: 'cluster')
-    coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation)
-    assert_equal annotation[:values].sort, coordinates.keys.sort
-    trace_attributes = [:x, :y, :cells, :annotations, :name]
-    coordinates.each do |name, trace|
-      trace_attributes.each do |attribute|
-        assert trace.try(:[], attribute).present?, "Did not find any values for #{name}:#{attribute}"
-      end
-    end
-  end
-
-  test 'should transform cluster coordinates for visualization' do
-    cluster = @study.default_cluster
-    metadata = @study.cell_metadata.by_name_and_type('disease', 'group')
-    annotation = {name: metadata.name, type: metadata.annotation_type, scope: 'study'}
-    coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation)
-    transformed_coords = ClusterVizService.transform_coordinates(coordinates, @study, cluster, annotation)
-    assert_equal coordinates.keys.size, transformed_coords.size,
-                 "Did not find correct number of traces; expected #{coordinates.keys.size} but found #{transformed_coords.size}"
-    expected_keys = [:x, :y, :cells, :name, :type, :mode, :marker, :opacity, :annotations, :z, :textposition].sort
-    transformed_coords.each do |trace|
-      keys = trace.keys.sort
-      assert_equal expected_keys, keys
-      assert_equal 'scatter3d', trace[:type]
-      assert_equal 'markers', trace[:mode]
-    end
+    viz_data = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation)
+    assert_equal ["bar", "bar", "--Unspecified--"], viz_data[:annotations]
+    assert_equal ["D", "E", "F"], viz_data[:cells]
   end
 
   test 'should load coordinate labels as annotations' do
@@ -199,24 +192,6 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
       expected_label = "PCA #{index + 1}"
       assert_equal expected_label, label
     end
-  end
-
-  test 'should compute range for coordinates' do
-    cluster = @study.default_cluster
-    metadata = @study.cell_metadata.by_name_and_type('species', 'group')
-    annotation = {name: metadata.name, type: metadata.annotation_type, scope: 'study'}
-    coordinates = ClusterVizService.load_cluster_group_data_array_points(@study, cluster, annotation)
-
-    # range of 1 to 9, plus 2% padding of total extent of range. i.e padding =  8 * .02, or .16
-    # therefore domain_range = [1 - padding, 9 + padding]
-    domain_range = [0.84, 9.16]
-    expected_range = {
-        x: domain_range,
-        y: domain_range,
-        z: domain_range
-    }
-    calculated_range = ClusterVizService.set_range(cluster, coordinates.values)
-    assert_equal expected_range, calculated_range
   end
 
   test 'should compute aspect ratio for predefined range' do

@@ -3,6 +3,7 @@ import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
 
+
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from 'components/visualization/controls/ClusterSelector'
 import AnnotationSelector from 'components/visualization/controls/AnnotationSelector'
@@ -13,6 +14,7 @@ import CreateAnnotation from 'components/visualization/controls/CreateAnnotation
 import PlotDisplayControls from 'components/visualization/PlotDisplayControls'
 import GeneListSelector from 'components/visualization/controls/GeneListSelector'
 import InferCNVIdeogramSelector from 'components/visualization/controls/InferCNVIdeogramSelector'
+import { createCache } from './plot-data-cache'
 import ScatterTab from './ScatterTab'
 import ScatterPlot from 'components/visualization/ScatterPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
@@ -24,6 +26,7 @@ import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from 'components/visualization/InferCNVIdeogram'
 import useResizeEffect from 'hooks/useResizeEffect'
 import { log } from 'lib/metrics-api'
+
 
 const tabList = [
   { key: 'loading', label: 'loading...' },
@@ -58,6 +61,7 @@ export default function ExploreDisplayTabs({
   clearExploreParams, exploreParamsWithDefaults, routerLocation
 }) {
   const [, setRenderForcer] = useState({})
+  const [dataCache] = useState(createCache())
   // tracks whether the view options controls are open or closed
   const [showViewOptionsControls, setShowViewOptionsControls] = useState(true)
   // whether the user is in lasso-select mode for selecting points for an annotation
@@ -132,6 +136,7 @@ export default function ExploreDisplayTabs({
   function updateClusterParams(newParams) {
     if (newParams.cluster && !newParams.spatialGroups) {
       newParams.spatialGroups = getDefaultSpatialGroupsForCluster(newParams.cluster, exploreInfo.spatialGroups)
+      dataCache.clear()
     }
     // if the user updates any cluster params, store all of them in the URL so we don't end up with
     // broken urls in the event of a default cluster/annotation changes
@@ -293,7 +298,8 @@ export default function ExploreDisplayTabs({
                     isMultiGene,
                     isCellSelecting,
                     plotPointsSelected,
-                    getPlotDimensions
+                    getPlotDimensions,
+                    dataCache
                   }}/>
               </div>
             }

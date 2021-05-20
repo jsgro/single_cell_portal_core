@@ -174,47 +174,59 @@ class ClusterVizService
     aspect
   end
 
-  # set the range for a plotly scatter, will default to data-defined if cluster hasn't defined its own ranges
-  # dynamically determines range based on inputs & available axes
-  def self.set_range(cluster, inputs)
-    # select coordinate axes from inputs
-    domain_keys = inputs.map(&:keys).flatten.uniq.select {|i| [:x, :y, :z].include?(i)}
-    range = Hash[domain_keys.zip]
-    if cluster.has_range?
-      # use study-provided range if available
-      range = cluster.domain_ranges
-    else
-      # take the minmax of each domain across all groups, then the global minmax
-      raw_values = []
-      inputs.each do |input|
-        domain_keys.each do |domain|
-          domain_range = RequestUtils.get_minmax(input[domain])
-          # RequestUtils.get_minmax will discard NaN/nil values that were ingested
-          # only add domain range to list if we have a valid minmax
-          raw_values << domain_range if domain_range.any?
-        end
-      end
-      aggregate_range = raw_values.flatten.minmax
-      # add 2% padding to range
-      padding = (aggregate_range.first - aggregate_range.last) * 0.02
-      absolute_range = [aggregate_range.first + padding, aggregate_range.last - padding]
-      range[:x] = absolute_range
-      range[:y] = absolute_range
-      range[:z] = absolute_range
-    end
-    range
-  end
-
   # generic method to populate data structure to render a cluster scatter plot
   # uses cluster_group model and loads annotation for both group & numeric plots
   # data values are pulled from associated data_array entries for each axis and annotation/text value
-  def self.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, colorscale=nil)
+  def self.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_coords: true, include_cells: true, include_annotations: true)
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    x_array = cluster.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-    y_array = cluster.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-    z_array = cluster.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-    cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
+
+    x_array = []
+    y_array = []
+    z_array = []
+    cells = []
+    annotation_array = []
+
+    data_source = cluster
+    if annotation[:scope] == 'user'
+      user_annotation = UserAnnotation.find(annotation[:id])
+      subsample_annotation = user_annotation.formatted_annotation_identifier
+      data_source =user_annotation
+    end
+    if include_coords
+      x_array = data_source.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
+      y_array = data_source.concatenate_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
+      z_array = data_source.concatenate_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
+    end
+    if include_cells || annotation[:scope] == 'study'
+      # for study annotations, we have to grab the cluster cells to match with the study-wide annotation
+      cells = data_source.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
+    end
+
+    viz_data = {}
+    if include_annotations
+      annotation_array = get_annotation_values_array(study, cluster, annotation, cells, subsample_annotation, subsample_threshold)
+      viz_data = { annotations: annotation_array }
+    end
+
+    if include_cells
+      viz_data[:cells] = cells
+    end
+
+    if include_coords
+      viz_data[:x] = x_array
+      viz_data[:y] = y_array
+      if cluster.is_3d?
+        viz_data[:z] = z_array
+      end
+    end
+
+    viz_data
+  end
+
+
+  # returns an array of the values for the given annotation, sorted by the cells of the given cells array
+  def self.get_annotation_values_array(study, cluster, annotation, cells, subsample_annotation, subsample_threshold)
     annotation_array = []
     annotation_hash = {}
     # Construct the arrays based on scope
@@ -224,107 +236,13 @@ class ClusterVizService
       # for user annotations, we have to load by id as names may not be unique to clusters
       user_annotation = UserAnnotation.find(annotation[:id])
       subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotation_array = user_annotation.concatenate_user_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-      x_array = user_annotation.concatenate_user_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
-      y_array = user_annotation.concatenate_user_data_arrays('y', 'coordinates', subsample_threshold, subsample_annotation)
-      z_array = user_annotation.concatenate_user_data_arrays('z', 'coordinates', subsample_threshold, subsample_annotation)
-      cells = user_annotation.concatenate_user_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
+      annotation_array = user_annotation.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
     else
       # for study-wide annotations, load from study_metadata values instead of cluster-specific annotations
       metadata_obj = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
       annotation_hash = metadata_obj.cell_annotations
-      annotation[:values] = AnnotationVizService.sanitize_values_array(metadata_obj.values, annotation[:type])
+      annotation_array = cells.map { |cell| annotation_hash[cell] }
     end
-    annotation_array = AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
-
-    coordinates = {}
-    if annotation[:type] == 'numeric'
-      text_array = []
-      color_array = []
-      # load text & color value from correct object depending on annotation scope
-      cells.each_with_index do |cell, index|
-        if annotation[:scope] == 'cluster'
-          val = annotation_array[index]
-          text_array << "#{cell}: (#{val})"
-        else
-          val = annotation_hash[cell]
-          text_array <<  "#{cell}: (#{val})"
-          color_array << val
-        end
-      end
-      # if we didn't assign anything to the color array, we know the annotation_array is good to use
-      color_array.empty? ? color_array = annotation_array : nil
-      # account for NaN when computing min/max
-      min, max = RequestUtils.get_minmax(annotation_array)
-      coordinates[:all] = {
-          x: x_array,
-          y: y_array,
-          annotations: annotation[:scope] == 'cluster' ? annotation_array : annotation_hash[:values],
-          text: text_array,
-          cells: cells,
-          name: annotation[:name],
-          marker: {
-              cmax: max,
-              cmin: min,
-              color: color_array,
-              size: study.default_cluster_point_size,
-              line: { color: 'rgb(40,40,40)', width: study.show_cluster_point_borders? ? 0.5 : 0},
-              colorscale: colorscale.nil? ? 'Reds' : colorscale,
-              showscale: true,
-              colorbar: {
-                  title: annotation[:name] ,
-                  titleside: 'right'
-              }
-          }
-      }
-      if cluster.is_3d?
-        coordinates[:all][:z] = z_array
-      end
-    else
-      # assemble containers for each trace
-      annotation[:values].each do |value|
-        coordinates[value] = {x: [], y: [], text: [], cells: [], annotations: [], name: value,
-                              marker: {size: study.default_cluster_point_size,
-                              line: { color: 'rgb(40,40,40)', width: study.show_cluster_point_borders? ? 0.5 : 0}}}
-        if cluster.is_3d?
-          coordinates[value][:z] = []
-        end
-      end
-
-      if annotation[:scope] == 'cluster' || annotation[:scope] == 'user'
-        annotation_array.each_with_index do |annotation_value, index|
-          coordinates[annotation_value][:text] << "<b>#{cells[index]}</b><br>#{annotation_value}"
-          coordinates[annotation_value][:annotations] << annotation_value
-          coordinates[annotation_value][:cells] << cells[index]
-          coordinates[annotation_value][:x] << x_array[index]
-          coordinates[annotation_value][:y] << y_array[index]
-          if cluster.is_3d?
-            coordinates[annotation_value][:z] << z_array[index]
-          end
-        end
-      else
-        cells.each_with_index do |cell, index|
-          if annotation_hash.has_key?(cell)
-            annotation_value = annotation_hash[cell]
-            coordinates[annotation_value][:text] << "<b>#{cell}</b><br>#{annotation_value}"
-            coordinates[annotation_value][:annotations] << annotation_value
-            coordinates[annotation_value][:x] << x_array[index]
-            coordinates[annotation_value][:y] << y_array[index]
-            coordinates[annotation_value][:cells] << cell
-            if cluster.is_3d?
-              coordinates[annotation_value][:z] << z_array[index]
-            end
-          end
-        end
-
-      end
-    end
-    # gotcha to remove entries in case a particular annotation value comes up blank
-    coordinates.delete_if {|key, data| data[:x].empty?}
-    coordinates.each do |key, data|
-      existing_name = data[:name].dup
-      data[:name] = "#{existing_name} (#{data[:x].size} points)"
-    end
-    coordinates
+    AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
   end
 end

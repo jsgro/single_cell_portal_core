@@ -17,6 +17,8 @@ export const emptyDataParams = {
   consensus: null
 }
 
+export const UNSPECIFIED_ANNOTATION_NAME = '--Unspecified--'
+
 /** takes the server response and returns subsample default subsample for the cluster */
 export function getDefaultSubsampleForCluster(annotationList, clusterName) {
   const subsampleOptions = annotationList.subsample_thresholds[clusterName]
