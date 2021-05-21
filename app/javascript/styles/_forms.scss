@@ -20,14 +20,33 @@
   }
 }
 
-button.text-button {
-
-}
-
 .action {
   color: $action-color;
   cursor: pointer;
   &:hover {
     color: darken($action-color, 10%);
   }
+}
+
+.table-terra {
+	thead {
+		background: #f4f4f4;
+		font-weight: bold;
+		td:first-of-type {
+			border-top-left-radius: 10px;
+			border-left: none;
+		} 
+		td:last-of-type {
+		  border-top-right-radius: 10px;
+		  border-right: none;
+		} 
+	}
+	tbody {
+	  label {
+			font-weight: normal;
+		}
+	}
+	td {
+		border: 1px solid #eee;
+	}
 }

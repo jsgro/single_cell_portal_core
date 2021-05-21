@@ -5,7 +5,7 @@ import Modal from 'react-bootstrap/lib/Modal'
 
 import KeywordSearch from './KeywordSearch'
 import FacetsPanel from './FacetsPanel'
-import DownloadButton from './DownloadButton'
+import DownloadButton from './download/DownloadButton'
 import DownloadProvider from 'providers/DownloadProvider'
 import { StudySearchContext } from 'providers/StudySearchProvider'
 import { UserContext } from 'providers/UserProvider'
@@ -94,7 +94,7 @@ export default function SearchPanel({
   </a>
   if (showAdvancedSearch) {
     searchButtons = <FacetsPanel/>
-    downloadButtons = <DownloadProvider><DownloadButton /></DownloadProvider>
+    downloadButtons = <DownloadButton searchResults={searchState.results}/>
     advancedOptsLink = <a className="action advanced-opts"
       onClick={() => setShowSearchHelpModal(true)}
       data-analytics-name="search-help">

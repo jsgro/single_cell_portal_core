@@ -464,12 +464,11 @@ export async function fetchFacetFilters(facet, query, mock=false) {
  * }
  * fetchDownloadSize([SCP200, SCP201], ["Expression", "Metadata"])
  */
-export async function fetchDownloadSize(accessions, fileTypes, mock=false) {
-  const fileTypesString = fileTypes.join(',')
-  const queryString = `?accessions=${accessions}&file_types=${fileTypesString}`
-  const pathAndQueryString = `/search/bulk_download_size/${queryString}`
-  const [size] = await scpApi(pathAndQueryString, defaultInit(), mock)
-  return size
+export async function fetchDownloadInfo(accessions, mock=false) {
+  const queryString = `?accessions=${accessions}`
+  const pathAndQueryString = `/search/bulk_download_info/${queryString}`
+  const [info] = await scpApi(pathAndQueryString, defaultInit(), mock)
+  return info
 }
 
 /**

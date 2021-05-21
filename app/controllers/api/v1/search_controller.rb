@@ -419,32 +419,20 @@ module Api
         render json: auth_code_response
       end
 
-      swagger_path '/search/bulk_download_size' do
+      swagger_path '/search/bulk_download_info' do
         operation :get do
           key :tags, [
               'Search'
           ]
-          key :summary, 'Preview of number of files/bytes requested for download'
-          key :description, 'Preview of the number of files and bytes (by file type) requested for download from search results'
-          key :operationId, 'search_bulk_download_size_path'
+          key :summary, 'Summary information of studies requested for download'
+          key :description, 'Preview of the names, number of files and bytes (by file type) requested for download from search results'
+          key :operationId, 'search_bulk_download_info_path'
           parameter do
             key :name, :accessions
             key :type, :string
             key :in, :query
             key :description, 'Comma-delimited list of Study accessions'
             key :required, true
-          end
-          parameter do
-            key :name, :file_types
-            key :in, :query
-            key :description, 'Comma-delimited list of file types'
-            key :required, false
-            key :type, :array
-            items do
-              key :type, :string
-              key :enum, StudyFile::BULK_DOWNLOAD_TYPES
-            end
-            key :collectionFormat, :csv
           end
           response 200 do
             key :description, 'Information about total number of files and sizes by type'
@@ -477,19 +465,14 @@ module Api
         end
       end
 
-      def bulk_download_size
+      def bulk_download_info
         # sanitize study accessions and file types
         valid_accessions = self.class.find_matching_accessions(params[:accessions])
-        sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
+        check_accession_permissions(valid_accessions)
 
-        if valid_accessions.blank?
-          render json: {error: 'Invalid request parameters; study accessions not found'}, status: 400 and return
-        end
+        @study_file_info = ::BulkDownloadService.get_download_info(valid_accessions)
 
-        @files_by_type = ::BulkDownloadService.get_requested_file_sizes_by_type(file_types: sanitized_file_types,
-                                                                                study_accessions: valid_accessions)
-
-        render json: @files_by_type
+        render json: @study_file_info
       end
 
       swagger_path '/search/bulk_download' do
@@ -564,27 +547,11 @@ module Api
         valid_accessions = self.class.find_matching_accessions(params[:accessions])
         sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
 
-        if valid_accessions.blank?
-          render json: {error: 'Invalid request parameters; study accessions not found'}, status: 400 and return
-        end
-        accessions_by_permission = ::BulkDownloadService.get_permitted_accessions(study_accessions: valid_accessions,
-                                                                                  user: current_api_user)
-        if accessions_by_permission[:forbidden].any? || accessions_by_permission[:lacks_acceptance].any?
-          error_msg = "Forbidden: cannot access requested accessions. "
-          if accessions_by_permission[:forbidden].any?
-            error_msg += "You do not have permission to view #{accessions_by_permission[:forbidden].join(', ')}"
-          end
-          if accessions_by_permission[:lacks_acceptance].any?
-            error_msg += "#{accessions_by_permission[:lacks_acceptance].join(', ')} require accepting a download agreement that can be found by viewing that study and going to the 'Download' tab"
-          end
-          render json: {error: error_msg},
-                 status: 403 and return
-        end
-        permitted_accessions = accessions_by_permission[:permitted]
+        check_accession_permissions(valid_accessions)
 
         # if this is a single-study download, allow for DirectoryListing downloads
-        if permitted_accessions.size == 1 && params[:directory].present?
-          study_accession = permitted_accessions.first
+        if valid_accessions.size == 1 && params[:directory].present?
+          study_accession = valid_accessions.first
           directories = self.class.find_matching_directories(params[:directory], study_accession)
           directory_files = ::BulkDownloadService.get_requested_directory_files(directories)
         else
@@ -595,7 +562,7 @@ module Api
         # get requested files
         # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
         files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
-                                                                    study_accessions: permitted_accessions)
+                                                                    study_accessions: valid_accessions)
 
         # determine quota impact & update user's download quota
         # will throw a RuntimeError if the download exceeds the user's daily quota
@@ -606,7 +573,7 @@ module Api
         end
 
         # create maps to avoid Mongo timeouts when generating curl commands in parallel processes
-        bucket_map = ::BulkDownloadService.generate_study_bucket_map(permitted_accessions)
+        bucket_map = ::BulkDownloadService.generate_study_bucket_map(valid_accessions)
         pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories)
 
         # generate curl config file
@@ -657,6 +624,25 @@ module Api
               end
             end
           end
+        end
+      end
+
+      def check_accession_permissions(valid_accessions)
+        if valid_accessions.blank?
+          render json: {error: 'Invalid request parameters; study accessions not found'}, status: 400 and return
+        end
+        accessions_by_permission = ::BulkDownloadService.get_permitted_accessions(study_accessions: valid_accessions,
+                                                                                  user: current_api_user)
+        if accessions_by_permission[:forbidden].any? || accessions_by_permission[:lacks_acceptance].any?
+          error_msg = "Forbidden: cannot access requested accessions. "
+          if accessions_by_permission[:forbidden].any?
+            error_msg += "You do not have permission to view #{accessions_by_permission[:forbidden].join(', ')}"
+          end
+          if accessions_by_permission[:lacks_acceptance].any?
+            error_msg += "#{accessions_by_permission[:lacks_acceptance].join(', ')} require accepting a download agreement that can be found by viewing that study and going to the 'Download' tab"
+          end
+          render json: {error: error_msg},
+                 status: 403 and return
         end
       end
 
