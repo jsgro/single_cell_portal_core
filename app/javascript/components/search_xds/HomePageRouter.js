@@ -1,14 +1,16 @@
 import { useEffect } from 'react'
 import { navigate, useLocation } from '@reach/router'
 import * as queryString from 'query-string'
+import _cloneDeep from 'lodash/cloneDeep'
+import _isEqual from 'lodash/isEqual'
 
-import { stringifyQuery, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
+import { stringifyQuery, geneParamToArray, geneArrayToParam, buildSearchQueryString, fetchSearch } from 'lib/scp-api'
+import { buildParamsFromQuery as buildGeneParamsFromQuery } from './GeneSearchProvider'
 import { getIdentifierForAnnotation } from 'lib/cluster-utils'
-import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
 // import { logGlobalGeneSearch } from 'lib/metrics-api'
 
 /**
- * manages view options and basic layout for the explore tab
+ * manages view options and basic layout for the home page
  * this component handles calling the API explore endpoint to get view options (clusters, etc..) for the study
  */
 export default function useHomePageRouter() {
@@ -24,14 +26,76 @@ export default function useHomePageRouter() {
     // if this is the first render, and there are already genes specified, that means they came
     // from the URL directly
     if (homeParams.genes.length > 0) {
-      // note that we can't pass the species list because we don't know it yet.
       // logGlobalGeneSearch(homeParams.genes, 'url')
     }
   }, [])
   return { homeParams, updateHomeParams, routerLocation, clearHomeParams }
 }
 
-/** Merges the received update into the exploreParams, and updates the page URL if need */
+/**
+ * renders a StudySearchContext tied to its props,
+ * fires route navigate on changes to params
+ */
+export function PropsStudySearchProvider(props) {
+  const startingState = _cloneDeep(emptySearch)
+  startingState.params = props.searchParams
+  // attach the perform and update methods to the context to avoid prop-drilling
+  startingState.performSearch = performSearch
+  startingState.updateSearch = updateSearch
+  const [searchState, setSearchState] = useState(startingState)
+  const searchParams = props.searchParams
+
+  /**
+   * Update search parameters in URL
+   * @param {Object} newParams Parameters to update
+   */
+  function updateSearch(newParams) {
+    const search = Object.assign({}, searchParams, newParams)
+    search.facets = Object.assign({}, searchParams.facets, newParams.facets)
+    // reset the page to 1 for new searches, unless otherwise specified
+    search.page = newParams.page ? newParams.page : 1
+    search.preset = undefined // for now, exclude preset from the page URL--it's in the component props instead
+    const mergedParams = Object.assign(buildGeneParamsFromQuery(window.location.search), search)
+    const queryString = buildSearchQueryString('study', mergedParams)
+    navigate(`?${queryString}`)
+  }
+
+  /** perform the actual API search based on current params */
+  async function performSearch() {
+    // reset the scroll in case they scrolled down to read prior results
+    window.scrollTo(0, 0)
+
+    const results = await fetchSearch('study', searchParams)
+
+    setSearchState({
+      params: searchParams,
+      isError: results.ok === false,
+      isLoading: false,
+      isLoaded: true,
+      results,
+      updateSearch
+    })
+  }
+
+  if (!_isEqual(searchParams, searchState.params)) {
+    performSearch()
+    setSearchState({
+      params: searchParams,
+      isError: false,
+      isLoading: true,
+      isLoaded: false,
+      results: [],
+      updateSearch
+    })
+  }
+  return (
+    <StudySearchContext.Provider value={searchState}>
+      <SearchSelectionProvider>{props.children}</SearchSelectionProvider>
+    </StudySearchContext.Provider>
+  )
+}
+
+/** Merges the received update into the homeParams, and updates the page URL if need */
 function updateHomeParams(newOptions, wasUserSpecified=true) {
   // rebuild the params from the actual URL to avoid races
   const search = location.search
@@ -55,7 +119,7 @@ function updateHomeParams(newOptions, wasUserSpecified=true) {
   const query = buildQueryFromParams(mergedOpts)
   // view options settings should not add history entries
   // e.g. when a user hits 'back', it shouldn't undo their cluster selection,
-  // it should take them to the page they were on before they came to the explore tab
+  // it should take them to the page they were on before they came to the home page
   navigate(query, { replace: true })
 }
 
@@ -83,59 +147,54 @@ function buildHomeParamsFromQuery(query) {
       homeParams.userSpecified[param] = true
     }
   })
-  homeParams.cluster = queryParams.cluster ? queryParams.cluster : ''
-  homeParams.annotation = annotation
-  homeParams.subsample = queryParams.subsample ? queryParams.subsample : ''
-  homeParams.consensus = queryParams.consensus ? queryParams.consensus : null
-  if (queryParams.spatialGroups === SPATIAL_GROUPS_EMPTY) {
-    homeParams.spatialGroups = []
-  } else {
-    homeParams.spatialGroups = queryParams.spatialGroups ? queryParams.spatialGroups.split(',') : []
-  }
-  homeParams.genes = geneParamToArray(queryParams.genes)
-  homeParams.geneList = queryParams.geneList ? queryParams.geneList : ''
-  homeParams.heatmapRowCentering = queryParams.heatmapRowCentering ?
-    queryParams.heatmapRowCentering :
-    DEFAULT_ROW_CENTERING
-
-  homeParams.scatterColor = queryParams.scatterColor ? queryParams.scatterColor : ''
-  homeParams.distributionPlot = queryParams.distributionPlot ? queryParams.distributionPlot : ''
-  homeParams.distributionPoints = queryParams.distributionPoints ? queryParams.distributionPoints : ''
-  homeParams.tab = queryParams.tab ? queryParams.tab : ''
-  homeParams.heatmapFit = queryParams.heatmapFit ? queryParams.heatmapFit : ''
-  homeParams.bamFileName = queryParams.bamFileName ? queryParams.bamFileName : ''
-  homeParams.ideogramFileId = queryParams.ideogramFileId ? queryParams.ideogramFileId : ''
+  homeParams.page = queryParams.page ? parseInt(queryParams.page) : 1,
+  homeParams.terms = queryParams.terms ? queryParams.terms : '',
+  homeParams.facets = buildFacetsFromQueryString(queryParams.facets),
+  homeParams.preset = preset ? preset : queryString.preset_search,
+  homeParams.order = queryParams.order
 
 
   return homeParams
 }
 
+/** Deserializes "facets" URL parameter into facets object */
+function buildFacetsFromQueryString(facetsParamString) {
+  const facets = {}
+  if (facetsParamString) {
+    facetsParamString.split('+').forEach(facetString => {
+      const facetArray = facetString.split(':')
+      facets[facetArray[0]] = facetArray[1].split(',')
+    })
+  }
+  return facets
+}
+
 /** converts the params objects into a query string, inverse of build*ParamsFromQuery */
-function buildQueryFromParams(exploreParams) {
+function buildQueryFromParams(homeParams) {
   const querySafeOptions = {
-    cluster: exploreParams.cluster,
-    annotation: getIdentifierForAnnotation(exploreParams.annotation),
-    subsample: exploreParams.subsample,
-    genes: geneArrayToParam(exploreParams.genes),
-    consensus: exploreParams.consensus,
-    geneList: exploreParams.geneList,
-    spatialGroups: exploreParams.spatialGroups.join(','),
-    heatmapRowCentering: exploreParams.heatmapRowCentering,
-    tab: exploreParams.tab,
-    scatterColor: exploreParams.scatterColor,
-    distributionPlot: exploreParams.distributionPlot,
-    distributionPoints: exploreParams.distributionPoints,
-    heatmapFit: exploreParams.heatmapFit,
-    bamFileName: exploreParams.bamFileName,
-    ideogramFileId: exploreParams.ideogramFileId
+    cluster: homeParams.cluster,
+    annotation: getIdentifierForAnnotation(homeParams.annotation),
+    subsample: homeParams.subsample,
+    genes: geneArrayToParam(homeParams.genes),
+    consensus: homeParams.consensus,
+    geneList: homeParams.geneList,
+    spatialGroups: homeParams.spatialGroups.join(','),
+    heatmapRowCentering: homeParams.heatmapRowCentering,
+    tab: homeParams.tab,
+    scatterColor: homeParams.scatterColor,
+    distributionPlot: homeParams.distributionPlot,
+    distributionPoints: homeParams.distributionPoints,
+    heatmapFit: homeParams.heatmapFit,
+    bamFileName: homeParams.bamFileName,
+    ideogramFileId: homeParams.ideogramFileId
   }
 
-  if (querySafeOptions.spatialGroups === '' && exploreParams.userSpecified['spatialGroups']) {
+  if (querySafeOptions.spatialGroups === '' && homeParams.userSpecified['spatialGroups']) {
     querySafeOptions.spatialGroups = SPATIAL_GROUPS_EMPTY
   }
   // remove keys which were not user-specified
   Object.keys(querySafeOptions).forEach(key => {
-    if (!exploreParams.userSpecified[key] && !exploreParams.userSpecified[key]) {
+    if (!homeParams.userSpecified[key] && !homeParams.userSpecified[key]) {
       delete querySafeOptions[key]
     }
   })
