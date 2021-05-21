@@ -2,6 +2,10 @@
 # API client bindings for retrieving information about Terra Data Repo datasets/snapshots/schemas from their API
 ##
 class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_at, :service_account_credentials)
+  extend AccessTokenGenerator # class method for generating OAuth2 access tokens
+  include GoogleServiceClient # helper module for refreshing access tokens, accessing GCS storage driver attributes
+  include ApiHelpers # process external API requests/responses
+
   # path to read-only service account JSON keyfile
   SERVICE_ACCOUNT_KEY = !ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'].blank? ? (ENV['NOT_DOCKERIZED'] ? ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'] : File.absolute_path(ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'])) : ''
   # Google authentication scopes necessary for querying TDR API
@@ -47,58 +51,6 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
     self.api_root = BASE_URL
   end
 
-  # generate an access token to use for all requests
-  #
-  # * *return*
-  #   - +Hash+ of Google Auth access token (contains access_token (string), token_type (string) and expires_in (integer, in seconds)
-  def self.generate_access_token(service_account)
-    # if no keyfile present, use environment variables
-    creds_attr = {scope: GOOGLE_SCOPES}
-    if !service_account.blank?
-      creds_attr.merge!(json_key_io: File.open(service_account))
-    end
-    creds = Google::Auth::ServiceAccountCredentials.make_creds(creds_attr)
-    token = creds.fetch_access_token!
-    token
-  end
-
-  # refresh access_token when expired and stores back in FireCloudClient instance
-  #
-  # * *return*
-  #   - +DateTime+ timestamp of new access token expiration
-  def refresh_access_token!
-    Rails.logger.info "DataRepoClient token expired, refreshing access token"
-    new_token = self.class.generate_access_token(self.service_account_credentials)
-    new_expiry = Time.zone.now + new_token['expires_in']
-    self.access_token = new_token
-    self.expires_at = new_expiry
-    new_token
-  end
-
-  # check if an access_token is expired
-  #
-  # * *return*
-  #   - +Boolean+ of token expiration
-  def access_token_expired?
-    Time.zone.now >= self.expires_at
-  end
-
-  # return a valid access token
-  #
-  # * *return*
-  #   - +Hash+ of access token
-  def valid_access_token
-    self.access_token_expired? ? self.refresh_access_token! : self.access_token
-  end
-
-  # get issuer of storage credentials
-  #
-  # * *return*
-  #   - +String+ of issuer email
-  def issuer
-    self.storage.service.credentials.issuer
-  end
-
   ##
   # Abstract request handlers
   ##
@@ -142,88 +94,6 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
         raise e
       end
     end
-  end
-
-  # check if OK response code was found
-  #
-  # * *params*
-  #   - +code+ (Integer) => integer HTTP response code
-  #
-  # * *return*
-  #   - +Boolean+ of whether or not response is a known 'OK' response
-  def ok?(code)
-    [200, 201, 202, 204, 206].include?(code)
-  end
-
-  # determine if request should be retried based on response code, and will retry if necessary
-  # only 502 (Bad Gateway), 503 (Service Unavailable), and 504 (Gateway Timeout) will be retried
-  # all other 4xx and 5xx responses will not as they are deemed 'unrecoverable'
-  #
-  # * *params*
-  #   - +code+ (Integer) => integer HTTP response code
-  #
-  # * *return*
-  #   - +Boolean+ of whether or not response code indicates a retry should be executed
-  def should_retry?(code)
-    code.nil? || [502, 503, 504].include?(code)
-  end
-
-  # merge hash of options into single URL query string, will reject query params with empty values
-  #
-  # * *params*
-  #   - +opts+ (Hash) => hash of query parameter key/value pairs
-  #
-  # * *return*
-  #   - +String+ of concatenated query params
-  def merge_query_options(opts={})
-    return nil if opts.blank?
-    '?' + opts.reject {|k,v| v.blank?}.to_a.map {|k,v| uri_encode("#{k}=#{v}")}.join('&')
-  end
-
-  # handle a RestClient::Response object
-  #
-  # * *params*
-  #   - +response+ (String) => an RestClient response object
-  #
-  # * *return*
-  #   - +Hash+ if response body is JSON, or +String+ of original body
-  def handle_response(response)
-    begin
-      if ok?(response.code)
-        response.body.present? ? parse_response_body(response.body) : true # blank body
-      else
-        response.message || parse_response_body(response.body)
-      end
-    rescue
-      # don't report, just return
-      response.message
-    end
-  end
-
-  # parse a response body based on the content
-  #
-  # * *params*
-  #   - +response_body+ (String) => an RestClient response body
-  #
-  # * *return*
-  #   - +Hash+ if response body is JSON, or +String+ of original body
-  def parse_response_body(response_body)
-    begin
-      JSON.parse(response_body)
-    rescue
-      response_body
-    end
-  end
-
-  # URI-encode parameters for use in API requests
-  #
-  # * *params*
-  #   - +parameter+ (String) => Parameter to encode
-  #
-  # * *returns*
-  #   - +String+ => URI-encoded parameter
-  def uri_encode(parameter)
-    URI.escape(parameter)
   end
 
   ##
