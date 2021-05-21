@@ -22,7 +22,7 @@ export function StudySearchView({ advancedSearchDefault }) {
   </>
 }
 
-const LinkableSearchTabs = function(props) {
+const LinkableSearchTabs = function() {
   // we can't use the regular ReachRouter methods for link highlighting
   // since the Reach router doesn't own the home path
   const location = useLocation()

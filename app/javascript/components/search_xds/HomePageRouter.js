@@ -5,41 +5,37 @@ import * as queryString from 'query-string'
 import { stringifyQuery, geneParamToArray, geneArrayToParam } from 'lib/scp-api'
 import { getIdentifierForAnnotation } from 'lib/cluster-utils'
 import { DEFAULT_ROW_CENTERING } from 'components/visualization/Heatmap'
-import { logStudyGeneSearch } from 'lib/metrics-api'
-
-
-const SPATIAL_GROUPS_EMPTY = '--'
+// import { logGlobalGeneSearch } from 'lib/metrics-api'
 
 /**
  * manages view options and basic layout for the explore tab
  * this component handles calling the API explore endpoint to get view options (clusters, etc..) for the study
  */
-export default function useExploreTabRouter() {
+export default function useHomePageRouter() {
   const routerLocation = useLocation()
-  const exploreParams = buildExploreParamsFromQuery(routerLocation.search)
+  const homeParams = buildHomeParamsFromQuery(routerLocation.search)
 
   /** reset to the default view for a study */
-  function clearExploreParams() {
-    navigate(`?#study-visualize`)
+  function clearHomeParams() {
+    navigate('')
   }
 
   useEffect(() => {
     // if this is the first render, and there are already genes specified, that means they came
     // from the URL directly
-    if (exploreParams.genes.length > 0) {
+    if (homeParams.genes.length > 0) {
       // note that we can't pass the species list because we don't know it yet.
-      logStudyGeneSearch(exploreParams.genes, 'url')
+      // logGlobalGeneSearch(homeParams.genes, 'url')
     }
   }, [])
-  return { exploreParams, updateExploreParams, routerLocation, clearExploreParams }
+  return { homeParams, updateHomeParams, routerLocation, clearHomeParams }
 }
 
-
 /** Merges the received update into the exploreParams, and updates the page URL if need */
-function updateExploreParams(newOptions, wasUserSpecified=true) {
+function updateHomeParams(newOptions, wasUserSpecified=true) {
   // rebuild the params from the actual URL to avoid races
   const search = location.search
-  const currentParams = buildExploreParamsFromQuery(search)
+  const currentParams = buildHomeParamsFromQuery(search)
   const mergedOpts = Object.assign({}, currentParams, newOptions)
   if (wasUserSpecified) {
     // this is just default params being fetched from the server, so don't change the URL
@@ -60,12 +56,12 @@ function updateExploreParams(newOptions, wasUserSpecified=true) {
   // view options settings should not add history entries
   // e.g. when a user hits 'back', it shouldn't undo their cluster selection,
   // it should take them to the page they were on before they came to the explore tab
-  navigate(`${query}#study-visualize`, { replace: true })
+  navigate(query, { replace: true })
 }
 
 /** converts query string parameters into the dataParams object */
-function buildExploreParamsFromQuery(query) {
-  const exploreParams = {
+function buildHomeParamsFromQuery(query) {
+  const homeParams = {
     userSpecified: {}
   }
   const queryParams = queryString.parse(query)
@@ -78,40 +74,40 @@ function buildExploreParamsFromQuery(query) {
     const [name, type, scope] = queryParams.annotation.split('--')
     annotation = { name, type, scope }
     if (name && name.length > 0) {
-      exploreParams.userSpecified.annotation = true
+      homeParams.userSpecified.annotation = true
     }
   }
 
   PARAM_LIST_ORDER.forEach(param => {
     if (queryParams[param] && queryParams[param].length) {
-      exploreParams.userSpecified[param] = true
+      homeParams.userSpecified[param] = true
     }
   })
-  exploreParams.cluster = queryParams.cluster ? queryParams.cluster : ''
-  exploreParams.annotation = annotation
-  exploreParams.subsample = queryParams.subsample ? queryParams.subsample : ''
-  exploreParams.consensus = queryParams.consensus ? queryParams.consensus : null
+  homeParams.cluster = queryParams.cluster ? queryParams.cluster : ''
+  homeParams.annotation = annotation
+  homeParams.subsample = queryParams.subsample ? queryParams.subsample : ''
+  homeParams.consensus = queryParams.consensus ? queryParams.consensus : null
   if (queryParams.spatialGroups === SPATIAL_GROUPS_EMPTY) {
-    exploreParams.spatialGroups = []
+    homeParams.spatialGroups = []
   } else {
-    exploreParams.spatialGroups = queryParams.spatialGroups ? queryParams.spatialGroups.split(',') : []
+    homeParams.spatialGroups = queryParams.spatialGroups ? queryParams.spatialGroups.split(',') : []
   }
-  exploreParams.genes = geneParamToArray(queryParams.genes)
-  exploreParams.geneList = queryParams.geneList ? queryParams.geneList : ''
-  exploreParams.heatmapRowCentering = queryParams.heatmapRowCentering ?
+  homeParams.genes = geneParamToArray(queryParams.genes)
+  homeParams.geneList = queryParams.geneList ? queryParams.geneList : ''
+  homeParams.heatmapRowCentering = queryParams.heatmapRowCentering ?
     queryParams.heatmapRowCentering :
     DEFAULT_ROW_CENTERING
 
-  exploreParams.scatterColor = queryParams.scatterColor ? queryParams.scatterColor : ''
-  exploreParams.distributionPlot = queryParams.distributionPlot ? queryParams.distributionPlot : ''
-  exploreParams.distributionPoints = queryParams.distributionPoints ? queryParams.distributionPoints : ''
-  exploreParams.tab = queryParams.tab ? queryParams.tab : ''
-  exploreParams.heatmapFit = queryParams.heatmapFit ? queryParams.heatmapFit : ''
-  exploreParams.bamFileName = queryParams.bamFileName ? queryParams.bamFileName : ''
-  exploreParams.ideogramFileId = queryParams.ideogramFileId ? queryParams.ideogramFileId : ''
+  homeParams.scatterColor = queryParams.scatterColor ? queryParams.scatterColor : ''
+  homeParams.distributionPlot = queryParams.distributionPlot ? queryParams.distributionPlot : ''
+  homeParams.distributionPoints = queryParams.distributionPoints ? queryParams.distributionPoints : ''
+  homeParams.tab = queryParams.tab ? queryParams.tab : ''
+  homeParams.heatmapFit = queryParams.heatmapFit ? queryParams.heatmapFit : ''
+  homeParams.bamFileName = queryParams.bamFileName ? queryParams.bamFileName : ''
+  homeParams.ideogramFileId = queryParams.ideogramFileId ? queryParams.ideogramFileId : ''
 
 
-  return exploreParams
+  return homeParams
 }
 
 /** converts the params objects into a query string, inverse of build*ParamsFromQuery */
