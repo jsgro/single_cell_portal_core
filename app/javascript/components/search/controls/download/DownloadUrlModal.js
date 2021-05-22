@@ -11,7 +11,7 @@ import { fetchAuthCode } from 'lib/scp-api'
  * @returns {Object} Object for auth code, time interval, and download command
  */
 function getDownloadCommand(authCode, fileIds) {
-  const queryString = `?auth_code=${authCode}&fileIds=${fileIds.join(',')}`
+  const queryString = `?auth_code=${authCode}&file_ids=${fileIds.join(',')}`
 
   // Gets a curl configuration ("cfg.txt") containing signed
   // URLs and output names for all files in the download object.

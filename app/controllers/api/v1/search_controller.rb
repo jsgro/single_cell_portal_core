@@ -481,7 +481,7 @@ module Api
               'Search'
           ]
           key :summary, 'Bulk download study data'
-          key :description, 'Download files in bulk of multiple types from one or more studies via curl'
+          key :description, 'Download files in bulk of multiple types from one or more studies via curl. Specify either study accessions and types, or file ids'
           key :operationId, 'search_bulk_download_path'
           parameter do
             key :name, :auth_code
@@ -506,6 +506,17 @@ module Api
             items do
               key :type, :string
               key :enum, StudyFile::BULK_DOWNLOAD_TYPES
+            end
+            key :collectionFormat, :csv
+          end
+          parameter do
+            key :name, :file_ids
+            key :in, :query
+            key :description, 'Comma-delimited list of file ids'
+            key :required, false
+            key :type, :array
+            items do
+              key :type, :string
             end
             key :collectionFormat, :csv
           end
@@ -543,10 +554,21 @@ module Api
       end
 
       def bulk_download
+        valid_accessions = []
+        file_ids = []
         # sanitize study accessions and file types
-        valid_accessions = self.class.find_matching_accessions(params[:accessions])
-        sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
-
+        if params[:file_ids]
+          begin
+            file_ids = RequestUtils.validate_id_list(params[:file_ids])
+          rescue ArgumentError
+            render json: {error: 'file_ids must be comma-delimited list of 24-character UUIDs'}, status: 400 and return
+          end
+          matched_study_ids = StudyFile.where(:id.in => file_ids).pluck(:study_id)
+          valid_accessions = Study.where(:id.in => matched_study_ids).pluck(:accession)
+        else
+          valid_accessions = self.class.find_matching_accessions(params[:accessions])
+          sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
+        end
         check_accession_permissions(valid_accessions)
 
         # if this is a single-study download, allow for DirectoryListing downloads
@@ -559,10 +581,15 @@ module Api
           directory_files = []
         end
 
+        files_requested = nil
         # get requested files
         # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
-        files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
-                                                                    study_accessions: valid_accessions)
+        if file_ids
+          files_requested = StudyFile.where(:id.in => file_ids)
+        else
+          files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
+                                                                      study_accessions: valid_accessions)
+        end
 
         # determine quota impact & update user's download quota
         # will throw a RuntimeError if the download exceeds the user's daily quota

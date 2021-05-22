@@ -79,6 +79,16 @@ class RequestUtils
     SANITIZER.sanitize(inputs).encode!(Encoding.find('ASCII-8BIT'), invalid: :replace, undef: :replace)
   end
 
+  def self.validate_id_list(id_list_string)
+    ids = id_list_string.split(',')
+    uuid_regex = /^[0-9a-f]{24}$/
+    match_results = ids.map {|id| uuid_regex.match?(id.downcase) }
+    if !match_results.all? {|r| r}
+      raise ArgumentError, 'Ids must be valid UUIDs'
+    end
+    ids
+  end
+
   # helper method for getting the base url with protocol, hostname, and port
   # e.g. "https://localhost"
   def self.get_base_url
