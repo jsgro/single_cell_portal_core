@@ -47,6 +47,7 @@ export default function DownloadButton({searchResults={}}) {
         <button
           id='download-button'
           className={`btn btn-primary ${active ? 'active' : 'disabled'}`}
+          disabled={!active}
           onClick={() => {setShowModal(!showModal)}}>
           <span>
             <FontAwesomeIcon className="icon-left" icon={faDownload}/>
@@ -54,7 +55,7 @@ export default function DownloadButton({searchResults={}}) {
           </span>
         </button>
       </OverlayTrigger>
-      <DownloadModal show={showModal} setShow={setShowModal} studyAccessions={matchingAccessions}/>
+      { showModal && <DownloadModal show={showModal} setShow={setShowModal} studyAccessions={matchingAccessions}/> }
     </>
   )
 }
