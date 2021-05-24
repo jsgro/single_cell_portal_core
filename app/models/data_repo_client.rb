@@ -2,22 +2,14 @@
 # API client bindings for retrieving information about Terra Data Repo datasets/snapshots/schemas from their API
 ##
 class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_at, :service_account_credentials)
-  extend AccessTokenGenerator # class method for generating OAuth2 access tokens
-  include GoogleServiceClient # helper module for refreshing access tokens, accessing GCS storage driver attributes
-  include ApiHelpers # process external API requests/responses
+  extend ServiceAccountManager
+  include GoogleServiceClient
+  include ApiHelpers
 
-  # path to read-only service account JSON keyfile
-  SERVICE_ACCOUNT_KEY = !ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'].blank? ? (ENV['NOT_DOCKERIZED'] ? ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'] : File.absolute_path(ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'])) : ''
   # Google authentication scopes necessary for querying TDR API
   GOOGLE_SCOPES = %w(openid email profile)
-  # GCP Compute project
-  COMPUTE_PROJECT = ENV['GOOGLE_CLOUD_PROJECT'].blank? ? '' : ENV['GOOGLE_CLOUD_PROJECT']
-  # Base API URL to request against
+   # Base API URL to request against
   BASE_URL = Rails.application.config.tdr_api_base_url
-  # constant used for retry loops in process_firecloud_request and execute_gcloud_method
-  MAX_RETRY_COUNT = 5
-  # constant used for incremental backoffs on retries (in seconds); ignored when running unit/integration test suite
-  RETRY_INTERVAL = Rails.env.test? ? 0 : 15
 
   # control variables
   SORT_DIRECTIONS = %w(asc desc).freeze
@@ -30,16 +22,16 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   ##
 
   # initialize is called after instantiating with DataRepoClient.new
-  # will set the access token, TDR base api url root and GCP storage driver instance
+  # will set the access token, TDR base API URL  root and GCP storage driver instance
   #
   # * *params*
   #   - +service_account_key+: (String, Pathname) => Path to service account JSON keyfile
   # * *return*
   #   - +DataRepoClient+ object
-  def initialize(service_account=SERVICE_ACCOUNT_KEY)
+  def initialize(service_account=self.class.get_primary_keyfile)
     # GCS storage driver attributes
     storage_attr = {
-      project: COMPUTE_PROJECT,
+      project: self.class.compute_project,
       timeout: 3600,
       keyfile: service_account
     }
@@ -78,11 +70,11 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
       context = " encountered when requesting '#{path}', attempt ##{current_retry}"
       log_message = "#{e.message}: #{e.http_body}; #{context}"
       Rails.logger.error log_message
-      retry_time = retry_count * RETRY_INTERVAL
+      retry_time = retry_count * ApiHelpers::RETRY_INTERVAL
       sleep(retry_time)
       # only retry if status code indicates a possible temporary error, and we are under the retry limit and
       # not calling a method that is blocked from retries
-      if should_retry?(e.http_code) && retry_count < MAX_RETRY_COUNT
+      if should_retry?(e.http_code) && retry_count < ApiHelpers::MAX_RETRY_COUNT
         process_api_request(http_method, path, payload: payload, retry_count: current_retry)
       else
         # we have reached our retry limit or the response code indicates we should not retry

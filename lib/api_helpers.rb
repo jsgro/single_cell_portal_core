@@ -1,7 +1,13 @@
 ##
 # helper methods for handing external API requests/responses
+# should be used in other classes via include, e.g. `include ApiHelpers`
 ##
 module ApiHelpers
+  # max number of retries if should_retry? is true
+  MAX_RETRY_COUNT = 5
+  # interval for retry backoff on request retries
+  RETRY_INTERVAL = Rails.env.test? ? 0 : 15
+
   # check if OK response code was found
   #
   # * *params*

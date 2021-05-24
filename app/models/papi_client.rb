@@ -7,13 +7,10 @@
 # Author::  Jon Bistline  (mailto:bistline@broadinstitute.org)
 
 class PapiClient < Struct.new(:project, :service_account_credentials, :service)
+  extend ServiceAccountManager
 
-  # Service account JSON credentials
-  SERVICE_ACCOUNT_KEY = !ENV['SERVICE_ACCOUNT_KEY'].blank? ? (ENV['NOT_DOCKERIZED'] ? ENV['SERVICE_ACCOUNT_KEY'] : File.absolute_path(ENV['SERVICE_ACCOUNT_KEY'])) : ''
-  # Google authentication scopes necessary for running pipelines
+   # Google authentication scopes necessary for running pipelines
   GOOGLE_SCOPES = %w(https://www.googleapis.com/auth/cloud-platform)
-  # GCP Compute project to run pipelines in
-  COMPUTE_PROJECT = ENV['GOOGLE_CLOUD_PROJECT'].blank? ? '' : ENV['GOOGLE_CLOUD_PROJECT']
   # Network and sub-network names, if needed
   GCP_NETWORK_NAME = ENV['GCP_NETWORK_NAME']
   GCP_SUB_NETWORK_NAME = ENV['GCP_SUB_NETWORK_NAME']
@@ -32,15 +29,12 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - +project+: (Path) => Absolute filepath to service account credentials
   # * *return*
   #   - +PapiClient+
-  def initialize(project=COMPUTE_PROJECT, service_account_credentials=SERVICE_ACCOUNT_KEY)
+  def initialize(project=self.class.compute_project, service_account_credentials=self.class.get_primary_keyfile)
 
     credentials = {
-        scope: GOOGLE_SCOPES
+        scope: GOOGLE_SCOPES,
+        json_key_io: File.open(service_account_credentials)
     }
-
-    if SERVICE_ACCOUNT_KEY.present?
-      credentials.merge!({json_key_io: File.open(service_account_credentials)})
-    end
 
     authorizer = Google::Auth::ServiceAccountCredentials.make_creds(credentials)
     genomics_service = Google::Apis::GenomicsV2alpha1::GenomicsService.new

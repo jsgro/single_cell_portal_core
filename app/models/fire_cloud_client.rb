@@ -9,9 +9,9 @@
 # Author::  Jon Bistline  (mailto:bistline@broadinstitute.org)
 
 class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :storage, :expires_at, :service_account_credentials)
-  extend AccessTokenGenerator # class method for generating OAuth2 access tokens
-  include GoogleServiceClient # helper module for refreshing access tokens, accessing GCS storage driver attributes
-  include ApiHelpers # process external API requests/responses
+  extend ServiceAccountManager
+  include GoogleServiceClient
+  include ApiHelpers
 
   #
   # CONSTANTS
@@ -26,20 +26,12 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
     https://www.googleapis.com/auth/userinfo.email
     https://www.googleapis.com/auth/devstorage.read_only
   )
-  # constant used for retry loops in process_firecloud_request and execute_gcloud_method
-  MAX_RETRY_COUNT = 5
-  # constant used for incremental backoffs on retries (in seconds); ignored when running unit/integration test suite
-  RETRY_INTERVAL = Rails.env.test? ? 0 : 15
   # List of URLs/Method names to never retry on or report error, regardless of error state
   ERROR_IGNORE_LIST = ["#{BASE_URL}/register"]
   # List of URLs/Method names to ignore incremental backoffs on (in cases of UI blocking)
   RETRY_BACKOFF_BLACKLIST = ["#{BASE_URL}/register", :generate_signed_url, :generate_api_url]
   # default namespace used for all FireCloud workspaces owned by the 'portal'
   PORTAL_NAMESPACE = ENV['PORTAL_NAMESPACE'].present? ? ENV['PORTAL_NAMESPACE'] : 'single-cell-portal'
-  # location of Google service account JSON (must be absolute path to file)
-  SERVICE_ACCOUNT_KEY = !ENV['SERVICE_ACCOUNT_KEY'].blank? ? File.absolute_path(ENV['SERVICE_ACCOUNT_KEY']) : ''
-  # location of Google service account JSON (must be absolute path to file)
-  READ_ONLY_SERVICE_ACCOUNT_KEY = !ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'].blank? ? File.absolute_path(ENV['READ_ONLY_SERVICE_ACCOUNT_KEY']) : ''
   # Permission values allowed for FireCloud workspace ACLs
   WORKSPACE_PERMISSIONS = ['OWNER', 'READER', 'WRITER', 'NO ACCESS']
   # List of FireCloud user group roles
@@ -91,7 +83,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   #   - +project+: (String) => Default GCP Project to use (can be overridden by other parameters)
   # * *return*
   #   - +FireCloudClient+ object
-  def initialize(user=nil, project=nil, service_account=SERVICE_ACCOUNT_KEY)
+  def initialize(user=nil, project=nil, service_account=self.class.get_primary_keyfile)
     # when initializing without a user, default to base configuration
     if user.nil?
       # instantiate Google Cloud Storage driver to work with files in workspace buckets
@@ -245,11 +237,11 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       context = " encountered when requesting '#{path}', attempt ##{current_retry}"
       log_message = "#{e.message}: #{e.http_body}; #{context}"
       Rails.logger.error log_message
-      retry_time = retry_count * RETRY_INTERVAL
+      retry_time = retry_count * ApiHelpers::RETRY_INTERVAL
       sleep(retry_time) unless RETRY_BACKOFF_BLACKLIST.include?(path) # only sleep if non-blocking
       # only retry if status code indicates a possible temporary error, and we are under the retry limit and
       # not calling a method that is blocked from retries
-      if should_retry?(e.http_code) && retry_count < MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(path)
+      if should_retry?(e.http_code) && retry_count < ApiHelpers::MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(path)
         process_firecloud_request(http_method, path, payload, opts, current_retry)
       else
         # we have reached our retry limit or the response code indicates we should not retry
@@ -1324,7 +1316,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
     rescue => e
       current_retry = retry_count + 1
       Rails.logger.info "error calling #{method_name} with #{params.join(', ')}; #{e.message} -- attempt ##{current_retry}"
-      retry_time = retry_count * RETRY_INTERVAL
+      retry_time = retry_count * ApiHelpers::RETRY_INTERVAL
       sleep(retry_time) unless RETRY_BACKOFF_BLACKLIST.include?(method_name)
       # only retry if status code indicates a possible temporary error, and we are under the retry limit and
       # not calling a method that is blocked from retries.  In case of a NoMethodError or RuntimeError, use 500 as the
@@ -1336,7 +1328,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       else
         status_code = nil
       end
-      if should_retry?(status_code) && retry_count < MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(method_name)
+      if should_retry?(status_code) && retry_count < ApiHelpers::MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(method_name)
         execute_gcloud_method(method_name, current_retry, *params)
       else
         # we have reached our retry limit or the response code indicates we should not retry

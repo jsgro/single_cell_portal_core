@@ -1,4 +1,8 @@
-module AccessTokenGenerator
+##
+# class methods for loading service account keyfiles & generating OAuth2 access tokens
+# should be used in other classes via extend, e.g. `extend ServiceAccountManager`
+##
+module ServiceAccountManager
   # generate an access token from a service account JSON keyfile
   #
   # * *params*
@@ -17,5 +21,20 @@ module AccessTokenGenerator
     creds = Google::Auth::ServiceAccountCredentials.make_creds(creds_attr)
     token = creds.fetch_access_token!
     token
+  end
+
+  # return the GCP project this instance is running in
+  def compute_project
+    ENV['GOOGLE_CLOUD_PROJECT']
+  end
+
+  # resolve filepath to primary service account (e.g. project owner) keyfile
+  def get_primary_keyfile
+    ENV['NOT_DOCKERIZED'] ? ENV['SERVICE_ACCOUNT_KEY']: File.absolute_path(ENV['SERVICE_ACCOUNT_KEY'])
+  end
+
+  # resolve filepath to primary service account (e.g. project owner) keyfile
+  def get_read_only_keyfile
+    ENV['NOT_DOCKERIZED'] ? ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'] : File.absolute_path(ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'])
   end
 end

@@ -1,5 +1,6 @@
 ##
-# module of generic GCP-centric methods, such as handling authorization/tokens, or GCS drivers
+# generic GCP-centric methods, such as handling authorization/tokens, or GCS drivers
+# should be used in other classes via include, e.g. `include GoogleServiceClient`
 ##
 module GoogleServiceClient
   ##

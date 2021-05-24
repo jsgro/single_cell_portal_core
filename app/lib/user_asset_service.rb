@@ -4,11 +4,7 @@
 ##
 
 class UserAssetService
-
-  # GCP Compute project to run reads/writes in
-  COMPUTE_PROJECT = ENV['GOOGLE_CLOUD_PROJECT'].blank? ? '' : ENV['GOOGLE_CLOUD_PROJECT']
-  # Service account JSON credentials
-  SERVICE_ACCOUNT_KEY = !ENV['SERVICE_ACCOUNT_KEY'].blank? ? File.absolute_path(ENV['SERVICE_ACCOUNT_KEY']) : ''
+  extend ServiceAccountManager
 
   # Asset Path helpers
   RAILS_PUBLIC_PATH = Rails.root.join('public', 'single_cell')
@@ -20,7 +16,7 @@ class UserAssetService
   ASSET_TYPES = ASSET_PATHS_BY_TYPE.keys.freeze
 
   # Bucket info; each Rails environment per project has a bucket
-  STORAGE_BUCKET_NAME = "#{COMPUTE_PROJECT}-#{Rails.env}-asset-storage".freeze
+  STORAGE_BUCKET_NAME = "#{self.class.compute_project}-#{Rails.env}-asset-storage".freeze
 
   # initialize GCS driver with same credentials as FireCloudClient
   # will return existing instance after first call is made (does not re-instantiate)
@@ -28,7 +24,7 @@ class UserAssetService
   # * *yields*
   #   - +Google::Cloud::Storage+
   def self.storage_service
-    @@storage_service ||= Google::Cloud::Storage.new(keyfile: SERVICE_ACCOUNT_KEY)
+    @@storage_service ||= Google::Cloud::Storage.new(keyfile: self.get_primary_keyfile)
   end
 
   # get storage driver access token
