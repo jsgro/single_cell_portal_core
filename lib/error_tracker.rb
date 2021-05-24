@@ -1,7 +1,7 @@
 module ErrorTracker
 
   # capture and report an exception to Sentry via Raven, setting user context & params as needed
-  def self.report_exception_with_context(exception, user, *context_objects)
+  def self.report_exception(exception, user, *context_objects)
     # only report to Sentry if configured and not in dev or test environment
     context = format_extra_context(*context_objects)
     if %w(development test).include?(Rails.env) || ENV['SENTRY_DSN'].nil?

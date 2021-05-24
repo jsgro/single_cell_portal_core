@@ -132,7 +132,7 @@ class ParseUtils
       end
       c_file.close
     rescue => e
-      ErrorTracker.report_exception_with_context(e, user, study, coordinate_file, {opts: opts})
+      ErrorTracker.report_exception(e, user, study, coordinate_file, { opts: opts})
       coordinate_file.update(parse_status: 'failed')
       error_message = "#{e.message}"
       Rails.logger.info error_message
@@ -281,7 +281,7 @@ class ParseUtils
       begin
         SingleCellMailer.notify_user_parse_complete(user.email, "Coordinate Label file: '#{coordinate_file.upload_file_name}' has completed parsing", @message, study).deliver_now
       rescue => e
-        ErrorTracker.report_exception_with_context(e, user, study, coordinate_file, {opts: opts})
+        ErrorTracker.report_exception(e, user, study, coordinate_file, { opts: opts})
         Rails.logger.error "Unable to deliver email: #{e.message}"
       end
 
@@ -292,7 +292,7 @@ class ParseUtils
       begin
         remote = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, destination)
       rescue => e
-        ErrorTracker.report_exception_with_context(e, user, study, coordinate_file, {opts: opts})
+        ErrorTracker.report_exception(e, user, study, coordinate_file, { opts: opts})
         Rails.logger.error "Error retrieving remote: #{e.message}"
       end
       if remote.nil?
@@ -300,7 +300,7 @@ class ParseUtils
           Rails.logger.info "Preparing to upload ordinations file: #{coordinate_file.upload_file_name}:#{coordinate_file.id} to FireCloud"
           study.send_to_firecloud(coordinate_file)
         rescue => e
-          ErrorTracker.report_exception_with_context(e, user, study, coordinate_file, {opts: opts})
+          ErrorTracker.report_exception(e, user, study, coordinate_file, { opts: opts})
           Rails.logger.info "Cluster file: #{coordinate_file.upload_file_name}:#{coordinate_file.id} failed to upload to FireCloud due to #{e.message}"
           SingleCellMailer.notify_admin_upload_fail(coordinate_file, e.message).deliver_now
         end
@@ -312,7 +312,7 @@ class ParseUtils
           Delayed::Job.enqueue(UploadCleanupJob.new(study, coordinate_file, 0), run_at: run_at)
           Rails.logger.info "Cleanup job for #{coordinate_file.upload_file_name}:#{coordinate_file.id} scheduled for #{run_at}"
         rescue => e
-          ErrorTracker.report_exception_with_context(e, user, study, coordinate_file, {opts: opts})
+          ErrorTracker.report_exception(e, user, study, coordinate_file, { opts: opts})
           # we don't really care if the delete fails, we can always manually remove it later as the file is in FireCloud already
           Rails.logger.error "Could not delete #{coordinate_file.name}:#{coordinate_file.id} in study #{study.name}; aborting"
           SingleCellMailer.admin_notification('Local file deletion failed', nil, "The file at #{@file_location} failed to clean up after parsing, please remove.").deliver_now
@@ -320,7 +320,7 @@ class ParseUtils
       end
     rescue => e
       @end_time = Time.now
-      ErrorTracker.report_exception_with_context(e, user, study, coordinate_file, {opts: opts})
+      ErrorTracker.report_exception(e, user, study, coordinate_file, { opts: opts})
       self.log_to_mixpanel(study, coordinate_file, user, @start_time, @end_time, 'failed')
       # error has occurred, so clean up records and remove file
       DataArray.where(study_file_id: coordinate_file.id).delete_all
@@ -378,7 +378,7 @@ class ParseUtils
       end
       file.close
     rescue => e
-      ErrorTracker.report_exception_with_context(e, user, study, marker_file, {opts: opts})
+      ErrorTracker.report_exception(e, user, study, marker_file, { opts: opts})
       filename = marker_file.upload_file_name
       marker_file.remove_local_copy
       marker_file.destroy
@@ -465,7 +465,7 @@ class ParseUtils
       begin
         SingleCellMailer.notify_user_parse_complete(user.email, "Gene list file: '#{marker_file.name}' has completed parsing", @message, study).deliver_now
       rescue => e
-        ErrorTracker.report_exception_with_context(e, user, study, marker_file, {opts: opts})
+        ErrorTracker.report_exception(e, user, study, marker_file, { opts: opts})
         Rails.logger.error "Unable to deliver email: #{e.message}"
       end
 
@@ -476,7 +476,7 @@ class ParseUtils
       begin
         remote = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, 0, study.bucket_id, destination)
       rescue => e
-        ErrorTracker.report_exception_with_context(e, user, study, marker_file, {opts: opts})
+        ErrorTracker.report_exception(e, user, study, marker_file, { opts: opts})
         Rails.logger.error "Error retrieving remote: #{e.message}"
       end
       if remote.nil?
@@ -484,7 +484,7 @@ class ParseUtils
           Rails.logger.info "Preparing to upload gene list file: #{marker_file.upload_file_name}:#{marker_file.id} to FireCloud"
           study.send_to_firecloud(marker_file)
         rescue => e
-          ErrorTracker.report_exception_with_context(e, user, study, marker_file, {opts: opts})
+          ErrorTracker.report_exception(e, user, study, marker_file, { opts: opts})
           Rails.logger.info "Gene List file: #{marker_file.upload_file_name}:#{marker_file.id} failed to upload to FireCloud due to #{e.message}"
           SingleCellMailer.notify_admin_upload_fail(marker_file, e.message).deliver_now
         end
@@ -496,7 +496,7 @@ class ParseUtils
           Delayed::Job.enqueue(UploadCleanupJob.new(study, marker_file, 0), run_at: run_at)
           Rails.logger.info "Cleanup job for #{marker_file.upload_file_name}:#{marker_file.id} scheduled for #{run_at}"
         rescue => e
-          ErrorTracker.report_exception_with_context(e, user, study, marker_file, {opts: opts})
+          ErrorTracker.report_exception(e, user, study, marker_file, { opts: opts})
           # we don't really care if the delete fails, we can always manually remove it later as the file is in FireCloud already
           Rails.logger.error "Could not delete #{marker_file.name} in study #{study.name}; aborting"
           SingleCellMailer.admin_notification('Local file deletion failed', nil, "The file at #{@file_location} failed to clean up after parsing, please remove.").deliver_now
@@ -504,7 +504,7 @@ class ParseUtils
       end
     rescue => e
       @end_time = Time.zone.now
-      ErrorTracker.report_exception_with_context(e, user, study, marker_file, {opts: opts})
+      ErrorTracker.report_exception(e, user, study, marker_file, { opts: opts})
       self.log_to_mixpanel(study, marker_file, user, @start_time, @end_time, 'failed')
       # parse has failed, so clean up records and remove file
       PrecomputedScore.where(study_file_id: marker_file.id).delete_all

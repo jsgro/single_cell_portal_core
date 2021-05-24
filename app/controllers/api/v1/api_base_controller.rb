@@ -23,7 +23,7 @@ module Api
       # this also logs exceptions in Mixpanel/Sentry
       rescue_from Exception do |exception|
         MetricsService.report_error(exception, request, current_api_user, @study)
-        ErrorTracker.report_exception_with_context(exception, current_api_user, params)
+        ErrorTracker.report_exception(exception, current_api_user, params)
         logger.error ([exception.message] + exception.backtrace).join($/)
         if Rails.env.production?
           render json: {error: "An unexpected error has occurred"}, status: 500

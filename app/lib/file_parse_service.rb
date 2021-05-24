@@ -172,7 +172,7 @@ class FileParseService
         end
       end
     rescue => e
-      ErrorTracker.report_exception_with_context(e, nil, study)
+      ErrorTracker.report_exception(e, nil, study)
     end
   end
 end

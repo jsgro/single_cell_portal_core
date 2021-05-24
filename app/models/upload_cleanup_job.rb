@@ -65,7 +65,7 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
             Rails.logger.error "error in UploadCleanupJob for #{study.accession}:#{study_file.bucket_location}:#{study_file.id}, will retry at #{run_at}; #{e.message}"
             Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, attempt), run_at: run_at)
           else
-            ErrorTracker.report_exception_with_context(e, nil, study, study_file, {retry_count: attempt})
+            ErrorTracker.report_exception(e, nil, study, study_file, { retry_count: attempt})
             Rails.logger.error "terminal error in UploadCleanupJob for #{study.accession}:#{study_file.bucket_location}:#{study_file.id}; #{e.message}"
             message = "<p>The following failure occurred when attempting to clean up #{study.firecloud_project}/#{study.firecloud_workspace}:#{study_file.bucket_location}</p>"
             message += "<hr /><p>#{e.class.name}: #{e.message}</p>"
@@ -98,7 +98,7 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
           study = study_file.study
           SingleCellMailer.notify_user_upload_fail(study_file, study, study.user).deliver_now
         rescue => e
-          ErrorTracker.report_exception_with_context(e, nil)
+          ErrorTracker.report_exception(e, nil)
           Rails.logger.error "Unable to notify user of upload failure: #{e.class}:#{e.message}"
         end
         DeleteQueueJob.new(study_file).perform

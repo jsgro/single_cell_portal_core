@@ -118,7 +118,7 @@ module Api
                 auth_response_headers: response.present? ? response.headers : nil,
                 token_present: api_access_token.present?
             }
-            ErrorTracker.report_exception_with_context(e, nil, error_context)
+            ErrorTracker.report_exception(e, nil, error_context)
             Rails.logger.error "Error retrieving user api credentials: #{e.class.name}: #{e.message}"
           end
           user

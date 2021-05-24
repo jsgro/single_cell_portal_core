@@ -84,7 +84,7 @@ class IngestJob
       end
     rescue => e
       Rails.logger.error "Error in launching ingest of #{file_identifier}: #{e.class.name}:#{e.message}"
-      ErrorTracker.report_exception_with_context(e, self.user, self.study, self.study_file, {action: self.action})
+      ErrorTracker.report_exception(e, self.user, self.study, self.study_file, { action: self.action})
       # notify admins of failure, and notify user that admins are looking into the issue
       SingleCellMailer.notify_admin_parse_launch_fail(self.study, self.study_file, self.user, self.action, e).deliver_now
       user_message = "<p>An error has occurred when attempting to launch the parse job associated with #{self.study_file.upload_file_name}.  "
@@ -490,7 +490,7 @@ class IngestJob
       end
       true
     rescue => e
-      ErrorTracker.report_exception_with_context(e, self.user, self.study_file, {action: :create_study_file_copy})
+      ErrorTracker.report_exception(e, self.user, self.study_file, { action: :create_study_file_copy})
       false
     end
   end

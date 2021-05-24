@@ -16,7 +16,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       self.class.validate_host_header_on_callback(request.headers)
     rescue SecurityError => e
       logger.error e.message
-      ErrorTracker.report_exception_with_context(e, @user, params)
+      ErrorTracker.report_exception(e, @user, params)
       MetricsService.report_error(e, request, @user)
       sign_out @user if @user.present?
       head 400 and return
@@ -48,7 +48,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       self.class.validate_host_header_on_callback(request.headers)
     rescue SecurityError => e
       logger.error e.message
-      ErrorTracker.report_exception_with_context(e, @user, params)
+      ErrorTracker.report_exception(e, @user, params)
       MetricsService.report_error(e, request, @user)
       sign_out @user if @user.present?
       head 400 and return

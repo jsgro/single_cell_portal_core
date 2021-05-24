@@ -147,7 +147,7 @@ class User
         self.update!(access_token: user_access_token)
         user_access_token
       rescue => e
-        ErrorTracker.report_exception_with_context(e, self)
+        ErrorTracker.report_exception(e, self)
         Rails.logger.error "#{Time.zone.now}: Unable to generate access token for user #{self.email} due to error; #{e.message}"
         nil
       end

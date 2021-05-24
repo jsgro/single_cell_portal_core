@@ -61,7 +61,7 @@ class GenomeAnnotation
         begin
           ApplicationController.firecloud_client.execute_gcloud_method(:generate_api_url, 0, self.bucket_id, self.link)
         rescue => e
-          ErrorTracker.report_exception_with_context(e, nil, self, {method_call: :generate_api_url})
+          ErrorTracker.report_exception(e, nil, self, { method_call: :generate_api_url})
           Rails.logger.error "Cannot generate public genome annotation link for #{self.link}: #{e.message}"
           ''
         end
@@ -83,7 +83,7 @@ class GenomeAnnotation
         begin
           ApplicationController.firecloud_client.execute_gcloud_method(:generate_api_url, 0, self.bucket_id, self.index_link)
         rescue => e
-          ErrorTracker.report_exception_with_context(e, nil, self, {method_call: :generate_api_url})
+          ErrorTracker.report_exception(e, nil, self, { method_call: :generate_api_url})
           Rails.logger.error "Cannot generate public genome annotation index link for #{self.index_link}: #{e.message}"
           ''
         end
@@ -105,7 +105,7 @@ class GenomeAnnotation
         begin
           ApplicationController.firecloud_client.execute_gcloud_method(:generate_signed_url, 0, self.bucket_id, self.link, expires: 15)
         rescue => e
-          ErrorTracker.report_exception_with_context(e, nil, self, {method_call: :generate_signed_url})
+          ErrorTracker.report_exception(e, nil, self, { method_call: :generate_signed_url})
           Rails.logger.error "Cannot generate genome annotation download link for #{self.link}: #{e.message}"
           ''
         end
@@ -138,7 +138,7 @@ class GenomeAnnotation
           self.bucket_id = bucket_id
         end
       rescue => e
-        ErrorTracker.report_exception_with_context(e, self.genome_assembly.taxon.user, {
+        ErrorTracker.report_exception(e, self.genome_assembly.taxon.user, {
           reference_project: reference_project, reference_workspace: reference_workspace
         }, self)
         errors.add(:bucket_id, "was unable to be set due to an error: #{e.message}.  Please check the reference workspace at #{config.value} and try again.")
@@ -160,7 +160,7 @@ class GenomeAnnotation
             auth_response_code: response.present? ? response.code : nil,
             auth_response_headers: response.present? ? response.headers : nil
         }
-        ErrorTracker.report_exception_with_context(e, self.genome_assembly.taxon.user, request_context, self)
+        ErrorTracker.report_exception(e, self.genome_assembly.taxon.user, request_context, self)
         errors.add(:link, "was not found due to an error: #{e.message}.  Please check the link and try again.")
       end
     else
@@ -174,7 +174,7 @@ class GenomeAnnotation
             errors.add(:link, "was not found in the reference workspace of #{config.value}.  Please check the link and try again.")
           end
         rescue => e
-          ErrorTracker.report_exception_with_context(e, self.genome_assembly.taxon.user, {
+          ErrorTracker.report_exception(e, self.genome_assembly.taxon.user, {
             reference_project: reference_project, reference_workspace: reference_workspace
           }, self)
           errors.add(:link, "was not found due to an error: #{e.message}.  Please check the link and try again.")
@@ -200,7 +200,7 @@ def check_genome_annotation_index_link
           auth_response_code: response.present? ? response.code : nil,
           auth_response_headers: response.present? ? response.headers : nil
       }
-      ErrorTracker.report_exception_with_context(e, nil, request_context, self)
+      ErrorTracker.report_exception(e, nil, request_context, self)
       errors.add(:index_link, "was not found due to an error: #{e.message}.  Please check the index link and try again.")
     end
   else
@@ -214,7 +214,7 @@ def check_genome_annotation_index_link
           errors.add(:index_link, "was not found in the reference workspace of #{config.value}.  Please check the index link and try again.")
         end
       rescue => e
-        ErrorTracker.report_exception_with_context(e, self.genome_assembly.taxon.user, {reference_project: reference_project, reference_workspace: reference_workspace}, self)
+        ErrorTracker.report_exception(e, self.genome_assembly.taxon.user, { reference_project: reference_project, reference_workspace: reference_workspace}, self)
         errors.add(:index_link, "was not found due to an error: #{e.message}.  Please check the index link and try again.")
       end
     else

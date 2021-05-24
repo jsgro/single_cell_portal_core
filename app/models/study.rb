@@ -826,7 +826,7 @@ class Study
             workspace_acl['acl'][user.email]['canCompute']
           end
         rescue => e
-          ErrorTracker.report_exception_with_context(e, user, { study: self.attributes.to_h})
+          ErrorTracker.report_exception(e, user, { study: self.attributes.to_h})
           Rails.logger.error "Unable to retrieve compute permissions for #{user.email}: #{e.message}"
           false
         end
@@ -855,7 +855,7 @@ class Study
         # use native array intersection to determine if any of the user's groups have been shared with this study at the correct permission
         (user_groups & group_shares).any?
       rescue => e
-        ErrorTracker.report_exception_with_context(e, user, { user_groups: user_groups, study: self.attributes.to_h})
+        ErrorTracker.report_exception(e, user, { user_groups: user_groups, study: self.attributes.to_h})
         Rails.logger.error "Unable to retrieve user groups for #{user.email}: #{e.class.name} -- #{e.message}"
         false
       end
@@ -1540,7 +1540,7 @@ class Study
       Delayed::Job.enqueue(UploadCleanupJob.new(file.study, file, 0), run_at: run_at)
       Rails.logger.info "#{Time.zone.now}: cleanup job for #{file.bucket_location}:#{file.id} scheduled for #{run_at}"
     rescue => e
-      ErrorTracker.report_exception_with_context(e, user, self, file)
+      ErrorTracker.report_exception(e, user, self, file)
       Rails.logger.error "#{Time.zone.now}: unable to upload '#{file.bucket_location}:#{file.id} to study bucket #{self.bucket_id}; #{e.message}"
       # notify admin of failure so they can push the file and relauch parse
       SingleCellMailer.notify_admin_upload_fail(file, e).deliver_now
@@ -1574,7 +1574,7 @@ class Study
       Rails.logger.info "#{Time.zone.now}: created default_participant for #{self.firecloud_workspace}"
       File.delete(path)
     rescue => e
-      ErrorTracker.report_exception_with_context(e, user, self)
+      ErrorTracker.report_exception(e, user, self)
       Rails.logger.error "#{Time.zone.now}: Unable to set default participant: #{e.message}"
     end
   end
@@ -1780,7 +1780,7 @@ class Study
               ApplicationController.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, acl)
               Rails.logger.info "#{Time.zone.now}: Study: #{self.name} FireCloud workspace acl assignment for shares #{share.email} successful"
             rescue RuntimeError => e
-              ErrorTracker.report_exception_with_context(e, user, self, acl)
+              ErrorTracker.report_exception(e, user, self, acl)
               errors.add(:study_shares, "Could not create a share for #{share.email} to workspace #{self.firecloud_workspace} due to: #{e.message}")
               return false
             end
@@ -1788,7 +1788,7 @@ class Study
         end
 
       rescue => e
-        ErrorTracker.report_exception_with_context(e, user, self)
+        ErrorTracker.report_exception(e, user, self)
         # delete workspace on any fail as this amounts to a validation fail
         Rails.logger.info "#{Time.zone.now}: Error creating workspace: #{e.message}"
         # delete firecloud workspace unless error is 409 Conflict (workspace already taken)
@@ -1889,14 +1889,14 @@ class Study
               ApplicationController.firecloud_client.update_workspace_acl(self.firecloud_project, self.firecloud_workspace, acl)
               Rails.logger.info "#{Time.zone.now}: Study: #{self.name} FireCloud workspace acl assignment for shares #{share.email} successful"
             rescue RuntimeError => e
-              ErrorTracker.report_exception_with_context(e, user, self, acl)
+              ErrorTracker.report_exception(e, user, self, acl)
               errors.add(:study_shares, "Could not create a share for #{share.email} to workspace #{self.firecloud_workspace} due to: #{e.message}")
               return false
             end
           end
         end
       rescue => e
-        ErrorTracker.report_exception_with_context(e, self.user, self)
+        ErrorTracker.report_exception(e, self.user, self)
         # delete workspace on any fail as this amounts to a validation fail
         Rails.logger.info "#{Time.zone.now}: Error assigning workspace: #{e.message}"
         errors.add(:firecloud_workspace, " assignment failed: #{e.message}; Please check the workspace in question and try again.")
@@ -1948,7 +1948,7 @@ class Study
       updated = client.get_workspace_acl(self.firecloud_project, self.firecloud_workspace)
       return updated['acl'][group_email]['accessLevel'] == 'OWNER'
     rescue RuntimeError => e
-      ErrorTracker.report_exception_with_context(e, self.user, { firecloud_project: self.firecloud_workspace})
+      ErrorTracker.report_exception(e, self.user, { firecloud_project: self.firecloud_workspace})
       Rails.logger.error "#{Time.zone.now}: unable to add portal service account to #{self.firecloud_workspace}: #{e.message}"
       false
     end
