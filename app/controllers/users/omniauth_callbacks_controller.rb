@@ -13,7 +13,12 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     begin
       provider = request.env["omniauth.auth"].dig('provider')
       self.class.validate_scopes_from_params(params, provider)
+      self.class.validate_host_header_on_callback(request.headers)
     rescue SecurityError => e
+      logger.error e.message
+      context = ErrorTracker.format_extra_context(params)
+      ErrorTracker.report_exception(e, @user, context)
+      MetricsService.report_error(e, request, @user)
       sign_out @user if @user.present?
       head 400 and return
     end
@@ -41,7 +46,12 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     begin
       provider = request.env["omniauth.auth"].dig('provider')
       self.class.validate_scopes_from_params(params, provider)
+      self.class.validate_host_header_on_callback(request.headers)
     rescue SecurityError => e
+      logger.error e.message
+      context = ErrorTracker.format_extra_context(params)
+      ErrorTracker.report_exception(e, @user, context)
+      MetricsService.report_error(e, request, @user)
       sign_out @user if @user.present?
       head 400 and return
     end
@@ -73,9 +83,17 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       scope_name = scope.starts_with?('https://www.googleapis.com/auth/') ? scope.split('/').last : scope
       if !configured_scopes.include?(scope_name)
         error_message = "Invalid scope requested in OAuth callback: #{scope_name}, not configured for #{provider}: #{configured_scopes}"
-        Rails.logger.error error_message
         raise SecurityError.new(error_message)
       end
+    end
+  end
+
+  # ensure that no host header injection has taken place
+  def self.validate_host_header_on_callback(headers)
+    host_header = headers['HTTP_HOST']&.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+    if host_header.present? && host_header != RequestUtils.get_hostname
+      error_message = "Invalid host header in callback: #{host_header}, does not match #{RequestUtils.get_hostname}"
+      raise SecurityError.new(error_message)
     end
   end
 end
