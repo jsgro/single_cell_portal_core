@@ -67,7 +67,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::ClientError) =>  The request is invalid and should not be retried without modification
   #   - (Google::Apis::AuthorizationError) => Authorization is required
   def list_pipelines(page_token: nil)
-    self.service.list_project_operations("projects/#{COMPUTE_PROJECT}/operations", page_token: page_token)
+    self.service.list_project_operations("projects/#{self.project}/operations", page_token: page_token)
   end
 
   # Runs a pipeline.  Will call sub-methods to instantiate required objects to pass to

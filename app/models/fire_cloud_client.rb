@@ -164,7 +164,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
         timeout: 3600
     }
     if !ENV['SERVICE_ACCOUNT_KEY'].blank?
-      storage_attr.merge!(keyfile: SERVICE_ACCOUNT_KEY)
+      storage_attr.merge!(keyfile: self.class.get_primary_keyfile)
     end
     new_storage = Google::Cloud::Storage.new(storage_attr)
     self.storage = new_storage
