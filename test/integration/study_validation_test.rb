@@ -322,6 +322,25 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
+  test 'should sanitize filenames with special characters' do
+    puts "#{File.basename(__FILE__)}: #{self.method_name}"
+
+    study = Study.find_by(name: "Testing Study #{@random_seed}")
+    filename = "README (1).txt"
+    # Carrierwave uses CarrierWave::SanitizedFile.sanitize_regexp to replace non-word characters with underscores
+    sanitized_filename = filename.gsub(CarrierWave::SanitizedFile.sanitize_regexp, '_')
+    file_params = {study_file: {file_type: 'Documentation', study_id: study.id.to_s, name: filename}}
+    perform_study_file_upload(filename, file_params, study.id)
+    assert_response 200, "README failed: #{@response.code}"
+    study_file = study.study_files.detect {|file| file.upload_file_name == sanitized_filename}
+    refute study_file.nil?, 'Did not find newly uploaded README with sanitized filename'
+
+    # clean up
+    study_file.destroy
+
+    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  end
+
   # validates that additional expression matrices with unique cells can be ingested to a study that already has a
   # metadata file and at least one other expression matrix
   test 'should validate unique cells for expression matrices' do
