@@ -9,10 +9,15 @@ import DownloadUrlModal from './DownloadUrlModal'
 import { fetchDownloadInfo } from 'lib/scp-api'
 import camelcaseKeys from 'camelcase-keys'
 
-const exStudies = [{"name":"Mouse stomach cells and GERD","accession":"SCP10","description":"Investigating mouse stomach tissue in mice with GERD. Jean Chang, Eric Weitz, Jon Bistline, Eno-Abasi Augustine-Akpan, Devon Bush, Vicky Horst.  Journal of SCP Synthetic Studies.  Volume 1, p1, February 2020.  Adding synthetic study data to development and staging environments has been shown to improve testability of new code.  We extend those findings to the Single Cell Portal by adding this synthetic data.","studyFiles":[{"name":"metadata.tsv","id":"60403ce3cc7ba03f9447762c","file_type":"Metadata","uploadFileSize":22843},{"name":"expression_matrix.tsv","id":"60403ce4cc7ba03f9447762e","file_type":"Expression Matrix","uploadFileSize":2669},{"name":"cluster.tsv","id":"60403ce4cc7ba03f94477630","file_type":"Cluster","uploadFileSize":4473}]},{"name":"Male Mouse brain","accession":"SCP32","description":"Investigating male mouse brain from healthy specimens. Jean Chang, Eric Weitz, Jon Bistline, Eno-Abasi Augustine-Akpan, Devon Bush, Vicky Horst. Journal of SCP Synthetic Studies. Volume 1, p1, February 2020. Adding synthetic study data to development and staging environments has been shown to improve testability of new code. We extend those findings to the Single Cell Portal by adding this synthetic data.","studyFiles":[{"name":"metadata.tsv","id":"6092ca23cc7ba0401d690079","file_type":"Metadata","uploadFileSize":31737},{"name":"expression_matrix.tsv","id":"6092ca23cc7ba0401d69007b","file_type":"Expression Matrix","uploadFileSize":3208},{"name":"raw_counts.tsv","id":"6092ca24cc7ba0401d69007d","file_type":"Expression Matrix","uploadFileSize":3483},{"name":"cluster.tsv","id":"6092ca24cc7ba0401d690080","file_type":"Cluster","uploadFileSize":4603,"bundled_files":[{"name":"coordinate_labels.tsv","id":"6092ca25cc7ba0401d690082","file_type":"Coordinate Labels","uploadFileSize":85}]},{"name":"coordinate_labels.tsv","id":"6092ca25cc7ba0401d690082","file_type":"Coordinate Labels","uploadFileSize":85},{"name":"DELETE-6e5e0358-ded7-4038-a483-5252deb97640","id":"6092ca26cc7ba0401d690085","file_type":"DELETE","uploadFileSize":5586},{"name":"DELETE-d4d4c011-ef01-492d-a986-eef9e56eabe2","id":"6092ca27cc7ba0401d690087","file_type":"DELETE","uploadFileSize":470249},{"name":"sample2.bam","id":"6092ca29cc7ba0401d69008a","file_type":"BAM","uploadFileSize":5586,"bundled_files":[{"name":"sample2.bam.bai","id":"6092ca2acc7ba0401d69008c","file_type":"BAM Index","uploadFileSize":470249}]},{"name":"sample2.bam.bai","id":"6092ca2acc7ba0401d69008c","file_type":"BAM Index","uploadFileSize":470249},{"name":"studies_data_(17).tsv","id":"60a2b4e3cc7ba07ff563cef5","file_type":"Documentation","uploadFileSize":132228},{"name":"studies_data_(18).tsv","id":"60a2b5bacc7ba07ff563cefa","file_type":"Documentation","uploadFileSize":132482},{"name":"DELETE-df137cd6-6953-4971-aeae-85f6453ddd94","id":"60a2b932cc7ba07ff563cf03","file_type":"DELETE","uploadFileSize":85}]},{"name":"Mouse brain clone","accession":"SCP33","description":"Clone for testing Rails 6","studyFiles":[{"name":"expression_matrix.tsv","id":"60a2b9c1cc7ba07ff563cf0c","file_type":"Expression Matrix","uploadFileSize":3208}]},{"name":"Single nucleus RNA-seq of cell diversity in the adult mouse hippocampus (sNuc-Seq)","accession":"SCP41","description":"Single cell RNA-Seq provides rich information about cell types and states. However, it is difficult to capture rare dynamic processes, such as adult neurogenesis, because isolation of rare neurons from adult tissue is challenging and markers for each phase are limited. Here, we develop Div-Seq, which combines scalable single-nucleus RNA-Seq (sNuc-Seq) with pulse labeling of proliferating cells by EdU to profile individual dividing cells. sNuc-Seq and Div-Seq can sensitively identify closely related hippocampal cell types and track transcriptional dynamics of newborn neurons within the adult hippocampal neurogenic niche, respectively. This study contains the sNuc-Seq analysis performed as a part of the Div-Seq method development.","studyFiles":[{"name":"reformatted_cell_metadata.txt","id":"60a53dc5cc7ba01261288735","file_type":"Metadata","uploadFileSize":52947},{"name":"Coordinates_CA1.txt","id":"60a53dc7cc7ba01261288737","file_type":"Cluster","uploadFileSize":6473},{"name":"Coordinates_CA3.txt","id":"60a53dc7cc7ba01261288739","file_type":"Cluster","uploadFileSize":3016},{"name":"Coordinates_Glia.txt","id":"60a53dc8cc7ba0126128873b","file_type":"Cluster","uploadFileSize":4548},{"name":"Coordinates_GABAergic.txt","id":"60a53dc9cc7ba0126128873d","file_type":"Cluster","uploadFileSize":5684},{"name":"Coordinates_DG.txt","id":"60a53dc9cc7ba0126128873f","file_type":"Cluster","uploadFileSize":32284}]},{"name":"Mouse colon cells with Salmonella","accession":"SCP9","description":"Investigating mouse colon tissue in mice exposed to salmonella infeection. Jean Chang, Eric Weitz, Jon Bistline, Eno-Abasi Augustine-Akpan, Devon Bush, Vicky Horst.  Journal of SCP Synthetic Studies.  Volume 1, p1, February 2020.  Adding synthetic study data to development and staging environments has been shown to improve testability of new code.  We extend those findings to the Single Cell Portal by adding this synthetic data.","studyFiles":[{"name":"metadata.tsv","id":"60403cd1cc7ba03f94477623","file_type":"Metadata","uploadFileSize":24570},{"name":"expression_matrix.tsv","id":"60403cd2cc7ba03f94477625","file_type":"Expression Matrix","uploadFileSize":2677},{"name":"cluster.tsv","id":"60403cd2cc7ba03f94477627","file_type":"Cluster","uploadFileSize":4604}]}]
+/**
+  * @fileoverview a modal that, given a list of study accessions, allows a user to select/deselect
+  * studies and file types for download.  This queries the bulk_download/summary API method
+  * to retrieve the list of study details and available files
+  */
+
 const NEW_ROW_STATE = {all: true, matrix: true, metadata: true, cluster: true}
 
-export default function DownloadModal({studyAccessions, show, setShow}) {
+export default function DownloadSelectionModal({studyAccessions, show, setShow}) {
   const [isLoading, setIsLoading] = useState(true)
   const [showUrlModal, setShowUrlModal] = useState(false)
   const [downloadInfo, setDownloadInfo] = useState([])
@@ -26,7 +31,6 @@ export default function DownloadModal({studyAccessions, show, setShow}) {
     if (show) {
       setIsLoading(true)
       fetchDownloadInfo(studyAccessions).then(result => {
-      //Promise.resolve(exStudies).then(result => {
         const newSelectedBoxes = {
           all: {...NEW_ROW_STATE},
           studies: result.map(study => ({...NEW_ROW_STATE}))
@@ -46,9 +50,9 @@ export default function DownloadModal({studyAccessions, show, setShow}) {
     className="btn btn-primary"
     onClick={performDownload}
     data-analytics-name="download-modal-download">
-    DOWNLOAD { fileCount } files / { prettyBytes }
+    NEXT
   </button>
-  let downloadCountText = `${downloadInfo.length} studies / ${fileCount} files`
+  let downloadCountText = `${prettyBytes} selected`
   if (fileCount === 0) {
     downloadButton = <button className="btn btn-primary" disabled="disabled">
       No files selected
@@ -58,13 +62,14 @@ export default function DownloadModal({studyAccessions, show, setShow}) {
 
   return <Modal
     id='bulk-download-modal'
+    className="full-height-modal"
     show={show}
     onHide={() => setShow(false)}
     animation={false}
     bsSize='large'>
     <Modal.Body>
       <div className="download-modal">
-        <h3>Download {downloadCountText}</h3>
+        <DownloadStepsHeader isFirstStep={true}/>
         <div className="download-table-container">
           {
             isLoading &&
@@ -90,12 +95,17 @@ export default function DownloadModal({studyAccessions, show, setShow}) {
       </div>
     </Modal.Body>
     <Modal.Footer>
+      { downloadCountText } &nbsp;
       <button className="btn action" onClick={() => setShow(false)} data-analytics-name="download-modal-cancel">
         CANCEL
       </button>
       { downloadButton }
     </Modal.Footer>
-    { showUrlModal && <DownloadUrlModal show={showUrlModal} setShow={setShowUrlModal} fileIds={selectedFileIds}/> }
+    { showUrlModal && <DownloadUrlModal
+      show={showUrlModal}
+      closeParent={() => setShow(false)}
+      setShow={setShowUrlModal}
+      fileIds={selectedFileIds}/> }
   </Modal>
 }
 
@@ -105,7 +115,7 @@ function DownloadSelectionTable({downloadInfo, setDownloadInfo, selectedBoxes, s
     const updatedSelection = _cloneDeep(selectedBoxes)
     let colsToUpdate = [column]
     if (column === 'all') {
-      colsToUpdate = ['all', ...COLUMN_ORDER]
+      colsToUpdate = COLUMN_ORDER_WITH_ALL
     }
     if (isAllStudies) {
       colsToUpdate.forEach(colType => updatedSelection.all[colType] = value)
@@ -114,10 +124,17 @@ function DownloadSelectionTable({downloadInfo, setDownloadInfo, selectedBoxes, s
       })
     } else {
       colsToUpdate.forEach(colType => updatedSelection.studies[index][colType] = value)
-      // if they make any study-specific changes, uncheck the related top row boxes
-      colsToUpdate.forEach(colType => updatedSelection.all[colType] = false)
-      updatedSelection.all.all = false
     }
+    // update the study select-all checkboxes given their selection
+    updatedSelection.studies.forEach(studySelection => {
+      const rowValues = COLUMN_ORDER.map(colType => studySelection[colType])
+      studySelection.all = rowValues.every(val => !!val)
+    })
+    // update the top row select-all checkboxes given their selection
+    COLUMN_ORDER_WITH_ALL.forEach(colType => {
+      const columnValues = updatedSelection.studies.map(studySelection => studySelection[colType])
+      updatedSelection.all[colType] = columnValues.every(val => !!val)
+    })
     setSelectedBoxes(updatedSelection)
   }
 
@@ -190,12 +207,36 @@ function DownloadSelectionTable({downloadInfo, setDownloadInfo, selectedBoxes, s
   )
 }
 
-const COLUMN_ORDER = ['matrix', 'cluster', 'metadata']
+export function DownloadStepsHeader(isFirstStep) {
+  return <div>
+    <div className="download-steps-header row">
+      <div className="col-md-4">
+        <h3 className={isFirstStep ? '' : 'greyed'}>
+          <span className="badge">1</span>
+          &nbsp; Select the files
+        </h3>
+      </div>
+      <div className="col-md-4">
+        <h3 className={!isFirstStep ? '' : 'greyed'}>
+          <span className="badge">2</span>
+          &nbsp; Get terminal link
+        </h3>
+      </div>
+    </div>
+    <div className="greyed">
+      Files are downloaded via the command line. Once you confirm your files selection, you will get a link
+      to use on your terminal.
+    </div>
+  </div>
+}
+
+const COLUMN_ORDER = ['matrix', 'metadata', 'cluster']
+const COLUMN_ORDER_WITH_ALL = ['all', ...COLUMN_ORDER]
 const COLUMNS = {
   matrix: {
     title: 'Matrix',
     types: ['Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File'],
-    info: 'Expression matrix files, including both dense and sparse, and processed or raw counts files'
+    info: 'Expression matrix files, including processed or raw counts files'
   },
   cluster: {
     title: 'Clustering',

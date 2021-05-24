@@ -28,6 +28,39 @@
   }
 }
 
+.full-height-modal {
+	.modal-dialog {
+		height: 100vh !important;
+		margin-top: 0;
+		margin-bottom: 0;
+		padding: 0;
+	}
+	.modal-content {
+		height: auto;
+		min-height: 100vh;
+		border-radius: 0;
+	}
+	.modal-body {
+		height: 90vh;
+	}
+}
+
+
+.download-steps-header .badge {
+	color: #fff;
+  background-color: #333;
+  font-size: 0.9em;
+  vertical-align: inherit;
+  border-radius: 2em;
+}
+
+.download-steps-header .greyed {
+	color: #888;
+	.badge {
+	 	background-color: #888;
+	}
+}
+
 .table-terra {
 	thead {
 		background: #f4f4f4;

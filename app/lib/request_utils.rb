@@ -79,6 +79,8 @@ class RequestUtils
     SANITIZER.sanitize(inputs).encode!(Encoding.find('ASCII-8BIT'), invalid: :replace, undef: :replace)
   end
 
+  # takes a comma-delimited string of ids (e.g. StudyFile ids) and returns an array of ids
+  # raises Argument error if any of the strings are not valid ids
   def self.validate_id_list(id_list_string)
     ids = id_list_string.split(',')
     uuid_regex = /^[0-9a-f]{24}$/
@@ -112,5 +114,10 @@ class RequestUtils
       end
     end
     genes
+  end
+
+  # generic split function, handles type checking
+  def self.split_query_param_on_delim(parameter:, delimiter: ',')
+    parameter.is_a?(Array) ? parameter : parameter.to_s.split(delimiter).map(&:strip)
   end
 end

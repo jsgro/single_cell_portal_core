@@ -3,6 +3,7 @@ import Modal from 'react-bootstrap/lib/Modal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
+import { DownloadStepsHeader } from './DownloadSelectionModal'
 import { fetchAuthCode } from 'lib/scp-api'
 
 /**
@@ -16,7 +17,7 @@ function getDownloadCommand(authCode, fileIds) {
   // Gets a curl configuration ("cfg.txt") containing signed
   // URLs and output names for all files in the download object.
   const baseUrl = `${window.origin}/single_cell/api/v1/`
-  const url = `${baseUrl}search/bulk_download${queryString}`
+  const url = `${baseUrl}/bulk_download/generate_curl_config${queryString}`
 
   // "-k" === "--insecure"
   let curlSecureFlag = ''
@@ -35,7 +36,7 @@ function getDownloadCommand(authCode, fileIds) {
   return downloadCommand
 }
 
-export default function DownloadUrlModal({show, setShow, fileIds=[]}) {
+export default function DownloadUrlModal({show, setShow, fileIds=[], closeParent}) {
   const [isLoading, setIsLoading] = useState(true)
   const [authInfo, setAuthInfo] = useState({ authCode: null, timeInterval: 3000 })
   const [refreshNum, setRefreshNum] = useState(0)
@@ -60,11 +61,15 @@ export default function DownloadUrlModal({show, setShow, fileIds=[]}) {
 
   return <Modal
     id='bulk-download-url-modal'
+    className="full-height-modal"
     show={show}
     onHide={() => setShow(false)}
-    animation={false}>
+    animation={false}
+    bsSize='large'>
     <Modal.Body>
-      <div className="download-url-modal">
+      <DownloadStepsHeader isFirstStep={false}/>
+      <div className="download-url-modal row">
+        <br/><br/><br/>
         {
           isLoading &&
           <div className="text-center">
@@ -78,8 +83,8 @@ export default function DownloadUrlModal({show, setShow, fileIds=[]}) {
         }
         {
           !isLoading &&
-          <div>
-            <h4>To execute your selected download, copy the command below and paste it into your terminal</h4>
+          <div className="col-md-8 col-md-offset-2">
+            <h4>Copy the command below and paste it into your terminal</h4>
             <div className='input-group'>
               <input
                 ref={textInputRef}
@@ -119,8 +124,13 @@ export default function DownloadUrlModal({show, setShow, fileIds=[]}) {
       </div>
     </Modal.Body>
     <Modal.Footer>
-      <button className="btn action" onClick={() => setShow(false)} data-analytics-name="download-url-modal-ok">
-        CANCEL
+      <button className="btn action" onClick={() => setShow(false)} data-analytics-name="download-url-modal-back">
+        BACK
+      </button>
+      <button className="btn action"
+              onClick={() => { setShow(false); closeParent() }}
+              data-analytics-name="download-url-modal-ok">
+        DONE
       </button>
     </Modal.Footer>
   </Modal>

@@ -4,7 +4,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons'
 import Tooltip from 'react-bootstrap/lib/Tooltip'
 import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger'
 
-import DownloadModal from './DownloadModal'
+import DownloadSelectionModal from './DownloadSelectionModal'
 import { hasSearchParams } from 'providers/StudySearchProvider'
 import { UserContext } from 'providers/UserProvider'
 
@@ -55,7 +55,7 @@ export default function DownloadButton({searchResults={}}) {
           </span>
         </button>
       </OverlayTrigger>
-      { showModal && <DownloadModal show={showModal} setShow={setShowModal} studyAccessions={matchingAccessions}/> }
+      { showModal && <DownloadSelectionModal show={showModal} setShow={setShowModal} studyAccessions={matchingAccessions}/> }
     </>
   )
 }
