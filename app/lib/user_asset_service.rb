@@ -16,7 +16,7 @@ class UserAssetService
   ASSET_TYPES = ASSET_PATHS_BY_TYPE.keys.freeze
 
   # Bucket info; each Rails environment per project has a bucket
-  STORAGE_BUCKET_NAME = "#{self.class.compute_project}-#{Rails.env}-asset-storage".freeze
+  STORAGE_BUCKET_NAME = "#{self.compute_project}-#{Rails.env}-asset-storage".freeze
 
   # initialize GCS driver with same credentials as FireCloudClient
   # will return existing instance after first call is made (does not re-instantiate)
