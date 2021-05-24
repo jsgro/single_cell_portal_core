@@ -1,5 +1,5 @@
 
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import { Router, Link, useLocation } from '@reach/router'
 
 import GeneSearchView from 'components/search/genes/GeneSearchView'
@@ -13,6 +13,8 @@ import UserProvider from 'providers/UserProvider'
 import ErrorBoundary from 'lib/ErrorBoundary'
 import * as queryString from 'query-string'
 
+import useHomePageRouter from './search_xds/HomePageRouter'
+
 /** include search controls and results */
 export function StudySearchView({ advancedSearchDefault }) {
   const studySearchState = useContext(StudySearchContext)
@@ -23,14 +25,17 @@ export function StudySearchView({ advancedSearchDefault }) {
 }
 
 const RoutableSearchTabs = function() {
-  // we can't use the regular ReachRouter methods for link highlighting
-  // since the Reach router doesn't own the home path
+  // stores the basic study overview data from the server, used to determine what views are available
+  const [homeInfo, setHomeInfo] = useState(null)
+  const { homeParams, updateHomeParams, clearHomeParams, routerLocation } = useHomePageRouter()
+
   const location = useLocation()
   const basePath = location.pathname.includes('covid19') ? '/single_cell/covid19' : '/single_cell'
   const showGenesTab = location.pathname.includes('/app/genes')
   const queryParams = queryString.parse(location.search)
   // the queryParams object does not support the more typical hasOwnProperty test
   const advancedSearchDefault = ('advancedSearch' in queryParams)
+
   return (
     <div>
       <nav className="nav search-links" data-analytics-name="search" role="tablist">
@@ -46,7 +51,16 @@ const RoutableSearchTabs = function() {
       <div className="tab-content top-pad">
         <Router basepath={basePath}>
           <GeneSearchView path="app/genes"/>
-          <StudySearchView advancedSearchDefault={advancedSearchDefault} default/>
+          <StudySearchView
+            advancedSearchDefault={advancedSearchDefault}
+            homeParams={homeParams}
+            updateHomeParams={updateHomeParams}
+            clearHomeParams={clearHomeParams}
+            routerLocation={routerLocation}
+            homeInfo={homeInfo}
+            setHomeInfo={setHomeInfo}
+            default
+          />
         </Router>
       </div>
     </div>
