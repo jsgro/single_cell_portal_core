@@ -201,7 +201,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
         'MONGODB_USERNAME' => 'single_cell',
         'MONGODB_PASSWORD' => ENV['PROD_DATABASE_PASSWORD'],
         'DATABASE_NAME' => Mongoid::Config.clients["default"]["database"],
-        'GOOGLE_PROJECT_ID' => COMPUTE_PROJECT,
+        'GOOGLE_PROJECT_ID' => self.project,
         'SENTRY_DSN' => ENV['SENTRY_DSN'],
         'BARD_HOST_URL' => Rails.application.config.bard_host_url
     }
@@ -216,7 +216,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::GenomicsV2alpha1::Resources)
   def create_resources_object(regions:)
     Google::Apis::GenomicsV2alpha1::Resources.new(
-         project_id: COMPUTE_PROJECT,
+         project_id: self.project,
          regions: regions,
          virtual_machine: self.create_virtual_machine_object
     )
