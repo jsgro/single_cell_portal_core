@@ -224,8 +224,7 @@ module Api
             begin
               ApplicationController.firecloud_client.delete_workspace(@study.firecloud_project, @study.firecloud_workspace)
             rescue => e
-              error_context = ErrorTracker.format_extra_context(@study, {params: params})
-              ErrorTracker.report_exception(e, current_api_user, error_context)
+              ErrorTracker.report_exception_with_context(e, current_api_user, @study, params.to_unsafe_hash)
               MetricsService.report_error(e, request, current_api_user, @study)
               logger.error "#{Time.zone.now} unable to delete workspace: #{@study.firecloud_workspace}; #{e.message}"
               render json: {error: "Error deleting FireCloud workspace #{@study.firecloud_project}/#{@study.firecloud_workspace}: #{e.message}"}, status: 500
@@ -405,8 +404,7 @@ module Api
             process_workspace_bucket_files(workspace_files)
           end
         rescue => e
-          error_context = ErrorTracker.format_extra_context(@study, {params: params})
-          ErrorTracker.report_exception(e, current_api_user, error_context)
+          ErrorTracker.report_exception_with_context(e, current_api_user, @study, params.to_unsafe_hash)
           MetricsService.report_error(e, request, current_api_user, @study)
           logger.error "#{Time.zone.now}: error syncing files in workspace bucket #{@study.firecloud_workspace} due to error: #{e.message}"
           render json: {error: "Unable to sync with workspace bucket: #{view_context.simple_format(e.message)}"}, status: 500

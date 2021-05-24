@@ -290,8 +290,7 @@ module Api
           @study_share.destroy
           head 204
         rescue => e
-          error_context = ErrorTracker.format_extra_context(@study_share, {params: params})
-          ErrorTracker.report_exception(e, current_api_user, error_context)
+          ErrorTracker.report_exception_with_context(e, current_api_user, @study_share, params)
           MetricsService.report_error(e, request, current_api_user, @study)
           render json: {error: e.message}, status: 500
         end

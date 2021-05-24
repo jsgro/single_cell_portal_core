@@ -387,8 +387,7 @@ module Api
           end
           head 204
         rescue => e
-          error_context = ErrorTracker.format_extra_context(@study_file, {params: params})
-          ErrorTracker.report_exception(e, current_api_user, error_context)
+          ErrorTracker.report_exception_with_context(e, current_api_user, @study_file, params)
           MetricsService.report_error(e, request, current_api_user, @study)
           logger.error "#{Time.zone.now}: error in deleting #{@study_file.upload_file_name} from workspace: #{@study.firecloud_workspace}; #{e.message}"
           render json: {error: "Error deleting remote file in bucket: #{e.message}"}, status: 500

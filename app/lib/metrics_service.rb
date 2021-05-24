@@ -27,7 +27,7 @@ class MetricsService
       # Rails.logger.error e.to_yaml
       if e.http_code != 503
         # TODO (SCP-2632): Refine handling of Bard "503 Service Unavailable" errors
-        ErrorTracker.report_exception(e, user, params)
+        ErrorTracker.report_exception_with_context(e, user, params)
       end
     end
   end

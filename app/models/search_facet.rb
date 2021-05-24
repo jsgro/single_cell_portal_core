@@ -258,8 +258,7 @@ class SearchFacet
       end
     rescue => e
       Rails.logger.error "Error retrieving table schema for #{CellMetadatum::BIGQUERY_TABLE}: #{e.class.name}:#{e.message}"
-      error_context = ErrorTracker.format_extra_context({query_string: query_string})
-      ErrorTracker.report_exception(e, nil, error_context)
+      ErrorTracker.report_exception_with_context(e, nil, {query_string: query_string})
       []
     end
   end
@@ -327,8 +326,7 @@ class SearchFacet
       self.is_numeric? ? results.first : results
     rescue => e
       Rails.logger.error "Error retrieving unique values for #{CellMetadatum::BIGQUERY_TABLE}: #{e.class.name}:#{e.message}"
-      error_context = ErrorTracker.format_extra_context({query_string: query_string})
-      ErrorTracker.report_exception(e, nil, error_context)
+      ErrorTracker.report_exception_with_context(e, nil, {query_string: query_string})
       []
     end
   end

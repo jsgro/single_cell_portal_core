@@ -99,11 +99,10 @@ module Api
 
         # Handle errors in saving user annotation
         rescue ArgumentError => e
-          error_context = ErrorTracker.format_extra_context(@study, {params: log_params})
-          ErrorTracker.report_exception(e, current_user, error_context)
+          ErrorTracker.report_exception_with_context(e, current_user, @study, log_params)
           render json: {error: e.message}, status: 400 # Bad request
         rescue => e
-          ErrorTracker.report_exception(e, current_user, error_context)
+          ErrorTracker.report_exception_with_context(e, current_user, error_context)
           message = 'An unexpected error prevented the annotation from being saved: ' + e.message
           render json: {error: message}, status: 500 # Server error
         end
