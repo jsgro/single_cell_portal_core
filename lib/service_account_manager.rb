@@ -30,7 +30,7 @@ module ServiceAccountManager
 
   # resolve filepath to primary service account (e.g. project owner) keyfile
   def get_primary_keyfile
-    ENV['NOT_DOCKERIZED'] ? ENV['SERVICE_ACCOUNT_KEY']: File.absolute_path(ENV['SERVICE_ACCOUNT_KEY'])
+    ENV['NOT_DOCKERIZED'] ? ENV['SERVICE_ACCOUNT_KEY'] : File.absolute_path(ENV['SERVICE_ACCOUNT_KEY'])
   end
 
   # resolve filepath to primary service account (e.g. project owner) keyfile
