@@ -185,7 +185,9 @@ function updateViolinPlot(target, plotType, showPoints) {
 function getViolinTraces(
   resultValues, showPoints='none', plotType='violin'
 ) {
-  const data = Object.entries(resultValues).map(([traceName, traceData], index) => {
+  const data = Object.entries(resultValues)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([traceName, traceData], index) => {
     // Plotly violin trace creation, adding to main array
     // get inputs for plotly violin creation
     const dist = traceData.y
