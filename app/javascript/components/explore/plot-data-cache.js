@@ -159,7 +159,8 @@ export function createCache() {
   * see fetchCluster in scp-api for parameter documentation
   * returns a promise */
   cache.fetchCluster = ({
-    studyAccession, cluster, annotation, subsample, consensus, genes=[], isAnnotatedScatter=false
+    studyAccession, cluster, annotation, subsample, consensus,
+    genes=[], isAnnotatedScatter=false, isCorrelatedScatter=false
   }) => {
     let apiCallPromise = null
     const { fields, promises } = cache._getFieldsToRequest({
@@ -168,7 +169,8 @@ export function createCache() {
 
     if (fields.length) {
       apiCallPromise = fetchCluster({
-        studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter, fields
+        studyAccession, cluster, annotation, subsample, consensus,
+        genes, isAnnotatedScatter, isCorrelatedScatter, fields
       })
       const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
       if (fields.includes('coordinates')) {
@@ -269,12 +271,12 @@ export function createCache() {
     * to fetchCluster in scp-api, and an array of promises for any in-flight requests relating to the needed data
      */
   cache._getFieldsToRequest = ({
-    studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter
+    studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter, isCorrelatedScatter
   }) => {
     const fields = []
     const promises = [] // API call promises
-    // we don't cache anything for annotated scatter since the coordinates are different per annotation/gene
-    if (!isAnnotatedScatter) {
+    // we don't cache anything for annotated/correlated scatter since the coordinates are different per annotation/gene
+    if (!isAnnotatedScatter && !isCorrelatedScatter) {
       const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
       Fields.cellsAndCoords.addFieldsOrPromise(cacheEntry, fields, promises)
       Fields.annotation.addFieldsOrPromise(cacheEntry, fields, promises, annotation.name, annotation.scope)

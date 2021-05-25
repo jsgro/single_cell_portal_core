@@ -37,7 +37,7 @@ window.Plotly = Plotly
   */
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
-  isAnnotatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
+  isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [scatterData, setScatterData] = useState(null)
@@ -60,6 +60,7 @@ function RawScatterPlot({
         annotType: scatter.annotParams.type,
         genes: scatter.genes,
         isAnnotatedScatter: scatter.isAnnotatedScatter,
+        isCorrelatedScatter: scatter.isCorrelatedScatter,
         scatterColor,
         dataScatterColor: scatter.scatterColor,
         pointAlpha: scatter.pointAlpha,
@@ -102,7 +103,8 @@ function RawScatterPlot({
       subsample,
       consensus,
       genes,
-      isAnnotatedScatter
+      isAnnotatedScatter,
+      isCorrelatedScatter
     }).then(handleResponse)
 
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
@@ -204,6 +206,7 @@ function getPlotlyTraces({
   annotName,
   genes,
   isAnnotatedScatter,
+  isCorrelatedScatter,
   scatterColor,
   dataScatterColor,
   pointAlpha,
@@ -252,7 +255,7 @@ function getPlotlyTraces({
     }
     const colors = genes.length ? data.expression : data.annotations
     const title = genes.length ? axes.titles.magnitude : annotName
-    if (!isAnnotatedScatter) {
+    if (!isAnnotatedScatter && !isCorrelatedScatter) {
       Object.assign(trace.marker, {
         showscale: true,
         colorscale: appliedScatterColor,
@@ -267,7 +270,7 @@ function getPlotlyTraces({
       }
     }
   }
-  addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, axes)
+  addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
   return [trace]
 }
 
@@ -318,7 +321,7 @@ function sortLegend({ graphElementId, isAnnotatedScatter, annotType, genes }) {
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */
-function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, axes) {
+function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes) {
   trace.text = trace.cells
   // use the 'meta' property so annotations are exposed to the hover template
   // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
@@ -327,7 +330,7 @@ function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, a
   if (isAnnotatedScatter) {
     // for annotated scatter, just show coordinates and cell name
     groupHoverTemplate = `(%{x}, %{y})<br>%{text}`
-  } else if (annotType === 'numeric' || genes.length) {
+  } else if ((annotType === 'numeric' || genes.length) && !isCorrelatedScatter) {
     // this is a graph with a continuous color scale
     // the bottom row of the hover will either be the expression value, or the annotation value
     const bottomRowLabel = genes.length ? axes.titles.magnitude : annotName

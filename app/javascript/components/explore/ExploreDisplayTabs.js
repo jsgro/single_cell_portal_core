@@ -32,6 +32,7 @@ const tabList = [
   { key: 'loading', label: 'loading...' },
   { key: 'scatter', label: 'Scatter' },
   { key: 'annotatedScatter', label: 'Annotated Scatter' },
+  { key: 'correlatedScatter', label: 'Scatter' },
   { key: 'distribution', label: 'Distribution' },
   { key: 'dotplot', label: 'Dot Plot' },
   { key: 'heatmap', label: 'Heatmap' },
@@ -285,6 +286,23 @@ export default function ExploreDisplayTabs({
                 />
               </div>
             }
+            { enabledTabs.includes('correlatedScatter') &&
+              <div className={shownTab === 'correlatedScatter' ? '' : 'hidden'}>
+                <ScatterPlot
+                  studyAccession={studyAccession}
+                  {...exploreParams}
+                  isCorrelatedScatter={true}
+                  dimensions={getPlotDimensions({
+                    numColumns: 1,
+                    numRows: exploreParams?.spatialGroups.length ? 2 : 1,
+                    hasTitle: true,
+                    showRelatedGenesIdeogram
+                  })}
+                  isCellSelecting={isCellSelecting}
+                  plotPointsSelected={plotPointsSelected}
+                />
+              </div>
+            }
             { enabledTabs.includes('scatter') &&
               <div className={shownTab === 'scatter' ? '' : 'hidden'}>
                 <ScatterTab
@@ -455,7 +473,8 @@ export default function ExploreDisplayTabs({
   */
 export function getEnabledTabs(exploreInfo, exploreParams) {
   const isGeneList = !!exploreParams.geneList
-  const isMultiGene = exploreParams?.genes?.length > 1
+  const numGenes = exploreParams?.genes?.length
+  const isMultiGene = numGenes > 1
   const isGene = exploreParams?.genes?.length > 0
   const isConsensus = !!exploreParams.consensus
   const hasClusters = exploreInfo && exploreInfo.clusterGroupNames.length > 0
@@ -474,6 +493,9 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
         enabledTabs = ['scatter', 'dotplot', 'heatmap']
       } else {
         enabledTabs = ['dotplot', 'heatmap']
+        if (numGenes === 2) {
+          enabledTabs = ['correlatedScatter', 'dotplot', 'heatmap']
+        }
       }
     } else if (exploreParams.annotation.type === 'numeric') {
       enabledTabs = ['annotatedScatter', 'scatter']
