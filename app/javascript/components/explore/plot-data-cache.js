@@ -209,6 +209,8 @@ export function createCache() {
         mergedResult = cache._mergeClusterResponse(studyAccession, result, cluster, subsample)
       })
       return mergedResult
+    }).catch(error => {
+      throw error
     })
   }
 

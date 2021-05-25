@@ -26,24 +26,6 @@ export default function useErrorMessage() {
   }
 }
 
-/**
-  * wraps a call to an scp-api function in error handling
-  * Once this code is good and stable, this should be folded into scp-api itself
-  */
-export function checkScpApiResponse(response, onError, setShowError, setErrorContent) {
-  // currently, scp-api just hands back a raw response if not ok,
-  // that isn't the best encapsulation of an API call, and should be refactored later
-  if ('ok' in response && !response.ok) {
-    response.json().then(response => {
-      onError()
-      setShowError(true)
-      setErrorContent(response.error)
-    })
-  } else {
-    return true
-  }
-}
-
 /** handler for morpheus errors that catches the error from an empty gene search to
     replace it with a more useful display and error message. */
 export function morpheusErrorHandler($target, setShowError, setErrorContent) {

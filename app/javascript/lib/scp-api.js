@@ -600,13 +600,17 @@ export default async function scpApi(
       // Converts API's snake_case to JS-preferrable camelCase,
       // for easy destructuring assignment.
       if (camelCase) {
-        return [camelcaseKeys(json), perfTimes]
+        return [camelcaseKeys(json), perfTimes, true]
       } else {
-        return [json, perfTimes]
+        return [json, perfTimes, true]
       }
     } else {
-      return [response, perfTimes]
+      return [response, perfTimes, true]
     }
   }
-  return [response, perfTimes]
+  if (toJson) {
+    const json = await response.json()
+    throw new Error(json.error)
+  }
+  throw new Error(response)
 }

@@ -46,47 +46,40 @@ function RawScatterPlot({
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
     const [scatter, perfTimes] = clusterResponse
+    const layout = getPlotlyLayout(dimensions, scatter)
+    const plotlyTraces = getPlotlyTraces({
+      axes: scatter.axes,
+      data: scatter.data,
+      annotName: scatter.annotParams.name,
+      annotType: scatter.annotParams.type,
+      genes: scatter.genes,
+      isAnnotatedScatter: scatter.isAnnotatedScatter,
+      scatterColor,
+      dataScatterColor: scatter.scatterColor,
+      pointAlpha: scatter.pointAlpha,
+      pointSize: scatter.pointSize,
+      showPointBorders: scatter.showClusterPointBorders,
+      is3D: scatter.is3D
+    })
 
-    const apiOk = checkScpApiResponse(scatter,
-      () => Plotly.purge(graphElementId),
-      setShowError,
-      setErrorContent)
-    if (apiOk) {
-      const layout = getPlotlyLayout(dimensions, scatter)
-      const plotlyTraces = getPlotlyTraces({
-        axes: scatter.axes,
-        data: scatter.data,
-        annotName: scatter.annotParams.name,
-        annotType: scatter.annotParams.type,
-        genes: scatter.genes,
-        isAnnotatedScatter: scatter.isAnnotatedScatter,
-        scatterColor,
-        dataScatterColor: scatter.scatterColor,
-        pointAlpha: scatter.pointAlpha,
-        pointSize: scatter.pointSize,
-        showPointBorders: scatter.showClusterPointBorders,
-        is3D: scatter.is3D
-      })
+    const startTime = performance.now()
 
-      const startTime = performance.now()
+    Plotly.react(graphElementId, plotlyTraces, layout)
+    sortLegend({
+      graphElementId,
+      isAnnotatedScatter,
+      annotType: scatter.annotParams.type,
+      genes: scatter.genes
+    })
 
-      Plotly.react(graphElementId, plotlyTraces, layout)
-      sortLegend({
-        graphElementId,
-        isAnnotatedScatter,
-        annotType: scatter.annotParams.type,
-        genes: scatter.genes
-      })
+    perfTimes.plot = performance.now() - startTime
 
-      perfTimes.plot = performance.now() - startTime
-
-      logScatterPlot(
-        { scatter, genes, width: dimensions.width, height: dimensions.height },
-        perfTimes
-      )
-      setScatterData(scatter)
-      setShowError(false)
-    }
+    logScatterPlot(
+      { scatter, genes, width: dimensions.width, height: dimensions.height },
+      perfTimes
+    )
+    setScatterData(scatter)
+    setShowError(false)
     setIsLoading(false)
   }
 
@@ -103,8 +96,12 @@ function RawScatterPlot({
       consensus,
       genes,
       isAnnotatedScatter
-    }).then(handleResponse)
-
+    }).then(handleResponse).catch(error => {
+      Plotly.purge(graphElementId)
+      setErrorContent(error.message)
+      setShowError(true)
+      setIsLoading(false)
+    })
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles Plotly `data` updates, e.g. changes in color profile

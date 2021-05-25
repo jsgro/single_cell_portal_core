@@ -51,9 +51,36 @@ function RawStudyViolinPlot({
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
   /** gets expression data from the server */
-  async function loadData() {
+  function loadData([results, perfTimes]) {
+    let distributionPlotToUse = distributionPlot
+    if (!distributionPlotToUse) {
+      distributionPlotToUse = defaultDistributionPlot
+    }
+
+    const startTime = performance.now()
+
+    renderViolinPlot(graphElementId, results, {
+      plotType: distributionPlotToUse,
+      showPoints: distributionPoints
+    })
+
+    perfTimes.plot = performance.now() - startTime
+
+    logViolinPlot(
+      { genes, distributionPlotToUse, distributionPoints },
+      perfTimes
+    )
+    setStudyGeneNames(results.gene_names)
+    if (setAnnotationList) {
+      setAnnotationList(results.annotation_list)
+    }
+    setShowError(false)
+    setIsLoading(false)
+  }
+  /** handles fetching the expression data (and menu option data) from the server */
+  useEffect(() => {
     setIsLoading(true)
-    const [results, perfTimes] = await fetchExpressionViolin(
+    fetchExpressionViolin(
       studyAccession,
       genes,
       cluster,
@@ -62,38 +89,12 @@ function RawStudyViolinPlot({
       annotation.scope,
       subsample,
       consensus
-    )
-    const apiOk = checkScpApiResponse(results, () => Plotly.purge(graphElementId), setShowError, setErrorContent)
-    if (apiOk) {
-      let distributionPlotToUse = distributionPlot
-      if (!distributionPlotToUse) {
-        distributionPlotToUse = defaultDistributionPlot
-      }
-
-      const startTime = performance.now()
-
-      renderViolinPlot(graphElementId, results, {
-        plotType: distributionPlotToUse,
-        showPoints: distributionPoints
-      })
-
-      perfTimes.plot = performance.now() - startTime
-
-      logViolinPlot(
-        { genes, distributionPlotToUse, distributionPoints },
-        perfTimes
-      )
-      setStudyGeneNames(results.gene_names)
-      if (setAnnotationList) {
-        setAnnotationList(results.annotation_list)
-      }
-      setShowError(false)
-    }
-    setIsLoading(false)
-  }
-  /** handles fetching the expression data (and menu option data) from the server */
-  useEffect(() => {
-    loadData()
+    ).then(loadData).catch(error => {
+      Plotly.purge(graphElementId)
+      setErrorContent(error.message)
+      setShowError(true)
+      setIsLoading(false)
+    })
   }, [ // do a load from the server if any of the paramenters passed to fetchExpressionViolin have changed
     studyAccession,
     genes[0],
