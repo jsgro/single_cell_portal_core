@@ -168,7 +168,9 @@ function RawScatterPlot({
           annotation={scatterData.annotParams.name}
           subsample={scatterData.subsample}
           genes={scatterData.genes}
-          consensus={scatterData.consensus}/>
+          consensus={scatterData.consensus}
+          isCorrelatedScatter={isCorrelatedScatter}
+          pearsonsR={scatterData.data.pearsonsR}/>
       }
       <div
         className="scatter-graph"
@@ -229,7 +231,7 @@ function getPlotlyTraces({
 
 
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
-  if (annotType === 'group' && !genes.length) {
+  if (annotType === 'group' && !genes.length || isCorrelatedScatter) {
     const traceCounts = countOccurences(data.annotations)
     const traceStyles = Object.keys(traceCounts).map((val, index) => {
       return {
@@ -255,7 +257,7 @@ function getPlotlyTraces({
     }
     const colors = genes.length ? data.expression : data.annotations
     const title = genes.length ? axes.titles.magnitude : annotName
-    if (!isAnnotatedScatter && !isCorrelatedScatter) {
+    if (!isAnnotatedScatter) {
       Object.assign(trace.marker, {
         showscale: true,
         colorscale: appliedScatterColor,
