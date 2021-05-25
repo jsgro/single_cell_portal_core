@@ -63,7 +63,7 @@ function buildHomeParamsFromQuery(query) {
     }
   })
   homeParams.terms = queryParams.terms ? queryParams.terms : '',
-  homeParams.genes = queryParams.terms ? queryParams.terms : '',
+  homeParams.genes = queryParams.genes ? queryParams.genes : [],
   homeParams.facets = buildFacetsFromQueryString(queryParams.facets),
   homeParams.type = queryParams.type ? queryParams.type : '',
   homeParams.page = queryParams.page ? parseInt(queryParams.page) : 1,

@@ -57,7 +57,9 @@ const helpModalContent = (<div>
  */
 export default function SearchPanel({
   advancedSearchDefault,
-  searchOnLoad
+  searchOnLoad,
+  homeParams, updateHomeParams, clearHomeParams,
+  routerLocation, homeInfo, setHomeInfo
 }) {
   // Note: This might become  a Higher-Order Component (HOC).
   // This search component is currently specific to the "Studies" tab, but
@@ -66,6 +68,7 @@ export default function SearchPanel({
   const searchState = useContext(StudySearchContext)
   const userState = useContext(UserContext)
   const featureFlagState = userState.featureFlagsWithDefaults
+
   if (userState.isAnonymous) {
     if (localStorage.getItem('faceted-search-flag') === 'true') {
       featureFlagState.faceted_search = true
@@ -89,11 +92,14 @@ export default function SearchPanel({
     }
   }
 
+  console.log('homeParams.facets')
+  console.log(homeParams.facets)
+
   let advancedOptsLink = <a className="action advanced-opts" onClick={handleMoreFiltersClick}>
     Advanced Search <sup className="new-feature">BETA</sup>
   </a>
   if (showAdvancedSearch) {
-    searchButtons = <FacetsPanel/>
+    searchButtons = <FacetsPanel facets={homeParams.facets}/>
     downloadButtons = <DownloadProvider><DownloadButton /></DownloadProvider>
     advancedOptsLink = <a className="action advanced-opts"
       onClick={() => setShowSearchHelpModal(true)}

@@ -16,10 +16,22 @@ import * as queryString from 'query-string'
 import useHomePageRouter from './search_xds/HomePageRouter'
 
 /** include search controls and results */
-export function StudySearchView({ advancedSearchDefault }) {
+export function StudySearchView({
+  advancedSearchDefault, homeParams, updateHomeParams, clearHomeParams,
+  routerLocation, homeInfo, setHomeInfo
+}) {
   const studySearchState = useContext(StudySearchContext)
   return <>
-    <SearchPanel advancedSearchDefault={advancedSearchDefault} searchOnLoad={true}/>
+    <SearchPanel
+      advancedSearchDefault={advancedSearchDefault}
+      searchOnLoad={true}
+      homeParams={homeParams}
+      updateHomeParams={updateHomeParams}
+      clearHomeParams={clearHomeParams}
+      routerLocation={routerLocation}
+      homeInfo={homeInfo}
+      setHomeInfo={setHomeInfo}
+    />
     <ResultsPanel studySearchState={studySearchState} studyComponent={StudyDetails} />
   </>
 }
@@ -41,7 +53,7 @@ const RoutableSearchTabs = function() {
       <nav className="nav search-links" data-analytics-name="search" role="tablist">
         <Link to={`${basePath}/app/studies${location.search}`}
           className={showGenesTab ? '' : 'active'}>
-          <span className="fas fa-book"></span> Search Studies
+          <span className="fas fa-book"></span> Search Studies (XDS)
         </Link>
         <Link to={`${basePath}/app/genes${location.search}`}
           className={showGenesTab ? 'active' : ''}>
@@ -71,13 +83,11 @@ const RoutableSearchTabs = function() {
 function ProviderStack(props) {
   return (
     <UserProvider>
-      <SearchFacetProvider>
-        <StudySearchProvider>
-          <GeneSearchProvider>
-            { props.children }
-          </GeneSearchProvider>
-        </StudySearchProvider>
-      </SearchFacetProvider>
+      <StudySearchProvider>
+        <GeneSearchProvider>
+          { props.children }
+        </GeneSearchProvider>
+      </StudySearchProvider>
     </UserProvider>
   )
 }
