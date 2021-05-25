@@ -36,12 +36,20 @@
 		padding: 0;
 	}
 	.modal-content {
+	  display: flex;
+		flex-direction: column;
 		height: auto;
 		min-height: 100vh;
 		border-radius: 0;
 	}
 	.modal-body {
-		height: 90vh;
+		flex: 1;
+		padding-left: 25px;
+		padding-right: 25px;
+	}
+	.modal-footer {
+		padding-left: 25px;
+		padding-right: 25px;
 	}
 }
 

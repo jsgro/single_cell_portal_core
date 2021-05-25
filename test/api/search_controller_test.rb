@@ -285,13 +285,10 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
     study = Study.find_by(name: "Testing Study #{@random_seed}")
-    file_types = %w(Expression Metadata)
-    execute_http_request(:get, api_v1_search_bulk_download_size_path(
-        accessions: study.accession, file_types: file_types.join(','))
-    )
+    execute_http_request(:get, api_v1_search_bulk_download_info_path(accessions: study.accession))
     assert_response :success
 
-    expected_files = study.study_files.where(:file_type.in => ['Metadata', /Matrix/, /10X/])
+    expected_files = study.study_files
     expected_response = bulk_download_response(expected_files)
     assert_equal expected_response, json.with_indifferent_access,
                  "Did not correctly return bulk download sizes, expected #{expected_response} but found #{json}"
