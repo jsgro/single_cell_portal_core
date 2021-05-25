@@ -1541,7 +1541,7 @@ class Study
       Rails.logger.info "#{Time.zone.now}: cleanup job for #{file.bucket_location}:#{file.id} scheduled for #{run_at}"
     rescue => e
       ErrorTracker.report_exception(e, user, self, file)
-      Rails.logger.error "#{Time.zone.now}: unable to upload '#{file.bucket_location}:#{file.id} to study bucket #{self.bucket_id}; #{e.message}"
+      Rails.logger.error "Unable to upload '#{file.bucket_location}:#{file.id} to study bucket #{self.bucket_id}; #{e.message}"
       # notify admin of failure so they can push the file and relauch parse
       SingleCellMailer.notify_admin_upload_fail(file, e).deliver_now
     end
@@ -1575,7 +1575,7 @@ class Study
       File.delete(path)
     rescue => e
       ErrorTracker.report_exception(e, user, self)
-      Rails.logger.error "#{Time.zone.now}: Unable to set default participant: #{e.message}"
+      Rails.logger.error "Unable to set default participant: #{e.message}"
     end
   end
 
@@ -1949,7 +1949,7 @@ class Study
       return updated['acl'][group_email]['accessLevel'] == 'OWNER'
     rescue RuntimeError => e
       ErrorTracker.report_exception(e, self.user, { firecloud_project: self.firecloud_workspace})
-      Rails.logger.error "#{Time.zone.now}: unable to add portal service account to #{self.firecloud_workspace}: #{e.message}"
+      Rails.logger.error "Unable to add portal service account to #{self.firecloud_workspace}: #{e.message}"
       false
     end
   end

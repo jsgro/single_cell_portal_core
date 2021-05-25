@@ -149,7 +149,7 @@ class AdminConfigurationsController < ApplicationController
       end
     rescue => e
       ErrorTracker.report_exception(e, current_user, params)
-      logger.error "#{Time.zone.now}: error in setting download status to #{status}; #{e.message}"
+      logger.error "Error in setting download status to #{status}; #{e.message}"
       redirect_to admin_configurations_path, alert: "An error occured while turing #{status} downloads: #{e.message}" and return
     end
   end
@@ -200,7 +200,7 @@ class AdminConfigurationsController < ApplicationController
       end
     rescue => e
       ErrorTracker.report_exception(e, current_user, params)
-      logger.error "#{Time.zone.now}: unable to retrieve service account FireCloud registration: #{e.message}"
+      logger.error "Unable to retrieve service account FireCloud registration: #{e.message}"
     end
   end
 
@@ -213,7 +213,7 @@ class AdminConfigurationsController < ApplicationController
       @notice = "The portal service account FireCloud profile has been successfully updated."
     rescue => e
       ErrorTracker.report_exception(e, current_user, params)
-      logger.error "#{Time.zone.now}: unable to update service account FireCloud registration: #{e.message}"
+      logger.error "Unable to update service account FireCloud registration: #{e.message}"
       @alert = "Unable to update portal service account FireCloud profile: #{e.message}"
     end
   end
@@ -260,10 +260,10 @@ class AdminConfigurationsController < ApplicationController
             end
           end
         end
-        logger.info "#{Time.zone.now}: User group #{@group_name} successfully synchronized"
+        logger.info "User group #{@group_name} successfully synchronized"
       rescue => e
         ErrorTracker.report_exception(e, current_user, params)
-        logger.error "#{Time.zone.now}: Error in synchronizing portal user group #{@group_name}: #{e.message}"
+        logger.error "Error in synchronizing portal user group #{@group_name}: #{e.message}"
         @alert = "Unable to synchronize user group #{@group_name} due to an error: #{e.message}"
       end
     else
@@ -349,7 +349,7 @@ class AdminConfigurationsController < ApplicationController
       @notice = 'Your email has successfully been queued for delivery and should arrive shortly.'
     rescue => e
       ErrorTracker.report_exception(e, current_user, users_email_params)
-      logger.error "#{Time.zone.now}: Error delivering users email: #{e.message}"
+      logger.error "Error delivering users email: #{e.message}"
       @alert = "Unabled to deliver users email due to the following error: #{e.message}"
     end
   end

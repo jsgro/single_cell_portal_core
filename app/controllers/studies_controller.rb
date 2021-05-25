@@ -160,7 +160,7 @@ class StudiesController < ApplicationController
     rescue => e
       ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
-      logger.error "#{Time.zone.now}: error syncing ACLs in workspace bucket #{@study.firecloud_workspace} due to error: #{e.message}"
+      logger.error "Error syncing ACLs in workspace bucket #{@study.firecloud_workspace} due to error: #{e.message}"
       redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]),
                   alert: "We were unable to sync with your workspace bucket due to an error: #{view_context.simple_format(e.message)}.  #{SCP_SUPPORT_EMAIL}" and return
     end
@@ -416,7 +416,7 @@ class StudiesController < ApplicationController
         rescue => e
           ErrorTracker.report_exception(e, current_user, @study, params)
           MetricsService.report_error(e, request, current_user, @study)
-          logger.error "#{Time.zone.now} unable to delete workspace: #{@study.firecloud_workspace}; #{e.message}"
+          logger.error "Unable to delete workspace: #{@study.firecloud_workspace}; #{e.message}"
           redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]),
                       alert: "We were unable to delete your study due to: #{view_context.simple_format(e.message)}.<br />" \
                              "<br />No files or database records have been deleted.  Please try again later.  #{SCP_SUPPORT_EMAIL}" and return
@@ -481,7 +481,7 @@ class StudiesController < ApplicationController
       begin
         study_file.update!(study_file_params)
       rescue => e
-        logger.error "#{Time.zone.now} #{study_file.errors.full_messages.join(", ")}"
+        logger.error "#{study_file.errors.full_messages.join(", ")}"
         existing_file = StudyFile.find(study_file.id)
         if existing_file
           ErrorTracker.report_exception(e, current_user, params)
@@ -790,7 +790,7 @@ class StudiesController < ApplicationController
         rescue => e
           ErrorTracker.report_exception(e, current_user, @study, params)
           MetricsService.report_error(e, request, current_user, @study)
-          logger.error "#{Time.zone.now}: error in deleting #{@study_file.upload_file_name} from workspace: #{@study.firecloud_workspace}; #{e.message}"
+          logger.error "Error in deleting #{@study_file.upload_file_name} from workspace: #{@study.firecloud_workspace}; #{e.message}"
           redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
                       alert: "We were unable to delete #{@study_file.upload_file_name} due to an error: " \
                              "#{view_context.simple_format(e.message)}.  Please try again later.  #{SCP_SUPPORT_EMAIL}"

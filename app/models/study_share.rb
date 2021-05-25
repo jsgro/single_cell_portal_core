@@ -229,7 +229,7 @@ class StudyShare
 			end
 		rescue RuntimeError => e
 			ErrorTracker.report_exception(e, nil, self.study, self)
-			Rails.logger.error "#{Time.zone.now}: Could not remove share for #{self.email} to workspace #{self.firecloud_workspace} due to: #{e.message}"
+			Rails.logger.error "Could not remove share for #{self.email} to workspace #{self.firecloud_workspace} due to: #{e.message}"
 			SingleCellMailer.share_delete_fail(self.study, self.email).deliver_now
 		end
 	end

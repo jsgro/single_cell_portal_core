@@ -95,11 +95,11 @@ class AnalysisMetadatum
       end
     rescue RestClient::ExceptionWithResponse => e
       ErrorTracker.report_exception(e, self.study.user, { request_url: self.definition_url, request_response: e.http_body})
-      Rails.logger.error "#{Time.zone.now}: Error retrieving remote HCA Analysis metadata schema: #{e.message}"
+      Rails.logger.error "Error retrieving remote HCA Analysis metadata schema: #{e.message}"
       {error: "Error retrieving definition schema: #{e.message}"}
     rescue JSON::ParserError => e
       ErrorTracker.report_exception(e, self.study.user, { metadata_body: metadata_schema.body})
-      Rails.logger.error "#{Time.zone.now}: Error parsing HCA Analysis metadata schema: #{e.message}"
+      Rails.logger.error "Error parsing HCA Analysis metadata schema: #{e.message}"
       {error: "Error parsing definition schema: #{e.message}"}
     end
   end
@@ -117,7 +117,7 @@ class AnalysisMetadatum
     rescue NoMethodError => e
       field_key = field.present? ? "#{key}/#{field}" : key
       ErrorTracker.report_exception(e, self.study.user, { missing_key: field_key, analysis_metadatum: self.attributes.to_h})
-      Rails.logger.error "#{Time.zone.now}: Error accessing remote HCA Analysis metadata field definitions for #{field_key}: #{e.message}"
+      Rails.logger.error "Error accessing remote HCA Analysis metadata field definitions for #{field_key}: #{e.message}"
       nil
     end
   end
@@ -198,7 +198,7 @@ class AnalysisMetadatum
       call_metadata
     rescue => e
       ErrorTracker.report_exception(e, self.study.user, { workflows: workflows, analysis_metadatum: self.attributes.to_h})
-      Rails.logger.error "#{Time.zone.now}: Error retrieving workflow call metadata for: #{e.message}"
+      Rails.logger.error "Error retrieving workflow call metadata for: #{e.message}"
       []
     end
   end
