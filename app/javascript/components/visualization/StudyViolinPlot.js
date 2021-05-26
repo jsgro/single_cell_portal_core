@@ -50,8 +50,8 @@ function RawStudyViolinPlot({
   const [graphElementId] = useState(_uniqueId('study-violin-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
-  /** gets expression data from the server */
-  function loadData([results, perfTimes]) {
+  /** renders received expression data from the server */
+  function renderData([results, perfTimes]) {
     let distributionPlotToUse = distributionPlot
     if (!distributionPlotToUse) {
       distributionPlotToUse = defaultDistributionPlot
@@ -89,7 +89,7 @@ function RawStudyViolinPlot({
       annotation.scope,
       subsample,
       consensus
-    ).then(loadData).catch(error => {
+    ).then(renderData).catch(error => {
       Plotly.purge(graphElementId)
       setErrorContent(error.message)
       setShowError(true)
