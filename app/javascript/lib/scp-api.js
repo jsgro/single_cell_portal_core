@@ -117,36 +117,17 @@ export async function createUserAnnotation(
   })
 
   const apiUrl = `/studies/${studyAccession}/user_annotations`
-  const [jsonOrResponse] = await scpApi(apiUrl, init, mock)
 
-  let message = ''
-  let annotations = {}
-  let errorType = null
-  let newAnnotations = []
+  const [response] = await scpApi(apiUrl, init, mock)
 
-  // Consider refactoring this when migrating user-annotations.js to
-  // React, so components share more error handling logic and UI
-  if (jsonOrResponse.ok === false) {
-    const json = await jsonOrResponse.json()
-    message = json.error
-    const status = jsonOrResponse.status
-    if (status === 400) {
-      errorType = 'user'
-    } else if (status === 500) {
-      errorType = 'server'
-    } else {
-      errorType = 'other'
-    }
-  } else {
-    // Parse JSON of successful response
-    message = jsonOrResponse.message
-    annotations = jsonOrResponse.annotations
-    newAnnotations = jsonOrResponse.annotationList
-  }
+  // Parse JSON of successful response
+  const message = response.message
+  const annotations = response.annotations
+  const newAnnotations = response.annotationList
 
   logCreateUserAnnotation()
 
-  return { message, annotations, errorType, newAnnotations }
+  return { message, annotations, newAnnotations }
 }
 
 /**
@@ -268,9 +249,10 @@ export async function fetchCluster({
   studyAccession, cluster, annotation, subsample, consensus, genes=null,
   isAnnotatedScatter=null, fields=[], mock=false
 }) {
-
-  const apiUrl = fetchClusterUrl({ studyAccession, cluster, annotation, subsample,
-    consensus, genes, isAnnotatedScatter, fields })
+  const apiUrl = fetchClusterUrl({
+    studyAccession, cluster, annotation, subsample,
+    consensus, genes, isAnnotatedScatter, fields
+  })
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
   const [scatter, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
@@ -307,7 +289,7 @@ export function fetchClusterUrl({
   if (!cluster || cluster === '') {
     cluster = '_default'
   }
-  return`/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
+  return `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
 }
 
 /**
@@ -600,13 +582,17 @@ export default async function scpApi(
       // Converts API's snake_case to JS-preferrable camelCase,
       // for easy destructuring assignment.
       if (camelCase) {
-        return [camelcaseKeys(json), perfTimes]
+        return [camelcaseKeys(json), perfTimes, true]
       } else {
-        return [json, perfTimes]
+        return [json, perfTimes, true]
       }
     } else {
-      return [response, perfTimes]
+      return [response, perfTimes, true]
     }
   }
-  return [response, perfTimes]
+  if (toJson) {
+    const json = await response.json()
+    throw new Error(json.error)
+  }
+  throw new Error(response)
 }
