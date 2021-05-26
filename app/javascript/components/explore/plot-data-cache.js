@@ -210,6 +210,8 @@ export function createCache() {
       })
       return mergedResult
     }).catch(error => {
+      // rather than try to reconstruct partial responses, clear the entire cache if an error occurs
+      cache.clear()
       throw error
     })
   }

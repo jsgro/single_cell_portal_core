@@ -117,36 +117,17 @@ export async function createUserAnnotation(
   })
 
   const apiUrl = `/studies/${studyAccession}/user_annotations`
-  const [jsonOrResponse] = await scpApi(apiUrl, init, mock)
 
-  let message = ''
-  let annotations = {}
-  let errorType = null
-  let newAnnotations = []
+  const [response] = await scpApi(apiUrl, init, mock)
 
-  // Consider refactoring this when migrating user-annotations.js to
-  // React, so components share more error handling logic and UI
-  if (jsonOrResponse.ok === false) {
-    const json = await jsonOrResponse.json()
-    message = json.error
-    const status = jsonOrResponse.status
-    if (status === 400) {
-      errorType = 'user'
-    } else if (status === 500) {
-      errorType = 'server'
-    } else {
-      errorType = 'other'
-    }
-  } else {
-    // Parse JSON of successful response
-    message = jsonOrResponse.message
-    annotations = jsonOrResponse.annotations
-    newAnnotations = jsonOrResponse.annotationList
-  }
+  // Parse JSON of successful response
+  const message = response.message
+  const annotations = response.annotations
+  const newAnnotations = response.annotationList
 
   logCreateUserAnnotation()
 
-  return { message, annotations, errorType, newAnnotations }
+  return { message, annotations, newAnnotations }
 }
 
 /**

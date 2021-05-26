@@ -207,7 +207,7 @@ module Api
               if is_collapsed_view
                 plot_data = ExpressionVizService.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample, !include_coordinates)
               else
-                plot_data = ExpressionVizService.load_expression_data_array_points(study, genes[0], cluster, annotation, subsample, !include_coordinates)
+                plot_data = ExpressionVizService.load_expression_data_array_points(study, genes[0], cluster, annotation, subsample, include_coordinates, include_annotation)
               end
             end
           end

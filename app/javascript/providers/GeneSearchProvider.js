@@ -63,28 +63,37 @@ export function PropsGeneSearchProvider(props) {
   }
 
   /** perform the actual API search */
-  async function performSearch() {
+  function performSearch() {
     // reset the scroll in case they scrolled down to read prior results
     window.scrollTo(0, 0)
 
-    const results = await fetchSearch(
+    fetchSearch(
       // Ensures event properties include "type": "gene" in search logging.
-      'gene',
-      {
+      'gene', {
         page: searchParams.page,
         genes: searchParams.genes,
         preset: searchParams.preset
-      }
-    )
-
-    setSearchState({
-      params: searchParams,
-      isError: results.ok === false,
-      isLoading: false,
-      isLoaded: true,
-      results,
-      updateSearch
+    }).then(results => {
+      setSearchState({
+        params: searchParams,
+        isError: false,
+        isLoading: false,
+        isLoaded: true,
+        results,
+        updateSearch
+      })
+    }).catch(error => {
+      setSearchState({
+        params: searchParams,
+        isError: true,
+        isLoading: false,
+        isLoaded: true,
+        results: error,
+        updateSearch
+      })
     })
+
+
   }
 
   if (!_isEqual(searchParams, searchState.params ||

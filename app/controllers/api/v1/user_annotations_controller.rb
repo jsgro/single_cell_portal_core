@@ -77,7 +77,7 @@ module Api
 
           # Don't log data_arrays to Sentry; it's too big
           log_params.delete(:user_data_arrays_attributes)
-
+          raise 'foo happpend'
           cluster = params[:cluster]
 
           annotations = UserAnnotationService.create_user_annotation(
