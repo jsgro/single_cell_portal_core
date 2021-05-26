@@ -73,7 +73,7 @@ export function PropsGeneSearchProvider(props) {
         page: searchParams.page,
         genes: searchParams.genes,
         preset: searchParams.preset
-    }).then(results => {
+      }).then(results => {
       setSearchState({
         params: searchParams,
         isError: false,
@@ -92,8 +92,6 @@ export function PropsGeneSearchProvider(props) {
         updateSearch
       })
     })
-
-
   }
 
   if (!_isEqual(searchParams, searchState.params ||

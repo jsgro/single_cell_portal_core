@@ -113,7 +113,7 @@ function CreateAnnotation({
       annotationName,
       selectionPayload
     ).then(handleCreateResponse).catch(error => {
-      handleCreateResponse({error: error})
+      handleCreateResponse({ error })
     })
   }
 

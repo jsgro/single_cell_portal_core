@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna, faExclamationCircle, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { faDna, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StudyResults from './StudyResults'
 import Study from './Study'

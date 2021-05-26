@@ -9,7 +9,7 @@ import Plotly from 'plotly.js-dist'
 
 import { useUpdateEffect } from 'hooks/useUpdate'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
-import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
+import useErrorMessage from 'lib/error-message'
 import { logViolinPlot } from 'lib/scp-api-metrics'
 
 
@@ -191,61 +191,61 @@ function getViolinTraces(
     .map(([traceName, traceData], index) => {
     // Plotly violin trace creation, adding to main array
     // get inputs for plotly violin creation
-    const dist = traceData.y
+      const dist = traceData.y
 
-    // Replace the none selection with bool false for plotly
-    if (showPoints === 'none' || !showPoints) {
-      showPoints = false
-    }
+      // Replace the none selection with bool false for plotly
+      if (showPoints === 'none' || !showPoints) {
+        showPoints = false
+      }
 
-    // Check if there is a distribution before adding trace
-    if (arrayMax(dist) !== arrayMin(dist) && plotType === 'violin') {
+      // Check if there is a distribution before adding trace
+      if (arrayMax(dist) !== arrayMin(dist) && plotType === 'violin') {
       // Make a violin plot if there is a distribution
-      return {
-        type: 'violin',
-        name: traceName,
-        y: dist,
-        points: showPoints,
-        pointpos: 0,
-        jitter: 0.85,
-        spanmode: 'hard',
-        box: {
-          visible: true,
-          fillcolor: '#ffffff',
-          width: .1
-        },
-        marker: {
-          size: 2,
-          color: '#000000',
-          opacity: 0.8
-        },
-        fillcolor: getColorBrewerColor(index),
-        line: {
-          color: '#000000',
-          width: 1.5
-        },
-        meanline: {
-          visible: false
+        return {
+          type: 'violin',
+          name: traceName,
+          y: dist,
+          points: showPoints,
+          pointpos: 0,
+          jitter: 0.85,
+          spanmode: 'hard',
+          box: {
+            visible: true,
+            fillcolor: '#ffffff',
+            width: .1
+          },
+          marker: {
+            size: 2,
+            color: '#000000',
+            opacity: 0.8
+          },
+          fillcolor: getColorBrewerColor(index),
+          line: {
+            color: '#000000',
+            width: 1.5
+          },
+          meanline: {
+            visible: false
+          }
+        }
+      } else {
+      // Make a boxplot for data with no distribution
+        return {
+          type: 'box',
+          name: traceName,
+          y: dist,
+          boxpoints: showPoints,
+          marker: {
+            color: getColorBrewerColor(index),
+            size: 2,
+            line: {
+              color: plotlyDefaultLineColor
+            }
+          },
+          boxmean: true
         }
       }
-    } else {
-      // Make a boxplot for data with no distribution
-      return {
-        type: 'box',
-        name: traceName,
-        y: dist,
-        boxpoints: showPoints,
-        marker: {
-          color: getColorBrewerColor(index),
-          size: 2,
-          line: {
-            color: plotlyDefaultLineColor
-          }
-        },
-        boxmean: true
-      }
-    }
-  })
+    })
   return data
 }
 
