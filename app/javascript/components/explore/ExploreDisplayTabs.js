@@ -294,9 +294,9 @@ export default function ExploreDisplayTabs({
                   isCorrelatedScatter={true}
                   dimensions={getPlotDimensions({
                     numColumns: 1,
-                    numRows: exploreParams?.spatialGroups.length ? 2 : 1,
+                    numRows: 1,
                     hasTitle: true,
-                    showRelatedGenesIdeogram
+                    showRelatedGenesIdeogram: false
                   })}
                   isCellSelecting={isCellSelecting}
                   plotPointsSelected={plotPointsSelected}

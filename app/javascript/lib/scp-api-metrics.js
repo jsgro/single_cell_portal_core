@@ -145,16 +145,18 @@ export function logScatterPlot(
   perfTimes
 ) {
   const props = {
-    'numPoints': scatter.numPoints, // How many cells are we plotting?
+    numPoints: scatter.numPoints, // How many cells are we plotting?
     genes,
-    'gene': scatter.gene,
-    'is3D': scatter.is3D,
+    gene: scatter.genes,
+    is3D: scatter.is3D,
     'layout:width': width, // Pixel width of graph
     'layout:height': height, // Pixel height of graph
     'numAnnotSelections': scatter.annotParams.values.length,
     'annotName': scatter.annotParams.name,
     'annotType': scatter.annotParams.type,
     'annotScope': scatter.annotParams.scope,
+    isCorrelatedScatter: scatter.isCorrelatedScatter,
+    isAnnotatedScatter: scatter.isAnnotatedScatter,
     perfTimes
   }
 

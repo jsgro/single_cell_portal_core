@@ -150,15 +150,17 @@ class ExpressionVizService
     viz_data
   end
 
-
+  # adapted from https://blog.chrislowis.co.uk/2008/11/24/ruby-gsl-pearson.html
+  # note that the age of the blog means his performance numbers of the ruby version are off
+  # in local testing, this can compute correlation for 1MM cells in 0.5 seconds
   def self.pearsons_r(x,y)
-    n=x.length
+    n = x.length
 
-    sumx = x.inject(0) {|r,i| r + i}
-    sumy = y.inject(0) {|r,i| r + i}
+    sumx = x.inject(0) { |r,i| r + i }
+    sumy = y.inject(0) { |r,i| r + i }
 
-    sumxSq = x.inject(0) {|r,i| r + i**2}
-    sumySq = y.inject(0) {|r,i| r + i**2}
+    sumxSq = x.inject(0) { |r,i| r + i**2 }
+    sumySq = y.inject(0) { |r,i| r + i**2 }
 
     prods = []
     x.each_with_index{ |this_x,i| prods << this_x * y[i] }
@@ -167,7 +169,7 @@ class ExpressionVizService
     # Calculate Pearson score
     num = pSum - (sumx * sumy / n)
     den = ((sumxSq - (sumx**2) / n) * (sumySq - (sumy**2) / n))**0.5
-    if den==0
+    if den == 0
       return 0
     end
     r = num / den
