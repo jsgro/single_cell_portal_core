@@ -138,6 +138,7 @@ export default function ExploreDisplayTabs({
       newParams.spatialGroups = getDefaultSpatialGroupsForCluster(newParams.cluster, exploreInfo.spatialGroups)
       dataCache.clear()
     }
+
     // if the user updates any cluster params, store all of them in the URL so we don't end up with
     // broken urls in the event of a default cluster/annotation changes
     // also, unset any gene lists as we're about to re-render the explore tab and having gene list selected will show
@@ -147,6 +148,12 @@ export default function ExploreDisplayTabs({
     clusterParamNames.forEach(param => {
       updateParams[param] = param in newParams ? newParams[param] : exploreParamsWithDefaults[param]
     })
+    // if a user switches to a numeric annotation, change the tab to annotated scatter (SCP-3833)
+    if (newParams.annotation?.type === 'numeric' &&
+      exploreParamsWithDefaults.genes.length &&
+      exploreParamsWithDefaults.annotation?.type !== 'numeric') {
+      updateParams.tab = 'annotatedScatter'
+    }
     updateExploreParams(updateParams)
   }
 
