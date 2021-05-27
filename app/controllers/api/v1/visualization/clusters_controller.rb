@@ -217,8 +217,8 @@ module Api
                   study, genes, cluster, annotation, subsample)
               gene_names = genes.map {|g| g['name']}
               titles = {
-                x: "#{gene_names[0]} #{titles[:magnitude]}",
-                y: "#{gene_names[1]} #{titles[:magnitude]}"
+                x: "#{gene_names.first} #{titles[:magnitude]}",
+                y: "#{gene_names.last} #{titles[:magnitude]}"
               }
             else
               # For "Scatter" tab

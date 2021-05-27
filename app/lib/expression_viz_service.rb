@@ -155,19 +155,19 @@ class ExpressionVizService
   def self.pearsons_r(x,y)
     n = x.length
 
-    sumx = x.inject(0) { |r,i| r + i }
-    sumy = y.inject(0) { |r,i| r + i }
+    sum_x = x.reduce(0, :+)
+    sum_y = y.reduce(0, :+)
 
-    sumxSq = x.inject(0) { |r,i| r + i**2 }
-    sumySq = y.inject(0) { |r,i| r + i**2 }
+    sum_x_sq = x.inject(0) { |r, i| r + i**2 }
+    sum_y_sq = y.inject(0) { |r, i| r + i**2 }
 
     prods = []
     x.each_with_index{ |this_x,i| prods << this_x * y[i] }
-    pSum = prods.inject(0){ |r,i| r + i }
+    p_sum = prods.inject(0){ |r,i| r + i }
 
     # Calculate Pearson score
-    num = pSum - (sumx * sumy / n)
-    den = ((sumxSq - (sumx**2) / n) * (sumySq - (sumy**2) / n))**0.5
+    num = p_sum - (sum_x * sum_y / n)
+    den = ((sum_x_sq - (sum_x**2) / n) * (sum_y_sq - (sum_y**2) / n))**0.5
     if den == 0
       return 0
     end
