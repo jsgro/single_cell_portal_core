@@ -126,13 +126,12 @@ class ExpressionVizService
 
   # load cluster_group data_array values, but use expression scores to set numerical color array
   # this is the scatter plot shown in the "scatter" tab next to "distribution" on gene-based views
-  def self.load_expression_data_array_points(study, gene, cluster, annotation, subsample_threshold=nil, expression_only=false)
-    viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_annotations: !expression_only, include_coords: !expression_only)
+  def self.load_expression_data_array_points(study, gene, cluster, annotation, subsample_threshold=nil, include_coords=true, include_annotations=true)
+    viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_annotations: include_annotations, include_coords: include_coords)
 
     viz_data[:expression] = viz_data[:cells].map { |cell| gene['scores'][cell].to_f.round(4) }
 
-    if expression_only
-      viz_data.delete(:annotations)
+    if !include_coords
       viz_data.delete(:cells)
     end
     viz_data
@@ -247,8 +246,8 @@ class ExpressionVizService
   # load scatter expression scores with average of scores across each gene for all cells
   # uses data_array as source for each axis
   # will support a variety of consensus modes (default is mean)
-  def self.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample_threshold=nil, expression_only=false)
-    viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_coords: !expression_only)
+  def self.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample_threshold=nil, include_coords=true, include_annotations=true)
+    viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_coords: include_coords, include_annotations: include_annotations)
 
     viz_data[:expression] = viz_data[:cells].map do |cell|
       if consensus == 'median'

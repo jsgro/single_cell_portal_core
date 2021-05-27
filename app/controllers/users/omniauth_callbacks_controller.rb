@@ -13,7 +13,6 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     begin
       provider = request.env["omniauth.auth"].dig('provider')
       self.class.validate_scopes_from_params(params, provider)
-      self.class.validate_host_header_on_callback(request.headers)
     rescue SecurityError => e
       logger.error e.message
       context = ErrorTracker.format_extra_context(params)
@@ -46,7 +45,6 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     begin
       provider = request.env["omniauth.auth"].dig('provider')
       self.class.validate_scopes_from_params(params, provider)
-      self.class.validate_host_header_on_callback(request.headers)
     rescue SecurityError => e
       logger.error e.message
       context = ErrorTracker.format_extra_context(params)
@@ -85,15 +83,6 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
         error_message = "Invalid scope requested in OAuth callback: #{scope_name}, not configured for #{provider}: #{configured_scopes}"
         raise SecurityError.new(error_message)
       end
-    end
-  end
-
-  # ensure that no host header injection has taken place
-  def self.validate_host_header_on_callback(headers)
-    host_header = headers['HTTP_HOST']&.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
-    if host_header.present? && host_header != RequestUtils.get_hostname
-      error_message = "Invalid host header in callback: #{host_header}, does not match #{RequestUtils.get_hostname}"
-      raise SecurityError.new(error_message)
     end
   end
 end
