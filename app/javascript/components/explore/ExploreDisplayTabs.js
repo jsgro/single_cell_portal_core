@@ -80,7 +80,12 @@ export default function ExploreDisplayTabs({
   /** helper function so that StudyGeneField doesn't have to see the full exploreParams object */
   function searchGenes(genes) {
     // also unset any selected gene lists or ideogram files
-    updateExploreParams({ genes, geneList: '', ideogramFileId: '' })
+    const newParams = { genes, geneList: '', ideogramFileId: '' }
+    if (genes.length < 2) {
+      // and unset the consensus if there are no longer 2+ genes
+      newParams.consensus = ''
+    }
+    updateExploreParams(newParams)
   }
 
   let shownTab = exploreParams.tab
@@ -469,7 +474,11 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   } else if (isGene) {
     if (isMultiGene) {
       if (isConsensus) {
-        enabledTabs = ['scatter', 'distribution', 'dotplot']
+        if (exploreParams.annotation.type === 'numeric') {
+          enabledTabs = ['annotatedScatter', 'distribution', 'dotplot']
+        } else {
+          enabledTabs = ['scatter', 'distribution', 'dotplot']
+        }
       } else if (hasSpatialGroups) {
         enabledTabs = ['scatter', 'dotplot', 'heatmap']
       } else {
