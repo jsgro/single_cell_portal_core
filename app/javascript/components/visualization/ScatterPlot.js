@@ -11,7 +11,7 @@ import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
-import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
+import useErrorMessage from 'lib/error-message'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
@@ -46,48 +46,40 @@ function RawScatterPlot({
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
     const [scatter, perfTimes] = clusterResponse
+    const layout = getPlotlyLayout(dimensions, scatter)
+    const plotlyTraces = getPlotlyTraces({
+      axes: scatter.axes,
+      data: scatter.data,
+      annotName: scatter.annotParams.name,
+      annotType: scatter.annotParams.type,
+      genes: scatter.genes,
+      isAnnotatedScatter: scatter.isAnnotatedScatter,
+      isCorrelatedScatter: scatter.isCorrelatedScatter,
+      scatterColor,
+      dataScatterColor: scatter.scatterColor,
+      pointAlpha: scatter.pointAlpha,
+      pointSize: scatter.pointSize,
+      showPointBorders: scatter.showClusterPointBorders,
+      is3D: scatter.is3D
+    })
 
-    const apiOk = checkScpApiResponse(scatter,
-      () => Plotly.purge(graphElementId),
-      setShowError,
-      setErrorContent)
-    if (apiOk) {
-      const layout = getPlotlyLayout(dimensions, scatter)
-      const plotlyTraces = getPlotlyTraces({
-        axes: scatter.axes,
-        data: scatter.data,
-        annotName: scatter.annotParams.name,
-        annotType: scatter.annotParams.type,
-        genes: scatter.genes,
-        isAnnotatedScatter: scatter.isAnnotatedScatter,
-        isCorrelatedScatter: scatter.isCorrelatedScatter,
-        scatterColor,
-        dataScatterColor: scatter.scatterColor,
-        pointAlpha: scatter.pointAlpha,
-        pointSize: scatter.pointSize,
-        showPointBorders: scatter.showClusterPointBorders,
-        is3D: scatter.is3D
-      })
+    const startTime = performance.now()
+    Plotly.react(graphElementId, plotlyTraces, layout)
 
-      const startTime = performance.now()
+    sortLegend({
+      graphElementId,
+      isAnnotatedScatter,
+      annotType: scatter.annotParams.type,
+      genes: scatter.genes
+    })
+    perfTimes.plot = performance.now() - startTime
 
-      Plotly.react(graphElementId, plotlyTraces, layout)
-      sortLegend({
-        graphElementId,
-        isAnnotatedScatter,
-        annotType: scatter.annotParams.type,
-        genes: scatter.genes
-      })
-
-      perfTimes.plot = performance.now() - startTime
-
-      logScatterPlot(
-        { scatter, genes, width: dimensions.width, height: dimensions.height },
-        perfTimes
-      )
-      setScatterData(scatter)
-      setShowError(false)
-    }
+    logScatterPlot(
+      { scatter, genes, width: dimensions.width, height: dimensions.height },
+      perfTimes
+    )
+    setScatterData(scatter)
+    setShowError(false)
     setIsLoading(false)
   }
 
@@ -105,7 +97,12 @@ function RawScatterPlot({
       genes,
       isAnnotatedScatter,
       isCorrelatedScatter
-    }).then(handleResponse)
+    }).then(handleResponse).catch(error => {
+      Plotly.purge(graphElementId)
+      setErrorContent(error.message)
+      setShowError(true)
+      setIsLoading(false)
+    })
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles Plotly `data` updates, e.g. changes in color profile

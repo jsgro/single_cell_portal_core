@@ -95,9 +95,14 @@ const Fields = {
     },
     merge: (entry, scatter) => {
       if (scatter.data.annotations) {
-        Fields.annotation.putInEntry(entry, scatter.annotParams.name, scatter.annotParams.scope, scatter.data.annotations)
+        Fields.annotation.putInEntry(entry,
+          scatter.annotParams.name,
+          scatter.annotParams.scope,
+          scatter.data.annotations)
       } else {
-        scatter.data.annotations = Fields.annotation.getFromEntry(entry, scatter.annotParams.name, scatter.annotParams.scope)
+        scatter.data.annotations = Fields.annotation.getFromEntry(entry,
+          scatter.annotParams.name,
+          scatter.annotParams.scope)
       }
     }
   },
@@ -139,6 +144,7 @@ const Fields = {
     putInEntry: (entry, clusterProps) => entry.clusterProps = clusterProps,
     merge: (entry, scatter) => {
       // clusterProps caches everything except the data and allDataFromCache properties
+      // eslint-disable-next-line no-unused-vars
       const { data, allDataFromCache, ...clusterProps } = scatter
       Object.assign(entry.clusterProps, clusterProps)
       Object.assign(scatter, entry.clusterProps)
@@ -213,6 +219,10 @@ export function createCache() {
         mergedResult = cache._mergeClusterResponse(studyAccession, result, cluster, subsample)
       })
       return mergedResult
+    }).catch(error => {
+      // rather than try to reconstruct partial responses, clear the entire cache if an error occurs
+      cache.clear()
+      throw error
     })
   }
 

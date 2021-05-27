@@ -44,19 +44,20 @@ describe('JavaScript client for SCP REST API', () => {
   })
 
   it('catches 500 errors', async () => {
+    expect.assertions(1)
     const mockErrorResponse = {
-      type: 'basic',
-      url: 'http://localhost:3000/single_cell/api/v1/search?type=study',
-      redirected: false,
-      status: 500,
-      ok: false,
-      statusText: 'Internal Server Error'
+      json: () => Promise.resolve({
+        error: 'Internal Server Error'
+      })
     }
     jest
       .spyOn(global, 'fetch')
       .mockReturnValue(Promise.resolve(mockErrorResponse))
-    const [actualResponse, perfTime] = await scpApi('/test/path', {}, false)
-    expect(actualResponse.status).toEqual(500)
-    expect(actualResponse.ok).toEqual(false)
+
+    return scpApi('/test/path', {}, false)
+      .then(() => {})
+      .catch(error => {
+        expect(error.message).toEqual('Internal Server Error')
+      })
   })
 })

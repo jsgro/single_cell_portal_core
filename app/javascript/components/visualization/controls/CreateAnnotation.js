@@ -11,7 +11,7 @@ import { isUserLoggedIn } from 'providers/UserProvider'
 import { getIdentifierForAnnotation, getDefaultAnnotationForCluster } from 'lib/cluster-utils'
 import { createUserAnnotation } from 'lib/scp-api'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
-import { userErrorEnd, serverErrorEnd } from 'lib/error-utils'
+import { serverErrorEnd } from 'lib/error-utils'
 
 
 /** A control for adding a new user-defined annotation */
@@ -58,8 +58,8 @@ function CreateAnnotation({
   }
 
   /** renders an appropriate modal and updates the cluster params with the response from the server */
-  function handleCreateResponse({ message, annotations, errorType, newAnnotations }) {
-    if (!errorType) {
+  function handleCreateResponse({ message, annotations, newAnnotations, error }) {
+    if (!error) {
       setResponseModalContent({
         message: `User Annotation: ${annotationName} successfully saved`,
         footer: 'You can now view this annotation via the "Annotations" dropdown.'
@@ -77,8 +77,8 @@ function CreateAnnotation({
       })
     } else {
       setResponseModalContent({
-        message: `User Annotation: ${annotationName} successfully saved`,
-        footer: errorType === 'server' ? serverErrorEnd : userErrorEnd
+        message: error.message,
+        footer: serverErrorEnd
       })
     }
     setShowResponseModal(true)
@@ -112,7 +112,9 @@ function CreateAnnotation({
       subsample,
       annotationName,
       selectionPayload
-    ).then(handleCreateResponse)
+    ).then(handleCreateResponse).catch(error => {
+      handleCreateResponse({ error })
+    })
   }
 
   /** creates a new label entry for the given cell names */
