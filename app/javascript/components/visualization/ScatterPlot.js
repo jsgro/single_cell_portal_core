@@ -95,7 +95,7 @@ function RawScatterPlot({
   useEffect(() => {
     setIsLoading(true)
     // use a data cache if one has been provided, otherwise query scp-api directly
-    let fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
+    const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
     fetchMethod({
       studyAccession,
       cluster,
@@ -106,7 +106,6 @@ function RawScatterPlot({
       isAnnotatedScatter,
       isCorrelatedScatter
     }).then(handleResponse)
-
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
@@ -141,7 +140,7 @@ function RawScatterPlot({
         graphElementId,
         isAnnotatedScatter,
         annotType: annotation.type,
-        genes: genes
+        genes
       })
     }
   }, [dimensions.width, dimensions.height])
@@ -307,8 +306,8 @@ function sortLegend({ graphElementId, isAnnotatedScatter, annotType, genes }) {
     return traceEl.textContent.match(legendTitleRegex)[1]
   })
   const sortedNames = [...legendNames].sort((a, b) => {
-    if (a === UNSPECIFIED_ANNOTATION_NAME) { return 1 }
-    if (b === UNSPECIFIED_ANNOTATION_NAME) { return -1 }
+    if (a === UNSPECIFIED_ANNOTATION_NAME) {return 1}
+    if (b === UNSPECIFIED_ANNOTATION_NAME) {return -1}
     return a.localeCompare(b)
   })
   const legendTransforms = legendTraces.map(traceEl => traceEl.getAttribute('transform'))
@@ -371,8 +370,10 @@ function getPlotlyLayout({ width, height }={}, {
     dragmode: getDragMode(isCellSelecting)
   }
   if (is3D) {
-    layout.scene = get3DScatterProps({ userSpecifiedRanges, axes, hasCoordinateLabels,
-      coordinateLabels })
+    layout.scene = get3DScatterProps({
+      userSpecifiedRanges, axes, hasCoordinateLabels,
+      coordinateLabels
+    })
   } else {
     const props2d = get2DScatterProps({
       axes,
@@ -445,8 +446,10 @@ const baseCamera = {
 }
 
 /** Gets Plotly layout scene props for 3D scatter plot */
-export function get3DScatterProps({ userSpecifiedRanges, axes, hasCoordinateLabels,
-      coordinateLabels }) {
+export function get3DScatterProps({
+  userSpecifiedRanges, axes, hasCoordinateLabels,
+  coordinateLabels
+}) {
   const { titles, ranges, aspects } = axes
 
   const scene = {

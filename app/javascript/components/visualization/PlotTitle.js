@@ -2,7 +2,8 @@ import React from 'react'
 
 /** Renders a plot title for scatter plots */
 export default function PlotTitle({
-  cluster, annotation, genes, consensus, subsample, isCorrelatedScatter, pearsonsR }) {
+  cluster, annotation, genes, consensus, subsample, isCorrelatedScatter, pearsonsR
+}) {
   let contentString = cluster
   let detailString = ''
   if (genes.length) {
@@ -21,7 +22,7 @@ export default function PlotTitle({
     <span className="cluster-title">{contentString} </span>
     <span className="detail"> {detailString}</span>
     { isCorrelatedScatter &&
-      <span> R<sup>2</sup>={pearsonsR}</span>
+      <span> &nbsp; R<sup>2</sup>={pearsonsR}</span>
     }
   </h5>
 }

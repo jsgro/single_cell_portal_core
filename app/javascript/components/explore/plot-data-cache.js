@@ -109,7 +109,7 @@ const Fields = {
     },
     putInEntry: (entry, genes, consensus, expression) => {
       const key = getExpressionKey(genes, consensus)
-       // we only cache one set of expression data at a time, so for now, delete any others
+      // we only cache one set of expression data at a time, so for now, delete any others
       entry.expression = {}
       entry.expression[key] = expression
     },
@@ -193,8 +193,10 @@ export function createCache() {
           data: {},
           allDataFromCache: true // set a flag indicating that no fresh request to the server was needed
         }, {
-          url: fetchClusterUrl({ studyAccession, cluster, annotation,
-            subsample, consensus, genes, isAnnotatedScatter }),
+          url: fetchClusterUrl({
+            studyAccession, cluster, annotation,
+            subsample, consensus, genes, isAnnotatedScatter
+          }),
           legacyBackend: STEP_NOT_NEEDED,
           isClientCache: true,
           parse: STEP_NOT_NEEDED,

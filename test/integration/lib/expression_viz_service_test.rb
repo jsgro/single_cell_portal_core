@@ -333,4 +333,18 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
       assert_equal expected_value, calculated_median, "Median calculation incorrect; #{expected_value} != #{calculated_median}"
     end
   end
+
+  test 'should load gene correlation visualization' do
+    genes = ['PTEN', 'AGPAT2'].map do |gene_name|
+      @basic_study.genes.by_name_or_id(gene_name, @basic_study.expression_matrix_files.pluck(:id))
+    end
+    cluster = @basic_study.default_cluster
+    default_annot = @basic_study.default_annotation
+    annot_name, annot_type, annot_scope = default_annot.split('--')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
+
+    viz_data = ExpressionVizService.load_correlated_data_array_scatter(@basic_study, genes, cluster, annotation)
+    expected = {:annotations=>["dog", "cat", "dog"], :cells=>["A", "B", "C"], :x=>[0.0, 3.0, 1.5], :y=>[0.0, 0.0, 8.0], :pearsonsR=>0.0}
+    assert_equal expected, viz_data
+  end
 end

@@ -268,9 +268,10 @@ export async function fetchCluster({
   studyAccession, cluster, annotation, subsample, consensus, genes=null,
   isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[], mock=false
 }) {
-
-  const apiUrl = fetchClusterUrl({ studyAccession, cluster, annotation, subsample,
-    consensus, genes, isAnnotatedScatter, isCorrelatedScatter, fields })
+  const apiUrl = fetchClusterUrl({
+    studyAccession, cluster, annotation, subsample,
+    consensus, genes, isAnnotatedScatter, isCorrelatedScatter, fields
+  })
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
   const [scatter, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
@@ -310,7 +311,7 @@ export function fetchClusterUrl({
   if (!cluster || cluster === '') {
     cluster = '_default'
   }
-  return`/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
+  return `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
 }
 
 /**

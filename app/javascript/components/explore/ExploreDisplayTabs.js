@@ -32,7 +32,7 @@ const tabList = [
   { key: 'loading', label: 'loading...' },
   { key: 'scatter', label: 'Scatter' },
   { key: 'annotatedScatter', label: 'Annotated Scatter' },
-  { key: 'correlatedScatter', label: 'Scatter' },
+  { key: 'correlatedScatter', label: 'Correlation' },
   { key: 'distribution', label: 'Distribution' },
   { key: 'dotplot', label: 'Dot Plot' },
   { key: 'heatmap', label: 'Heatmap' },
