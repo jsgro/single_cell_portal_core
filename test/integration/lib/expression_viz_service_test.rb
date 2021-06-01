@@ -259,7 +259,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
-    expression_scatter = ExpressionVizService.load_expression_data_array_points(@basic_study, gene, cluster, annotation,
+    expression_scatter = ExpressionVizService.load_expression_data_array_points(@basic_study, [gene], cluster, annotation,
                                                                                 nil)
     assert_equal(cluster.concatenate_data_arrays('x', 'coordinates'), expression_scatter[:x])
     assert_equal(cluster.concatenate_data_arrays('y', 'coordinates'), expression_scatter[:y])
@@ -307,8 +307,8 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
-    gene_set_exp_scatter = ExpressionVizService.load_gene_set_expression_data_arrays(
-        @basic_study, genes, cluster, annotation, 'mean'
+    gene_set_exp_scatter = ExpressionVizService.load_expression_data_array_points(
+        @basic_study, genes, cluster, annotation, consensus: 'mean'
     )
 
     # mean of values for scores across both genes for each cell
