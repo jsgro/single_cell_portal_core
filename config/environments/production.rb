@@ -113,8 +113,4 @@ Rails.application.configure do
   config.disable_admin_notifications = false
 
   config.bard_host_url = 'https://terra-bard-prod.appspot.com'
-
-  # Host header injection protection
-  # from https://guides.rubyonrails.org/configuring.html#configuring-middleware
-  config.hosts << ENV['PROD_HOSTNAME']
 end
