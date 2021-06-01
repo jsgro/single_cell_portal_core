@@ -110,6 +110,12 @@ function RawScatterPlot({
     if (scatterData && !isLoading) {
       const dataUpdate = { 'marker.colorscale': scatterColor }
       Plotly.update(graphElementId, dataUpdate)
+      sortLegend({
+        graphElementId,
+        isAnnotatedScatter,
+        annotType: annotation.type,
+        genes
+      })
     }
   }, [scatterColor])
 
@@ -122,6 +128,12 @@ function RawScatterPlot({
       if (!isCellSelecting) {
         Plotly.restyle(graphElementId, { selectedpoints: [null] })
       }
+      sortLegend({
+        graphElementId,
+        isAnnotatedScatter,
+        annotType: annotation.type,
+        genes
+      })
     }
   }, [isCellSelecting])
 
