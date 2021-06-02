@@ -29,6 +29,13 @@
 	.plot-title {
 		margin-left: 1em;
 		margin-top: 0.5em;
+		.badge {
+			font-weight: normal;
+			margin-right: 0.2em;
+		}
+		.correlation { 
+			font-weight: normal
+		}
 	}
 	.legendtitletext {
 	}

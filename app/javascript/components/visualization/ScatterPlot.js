@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
 import Plotly from 'plotly.js-dist'
+import SpearmanRho from 'spearman-rho'
 
 import { fetchCluster } from 'lib/scp-api'
 import { logScatterPlot } from 'lib/scp-api-metrics'
@@ -19,6 +20,8 @@ export const SCATTER_COLOR_OPTIONS = [
   'Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu', 'Reds', 'Blues', 'Picnic',
   'Rainbow', 'Portland', 'Jet', 'Hot', 'Blackbody', 'Earth', 'Electric', 'Viridis', 'Cividis'
 ]
+
+window.spearman = SpearmanRho
 
 export const defaultScatterColor = 'Reds'
 window.Plotly = Plotly
@@ -40,6 +43,7 @@ function RawScatterPlot({
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
 }) {
   const [isLoading, setIsLoading] = useState(false)
+  const [spearman, setSpearman] = useState(null)
   const [scatterData, setScatterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
@@ -78,6 +82,13 @@ function RawScatterPlot({
       { scatter, genes, width: dimensions.width, height: dimensions.height },
       perfTimes
     )
+
+    if (isCorrelatedScatter) {
+      // compute correlation stats, but do it after the graph render so it doesn't delay
+      // the visualizations or impact logging
+      const spearmanRho = new SpearmanRho(scatter.data.x, scatter.data.y)
+      spearmanRho.calc().then(value => setSpearman(value))
+    }
     setScatterData(scatter)
     setShowError(false)
     setIsLoading(false)
@@ -166,7 +177,7 @@ function RawScatterPlot({
           genes={scatterData.genes}
           consensus={scatterData.consensus}
           isCorrelatedScatter={isCorrelatedScatter}
-          pearsonsR={scatterData.data.pearsonsR}/>
+          correlations={ { spearman: spearman }}/>
       }
       <div
         className="scatter-graph"
@@ -225,9 +236,10 @@ function getPlotlyTraces({
     trace.z = data.z
   }
 
-
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
-  if (annotType === 'group' && !genes.length || isCorrelatedScatter) {
+  const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
+  if (annotType === 'group' && !isGeneExpressionForColor) {
+    // use plotly's groupby transformation to make the traces
     const traceCounts = countOccurences(data.annotations)
     const traceStyles = Object.keys(traceCounts).map((val, index) => {
       return {
@@ -251,8 +263,8 @@ function getPlotlyTraces({
       line: { color: 'rgb(40,40,40)', width: 0 },
       size: pointSize
     }
-    const colors = genes.length ? data.expression : data.annotations
-    const title = genes.length ? axes.titles.magnitude : annotName
+    const colors = isGeneExpressionForColor ? data.expression : data.annotations
+    const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
     if (!isAnnotatedScatter) {
       Object.assign(trace.marker, {
         showscale: true,

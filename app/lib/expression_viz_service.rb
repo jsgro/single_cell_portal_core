@@ -145,34 +145,7 @@ class ExpressionVizService
 
     viz_data[:x] = gene0_expression
     viz_data[:y] = gene1_expression
-    viz_data[:pearsonsR] = pearsons_r(gene0_expression, gene1_expression).to_f.round(4)
     viz_data
-  end
-
-  # adapted from https://blog.chrislowis.co.uk/2008/11/24/ruby-gsl-pearson.html
-  # note that the age of the blog means his performance numbers of the ruby version are off
-  # in local testing, this can compute correlation for 1MM cells in 0.5 seconds
-  def self.pearsons_r(x,y)
-    n = x.length
-
-    sum_x = x.reduce(0, :+)
-    sum_y = y.reduce(0, :+)
-
-    sum_x_sq = x.inject(0) { |r, i| r + i**2 }
-    sum_y_sq = y.inject(0) { |r, i| r + i**2 }
-
-    prods = []
-    x.each_with_index{ |this_x,i| prods << this_x * y[i] }
-    p_sum = prods.inject(0){ |r,i| r + i }
-
-    # Calculate Pearson score
-    num = p_sum - (sum_x * sum_y / n)
-    den = ((sum_x_sq - (sum_x**2) / n) * (sum_y_sq - (sum_y**2) / n))**0.5
-    if den == 0
-      return 0
-    end
-    r = num / den
-    return r
   end
 
   # load boxplot expression scores vs. scores across each gene for all cells
