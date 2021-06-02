@@ -158,7 +158,7 @@
 				add: function (e, data) {
 					  fileUploading = true;
 					  var that = this;
-					  var fileName = data.files[0].name.replace(/ /g, '_');
+					  var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
             $(`${ordsFormSelector} .filename-to-upload`).val(fileName);
             canUpload = validateCandidateUpload(ordsFormSelector, fileName, $('.initialize_ordinations_form .filename-to-upload'));
             if ( canUpload ) {
@@ -183,7 +183,7 @@
 				done: function(e, data) {
           $('#add-coordinate-label-btn').removeClass('hidden');
           completeWizardStep('initialize_ordinations_form_nav');
-					var fileName = data.files[0].name.replace(/ /g, '_');
+					var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
 					// update upload status
 					$.ajax({
 						  url: "<%= update_status_study_path %>",

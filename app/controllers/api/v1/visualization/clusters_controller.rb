@@ -13,6 +13,8 @@ module Api
         VALID_TYPE_VALUES = ['group', 'numeric']
         VALID_CONSENSUS_VALUES = ['mean', 'median']
 
+        DEFAULT_DATA_FIELDS = ['coordinates', 'expression', 'annotation', 'cells']
+
         before_action :set_current_api_user!
         before_action :set_study
         before_action :check_study_view_permission
@@ -81,6 +83,36 @@ module Api
               key :description, 'Whether plot is an "Annotated Scatter", i.e. an annotation-based data array scatter plot.'
               key :type, :string
             end
+            parameter do
+              key :name, :annot_name
+              key :in, :query
+              key :description, 'Name of the annotation to categorize the cluster data.  Blank for default annotation.'
+              key :type, :string
+            end
+            parameter do
+              key :name, :annot_type
+              key :in, :query
+              key :description, 'Type of the annotation to retrieve--numeric or category.  Blank for default annotation.'
+              key :type, :string
+            end
+            parameter do
+              key :name, :annot_scope
+              key :in, :query
+              key :description, 'Scope of the annotation to retrieve--study or cluster.  Blank for default annotation.'
+              key :type, :string
+            end
+            parameter do
+              key :name, :gene
+              key :in, :query
+              key :description, 'gene name(s) to search, comma delimited'
+              key :type, :string
+            end
+            parameter do
+              key :name, :fields
+              key :in, :query
+              key :description, 'Comma-delimited list of fields to include in response.  Valid fields: coordinates, expression, annotation, cells.  Blank returns all.'
+              key :type, :string
+            end
             response 200 do
               key :description, 'Scatter plot visualization of cluster, suitable for rendering in Plotly'
             end
@@ -125,6 +157,12 @@ module Api
           subsample = get_selected_subsample_threshold(url_params[:subsample], cluster)
           consensus = url_params[:consensus].blank? ? nil : url_params[:consensus]
 
+          data_fields = url_params[:fields].blank? ? DEFAULT_DATA_FIELDS : url_params[:fields].split(',')
+          include_coordinates = data_fields.include?('coordinates')
+          include_expression = data_fields.include?('expression')
+          include_annotation = data_fields.include?('annotation')
+          include_cells = data_fields.include?('cells')
+
           colorscale = url_params[:colorscale]
           if colorscale.blank?
             colorscale = study.default_color_profile
@@ -136,15 +174,14 @@ module Api
           is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
 
           titles = ClusterVizService.load_axis_labels(cluster)
-          coordinates = nil
+          titles[:magnitude] = ExpressionVizService.load_expression_axis_title(study)
+
+          plot_data = nil
           genes = RequestUtils.get_genes_from_param(study, url_params[:gene])
 
-          if url_params[:gene].blank?
+          if url_params[:gene].blank? || !include_expression
             # For "Clusters" tab in default view of Explore tab
-            coordinates = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, colorscale)
-            if cluster.is_3d?
-              range = ClusterVizService.set_range(cluster, coordinates.values)
-            end
+            plot_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, include_coords: include_coordinates, include_cells: include_cells)
           else
             if genes.count == 0
               # all searched genes do not exist in this study
@@ -152,28 +189,23 @@ module Api
             end
             # For single-gene view of Explore tab (or collapsed multi-gene)
             is_collapsed_view = genes.length > 1 && consensus.present?
-            y_axis_title = ExpressionVizService.load_expression_axis_title(study)
 
             if is_annotated_scatter
               # For "Annotated scatter" tab, shown in first tab for numeric annotations
               if is_collapsed_view
-                coordinates = ExpressionVizService.load_gene_set_annotation_based_scatter(study, genes, cluster, annotation, consensus, subsample, y_axis_title)
+                plot_data = ExpressionVizService.load_gene_set_annotation_based_scatter(study, genes, cluster, annotation, consensus, subsample)
               else
-                coordinates = ExpressionVizService.load_annotation_based_data_array_scatter(
-                  study, genes[0], cluster, annotation, subsample, y_axis_title)
+                plot_data = ExpressionVizService.load_annotation_based_data_array_scatter(
+                  study, genes[0], cluster, annotation, subsample)
               end
-              range = ClusterVizService.set_range(cluster, coordinates.values)
               titles = {
                 x: annot_params[:name],
-                y: y_axis_title
+                y: titles[:magnitude]
               }
             else
               # For "Scatter" tab
-              if is_collapsed_view
-                coordinates = ExpressionVizService.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample, y_axis_title, colorscale)
-              else
-                coordinates = ExpressionVizService.load_expression_data_array_points(study, genes[0], cluster, annotation, subsample, y_axis_title, colorscale)
-              end
+              plot_data = ExpressionVizService.load_expression_data_array_points(study, genes, cluster, annotation, subsample,
+                consensus: consensus, expression_only: !include_coordinates)
             end
           end
 
@@ -181,28 +213,28 @@ module Api
             aspect = ClusterVizService.compute_aspect_ratios(range)
           end
 
-          plot_data = ClusterVizService.transform_coordinates(coordinates, study, cluster, annotation)
-
           axes_full = {
             titles: titles,
-            ranges: range,
             aspects: aspect
           }
 
           coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(cluster)
           {
             "data": plot_data,
+            "pointSize": study.default_cluster_point_size,
+            "userSpecifiedRanges": cluster.domain_ranges,
+            "showClusterPointBorders": study.show_cluster_point_borders?,
             "description": cluster.study_file.description,
             "is3D": cluster.is_3d?,
             "isSubsampled": cluster.subsampled?,
             "isAnnotatedScatter": is_annotated_scatter,
             "numPoints": cluster.points,
-            "domainRanges": cluster.domain_ranges,
             "axes": axes_full,
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
             "coordinateLabels": coordinate_labels,
+            "pointAlpha": study.default_cluster_point_alpha,
             "cluster": cluster.name,
-            "gene": genes.map {|g| g['name']}.join(', '),
+            "genes": genes.map {|g| g['name']},
             "annotParams": annotation,
             "subsample": subsample.nil? ? 'all' : subsample,
             "consensus": consensus

@@ -40,7 +40,7 @@ class Study
   # associations and scopes
   belongs_to :user
   belongs_to :branding_group, optional: true
-  has_many :study_files, dependent: :delete do
+  has_many :study_files, dependent: :delete_all do
     def by_type(file_type)
       if file_type.is_a?(Array)
         where(queued_for_deletion: false, :file_type.in => file_type).to_a
@@ -187,7 +187,7 @@ class Study
   has_many :user_data_arrays
 
   # HCA metadata object
-  has_many :analysis_metadata, dependent: :delete
+  has_many :analysis_metadata, dependent: :delete_all
 
   # Study Accession
   has_one :study_accession
@@ -196,10 +196,10 @@ class Study
   has_many :external_resources, as: :resource_links, dependent: :destroy
 
   # Study Detail (full html description)
-  has_one :study_detail, dependent: :delete
+  has_one :study_detail, dependent: :delete_all
 
   # DownloadAgreement (extra user terms for downloading data)
-  has_one :download_agreement, dependent: :delete
+  has_one :download_agreement, dependent: :delete_all
 
   # field definitions
   field :name, type: String
@@ -610,7 +610,7 @@ class Study
     end
     property :preset_match do
       key :type, :boolean
-      key :description, 'Indication this study was whitelisted by a preset search'
+      key :description, 'Indication this study was included by a preset search'
     end
     property :gene_matches do
       key :type, :array
@@ -897,7 +897,7 @@ class Study
   # primarily used when syncing study with FireCloud workspace
   def local_acl
     acl = {
-        "#{self.user.email}" => (Rails.env.production? && FireCloudClient::COMPUTE_BLACKLIST.include?(self.firecloud_project)) ? 'Edit' : 'Owner'
+        "#{self.user.email}" => (Rails.env.production? && FireCloudClient::COMPUTE_DENYLIST.include?(self.firecloud_project)) ? 'Edit' : 'Owner'
     }
     self.study_shares.each do |share|
       acl["#{share.email}"] = share.permission
@@ -1247,7 +1247,7 @@ class Study
     end
   end
 
-  # return an array of all single cell names in study, will check for master list of cells or concatenate all
+  # return an array of all single cell names in study, will check for main list of cells or concatenate all
   # cell lists from individual expression matrices
   def all_cells_array
     if self.metadata_file&.parsed? # nil-safed via &
@@ -1759,8 +1759,8 @@ class Study
           study_owner = self.user.email
           workspace_permission = 'WRITER'
           can_compute = true
-          # if study project is in the compute blacklist, revoke compute permission
-          if Rails.env.production? && FireCloudClient::COMPUTE_BLACKLIST.include?(self.firecloud_project)
+          # if study project is in the compute denylist, revoke compute permission
+          if Rails.env.production? && FireCloudClient::COMPUTE_DENYLIST.include?(self.firecloud_project)
             can_compute = false
           end
           acl = ApplicationController.firecloud_client.create_workspace_acl(study_owner, workspace_permission, true, can_compute)
@@ -1848,8 +1848,8 @@ class Study
         if self.firecloud_project == FireCloudClient::PORTAL_NAMESPACE
           workspace_permission = 'WRITER'
           can_compute = true
-          # if study project is in the compute blacklist, revoke compute permission
-          if Rails.env.production? && FireCloudClient::COMPUTE_BLACKLIST.include?(self.firecloud_project)
+          # if study project is in the compute denylist, revoke compute permission
+          if Rails.env.production? && FireCloudClient::COMPUTE_DENYLIST.include?(self.firecloud_project)
             can_compute = false
             Rails.logger.info "#{Time.zone.now}: Study: #{self.name} removing compute permissions"
             compute_acl = ApplicationController.firecloud_client.create_workspace_acl(self.user.email, workspace_permission, true, can_compute)

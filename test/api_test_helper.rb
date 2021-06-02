@@ -11,7 +11,7 @@ module Requests
   module JsonHelpers
     # parse a response body as JSON
     def json
-      if @response.content_type == 'application/json'
+      if @response.content_type.include? 'application/json'
         JSON.parse(@response.body)
       else
         @response.body

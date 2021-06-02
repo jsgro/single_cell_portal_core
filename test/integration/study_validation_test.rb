@@ -311,7 +311,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     exp_matrix = File.open(Rails.root.join('test', 'test_data', filename))
     perform_chunked_study_file_upload(filename, file_params, study.id)
     assert_response 200, "Expression upload failed: #{@response.code}"
-    study_file = study.study_files.detect {|file| file.upload_file_name == sanitized_filename}
+    study_file = study.study_files.detect {|file| file.name == sanitized_filename}
     refute study_file.nil?, 'Did not find newly uploaded expression matrix'
     assert_equal exp_matrix.size, study_file.upload_file_size, "File sizes do not match; #{exp_matrix.size} != #{study_file.upload_file_size}"
 

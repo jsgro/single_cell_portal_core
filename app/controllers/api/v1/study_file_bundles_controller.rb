@@ -252,7 +252,7 @@ module Api
         head 403 unless @study.can_edit?(current_api_user)
       end
 
-      # study file params whitelist
+      # study file params list
       def study_file_bundle_params
         params.require(:study_file_bundle).permit(:bundle_type, original_file_list: [:name, :file_type, :species, :assembly])
       end

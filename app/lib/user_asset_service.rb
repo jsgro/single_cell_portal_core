@@ -94,6 +94,10 @@ class UserAssetService
       sub_dirs.each do |sub_dir|
         current_dir = asset_path.join(sub_dir)
         files = get_directory_entries(current_dir)
+        if files.include?('original') # patch for new storage path in Carrierwave
+          current_dir = current_dir.join('original')
+          files = get_directory_entries(current_dir)
+        end
         local_files += files.map {|file| Pathname.new(current_dir).join(file)}
       end
     end
@@ -193,6 +197,7 @@ class UserAssetService
   end
 
   # create a local directory in which to localize a remote asset to prevent Errno::ENOENT errors
+  #
   # * *params*
   #   - +pathname+ (Pathname) => Pathname of remote file
   #
@@ -203,6 +208,16 @@ class UserAssetService
     fullpath = RAILS_PUBLIC_PATH.join(parent_dir)
     FileUtils.mkdir_p(fullpath) unless Dir.exists?(fullpath)
     fullpath
+  end
+
+  # remove cached assets in remote bucket on deletion of parent record
+  #
+  # * *params*
+  #   - +remote_folder+ (Pathname, String) => remote bucket folder in which to remove all entries
+  def self.remove_assets_from_remote(remote_folder)
+    bucket = get_storage_bucket
+    files = bucket.files prefix: remote_folder.to_s
+    files.map {|file| file.delete } if files.present?
   end
 
   private

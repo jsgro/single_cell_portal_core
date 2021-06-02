@@ -63,7 +63,7 @@
 				add: function (e, data) {
 					fileUploading = true;
 					var that = this;
-					var fileName = data.files[0].name.replace(/ /g, '_');
+					var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
           $('#bundled_file_form_<%= study_file._id %> .filename').val(fileName);
           canUpload = validateCandidateUpload("#bundled_file_form_<%= study_file._id %>", fileName, $('.initialize_bundled_file_form .filename'));
           if ( canUpload ) {
@@ -88,7 +88,7 @@
 				done: function(e, data) {
 				    var fileType = $('#bundled_file_form_<%= study_file._id %> .file-type').val();
 				    if ( fileType === 'BAM Index') {
-                var fileName = data.files[0].name.replace(/ /g, '_');
+                var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
                 $.ajax({
                     url: "<%= update_status_study_path %>",
                     type: "PATCH",
@@ -110,7 +110,7 @@
                     }
                 });
             } else {
-                var fileName = data.files[0].name.replace(/ /g, '_');
+                var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
                 $.ajax({
                     url: "<%= update_status_study_path %>",
                     type: "PATCH",

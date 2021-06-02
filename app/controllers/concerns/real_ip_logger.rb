@@ -1,9 +1,8 @@
 module RealIpLogger
+  extend ActiveSupport::Concern
   ##
   # real_ip_logger.rb: logs the actual client IP address set by the nginx X-Forwarded-For header, instead of load balancer ip
   ##
-
-  extend ActiveSupport::Concern
 
   included do
     around_action :log_real_ip
@@ -16,4 +15,3 @@ module RealIpLogger
     yield # regardless of any issues/errors, request will always execute and render a response
   end
 end
-

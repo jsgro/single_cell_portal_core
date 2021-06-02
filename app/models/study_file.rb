@@ -14,9 +14,11 @@ class StudyFile
 
   include Mongoid::Document
   include Mongoid::Timestamps
-  include Mongoid::Paperclip
   include Rails.application.routes.url_helpers # for accessing download_file_path and download_private_file_path
   include Swagger::Blocks
+
+  # carrierwave settings
+  mount_uploader :upload, UploadUploader, mount_on: :upload_file_name
 
   # constants, used for statuses and file types
   STUDY_FILE_TYPES = ['Cluster', 'Coordinate Labels' ,'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File',
@@ -88,10 +90,9 @@ class StudyFile
   field :queued_for_deletion, type: Boolean, default: false
   field :remote_location, type: String, default: ''
   field :options, type: Hash, default: {}
-
-  Paperclip.interpolates :data_dir do |attachment, style|
-    attachment.instance.data_dir
-  end
+  # legacy attributes from Paperclip for Carrierwave compatibility
+  field :upload_file_size, type: Integer
+  field :upload_content_type, type: String
 
   ##
   #
@@ -579,14 +580,6 @@ class StudyFile
   before_validation   :set_file_name_and_data_dir, on: :create
   before_save         :sanitize_name
   after_save          :set_cluster_group_ranges, :set_options_by_file_type
-
-  has_mongoid_attached_file :upload,
-                            :path => ":rails_root/data/:data_dir/:id/:filename",
-                            :url => ''
-
-  # turning off validation to allow any kind of data file to be uploaded
-  do_not_validate_attachment_file_type :upload
-
   validates_uniqueness_of :upload_file_name, scope: :study_id, unless: Proc.new {|f| f.human_data?}
   validates_presence_of :name
   validates_presence_of :human_fastq_url, if: proc {|f| f.human_data}
@@ -737,7 +730,7 @@ class StudyFile
 
   # end path for a file when localizing during a parse
   def download_location
-    self.remote_location.blank? ? File.join(self.id, self.upload_file_name) : self.remote_location
+    self.remote_location.blank? ? File.join(self.id, 'original', self.upload_file_name) : self.remote_location
   end
 
   # for constructing a path to a file in a Google bucket
@@ -1216,22 +1209,22 @@ class StudyFile
   #
   ###
 
-  # strip whitespace from name if the file is a cluster or gene list (will cause problems when rendering)
+  # strip space from name if the file is a cluster or gene list (will cause problems when rendering)
   def sanitize_name
     if ['Gene List', 'Cluster'].include?(self.file_type)
       self.name.strip!
     end
   end
 
-  # set filename and construct url safe name from study
+  # set name and data_dir on create
   def set_file_name_and_data_dir
-    if self.upload_file_name.nil?
-      self.status = 'uploaded'
-      if self.name.nil?
-        self.name = ''
+    # use filename of uploaded file for "name" if upload object is present, or upload_file_name is being manually set
+    if self.name.blank?
+      if self.upload_file_name.present?
+        self.name = self.upload_file_name
+      elsif self.upload.present?
+        self.name = self.upload.file.filename
       end
-    elsif (self.name.nil? || self.name.blank?) || (!self.new_record? && self.upload_file_name != self.name)
-      self.name = self.upload_file_name
     end
     self.data_dir = self.study.data_dir
   end

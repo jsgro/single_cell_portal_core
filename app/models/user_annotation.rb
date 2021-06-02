@@ -27,7 +27,7 @@ class UserAnnotation
   belongs_to :study
 
   # user data arrays belong to user annotations
-  has_many :user_data_arrays, dependent: :delete do
+  has_many :user_data_arrays, dependent: :delete_all do
     def by_name_and_type(name, type, subsample_threshold=nil, subsample_annotation=nil)
       where(name: name, array_type: type, subsample_threshold: subsample_threshold, subsample_annotation: subsample_annotation).order_by(&:array_index).to_a
     end
@@ -38,7 +38,7 @@ class UserAnnotation
     end
   end
 
-  has_many :user_annotation_shares, dependent: :delete do
+  has_many :user_annotation_shares, dependent: :delete_all do
     def can_edit
       where(permission: 'Edit').map(&:email)
     end
@@ -129,7 +129,7 @@ class UserAnnotation
   end
 
   # combine split data arrays when they were longer than 100k values each.
-  def concatenate_user_data_arrays(array_name, array_type, subsample_threshold=nil, subsample_annotation=nil)
+  def concatenate_data_arrays(array_name, array_type, subsample_threshold=nil, subsample_annotation=nil)
     if subsample_threshold.blank?
       subsample_threshold = nil
       subsample_annotation = nil
@@ -168,9 +168,9 @@ class UserAnnotation
       # since user annotations can have the same name in the same cluster for different users, the lookup key is actually the ID
       user_annot_id = annotation.split('--').first
       user_annot = UserAnnotation.find(user_annot_id)
-      cell_name_array = user_annot.concatenate_user_data_arrays('text', 'cells', threshold, annotation)
-      x_array = user_annot.concatenate_user_data_arrays('x', 'coordinates', threshold, annotation)
-      y_array = user_annot.concatenate_user_data_arrays('y', 'coordinates', threshold, annotation)
+      cell_name_array = user_annot.concatenate_data_arrays('text', 'cells', threshold, annotation)
+      x_array = user_annot.concatenate_data_arrays('x', 'coordinates', threshold, annotation)
+      y_array = user_annot.concatenate_data_arrays('y', 'coordinates', threshold, annotation)
     end
 
     # get an ordered array of labels
@@ -319,7 +319,7 @@ class UserAnnotation
       cell_name_array = cluster.concatenate_data_arrays('text', 'cells')
       x_array = cluster.concatenate_data_arrays('x', 'coordinates')
       y_array = cluster.concatenate_data_arrays('y', 'coordinates')
-      user_annotation_array = self.concatenate_user_data_arrays(annot_name,'annotations')
+      user_annotation_array = self.concatenate_data_arrays(annot_name,'annotations')
 
       # create new annotation data arrays and add them
       user_annotation_data_arrays = self.user_data_arrays.where(array_type: 'annotations').to_a

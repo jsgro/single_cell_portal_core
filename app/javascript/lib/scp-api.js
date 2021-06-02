@@ -117,36 +117,17 @@ export async function createUserAnnotation(
   })
 
   const apiUrl = `/studies/${studyAccession}/user_annotations`
-  const [jsonOrResponse] = await scpApi(apiUrl, init, mock)
 
-  let message = ''
-  let annotations = {}
-  let errorType = null
-  let newAnnotations = []
+  const [response] = await scpApi(apiUrl, init, mock)
 
-  // Consider refactoring this when migrating user-annotations.js to
-  // React, so components share more error handling logic and UI
-  if (jsonOrResponse.ok === false) {
-    const json = await jsonOrResponse.json()
-    message = json.error
-    const status = jsonOrResponse.status
-    if (status === 400) {
-      errorType = 'user'
-    } else if (status === 500) {
-      errorType = 'server'
-    } else {
-      errorType = 'other'
-    }
-  } else {
-    // Parse JSON of successful response
-    message = jsonOrResponse.message
-    annotations = jsonOrResponse.annotations
-    newAnnotations = jsonOrResponse.annotationList
-  }
+  // Parse JSON of successful response
+  const message = response.message
+  const annotations = response.annotations
+  const newAnnotations = response.annotationList
 
   logCreateUserAnnotation()
 
-  return { message, annotations, errorType, newAnnotations }
+  return { message, annotations, newAnnotations }
 }
 
 /**
@@ -264,17 +245,33 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/
      Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
  */
-export async function fetchCluster(
-  studyAccession, cluster, annotation, subsample, consensus, gene=null,
-  isAnnotatedScatter=null, mock=false
-) {
+export async function fetchCluster({
+  studyAccession, cluster, annotation, subsample, consensus, genes=null,
+  isAnnotatedScatter=null, fields=[], mock=false
+}) {
+  const apiUrl = fetchClusterUrl({
+    studyAccession, cluster, annotation, subsample,
+    consensus, genes, isAnnotatedScatter, fields
+  })
+  // don't camelcase the keys since those can be cluster names,
+  // so send false for the 4th argument
+  const [scatter, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return [scatter, perfTimes]
+}
+
+/** Helper function for returning a url for fetching cluster data.  See fetchCluster above for documentation */
+export function fetchClusterUrl({
+  studyAccession, cluster, annotation, subsample, consensus, genes=null,
+  isAnnotatedScatter=null, fields=[]
+}) {
   // Digest full annotation name to enable easy validation in API
   let [annotName, annotType, annotScope] = [annotation.name, annotation.type, annotation.scope]
-  if (annotName == undefined) {
+  if (annotName == undefined && annotation.length) {
     [annotName, annotType, annotScope] = annotation.split('--')
   }
-  if (Array.isArray(gene)) {
-    gene = gene.join(',')
+  if (Array.isArray(genes)) {
+    genes = genes.join(',')
   }
   // eslint-disable-next-line camelcase
   const is_annotated_scatter = isAnnotatedScatter ? true : ''
@@ -284,20 +281,15 @@ export async function fetchCluster(
     annotation_scope: annotScope,
     subsample,
     consensus,
-    gene,
+    gene: genes,
+    fields: fields.join(','),
     is_annotated_scatter
   }
-
   const params = stringifyQuery(paramObj)
   if (!cluster || cluster === '') {
     cluster = '_default'
   }
-  const apiUrl = `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
-  // don't camelcase the keys since those can be cluster names,
-  // so send false for the 4th argument
-  const [scatter, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
-
-  return [scatter, perfTimes]
+  return `/studies/${studyAccession}/clusters/${encodeURIComponent(cluster)}${params}`
 }
 
 /**
@@ -574,7 +566,7 @@ export default async function scpApi(
 
   // Milliseconds taken to fetch data from API
   // Suboptimal, but retained until at least Q4 2021 for continuity.
-  // Use `perfTimeFull` for closest measure of user-perceived duration.
+  // Use `perfTime:full` for closest measure of user-perceived duration.
   const legacyBackendTime = performance.now() - perfTimeStart
 
   const perfTimes = {
@@ -590,13 +582,17 @@ export default async function scpApi(
       // Converts API's snake_case to JS-preferrable camelCase,
       // for easy destructuring assignment.
       if (camelCase) {
-        return [camelcaseKeys(json), perfTimes]
+        return [camelcaseKeys(json), perfTimes, true]
       } else {
-        return [json, perfTimes]
+        return [json, perfTimes, true]
       }
     } else {
-      return [response, perfTimes]
+      return [response, perfTimes, true]
     }
   }
-  return [response, perfTimes]
+  if (toJson) {
+    const json = await response.json()
+    throw new Error(json.error)
+  }
+  throw new Error(response)
 }

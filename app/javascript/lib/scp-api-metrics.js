@@ -147,6 +147,9 @@ export function logScatterPlot(
   const props = {
     'numPoints': scatter.numPoints, // How many cells are we plotting?
     genes,
+    'numPointsPlotted': scatter.data.cells.length,
+    'isSubsampled': scatter.isSubsampled,
+    'subsample': scatter.subsample,
     'gene': scatter.gene,
     'is3D': scatter.is3D,
     'layout:width': width, // Pixel width of graph

@@ -302,7 +302,7 @@ module Api
         head 403 unless @study.can_edit?(current_api_user)
       end
 
-      # study file params whitelist
+      # study file params list
       def directory_listing_params
         params.require(:directory_listing).permit(:id, :name, :description, :file_type, :sync_status, files: [:name, :size, :generation])
       end

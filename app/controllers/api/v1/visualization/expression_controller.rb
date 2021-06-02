@@ -118,6 +118,7 @@ module Api
                                                                     annot_scope: params[:annotation_scope])
           subsample = ClustersController.get_selected_subsample_threshold(params[:subsample], cluster)
           genes = RequestUtils.get_genes_from_param(@study, params[:genes])
+
           if genes.empty?
             if params[:genes].empty?
               render json: {error: 'You must supply at least one gene'}, status: 400

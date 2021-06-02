@@ -9,7 +9,7 @@ import Plotly from 'plotly.js-dist'
 
 import { useUpdateEffect } from 'hooks/useUpdate'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
-import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
+import useErrorMessage from 'lib/error-message'
 import { logViolinPlot } from 'lib/scp-api-metrics'
 
 
@@ -50,10 +50,37 @@ function RawStudyViolinPlot({
   const [graphElementId] = useState(_uniqueId('study-violin-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
-  /** gets expression data from the server */
-  async function loadData() {
+  /** renders received expression data from the server */
+  function renderData([results, perfTimes]) {
+    let distributionPlotToUse = distributionPlot
+    if (!distributionPlotToUse) {
+      distributionPlotToUse = defaultDistributionPlot
+    }
+
+    const startTime = performance.now()
+
+    renderViolinPlot(graphElementId, results, {
+      plotType: distributionPlotToUse,
+      showPoints: distributionPoints
+    })
+
+    perfTimes.plot = performance.now() - startTime
+
+    logViolinPlot(
+      { genes, distributionPlotToUse, distributionPoints },
+      perfTimes
+    )
+    setStudyGeneNames(results.gene_names)
+    if (setAnnotationList) {
+      setAnnotationList(results.annotation_list)
+    }
+    setShowError(false)
+    setIsLoading(false)
+  }
+  /** handles fetching the expression data (and menu option data) from the server */
+  useEffect(() => {
     setIsLoading(true)
-    const [results, perfTimes] = await fetchExpressionViolin(
+    fetchExpressionViolin(
       studyAccession,
       genes,
       cluster,
@@ -62,38 +89,12 @@ function RawStudyViolinPlot({
       annotation.scope,
       subsample,
       consensus
-    )
-    const apiOk = checkScpApiResponse(results, () => Plotly.purge(graphElementId), setShowError, setErrorContent)
-    if (apiOk) {
-      let distributionPlotToUse = distributionPlot
-      if (!distributionPlotToUse) {
-        distributionPlotToUse = defaultDistributionPlot
-      }
-
-      const startTime = performance.now()
-
-      renderViolinPlot(graphElementId, results, {
-        plotType: distributionPlotToUse,
-        showPoints: distributionPoints
-      })
-
-      perfTimes.plot = performance.now() - startTime
-
-      logViolinPlot(
-        { genes, distributionPlotToUse, distributionPoints },
-        perfTimes
-      )
-      setStudyGeneNames(results.gene_names)
-      if (setAnnotationList) {
-        setAnnotationList(results.annotation_list)
-      }
-      setShowError(false)
-    }
-    setIsLoading(false)
-  }
-  /** handles fetching the expression data (and menu option data) from the server */
-  useEffect(() => {
-    loadData()
+    ).then(renderData).catch(error => {
+      Plotly.purge(graphElementId)
+      setErrorContent(error.message)
+      setShowError(true)
+      setIsLoading(false)
+    })
   }, [ // do a load from the server if any of the paramenters passed to fetchExpressionViolin have changed
     studyAccession,
     genes[0],
@@ -185,64 +186,66 @@ function updateViolinPlot(target, plotType, showPoints) {
 function getViolinTraces(
   resultValues, showPoints='none', plotType='violin'
 ) {
-  const data = Object.entries(resultValues).map(([traceName, traceData], index) => {
-    // Plotly violin trace creation, adding to master array
+  const data = Object.entries(resultValues)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([traceName, traceData], index) => {
+    // Plotly violin trace creation, adding to main array
     // get inputs for plotly violin creation
-    const dist = traceData.y
+      const dist = traceData.y
 
-    // Replace the none selection with bool false for plotly
-    if (showPoints === 'none' || !showPoints) {
-      showPoints = false
-    }
+      // Replace the none selection with bool false for plotly
+      if (showPoints === 'none' || !showPoints) {
+        showPoints = false
+      }
 
-    // Check if there is a distribution before adding trace
-    if (arrayMax(dist) !== arrayMin(dist) && plotType === 'violin') {
+      // Check if there is a distribution before adding trace
+      if (arrayMax(dist) !== arrayMin(dist) && plotType === 'violin') {
       // Make a violin plot if there is a distribution
-      return {
-        type: 'violin',
-        name: traceName,
-        y: dist,
-        points: showPoints,
-        pointpos: 0,
-        jitter: 0.85,
-        spanmode: 'hard',
-        box: {
-          visible: true,
-          fillcolor: '#ffffff',
-          width: .1
-        },
-        marker: {
-          size: 2,
-          color: '#000000',
-          opacity: 0.8
-        },
-        fillcolor: getColorBrewerColor(index),
-        line: {
-          color: '#000000',
-          width: 1.5
-        },
-        meanline: {
-          visible: false
+        return {
+          type: 'violin',
+          name: traceName,
+          y: dist,
+          points: showPoints,
+          pointpos: 0,
+          jitter: 0.85,
+          spanmode: 'hard',
+          box: {
+            visible: true,
+            fillcolor: '#ffffff',
+            width: .1
+          },
+          marker: {
+            size: 2,
+            color: '#000000',
+            opacity: 0.8
+          },
+          fillcolor: getColorBrewerColor(index),
+          line: {
+            color: '#000000',
+            width: 1.5
+          },
+          meanline: {
+            visible: false
+          }
+        }
+      } else {
+      // Make a boxplot for data with no distribution
+        return {
+          type: 'box',
+          name: traceName,
+          y: dist,
+          boxpoints: showPoints,
+          marker: {
+            color: getColorBrewerColor(index),
+            size: 2,
+            line: {
+              color: plotlyDefaultLineColor
+            }
+          },
+          boxmean: true
         }
       }
-    } else {
-      // Make a boxplot for data with no distribution
-      return {
-        type: 'box',
-        name: traceName,
-        y: dist,
-        boxpoints: showPoints,
-        marker: {
-          color: getColorBrewerColor(index),
-          size: 2,
-          line: {
-            color: plotlyDefaultLineColor
-          }
-        },
-        boxmean: true
-      }
-    }
-  })
+    })
   return data
 }
 

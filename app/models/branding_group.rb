@@ -1,13 +1,12 @@
 class BrandingGroup
   include Mongoid::Document
   include Mongoid::Timestamps
-  include Mongoid::Paperclip
   include FeatureFlaggable
 
   field :name, type: String
   field :name_as_id, type: String
   field :tag_line, type: String
-  field :background_color, type: String
+  field :background_color, type: String, default: '#FFFFFF'
   field :font_family, type: String, default: 'Helvetica Neue, sans-serif'
   field :font_color, type: String, default: '#333333'
   field :feature_flags, type: Hash, default: {}
@@ -20,31 +19,26 @@ class BrandingGroup
   has_many :studies
   belongs_to :user
 
-  has_mongoid_attached_file :splash_image,
-                            :path => ":rails_root/public/single_cell/branding_groups/:id/:filename",
-                            :url => "/single_cell/branding_groups/:id/:filename"
+  field :splash_image_file_size, type: Integer
+  field :splash_image_content_type, type: String
+  field :footer_image_file_size, type: Integer
+  field :footer_image_content_type, type: String
+  field :banner_image_file_size, type: Integer
+  field :banner_image_content_type, type: String
 
-  validates_attachment :splash_image,
-                       content_type: { content_type: ['image/jpeg', 'image/jpg', 'image/png'] },
-                       size: { in: 0..10.megabytes }
+  # carrierwave settings
+  mount_uploader :splash_image, BrandingGroupImageUploader, mount_on: :splash_image_file_name
+  mount_uploader :banner_image, BrandingGroupImageUploader, mount_on: :banner_image_file_name
+  mount_uploader :footer_image, BrandingGroupImageUploader, mount_on: :footer_image_file_name
 
-  has_mongoid_attached_file :footer_image,
-                            :path => ":rails_root/public/single_cell/branding_groups/:id/:filename",
-                            :url => "/single_cell/branding_groups/:id/:filename"
-
-  validates_attachment :footer_image,
-                       content_type: { content_type: ['image/jpeg', 'image/jpg', 'image/png'] },
-                       size: { in: 0..10.megabytes }
-
-
-  has_mongoid_attached_file :banner_image,
-                            :path => ":rails_root/public/single_cell/branding_groups/:id/:filename",
-                            :url => "/single_cell/branding_groups/:id/:filename"
-
-  validates_attachment :banner_image,
-                       content_type: { content_type: ['image/jpeg', 'image/jpg', 'image/png'] },
-                       size: { in: 0..10.megabytes }
-
+  # carrierwave conditional validations
+  %w(splash_image banner_image footer_image).each do |image_attachment|
+    validates_numericality_of "#{image_attachment}_file_size".to_sym, less_than_or_equal_to: 10.megabytes,
+                              if: proc {|bg| bg.send(image_attachment).present?}
+    validates_inclusion_of "#{image_attachment}_content_type",
+                           in: %w(image/jpg image/jpeg image/png image/gif image/svg+xml),
+                           if: proc {|bg| bg.send(image_attachment).present?}
+  end
 
   validates_presence_of :name, :name_as_id, :user_id, :background_color, :font_family
   validates_uniqueness_of :name
@@ -58,7 +52,7 @@ class BrandingGroup
                       message: ValidationTools::ALPHANUMERIC_EXTENDED_ERROR
 
   before_validation :set_name_as_id
-  before_destroy :remove_branding_association
+  before_destroy :remove_branding_association, :remove_cached_images
 
   # helper to return list of associated search facets
   def facets
@@ -76,5 +70,10 @@ class BrandingGroup
     self.studies.each do |study|
       study.update(branding_group_id: nil)
     end
+  end
+
+  # delete all cached images from UserAssetService::STORAGE_BUCKET_NAME when deleting a branding group
+  def remove_cached_images
+    UserAssetService.remove_assets_from_remote("branding_groups/#{self.id}")
   end
 end

@@ -106,10 +106,10 @@ to log in with their Google accounts.  To do so:
   * Save the client id
   * You will also want to create a second OAuth Client ID to use in local development, using `localhost` as the hostname
 
-* **Whitelisting your OAuth Audience**
-  * Once you have exported your OAuth credentials, you will need to have your client id whitelisted to allow it to make
+* **Authorizing your OAuth Audience**
+  * Once you have exported your OAuth credentials, you will need to have your client id authorized to allow it to make
   authenticated requests into the Terra API as per [OpenID Connect 1.0](http://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation)
-    *  Send an email to **dsp-devops@broadinstitute.org** with your OAuth2 client ID(s) so it can be added to the whitelist
+    *  Send an email to **dsp-devops@broadinstitute.org** with your OAuth2 client ID(s) so it can be added to the authorized list
 
 * **GCP Service Account keys**: Regardless of where the portal is deployed, it requires a Google Cloud Platform Service
 Account in order to make authenticated calls into Terra and Google Cloud Storage.  Therefore, you must export the
@@ -147,7 +147,7 @@ To do so:
 	* Fill out all form fields and submit
 	* This must be done for both the 'main' and 'read-only' service accounts
 
-* **Creating a Terra Project**: Once your OAuth audience has been whitelisted, and before you can create studies, you
+* **Creating a Terra Project**: Once your OAuth audience has been authorized, and before you can create studies, you
 will need to create a Terra project that will own all the workspaces created in the portal. To do this:
 	* Create a [Google Billing Project](https://support.terra.bio/hc/en-us/articles/360026182251#How%20to%20create%20your%20own%20Google%20Billing%20Account).
 	* Using the same Google account that owns the billing project, log into the portal and select 'My Billing Projects' from the profile menu.

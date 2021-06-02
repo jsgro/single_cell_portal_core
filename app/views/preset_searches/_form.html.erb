@@ -19,7 +19,7 @@
     </div>
     <div id="preset-search-help" class="panel-collapse collapse <%= @preset_search.new_record? ? 'in' : nil %>">
       <div class="panel-body">
-        <h5>Whitelist</h5>
+        <h5>Accession List</h5>
         <p>
           Enter study accessions, space-delimited (no commas).  These studies will <strong>always</strong> be returned in results first.<br />
           <span class="help-block">Example: <code>SCP1 SCP2 SCP3</code></span>
@@ -34,7 +34,7 @@
           Enter facet identifers and filter IDs, plus-delimited (+) between facets, colons between identifiers and filters,
           commas between filter values.
           <%= link_to "List of Available Facets <i class='fas fa-external-link-alt'></i>".html_safe,
-                      api_swagger_ui_engine_path + '#/Search/search_facets_path',
+                      api_v1_swagger_ui_path + '#/Search/search_facets_path',
                       class: 'btn btn-default btn-xs', target: :_blank %><br />
           <span class="help-block">Example: <code>disease:MONDO_0000001,MONDO_0018076+species:NCBITaxon_9606,NCBITaxon_10090</code></span>
         </p>
@@ -53,8 +53,8 @@
       <%= form.select :public, options_for_select([['Yes',1],['No',0]], @preset_search.public? ? 1 : 0), {}, class: 'form-control' %>
     </div>
     <div class="col-sm-6">
-      <%= form.label :accession_whitelist, 'Whitelist' %>
-      <%= form.text_field :accession_whitelist, class: 'form-control' %>
+      <%= form.label :accession_list, 'Accession List' %>
+      <%= form.text_field :accession_list, class: 'form-control' %>
     </div>
   </div>
 

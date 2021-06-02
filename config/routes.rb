@@ -6,8 +6,10 @@ Rails.application.routes.draw do
   scope 'single_cell' do
     # API Routes
     namespace :api do
-      mount SwaggerUiEngine::Engine, at: '/'
+      get '/', to:redirect('/single_cell/api/v1', status: 302)
       namespace :v1 do
+        get '/', to: 'api_docs#swagger_ui', as: 'swagger_ui'
+        get 'oauth2_redirect', to: 'api_docs#oauth2_redirect', as: 'oauth2_redirect'
         resources :api_docs, only: :index
         namespace :schemas do
           get 'studies'
@@ -48,13 +50,13 @@ Rails.application.routes.draw do
           end
           resources :expression, controller: 'visualization/expression', only: [:show], param: :data_type
           resources :clusters, controller: 'visualization/clusters',
-                               only: [:show, :index],
-                               param: :cluster_name,
-                               constraints: { cluster_name: /[^\/]+/ } # needed to allow '.' in cluster names
+                    only: [:show, :index],
+                    param: :cluster_name,
+                    constraints: { cluster_name: /[^\/]+/ } # needed to allow '.' in cluster names
           resources :annotations, controller: 'visualization/annotations',
-                               only: [:show, :index],
-                               param: :annotation_name,
-                               constraints: { annotation_name: /[^\/]+/ } do # needed to allow '.' in annotation names
+                    only: [:show, :index],
+                    param: :annotation_name,
+                    constraints: { annotation_name: /[^\/]+/ } do # needed to allow '.' in annotation names
             member do
               get 'cell_values', to: 'visualization/annotations#cell_values'
             end
@@ -272,5 +274,5 @@ Rails.application.routes.draw do
     get 'app/*path', to: 'site#index'
 
     root to: 'site#index'
-  end
+    end
 end
