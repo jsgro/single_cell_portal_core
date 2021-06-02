@@ -368,6 +368,7 @@ function getPlotlyLayout({ width, height }={}, {
   hasCoordinateLabels,
   coordinateLabels,
   isAnnotatedScatter,
+  isCorrelatedScatter,
   is3D,
   isCellSelecting=false,
   genes,
@@ -389,7 +390,8 @@ function getPlotlyLayout({ width, height }={}, {
       userSpecifiedRanges,
       hasCoordinateLabels,
       coordinateLabels,
-      isAnnotatedScatter
+      isAnnotatedScatter,
+      isCorrelatedScatter
     })
     Object.assign(layout, props2d)
   }
@@ -410,7 +412,8 @@ function get2DScatterProps({
   userSpecifiedRanges,
   hasCoordinateLabels,
   coordinateLabels,
-  isAnnotatedScatter
+  isAnnotatedScatter,
+  isCorrelatedScatter
 }) {
   const { titles } = axes
 
@@ -419,7 +422,7 @@ function get2DScatterProps({
     yaxis: { title: titles.y, range: axes?.ranges?.y }
   }
 
-  if (isAnnotatedScatter === false) {
+  if (isAnnotatedScatter === false && isCorrelatedScatter === false) {
     layout.xaxis.showticklabels = false
     layout.yaxis.scaleanchor = 'x'
     layout.yaxis.showticklabels = false
