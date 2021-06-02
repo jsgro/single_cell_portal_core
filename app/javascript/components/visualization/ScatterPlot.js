@@ -427,10 +427,17 @@ function get2DScatterProps({
     layout.yaxis.scaleanchor = 'x'
     layout.yaxis.showticklabels = false
     layout.margin = {
-      t: 25,
+      t: 10,
       r: 0,
       b: 20,
       l: 0
+    }
+  } else {
+    layout.margin = {
+      t: 10,
+      r: 0,
+      b: 50,
+      l: 50
     }
   }
 
@@ -443,7 +450,7 @@ function get2DScatterProps({
     layout.yaxis.autorange = true
   }
 
-  if (hasCoordinateLabels && !isAnnotatedScatter) {
+  if (hasCoordinateLabels && !isAnnotatedScatter && !isCorrelatedScatter) {
     // don't show coordinate labels on annotated scatters, since the axes are different
     layout.annotations = coordinateLabels
   }
