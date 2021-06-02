@@ -84,8 +84,9 @@ function RawScatterPlot({
     )
 
     if (isCorrelatedScatter) {
-      // compute correlation stats, but do it after the graph render so it doesn't delay
-      // the visualizations or impact logging
+      // compute correlation stats asynchronously so it doesn't delay
+      // rendering of other visualizations or impact logging
+      // in the event these stats become more complex or widely used, consider instrumentation strategies
       const spearmanRho = new SpearmanRho(scatter.data.x, scatter.data.y)
       spearmanRho.calc().then(value => setSpearman(value))
     }

@@ -29,7 +29,7 @@ export default function PlotTitle({
     <span className="detail"> {detailContent} </span>
     { isCorrelatedScatter && !!correlations.spearman &&
       <span className="correlation">
-        Spearman rho={ Math.round(correlations.spearman * 1000) / 1000}
+        Spearman rho = { Math.round(correlations.spearman * 1000) / 1000}
       </span>
     }
   </h5>
