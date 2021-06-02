@@ -222,11 +222,8 @@ module Api
               }
             else
               # For "Scatter" tab
-              if is_collapsed_view
-                plot_data = ExpressionVizService.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample, !include_coordinates)
-              else
-                plot_data = ExpressionVizService.load_expression_data_array_points(study, genes[0], cluster, annotation, subsample, include_coordinates, include_annotation)
-              end
+              plot_data = ExpressionVizService.load_expression_data_array_points(study, genes, cluster, annotation, subsample,
+                consensus: consensus, expression_only: !include_coordinates)
             end
           end
 

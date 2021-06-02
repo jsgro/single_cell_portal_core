@@ -126,12 +126,25 @@ class ExpressionVizService
 
   # load cluster_group data_array values, but use expression scores to set numerical color array
   # this is the scatter plot shown in the "scatter" tab next to "distribution" on gene-based views
-  def self.load_expression_data_array_points(study, gene, cluster, annotation, subsample_threshold=nil, include_coords=true, include_annotations=true)
-    viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_annotations: include_annotations, include_coords: include_coords)
+  def self.load_expression_data_array_points(study, genes, cluster, annotation, subsample=nil,
+    consensus: nil, expression_only: false)
+    viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample,
+      include_annotations: !expression_only, include_coords: !expression_only)
 
-    viz_data[:expression] = viz_data[:cells].map { |cell| gene['scores'][cell].to_f.round(4) }
+    viz_data[:expression] = viz_data[:cells].map do |cell|
+      if consensus == 'median'
+        expression_score = calculate_median(genes, cell)
+      elsif consensus == 'mean'
+        expression_score = calculate_mean(genes, cell)
+      else
+        expression_score = genes[0]['scores'][cell].to_f.round(4)
+      end
+      expression_score
+    end
 
-    if !include_coords
+    if expression_only
+      # x and y will already be excluded, but we had to return the cells from the above call to
+      # match the appropriate gene scores
       viz_data.delete(:cells)
     end
     viz_data
@@ -251,26 +264,6 @@ class ExpressionVizService
         viz_data[:cells] << cell
       end
     end
-    viz_data
-  end
-
-  # load scatter expression scores with average of scores across each gene for all cells
-  # uses data_array as source for each axis
-  # will support a variety of consensus modes (default is mean)
-  def self.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample_threshold=nil, include_coords=true, include_annotations=true)
-    viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_coords: include_coords, include_annotations: include_annotations)
-
-    viz_data[:expression] = viz_data[:cells].map do |cell|
-      if consensus == 'median'
-        expression_score = calculate_median(genes, cell)
-      else
-        expression_score = calculate_mean(genes, cell)
-      end
-      expression_score
-    end
-
-    emin, emax = RequestUtils.get_minmax(viz_data[:expression])
-    viz_data[:expressionRange] = {min: emin, max: emax}
     viz_data
   end
 

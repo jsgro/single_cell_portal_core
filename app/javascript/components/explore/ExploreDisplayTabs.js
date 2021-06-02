@@ -81,7 +81,12 @@ export default function ExploreDisplayTabs({
   /** helper function so that StudyGeneField doesn't have to see the full exploreParams object */
   function searchGenes(genes) {
     // also unset any selected gene lists or ideogram files
-    updateExploreParams({ genes, geneList: '', ideogramFileId: '' })
+    const newParams = { genes, geneList: '', ideogramFileId: '' }
+    if (genes.length < 2) {
+      // and unset the consensus if there are no longer 2+ genes
+      newParams.consensus = ''
+    }
+    updateExploreParams(newParams)
   }
 
   let shownTab = exploreParams.tab
@@ -139,6 +144,7 @@ export default function ExploreDisplayTabs({
       newParams.spatialGroups = getDefaultSpatialGroupsForCluster(newParams.cluster, exploreInfo.spatialGroups)
       dataCache.clear()
     }
+
     // if the user updates any cluster params, store all of them in the URL so we don't end up with
     // broken urls in the event of a default cluster/annotation changes
     // also, unset any gene lists as we're about to re-render the explore tab and having gene list selected will show
@@ -148,6 +154,12 @@ export default function ExploreDisplayTabs({
     clusterParamNames.forEach(param => {
       updateParams[param] = param in newParams ? newParams[param] : exploreParamsWithDefaults[param]
     })
+    // if a user switches to a numeric annotation, change the tab to annotated scatter (SCP-3833)
+    if (newParams.annotation?.type === 'numeric' &&
+      exploreParamsWithDefaults.genes.length &&
+      exploreParamsWithDefaults.annotation?.type !== 'numeric') {
+      updateParams.tab = 'annotatedScatter'
+    }
     updateExploreParams(updateParams)
   }
 
@@ -488,7 +500,11 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   } else if (isGene) {
     if (isMultiGene) {
       if (isConsensus) {
-        enabledTabs = ['scatter', 'distribution', 'dotplot']
+        if (exploreParams.annotation.type === 'numeric') {
+          enabledTabs = ['annotatedScatter', 'distribution', 'dotplot']
+        } else {
+          enabledTabs = ['scatter', 'distribution', 'dotplot']
+        }
       } else if (hasSpatialGroups) {
         enabledTabs = ['scatter', 'dotplot', 'heatmap']
       } else {

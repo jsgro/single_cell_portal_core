@@ -149,6 +149,9 @@ export function logScatterPlot(
     genes,
     genesPlotted: scatter.genes,
     is3D: scatter.is3D,
+    'numPointsPlotted': scatter.data.cells.length,
+    'isSubsampled': scatter.isSubsampled,
+    'subsample': scatter.subsample,
     'layout:width': width, // Pixel width of graph
     'layout:height': height, // Pixel height of graph
     'numAnnotSelections': scatter.annotParams.values.length,

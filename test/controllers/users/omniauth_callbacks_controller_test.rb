@@ -36,19 +36,4 @@ class User::OmniauthCallbacksControllerTest < ActiveSupport::TestCase
       Users::OmniauthCallbacksController.validate_scopes_from_params(@google_billing_params, provider)
     end
   end
-
-  test 'should validate host header on callback' do
-    RequestUtils.stub :get_hostname, 'localhost:3000' do
-      assert_nothing_raised do
-        Users::OmniauthCallbacksController.validate_host_header_on_callback({'HTTP_HOST' => 'localhost:3000'})
-      end
-
-      %w(localhost localhost:12345 malicious.com).each do |host|
-        invalid_headers = {'HTTP_HOST' => host}
-        assert_raise SecurityError do
-          Users::OmniauthCallbacksController.validate_host_header_on_callback(invalid_headers)
-        end
-      end
-    end
-  end
 end

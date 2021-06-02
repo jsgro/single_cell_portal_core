@@ -241,18 +241,20 @@ function getPlotlyTraces({
   if (annotType === 'group' && !isGeneExpressionForColor) {
     // use plotly's groupby transformation to make the traces
     const traceCounts = countOccurences(data.annotations)
-    const traceStyles = Object.keys(traceCounts).map((val, index) => {
-      return {
-        target: val,
-        value: {
-          name: `${val} (${traceCounts[val]} points)`,
-          marker: {
-            color: getColorBrewerColor(index),
-            size: pointSize
+    const traceStyles = Object.keys(traceCounts)
+      .sort(traceNameSort) // sort the keys so we assign colors in the right order
+      .map((val, index) => {
+        return {
+          target: val,
+          value: {
+            name: `${val} (${traceCounts[val]} points)`,
+            marker: {
+              color: getColorBrewerColor(index),
+              size: pointSize
+            }
           }
         }
-      }
-    })
+      })
     trace.transforms = [{
       type: 'groupby',
       groups: data.annotations,
@@ -299,6 +301,13 @@ function countOccurences(array) {
   }, {})
 }
 
+/** sort trace names lexically, but always putting 'unspecified' last */
+function traceNameSort(a, b) {
+  if (a === UNSPECIFIED_ANNOTATION_NAME) {return 1}
+  if (b === UNSPECIFIED_ANNOTATION_NAME) {return -1}
+  return a.localeCompare(b)
+}
+
 /** sorts the scatter plot legend alphabetically
   this is super-hacky in that it relies a lot on plotly internal classnames and styling implementation
   it should only be used as a last resort if https://github.com/plotly/plotly.js/pull/5591
@@ -314,11 +323,9 @@ function sortLegend({ graphElementId, isAnnotatedScatter, annotType, genes }) {
   const legendNames = legendTraces.map(traceEl => {
     return traceEl.textContent.match(legendTitleRegex)[1]
   })
-  const sortedNames = [...legendNames].sort((a, b) => {
-    if (a === UNSPECIFIED_ANNOTATION_NAME) {return 1}
-    if (b === UNSPECIFIED_ANNOTATION_NAME) {return -1}
-    return a.localeCompare(b)
-  })
+
+  const sortedNames = [...legendNames].sort(traceNameSort)
+
   const legendTransforms = legendTraces.map(traceEl => traceEl.getAttribute('transform'))
 
   legendNames.forEach((traceName, index) => {
