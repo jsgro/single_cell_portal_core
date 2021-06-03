@@ -9,6 +9,9 @@
 # Author::  Jon Bistline  (mailto:bistline@broadinstitute.org)
 
 class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :storage, :expires_at, :service_account_credentials)
+  extend ServiceAccountManager
+  include GoogleServiceClient
+  include ApiHelpers
 
   #
   # CONSTANTS
@@ -23,20 +26,12 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
     https://www.googleapis.com/auth/userinfo.email
     https://www.googleapis.com/auth/devstorage.read_only
   )
-  # constant used for retry loops in process_firecloud_request and execute_gcloud_method
-  MAX_RETRY_COUNT = 5
-  # constant used for incremental backoffs on retries (in seconds); ignored when running unit/integration test suite
-  RETRY_INTERVAL = Rails.env.test? ? 0 : 15
   # List of URLs/Method names to never retry on or report error, regardless of error state
   ERROR_IGNORE_LIST = ["#{BASE_URL}/register"]
   # List of URLs/Method names to ignore incremental backoffs on (in cases of UI blocking)
   RETRY_BACKOFF_BLACKLIST = ["#{BASE_URL}/register", :generate_signed_url, :generate_api_url]
   # default namespace used for all FireCloud workspaces owned by the 'portal'
   PORTAL_NAMESPACE = ENV['PORTAL_NAMESPACE'].present? ? ENV['PORTAL_NAMESPACE'] : 'single-cell-portal'
-  # location of Google service account JSON (must be absolute path to file)
-  SERVICE_ACCOUNT_KEY = !ENV['SERVICE_ACCOUNT_KEY'].blank? ? File.absolute_path(ENV['SERVICE_ACCOUNT_KEY']) : ''
-  # location of Google service account JSON (must be absolute path to file)
-  READ_ONLY_SERVICE_ACCOUNT_KEY = !ENV['READ_ONLY_SERVICE_ACCOUNT_KEY'].blank? ? File.absolute_path(ENV['READ_ONLY_SERVICE_ACCOUNT_KEY']) : ''
   # Permission values allowed for FireCloud workspace ACLs
   WORKSPACE_PERMISSIONS = ['OWNER', 'READER', 'WRITER', 'NO ACCESS']
   # List of FireCloud user group roles
@@ -88,7 +83,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   #   - +project+: (String) => Default GCP Project to use (can be overridden by other parameters)
   # * *return*
   #   - +FireCloudClient+ object
-  def initialize(user=nil, project=nil, service_account=SERVICE_ACCOUNT_KEY)
+  def initialize(user=nil, project=nil, service_account=self.class.get_primary_keyfile)
     # when initializing without a user, default to base configuration
     if user.nil?
       # instantiate Google Cloud Storage driver to work with files in workspace buckets
@@ -103,7 +98,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
         self.service_account_credentials = service_account
       end
 
-      self.access_token = FireCloudClient.generate_access_token(service_account)
+      self.access_token = self.class.generate_access_token(service_account)
       self.project = PORTAL_NAMESPACE
 
       self.storage = Google::Cloud::Storage.new(storage_attr)
@@ -152,66 +147,9 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   # TOKEN METHODS
   #
 
-  # generate an access token to use for all requests
-  #
-  # * *return*
-  #   - +Hash+ of Google Auth access token (contains access_token (string), token_type (string) and expires_in (integer, in seconds)
-  def self.generate_access_token(service_account)
-    # if no keyfile present, use environment variables
-    creds_attr = {scope: GOOGLE_SCOPES}
-    if !service_account.blank?
-      creds_attr.merge!(json_key_io: File.open(service_account))
-    end
-    creds = Google::Auth::ServiceAccountCredentials.make_creds(creds_attr)
-    token = creds.fetch_access_token!
-    token
-  end
-
-  # refresh access_token when expired and stores back in FireCloudClient instance
-  #
-  # * *return*
-  #   - +DateTime+ timestamp of new access token expiration
-  def refresh_access_token
-    if self.user.nil?
-      new_token = FireCloudClient.generate_access_token(self.service_account_credentials)
-      new_expiry = Time.zone.now + new_token['expires_in']
-      self.access_token = new_token
-      self.expires_at = new_expiry
-    else
-      new_token = self.user.generate_access_token
-      self.access_token = new_token
-      self.expires_at = new_token['expires_at']
-    end
-    new_token
-  end
-
-  # check if an access_token is expired
-  #
-  # * *return*
-  #   - +Boolean+ of token expiration
-  def access_token_expired?
-    Time.zone.now >= self.expires_at
-  end
-
-  # return a valid access token
-  #
-  # * *return*
-  #   - +Hash+ of access token
-  def valid_access_token
-    self.access_token_expired? ? self.refresh_access_token : self.access_token
-  end
-
   ##
   ## STORAGE INSTANCE METHODS
   ##
-
-  # get instance information about the storage driver
-  #
-  # * *return*
-  #   - +JSON+ object of storage driver instance attributes
-  def storage_attributes
-    JSON.parse self.storage.to_json
-  end
 
   # renew the storage driver
   #
@@ -226,51 +164,11 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
         timeout: 3600
     }
     if !ENV['SERVICE_ACCOUNT_KEY'].blank?
-      storage_attr.merge!(keyfile: SERVICE_ACCOUNT_KEY)
+      storage_attr.merge!(keyfile: self.class.get_primary_keyfile)
     end
     new_storage = Google::Cloud::Storage.new(storage_attr)
     self.storage = new_storage
     new_storage
-  end
-
-  # get storage driver access token
-  #
-  # * *return*
-  #   - +String+ access token
-  def storage_access_token
-    self.storage.service.credentials.client.access_token
-  end
-
-  # get storage driver issue timestamp
-  #
-  # * *return*
-  #   - +DateTime+ issue timestamp
-  def storage_issued_at
-    self.storage.service.credentials.client.issued_at
-  end
-
-  # get issuer of storage credentials
-  #
-  # * *return*
-  #   - +String+ of issuer email
-  def storage_issuer
-    self.storage.service.credentials.issuer
-  end
-
-  # get issuer of access_token
-  #
-  # * *return*
-  #   - +String+ of access_token issuer email
-  def issuer
-    self.user.nil? ? self.storage_issuer : self.user.email
-  end
-
-  # get issuer object of access_token (either instance of User, or email of service account)
-  #
-  # * *return*
-  #   - +User+ of access_token issuer or +String+ of service account email
-  def issuer_object
-    self.user.nil? ? self.storage_issuer : self.user
   end
 
   # identify user initiating a request; either self.user, Current.user, or service account
@@ -339,11 +237,11 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       context = " encountered when requesting '#{path}', attempt ##{current_retry}"
       log_message = "#{e.message}: #{e.http_body}; #{context}"
       Rails.logger.error log_message
-      retry_time = retry_count * RETRY_INTERVAL
+      retry_time = retry_count * ApiHelpers::RETRY_INTERVAL
       sleep(retry_time) unless RETRY_BACKOFF_BLACKLIST.include?(path) # only sleep if non-blocking
       # only retry if status code indicates a possible temporary error, and we are under the retry limit and
       # not calling a method that is blocked from retries
-      if should_retry?(e.http_code) && retry_count < MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(path)
+      if should_retry?(e.http_code) && retry_count < ApiHelpers::MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(path)
         process_firecloud_request(http_method, path, payload, opts, current_retry)
       else
         # we have reached our retry limit or the response code indicates we should not retry
@@ -1418,7 +1316,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
     rescue => e
       current_retry = retry_count + 1
       Rails.logger.info "error calling #{method_name} with #{params.join(', ')}; #{e.message} -- attempt ##{current_retry}"
-      retry_time = retry_count * RETRY_INTERVAL
+      retry_time = retry_count * ApiHelpers::RETRY_INTERVAL
       sleep(retry_time) unless RETRY_BACKOFF_BLACKLIST.include?(method_name)
       # only retry if status code indicates a possible temporary error, and we are under the retry limit and
       # not calling a method that is blocked from retries.  In case of a NoMethodError or RuntimeError, use 500 as the
@@ -1430,7 +1328,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       else
         status_code = nil
       end
-      if should_retry?(status_code) && retry_count < MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(method_name)
+      if should_retry?(status_code) && retry_count < ApiHelpers::MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(method_name)
         execute_gcloud_method(method_name, current_retry, *params)
       else
         # we have reached our retry limit or the response code indicates we should not retry
@@ -1694,94 +1592,6 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
     map
   end
 
-  # check if OK response code was found
-  #
-  # * *params*
-  #   - +code+ (Integer) => integer HTTP response code
-  #
-  # * *return*
-  #   - +Boolean+ of whether or not response is a known 'OK' response
-  def ok?(code)
-    [200, 201, 202, 204, 206].include?(code)
-  end
-
-  # determine if request should be retried based on response code
-  #
-  # * *params*
-  #   - +code+ (Integer) => integer HTTP response code
-  #
-  # * *return*
-  #   - +Boolean+ of whether or not response code indicates a retry should be executed
-  def should_retry?(code)
-    # if code is nil, we're not sure so retry anyway
-    code.nil? || [502, 503].include?(code)
-  end
-
-  # merge hash of options into single URL query string
-  #
-  # * *params*
-  #   - +opts+ (Hash) => hash of query parameter key/value pairs
-  #
-  # * *return*
-  #   - +String+ of concatenated query params
-  def merge_query_options(opts)
-    # return nil if opts is empty, else concat
-    opts.blank? ? nil : '?' + opts.to_a.map {|k,v| "#{k}=#{v}"}.join("&")
-  end
-
-  # handle a RestClient::Response object
-  #
-  # * *params*
-  #   - +response+ (String) => an RestClient response object
-  #
-  # * *return*
-  #   - +Hash+ if response body is JSON, or +String+ of original body
-  def handle_response(response)
-    begin
-      if ok?(response.code)
-        if response.body.present?
-          parse_response_body(response.body)
-        else
-          true # blank body
-        end
-      else
-        Rails.logger.info "Unexpected response #{response.code}, not sure what to do here..."
-        response.message
-      end
-    rescue => e
-      # don't report, just return
-      response.message
-    end
-  end
-
-  # parse a response body based on the content
-  #
-  # * *params*
-  #   - +response_body+ (String) => an RestClient response body
-  #
-  # * *return*
-  #   - +Hash+ if response body is JSON, or +String+ of original body
-  def parse_response_body(response_body)
-    is_json?(response_body) ? JSON.parse(response_body) : response_body
-  end
-
-  # determine if a response body is parseable as JSON
-  #
-  # * *params*
-  #   - +content+ (String) => an RestClient response body
-  #
-  # * *return*
-  #   - +Boolean+ indication if content is JSON
-  def is_json?(content)
-    if content.present?
-      sanitized_content = content.gsub(/\n/, '') # remove newlines that may break this check
-      chars = [sanitized_content[0], sanitized_content[sanitized_content.size - 1]]
-      chars == %w({ }) || chars == %w([ ])
-    else
-      false
-    end
-  end
-
   # return a more user-friendly error message
   #
   # * *params*
@@ -1820,16 +1630,5 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
         error.message + ': ' + error.http_body
       end
     end
-  end
-
-  # URI-encode workspace identifiers (namespaces, workspaces) for use in API requests
-  #
-  # * *params*
-  #   - +identifier+ (String) => Name of Terra namespace/workspace
-  #
-  # * *returns*
-  #   - +String+ => URI-encoded namespace/workspace
-  def uri_encode(identifier)
-    URI.escape(identifier)
   end
 end

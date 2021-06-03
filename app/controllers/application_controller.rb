@@ -45,6 +45,10 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def self.data_repo_client
+    @@data_repo_client ||= DataRepoClient.new
+  end
+
   # method to renew firecloud client (forces new access token for API and reinitializes storage driver)
   def self.refresh_firecloud_client
     begin
