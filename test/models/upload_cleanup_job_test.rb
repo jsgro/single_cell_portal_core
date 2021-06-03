@@ -22,7 +22,7 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
     assert failed_uploads == 0, "Should not have found any failed uploads but found #{failed_uploads}"
 
     # now simulate a failed upload and prove they are detected
-    filename = 'README.txt'
+    filename = 'mock_study_doc_upload.txt'
     file = File.open(Rails.root.join('test', 'test_data', filename))
     bad_upload = StudyFile.create!(name: filename, study: @study, file_type: 'Other', upload: file, status: 'uploading',
                                    created_at: 1.week.ago.in_time_zone, parse_status: 'unparsed', generation: nil)
