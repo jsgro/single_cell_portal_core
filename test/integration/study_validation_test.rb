@@ -329,7 +329,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     filename = "README (1).txt"
     # Carrierwave uses CarrierWave::SanitizedFile.sanitize_regexp to replace non-word characters with underscores
     sanitized_filename = filename.gsub(CarrierWave::SanitizedFile.sanitize_regexp, '_')
-    file_params = {study_file: {file_type: 'Documentation', study_id: study.id.to_s, name: filename}}
+    file_params = {study_file: {file_type: 'Documentation', study_id: study.id.to_s, name: sanitized_filename}}
     perform_study_file_upload(filename, file_params, study.id)
     assert_response 200, "README failed: #{@response.code}"
     study_file = study.study_files.detect {|file| file.upload_file_name == sanitized_filename}
