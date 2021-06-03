@@ -348,8 +348,8 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       else
         # we have reached our retry limit or the response code indicates we should not retry
         unless ERROR_IGNORE_LIST.include?(path)
-          ErrorTracker.report_exception(e, self.issuer_object, {method: http_method, url: path, payload: payload,
-                                                                opts: opts, retry_count: retry_count})
+          ErrorTracker.report_exception(e, self.issuer_object, { method: http_method, url: path, payload: payload,
+                                                                 opts: opts, retry_count: retry_count})
         end
         error_message = parse_error_message(e)
         Rails.logger.error "Retry count exceeded when requesting '#{path}' - #{error_message}"
@@ -1435,8 +1435,8 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       else
         # we have reached our retry limit or the response code indicates we should not retry
         unless ERROR_IGNORE_LIST.include?(method_name)
-          ErrorTracker.report_exception(e, self.issuer_object, {method_name: method_name,
-                                                                retry_count: current_retry, params: params})
+          ErrorTracker.report_exception(e, self.issuer_object, { method_name: method_name,
+                                                                 retry_count: current_retry, params: params})
         end
         Rails.logger.info "Retry count exceeded calling #{method_name} with #{params.join(', ')}: #{e.message}"
         raise RuntimeError.new "#{e.message}"
@@ -1545,8 +1545,8 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
 		begin
 			file.delete
     rescue => e
-      ErrorTracker.report_exception(e, self.issuer_object, {method_name: :delete_workspace_file,
-                                                            params: [workspace_bucket_id, filename]})
+      ErrorTracker.report_exception(e, self.issuer_object, { method_name: :delete_workspace_file,
+                                                             params: [workspace_bucket_id, filename]})
 			Rails.logger.info("failed to delete workspace file #{filename} with error #{e.message}")
 			false
 		end

@@ -279,8 +279,7 @@ class SiteController < ApplicationController
       end
       render json: @samples.to_json
     rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
       logger.error "Error retrieving workspace samples for #{study.name}; #{e.message}"
       render json: []
@@ -332,8 +331,7 @@ class SiteController < ApplicationController
       @notice = 'Your sample information has successfully been saved.'
       render action: :update_workspace_samples
     rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
       logger.info "Error saving workspace entities: #{e.message}"
       @alert = "An error occurred while trying to save your sample information: #{view_context.simple_format(e.message)}"
@@ -360,8 +358,7 @@ class SiteController < ApplicationController
       @empty_samples_table = true
       render action: :update_workspace_samples
     rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
       logger.error "Error deleting workspace entities: #{e.message}"
       @alert = "An error occurred while trying to delete your sample information: #{view_context.simple_format(e.message)}"
@@ -415,8 +412,7 @@ class SiteController < ApplicationController
                                 submission_id: @submission['submissionId'], firecloud_workspace: @study.firecloud_workspace,
                                 analysis_name: @analysis_configuration.identifier, submitted_on: Time.zone.now, submitted_from_portal: true)
     rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
       logger.error "Unable to submit workflow #{@analysis_configuration.identifier} in #{@study.firecloud_workspace} due to: #{e.message}"
       @alert = "We were unable to submit your workflow due to an error: #{e.message}"
@@ -430,8 +426,7 @@ class SiteController < ApplicationController
       submission = ApplicationController.firecloud_client.get_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, params[:submission_id])
       render json: submission.to_json
     rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
       logger.error "Unable to load workspace submission #{params[:submission_id]} in #{@study.firecloud_workspace} due to: #{e.message}"
       render js: "alert('We were unable to load the requested submission due to an error: #{e.message}')"
@@ -445,8 +440,7 @@ class SiteController < ApplicationController
       ApplicationController.firecloud_client.abort_workspace_submission(@study.firecloud_project, @study.firecloud_workspace, @submission_id)
       @notice = "Submission #{@submission_id} was successfully aborted."
     rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
       @alert = "Unable to abort submission #{@submission_id} due to an error: #{e.message}"
       render action: :notice
@@ -481,8 +475,7 @@ class SiteController < ApplicationController
       end
       @error_message = errors.join("<br />")
     rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
       @alert = "Unable to retrieve submission #{@submission_id} error messages due to: #{e.message}"
       render action: :notice
@@ -504,8 +497,7 @@ class SiteController < ApplicationController
         end
       end
     rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
       @alert = "Unable to retrieve submission #{@submission_id} outputs due to: #{e.message}"
       render action: :notice
@@ -533,8 +525,7 @@ class SiteController < ApplicationController
         render action: :notice
       end
     rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
       @alert = "An error occurred trying to load submission '#{params[:submission_id]}': #{e.message}"
       render action: :notice
@@ -570,8 +561,7 @@ class SiteController < ApplicationController
       submission_files = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_files, 0, @study.bucket_id, prefix: params[:submission_id])
       DeleteQueueJob.new(submission_files).perform
     rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
       logger.error "Unable to remove submission #{params[:submission_id]} files from #{@study.firecloud_workspace} due to: #{e.message}"
       @alert = "Unable to delete the outputs for #{params[:submission_id]} due to the following error: #{e.message}"
@@ -680,8 +670,7 @@ class SiteController < ApplicationController
       end
     rescue => e
       logger.error "Error checking FireCloud API status: #{e.class.name} -- #{e.message}"
-      error_context = ErrorTracker.format_extra_context(@study, {firecloud_status: api_status})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, { firecloud_status: api_status})
       MetricsService.report_error(e, request, current_user, @study)
     end
   end
@@ -705,8 +694,7 @@ class SiteController < ApplicationController
       end
     rescue => e
       logger.error "Error setting study permissions: #{e.class.name} -- #{e.message}"
-      error_context = ErrorTracker.format_extra_context(@study)
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study)
       MetricsService.report_error(e, request, current_user, @study)
     end
   end

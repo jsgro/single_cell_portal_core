@@ -119,7 +119,7 @@ class ApplicationController < ActionController::Base
 
   # rescue from an invalid csrf token (if user logged out in another window, or some kind of spoofing attack)
   def invalid_csrf(exception)
-    ErrorTracker.report_exception(exception, current_user, {request_url: request.url, params: params.to_unsafe_hash})
+    ErrorTracker.report_exception(exception, current_user, params, { request_url: request.url})
     MetricsService.report_error(e, request, current_user, @study)
     @alert = "We're sorry, but the change you wanted was rejected by the server."
     respond_to do |format|
@@ -252,8 +252,7 @@ class ApplicationController < ActionController::Base
                     alert: "#{study.accession}:#{params[:filename]} could not be found.  Please contact the study owner if you require access to this file.  #{SCP_SUPPORT_EMAIL}" and return
       end
     rescue => e
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, @study, params)
       MetricsService.report_error(e, request, current_user, @study)
       logger.error "#{Time.zone.now}: error generating signed url for #{params[:filename]}; #{e.message}."
       redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
@@ -266,8 +265,7 @@ class ApplicationController < ActionController::Base
   if !Rails.env.development? # Show stack trace for template errors in dev
     rescue_from Exception do |exception|
       MetricsService.report_error(exception, request, current_user, @study)
-      error_context = ErrorTracker.format_extra_context(@study, {params: params})
-      ErrorTracker.report_exception(exception, current_user, error_context)
+      ErrorTracker.report_exception(exception, current_user, @study, params)
       respond_to do |format|
         format.html { render '/error_pages/500', layout: 'application', status: 500 }
         format.json { render json: {error: exception.message}, status: 500}
