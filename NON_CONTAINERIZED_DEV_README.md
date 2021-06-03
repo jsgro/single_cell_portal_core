@@ -4,7 +4,7 @@ Developing on SCP without a Docker container, while less robust, opens up some f
 
 ## SETUP
 
-1.  Run `ruby -v` to ensure Ruby 2.5.7 is installed on your local machine.  If not, [install rvm](https://rvm.io/rvm/install), then `rvm install 2.5.7`, then `rvm use 2.5.7`.
+1.  Run `ruby -v` to ensure Ruby 2.6.6 (as of June 2021) is installed on your local machine.  If not, [install rbenv](https://github.com/rbenv/rbenv#installation), (if on MacOS `brew install rbenv`) then `rbenv init` to set up rbenv in your shell. Then close out terminal and reopen and run `rvm install 2.6.6`.
 2.  Run `bundler -v` to ensure Bundler is installed.  If not, `gem install bundler`.
 3.  `cd` to where you have the `single_cell_portal_core` Git repo checked out.
 4.  Run `bundle install`
@@ -27,3 +27,9 @@ Adding `source <<path-to-single-cell-portal-core>>/config/secrets/.source_env.ba
 2. You may experience difficulty toggling back and forth between containerized and non-containerized deployment, as node-sass bindings are OS-specific.  If you see an error like 'No matching version of node-sass found'
    * if this error occurs when trying to deploy in the container, fix it by deleting the `node-modules/node-sass` folder, and then rerunning the load_env_secrets process
    * if the error is when you're trying to run locally, fix it by running `npm rebuild node-sass`
+
+## TROUBLE SHOOTING
+1. If the version you specified for Ruby is not the same as the version returned from running `ruby -v`, run `which ruby` to find out what path to Ruby is being used. The path should be something like: `<user>/.rbenv/shims/ruby`. If it is not, try adding `export PATH="$HOME/.rbenv/shims:$PATH"` to your `~/.bash_profile` to point it at the correct path. 
+3. If, after adding your certificate as a trusted certificate, `localhost:3000` still claims that the certificate is not trusted you might need to update your system default configuration to "Always Trust". On MacOS this can be done in the keychain access app by clicking on the localhost cert and then in the Trust dropdown choosing "Always Trust".
+3. If you need to download Xcode for your rbenv install be aware that it can take a very long time (multiple hours) and if you are a Broad employee it is recommended you download through `selfservice` from BITS.
+4. If when trying to run `bundle install` you get an error like `Gem::Ext::BuildError: ERROR: Failed to build gem native extension.` you can try `gem install bson_ext -v '1.5.1' --source 'https://rubygems.org/' -- --with-cflags="-Wno-error=implicit-function-declaration"`
