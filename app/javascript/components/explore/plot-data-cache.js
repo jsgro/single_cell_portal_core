@@ -166,7 +166,7 @@ export function createCache() {
   * returns a promise */
   cache.fetchCluster = ({
     studyAccession, cluster, annotation, subsample, consensus,
-    genes=[], isAnnotatedScatter=false, isCorrelatedScatter=false
+    genes=[], isAnnotatedScatter=null, isCorrelatedScatter=null
   }) => {
     let apiCallPromise = null
     const { fields, promises } = cache._getFieldsToRequest({

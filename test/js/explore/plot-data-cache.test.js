@@ -96,7 +96,8 @@ describe('Plot data cache', () => {
       consensus: undefined,
       fields: ['coordinates', 'cells', 'annotation'],
       genes: [],
-      isAnnotatedScatter: false,
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
       studyAccession: 'SCP1',
       subsample: undefined
     }
@@ -121,7 +122,8 @@ describe('Plot data cache', () => {
         consensus: undefined,
         fields: ['annotation'],
         genes: [],
-        isAnnotatedScatter: false,
+        isAnnotatedScatter: null,
+        isCorrelatedScatter: null,
         studyAccession: 'SCP1',
         subsample: undefined
       }
@@ -154,7 +156,8 @@ describe('Plot data cache', () => {
         consensus: undefined,
         fields: ['expression'],
         genes: ['Apoe'],
-        isAnnotatedScatter: false,
+        isAnnotatedScatter: null,
+        isCorrelatedScatter: null,
         studyAccession: 'SCP1',
         subsample: undefined
       }
@@ -202,7 +205,8 @@ describe('Plot data cache', () => {
       consensus: undefined,
       fields: ['annotation'],
       genes: [],
-      isAnnotatedScatter: false,
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
       studyAccession: 'SCP1',
       subsample: undefined
     }
@@ -243,7 +247,8 @@ describe('cache handles simultaneous gene/cluster plots', () => {
       consensus: undefined,
       fields: ['coordinates', 'cells', 'annotation', 'expression'],
       genes: ['Apoe'],
-      isAnnotatedScatter: false,
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
       studyAccession: 'SCP1',
       subsample: undefined
     }
@@ -290,7 +295,8 @@ describe('cache handles simultaneous gene/cluster plots', () => {
         consensus: null,
         fields: ['annotation'],
         genes: ['Apoe'],
-        isAnnotatedScatter: false,
+        isAnnotatedScatter: null,
+        isCorrelatedScatter: null,
         studyAccession: 'SCP1',
         subsample: 'all'
       }

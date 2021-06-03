@@ -344,7 +344,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
 
     viz_data = ExpressionVizService.load_correlated_data_array_scatter(@basic_study, genes, cluster, annotation)
-    expected = {:annotations=>["dog", "cat", "dog"], :cells=>["A", "B", "C"], :x=>[0.0, 3.0, 1.5], :y=>[0.0, 0.0, 8.0], :pearsonsR=>0.0}
+    expected = {:annotations=>["dog", "cat", "dog"], :cells=>["A", "B", "C"], :x=>[0.0, 3.0, 1.5], :y=>[0.0, 0.0, 8.0]}
     assert_equal expected, viz_data
   end
 end
