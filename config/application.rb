@@ -40,16 +40,5 @@ module SingleCellPortal
     # extended scopes add cloud-billing.readonly which requires user consent
     # these are only requested when users attempt to visit the "My Billing Projects" page
     EXTENDED_GOOGLE_SCOPES = BASIC_GOOGLE_SCOPES.dup + %w(cloud-billing.readonly)
-
-    # DNS rebinding/host header injection protection
-    # CIDR ip ranges from https://cloud.google.com/load-balancing/docs/health-checks#firewall_rules
-    config.hosts = [
-      ENV['PROD_HOSTNAME'], # hostname for server
-      IPAddr.new('10.128.0.0/24'), # connection on private network for LB health check
-      IPAddr.new('35.191.0.0/16'), # external IP range for LB health check
-      IPAddr.new('130.211.0.0/22'), # external IP range for LB health check
-      IPAddr.new('209.85.152.0/22'), # external IP range for network LB
-      IPAddr.new('209.85.204.0/22') # external IP range for network LB
-    ]
   end
 end

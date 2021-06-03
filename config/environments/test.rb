@@ -76,4 +76,7 @@ Rails.application.configure do
   Mongoid.logger.level = Logger::INFO
 
   config.bard_host_url = 'https://terra-bard-dev.appspot.com'
+
+  # only allow local requests during test/CI runs
+  config.hosts << 'localhost'
 end
