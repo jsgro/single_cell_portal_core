@@ -41,7 +41,7 @@ Tracked web vitals:
 LCP, FID, and CLS are core web vitals. TTFB and FCP are useful supplements.
 
 # Client hardware
-Since users' machines and connection speeds impact performance, [SCP tracks for client hardware](https://mixpanel.com/project/2120588/view/19059/app/dashboards#id=1037816):
+Since users' machines and connection speeds impact performance, [SCP tracks client hardware](https://mixpanel.com/project/2120588/view/19059/app/dashboards#id=1037816):
 
 * Memory (GB RAM)
 * CPU (# CPUs)
