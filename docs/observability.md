@@ -1,15 +1,19 @@
 # Observability
 
-Single Cell Portal has several tools for analyzing the web application at various levels.
+Single Cell Portal has several tools for analyzing the web application and related software at various levels.
 
 ## Summary
 
-| Store         | Non-production? | Production  | Covers |
-| ------------- |-------------| ----- | --- |
-| Mixpanel      | [Yes](https://mixpanel.com/project/2085496/view/19055/app/dashboards) | [Yes](https://mixpanel.com/project/2120588/view/19059/app/dashboards) | JS, Rails
-| Sentry      | No      |   [Yes](https://sentry.io/organizations/broad-institute/issues/?project=1424198) | Rails, Ingest
-| Kibana | No      |    [Yes](https://dashboard.logit.io/a/a2d8b721-3ba5-4622-8843-ca48d7bf6e48) | Rails
-| Local logs | Yes      |    Yes | Rails, Ingest
+| Store      | Non-production? | Production  | Covers |
+| -----------|-----------------| ----------- | ------ |
+| Mixpanel   | [Yes](https://mixpanel.com/project/2085496/view/19055/app/dashboards) | [Yes](https://mixpanel.com/project/2120588/view/19059/app/dashboards) | JS, Rails, Ingest
+| Sentry     | No | [Yes](https://sentry.io/organizations/broad-institute/issues/?project=1424198) | Rails, Ingest
+| Kibana     | No |   [Yes](https://dashboard.logit.io/a/a2d8b721-3ba5-4622-8843-ca48d7bf6e48) | Rails
+| Local logs | Yes | Yes | Rails, Ingest
+
+* JS: frontend JavaScript
+* Rails: Ruby on Rails server application code
+* Ingest: [Ingest Pipeline](https://github.com/broadinstitute/scp-ingest-pipeline), a Python ETL pipeline for user-generated single cell data
 
 ### Mixpanel
 
@@ -19,8 +23,7 @@ Mixpanel ([prod](https://mixpanel.com/project/2120588/view/19059/app/dashboards)
 [Sentry](https://sentry.io/organizations/broad-institute/issues/?project=1424198) tracks errors thrown by Ruby in the Rails app and Python in Ingest Pipeline.
 
 ### Kibana
-[Kibana / Logit](https://dashboard.logit.io/a/a2d8b721-3ba5-4622-8843-ca48d7bf6e48
- ) tracks granular, low-level events logged to `stdout` on GCP VMs.
+[Kibana / Logit](https://dashboard.logit.io/a/a2d8b721-3ba5-4622-8843-ca48d7bf6e48) tracks granular, low-level Rails events logged on GCP VMs.
 
 ### Local logs
 Local logs exist on your SCP instance under `single_cell_portal_core/log/development.log` (or `.../staging.log` or `.../production.log`) for those environments.
@@ -30,7 +33,7 @@ Local logs exist on your SCP instance under `single_cell_portal_core/log/develop
 ### Web vitals and client hardware
 Good [web vitals](https://web.dev/vitals/) improve user experience and findability via external search engines. They are measured for all page views.
 
-Tracked web vitals:
+[Tracked web vitals](https://mixpanel.com/s/1NHuvg):
 
 * TTFB: time to first byte, the earliest page load event
 * FCP: first contentful paint, when users gets first visual feedback
