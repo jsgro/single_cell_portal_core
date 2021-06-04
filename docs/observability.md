@@ -60,12 +60,16 @@ Users' machines and connection speeds impact performance, so [SCP tracks client 
 
 These metrics are tracked for all page views, and all logged events that involve an SCP API call.
 
+Below is a screenshot of [event tracking page load performance](https://mixpanel.com/s/1pXBMo), highlighting metrics for web vitals metrics and client hardware.
+
+![Web vitals and client hardware Single Cell Portal](./img/Web_vitals_and_client_hardware_Single_Cell_Portal.png)
+
 ### Plots
-Fast visualizations help users explore hypotheses.  To know what to optimize, we must first identify performance bottlenecks.  To know our changes resolve those bottlenecks, we must track them.
+Fast visualizations help users explore hypotheses.  To know how best to optimize, we must first identify performance bottlenecks.  To know our changes resolve those bottlenecks, we must track them.
 
-SCP tracks plot performance in hierarchical segments.  The sum of `perfTime` values for all child segments matches the sum of `perfTime` in the parent segment.  This diagrams illustrates the concept for a hypothetical `scatter:plot` event.
+So SCP tracks plot performance in hierarchical segments.  The sum of `perfTime` values for all child segments matches the sum of `perfTime` in the parent segment.  This diagrams illustrates the concept for a hypothetical `scatter:plot` event.
 
-![Getting Started](./img/Client-side_performance_monitoring_for_Single_Cell_Portal.png)
+![Client-side performance monitoring for Single Cell Portal](./img/Client-side_performance_monitoring_for_Single_Cell_Portal.png)
 
 For reference, below are the `perfTime` segments logged to Mixpanel, and related data transfer properties.
 
