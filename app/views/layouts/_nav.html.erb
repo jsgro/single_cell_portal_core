@@ -28,6 +28,9 @@
           <li><%= link_to "<span class='fas fa-fw fa-code'></span> REST API Documentation".html_safe, api_v1_swagger_ui_path, target: '_blank' %></li>
 				</ul>
 			</li>
+			<li class="left-border-0-5">
+            	<%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Create a Study".html_safe, new_study_path, class: 'check-upload', 'data-analytics-name' => 'experiment-create-study-button' %>
+            </li>
 			<% if user_signed_in? %>
 				<li class="dropdown"><%= scp_link_to "<span class='fas fa-user'></span> #{current_user.email.split('@').first} <span class='caret'></span>".html_safe, "#", class: "dropdown-toggle left-border-0-5", "data-toggle" => "dropdown", id: 'profile-nav' %>
 					<ul class="dropdown-menu dropdown-menu-right">
@@ -46,7 +49,7 @@
             <li><%= scp_link_to "<span class='fas fa-tags fa-fw'></span> My Annotations".html_safe, user_annotations_path, class: 'check-upload', id: 'my-annotations' %></li>
             <li><%= scp_link_to "<span class='fas fa-book fa-fw'></span> My Studies".html_safe, studies_path, class: 'check-upload', id: 'my-studies' %>
             <li><%= scp_link_to "<span class='fas fa-dollar-sign fa-fw'></span> My Billing Projects".html_safe, billing_projects_path, class: 'check-upload', id: 'my-firecloud-projects' %>
-						<li><%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Add a Study".html_safe, new_study_path, class: 'check-upload' %></li>
+						<li><%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Create a Study".html_safe, new_study_path, class: 'check-upload' %></li>
             <% if current_user.available_branding_groups.any? %>
               <li role="separator" class="divider"></li>
               <li class="dropdown-header">My Brands</li>
