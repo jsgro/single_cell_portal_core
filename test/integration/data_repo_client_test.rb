@@ -95,20 +95,20 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should get datasets' do
-    datasets = @data_repo_client.datasets
+    datasets = @data_repo_client.get_datasets
     assert datasets.dig('total').present?
     skip 'got empty response for datasets' if datasets.dig('items').empty?
     dataset_id = datasets.dig('items').first.dig('id')
-    dataset = @data_repo_client.dataset(dataset_id)
+    dataset = @data_repo_client.get_dataset(dataset_id)
     assert dataset.present?
   end
 
   test 'should get snapshots' do
-    snapshots = @data_repo_client.snapshots
+    snapshots = @data_repo_client.get_snapshots
     assert snapshots.dig('total').present?
     skip 'got empty response for snapshots' if snapshots.dig('items').empty?
     snapshot_id = snapshots.dig('items').first.dig('id')
-    snapshot = @data_repo_client.snapshot(snapshot_id)
+    snapshot = @data_repo_client.get_snapshot(snapshot_id)
     assert snapshot.present?
   end
 end

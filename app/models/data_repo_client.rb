@@ -28,7 +28,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #   - +service_account_key+: (String, Pathname) => Path to service account JSON keyfile
   # * *return*
   #   - +DataRepoClient+ object
-  def initialize(service_account=self.class.get_primary_keyfile)
+  def initialize(service_account=self.class.get_read_only_keyfile)
     # GCS storage driver attributes
     storage_attr = {
       project: self.class.compute_project,
@@ -56,6 +56,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
     headers = {
       'Authorization' => "Bearer #{self.valid_access_token['access_token']}",
       'Accept' => 'application/json',
+      'Content-Type' => 'application/json',
       'x-app-id' => "single-cell-portal",
       'x-domain-id' => "#{ENV['HOSTNAME']}"
     }
@@ -107,7 +108,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #
   # * *returns*
   #   - (Array<Hash>) => Array of dataset JSON attributes
-  def datasets(direction: 'desc', filter: nil, limit: 100, offset: 0, sort: 'name')
+  def get_datasets(direction: 'desc', filter: nil, limit: 100, offset: 0, sort: 'name')
     validate_argument(:direction, direction, SORT_DIRECTIONS)
     validate_argument(:sort, sort, SORT_OPTIONS)
     query_opts = merge_query_options({direction: direction, filter: filter, limit: limit, offset: offset, sort: sort})
@@ -123,7 +124,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #
   # * *returns*
   #   - (Hash) => Hash of dataset JSON attributes
-  def dataset(dataset_id, include: ALL_DATASET_FIELDS)
+  def get_dataset(dataset_id, include: ALL_DATASET_FIELDS)
     path = api_root + "/api/repository/v1/datasets/#{dataset_id}"
     if include.any?
       validate_argument(:include, include, DATASET_INCLUDE_FIELDS)
@@ -149,7 +150,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #
   # * *returns*
   #   - (Array<Hash>) => Array of snapshot JSON atributes
-  def snapshots(datasetIds: [], direction: 'desc', filter: nil, limit: 100, offset: 0, sort: 'name')
+  def get_snapshots(datasetIds: [], direction: 'desc', filter: nil, limit: 100, offset: 0, sort: 'name')
     validate_argument(:direction, direction, SORT_DIRECTIONS)
     validate_argument(:sort, sort, SORT_OPTIONS)
     query_opts = merge_query_options(
@@ -169,9 +170,72 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #
   # * *returns*
   #   - (Hash) => Hash of snapshot JSON attributes
-  def snapshot(snapshot_id)
+  def get_snapshot(snapshot_id)
     path = api_root + "/api/repository/v1/snapshots/#{snapshot_id}"
     process_api_request(:get, path)
+  end
+
+  # find all tables that pertain to files for a given snapshot
+  #
+  # * *params*
+  #   - +snapshot_id+ (UUID) => Snapshot UUID
+  #   - +file_id+ (String) => Snapshot file ID, usually a DRS ID
+  #
+  # * *returns*
+  #   - (Array<Hash>) => Array of hashes of all tables/columns in a given snapshot that are file-based
+  def get_snapshot_file(snapshot_id)
+    path = api_root + "/api/repository/v1/snapshots/#{snapshot_id}/files/#{file_id}"
+    process_api_request(:get, path)
+  end
+
+  ##
+  # Query methods
+  ##
+
+  # query existing snapshot indexes to return denormalized row-level entries from the index
+  #
+  # * *params*
+  #   - +query_json+ (String) => ElasticSearch DSL query string, from generate_query_from_facets
+  #   - +limit+ (Integer) => limit on results returned, default: 1000
+  #   - +offset+ (Integer) => offset row count on results, default: 0
+  #   - +snapshot_ids+ (Array<UUID>) => restrict query to provided snapshots, default will query all available indexes
+  #
+  # * *returns*
+  #   - (Array<Hash>) => Array of row-level results, with all columns present in index (there will be a lot of duplication)
+  def query_snapshot_indexes(query_json, limit: 1000, offset: 0, snapshot_ids: [])
+    query_opts = merge_query_options({limit: limit, offset: offset})
+    path = api_root + '/api/repository/v1/search/query' + query_opts
+    payload = {
+      query: query_json.to_json, # extra JSON encoding needed here to escape quotes and other characters
+      snapshotIds: snapshot_ids
+    }.to_json
+    process_api_request(:post, path, payload: payload)
+  end
+
+  # generate a query string in ElasticSearch query DSL
+  # see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html for more information
+  #
+  # * *params*
+  #   - +query_values+ (Hash) => Hash of query facets & filter values; supports strings, numbers, and ranges
+  #                              e.g. {species: 'Homo sapiens', disease: 'tuberculosis, melanoma', organism_age: 18..35}
+  #
+  # * *returns*
+  #   - (String) => String representation of query in ElasticSearch query DSL
+  #                 e.g. "(species:Homo sapiens) AND (disease:tuberculosis OR disease:melanoma) AND (organism_age:18-35)"
+  def generate_query_from_facets(query_values)
+    formatted_elements = []
+    query_values.each do |facet, filter_values|
+      if filter_values.is_a? String
+        filters = filter_values.split(',').map(&:strip)
+      elsif filter_values.is_a? Numeric
+        filters = [filter_values]
+      elsif filter_values.is_a? Range
+        filters = [filter_values.minmax.join('-')]
+      end
+      elements = filters.map {|filter| "#{facet}:#{filter}" }
+      formatted_elements << "(#{elements.join(' OR ')})"
+    end
+    {query_string: {query: formatted_elements.join(' AND ')}}
   end
 
   private
