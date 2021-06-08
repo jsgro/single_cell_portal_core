@@ -183,7 +183,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #
   # * *returns*
   #   - (Array<Hash>) => Array of hashes of all tables/columns in a given snapshot that are file-based
-  def get_snapshot_file(snapshot_id)
+  def get_snapshot_file(snapshot_id, file_id)
     path = api_root + "/api/repository/v1/snapshots/#{snapshot_id}/files/#{file_id}"
     process_api_request(:get, path)
   end
