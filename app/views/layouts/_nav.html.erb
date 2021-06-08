@@ -29,7 +29,7 @@
 				</ul>
 			</li>
 			<li class="left-border-0-5">
-            	<%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Create a Study".html_safe, new_study_path, class: 'check-upload', 'data-analytics-name' => 'experiment-create-study-button' %>
+            	<%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Create a Study".html_safe, new_study_path, class: 'check-upload', 'data-analytics-name' => 'prominent-create-study-button' %>
             </li>
 			<% if user_signed_in? %>
 				<li class="dropdown"><%= scp_link_to "<span class='fas fa-user'></span> #{current_user.email.split('@').first} <span class='caret'></span>".html_safe, "#", class: "dropdown-toggle left-border-0-5", "data-toggle" => "dropdown", id: 'profile-nav' %>
