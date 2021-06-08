@@ -14,8 +14,7 @@ class AddSubmitterToAnalysisMetadatum < Mongoid::Migration
           puts "#{Time.zone.now} skipping #{analysis.name}:#{analysis.submission_id}, study no longer present"
         end
       rescue => e
-        error_context = ErrorTracker.format_extra_context(analysis)
-        ErrorTracker.report_exception(e, nil, error_context)
+        ErrorTracker.report_exception(e, nil, analysis)
         puts "#{Time.zone.now} unable set submitter on #{analysis.name}:#{analysis.submission_id}; #{e.message}"
       end
     end

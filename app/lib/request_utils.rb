@@ -91,15 +91,17 @@ class RequestUtils
     ids
   end
 
+  # return the hostname (and port, if present) for this instance
+  # e.g. "localhost", "localhost:3000", "singlecell.broadinstitute.org"
+  def self.get_hostname
+    url_opts = ApplicationController.default_url_options
+    url_opts[:port].present? ? "#{url_opts[:host]}:#{url_opts[:port]}" : url_opts[:host]
+  end
+
   # helper method for getting the base url with protocol, hostname, and port
   # e.g. "https://localhost"
   def self.get_base_url
-    url_opts = ApplicationController.default_url_options
-    base_url = "#{url_opts[:protocol]}://#{url_opts[:host]}"
-    if url_opts[:port].present?
-      base_url += ":#{url_opts[:port]}"
-    end
-    base_url
+    "#{ApplicationController.default_url_options[:protocol]}://#{self.get_hostname}"
   end
 
   # extracts an array of genes from a comma-delimited string list of gene names

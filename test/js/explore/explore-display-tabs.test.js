@@ -174,7 +174,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     }
 
     const expectedResults = {
-      enabledTabs: ['dotplot', 'heatmap'],
+      enabledTabs: ['correlatedScatter', 'dotplot', 'heatmap'],
       isGeneList: false,
       isGene: true,
       isMultiGene: true,

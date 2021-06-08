@@ -14,6 +14,9 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       provider = request.env["omniauth.auth"].dig('provider')
       self.class.validate_scopes_from_params(params, provider)
     rescue SecurityError => e
+      logger.error e.message
+      ErrorTracker.report_exception(e, @user, params)
+      MetricsService.report_error(e, request, @user)
       sign_out @user if @user.present?
       head 400 and return
     end
@@ -42,6 +45,9 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       provider = request.env["omniauth.auth"].dig('provider')
       self.class.validate_scopes_from_params(params, provider)
     rescue SecurityError => e
+      logger.error e.message
+      ErrorTracker.report_exception(e, @user, params)
+      MetricsService.report_error(e, request, @user)
       sign_out @user if @user.present?
       head 400 and return
     end
@@ -73,7 +79,6 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       scope_name = scope.starts_with?('https://www.googleapis.com/auth/') ? scope.split('/').last : scope
       if !configured_scopes.include?(scope_name)
         error_message = "Invalid scope requested in OAuth callback: #{scope_name}, not configured for #{provider}: #{configured_scopes}"
-        Rails.logger.error error_message
         raise SecurityError.new(error_message)
       end
     end

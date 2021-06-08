@@ -30,7 +30,7 @@ class FireCloudClientTest < ActiveSupport::TestCase
 
     expires_at = @fire_cloud_client.expires_at
     assert !@fire_cloud_client.access_token_expired?, 'Token should not be expired for new clients'
-    @fire_cloud_client.refresh_access_token
+    @fire_cloud_client.refresh_access_token!
     assert @fire_cloud_client.expires_at > expires_at, "Expiration date did not update, #{@fire_cloud_client.expires_at} is not greater than #{expires_at}"
 
     puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
@@ -577,13 +577,10 @@ class FireCloudClientTest < ActiveSupport::TestCase
 
     # download remote file to local
     puts 'downloading file...'
-    # load study for place to download files to
-    @study = Study.first
-    # ensure download path is available in case it did not get created
-    @study.make_data_dir
-    downloaded_file = @fire_cloud_client.execute_gcloud_method(:download_workspace_file, 0, workspace['bucketName'], file.name, @study.data_store_path)
+    download_path = Rails.root.join('tmp')
+    downloaded_file = @fire_cloud_client.execute_gcloud_method(:download_workspace_file, 0, workspace['bucketName'], file.name, download_path)
     assert downloaded_file.present?, 'Did not download local copy of file'
-    assert downloaded_file.to_path == File.join(@study.data_store_path, file.name), "Did not download #{file.name} to #{@study.data_store_path}, downloaded file is at #{downloaded_file.to_path}"
+    assert downloaded_file.to_path == File.join(download_path, file.name), "Did not download #{file.name} to #{download_path}, downloaded file is at #{downloaded_file.to_path}"
     # clean up download
     File.delete(downloaded_file.to_path)
 

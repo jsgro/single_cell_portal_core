@@ -115,19 +115,28 @@ export function PropsStudySearchProvider(props) {
   }
 
   /** perform the actual API search based on current params */
-  async function performSearch() {
+  function performSearch() {
     // reset the scroll in case they scrolled down to read prior results
     window.scrollTo(0, 0)
 
-    const results = await fetchSearch('study', searchParams)
-
-    setSearchState({
-      params: searchParams,
-      isError: results.ok === false,
-      isLoading: false,
-      isLoaded: true,
-      results,
-      updateSearch
+    fetchSearch('study', searchParams).then(results => {
+      setSearchState({
+        params: searchParams,
+        isError: false,
+        isLoading: false,
+        isLoaded: true,
+        results,
+        updateSearch
+      })
+    }).catch(error => {
+      setSearchState({
+        params: searchParams,
+        isError: true,
+        isLoading: false,
+        isLoaded: true,
+        results: error,
+        updateSearch
+      })
     })
   }
 

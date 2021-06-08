@@ -276,8 +276,7 @@ module Api
           @external_resource.destroy
           head 204
         rescue => e
-          error_context = ErrorTracker.format_extra_context(@external_resource, {params: params})
-          ErrorTracker.report_exception(e, current_api_user, error_context)
+          ErrorTracker.report_exception(e, current_api_user, @external_resource, params)
           MetricsService.report_error(e, request, current_api_user, @study)
           render json: {error: e.message}, status: 500
         end

@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
 import Plotly from 'plotly.js-dist'
+import SpearmanRho from 'spearman-rho'
 
 import { fetchCluster } from 'lib/scp-api'
 import { logScatterPlot } from 'lib/scp-api-metrics'
@@ -11,7 +12,7 @@ import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
-import useErrorMessage, { checkScpApiResponse } from 'lib/error-message'
+import useErrorMessage from 'lib/error-message'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
@@ -19,6 +20,8 @@ export const SCATTER_COLOR_OPTIONS = [
   'Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu', 'Reds', 'Blues', 'Picnic',
   'Rainbow', 'Portland', 'Jet', 'Hot', 'Blackbody', 'Earth', 'Electric', 'Viridis', 'Cividis'
 ]
+
+window.spearman = SpearmanRho
 
 export const defaultScatterColor = 'Reds'
 window.Plotly = Plotly
@@ -37,56 +40,58 @@ window.Plotly = Plotly
   */
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
-  isAnnotatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
+  isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
 }) {
   const [isLoading, setIsLoading] = useState(false)
+  const [spearman, setSpearman] = useState(null)
   const [scatterData, setScatterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
     const [scatter, perfTimes] = clusterResponse
+    const layout = getPlotlyLayout(dimensions, scatter)
+    const plotlyTraces = getPlotlyTraces({
+      axes: scatter.axes,
+      data: scatter.data,
+      annotName: scatter.annotParams.name,
+      annotType: scatter.annotParams.type,
+      genes: scatter.genes,
+      isAnnotatedScatter: scatter.isAnnotatedScatter,
+      isCorrelatedScatter: scatter.isCorrelatedScatter,
+      scatterColor,
+      dataScatterColor: scatter.scatterColor,
+      pointAlpha: scatter.pointAlpha,
+      pointSize: scatter.pointSize,
+      showPointBorders: scatter.showClusterPointBorders,
+      is3D: scatter.is3D
+    })
 
-    const apiOk = checkScpApiResponse(scatter,
-      () => Plotly.purge(graphElementId),
-      setShowError,
-      setErrorContent)
-    if (apiOk) {
-      const layout = getPlotlyLayout(dimensions, scatter)
-      const plotlyTraces = getPlotlyTraces({
-        axes: scatter.axes,
-        data: scatter.data,
-        annotName: scatter.annotParams.name,
-        annotType: scatter.annotParams.type,
-        genes: scatter.genes,
-        isAnnotatedScatter: scatter.isAnnotatedScatter,
-        scatterColor,
-        dataScatterColor: scatter.scatterColor,
-        pointAlpha: scatter.pointAlpha,
-        pointSize: scatter.pointSize,
-        showPointBorders: scatter.showClusterPointBorders,
-        is3D: scatter.is3D
-      })
+    const startTime = performance.now()
+    Plotly.react(graphElementId, plotlyTraces, layout)
 
-      const startTime = performance.now()
+    sortLegend({
+      graphElementId,
+      isAnnotatedScatter,
+      annotType: scatter.annotParams.type,
+      genes: scatter.genes
+    })
+    perfTimes.plot = performance.now() - startTime
 
-      Plotly.react(graphElementId, plotlyTraces, layout)
-      sortLegend({
-        graphElementId,
-        isAnnotatedScatter,
-        annotType: scatter.annotParams.type,
-        genes: scatter.genes
-      })
+    logScatterPlot(
+      { scatter, genes, width: dimensions.width, height: dimensions.height },
+      perfTimes
+    )
 
-      perfTimes.plot = performance.now() - startTime
-
-      logScatterPlot(
-        { scatter, genes, width: dimensions.width, height: dimensions.height },
-        perfTimes
-      )
-      setScatterData(scatter)
-      setShowError(false)
+    if (isCorrelatedScatter) {
+      // compute correlation stats asynchronously so it doesn't delay
+      // rendering of other visualizations or impact logging
+      // in the event these stats become more complex or widely used, consider instrumentation strategies
+      const spearmanRho = new SpearmanRho(scatter.data.x, scatter.data.y)
+      spearmanRho.calc().then(value => setSpearman(value))
     }
+    setScatterData(scatter)
+    setShowError(false)
     setIsLoading(false)
   }
 
@@ -94,7 +99,7 @@ function RawScatterPlot({
   useEffect(() => {
     setIsLoading(true)
     // use a data cache if one has been provided, otherwise query scp-api directly
-    let fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
+    const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
     fetchMethod({
       studyAccession,
       cluster,
@@ -102,9 +107,14 @@ function RawScatterPlot({
       subsample,
       consensus,
       genes,
-      isAnnotatedScatter
-    }).then(handleResponse)
-
+      isAnnotatedScatter,
+      isCorrelatedScatter
+    }).then(handleResponse).catch(error => {
+      Plotly.purge(graphElementId)
+      setErrorContent(error.message)
+      setShowError(true)
+      setIsLoading(false)
+    })
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
@@ -113,6 +123,12 @@ function RawScatterPlot({
     if (scatterData && !isLoading) {
       const dataUpdate = { 'marker.colorscale': scatterColor }
       Plotly.update(graphElementId, dataUpdate)
+      sortLegend({
+        graphElementId,
+        isAnnotatedScatter,
+        annotType: annotation.type,
+        genes
+      })
     }
   }, [scatterColor])
 
@@ -125,6 +141,12 @@ function RawScatterPlot({
       if (!isCellSelecting) {
         Plotly.restyle(graphElementId, { selectedpoints: [null] })
       }
+      sortLegend({
+        graphElementId,
+        isAnnotatedScatter,
+        annotType: annotation.type,
+        genes
+      })
     }
   }, [isCellSelecting])
 
@@ -139,7 +161,7 @@ function RawScatterPlot({
         graphElementId,
         isAnnotatedScatter,
         annotType: annotation.type,
-        genes: genes
+        genes
       })
     }
   }, [dimensions.width, dimensions.height])
@@ -166,7 +188,9 @@ function RawScatterPlot({
           annotation={scatterData.annotParams.name}
           subsample={scatterData.subsample}
           genes={scatterData.genes}
-          consensus={scatterData.consensus}/>
+          consensus={scatterData.consensus}
+          isCorrelatedScatter={isCorrelatedScatter}
+          correlations={ { spearman: spearman }}/>
       }
       <div
         className="scatter-graph"
@@ -204,6 +228,7 @@ function getPlotlyTraces({
   annotName,
   genes,
   isAnnotatedScatter,
+  isCorrelatedScatter,
   scatterColor,
   dataScatterColor,
   pointAlpha,
@@ -224,22 +249,25 @@ function getPlotlyTraces({
     trace.z = data.z
   }
 
-
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
-  if (annotType === 'group' && !genes.length) {
+  const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
+  if (annotType === 'group' && !isGeneExpressionForColor) {
+    // use plotly's groupby transformation to make the traces
     const traceCounts = countOccurences(data.annotations)
-    const traceStyles = Object.keys(traceCounts).map((val, index) => {
-      return {
-        target: val,
-        value: {
-          name: `${val} (${traceCounts[val]} points)`,
-          marker: {
-            color: getColorBrewerColor(index),
-            size: pointSize
+    const traceStyles = Object.keys(traceCounts)
+      .sort(traceNameSort) // sort the keys so we assign colors in the right order
+      .map((val, index) => {
+        return {
+          target: val,
+          value: {
+            name: `${val} (${traceCounts[val]} points)`,
+            marker: {
+              color: getColorBrewerColor(index),
+              size: pointSize
+            }
           }
         }
-      }
-    })
+      })
     trace.transforms = [{
       type: 'groupby',
       groups: data.annotations,
@@ -250,8 +278,8 @@ function getPlotlyTraces({
       line: { color: 'rgb(40,40,40)', width: 0 },
       size: pointSize
     }
-    const colors = genes.length ? data.expression : data.annotations
-    const title = genes.length ? axes.titles.magnitude : annotName
+    const colors = isGeneExpressionForColor ? data.expression : data.annotations
+    const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
     if (!isAnnotatedScatter) {
       Object.assign(trace.marker, {
         showscale: true,
@@ -267,7 +295,7 @@ function getPlotlyTraces({
       }
     }
   }
-  addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, axes)
+  addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
   return [trace]
 }
 
@@ -286,6 +314,13 @@ function countOccurences(array) {
   }, {})
 }
 
+/** sort trace names lexically, but always putting 'unspecified' last */
+function traceNameSort(a, b) {
+  if (a === UNSPECIFIED_ANNOTATION_NAME) {return 1}
+  if (b === UNSPECIFIED_ANNOTATION_NAME) {return -1}
+  return a.localeCompare(b)
+}
+
 /** sorts the scatter plot legend alphabetically
   this is super-hacky in that it relies a lot on plotly internal classnames and styling implementation
   it should only be used as a last resort if https://github.com/plotly/plotly.js/pull/5591
@@ -301,11 +336,9 @@ function sortLegend({ graphElementId, isAnnotatedScatter, annotType, genes }) {
   const legendNames = legendTraces.map(traceEl => {
     return traceEl.textContent.match(legendTitleRegex)[1]
   })
-  const sortedNames = [...legendNames].sort((a, b) => {
-    if (a === UNSPECIFIED_ANNOTATION_NAME) { return 1 }
-    if (b === UNSPECIFIED_ANNOTATION_NAME) { return -1 }
-    return a.localeCompare(b)
-  })
+
+  const sortedNames = [...legendNames].sort(traceNameSort)
+
   const legendTransforms = legendTraces.map(traceEl => traceEl.getAttribute('transform'))
 
   legendNames.forEach((traceName, index) => {
@@ -318,7 +351,7 @@ function sortLegend({ graphElementId, isAnnotatedScatter, annotType, genes }) {
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */
-function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, axes) {
+function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes) {
   trace.text = trace.cells
   // use the 'meta' property so annotations are exposed to the hover template
   // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
@@ -327,7 +360,7 @@ function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, a
   if (isAnnotatedScatter) {
     // for annotated scatter, just show coordinates and cell name
     groupHoverTemplate = `(%{x}, %{y})<br>%{text}`
-  } else if (annotType === 'numeric' || genes.length) {
+  } else if ((annotType === 'numeric' || genes.length) && !isCorrelatedScatter) {
     // this is a graph with a continuous color scale
     // the bottom row of the hover will either be the expression value, or the annotation value
     const bottomRowLabel = genes.length ? axes.titles.magnitude : annotName
@@ -355,6 +388,7 @@ function getPlotlyLayout({ width, height }={}, {
   hasCoordinateLabels,
   coordinateLabels,
   isAnnotatedScatter,
+  isCorrelatedScatter,
   is3D,
   isCellSelecting=false,
   genes,
@@ -366,15 +400,18 @@ function getPlotlyLayout({ width, height }={}, {
     dragmode: getDragMode(isCellSelecting)
   }
   if (is3D) {
-    layout.scene = get3DScatterProps({ userSpecifiedRanges, axes, hasCoordinateLabels,
-      coordinateLabels })
+    layout.scene = get3DScatterProps({
+      userSpecifiedRanges, axes, hasCoordinateLabels,
+      coordinateLabels
+    })
   } else {
     const props2d = get2DScatterProps({
       axes,
       userSpecifiedRanges,
       hasCoordinateLabels,
       coordinateLabels,
-      isAnnotatedScatter
+      isAnnotatedScatter,
+      isCorrelatedScatter
     })
     Object.assign(layout, props2d)
   }
@@ -395,7 +432,8 @@ function get2DScatterProps({
   userSpecifiedRanges,
   hasCoordinateLabels,
   coordinateLabels,
-  isAnnotatedScatter
+  isAnnotatedScatter,
+  isCorrelatedScatter
 }) {
   const { titles } = axes
 
@@ -404,15 +442,22 @@ function get2DScatterProps({
     yaxis: { title: titles.y, range: axes?.ranges?.y }
   }
 
-  if (isAnnotatedScatter === false) {
+  if (isAnnotatedScatter === false && isCorrelatedScatter === false) {
     layout.xaxis.showticklabels = false
     layout.yaxis.scaleanchor = 'x'
     layout.yaxis.showticklabels = false
     layout.margin = {
-      t: 25,
+      t: 10,
       r: 0,
       b: 20,
       l: 0
+    }
+  } else {
+    layout.margin = {
+      t: 10,
+      r: 0,
+      b: 50,
+      l: 50
     }
   }
 
@@ -425,7 +470,7 @@ function get2DScatterProps({
     layout.yaxis.autorange = true
   }
 
-  if (hasCoordinateLabels && !isAnnotatedScatter) {
+  if (hasCoordinateLabels && !isAnnotatedScatter && !isCorrelatedScatter) {
     // don't show coordinate labels on annotated scatters, since the axes are different
     layout.annotations = coordinateLabels
   }
@@ -440,8 +485,10 @@ const baseCamera = {
 }
 
 /** Gets Plotly layout scene props for 3D scatter plot */
-export function get3DScatterProps({ userSpecifiedRanges, axes, hasCoordinateLabels,
-      coordinateLabels }) {
+export function get3DScatterProps({
+  userSpecifiedRanges, axes, hasCoordinateLabels,
+  coordinateLabels
+}) {
   const { titles, ranges, aspects } = axes
 
   const scene = {

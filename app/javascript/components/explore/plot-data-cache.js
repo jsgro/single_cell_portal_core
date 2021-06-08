@@ -95,9 +95,14 @@ const Fields = {
     },
     merge: (entry, scatter) => {
       if (scatter.data.annotations) {
-        Fields.annotation.putInEntry(entry, scatter.annotParams.name, scatter.annotParams.scope, scatter.data.annotations)
+        Fields.annotation.putInEntry(entry,
+          scatter.annotParams.name,
+          scatter.annotParams.scope,
+          scatter.data.annotations)
       } else {
-        scatter.data.annotations = Fields.annotation.getFromEntry(entry, scatter.annotParams.name, scatter.annotParams.scope)
+        scatter.data.annotations = Fields.annotation.getFromEntry(entry,
+          scatter.annotParams.name,
+          scatter.annotParams.scope)
       }
     }
   },
@@ -109,7 +114,7 @@ const Fields = {
     },
     putInEntry: (entry, genes, consensus, expression) => {
       const key = getExpressionKey(genes, consensus)
-       // we only cache one set of expression data at a time, so for now, delete any others
+      // we only cache one set of expression data at a time, so for now, delete any others
       entry.expression = {}
       entry.expression[key] = expression
     },
@@ -139,6 +144,7 @@ const Fields = {
     putInEntry: (entry, clusterProps) => entry.clusterProps = clusterProps,
     merge: (entry, scatter) => {
       // clusterProps caches everything except the data and allDataFromCache properties
+      // eslint-disable-next-line no-unused-vars
       const { data, allDataFromCache, ...clusterProps } = scatter
       Object.assign(entry.clusterProps, clusterProps)
       Object.assign(scatter, entry.clusterProps)
@@ -159,7 +165,8 @@ export function createCache() {
   * see fetchCluster in scp-api for parameter documentation
   * returns a promise */
   cache.fetchCluster = ({
-    studyAccession, cluster, annotation, subsample, consensus, genes=[], isAnnotatedScatter=false
+    studyAccession, cluster, annotation, subsample, consensus,
+    genes=[], isAnnotatedScatter=null, isCorrelatedScatter=null
   }) => {
     let apiCallPromise = null
     const { fields, promises } = cache._getFieldsToRequest({
@@ -168,7 +175,8 @@ export function createCache() {
 
     if (fields.length) {
       apiCallPromise = fetchCluster({
-        studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter, fields
+        studyAccession, cluster, annotation, subsample, consensus,
+        genes, isAnnotatedScatter, isCorrelatedScatter, fields
       })
       const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
       if (fields.includes('coordinates')) {
@@ -191,8 +199,10 @@ export function createCache() {
           data: {},
           allDataFromCache: true // set a flag indicating that no fresh request to the server was needed
         }, {
-          url: fetchClusterUrl({ studyAccession, cluster, annotation,
-            subsample, consensus, genes, isAnnotatedScatter }),
+          url: fetchClusterUrl({
+            studyAccession, cluster, annotation,
+            subsample, consensus, genes, isAnnotatedScatter
+          }),
           legacyBackend: STEP_NOT_NEEDED,
           isClientCache: true,
           parse: STEP_NOT_NEEDED,
@@ -209,6 +219,10 @@ export function createCache() {
         mergedResult = cache._mergeClusterResponse(studyAccession, result, cluster, subsample)
       })
       return mergedResult
+    }).catch(error => {
+      // rather than try to reconstruct partial responses, clear the entire cache if an error occurs
+      cache.clear()
+      throw error
     })
   }
 
@@ -269,12 +283,12 @@ export function createCache() {
     * to fetchCluster in scp-api, and an array of promises for any in-flight requests relating to the needed data
      */
   cache._getFieldsToRequest = ({
-    studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter
+    studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter, isCorrelatedScatter
   }) => {
     const fields = []
     const promises = [] // API call promises
-    // we don't cache anything for annotated scatter since the coordinates are different per annotation/gene
-    if (!isAnnotatedScatter) {
+    // we don't cache anything for annotated/correlated scatter since the coordinates are different per annotation/gene
+    if (!isAnnotatedScatter && !isCorrelatedScatter) {
       const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
       Fields.cellsAndCoords.addFieldsOrPromise(cacheEntry, fields, promises)
       Fields.annotation.addFieldsOrPromise(cacheEntry, fields, promises, annotation.name, annotation.scope)

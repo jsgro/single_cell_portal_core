@@ -84,6 +84,12 @@ module Api
               key :type, :string
             end
             parameter do
+              key :name, :is_correlated_scatter
+              key :in, :query
+              key :description, 'Whether plot is a "Correlated Scatter", i.e. a graph of two gene expressions plotted against each other.'
+              key :type, :string
+            end
+            parameter do
               key :name, :annot_name
               key :in, :query
               key :description, 'Name of the annotation to categorize the cluster data.  Blank for default annotation.'
@@ -172,6 +178,7 @@ module Api
           end
 
           is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
+          is_correlated_scatter = !url_params[:is_correlated_scatter].blank?
 
           titles = ClusterVizService.load_axis_labels(cluster)
           titles[:magnitude] = ExpressionVizService.load_expression_axis_title(study)
@@ -202,13 +209,21 @@ module Api
                 x: annot_params[:name],
                 y: titles[:magnitude]
               }
+            elsif is_correlated_scatter
+              if genes.count != 2
+                raise ArgumentError, "Correlated scatter plots require specifying 2 genes"
+              end
+              plot_data = ExpressionVizService.load_correlated_data_array_scatter(
+                  study, genes, cluster, annotation, subsample)
+              gene_names = genes.map {|g| g['name']}
+              titles = {
+                x: "#{gene_names.first} #{titles[:magnitude]}",
+                y: "#{gene_names.last} #{titles[:magnitude]}"
+              }
             else
               # For "Scatter" tab
-              if is_collapsed_view
-                plot_data = ExpressionVizService.load_gene_set_expression_data_arrays(study, genes, cluster, annotation, consensus, subsample, !include_coordinates)
-              else
-                plot_data = ExpressionVizService.load_expression_data_array_points(study, genes[0], cluster, annotation, subsample, !include_coordinates)
-              end
+              plot_data = ExpressionVizService.load_expression_data_array_points(study, genes, cluster, annotation, subsample,
+                consensus: consensus, expression_only: !include_coordinates)
             end
           end
 
@@ -231,6 +246,7 @@ module Api
             "is3D": cluster.is_3d?,
             "isSubsampled": cluster.subsampled?,
             "isAnnotatedScatter": is_annotated_scatter,
+            "isCorrelatedScatter": is_correlated_scatter,
             "numPoints": cluster.points,
             "axes": axes_full,
             "hasCoordinateLabels": cluster.has_coordinate_labels?,

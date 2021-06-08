@@ -1,12 +1,13 @@
 import React, { useContext } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna, faExclamationCircle, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { faDna, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StudyResults from './StudyResults'
 import Study from './Study'
 import SearchQueryDisplay from './SearchQueryDisplay'
 import { UserContext } from 'providers/UserProvider'
 import { getNumFacetsAndFilters } from 'providers/StudySearchProvider'
+import { serverErrorEnd } from 'lib/error-utils'
 
 
 /**
@@ -22,17 +23,8 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
   let panelContent
   if (studySearchState.isError) {
     panelContent = (
-      <div className="error-panel  col-md-6 col-md-offset-3">
-        <FontAwesomeIcon
-          icon={faExclamationCircle}
-          className="left-margin-icon"
-        />
-        Sorry, an error has occurred. Support has been notified. Please try
-        again. If this error persists, or you require assistance, please contact
-        support at &nbsp;
-        <a href="mailto:scp-support@broadinstitute.zendesk.com">
-          scp-support@broadinstitute.zendesk.com
-        </a>
+      <div className="error-panel col-md-6 col-md-offset-3">
+        { serverErrorEnd }
       </div>
     )
   } else if (!studySearchState.isLoaded) {

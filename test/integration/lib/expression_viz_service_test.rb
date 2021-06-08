@@ -259,7 +259,7 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
-    expression_scatter = ExpressionVizService.load_expression_data_array_points(@basic_study, gene, cluster, annotation,
+    expression_scatter = ExpressionVizService.load_expression_data_array_points(@basic_study, [gene], cluster, annotation,
                                                                                 nil)
     assert_equal(cluster.concatenate_data_arrays('x', 'coordinates'), expression_scatter[:x])
     assert_equal(cluster.concatenate_data_arrays('y', 'coordinates'), expression_scatter[:y])
@@ -307,8 +307,8 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     default_annot = @basic_study.default_annotation
     annot_name, annot_type, annot_scope = default_annot.split('--')
     annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
-    gene_set_exp_scatter = ExpressionVizService.load_gene_set_expression_data_arrays(
-        @basic_study, genes, cluster, annotation, 'mean'
+    gene_set_exp_scatter = ExpressionVizService.load_expression_data_array_points(
+        @basic_study, genes, cluster, annotation, consensus: 'mean'
     )
 
     # mean of values for scores across both genes for each cell
@@ -332,5 +332,19 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
       assert_equal expected_value, calculated_mean, "Mean calculation incorrect; #{expected_value} != #{calculated_mean}"
       assert_equal expected_value, calculated_median, "Median calculation incorrect; #{expected_value} != #{calculated_median}"
     end
+  end
+
+  test 'should load gene correlation visualization' do
+    genes = ['PTEN', 'AGPAT2'].map do |gene_name|
+      @basic_study.genes.by_name_or_id(gene_name, @basic_study.expression_matrix_files.pluck(:id))
+    end
+    cluster = @basic_study.default_cluster
+    default_annot = @basic_study.default_annotation
+    annot_name, annot_type, annot_scope = default_annot.split('--')
+    annotation = AnnotationVizService.get_selected_annotation(@basic_study, cluster: cluster, annot_name: annot_name, annot_type: annot_type, annot_scope: annot_scope)
+
+    viz_data = ExpressionVizService.load_correlated_data_array_scatter(@basic_study, genes, cluster, annotation)
+    expected = {:annotations=>["dog", "cat", "dog"], :cells=>["A", "B", "C"], :x=>[0.0, 3.0, 1.5], :y=>[0.0, 0.0, 8.0]}
+    assert_equal expected, viz_data
   end
 end

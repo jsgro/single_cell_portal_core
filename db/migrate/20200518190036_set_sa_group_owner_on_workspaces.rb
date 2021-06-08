@@ -16,8 +16,7 @@ class SetSaGroupOwnerOnWorkspaces < Mongoid::Migration
         puts "Update on #{study.firecloud_project}/#{study.firecloud_workspace} complete"
       rescue => e
         puts "Error updating workspace acl for #{study.firecloud_project}/#{study.firecloud_workspace}"
-        context = ErrorTracker.format_extra_context(study, acl, ws_owner_group)
-        ErrorTracker.report_exception(e, client.issuer, context)
+        ErrorTracker.report_exception(e, client.issuer, study, acl, ws_owner_group)
       end
     end
   end
