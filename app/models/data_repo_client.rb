@@ -12,6 +12,8 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   BASE_URL = Rails.application.config.tdr_api_base_url.freeze
   # Hostname of repo, needed for parsing out DRS identifiers
   REPOSITORY_HOSTNAME = URI(BASE_URL).host.freeze
+  # prefix used to identify valid DRS ids
+  DRS_PREFIX = "drs://#{REPOSITORY_HOSTNAME}/".freeze
 
   # control variables
   SORT_DIRECTIONS = %w(asc desc).freeze
@@ -338,8 +340,8 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   # * *raises*
   #   - (ArgumentError) => if drs_id is not formatted correctly
   def parse_drs_id(drs_id)
-    raise ArgumentError.new("#{drs_id} is not a valid DRS id") unless drs_id.starts_with?("drs://#{REPOSITORY_HOSTNAME}/")
-    drs_id.split("drs://#{REPOSITORY_HOSTNAME}/").last
+    raise ArgumentError.new("#{drs_id} is not a valid DRS id") unless drs_id.starts_with?(DRS_PREFIX)
+    drs_id.split(DRS_PREFIX).last
   end
 
   ##
