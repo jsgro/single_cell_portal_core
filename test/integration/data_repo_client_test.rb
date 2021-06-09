@@ -11,7 +11,9 @@ class DataRepoClientTest < ActiveSupport::TestCase
     @file_id = '5009a1f8-c2ee-4ceb-8ddb-40c3ddee5472' # ID of sequence file in PulmonaryFibrosisGSE135893 snapshot
     @filename = 'IPF_VUILD54_1_LU_Whole_C1_X5SCR_F00207_HMWLCBGX7_ATTTGCTA_L001_R1_001.fastq.gz' # name of above file
     @drs_file_id = "drs://#{DataRepoClient::REPOSITORY_HOSTNAME}/v1_#{@snapshot_id}_#{@file_id}" # computed DRS id
-    @gs_url = "gs://broad-jade-dev-data-bucket/#{@dataset_id}/#{@file_id}/#{@filename}" # computed GS url
+    bucket_id = 'broad-jade-dev-data-bucket'
+    @gs_url = "gs://#{bucket_id}/#{@dataset_id}/#{@file_id}/#{@filename}" # computed GS url
+    @https_url = "https://www.googleapis.com/storage/v1/b/#{bucket_id}/o/#{@dataset_id}%2F#{@file_id}%2F#{@filename}?alt=media"
   end
 
   # skip a test if the TDR API is not up (since it is their dev instance there is no uptime guarantee)
@@ -212,14 +214,17 @@ class DataRepoClientTest < ActiveSupport::TestCase
     end
   end
 
-  test 'should get gs url from drs id' do
+  test 'should get access url from drs id' do
     skip_if_api_down
-    found_gs_url = @data_repo_client.get_gs_url_from_drs_id(@drs_file_id)
+    found_gs_url = @data_repo_client.get_access_url_from_drs_id(@drs_file_id, :gs)
     assert_equal @gs_url, found_gs_url
+
+    found_https_url = @data_repo_client.get_access_url_from_drs_id(@drs_file_id, :https)
+    assert_equal @https_url, found_https_url
 
     # ensure error handling
     assert_raise ArgumentError do
-      @data_repo_client.get_drs_file_info('foo')
+      @data_repo_client.get_access_url_from_drs_id('foo', :gs)
     end
   end
 end

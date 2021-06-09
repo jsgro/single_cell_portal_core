@@ -313,17 +313,18 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #
   # * *params*
   #   - +drs_id+ (String) => A DRS identifier, formatted as drs://[repository_hostname]/v1_[collection_id]_[file_id]
+  #   - +access_type+ (String, Symbol) => type of access, either :gs or :https
   #
   # * *returns*
-  #   - (String) => a GS url pointing to a file in a bucket
+  #   - (String) => a url pointing to a file in a bucket, can be gs:// or https://
   #
   # * *raises*
   #   - (ArgumentError) => if drs_id is not formatted correctly
-  def get_gs_url_from_drs_id(drs_id)
+  def get_access_url_from_drs_id(drs_id, access_type)
     file_info = get_drs_file_info(drs_id)
-    gs_info = file_info.dig('access_methods').detect {|access| access.dig('type') == 'gs'}
-    if gs_info.present?
-      gs_info.dig('access_url', 'url')
+    access_info = file_info.dig('access_methods').detect {|access| access.dig('type') == access_type.to_s}
+    if access_info.present?
+      access_info.dig('access_url', 'url')
     else
       nil
     end
@@ -342,70 +343,6 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   def parse_drs_id(drs_id)
     raise ArgumentError.new("#{drs_id} is not a valid DRS id") unless drs_id.starts_with?(DRS_PREFIX)
     drs_id.split(DRS_PREFIX).last
-  end
-
-  ##
-  # GCS File methods
-  # NOTE: these currently will not work due to access controls on TDR buckets. leaving for now in case this is resolved,
-  # but they may end up being removed in favor of other tooling such as gsutil
-  ##
-
-  # retrieve a workspace's GCP bucket
-  #
-  # * *params*
-  #   - +bucket_id+ (String) => ID of workspace GCP bucket
-  #
-  # * *return*
-  #   - +Google::Cloud::Storage::Bucket+ object
-  def get_bucket(bucket_id)
-    self.storage.bucket bucket_id
-  end
-
-  # retrieve single study_file in a GCP bucket of a workspace
-  #
-  # * *params*
-  #   - +bucket_id+ (String) => ID of workspace GCP bucket
-  #   - +filename+ (String) => name of file
-  #
-  # * *return*
-  #   - +Google::Cloud::Storage::File+
-  def get_bucket_file(bucket_id, filename)
-    bucket = self.get_bucket(bucket_id)
-    bucket.file filename
-  end
-
-  # get a remote GCS file from a DRS id
-  #
-  # * *params*
-  #   - +drs_id+ (String) => A DRS identifier, formatted as drs://[repository_hostname]/v1_[collection_id]_[file_id]
-  #
-  # * *return*
-  #   - +Google::Cloud::Storage::Bucket+ object
-  #
-  # * *raises*
-  #   - (ArgumentError) => if drs_id is not formatted correctly
-  def get_bucket_file_from_drs_id(drs_id)
-    gs_url = get_gs_url_from_drs_id(drs_id)
-    gs_info = parse_gs_url(gs_url)
-    get_bucket_file(gs_info[:bucket_id], gs_info[:filepath])
-  end
-
-  # parse a GS URL into a bucket_id and filepath
-  #
-  # * *params*
-  #   - +gs_url+ GS url to file in TDR bucket, e.g. gs://bucket_name/path/to/file.txt
-  #
-  # * *returns*
-  #   - (Hash) => Hash of file info => {bucket_id: id, filepath: filepath}
-  #
-  # * *raises*
-  #   - (ArgumentError) => if gs_url is not formatted correctly
-  def parse_gs_url(gs_url)
-    raise ArgumentError.new("#{gs_url} is not a valid GS URL") unless gs_url.starts_with?('gs://')
-    url_parts = gs_url.split('gs://').last.split('/')
-    bucket_id = url_parts.slice!(0)
-    filepath = url_parts.join('/')
-    {bucket_id: bucket_id, filepath: filepath}
   end
 
   private
