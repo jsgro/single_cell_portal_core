@@ -11,7 +11,7 @@ import { UserContext } from 'providers/UserProvider'
 /**
  * Component for "Download" button and Bulk Download modal.
  */
-export default function DownloadButton({searchResults={}}) {
+export default function DownloadButton({ searchResults={} }) {
   const userContext = useContext(UserContext)
 
   const [showModal, setShowModal] = useState(false)
@@ -55,7 +55,8 @@ export default function DownloadButton({searchResults={}}) {
           </span>
         </button>
       </OverlayTrigger>
-      { showModal && <DownloadSelectionModal show={showModal} setShow={setShowModal} studyAccessions={matchingAccessions}/> }
+      { showModal &&
+        <DownloadSelectionModal show={showModal} setShow={setShowModal} studyAccessions={matchingAccessions}/> }
     </>
   )
 }

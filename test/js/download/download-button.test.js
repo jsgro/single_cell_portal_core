@@ -1,9 +1,5 @@
-/* eslint-disable */
-// ESLint unexpectedly converts use `done` in `it` to a Promise, so disable it
-
 import React from 'react'
 import { mount } from 'enzyme'
-// import { act } from 'react-dom/test-utils';
 
 const fetch = require('node-fetch')
 
@@ -11,11 +7,7 @@ import DownloadButton from 'components/search/controls/download/DownloadButton'
 import { UserContext } from 'providers/UserProvider'
 
 
-describe('Download components for faceted search', () => {
-  beforeAll(() => {
-    global.fetch = fetch
-  })
-
+describe('Download button for faceted search', () => {
 
   it('shows expected tooltip for unauthenticated users', async () => {
     const wrapper = mount((
@@ -44,6 +36,7 @@ describe('Download components for faceted search', () => {
   })
 
   it('is enabled and shows the modal for signed in users who perform a search', async () => {
+    global.fetch = fetch
     const wrapper = mount((
       <UserContext.Provider value={{ accessToken: 'test'}}>
         <DownloadButton searchResults={{ matchingAccessions: ['SCP1', 'SCP2'], terms: 'foo', facets: [] }}/>

@@ -190,7 +190,7 @@ function RawScatterPlot({
           genes={scatterData.genes}
           consensus={scatterData.consensus}
           isCorrelatedScatter={isCorrelatedScatter}
-          correlations={ { spearman: spearman }}/>
+          correlations={{ spearman }}/>
       }
       <div
         className="scatter-graph"

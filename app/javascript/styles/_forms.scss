@@ -31,6 +31,7 @@
 .full-height-modal {
 	.modal-dialog {
 		height: 100vh !important;
+		max-height: 100vh;
 		margin-top: 0;
 		margin-bottom: 0;
 		padding: 0;
@@ -40,32 +41,18 @@
 		flex-direction: column;
 		height: auto;
 		min-height: 100vh;
+		max-height: 100vh;
 		border-radius: 0;
 	}
 	.modal-body {
 		flex: 1;
 		padding-left: 25px;
 		padding-right: 25px;
+		overflow-y: auto;
 	}
 	.modal-footer {
 		padding-left: 25px;
 		padding-right: 25px;
-	}
-}
-
-
-.download-steps-header .badge {
-	color: #fff;
-  background-color: #333;
-  font-size: 0.9em;
-  vertical-align: inherit;
-  border-radius: 2em;
-}
-
-.download-steps-header .greyed {
-	color: #888;
-	.badge {
-	 	background-color: #888;
 	}
 }
 

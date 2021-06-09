@@ -2,24 +2,24 @@ import React, { useEffect, useState } from 'react'
 import Modal from 'react-bootstrap/lib/Modal'
 
 import DownloadCommand from './DownloadCommand'
-import DownloadSelectionTable, { newSelectedBoxesState, getSelectedFileIds, getSelectedFileStats,
-  getFileStats, bytesToSize} from './DownloadSelectionTable'
+import DownloadSelectionTable, {
+  newSelectedBoxesState, getSelectedFileIds, getSelectedFileStats, bytesToSize
+} from './DownloadSelectionTable'
 import { fetchDownloadInfo } from 'lib/scp-api'
 
 
 /**
-  * @fileoverview a modal that, given a list of study accessions, allows a user to select/deselect
+  * a modal that, given a list of study accessions, allows a user to select/deselect
   * studies and file types for download.  This queries the bulk_download/summary API method
   * to retrieve the list of study details and available files
   */
-
-export default function DownloadSelectionModal({studyAccessions, show, setShow}) {
+export default function DownloadSelectionModal({ studyAccessions, show, setShow }) {
   const [isLoading, setIsLoading] = useState(true)
   const [downloadInfo, setDownloadInfo] = useState([])
   const [selectedBoxes, setSelectedBoxes] = useState()
   const [stepNum, setStepNum] = useState(1)
 
-  let {fileCount, fileSize} = getSelectedFileStats(downloadInfo, selectedBoxes, isLoading)
+  const { fileCount, fileSize } = getSelectedFileStats(downloadInfo, selectedBoxes, isLoading)
   const prettyBytes = bytesToSize(fileSize)
   const selectedFileIds = getSelectedFileIds(downloadInfo, selectedBoxes)
 
@@ -40,12 +40,10 @@ export default function DownloadSelectionModal({studyAccessions, show, setShow})
     data-analytics-name="download-modal-next">
     NEXT
   </button>
-  let downloadCountText = `${prettyBytes} selected`
   if (fileCount === 0) {
     downloadButton = <button className="btn btn-primary" disabled="disabled">
       No files selected
     </button>
-    downloadCountText = ''
   }
 
   return <Modal
@@ -85,12 +83,17 @@ export default function DownloadSelectionModal({studyAccessions, show, setShow})
         { stepNum === 2 && <DownloadCommand
           closeParent={() => setShow(false)}
           fileIds={selectedFileIds}/> }
+        { !isLoading &&
+          <div className="download-size-message">
+            <label htmlFor="download-size-amount">Total size</label>
+            <span data-testid="download-size-amount" id="download-size-amount">{prettyBytes}</span>
+          </div>
+        }
       </div>
     </Modal.Body>
     <Modal.Footer>
       { stepNum === 1 &&
         <span>
-          { downloadCountText } &nbsp;
           <button className="btn action" onClick={() => setShow(false)} data-analytics-name="download-modal-cancel">
             CANCEL
           </button>
@@ -103,8 +106,8 @@ export default function DownloadSelectionModal({studyAccessions, show, setShow})
             BACK
           </button>
           <button className="btn action"
-                  onClick={() => setShow(false) }
-                  data-analytics-name="download-modal-done">
+            onClick={() => setShow(false)}
+            data-analytics-name="download-modal-done">
             DONE
           </button>
         </span>
