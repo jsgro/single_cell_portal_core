@@ -6,6 +6,17 @@ class DataRepoClientTest < ActiveSupport::TestCase
 
   before(:all) do
     @data_repo_client = ApplicationController.data_repo_client
+    @dataset_id = 'd918e6f2-e63b-4d9c-82a6-f0d44c6bcc0d' # dataset for snapshot, we don't actually have access to this
+    @snapshot_id = 'fcaee9e0-4745-4006-9718-7d048a846d96' # dev PulmonaryFibrosisGSE135893 snapshot
+    @file_id = '5009a1f8-c2ee-4ceb-8ddb-40c3ddee5472' # ID of sequence file in PulmonaryFibrosisGSE135893 snapshot
+    @filename = 'IPF_VUILD54_1_LU_Whole_C1_X5SCR_F00207_HMWLCBGX7_ATTTGCTA_L001_R1_001.fastq.gz' # name of above file
+    @drs_file_id = "drs://#{DataRepoClient::REPOSITORY_HOSTNAME}/v1_#{@snapshot_id}_#{@file_id}" # computed DRS id
+    @gs_url = "gs://broad-jade-dev-data-bucket/#{@dataset_id}/#{@file_id}/#{@filename}" # computed GS url
+  end
+
+  # skip a test if the TDR API is not up (since it is their dev instance there is no uptime guarantee)
+  def skip_if_api_down(test_name)
+    skip "skipping #{test_name} due to TDR API being unavailable" if !@data_repo_client.api_available?
   end
 
   test 'should instantiate client' do
@@ -94,7 +105,19 @@ class DataRepoClientTest < ActiveSupport::TestCase
     assert_equal string_response, parsed_string
   end
 
+  test 'should get api status' do
+    skip_if_api_down(self.method_name)
+    status = @data_repo_client.api_status
+    assert status['ok']
+  end
+
+  test 'should check if api is available' do
+    skip_if_api_down(self.method_name)
+    assert @data_repo_client.api_available?
+  end
+
   test 'should get datasets' do
+    skip_if_api_down(self.method_name)
     datasets = @data_repo_client.get_datasets
     assert datasets.dig('total').present?
     skip 'got empty response for datasets' if datasets.dig('items').empty?
@@ -104,11 +127,97 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should get snapshots' do
+    skip_if_api_down(self.method_name)
     snapshots = @data_repo_client.get_snapshots
     assert snapshots.dig('total').present?
     skip 'got empty response for snapshots' if snapshots.dig('items').empty?
     snapshot_id = snapshots.dig('items').first.dig('id')
     snapshot = @data_repo_client.get_snapshot(snapshot_id)
     assert snapshot.present?
+  end
+
+  test 'should get snapshot' do
+    skip_if_api_down(self.method_name)
+    snapshot = @data_repo_client.get_snapshot(@snapshot_id)
+    assert snapshot.present?
+    expected_keys = %w(id name description createdDate source tables
+                       relationships profileId dataProject accessInformation).sort
+    assert_equal expected_keys, snapshot.keys.sort
+  end
+
+  test 'should get file in snapshot' do
+    skip_if_api_down(self.method_name)
+    file_info = @data_repo_client.get_snapshot_file_info(@snapshot_id, @file_id)
+    assert file_info.present?
+    assert_equal @file_id, file_info.dig('fileId')
+    assert file_info.dig('size') > 0, 'did not get a valid file size'
+    found_gs_url = file_info.dig('fileDetail', 'accessUrl')
+    assert_equal @gs_url, found_gs_url
+  end
+
+  test 'should generate query json from facets' do
+    selected_facets = [
+      {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]},
+      {id: :disease, filters: [{id: 'MONDO_0018076', name: 'tuberculosis'},{id: 'MONDO_0005109', name: 'HIV infectious disease'}]}
+    ]
+    expected_query = "(species:NCBITaxon9609 OR species:Homo sapiens) AND (disease:MONDO_0018076 OR disease:tuberculosis " \
+                     "OR disease:MONDO_0005109 OR disease:HIV infectious disease)"
+
+    query_json = @data_repo_client.generate_query_from_facets(selected_facets)
+    assert_equal expected_query, query_json.dig(:query_string, :query)
+  end
+
+  test 'should query snapshot index' do
+    skip_if_api_down(self.method_name)
+    selected_facets = [
+      {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]}
+    ]
+    query_json = @data_repo_client.generate_query_from_facets(selected_facets)
+    results = @data_repo_client.query_snapshot_indexes(query_json, snapshot_ids: [@snapshot_id])
+    original_count = results.dig('result').count
+    assert original_count > 0
+    sample_row = results.dig('result').sample
+    assert_equal 'Homo sapiens', sample_row.dig('genus_species')
+    expected_project = 'Single-cell RNA-sequencing reveals profibrotic roles of distinct epithelial and mesenchymal lineages in pulmonary fibrosis'
+    assert_equal expected_project, sample_row.dig('project_title')
+
+    # refine query and re-run
+    selected_facets = [
+      {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]},
+      {id: :organism_age, filters: {min: 46, max: 72, unit: 'years'}}
+    ]
+    query_json = @data_repo_client.generate_query_from_facets(selected_facets)
+    results = @data_repo_client.query_snapshot_indexes(query_json, snapshot_ids: [@snapshot_id])
+    new_count = results.dig('result').count
+    assert new_count < original_count
+    sample_row = results.dig('result').sample
+    assert_equal '46-72', sample_row.dig('organism_age')
+  end
+
+  test 'should get file info from drs id' do
+    skip_if_api_down(self.method_name)
+    file_info = @data_repo_client.get_drs_file_info(@drs_file_id)
+    assert file_info.present?
+    expected_id = @drs_file_id.split('/').last
+    assert_equal expected_id, file_info.dig('id')
+    assert file_info.dig('size') > 0, 'did not get a valid file size'
+    found_filename = file_info.dig('name')
+    assert_equal @filename, found_filename
+
+    # ensure error handling
+    assert_raise ArgumentError do
+      @data_repo_client.get_drs_file_info('foo')
+    end
+  end
+
+  test 'should get gs url from drs id' do
+    skip_if_api_down(self.method_name)
+    found_gs_url = @data_repo_client.get_gs_url_from_drs_id(@drs_file_id)
+    assert_equal @gs_url, found_gs_url
+
+    # ensure error handling
+    assert_raise ArgumentError do
+      @data_repo_client.get_drs_file_info('foo')
+    end
   end
 end

@@ -9,7 +9,9 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   # Google authentication scopes necessary for querying TDR API
   GOOGLE_SCOPES = %w(openid email profile)
    # Base API URL to request against
-  BASE_URL = Rails.application.config.tdr_api_base_url
+  BASE_URL = Rails.application.config.tdr_api_base_url.freeze
+  # Hostname of repo, needed for parsing out DRS identifiers
+  REPOSITORY_HOSTNAME = URI(BASE_URL).host.freeze
 
   # control variables
   SORT_DIRECTIONS = %w(asc desc).freeze
@@ -92,6 +94,47 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   ##
   # API ENDPOINT BINDINGS
   ##
+
+  ##
+  # Status
+  ##
+
+  # get more detailed status information about TDR API
+  # this method doesn't use process_api_request as we want to preserve error states rather than catch and suppress them
+  #
+  # * *return*
+  #   - +Hash+ with health status information for various TDR services or error response
+  def api_status
+    path = self.api_root + '/status'
+    # make sure access token is still valid
+    headers = {
+      'Authorization' => "Bearer #{self.valid_access_token['access_token']}",
+      'Accept' => 'application/json',
+      'Content-Type' => 'application/json',
+      'x-app-id' => "single-cell-portal",
+      'x-domain-id' => "#{ENV['HOSTNAME']}"
+    }
+    begin
+      response = RestClient::Request.execute(method: :get, url: path, headers: headers)
+      JSON.parse(response.body)
+    rescue RestClient::ExceptionWithResponse => e
+      Rails.logger.error "Terra Data Repo status error: #{e.message}"
+      e.response
+    end
+  end
+
+  # determine if TDR API is currently up/available
+  #
+  # * *return*
+  #   - +Boolean+ indication of TDR current root status
+  def api_available?
+    begin
+      response = self.api_status
+      response.is_a?(Hash) && response['ok']
+    rescue => e
+      false
+    end
+  end
 
   ##
   # Datasets
@@ -179,11 +222,11 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #
   # * *params*
   #   - +snapshot_id+ (UUID) => Snapshot UUID
-  #   - +file_id+ (String) => Snapshot file ID, usually a DRS ID
+  #   - +file_id+ (String) => Snapshot file ID, usually the last UUID component from a DRS ID
   #
   # * *returns*
-  #   - (Array<Hash>) => Array of hashes of all tables/columns in a given snapshot that are file-based
-  def get_snapshot_file(snapshot_id, file_id)
+  #   - (Hash) => Hash detail of file object with path/size/checksum info, and a fileDetail object with a gs accessUrl
+  def get_snapshot_file_info(snapshot_id, file_id)
     path = api_root + "/api/repository/v1/snapshots/#{snapshot_id}/files/#{file_id}"
     process_api_request(:get, path)
   end
@@ -195,7 +238,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   # query existing snapshot indexes to return denormalized row-level entries from the index
   #
   # * *params*
-  #   - +query_json+ (String) => ElasticSearch DSL query string, from generate_query_from_facets
+  #   - +query_json+ (String) => ElasticSearch DSL query string, from DataRepoClient#generate_query_from_facets
   #   - +limit+ (Integer) => limit on results returned, default: 1000
   #   - +offset+ (Integer) => offset row count on results, default: 0
   #   - +snapshot_ids+ (Array<UUID>) => restrict query to provided snapshots, default will query all available indexes
@@ -206,7 +249,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
     query_opts = merge_query_options({limit: limit, offset: offset})
     path = api_root + '/api/repository/v1/search/query' + query_opts
     payload = {
-      query: query_json.to_json, # extra JSON encoding needed here to escape quotes and other characters
+      query: query_json.to_json, # extra JSON encoding needed here to escape quotes and other control characters
       snapshotIds: snapshot_ids
     }.to_json
     process_api_request(:post, path, payload: payload)
@@ -216,26 +259,151 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   # see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html for more information
   #
   # * *params*
-  #   - +query_values+ (Hash) => Hash of query facets & filter values; supports strings, numbers, and ranges
-  #                              e.g. {species: 'Homo sapiens', disease: 'tuberculosis, melanoma', organism_age: 18..35}
+  #   - +selected_facets+ (Array<Hash>) => Array of hashes representing query facets & filter values, passed from Api::V1::SearchController#index
+  #                              e.g. [{id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]},
+  #                                    {id: :disease, filters: [{id: 'MONDO_0018076', name: 'tuberculosis', },
+  #                                    {id: 'MONDO_0005105', name: 'melanoma'}]}]
   #
   # * *returns*
-  #   - (String) => String representation of query in ElasticSearch query DSL
-  #                 e.g. "(species:Homo sapiens) AND (disease:tuberculosis OR disease:melanoma) AND (organism_age:18-35)"
-  def generate_query_from_facets(query_values)
+  #   - (Hash) => Hash representation of query in ElasticSearch query DSL (must be cast to JSON for use in DataRepoClient#query_snapshot_indexes)
+  #                 e.g. "{:query_string=>{:query=>"(species:NCBITaxon9609 OR species:Homo sapiens) AND
+  #                         (disease:MONDO_0018076 OR disease:tuberculosis OR disease:MONDO_0005105 OR disease:melanoma)"}}"
+  def generate_query_from_facets(selected_facets)
     formatted_elements = []
-    query_values.each do |facet, filter_values|
-      if filter_values.is_a? String
-        filters = filter_values.split(',').map(&:strip)
-      elsif filter_values.is_a? Numeric
-        filters = [filter_values]
-      elsif filter_values.is_a? Range
-        filters = [filter_values.minmax.join('-')]
+    selected_facets.each do |search_facet|
+      facet = search_facet[:id]
+      if search_facet[:filters].is_a? Hash # this is a numeric facet w/ min/max/unit
+        filters = ["#{search_facet.dig(:filters, :min)}-#{search_facet.dig(:filters, :max)}"]
+      else
+        filters = search_facet[:filters].map(&:values).flatten
       end
       elements = filters.map {|filter| "#{facet}:#{filter}" }
       formatted_elements << "(#{elements.join(' OR ')})"
     end
     {query_string: {query: formatted_elements.join(' AND ')}}
+  end
+
+  ##
+  # DRS File methods
+  ##
+
+  # get a file using a DRS identifier
+  #
+  # * *params*
+  #   - +drs_id+ (String) => A DRS idenfifier, formatted as drs://[repository_hostname]/v1_[collection_id]_[file_id], where
+  #                          [repository_hostname] is a domain name, e.g. jade.datarepo-dev.broadinstitute.org,
+  #                          [collection_id] is a UUID of a collection, and
+  #                          [file_id] is a UUID of a file object, e.g:
+  #                          drs://jade.datarepo-dev.broadinstitute.org/v1_fcaee9e0-4745-4006-9718-7d048a846d96_5009a1f8-c2ee-4ceb-8ddb-40c3ddee5472
+  #
+  # * *returns*
+  #   - (Hash) => Hash detail of file object with path/size/checksum info, and a fileDetail object with a gs accessUrl
+  #
+  # * *raises*
+  #   - (ArgumentError) => if drs_id is not formatted correctly
+  def get_drs_file_info(drs_id)
+    formatted_id = parse_drs_id(drs_id)
+    path = api_root + '/ga4gh/drs/v1/objects/' + formatted_id
+    process_api_request(:get, path)
+  end
+
+  # get back a GS url from a DRS file id
+  #
+  # * *params*
+  #   - +drs_id+ (String) => A DRS identifier, formatted as drs://[repository_hostname]/v1_[collection_id]_[file_id]
+  #
+  # * *returns*
+  #   - (String) => a GS url pointing to a file in a bucket
+  #
+  # * *raises*
+  #   - (ArgumentError) => if drs_id is not formatted correctly
+  def get_gs_url_from_drs_id(drs_id)
+    file_info = get_drs_file_info(drs_id)
+    gs_info = file_info.dig('access_methods').detect {|access| access.dig('type') == 'gs'}
+    if gs_info.present?
+      gs_info.dig('access_url', 'url')
+    else
+      nil
+    end
+  end
+
+  # parse a DRS identifier into a usable ID for DataRepoClient#get_drs_file_info
+  #
+  # * *params*
+  #   - +drs_id+ (String) => A DRS identifier, formatted as drs://[repository_hostname]/v1_[collection_id]_[file_id]
+  #
+  # * *returns*
+  #   - (String) => an identifier to be used in DataRepoClient#get_drs_file_info
+  #
+  # * *raises*
+  #   - (ArgumentError) => if drs_id is not formatted correctly
+  def parse_drs_id(drs_id)
+    raise ArgumentError.new("#{drs_id} is not a valid DRS id") unless drs_id.starts_with?("drs://#{REPOSITORY_HOSTNAME}/")
+    drs_id.split("drs://#{REPOSITORY_HOSTNAME}/").last
+  end
+
+  ##
+  # GCS File methods
+  # NOTE: these currently will not work due to access controls on TDR buckets. leaving for now in case this is resolved,
+  # but they may end up being removed in favor of other tooling such as gsutil
+  ##
+
+  # retrieve a workspace's GCP bucket
+  #
+  # * *params*
+  #   - +bucket_id+ (String) => ID of workspace GCP bucket
+  #
+  # * *return*
+  #   - +Google::Cloud::Storage::Bucket+ object
+  def get_bucket(bucket_id)
+    self.storage.bucket bucket_id
+  end
+
+  # retrieve single study_file in a GCP bucket of a workspace
+  #
+  # * *params*
+  #   - +bucket_id+ (String) => ID of workspace GCP bucket
+  #   - +filename+ (String) => name of file
+  #
+  # * *return*
+  #   - +Google::Cloud::Storage::File+
+  def get_bucket_file(bucket_id, filename)
+    bucket = self.get_bucket(bucket_id)
+    bucket.file filename
+  end
+
+  # get a remote GCS file from a DRS id
+  #
+  # * *params*
+  #   - +drs_id+ (String) => A DRS identifier, formatted as drs://[repository_hostname]/v1_[collection_id]_[file_id]
+  #
+  # * *return*
+  #   - +Google::Cloud::Storage::Bucket+ object
+  #
+  # * *raises*
+  #   - (ArgumentError) => if drs_id is not formatted correctly
+  def get_bucket_file_from_drs_id(drs_id)
+    gs_url = get_gs_url_from_drs_id(drs_id)
+    gs_info = parse_gs_url(gs_url)
+    get_bucket_file(gs_info[:bucket_id], gs_info[:filepath])
+  end
+
+  # parse a GS URL into a bucket_id and filepath
+  #
+  # * *params*
+  #   - +gs_url+ GS url to file in TDR bucket, e.g. gs://bucket_name/path/to/file.txt
+  #
+  # * *returns*
+  #   - (Hash) => Hash of file info => {bucket_id: id, filepath: filepath}
+  #
+  # * *raises*
+  #   - (ArgumentError) => if gs_url is not formatted correctly
+  def parse_gs_url(gs_url)
+    raise ArgumentError.new("#{gs_url} is not a valid GS URL") unless gs_url.starts_with?('gs://')
+    url_parts = gs_url.split('gs://').last.split('/')
+    bucket_id = url_parts.slice!(0)
+    filepath = url_parts.join('/')
+    {bucket_id: bucket_id, filepath: filepath}
   end
 
   private
