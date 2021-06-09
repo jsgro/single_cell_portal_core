@@ -206,9 +206,10 @@ module Api
         end
 
         files_requested = nil
+        byebug
         # get requested files
         # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
-        if file_ids
+        if params[:file_ids]
           files_requested = StudyFile.where(:id.in => file_ids)
         else
           files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
@@ -274,7 +275,11 @@ module Api
       # find valid bulk download types from query parameters
       def self.find_matching_file_types(raw_file_types)
         file_types = RequestUtils.split_query_param_on_delim(parameter: raw_file_types)
-        StudyFile::BULK_DOWNLOAD_TYPES & file_types # find array intersection
+        if file_types.count > 0
+          return StudyFile::BULK_DOWNLOAD_TYPES & file_types # find array intersection
+        end
+        # default is return all types
+        StudyFile::BULK_DOWNLOAD_TYPES
       end
 
       # find matching directories in a given study
