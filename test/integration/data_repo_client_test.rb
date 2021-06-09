@@ -15,8 +15,10 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   # skip a test if the TDR API is not up (since it is their dev instance there is no uptime guarantee)
-  def skip_if_api_down(test_name)
-    skip "skipping #{test_name} due to TDR API being unavailable" if !@data_repo_client.api_available?
+  def skip_if_api_down
+    if !@data_repo_client.api_available?
+      puts "-- skipping due to TDR API being unavailable --" ; skip
+    end
   end
 
   test 'should instantiate client' do
@@ -106,18 +108,18 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should get api status' do
-    skip_if_api_down(self.method_name)
+    skip_if_api_down
     status = @data_repo_client.api_status
     assert status['ok']
   end
 
   test 'should check if api is available' do
-    skip_if_api_down(self.method_name)
+    skip_if_api_down
     assert @data_repo_client.api_available?
   end
 
   test 'should get datasets' do
-    skip_if_api_down(self.method_name)
+    skip_if_api_down
     datasets = @data_repo_client.get_datasets
     assert datasets.dig('total').present?
     skip 'got empty response for datasets' if datasets.dig('items').empty?
@@ -127,7 +129,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should get snapshots' do
-    skip_if_api_down(self.method_name)
+    skip_if_api_down
     snapshots = @data_repo_client.get_snapshots
     assert snapshots.dig('total').present?
     skip 'got empty response for snapshots' if snapshots.dig('items').empty?
@@ -137,7 +139,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should get snapshot' do
-    skip_if_api_down(self.method_name)
+    skip_if_api_down
     snapshot = @data_repo_client.get_snapshot(@snapshot_id)
     assert snapshot.present?
     expected_keys = %w(id name description createdDate source tables
@@ -146,7 +148,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should get file in snapshot' do
-    skip_if_api_down(self.method_name)
+    skip_if_api_down
     file_info = @data_repo_client.get_snapshot_file_info(@snapshot_id, @file_id)
     assert file_info.present?
     assert_equal @file_id, file_info.dig('fileId')
@@ -168,7 +170,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should query snapshot index' do
-    skip_if_api_down(self.method_name)
+    skip_if_api_down
     selected_facets = [
       {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]}
     ]
@@ -195,7 +197,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should get file info from drs id' do
-    skip_if_api_down(self.method_name)
+    skip_if_api_down
     file_info = @data_repo_client.get_drs_file_info(@drs_file_id)
     assert file_info.present?
     expected_id = @drs_file_id.split('/').last
@@ -211,7 +213,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should get gs url from drs id' do
-    skip_if_api_down(self.method_name)
+    skip_if_api_down
     found_gs_url = @data_repo_client.get_gs_url_from_drs_id(@drs_file_id)
     assert_equal @gs_url, found_gs_url
 
