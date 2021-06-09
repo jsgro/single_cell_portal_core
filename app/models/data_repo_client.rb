@@ -7,7 +7,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   include ApiHelpers
 
   # Google authentication scopes necessary for querying TDR API
-  GOOGLE_SCOPES = %w(openid email profile)
+  GOOGLE_SCOPES = %w(openid email profile https://www.googleapis.com/auth/devstorage.read_only)
    # Base API URL to request against
   BASE_URL = Rails.application.config.tdr_api_base_url.freeze
   # Hostname of repo, needed for parsing out DRS identifiers
