@@ -1,24 +1,25 @@
 <nav class="navbar fluid navbar-inverse navbar-fixed-top sc-navbar rectangle" role="navigation" id="single-cell-navbar">
-   <div class="navbar-header">
-		<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#scp-navbar-dropdown-collapse">
-			<span class="sr-only">Toggle navigation</span>
-			<span class="icon-bar"></span>
-			<span class="icon-bar"></span>
-			<span class="icon-bar"></span>
-		</button>
-     <div id="navbar-brand-wrapper">
-       <% if @selected_branding_group.present? %>
-         <%= scp_link_to "<span class='fas fa-home'></span> #{@selected_branding_group.name}</sup>".html_safe, site_path, class: "navbar-brand check-upload", style: 'margin-top: 6px;' %>
-       <% else %>
-         <%= link_to image_tag('SCP-white.png'), site_path, class: "navbar-brand check-upload" %><small id="beta-nav"><sup>BETA</sup></small>
-       <% end %>
-     </div>
-	</div>
-	<div class="collapse navbar-collapse" id="scp-navbar-dropdown-collapse">
-		<%= render partial: '/layouts/breadcrumbs' %>
-		<ul class="nav navbar-nav pull-right">
-			<li class='dropdown'><%= scp_link_to "<span class='fas fa-question-circle'></span> Help & Resources <span class='caret'></span>".html_safe, "#", class: "dropdown-toggle", "data-toggle" => "dropdown" %>
-				<ul class="dropdown-menu dropdown-menu-right">
+  <div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#scp-navbar-dropdown-collapse">
+      <span class="sr-only">Toggle navigation</span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+    <div id="navbar-brand-wrapper">
+      <% if @selected_branding_group.present? %>
+        <%= scp_link_to "<span class='fas fa-home'></span> #{@selected_branding_group.name}</sup>".html_safe, site_path, class: "navbar-brand check-upload", style: 'margin-top: 6px;' %>
+      <% else %>
+        <%= link_to image_tag('SCP-white.png'), site_path, class: "navbar-brand check-upload" %>
+        <small id="beta-nav"><sup>BETA</sup></small>
+      <% end %>
+    </div>
+  </div>
+  <div class="collapse navbar-collapse" id="scp-navbar-dropdown-collapse">
+    <%= render partial: '/layouts/breadcrumbs' %>
+    <ul class="nav navbar-nav pull-right">
+      <li class='dropdown'><%= scp_link_to "<span class='fas fa-question-circle'></span> Help & Resources <span class='caret'></span>".html_safe, "#", class: "dropdown-toggle", "data-toggle" => "dropdown" %>
+        <ul class="dropdown-menu dropdown-menu-right">
           <% if @selected_branding_group.present? && @selected_branding_group.external_link_url %>
             <li><%= link_to "<span class='fas fa-fw fa-globe'></span> ".html_safe + @selected_branding_group.external_link_description.html_safe, @selected_branding_group.external_link_url, target: '_blank', class: 'check-upload' %></li>
           <% end %>
@@ -26,11 +27,14 @@
           <li><%= link_to "<span class='fas fa-fw fa-envelope'></span> Contact Us".html_safe, '#', id: 'open-contact-modal' %></li>
           <li><%= link_to "<span class='fab fa-fw fa-github'></span> Portal Source Code".html_safe, 'https://github.com/broadinstitute/single_cell_portal_core', target: '_blank' %></li>
           <li><%= link_to "<span class='fas fa-fw fa-code'></span> REST API Documentation".html_safe, api_v1_swagger_ui_path, target: '_blank' %></li>
-				</ul>
-			</li>
-			<% if user_signed_in? %>
-				<li class="dropdown"><%= scp_link_to "<span class='fas fa-user'></span> #{current_user.email.split('@').first} <span class='caret'></span>".html_safe, "#", class: "dropdown-toggle left-border-0-5", "data-toggle" => "dropdown", id: 'profile-nav' %>
-					<ul class="dropdown-menu dropdown-menu-right">
+        </ul>
+      </li>
+      <li class="left-border-0-5">
+        <%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Create a Study".html_safe, new_study_path, class: 'check-upload', 'data-analytics-name' => 'prominent-create-study-button' %>
+      </li>
+      <% if user_signed_in? %>
+        <li class="dropdown"><%= scp_link_to "<span class='fas fa-user'></span> #{current_user.email.split('@').first} <span class='caret'></span>".html_safe, "#", class: "dropdown-toggle left-border-0-5", "data-toggle" => "dropdown", id: 'profile-nav' %>
+          <ul class="dropdown-menu dropdown-menu-right">
             <% if current_user.admin? %>
               <li><%= link_to "<span class='fas fa-lock fa-fw'></span> Admin Config".html_safe, admin_configurations_path, class: 'check-upload', id: 'admin-nav' %></li>
               <li><%= link_to "<span class='fas fa-flask fa-fw'></span> Analyses".html_safe, analysis_configurations_path, class: 'check-upload', id: 'analysis-nav' %></li>
@@ -46,7 +50,7 @@
             <li><%= scp_link_to "<span class='fas fa-tags fa-fw'></span> My Annotations".html_safe, user_annotations_path, class: 'check-upload', id: 'my-annotations' %></li>
             <li><%= scp_link_to "<span class='fas fa-book fa-fw'></span> My Studies".html_safe, studies_path, class: 'check-upload', id: 'my-studies' %>
             <li><%= scp_link_to "<span class='fas fa-dollar-sign fa-fw'></span> My Billing Projects".html_safe, billing_projects_path, class: 'check-upload', id: 'my-firecloud-projects' %>
-						<li><%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Add a Study".html_safe, new_study_path, class: 'check-upload' %></li>
+            <li><%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Create a Study".html_safe, new_study_path, class: 'check-upload' %></li>
             <% if current_user.available_branding_groups.any? %>
               <li role="separator" class="divider"></li>
               <li class="dropdown-header">My Brands</li>
@@ -61,16 +65,16 @@
             <li role="separator" class="divider"></li>
             <li><%= scp_link_to "<span class='fas fa-sign-out-alt fa-fw'></span> Sign Out".html_safe, destroy_user_session_path, method: :delete, class: 'check-upload', id: 'logout-nav' %></li>
           </ul>
-				</li>
-			<% else %>
+        </li>
+      <% else %>
 
-				<li><%= scp_link_to "<span class='fas fa-sign-in-alt fa-fw'></span> Sign In".html_safe, user_google_omniauth_authorize_path, method: :post, class: 'left-border-0-5', id: 'login-nav' %></li>
-			<% end %>
-		</ul>
-	</div>
+        <li><%= scp_link_to "<span class='fas fa-sign-in-alt fa-fw'></span> Sign In".html_safe, user_google_omniauth_authorize_path, method: :post, class: 'left-border-0-5', id: 'login-nav' %></li>
+      <% end %>
+    </ul>
+  </div>
   <% if @deployment_notification.present? %>
     <% if Time.zone.now >= @deployment_notification.display_time %>
-      <% if cookies[:hide_deployment_notification].nil? || cookies[:hide_deployment_notification] !=  @deployment_notification.id.to_s  %>
+      <% if cookies[:hide_deployment_notification].nil? || cookies[:hide_deployment_notification] != @deployment_notification.id.to_s %>
         <%= render partial: '/layouts/deployment_notification_banner', locals: {deployment_notification: @deployment_notification} %>
       <% end %>
     <% end %>
@@ -78,10 +82,12 @@
 </nav>
 
 <script type='text/javascript' nonce="<%= content_security_policy_script_nonce %>">
-    $('#open-contact-modal').on('click', function() {
-        $('#generic-update-target').html("<%= escape_javascript(render partial: '/layouts/generic_update_modal') %>");
-        $('#generic-update-modal-title').html("<span class='h2'>Need Help?</span>");
-        $('#generic-update-modal-body').html("<%= escape_javascript(render partial: '/layouts/contact_us') %>");
-        $("#generic-update-modal").modal("show");
-    });
+  $('#open-contact-modal').on('click', function() {
+    $('#generic-update-target')
+      .html("<%= escape_javascript(render partial: '/layouts/generic_update_modal') %>")
+    $('#generic-update-modal-title').html('<span class=\'h2\'>Need Help?</span>')
+    $('#generic-update-modal-body')
+      .html("<%= escape_javascript(render partial: '/layouts/contact_us') %>")
+    $('#generic-update-modal').modal('show')
+  })
 </script>

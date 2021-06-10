@@ -181,8 +181,7 @@ class AnalysisConfiguration
     begin
       ApplicationController.firecloud_client.get_method(self.namespace, self.name, self.snapshot, true)
     rescue => e
-      error_context = ErrorTracker.format_extra_context(self)
-      ErrorTracker.report_exception(e, nil, error_context)
+      ErrorTracker.report_exception(e, nil, self)
       Rails.logger.error "Error retrieving analysis WDL payload for #{self.identifier}: #{e.message}"
       nil
     end
@@ -327,8 +326,7 @@ class AnalysisConfiguration
       end
       true
     rescue => e
-      error_context = ErrorTracker.format_extra_context(self, last_config)
-      ErrorTracker.report_exception(e, self.user, error_context)
+      ErrorTracker.report_exception(e, self.user, self, last_config)
       Rails.logger.error "Error retrieving analysis WDL inputs/outputs for #{self.identifier}: #{e.message}"
       e
     end
@@ -343,8 +341,7 @@ class AnalysisConfiguration
       method = ApplicationController.firecloud_client.get_method(self.namespace, self.name, self.snapshot)
       self.synopsis = method['synopsis']
     rescue => e
-      error_context = ErrorTracker.format_extra_context(self)
-      ErrorTracker.report_exception(e, self.user, error_context)
+      ErrorTracker.report_exception(e, self.user, self)
       Rails.logger.error "Error retrieving analysis WDL synopsis for #{self.identifier}: #{e.message}"
       e
     end
@@ -369,8 +366,7 @@ class AnalysisConfiguration
         errors.add(:base, "#{self.identifier} is not viewable by Single Cell Portal.  Please ensure that the analysis WDL is public.")
       end
     rescue => e
-      error_context = ErrorTracker.format_extra_context(self)
-      ErrorTracker.report_exception(e, self.user, error_context)
+      ErrorTracker.report_exception(e, self.user, self)
       errors.add(:base, "#{self.identifier} is not viewable by Single Cell Portal.  Please ensure that the analysis WDL is public.")
     end
   end
@@ -383,8 +379,7 @@ class AnalysisConfiguration
         errors.add(:base, "#{self.identifier} does not have a publicly available configuration saved in the Methods Repository")
       end
     rescue => e
-      error_context = ErrorTracker.format_extra_context(self)
-      ErrorTracker.report_exception(e, self.user, error_context)
+      ErrorTracker.report_exception(e, self.user, self)
       errors.add(:base, "#{self.identifier} does not have a publicly available configuration saved in the Methods Repository")
     end
   end

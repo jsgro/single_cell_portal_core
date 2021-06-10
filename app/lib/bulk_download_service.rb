@@ -228,8 +228,7 @@ class BulkDownloadService
           'output="' + output_path + '"'
       ]
     rescue => e
-      error_context = ErrorTracker.format_extra_context(file, {storage_bucket: bucket_name})
-      ErrorTracker.report_exception(e, user, error_context)
+      ErrorTracker.report_exception(e, user, file, { storage_bucket: bucket_name})
       Rails.logger.error "Error generating signed url for #{output_path}; #{e.message}"
       curl_config = [
           '# Error downloading ' + output_path + '.  ' +

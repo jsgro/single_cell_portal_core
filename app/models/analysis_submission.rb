@@ -37,8 +37,7 @@ class AnalysisSubmission
           submission.update(status: 'Deleted', completed_on: Time.zone.now)
         end
       rescue => e
-        error_context = ErrorTracker.format_extra_context(submission)
-        ErrorTracker.report_exception(e, ApplicationController.firecloud_client.issuer, error_context)
+        ErrorTracker.report_exception(e, ApplicationController.firecloud_client.issuer, submission)
         Rails.logger.error "Setting #{submission.firecloud_project}/#{submission.firecloud_workspace}:#{submission.submission_id} to 'Deleted' due to error: #{e.message}"
         submission.update(status: 'Deleted', completed_on: Time.zone.now)
       end
@@ -75,8 +74,7 @@ class AnalysisSubmission
     begin
       ApplicationController.firecloud_client.get_workspace_submission(self.firecloud_project, self.firecloud_workspace, self.submission_id)
     rescue => e
-      error_context = ErrorTracker.format_extra_context(self)
-      ErrorTracker.report_exception(e, self.user, error_context)
+      ErrorTracker.report_exception(e, self.user, self)
       logger.error "Unable to retrieve submission JSON for #{self.firecloud_project}/#{self.firecloud_workspace}:#{self.submission_id}; #{e.message}"
     end
   end
@@ -91,8 +89,7 @@ class AnalysisSubmission
       method = configuration['methodRepoMethod']
       "#{method['methodNamespace']}/#{method['methodName']}/#{method['methodVersion']}"
     rescue => e
-      error_context = ErrorTracker.format_extra_context(self)
-      ErrorTracker.report_exception(e, self.user, error_context)
+      ErrorTracker.report_exception(e, self.user, self)
       logger.error "Unable to retrieve submission configuration JSON for #{self.firecloud_project}/#{self.firecloud_workspace}:#{self.submission_id}; #{e.message}"
     end
   end

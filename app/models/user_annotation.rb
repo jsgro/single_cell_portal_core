@@ -444,8 +444,7 @@ class UserAnnotation
         SingleCellMailer.annotation_publish_fail(self, self.user, cluster.errors.full_messages.join(', '))
       end
     rescue => e
-      error_context = ErrorTracker.format_extra_context(self)
-      ErrorTracker.report_exception(e, self.user, error_context)
+      ErrorTracker.report_exception(e, self.user, self)
       # error occured, so roll back
       self.update(queued_for_deletion: false, publishing: false)
 

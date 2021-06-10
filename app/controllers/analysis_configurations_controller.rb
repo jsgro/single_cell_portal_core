@@ -97,8 +97,7 @@ class AnalysisConfigurationsController < ApplicationController
         model_attributes[constant_name.downcase.to_s] = model.const_defined?(constant_name) ? model.const_get(constant_name) : []
       end
     rescue => e
-      error_context = ErrorTracker.format_extra_context({params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, params)
       logger.error "Error loading associated model due to error: #{e.message}"
     end
     render json: model_attributes.to_json
@@ -114,8 +113,7 @@ class AnalysisConfigurationsController < ApplicationController
         model_filters = model.const_get(:ANALYSIS_PARAMETER_FILTERS).keys
       end
     rescue => e
-      error_context = ErrorTracker.format_extra_context({params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, params)
       logger.error "Error loading associated model due to error: #{e.message}"
     end
     render json: model_filters.to_json
@@ -132,8 +130,7 @@ class AnalysisConfigurationsController < ApplicationController
         model_filters = model.const_get(:ANALYSIS_PARAMETER_FILTERS)[filter_attr]
       end
     rescue => e
-      error_context = ErrorTracker.format_extra_context({params: params})
-      ErrorTracker.report_exception(e, current_user, error_context)
+      ErrorTracker.report_exception(e, current_user, params)
       logger.error "Error loading associated model due to error: #{e.message}"
     end
     render json: model_filters.to_json

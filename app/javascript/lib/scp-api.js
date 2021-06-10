@@ -247,11 +247,11 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  */
 export async function fetchCluster({
   studyAccession, cluster, annotation, subsample, consensus, genes=null,
-  isAnnotatedScatter=null, fields=[], mock=false
+  isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[], mock=false
 }) {
   const apiUrl = fetchClusterUrl({
     studyAccession, cluster, annotation, subsample,
-    consensus, genes, isAnnotatedScatter, fields
+    consensus, genes, isAnnotatedScatter, isCorrelatedScatter, fields
   })
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
@@ -263,7 +263,7 @@ export async function fetchCluster({
 /** Helper function for returning a url for fetching cluster data.  See fetchCluster above for documentation */
 export function fetchClusterUrl({
   studyAccession, cluster, annotation, subsample, consensus, genes=null,
-  isAnnotatedScatter=null, fields=[]
+  isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[]
 }) {
   // Digest full annotation name to enable easy validation in API
   let [annotName, annotType, annotScope] = [annotation.name, annotation.type, annotation.scope]
@@ -275,6 +275,8 @@ export function fetchClusterUrl({
   }
   // eslint-disable-next-line camelcase
   const is_annotated_scatter = isAnnotatedScatter ? true : ''
+  // eslint-disable-next-line camelcase
+  const is_correlated_scatter = isCorrelatedScatter ? true : ''
   const paramObj = {
     annotation_name: annotName,
     annotation_type: annotType,
@@ -283,7 +285,8 @@ export function fetchClusterUrl({
     consensus,
     gene: genes,
     fields: fields.join(','),
-    is_annotated_scatter
+    is_annotated_scatter,
+    is_correlated_scatter
   }
   const params = stringifyQuery(paramObj)
   if (!cluster || cluster === '') {

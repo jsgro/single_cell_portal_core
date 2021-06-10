@@ -29,7 +29,10 @@ module SingleCellPortal
     config.middleware.use Rack::Brotli
 
     # Docker image for file parsing via scp-ingest-pipeline
-    config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.10.2'
+    config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.11.0'
+
+    # Terra Data Repo API base url
+    config.tdr_api_base_url = 'https://jade-terra.datarepo-prod.broadinstitute.org/'
 
     config.autoload_paths << Rails.root.join('lib')
 

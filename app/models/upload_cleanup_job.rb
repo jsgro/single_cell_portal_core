@@ -59,14 +59,13 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
             end
           end
         rescue => e
-          error_context = ErrorTracker.format_extra_context(study, study_file, {retry_count: attempt})
-          ErrorTracker.report_exception(e, nil, error_context)
           if attempt <= MAX_RETRIES
             interval = attempt * 2
             run_at = interval.minutes.from_now
             Rails.logger.error "error in UploadCleanupJob for #{study.accession}:#{study_file.bucket_location}:#{study_file.id}, will retry at #{run_at}; #{e.message}"
             Delayed::Job.enqueue(UploadCleanupJob.new(study, study_file, attempt), run_at: run_at)
           else
+            ErrorTracker.report_exception(e, nil, study, study_file, { retry_count: attempt})
             Rails.logger.error "terminal error in UploadCleanupJob for #{study.accession}:#{study_file.bucket_location}:#{study_file.id}; #{e.message}"
             message = "<p>The following failure occurred when attempting to clean up #{study.firecloud_project}/#{study.firecloud_workspace}:#{study_file.bucket_location}</p>"
             message += "<hr /><p>#{e.class.name}: #{e.message}</p>"

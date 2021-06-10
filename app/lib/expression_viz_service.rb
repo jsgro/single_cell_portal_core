@@ -150,6 +150,17 @@ class ExpressionVizService
     viz_data
   end
 
+  def self.load_correlated_data_array_scatter(study, genes, cluster, annotation,  subsample_threshold=nil)
+    viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_coords: false)
+
+    gene0_expression = viz_data[:cells].map { |cell| genes[0]['scores'][cell].to_f.round(4) }
+    gene1_expression = viz_data[:cells].map { |cell| genes[1]['scores'][cell].to_f.round(4) }
+
+    viz_data[:x] = gene0_expression
+    viz_data[:y] = gene1_expression
+    viz_data
+  end
+
   # load boxplot expression scores vs. scores across each gene for all cells
   # will support a variety of consensus modes (default is mean)
   def self.load_gene_set_expression_boxplot_scores(study, genes, cluster, annotation, consensus, subsample_threshold=nil)
