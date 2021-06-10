@@ -258,6 +258,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   end
 
   # generate a query string in ElasticSearch query DSL
+  # will also convert SCP metadata convention names to HCA/TIM names for TDR query
   # see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html for more information
   #
   # * *params*
@@ -268,18 +269,21 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #
   # * *returns*
   #   - (Hash) => Hash representation of query in ElasticSearch query DSL (must be cast to JSON for use in DataRepoClient#query_snapshot_indexes)
-  #                 e.g. "{:query_string=>{:query=>"(species:NCBITaxon9609 OR species:Homo sapiens) AND
+  #                 e.g. "{:query_string=>{:query=>"(genus_species:NCBITaxon9609 OR genus_species:Homo sapiens) AND
   #                         (disease:MONDO_0018076 OR disease:tuberculosis OR disease:MONDO_0005105 OR disease:melanoma)"}}"
   def generate_query_from_facets(selected_facets)
     formatted_elements = []
     selected_facets.each do |search_facet|
-      facet = search_facet[:id]
+      facet_id = search_facet[:id]
+      # convert to names used in TDR, or fall back to SCP name if not found
+      tdr_column = FacetNameConverter.to_hca(facet_id) || facet_id
       if search_facet[:filters].is_a? Hash # this is a numeric facet w/ min/max/unit
-        filters = ["#{search_facet.dig(:filters, :min)}-#{search_facet.dig(:filters, :max)}"]
+        # cast to integer for matching; TODO: determine correct unit/datatype and convert
+        filters = ["#{search_facet.dig(:filters, :min).to_i}-#{search_facet.dig(:filters, :max).to_i}"]
       else
         filters = search_facet[:filters].map(&:values).flatten
       end
-      elements = filters.map {|filter| "#{facet}:#{filter}" }
+      elements = filters.map {|filter| "#{tdr_column}:#{filter}" }
       formatted_elements << "(#{elements.join(' OR ')})"
     end
     {query_string: {query: formatted_elements.join(' AND ')}}

@@ -178,7 +178,7 @@ module Api
           if @preset_search.accession_list.any?
             sort_type = :accession_list if params[:terms].blank?
             @accession_list = @preset_search.accession_list
-            Rails.logger.info "Scoping search results to accessions from preset search: #{@preset_search.name}: #{@accession_list}"
+            logger.info "Scoping search results to accessions from preset search: #{@preset_search.name}: #{@accession_list}"
             @viewable = @viewable.where(:accession.in => @accession_list)
           end
         end
@@ -291,8 +291,16 @@ module Api
           end
         end
 
+        # perform TDR search, if enabled & user performed faceted search
+        if @facets.any? && User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend')
+          @trd_results = self.class.get_tdr_results(@facets)
+          # just log for now
+          logger.info "Found #{@trd_results.keys.size} results in Terra Data Repo"
+          logger.info pp @trd_results
+        end
+
         @matching_accessions = @studies.map(&:accession)
-        Rails.logger.info "Final list of matching studies: #{@matching_accessions}"
+        logger.info "Final list of matching studies: #{@matching_accessions}"
         @results = @studies.paginate(page: params[:page], per_page: Study.per_page)
         render json: search_results_obj, status: 200
       end
@@ -925,6 +933,48 @@ module Api
         else
           return matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] }
         end
+      end
+
+      # execute a search in TDR and get back normalized results
+      def self.get_tdr_results(selected_facets)
+        query_json = ApplicationController.data_repo_client.generate_query_from_facets(selected_facets)
+        raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json)
+        results = {}
+        raw_tdr_results.dig('result').each do |result_row|
+          short_name = result_row.dig('project_short_name')
+          results[short_name] ||= {
+            name: result_row.dig('project_title'),
+            description: result_row.dig('project_description'),
+            matches: []
+          }
+          # determine facet filter matches
+          selected_facets.each do |facet|
+            matches = get_facet_match_for_tdr_result(facet, result_row)
+            matches.each do |col_name, matched_val|
+              entry = {col_name => matched_val}
+              results[short_name][:matches] << entry unless results[short_name][:matches].include?(entry)
+            end
+          end
+        end
+        results
+      end
+
+      # determine facet matches for an individual result row from TDR
+      def self.get_facet_match_for_tdr_result(facet, result_row)
+        tdr_name = FacetNameConverter.to_hca(facet[:id])
+        if facet[:filters].is_a? Hash
+          # this is a numeric facet, so convert to range for match
+          # TODO: determine correct unit/datatype and convert
+          filter_value = "#{facet.dig(:filters, :min).to_i}-#{facet.dig(:filters, :max).to_i}"
+          matches = result_row.each_pair.select {|col, val| col == tdr_name && val == filter_value}
+        else
+          matches = []
+          facet[:filters].each do |filter|
+            # look for match on the column name, and see which filter value also matched (ontology label or id)
+            matches << result_row.each_pair.select {|col, val| col == tdr_name && (val == filter[:name] || filter[:id])}.flatten
+          end
+        end
+        matches
       end
     end
   end
