@@ -6,6 +6,8 @@ module Api
 
       before_action :authenticate_api_user!
 
+      DEFAULT_BULK_FILE_TYPES = ['Cluster', 'Metadata', 'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File']
+
       swagger_path '/bulk_download/auth_code' do
         operation :post do
           key :tags, [
@@ -206,7 +208,6 @@ module Api
         end
 
         files_requested = nil
-        byebug
         # get requested files
         # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
         if params[:file_ids]
@@ -279,7 +280,7 @@ module Api
           return StudyFile::BULK_DOWNLOAD_TYPES & file_types # find array intersection
         end
         # default is return all types
-        StudyFile::BULK_DOWNLOAD_TYPES
+        DEFAULT_BULK_FILE_TYPES
       end
 
       # find matching directories in a given study

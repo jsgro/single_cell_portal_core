@@ -60,7 +60,7 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
             <div className="col-md-4">
               <h3 className={stepNum === 1 ? '' : 'greyed'}>
                 <span className="badge">1</span>
-                &nbsp; Select the files
+                &nbsp; Select files
               </h3>
             </div>
             <div className="col-md-4">

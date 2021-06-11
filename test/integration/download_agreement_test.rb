@@ -35,8 +35,8 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
     assert signed_url.include?(@exp_matrix.upload_file_name), "Redirect url does not point at requested file"
 
     # test bulk download, first by generating and saving user totat.
-    totat = @test_user.create_totat(30, api_v1_search_bulk_download_path)
-    get api_v1_search_bulk_download_path, params: {accessions: [@study.accession], auth_code: totat[:totat]}
+    totat = @test_user.create_totat(30, api_v1_bulk_download_generate_curl_config_path)
+    get api_v1_bulk_download_generate_curl_config_path, params: {accessions: [@study.accession], auth_code: totat[:totat]}
     assert_response :success, "Did not get curl config for bulk download"
 
     # enable download agreement, assert 403
@@ -45,8 +45,8 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
 
     get download_file_path(accession: @study.accession, study_name: @study.url_safe_name, filename: @exp_matrix.upload_file_name)
     assert_response :forbidden, "Did not correctly respond 403 when download agreement is in place: #{response.code}"
-    totat = @test_user.create_totat(30, api_v1_search_bulk_download_path)
-    get api_v1_search_bulk_download_path, params: {accessions: [@study.accession], auth_code: totat[:totat]}
+    totat = @test_user.create_totat(30, api_v1_bulk_download_generate_curl_config_path)
+    get api_v1_bulk_download_generate_curl_config_path, params: {accessions: [@study.accession], auth_code: totat[:totat]}
     assert_response :forbidden, "Did not correctly respond 403 for bulk download: #{response.code}"
     assert response.body.include?('download agreement'), "Error response did not reference download agreement: #{response.body}"
 
@@ -59,8 +59,8 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
     signed_url = response.headers['Location']
 
     assert signed_url.include?(@exp_matrix.upload_file_name), "Redirect url does not point at requested file"
-    totat = @test_user.create_totat(30, api_v1_search_bulk_download_path)
-    get api_v1_search_bulk_download_path, params: {accessions: [@study.accession], auth_code: totat[:totat]}
+    totat = @test_user.create_totat(30, api_v1_bulk_download_generate_curl_config_path)
+    get api_v1_bulk_download_generate_curl_config_path, params: {accessions: [@study.accession], auth_code: totat[:totat]}
     assert_response :success, "Did get curl config for bulk download after accepting download agreement"
 
     # clean up

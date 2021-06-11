@@ -130,16 +130,16 @@ describe('Download selection modal', () => {
       <DownloadSelectionModal studyAccessions={['SCP12', 'SCP1', 'SCP35', 'SCP42']} show={true} setShow={()=>{}}/>
     ))
     await waitForElementToBeRemoved(() => screen.getByTestId('bulk-download-loading-icon'))
-    expect(screen.getByTestId('download-size-amount')).toHaveTextContent('3.1MB')
+    expect(screen.getByTestId('download-size-amount')).toHaveTextContent('3.1 MB')
 
-    fireEvent.click(screen.getByText('1 files 215.1KB'))
-    expect(screen.getByTestId('download-size-amount')).toHaveTextContent('2.9MB')
+    fireEvent.click(screen.getByText('1 files 215.1 KB'))
+    expect(screen.getByTestId('download-size-amount')).toHaveTextContent('2.9 MB')
 
-    fireEvent.click(screen.getByText('1 files 215.1KB'))
-    expect(screen.getByTestId('download-size-amount')).toHaveTextContent('3.1MB')
+    fireEvent.click(screen.getByText('1 files 215.1 KB'))
+    expect(screen.getByTestId('download-size-amount')).toHaveTextContent('3.1 MB')
 
     fireEvent.click(screen.getByText('Matrix'))
-    expect(screen.getByTestId('download-size-amount')).toHaveTextContent('825.2KB')
+    expect(screen.getByTestId('download-size-amount')).toHaveTextContent('825.2 KB')
 
     fireEvent.click(screen.getByText('NEXT'))
     await waitForElementToBeRemoved(() => screen.getByTestId('bulk-download-loading-icon'))

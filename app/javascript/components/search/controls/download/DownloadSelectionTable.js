@@ -250,6 +250,6 @@ export function bytesToSize(bytes) {
   // binary and have values like MiB (mebibyte)
   const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1000)), 10)
 
-  if (i === 0) {return `${bytes}${sizes[i]}`}
-  return `${(bytes / (1000 ** i)).toFixed(1)}${sizes[i]}`
+  if (i === 0) {return `${bytes} ${sizes[i]}`}
+  return `${(bytes / (1000 ** i)).toFixed(1)} ${sizes[i]}`
 }

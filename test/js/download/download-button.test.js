@@ -50,6 +50,15 @@ describe('Download button for faceted search', () => {
     expect(screen.getAllByRole('dialog')).toHaveLength(2) // even though there is only one dialog, bootstrap gives two different elements the role 'dialog'
     const headings = screen.getAllByRole('heading')
     expect(headings).toHaveLength(2)
-    expect(headings[0]).toHaveTextContent('1 Select the files')
+    expect(headings[0]).toHaveTextContent('1 Select files')
+  })
+
+  it('is enabled for users who perform a facet search', async () => {
+    render((
+      <UserContext.Provider value={{ accessToken: 'test'}}>
+        <DownloadButton searchResults={{ matchingAccessions: ['SCP1', 'SCP2'], terms: '', facets: [{disease: ['foo']}] }}/>
+      </UserContext.Provider>
+    ))
+    expect(screen.getByRole('button')).toBeEnabled()
   })
 })

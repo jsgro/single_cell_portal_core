@@ -82,11 +82,11 @@ class RequestUtils
   # takes a comma-delimited string of ids (e.g. StudyFile ids) and returns an array of ids
   # raises Argument error if any of the strings are not valid ids
   def self.validate_id_list(id_list_string)
-    ids = id_list_string.split(',')
-    uuid_regex = /^[0-9a-f]{24}$/
-    match_results = ids.map {|id| uuid_regex.match?(id.downcase) }
-    if !match_results.all? {|r| r}
-      raise ArgumentError, 'Ids must be valid UUIDs'
+    ids = id_list_string.split(',').map(&:strip)
+    begin
+      ids.each {|id| BSON::ObjectId.from_string(id) }
+    rescue
+      raise ArgumentError, 'IDs must be valid MongoDB ObjectId values'
     end
     ids
   end

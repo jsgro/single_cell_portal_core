@@ -45,12 +45,10 @@ export default function DownloadCommand({ fileIds=[] }) {
     {
       !isLoading &&
       <div className="col-md-12">
-        <h4>Copy the command below and paste it into your terminal</h4>
-        This link is valid for one use within&nbsp;
-        <span className='countdown'>
+        <h4>Copy the command below and paste it into your Mac/Linux/Unix terminal</h4>
+        This command is valid for one use within <span className='countdown'>
           {Math.floor(authInfo.timeInterval / 60)}
-        </span>&nbsp;
-        minutes.
+        </span> minutes.
         <div className='input-group'>
           <input
             ref={textInputRef}

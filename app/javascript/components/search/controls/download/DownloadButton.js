@@ -27,7 +27,7 @@ export default function DownloadButton({ searchResults={} }) {
   const active = (
     userContext.accessToken !== '' &&
     matchingAccessions.length > 0 &&
-    searchResults && hasSearchParams(searchResults)
+    (searchResults?.terms?.length > 0 || searchResults?.facets?.length > 0)
   )
 
   let hint = 'Download files for your search results'
