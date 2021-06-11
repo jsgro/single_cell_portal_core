@@ -223,7 +223,7 @@ module Api
             else
               # For "Scatter" tab
               plot_data = ExpressionVizService.load_expression_data_array_points(study, genes, cluster, annotation, subsample,
-                consensus: consensus, expression_only: !include_coordinates)
+                consensus: consensus, include_coords: include_coordinates, include_annotation: include_annotation, include_cells: include_cells)
             end
           end
 
