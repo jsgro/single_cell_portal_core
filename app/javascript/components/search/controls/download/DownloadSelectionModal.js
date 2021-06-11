@@ -71,7 +71,7 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
             </div>
           </div>
           <div className="greyed">
-            Files are downloaded via the command line. Once you confirm your files selection, you will get a link
+            Files are downloaded via the command line. Once you confirm your files selection, you will get a command
             to use on your terminal.
           </div>
         </div>

@@ -221,20 +221,6 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
-  # should generate an auth code for a given user
-  test 'should generate auth code' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
-    execute_http_request(:post, api_v1_create_auth_code_path)
-    assert_response :success
-    assert_not_nil json['auth_code'], "Did not generate auth code; missing 'totat' field: #{json}"
-    auth_code = json['auth_code']
-    @user.reload
-    assert_equal auth_code, @user.totat
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
-  end
-
   test 'should filter search results by branding group' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
