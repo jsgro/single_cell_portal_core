@@ -66,7 +66,7 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
             <div className="col-md-4">
               <h3 className={stepNum === 2 ? '' : 'greyed'}>
                 <span className="badge">2</span>
-                &nbsp; Get terminal link
+                &nbsp; Get terminal command
               </h3>
             </div>
           </div>
