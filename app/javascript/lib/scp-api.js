@@ -598,10 +598,9 @@ export default async function scpApi(
     if (response.status === 401 || response.status === 403) {
       showMessage(
         <div>
-          Authorization error<br/>
+          Authentication failed<br/>
           Your session may have timed out. Please sign in again<br/><br/>
-          If this error persists, contact support at { supportEmailLink }
-        </div>, 'error-api-auth'
+        </div>, 'api-auth-failure'
       )
     }
   }

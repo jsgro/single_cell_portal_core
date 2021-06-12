@@ -26,7 +26,7 @@ export default function MessageModal() {
     newMessages[key] = message
     setMessages(newMessages)
     setShow(true)
-    log('notify-modal', { key })
+    log('message-modal', { key })
   }
 
   /** helper function to clear the messages and hide the modal */
