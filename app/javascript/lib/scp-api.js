@@ -5,7 +5,7 @@
  *
  * API docs: https://singlecell.broadinstitute.org/single_cell/api
  */
-
+import React from 'react'
 import camelcaseKeys from 'camelcase-keys'
 import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
@@ -15,6 +15,8 @@ import {
   logSearch, logDownloadAuthorization, logCreateUserAnnotation,
   mapFiltersForLogging
 } from './scp-api-metrics'
+import { showMessage } from 'lib/MessageModal'
+import { supportEmailLink } from 'lib/error-utils'
 
 // If true, returns mock data for all API responses.  Only for dev.
 let globalMock = false
@@ -591,6 +593,16 @@ export default async function scpApi(
       }
     } else {
       return [response, perfTimes, true]
+    }
+  } else {
+    if (response.status === 401 || response.status === 403) {
+      showMessage(
+        <div>
+          Authorization error<br/>
+          Your session may have timed out. Please sign in again<br/><br/>
+          If this error persists, contact support at { supportEmailLink }
+        </div>, 'error-api-auth'
+      )
     }
   }
   if (toJson) {

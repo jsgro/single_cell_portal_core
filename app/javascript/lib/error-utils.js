@@ -1,19 +1,22 @@
 import React from 'react'
 
+export const supportEmailAddress = 'scp-support@broadinstitute.zendesk.com'
+export const supportEmailLink = (
+  <a href={`mailto:${supportEmailAddress}`}>
+    {supportEmailAddress}
+  </a>
+)
+
 export const serverErrorEnd = <div>
   Sorry, an error has occurred. Support has been notified. Please try
   again. If this error persists, or you require assistance, please
   contact support at
   <br/>
-  <a href="mailto:scp-support@broadinstitute.zendesk.com">
-    scp-support@broadinstitute.zendesk.com
-  </a>
+  {supportEmailLink}
 </div>
 
 export const userErrorEnd = <div>
   If you require assistance, please contact support at
   <br/>
-  <a href="mailto:scp-support@broadinstitute.zendesk.com">
-    scp-support@broadinstitute.zendesk.com
-  </a>
+  {supportEmailLink}
 </div>

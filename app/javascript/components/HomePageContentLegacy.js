@@ -3,6 +3,7 @@ import React, { useContext } from 'react'
 import { Router, Link, useLocation } from '@reach/router'
 
 import GeneSearchView from 'components/search/genes/GeneSearchView'
+import MessageModal from 'lib/MessageModal'
 import GeneSearchProvider from 'providers/GeneSearchProvider'
 import SearchPanel from 'components/search/controls/SearchPanel'
 import ResultsPanel from 'components/search/results/ResultsPanel'
@@ -74,6 +75,7 @@ function ProviderStack(props) {
 function RawHomePageContent() {
   return (
     <ErrorBoundary>
+      <MessageModal/>
       <ProviderStack>
         <LinkableSearchTabs/>
       </ProviderStack>

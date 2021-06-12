@@ -128,6 +128,7 @@ module Api
 
         def show
           cluster = nil
+          render json: {error: 'Unauthorized'}, status: 403 and return
           if params[:cluster_name] == '_default' || params[:cluster_name].empty?
             cluster = @study.default_cluster
             if cluster.nil?
