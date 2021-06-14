@@ -501,7 +501,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
     if (isMultiGene) {
       if (isConsensus) {
         if (exploreParams.annotation.type === 'numeric') {
-          enabledTabs = ['annotatedScatter', 'distribution', 'dotplot']
+          enabledTabs = ['annotatedScatter', 'dotplot', 'heatmap']
         } else {
           enabledTabs = ['scatter', 'distribution', 'dotplot']
         }
