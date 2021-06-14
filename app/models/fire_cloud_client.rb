@@ -216,15 +216,11 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       self.refresh_access_token
     end
     # set default headers, appending application identifier including hostname for disambiguation
-    headers = {
-        'Authorization' => "Bearer #{self.access_token['access_token']}",
-        'x-app-id' => "single-cell-portal",
-        'x-domain-id' => "#{ENV['HOSTNAME']}",
-        'x-user-id' => "#{self.tracking_identifier}"
-    }
-    # if not uploading a file, set the content_type to application/json
-    if !request_opts[:file_upload]
-      headers.merge!({'Content-Type' => 'application/json'})
+    headers = get_default_headers
+
+    # if uploading a file, remove Content-Type header to use default x-www-form-urlencoded type on POSTs
+    if request_opts[:file_upload]
+      headers.delete!({'Content-Type' => 'application/json'})
     end
 
     # process request
@@ -284,14 +280,8 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
   #   - +Hash+ with health status information for various FireCloud services or error response
   def api_status
     path = self.api_root + '/status'
-    # make sure access token is still valid
-    headers = {
-        'Authorization' => "Bearer #{self.valid_access_token['access_token']}",
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json'
-    }
     begin
-      response = RestClient::Request.execute(method: :get, url: path, headers: headers)
+      response = RestClient::Request.execute(method: :get, url: path, headers: get_default_headers)
       JSON.parse(response.body)
     rescue RestClient::ExceptionWithResponse => e
       Rails.logger.error "FireCloud status error: #{e.message}"

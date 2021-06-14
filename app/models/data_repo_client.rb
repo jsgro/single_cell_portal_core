@@ -57,13 +57,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
     Rails.logger.info "Terra Data Repo API request (#{http_method.to_s.upcase}) #{path}"
 
     # set default headers, appending application identifier including hostname for disambiguation
-    headers = {
-      'Authorization' => "Bearer #{self.valid_access_token['access_token']}",
-      'Accept' => 'application/json',
-      'Content-Type' => 'application/json',
-      'x-app-id' => "single-cell-portal",
-      'x-domain-id' => "#{ENV['HOSTNAME']}"
-    }
+    headers = get_default_headers
 
     # process request
     begin
