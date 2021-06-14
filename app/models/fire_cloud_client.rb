@@ -220,7 +220,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
 
     # if uploading a file, remove Content-Type header to use default x-www-form-urlencoded type on POSTs
     if request_opts[:file_upload]
-      headers.delete!({'Content-Type' => 'application/json'})
+      headers.reject! {|k,v| k == 'Content-Type'}
     end
 
     # process request
