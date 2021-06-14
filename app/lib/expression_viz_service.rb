@@ -127,9 +127,9 @@ class ExpressionVizService
   # load cluster_group data_array values, but use expression scores to set numerical color array
   # this is the scatter plot shown in the "scatter" tab next to "distribution" on gene-based views
   def self.load_expression_data_array_points(study, genes, cluster, annotation, subsample=nil,
-    consensus: nil, expression_only: false)
+    consensus: nil, include_coords: true, include_annotation: true, include_cells: true)
     viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample,
-      include_annotations: !expression_only, include_coords: !expression_only)
+      include_annotations: include_annotation, include_coords: include_coords)
 
     viz_data[:expression] = viz_data[:cells].map do |cell|
       if consensus == 'median'
@@ -142,7 +142,7 @@ class ExpressionVizService
       expression_score
     end
 
-    if expression_only
+    if !include_coords
       # x and y will already be excluded, but we had to return the cells from the above call to
       # match the appropriate gene scores
       viz_data.delete(:cells)
