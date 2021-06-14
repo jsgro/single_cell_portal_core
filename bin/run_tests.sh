@@ -97,11 +97,15 @@ clean_up
 echo "*** STARTING DELAYED_JOB for $PASSENGER_APP_ENV env ***"
 bin/delayed_job restart $PASSENGER_APP_ENV -n 6 || { echo "FAILED to start DELAYED_JOB" >&2; exit 1; } # WARNING: using "restart" with environment of test is a HACK that will prevent delayed_job from running in development mode, for example
 
-echo "Precompiling assets, yarn and webpacker..."
-export NODE_OPTIONS="--max-old-space-size=4096"
-RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:clean
-RAILS_ENV=test NODE_ENV=test yarn install --force --trace
-RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:precompile
+# If we're only running Ruby tests, then don't compile JavaScript
+if [[ "$TEST_FILEPATH" == "" ]]; then
+  echo "Precompiling assets, yarn and webpacker..."
+  export NODE_OPTIONS="--max-old-space-size=4096"
+  RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:clean
+  RAILS_ENV=test NODE_ENV=test yarn install --force --trace
+  RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:precompile
+fi
+
 echo "Generating random seed, seeding test database..."
 RANDOM_SEED=$(openssl rand -hex 16)
 echo $RANDOM_SEED > "$BASE_DIR/.random_seed"
