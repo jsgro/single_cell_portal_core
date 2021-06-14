@@ -55,13 +55,9 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   def process_api_request(http_method, path, payload: nil, retry_count: 0)
     # Log API call for auditing/tracking purposes
     Rails.logger.info "Terra Data Repo API request (#{http_method.to_s.upcase}) #{path}"
-
-    # set default headers, appending application identifier including hostname for disambiguation
-    headers = get_default_headers
-
     # process request
     begin
-      response = RestClient::Request.execute(method: http_method, url: path, payload: payload, headers: headers)
+      response = RestClient::Request.execute(method: http_method, url: path, payload: payload, headers: get_default_headers)
       # handle response using helper
       handle_response(response)
     rescue RestClient::Exception => e
@@ -102,16 +98,8 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #   - +Hash+ with health status information for various TDR services or error response
   def api_status
     path = self.api_root + '/status'
-    # make sure access token is still valid
-    headers = {
-      'Authorization' => "Bearer #{self.valid_access_token['access_token']}",
-      'Accept' => 'application/json',
-      'Content-Type' => 'application/json',
-      'x-app-id' => "single-cell-portal",
-      'x-domain-id' => "#{ENV['HOSTNAME']}"
-    }
     begin
-      response = RestClient::Request.execute(method: :get, url: path, headers: headers)
+      response = RestClient::Request.execute(method: :get, url: path, headers: get_default_headers)
       JSON.parse(response.body)
     rescue RestClient::ExceptionWithResponse => e
       Rails.logger.error "Terra Data Repo status error: #{e.message}"
