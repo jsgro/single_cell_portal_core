@@ -218,9 +218,9 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
     # set default headers, appending application identifier including hostname for disambiguation
     headers = get_default_headers
 
-    # if uploading a file, remove Content-Type header to use default x-www-form-urlencoded type on POSTs
+    # if uploading a file, remove Content-Type/Accept headers to use default x-www-form-urlencoded type on POSTs
     if request_opts[:file_upload]
-      headers.reject! {|k,v| k == 'Content-Type'}
+      headers.reject! {|header, value| %w(Content-Type Accept).include? header }
     end
 
     # process request
