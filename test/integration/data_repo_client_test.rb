@@ -164,8 +164,8 @@ class DataRepoClientTest < ActiveSupport::TestCase
       {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]},
       {id: :disease, filters: [{id: 'MONDO_0018076', name: 'tuberculosis'},{id: 'MONDO_0005109', name: 'HIV infectious disease'}]}
     ]
-    expected_query = "(species:NCBITaxon9609 OR species:Homo sapiens) AND (disease:MONDO_0018076 OR disease:tuberculosis " \
-                     "OR disease:MONDO_0005109 OR disease:HIV infectious disease)"
+    expected_query = "(genus_species:NCBITaxon9609 OR genus_species:Homo sapiens) AND (disease:MONDO_0018076 OR " \
+                     "disease:tuberculosis OR disease:MONDO_0005109 OR disease:HIV infectious disease)"
 
     query_json = @data_repo_client.generate_query_from_facets(selected_facets)
     assert_equal expected_query, query_json.dig(:query_string, :query)
