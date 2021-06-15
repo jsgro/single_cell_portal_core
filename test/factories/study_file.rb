@@ -48,7 +48,7 @@ FactoryBot.define do
         cell_input {
           {}
         }
-        cluster_type { '2d' }
+        cluster_type { cell_input.dig(:z).present? ? '3d' : '2d' }
         # annotation_input is an array of objects specifying name, type, and values for annotations
         # values should be an array in the same length and order as the 'cells' array above
         # e.g. [{ name: 'category', type: 'group', values: ['foo', 'foo', 'bar'] }]
