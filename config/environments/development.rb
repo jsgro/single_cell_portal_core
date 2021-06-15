@@ -110,4 +110,7 @@ Rails.application.configure do
   end
 
   config.bard_host_url = 'https://terra-bard-dev.appspot.com'
+
+  # Terra Data Repo API base url
+  config.tdr_api_base_url = 'https://jade.datarepo-dev.broadinstitute.org'
 end

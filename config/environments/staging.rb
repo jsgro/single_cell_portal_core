@@ -114,6 +114,9 @@ Rails.application.configure do
 
   config.bard_host_url = 'https://terra-bard-dev.appspot.com'
 
+  # Terra Data Repo API base url
+  config.tdr_api_base_url = 'https://jade.datarepo-dev.broadinstitute.org'
+
   # DNS rebinding/host header injection protection
   # CIDR ip ranges from https://cloud.google.com/load-balancing/docs/health-checks#firewall_rules
   config.hosts = [
