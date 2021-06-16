@@ -1,7 +1,7 @@
 FactoryBot.define do
   # creates a ClusterGroup object
   factory :cluster_group do
-    cluster_type { }
+    cluster_type { '2d' }
     cell_annotations { [] }
     name { study_file.name }
     study { study_file.study }

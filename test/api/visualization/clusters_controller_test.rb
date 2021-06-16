@@ -89,7 +89,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
       "isAnnotatedScatter"=>false,
       "isCorrelatedScatter"=>false,
       "numPoints"=>3,
-      "axes"=>{"titles"=>{"x"=>"X", "y"=>"Y", "z"=>"Z", "magnitude" => "Expression"}, "aspects"=>nil, "ranges"=>nil},
+      "axes"=>{"titles"=>{"x"=>"X", "y"=>"Y", "z"=>"Z", "magnitude" => "Expression"}, "aspects"=>nil},
       "hasCoordinateLabels"=>false,
       "coordinateLabels"=>[],
       "pointAlpha"=>1.0,
@@ -166,7 +166,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
                                      z_axis_min: 4, z_axis_max: 9
     )
     sign_in_and_update @user
-    execute_http_request(:get, api_v1_study_cluster_path(study, cluster_name, ))
+    execute_http_request(:get, api_v1_study_cluster_path(study, cluster_name))
     # aspect should be 'cube' as domain range of each axis is equal (5)
     expected_aspect = {
       mode: 'cube', x: 1.0, y: 1.0, z: 1.0
@@ -180,6 +180,6 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
 
     assert viz_data.dig(:is3D)
     assert_equal expected_aspect, viz_data.dig(:axes, :aspects)
-    assert_equal expected_ranges, viz_data.dig(:axes, :ranges)
+    assert_equal expected_ranges, viz_data.dig(:userSpecifiedRanges)
   end
 end

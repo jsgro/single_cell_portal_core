@@ -233,8 +233,7 @@ module Api
 
           axes_full = {
             titles: titles,
-            aspects: aspect,
-            ranges: cluster.domain_ranges
+            aspects: aspect
           }
 
           coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(cluster)
