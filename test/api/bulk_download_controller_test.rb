@@ -16,11 +16,11 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
 
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
-    @taxon = Taxon.find_or_create_by!(common_name: 'mouse',
-                           scientific_name: 'Mus musculus',
+    @taxon = Taxon.find_or_create_by!(common_name: 'mouse_fake1',
+                           scientific_name: 'Mus musculusfake1',
                            user: User.first,
                            ncbi_taxid: 10090,
-                           notes: 'fake mouse taxon for testing')
+                           notes: 'fake mouse taxon 1 for testing')
     @genome_assembly = GenomeAssembly.find_or_create_by!(name: "GRCm38",
                                               alias: nil,
                                               release_date: '2012-01-09',
@@ -66,6 +66,12 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
                                                   study: @basic_study,
                                                   upload_file_size: 100)
     sign_in_and_update @user
+  end
+
+
+  teardown do
+    OmniAuth.config.mock_auth[:google] = nil
+    @taxon.destroy
   end
 
   # should generate a config text file to pass to curl for bulk download
