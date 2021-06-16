@@ -6,7 +6,7 @@ module Api
       include StudySearchResultsObjects
 
       before_action :set_current_api_user!
-      before_action :authenticate_api_user!, only: [:create_auth_code, :bulk_download]
+      before_action :authenticate_api_user!, only: [:create_auth_code]
       before_action :set_search_facet, only: :facet_filters
       before_action :set_search_facets_and_filters, only: :index
       before_action :set_preset_search, only: :index
