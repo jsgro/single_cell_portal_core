@@ -5,6 +5,7 @@ import _clone from 'lodash/clone'
 
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { getDefaultClusterParams } from 'lib/cluster-utils'
+import MessageModal from 'lib/MessageModal'
 
 import { fetchExplore } from 'lib/scp-api'
 import useExploreTabRouter from './ExploreTabRouter'
@@ -28,6 +29,7 @@ function RoutableExploreTab({ studyAccession }) {
 
   return (
     <div className="study-explore">
+      <MessageModal/>
       <ExploreDisplayTabs studyAccession={studyAccession}
         exploreParams={exploreParams}
         clearExploreParams={clearExploreParams}
