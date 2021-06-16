@@ -11,8 +11,8 @@ const functionHolder = {}
   * @param {String|JSX} message the message content to display
   * @param {String} key a key for deduping multiple errors, and used for logging
   */
-export function showMessage(message, key) {
-  functionHolder.showMessage(message, key)
+export function showMessage(message, key, logProps) {
+  functionHolder.showMessage(message, key, logProps)
 }
 
 /** Component to render a modal that can display messages in response to any call to 'showMessage' */
@@ -21,12 +21,12 @@ export default function MessageModal() {
   const [messages, setMessages] = useState({})
 
   /** helper function to render the message, show the modal, and log the event */
-  function showMessage(message, key) {
+  function showMessage(message, key, logProps) {
     const newMessages = _clone(messages)
     newMessages[key] = message
     setMessages(newMessages)
     setShow(true)
-    log('message-modal', { key })
+    log('message-modal', { ...logProps, key })
   }
 
   /** helper function to clear the messages and hide the modal */

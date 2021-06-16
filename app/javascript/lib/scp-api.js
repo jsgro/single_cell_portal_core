@@ -600,7 +600,15 @@ export default async function scpApi(
         <div>
           Authentication failed<br/>
           Your session may have timed out. Please sign in again.<br/><br/>
-        </div>, 'api-auth-failure'
+        </div>,
+        'api-auth-failure',
+        {
+          source: 'api',
+          url,
+          isError: true,
+          messageType: 'error-client',
+          statusCode: response.status
+        }
       )
     }
   }
