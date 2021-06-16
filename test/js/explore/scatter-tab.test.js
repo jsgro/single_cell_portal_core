@@ -138,7 +138,7 @@ describe('getNewContextMap correctly assigns contexts', () => {
     })
   })
 
-  it('generates scatterPlots and titles for spatial plots', async () => {
+  it('generates scatter plots and titles for spatial clusters', async () => {
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
     // pass in a clone of the response since it may get modified by the cache operations
     apiFetch.mockImplementation(params => {
