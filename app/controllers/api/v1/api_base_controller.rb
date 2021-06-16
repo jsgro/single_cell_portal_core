@@ -26,9 +26,9 @@ module Api
         ErrorTracker.report_exception(exception, current_api_user, params)
         logger.error ([exception.message] + exception.backtrace).join($/)
         if Rails.env.production?
-          render json: {error: "An unexpected error has occurred"}, status: 500
+          render json: {error: "An unexpected error has occurred"}, status: 500 and return
         else
-          render json: {error: exception.message}, status: 500
+          render json: {error: exception.message}, status: 500 and return
         end
       end
 
