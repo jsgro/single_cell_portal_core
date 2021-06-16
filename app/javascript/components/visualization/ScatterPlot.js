@@ -489,7 +489,7 @@ export function get3DScatterProps({
   userSpecifiedRanges, axes, hasCoordinateLabels,
   coordinateLabels
 }) {
-  const { titles, ranges, aspects } = axes
+  const { titles, aspects } = axes
 
   const scene = {
     baseCamera,
@@ -501,11 +501,11 @@ export function get3DScatterProps({
 
   if (userSpecifiedRanges) {
     scene.xaxis.autorange = false
-    scene.xaxis.range = ranges.x
+    scene.xaxis.range = userSpecifiedRanges.x
     scene.yaxis.autorange = false
-    scene.yaxis.range = ranges.y
+    scene.yaxis.range = userSpecifiedRanges.y
     scene.zaxis.autorange = false
-    scene.zaxis.range = ranges.x
+    scene.zaxis.range = userSpecifiedRanges.z
     scene.aspectmode = aspects.mode,
     scene.aspectratio = {
       x: aspects.x,

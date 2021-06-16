@@ -143,4 +143,43 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
     expected_error = {"error"=>"No cluster named data%2Fcluster_with_slash.txt could be found"}
     assert_equal expected_error, json
   end
+
+  test 'should set aspect ratio and domains when provided' do
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'Domain Range Study',
+                              test_array: @@studies_to_clean)
+    cluster_name = 'cluster_domains.txt'
+    cluster_file = FactoryBot.create(:cluster_file,
+                                     name: cluster_name,
+                                     study: study,
+                                     cell_input: {
+                                       x: [1, 2 , 3, 4],
+                                       y: [3, 4, 5, 6],
+                                       z: [5, 6, 7, 8],
+                                       cells: %w(A B C D)
+                                     },
+                                     annotation_input: [
+                                       {name: 'species', type: 'group', values: ['dog', 'cat', 'dog']}
+                                     ],
+                                     x_axis_min: 0, x_axis_max: 5,
+                                     y_axis_min: 2, y_axis_max: 7,
+                                     z_axis_min: 4, z_axis_max: 9
+    )
+    sign_in_and_update @user
+    execute_http_request(:get, api_v1_study_cluster_path(study, cluster_name))
+    # aspect should be 'cube' as domain range of each axis is equal (5)
+    expected_aspect = {
+      mode: 'cube', x: 1.0, y: 1.0, z: 1.0
+    }.with_indifferent_access
+    expected_ranges = {
+      x: [cluster_file.x_axis_min, cluster_file.x_axis_max],
+      y: [cluster_file.y_axis_min, cluster_file.y_axis_max],
+      z: [cluster_file.z_axis_min, cluster_file.z_axis_max]
+    }.with_indifferent_access
+    viz_data = json.with_indifferent_access
+
+    assert viz_data.dig(:is3D)
+    assert_equal expected_aspect, viz_data.dig(:axes, :aspects)
+    assert_equal expected_ranges, viz_data.dig(:userSpecifiedRanges)
+  end
 end
