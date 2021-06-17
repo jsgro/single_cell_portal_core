@@ -1,7 +1,11 @@
-require "integration_test_helper"
+require 'integration_test_helper'
+require 'api_test_helper'
 
 class DownloadAgreementTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
+  include Requests::HttpHelpers
+  include Minitest::Hooks
+  include ::TestInstrumentor
 
   setup do
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
@@ -25,8 +29,6 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
   end
 
   test 'should enforce download agreement' do
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # ensure normal download works
     get download_file_path(accession: @study.accession, study_name: @study.url_safe_name, filename: @exp_matrix.upload_file_name)
     # since this is an external redirect, we cannot call follow_redirect! but instead have to get the location header
@@ -36,7 +38,7 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
 
     # test bulk download, first by generating and saving user totat.
     totat = @test_user.create_totat(30, api_v1_bulk_download_generate_curl_config_path)
-    get api_v1_bulk_download_generate_curl_config_path, params: {accessions: [@study.accession], auth_code: totat[:totat]}
+    execute_http_request(:get, api_v1_bulk_download_generate_curl_config_path(accessions: [@study.accession], auth_code: totat[:totat]), user: @test_user)
     assert_response :success, "Did not get curl config for bulk download"
 
     # enable download agreement, assert 403
@@ -46,7 +48,7 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
     get download_file_path(accession: @study.accession, study_name: @study.url_safe_name, filename: @exp_matrix.upload_file_name)
     assert_response :forbidden, "Did not correctly respond 403 when download agreement is in place: #{response.code}"
     totat = @test_user.create_totat(30, api_v1_bulk_download_generate_curl_config_path)
-    get api_v1_bulk_download_generate_curl_config_path, params: {accessions: [@study.accession], auth_code: totat[:totat]}
+    execute_http_request(:get, api_v1_bulk_download_generate_curl_config_path(accessions: [@study.accession], auth_code: totat[:totat]), user: @test_user)
     assert_response :forbidden, "Did not correctly respond 403 for bulk download: #{response.code}"
     assert response.body.include?('download agreement'), "Error response did not reference download agreement: #{response.body}"
 
@@ -60,14 +62,12 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
 
     assert signed_url.include?(@exp_matrix.upload_file_name), "Redirect url does not point at requested file"
     totat = @test_user.create_totat(30, api_v1_bulk_download_generate_curl_config_path)
-    get api_v1_bulk_download_generate_curl_config_path, params: {accessions: [@study.accession], auth_code: totat[:totat]}
+    execute_http_request(:get, api_v1_bulk_download_generate_curl_config_path(accessions: [@study.accession], auth_code: totat[:totat]), user: @test_user)
     assert_response :success, "Did get curl config for bulk download after accepting download agreement"
 
     # clean up
     download_agreement.destroy
     download_acceptance.destroy
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
 end
