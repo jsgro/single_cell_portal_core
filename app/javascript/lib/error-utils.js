@@ -7,6 +7,13 @@ export const supportEmailLink = (
   </a>
 )
 
+export const jsErrorEnd = <div>
+  Please try reloading the page. If this error persists, or you require assistance, please
+  contact support at
+  <br/>
+  {supportEmailLink}
+</div>
+
 export const serverErrorEnd = <div>
   Sorry, an error has occurred. Support has been notified. Please try
   again. If this error persists, or you require assistance, please
