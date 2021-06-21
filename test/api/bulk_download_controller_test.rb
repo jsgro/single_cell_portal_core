@@ -19,7 +19,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     @taxon = Taxon.find_or_create_by!(common_name: 'mouse_fake1',
                            scientific_name: 'Mus musculusfake1',
                            user: User.first,
-                           ncbi_taxid: 10090,
+                           ncbi_taxid: 100901,
                            notes: 'fake mouse taxon 1 for testing')
     @genome_assembly = GenomeAssembly.find_or_create_by!(name: "GRCm38",
                                               alias: nil,

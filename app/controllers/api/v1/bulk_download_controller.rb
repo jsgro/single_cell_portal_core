@@ -94,7 +94,12 @@ module Api
       def summary
         # sanitize study accessions and file types
         valid_accessions = self.class.find_matching_accessions(params[:accessions])
-        check_accession_permissions(valid_accessions)
+
+        begin
+          check_accession_permissions(valid_accessions)
+        rescue ArgumentError => e
+          render json: e.message, status: 403 and return
+        end
 
         @study_file_info = ::BulkDownloadService.get_download_info(valid_accessions)
 
@@ -195,7 +200,11 @@ module Api
           valid_accessions = self.class.find_matching_accessions(params[:accessions])
           sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
         end
-        check_accession_permissions(valid_accessions)
+        begin
+          check_accession_permissions(valid_accessions)
+        rescue ArgumentError => e
+          render json: e.message, status: 403 and return
+        end
 
         # if this is a single-study download, allow for DirectoryListing downloads
         if valid_accessions.size == 1 && params[:directory].present?
@@ -253,15 +262,14 @@ module Api
         accessions_by_permission = ::BulkDownloadService.get_permitted_accessions(study_accessions: valid_accessions,
                                                                                   user: current_api_user)
         if accessions_by_permission[:forbidden].any? || accessions_by_permission[:lacks_acceptance].any?
-          error_msg = "Forbidden: cannot access requested accessions. "
+          error_msg = "Forbidden: cannot access one or more requested studies for download. "
           if accessions_by_permission[:forbidden].any?
             error_msg += "You do not have permission to view #{accessions_by_permission[:forbidden].join(', ')}"
           end
           if accessions_by_permission[:lacks_acceptance].any?
             error_msg += "#{accessions_by_permission[:lacks_acceptance].join(', ')} require accepting a download agreement that can be found by viewing that study and going to the 'Download' tab"
           end
-          render json: {error: error_msg},
-                 status: 403 and return
+          raise ArgumentError, error_msg
         end
       end
 

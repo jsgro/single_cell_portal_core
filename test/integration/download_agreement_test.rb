@@ -1,5 +1,6 @@
 require 'integration_test_helper'
 require 'api_test_helper'
+require 'test_helper'
 
 class DownloadAgreementTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -10,7 +11,7 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
   setup do
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
     @test_user = User.find_by(email: 'testing.user@gmail.com')
-    @study = Study.create(name: "Download Agreement #{@random_seed}", user_id: @test_user.id, firecloud_project: ENV['PORTAL_NAMESPACE'])
+    @study = Study.create!(name: "Download Agreement #{@random_seed}", user_id: @test_user.id, firecloud_project: ENV['PORTAL_NAMESPACE'])
     upload = File.open(Rails.root.join('test', 'test_data', 'expression_matrix_example.txt'))
     @exp_matrix = @study.study_files.build(file_type: 'Expression Matrix', upload: upload)
     if Taxon.count > 0
@@ -25,7 +26,7 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
 
   teardown do
     OmniAuth.config.mock_auth[:google] = nil
-    Study.find_by(name: "Download Agreement #{@random_seed}").destroy
+    Study.find_by(name: "Download Agreement #{@random_seed}").destroy_and_remove_workspace
   end
 
   test 'should enforce download agreement' do
@@ -34,6 +35,7 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
     # since this is an external redirect, we cannot call follow_redirect! but instead have to get the location header
     assert_response 302, "Did not initiate file download as expected; response code: #{response.code}"
     signed_url = response.headers['Location']
+
     assert signed_url.include?(@exp_matrix.upload_file_name), "Redirect url does not point at requested file"
 
     # test bulk download, first by generating and saving user totat.
