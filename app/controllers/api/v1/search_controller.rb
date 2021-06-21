@@ -945,14 +945,14 @@ module Api
           results[short_name] ||= {
             name: result_row.dig('project_title'),
             description: result_row.dig('project_description'),
-            matches: []
+            facet_matches: []
           }
           # determine facet filter matches
           selected_facets.each do |facet|
             matches = get_facet_match_for_tdr_result(facet, result_row)
             matches.each do |col_name, matched_val|
               entry = {col_name => matched_val}
-              results[short_name][:matches] << entry unless results[short_name][:matches].include?(entry)
+              results[short_name][:facet_matches] << entry unless results[short_name][:facet_matches].include?(entry)
             end
           end
         end
