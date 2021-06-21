@@ -35,7 +35,7 @@ export default class ErrorBoundary extends Component {
   render() {
     if (this.state.error) {
       let displayMessage = jsErrorEnd
-      if (process.env.VIEW_ENV != 'production') {
+      if (process.env.VIEW_ENV === 'development') {
         displayMessage = <pre>
           {this.state.error.message}
           {this.state.info.componentStack}
