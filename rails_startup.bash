@@ -141,5 +141,8 @@ echo "*** ADDING REPORTING CRONS ***"
 (crontab -u app -l ; echo "@daily . /home/app/.cron_env ; cd /home/app/webapp/; /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV \"AnalysisSubmission.update_running_submissions\" >> /home/app/webapp/log/cron_out.log 2>&1") | crontab -u app -
 echo "*** COMPLETED ***"
 
+echo "*** REFRESHING DEFAULT CLUSTER CACHE ***"
+sudo -E -u app -H /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV "ClusterCacheService.delay(queue: :cache).cache_all_defaults"
+
 echo "*** SENDING RESTART NOTIFICATION ***"
 sudo -E -u app -H /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV "AdminConfiguration.restart_notification"
