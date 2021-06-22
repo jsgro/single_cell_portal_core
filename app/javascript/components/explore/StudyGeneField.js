@@ -5,6 +5,7 @@ import Button from 'react-bootstrap/lib/Button'
 import Modal from 'react-bootstrap/lib/Modal'
 import CreatableSelect from 'react-select/creatable'
 import _differenceBy from 'lodash/differenceBy'
+import stringSimilarity from 'string-similarity'
 
 import { log, logStudyGeneSearch } from 'lib/metrics-api'
 
@@ -19,11 +20,11 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
   let geneOptions = []
   if (allGenes) {
     // Autocomplete when user starts typing
-    if (inputText && inputText.length > 1) {
-      const lowerCaseInput = inputText.toLowerCase()
-      geneOptions = getOptionsFromGenes(allGenes.filter(geneName => {
-        return geneName.toLowerCase().includes(lowerCaseInput)
-      }))
+    if (inputText) {
+      const similar = stringSimilarity.findBestMatch(inputText, allGenes)
+      const sortedMatches = similar.ratings.sort((a, b) => b.rating - a.rating)
+      const topMatches = sortedMatches.map(match => match.target).slice(0, 20) // Show up to 20 matches
+      geneOptions = getOptionsFromGenes(topMatches)
     }
   }
 
