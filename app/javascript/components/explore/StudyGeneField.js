@@ -9,7 +9,6 @@ import stringSimilarity from 'string-similarity'
 
 import { log, logStudyGeneSearch } from 'lib/metrics-api'
 
-
 /** renders the gene text input
   * This shares a lot of logic with search/genes/GeneKeyword, but is kept as a separate component for
   * now, as the need for autocomplete raises additional complexity
@@ -21,9 +20,21 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
   if (allGenes) {
     // Autocomplete when user starts typing
     if (inputText) {
+      const text = inputText.toLowerCase()
+      const prefixMatches = allGenes.filter(gene => gene.toLowerCase().startsWith(text))
+
+      console.log('prefixMatches', prefixMatches)
+
       const similar = stringSimilarity.findBestMatch(inputText, allGenes)
-      const sortedMatches = similar.ratings.sort((a, b) => b.rating - a.rating)
-      const topMatches = sortedMatches.map(match => match.target).slice(0, 20) // Show up to 20 matches
+      const sortedMatches =
+        similar.ratings
+          .sort((a, b) => b.rating - a.rating)
+          .filter(match => !prefixMatches.includes(match.target))
+          .map(match => match.target)
+
+      // Show top 20 matches -- first prefix matches, then ranked by similarity
+      const topMatches = prefixMatches.concat(sortedMatches).slice(0, 20)
+
       geneOptions = getOptionsFromGenes(topMatches)
     }
   }
