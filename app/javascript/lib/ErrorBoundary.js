@@ -34,19 +34,14 @@ export default class ErrorBoundary extends Component {
   /** show an error if one exists, otherwise show the component */
   render() {
     if (this.state.error) {
-      let displayMessage = jsErrorEnd
-      if (process.env.VIEW_ENV === 'development') {
-        displayMessage = <pre>
-          {this.state.error.message}
-          {this.state.info.componentStack}
-        </pre>
-      }
-      // consider using node_env to decide whether or not to render the full trace
-      // See related ticket SCP-2237
       return (
         <div className="alert-danger text-center error-boundary">
           <span className="font-italic ">Something went wrong.</span><br/>
-          { displayMessage }
+          {jsErrorEnd}
+          <pre>
+            {this.state.error.message}
+            {this.state.info.componentStack}
+          </pre>
         </div>
       )
     }
