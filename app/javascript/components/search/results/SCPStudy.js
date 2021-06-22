@@ -111,9 +111,9 @@ function facetMatchBadges(study) {
       const helpText = `Metadata match for ${key}`
       return (
         <span key={index}
-          className="badge badge-secondary facet-match"
-          data-toggle="tooltip"
-          title={helpText}>
+              className="badge badge-secondary facet-match"
+              data-toggle="tooltip"
+              title={helpText}>
           {
             matches[key].map(filter => {
               if ('min' in filter) { // numeric facet
@@ -129,7 +129,7 @@ function facetMatchBadges(study) {
 }
 
 /* displays a brief summary of a study, with a link to the study page */
-export default function Study({ study }) {
+export default function SCPStudy({ study }) {
   const termMatches = study.term_matches
   const studyTitle= highlightText(study.name, termMatches).styledText
   const studyDescription = formatDescription(study.description, termMatches)

@@ -943,6 +943,8 @@ module Api
         raw_tdr_results.dig('result').each do |result_row|
           short_name = result_row.dig('project_short_name')
           results[short_name] ||= {
+            trd_result: true, # identify this entry as coming from Data Repo
+            accession: short_name,
             name: result_row.dig('project_title'),
             description: result_row.dig('project_description'),
             facet_matches: []
