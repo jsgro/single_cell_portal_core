@@ -42,7 +42,7 @@ function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
 }) {
-  const [isLoading, setIsLoading] = duseState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [spearman, setSpearman] = useState(null)
   const [scatterData, setScatterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
