@@ -15,6 +15,10 @@ module Api
         # cache expiration is still handled by CacheRemovalJob
         def check_api_cache!
           cache_path = RequestUtils.get_cache_path(request.path, params.to_unsafe_hash)
+          Rails.logger.info "Rails.cache"
+          Rails.logger.info Rails.cache
+          Rails.logger.info "Rails.cache.stats"
+          Rails.logger.info Rails.cache.stats
           if check_caching_config && Rails.cache.exist?(cache_path)
             Rails.logger.info "Reading from API cache: #{cache_path}"
             json_response = Rails.cache.fetch(cache_path)
@@ -26,8 +30,13 @@ module Api
         def write_api_cache!
           cache_path = RequestUtils.get_cache_path(request.path, params.to_unsafe_hash)
           if check_caching_config && !Rails.cache.exist?(cache_path)
-            Rails.logger.info "Writing to API cache: #{cache_path}"
-            Rails.cache.write(cache_path, response.body)
+            if Rails.cache.instance_variable_get(:@data).size == 0
+              Rails.logger.info "Warming default cluster cache"
+              ClusterCacheService.cache_all_defaults
+            else
+              Rails.logger.info "Writing to API cache: #{cache_path}"
+              Rails.cache.write(cache_path, response.body)
+            end
           end
         end
 

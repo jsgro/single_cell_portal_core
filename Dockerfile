@@ -1,6 +1,8 @@
 # use KDUX base Rails image, configure only project-specific items here
 FROM gcr.io/broad-singlecellportal-staging/rails-baseimage:1.2.0
 
+RUN apt-get install -y -qq --no-install-recommends memcached
+
 # Set ruby version
 RUN bash -lc 'rvm --default use ruby-2.6.6'
 RUN bash -lc 'rvm rvmrc warning ignore /home/app/webapp/Gemfile'

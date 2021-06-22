@@ -131,6 +131,7 @@ GEM
     connection_pool (2.2.5)
     crass (1.0.6)
     daemons (1.4.0)
+    dalli (2.7.11)
     debase (0.2.4.1)
       debase-ruby_core_source (>= 0.10.2)
     debase-ruby_core_source (0.10.12)
@@ -530,6 +531,7 @@ DEPENDENCIES
   carrierwave-mongoid
   coffee-rails
   daemons
+  dalli
   debase
   delayed_job
   delayed_job_mongoid

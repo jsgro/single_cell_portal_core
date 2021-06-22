@@ -27,6 +27,11 @@ class ClusterCacheService
   # * *yields*
   #   - (JSON) => ActionDispatch::Cache entry of JSON viz data
   def self.cache_study_defaults(study)
+    Rails.logger.info "Rails.cache"
+    Rails.logger.info Rails.cache
+    Rails.logger.info "Rails.cache.stats"
+    Rails.logger.info Rails.cache.stats
+
     Rails.logger.info "Checking defaults on #{study.accession} for pre-caching"
     cluster = study.default_cluster
     annotation = study.default_annotation
@@ -38,7 +43,10 @@ class ClusterCacheService
         annotation_name: annotation_name, annotation_scope: annotation_scope, annotation_type: annotation_type,
         subsample: 'all', cluster_name: sanitized_cluster_name
       }
-      default_params = {cluster_name: '_default'}
+      default_params = {
+        cluster_name: '_default',
+        fields: 'coordinates,cells,annotation'
+      }
       [default_params, full_params].each do |url_params|
         path = format_request_path(:api_v1_study_cluster_path, study.accession, url_params[:cluster_name])
         cache_path = RequestUtils.get_cache_path(path, url_params.with_indifferent_access)
