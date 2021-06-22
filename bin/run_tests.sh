@@ -98,6 +98,13 @@ echo "*** STARTING DELAYED_JOB for $PASSENGER_APP_ENV env ***"
 bin/delayed_job restart $PASSENGER_APP_ENV -n 6 || { echo "FAILED to start DELAYED_JOB" >&2; exit 1; } # WARNING: using "restart" with environment of test is a HACK that will prevent delayed_job from running in development mode, for example
 
 # If we're only running Ruby tests, then don't compile JavaScript
+#
+# Note: there are some Ruby integration tests that do require JS assets to be
+# compiled.  Any test that issues a local HTTP request to a non-API endpoints
+# (such as StudyCreationTest or TaxonsControllerTest) will cause webpack to
+# autocompile assets if they are not already present. This change won't result
+# in an error; this is just an FYI that static assets are needed for more
+# than just `yarn ui-test`.
 if [[ "$TEST_FILEPATH" == "" ]]; then
   echo "Precompiling assets, yarn and webpacker..."
   export NODE_OPTIONS="--max-old-space-size=4096"
