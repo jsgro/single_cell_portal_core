@@ -96,7 +96,7 @@ module Api
         valid_accessions = self.class.find_matching_accessions(params[:accessions])
 
         begin
-          check_accession_permissions(valid_accessions)
+          self.class.check_accession_permissions(valid_accessions, current_api_user)
         rescue ArgumentError => e
           render json: e.message, status: 403 and return
         end
@@ -201,7 +201,7 @@ module Api
           sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
         end
         begin
-          check_accession_permissions(valid_accessions)
+          self.class.check_accession_permissions(valid_accessions, current_api_user)
         rescue ArgumentError => e
           render json: e.message, status: 403 and return
         end
@@ -255,12 +255,12 @@ module Api
 
       private
 
-      def check_accession_permissions(valid_accessions)
+      def self.check_accession_permissions(valid_accessions, user)
         if valid_accessions.blank?
-          render json: {error: 'Invalid request parameters; study accessions not found'}, status: 400 and return
+          raise ArgumentError, 'Invalid request parameters; study accessions not found'
         end
         accessions_by_permission = ::BulkDownloadService.get_permitted_accessions(study_accessions: valid_accessions,
-                                                                                  user: current_api_user)
+                                                                                  user: user)
         if accessions_by_permission[:forbidden].any? || accessions_by_permission[:lacks_acceptance].any?
           error_msg = "Forbidden: cannot access one or more requested studies for download. "
           if accessions_by_permission[:forbidden].any?
