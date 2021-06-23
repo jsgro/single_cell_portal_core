@@ -1,5 +1,5 @@
 # use KDUX base Rails image, configure only project-specific items here
-FROM gcr.io/broad-singlecellportal-staging/rails-baseimage:1.2.0
+FROM gcr.io/broad-singlecellportal-staging/rails-baseimage:1.2.1
 
 # Set ruby version
 RUN bash -lc 'rvm --default use ruby-2.6.6'
