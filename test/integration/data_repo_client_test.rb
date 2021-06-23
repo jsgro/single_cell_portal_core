@@ -7,7 +7,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
   before(:all) do
     @data_repo_client = ApplicationController.data_repo_client
     @dataset_id = 'd918e6f2-e63b-4d9c-82a6-f0d44c6bcc0d' # dataset for snapshot, we don't actually have access to this
-    @snapshot_id = 'fcaee9e0-4745-4006-9718-7d048a846d96' # dev PulmonaryFibrosisGSE135893 snapshot
+    @snapshot_id = '257c5646-689a-4f25-8396-2500c849cb4f' # dev PulmonaryFibrosisGSE135893 snapshot
     @file_id = '5009a1f8-c2ee-4ceb-8ddb-40c3ddee5472' # ID of sequence file in PulmonaryFibrosisGSE135893 snapshot
     @filename = 'IPF_VUILD54_1_LU_Whole_C1_X5SCR_F00207_HMWLCBGX7_ATTTGCTA_L001_R1_001.fastq.gz' # name of above file
     @drs_file_id = "drs://#{DataRepoClient::REPOSITORY_HOSTNAME}/v1_#{@snapshot_id}_#{@file_id}" # computed DRS id
@@ -164,8 +164,12 @@ class DataRepoClientTest < ActiveSupport::TestCase
       {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]},
       {id: :disease, filters: [{id: 'MONDO_0018076', name: 'tuberculosis'},{id: 'MONDO_0005109', name: 'HIV infectious disease'}]}
     ]
-    expected_query = "(genus_species:NCBITaxon9609 OR genus_species:Homo sapiens) AND (disease:MONDO_0018076 OR " \
-                     "disease:tuberculosis OR disease:MONDO_0005109 OR disease:HIV infectious disease)"
+    expected_query = "(tim__a__terraa__corec__a__donora__terraa__corec__hasa__organisma__type:NCBITaxon9609 OR " \
+                     "tim__a__terraa__corec__a__donora__terraa__corec__hasa__organisma__type:Homo sapiens) AND " \
+                     "(tim__a__terraa__corec__a__bioa__samplea__terraa__corec__c__hasa__disease:MONDO_0018076 OR " \
+                     "tim__a__terraa__corec__a__bioa__samplea__terraa__corec__c__hasa__disease:tuberculosis OR " \
+                     "tim__a__terraa__corec__a__bioa__samplea__terraa__corec__c__hasa__disease:MONDO_0005109 OR "\
+                     "tim__a__terraa__corec__a__bioa__samplea__terraa__corec__c__hasa__disease:HIV infectious disease)"
 
     query_json = @data_repo_client.generate_query_from_facets(selected_facets)
     assert_equal expected_query, query_json.dig(:query_string, :query)
@@ -181,9 +185,11 @@ class DataRepoClientTest < ActiveSupport::TestCase
     original_count = results.dig('result').count
     assert original_count > 0
     sample_row = results.dig('result').sample
-    assert_equal 'Homo sapiens', sample_row.dig('genus_species')
+    species_field_name = FacetNameConverter.convert_to_model(:tim, :species, :name)
+    assert_equal 'Homo sapiens', sample_row[species_field_name]
     expected_project = 'Single-cell RNA-sequencing reveals profibrotic roles of distinct epithelial and mesenchymal lineages in pulmonary fibrosis'
-    assert_equal expected_project, sample_row.dig('project_title')
+    project_title_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
+    assert_equal expected_project, sample_row[project_title_field]
 
     # refine query and re-run
     selected_facets = [
@@ -192,10 +198,10 @@ class DataRepoClientTest < ActiveSupport::TestCase
     ]
     query_json = @data_repo_client.generate_query_from_facets(selected_facets)
     results = @data_repo_client.query_snapshot_indexes(query_json, snapshot_ids: [@snapshot_id])
-    new_count = results.dig('result').count
+    new_count = results['result'].count
     assert new_count < original_count
-    sample_row = results.dig('result').sample
-    assert_equal '46-72', sample_row.dig('organism_age')
+    sample_row = results['result'].sample
+    assert_equal '46-72', sample_row['organism_age']
   end
 
   test 'should get file info from drs id' do

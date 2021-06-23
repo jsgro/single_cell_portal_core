@@ -258,7 +258,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
     selected_facets.each do |search_facet|
       facet_id = search_facet[:id]
       # convert to names used in TDR, or fall back to SCP name if not found
-      tdr_column = FacetNameConverter.to_hca(facet_id) || facet_id
+      tdr_column = FacetNameConverter.convert_to_model(:tim, facet_id, :id) || facet_id
       if search_facet[:filters].is_a? Hash # this is a numeric facet w/ min/max/unit
         # cast to integer for matching; TODO: determine correct unit/datatype and convert
         filters = ["#{search_facet.dig(:filters, :min).to_i}-#{search_facet.dig(:filters, :max).to_i}"]
