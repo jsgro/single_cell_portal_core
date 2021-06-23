@@ -8,6 +8,7 @@ import { getDefaultClusterParams } from 'lib/cluster-utils'
 import MessageModal from 'lib/MessageModal'
 
 import { fetchExplore } from 'lib/scp-api'
+import ErrorBoundary from 'lib/ErrorBoundary'
 import useExploreTabRouter from './ExploreTabRouter'
 
 /**
@@ -64,9 +65,11 @@ function createExploreParamsWithDefaults(exploreParams, exploreInfo) {
 /** wraps the explore tab in a Router object so it can use React hooks for routable parameters */
 export default function ExploreTab({ studyAccession }) {
   return (
-    <Router>
-      <RoutableExploreTab studyAccession={studyAccession} default/>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <RoutableExploreTab studyAccession={studyAccession} default/>
+      </Router>
+    </ErrorBoundary>
   )
 }
 
