@@ -1,4 +1,4 @@
-require "test_helper"
+require 'test_helper'
 
 class DataRepoClientTest < ActiveSupport::TestCase
   include Minitest::Hooks
@@ -18,8 +18,8 @@ class DataRepoClientTest < ActiveSupport::TestCase
 
   # skip a test if the TDR API is not up (since it is their dev instance there is no uptime guarantee)
   def skip_if_api_down
-    if !@data_repo_client.api_available?
-      puts "-- skipping due to TDR API being unavailable --" ; skip
+    unless @data_repo_client.api_available?
+      puts '-- skipping due to TDR API being unavailable --' ; skip
     end
   end
 
@@ -58,7 +58,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should get issuer email' do
-    service_account_email = JSON.parse(File.open(@data_repo_client.service_account_credentials).read).dig('client_email')
+    service_account_email = JSON.parse(File.open(@data_repo_client.service_account_credentials).read)['client_email']
     assert_equal service_account_email, @data_repo_client.issuer
   end
 
@@ -82,12 +82,12 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should merge query string params from hash' do
-    opts = {foo: 'bar', bing: 'baz'}
-    expected_query = "?foo=bar&bing=baz"
+    opts = { foo: 'bar', bing: 'baz' }
+    expected_query = '?foo=bar&bing=baz'
     assert_equal expected_query, @data_repo_client.merge_query_options(opts)
     # ensure params are uri-encoded
-    new_opts = {one: 'foo', two: 'bar bing'}
-    expected_encoded_query = "?one=foo&two=bar%20bing"
+    new_opts = { one: 'foo', two: 'bar bing' }
+    expected_encoded_query = '?one=foo&two=bar%20bing'
     assert_equal expected_encoded_query, @data_repo_client.merge_query_options(new_opts)
   end
 
@@ -97,14 +97,14 @@ class DataRepoClientTest < ActiveSupport::TestCase
       items: [
         {
           id: SecureRandom.uuid, name: 'My Dataset', description: 'This is the description',
-          createdDate: Time.now.to_s(:db), profileId: SecureRandom.uuid
+          createdDate: Time.zone.now.to_s(:db), profileId: SecureRandom.uuid
         }
       ]
     }.with_indifferent_access
     parsed_response = @data_repo_client.parse_response_body(response.to_json)
     assert_equal response, parsed_response.with_indifferent_access
 
-    string_response = "This is the response"
+    string_response = 'This is the response'
     parsed_string = @data_repo_client.parse_response_body(string_response)
     assert_equal string_response, parsed_string
   end
@@ -123,9 +123,9 @@ class DataRepoClientTest < ActiveSupport::TestCase
   test 'should get datasets' do
     skip_if_api_down
     datasets = @data_repo_client.get_datasets
-    assert datasets.dig('total').present?
-    skip 'got empty response for datasets' if datasets.dig('items').empty?
-    dataset_id = datasets.dig('items').first.dig('id')
+    assert datasets['total'].present?
+    skip 'got empty response for datasets' if datasets['items'].empty?
+    dataset_id = datasets['items'].first['id']
     dataset = @data_repo_client.get_dataset(dataset_id)
     assert dataset.present?
   end
@@ -133,9 +133,9 @@ class DataRepoClientTest < ActiveSupport::TestCase
   test 'should get snapshots' do
     skip_if_api_down
     snapshots = @data_repo_client.get_snapshots
-    assert snapshots.dig('total').present?
-    skip 'got empty response for snapshots' if snapshots.dig('items').empty?
-    snapshot_id = snapshots.dig('items').first.dig('id')
+    assert snapshots['total'].present?
+    skip 'got empty response for snapshots' if snapshots['items'].empty?
+    snapshot_id = snapshots['items'].first['id']
     snapshot = @data_repo_client.get_snapshot(snapshot_id)
     assert snapshot.present?
   end
@@ -144,8 +144,8 @@ class DataRepoClientTest < ActiveSupport::TestCase
     skip_if_api_down
     snapshot = @data_repo_client.get_snapshot(@snapshot_id)
     assert snapshot.present?
-    expected_keys = %w(id name description createdDate source tables
-                       relationships profileId dataProject accessInformation).sort
+    expected_keys = %w[id name description createdDate source tables
+                       relationships profileId dataProject accessInformation].sort
     assert_equal expected_keys, snapshot.keys.sort
   end
 
@@ -153,16 +153,19 @@ class DataRepoClientTest < ActiveSupport::TestCase
     skip_if_api_down
     file_info = @data_repo_client.get_snapshot_file_info(@snapshot_id, @file_id)
     assert file_info.present?
-    assert_equal @file_id, file_info.dig('fileId')
-    assert file_info.dig('size') > 0, 'did not get a valid file size'
+    assert_equal @file_id, file_info['fileId']
+    assert file_info['size'].positive?, 'did not get a valid file size'
     found_gs_url = file_info.dig('fileDetail', 'accessUrl')
     assert_equal @gs_url, found_gs_url
   end
 
   test 'should generate query json from facets' do
     selected_facets = [
-      {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]},
-      {id: :disease, filters: [{id: 'MONDO_0018076', name: 'tuberculosis'},{id: 'MONDO_0005109', name: 'HIV infectious disease'}]}
+      { id: :species, filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }] },
+      { id: :disease, filters: [
+          { id: 'MONDO_0018076', name: 'tuberculosis' }, { id: 'MONDO_0005109', name: 'HIV infectious disease' }
+        ]
+      }
     ]
     species_field = FacetNameConverter.convert_to_model(:tim, :species, :id)
     disease_field = FacetNameConverter.convert_to_model(:tim, :disease, :id)
@@ -175,7 +178,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should generate query from keywords' do
-    keywords = %w(pulmonary human lung)
+    keywords = %w[pulmonary human lung]
     name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :id)
     description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :id)
     expected_query = "(#{name_field}:pulmonary OR #{name_field}:human OR #{name_field}:lung) OR " \
@@ -190,10 +193,13 @@ class DataRepoClientTest < ActiveSupport::TestCase
     species_field = FacetNameConverter.convert_to_model(:tim, :species, :id)
     disease_field = FacetNameConverter.convert_to_model(:tim, :disease, :id)
     selected_facets = [
-      {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]},
-      {id: :disease, filters: [{id: 'MONDO_0018076', name: 'tuberculosis'},{id: 'MONDO_0005109', name: 'HIV infectious disease'}]}
+      { id: :species, filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }] },
+      { id: :disease, filters: [
+          { id: 'MONDO_0018076', name: 'tuberculosis' }, { id: 'MONDO_0005109', name: 'HIV infectious disease' }
+        ]
+      }
     ]
-    keywords = %w(pulmonary human lung)
+    keywords = %w[pulmonary human lung]
     expected_query = "((#{species_field}:NCBITaxon9609 OR #{species_field}:Homo sapiens) AND " \
                      "(#{disease_field}:MONDO_0018076 OR #{disease_field}:tuberculosis OR " \
                      "#{disease_field}:MONDO_0005109 OR #{disease_field}:HIV infectious disease)) AND " \
@@ -207,23 +213,24 @@ class DataRepoClientTest < ActiveSupport::TestCase
   test 'should query snapshot index' do
     skip_if_api_down
     selected_facets = [
-      {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]}
+      { id: :species, filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }] }
     ]
     query_json = @data_repo_client.generate_query_from_facets(selected_facets)
     results = @data_repo_client.query_snapshot_indexes(query_json, snapshot_ids: [@snapshot_id])
-    original_count = results.dig('result').count
-    assert original_count > 0
-    sample_row = results.dig('result').sample
+    original_count = results['result'].count
+    assert original_count.positive?
+    sample_row = results['result'].sample
     species_field_name = FacetNameConverter.convert_to_model(:tim, :species, :name)
     assert_equal 'Homo sapiens', sample_row[species_field_name]
-    expected_project = 'Single-cell RNA-sequencing reveals profibrotic roles of distinct epithelial and mesenchymal lineages in pulmonary fibrosis'
+    expected_project = 'Single-cell RNA-sequencing reveals profibrotic roles of distinct epithelial and mesenchymal ' \
+                       'lineages in pulmonary fibrosis'
     project_title_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
     assert_equal expected_project, sample_row[project_title_field]
 
     # refine query and re-run
     selected_facets = [
-      {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]},
-      {id: :organism_age, filters: {min: 46, max: 72, unit: 'years'}}
+      { id: :species, filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }] },
+      { id: :organism_age, filters: { min: 46, max: 72, unit: 'years' } }
     ]
     query_json = @data_repo_client.generate_query_from_facets(selected_facets)
     results = @data_repo_client.query_snapshot_indexes(query_json, snapshot_ids: [@snapshot_id])
@@ -238,9 +245,9 @@ class DataRepoClientTest < ActiveSupport::TestCase
     file_info = @data_repo_client.get_drs_file_info(@drs_file_id)
     assert file_info.present?
     expected_id = @drs_file_id.split('/').last
-    assert_equal expected_id, file_info.dig('id')
-    assert file_info.dig('size') > 0, 'did not get a valid file size'
-    found_filename = file_info.dig('name')
+    assert_equal expected_id, file_info['id']
+    assert file_info['size'].positive?, 'did not get a valid file size'
+    found_filename = file_info['name']
     assert_equal @filename, found_filename
 
     # ensure error handling

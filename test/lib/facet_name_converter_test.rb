@@ -3,7 +3,6 @@ require 'test_helper'
 class FacetNameConverterTest < ActiveSupport::TestCase
 
   include Minitest::Hooks
-  include SelfCleaningSuite
   include TestInstrumentor
 
   before(:all) do
