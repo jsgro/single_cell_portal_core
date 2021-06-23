@@ -5,37 +5,10 @@ import Button from 'react-bootstrap/lib/Button'
 import Modal from 'react-bootstrap/lib/Modal'
 import CreatableSelect from 'react-select/creatable'
 import _differenceBy from 'lodash/differenceBy'
-import stringSimilarity from 'string-similarity'
 
+import { getAutocompleteSuggestions } from 'lib/search-utils'
 import { log, logStudyGeneSearch } from 'lib/metrics-api'
 
-/** Get list of autocomplete suggestions, based on input text */
-function getGeneOptions(inputText, allGenes) {
-  let geneOptions = []
-  if (allGenes) {
-    // Autocomplete when user starts typing
-    if (inputText) {
-      const text = inputText.toLowerCase()
-
-      // Get genes that start with the input text
-      const prefixMatches = allGenes.filter(gene => gene.toLowerCase().startsWith(text))
-
-      // Get similarly-named genes, as measured by Dice coefficient (`rating`)
-      const similar = stringSimilarity.findBestMatch(inputText, allGenes)
-      const similarMatches =
-        similar.ratings
-          .sort((a, b) => b.rating - a.rating) // Rank larger numbers higher
-          .filter(match => !prefixMatches.includes(match.target))
-          .map(match => match.target)
-
-      // Show top 20 matches -- first prefix matches, then ranked by similarity
-      const topMatches = prefixMatches.concat(similarMatches).slice(0, 20)
-
-      geneOptions = getOptionsFromGenes(topMatches)
-    }
-  }
-  return geneOptions
-}
 
 /** renders the gene text input
   * This shares a lot of logic with search/genes/GeneKeyword, but is kept as a separate component for
@@ -44,7 +17,8 @@ function getGeneOptions(inputText, allGenes) {
 export default function StudyGeneField({ genes, searchGenes, allGenes, speciesList }) {
   const [inputText, setInputText] = useState('')
 
-  const geneOptions = getGeneOptions(inputText, allGenes)
+  const rawSuggestions = getAutocompleteSuggestions(inputText, allGenes)
+  const geneOptions = getOptionsFromGenes(rawSuggestions)
 
   let enteredGeneArray = []
   if (genes) {
