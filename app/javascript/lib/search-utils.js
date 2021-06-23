@@ -11,7 +11,7 @@ import stringSimilarity from 'string-similarity'
  */
 export function getAutocompleteSuggestions(inputText, targets, numSuggestions=8) {
   // Autocomplete when user starts typing
-  if (!targets || !inputText) {
+  if (!targets || targets.length === 0 || !inputText) {
     return []
   }
 
