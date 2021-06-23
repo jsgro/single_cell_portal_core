@@ -59,7 +59,8 @@ export default function ScatterTab({
         </div>,
         rowDivider
       ]
-    }).reduce((acc, val) => acc.concat(val), [])} // equivalent to .flat(), but .flat() isn't supported in travis node yet
+    /* below is equivalent to .flat(), but .flat() isn't supported in travis node yet */
+    }).reduce((acc, val) => acc.concat(val), []) }
     { scatterParams.length > MAX_PLOTS &&
       <div className="panel">
         <span>Due to browser limitations, only 8 plots can be shown at one time.  Deselect some spatial groups</span>
