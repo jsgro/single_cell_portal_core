@@ -164,15 +164,44 @@ class DataRepoClientTest < ActiveSupport::TestCase
       {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]},
       {id: :disease, filters: [{id: 'MONDO_0018076', name: 'tuberculosis'},{id: 'MONDO_0005109', name: 'HIV infectious disease'}]}
     ]
-    expected_query = "(tim__a__terraa__corec__a__donora__terraa__corec__hasa__organisma__type:NCBITaxon9609 OR " \
-                     "tim__a__terraa__corec__a__donora__terraa__corec__hasa__organisma__type:Homo sapiens) AND " \
-                     "(tim__a__terraa__corec__a__bioa__samplea__terraa__corec__c__hasa__disease:MONDO_0018076 OR " \
-                     "tim__a__terraa__corec__a__bioa__samplea__terraa__corec__c__hasa__disease:tuberculosis OR " \
-                     "tim__a__terraa__corec__a__bioa__samplea__terraa__corec__c__hasa__disease:MONDO_0005109 OR "\
-                     "tim__a__terraa__corec__a__bioa__samplea__terraa__corec__c__hasa__disease:HIV infectious disease)"
+    species_field = FacetNameConverter.convert_to_model(:tim, :species, :id)
+    disease_field = FacetNameConverter.convert_to_model(:tim, :disease, :id)
+    expected_query = "(#{species_field}:NCBITaxon9609 OR #{species_field}:Homo sapiens) AND " \
+                     "(#{disease_field}:MONDO_0018076 OR #{disease_field}:tuberculosis OR " \
+                     "#{disease_field}:MONDO_0005109 OR #{disease_field}:HIV infectious disease)"
 
     query_json = @data_repo_client.generate_query_from_facets(selected_facets)
     assert_equal expected_query, query_json.dig(:query_string, :query)
+  end
+
+  test 'should generate query from keywords' do
+    keywords = %w(pulmonary human lung)
+    name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :id)
+    description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :id)
+    expected_query = "(#{name_field}:pulmonary OR #{name_field}:human OR #{name_field}:lung) OR " \
+                     "(#{description_field}:pulmonary OR #{description_field}:human OR #{description_field}:lung)"
+    query_json = @data_repo_client.generate_query_from_keywords(keywords)
+    assert_equal expected_query, query_json.dig(:query_string, :query)
+  end
+
+  test 'should merge query json for facets and keywords' do
+    name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :id)
+    description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :id)
+    species_field = FacetNameConverter.convert_to_model(:tim, :species, :id)
+    disease_field = FacetNameConverter.convert_to_model(:tim, :disease, :id)
+    selected_facets = [
+      {id: :species, filters: [{id: 'NCBITaxon9609', name: 'Homo sapiens'}]},
+      {id: :disease, filters: [{id: 'MONDO_0018076', name: 'tuberculosis'},{id: 'MONDO_0005109', name: 'HIV infectious disease'}]}
+    ]
+    keywords = %w(pulmonary human lung)
+    expected_query = "((#{species_field}:NCBITaxon9609 OR #{species_field}:Homo sapiens) AND " \
+                     "(#{disease_field}:MONDO_0018076 OR #{disease_field}:tuberculosis OR " \
+                     "#{disease_field}:MONDO_0005109 OR #{disease_field}:HIV infectious disease)) AND " \
+                     "((#{name_field}:pulmonary OR #{name_field}:human OR #{name_field}:lung) OR " \
+                     "(#{description_field}:pulmonary OR #{description_field}:human OR #{description_field}:lung))"
+    merged_query = @data_repo_client.merge_query_json(facet_query: @data_repo_client.generate_query_from_facets(selected_facets),
+                                                      term_query: @data_repo_client.generate_query_from_keywords(keywords))
+    assert_equal expected_query, merged_query.dig(:query_string, :query)
   end
 
   test 'should query snapshot index' do
