@@ -33,8 +33,8 @@ export default function useCloseableModal(show, setShow) {
 
   const node = useRef()
   const handleOtherClick = e => {
-    if (node.current.contains(e.target)) {
-      // click was inside the modal, do nothing
+    if (!node.current || node.current.contains(e.target)) {
+      // modal is already gone, or click was inside the modal, do nothing
       return
     }
     setShow(false)

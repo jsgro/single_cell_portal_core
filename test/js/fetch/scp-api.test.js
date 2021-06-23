@@ -18,7 +18,7 @@ describe('JavaScript client for SCP REST API', () => {
   })
 
   it('returns `authCode` and `timeInterval` from fetchAuthCode', async () => {
-    const url = getFullUrl('/search/auth_code')
+    const url = getFullUrl('/bulk_download/auth_code')
     mockPerformance(url)
     const { authCode, timeInterval } = await fetchAuthCode()
     expect(authCode).toBe(123456)
@@ -32,7 +32,7 @@ describe('JavaScript client for SCP REST API', () => {
 
   it('includes `perfTimes` in return from scpApi', async () => {
     const [authCode, perfTimes] =
-      await scpApi('/search/auth_code', defaultInit(), true)
+      await scpApi('/bulk_download/auth_code', defaultInit(), true)
 
     const perfTime = perfTimes.legacyBackend
 

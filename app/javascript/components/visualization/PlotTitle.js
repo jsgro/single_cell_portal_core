@@ -7,7 +7,7 @@ export default function PlotTitle({
   let content = cluster
   let detailContent = ''
   if (genes.length) {
-    let geneList = genes.map(gene => {
+    const geneList = genes.map(gene => {
       return <span className="badge" key={gene}>{gene}</span>
     })
     if (isCorrelatedScatter) {
