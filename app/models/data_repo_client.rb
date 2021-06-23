@@ -271,6 +271,48 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
     {query_string: {query: formatted_elements.join(' AND ')}}
   end
 
+  # generate query json from a list of keywords/terms to search titles/descriptions
+  #
+  # * *params*
+  #   - +terms+ (Array<String>) => Array of keywords/terms
+  #
+  # * *returns*
+  #   - (Hash) => Hash representation of query in ElasticSearch query DSL (must be cast to JSON for use in DataRepoClient#query_snapshot_indexes)
+  def generate_query_from_keywords(term_list)
+    name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :id)
+    desc_field = FacetNameConverter.convert_to_model(:tim, :study_description, :id)
+    formatted_elements = []
+    [name_field, desc_field].each do |tdr_column|
+      elements = term_list.map {|term| "#{tdr_column}:#{term}"}
+      formatted_elements << "(#{elements.join(' OR ')})"
+    end
+    # this is a logical OR query as a match in either name or description is valid
+    {query_string: {query: formatted_elements.join(' OR ')}}
+  end
+
+  # merge two query json objects together, if necessary
+  #
+  # * *params*
+  #   - +facet_query+ (Hash) => query json from generate_query_from_facets
+  #   - +term_query+ (Hash) => query json from generate_query_from_keywords
+  #
+  # * *returns*
+  #   - (Hash) => Hash representation of query in ElasticSearch query DSL (must be cast to JSON for use in DataRepoClient#query_snapshot_indexes)
+  #
+  # * *raises*
+  #   - (ArgumentError) => if both query objects are empty
+  def merge_query_json(facet_query:, term_query:)
+    raise ArgumentError.new('Must supply either facet_query or term_query to merge') if facet_query.nil? && term_query.nil?
+    # merge two together, otherwise return which ever is present
+    if facet_query.present? && term_query.present?
+      {query_string: {query: "(#{facet_query.dig(:query_string, :query)}) AND (#{term_query.dig(:query_string, :query)})"}}
+    elsif facet_query.present? && term_query.nil?
+      facet_query
+    else
+      term_query
+    end
+  end
+
   ##
   # DRS File methods
   ##
