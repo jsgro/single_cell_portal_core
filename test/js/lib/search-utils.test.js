@@ -20,7 +20,7 @@ describe('Search utilties', () => {
     const suggestions = getAutocompleteSuggestions(inputGene, targets)
 
     expect(suggestions[0]).toEqual('PTEN')
-    expect(suggestions).toHaveLength(20)
+    expect(suggestions).toHaveLength(8)
   })
 
   it('suggests close inexact match first', async () => {
