@@ -30,7 +30,7 @@ class FacetNameConverterTest < ActiveSupport::TestCase
     @fields.each do |field|
       @scp_field_names.each_with_index do |scp_name, index|
         converted_name = FacetNameConverter.convert_to_model(model_name, scp_name, field)
-        assert_equal @expected_conversions[:hca][field][index], converted_name
+        assert_equal @expected_conversions[model_name][field][index], converted_name
       end
       # test fallback
       assert_equal @nonexistent_field, FacetNameConverter.convert_to_model(model_name, @nonexistent_field, field)
