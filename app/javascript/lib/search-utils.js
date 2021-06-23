@@ -29,7 +29,10 @@ export function getAutocompleteSuggestions(inputText, targets) {
   const similarMatches =
       similar.ratings
         .sort((a, b) => b.rating - a.rating) // Rank larger numbers higher
-        .filter(match => !prefixMatches.includes(match.target))
+        .filter(match => {
+          const target = match.target
+          return target !== inputText && !prefixMatches.includes(target)
+        })
         .map(match => match.target)
 
   // Show top 20 matches -- exact match, prefix matches, then similar matches

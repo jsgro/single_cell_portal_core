@@ -60,44 +60,7 @@ module Api
           study_obj[:gene_matches] = @gene_results[:genes_by_study][study.id].uniq
           study_obj[:can_visualize_clusters] = study.can_visualize_clusters?
         end
-        if study.detached
-          study_obj[:study_files] = 'Unavailable (cannot load study workspace or bucket)'
-        else
-          study_obj[:study_files] = study_files_response_obj(study)
-        end
         study_obj
-      end
-
-      def study_files_response_obj(study)
-        file_objs = study.study_files.map { |study_file| study_file_response_obj(study_file) }
-        files_by_category = {}
-        StudyFile::BULK_DOWNLOAD_TYPES.each do |file_category|
-          if file_category == 'Expression'
-            files_by_category[:Expression] = file_objs.select do |file|
-              ['Expression Matrix', 'MM Coordinate Matrix'].include?(file[:file_type])
-            end
-          else
-            files_by_category[file_category] = file_objs.select do |file|
-              file_category == file[:file_type]
-            end
-          end
-        end
-        files_by_category
-      end
-
-      def study_file_response_obj(study_file)
-        study_file_obj = {
-          name: study_file.name,
-          file_type: study_file.file_type,
-          description: study_file.description,
-          bucket_location: study_file.bucket_location,
-          upload_file_size: study_file.upload_file_size,
-          download_url: api_v1_site_study_download_data_url(accession: study_file.study.accession, filename: study_file.bucket_location)
-        }
-        if study_file.is_bundle_parent?
-          study_file_obj[:bundled_files] = study_file.bundled_files.map { |sf| study_file_response_obj(sf) }
-        end
-        study_file_obj
       end
     end
   end

@@ -34,33 +34,35 @@ export default function ScatterTab({
   }, [])
 
   return <div className="row">
-    { scatterParams.map((params, index) => {
-      const isTwoColRow = isTwoColumn && !(index === 0 && firstRowSingleCol)
-      const key = getKeyFromScatterParams(params)
-      let rowDivider = <span key={`d${index}`}></span>
-      if (index % 2 === 1) {
-        // Use a full-width empty column to make sure plots align into rows, even if they are unequal height
-        rowDivider = <div className="col-md-12" key={`d${index}`}></div>
-      }
-      return [
-        <div className={isTwoColRow ? 'col-md-6' : 'col-md-12'} key={key}>
-          <ScatterPlot
-            {...{
-              studyAccession, plotPointsSelected, isCellSelecting, updateScatterColor
-            }}
-            {...params}
-            dataCache={dataCache}
-            dimensions={getPlotDimensions({
-              isMultiRow,
-              isTwoColumn: isTwoColRow,
-              hasTitle: true
-            })}
-          />
-        </div>,
-        rowDivider
-      ]
-    /* below is equivalent to .flat(), but .flat() isn't supported in travis node yet */
-    }).reduce((acc, val) => acc.concat(val), []) }
+    {
+      scatterParams.map((params, index) => {
+        const isTwoColRow = isTwoColumn && !(index === 0 && firstRowSingleCol)
+        const key = getKeyFromScatterParams(params)
+        let rowDivider = <span key={`d${index}`}></span>
+        if (index % 2 === 1) {
+          // Use a full-width empty column to make sure plots align into rows, even if they are unequal height
+          rowDivider = <div className="col-md-12" key={`d${index}`}></div>
+        }
+        return [
+          <div className={isTwoColRow ? 'col-md-6' : 'col-md-12'} key={key}>
+            <ScatterPlot
+              {...{
+                studyAccession, plotPointsSelected, isCellSelecting, updateScatterColor
+              }}
+              {...params}
+              dataCache={dataCache}
+              dimensions={getPlotDimensions({
+                isMultiRow,
+                isTwoColumn: isTwoColRow,
+                hasTitle: true
+              })}
+            />
+          </div>,
+          rowDivider
+        ]
+      /* equivalent to .flat(), but .flat() isn't supported in travis node yet */
+      }).reduce((acc, val) => acc.concat(val), [])
+    }
     { scatterParams.length > MAX_PLOTS &&
       <div className="panel">
         <span>Due to browser limitations, only 8 plots can be shown at one time.  Deselect some spatial groups</span>
