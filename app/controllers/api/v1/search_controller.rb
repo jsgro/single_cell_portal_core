@@ -296,8 +296,10 @@ module Api
           @tdr_results = self.class.get_tdr_results(@facets)
           # just log for now
           logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
-          logger.info(pp @tdr_results)
-          @studies += [@tdr_results]
+          # since @tdr_results is a hash, iterate through each key and add results to array
+          @tdr_results.each do |short_name, tdr_result|
+            @studies << tdr_result
+          end
         end
 
         @matching_accessions = @studies.map {|study| study.is_a?(Study) ? study.accession : study[:accession]}

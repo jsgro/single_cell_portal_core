@@ -40,6 +40,7 @@ module Api
           }
         else
           study_obj = {
+            trd_result: true,
             accession: study[:accession],
             name: study[:name],
             description: study[:description],
