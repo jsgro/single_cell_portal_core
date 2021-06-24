@@ -6,6 +6,7 @@ import Modal from 'react-bootstrap/lib/Modal'
 import CreatableSelect from 'react-select/creatable'
 import _differenceBy from 'lodash/differenceBy'
 
+import { getAutocompleteSuggestions } from 'lib/search-utils'
 import { log, logStudyGeneSearch } from 'lib/metrics-api'
 
 
@@ -16,16 +17,8 @@ import { log, logStudyGeneSearch } from 'lib/metrics-api'
 export default function StudyGeneField({ genes, searchGenes, allGenes, speciesList }) {
   const [inputText, setInputText] = useState('')
 
-  let geneOptions = []
-  if (allGenes) {
-    // Autocomplete when user starts typing
-    if (inputText && inputText.length > 1) {
-      const lowerCaseInput = inputText.toLowerCase()
-      geneOptions = getOptionsFromGenes(allGenes.filter(geneName => {
-        return geneName.toLowerCase().includes(lowerCaseInput)
-      }))
-    }
-  }
+  const rawSuggestions = getAutocompleteSuggestions(inputText, allGenes)
+  const geneOptions = getOptionsFromGenes(rawSuggestions)
 
   let enteredGeneArray = []
   if (genes) {

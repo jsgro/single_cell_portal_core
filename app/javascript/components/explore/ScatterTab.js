@@ -60,7 +60,8 @@ export default function ScatterTab({
           </div>,
           rowDivider
         ]
-      }).reduce((acc, val) => acc.concat(val), []) // equivalent to .flat(), but .flat() isn't supported in travis node yet
+      /* equivalent to .flat(), but .flat() isn't supported in travis node yet */
+      }).reduce((acc, val) => acc.concat(val), [])
     }
     { scatterParams.length > MAX_PLOTS &&
       <div className="panel">
