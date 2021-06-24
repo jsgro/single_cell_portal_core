@@ -66,10 +66,11 @@ class ClusterCacheServiceTest < ActiveSupport::TestCase
     cluster_name = cluster.name.gsub(/\./, '_') # need to escape period in cluster name for cache path
     annotation = @study.default_annotation
     annotation_name, annotation_type, annotation_scope = annotation.split('--')
-    expected_default_path = "_single_cell_api_v1_studies_#{@study.accession}_clusters__default_cluster_name__default"
+    expected_default_path = "_single_cell_api_v1_studies_#{@study.accession}_clusters__default_cluster_name__default" \
+                            "_fields_coordinates_cells_annotation"
     expected_named_path = "_single_cell_api_v1_studies_#{@study.accession}_clusters_#{cluster_name}_annotation_name_" \
                           "#{annotation_name}_annotation_scope_#{annotation_scope}_annotation_type_#{annotation_type}_" \
-                          "cluster_name_#{cluster_name}_subsample_all"
+                          "cluster_name_#{cluster_name}_fields_coordinates_cells_annotation_subsample_all"
     ClusterCacheService.cache_study_defaults(@study)
     assert Rails.cache.exist?(expected_default_path), "did not find default cache entry at #{expected_default_path}"
     assert Rails.cache.exist?(expected_named_path), "did not find named cache entry at #{expected_named_path}"

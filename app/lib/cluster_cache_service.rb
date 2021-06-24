@@ -36,9 +36,12 @@ class ClusterCacheService
       sanitized_cluster_name = cluster.name.include?('/') ? CGI.escape(cluster.name) : cluster.name
       full_params = {
         annotation_name: annotation_name, annotation_scope: annotation_scope, annotation_type: annotation_type,
-        subsample: 'all', cluster_name: sanitized_cluster_name
+        subsample: 'all', cluster_name: sanitized_cluster_name, fields: 'coordinates,cells,annotation'
       }
-      default_params = {cluster_name: '_default'}
+      default_params = {
+        cluster_name: '_default',
+        fields: 'coordinates,cells,annotation'
+      }
       [default_params, full_params].each do |url_params|
         path = format_request_path(:api_v1_study_cluster_path, study.accession, url_params[:cluster_name])
         cache_path = RequestUtils.get_cache_path(path, url_params.with_indifferent_access)

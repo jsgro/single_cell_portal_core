@@ -245,7 +245,10 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  *
  * Example:
  * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/
-     Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
+ *   Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
+ *
+ * If changing URL query string parameters here, then also change them for
+ * `full_params` and `default_params` in `cluster_cache_service.rb`.
  */
 export async function fetchCluster({
   studyAccession, cluster, annotation, subsample, consensus, genes=null,
