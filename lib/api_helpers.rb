@@ -8,6 +8,20 @@ module ApiHelpers
   # interval for retry backoff on request retries
   RETRY_INTERVAL = Rails.env.test? ? 0 : 15
 
+  # get default HTTP headers for making requests
+  #
+  # * *returns*
+  #   - (Hash) => Hash of default HTTP headers, e.g. Authorization, Content-Type
+  def get_default_headers
+    {
+      'Authorization' => "Bearer #{self.valid_access_token['access_token']}",
+      'Accept' => 'application/json',
+      'Content-Type' => 'application/json',
+      'x-app-id' => 'single-cell-portal',
+      'x-domain-id' => "#{ENV['HOSTNAME']}"
+    }
+  end
+
   # check if OK response code was found
   #
   # * *params*

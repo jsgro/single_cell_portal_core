@@ -5,7 +5,7 @@
  *
  * API docs: https://singlecell.broadinstitute.org/single_cell/api
  */
-
+import React from 'react'
 import camelcaseKeys from 'camelcase-keys'
 import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
@@ -15,6 +15,8 @@ import {
   logSearch, logDownloadAuthorization, logCreateUserAnnotation,
   mapFiltersForLogging
 } from './scp-api-metrics'
+import { showMessage } from 'lib/MessageModal'
+import { supportEmailLink } from 'lib/error-utils'
 
 // If true, returns mock data for all API responses.  Only for dev.
 let globalMock = false
@@ -79,7 +81,7 @@ function defaultPostInit(mock=false) {
 export async function fetchAuthCode(mock=false) {
   const init = defaultPostInit(mock)
 
-  const [authCode, perfTimes] = await scpApi('/search/auth_code', init, mock)
+  const [authCode, perfTimes] = await scpApi('/bulk_download/auth_code', init, mock)
 
   logDownloadAuthorization(perfTimes)
 
@@ -434,27 +436,18 @@ export async function fetchFacetFilters(facet, query, mock=false) {
 }
 
 /**
- *  Returns number of files and bytes (by file type), to preview bulk download
+ *  Queries the bulk_download/summary API to retrieve a list of study and file information
  *
  * Docs:
- * https://singlecell.broadinstitute.org/single_cell/api/swagger_docs/v1#!/Search/search_bulk_download_size_path
+ * https://singlecell.broadinstitute.org/single_cell/api/swagger_docs/v1#!/BulkDownload/bulk_download_summary_path
  *
  * @param {Array} accessions List of study accessions to preview download
- * @param {Array} fileTypes List of file types in studies to preview download
- *
- * @example returns Promise for JSON
- * {
- *  "Expression": {"total_files": 4, "total_bytes": 1797720765},
- *  "Metadata": {"total_files": 2, "total_bytes": 865371}
- * }
- * fetchDownloadSize([SCP200, SCP201], ["Expression", "Metadata"])
  */
-export async function fetchDownloadSize(accessions, fileTypes, mock=false) {
-  const fileTypesString = fileTypes.join(',')
-  const queryString = `?accessions=${accessions}&file_types=${fileTypesString}`
-  const pathAndQueryString = `/search/bulk_download_size/${queryString}`
-  const [size] = await scpApi(pathAndQueryString, defaultInit(), mock)
-  return size
+export async function fetchDownloadInfo(accessions, mock=false) {
+  const queryString = `?accessions=${accessions}`
+  const pathAndQueryString = `/bulk_download/summary/${queryString}`
+  const [info] = await scpApi(pathAndQueryString, defaultInit(), mock)
+  return info
 }
 
 /**
@@ -591,6 +584,23 @@ export default async function scpApi(
       }
     } else {
       return [response, perfTimes, true]
+    }
+  } else {
+    if (response.status === 401 || response.status === 403) {
+      showMessage(
+        <div>
+          Authentication failed<br/>
+          Your session may have timed out. Please sign in again.<br/><br/>
+        </div>,
+        'api-auth-failure',
+        {
+          source: 'api',
+          url,
+          isError: true,
+          messageType: 'error-client',
+          statusCode: response.status
+        }
+      )
     }
   }
   if (toJson) {

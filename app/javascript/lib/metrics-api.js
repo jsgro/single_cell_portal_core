@@ -218,8 +218,9 @@ function logClickInput(target) {
     const label = domLabels.length > 0 ? getNameForClickTarget(domLabels[0]) : ''
 
     props = { label }
-
-    if (target.type === 'submit') {
+    if (target.dataset.analyticsName) {
+      props.text = target.dataset.analyticsName
+    } else if (target.type === 'submit') {
       props.text = target.value
     }
   }

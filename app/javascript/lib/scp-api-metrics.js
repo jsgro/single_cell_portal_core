@@ -145,10 +145,10 @@ export function logScatterPlot(
   perfTimes
 ) {
   const props = {
-    numPoints: scatter.numPoints, // How many cells are we plotting?
+    'numPoints': scatter.numPoints, // How many cells are we plotting?
     genes,
-    genesPlotted: scatter.genes,
-    is3D: scatter.is3D,
+    'genesPlotted': scatter.genes,
+    'is3D': scatter.is3D,
     'numPointsPlotted': scatter.data.cells.length,
     'isSubsampled': scatter.isSubsampled,
     'subsample': scatter.subsample,
@@ -158,8 +158,8 @@ export function logScatterPlot(
     'annotName': scatter.annotParams.name,
     'annotType': scatter.annotParams.type,
     'annotScope': scatter.annotParams.scope,
-    isCorrelatedScatter: scatter.isCorrelatedScatter,
-    isAnnotatedScatter: scatter.isAnnotatedScatter,
+    'isCorrelatedScatter': scatter.isCorrelatedScatter,
+    'isAnnotatedScatter': scatter.isAnnotatedScatter,
     perfTimes
   }
 

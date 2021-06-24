@@ -61,7 +61,7 @@ export function getNumFacetsAndFilters(facets) {
 
 /** Converts raw searched terms to an array */
 export function formatTerms(terms) {
-  if (typeof terms === 'undefined') {return []}
+  if (typeof terms === 'undefined' || terms === null) {return []}
   return terms.trim().split(/[, ]/).filter(term => term.length > 0)
 }
 

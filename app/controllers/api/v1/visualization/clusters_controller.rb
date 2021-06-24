@@ -228,7 +228,7 @@ module Api
           end
 
           if cluster.is_3d? && cluster.has_range?
-            aspect = ClusterVizService.compute_aspect_ratios(range)
+            aspect = ClusterVizService.compute_aspect_ratios(cluster.domain_ranges)
           end
 
           axes_full = {
