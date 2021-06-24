@@ -160,21 +160,47 @@ class BulkDownloadService
   # Get a preview of the number of files/total bytes by StudyAccession and file_type
   #
   # * *params*
-  #   - +file_types+ (Array<String>) => Array of requested file types to be ingested
   #   - +study_accessions+ (Array<String>) => Array of StudyAccession values from which to pull files
-  #
   # * *return*
-  #   - (Hash) => Hash of StudyFile::BULK_DOWNLOAD_TYPES matching query w/ number of files and total bytes
-  def self.get_requested_file_sizes_by_type(file_types: [], study_accessions:)
-    # replace 'Expression' with both dense & sparse matrix file types
-    requested_files = get_requested_files(file_types: file_types, study_accessions: study_accessions)
-    files_by_type = {}
-    requested_types = requested_files.map(&:simplified_file_type).uniq
-    requested_types.each do |req_type|
-      files = requested_files.select {|file| file.simplified_file_type == req_type}
-      files_by_type[req_type] = {total_files: files.size, total_bytes: files.map(&:upload_file_size).compact.reduce(:+)}
+  #   - (Hash) => Array of study objects, each one containing a study_files array with name, type, and upload_file_size
+  def self.get_download_info(study_accessions)
+    Study.where(:accession.in => study_accessions).map { |study| BulkDownloadService.study_download_info(study) }
+  end
+
+  # Get download preview information for a single study
+  #
+  # * *params*
+  #   -+study+ (Study) => The study to retrieve download preview information for
+  #
+  # * *returns*
+  #   - (Hash) => Hash of download information about the study, including an array of the study files
+  def self.study_download_info(study)
+    {
+      name: study.name,
+      accession: study.accession,
+      description: study.description,
+      study_files: study.study_files.map { |study_file| BulkDownloadService.study_file_download_info(study_file) }
+    }
+  end
+
+  # Get download preview information for a single StudyFile
+  #
+  # * *params*
+  #   -+study_file+ (StudyFile) => The study to retrieve download preview information for
+  #
+  # * *returns*
+  #   - (Hash) => Hash of download information about the study file, including type and size
+  def self.study_file_download_info(study_file)
+    study_file_obj = {
+      name: study_file.name,
+      id: study_file.id.to_s,
+      file_type: study_file.file_type,
+      upload_file_size: study_file.upload_file_size,
+    }
+    if study_file.is_bundle_parent?
+      study_file_obj[:bundled_files] = study_file.bundled_files.map { |sf| study_file_download_info(sf) }
     end
-    files_by_type
+    study_file_obj
   end
 
   # Get a preview of the number of files/total bytes by DirectoryListing name (single study)

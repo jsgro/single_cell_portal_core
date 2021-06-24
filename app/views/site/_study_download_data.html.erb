@@ -86,7 +86,7 @@
 
         $('body').on('click', '.btn-refresh', function(event) {
           var commandContainer = $(this).parentsUntil('.command-container').parent();
-          var downloadObject = commandContainer.attr('id').split('__').slice(-1)[0];
+          var downloadObject = commandContainer.attr('id').split('-').slice(-1)[0];
           var fileTypes = commandContainer.data('filetypes');
           writeDownloadCommand(downloadObject, fileTypes);
         });
@@ -114,7 +114,7 @@
               // URLs and output names for all files in the download object.
               var url = (
                 window.location.origin +
-                '/single_cell/api/v1/search/bulk_download?' +
+                '/single_cell/api/v1/bulk_download/generate_curl_config?' +
                 `accessions=${accession}` +
                 `&auth_code=${authCode}` +
                 `&directory=${downloadObjectName}`

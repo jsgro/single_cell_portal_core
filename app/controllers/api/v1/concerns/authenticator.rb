@@ -8,7 +8,7 @@ module Api
 
         OAUTH_V3_TOKEN_INFO = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
         TOTAT_REQUIRED_ACTIONS = [
-          {controller: 'search', action: 'bulk_download'},
+          {controller: 'bulk_download', action: 'generate_curl_config'},
           {controller: 'studies', action: 'generate_manifest'}
         ]
         # these are API actions that we allow logged-in site users to access using

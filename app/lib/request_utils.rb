@@ -79,6 +79,18 @@ class RequestUtils
     SANITIZER.sanitize(inputs).encode!(Encoding.find('ASCII-8BIT'), invalid: :replace, undef: :replace)
   end
 
+  # takes a comma-delimited string of ids (e.g. StudyFile ids) and returns an array of ids
+  # raises Argument error if any of the strings are not valid ids
+  def self.validate_id_list(id_list_string)
+    ids = id_list_string.split(',').map(&:strip)
+    begin
+      ids.each {|id| BSON::ObjectId.from_string(id) }
+    rescue
+      raise ArgumentError, 'IDs must be valid MongoDB ObjectId values'
+    end
+    ids
+  end
+
   # return the hostname (and port, if present) for this instance
   # e.g. "localhost", "localhost:3000", "singlecell.broadinstitute.org"
   def self.get_hostname
@@ -104,5 +116,10 @@ class RequestUtils
       end
     end
     genes
+  end
+
+  # generic split function, handles type checking
+  def self.split_query_param_on_delim(parameter:, delimiter: ',')
+    parameter.is_a?(Array) ? parameter : parameter.to_s.split(delimiter).map(&:strip)
   end
 end
