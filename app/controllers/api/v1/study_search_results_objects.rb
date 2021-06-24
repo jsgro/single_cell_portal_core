@@ -1,5 +1,3 @@
-
-
 module Api
   module V1
     # contains helper methods for converting search results and studies to plain objects suitable
@@ -38,6 +36,29 @@ module Api
             study_url: view_study_path(accession: study.accession, study_name: study.url_safe_name) +
               (params[:scpbr].present? ? "?scpbr=#{params[:scpbr]}" : '')
           }
+          if @studies_by_facet.present?
+            # faceted search was run, so append filter matches
+            study_obj[:facet_matches] = @studies_by_facet[study.accession]
+          end
+          if params[:terms].present?
+            search_weight = study.search_weight(@term_list)
+            study_obj[:term_matches] = search_weight[:terms].keys
+            study_obj[:term_search_weight] = search_weight[:total]
+          end
+          # if this is an inferred match, use :term_matches for highlighting, but set :inferred_match to true
+          if @inferred_accessions.present? && @inferred_accessions.include?(study.accession)
+            study_obj[:inferred_match] = true
+            inferred_weight = study.search_weight(@inferred_terms)
+            study_obj[:term_matches] = inferred_weight[:terms].keys
+            study_obj[:term_search_weight] = inferred_weight[:total]
+          end
+          if @preset_search.present? && @preset_search.accession_list.include?(study.accession)
+            study_obj[:preset_match] = true
+          end
+          if @gene_results.present?
+            study_obj[:gene_matches] = @gene_results[:genes_by_study][study.id].uniq
+            study_obj[:can_visualize_clusters] = study.can_visualize_clusters?
+          end
         else
           study_obj = {
             trd_result: true,
@@ -50,71 +71,6 @@ module Api
             gene_count: 0,
             study_url: '#'
           }
-        end
-
-        if study.is_a?(Study)
-          if @studies_by_facet.present?
-            # faceted search was run, so append filter matches
-            study_obj[:facet_matches] = @studies_by_facet[study.accession]
-          end
-          if params[:terms].present?
-            search_weight = study.search_weight(@term_list)
-            study_obj[:term_matches] = search_weight[:terms].keys
-            study_obj[:term_search_weight] = search_weight[:total]
-          end
-          # if this is an inferred match, use :term_matches for highlighting, but set :inferred_match to true
-          if @inferred_accessions.present? && @inferred_accessions.include?(study.accession)
-            study_obj[:inferred_match] = true
-            inferred_weight = study.search_weight(@inferred_terms)
-            study_obj[:term_matches] = inferred_weight[:terms].keys
-            study_obj[:term_search_weight] = inferred_weight[:total]
-          end
-          if @preset_search.present? && @preset_search.accession_list.include?(study.accession)
-            study_obj[:preset_match] = true
-          end
-          if @gene_results.present?
-            study_obj[:gene_matches] = @gene_results[:genes_by_study][study.id].uniq
-            study_obj[:can_visualize_clusters] = study.can_visualize_clusters?
-          end
-          if study.detached
-            study_obj[:study_files] = 'Unavailable (cannot load study workspace or bucket)'
-          else
-            study_obj[:study_files] = study_files_response_obj(study)
-          end
-          study_obj = {
-            accession: study.accession,
-            name: study.name,
-            description: study.description,
-            public: study.public,
-            detached: study.detached,
-            cell_count: study.cell_count,
-            gene_count: study.gene_count,
-            study_url: view_study_path(accession: study.accession, study_name: study.url_safe_name) +
-                       (params[:scpbr].present? ? "?scpbr=#{params[:scpbr]}" : '')
-          }
-          if @studies_by_facet.present?
-            # faceted search was run, so append filter matches
-            study_obj[:facet_matches] = @studies_by_facet[study.accession]
-          end
-          if params[:terms].present?
-            search_weight = study.search_weight(@term_list)
-            study_obj[:term_matches] = search_weight[:terms].keys
-            study_obj[:term_search_weight] = search_weight[:total]
-          end
-          # if this is an inferred match, use :term_matches for highlighting, but set :inferred_match to true
-          if @inferred_accessions.present? && @inferred_accessions.include?(study.accession)
-            study_obj[:inferred_match] = true
-            inferred_weight = study.search_weight(@inferred_terms)
-            study_obj[:term_matches] = inferred_weight[:terms].keys
-            study_obj[:term_search_weight] = inferred_weight[:total]
-          end
-          if @preset_search.present? && @preset_search.accession_list.include?(study.accession)
-            study_obj[:preset_match] = true
-          end
-          if @gene_results.present?
-            study_obj[:gene_matches] = @gene_results[:genes_by_study][study.id].uniq
-            study_obj[:can_visualize_clusters] = study.can_visualize_clusters?
-          end
         end
         study_obj
       end
