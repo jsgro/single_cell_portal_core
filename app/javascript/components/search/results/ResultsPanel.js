@@ -80,8 +80,12 @@ const FacetResultsFooter = ({ studySearchState }) => {
         <div className="">
           <p>Our advanced search is metadata-powered.
           By selecting filters, your search <b>targets only studies that use ontology terms</b> in their metadata file.
-          Currently, about 20% of public studies supply that metadata.</p>
-          Learn more about our search capability on our
+          Currently, almost 25% of public studies supply that metadata.</p>
+          {/*
+            84 of 353 studies as of 2021-06-22,
+            per https://docs.google.com/spreadsheets/d/1FSpP2XTrG9FqAqD9X-BHxkCZae9vxZA3cQLow8mn-bk
+          */}
+          Learn more about our search capability on our{' '}
           <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies"
             target="_blank" rel="noreferrer">wiki
           </a>.<br/>
