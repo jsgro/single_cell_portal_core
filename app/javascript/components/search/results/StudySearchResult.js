@@ -159,7 +159,7 @@ export default function StudySearchResult({ study }) {
     return (
       <>
         <div key={study.accession}>
-          <label htmlFor={study.name} id="result-title" className={'study-item'}>
+          <label htmlFor={study.name} id="result-title" className={'study-label'}>
             <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle}/>{inferredBadge}
             <span className="badge badge-secondary study-type"
               data-toggle="tooltip"
@@ -182,7 +182,7 @@ export default function StudySearchResult({ study }) {
     return (
       <>
         <div key={study.accession}>
-          <label htmlFor={study.name} id="result-title" className={'study-item'}>
+          <label htmlFor={study.name} id="result-title" className={'study-label'}>
             <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle}/>
             <span className="badge badge-secondary study-type" data-toggle="tooltip"
               title={'Study comes from Terra Data Repo'}> TDR </span>
