@@ -154,7 +154,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
     file_info = @data_repo_client.get_snapshot_file_info(@snapshot_id, @file_id)
     assert file_info.present?
     assert_equal @file_id, file_info['fileId']
-    assert file_info['size'].positive?, 'did not get a valid file size'
+    assert file_info['size'] > 0, 'did not get a valid file size'
     found_gs_url = file_info.dig('fileDetail', 'accessUrl')
     assert_equal @gs_url, found_gs_url
   end
@@ -218,7 +218,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
     query_json = @data_repo_client.generate_query_from_facets(selected_facets)
     results = @data_repo_client.query_snapshot_indexes(query_json, snapshot_ids: [@snapshot_id])
     original_count = results['result'].count
-    assert original_count.positive?
+    assert original_count > 0
     sample_row = results['result'].sample
     species_field_name = FacetNameConverter.convert_to_model(:tim, :species, :name)
     assert_equal 'Homo sapiens', sample_row[species_field_name]
@@ -246,7 +246,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
     assert file_info.present?
     expected_id = @drs_file_id.split('/').last
     assert_equal expected_id, file_info['id']
-    assert file_info['size'].positive?, 'did not get a valid file size'
+    assert file_info['size'] > 0, 'did not get a valid file size'
     found_filename = file_info['name']
     assert_equal @filename, found_filename
 
