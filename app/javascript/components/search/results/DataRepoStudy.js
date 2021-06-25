@@ -1,10 +1,11 @@
 /** show a search result entry from Data Repo */
-import React from "react";
+import React from 'react'
 export const descriptionCharacterLimit = 750
 export const summaryWordLimit = 150
 
-import {getDisplayNameForFacet} from "providers/SearchFacetProvider";
+import { getDisplayNameForFacet } from 'providers/SearchFacetProvider'
 
+/** truncate a Data Repo Study description, if necessary */
 export function shortenDescription(textDescription) {
   const suffixTag = <span className="detail"> ...(continued)</span>
   const displayedStudyDescription = { __html: textDescription.slice(0, descriptionCharacterLimit) }
@@ -47,6 +48,7 @@ function facetMatchBadges(study) {
   </>)
 }
 
+/** render a Data Repo Study search result div */
 export default function DataRepoStudy({ study }) {
   const studyDescription = shortenDescription(study.description)
   const displayStudyTitle = { __html: study.name }
