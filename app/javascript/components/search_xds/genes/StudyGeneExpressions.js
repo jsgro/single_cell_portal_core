@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import _clone from 'lodash/clone'
 
-import Study, { getByline } from 'components/search/results/Study'
+import ResultDetail, { getByline } from 'components/search/results/Study'
 import DotPlot from 'components/visualization/DotPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import ClusterSelector from 'components/visualization/controls/ClusterSelector'
@@ -27,7 +27,7 @@ export default function StudyGeneExpressions({ study }) {
 
   let studyRenderComponent
   if (!study.gene_matches) {
-    return <Study study={study}/>
+    return <ResultDetail study={study}/>
   }
   const isMultiGene = study.gene_matches.length > 1
   const showDotPlot = isMultiGene && !clusterParams.consensus

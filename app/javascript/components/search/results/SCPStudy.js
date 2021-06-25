@@ -129,7 +129,7 @@ function facetMatchBadges(study) {
 }
 
 /* displays a brief summary of a study, with a link to the study page */
-export default function Study({ study }) {
+export default function SCPStudy({ study }) {
   const termMatches = study.term_matches
   const studyTitle= highlightText(study.name, termMatches).styledText
   const studyDescription = formatDescription(study.description, termMatches)

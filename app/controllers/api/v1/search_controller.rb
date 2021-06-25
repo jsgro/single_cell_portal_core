@@ -291,15 +291,18 @@ module Api
           end
         end
 
-        # perform TDR search, if enabled & user performed faceted search
-        if @facets.any? && User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend')
-          @trd_results = self.class.get_tdr_results(@facets)
+        # perform TDR search, if enabled, and there are facets/terms provided by user
+        if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') && (@facets.present? || @term_list.present?)
+          @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
           # just log for now
-          logger.info "Found #{@trd_results.keys.size} results in Terra Data Repo"
-          logger.info pp @trd_results
+          logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
+          logger.info pp @tdr_results if @tdr_results.any?
+          @tdr_results.each do |short_name, tdr_result|
+            @studies << tdr_result
+          end
         end
 
-        @matching_accessions = @studies.map(&:accession)
+        @matching_accessions = @studies.map {|study| study.is_a?(Study) ? study.accession : study[:accession]}
         logger.info "Final list of matching studies: #{@matching_accessions}"
         @results = @studies.paginate(page: params[:page], per_page: Study.per_page)
         render json: search_results_obj, status: 200
@@ -389,8 +392,6 @@ module Api
         query_matcher = /#{Regexp.escape(@query_string)}/i
         @matching_filters = @search_facet.filters.select {|filter| filter[:name] =~ query_matcher}
       end
-
-
 
       private
 
@@ -499,14 +500,11 @@ module Api
         # sort the facets so that OR'ed facets will be next to each other, the 99 is just
         # an arbitrary large-ish number to make sure the non-or-grouped facets are sorted together
         sorted_facets = facets.sort_by {|facet| or_facets.flatten.find_index(facet[:id]) || 99}
-
         sorted_facets.each_with_index do |facet_obj, index|
           query_elements = get_query_elements_for_facet(facet_obj)
           from_clause += ", #{query_elements[:from]}" if query_elements[:from]
           base_query += ", #{query_elements[:select]}" if query_elements[:select]
           with_clauses << query_elements[:with] if query_elements[:with]
-
-
           or_group_index = leading_or_facets.find_index(facet_obj[:id])
           next_facet_id = sorted_facets[index + 1].try(:[], :id)
 
@@ -664,42 +662,97 @@ module Api
       end
 
       # execute a search in TDR and get back normalized results
-      def self.get_tdr_results(selected_facets)
-        query_json = ApplicationController.data_repo_client.generate_query_from_facets(selected_facets)
-        raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json)
+      def self.get_tdr_results(selected_facets:, terms:)
         results = {}
-        raw_tdr_results.dig('result').each do |result_row|
-          short_name = result_row.dig('project_short_name')
-          results[short_name] ||= {
-            name: result_row.dig('project_title'),
-            description: result_row.dig('project_description'),
-            matches: []
-          }
-          # determine facet filter matches
+        if selected_facets.present?
+          facet_json = ApplicationController.data_repo_client.generate_query_from_facets(selected_facets)
+        end
+        if terms.present?
+          term_json = ApplicationController.data_repo_client.generate_query_from_keywords(terms)
+        end
+        # now we merge the two queries together to perform a single search request
+        query_json = ApplicationController.data_repo_client.merge_query_json(facet_query: facet_json, term_query: term_json)
+        logger.info "Executing TDR query with: #{query_json}"
+        raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json)
+        raw_tdr_results['result'].each do |result_row|
+          results = process_tdr_result_row(result_row, results, selected_facets: selected_facets, terms: terms)
+        end
+        results
+      end
+
+      # process an individual result row from TDR
+      def self.process_tdr_result_row(row, results, selected_facets:, terms:)
+        # get column name mappings for assembling results
+        short_name_field = FacetNameConverter.convert_to_model(:tim, :accession, :name)
+        name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
+        description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :name)
+        short_name = row[short_name_field]
+        results[short_name] ||= {
+          tdr_result: true, # identify this entry as coming from Data Repo
+          accession: short_name,
+          name: row[name_field],
+          description: row[description_field],
+          facet_matches: [],
+          term_matches: [],
+          drs_ids: [],
+          file_information: []
+        }.with_indifferent_access
+        # determine facet filter matches
+        if selected_facets.present?
           selected_facets.each do |facet|
-            matches = get_facet_match_for_tdr_result(facet, result_row)
+            matches = get_facet_match_for_tdr_result(facet, row)
             matches.each do |col_name, matched_val|
-              entry = {col_name => matched_val}
-              results[short_name][:matches] << entry unless results[short_name][:matches].include?(entry)
+              entry = { col_name => matched_val }
+              results[short_name][:facet_matches] << entry unless results[short_name][:facet_matches].include?(entry)
             end
           end
+        end
+        if terms.present?
+          terms.each do |term|
+            matches = get_term_match_for_tdr_result(term, row)
+            matches.each do |col_name, _|
+              entry = { col_name => term }
+              results[short_name][:term_matches] << entry unless results[short_name][:term_matches].include?(entry)
+            end
+          end
+        end
+        # if any output IDs are DRS IDs, then store the DRS id for getting file information later
+        if row['output_id'].present? && row['output_id'].starts_with?('drs')
+          drs_id = row['output_id']
+          results[short_name][:drs_ids] << drs_id unless results[short_name][:drs_ids].include?(drs_id)
         end
         results
       end
 
       # determine facet matches for an individual result row from TDR
       def self.get_facet_match_for_tdr_result(facet, result_row)
-        tdr_name = FacetNameConverter.to_hca(facet[:id])
+        tdr_name = FacetNameConverter.convert_to_model(:tim, facet[:id], :name)
         if facet[:filters].is_a? Hash
           # this is a numeric facet, so convert to range for match
           # TODO: determine correct unit/datatype and convert
           filter_value = "#{facet.dig(:filters, :min).to_i}-#{facet.dig(:filters, :max).to_i}"
-          matches = result_row.each_pair.select {|col, val| col == tdr_name && val == filter_value}
+          matches = result_row.each_pair.select { |col, val| col == tdr_name && val == filter_value }
         else
           matches = []
           facet[:filters].each do |filter|
             # look for match on the column name, and see which filter value also matched (ontology label or id)
-            matches << result_row.each_pair.select {|col, val| col == tdr_name && (val == filter[:name] || filter[:id])}.flatten
+            matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || filter[:id]) }
+                                 .flatten
+          end
+        end
+        matches
+      end
+
+      # determine term/keyword match for an individual result row from TDR
+      def self.get_term_match_for_tdr_result(term, result_row)
+        name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
+        description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :name)
+        matches = []
+        [name_field, description_field].each do |tdr_name|
+          result_row.each_pair do |col, val|
+            if col == tdr_name && val.include?(term)
+              matches << [tdr_name, term]
+            end
           end
         end
         matches
