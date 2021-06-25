@@ -34,17 +34,18 @@ const helpModalContent = (<div>
   Single Cell Portal supports searching on specific facets of studies by ontology classifications.
   <br/><br/>
    For example, you can search on studies that
-  have <b>species</b> of <b>&quot;Homo sapiens&quot;</b> or have an <b>organ</b> of <b>&quot;brain&quot;</b>.
-  <br/>
-    Currently, about <b>70 out of ~300</b> public studies in SCP provide this metadata information.
+  have <b>species</b> of <b>&quot;Homo sapiens&quot;</b> or have an <b>organ</b> of <b>&quot;brain&quot;</b>.{' '}
+  Almost <b>25% (84 of ~350)</b> public studies in SCP provide this metadata information.
+  {/*
+    84 of 353 studies as of 2021-06-22,
+    per https://docs.google.com/spreadsheets/d/1FSpP2XTrG9FqAqD9X-BHxkCZae9vxZA3cQLow8mn-bk
+  */}
   <br/><br/>
   For more detailed information, visit
-  our
+  our{' '}
   <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies"
     target="_blank" rel="noreferrer">wiki
-  </a>.
-  <br/>If you are a study creator and would like to provide that metadata for your study to be searchable,
-  see our
+  </a>.  Study authors looking to make their studies more accessible can read our{' '}
   <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search"
     target="_blank" rel="noreferrer">metadata guide
   </a>.
