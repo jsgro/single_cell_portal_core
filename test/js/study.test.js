@@ -1,5 +1,5 @@
 import { mount } from 'enzyme'
-import { highlightText, shortenDescription, descriptionCharacterLimit } from 'components/search/results/Study'
+import { highlightText, shortenDescription, descriptionCharacterLimit } from 'components/search/results/SCPStudy'
 
 
 describe('highlightText', () => {
