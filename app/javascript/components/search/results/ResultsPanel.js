@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StudyResults from './StudyResults'
-import ResultDetail from './ResultDetail'
+import StudySearchResult from './StudySearchResult'
 import SearchQueryDisplay from './SearchQueryDisplay'
 import { UserContext } from 'providers/UserProvider'
 import { getNumFacetsAndFilters } from 'providers/StudySearchProvider'
@@ -18,7 +18,7 @@ import { serverErrorEnd } from 'lib/error-utils'
  */
 const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) => {
   const featureFlagState = useContext(UserContext).featureFlagsWithDefaults
-  const results = studySearchState.results
+  let results = studySearchState.results
 
   let panelContent
   if (studySearchState.isError) {
@@ -35,13 +35,17 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
       </div>
     )
   } else if (results.studies && results.studies.length > 0) {
+
+    for (let i = 0; i < 100; i++){
+      results.studies.push(results.studies[0]);
+    }
     panelContent = (
       <>
         { featureFlagState && featureFlagState.faceted_search &&
           <SearchQueryDisplay terms={results.termList} facets={results.facets}/> }
         <StudyResults
           results={results}
-          StudyComponent={studyComponent ? studyComponent : ResultDetail}
+          StudyComponent={StudySearchResult}
           changePage={pageNum => {
             studySearchState.updateSearch({ page: pageNum })
           }}
@@ -83,12 +87,12 @@ const FacetResultsFooter = ({ studySearchState }) => {
           Currently, about 20% of public studies supply that metadata.</p>
           Learn more about our search capability on our
           <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies"
-            target="_blank" rel="noreferrer">wiki
+            target="_blank" rel="noreferrer"> wiki
           </a>.<br/>
           Study authors looking to make their studies more accessible can read our
           {/* eslint-disable-next-line max-len */}
           <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search"
-            target="_blank" rel="noreferrer">metadata guide
+            target="_blank" rel="noreferrer"> metadata guide
           </a>.
         </div>
       </div>

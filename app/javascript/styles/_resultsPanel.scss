@@ -126,3 +126,18 @@
     margin: 0 0.2em 0 0.2em;
   }
 }
+
+.study-type {
+  border: 1px solid #4d72aa;
+  background-color: white;
+  font-weight: normal;
+  color: #777;
+  width: 44px;
+  height: 20px
+}
+
+.study-label {
+  grid-template-columns: 6fr 0.25fr;
+  display: grid;
+
+}
