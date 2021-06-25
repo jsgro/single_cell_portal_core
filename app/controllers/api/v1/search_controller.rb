@@ -393,8 +393,6 @@ module Api
         @matching_filters = @search_facet.filters.select {|filter| filter[:name] =~ query_matcher}
       end
 
-
-
       private
 
       def set_branding_group
@@ -677,45 +675,51 @@ module Api
         logger.info "Executing TDR query with: #{query_json}"
         raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json)
         raw_tdr_results['result'].each do |result_row|
-          # get column name mappings for assembling results
-          short_name_field = FacetNameConverter.convert_to_model(:tim, :accession, :name)
-          name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
-          description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :name)
-          short_name = result_row[short_name_field]
-          results[short_name] ||= {
-            trd_result: true, # identify this entry as coming from Data Repo
-            accession: short_name,
-            name: result_row[name_field],
-            description: result_row[description_field],
-            facet_matches: [],
-            term_matches: [],
-            drs_ids: [],
-            file_information: []
-          }.with_indifferent_access
-          # determine facet filter matches
-          if selected_facets.present?
-            selected_facets.each do |facet|
-              matches = get_facet_match_for_tdr_result(facet, result_row)
-              matches.each do |col_name, matched_val|
-                entry = {col_name => matched_val}
-                results[short_name][:facet_matches] << entry unless results[short_name][:facet_matches].include?(entry)
-              end
+          results = process_tdr_result_row(result_row, results, selected_facets: selected_facets, terms: terms)
+        end
+        results
+      end
+
+      # process an individual result row from TDR
+      def self.process_tdr_result_row(row, results, selected_facets:, terms:)
+        # get column name mappings for assembling results
+        short_name_field = FacetNameConverter.convert_to_model(:tim, :accession, :name)
+        name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
+        description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :name)
+        short_name = row[short_name_field]
+        results[short_name] ||= {
+          tdr_result: true, # identify this entry as coming from Data Repo
+          accession: short_name,
+          name: row[name_field],
+          description: row[description_field],
+          facet_matches: [],
+          term_matches: [],
+          drs_ids: [],
+          file_information: []
+        }.with_indifferent_access
+        # determine facet filter matches
+        if selected_facets.present?
+          selected_facets.each do |facet|
+            matches = get_facet_match_for_tdr_result(facet, row)
+            matches.each do |col_name, matched_val|
+              entry = { col_name => matched_val }
+              results[short_name][:facet_matches] << entry unless results[short_name][:facet_matches].include?(entry)
             end
           end
-          if terms.present?
-            terms.each do |term|
-              matches = get_term_match_for_tdr_result(term, result_row)
-              matches.each do |col_name, matched_val|
-                entry = {col_name => term}
-                results[short_name][:term_matches] << entry unless results[short_name][:term_matches].include?(entry)
-              end
+        end
+        if terms.present?
+          terms.each do |term|
+            matches = get_term_match_for_tdr_result(term, row)
+            matches.each do |col_name, _|
+              entry = { col_name => term }
+              results[short_name][:term_matches] << entry unless results[short_name][:term_matches].include?(entry)
             end
           end
-          # if any output IDs are DRS IDs, then store the DRS id for getting file information later
-          if result_row['output_id'].present? && result_row['output_id'].starts_with?('drs')
-            drs_id = result_row['output_id']
-            results[short_name][:drs_ids] << drs_id unless results[short_name][:drs_ids].include?(drs_id)
-          end
+        end
+        # if any output IDs are DRS IDs, then store the DRS id for getting file information later
+        if row['output_id'].present? && row['output_id'].starts_with?('drs')
+          drs_id = row['output_id']
+          results[short_name][:drs_ids] << drs_id unless results[short_name][:drs_ids].include?(drs_id)
         end
         results
       end
@@ -727,12 +731,13 @@ module Api
           # this is a numeric facet, so convert to range for match
           # TODO: determine correct unit/datatype and convert
           filter_value = "#{facet.dig(:filters, :min).to_i}-#{facet.dig(:filters, :max).to_i}"
-          matches = result_row.each_pair.select {|col, val| col == tdr_name && val == filter_value}
+          matches = result_row.each_pair.select { |col, val| col == tdr_name && val == filter_value }
         else
           matches = []
           facet[:filters].each do |filter|
             # look for match on the column name, and see which filter value also matched (ontology label or id)
-            matches << result_row.each_pair.select {|col, val| col == tdr_name && (val == filter[:name] || filter[:id])}.flatten
+            matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || filter[:id]) }
+                                 .flatten
           end
         end
         matches

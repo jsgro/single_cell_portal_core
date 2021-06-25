@@ -61,7 +61,7 @@ module Api
           end
         else
           study_obj = {
-            trd_result: true,
+            tdr_result: true,
             accession: study[:accession],
             name: study[:name],
             description: study[:description],

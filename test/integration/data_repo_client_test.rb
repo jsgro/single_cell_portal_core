@@ -159,7 +159,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
     assert_equal @gs_url, found_gs_url
   end
 
-  test 'should generate query json from facets' do
+  test 'should generate query JSON from facets' do
     selected_facets = [
       { id: :species, filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }] },
       { id: :disease, filters: [
@@ -177,7 +177,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
     assert_equal expected_query, query_json.dig(:query_string, :query)
   end
 
-  test 'should generate query from keywords' do
+  test 'should generate query JSON from keywords' do
     keywords = %w[pulmonary human lung]
     name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :id)
     description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :id)
@@ -187,7 +187,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
     assert_equal expected_query, query_json.dig(:query_string, :query)
   end
 
-  test 'should merge query json for facets and keywords' do
+  test 'should merge query JSON for facets and keywords' do
     name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :id)
     description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :id)
     species_field = FacetNameConverter.convert_to_model(:tim, :species, :id)
