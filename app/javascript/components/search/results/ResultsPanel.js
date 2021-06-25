@@ -18,7 +18,7 @@ import { serverErrorEnd } from 'lib/error-utils'
  */
 const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) => {
   const featureFlagState = useContext(UserContext).featureFlagsWithDefaults
-  let results = studySearchState.results
+  const results = studySearchState.results
 
   let panelContent
   if (studySearchState.isError) {
@@ -35,10 +35,6 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
       </div>
     )
   } else if (results.studies && results.studies.length > 0) {
-
-    for (let i = 0; i < 100; i++){
-      results.studies.push(results.studies[0]);
-    }
     panelContent = (
       <>
         { featureFlagState && featureFlagState.faceted_search &&
