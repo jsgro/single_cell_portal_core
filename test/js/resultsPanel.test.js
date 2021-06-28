@@ -4,7 +4,7 @@ import StudyResults from
   'components/search/results/StudyResults'
 import { StudySearchContext } from
   'providers/StudySearchProvider'
-import Study from 'components/search/results//Study'
+import ResultDetail from 'components/search/results/ResultDetail'
 import ResultsPanel from 'components/search/results/ResultsPanel'
 import { mount } from 'enzyme'
 React.useLayoutEffect = React.useEffect
@@ -38,7 +38,7 @@ describe('<StudyResultsContainer/> rendering>', () => {
       }
     }
     const resultsPanel = mount(
-      <ResultsPanel studySearchState={studySearchState} studyComponent={Study} />
+      <ResultsPanel studySearchState={studySearchState} studyComponent={ResultDetail} />
     )
     expect(resultsPanel.find(StudyResults)).toHaveLength(1)
     expect(resultsPanel.find('.loading-panel')).toHaveLength(0)

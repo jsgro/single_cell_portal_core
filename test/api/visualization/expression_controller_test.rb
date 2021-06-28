@@ -38,6 +38,7 @@ class ExpressionControllerTest < ActionDispatch::IntegrationTest
     @basic_study_exp_file = FactoryBot.create(:study_file,
                                               name: 'dense.txt',
                                               file_type: 'Expression Matrix',
+                                              taxon: Taxon.first,
                                               study: @basic_study)
     @pten_gene = FactoryBot.create(:gene_with_expression,
                                    name: 'PTEN',

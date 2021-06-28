@@ -6,7 +6,7 @@ module Api
       include StudySearchResultsObjects
 
       before_action :set_current_api_user!
-      before_action :authenticate_api_user!, only: [:create_auth_code, :bulk_download]
+      before_action :authenticate_api_user!, only: [:create_auth_code]
       before_action :set_search_facet, only: :facet_filters
       before_action :set_search_facets_and_filters, only: :index
       before_action :set_preset_search, only: :index
@@ -393,248 +393,6 @@ module Api
         @matching_filters = @search_facet.filters.select {|filter| filter[:name] =~ query_matcher}
       end
 
-      swagger_path '/search/auth_code' do
-        operation :post do
-          key :tags, [
-              'Search'
-          ]
-          key :summary, 'Create one-time auth code for downloads'
-          key :description, 'Create and return a one-time authorization code (OTAC) to identify a user for bulk downloads'
-          key :operationId, 'search_auth_code_path'
-          response 200 do
-            key :description, 'One-time auth code and time interval, in seconds'
-            schema do
-              property :auth_code do
-                key :type, :integer
-                key :description, 'One-time auth code'
-              end
-              property :time_interval do
-                key :type, :integer
-                key :description, 'Time interval (in seconds) OTAC will be valid'
-              end
-            end
-          end
-          response 401 do
-            key :description, ApiBaseController.unauthorized
-          end
-          response 406 do
-            key :description, ApiBaseController.not_acceptable
-          end
-        end
-      end
-
-      def create_auth_code
-        half_hour = 1800 # seconds
-        totat = current_api_user.create_totat(half_hour, "#{api_v1_search_path}/bulk_download")
-        auth_code_response = {auth_code: totat[:totat], time_interval: totat[:totat_info][:valid_seconds]}
-        render json: auth_code_response
-      end
-
-      swagger_path '/search/bulk_download_size' do
-        operation :get do
-          key :tags, [
-              'Search'
-          ]
-          key :summary, 'Preview of number of files/bytes requested for download'
-          key :description, 'Preview of the number of files and bytes (by file type) requested for download from search results'
-          key :operationId, 'search_bulk_download_size_path'
-          parameter do
-            key :name, :accessions
-            key :type, :string
-            key :in, :query
-            key :description, 'Comma-delimited list of Study accessions'
-            key :required, true
-          end
-          parameter do
-            key :name, :file_types
-            key :in, :query
-            key :description, 'Comma-delimited list of file types'
-            key :required, false
-            key :type, :array
-            items do
-              key :type, :string
-              key :enum, StudyFile::BULK_DOWNLOAD_TYPES
-            end
-            key :collectionFormat, :csv
-          end
-          response 200 do
-            key :description, 'Information about total number of files and sizes by type'
-            key :type, :object
-            key :title, 'FileSizesByType'
-            schema do
-              StudyFile::BULK_DOWNLOAD_TYPES.each do |file_type|
-                property file_type do
-                  key :type, :object
-                  key :title, file_type
-                  key :description, "#{file_type} files"
-                  property :total_files do
-                    key :type, :integer
-                    key :description, "Number of #{file_type} files"
-                  end
-                  property :total_bytes do
-                    key :type, :integer
-                    key :description, "Total number of bytes for #{file_type} files"
-                  end
-                end
-              end
-            end
-          end
-          response 400 do
-            key :description, 'Invalid study accessions or requested file types'
-          end
-          response 406 do
-            key :description, ApiBaseController.not_acceptable
-          end
-        end
-      end
-
-      def bulk_download_size
-        # sanitize study accessions and file types
-        valid_accessions = self.class.find_matching_accessions(params[:accessions])
-        sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
-
-        if valid_accessions.blank?
-          render json: {error: 'Invalid request parameters; study accessions not found'}, status: 400 and return
-        end
-
-        @files_by_type = ::BulkDownloadService.get_requested_file_sizes_by_type(file_types: sanitized_file_types,
-                                                                                study_accessions: valid_accessions)
-
-        render json: @files_by_type
-      end
-
-      swagger_path '/search/bulk_download' do
-        operation :get do
-          key :tags, [
-              'Search'
-          ]
-          key :summary, 'Bulk download study data'
-          key :description, 'Download files in bulk of multiple types from one or more studies via curl'
-          key :operationId, 'search_bulk_download_path'
-          parameter do
-            key :name, :auth_code
-            key :type, :integer
-            key :in, :query
-            key :description, 'User-specific one-time authorization code'
-            key :required, true
-          end
-          parameter do
-            key :name, :accessions
-            key :type, :string
-            key :in, :query
-            key :description, 'Comma-delimited list of Study accessions'
-            key :required, true
-          end
-          parameter do
-            key :name, :file_types
-            key :in, :query
-            key :description, 'Comma-delimited list of file types'
-            key :required, false
-            key :type, :array
-            items do
-              key :type, :string
-              key :enum, StudyFile::BULK_DOWNLOAD_TYPES
-            end
-            key :collectionFormat, :csv
-          end
-          parameter do
-            key :name, :directory
-            key :type, :string
-            key :in, :query
-            key :description, 'Name of directory folder to download (for single-study bulk download only), can be "all"'
-            key :required, false
-          end
-          response 200 do
-            key :description, 'Curl configuration file with signed URLs for requested data'
-            key :type, :string
-          end
-          response 400 do
-            key :description, 'Invalid study accessions or requested file types'
-          end
-          response 401 do
-            key :description, ApiBaseController.unauthorized
-          end
-          response 403 do
-            key :description, ApiBaseController.forbidden('download with provided auth_token, or download exceeds user quota')
-            schema do
-              key :title, 'Error'
-              property :message do
-                key :type, :string
-                key :description, 'Error message'
-              end
-            end
-          end
-          response 406 do
-            key :description, ApiBaseController.not_acceptable
-          end
-        end
-      end
-
-      def bulk_download
-        # sanitize study accessions and file types
-        valid_accessions = self.class.find_matching_accessions(params[:accessions])
-        sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
-
-        if valid_accessions.blank?
-          render json: {error: 'Invalid request parameters; study accessions not found'}, status: 400 and return
-        end
-        accessions_by_permission = ::BulkDownloadService.get_permitted_accessions(study_accessions: valid_accessions,
-                                                                                  user: current_api_user)
-        if accessions_by_permission[:forbidden].any? || accessions_by_permission[:lacks_acceptance].any?
-          error_msg = "Forbidden: cannot access requested accessions. "
-          if accessions_by_permission[:forbidden].any?
-            error_msg += "You do not have permission to view #{accessions_by_permission[:forbidden].join(', ')}"
-          end
-          if accessions_by_permission[:lacks_acceptance].any?
-            error_msg += "#{accessions_by_permission[:lacks_acceptance].join(', ')} require accepting a download agreement that can be found by viewing that study and going to the 'Download' tab"
-          end
-          render json: {error: error_msg},
-                 status: 403 and return
-        end
-        permitted_accessions = accessions_by_permission[:permitted]
-
-        # if this is a single-study download, allow for DirectoryListing downloads
-        if permitted_accessions.size == 1 && params[:directory].present?
-          study_accession = permitted_accessions.first
-          directories = self.class.find_matching_directories(params[:directory], study_accession)
-          directory_files = ::BulkDownloadService.get_requested_directory_files(directories)
-        else
-          directories = []
-          directory_files = []
-        end
-
-        # get requested files
-        # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
-        files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
-                                                                    study_accessions: permitted_accessions)
-
-        # determine quota impact & update user's download quota
-        # will throw a RuntimeError if the download exceeds the user's daily quota
-        begin
-          ::BulkDownloadService.update_user_download_quota(user: current_api_user, files: files_requested, directories: directories)
-        rescue RuntimeError => e
-          render json: {error: e.message}, status: 403 and return
-        end
-
-        # create maps to avoid Mongo timeouts when generating curl commands in parallel processes
-        bucket_map = ::BulkDownloadService.generate_study_bucket_map(permitted_accessions)
-        pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories)
-
-        # generate curl config file
-        logger.info "Beginning creation of curl configuration for user_id, auth token: #{current_api_user.id}"
-        start_time = Time.zone.now
-        @configuration = ::BulkDownloadService.generate_curl_configuration(study_files: files_requested,
-                                                                           directory_files: directory_files,
-                                                                           user: current_api_user,
-                                                                           study_bucket_map: bucket_map,
-                                                                           output_pathname_map: pathname_map)
-        end_time = Time.zone.now
-        runtime = TimeDifference.between(start_time, end_time).humanize
-        logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size + directory_files.size} total files"
-        logger.info "Total time in generating curl configuration: #{runtime}"
-        send_data @configuration, type: 'text/plain', filename: 'cfg.txt'
-      end
-
       private
 
       def set_branding_group
@@ -652,10 +410,10 @@ module Api
       def set_search_facets_and_filters
         @facets = []
         if params[:facets].present?
-          facet_queries = self.class.split_query_param_on_delim(parameter: params[:facets], delimiter: '+')
+          facet_queries = RequestUtils.split_query_param_on_delim(parameter: params[:facets], delimiter: '+')
           facet_queries.each do |query|
-            facet_id, raw_filters = self.class.split_query_param_on_delim(parameter: query, delimiter: ':')
-            filter_values = self.class.split_query_param_on_delim(parameter: raw_filters)
+            facet_id, raw_filters = RequestUtils.split_query_param_on_delim(parameter: query, delimiter: ':')
+            filter_values = RequestUtils.split_query_param_on_delim(parameter: raw_filters)
             facet = SearchFacet.find_by(identifier: facet_id)
             if facet.present?
               matching_filters = self.class.find_matching_filters(facet: facet, filter_values: filter_values)
@@ -889,38 +647,6 @@ module Api
         matching_filters
       end
 
-      # find valid StudyAccessions from query parameters
-      # only returns accessions currently in use
-      def self.find_matching_accessions(raw_accessions)
-        accessions = split_query_param_on_delim(parameter: raw_accessions)
-        sanitized_accessions = StudyAccession.sanitize_accessions(accessions)
-        Study.where(:accession.in => sanitized_accessions).pluck(:accession)
-      end
-
-      # find valid bulk download types from query parameters
-      def self.find_matching_file_types(raw_file_types)
-        file_types = split_query_param_on_delim(parameter: raw_file_types)
-        StudyFile::BULK_DOWNLOAD_TYPES & file_types # find array intersection
-      end
-
-      # find matching directories in a given study
-      # this only works for single-study bulk download, not from advanced/faceted search
-      # can be 'all', or a single directory
-      def self.find_matching_directories(directory_name, accession)
-        study = Study.find_by(accession: accession)
-        sanitized_dirname = URI.decode(directory_name)
-        selector = DirectoryListing.where(study_id: study.id, sync_status: true)
-        if sanitized_dirname.downcase != 'all'
-          selector = selector.where(name: sanitized_dirname)
-        end
-        selector
-      end
-
-      # generic split function, handles type checking
-      def self.split_query_param_on_delim(parameter:, delimiter: ',')
-        parameter.is_a?(Array) ? parameter : parameter.to_s.split(delimiter).map(&:strip)
-      end
-
       # build a map of facet filter matches to studies for computing simplistic weights for scoring
       def self.match_results_by_filter(search_result:, result_key:, facets:)
         facet_name = result_key.to_s.chomp('_val')
@@ -949,45 +675,51 @@ module Api
         logger.info "Executing TDR query with: #{query_json}"
         raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json)
         raw_tdr_results['result'].each do |result_row|
-          # get column name mappings for assembling results
-          short_name_field = FacetNameConverter.convert_to_model(:tim, :accession, :name)
-          name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
-          description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :name)
-          short_name = result_row[short_name_field]
-          results[short_name] ||= {
-            study_source: 'TDR', # identify this entry as coming from Data Repo
-            accession: short_name,
-            name: result_row[name_field],
-            description: result_row[description_field],
-            facet_matches: [],
-            term_matches: [],
-            drs_ids: [],
-            file_information: []
-          }.with_indifferent_access
-          # determine facet filter matches
-          if selected_facets.present?
-            selected_facets.each do |facet|
-              matches = get_facet_match_for_tdr_result(facet, result_row)
-              matches.each do |col_name, matched_val|
-                entry = {col_name => matched_val}
-                results[short_name][:facet_matches] << entry unless results[short_name][:facet_matches].include?(entry)
-              end
+          results = process_tdr_result_row(result_row, results, selected_facets: selected_facets, terms: terms)
+        end
+        results
+      end
+
+      # process an individual result row from TDR
+      def self.process_tdr_result_row(row, results, selected_facets:, terms:)
+        # get column name mappings for assembling results
+        short_name_field = FacetNameConverter.convert_to_model(:tim, :accession, :name)
+        name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
+        description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :name)
+        short_name = row[short_name_field]
+        results[short_name] ||= {
+          tdr_result: true, # identify this entry as coming from Data Repo
+          accession: short_name,
+          name: row[name_field],
+          description: row[description_field],
+          facet_matches: [],
+          term_matches: [],
+          drs_ids: [],
+          file_information: []
+        }.with_indifferent_access
+        # determine facet filter matches
+        if selected_facets.present?
+          selected_facets.each do |facet|
+            matches = get_facet_match_for_tdr_result(facet, row)
+            matches.each do |col_name, matched_val|
+              entry = { col_name => matched_val }
+              results[short_name][:facet_matches] << entry unless results[short_name][:facet_matches].include?(entry)
             end
           end
-          if terms.present?
-            terms.each do |term|
-              matches = get_term_match_for_tdr_result(term, result_row)
-              matches.each do |col_name, matched_val|
-                entry = {col_name => term}
-                results[short_name][:term_matches] << entry unless results[short_name][:term_matches].include?(entry)
-              end
+        end
+        if terms.present?
+          terms.each do |term|
+            matches = get_term_match_for_tdr_result(term, row)
+            matches.each do |col_name, _|
+              entry = { col_name => term }
+              results[short_name][:term_matches] << entry unless results[short_name][:term_matches].include?(entry)
             end
           end
-          # if any output IDs are DRS IDs, then store the DRS id for getting file information later
-          if result_row['output_id'].present? && result_row['output_id'].starts_with?('drs')
-            drs_id = result_row['output_id']
-            results[short_name][:drs_ids] << drs_id unless results[short_name][:drs_ids].include?(drs_id)
-          end
+        end
+        # if any output IDs are DRS IDs, then store the DRS id for getting file information later
+        if row['output_id'].present? && row['output_id'].starts_with?('drs')
+          drs_id = row['output_id']
+          results[short_name][:drs_ids] << drs_id unless results[short_name][:drs_ids].include?(drs_id)
         end
         results
       end
@@ -999,12 +731,13 @@ module Api
           # this is a numeric facet, so convert to range for match
           # TODO: determine correct unit/datatype and convert
           filter_value = "#{facet.dig(:filters, :min).to_i}-#{facet.dig(:filters, :max).to_i}"
-          matches = result_row.each_pair.select {|col, val| col == tdr_name && val == filter_value}
+          matches = result_row.each_pair.select { |col, val| col == tdr_name && val == filter_value }
         else
           matches = []
           facet[:filters].each do |filter|
             # look for match on the column name, and see which filter value also matched (ontology label or id)
-            matches << result_row.each_pair.select {|col, val| col == tdr_name && (val == filter[:name] || filter[:id])}.flatten
+            matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || filter[:id]) }
+                                 .flatten
           end
         end
         matches

@@ -210,11 +210,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
 
     # Log API call for auditing/tracking purposes
     Rails.logger.info "FireCloud API request (#{http_method.to_s.upcase}) #{path} with tracking identifier: #{self.tracking_identifier}"
-    # check for token expiry first before executing
-    if self.access_token_expired?
-      Rails.logger.info "FireCloudClient token expired, refreshing access token"
-      self.refresh_access_token
-    end
+
     # set default headers, appending application identifier including hostname for disambiguation
     headers = get_default_headers
 
