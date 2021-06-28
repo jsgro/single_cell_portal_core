@@ -454,6 +454,46 @@ export async function fetchDownloadInfo(accessions, mock=false) {
 }
 
 /**
+ *  Queries the bulk_download/summary API to retrieve a list of study and file information
+ *
+ * Docs:
+ * https://singlecell.broadinstitute.org/single_cell/api/swagger_docs/v1#!/BulkDownload/bulk_download_summary_path
+ *
+ * @param {Array} accessions List of study accessions to preview download
+ */
+export async function fetchDownloadInfoTDR(accessions, mock=false) {
+  return Promise.resolve([{
+    "name": "Single-cell RNA-sequencing reveals profibrotic roles of distinct epithelial and mesenchymal lineages in pulmonary fibrosis",
+    "accession": "SCP35",
+    "description": "bleh",
+    "studyFiles": [
+      {
+        "name": "pulmonary.metadata.tsv",
+        "id": "60a2cf62cc7ba082358b545f",
+        "file_type": "analysis",
+        "upload_file_size": 215081
+      },
+      {
+        "name": "pulmonary.genes.tsv",
+        "id": "60a2cf63cc7ba082358b5461",
+        "file_type": "analysis",
+        "upload_file_size": 1005150
+      },
+      {
+        "name": "sample1.bam",
+        "id": "60a2cf63cc7ba082358b5464",
+        "file_type": "sequence",
+        "upload_file_size": 259970
+      }
+    ]
+  }])
+  // const queryString = `?accessions=${accessions}`
+  // const pathAndQueryString = `/bulk_download/summary_tdr/${queryString}`
+  // const [info] = await scpApi(pathAndQueryString, defaultInit(), mock)
+  // return info
+}
+
+/**
  * Returns a list of matching studies given a keyword and facets
  *
  * Docs: https:///singlecell.broadinstitute.org/single_cell/api/swagger_docs/v1#!/Search/search

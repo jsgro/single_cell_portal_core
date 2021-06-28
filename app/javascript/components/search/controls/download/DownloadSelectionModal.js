@@ -5,8 +5,11 @@ import DownloadCommand from './DownloadCommand'
 import DownloadSelectionTable, {
   newSelectedBoxesState, getSelectedFileIds, getSelectedFileStats, bytesToSize
 } from './DownloadSelectionTable'
-import { fetchDownloadInfo } from 'lib/scp-api'
 
+import { fetchDownloadInfo, fetchDownloadInfoTDR } from 'lib/scp-api'
+
+const TDR_COLUMNS = ['analysis', 'sequence']
+const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
 
 /**
   * a modal that, given a list of study accessions, allows a user to select/deselect
@@ -15,22 +18,38 @@ import { fetchDownloadInfo } from 'lib/scp-api'
   */
 export default function DownloadSelectionModal({ studyAccessions, show, setShow }) {
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingTDR, setIsLoadingTDR] = useState(true)
   const [downloadInfo, setDownloadInfo] = useState([])
   const [selectedBoxes, setSelectedBoxes] = useState()
+  const [downloadInfoTDR, setDownloadInfoTDR] = useState([])
+  const [selectedBoxesTDR, setSelectedBoxesTDR] = useState()
   const [stepNum, setStepNum] = useState(1)
 
+  const scpAccessions = studyAccessions.filter(accession => accession.startsWith('SCP'))
+  const tdrAccessions = studyAccessions.filter(accession => !accession.startsWith('SCP'))
+  const showTDRSelectionPane = tdrAccessions.length > 0
   const { fileCount, fileSize } = getSelectedFileStats(downloadInfo, selectedBoxes, isLoading)
-  const prettyBytes = bytesToSize(fileSize)
+  const { fileCount: fileCountTDR, fileSize: fileSizeTDR } =
+    getSelectedFileStats(downloadInfoTDR, selectedBoxesTDR, isLoadingTDR)
+  const prettyBytes = bytesToSize(fileSize + fileSizeTDR)
   const selectedFileIds = getSelectedFileIds(downloadInfo, selectedBoxes)
 
   useEffect(() => {
     if (show) {
       setIsLoading(true)
-      fetchDownloadInfo(studyAccessions).then(result => {
-        setSelectedBoxes(newSelectedBoxesState(result))
+      setIsLoadingTDR(true)
+      fetchDownloadInfo(scpAccessions).then(result => {
+        setSelectedBoxes(newSelectedBoxesState(result, SCP_COLUMNS))
         setDownloadInfo(result)
         setIsLoading(false)
       })
+      if (showTDRSelectionPane) {
+        fetchDownloadInfoTDR(tdrAccessions).then(result => {
+          setSelectedBoxesTDR(newSelectedBoxesState(result, TDR_COLUMNS))
+          setDownloadInfoTDR(result)
+          setIsLoadingTDR(false)
+        })
+      }
     }
   }, [show, studyAccessions.join(',')])
 
@@ -40,7 +59,7 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
     data-analytics-name="download-modal-next">
     NEXT
   </button>
-  if (fileCount === 0) {
+  if (fileCount + fileCountTDR === 0) {
     downloadButton = <button className="btn btn-primary" disabled="disabled">
       No files selected
     </button>
@@ -63,7 +82,7 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
                 &nbsp; Select files
               </h3>
             </div>
-            <div className="col-md-4">
+            <div className="col-md-6">
               <h3 className={stepNum === 2 ? '' : 'greyed'}>
                 <span className="badge">2</span>
                 &nbsp; Get terminal command
@@ -75,11 +94,27 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
             to use on your terminal.
           </div>
         </div>
-        { stepNum === 1 && <DownloadSelectionTable
-          isLoading={isLoading}
-          downloadInfo={downloadInfo}
-          selectedBoxes={selectedBoxes}
-          setSelectedBoxes={setSelectedBoxes}/> }
+        { stepNum === 1 &&
+          <div>
+            <DownloadSelectionTable
+              isLoading={isLoading}
+              downloadInfo={downloadInfo}
+              selectedBoxes={selectedBoxes}
+              setSelectedBoxes={setSelectedBoxes}
+              columnTypes={SCP_COLUMNS}/>
+            { showTDRSelectionPane &&
+              <div>
+                <h4>HCA studies</h4>
+                <DownloadSelectionTable
+                  isLoading={isLoadingTDR}
+                  downloadInfo={downloadInfoTDR}
+                  selectedBoxes={selectedBoxesTDR}
+                  setSelectedBoxes={setSelectedBoxesTDR}
+                  columnTypes={TDR_COLUMNS}/>
+              </div>
+            }
+          </div>
+        }
         { stepNum === 2 && <DownloadCommand
           closeParent={() => setShow(false)}
           fileIds={selectedFileIds}/> }
