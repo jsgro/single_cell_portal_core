@@ -10955,10 +10955,10 @@ pleeease-filters@^4.0.0:
     onecolor "^3.0.4"
     postcss "^6.0.1"
 
-plotly.js-dist@1.58.4:
-  version "1.58.4"
-  resolved "https://registry.npmjs.org/plotly.js-dist/-/plotly.js-dist-1.58.4.tgz"
-  integrity sha512-oXCTRJFN8FBsHZSQPYoM3LuJQchPUrf6sOXFC0EFdvcr5lmJmLcAsW74jDy9PkRpm3PB+A+2oY1hsUMmk2eZbw==
+plotly.js-dist@2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/plotly.js-dist/-/plotly.js-dist-2.2.0.tgz#a42c9310f5dd29d5cd437457925407fb952e6fba"
+  integrity sha512-8frGW2md+erSEZdOHiHc7xyOORK3Oq01nsJk546kDdjyCHLGqan4pqNdoHlwlPemlcdqBnrsahYY6z2rLU6srw==
 
 pluralize@^8.0.0:
   version "8.0.0"
