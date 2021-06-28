@@ -955,7 +955,7 @@ module Api
           description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :name)
           short_name = result_row[short_name_field]
           results[short_name] ||= {
-            trd_result: true, # identify this entry as coming from Data Repo
+            study_source: 'TDR', # identify this entry as coming from Data Repo
             accession: short_name,
             name: result_row[name_field],
             description: result_row[description_field],

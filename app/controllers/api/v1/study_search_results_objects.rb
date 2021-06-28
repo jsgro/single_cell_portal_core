@@ -28,6 +28,7 @@ module Api
       def study_response_obj(study)
         if study.is_a?(Study)
           study_obj = {
+            study_source: 'SCP',
             accession: study.accession,
             name: study.name,
             description: study.description,
@@ -40,7 +41,7 @@ module Api
           }
         else
           study_obj = {
-            trd_result: true,
+            study_source: 'TDR',
             accession: study[:accession],
             name: study[:name],
             description: study[:description],

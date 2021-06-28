@@ -141,58 +141,53 @@ function facetMatchBadges(study) {
   </>)
 }
 
+// generate a cell count badge for SCP studies
+function cellCountBadge(study) {
+  if (study.study_source === 'SCP') {
+    return <span className="badge cell-count">
+      {study.cell_count} Cells
+    </span>
+  }
+}
+
+// generate the inferredBadge for SCP studies
+function inferredBadge(study, termMatches) {
+  if (study.inferred_match && study.study_source === 'SCP') {
+    const helpText = `${termMatches.join(', ')} was not found in study metadata,
+     only in study title or description`
+    return <span className="badge soft-badge" data-toggle="tooltip" title={helpText}>text match only</span>
+  }
+}
+
+/* generate a badge to indicate to users the study origin for non-SCP studies */
+function studyTypeBadge(study) {
+  if (study.study_source === 'TDR') {
+    return <span className="badge badge-secondary study-type" data-toggle="tooltip"
+      title={'Study comes from Terra Data Repo'}> TDR </span>
+  }
+}
+
 /* displays a brief summary of a study, with a link to the study page */
 export default function StudySearchResult({ study }) {
-  if (!study.trd_result) {
-    const termMatches = study.term_matches
-    const studyTitle = highlightText(study.name, termMatches).styledText
-    const studyDescription = formatDescription(study.description, termMatches)
-    const displayStudyTitle = { __html: studyTitle }
+  const termMatches = study.term_matches
+  const studyTitle = highlightText(study.name, termMatches).styledText
+  const studyDescription = formatDescription(study.description, termMatches)
+  const displayStudyTitle = { __html: studyTitle }
 
-    let inferredBadge = <></>
-    if (study.inferred_match) {
-      const helpText = `${termMatches.join(', ')} was not found in study metadata,
-     only in study title or description`
-      inferredBadge = <span className="badge soft-badge" data-toggle="tooltip" title={helpText}>text match only</span>
-    }
-
-    return (
-      <>
-        <div key={study.accession}>
-          <label htmlFor={study.name} id="result-title" className={'study-label'}>
-            <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle}/>{inferredBadge}
-            <span className="badge badge-secondary study-type"
-              data-toggle="tooltip"
-              title={'Study comes from Single Cell Portal'}>
-              SCP </span>
-          </label>
-          <div>
-            <span className="badge cell-count">
-              {study.cell_count} Cells
-            </span>
-            {facetMatchBadges(study)}
-          </div>
-          {studyDescription}
+  return (
+    <>
+      <div key={study.accession}>
+        <label htmlFor={study.name} id="result-title" className={'study-label'}>
+          <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle} />
+          {inferredBadge(study, termMatches)}
+          {studyTypeBadge(study)}
+        </label>
+        <div>
+          {cellCountBadge(study)}
+          {facetMatchBadges(study)}
         </div>
-      </>
-    )
-  } else {
-    const studyDescription = simpleShortenDescription(study.description)
-    const displayStudyTitle = { __html: study.name }
-    return (
-      <>
-        <div key={study.accession}>
-          <label htmlFor={study.name} id="result-title" className={'study-label'}>
-            <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle}/>
-            <span className="badge badge-secondary study-type" data-toggle="tooltip"
-              title={'Study comes from Terra Data Repo'}> TDR </span>
-          </label>
-          <div>
-            {facetMatchBadges(study)}
-          </div>
-          {studyDescription}
-        </div>
-      </>
-    )
-  }
+        {studyDescription}
+      </div>
+    </>
+  )
 }
