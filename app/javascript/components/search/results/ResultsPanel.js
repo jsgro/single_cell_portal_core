@@ -41,7 +41,7 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
           <SearchQueryDisplay terms={results.termList} facets={results.facets}/> }
         <StudyResults
           results={results}
-          StudyComponent={StudySearchResult}
+          StudyComponent={studyComponent ? studyComponent : StudySearchResult}
           changePage={pageNum => {
             studySearchState.updateSearch({ page: pageNum })
           }}

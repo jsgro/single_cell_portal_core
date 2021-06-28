@@ -40,18 +40,6 @@ export function getByline(rawDescription) {
   return bylineText
 }
 
-export function simpleShortenDescription(textDescription) {
-  const suffixTag = <span className="detail"> ...(continued)</span>
-  const displayedStudyDescription = { __html: textDescription.slice(0, descriptionCharacterLimit) }
-  if (textDescription.length > descriptionCharacterLimit) {
-    return <>
-      <span className="studyDescription" dangerouslySetInnerHTML={displayedStudyDescription}></span>{suffixTag}
-    </>
-  } else {
-    return <><span className="studyDescription" dangerouslySetInnerHTML={displayedStudyDescription}></span></>
-  }
-}
-
 export function shortenDescription(textDescription, term) {
   const { styledText, matchedIndices } = highlightText(textDescription, term)
   const suffixTag = <span className="detail"> ...(continued)</span>
