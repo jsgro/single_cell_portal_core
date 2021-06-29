@@ -165,7 +165,7 @@ export default function StudySearchResult({ study }) {
   return (
     <>
       <div key={study.accession}>
-        <label htmlFor={study.name} id="result-title" className={'study-label'}>
+        <label htmlFor={study.name} id="result-title" className='study-label'>
           <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle} />
           {inferredBadge(study, termMatches)}
           {studyTypeBadge(study)}
