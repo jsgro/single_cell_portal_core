@@ -1,8 +1,8 @@
-import React from 'react';
-import * as ReactAll from 'react';
-import { mount } from 'enzyme';
+import React from 'react'
+import * as ReactAll from 'react'
+import { mount } from 'enzyme'
 
-import ResultDetail from 'components/search/results/ResultDetail';
+import StudySearchResult from 'components/search/results/StudySearchResult'
 
 const facetMatchedStudy = {
   name: 'Tuberculosis subtypes in human male blood',
@@ -10,7 +10,7 @@ const facetMatchedStudy = {
   cell_count: 130,
   facet_matches: {
     facet_search_weight: 1,
-    organ: [{id: 'id1', name: 'blood'}]
+    organ: [{ id: 'id1', name: 'blood' }]
   }
 }
 
@@ -20,8 +20,8 @@ const complexFacetMatchedStudy = {
   cell_count: 130,
   facet_matches: {
     facet_search_weight: 1,
-    organ: [{id: 'id1', name: 'blood'}],
-    species: [{id: 'id5', name: 'mouse'}, {id: 'id7', name: 'human'}]
+    organ: [{ id: 'id1', name: 'blood' }],
+    species: [{ id: 'id5', name: 'mouse' }, { id: 'id7', name: 'human' }]
   }
 }
 
@@ -53,14 +53,14 @@ const facetUnmatchedStudy = {
 describe('Facet match badges', () => {
   it('renders no badges with no matches', async () => {
     const wrapper = mount((
-      <ResultDetail study={facetUnmatchedStudy}/>
+      <StudySearchResult study={facetUnmatchedStudy}/>
     ))
     expect(wrapper.find('.facet-match').length).toEqual(0)
   })
 
   it('renders one badges with one match', async () => {
     const wrapper = mount((
-      <ResultDetail study={facetMatchedStudy}/>
+      <StudySearchResult study={facetMatchedStudy}/>
     ))
     expect(wrapper.find('.facet-match').length).toEqual(1)
     expect(wrapper.find('.facet-match').first().text().trim()).toEqual('blood')
@@ -68,7 +68,7 @@ describe('Facet match badges', () => {
 
   it('renders two badges with two matches', async () => {
     const wrapper = mount((
-      <ResultDetail study={complexFacetMatchedStudy}/>
+      <StudySearchResult study={complexFacetMatchedStudy}/>
     ))
     expect(wrapper.find('.facet-match').length).toEqual(2)
     expect(wrapper.find('.facet-match').first().text().trim()).toEqual('blood')
@@ -77,12 +77,12 @@ describe('Facet match badges', () => {
 
   it('renders badges for numeric facets', async () => {
     const wrapper = mount((
-      <ResultDetail study={numericFacetMatchedStudy}/>
+      <StudySearchResult study={numericFacetMatchedStudy}/>
     ))
     expect(wrapper.find('.facet-match').length).toEqual(1)
     expect(wrapper.find('.facet-match').first().text().trim()).toEqual('organism age 30-50 years')
     const wrapper2 = mount((
-      <ResultDetail study={numericFacetMatchedRange0Study}/>
+      <StudySearchResult study={numericFacetMatchedRange0Study}/>
     ))
     expect(wrapper2.find('.facet-match').length).toEqual(1)
     expect(wrapper2.find('.facet-match').first().text().trim()).toEqual('organism age 0-50 years')
