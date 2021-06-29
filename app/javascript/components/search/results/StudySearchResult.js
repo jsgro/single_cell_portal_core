@@ -138,7 +138,7 @@ function cellCountBadge(study) {
   }
 }
 
-// generate the inferredBadge for SCP studies
+/** Generate the inferredBadge for SCP studies */
 function inferredBadge(study, termMatches) {
   if (study.inferred_match && study.study_source === 'SCP') {
     const helpText = `${termMatches.join(', ')} was not found in study metadata,
