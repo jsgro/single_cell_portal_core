@@ -51,4 +51,19 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
 
     assert_equal @basic_study.genes.count, 0, "Should not have found any genes but found #{@basic_study.genes.count}"
   end
+
+  test 'should allow reuse of filename after deletion' do
+    filename = 'exp_matrix.txt'
+    matrix = FactoryBot.create(:study_file, name: filename, file_type: 'Expression Matrix', study: @basic_study)
+    assert matrix.persisted?
+    assert matrix.valid?
+    # queue for deletion and attempt to use same filename again
+    DeleteQueueJob.new(matrix).perform
+    matrix.reload
+    assert matrix.queued_for_deletion
+    assert_not_equal filename, matrix.upload_file_name
+    new_matrix = FactoryBot.create(:study_file, name: filename, file_type: 'Expression Matrix', study: @basic_study)
+    assert new_matrix.persisted?
+    assert new_matrix.valid?
+  end
 end
