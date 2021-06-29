@@ -69,7 +69,8 @@ module Api
             detached: false,
             cell_count: 0,
             gene_count: 0,
-            study_url: '#'
+            study_url: '#',
+            file_information: study[:file_information]
           }
         end
         study_obj
