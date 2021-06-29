@@ -147,7 +147,7 @@ function inferredBadge(study, termMatches) {
   }
 }
 
-/* generate a badge to indicate to users the study origin for non-SCP studies */
+/** Generate a badge to indicate to users the study origin for non-SCP studies */
 function studyTypeBadge(study) {
   if (study.study_source === 'TDR') {
     return <span className="badge badge-secondary study-type" data-toggle="tooltip"
