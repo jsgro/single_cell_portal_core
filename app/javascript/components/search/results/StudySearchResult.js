@@ -155,7 +155,7 @@ function studyTypeBadge(study) {
   }
 }
 
-/* displays a brief summary of a study, with a link to the study page */
+/** Displays a brief summary of a study, with a link to the study page */
 export default function StudySearchResult({ study }) {
   const termMatches = study.term_matches
   const studyTitle = highlightText(study.name, termMatches).styledText
