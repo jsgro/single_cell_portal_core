@@ -129,7 +129,7 @@ function facetMatchBadges(study) {
   </>)
 }
 
-// generate a cell count badge for SCP studies
+/** Generate a cell count badge for SCP studies */
 function cellCountBadge(study) {
   if (study.study_source === 'SCP') {
     return <span className="badge cell-count">
