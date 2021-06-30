@@ -173,4 +173,41 @@ class IngestJobTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test 'should set default annotation even if not visualizable' do
+    assert @basic_study.default_annotation.nil?
+    # test metadata file with a single annotation with only one unique value
+    metadata_file = FactoryBot.create(:metadata_file,
+                                      name: 'metadata.txt',
+                                      study: @basic_study,
+                                      cell_input: %w[A B C],
+                                      annotation_input: [
+                                        { name: 'species', type: 'group', values: %w[dog dog dog] }
+                                      ])
+    job = IngestJob.new(study: @basic_study, study_file: metadata_file, user: @user, action: :ingest_metadata)
+    job.set_study_default_options
+    @basic_study.reload
+    assert_equal 'species--group--study', @basic_study.default_annotation
+
+    # reset default annotation, then test cluster file with a single annotation with only one unique value
+    @basic_study.cell_metadata.destroy_all
+    @basic_study.default_options = {}
+    @basic_study.save
+    assert @basic_study.default_annotation.nil?
+    assert @basic_study.default_cluster.nil?
+    cluster_file = FactoryBot.create(:cluster_file,
+                                     name: 'cluster.txt', study: @basic_study,
+                                     cell_input: {
+                                       x: [1, 4, 6],
+                                       y: [7, 5, 3],
+                                       cells: %w[A B C]
+                                     },
+                                     annotation_input: [{ name: 'foo', type: 'group', values: %w[bar bar bar] }])
+    job = IngestJob.new(study: @basic_study, study_file: cluster_file, user: @user, action: :ingest_cluster)
+    job.set_study_default_options
+    @basic_study.reload
+    cluster = @basic_study.cluster_groups.first
+    assert_equal cluster, @basic_study.default_cluster
+    assert_equal 'foo--group--cluster', @basic_study.default_annotation
+  end
 end
