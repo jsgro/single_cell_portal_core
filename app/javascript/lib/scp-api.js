@@ -78,9 +78,12 @@ function defaultPostInit(mock=false) {
  * // returns {authCode: 123456, timeInterval: 1800}
  * fetchAuthCode(true)
  */
-export async function fetchAuthCode(mock=false) {
+export async function fetchAuthCode(fileIds, tdrFiles, mock=false) {
   const init = defaultPostInit(mock)
-
+  init.body = JSON.stringify({
+    file_ids: fileIds,
+    tdr_files: tdrFiles
+  })
   const [authCode, perfTimes] = await scpApi('/bulk_download/auth_code', init, mock)
 
   logDownloadAuthorization(perfTimes)
@@ -461,36 +464,11 @@ export async function fetchDownloadInfo(accessions, mock=false) {
  *
  * @param {Array} accessions List of study accessions to preview download
  */
-export async function fetchDownloadInfoTDR(accessions, mock=false) {
-  return Promise.resolve([{
-    "name": "Single-cell RNA-sequencing reveals profibrotic roles of distinct epithelial and mesenchymal lineages in pulmonary fibrosis",
-    "accession": "SCP35",
-    "description": "bleh",
-    "studyFiles": [
-      {
-        "name": "pulmonary.metadata.tsv",
-        "id": "60a2cf62cc7ba082358b545f",
-        "file_type": "analysis",
-        "upload_file_size": 215081
-      },
-      {
-        "name": "pulmonary.genes.tsv",
-        "id": "60a2cf63cc7ba082358b5461",
-        "file_type": "analysis",
-        "upload_file_size": 1005150
-      },
-      {
-        "name": "sample1.bam",
-        "id": "60a2cf63cc7ba082358b5464",
-        "file_type": "sequence",
-        "upload_file_size": 259970
-      }
-    ]
-  }])
-  // const queryString = `?accessions=${accessions}`
-  // const pathAndQueryString = `/bulk_download/summary_tdr/${queryString}`
-  // const [info] = await scpApi(pathAndQueryString, defaultInit(), mock)
-  // return info
+export async function fetchDrsInfo(drsIds, mock=false) {
+  const init = defaultPostInit(mock)
+  init.body = JSON.stringify({ drs_ids: drsIds })
+  const [info] = await scpApi(`/bulk_download/drs_info/`, init, mock)
+  return info
 }
 
 /**

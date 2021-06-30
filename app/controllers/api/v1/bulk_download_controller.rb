@@ -40,19 +40,32 @@ module Api
 
       def auth_code
         half_hour = 1800 # seconds
+
         totat = current_api_user.create_totat(half_hour, api_v1_bulk_download_generate_curl_config_path)
-        auth_code_response = {auth_code: totat[:totat], time_interval: totat[:totat_info][:valid_seconds]}
+        valid_params = params.permit({file_ids: [], tdr_files: {}}).to_h
+        # for now, we don't do any validation on the param values -- we'll do that during the actual download, since
+        # quota/files/permissions may change between the creation of the download and the actual download
+        auth_download = DownloadRequest.create!(
+          auth_code: totat[:totat],
+          file_ids: valid_params[:file_ids],
+          tdr_files: valid_params[:tdr_files],
+          user_id: current_api_user.id)
+        auth_code_response = {
+          auth_code: totat[:totat],
+          time_interval: totat[:totat_info][:valid_seconds],
+          download_id: auth_download.id.to_s
+        }
         render json: auth_code_response
       end
 
-      swagger_path '/bulk_download/summary_info' do
+      swagger_path '/bulk_download/summary' do
         operation :get do
           key :tags, [
               'Search'
           ]
           key :summary, 'Summary information of studies requested for download'
           key :description, 'Preview of the names, number of files and bytes (by file type) requested for download from search results'
-          key :operationId, 'search_bulk_download_info_path'
+          key :operationId, 'search_bulk_download_summary_path'
           parameter do
             key :name, :accessions
             key :type, :string
@@ -92,7 +105,7 @@ module Api
       end
 
       def summary
-        # sanitize study accessions and file types
+        # sanitize study accessions
         valid_accessions = self.class.find_matching_accessions(params[:accessions])
 
         begin
@@ -104,6 +117,22 @@ module Api
         @study_file_info = ::BulkDownloadService.get_download_info(valid_accessions)
 
         render json: @study_file_info
+      end
+
+      def drs_info
+        drs_ids = params[:drs_ids]
+        file_info = Parallel.map(drs_ids, in_threads: 100) do |drs_id|
+          begin
+            client = DataRepoClient.new
+            client.get_drs_file_info(drs_id)
+          rescue StandardError => e
+            {
+              drs_id: drs_id,
+              error: e.message
+            }
+          end
+        end
+        render json: file_info
       end
 
       swagger_path '/bulk_download/generate_curl_config' do
@@ -187,13 +216,24 @@ module Api
       def generate_curl_config
         valid_accessions = []
         file_ids = []
-        # sanitize study accessions and file types
-        if params[:file_ids]
+        tdr_files = {}
+        if params[:download_id]
+          download_req = DownloadRequest.find(params[:download_id])
+          if !download_req
+            render json: {error: 'Invalid download_id provided'}, status: 400 and return
+          end
+          file_ids = download_req.file_ids
+          tdr_files = download_req.tdr_files
+        else
           begin
-            file_ids = RequestUtils.validate_id_list(params[:file_ids])
+            file_ids = RequestUtils.validate_id_list(file_ids)
           rescue ArgumentError
             render json: {error: 'file_ids must be comma-delimited list of 24-character UUIDs'}, status: 400 and return
           end
+        end
+
+        # sanitize study accessions and file types
+        if file_ids
           matched_study_ids = StudyFile.where(:id.in => file_ids).pluck(:study_id)
           valid_accessions = Study.where(:id.in => matched_study_ids).pluck(:accession)
         else
@@ -219,7 +259,7 @@ module Api
         files_requested = nil
         # get requested files
         # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
-        if params[:file_ids]
+        if file_ids
           files_requested = StudyFile.where(:id.in => file_ids)
         else
           files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
@@ -245,7 +285,8 @@ module Api
                                                                            directory_files: directory_files,
                                                                            user: current_api_user,
                                                                            study_bucket_map: bucket_map,
-                                                                           output_pathname_map: pathname_map)
+                                                                           output_pathname_map: pathname_map,
+                                                                           tdr_files: tdr_files)
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
         logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size + directory_files.size} total files"

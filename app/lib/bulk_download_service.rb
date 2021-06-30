@@ -20,7 +20,8 @@ class BulkDownloadService
                                        directory_files: [],
                                        user:,
                                        study_bucket_map:,
-                                       output_pathname_map:)
+                                       output_pathname_map:,
+                                       tdr_files:)
     curl_configs = ['--create-dirs', '--compressed']
     # create an array of all objects to be downloaded, including directory files
     download_objects = study_files.to_a + directory_files
@@ -48,10 +49,27 @@ class BulkDownloadService
       manifest_config += "output=\"#{study.accession}/file_supplemental_info.tsv\""
       curl_configs << manifest_config
     end
+    tdr_studies = tdr_files ? tdr_files.keys : []
+    tdr_file_configs = []
+
+    if tdr_files
+      curl_configs << "-H \"Authorization: Bearer #{DataRepoClient.new.access_token['access_token']}\""
+      tdr_file_configs = tdr_files.map do |shortname, file_infos|
+        file_infos.map do |file_info|
+          file_config = "url=\"#{file_info['url']}\"\n"
+          file_config += "output=\"#{shortname}/#{file_info['name']}"
+          file_config
+        end
+      end
+      curl_configs.concat(tdr_file_configs.flatten)
+    end
     MetricsService.log('file-download:curl-config', {
       numFiles: study_files.count,
       numStudies: studies.count,
-      studyAccesions: studies.map(&:accession)
+      studyAccesions: studies.map(&:accession),
+      numTdrStudies: tdr_studies.count,
+      tdrAccessions: tdr_studies,
+      numTDRFiles: tdr_file_configs.count
     }, user)
     curl_configs.join("\n\n")
   end

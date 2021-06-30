@@ -1,0 +1,17 @@
+class DownloadRequest
+
+  ###
+  #
+  # Stores information about files requested for a download and a corresponding auth. code
+  # Used primarily so that the curl command given to users can be concise and not require excessive escape characters
+  #
+  ###
+
+  include Mongoid::Document
+  include Mongoid::Timestamps
+
+  field :auth_code, type: String
+  field :file_ids # Mongo ids of study files to download
+  field :tdr_files, type: Hash, default: {} # Hash of TDR project shortnames to arrays of access urls
+  field :user_id # User making the request
+end

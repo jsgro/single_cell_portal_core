@@ -161,13 +161,13 @@ const COLUMNS = {
   },
   analysis: {
     title: 'Analysis',
-    types: ['analysis'],
+    types: ['analysis_file'],
     info: 'Expression matrix files, including processed or raw counts files',
     default: true
   },
   sequence: {
     title: 'Sequence',
-    types: ['sequence'],
+    types: ['sequence_file'],
     info: 'Sequence files, such as BAM or BAI files',
     default: false
   }
@@ -184,6 +184,13 @@ function StudyFileCheckbox({ study, studyIndex, selectedBoxes, colType, updateSe
   if (fileCount === 0) {
     return <span className="detail">none</span>
   }
+  let sizeIndicator = null
+  if (fileSize === undefined || fileSize === 0) {
+    // the file sizes are still loading from TDR
+    sizeIndicator = <FontAwesomeIcon icon={faDna} data-testid="bulk-download-loading-icon" className="gene-load-spinner"/>
+  } else {
+    sizeIndicator = <span>{bytesToSize(fileSize)}</span>
+  }
   return <label>
     <input type="checkbox"
       data-analytics-name="download-modal-checkbox"
@@ -191,7 +198,7 @@ function StudyFileCheckbox({ study, studyIndex, selectedBoxes, colType, updateSe
       checked={selectedBoxes.studies[studyIndex][colType]}>
     </input>
     &nbsp;
-    {fileCount} files {bytesToSize(fileSize)}
+    {fileCount} files {sizeIndicator}
   </label>
 }
 
@@ -227,8 +234,10 @@ export function getSelectedFileStats(downloadInfo, selectedBoxes, isLoading) {
       fileTypeKeys.forEach(colType => {
         if (selectedBoxes.studies[index][colType]) {
           const { fileCount, fileSize } = getFileStats(study, COLUMNS[colType].types)
-          totalFileCount += fileCount
-          totalFileSize += fileSize
+          if (fileCount && fileSize) {
+            totalFileCount += fileCount
+            totalFileSize += fileSize
+          }
         }
       })
     })
@@ -244,27 +253,32 @@ export function getSelectedFileStats(downloadInfo, selectedBoxes, isLoading) {
 export function getFileStats(study, fileTypes) {
   const files = study.studyFiles.filter(file => fileTypes.includes(file.file_type))
   const fileCount = files.length
-  const fileSize = files.reduce((sum, studyFile) => sum + studyFile.upload_file_size, 0)
+  const fileSize = files.reduce((sum, studyFile) => sum + (studyFile.upload_file_size ? studyFile.upload_file_size : 0), 0)
   return { fileCount, fileSize }
 }
 
-/** Gets the file ids selected, given downloadInfo and the current selection state
+/** Gets the file ids/urls selected, given downloadInfo and the current selection state
   */
-export function getSelectedFileIds(downloadInfo, selectedBoxes) {
-  const fileIds = []
+export function getSelectedFileHandles(downloadInfo, selectedBoxes, hashByStudy=false) {
+  const fileHandles = hashByStudy ? {} : []
   if (!selectedBoxes) {
-    return fileIds
+    return fileHandles
   }
   const fileTypeKeys = Object.keys(selectedBoxes.all).filter(key => key !== 'all')
   downloadInfo.forEach((study, index) => {
     fileTypeKeys.forEach(colType => {
       if (selectedBoxes.studies[index][colType]) {
         const filesOfType = study.studyFiles.filter(file => COLUMNS[colType].types.includes(file.file_type))
-        fileIds.push(...filesOfType.map(file => file.id))
+        const selectedHandles = filesOfType.map(file => file.url ? { url: file.url, name: file.name } : file.id)
+        if (hashByStudy) {
+          fileHandles[study.accession] = selectedHandles
+        } else {
+          fileHandles.push(...selectedHandles)
+        }
       }
     })
   })
-  return fileIds
+  return fileHandles
 }
 
 /**
@@ -274,7 +288,12 @@ export function getSelectedFileIds(downloadInfo, selectedBoxes) {
  */
 export function bytesToSize(bytes) {
   const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB']
-  if (bytes === 0) {return 'n/a'}
+  if (bytes === 0) {
+    return 'n/a'
+  }
+  if (!bytes) {
+    return undefined
+  }
 
   // eweitz: Most implementations use log(1024), but such units are
   // binary and have values like MiB (mebibyte)

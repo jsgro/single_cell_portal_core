@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import Modal from 'react-bootstrap/lib/Modal'
+import _cloneDeep from 'lodash/cloneDeep'
 
 import DownloadCommand from './DownloadCommand'
 import DownloadSelectionTable, {
-  newSelectedBoxesState, getSelectedFileIds, getSelectedFileStats, bytesToSize
+  newSelectedBoxesState, getSelectedFileHandles, getSelectedFileStats, bytesToSize
 } from './DownloadSelectionTable'
 
-import { fetchDownloadInfo, fetchDownloadInfoTDR } from 'lib/scp-api'
+import { fetchDownloadInfo, fetchDrsInfo } from 'lib/scp-api'
 
 const TDR_COLUMNS = ['analysis', 'sequence']
 const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
@@ -16,7 +17,7 @@ const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
   * studies and file types for download.  This queries the bulk_download/summary API method
   * to retrieve the list of study details and available files
   */
-export default function DownloadSelectionModal({ studyAccessions, show, setShow }) {
+export default function DownloadSelectionModal({ studyAccessions, tdrFileInfo, show, setShow }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingTDR, setIsLoadingTDR] = useState(true)
   const [downloadInfo, setDownloadInfo] = useState([])
@@ -32,8 +33,8 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
   const { fileCount: fileCountTDR, fileSize: fileSizeTDR } =
     getSelectedFileStats(downloadInfoTDR, selectedBoxesTDR, isLoadingTDR)
   const prettyBytes = bytesToSize(fileSize + fileSizeTDR)
-  const selectedFileIds = getSelectedFileIds(downloadInfo, selectedBoxes)
-
+  const selectedFileIds = getSelectedFileHandles(downloadInfo, selectedBoxes)
+  const selectedFileUrls = getSelectedFileHandles(downloadInfoTDR, selectedBoxesTDR, true)
   useEffect(() => {
     if (show) {
       setIsLoading(true)
@@ -44,10 +45,25 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
         setIsLoading(false)
       })
       if (showTDRSelectionPane) {
-        fetchDownloadInfoTDR(tdrAccessions).then(result => {
-          setSelectedBoxesTDR(newSelectedBoxesState(result, TDR_COLUMNS))
-          setDownloadInfoTDR(result)
-          setIsLoadingTDR(false)
+        setSelectedBoxesTDR(newSelectedBoxesState(tdrFileInfo, TDR_COLUMNS))
+        setDownloadInfoTDR(tdrFileInfo)
+        setIsLoadingTDR(false)
+        const drsIds = tdrFileInfo.map(study => study.studyFiles.map(sfile => sfile.drs_id))
+          .reduce((acc, val) => acc.concat(val), [])
+        fetchDrsInfo(drsIds).then(result => {
+          const fullTdrFileInfo = _cloneDeep(tdrFileInfo)
+          fullTdrFileInfo.forEach(study => {
+            study.studyFiles.forEach(sfile => {
+              const fileId = sfile.drs_id.split('/').slice(-1)[0]
+              const matchFile = result.find(file => file.id === fileId)
+              if (matchFile) {
+                sfile.upload_file_size = matchFile.size
+                sfile.url = matchFile.accessMethods.find(method => method.type === 'https').access_url.url
+                sfile.name = matchFile.name
+              }
+            })
+          })
+          setDownloadInfoTDR(fullTdrFileInfo)
         })
       }
     }
@@ -117,7 +133,8 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
         }
         { stepNum === 2 && <DownloadCommand
           closeParent={() => setShow(false)}
-          fileIds={selectedFileIds}/> }
+          fileIds={selectedFileIds}
+          tdrFiles={selectedFileUrls}/> }
         { !isLoading &&
           <div className="download-size-message">
             <label htmlFor="download-size-amount">Total size</label>
