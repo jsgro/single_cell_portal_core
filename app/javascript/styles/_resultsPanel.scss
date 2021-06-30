@@ -98,14 +98,14 @@
     td {
       background: #f6f6f6;
     }
-    .soft-badge {
-      background-color: #f6f6f6;
-      font-weight: normal;
-      font-style: italic;
-      margin-bottom: 5px;
-      border: 1px solid #ddd;
-      color: #888;
-    }
+  }
+  .soft-badge {
+    background-color: #f6f6f6;
+    font-weight: normal;
+    font-style: italic;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
+    color: #888;
   }
 }
 .pagination {
@@ -132,12 +132,16 @@
   background-color: white;
   font-weight: normal;
   color: #777;
-  width: 44px;
-  height: 20px
+  min-width: 44px;
+  height: 20px;
 }
 
 .study-label {
-  grid-template-columns: 6fr 0.25fr;
-  display: grid;
+  display: flex;
+  gap: 10px;
+}
 
+.match-badge {
+  min-width: 120px;
+  height: 20px;
 }

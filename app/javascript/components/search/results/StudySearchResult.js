@@ -140,10 +140,10 @@ function cellCountBadge(study) {
 
 /** Generate the inferredBadge for SCP studies */
 function inferredBadge(study, termMatches) {
-  if (study.inferred_match && study.study_source === 'SCP') {
+  if (study.inferred_match) {
     const helpText = `${termMatches.join(', ')} was not found in study metadata,
      only in study title or description`
-    return <span className="badge soft-badge" data-toggle="tooltip" title={helpText}>text match only</span>
+    return <span className="badge soft-badge match-badge" data-toggle="tooltip" title={helpText}>text match only</span>
   }
 }
 
@@ -151,7 +151,6 @@ function inferredBadge(study, termMatches) {
 function studyTypeBadge(study) {
   if (study.study_source === 'TDR') {
     return <span className="badge badge-secondary study-type" data-toggle="tooltip"
-      title={'Study comes from Terra Data Repo'}> TDR </span>
   }
 }
 
@@ -165,8 +164,10 @@ export default function StudySearchResult({ study }) {
   return (
     <>
       <div key={study.accession}>
-        <label htmlFor={study.name} id="result-title" className='study-label'>
-          <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle} />
+        <label htmlFor={study.name} id="result-title" className="study-label">
+          {study.study_source === 'SCP' ? <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle} ></a> :
+            <span dangerouslySetInnerHTML={displayStudyTitle} />
+          }
           {inferredBadge(study, termMatches)}
           {studyTypeBadge(study)}
         </label>

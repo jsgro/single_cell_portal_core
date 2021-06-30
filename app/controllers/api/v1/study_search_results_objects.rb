@@ -70,7 +70,8 @@ module Api
             detached: false,
             cell_count: 0,
             gene_count: 0,
-            study_url: '#'
+            study_url: '#',
+            term_matches: @term_list
           }
         end
         study_obj
