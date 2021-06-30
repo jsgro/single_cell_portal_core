@@ -129,7 +129,7 @@ function facetMatchBadges(study) {
   </>)
 }
 
-// generate a cell count badge for SCP studies
+/** Generate a cell count badge for SCP studies */
 function cellCountBadge(study) {
   if (study.study_source === 'SCP') {
     return <span className="badge cell-count">
@@ -138,25 +138,25 @@ function cellCountBadge(study) {
   }
 }
 
-// generate the inferredBadge for SCP studies
+/** Generate the inferredBadge for SCP studies */
 function inferredBadge(study, termMatches) {
-  if (study.inferred_match && study.study_source === 'SCP') {
+  if (study.inferred_match) {
     const helpText = `${termMatches.join(', ')} was not found in study metadata,
      only in study title or description`
-    return <span className="badge soft-badge" data-toggle="tooltip" title={helpText}>text match only</span>
+    return <span className="badge soft-badge match-badge" data-toggle="tooltip" title={helpText}>text match only</span>
   }
 }
 
-/* generate a badge to indicate to users the study origin for non-SCP studies */
+/** Generate a badge to indicate to users the study origin for non-SCP studies */
 function studyTypeBadge(study) {
   if (study.study_source === 'TDR') {
     // Once non-HCA studies are added to the TDR search index, we'll want a way to distinguish them
     return <span className="badge badge-secondary study-type" data-toggle="tooltip"
-      title={'Human Cell Atlas study, stored in Terra Data Repo'}> HCA </span>
+      title={'Study from Human Cell Atlas hosted by Terra Data Repo'}> HCA </span>
   }
 }
 
-/* displays a brief summary of a study, with a link to the study page */
+/** Displays a brief summary of a study, with a link to the study page */
 export default function StudySearchResult({ study }) {
   const termMatches = study.term_matches
   const studyTitle = highlightText(study.name, termMatches).styledText
@@ -166,8 +166,10 @@ export default function StudySearchResult({ study }) {
   return (
     <>
       <div key={study.accession}>
-        <label htmlFor={study.name} id="result-title" className={'study-label'}>
-          <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle} />
+        <label htmlFor={study.name} id="result-title" className="study-label">
+          {study.study_source === 'SCP' ? <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle} ></a> :
+            <span dangerouslySetInnerHTML={displayStudyTitle} />
+          }
           {inferredBadge(study, termMatches)}
           {studyTypeBadge(study)}
         </label>

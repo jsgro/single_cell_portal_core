@@ -71,7 +71,8 @@ module Api
             cell_count: 0,
             gene_count: 0,
             study_url: '#',
-            file_information: study[:file_information]
+            file_information: study[:file_information],
+            term_matches: @term_list
           }
         end
         study_obj

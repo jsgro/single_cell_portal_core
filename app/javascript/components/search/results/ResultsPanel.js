@@ -13,7 +13,7 @@ import { serverErrorEnd } from 'lib/error-utils'
 /**
  * handles display of loading, error and results for a list of studies
  * @studySearchState - an object with isLoaded, isLoading, isError, and results properties
- * @studyComponent - the component to use to render individual studies.  If not specified, results/Study.js
+ * @studyComponent - the component to use to render individual studies.  If not specified, results/StudySearchResult.js
  * will be used
  */
 const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) => {
