@@ -13,7 +13,7 @@ class BulkDownloadService
   #   - +user+ (User) => User requesting download
   #   - +study_bucket_map+ => Map of study IDs to bucket names
   #   - +output_pathname_map+ => Map of study file IDs to output pathnames
-  #
+  #   - +tdr_files+ => Hash of tdr accessions to arrays of file information including name & url for each file
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
   def self.generate_curl_configuration(study_files:,
@@ -21,7 +21,7 @@ class BulkDownloadService
                                        user:,
                                        study_bucket_map:,
                                        output_pathname_map:,
-                                       tdr_files:)
+                                       tdr_files: nil)
     curl_configs = ['--create-dirs', '--compressed']
     # create an array of all objects to be downloaded, including directory files
     download_objects = study_files.to_a + directory_files
