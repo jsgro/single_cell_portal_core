@@ -101,6 +101,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     end
 
     refute config_file.include?('clusterA.txt'), "Should not include cluster file, as it was not a requested type"
+    refute  config_file.include?("-H \"Authorization: Bearer"), 'Should not include bearer token if no TDR files are requested'
 
     # ensure bad/missing auth_token return 401
     invalid_auth_code = auth_code.to_i + 1
@@ -137,5 +138,37 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
 
     excluded_file = study.study_files.by_type('Fastq').first
     refute json.include?(excluded_file.name), 'Bulk download config did not exclude external fastq link'
+  end
+
+  test 'bulk download should support a download_id and tdr files' do
+    study = @basic_study
+    payload = {
+      file_ids: [@basic_study_metadata_file.id.to_s],
+      tdr_files: {
+        FakeHCAStudy1: [{
+            url: 'https://datarepo.test/file1',
+            name: 'hca_file1.tsv'
+          },{
+            url: 'https://datarepo.test/file2',
+            name: 'hca_file2.tsv'
+          }
+        ]
+      }
+    }
+    execute_http_request(:post, api_v1_bulk_download_auth_code_path, request_payload: payload, user: @user)
+    assert_response :success
+    auth_code = json['auth_code']
+    download_id = json['download_id']
+
+    execute_http_request(:get, api_v1_bulk_download_generate_curl_config_path(
+        auth_code: auth_code, download_id: download_id)
+    )
+    assert_response :success
+    config_file = json
+
+    assert config_file.include?("#{@basic_study.accession}/metadata/metadata.txt"), 'did not include SCP metadata file'
+    assert config_file.include?("-H \"Authorization: Bearer ya29"), 'did not include bearer token header for TDR files'
+    assert config_file.include?("url=\"https://datarepo.test/file1\"\noutput=\"FakeHCAStudy1/hca_file1.tsv\""), 'did not include correct TDR file or output path'
+    assert config_file.include?("url=\"https://datarepo.test/file2\"\noutput=\"FakeHCAStudy1/hca_file2.tsv\""), 'did not include correct TDR file or output path'
   end
 end

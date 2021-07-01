@@ -34,7 +34,38 @@ export default function DownloadSelectionModal({ studyAccessions, tdrFileInfo, s
     getSelectedFileStats(downloadInfoTDR, selectedBoxesTDR, isLoadingTDR)
   const prettyBytes = bytesToSize(fileSize + fileSizeTDR)
   const selectedFileIds = getSelectedFileHandles(downloadInfo, selectedBoxes)
-  const selectedFileUrls = getSelectedFileHandles(downloadInfoTDR, selectedBoxesTDR, true)
+  const selectedTdrFiles = getSelectedFileHandles(downloadInfoTDR, selectedBoxesTDR, true)
+
+  /** For TDR studies, we will know from the tdrFileInfo object how many files of each type there are
+   * But we need to query the drsInfo so that we can get the file sizes and download urls */
+  function initializeTDRTable() {
+    setSelectedBoxesTDR(newSelectedBoxesState(tdrFileInfo, TDR_COLUMNS))
+    setDownloadInfoTDR(tdrFileInfo)
+    setIsLoadingTDR(false)
+    // pull the drs ids out of each study and put them in a single array
+    const drsIds = tdrFileInfo.map(study => study.studyFiles.map(sfile => sfile.drs_id))
+      .reduce((acc, val) => acc.concat(val), [])
+    fetchDrsInfo(drsIds).then(result => {
+      const fullTdrFileInfo = _cloneDeep(tdrFileInfo)
+      // now iterate through the file info and add file sizes, urls, and file names.
+      // the names and urls will be used for making the download request later
+      fullTdrFileInfo.forEach(study => {
+        study.studyFiles.forEach(sfile => {
+          const fileId = sfile.drs_id.split('/').slice(-1)[0]
+          const matchFile = result.find(file => file.id === fileId)
+          if (matchFile) {
+            sfile.upload_file_size = matchFile.size
+            // we add the url and name to each file info so that they can be sent along with the download
+            // request, this allows us to avoid having to query the DRS service again
+            sfile.url = matchFile.accessMethods.find(method => method.type === 'https').access_url.url
+            sfile.name = matchFile.name
+          }
+        })
+      })
+      setDownloadInfoTDR(fullTdrFileInfo)
+    })
+  }
+
   useEffect(() => {
     if (show) {
       setIsLoading(true)
@@ -45,26 +76,7 @@ export default function DownloadSelectionModal({ studyAccessions, tdrFileInfo, s
         setIsLoading(false)
       })
       if (showTDRSelectionPane) {
-        setSelectedBoxesTDR(newSelectedBoxesState(tdrFileInfo, TDR_COLUMNS))
-        setDownloadInfoTDR(tdrFileInfo)
-        setIsLoadingTDR(false)
-        const drsIds = tdrFileInfo.map(study => study.studyFiles.map(sfile => sfile.drs_id))
-          .reduce((acc, val) => acc.concat(val), [])
-        fetchDrsInfo(drsIds).then(result => {
-          const fullTdrFileInfo = _cloneDeep(tdrFileInfo)
-          fullTdrFileInfo.forEach(study => {
-            study.studyFiles.forEach(sfile => {
-              const fileId = sfile.drs_id.split('/').slice(-1)[0]
-              const matchFile = result.find(file => file.id === fileId)
-              if (matchFile) {
-                sfile.upload_file_size = matchFile.size
-                sfile.url = matchFile.accessMethods.find(method => method.type === 'https').access_url.url
-                sfile.name = matchFile.name
-              }
-            })
-          })
-          setDownloadInfoTDR(fullTdrFileInfo)
-        })
+        initializeTDRTable()
       }
     }
   }, [show, studyAccessions.join(',')])
@@ -134,7 +146,7 @@ export default function DownloadSelectionModal({ studyAccessions, tdrFileInfo, s
         { stepNum === 2 && <DownloadCommand
           closeParent={() => setShow(false)}
           fileIds={selectedFileIds}
-          tdrFiles={selectedFileUrls}/> }
+          tdrFiles={selectedTdrFiles}/> }
         { !isLoading &&
           <div className="download-size-message">
             <label htmlFor="download-size-amount">Total size</label>

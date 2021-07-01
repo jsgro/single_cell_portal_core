@@ -52,12 +52,12 @@ class BulkDownloadService
     tdr_studies = tdr_files ? tdr_files.keys : []
     tdr_file_configs = []
 
-    if tdr_files
+    if tdr_files.present?
       curl_configs << "-H \"Authorization: Bearer #{DataRepoClient.new.access_token['access_token']}\""
       tdr_file_configs = tdr_files.map do |shortname, file_infos|
         file_infos.map do |file_info|
           file_config = "url=\"#{file_info['url']}\"\n"
-          file_config += "output=\"#{shortname}/#{file_info['name']}"
+          file_config += "output=\"#{shortname}/#{file_info['name']}\""
           file_config
         end
       end

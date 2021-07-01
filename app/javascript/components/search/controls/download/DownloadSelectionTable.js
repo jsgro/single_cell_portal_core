@@ -18,7 +18,6 @@ export default function DownloadSelectionTable({
   setSelectedBoxes,
   columnTypes
 }) {
-
   const columnTypesWithAll = ['all', ...columnTypes]
   /** update a single checkbox value, and handles updating any connected checkboxes in the table
     * for example, if you update the value of the 'all metadata' checkbox, this checks all the individual
@@ -187,9 +186,12 @@ function StudyFileCheckbox({ study, studyIndex, selectedBoxes, colType, updateSe
   let sizeIndicator = null
   if (fileSize === undefined || fileSize === 0) {
     // the file sizes are still loading from TDR
-    sizeIndicator = <FontAwesomeIcon icon={faDna} data-testid="bulk-download-loading-icon" className="gene-load-spinner"/>
+    sizeIndicator = <FontAwesomeIcon
+      icon={faDna}
+      data-testid="bulk-download-loading-icon"
+      className="gene-load-spinner"/>
   } else {
-    sizeIndicator = <span>{bytesToSize(fileSize)}</span>
+    sizeIndicator = bytesToSize(fileSize)
   }
   return <label>
     <input type="checkbox"
@@ -253,7 +255,9 @@ export function getSelectedFileStats(downloadInfo, selectedBoxes, isLoading) {
 export function getFileStats(study, fileTypes) {
   const files = study.studyFiles.filter(file => fileTypes.includes(file.file_type))
   const fileCount = files.length
-  const fileSize = files.reduce((sum, studyFile) => sum + (studyFile.upload_file_size ? studyFile.upload_file_size : 0), 0)
+  const fileSize = files.reduce((sum, studyFile) => {
+    return sum + (studyFile.upload_file_size ? studyFile.upload_file_size : 0)
+  }, 0)
   return { fileCount, fileSize }
 }
 

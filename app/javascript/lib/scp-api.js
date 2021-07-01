@@ -16,7 +16,6 @@ import {
   mapFiltersForLogging
 } from './scp-api-metrics'
 import { showMessage } from 'lib/MessageModal'
-import { supportEmailLink } from 'lib/error-utils'
 
 // If true, returns mock data for all API responses.  Only for dev.
 let globalMock = false

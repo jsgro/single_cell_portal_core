@@ -16,6 +16,20 @@ module Api
           key :summary, 'Create one-time auth code for downloads'
           key :description, 'Create and return a one-time authorization code (OTAC) to identify a user for bulk downloads'
           key :operationId, 'bulk_download_auth_code_path'
+          parameter do
+            key :name, :file_ids
+            key :type, :string
+            key :in, :body
+            key :description, 'Comma-delimited list of StudyFile ids (such as returned from the summary endpoint)'
+            key :required, true
+          end
+          parameter do
+            key :name, :tdr_files
+            key :type, :json
+            key :in, :body
+            key :description, 'Hash of file arrays to download from TDR, keyed by accession. Each file should specify url and name'
+            key :required, true
+          end
           response 200 do
             key :description, 'One-time auth code and time interval, in seconds'
             schema do
@@ -26,6 +40,10 @@ module Api
               property :time_interval do
                 key :type, :integer
                 key :description, 'Time interval (in seconds) OTAC will be valid'
+              end
+              property :download_id do
+                key :type, :string
+                key :description, 'An id which can be passed to generate_curl_config in lieu of file_ids'
               end
             end
           end
@@ -43,8 +61,9 @@ module Api
 
         totat = current_api_user.create_totat(half_hour, api_v1_bulk_download_generate_curl_config_path)
         valid_params = params.permit({file_ids: [], tdr_files: {}}).to_h
-        # for now, we don't do any validation on the param values -- we'll do that during the actual download, since
-        # quota/files/permissions may change between the creation of the download and the actual download
+
+        # for now, we don't do any permissions validation on the param values -- we'll do that during the actual download, since
+        # quota/files/permissions may change between the creation of the download and the actual download.
         auth_download = DownloadRequest.create!(
           auth_code: totat[:totat],
           file_ids: valid_params[:file_ids],
@@ -141,7 +160,7 @@ module Api
               'Search'
           ]
           key :summary, 'Get curl command file for bulk file download'
-          key :description, 'Generates a curl config file for downloading files in bulk of multiple types. Specify either study accessions and types, or file ids'
+          key :description, 'Generates a curl config file for downloading files in bulk of multiple types. Specify either study accessions and types, or file ids, or a download_id'
           key :operationId, 'bulk_download_generate_curl_config_path'
           parameter do
             key :name, :auth_code
@@ -181,6 +200,13 @@ module Api
             key :collectionFormat, :csv
           end
           parameter do
+            key :name, :download_id
+            key :in, :query
+            key :description, 'a DownloadRequest id, such as returned by a call to the auth_code endpoint'
+            key :required, false
+            key :type, :string
+          end
+          parameter do
             key :name, :directory
             key :type, :string
             key :in, :query
@@ -217,6 +243,8 @@ module Api
         valid_accessions = []
         file_ids = []
         tdr_files = {}
+
+        # branch based on whether they provided a download_id, file_ids, or accessions
         if params[:download_id]
           download_req = DownloadRequest.find(params[:download_id])
           if !download_req
@@ -224,22 +252,23 @@ module Api
           end
           file_ids = download_req.file_ids
           tdr_files = download_req.tdr_files
-        else
+        elsif params[:file_ids]
           begin
-            file_ids = RequestUtils.validate_id_list(file_ids)
+            file_ids = RequestUtils.validate_id_list(params[:file_ids])
           rescue ArgumentError
             render json: {error: 'file_ids must be comma-delimited list of 24-character UUIDs'}, status: 400 and return
           end
-        end
-
-        # sanitize study accessions and file types
-        if file_ids
-          matched_study_ids = StudyFile.where(:id.in => file_ids).pluck(:study_id)
-          valid_accessions = Study.where(:id.in => matched_study_ids).pluck(:accession)
         else
           valid_accessions = self.class.find_matching_accessions(params[:accessions])
           sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
         end
+
+        # if they provided file_ids (either directly or via download_id), get the corresponding studies
+        if !file_ids.empty?
+          matched_study_ids = StudyFile.where(:id.in => file_ids).pluck(:study_id)
+          valid_accessions = Study.where(:id.in => matched_study_ids).pluck(:accession)
+        end
+
         begin
           self.class.check_accession_permissions(valid_accessions, current_api_user)
         rescue ArgumentError => e
@@ -259,7 +288,7 @@ module Api
         files_requested = nil
         # get requested files
         # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
-        if file_ids
+        if !file_ids.empty?
           files_requested = StudyFile.where(:id.in => file_ids)
         else
           files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
