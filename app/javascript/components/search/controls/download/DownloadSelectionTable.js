@@ -155,7 +155,7 @@ const COLUMNS = {
   metadata: {
     title: 'Metadata',
     types: ['Metadata'],
-    info: 'The listing of all cells in the study, along with associated metadata such as species, cell type, etc...',
+    info: 'The listing of all cells in the study, along with associated metadata such as species, cell type, etc.',
     default: true
   },
   analysis: {
@@ -261,7 +261,7 @@ export function getFileStats(study, fileTypes) {
   return { fileCount, fileSize }
 }
 
-/** Gets the file ids/urls selected, given downloadInfo and the current selection state
+/** Gets the file IDs/URLs selected, given downloadInfo and the current selection state
   */
 export function getSelectedFileHandles(downloadInfo, selectedBoxes, hashByStudy=false) {
   const fileHandles = hashByStudy ? {} : []

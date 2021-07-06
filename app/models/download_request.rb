@@ -1,11 +1,6 @@
+# Stores information about files requested for a download and a corresponding auth. code
+# Used mainly so the curl command given to users can be concise and not require excessive escape characters
 class DownloadRequest
-
-  ###
-  #
-  # Stores information about files requested for a download and a corresponding auth. code
-  # Used primarily so that the curl command given to users can be concise and not require excessive escape characters
-  #
-  ###
 
   include Mongoid::Document
   include Mongoid::Timestamps

@@ -722,7 +722,7 @@ module Api
             end
           end
         end
-        # if the output_id is a drs id, add it and the output_type to the file_information array,
+        # if the output_id is a drs_id, add it and the output_type to the file_information array,
         if row['output_id']&.starts_with?('drs')
           drs_id = row['output_id']
           if !added_file_ids[drs_id]

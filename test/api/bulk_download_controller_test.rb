@@ -140,7 +140,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     refute json.include?(excluded_file.name), 'Bulk download config did not exclude external fastq link'
   end
 
-  test 'bulk download should support a download_id and tdr files' do
+  test 'bulk download should support a download_id and TDR files' do
     study = @basic_study
     payload = {
       file_ids: [@basic_study_metadata_file.id.to_s],
