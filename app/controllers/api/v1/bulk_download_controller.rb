@@ -20,14 +20,14 @@ module Api
             key :name, :file_ids
             key :type, :string
             key :in, :body
-            key :description, 'Comma-delimited list of StudyFile ids (such as returned from the summary endpoint)'
+            key :description, 'Comma-delimited list of StudyFile IDs (such as returned from the summary endpoint)'
             key :required, true
           end
           parameter do
             key :name, :tdr_files
             key :type, :json
             key :in, :body
-            key :description, 'Hash of file arrays to download from TDR, keyed by accession. Each file should specify url and name'
+            key :description, 'Hash of file arrays to download from TDR, keyed by accession. Each file should specify URL and name'
             key :required, true
           end
           response 200 do
@@ -43,7 +43,7 @@ module Api
               end
               property :download_id do
                 key :type, :string
-                key :description, 'An id which can be passed to generate_curl_config in lieu of file_ids'
+                key :description, 'ID that can be passed to generate_curl_config in lieu of file_ids'
               end
             end
           end
