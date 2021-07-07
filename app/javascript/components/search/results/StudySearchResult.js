@@ -151,7 +151,7 @@ function inferredBadge(study, termMatches) {
 function studyTypeBadge(study) {
   if (study.study_source === 'TDR') {
     return <span className="badge badge-secondary study-type" data-toggle="tooltip"
-      title={'Study from Human Cell Atlas hosted by Terra Data Repo'}> HCA </span>
+      title={'Study from Human Cell Atlas hosted by Terra Data Repo'}> Human Cell Atlas </span>
   }
 }
 
@@ -170,11 +170,11 @@ export default function StudySearchResult({ study }) {
             <span dangerouslySetInnerHTML={displayStudyTitle} />
           }
           {inferredBadge(study, termMatches)}
-          {studyTypeBadge(study)}
         </label>
         <div>
           {cellCountBadge(study)}
           {facetMatchBadges(study)}
+          {studyTypeBadge(study)}
         </div>
         {studyDescription}
       </div>
