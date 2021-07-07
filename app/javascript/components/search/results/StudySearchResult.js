@@ -150,6 +150,7 @@ function inferredBadge(study, termMatches) {
 /** Generate a badge to indicate to users the study origin for non-SCP studies */
 function studyTypeBadge(study) {
   if (study.study_source === 'TDR') {
+    // Once non-HCA studies are added to the TDR search index, we'll want a way to distinguish them
     return <span className="badge badge-secondary study-type" data-toggle="tooltip"
       title={'Study from Human Cell Atlas hosted by Terra Data Repo'}> Human Cell Atlas </span>
   }

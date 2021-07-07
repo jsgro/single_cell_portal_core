@@ -1,10 +1,19 @@
 {
   "study": {
     "name": "Mouse Bronchial Lymphoid and GERD",
-    "description": "<p>Mouse tuberculosis and GERD (AA).  Jean Chang, Eric Weitz, Jon Bistline, Eno-Abasi Augustine-Akpan, Devon Bush, Vicky Horst.  Journal of SCP Synthetic Studies.  Volume 1, p1, February 2020.  Adding synthetic study data to development and staging environments has been shown to improve testability of new code.  We extend those findings to the Single Cell Portal by adding this synthetic data.</p>",
+    "description": "<p>Mouse tuberculosis and GERD (AA).  Jean Chang, Eric Weitz, Jon Bistline, Eno-Abasi Augustine-Akpan, Devon Bush, Vicky Horst.  Journal of SCP Synthetic Studies.  Volume 1, p1, February 2020.  Adding synthetic study data, such as this pulmonary study of mice, to development and staging environments has been shown to improve testability of new code.  We extend those findings to the Single Cell Portal by adding this synthetic data.</p>",
     "data_dir": "test"
   },
   "files": [
-     {"type": "Metadata", "filename": "metadata.tsv", "use_metadata_convention": true}
+    {"type": "Metadata", "filename": "metadata.tsv", "use_metadata_convention": true},
+    {
+      "type": "Expression Matrix",
+      "filename": "expression_matrix.tsv",
+      "species_scientific_name": "Mus musculus"
+    },
+    {
+      "type": "Cluster",
+      "filename": "cluster.tsv"
+    }
   ]
 }
