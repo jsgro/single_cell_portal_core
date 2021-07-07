@@ -11,7 +11,7 @@ module Api
       swagger_path '/bulk_download/auth_code' do
         operation :post do
           key :tags, [
-              'Search'
+              'Bulk Download'
           ]
           key :summary, 'Create one-time auth code for downloads'
           key :description, 'Create and return a one-time authorization code (OTAC) to identify a user for bulk downloads'
@@ -80,7 +80,7 @@ module Api
       swagger_path '/bulk_download/summary' do
         operation :get do
           key :tags, [
-              'Search'
+              'Bulk Download'
           ]
           key :summary, 'Summary information of studies requested for download'
           key :description, 'Preview of the names, number of files and bytes (by file type) requested for download from search results'
@@ -138,13 +138,46 @@ module Api
         render json: @study_file_info
       end
 
+      swagger_path '/bulk_download/drs_info' do
+        operation :post do
+          key :tags, [
+            'Bulk Download'
+          ]
+          key :summary, 'Retrieve information about DRS file objects in TDR'
+          key :description, 'Retrieve file-level information about DRS objects existing in Terra Data Repo, such as filenames, sizes, and access URLs.'
+          key :operationId, 'search_bulk_download_drs_info'
+          parameter do
+            key :name, :drs_ids
+            key :type, :array
+            key :in, :body
+            key :description, 'Array of DRS IDs'
+            key :example, "{\"drs_ids\":[\"drs://jade.datarepo-dev.broadinstitute.org/v1_257c5646-689a-4f25-8396-2500c849cb4f_8f63e624-5e41-44fa-aabe-5133ec12c4bc\"]}"
+            key :required, true
+          end
+          response 200 do
+            key :type, :array
+            key :description, 'Array of file information objects, containing filenames, sizes, and access URLs.  See ' \
+                              'https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/DataRepositoryService/getObject ' \
+                              'for more information regarding response structure.'
+          end
+          response 406 do
+            key :description, ApiBaseController.not_acceptable
+          end
+          response 500 do
+            key :description, 'Invalid DRS ID format'
+          end
+        end
+      end
+
       def drs_info
         drs_ids = params[:drs_ids]
         file_info = Parallel.map(drs_ids, in_threads: 100) do |drs_id|
           begin
-            client = DataRepoClient.new
-            client.get_drs_file_info(drs_id)
-          rescue StandardError => e
+            ApplicationController.data_repo_client.get_drs_file_info(drs_id)
+          rescue RestClient::Exception => e
+            # DataRepoClient only emits RestClient::Exception errors, and the error will have already been reported
+            # to Sentry, so also report to Mixpanel
+            MetricsService.report_error(e, request, current_api_user)
             {
               drs_id: drs_id,
               error: e.message
@@ -157,10 +190,10 @@ module Api
       swagger_path '/bulk_download/generate_curl_config' do
         operation :get do
           key :tags, [
-              'Search'
+              'Bulk Download'
           ]
           key :summary, 'Get curl command file for bulk file download'
-          key :description, 'Generates a curl config file for downloading files in bulk of multiple types. Specify either study accessions and types, or file ids, or a download_id'
+          key :description, 'Generates a curl config file for downloading files in bulk of multiple types. Specify either study accessions and types, or file IDs, or a download ID'
           key :operationId, 'bulk_download_generate_curl_config_path'
           parameter do
             key :name, :auth_code
@@ -202,7 +235,7 @@ module Api
           parameter do
             key :name, :download_id
             key :in, :query
-            key :description, 'a DownloadRequest id, such as returned by a call to the auth_code endpoint'
+            key :description, 'a DownloadRequest ID, such as returned by a call to the auth_code endpoint'
             key :required, false
             key :type, :string
           end
@@ -248,7 +281,7 @@ module Api
         if params[:download_id]
           download_req = DownloadRequest.find(params[:download_id])
           if !download_req
-            render json: {error: 'Invalid download_id provided'}, status: 400 and return
+            render json: { error: 'Invalid download_id provided' }, status: 400 and return
           end
           file_ids = download_req.file_ids
           tdr_files = download_req.tdr_files

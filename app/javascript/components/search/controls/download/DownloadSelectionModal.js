@@ -132,7 +132,7 @@ export default function DownloadSelectionModal({ studyAccessions, tdrFileInfo, s
               columnTypes={SCP_COLUMNS}/>
             { showTDRSelectionPane &&
               <div>
-                <h4>HCA studies</h4>
+                <h4>Human Cell Atlas studies</h4>
                 <DownloadSelectionTable
                   isLoading={isLoadingTDR}
                   downloadInfo={downloadInfoTDR}

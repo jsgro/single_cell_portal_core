@@ -82,7 +82,6 @@ class RequestUtils
   # takes a comma-delimited string of ids (e.g. StudyFile ids) and returns an array of ids
   # raises Argument error if any of the strings are not valid ids
   def self.validate_id_list(id_list_string)
-    byebug
     ids = id_list_string.split(',').map(&:strip)
     begin
       ids.each {|id| BSON::ObjectId.from_string(id) }
