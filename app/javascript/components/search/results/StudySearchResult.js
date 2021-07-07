@@ -1,9 +1,11 @@
 /* eslint-disable require-jsdoc */
 import React from 'react'
 
+
 export const descriptionCharacterLimit = 750
 export const summaryWordLimit = 150
 import { getDisplayNameForFacet } from 'providers/SearchFacetProvider'
+
 
 const lengthOfHighlightTag = 21
 
@@ -16,9 +18,9 @@ export function formatDescription(rawDescription, term) {
 export function highlightText(text, termMatches) {
   let matchedIndices = []
   if (termMatches) {
-    matchedIndices=termMatches.map(term => text.indexOf(term))
+    matchedIndices = termMatches.map(term => text.indexOf(term))
   }
-  if (matchedIndices.length>0) {
+  if (matchedIndices.length > 0) {
     termMatches.forEach((term, index) => {
       const regex = RegExp(term, 'gi')
       text = text.replace(regex, `<span class='highlight'>${term}</span>`)
@@ -38,7 +40,6 @@ export function getByline(rawDescription) {
   return bylineText
 }
 
-
 export function shortenDescription(textDescription, term) {
   const { styledText, matchedIndices } = highlightText(textDescription, term)
   const suffixTag = <span className="detail"> ...(continued)</span>
@@ -52,20 +53,20 @@ export function shortenDescription(textDescription, term) {
 
     const firstIndex = matchesOutSidedescriptionCharacterLimit[0]
     // Find matches that fit within the n+descriptionCharacterLimit
-    const ranges = matchesOutSidedescriptionCharacterLimit.filter(index => index < descriptionCharacterLimit+firstIndex)
+    const ranges = matchesOutSidedescriptionCharacterLimit.filter(index => index < descriptionCharacterLimit + firstIndex)
     // Determine where start and end index to ensure matched keywords are included
     const start = ((matchedIndices.length - matchesOutSidedescriptionCharacterLimit.length) *
-      (lengthOfHighlightTag+term.length)) + firstIndex
-    const end = start + descriptionCharacterLimit + (ranges.length*(lengthOfHighlightTag+term.length))
-    const descriptionText = styledText.slice(start-100, end)
+      (lengthOfHighlightTag + term.length)) + firstIndex
+    const end = start + descriptionCharacterLimit + (ranges.length * (lengthOfHighlightTag + term.length))
+    const descriptionText = styledText.slice(start - 100, end)
     const displayedStudyDescription = { __html: descriptionText }
     // Determine if there are matches to display in summary paragraph
     const amountOfMatchesInSummaryWordLimit = matchedIndices.filter(matchedIndex =>
       matchedIndex <= summaryWordLimit).length
-    if (amountOfMatchesInSummaryWordLimit>0) {
+    if (amountOfMatchesInSummaryWordLimit > 0) {
       //  Need to recaluculate index positions because added html changes size of textDescription
-      const beginningTextIndex= (amountOfMatchesInSummaryWordLimit *(lengthOfHighlightTag+term.length))
-      const displayedBeginningText = { __html: styledText.slice(0, beginningTextIndex+summaryWordLimit) }
+      const beginningTextIndex = (amountOfMatchesInSummaryWordLimit * (lengthOfHighlightTag + term.length))
+      const displayedBeginningText = { __html: styledText.slice(0, beginningTextIndex + summaryWordLimit) }
       return <>
         <span className="openingText" dangerouslySetInnerHTML={displayedBeginningText}></span>
         <span className="detail">... </span>
@@ -80,12 +81,12 @@ export function shortenDescription(textDescription, term) {
     </>
   }
   const displayedStudyDescription = { __html: styledText.slice(0, descriptionCharacterLimit) }
-  if (textDescription.length>descriptionCharacterLimit) {
+  if (textDescription.length > descriptionCharacterLimit) {
     return <>
       <span className="studyDescription" dangerouslySetInnerHTML={displayedStudyDescription}></span>{suffixTag}
     </>
   } else {
-    return <><span className = 'studyDescription' dangerouslySetInnerHTML={displayedStudyDescription}></span></>
+    return <><span className="studyDescription" dangerouslySetInnerHTML={displayedStudyDescription}></span></>
   }
 }
 
@@ -107,7 +108,7 @@ function facetMatchBadges(study) {
   const matchedKeys = Object.keys(matches)
     .filter(key => key != 'facet_search_weight')
   return (<>
-    { matchedKeys.map((key, index) => {
+    {matchedKeys.map((key, index) => {
       const helpText = `Metadata match for ${key}`
       return (
         <span key={index}
@@ -128,31 +129,52 @@ function facetMatchBadges(study) {
   </>)
 }
 
-/* displays a brief summary of a study, with a link to the study page */
-export default function SCPStudy({ study }) {
-  const termMatches = study.term_matches
-  const studyTitle= highlightText(study.name, termMatches).styledText
-  const studyDescription = formatDescription(study.description, termMatches)
-  const displayStudyTitle = { __html: studyTitle }
+/** Generate a cell count badge for SCP studies */
+function cellCountBadge(study) {
+  if (study.study_source === 'SCP') {
+    return <span className="badge cell-count">
+      {study.cell_count} Cells
+    </span>
+  }
+}
 
-  let inferredBadge = <></>
+/** Generate the inferredBadge for SCP studies */
+function inferredBadge(study, termMatches) {
   if (study.inferred_match) {
     const helpText = `${termMatches.join(', ')} was not found in study metadata,
      only in study title or description`
-    inferredBadge = <span className="badge soft-badge" data-toggle="tooltip" title={helpText}>text match only</span>
+    return <span className="badge soft-badge match-badge" data-toggle="tooltip" title={helpText}>text match only</span>
   }
+}
+
+/** Generate a badge to indicate to users the study origin for non-SCP studies */
+function studyTypeBadge(study) {
+  if (study.study_source === 'TDR') {
+    return <span className="badge badge-secondary study-type" data-toggle="tooltip"
+      title={'Study from Human Cell Atlas hosted by Terra Data Repo'}> Human Cell Atlas </span>
+  }
+}
+
+/** Displays a brief summary of a study, with a link to the study page */
+export default function StudySearchResult({ study }) {
+  const termMatches = study.term_matches
+  const studyTitle = highlightText(study.name, termMatches).styledText
+  const studyDescription = formatDescription(study.description, termMatches)
+  const displayStudyTitle = { __html: studyTitle }
 
   return (
     <>
       <div key={study.accession}>
-        <label htmlFor={study.name} id= 'result-title'>
-          <a href={study.study_url} dangerouslySetInnerHTML = {displayStudyTitle}></a>{inferredBadge}
+        <label htmlFor={study.name} id="result-title" className="study-label">
+          {study.study_source === 'SCP' ? <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle} ></a> :
+            <span dangerouslySetInnerHTML={displayStudyTitle} />
+          }
+          {inferredBadge(study, termMatches)}
         </label>
         <div>
-          <span className='badge badge-secondary cell-count'>
-            {study.cell_count} Cells
-          </span>
-          { facetMatchBadges(study) }
+          {cellCountBadge(study)}
+          {facetMatchBadges(study)}
+          {studyTypeBadge(study)}
         </div>
         {studyDescription}
       </div>
