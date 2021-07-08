@@ -23,7 +23,8 @@ function getAnnotationOptions(annotationList, clusterName) {
   }, {
     label: 'Cannot Display',
     options: annotationList.annotations
-      .filter(annot => annot.scope == 'invalid').map(annot => annotationKeyProperties(annot))
+      .filter(annot => annot.scope == 'invalid' && (annot.cluster_name == clusterName || !annot.cluster_name))
+      .map(annot => annotationKeyProperties(annot))
   }]
 }
 

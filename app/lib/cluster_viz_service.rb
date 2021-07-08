@@ -37,7 +37,8 @@ class ClusterVizService
         name: annot[:name],
         type: annot[:type],
         values: annot[:values],
-        scope: 'cluster',
+        # mark non-plottable annotations as 'invalid' so they show up in the dropdown but are not selectable
+        scope: cluster.can_visualize_cell_annotation?(annot) ? 'cluster' : 'invalid',
         cluster_name: cluster.name
       }
     end
