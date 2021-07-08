@@ -29,7 +29,7 @@ import {
   logPageView, logClick, logMenuChange, setupPageTransitionLog, log, logCopy, logContextMenu
 } from 'lib/metrics-api'
 import * as ScpApi from 'lib/scp-api'
-import validateFile from 'lib/validate-file'
+import validateFile from 'lib/validation/validate-file'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
 
