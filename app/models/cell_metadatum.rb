@@ -61,7 +61,7 @@ class CellMetadatum
 
   # create dropdown menu value for annotation select
   def annotation_select_value
-    "#{self.name}--#{self.annotation_type}--study"
+    "#{self.name}--#{self.annotation_type}--#{can_visualize? ? 'study' : 'invalid'}"
   end
 
   # generate a select box option for use in dropdowns that corresponds to this cell_metadatum

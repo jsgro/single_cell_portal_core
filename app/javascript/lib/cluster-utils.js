@@ -42,7 +42,8 @@ export function annotationKeyProperties(annotation) {
     name: annotation.name,
     type: annotation.type,
     scope: annotation.scope,
-    id: annotation.id
+    id: annotation.id,
+    isDisabled: annotation.scope == 'invalid'
   }
 }
 

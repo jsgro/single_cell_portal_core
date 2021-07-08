@@ -139,6 +139,29 @@ class AnnotationVizService
       end
     end
     annotations.concat(cluster_annots)
+    # show 'invalid' annotations (e.g. cannot be visualized) as a courtesy, but don't allow selection
+    invalid_annots = []
+    study.cell_metadata.each do |meta|
+      unless meta.can_visualize?
+        invalid_annots << {
+          name: meta.name,
+          type: meta.annotation_type,
+          scope: 'invalid'
+        }
+      end
+    end
+    if cluster.present?
+      cluster.cell_annotations.each do |cell_annot|
+        unless cluster.can_visualize_cell_annotation?(cell_annot)
+          invalid_annots << {
+            name: cell_annot['name'],
+            type: cell_annot['annotation_type'],
+            scope: 'invalid'
+          }
+        end
+      end
+    end
+    annotations.concat(invalid_annots)
     annotations
   end
 
