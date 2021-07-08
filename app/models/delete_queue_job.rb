@@ -22,6 +22,9 @@ class DeleteQueueJob < Struct.new(:object)
       file_type = object.file_type
       study = object.study
 
+      # remove expression_file_info, if present to avoid validation issues later
+      object.expression_file_info.destroy if object.expression_file_info.present?
+
       # now remove all child objects first to free them up to be re-used.
       case file_type
       when 'Cluster'
@@ -99,12 +102,11 @@ class DeleteQueueJob < Struct.new(:object)
         object.study_file_bundle.destroy
       end
 
-      # queue study file object for deletion, set file_type to DELETE to prevent it from being picked up in any queries
-      # use assign_attributes and save!(validate: false) to avoid any validation issues that might prevent saving
-      # this ensures file is queued for deletion, as dependent records have already been deleted
+      # overwrite attributes to allow their immediate reuse
+      # this must be done with a fresh StudyFile reference, otherwise upload_file_name may not overwrite
       new_name = "DELETE-#{SecureRandom.uuid}"
-      object.assign_attributes({queued_for_deletion: true, upload_file_name: new_name, name: new_name, file_type: 'DELETE'})
-      object.save!(validate: false)
+      file_reference = StudyFile.find(object.id)
+      file_reference.update!(queued_for_deletion: true, upload_file_name: new_name, name: new_name, file_type: 'DELETE')
 
       # reset initialized if needed
       if study.cluster_groups.empty? || study.genes.empty? || study.cell_metadata.empty?

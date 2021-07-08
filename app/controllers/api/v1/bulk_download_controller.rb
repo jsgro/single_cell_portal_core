@@ -11,11 +11,25 @@ module Api
       swagger_path '/bulk_download/auth_code' do
         operation :post do
           key :tags, [
-              'Search'
+              'Bulk Download'
           ]
           key :summary, 'Create one-time auth code for downloads'
           key :description, 'Create and return a one-time authorization code (OTAC) to identify a user for bulk downloads'
           key :operationId, 'bulk_download_auth_code_path'
+          parameter do
+            key :name, :file_ids
+            key :type, :string
+            key :in, :body
+            key :description, 'Comma-delimited list of StudyFile IDs (such as returned from the summary endpoint)'
+            key :required, true
+          end
+          parameter do
+            key :name, :tdr_files
+            key :type, :json
+            key :in, :body
+            key :description, 'Hash of file arrays to download from TDR, keyed by accession. Each file should specify URL and name'
+            key :required, true
+          end
           response 200 do
             key :description, 'One-time auth code and time interval, in seconds'
             schema do
@@ -26,6 +40,10 @@ module Api
               property :time_interval do
                 key :type, :integer
                 key :description, 'Time interval (in seconds) OTAC will be valid'
+              end
+              property :download_id do
+                key :type, :string
+                key :description, 'ID that can be passed to generate_curl_config in lieu of file_ids'
               end
             end
           end
@@ -40,19 +58,33 @@ module Api
 
       def auth_code
         half_hour = 1800 # seconds
+
         totat = current_api_user.create_totat(half_hour, api_v1_bulk_download_generate_curl_config_path)
-        auth_code_response = {auth_code: totat[:totat], time_interval: totat[:totat_info][:valid_seconds]}
+        valid_params = params.permit({file_ids: [], tdr_files: {}}).to_h
+
+        # for now, we don't do any permissions validation on the param values -- we'll do that during the actual download, since
+        # quota/files/permissions may change between the creation of the download and the actual download.
+        auth_download = DownloadRequest.create!(
+          auth_code: totat[:totat],
+          file_ids: valid_params[:file_ids],
+          tdr_files: valid_params[:tdr_files],
+          user_id: current_api_user.id)
+        auth_code_response = {
+          auth_code: totat[:totat],
+          time_interval: totat[:totat_info][:valid_seconds],
+          download_id: auth_download.id.to_s
+        }
         render json: auth_code_response
       end
 
-      swagger_path '/bulk_download/summary_info' do
+      swagger_path '/bulk_download/summary' do
         operation :get do
           key :tags, [
-              'Search'
+              'Bulk Download'
           ]
           key :summary, 'Summary information of studies requested for download'
           key :description, 'Preview of the names, number of files and bytes (by file type) requested for download from search results'
-          key :operationId, 'search_bulk_download_info_path'
+          key :operationId, 'search_bulk_download_summary_path'
           parameter do
             key :name, :accessions
             key :type, :string
@@ -92,7 +124,7 @@ module Api
       end
 
       def summary
-        # sanitize study accessions and file types
+        # sanitize study accessions
         valid_accessions = self.class.find_matching_accessions(params[:accessions])
 
         begin
@@ -106,13 +138,62 @@ module Api
         render json: @study_file_info
       end
 
+      swagger_path '/bulk_download/drs_info' do
+        operation :post do
+          key :tags, [
+            'Bulk Download'
+          ]
+          key :summary, 'Retrieve information about DRS file objects in TDR'
+          key :description, 'Retrieve file-level information about DRS objects existing in Terra Data Repo, such as filenames, sizes, and access URLs.'
+          key :operationId, 'search_bulk_download_drs_info'
+          parameter do
+            key :name, :drs_ids
+            key :type, :array
+            key :in, :body
+            key :description, 'Array of DRS IDs'
+            key :example, "{\"drs_ids\":[\"drs://jade.datarepo-dev.broadinstitute.org/v1_257c5646-689a-4f25-8396-2500c849cb4f_8f63e624-5e41-44fa-aabe-5133ec12c4bc\"]}"
+            key :required, true
+          end
+          response 200 do
+            key :type, :array
+            key :description, 'Array of file information objects, containing filenames, sizes, and access URLs.  See ' \
+                              'https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/DataRepositoryService/getObject ' \
+                              'for more information regarding response structure.'
+          end
+          response 406 do
+            key :description, ApiBaseController.not_acceptable
+          end
+          response 500 do
+            key :description, 'Invalid DRS ID format'
+          end
+        end
+      end
+
+      def drs_info
+        drs_ids = params[:drs_ids]
+        file_info = Parallel.map(drs_ids, in_threads: 100) do |drs_id|
+          begin
+            ApplicationController.data_repo_client.get_drs_file_info(drs_id)
+          rescue RestClient::Exception => e
+            # DataRepoClient only emits RestClient::Exception errors, and the error will have already been reported
+            # to Sentry, so also report to Mixpanel
+            MetricsService.report_error(e, request, current_api_user)
+            {
+              drs_id: drs_id,
+              error: e.message
+            }
+          end
+        end
+        render json: file_info
+      end
+
       swagger_path '/bulk_download/generate_curl_config' do
         operation :get do
           key :tags, [
-              'Search'
+              'Bulk Download'
           ]
           key :summary, 'Get curl command file for bulk file download'
-          key :description, 'Generates a curl config file for downloading files in bulk of multiple types. Specify either study accessions and types, or file ids'
+          key :description, 'Generates a curl config file for downloading files in bulk of multiple types. Specify either study accessions and types, or file IDs, or a download ID'
           key :operationId, 'bulk_download_generate_curl_config_path'
           parameter do
             key :name, :auth_code
@@ -152,6 +233,13 @@ module Api
             key :collectionFormat, :csv
           end
           parameter do
+            key :name, :download_id
+            key :in, :query
+            key :description, 'a DownloadRequest ID, such as returned by a call to the auth_code endpoint'
+            key :required, false
+            key :type, :string
+          end
+          parameter do
             key :name, :directory
             key :type, :string
             key :in, :query
@@ -187,19 +275,33 @@ module Api
       def generate_curl_config
         valid_accessions = []
         file_ids = []
-        # sanitize study accessions and file types
-        if params[:file_ids]
+        tdr_files = {}
+
+        # branch based on whether they provided a download_id, file_ids, or accessions
+        if params[:download_id]
+          download_req = DownloadRequest.find(params[:download_id])
+          if !download_req
+            render json: { error: 'Invalid download_id provided' }, status: 400 and return
+          end
+          file_ids = download_req.file_ids
+          tdr_files = download_req.tdr_files
+        elsif params[:file_ids]
           begin
             file_ids = RequestUtils.validate_id_list(params[:file_ids])
           rescue ArgumentError
             render json: {error: 'file_ids must be comma-delimited list of 24-character UUIDs'}, status: 400 and return
           end
-          matched_study_ids = StudyFile.where(:id.in => file_ids).pluck(:study_id)
-          valid_accessions = Study.where(:id.in => matched_study_ids).pluck(:accession)
         else
           valid_accessions = self.class.find_matching_accessions(params[:accessions])
           sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
         end
+
+        # if they provided file_ids (either directly or via download_id), get the corresponding studies
+        if !file_ids.empty?
+          matched_study_ids = StudyFile.where(:id.in => file_ids).pluck(:study_id)
+          valid_accessions = Study.where(:id.in => matched_study_ids).pluck(:accession)
+        end
+
         begin
           self.class.check_accession_permissions(valid_accessions, current_api_user)
         rescue ArgumentError => e
@@ -219,7 +321,7 @@ module Api
         files_requested = nil
         # get requested files
         # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
-        if params[:file_ids]
+        if !file_ids.empty?
           files_requested = StudyFile.where(:id.in => file_ids)
         else
           files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
@@ -245,7 +347,8 @@ module Api
                                                                            directory_files: directory_files,
                                                                            user: current_api_user,
                                                                            study_bucket_map: bucket_map,
-                                                                           output_pathname_map: pathname_map)
+                                                                           output_pathname_map: pathname_map,
+                                                                           tdr_files: tdr_files)
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
         logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size + directory_files.size} total files"
