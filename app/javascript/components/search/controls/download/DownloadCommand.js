@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 
-import { fetchAuthCode } from 'lib/scp-api'
+import { fetchAuthCode, stringifyQuery } from 'lib/scp-api'
 
 /** component for rendering a copyable bulk download command for an array of file ids.
     Queries the server to retrieve the appropriate auth code. */
-export default function DownloadCommand({ fileIds=[] }) {
+export default function DownloadCommand({ fileIds=[], tdrFiles }) {
   const [isLoading, setIsLoading] = useState(true)
   const [authInfo, setAuthInfo] = useState({ authCode: null, timeInterval: 3000 })
   const [refreshNum, setRefreshNum] = useState(0)
@@ -21,13 +21,13 @@ export default function DownloadCommand({ fileIds=[] }) {
 
   useEffect(() => {
     setIsLoading(true)
-    fetchAuthCode().then(authInfo => {
-      setAuthInfo(authInfo)
+    fetchAuthCode(fileIds, tdrFiles).then(result => {
+      setAuthInfo(result)
       setIsLoading(false)
     })
   }, [refreshNum])
 
-  const downloadCommand = getDownloadCommand(authInfo.authCode, fileIds)
+  const downloadCommand = getDownloadCommand(authInfo.authCode, authInfo.downloadId)
 
   return <div className="download-url-modal row">
     <br/><br/><br/>
@@ -86,8 +86,12 @@ export default function DownloadCommand({ fileIds=[] }) {
  *
  * @returns {Object} Object for auth code, time interval, and download command
  */
-function getDownloadCommand(authCode, fileIds) {
-  const queryString = `?auth_code=${authCode}&file_ids=${fileIds.join(',')}`
+function getDownloadCommand(authCode, downloadId) {
+  const queryParams = {
+    auth_code: authCode,
+    download_id: downloadId
+  }
+  const queryString = stringifyQuery(queryParams)
 
   // Gets a curl configuration ("cfg.txt") containing signed
   // URLs and output names for all files in the download object.

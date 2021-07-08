@@ -1046,20 +1046,21 @@ class Study
 
   # helper to return default annotation to load, will fall back to first available annotation if no preference has been set
   # or default annotation cannot be loaded.  returns a hash of {name: ,type:, scope: }
-  def default_annotation_params(cluster=self.default_cluster)
-    default_annot = self.default_options[:annotation]
+  def default_annotation_params(cluster=default_cluster)
+    default_annot = default_options[:annotation]
     annot_params = nil
     # in case default has not been set
     if default_annot.nil?
       if !cluster.nil? && cluster.cell_annotations.any?
-        annot = cluster.cell_annotations.first
+        annot = cluster.cell_annotations.select { |annot| cluster.can_visualize_cell_annotation?(annot) }.first ||
+          cluster.cell_annotations.first
         annot_params = {
           name: annot[:name],
           type: annot[:type],
           scope: 'cluster'
         }
-      elsif self.cell_metadata.any?
-        metadatum = self.cell_metadata.keep_if {|meta| meta.can_visualize?}.first
+      elsif cell_metadata.any?
+        metadatum = cell_metadata.keep_if(&:can_visualize?).first || cell_metadata.first
         annot_params = {
           name: metadatum.name,
           type: metadatum.annotation_type,

@@ -1,36 +1,83 @@
 import React, { useEffect, useState } from 'react'
 import Modal from 'react-bootstrap/lib/Modal'
+import _cloneDeep from 'lodash/cloneDeep'
 
 import DownloadCommand from './DownloadCommand'
 import DownloadSelectionTable, {
-  newSelectedBoxesState, getSelectedFileIds, getSelectedFileStats, bytesToSize
+  newSelectedBoxesState, getSelectedFileHandles, getSelectedFileStats, bytesToSize
 } from './DownloadSelectionTable'
-import { fetchDownloadInfo } from 'lib/scp-api'
 
+import { fetchDownloadInfo, fetchDrsInfo } from 'lib/scp-api'
+
+const TDR_COLUMNS = ['analysis', 'sequence']
+const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
 
 /**
   * a modal that, given a list of study accessions, allows a user to select/deselect
   * studies and file types for download.  This queries the bulk_download/summary API method
   * to retrieve the list of study details and available files
   */
-export default function DownloadSelectionModal({ studyAccessions, show, setShow }) {
+export default function DownloadSelectionModal({ studyAccessions, tdrFileInfo, show, setShow }) {
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingTDR, setIsLoadingTDR] = useState(true)
   const [downloadInfo, setDownloadInfo] = useState([])
   const [selectedBoxes, setSelectedBoxes] = useState()
+  const [downloadInfoTDR, setDownloadInfoTDR] = useState([])
+  const [selectedBoxesTDR, setSelectedBoxesTDR] = useState()
   const [stepNum, setStepNum] = useState(1)
 
+  const scpAccessions = studyAccessions.filter(accession => accession.startsWith('SCP'))
+  const tdrAccessions = studyAccessions.filter(accession => !accession.startsWith('SCP'))
+  const showTDRSelectionPane = tdrAccessions.length > 0
   const { fileCount, fileSize } = getSelectedFileStats(downloadInfo, selectedBoxes, isLoading)
-  const prettyBytes = bytesToSize(fileSize)
-  const selectedFileIds = getSelectedFileIds(downloadInfo, selectedBoxes)
+  const { fileCount: fileCountTDR, fileSize: fileSizeTDR } =
+    getSelectedFileStats(downloadInfoTDR, selectedBoxesTDR, isLoadingTDR)
+  const prettyBytes = bytesToSize(fileSize + fileSizeTDR)
+  const selectedFileIds = getSelectedFileHandles(downloadInfo, selectedBoxes)
+  const selectedTdrFiles = getSelectedFileHandles(downloadInfoTDR, selectedBoxesTDR, true)
+
+  /** For TDR studies, we will know from the tdrFileInfo object how many files of each type there are
+   * But we need to query the drsInfo so that we can get the file sizes and download urls */
+  function initializeTDRTable() {
+    setSelectedBoxesTDR(newSelectedBoxesState(tdrFileInfo, TDR_COLUMNS))
+    setDownloadInfoTDR(tdrFileInfo)
+    setIsLoadingTDR(false)
+    // pull the drs ids out of each study and put them in a single array
+    const drsIds = tdrFileInfo.map(study => study.studyFiles.map(sfile => sfile.drs_id))
+      .reduce((acc, val) => acc.concat(val), [])
+    fetchDrsInfo(drsIds).then(result => {
+      const fullTdrFileInfo = _cloneDeep(tdrFileInfo)
+      // now iterate through the file info and add file sizes, urls, and file names.
+      // the names and urls will be used for making the download request later
+      fullTdrFileInfo.forEach(study => {
+        study.studyFiles.forEach(sfile => {
+          const fileId = sfile.drs_id.split('/').slice(-1)[0]
+          const matchFile = result.find(file => file.id === fileId)
+          if (matchFile) {
+            sfile.upload_file_size = matchFile.size
+            // we add the url and name to each file info so that they can be sent along with the download
+            // request, this allows us to avoid having to query the DRS service again
+            sfile.url = matchFile.accessMethods.find(method => method.type === 'https').access_url.url
+            sfile.name = matchFile.name
+          }
+        })
+      })
+      setDownloadInfoTDR(fullTdrFileInfo)
+    })
+  }
 
   useEffect(() => {
     if (show) {
       setIsLoading(true)
-      fetchDownloadInfo(studyAccessions).then(result => {
-        setSelectedBoxes(newSelectedBoxesState(result))
+      setIsLoadingTDR(true)
+      fetchDownloadInfo(scpAccessions).then(result => {
+        setSelectedBoxes(newSelectedBoxesState(result, SCP_COLUMNS))
         setDownloadInfo(result)
         setIsLoading(false)
       })
+      if (showTDRSelectionPane) {
+        initializeTDRTable()
+      }
     }
   }, [show, studyAccessions.join(',')])
 
@@ -40,7 +87,7 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
     data-analytics-name="download-modal-next">
     NEXT
   </button>
-  if (fileCount === 0) {
+  if (fileCount + fileCountTDR === 0) {
     downloadButton = <button className="btn btn-primary" disabled="disabled">
       No files selected
     </button>
@@ -63,7 +110,7 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
                 &nbsp; Select files
               </h3>
             </div>
-            <div className="col-md-4">
+            <div className="col-md-6">
               <h3 className={stepNum === 2 ? '' : 'greyed'}>
                 <span className="badge">2</span>
                 &nbsp; Get terminal command
@@ -75,14 +122,31 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
             to use on your terminal.
           </div>
         </div>
-        { stepNum === 1 && <DownloadSelectionTable
-          isLoading={isLoading}
-          downloadInfo={downloadInfo}
-          selectedBoxes={selectedBoxes}
-          setSelectedBoxes={setSelectedBoxes}/> }
+        { stepNum === 1 &&
+          <div>
+            <DownloadSelectionTable
+              isLoading={isLoading}
+              downloadInfo={downloadInfo}
+              selectedBoxes={selectedBoxes}
+              setSelectedBoxes={setSelectedBoxes}
+              columnTypes={SCP_COLUMNS}/>
+            { showTDRSelectionPane &&
+              <div>
+                <h4>Human Cell Atlas studies</h4>
+                <DownloadSelectionTable
+                  isLoading={isLoadingTDR}
+                  downloadInfo={downloadInfoTDR}
+                  selectedBoxes={selectedBoxesTDR}
+                  setSelectedBoxes={setSelectedBoxesTDR}
+                  columnTypes={TDR_COLUMNS}/>
+              </div>
+            }
+          </div>
+        }
         { stepNum === 2 && <DownloadCommand
           closeParent={() => setShow(false)}
-          fileIds={selectedFileIds}/> }
+          fileIds={selectedFileIds}
+          tdrFiles={selectedTdrFiles}/> }
         { !isLoading &&
           <div className="download-size-message">
             <label htmlFor="download-size-amount">Total size</label>

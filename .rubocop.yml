@@ -46,3 +46,6 @@ Metrics/AbcSize:
 Style/Documentation:
   Exclude:
     - 'test/**/*'
+
+Style/NumericPredicate:
+  Enabled: false

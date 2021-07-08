@@ -16,7 +16,6 @@ import {
   mapFiltersForLogging
 } from './scp-api-metrics'
 import { showMessage } from 'lib/MessageModal'
-import { supportEmailLink } from 'lib/error-utils'
 
 // If true, returns mock data for all API responses.  Only for dev.
 let globalMock = false
@@ -78,9 +77,12 @@ function defaultPostInit(mock=false) {
  * // returns {authCode: 123456, timeInterval: 1800}
  * fetchAuthCode(true)
  */
-export async function fetchAuthCode(mock=false) {
+export async function fetchAuthCode(fileIds, tdrFiles, mock=false) {
   const init = defaultPostInit(mock)
-
+  init.body = JSON.stringify({
+    file_ids: fileIds,
+    tdr_files: tdrFiles
+  })
   const [authCode, perfTimes] = await scpApi('/bulk_download/auth_code', init, mock)
 
   logDownloadAuthorization(perfTimes)
@@ -245,7 +247,10 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  *
  * Example:
  * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/
-     Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
+ *   Coordinates_Major_cell_types.txt?annotation_name=CLUSTER&annotation_type=group&annotation_scope=study
+ *
+ * If changing URL query string parameters here, then also change them for
+ * `full_params` and `default_params` in `cluster_cache_service.rb`.
  */
 export async function fetchCluster({
   studyAccession, cluster, annotation, subsample, consensus, genes=null,
@@ -447,6 +452,21 @@ export async function fetchDownloadInfo(accessions, mock=false) {
   const queryString = `?accessions=${accessions}`
   const pathAndQueryString = `/bulk_download/summary/${queryString}`
   const [info] = await scpApi(pathAndQueryString, defaultInit(), mock)
+  return info
+}
+
+/**
+ *  Queries the bulk_download/summary API to retrieve a list of study and file information
+ *
+ * Docs:
+ * https://singlecell.broadinstitute.org/single_cell/api/swagger_docs/v1#!/BulkDownload/bulk_download_summary_path
+ *
+ * @param {Array} accessions List of study accessions to preview download
+ */
+export async function fetchDrsInfo(drsIds, mock=false) {
+  const init = defaultPostInit(mock)
+  init.body = JSON.stringify({ drs_ids: drsIds })
+  const [info] = await scpApi(`/bulk_download/drs_info/`, init, mock)
   return info
 }
 

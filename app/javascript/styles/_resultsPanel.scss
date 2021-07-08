@@ -85,10 +85,11 @@
   .cell-count {
     background-color: #74ae43;
     font-weight: normal;
+    margin-right: 0.5em
   }
   .facet-match, .gene-match {
     background-color: #fff;
-    margin-left: 0.5em;
+    margin-right: 0.5em;
     color: #74ae43;
     border: 1px solid #74ae43;
     font-weight: normal;
@@ -98,14 +99,14 @@
     td {
       background: #f6f6f6;
     }
-    .soft-badge {
-      background-color: #f6f6f6;
-      font-weight: normal;
-      font-style: italic;
-      margin-bottom: 5px;
-      border: 1px solid #ddd;
-      color: #888;
-    }
+  }
+  .soft-badge {
+    background-color: #f6f6f6;
+    font-weight: normal;
+    font-style: italic;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
+    color: #888;
   }
 }
 .pagination {
@@ -125,4 +126,23 @@
   .currentPage {
     margin: 0 0.2em 0 0.2em;
   }
+}
+
+.study-type {
+  border: 1px solid #4d72aa;
+  background-color: white;
+  font-weight: normal;
+  color: #777;
+  min-width: 44px;
+  height: 20px;
+}
+
+.study-label {
+  display: flex;
+  gap: 10px;
+}
+
+.match-badge {
+  min-width: 120px;
+  height: 20px;
 }

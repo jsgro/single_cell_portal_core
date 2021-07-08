@@ -6,6 +6,10 @@ echo "*** ROLLING OVER LOGS ***"
 ruby /home/app/webapp/bin/cycle_logs.rb
 echo "*** COMPLETED ***"
 
+# Avoids bugs from subtly-breaking API changes
+echo "*** CLEARING TMP CACHE ***"
+sudo -E -u app -H bin/rails RAILS_ENV=$PASSENGER_APP_ENV tmp:clear
+
 # ensure data upload directory exists and has correct permissions
 echo "*** ENSURING DATA UPLOAD DIRECTORY PERMISSIONS ***"
 if [[ ! -d /home/app/webapp/data ]]; then
@@ -140,6 +144,10 @@ echo "*** ADDING REPORTING CRONS ***"
 (crontab -u app -l ; echo "5 0 * * Sun . /home/app/.cron_env ; cd /home/app/webapp/; /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV \"ReportTimePoint.weekly_returning_users\" >> /home/app/webapp/log/cron_out.log 2>&1") | crontab -u app -
 (crontab -u app -l ; echo "@daily . /home/app/.cron_env ; cd /home/app/webapp/; /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV \"AnalysisSubmission.update_running_submissions\" >> /home/app/webapp/log/cron_out.log 2>&1") | crontab -u app -
 echo "*** COMPLETED ***"
+
+# Improves performance for cluster scatter plots in Explore tab
+echo "*** REFRESHING DEFAULT CLUSTER CACHE ***"
+sudo -E -u app -H /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV "ClusterCacheService.delay(queue: :cache).cache_all_defaults"
 
 echo "*** SENDING RESTART NOTIFICATION ***"
 sudo -E -u app -H /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV "AdminConfiguration.restart_notification"

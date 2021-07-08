@@ -26,6 +26,10 @@ module Api
           key :description, 'Keyword and Faceted search operations'
         end
         tag do
+          key :name, 'Bulk Download'
+          key :description, 'Download files in bulk via curl'
+        end
+        tag do
           key :name, 'Status'
           key :description, 'Status operations'
         end
@@ -111,6 +115,7 @@ module Api
           Api::V1::StatusController,
           Api::V1::SiteController,
           Api::V1::SearchController,
+          Api::V1::BulkDownloadController,
           Api::V1::Visualization::ClustersController,
           Api::V1::Visualization::AnnotationsController,
           Api::V1::Visualization::ExpressionController,

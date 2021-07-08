@@ -95,6 +95,7 @@ Rails.application.routes.draw do
         scope :bulk_download do
           post 'auth_code', to: 'bulk_download#auth_code', as: :bulk_download_auth_code
           get 'summary', to: 'bulk_download#summary', as: :bulk_download_summary
+          post 'drs_info', to: 'bulk_download#drs_info', as: :bulk_download_drs_info
           get 'generate_curl_config', to: 'bulk_download#generate_curl_config', as: :bulk_download_generate_curl_config
         end
       end

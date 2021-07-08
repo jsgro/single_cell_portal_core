@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StudyResults from './StudyResults'
-import Study from './Study'
+import StudySearchResult from './StudySearchResult'
 import SearchQueryDisplay from './SearchQueryDisplay'
 import { UserContext } from 'providers/UserProvider'
 import { getNumFacetsAndFilters } from 'providers/StudySearchProvider'
@@ -13,7 +13,7 @@ import { serverErrorEnd } from 'lib/error-utils'
 /**
  * handles display of loading, error and results for a list of studies
  * @studySearchState - an object with isLoaded, isLoading, isError, and results properties
- * @studyComponent - the component to use to render individual studies.  If not specified, results/Study.js
+ * @studyComponent - the component to use to render individual studies.  If not specified, results/StudySearchResult.js
  * will be used
  */
 const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) => {
@@ -41,7 +41,7 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
           <SearchQueryDisplay terms={results.termList} facets={results.facets}/> }
         <StudyResults
           results={results}
-          StudyComponent={studyComponent ? studyComponent : Study}
+          StudyComponent={studyComponent ? studyComponent : StudySearchResult}
           changePage={pageNum => {
             studySearchState.updateSearch({ page: pageNum })
           }}
@@ -91,7 +91,7 @@ const FacetResultsFooter = ({ studySearchState }) => {
           </a>.  Study authors looking to make their studies more accessible can read our{' '}
           {/* eslint-disable-next-line max-len */}
           <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search"
-            target="_blank" rel="noreferrer">metadata guide
+            target="_blank" rel="noreferrer"> metadata guide
           </a>.
         </div>
       </div>

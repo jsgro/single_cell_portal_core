@@ -91,12 +91,12 @@ const FacetResultsFooter = ({ studySearchState }) => {
           Currently, about 20% of public studies supply that metadata.</p>
           Learn more about our search capability on our
           <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies"
-            target="_blank" rel="noreferrer">wiki
+            target="_blank" rel="noreferrer"> wiki
           </a>.<br/>
           Study authors looking to make their studies more accessible can read our
           {/* eslint-disable-next-line max-len */}
           <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search"
-            target="_blank" rel="noreferrer">metadata guide
+            target="_blank" rel="noreferrer"> metadata guide
           </a>.
         </div>
       </div>

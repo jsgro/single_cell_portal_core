@@ -27,7 +27,7 @@
     "jquery": "3.5.1",
     "jquery-ui": "1.12.1",
     "morpheus-app": "1.0.18",
-    "plotly.js-dist": "1.58.4",
+    "plotly.js-dist": "2.2.0",
     "pluralize": "^8.0.0",
     "pnp-webpack-plugin": "^1.6.4",
     "postcss-cssnext": "3.1.0",
@@ -45,7 +45,8 @@
     "spearman-rho": "^1.0.6",
     "spin.js": "^4.0.0",
     "stylelint-config-sass-guidelines": "^7.0.0",
-    "web-vitals": "^1.1.1"
+    "web-vitals": "^1.1.1",
+    "string-similarity": "^4.0.4"
   },
   "devDependencies": {
     "@sheerun/mutationobserver-shim": "^0.3.3",
