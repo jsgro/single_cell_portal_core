@@ -101,7 +101,7 @@ module Api
           ErrorTracker.report_exception(e, current_user, @study, log_params)
           render json: {error: e.message}, status: 400 # Bad request
         rescue => e
-          ErrorTracker.report_exception(e, current_user, error_context)
+          ErrorTracker.report_exception(e, current_user, @study, log_params)
           message = 'An unexpected error prevented the annotation from being saved: ' + e.message
           render json: {error: message}, status: 500 # Server error
         end

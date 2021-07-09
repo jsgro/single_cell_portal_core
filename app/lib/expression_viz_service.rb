@@ -248,7 +248,7 @@ class ExpressionVizService
     annotation_array = ClusterVizService.get_annotation_values_array(study, cluster, annotation, cells, subsample_annotation, subsample_threshold)
 
     cells.each_with_index do |cell, index|
-      annotation_value = annotation[:scope] == 'cluster' ? annotation_array[index] : annotation_hash[cell]
+      annotation_value = annotation_array[index]
       if !annotation_value.nil?
         case consensus
         when 'mean'
