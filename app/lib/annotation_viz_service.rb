@@ -146,6 +146,7 @@ class AnnotationVizService
         invalid_annots << {
           name: meta.name,
           type: meta.annotation_type,
+          values: meta.values,
           scope: 'invalid'
         }
       end
@@ -156,6 +157,7 @@ class AnnotationVizService
           invalid_annots << {
             name: cell_annot['name'],
             type: cell_annot['annotation_type'],
+            values: cell_annot['values'],
             scope: 'invalid'
           }
         end

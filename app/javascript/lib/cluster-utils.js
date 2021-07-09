@@ -39,11 +39,24 @@ export function getDefaultSubsampleForCluster(annotationList, clusterName) {
   * key parameters for url state */
 export function annotationKeyProperties(annotation) {
   return {
-    name: annotation.name,
+    name: getAnnotationDisplayName(annotation),
     type: annotation.type,
     scope: annotation.scope,
     id: annotation.id,
     isDisabled: annotation.scope == 'invalid'
+  }
+}
+
+/** returns a display name for an annotation to use in the select menu
+ *
+ * @param annotation - annotation object
+ */
+export function getAnnotationDisplayName(annotation) {
+  if (annotation.scope === 'invalid') {
+    const annotLabel = annotation.values.length === 1 ? 'Only one label' : 'Too many labels'
+    return `${annotation.name} (${annotLabel})`
+  } else {
+    return annotation.name
   }
 }
 
