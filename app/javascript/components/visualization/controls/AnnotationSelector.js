@@ -9,7 +9,7 @@ function getAnnotationOptions(annotationList, clusterName) {
   return [{
     label: 'Study Wide',
     options: annotationList.annotations
-      .filter(annot => annot.scope == 'study').map(annot => annotationKeyProperties(annot))
+      .filter(annot => annot.scope === 'study').map(annot => annotationKeyProperties(annot))
   }, {
     label: 'Cluster-Based',
     options: annotationList.annotations
@@ -23,7 +23,7 @@ function getAnnotationOptions(annotationList, clusterName) {
   }, {
     label: 'Cannot Display',
     options: annotationList.annotations
-      .filter(annot => annot.scope == 'invalid' && (annot.cluster_name == clusterName || !annot.cluster_name))
+      .filter(annot => annot.scope === 'invalid' && (annot.cluster_name == clusterName || !annot.cluster_name))
       .map(annot => annotationKeyProperties(annot))
   }]
 }

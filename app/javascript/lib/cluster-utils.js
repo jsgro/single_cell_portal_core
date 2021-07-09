@@ -43,7 +43,7 @@ export function annotationKeyProperties(annotation) {
     type: annotation.type,
     scope: annotation.scope,
     id: annotation.id,
-    isDisabled: annotation.scope == 'invalid'
+    isDisabled: annotation.scope === 'invalid'
   }
 }
 
