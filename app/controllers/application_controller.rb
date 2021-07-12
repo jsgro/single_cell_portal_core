@@ -112,19 +112,23 @@ class ApplicationController < ActionController::Base
   def set_study_default_options
     @default_cluster = @study.default_cluster
     @default_cluster_annotations = {
-        'Study Wide' => @study.viewable_metadata.map {|metadata| metadata.annotation_select_option }
+      'Study Wide' => @study.viewable_metadata.map(&:annotation_select_option),
+      'Cluster-based' => [],
+      'Cannot Display' => @study.cell_metadata.reject(&:can_visualize?).map(&:annotation_select_option)
     }
-    unless @default_cluster.nil?
-      @default_cluster_annotations['Cluster-based'] = @default_cluster.cell_annotations
-                                                          .keep_if {|annot| @default_cluster.can_visualize_cell_annotation?(annot)}
-                                                          .map {|annot| @default_cluster.formatted_cell_annotation(annot)}
+    @default_cluster&.cell_annotations&.each do |cell_annotation|
+      if @default_cluster&.can_visualize_cell_annotation?(cell_annotation)
+        @default_cluster_annotations['Cluster-based'] << @default_cluster&.formatted_cell_annotation(cell_annotation)
+      else
+        @default_cluster_annotations['Cannot Display'] << @default_cluster&.formatted_cell_annotation(cell_annotation)
+      end
     end
   end
 
   # rescue from an invalid csrf token (if user logged out in another window, or some kind of spoofing attack)
   def invalid_csrf(exception)
     ErrorTracker.report_exception(exception, current_user, params, { request_url: request.url})
-    MetricsService.report_error(e, request, current_user, @study)
+    MetricsService.report_error(exception, request, current_user, @study)
     @alert = "We're sorry, but the change you wanted was rejected by the server."
     respond_to do |format|
       format.html {render template: '/layouts/422', status: 422}
