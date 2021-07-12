@@ -1,6 +1,9 @@
-require "test_helper"
+require 'test_helper'
 
 class SearchFacetTest < ActiveSupport::TestCase
+
+  include Minitest::Hooks
+  include TestInstrumentor
 
   def setup
     @search_facet = SearchFacet.find_by(identifier: 'species')
@@ -20,8 +23,6 @@ class SearchFacetTest < ActiveSupport::TestCase
   # should return expected filters list
   # mocks call to BigQuery to avoid unnecessary overhead
   test 'should update filters list' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     # mock call to BQ, until a better library can be found
     mock = Minitest::Mock.new
     mock.expect :query, @filter_results, [String]
@@ -31,15 +32,11 @@ class SearchFacetTest < ActiveSupport::TestCase
       mock.verify
       assert_equal @filter_results, filters
     end
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   # should generate correct kind of query for DISTINCT filters based on array/non-array columns
   # generate_query_string_by_type should return the correct query string in each case, based on facet type
   test 'should generate correct distinct queries' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     non_array_query = @search_facet.generate_bq_query_string
     non_array_match = /DISTINCT #{@search_facet.big_query_id_column}/
     assert_match non_array_match, non_array_query, "Non-array query did not contain correct DISTINCT clause: #{non_array_query}"
@@ -51,14 +48,20 @@ class SearchFacetTest < ActiveSupport::TestCase
     numeric_query = numeric_facet.generate_bq_query_string
     numeric_match = /MIN\(#{numeric_facet.big_query_id_column}\).*MAX\(#{numeric_facet.big_query_id_column}\)/
     assert_match numeric_match, numeric_query, "MinMax query did not contain MIN or MAX calls for correct columns: #{numeric_query}"
+  end
 
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  test 'should generate correct distinct queries for public-only studies' do
+    public_studies = Study.where(public: true).pluck(:accession)
+    public_query = "study_accession IN (#{public_studies.map { |acc| "\'#{acc}\'" }.join(', ')})"
+    non_array_query = @search_facet.generate_bq_query_string(accessions: public_studies)
+    assert_match public_query, non_array_query, "Non-array query did not contain correct DISTINCT clause: #{non_array_query}"
+    array_facet = SearchFacet.find_by(identifier: 'disease')
+    array_query = array_facet.generate_bq_query_string(accessions: public_studies)
+    assert_match public_query, array_query, "Array query did not correctly unnest column or match offset positions: #{array_query}"
   end
 
   # should validate search facet correctly, especially links to external ontologies
   test 'should validate search_facet including ontology urls' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     assert @search_facet.valid?, "Testing search facet did not validate: #{@search_facet.errors.full_messages}"
     invalid_facet = SearchFacet.new
     assert_not invalid_facet.valid?, 'Did not correctly find validation errors on empty facet'
@@ -74,13 +77,9 @@ class SearchFacetTest < ActiveSupport::TestCase
     assert_not @search_facet.valid?, 'Did not correctly find validation errors on invalid facet'
     assert_equal @search_facet.errors.to_hash[:ontology_urls].first,
                  'contains an invalid URL: not a url'
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should set data_type and is_array_based on create' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     mock = Minitest::Mock.new
     mock.expect :query, @column_schema, [String]
 
@@ -102,13 +101,9 @@ class SearchFacetTest < ActiveSupport::TestCase
       assert reads_facet.is_numeric?, "Did not correctly return true for is_numeric? with data_type: #{reads_facet.data_type}"
 
     end
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should set minmax values for numeric facets' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     mock = Minitest::Mock.new
     mock.expect :query, @minmax_results, [String]
 
@@ -126,13 +121,9 @@ class SearchFacetTest < ActiveSupport::TestCase
       assert_equal @minmax_results.first[:MAX], age_facet.max,
                    "Did not set minimum value; expected #{@minmax_results.first[:MAX]} but found #{age_facet.max}"
     end
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should convert time values between units' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     age_facet = SearchFacet.find_by(identifier: 'organism_age')
     times = {
         hours: 336,
@@ -148,7 +139,5 @@ class SearchFacetTest < ActiveSupport::TestCase
       assert_equal expected_time, converted_time,
                    "Did not convert #{time_val} correctly from #{unit} to #{convert_unit}; expected #{expected_time} but found #{converted_time}"
     end
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end

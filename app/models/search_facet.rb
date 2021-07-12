@@ -11,6 +11,7 @@ class SearchFacet
   field :name, type: String
   field :identifier, type: String
   field :filters, type: Array, default: []
+  field :public_filters, type: Array, default: [] # filters for public studies only
   field :is_ontology_based, type: Boolean, default: false
   field :ontology_urls, type: Array, default: []
   field :data_type, type: String
@@ -39,7 +40,8 @@ class SearchFacet
   }.with_indifferent_access.freeze
   TIME_UNITS = TIME_MULTIPLIERS.keys.freeze
 
-  validates_presence_of :name, :identifier, :data_type, :big_query_id_column, :big_query_name_column, :convention_name, :convention_version
+  validates_presence_of :name, :identifier, :data_type, :big_query_id_column, :big_query_name_column, :convention_name,
+                        :convention_version
   validates_uniqueness_of :big_query_id_column, scope: [:convention_name, :convention_version]
   validate :ensure_ontology_url_format, if: proc {|attributes| attributes[:is_ontology_based]}
   before_validation :set_data_type_and_array, on: :create,
@@ -47,7 +49,7 @@ class SearchFacet
   after_create :update_filter_values!
 
   swagger_schema :SearchFacet do
-    key :required, [:name, :identifier, :data_type, :big_query_id_column, :big_query_name_column, :convention_name, :convention_version]
+    key :required, %i[name identifier data_type big_query_id_column big_query_name_column convention_name convention_version]
     key :name, 'SearchFacet'
     property :name do
       key :type, :string
@@ -67,7 +69,7 @@ class SearchFacet
       key :description, 'Array of filter values for facet'
       items type: :object do
         key :title, 'FacetFilter'
-        key :required, [:name, :id]
+        key :required, %i[name id]
         property :name do
           key :type, :string
           key :description, 'Display name of filter'
@@ -87,7 +89,7 @@ class SearchFacet
       key :description, 'Array of external links to ontologies (if ontology-based)'
       items type: :object do
         key :title, 'OntologyUrl'
-        key :required, [:name, :url]
+        key :required, %i[name url]
         property :name do
           key :type, :string
           key :description, 'Display name of ontology'
@@ -139,7 +141,7 @@ class SearchFacet
 
   swagger_schema :SearchFacetConfig do
     key :name, 'SearchFacetConfig'
-    key :required, [:name, :id, :links, :filters]
+    key :required, %i[name id links filters public_filters]
     property :name do
       key :type, :string
       key :description, 'Name/category of search facet'
@@ -164,10 +166,10 @@ class SearchFacet
     end
     property :filters do
       key :type, :array
-      key :description, 'Array of filter values for facet'
+      key :description, 'Array of filter values for facet (will default to public_filters if no user is signed in)'
       items type: :object do
         key :title, 'FacetFilter'
-        key :required, [:name, :id]
+        key :required, %i[name id]
         property :name do
           key :type, :string
           key :description, 'Display name of filter'
@@ -183,7 +185,7 @@ class SearchFacet
       key :description, 'Array of external links to ontologies (if ontology-based)'
       items type: :object do
         key :title, 'OntologyUrl'
-        key :required, [:name, :url]
+        key :required, %i[name url]
         property :name do
           key :type, :string
           key :description, 'Display name of ontology'
@@ -210,7 +212,7 @@ class SearchFacet
 
   swagger_schema :SearchFacetQuery do
     key :name, 'SearchFacetQuery'
-    key :required, [:facet, :query, :filters]
+    key :required, %i[facet query filters]
     property :name do
       key :type, :string
       key :description, 'ID of facet from convention JSON'
@@ -229,7 +231,7 @@ class SearchFacet
       key :description, 'Array of matching filter values for facet from query'
       items type: :object do
         key :title, 'FacetFilter'
-        key :required, [:name, :id]
+        key :required, %i[name id]
         property :name do
           key :type, :string
           key :description, 'Display name of filter'
@@ -250,9 +252,9 @@ class SearchFacet
   def self.get_table_schema(table_name: CellMetadatum::BIGQUERY_TABLE, column_name: nil)
     begin
       query_string = "SELECT column_name, data_type, is_nullable FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='#{table_name}'"
-      schema = self.big_query_dataset.query(query_string)
+      schema = big_query_dataset.query(query_string)
       if column_name.present?
-        schema.detect {|column| column[:column_name] == column_name}
+        schema.detect { |column| column[:column_name] == column_name }
       else
         schema
       end
@@ -278,26 +280,26 @@ class SearchFacet
 
   # return all "visible" facets
   def self.visible
-    self.where(visible: true)
+    where(visible: true)
   end
 
   # helper to know if column is numeric
   def is_numeric?
-    self.data_type == 'number'
+    data_type == 'number'
   end
 
   # for now, assume it's time if it's numeric and has a known time unit
   def is_time_unit?
-    self.is_numeric? && TIME_UNITS.include?(self.unit)
+    is_numeric? && TIME_UNITS.include?(unit)
   end
 
   # know if a facet needs unit conversion
   def must_convert?
-    self.big_query_conversion_column.present? && self.unit != 'seconds'
+    big_query_conversion_column.present? && unit != 'seconds'
   end
 
   # convert a numeric time-based value into seconds, defaulting to declared unit type
-  def calculate_time_in_seconds(base_value:, unit_label: self.unit)
+  def calculate_time_in_seconds(base_value:, unit_label: unit)
     multiplier = TIME_MULTIPLIERS[unit_label]
     # cast as float to allow passing in strings from search requests as values
     base_value.to_f * multiplier
@@ -309,80 +311,96 @@ class SearchFacet
       base_value
     else
       # first convert to seconds
-      value_in_seconds = self.calculate_time_in_seconds(base_value: base_value, unit_label: original_unit)
+      value_in_seconds = calculate_time_in_seconds(base_value: base_value, unit_label: original_unit)
       # now divide by multiplier to get value in new unit
       denominator = TIME_MULTIPLIERS[new_unit]
       value_in_seconds.to_f / denominator
     end
   end
 
-  # retrieve unique values from BigQuery and format an array of hashes with :name and :id values to populate :filters attribute
-  def get_unique_filter_values
-    Rails.logger.info "Updating filter values for SearchFacet: #{self.name} using id: #{self.big_query_id_column} and name: #{self.big_query_name_column}"
-    query_string = self.generate_bq_query_string
+  # retrieve unique values from BigQuery and format an array of hashes with :name and :id values to populate :filters
+  # can specify 'public only' to return filters for public studies
+  def get_unique_filter_values(public_only: false)
+    log_message = "Updating#{public_only ? ' public' : nil} filter values for SearchFacet: #{name} using id: " \
+                  "#{big_query_id_column} and name: #{big_query_name_column}"
+    Rails.logger.info log_message
+    if public_only
+      accessions = Study.where(public: true).pluck(:accession)
+      query_string = generate_bq_query_string(accessions: accessions)
+    else
+      query_string = generate_bq_query_string
+    end
     begin
       Rails.logger.info "Executing query: #{query_string}"
       results = SearchFacet.big_query_dataset.query(query_string)
-      self.is_numeric? ? results.first : results
+      is_numeric? ? results.first : results
     rescue => e
       Rails.logger.error "Error retrieving unique values for #{CellMetadatum::BIGQUERY_TABLE}: #{e.class.name}:#{e.message}"
-      ErrorTracker.report_exception(e, nil, { query_string: query_string})
+      ErrorTracker.report_exception(e, nil, { query_string: query_string, public_only: public_only })
       []
     end
   end
 
-  # update cached filters in place with new values
+  # update cached filters in place with new values, updating both public-only and regular list
+  # will update public-only values for non-numeric facets only since numeric facets have hard-coded ranges in UI
   def update_filter_values!
-    values = self.get_unique_filter_values
-    unless values.empty?
-      if self.is_numeric?
-        self.update(min: values[:MIN], max: values[:MAX])
-      else
-        self.update(filters: values.to_a)
-      end
+    if is_numeric?
+      values = get_unique_filter_values
+      return false if values.empty? # found no results, meaning an error occurred
+
+      update(min: values[:MIN], max: values[:MAX])
     else
-      false # did not get any results back, meaning :retrieve_unique_filter_values encountered an error
+      values = get_unique_filter_values(public_only: false)
+      return false if values.empty? # found no results, meaning an error occurred
+
+      public_values = get_unique_filter_values(public_only: true)
+      update(filters: values.to_a)
+      update(public_filters: public_values.to_a)
     end
   end
 
   # return the correct query string for updating filter values from BQ based on facet type
-  def generate_bq_query_string
-    if self.is_array_based
-      self.generate_array_query
-    elsif self.is_numeric?
-      self.generate_minmax_query
+  # can filter by list of accessions for public-only studies
+  def generate_bq_query_string(accessions: [])
+    if is_array_based
+      generate_array_query(accessions: accessions)
+    elsif is_numeric?
+      generate_minmax_query
     else
-      self.generate_non_array_query
+      generate_non_array_query(accessions: accessions)
     end
   end
 
   # generate a single query to get DISTINCT values from an array-based column, preserving order
-  def generate_array_query
-    "SELECT DISTINCT id, name FROM(SELECT id_col AS id, name_col as name " + \
-    "FROM #{CellMetadatum::BIGQUERY_TABLE}, UNNEST(#{self.big_query_id_column}) AS id_col WITH OFFSET id_pos, " + \
-    "UNNEST(#{self.big_query_name_column}) as name_col WITH OFFSET name_pos WHERE id_pos = name_pos) WHERE id IS NOT NULL " + \
-    "ORDER BY LOWER(name)"
+  # can filter by list of accessions for public-only studies
+  def generate_array_query(accessions: [])
+    "SELECT DISTINCT id, name FROM(SELECT id_col AS id, name_col as name FROM #{CellMetadatum::BIGQUERY_TABLE}, " \
+    "UNNEST(#{big_query_id_column}) AS id_col WITH OFFSET id_pos, UNNEST(#{big_query_name_column}) AS name_col " \
+    "WITH OFFSET name_pos WHERE id_pos = name_pos #{accessions.any? ? "AND #{format_accession_list(accessions)}" : nil}) " \
+    'WHERE id IS NOT NULL ORDER BY LOWER(name)'
   end
 
   # generate query string to retrieve distinct values for non-array based facets
-  def generate_non_array_query
-    "SELECT DISTINCT #{self.big_query_id_column} AS id, #{self.big_query_name_column} AS name FROM #{CellMetadatum::BIGQUERY_TABLE} " + \
-    "WHERE #{self.big_query_id_column} IS NOT NULL ORDER BY LOWER(#{self.big_query_name_column})"
+  # can filter by list of accessions for public-only studies
+  def generate_non_array_query(accessions: [])
+    "SELECT DISTINCT #{big_query_id_column} AS id, #{big_query_name_column} AS name FROM #{CellMetadatum::BIGQUERY_TABLE} " \
+    "WHERE #{big_query_id_column} IS NOT NULL #{accessions.any? ? "AND #{format_accession_list(accessions)} " : nil}" \
+    "ORDER BY LOWER(#{big_query_name_column})"
   end
 
   # generate a minmax query string to set bounds for numeric facets
   def generate_minmax_query
-    "SELECT MIN(#{self.big_query_id_column}) AS MIN, MAX(#{self.big_query_id_column}) AS MAX FROM #{CellMetadatum::BIGQUERY_TABLE}"
+    "SELECT MIN(#{big_query_id_column}) AS MIN, MAX(#{big_query_id_column}) AS MAX FROM #{CellMetadatum::BIGQUERY_TABLE}"
   end
 
   private
 
   # determine if this facet references array-based data in BQ as data_type will look like "ARRAY<STRING>"
   def set_data_type_and_array
-    column_schema = SearchFacet.get_table_schema(column_name: self.big_query_id_column)
+    column_schema = SearchFacet.get_table_schema(column_name: big_query_id_column)
     detected_type = column_schema[:data_type]
     self.is_array_based = detected_type.include?('ARRAY')
-    item_type = BQ_DATA_TYPES.detect {|d| detected_type.match(d).present?}
+    item_type = BQ_DATA_TYPES.detect { |d| detected_type.match(d).present? }
     self.data_type = BQ_TO_FACET_TYPES[item_type]
   end
 
@@ -409,5 +427,11 @@ class SearchFacet
   def url_valid?(url)
     url = URI.parse(url) rescue false
     url.kind_of?(URI::HTTP) || url.kind_of?(URI::HTTPS)
+  end
+
+  # format a WHERE clause using an array of study accessions
+  # will quote each accession with single quotes and join with commas, wrapping clause in parentheses
+  def format_accession_list(accessions)
+    "study_accession IN (#{accessions.map { |acc| "\'#{acc}\'" }.join(', ')})"
   end
 end
