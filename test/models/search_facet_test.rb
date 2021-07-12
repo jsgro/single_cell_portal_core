@@ -10,8 +10,8 @@ class SearchFacetTest < ActiveSupport::TestCase
 
     # filter_results to return from mock call to BigQuery
     @filter_results = [
-        {id: 'NCBITaxon_9606', name: 'Homo sapiens'},
-        {id: 'NCBITaxon_10090', name: 'Mus musculus'}
+        { id: 'NCBITaxon_9606', name: 'Homo sapiens' },
+        { id: 'NCBITaxon_10090', name: 'Mus musculus' }
     ]
 
     # mock schema for number_of_reads column in BigQuery
