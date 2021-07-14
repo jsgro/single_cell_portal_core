@@ -166,7 +166,7 @@ class SearchFacet
     end
     property :filters do
       key :type, :array
-      key :description, 'Array of filter values for facet (will default to public_filters if no user is signed in)'
+      key :description, 'Array of filter values for facet (will default to public_filters if user is not signed in)'
       items type: :object do
         key :title, 'FacetFilter'
         key :required, %i[name id]
