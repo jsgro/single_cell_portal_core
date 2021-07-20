@@ -15,8 +15,20 @@ class ClusterCacheService
   end
 
   # pre-cache all default clusters/annotations for every study
+  # use accession list to prevent long-lived query cursors from timing out in Delayed::Job
   def self.cache_all_defaults
-    Study.all.map {|study| cache_study_defaults(study) }
+    accessions = Study.pluck(:accession)
+    accessions.each do |accession|
+      begin
+        study = Study.find_by(accession: accession)
+        cache_study_defaults(study)
+      rescue Mongo::Error::OperationFailure => e
+        ErrorTracker.report_exception(e, nil,
+                                      { study_accession: accession, operation: :cache_study_defaults })
+        Rails.logger.error "Error caching study defaults for #{accession}: #{e.message}"
+        next
+      end
+    end
   end
 
   # pre-cache the default cluster & annotation for a given study
