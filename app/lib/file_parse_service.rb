@@ -172,16 +172,4 @@ class FileParseService
       ErrorTracker.report_exception(e, nil, study)
     end
   end
-
-  # helper to determine if a metadata file can be ingested (must either conform to convention, or user has exemption)
-  # if no exemption is present, will fall back to opposite of the default value
-  def self.can_ingest_metadata?(study_file, user)
-    if study_file.use_metadata_convention || study_file.file_type != 'Metadata'
-      # file is compliant, or not metadata
-      true
-    else
-      # return opposite as convention_required: true here means the file cannot be ingested
-      !User.feature_flag_for_instance(user, 'convention_required')
-    end
-  end
 end

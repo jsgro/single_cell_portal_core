@@ -607,7 +607,7 @@ class StudyFile
   validate :check_taxon, on: :create
   validate :check_assembly, on: :create
   validate :ensure_metadata_singleton, if: proc { |f| f.file_type == 'Metadata' }
-  validate :ensure_metadata_convention, if: proc { |f| f.file_type == 'Metadata' }
+  validate :ensure_metadata_convention, if: proc { |f| f.file_type == 'Metadata' && !f.use_metadata_convention }
 
   ###
   #
@@ -1315,8 +1315,13 @@ class StudyFile
   # ensure that metadata file adheres to convention acceptance criteria, if turned on
   # will check for exemption from any users associated with given study
   def ensure_metadata_convention
-    unless use_metadata_convention
-
+    convention_required = study.associated_users(permission: 'Edit').map { |user|
+      User.feature_flag_for_instance(user, 'convention_required')
+    }.uniq
+    # if any user account returned false for :convention_required, then allow ingest (means user received exemption)
+    # otherwise, add validation error for :use_metadata_convention
+    unless convention_required.include?(false)
+      errors.add(:use_metadata_convention, 'must be "true" to ensure data complies with the SCP metadata convention')
     end
   end
 end
