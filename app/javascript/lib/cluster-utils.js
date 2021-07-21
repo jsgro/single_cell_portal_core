@@ -23,12 +23,12 @@ export const UNSPECIFIED_ANNOTATION_NAME = '--Unspecified--'
 export function getDefaultSubsampleForCluster(annotationList, clusterName) {
   const subsampleOptions = annotationList.subsample_thresholds[clusterName]
   if (subsampleOptions?.length) {
-    // find the max subsample less than or equal to 10000
-    const defaultSubsample = Math.max(...subsampleOptions.filter(opt => opt <= 10000))
-    // if it's 10000, that means the study has more than 10000 cells, and so the
-    // default is to show 10000.  otherwise we'll show all cells by default
-    if (defaultSubsample === 10000) {
-      return 10000
+    // find the max subsample less than or equal to 100000
+    const defaultSubsample = Math.max(...subsampleOptions.filter(opt => opt <= 100000))
+    // if it's 100000, that means the study has more than 100000 cells, and so the
+    // default is to show 100000.  otherwise we'll show all cells by default
+    if (defaultSubsample === 100000) {
+      return 100000
     }
   }
   return 'all'
