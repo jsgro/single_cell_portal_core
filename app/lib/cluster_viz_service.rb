@@ -80,10 +80,10 @@ class ClusterVizService
   # will only provide options if subsampling has completed for a cluster
   def self.default_subsampling(cluster)
     num_points = cluster.points
-    if num_points < 10000
+    if num_points < 100000
       return nil
     else
-      ClusterGroup::SUBSAMPLE_THRESHOLDS.select{|val| val <= 10000}.max
+      ClusterGroup::SUBSAMPLE_THRESHOLDS.select{|val| val <= 100000}.max
     end
   end
 
