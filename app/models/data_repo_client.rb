@@ -229,7 +229,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #
   # * *returns*
   #   - (Array<Hash>) => Array of row-level results, with all columns present in index (there will be a lot of duplication)
-  def query_snapshot_indexes(query_json, limit: 1000, offset: 0, snapshot_ids: [])
+  def query_snapshot_indexes(query_json, limit: 10000, offset: 0, snapshot_ids: [])
     query_opts = merge_query_options({limit: limit, offset: offset})
     path = api_root + '/api/repository/v1/search/query' + query_opts
     payload = {
