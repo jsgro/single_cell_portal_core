@@ -699,6 +699,7 @@ module Api
           accession: short_name,
           name: row[name_field],
           description: row[description_field],
+          project_id: row['project_id'],
           facet_matches: [],
           term_matches: [],
           file_information: []
