@@ -102,7 +102,7 @@ export async function fetchAuthCode(fileIds, tdrFiles, mock=false) {
 * @param {String} studyAccession Study accession, e.g. SCP123
 * @param {String} cluster Name of cluster, as defined at upload
 * @param {String} annotation Full annotation name, e.g. "CLUSTER--group--study"
-* @param {String} subsample Subsampling threshold, e.g. 100000
+* @param {String} subsample Subsampling threshold, e.g. 10000
 * @param {String} userAnnotationName Name of new annotation
 * @param {Object} selections User selections for new annotation.
 *    Each selection has a label (`name`) and list of cell names (`values`).
@@ -239,7 +239,7 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  * @param {String} cluster Name of cluster, as defined at upload
  * @param {String} annotation Full annotation name,
      e.g. "CLUSTER--group--study", or object with name,type, and scope properties
- * @param {String} subsample Subsampling threshold, e.g. 100000
+ * @param {String} subsample Subsampling threshold, e.g. 10000
  * @param {String} consensus Statistic to use for consensus, e.g. "mean"
  * @param {Boolean} isAnnotatedScatter If showing "Annotated scatter" plot.
  *                  Only applies for numeric (not group) annotations.

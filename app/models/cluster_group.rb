@@ -112,7 +112,8 @@ class ClusterGroup
 
   # formatted annotation select option value
   def annotation_select_value(annotation, prepend_name=false)
-    "#{prepend_name ? "#{self.name}--" : nil}#{annotation[:name]}--#{annotation[:type]}--cluster"
+    "#{prepend_name ? "#{self.name}--" : nil}#{annotation[:name]}--#{annotation[:type]}--" \
+    "#{can_visualize_cell_annotation?(annotation) ? 'cluster' : 'invalid'}"
   end
 
   # return a formatted array for use in a select dropdown that corresponds to a specific cell_annotation
@@ -129,9 +130,7 @@ class ClusterGroup
   end
 
   def cell_annotations_by_type(annotation_type=nil)
-    annotations = annotation_type.nil? ? self.cell_annotations : self.cell_annotations.select {|annot| annot[:type] == annotation_type}
-    annotations = annotations.keep_if {|annot| self.can_visualize_cell_annotation?(annot)}
-    annotations
+    annotation_type.nil? ? self.cell_annotations : self.cell_annotations.select {|annot| annot[:type] == annotation_type}
   end
 
   # list of cell annotation header values by type (group or numeric)

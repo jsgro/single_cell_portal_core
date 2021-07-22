@@ -390,7 +390,8 @@ module Api
         # sanitize query string for regexp matching
         @query_string = params[:query]
         query_matcher = /#{Regexp.escape(@query_string)}/i
-        @matching_filters = @search_facet.filters.select {|filter| filter[:name] =~ query_matcher}
+        filter_list = user_signed_in? ? @search_facet.filters : @search_facet.public_filters
+        @matching_filters = filter_list.select { |filter| filter[:name] =~ query_matcher }
       end
 
       private

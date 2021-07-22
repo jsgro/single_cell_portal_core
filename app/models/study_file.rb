@@ -580,11 +580,11 @@ class StudyFile
   before_validation   :set_file_name_and_data_dir, on: :create
   before_save         :sanitize_name
   after_save          :set_cluster_group_ranges, :set_options_by_file_type
-  validates_uniqueness_of :upload_file_name, scope: :study_id, unless: Proc.new {|f| f.human_data?}
+  validates_uniqueness_of :upload_file_name, scope: :study_id, unless: Proc.new { |f| f.human_data? }
   validates_presence_of :name
-  validates_presence_of :human_fastq_url, if: proc {|f| f.human_data}
+  validates_presence_of :human_fastq_url, if: proc { |f| f.human_data }
   validates_format_of :human_fastq_url, with: URI.regexp,
-                      message: 'is not a valid URL', if: proc {|f| f.human_data}
+                      message: 'is not a valid URL', if: proc { |f| f.human_data }
   validate :validate_name_by_file_type
 
   validates_format_of :description, with: ValidationTools::NO_SCRIPT_TAGS,
@@ -600,13 +600,14 @@ class StudyFile
                       message: ValidationTools::NO_SCRIPT_TAGS_ERROR,
                       allow_blank: true
 
-  validates_format_of :generation, with: /\A\d+\z/, if: proc {|f| f.generation.present?}
+  validates_format_of :generation, with: /\A\d+\z/, if: proc { |f| f.generation.present? }
 
-  validates_inclusion_of :file_type, in: STUDY_FILE_TYPES, unless: proc {|f| f.file_type == 'DELETE'}
+  validates_inclusion_of :file_type, in: STUDY_FILE_TYPES, unless: proc { |f| f.file_type == 'DELETE' }
 
   validate :check_taxon, on: :create
   validate :check_assembly, on: :create
-  validate :ensure_metadata_singleton, if: proc {|f| f.file_type == 'Metadata'}
+  validate :ensure_metadata_singleton, if: proc { |f| f.file_type == 'Metadata' }
+  validate :ensure_metadata_convention, if: proc { |f| f.file_type == 'Metadata' && !f.use_metadata_convention }
 
   ###
   #
@@ -1308,6 +1309,19 @@ class StudyFile
   def ensure_metadata_singleton
     if StudyFile.where(file_type: 'Metadata', study_id: self.study_id, queued_for_deletion: false, :id.ne => self.id).exists?
       errors.add(:file_type, 'You may only add one metadata file per study')
+    end
+  end
+
+  # ensure that metadata file adheres to convention acceptance criteria, if turned on
+  # will check for exemption from any users associated with given study
+  def ensure_metadata_convention
+    convention_required = study.associated_users(permission: 'Edit').map { |user|
+      User.feature_flag_for_instance(user, 'convention_required')
+    }.uniq
+    # if any user account returned false for :convention_required, then allow ingest (means user received exemption)
+    # otherwise, add validation error for :use_metadata_convention
+    unless convention_required.include?(false)
+      errors.add(:use_metadata_convention, 'must be "true" to ensure data complies with the SCP metadata convention')
     end
   end
 end

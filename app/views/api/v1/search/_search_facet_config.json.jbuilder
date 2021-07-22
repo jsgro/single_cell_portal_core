@@ -9,7 +9,7 @@ else
 end
 json.set! :id, search_facet_config.identifier
 json.set! :links, search_facet_config.ontology_urls
-json.set! :filters, search_facet_config.filters
+json.set! :filters, user_signed_in? ? search_facet_config.filters : search_facet_config.public_filters
 if search_facet_config.is_numeric?
   json.set! :unit, search_facet_config.unit
   json.set! :max, search_facet_config.max

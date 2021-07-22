@@ -869,6 +869,15 @@ class Study
     [self.user.email, self.study_shares.can_edit, User.where(admin: true).pluck(:email)].flatten.uniq
   end
 
+  # array of user accounts associated with this study (study owner + shares); can scope by permission, if provided
+  # differs from study.admins as it does not include portal admins
+  def associated_users(permission: nil)
+    owner = self.user
+    shares = permission.present? ? self.study_shares.where(permission: permission) : self.study_shares
+    share_users = shares.map { |share| User.find_by(email: share.email) }.compact
+    [owner] + share_users
+  end
+
   # check if study is still under embargo or whether given user can bypass embargo
   def embargoed?(user)
     if user.nil?

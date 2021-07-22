@@ -9,7 +9,7 @@ function getAnnotationOptions(annotationList, clusterName) {
   return [{
     label: 'Study Wide',
     options: annotationList.annotations
-      .filter(annot => annot.scope == 'study').map(annot => annotationKeyProperties(annot))
+      .filter(annot => annot.scope === 'study').map(annot => annotationKeyProperties(annot))
   }, {
     label: 'Cluster-Based',
     options: annotationList.annotations
@@ -19,6 +19,11 @@ function getAnnotationOptions(annotationList, clusterName) {
     label: 'User-Based',
     options: annotationList.annotations
       .filter(annot => annot.cluster_name === clusterName && annot.scope === 'user')
+      .map(annot => annotationKeyProperties(annot))
+  }, {
+    label: 'Cannot Display',
+    options: annotationList.annotations
+      .filter(annot => annot.scope === 'invalid' && (annot.cluster_name == clusterName || !annot.cluster_name))
       .map(annot => annotationKeyProperties(annot))
   }]
 }
@@ -59,6 +64,7 @@ export default function AnnotationControl({
       <label>Annotation</label>
       <Select options={annotationOptions}
         value={shownAnnotation}
+        isOptionDisabled={annotation => annotation.isDisabled}
         getOptionLabel={annotation => annotation.name}
         getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
         onChange={newAnnotation => updateClusterParams({ annotation: newAnnotation })}

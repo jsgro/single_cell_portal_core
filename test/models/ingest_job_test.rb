@@ -187,7 +187,7 @@ class IngestJobTest < ActiveSupport::TestCase
     job = IngestJob.new(study: @basic_study, study_file: metadata_file, user: @user, action: :ingest_metadata)
     job.set_study_default_options
     @basic_study.reload
-    assert_equal 'species--group--study', @basic_study.default_annotation
+    assert_equal 'species--group--invalid', @basic_study.default_annotation
 
     # reset default annotation, then test cluster file with a single annotation with only one unique value
     @basic_study.cell_metadata.destroy_all
@@ -208,6 +208,6 @@ class IngestJobTest < ActiveSupport::TestCase
     @basic_study.reload
     cluster = @basic_study.cluster_groups.first
     assert_equal cluster, @basic_study.default_cluster
-    assert_equal 'foo--group--cluster', @basic_study.default_annotation
+    assert_equal 'foo--group--invalid', @basic_study.default_annotation
   end
 end
