@@ -674,8 +674,9 @@ module Api
           end
           # now we merge the two queries together to perform a single search request
           query_json = ApplicationController.data_repo_client.merge_query_json(facet_query: facet_json, term_query: term_json)
+          logger.info "Executing TDR query with: #{query_json}"
           snapshot_ids = AdminConfiguration.get_tdr_snapshot_ids
-          logger.info "Executing TDR query with: #{query_json} ()"
+          logger.info "Scoping TDR query to snapshots: #{snapshot_ids.join(', ')}" if snapshot_ids.present?
           raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json,
                                                                                           snapshot_ids: snapshot_ids)
           added_file_ids = {}
