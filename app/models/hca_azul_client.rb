@@ -6,6 +6,9 @@ class HcaAzulClient < Struct.new(:api_root)
   GOOGLE_SCOPES = %w[openid email profile].freeze
   BASE_URL = 'https://service.azul.data.humancellatlas.org'.freeze
 
+  # maximum wait time for manifest generation
+  MAX_MANIFEST_TIMEOUT = 30.seconds.freeze
+
   # list of available HCA catalogs
   HCA_CATALOGS = %w[dcp1 dcp6 dcp7 it1 it6 it7 it0lungmap lungmap].freeze
 
@@ -117,6 +120,19 @@ class HcaAzulClient < Struct.new(:api_root)
     project_filter = { 'projectId' => { 'is' => [project_id] } }
     filter_query = format_hash_as_query_string(project_filter)
     path += "&filters=#{filter_query}&format=#{format}"
-    process_api_request(:get, path)
+    # since manifest files are generated on-demand, keep making requests until the Status code is 302 (Found)
+    # Status 301 means that the manifest is still being generated; if no manifest is ready after 30s, return anyway
+    time_slept = 0
+    manifest_info = process_api_request(:get, path)
+    while manifest_info['Status'] == 301
+      break if time_slept >= MAX_MANIFEST_TIMEOUT
+
+      interval = manifest_info['Retry-After']
+      Rails.logger.info "Manifest still generating for #{catalog}:#{project_id} (#{format}), retrying in #{interval}"
+      sleep interval
+      time_slept += interval
+      manifest_info = process_api_request(:get, path)
+    end
+    manifest_info
   end
 end
