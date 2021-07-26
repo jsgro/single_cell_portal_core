@@ -14,8 +14,16 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     assert_equal HcaAzulClient::BASE_URL, client.api_root
   end
 
+  test 'should get catalogs' do
+    catalogs = @hca_azul_client.get_catalogs
+    default_catalog = catalogs['default_catalog']
+    all_catalogs = catalogs['catalogs'].keys
+    assert_equal HcaAzulClient::HCA_CATALOGS.sort, all_catalogs.sort
+    assert HcaAzulClient::HCA_CATALOGS.include? default_catalog
+  end
+
   test 'should get HCA metadata tsv link' do
-    manifest_info = @hca_azul_client.get_project_manifest_link('dcp6', @project_id)
+    manifest_info = @hca_azul_client.get_project_manifest_link('dcp7', @project_id)
     assert manifest_info.present?
     assert_equal 302, manifest_info['Status']
     # make GET on manifest URL and assert contents are HCA metadata
