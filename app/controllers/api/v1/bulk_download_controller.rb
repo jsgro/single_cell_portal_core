@@ -30,6 +30,13 @@ module Api
             key :description, 'Hash of file arrays to download from TDR, keyed by accession. Each file should specify URL and name'
             key :required, true
           end
+          parameter do
+            key :name, :hca_project_id
+            key :type, :string
+            key :in, :body
+            key :description, 'HCA project UUID, if specified'
+            key :required, false
+          end
           response 200 do
             key :description, 'One-time auth code and time interval, in seconds'
             schema do
@@ -60,7 +67,7 @@ module Api
         half_hour = 1800 # seconds
 
         totat = current_api_user.create_totat(half_hour, api_v1_bulk_download_generate_curl_config_path)
-        valid_params = params.permit({file_ids: [], tdr_files: {}}).to_h
+        valid_params = params.permit({file_ids: [], tdr_files: {}, hca_project_id: ''}).to_h
 
         # for now, we don't do any permissions validation on the param values -- we'll do that during the actual download, since
         # quota/files/permissions may change between the creation of the download and the actual download.
@@ -68,6 +75,7 @@ module Api
           auth_code: totat[:totat],
           file_ids: valid_params[:file_ids],
           tdr_files: valid_params[:tdr_files],
+          hca_project_id: valid_params[:hca_project_id],
           user_id: current_api_user.id)
         auth_code_response = {
           auth_code: totat[:totat],
@@ -348,7 +356,8 @@ module Api
                                                                            user: current_api_user,
                                                                            study_bucket_map: bucket_map,
                                                                            output_pathname_map: pathname_map,
-                                                                           tdr_files: tdr_files)
+                                                                           tdr_files: tdr_files,
+                                                                           hca_project_id: download_req&.hca_project_id)
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
         logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size + directory_files.size} total files"

@@ -14,6 +14,7 @@ class BulkDownloadService
   #   - +study_bucket_map+ => Map of study IDs to bucket names
   #   - +output_pathname_map+ => Map of study file IDs to output pathnames
   #   - +tdr_files+ => Hash of tdr accessions to arrays of file information including name & url for each file
+  #   - +hca_project_id+ => UUID of HCA project, for generating metadata manifest (optional)
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
   def self.generate_curl_configuration(study_files:,
@@ -21,7 +22,8 @@ class BulkDownloadService
                                        user:,
                                        study_bucket_map:,
                                        output_pathname_map:,
-                                       tdr_files: nil)
+                                       tdr_files: nil,
+                                       hca_project_id: nil)
     curl_configs = ['--create-dirs', '--compressed']
     # create an array of all objects to be downloaded, including directory files
     download_objects = study_files.to_a + directory_files
@@ -62,6 +64,9 @@ class BulkDownloadService
         end
       end
       curl_configs.concat(tdr_file_configs.flatten)
+    end
+    if hca_project_id.present?
+
     end
     MetricsService.log('file-download:curl-config', {
       numFiles: study_files.count,

@@ -9,7 +9,7 @@ import DownloadSelectionTable, {
 
 import { fetchDownloadInfo, fetchDrsInfo } from 'lib/scp-api'
 
-const TDR_COLUMNS = ['analysis', 'sequence']
+const TDR_COLUMNS = ['metadata', 'analysis', 'sequence']
 const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
 
 /**

@@ -9,8 +9,8 @@ class HcaAzulClient < Struct.new(:api_root)
   # maximum wait time for manifest generation
   MAX_MANIFEST_TIMEOUT = 30.seconds.freeze
 
-  # list of available HCA catalogs
-  HCA_CATALOGS = %w[dcp1 dcp7 it1 it7 it0lungmap lungmap].freeze
+  # list of available public HCA catalogs (used as fallback)
+  HCA_CATALOGS = %w[dcp1 dcp7 lungmap].freeze
 
   # List of accepted formats for manifest files
   MANIFEST_FORMATS = %w[compact full terra.bdbag terra.pfb curl].freeze
@@ -101,7 +101,40 @@ class HcaAzulClient < Struct.new(:api_root)
   # * *returns*
   #   - (Hash) => Available catalogs, including :default_catalog
   def get_catalogs
-    path = self.api_root + '/index/catalogs'
+    path = "#{api_root}/index/catalogs"
+    process_api_request(:get, path)
+  end
+
+  # get a list of all available projects
+  #
+  # * *params*
+  #   - +catalog+ (String) => HCA catalog name, from HCA_CATALOGS
+  #
+  # * *returns*
+  #   - (Hash) => Available projects
+  #
+  # * *raises*
+  #   - (ArgumentError) => if catalog is not in HCA_CATALOGS or format is not in MANIFEST_FORMATS
+  def get_projects(catalog)
+    validate_catalog_name(catalog)
+    path = "#{api_root}/index/projects"
+    process_api_request(:get, path)
+  end
+
+  # get a list of all available catalogs
+  #
+  # * *params*
+  #   - +catalog+ (String) => HCA catalog name, from HCA_CATALOGS
+  #   - +project_id+ (String) => UUID of HCA project
+  #
+  # * *returns*
+  #   - (Hash) => Available catalogs, including :default_catalog
+  #
+  # * *raises*
+  #   - (ArgumentError) => if catalog is not in HCA_CATALOGS
+  def get_project(catalog, project_id)
+    validate_catalog_name(catalog)
+    path = "#{api_root}/index/projects/#{project_id}?catalog=#{catalog}"
     process_api_request(:get, path)
   end
 
@@ -118,14 +151,10 @@ class HcaAzulClient < Struct.new(:api_root)
   # * *raises*
   #   - (ArgumentError) => if catalog is not in HCA_CATALOGS or format is not in MANIFEST_FORMATS
   def get_project_manifest_link(catalog, project_id, format = 'compact')
-    unless HCA_CATALOGS.include?(catalog)
-      raise ArgumentError, "#{catalog} is not a valid catalog: #{HCA_CATALOGS.join(',')}"
-    end
-    unless MANIFEST_FORMATS.include?(format)
-      raise ArgumentError, "#{format} is not a valid format: #{MANIFEST_FORMATS.join(',')}"
-    end
+    validate_catalog_name(catalog)
+    validate_manifest_format(format)
 
-    path = self.api_root + "/fetch/manifest/files?catalog=#{catalog}"
+    path = "#{api_root}/fetch/manifest/files?catalog=#{catalog}"
     project_filter = { 'projectId' => { 'is' => [project_id] } }
     filter_query = format_hash_as_query_string(project_filter)
     path += "&filters=#{filter_query}&format=#{format}"
@@ -143,5 +172,28 @@ class HcaAzulClient < Struct.new(:api_root)
       manifest_info = process_api_request(:get, path)
     end
     manifest_info
+  end
+
+  private
+
+  # validate that a catalog exists by checking the list of available public catalogs
+  def validate_catalog_name(catalog)
+    is_valid = true
+    begin
+      all_catalogs = get_catalogs['catalogs']
+      public_catalogs = all_catalogs.reject { |_, catalog_detail| catalog_detail['internal'] }.keys
+      is_valid = public_catalogs.include? catalog
+    rescue RestClient::Exception
+      # fall back to HCA_CATALOGS
+      is_valid = HCA_CATALOGS.include? catalog
+    end
+    raise ArgumentError, "#{catalog} is not a valid catalog: #{HCA_CATALOGS.join(',')}" unless is_valid
+  end
+
+  # validate requested format is valid
+  def validate_manifest_format(format)
+    unless MANIFEST_FORMATS.include?(format)
+      raise ArgumentError, "#{format} is not a valid format: #{MANIFEST_FORMATS.join(',')}"
+    end
   end
 end
