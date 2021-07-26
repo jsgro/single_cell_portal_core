@@ -10,7 +10,7 @@ class HcaAzulClient < Struct.new(:api_root)
   MAX_MANIFEST_TIMEOUT = 30.seconds.freeze
 
   # list of available HCA catalogs
-  HCA_CATALOGS = %w[dcp1 dcp6 dcp7 it1 it6 it7 it0lungmap lungmap].freeze
+  HCA_CATALOGS = %w[dcp1 dcp7 it1 it7 it0lungmap lungmap].freeze
 
   # List of accepted formats for manifest files
   MANIFEST_FORMATS = %w[compact full terra.bdbag terra.pfb curl].freeze
@@ -95,6 +95,15 @@ class HcaAzulClient < Struct.new(:api_root)
   end
 
   # API endpoint bindings
+
+  # get a list of all available catalogs
+  #
+  # * *returns*
+  #   - (Hash) => Available catalogs, including :default_catalog
+  def get_catalogs
+    path = self.api_root + '/index/catalogs'
+    process_api_request(:get, path)
+  end
 
   # get a metadata TSV file for a given HCA project UUID
   #
