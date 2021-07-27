@@ -52,6 +52,18 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   ##
 
   # submit a request to TDR API
+  #
+  # * *params*
+  #   - +http_method+ (String, Symbol) => HTTP method, e.g. :get, :post
+  #   - +path+ (String) => Relative URL path for API request being made
+  #   - +payload+ (Hash) => Hash representation of request body
+  #   - +retry_count+ (Integer) => Counter for tracking request retries
+  #
+  # * *returns*
+  #   - (Hash) => Parsed response body, if present
+  #
+  # * *raises*
+  #   - (RestClient::Exception) => if HTTP request fails for any reason  def process_api_request(http_method, path, payload: nil, retry_count: 0)
   def process_api_request(http_method, path, payload: nil, retry_count: 0)
     # Log API call for auditing/tracking purposes
     Rails.logger.info "Terra Data Repo API request (#{http_method.to_s.upcase}) #{path}"
