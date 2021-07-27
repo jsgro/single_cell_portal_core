@@ -31,10 +31,10 @@ module Api
             key :required, true
           end
           parameter do
-            key :name, :hca_project_id
-            key :type, :string
+            key :name, :hca_projects
+            key :type, :object
             key :in, :body
-            key :description, 'HCA project UUID, if specified'
+            key :description, 'Hash of HCA project short names to UUIDs, if specified'
             key :required, false
           end
           response 200 do
@@ -67,7 +67,7 @@ module Api
         half_hour = 1800 # seconds
 
         totat = current_api_user.create_totat(half_hour, api_v1_bulk_download_generate_curl_config_path)
-        valid_params = params.permit({file_ids: [], tdr_files: {}, hca_project_id: ''}).to_h
+        valid_params = params.permit({file_ids: [], tdr_files: {}, hca_project_ids: {}}).to_h
 
         # for now, we don't do any permissions validation on the param values -- we'll do that during the actual download, since
         # quota/files/permissions may change between the creation of the download and the actual download.
@@ -75,7 +75,7 @@ module Api
           auth_code: totat[:totat],
           file_ids: valid_params[:file_ids],
           tdr_files: valid_params[:tdr_files],
-          hca_project_id: valid_params[:hca_project_id],
+          hca_projects: valid_params[:hca_projects],
           user_id: current_api_user.id)
         auth_code_response = {
           auth_code: totat[:totat],
