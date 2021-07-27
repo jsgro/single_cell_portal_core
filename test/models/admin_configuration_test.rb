@@ -1,6 +1,9 @@
-require "test_helper"
+require 'test_helper'
 
 class AdminConfigurationTest < ActiveSupport::TestCase
+  include Minitest::Hooks
+  include TestInstrumentor
+
   def setup
     @client = FireCloudClient.new
   end
@@ -8,8 +11,6 @@ class AdminConfigurationTest < ActiveSupport::TestCase
   # since the migration SetSaGroupOwnerOnWorkspaces will have already run, we are ensuring that calling
   # AdminConfiguration.find_or_create_ws_user_group! retrieves the user group rather than creating a new one
   test 'should create or retrieve service account workspace owner group' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     first_sa_group = AdminConfiguration.find_or_create_ws_user_group!
     assert_not_nil first_sa_group, 'Did not create/retrieve service account workspace owner group'
 
@@ -26,14 +27,10 @@ class AdminConfigurationTest < ActiveSupport::TestCase
     second_group_names = second_groups.map {|group| group['groupName']}.sort
     assert_equal first_group_names, second_group_names,
                  "Groups are not the same: #{first_group_names} != #{second_group_names}"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   # test getting the default configured ingest docker image, and overriding via admin_configuration
   test 'should retrieve ingest docker image tag from config' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     # default configured image
     default_image = Rails.application.config.ingest_docker_image
     config_image = AdminConfiguration.get_ingest_docker_image
@@ -54,13 +51,9 @@ class AdminConfigurationTest < ActiveSupport::TestCase
     reverted_image = AdminConfiguration.get_ingest_docker_image
     assert_equal default_image, reverted_image,
                  "Reverted ingest image names do not match; #{default_image} != #{reverted_image}"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should revert ingest image to default' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     default_image = Rails.application.config.ingest_docker_image
 
     # add new image config
@@ -77,20 +70,22 @@ class AdminConfigurationTest < ActiveSupport::TestCase
     current_image = AdminConfiguration.get_ingest_docker_image
     assert_equal default_image, current_image,
                  "Reverted ingest image names do not match; #{default_image} != #{current_image}"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should extract docker image attributes from image name string' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     image_attributes = AdminConfiguration.get_ingest_docker_image_attributes
     expected_keys = [:registry, :project, :image_name, :tag]
     image_attributes.each do |attribute, value|
       assert expected_keys.include?(attribute), "Unexpected attribute name found: #{attribute}; not in #{expected_keys}"
       assert value.present?, "Did not retrieve a value for #{attribute}: #{value}"
     end
+  end
 
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+  test 'should get array of snapshot IDs for TDR' do
+    config = AdminConfiguration.create(config_type: 'TDR Snapshot IDs', value_type: 'String', value: 'foo, bar, bing ')
+    expected_ids = %w[foo bar bing]
+    snapshot_ids = AdminConfiguration.get_tdr_snapshot_ids
+    assert_equal expected_ids, snapshot_ids
+    config.destroy
   end
 end
