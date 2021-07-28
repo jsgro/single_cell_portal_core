@@ -702,7 +702,14 @@ module Api
           hca_project_id: row['project_id'],
           facet_matches: [],
           term_matches: [],
-          file_information: []
+          file_information: [
+            {
+              url: row['project_id'],
+              file_type: 'Metadata',
+              upload_file_size: 10.kilobytes,
+              name: "#{short_name}.tsv"
+            }
+          ]
         }.with_indifferent_access
         result = results[short_name]
         # determine facet filter matches

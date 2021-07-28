@@ -22,8 +22,7 @@ class BulkDownloadService
                                        user:,
                                        study_bucket_map:,
                                        output_pathname_map:,
-                                       tdr_files: nil,
-                                       hca_project_id: nil)
+                                       tdr_files: nil)
     curl_configs = ['--create-dirs', '--compressed']
     # create an array of all objects to be downloaded, including directory files
     download_objects = study_files.to_a + directory_files
@@ -64,17 +63,6 @@ class BulkDownloadService
         end
       end
       curl_configs.concat(tdr_file_configs.flatten)
-    end
-    if hca_project_id.present?
-      hca_azul_client = ApplicationController.hca_azul_client
-      default_catalog = hca_azul_client.default_catalog
-      # get project short name to use as filename
-      hca_project = hca_azul_client.get_project(default_catalog, hca_project_id)
-      short_name = hca_project['projects'].first['projectShortname'] || hca_project_id
-      manifest_info = hca_azul_client.get_project_manifest_link(default_catalog, hca_project_id)
-      metadata_config = "url=\"#{manifest_info['Location']}\"\n"
-      metadata_config += "output=\"#{short_name}.tsv\""
-      curl_configs << metadata_config
     end
     MetricsService.log('file-download:curl-config', {
       numFiles: study_files.count,

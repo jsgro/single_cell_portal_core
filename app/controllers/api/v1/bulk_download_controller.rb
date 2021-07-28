@@ -356,8 +356,7 @@ module Api
                                                                            user: current_api_user,
                                                                            study_bucket_map: bucket_map,
                                                                            output_pathname_map: pathname_map,
-                                                                           tdr_files: tdr_files,
-                                                                           hca_project_id: download_req&.hca_project_id)
+                                                                           tdr_files: tdr_files)
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
         logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size + directory_files.size} total files"

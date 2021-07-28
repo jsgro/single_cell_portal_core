@@ -180,17 +180,7 @@ const COLUMNS = {
   */
 function StudyFileCheckbox({ study, studyIndex, selectedBoxes, colType, updateSelection }) {
   const { fileCount, fileSize } = getFileStats(study, COLUMNS[colType].types)
-  if (colType === 'metadata' && study.study_source === 'TDR') {
-    return <label>
-      <input type="checkbox"
-             data-analytics-name="download-modal-checkbox"
-             onChange={e => updateSelection(e.target.checked, false, colType, studyIndex)}
-             checked={selectedBoxes.studies[studyIndex][colType]}>
-      </input>
-      &nbsp;
-      1 file (size TBD until download)
-    </label>
-  } else if (fileCount === 0) {
+  if (fileCount === 0) {
     return <span className="detail">none</span>
   }
   let sizeIndicator = null
