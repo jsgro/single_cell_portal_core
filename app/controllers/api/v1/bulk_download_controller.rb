@@ -67,7 +67,7 @@ module Api
         half_hour = 1800 # seconds
 
         totat = current_api_user.create_totat(half_hour, api_v1_bulk_download_generate_curl_config_path)
-        valid_params = params.permit({file_ids: [], tdr_files: {}, hca_project_ids: {}}).to_h
+        valid_params = params.permit({ file_ids: [], tdr_files: {} }).to_h
 
         # for now, we don't do any permissions validation on the param values -- we'll do that during the actual download, since
         # quota/files/permissions may change between the creation of the download and the actual download.
@@ -75,8 +75,8 @@ module Api
           auth_code: totat[:totat],
           file_ids: valid_params[:file_ids],
           tdr_files: valid_params[:tdr_files],
-          hca_projects: valid_params[:hca_projects],
-          user_id: current_api_user.id)
+          user_id: current_api_user.id
+        )
         auth_code_response = {
           auth_code: totat[:totat],
           time_interval: totat[:totat_info][:valid_seconds],
@@ -136,7 +136,8 @@ module Api
         valid_accessions = self.class.find_matching_accessions(params[:accessions])
 
         begin
-          self.class.check_accession_permissions(valid_accessions, current_api_user)
+          # only validate accessions, if present.  TDR/HCA-only downloads will not have SCP accessions present
+          self.class.check_accession_permissions(valid_accessions, current_api_user) if valid_accessions.any?
         rescue ArgumentError => e
           render json: e.message, status: 403 and return
         end
@@ -297,7 +298,7 @@ module Api
           begin
             file_ids = RequestUtils.validate_id_list(params[:file_ids])
           rescue ArgumentError
-            render json: {error: 'file_ids must be comma-delimited list of 24-character UUIDs'}, status: 400 and return
+            render json: { error: 'file_ids must be comma-delimited list of 24-character UUIDs' }, status: 400 and return
           end
         else
           valid_accessions = self.class.find_matching_accessions(params[:accessions])
@@ -305,13 +306,15 @@ module Api
         end
 
         # if they provided file_ids (either directly or via download_id), get the corresponding studies
-        if !file_ids.empty?
+        if file_ids.any?
           matched_study_ids = StudyFile.where(:id.in => file_ids).pluck(:study_id)
           valid_accessions = Study.where(:id.in => matched_study_ids).pluck(:accession)
         end
 
         begin
-          self.class.check_accession_permissions(valid_accessions, current_api_user)
+          # only validate accessions if set either in POST body or DownloadRequest object
+          # if user is only downloading TDR/HCA data, then no SCP accessions will have been set
+          self.class.check_accession_permissions(valid_accessions, current_api_user) if valid_accessions.any?
         rescue ArgumentError => e
           render json: e.message, status: 403 and return
         end
@@ -326,12 +329,12 @@ module Api
           directory_files = []
         end
 
-        files_requested = nil
+        files_requested = []
         # get requested files
         # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
-        if !file_ids.empty?
+        if file_ids.any?
           files_requested = StudyFile.where(:id.in => file_ids)
-        else
+        elsif valid_accessions.any? && sanitized_file_types.present?
           files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
                                                                       study_accessions: valid_accessions)
         end
@@ -341,12 +344,12 @@ module Api
         begin
           ::BulkDownloadService.update_user_download_quota(user: current_api_user, files: files_requested, directories: directories)
         rescue RuntimeError => e
-          render json: {error: e.message}, status: 403 and return
+          render json: { error: e.message }, status: 403 and return
         end
 
         # create maps to avoid Mongo timeouts when generating curl commands in parallel processes
-        bucket_map = ::BulkDownloadService.generate_study_bucket_map(valid_accessions)
-        pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories)
+        bucket_map = ::BulkDownloadService.generate_study_bucket_map(valid_accessions) if valid_accessions.any?
+        pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories) if files_requested.present?
 
         # generate curl config file
         logger.info "Beginning creation of curl configuration for user_id, auth token: #{current_api_user.id}"

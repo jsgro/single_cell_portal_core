@@ -270,12 +270,17 @@ export function getSelectedFileHandles(downloadInfo, selectedBoxes, hashByStudy=
   }
   const fileTypeKeys = Object.keys(selectedBoxes.all).filter(key => key !== 'all')
   downloadInfo.forEach((study, index) => {
+    if (hashByStudy) {
+      // initialize empty array for storing file handles by study accession
+      fileHandles[study.accession] = []
+    }
     fileTypeKeys.forEach(colType => {
       if (selectedBoxes.studies[index][colType]) {
         const filesOfType = study.studyFiles.filter(file => COLUMNS[colType].types.includes(file.file_type))
-        const selectedHandles = filesOfType.map(file => file.url ? { url: file.url, name: file.name } : file.id)
+        {/* eslint-disable-next-line max-len */}
+        const selectedHandles = filesOfType.map(file => file.url ? { url: file.url, name: file.name, file_type: file.file_type } : file.id)
         if (hashByStudy) {
-          fileHandles[study.accession] = selectedHandles
+          fileHandles[study.accession].push(...selectedHandles)
         } else {
           fileHandles.push(...selectedHandles)
         }
