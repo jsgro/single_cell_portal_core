@@ -665,22 +665,30 @@ module Api
       # execute a search in TDR and get back normalized results
       def self.get_tdr_results(selected_facets:, terms:)
         results = {}
-        if selected_facets.present?
-          facet_json = ApplicationController.data_repo_client.generate_query_from_facets(selected_facets)
-        end
-        if terms.present?
-          term_json = ApplicationController.data_repo_client.generate_query_from_keywords(terms)
-        end
-        # now we merge the two queries together to perform a single search request
-        query_json = ApplicationController.data_repo_client.merge_query_json(facet_query: facet_json, term_query: term_json)
-        logger.info "Executing TDR query with: #{query_json}"
-        raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json)
-        added_file_ids = {}
-        raw_tdr_results['result'].each do |result_row|
-          results = process_tdr_result_row(result_row, results,
-                                           selected_facets: selected_facets,
-                                           terms: terms,
-                                           added_file_ids: added_file_ids)
+        begin
+          if selected_facets.present?
+            facet_json = ApplicationController.data_repo_client.generate_query_from_facets(selected_facets)
+          end
+          if terms.present?
+            term_json = ApplicationController.data_repo_client.generate_query_from_keywords(terms)
+          end
+          # now we merge the two queries together to perform a single search request
+          query_json = ApplicationController.data_repo_client.merge_query_json(facet_query: facet_json, term_query: term_json)
+          logger.info "Executing TDR query with: #{query_json}"
+          snapshot_ids = AdminConfiguration.get_tdr_snapshot_ids
+          logger.info "Scoping TDR query to snapshots: #{snapshot_ids.join(', ')}" if snapshot_ids.present?
+          raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json,
+                                                                                          snapshot_ids: snapshot_ids)
+          added_file_ids = {}
+          raw_tdr_results['result'].each do |result_row|
+            results = process_tdr_result_row(result_row, results,
+                                             selected_facets: selected_facets,
+                                             terms: terms,
+                                             added_file_ids: added_file_ids)
+          end
+        rescue RestClient::Exception => e
+          Rails.logger.error "Error querying TDR: #{e.class.name} -- #{e.message}"
+          ErrorTracker.report_exception(e, nil, selected_facets, { terms: terms })
         end
         results
       end
