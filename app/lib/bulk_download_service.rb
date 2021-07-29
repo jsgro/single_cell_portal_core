@@ -62,9 +62,11 @@ class BulkDownloadService
           if file_info['file_type'] == 'Metadata'
             # generate manifest link using HCA project UUID from :url property
             manifest = hca_client.get_project_manifest_link(default_catalog, file_info['url'])
-            file_config = "url=\"#{manifest['Location']}\"\n"
+            file_config = "--location\n" # add location directive to allow following 302 redirect to manifest location
+            file_config += "url=\"#{manifest['Location']}\"\n"
           else
             file_config = "url=\"#{file_info['url']}\"\n"
+            file_config += "output=\"#{shortname}/#{file_info['name']}\""
           end
           file_config += "output=\"#{shortname}/#{file_info['name']}\""
           file_config
