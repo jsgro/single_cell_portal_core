@@ -334,7 +334,7 @@ module Api
 
         # create maps to avoid Mongo timeouts when generating curl commands in parallel processes
         bucket_map = ::BulkDownloadService.generate_study_bucket_map(valid_accessions) if valid_accessions.any?
-        pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories) if files_requested.present?
+        pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories) if files_requested.any?
 
         # generate curl config file
         logger.info "Beginning creation of curl configuration for user_id, auth token: #{current_api_user.id}"
