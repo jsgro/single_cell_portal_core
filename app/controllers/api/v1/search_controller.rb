@@ -656,9 +656,9 @@ module Api
         if db_facet.is_numeric?
           match = matching_facet[:filters].dup
           match.delete(:name)
-          return match
+          match
         else
-          return matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] }
+          matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] }
         end
       end
 
@@ -678,9 +678,9 @@ module Api
         added_file_ids = {}
         raw_tdr_results['result'].each do |result_row|
           results = process_tdr_result_row(result_row, results,
-            selected_facets: selected_facets,
-            terms: terms,
-            added_file_ids: added_file_ids)
+                                           selected_facets: selected_facets,
+                                           terms: terms,
+                                           added_file_ids: added_file_ids)
         end
         results
       end
@@ -705,7 +705,7 @@ module Api
           file_information: [
             {
               url: row['project_id'],
-              file_type: 'Metadata',
+              file_type: 'Project Manifest',
               upload_file_size: 1.megabyte, # placeholder filesize as we don't know until manifest is downloaded
               name: "#{short_name}.tsv"
             }

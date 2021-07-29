@@ -68,7 +68,8 @@ export default function DownloadSelectionTable({
         </div>
       }
       {
-        !isLoading &&
+        // only render table if there are results to show
+        !isLoading && Object.keys(downloadInfo).length > 0 &&
         <table className="table table-terra">
           <thead>
             <tr>
@@ -98,6 +99,7 @@ export default function DownloadSelectionTable({
                   &nbsp;
                   <FontAwesomeIcon data-analytics-name="download-modal-column-info"
                     data-toggle="tooltip"
+                    data-container="terra-table"
                     data-original-title={COLUMNS[colType].info}
                     className="action log-click help-icon"
                     icon={faInfoCircle} />
@@ -156,6 +158,12 @@ const COLUMNS = {
     title: 'Metadata',
     types: ['Metadata'],
     info: 'The listing of all cells in the study, along with associated metadata such as species, cell type, etc.',
+    default: true
+  },
+  project_manifest: {
+    title: 'Project Manifest',
+    types: ['Project Manifest'],
+    info: 'List of available project files and associated project-level metadata.',
     default: true
   },
   analysis: {

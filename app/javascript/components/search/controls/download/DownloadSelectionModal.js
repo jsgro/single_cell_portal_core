@@ -9,7 +9,7 @@ import DownloadSelectionTable, {
 
 import { fetchDownloadInfo, fetchDrsInfo } from 'lib/scp-api'
 
-const TDR_COLUMNS = ['metadata', 'analysis', 'sequence']
+const TDR_COLUMNS = ['project_manifest', 'analysis', 'sequence']
 const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
 
 /**
@@ -69,18 +69,25 @@ export default function DownloadSelectionModal({ studyAccessions, tdrFileInfo, s
     })
   }
 
+  /**
+    render bulk download table for SCP & TDR/HCA studies
+   */
+  function renderFileTables(result=[]) {
+    setSelectedBoxes(newSelectedBoxesState(result, SCP_COLUMNS))
+    setDownloadInfo(result)
+    setIsLoading(false)
+    if (showTDRSelectionPane) {
+      initializeTDRTable()
+    }
+  }
+
   useEffect(() => {
     if (show) {
       setIsLoading(true)
       setIsLoadingTDR(true)
       fetchDownloadInfo(scpAccessions).then(result => {
-        setSelectedBoxes(newSelectedBoxesState(result, SCP_COLUMNS))
-        setDownloadInfo(result)
-        setIsLoading(false)
+        renderFileTables(result)
       })
-      if (showTDRSelectionPane) {
-        initializeTDRTable()
-      }
     }
   }, [show, studyAccessions.join(',')])
 

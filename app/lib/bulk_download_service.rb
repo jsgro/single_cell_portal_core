@@ -59,7 +59,7 @@ class BulkDownloadService
       curl_configs << "-H \"Authorization: Bearer #{DataRepoClient.new.access_token['access_token']}\""
       tdr_file_configs = tdr_files.map do |shortname, file_infos|
         file_infos.map do |file_info|
-          if file_info['file_type'] == 'Metadata'
+          if file_info['file_type'] == 'Project Manifest'
             # generate manifest link using HCA project UUID from :url property
             manifest = hca_client.get_project_manifest_link(default_catalog, file_info['url'])
             file_config = "--location\n" # add location directive to allow following 302 redirect to manifest location
@@ -95,7 +95,7 @@ class BulkDownloadService
   #
   # * *raises*
   #   - (RuntimeError) => User download quota exceeded
-  def self.update_user_download_quota(user:, files: [], directories: [])
+  def self.update_user_download_quota(user:, files:, directories: [])
     download_quota = ApplicationController.get_download_quota
     file_bytes_requested = files.map(&:upload_file_size).compact.reduce(0, :+)
     dir_bytes_requested = directories.map(&:total_bytes).reduce(0, :+)

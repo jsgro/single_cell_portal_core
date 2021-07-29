@@ -289,9 +289,8 @@ module Api
         # branch based on whether they provided a download_id, file_ids, or accessions
         if params[:download_id]
           download_req = DownloadRequest.find(params[:download_id])
-          if !download_req
-            render json: { error: 'Invalid download_id provided' }, status: 400 and return
-          end
+          render json: { error: 'Invalid download_id provided' }, status: 400 and return if download_req.blank?
+
           file_ids = download_req.file_ids
           tdr_files = download_req.tdr_files
         elsif params[:file_ids]
@@ -329,15 +328,8 @@ module Api
           directory_files = []
         end
 
-        files_requested = []
-        # get requested files
-        # reference BulkDownloadService as ::BulkDownloadService to avoid NameError when resolving reference
-        if file_ids.any?
-          files_requested = StudyFile.where(:id.in => file_ids)
-        elsif valid_accessions.any? && sanitized_file_types.present?
-          files_requested = ::BulkDownloadService.get_requested_files(file_types: sanitized_file_types,
-                                                                      study_accessions: valid_accessions)
-        end
+        # get requested files, depending on access method
+        files_requested = self.class.load_study_files(ids: file_ids, accessions: valid_accessions, file_types: sanitized_file_types)
 
         # determine quota impact & update user's download quota
         # will throw a RuntimeError if the download exceeds the user's daily quota
@@ -366,8 +358,6 @@ module Api
         logger.info "Total time in generating curl configuration: #{runtime}"
         send_data @configuration, type: 'text/plain', filename: 'cfg.txt'
       end
-
-      private
 
       def self.check_accession_permissions(valid_accessions, user)
         if valid_accessions.blank?
@@ -416,6 +406,18 @@ module Api
           selector = selector.where(name: sanitized_dirname)
         end
         selector
+      end
+
+      # find matching study files, either directly by id, or via a list of accessions and file types
+      def self.load_study_files(ids: [], accessions: [], file_types: [])
+        if ids.any?
+          StudyFile.where(:id.in => ids)
+        elsif accessions.any? && file_types.any?
+          ::BulkDownloadService.get_requested_files(file_types: file_types, study_accessions: accessions)
+        else
+          # fallback case, return empty array to prevent downstream errors
+          []
+        end
       end
     end
   end
