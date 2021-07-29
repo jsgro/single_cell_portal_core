@@ -706,7 +706,7 @@ module Api
             {
               url: row['project_id'],
               file_type: 'Metadata',
-              upload_file_size: 10.kilobytes,
+              upload_file_size: 1.megabyte, # placeholder filesize as we don't know until manifest is downloaded
               name: "#{short_name}.tsv"
             }
           ]
