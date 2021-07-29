@@ -19,8 +19,8 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   test 'should get catalogs' do
     catalogs = @hca_azul_client.get_catalogs
     default_catalog = catalogs['default_catalog']
-    all_catalogs = catalogs['catalogs'].keys
-    assert_equal HcaAzulClient::HCA_CATALOGS.sort, all_catalogs.sort
+    public_catalogs = catalogs['catalogs'].reject { |_, catalog| catalog['internal'] }.keys
+    assert_equal HcaAzulClient::HCA_CATALOGS.sort, public_catalogs.sort
     assert HcaAzulClient::HCA_CATALOGS.include? default_catalog
   end
 
@@ -32,7 +32,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
 
   test 'should get one project' do
     project = @hca_azul_client.get_project(@default_catalog, @project_id)
-    assert_equal @project_id, project['projectId']
+    assert_equal @project_id, project['entryId']
     project_detail = project['projects'].first
     assert_equal @project_short_name, project_detail['projectShortname']
   end
