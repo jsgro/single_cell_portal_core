@@ -14,7 +14,7 @@ Rails.application.config.assets.paths << Rails.root.join('node_modules')
 Rails.application.config.assets.precompile += %w(manifest.js *.svg *.eot *.woff *.ttf)
 
 # Fixes error thrown when calling `assets:precompile` in Dockerized environment
-# See https://broadworkbench.atlassian.net/browse/SCP-3531.
+# See https://github.com/broadinstitute/single_cell_portal_core/pull/1109.
 Rails.application.config.assets.configure do |env|
   env.export_concurrent = false
 end
