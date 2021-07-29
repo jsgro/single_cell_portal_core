@@ -213,8 +213,25 @@ module Api
           @studies = @viewable
         end
 
+        #prune out nil studies
+        # @studies.each do |study|
+        #   puts "study: #{study}"
+        # end
+
+        # @studies = @studies.where.not(accession: nil)
+        # stt = @studies.where.not(:accession.in => [nil])
+
+        # puts "studi styyt: #{@studies}" 
+
+        # puts "styyt: #{stt}"
+
+        # suttu = @studies.select { |k,v| k == :accession && v == nil}
+         
+        # puts "Studies fter filter: #{suttu}"
+
         # only call BigQuery if list of possible studies is larger than 0 and we have matching facets to use
         if @studies.count > 0 && @facets.any?
+          # puts "studies at begining of the facet matching: #{@studies}"
           sort_type = :facet
           @studies_by_facet = {}
           @big_query_search = self.class.generate_bq_query_string(@facets)
@@ -222,7 +239,15 @@ module Api
           query_results = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).query @big_query_search
           job_id = query_results.job_gapi.job_reference.job_id
           # build up map of study matches by facet & filter value (for adding labels in UI)
+
+          # first need to do the re-map here before passing results to be matched
+          # @temp_studies_by_facet = 
+
+
           @studies_by_facet = self.class.match_studies_by_facet(query_results, @facets)
+          puts "HERE: #{@studies_by_facet}" 
+          # result: {:study_accession=>"SCP14", :species=>"NCBITaxon_9606"}
+          #   "facet_matches"=>[{"TerraCore:hasOrganismType"=>"Homo sapiens"}],
           # uniquify result list as one study may match multiple facets/filters
           @convention_accessions = query_results.map {|match| match[:study_accession]}.uniq
           logger.info "Found #{@convention_accessions.count} matching studies from BQ job #{job_id}: #{@convention_accessions}"
@@ -294,17 +319,43 @@ module Api
         # perform TDR search, if enabled, and there are facets/terms provided by user
         if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') && (@facets.present? || @term_list.present?)
           @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
+          puts "@facets.present? : #{@facets.present?}"
+          facets_studies = @studies_by_facet
+
+          if (@facets.present?)
+            # puts "perform the TDR sarch: #{@tdr_results}"
+
+            simple_tdr_results = self.class.simplify_TDR_facet_search_results(@tdr_results, @facets)
+
+            # puts "@simple_tdr_results: #{@simple_tdr_results}"
+            studys_frim_tdr = self.class.match_studies_by_facet(simple_tdr_results, @facets)
+            # puts "studys_frim_tdr: #{@studys_frim_tdr}"
+            @studies_by_facet = facets_studies.merge(studys_frim_tdr)
+            # puts "HERE2: #{@studies_by_facet}" 
+          end
+
+          # result: ["PulmonaryFibrosisGSE135893", {"tdr_result"=>true, "accession"=>"PulmonaryFibrosisGSE135893", "name"=>"Single-cell RNA-sequencing reveals profibrotic roles of distinct epithelial and mesenchymal lineages in pulmonary fibrosis", "description"=>"Pulmonary fibrosis (PF) is a form of chronic lung disease characterized by progressive destruction of normal alveolar gas-exchange surfaces and accumulation of extracellular matrix (ECM). In order to comprehensively define the cell types, mechanisms and mediators driving ECM deposition and fibrotic remodeling in lungs with pulmonary fibrosis, we performed single-cell RNA-sequencing (scRNA-seq) of single-cell suspensions generated from non-fibrotic control and PF lungs. Analysis of over 114,000 cells from 20 PF and 10 control lungs identified 31 distinct cell types. We identified multiple distinct lineages directly contribute to ECM expansion, including a novel HAS1hi fibroblast subtype and a previously undescribed KRT5-/KRT17+, collagen and ECM-producing epithelial cell population that was highly enriched in PF lungs. Together these data provide high-resolution insights into the basic mechanisms of pulmonary fibrosis, and indicate a direct profibrotic role of the lung epithelium in PF pathogenesis. Overall design: We performed single-cell RNA-sequencing (scRNA-seq) of single-cell suspensions generated from non-fibrotic control and pulmonary fibrosis (PF) lungs", "facet_matches"=>[{"TerraCore:hasOrganismType"=>"Homo sapiens"}], "term_matches"=>[], "file_information"=>[]}]
+          #   "facet_matches"=>[{"TerraCore:hasOrganismType"=>"Homo sapiens"}],
           # just log for now
           logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
           logger.info pp @tdr_results if @tdr_results.any?
           @tdr_results.each do |short_name, tdr_result|
-            @studies << tdr_result
+            # puts "tdr_result in do : #{tdr_result}"
+            # puts "short_name in do : #{tdr_result}"
+              if tdr_result[:accession] != nil
+                @studies << tdr_result
+              end
           end
+          # puts "studies after supposed to add TDR results #{@studies}" 
         end
 
         @matching_accessions = @studies.map {|study| study.is_a?(Study) ? study.accession : study[:accession]}
         logger.info "Final list of matching studies: #{@matching_accessions}"
+        logger.info "Final list of matching studies: #{@studies}"
+
         @results = @studies.paginate(page: params[:page], per_page: Study.per_page)
+        logger.info "results: #{@results}"
+        logger.info "search_results_obj: #{search_results_obj}"
         render json: search_results_obj, status: 200
       end
 
@@ -599,14 +650,19 @@ module Api
 
       # build a match of studies to facets/filters used in search (for labeling studies in UI with matches)
       def self.match_studies_by_facet(query_results, search_facets)
+        # puts "Queryresults: #{query_results}"
+        # puts "search_facets: #{search_facets}"
         matches = {}
         query_results.each do |result|
+          # puts "result: #{result}"
           accession = result[:study_accession]
+          # puts "accession: #{accession}"
           matches[accession] ||= {facet_search_weight: 0}
           result.keys.keep_if { |key| key != :study_accession }.each do |key|
             facet_name = key.to_s.chomp('_val')
             matching_filter = match_results_by_filter(search_result: result, result_key: key, facets: search_facets)
             # there may not be a matching filter if the facet was OR'ed
+            # puts "matching_filter: #{matching_filter}"
             if matching_filter
               matches[accession][facet_name] ||= []
               if !matches[accession][facet_name].include?(matching_filter)
@@ -616,8 +672,47 @@ module Api
             end
           end
         end
+        # puts "matches:' #{matches}"
         matches
       end
+
+      # Simplify TDR results to be mappable for the UI badges for facet search
+      def self.simplify_TDR_facet_search_results(query_results, search_facets)
+        # puts "Queryresults: #{query_results}"
+        # puts "search_facets: #{search_facets}"
+        simple_TDR_result = {}
+        simple_TDR_results = []
+        query_results.each do |result|
+          unless result[0].nil?
+            # puts "result: #{result}"
+            result_for_real = result[1]
+            # puts "result_for_real, #{result_for_real}"
+            accession = result_for_real[:accession]
+            # puts "accession: #{accession}"
+            facet_matches = result_for_real[:facet_matches]
+            # puts "facet_mathces: #{facet_matches}"
+            simple_TDR_result[:study_accession] = accession
+            # simple_TDR_result[study_accession] = accession
+
+            if facet_matches.present?
+              facet_matches[0].each_pair {|key, val| 
+                puts "key : #{key}" 
+                puts "val : #{val}" 
+
+              short_name_field = FacetNameConverter.convert_to_scp(key, :name)
+                # puts "short_name_field #{short_name_field}"
+              simple_TDR_result[short_name_field] = val
+              #  puts "simple_TDR_result: #{simple_TDR_result}"
+              #result: {:study_accession=>"SCP14", :species=>"NCBITaxon_9606"}
+              #  simple_TDR_result: {:study_accession=>"PulmonaryFibrosisGSE135893", :short_name_field=>"Homo sapiens"}
+              }
+            end
+          end
+          simple_TDR_results.append(simple_TDR_result)
+        end
+        simple_TDR_results
+      end
+
 
       # find matching filters within a given facet based on query parameters
       def self.find_matching_filters(facet:, filter_values:)
@@ -651,14 +746,21 @@ module Api
       # build a map of facet filter matches to studies for computing simplistic weights for scoring
       def self.match_results_by_filter(search_result:, result_key:, facets:)
         facet_name = result_key.to_s.chomp('_val')
+        # puts "inside match_results_by_filter facet_name: , #{facet_name}"
+        # puts "facets: #{facets}"
         matching_facet = facets.detect { |facet| facet[:id] == facet_name }
+        # puts "inside match_results_by_filter matching_facet: , #{matching_facet}"
         db_facet = matching_facet[:db_facet]
+        # puts "inside match_results_by_filter db_facet: , #{db_facet}"
         if db_facet.is_numeric?
           match = matching_facet[:filters].dup
           match.delete(:name)
           return match
         else
-          return matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] }
+          # puts "matching_facet[:filters] #{matching_facet[:filters]}"
+          # puts "filter[:id]: #{filter[:id]}"
+          # puts "earch_result[result_key]: #{search_result[result_key]}"
+          return matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] || filter[:name] == search_result[result_key]}
         end
       end
 
@@ -690,9 +792,21 @@ module Api
       # handle adding to and checking it.
       def self.process_tdr_result_row(row, results, selected_facets:, terms:, added_file_ids:)
         # get column name mappings for assembling results
+        # console.log('tim:', :tim)
+        # console.log('accession:', :accession)
+        # console.log('name:', :name)
+        
         short_name_field = FacetNameConverter.convert_to_model(:tim, :accession, :name)
+        # console.log('result is a shortname field:', short_name_field)
         name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
+        # console.log('study_name:', :study_name)
+        # console.log('result is a name_field field:', name_field)
+        
+
         description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :name)
+        # console.log('study_description:', :study_description)
+        # console.log('result is a description_field field:', description_field)
+
         short_name = row[short_name_field]
         results[short_name] ||= {
           tdr_result: true, # identify this entry as coming from Data Repo
@@ -734,17 +848,24 @@ module Api
             added_file_ids[drs_id] = true
           end
         end
+
         results
       end
 
       # determine facet matches for an individual result row from TDR
       def self.get_facet_match_for_tdr_result(facet, result_row)
+        # puts "tdrtim: #{:tim}"
+        # puts "tdrid: #{facet[:id]}"
+        # puts "tdrnamebefore: #{:name}"
+
         tdr_name = FacetNameConverter.convert_to_model(:tim, facet[:id], :name)
+        puts "tdrname final: #{tdr_name}"
         if facet[:filters].is_a? Hash
           # this is a numeric facet, so convert to range for match
           # TODO: determine correct unit/datatype and convert
           filter_value = "#{facet.dig(:filters, :min).to_i}-#{facet.dig(:filters, :max).to_i}"
           matches = result_row.each_pair.select { |col, val| col == tdr_name && val == filter_value }
+          puts "matches in if: #{matches}"
         else
           matches = []
           facet[:filters].each do |filter|
@@ -752,6 +873,7 @@ module Api
             matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || filter[:id]) }
                                  .flatten
           end
+          puts "matches in else: #{matches}"
         end
         matches
       end
