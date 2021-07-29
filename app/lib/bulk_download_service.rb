@@ -14,7 +14,7 @@ class BulkDownloadService
   #   - +study_bucket_map+ => Map of study IDs to bucket names
   #   - +output_pathname_map+ => Map of study file IDs to output pathnames
   #   - +tdr_files+ => Hash of tdr accessions to arrays of file information including name & url for each file
-  #   - +hca_project_id+ => UUID of HCA project, for generating metadata manifest (optional)
+  #
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
   def self.generate_curl_configuration(study_files:,

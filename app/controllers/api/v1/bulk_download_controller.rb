@@ -30,13 +30,6 @@ module Api
             key :description, 'Hash of file arrays to download from TDR, keyed by accession. Each file should specify URL and name'
             key :required, true
           end
-          parameter do
-            key :name, :hca_projects
-            key :type, :object
-            key :in, :body
-            key :description, 'Hash of HCA project short names to UUIDs, if specified'
-            key :required, false
-          end
           response 200 do
             key :description, 'One-time auth code and time interval, in seconds'
             schema do
