@@ -14,13 +14,24 @@ module ServiceAccountManager
   #     - +expires_in+ (Integer) => duration of token, in seconds
   #     - +token_type+ (String) => type of access token (e.g. 'Bearer')
   def generate_access_token(service_account)
-    creds_attr = {scope: self::GOOGLE_SCOPES}
-    if !service_account.blank?
-      creds_attr.merge!(json_key_io: File.open(service_account))
-    end
-    creds = Google::Auth::ServiceAccountCredentials.make_creds(creds_attr)
-    token = creds.fetch_access_token!
-    token
+    creds = load_service_account_creds(service_account)
+    creds.fetch_access_token!
+  end
+
+  # create a Google ServiceAccountCredentials instance for issuing access tokens, parsing service account attributes
+  #
+  # * *params*
+  #   - +service_account+ (Pathname) => path to service account JSON keyfile
+  #
+  # * *returns*
+  #   - (Google::Auth::ServiceAccountCredentials) => ServiceAccountCredentials instance
+  def load_service_account_creds(service_account)
+    Google::Auth::ServiceAccountCredentials.make_creds(
+      {
+        scope: self::GOOGLE_SCOPES,
+        json_key_io: File.open(service_account)
+      }
+    )
   end
 
   # return the GCP project this instance is running in

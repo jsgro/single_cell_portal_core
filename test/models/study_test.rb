@@ -106,4 +106,16 @@ class StudyTest < ActiveSupport::TestCase
                       ])
     assert_equal 'species--group--study', study.default_annotation
   end
+
+  test 'should ignore email case for share checking' do
+    study = FactoryBot.create(:detached_study, name_prefix: 'Share Case Test', test_array: @@studies_to_clean)
+    share_user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    invalid_email = share_user.email.upcase
+    share = study.study_shares.build(permission: 'View', email: invalid_email)
+    share.save!
+    assert share.present?
+    assert_equal invalid_email, share.email
+    refute share.email == share_user.email
+    assert study.can_view?(share_user)
+  end
 end

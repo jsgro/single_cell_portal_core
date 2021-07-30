@@ -49,6 +49,10 @@ class ApplicationController < ActionController::Base
     @@data_repo_client ||= DataRepoClient.new
   end
 
+  def self.hca_azul_client
+    @@hca_azul_client ||= HcaAzulClient.new
+  end
+
   # method to renew firecloud client (forces new access token for API and reinitializes storage driver)
   def self.refresh_firecloud_client
     begin
