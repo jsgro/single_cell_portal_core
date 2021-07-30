@@ -45,22 +45,22 @@ export default function DownloadSelectionModal({ studyAccessions, tdrFileInfo, s
     // pull the drs ids out of each study and put them in a single array
     // calling filter at end removes metadata file that does not have a DRS id
     const drsIds = tdrFileInfo.map(study => study.studyFiles.map(sfile => sfile.drs_id))
-      .reduce((acc, val) => acc.concat(val), []).filter(e => e != null)
+      .reduce((acc, val) => acc.concat(val), []).filter(e => e !== null)
     fetchDrsInfo(drsIds).then(result => {
       const fullTdrFileInfo = _cloneDeep(tdrFileInfo)
       // now iterate through the file info and add file sizes, urls, and file names.
       // the names and urls will be used for making the download request later
       fullTdrFileInfo.forEach(study => {
-        study.studyFiles.forEach(sfile => {
-          if (sfile.drs_id) {
-            const fileId = sfile.drs_id.split('/').slice(-1)[0]
+        study.studyFiles.forEach(studyFile => {
+          if (studyFile.drs_id) {
+            const fileId = studyFile.drs_id.split('/').slice(-1)[0]
             const matchFile = result.find(file => file.id === fileId)
             if (matchFile) {
-              sfile.upload_file_size = matchFile.size
+              studyFile.upload_file_size = matchFile.size
               // we add the url and name to each file info so that they can be sent along with the download
               // request, this allows us to avoid having to query the DRS service again
-              sfile.url = matchFile.accessMethods.find(method => method.type === 'https').access_url.url
-              sfile.name = matchFile.name
+              studyFile.url = matchFile.accessMethods.find(method => method.type === 'https').access_url.url
+              studyFile.name = matchFile.name
             }
           }
         })

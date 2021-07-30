@@ -74,8 +74,12 @@ class BulkDownloadService
       end
       curl_configs.concat(tdr_file_configs.flatten)
     end
+    file_map = create_file_type_map(study_files)
     MetricsService.log('file-download:curl-config', {
       numFiles: study_files.count,
+      numMetadataFiles: file_map['Metadata'],
+      numExpressionFiles: file_map['Expression Matrix'] + file_map['MM Coordinate Matrix'],
+      numClusterFiles: file_map['Cluster'],
       numStudies: studies.count,
       studyAccessions: studies.map(&:accession),
       numTdrStudies: tdr_studies.count,
@@ -431,5 +435,14 @@ class BulkDownloadService
       end
     end
     tsv_string
+  end
+
+  # create a map of study file types to counts of each type for reporting metrics
+  def self.create_file_type_map(files)
+    file_types = StudyFile::STUDY_FILE_TYPES
+    # counts of file types are returned from iterating over list of all types and calling :select, :count
+    # Hash[] initializes a new Hash from an nested array of two-element arrays, which are created from Array.zip
+    # e.g. Hash[[:foo, :bar].zip([1,2])] => {foo: 1, bar: 2}
+    Hash[file_types.zip(file_types.map { |type| files.select { |file| file.file_type == type }.count })]
   end
 end
