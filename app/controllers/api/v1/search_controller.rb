@@ -215,7 +215,6 @@ module Api
 
         # only call BigQuery if list of possible studies is larger than 0 and we have matching facets to use
         if @studies.count > 0 && @facets.any?
-          # puts "studies at begining of the facet matching: #{@studies}"
           sort_type = :facet
           @studies_by_facet = {}
           @big_query_search = self.class.generate_bq_query_string(@facets)
@@ -223,7 +222,7 @@ module Api
           query_results = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).query @big_query_search
           job_id = query_results.job_gapi.job_reference.job_id
           @studies_by_facet = self.class.match_studies_by_facet(query_results, @facets)
-
+          # build up map of study matches by facet & filter value (for adding labels in UI)
           # uniquify result list as one study may match multiple facets/filters
           @convention_accessions = query_results.map {|match| match[:study_accession]}.uniq
           logger.info "Found #{@convention_accessions.count} matching studies from BQ job #{job_id}: #{@convention_accessions}"
@@ -319,11 +318,7 @@ module Api
 
         @matching_accessions = @studies.map {|study| study.is_a?(Study) ? study.accession : study[:accession]}
         logger.info "Final list of matching studies: #{@matching_accessions}"
-        logger.info "Final list of matching studies: #{@studies}"
-
         @results = @studies.paginate(page: params[:page], per_page: Study.per_page)
-        logger.info "results: #{@results}"
-        logger.info "search_results_obj: #{search_results_obj}"
         render json: search_results_obj, status: 200
       end
 
@@ -739,6 +734,7 @@ module Api
       # added_file_ids is a hash to ensure the same file is not added multiple times -- this method will
       # handle adding to and checking it.
       def self.process_tdr_result_row(row, results, selected_facets:, terms:, added_file_ids:)
+        # get column name mappings for assembling results
         short_name_field = FacetNameConverter.convert_to_model(:tim, :accession, :name)
         name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
         description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :name)
@@ -784,7 +780,6 @@ module Api
             added_file_ids[drs_id] = true
           end
         end
-
         results
       end
 

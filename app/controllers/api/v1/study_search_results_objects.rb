@@ -40,7 +40,6 @@ module Api
           if @studies_by_facet.present?
             # faceted search was run, so append filter matches
             puts "studies_by_facet: #{@studies_by_facet}"
-              #studies_by_facet: {"SCP14"=>{:facet_search_weight=>1, "species"=>[{"id"=>"NCBITaxon_9606", "name"=>"Homo sapiens"}]}}
             study_obj[:facet_matches] = @studies_by_facet[study.accession]
           end
           if params[:terms].present?
@@ -63,8 +62,6 @@ module Api
             study_obj[:can_visualize_clusters] = study.can_visualize_clusters?
           end
         else
-          # puts "studies_by_facet in else: #{@studies_by_facet}"
-          # puts "@studies_by_facet[:accession]: #{study[:accession]}"
           study_obj = {
             study_source: 'TDR',
             accession: study[:accession],
@@ -77,14 +74,12 @@ module Api
             study_url: '#',
             file_information: study[:file_information],
             term_matches: @term_list,
-            # facet_matches: @studies_by_facet[study[:accession]]
           }
           if @studies_by_facet.present?
             # faceted search was run, so append filter matches
             study_obj[:facet_matches] = @studies_by_facet[study[:accession]]
           end
         end
-        # puts "study_obj: #{study_obj}"
         study_obj
       end
     end

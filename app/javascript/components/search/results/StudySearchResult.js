@@ -101,9 +101,7 @@ export function stripTags(rawString) {
 
 /* generate a badge for each matched facet, containing the filter names */
 function facetMatchBadges(study) {
-  console.log('inside the facetbade match:', study)
   const matches = study.facet_matches
-  console.log('matches:', matches)
 
   if (!matches) {
     return <></>
@@ -166,10 +164,7 @@ export default function StudySearchResult({ study }) {
   const studyDescription = formatDescription(study.description, termMatches)
   const displayStudyTitle = { __html: studyTitle }
 
-  console.log('study:', study)
-
   if (!study.accession) {
-    console.log("accession was: ", study.accession)
     return
   } else {
     return (
