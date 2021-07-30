@@ -189,13 +189,21 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog)
       # fall back to HCA_CATALOGS
       is_valid = HCA_CATALOGS.include? catalog
     end
-    raise ArgumentError, "#{catalog} is not a valid catalog: #{HCA_CATALOGS.join(',')}" unless is_valid
+    unless is_valid
+      error = ArgumentError.new("#{catalog} is not a valid catalog: #{HCA_CATALOGS.join(',')}")
+      api_method = caller_locations.first.label
+      ErrorTracker.report_exception(error, nil, { catalog: catalog, method: api_method })
+      raise error
+    end
   end
 
   # validate requested format is valid
   def validate_manifest_format(format)
     unless MANIFEST_FORMATS.include?(format)
-      raise ArgumentError, "#{format} is not a valid format: #{MANIFEST_FORMATS.join(',')}"
+      error = ArgumentError.new("#{format} is not a valid format: #{MANIFEST_FORMATS.join(',')}")
+      api_method = caller_locations.first.label
+      ErrorTracker.report_exception(error, nil, { format: format, method: api_method })
+      raise error
     end
   end
 end
