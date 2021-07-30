@@ -299,7 +299,6 @@ module Api
             simple_tdr_results = self.class.simplify_TDR_facet_search_results(@tdr_results, @facets)
             studys_from_tdr = self.class.match_studies_by_facet(simple_tdr_results, @facets)
             
-            // TODO
             if @studies_by_facet.present?
               @studies_by_facet = @studies_by_facet.merge(studys_from_tdr)
             else

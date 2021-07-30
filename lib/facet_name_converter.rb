@@ -37,13 +37,19 @@ class FacetNameConverter
 
   # map of Terra Interoperability Model (TIM) metadata convention names to Alexandria metadata convention names
   TIM_TO_ALEXANDRIA = {
+    'dct:identifier': { name: 'biosample_id' },
+    'prov:wasDerivedFrom': { name: 'donor_id' },
+    'TerraCore:hasDisease': { name: 'disease'},
+    'TerraCore:hasLibraryPrep': { name: 'library_preparation_protocol'},
+    'TerraCore:hasAnatomicalSite': { name: 'organ'},
+    'organism_age': { name: 'organism_age'},
+    'TerraCore:hasSex': { name: 'sex'},
     'TerraCore:hasOrganismType': {name: 'species'},
     'dct:title': { name: 'study_name' },
     'dct:description': { name: 'study_description'},
     'rdfs:label': { name: 'accession'}
   }.freeze
   
-  # matches in else: [["TerraCore:hasOrganismType", "Homo sapiens"]]
 
   # convert from SCP metadata names to Terra Interoperability Model or HCA short names
   #
@@ -62,10 +68,9 @@ class FacetNameConverter
 
 
 
-    # convert from SCP metadata names to Terra Interoperability Model or HCA short names
+  # convert from Terra Interoperability Model to SCP metadata names 
   #
   # * *params*
-  #   - +model_name+ (String, Symbol) => Name of schema to convert to (:hca or :tim)
   #   - +column_name+ (String, Symbol) => facet name to convert
   #   - +property+ (String, Symbol) => property to return (:id or :name only)
   #
@@ -73,8 +78,6 @@ class FacetNameConverter
   #   - (String) => String value of requested column/property
   def self.convert_to_scp(column_name, property)
     mappings = TIM_TO_ALEXANDRIA
-    puts "column_name: #{column_name}"
-    # perform lookup, but fall back to provided column name if no match is found
     mappings[column_name.to_sym]&.dig(property.to_sym) || column_name
   end
 end
