@@ -296,7 +296,7 @@ module Api
           @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
           
           if (@facets.present?)
-            simple_tdr_results = self.class.simplify_TDR_facet_search_results(@tdr_results, @facets)
+            simple_tdr_results = self.class.simplify_tdr_facet_search_results(@tdr_results, @facets)
             matched_tdr_studies = self.class.match_studies_by_facet(simple_tdr_results, @facets)
             
             if @studies_by_facet.present?
@@ -633,7 +633,7 @@ module Api
       end
 
       # Simplify TDR results to be mappable for the UI badges for facet search
-      def self.simplify_TDR_facet_search_results(query_results, search_facets)
+      def self.simplify_tdr_facet_search_results(query_results, search_facets)
         simple_TDR_result = {}
         simple_TDR_results = []
         query_results.each do |result|
