@@ -300,7 +300,7 @@ module Api
             matched_tdr_studies = self.class.match_studies_by_facet(simple_tdr_results, @facets)
             
             if @studies_by_facet.present?
-              @studies_by_facet = @studies_by_facet.merge(matched_tdr_studies)
+              @studies_by_facet.merge!(matched_tdr_studies)
             else
               @studies_by_facet = matched_tdr_studies
             end
