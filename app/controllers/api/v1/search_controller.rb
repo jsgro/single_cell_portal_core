@@ -638,9 +638,9 @@ module Api
         simple_TDR_results = []
         query_results.each do |result|
           unless result[0].nil?
-            result_for_real = result[1]
-            accession = result_for_real[:accession]
-            facet_matches = result_for_real[:facet_matches]
+            result_details = result[1]
+            accession = result_details[:accession]
+            facet_matches = result_details[:facet_matches]
             simple_TDR_result[:study_accession] = accession
             if facet_matches.present?
               facet_matches[0].each_pair { |key, val| 
