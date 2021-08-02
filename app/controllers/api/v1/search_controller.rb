@@ -295,7 +295,7 @@ module Api
         if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') && (@facets.present? || @term_list.present?)
           @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
           
-          if (@facets.present?)
+          if @facets.present?
             simple_tdr_results = self.class.simplify_TDR_facet_search_results(@tdr_results, @facets)
             matched_tdr_studies = self.class.match_studies_by_facet(simple_tdr_results, @facets)
             
