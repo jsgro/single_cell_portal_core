@@ -39,7 +39,6 @@ module Api
           }
           if @studies_by_facet.present?
             # faceted search was run, so append filter matches
-            puts "studies_by_facet: #{@studies_by_facet}"
             study_obj[:facet_matches] = @studies_by_facet[study.accession]
           end
           if params[:terms].present?
@@ -73,7 +72,7 @@ module Api
             gene_count: 0,
             study_url: '#',
             file_information: study[:file_information],
-            term_matches: @term_list,
+            term_matches: @term_list
           }
           if @studies_by_facet.present?
             # faceted search was run, so append filter matches

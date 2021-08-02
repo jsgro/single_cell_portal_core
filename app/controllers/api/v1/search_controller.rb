@@ -221,8 +221,8 @@ module Api
           logger.info "Searching BigQuery using facet-based query: #{@big_query_search}"
           query_results = ApplicationController.big_query_client.dataset(CellMetadatum::BIGQUERY_DATASET).query @big_query_search
           job_id = query_results.job_gapi.job_reference.job_id
-          @studies_by_facet = self.class.match_studies_by_facet(query_results, @facets)
           # build up map of study matches by facet & filter value (for adding labels in UI)
+          @studies_by_facet = self.class.match_studies_by_facet(query_results, @facets)
           # uniquify result list as one study may match multiple facets/filters
           @convention_accessions = query_results.map {|match| match[:study_accession]}.uniq
           logger.info "Found #{@convention_accessions.count} matching studies from BQ job #{job_id}: #{@convention_accessions}"
@@ -297,12 +297,12 @@ module Api
           
           if (@facets.present?)
             simple_tdr_results = self.class.simplify_TDR_facet_search_results(@tdr_results, @facets)
-            studys_from_tdr = self.class.match_studies_by_facet(simple_tdr_results, @facets)
+            matched_tdr_studies = self.class.match_studies_by_facet(simple_tdr_results, @facets)
             
             if @studies_by_facet.present?
-              @studies_by_facet = @studies_by_facet.merge(studys_from_tdr)
+              @studies_by_facet = @studies_by_facet.merge(matched_tdr_studies)
             else
-              @studies_by_facet = studys_from_tdr
+              @studies_by_facet = matched_tdr_studies
             end
           end
           # just log for now
@@ -643,7 +643,7 @@ module Api
             facet_matches = result_for_real[:facet_matches]
             simple_TDR_result[:study_accession] = accession
             if facet_matches.present?
-              facet_matches[0].each_pair {|key, val| 
+              facet_matches[0].each_pair { |key, val| 
               short_name_field = FacetNameConverter.convert_to_scp(key, :name)
               simple_TDR_result[short_name_field] = val
               }

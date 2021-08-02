@@ -102,7 +102,6 @@ export function stripTags(rawString) {
 /* generate a badge for each matched facet, containing the filter names */
 function facetMatchBadges(study) {
   const matches = study.facet_matches
-
   if (!matches) {
     return <></>
   }
@@ -164,26 +163,22 @@ export default function StudySearchResult({ study }) {
   const studyDescription = formatDescription(study.description, termMatches)
   const displayStudyTitle = { __html: studyTitle }
 
-  if (!study.accession) {
-    return
-  } else {
-    return (
-      <>
-        <div key={study.accession}>
-          <label htmlFor={study.name} id="result-title" className="study-label">
-            {study.study_source === 'SCP' ? <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle} ></a> :
-              <span dangerouslySetInnerHTML={displayStudyTitle} />
-            }
-            {inferredBadge(study, termMatches)}
-          </label>
-          <div>
-            {cellCountBadge(study)}
-            {studyTypeBadge(study)}
-            {facetMatchBadges(study)}
-          </div>
-          {studyDescription}
+  return (
+    <>
+      <div key={study.accession}>
+        <label htmlFor={study.name} id="result-title" className="study-label">
+          {study.study_source === 'SCP' ? <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle} ></a> :
+            <span dangerouslySetInnerHTML={displayStudyTitle} />
+          }
+          {inferredBadge(study, termMatches)}
+        </label>
+        <div>
+          {cellCountBadge(study)}
+          {studyTypeBadge(study)}
+          {facetMatchBadges(study)}
         </div>
-      </>
-    )
-  }
+        {studyDescription}
+      </div>
+    </>
+  )
 }
