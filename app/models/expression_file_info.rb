@@ -14,11 +14,11 @@ class ExpressionFileInfo
 
   # note that species and reference genome/annotation live at the study_file level, not here
 
-  UNITS_VALUES = ['UMI-corrected raw counts', 'raw counts']
-  validates :units, inclusion: {in: UNITS_VALUES}, allow_blank: true
+  UNITS_VALUES = ['UMI-corrected raw counts', 'raw counts'].freeze
+  validates :units, inclusion: { in: UNITS_VALUES }, allow_blank: true
 
-  BIOSAMPLE_INPUT_TYPE_VALUES = ['Whole cell', 'Single nuclei', 'Bulk']
-  validates :biosample_input_type, inclusion: {in: BIOSAMPLE_INPUT_TYPE_VALUES}
+  BIOSAMPLE_INPUT_TYPE_VALUES = ['Whole cell', 'Single nuclei', 'Bulk'].freeze
+  validates :biosample_input_type, inclusion: { in: BIOSAMPLE_INPUT_TYPE_VALUES }
 
   MODALITY_VALUES = [
     'Transcriptomic: unbiased',
@@ -29,14 +29,14 @@ class ExpressionFileInfo
     'Epigenomic: DNA chromatin accessibility',
     'Epigenomic: DNA methylation',
     'Proteomic'
-  ]
-  validates :modality, inclusion: {in: MODALITY_VALUES}
+  ].freeze
+  validates :modality, inclusion: { in: MODALITY_VALUES }
 
-  LIBRARY_PREPARATION_VALUES = ['10x 3\' v1',
-                                '10x 3\' v2',
-                                '10x 3\' v3',
-                                '10x 5\' v2',
-                                '10x 5\' v3',
+  LIBRARY_PREPARATION_VALUES = ["10x 3' v1",
+                                "10x 3' v2",
+                                "10x 3' v3",
+                                "10x 5' v2",
+                                "10x 5' v3",
                                 'CEL-seq2',
                                 'Drop-seq',
                                 'inDrop',
@@ -65,8 +65,8 @@ class ExpressionFileInfo
                                 'smFISH',
                                 'STARmap', # Note WIP for EFO term: https://broadinstitute.zendesk.com/agent/tickets/139334
                                 # single cell ChIP-seq assays
-                                'Drop-ChIP']
-  validates :library_preparation_protocol, inclusion: {in: LIBRARY_PREPARATION_VALUES}
+                                'Drop-ChIP'].freeze
+  validates :library_preparation_protocol, inclusion: { in: LIBRARY_PREPARATION_VALUES }
 
   validate :unset_units_unless_raw_counts
   validate :enforce_units_on_raw_counts
@@ -108,7 +108,7 @@ class ExpressionFileInfo
 
     # next check for exemption
     raw_counts_required = study_file.study.associated_users(permission: 'Edit').map do |user|
-      User.feature_flag_for_instance(user, 'raw_counts_required_backed')
+      User.feature_flag_for_instance(user, 'raw_counts_required_backend')
     end.uniq
     # if any user account returned false for :raw_counts_required_backed, then allow saving of expression matrix
     # otherwise, add validation error for :raw_counts_associations
