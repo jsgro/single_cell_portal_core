@@ -8,6 +8,9 @@ class ExpressionFileInfo
   field :biosample_input_type, type: String
   field :modality, type: String
   field :is_raw_counts, type: Boolean, default: false
+  field :raw_counts_associations, type: Array, default: []
+
+  before_validation :sanitize_raw_counts_associations
 
   # note that species and reference genome/annotation live at the study_file level, not here
 
@@ -67,8 +70,15 @@ class ExpressionFileInfo
 
   validate :unset_units_unless_raw_counts
   validate :enforce_units_on_raw_counts
+  validate :enforce_raw_counts_associations, unless: proc { |attributes| attributes[:is_raw_counts] }
 
   private
+
+  # remove invalid StudyFile ids, as well as nil/empty string values
+  def sanitize_raw_counts_associations
+    invalid_ids = raw_counts_associations.map { |study_file_id| StudyFile.find(study_file_id).nil? }
+    raw_counts_associations.reject! { |study_file_id| study_file_id.blank? || invalid_ids.include?(study_file_id) }
+  end
 
   # unset the value for :units unless :is_raw_counts is true
   # this has to be invoked as a validation as callbacks only fire on parent document (StudyFile)
@@ -82,6 +92,28 @@ class ExpressionFileInfo
   def enforce_units_on_raw_counts
     if self.is_raw_counts && self.units.blank?
       errors.add(:units, ' must have a value for raw counts matrices')
+    end
+  end
+
+  # enforce assigning associations on "processed" expression matrix files
+  # will check for exemption from any users associated with given study
+  def enforce_raw_counts_associations
+    # first ensure raw matrix is present
+    if raw_counts_associations.any?
+      raw_counts_associations.each do |study_file_id|
+        raw_matrix = StudyFile.find(study_file_id)
+        return true if raw_matrix&.is_raw_counts_file?
+      end
+    end
+
+    # next check for exemption
+    raw_counts_required = study_file.study.associated_users(permission: 'Edit').map do |user|
+      User.feature_flag_for_instance(user, 'raw_counts_required_backed')
+    end.uniq
+    # if any user account returned false for :raw_counts_required_backed, then allow saving of expression matrix
+    # otherwise, add validation error for :raw_counts_associations
+    unless raw_counts_required.include?(false)
+      errors.add(:raw_counts_associations, 'must include at least one raw counts matrix filename before saving')
     end
   end
 end
