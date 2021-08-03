@@ -44,9 +44,6 @@ function validateUniqueHeaders(headers) {
   const issues = []
   const uniques = new Set(headers)
 
-  console.log('headers', headers)
-  console.log('uniques', uniques)
-
   // Are headers unique?
   if (uniques.size !== headers.length) {
     const seen = new Set()
@@ -67,7 +64,9 @@ function validateUniqueHeaders(headers) {
     issues.push(['error', 'format', msg])
   }
 
-  return { issues }
+  console.log('in validateUniqueHeaders, issues:', issues)
+
+  return issues
 }
 
 /**
@@ -89,6 +88,8 @@ function validateTypeKeyword(annotTypes) {
       `Provided value was "${value}".`
     issues.push(['error', 'format', msg])
   }
+
+  console.log('in validateTypeKeyword, issues:', issues)
 
   return issues
 }
@@ -134,10 +135,21 @@ async function validateMetadata(file) {
     validateTypeKeyword(annotTypes)
   )
 
+  console.log('in validateMetadata, issues:', issues)
+
   return issues
 }
 
 /** Validate a local file */
-export default function validateFile(file, studyFileType) {
-  if (studyFileType === 'metadata') {validateMetadata(file)}
+export async function validateFile(file, studyFileType) {
+  let issues = []
+  if (studyFileType === 'metadata') {issues = await validateMetadata(file)}
+
+  // Ingest Pipeline reports "issues", which includes "errors" and "warnings".
+  // Keep issue type distinction in this module to ease porting, but for now
+  // only report errors.
+  const errors = issues.filter(issue => issue[0] === 'error')
+
+  return errors
 }
+
