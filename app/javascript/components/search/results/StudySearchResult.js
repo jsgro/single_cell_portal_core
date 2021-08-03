@@ -174,8 +174,8 @@ export default function StudySearchResult({ study }) {
         </label>
         <div>
           {cellCountBadge(study)}
-          {facetMatchBadges(study)}
           {studyTypeBadge(study)}
+          {facetMatchBadges(study)}
         </div>
         {studyDescription}
       </div>
