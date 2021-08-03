@@ -309,7 +309,7 @@ module Api
           logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
           logger.info pp @tdr_results if @tdr_results.any?
           @tdr_results.each do |short_name, tdr_result|
-              @studies << tdr_result
+            @studies << tdr_result
           end
         end
 
@@ -793,6 +793,7 @@ module Api
                                  .flatten                                 
           end
         end
+        matches.reject! { |key, value| key.blank? || value.blank? }
         matches
       end
 
