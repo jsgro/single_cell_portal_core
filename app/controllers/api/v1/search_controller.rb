@@ -630,7 +630,7 @@ module Api
         matches
       end
 
-      # Simplify TDR results to be mappable for the UI badges for facet search
+      # Simplify TDR results to be mappable for the UI badges for faceted search
       def self.simplify_tdr_facet_search_results(query_results, search_facets)
         simple_TDR_result = {}
         simple_TDR_results = []
