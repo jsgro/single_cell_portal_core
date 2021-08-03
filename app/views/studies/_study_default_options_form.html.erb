@@ -21,7 +21,7 @@
         </div>
         <div class="col-sm-4">
           <%= f.label :annotation, 'Default Annotation' %><br />
-          <%= f.select :annotation, grouped_options_for_select(@default_cluster_annotations, @study.default_annotation), {},class: 'form-control' %>
+          <%= f.select :annotation, grouped_options_for_select(@default_cluster_annotations, @study.default_annotation), {}, class: 'form-control' %>
         </div>
         <div class="col-sm-4">
           <%= f.label :color_profile, "Default Color Profile <i class='fas fa-info-circle' title='The default color profile only applies to the selected annotation (if the type is numeric)' data-toggle='tooltip'></i>".html_safe %><br />

@@ -16,14 +16,14 @@ class AdminConfiguration
   has_many :configuration_options, dependent: :destroy
   accepts_nested_attributes_for :configuration_options, allow_destroy: true
 
-  FIRECLOUD_ACCESS_NAME = 'FireCloud Access'
-  API_NOTIFIER_NAME = 'API Health Check Notifier'
-  INGEST_DOCKER_NAME = 'Ingest Pipeline Docker Image'
-  NUMERIC_VALS = %w(byte kilobyte megabyte terabyte petabyte exabyte)
-  CONFIG_TYPES = [INGEST_DOCKER_NAME, 'Daily User Download Quota', 'Portal FireCloud User Group',
-                  'Reference Data Workspace', 'Read-Only Access Control', 'QA Dev Email', API_NOTIFIER_NAME]
-  ALL_CONFIG_TYPES = CONFIG_TYPES.dup << FIRECLOUD_ACCESS_NAME
-  VALUE_TYPES = %w(Numeric Boolean String)
+  FIRECLOUD_ACCESS_NAME = 'FireCloud Access'.freeze
+  API_NOTIFIER_NAME = 'API Health Check Notifier'.freeze
+  INGEST_DOCKER_NAME = 'Ingest Pipeline Docker Image'.freeze
+  NUMERIC_VALS = %w[byte kilobyte megabyte terabyte petabyte exabyte].freeze
+  CONFIG_TYPES = [INGEST_DOCKER_NAME, 'Daily User Download Quota', 'Portal FireCloud User Group', 'TDR Snapshot IDs',
+                  'Reference Data Workspace', 'Read-Only Access Control', 'QA Dev Email', API_NOTIFIER_NAME].freeze
+  ALL_CONFIG_TYPES = (CONFIG_TYPES.dup << FIRECLOUD_ACCESS_NAME).freeze
+  VALUE_TYPES = %w[Numeric Boolean String].freeze
 
   validates_uniqueness_of :config_type,
                           message: ": '%{value}' has already been set.  Please edit the corresponding entry to update."
@@ -34,11 +34,11 @@ class AdminConfiguration
   validates_inclusion_of :multiplier, in: NUMERIC_VALS, allow_blank: true
   validates_format_of :value, with: ValidationTools::OBJECT_LABELS,
                       message: ValidationTools::OBJECT_LABELS_ERROR,
-                      unless: proc {|attributes| attributes.config_type == 'QA Dev Email'} # allow '@' for this config
+                      unless: proc { |attributes| attributes.config_type == 'QA Dev Email' } # allow '@' for this config
 
   validate :manage_readonly_access
-  validate :ensure_docker_image_present, if: proc {|attributes| attributes.config_type == INGEST_DOCKER_NAME}
-  before_validation :strip_empty_space, if: proc {|attributes| attributes.value_type == 'String'}
+  validate :ensure_docker_image_present, if: proc { |attributes| attributes.config_type == INGEST_DOCKER_NAME }
+  before_validation :strip_empty_space, if: proc { |attributes| attributes.value_type == 'String' }
 
   # really only used for IDs in the table...
   def url_safe_name
@@ -53,7 +53,7 @@ class AdminConfiguration
   # Ingest docker image getter
   def self.get_ingest_docker_image
     ingest_config = self.get_ingest_docker_image_config
-    if Rails.env != 'production' && ingest_config.present?
+    if !Rails.env.production? && ingest_config.present?
       ingest_config.value
     else
       Rails.application.config.ingest_docker_image
@@ -66,10 +66,10 @@ class AdminConfiguration
     image_attributes = image_name.split('/')
     image_name, image_tag = image_attributes.last.split(':')
     {
-        registry: "#{image_attributes[0]}",
-        project: "#{image_attributes[1]}",
-        image_name: "#{image_name}",
-        tag: "#{image_tag}",
+      registry: "#{image_attributes[0]}",
+      project: "#{image_attributes[1]}",
+      image_name: "#{image_name}",
+      tag: "#{image_tag}",
     }
   end
 
@@ -94,6 +94,15 @@ class AdminConfiguration
       true
     else
       status.value == 'on'
+    end
+  end
+
+  # get an array of Terra Data Repo snapshot IDs to append to all query requests
+  # if not configured, nil return will force TDR to query all snapshots visible to read only service account
+  def self.get_tdr_snapshot_ids
+    config = AdminConfiguration.find_by(config_type: 'TDR Snapshot IDs')
+    if config.present?
+      config.value.split(',').map(&:strip)
     end
   end
 

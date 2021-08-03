@@ -5,13 +5,13 @@ import * as Reach from '@reach/router'
 
 const fetch = require('node-fetch');
 
-import GeneSearchView from 'components/search/genes/GeneSearchView';
-import SearchPanel from 'components/search/controls/SearchPanel';
-import { PropsStudySearchProvider } from 'providers/StudySearchProvider';
-import { PropsGeneSearchProvider, GeneSearchContext, emptySearch } from 'providers/GeneSearchProvider';
+import GeneSearchView from 'components/search/genes/GeneSearchView'
+import SearchPanel from 'components/search/controls/SearchPanel'
+import { PropsStudySearchProvider } from 'providers/StudySearchProvider'
+import { PropsGeneSearchProvider, GeneSearchContext, emptySearch } from 'providers/GeneSearchProvider'
 import { UserContext } from 'providers/UserProvider'
 import StudyResultsPanel from 'components/search/results/ResultsPanel'
-import SCPStudy from 'components/search/results/SCPStudy'
+import StudySearchResult from 'components/search/results/StudySearchResult'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import * as ScpAPI from 'lib/scp-api'
 
@@ -27,7 +27,7 @@ describe('Gene search page landing', () => {
         </GeneSearchContext.Provider>
       </PropsStudySearchProvider>
     ))
-    expect(wrapper.find(SCPStudy)).toHaveLength(1)
+    expect(wrapper.find(StudySearchResult)).toHaveLength(1)
   })
 
   it('shows gene results when gene query is loaded', async () => {
@@ -42,7 +42,7 @@ describe('Gene search page landing', () => {
       </PropsStudySearchProvider>
     ))
 
-    expect(wrapper.find(SCPStudy)).toHaveLength(0)
+    expect(wrapper.find(StudySearchResult)).toHaveLength(0)
     const wrapperText = wrapper.find('.study-gene-result').text()
     expect(wrapperText.indexOf('This study contains agpat2 in expression data')).toBeGreaterThan(0)
   })
@@ -59,7 +59,7 @@ describe('Gene search page landing', () => {
       </PropsStudySearchProvider>
     ))
 
-    expect(wrapper.find(SCPStudy)).toHaveLength(0)
+    expect(wrapper.find(StudySearchResult)).toHaveLength(0)
     const wrapperText = wrapper.find('.study-gene-result').text()
     expect(wrapperText.indexOf('This study contains agpat2, farsa in expression data')).toBeGreaterThan(0)
   })

@@ -45,9 +45,9 @@ const helpModalContent = (<div>
   our{' '}
   <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies"
     target="_blank" rel="noreferrer">wiki
-  </a>.  Study authors looking to make their studies more accessible can read our{' '}
+  </a>.  Study authors looking to make their studies more accessible can read our
   <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search"
-    target="_blank" rel="noreferrer">metadata guide
+    target="_blank" rel="noreferrer"> metadata guide
   </a>.
 </div>)
 

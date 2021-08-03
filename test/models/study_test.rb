@@ -1,6 +1,10 @@
 require "test_helper"
 
 class StudyTest < ActiveSupport::TestCase
+  include Minitest::Hooks
+  include SelfCleaningSuite
+  include TestInstrumentor
+
   def setup
     @study = Study.first
     @exp_matrix = @study.expression_matrix_files.first
@@ -32,8 +36,6 @@ class StudyTest < ActiveSupport::TestCase
   end
 
   test 'should honor case in gene search within study' do
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     gene_name = @gene_names.sample
     matrix_ids = @study.expression_matrix_files.pluck(:id)
     # search with case sensitivity first
@@ -57,13 +59,9 @@ class StudyTest < ActiveSupport::TestCase
                  "Did not return correct gene from #{lower_case}; expected #{gene_name} but found #{gene_3['name']}"
     assert_equal expected_scores, gene_3['scores'],
                  "Did not load correct expression data from #{lower_case}; expected #{expected_scores} but found #{gene_3['scores']}"
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   test 'should skip permission and group check during firecloud service outage' do
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # assert that under normal conditions user has compute permissions
     user = @study.user
     compute_permission = @study.can_compute?(user)
@@ -93,7 +91,31 @@ class StudyTest < ActiveSupport::TestCase
       refute compute_in_outage, "Should not have compute permissions in outage, but can_compute? is #{compute_in_outage}"
       refute group_share_in_outage, "Should not have group share in outage, but user_in_group_share? is #{group_share_in_outage}"
     end
+  end
 
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
+  test 'should default to first available annotation' do
+    user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    study = FactoryBot.create(:detached_study, name_prefix: 'Default Annotation Test', test_array: @@studies_to_clean)
+    assert study.default_annotation.nil?
+    FactoryBot.create(:metadata_file,
+                      name: 'metadata.txt',
+                      study: study,
+                      cell_input: %w[A B C],
+                      annotation_input: [
+                        { name: 'species', type: 'group', values: %w[dog dog dog] }
+                      ])
+    assert_equal 'species--group--study', study.default_annotation
+  end
+
+  test 'should ignore email case for share checking' do
+    study = FactoryBot.create(:detached_study, name_prefix: 'Share Case Test', test_array: @@studies_to_clean)
+    share_user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    invalid_email = share_user.email.upcase
+    share = study.study_shares.build(permission: 'View', email: invalid_email)
+    share.save!
+    assert share.present?
+    assert_equal invalid_email, share.email
+    refute share.email == share_user.email
+    assert study.can_view?(share_user)
   end
 end

@@ -26,6 +26,7 @@ module Api
       def study_response_obj(study)
         if study.is_a?(Study)
           study_obj = {
+            study_source: 'SCP',
             accession: study.accession,
             name: study.name,
             description: study.description,
@@ -61,7 +62,7 @@ module Api
           end
         else
           study_obj = {
-            tdr_result: true,
+            study_source: 'TDR',
             accession: study[:accession],
             name: study[:name],
             description: study[:description],
@@ -69,7 +70,9 @@ module Api
             detached: false,
             cell_count: 0,
             gene_count: 0,
-            study_url: '#'
+            study_url: '#',
+            file_information: study[:file_information],
+            term_matches: @term_list
           }
         end
         study_obj

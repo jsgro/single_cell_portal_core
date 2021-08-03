@@ -704,7 +704,7 @@ class Study
       self.where(queued_for_deletion: false)
     else
       studies = self.where(queued_for_deletion: false, user_id: user._id)
-      shares = StudyShare.where(email: user.email, permission: 'Edit').map(&:study).select {|s| !s.queued_for_deletion }
+      shares = StudyShare.where(email: /#{user.email}/i, permission: 'Edit').map(&:study).select {|s| !s.queued_for_deletion }
       [studies + shares].flatten.uniq
     end
   end
@@ -718,7 +718,7 @@ class Study
     else
       public = self.where(public: true, queued_for_deletion: false).map(&:id)
       owned = self.where(user_id: user._id, public: false, queued_for_deletion: false).map(&:id)
-      shares = StudyShare.where(email: user.email).map(&:study).select {|s| !s.queued_for_deletion }.map(&:id)
+      shares = StudyShare.where(email: /#{user.email}/i).map(&:study).select {|s| !s.queued_for_deletion }.map(&:id)
       group_shares = []
       if user.registered_for_firecloud && (user.refresh_token.present? || user.api_access_token.present?)
         user_client = FireCloudClient.new(user, FireCloudClient::PORTAL_NAMESPACE)
@@ -737,7 +737,7 @@ class Study
       self.where(queued_for_deletion: false)
     else
       owned = self.where(user_id: user._id, queued_for_deletion: false).map(&:_id)
-      shares = StudyShare.where(email: user.email).map(&:study).select {|s| !s.queued_for_deletion }.map(&:_id)
+      shares = StudyShare.where(email: /#{user.email}/i).map(&:study).select {|s| !s.queued_for_deletion }.map(&:_id)
       group_shares = []
       if user.registered_for_firecloud
         user_client = FireCloudClient.new(user, FireCloudClient::PORTAL_NAMESPACE)
@@ -754,7 +754,7 @@ class Study
     if user.nil?
       false
     else
-      if self.admins.include?(user.email)
+      if self.admins.map(&:downcase).include?(user.email.downcase)
         return true
       else
         self.user_in_group_share?(user, 'Edit')
@@ -768,7 +768,7 @@ class Study
       false
     else
       # use if/elsif with explicit returns to ensure skipping downstream calls
-      if self.study_shares.can_view.include?(user.email)
+      if self.study_shares.can_view.map(&:downcase).include?(user.email.downcase)
         return true
       elsif self.can_edit?(user)
         return true
@@ -786,7 +786,7 @@ class Study
     else
       if self.user == user
         return true
-      elsif self.study_shares.non_reviewers.include?(user.email)
+      elsif self.study_shares.non_reviewers.map(&:downcase).include?(user.email.downcase)
         return true
       else
         self.user_in_group_share?(user, 'View', 'Edit')
@@ -867,6 +867,15 @@ class Study
   # list of emails for accounts that can edit this study
   def admins
     [self.user.email, self.study_shares.can_edit, User.where(admin: true).pluck(:email)].flatten.uniq
+  end
+
+  # array of user accounts associated with this study (study owner + shares); can scope by permission, if provided
+  # differs from study.admins as it does not include portal admins
+  def associated_users(permission: nil)
+    owner = self.user
+    shares = permission.present? ? self.study_shares.where(permission: permission) : self.study_shares
+    share_users = shares.map { |share| User.find_by(email: share.email) }.compact
+    [owner] + share_users
   end
 
   # check if study is still under embargo or whether given user can bypass embargo
@@ -1046,20 +1055,21 @@ class Study
 
   # helper to return default annotation to load, will fall back to first available annotation if no preference has been set
   # or default annotation cannot be loaded.  returns a hash of {name: ,type:, scope: }
-  def default_annotation_params(cluster=self.default_cluster)
-    default_annot = self.default_options[:annotation]
+  def default_annotation_params(cluster=default_cluster)
+    default_annot = default_options[:annotation]
     annot_params = nil
     # in case default has not been set
     if default_annot.nil?
       if !cluster.nil? && cluster.cell_annotations.any?
-        annot = cluster.cell_annotations.first
+        annot = cluster.cell_annotations.select { |annot| cluster.can_visualize_cell_annotation?(annot) }.first ||
+          cluster.cell_annotations.first
         annot_params = {
           name: annot[:name],
           type: annot[:type],
           scope: 'cluster'
         }
-      elsif self.cell_metadata.any?
-        metadatum = self.cell_metadata.keep_if {|meta| meta.can_visualize?}.first
+      elsif cell_metadata.any?
+        metadatum = cell_metadata.keep_if(&:can_visualize?).first || cell_metadata.first
         annot_params = {
           name: metadatum.name,
           type: metadatum.annotation_type,

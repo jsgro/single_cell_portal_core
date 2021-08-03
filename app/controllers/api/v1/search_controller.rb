@@ -390,7 +390,8 @@ module Api
         # sanitize query string for regexp matching
         @query_string = params[:query]
         query_matcher = /#{Regexp.escape(@query_string)}/i
-        @matching_filters = @search_facet.filters.select {|filter| filter[:name] =~ query_matcher}
+        filter_list = user_signed_in? ? @search_facet.filters : @search_facet.public_filters
+        @matching_filters = filter_list.select { |filter| filter[:name] =~ query_matcher }
       end
 
       private
@@ -664,24 +665,38 @@ module Api
       # execute a search in TDR and get back normalized results
       def self.get_tdr_results(selected_facets:, terms:)
         results = {}
-        if selected_facets.present?
-          facet_json = ApplicationController.data_repo_client.generate_query_from_facets(selected_facets)
-        end
-        if terms.present?
-          term_json = ApplicationController.data_repo_client.generate_query_from_keywords(terms)
-        end
-        # now we merge the two queries together to perform a single search request
-        query_json = ApplicationController.data_repo_client.merge_query_json(facet_query: facet_json, term_query: term_json)
-        logger.info "Executing TDR query with: #{query_json}"
-        raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json)
-        raw_tdr_results['result'].each do |result_row|
-          results = process_tdr_result_row(result_row, results, selected_facets: selected_facets, terms: terms)
+        begin
+          if selected_facets.present?
+            facet_json = ApplicationController.data_repo_client.generate_query_from_facets(selected_facets)
+          end
+          if terms.present?
+            term_json = ApplicationController.data_repo_client.generate_query_from_keywords(terms)
+          end
+          # now we merge the two queries together to perform a single search request
+          query_json = ApplicationController.data_repo_client.merge_query_json(facet_query: facet_json, term_query: term_json)
+          logger.info "Executing TDR query with: #{query_json}"
+          snapshot_ids = AdminConfiguration.get_tdr_snapshot_ids
+          logger.info "Scoping TDR query to snapshots: #{snapshot_ids.join(', ')}" if snapshot_ids.present?
+          raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json,
+                                                                                          snapshot_ids: snapshot_ids)
+          added_file_ids = {}
+          raw_tdr_results['result'].each do |result_row|
+            results = process_tdr_result_row(result_row, results,
+                                             selected_facets: selected_facets,
+                                             terms: terms,
+                                             added_file_ids: added_file_ids)
+          end
+        rescue RestClient::Exception => e
+          Rails.logger.error "Error querying TDR: #{e.class.name} -- #{e.message}"
+          ErrorTracker.report_exception(e, nil, selected_facets, { terms: terms })
         end
         results
       end
 
       # process an individual result row from TDR
-      def self.process_tdr_result_row(row, results, selected_facets:, terms:)
+      # added_file_ids is a hash to ensure the same file is not added multiple times -- this method will
+      # handle adding to and checking it.
+      def self.process_tdr_result_row(row, results, selected_facets:, terms:, added_file_ids:)
         # get column name mappings for assembling results
         short_name_field = FacetNameConverter.convert_to_model(:tim, :accession, :name)
         name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
@@ -692,18 +707,19 @@ module Api
           accession: short_name,
           name: row[name_field],
           description: row[description_field],
+          project_id: row['project_id'],
           facet_matches: [],
           term_matches: [],
-          drs_ids: [],
           file_information: []
         }.with_indifferent_access
+        result = results[short_name]
         # determine facet filter matches
         if selected_facets.present?
           selected_facets.each do |facet|
             matches = get_facet_match_for_tdr_result(facet, row)
             matches.each do |col_name, matched_val|
               entry = { col_name => matched_val }
-              results[short_name][:facet_matches] << entry unless results[short_name][:facet_matches].include?(entry)
+              result[:facet_matches] << entry unless result[:facet_matches].include?(entry)
             end
           end
         end
@@ -712,14 +728,20 @@ module Api
             matches = get_term_match_for_tdr_result(term, row)
             matches.each do |col_name, _|
               entry = { col_name => term }
-              results[short_name][:term_matches] << entry unless results[short_name][:term_matches].include?(entry)
+              result[:term_matches] << entry unless result[:term_matches].include?(entry)
             end
           end
         end
-        # if any output IDs are DRS IDs, then store the DRS id for getting file information later
-        if row['output_id'].present? && row['output_id'].starts_with?('drs')
+        # if the output_id is a drs_id, add it and the output_type to the file_information array,
+        if row['output_id']&.starts_with?('drs')
           drs_id = row['output_id']
-          results[short_name][:drs_ids] << drs_id unless results[short_name][:drs_ids].include?(drs_id)
+          if !added_file_ids[drs_id]
+            result[:file_information] << {
+              drs_id: drs_id,
+              file_type: row['output_type']
+            }
+            added_file_ids[drs_id] = true
+          end
         end
         results
       end
