@@ -294,9 +294,9 @@ module Api
         # perform TDR search, if enabled, and there are facets/terms provided by user
         if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') && (@facets.present? || @term_list.present?)
           @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
-          
+
           if @facets.present?
-            simple_tdr_results = self.class.simplify_TDR_facet_search_results(@tdr_results, @facets)
+            simple_tdr_results = self.class.simplify_tdr_facet_search_results(@tdr_results, @facets)
             matched_tdr_studies = self.class.match_studies_by_facet(simple_tdr_results, @facets)
             
             if @studies_by_facet.present?
@@ -309,9 +309,7 @@ module Api
           logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
           logger.info pp @tdr_results if @tdr_results.any?
           @tdr_results.each do |short_name, tdr_result|
-              if tdr_result[:accession] != nil
-                @studies << tdr_result
-              end
+              @studies << tdr_result
           end
         end
 
@@ -636,20 +634,18 @@ module Api
       def self.simplify_tdr_facet_search_results(query_results, search_facets)
         simple_TDR_result = {}
         simple_TDR_results = []
-        query_results.each do |result|
-          unless result[0].nil?
-            result_details = result[1]
-            accession = result_details[:accession]
-            facet_matches = result_details[:facet_matches]
-            simple_TDR_result[:study_accession] = accession
-            if facet_matches.present?
-              facet_matches[0].each_pair { |key, val| 
-              short_name_field = FacetNameConverter.convert_to_scp(key, :name)
-              simple_TDR_result[short_name_field] = val
+        query_results.each_pair do |accession, result|
+          facet_matches = result[:facet_matches]
+          simple_TDR_result[:study_accession] = accession
+          if facet_matches.present?
+            facet_matches.each { |mapping| 
+              mapping.each_pair { |key, val| 
+                short_name_field = FacetNameConverter.convert_to_model(:tim, :alex, key, :name)
+                simple_TDR_result[short_name_field] = val
               }
-            end
+            }
           end
-          simple_TDR_results.append(simple_TDR_result)
+          simple_TDR_results << simple_TDR_result
         end
         simple_TDR_results
       end
@@ -793,9 +789,8 @@ module Api
         else
           matches = []
           facet[:filters].each do |filter|
-            # look for match on the column name, and see which filter value also matched (ontology label or id)
-            matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || filter[:id]) }
-                                 .flatten
+            matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || val == filter[:id] ) }
+                                 .flatten                                 
           end
         end
         matches

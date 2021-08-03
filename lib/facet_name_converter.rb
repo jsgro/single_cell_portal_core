@@ -60,24 +60,13 @@ class FacetNameConverter
   #
   # * *returns*
   #   - (String) => String value of requested column/property
-  def self.convert_to_model(model_name, column_name, property)
-    mappings = model_name.to_sym == :hca ? ALEXANDRIA_TO_HCA : ALEXANDRIA_TO_TIM
+  def self.convert_to_model(source_model = :alex, target_model, column_name, property)
+    if source_model.to_sym == :tim
+      mappings = TIM_TO_ALEXANDRIA
+    else
+      mappings = target_model.to_sym == :hca ? ALEXANDRIA_TO_HCA : ALEXANDRIA_TO_TIM
+    end
     # perform lookup, but fall back to provided column name if no match is found
-    mappings[column_name.to_sym]&.dig(property.to_sym) || column_name
-  end
-
-
-
-  # convert from Terra Interoperability Model to SCP metadata names 
-  #
-  # * *params*
-  #   - +column_name+ (String, Symbol) => facet name to convert
-  #   - +property+ (String, Symbol) => property to return (:id or :name only)
-  #
-  # * *returns*
-  #   - (String) => String value of requested column/property
-  def self.convert_to_scp(column_name, property)
-    mappings = TIM_TO_ALEXANDRIA
     mappings[column_name.to_sym]&.dig(property.to_sym) || column_name
   end
 end
