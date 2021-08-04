@@ -2,6 +2,9 @@
 # this is currently for PoC work on XDSS - eventually this will be replaced by an onotology server that can handle
 # conversions programmatically
 class FacetNameConverter
+  # controlled list of metadata schema names
+  SCHEMA_NAMES = %i[alexandria tim hca].freeze
+
   # map of Alexandria metadata convention names to HCA 'short' names
   ALEXANDRIA_TO_HCA = {
     'biosample_id' => 'biosample_id',
@@ -47,7 +50,13 @@ class FacetNameConverter
   #
   # * *returns*
   #   - (String) => String value of requested column/property
+  #
+  # * *raises*
+  #   - (ArgumentError) => if source/target schema do not exist
   def self.convert_schema_column(source_schema = :alexandria, target_schema, column_name)
+    invalid_schemas = [source_schema.to_sym, target_schema.to_sym] - SCHEMA_NAMES
+    raise ArgumentError, "invalid schema conversion: #{invalid_schemas.join(', ')}" if invalid_schemas.any?
+
     map_name = "FacetNameConverter::#{source_schema.upcase}_TO_#{target_schema.upcase}"
     if Object.const_defined? map_name
       # perform lookup, but fall back to provided column name if no match is found

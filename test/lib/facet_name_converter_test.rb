@@ -31,4 +31,10 @@ class FacetNameConverterTest < ActiveSupport::TestCase
   test 'should convert to TIM names' do
     compare_all_fields(:tim)
   end
+
+  test 'should throw error on invalid conversion' do
+    assert_raise ArgumentError do
+      FacetNameConverter.convert_schema_column(:alexandria, :foo, 'species')
+    end
+  end
 end
