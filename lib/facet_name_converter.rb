@@ -1,9 +1,9 @@
-# class for converting from alexandria convention names to HCA or TIM metadata model names (i.e. columns, not individual values)
+# class for converting from Alexandria convention names to HCA or TIM metadata model names (i.e. columns, not individual values)
 # this is currently for PoC work on XDSS - eventually this will be replaced by an onotology server that can handle
 # conversions programmatically
 # entries have a :name (column name in query results for facet matching) and :id (ElasticSearch encoded property name)
 class FacetNameConverter
-  # map of alexandria metadata convention names to HCA 'short' names
+  # map of Alexandria metadata convention names to HCA 'short' names
   ALEXANDRIA_TO_HCA = {
     biosample_id: { name: 'biosample_id', id: 'biosample_id' },
     cell_type: { name: 'cell_type', id: 'cell_type' },
@@ -19,7 +19,7 @@ class FacetNameConverter
     accession: {name: 'project_short_name', id: 'project_short_name'}
   }.freeze
 
-  # map of alexandria metadata convention names to namespace Terra Interoperability Model (TIM) names
+  # map of Alexandria metadata convention names to namespace Terra Interoperability Model (TIM) names
   ALEXANDRIA_TO_TIM = {
     biosample_id: { name: 'dct:identifier', id: 'tim__a__terraa__corec__a__bioa__samplep__dctc__identifier' },
     donor_id: { name: 'prov:wasDerivedFrom', id: 'tim__a__terraa__corec__a__bioa__sampleprovc__wasa__deriveda__from' },
@@ -34,6 +34,23 @@ class FacetNameConverter
     accession: { name: 'rdfs:label', id: 'tim__rdfsc__label'}
   }.freeze
 
+
+  # map of Terra Interoperability Model (TIM) metadata convention names to Alexandria metadata convention names
+  TIM_TO_ALEXANDRIA = {
+    'dct:identifier': { name: 'biosample_id' },
+    'prov:wasDerivedFrom': { name: 'donor_id' },
+    'TerraCore:hasDisease': { name: 'disease'},
+    'TerraCore:hasLibraryPrep': { name: 'library_preparation_protocol'},
+    'TerraCore:hasAnatomicalSite': { name: 'organ'},
+    'organism_age': { name: 'organism_age'},
+    'TerraCore:hasSex': { name: 'sex'},
+    'TerraCore:hasOrganismType': {name: 'species'},
+    'dct:title': { name: 'study_name' },
+    'dct:description': { name: 'study_description'},
+    'rdfs:label': { name: 'accession'}
+  }.freeze
+  
+
   # convert from SCP metadata names to Terra Interoperability Model or HCA short names
   #
   # * *params*
@@ -43,8 +60,12 @@ class FacetNameConverter
   #
   # * *returns*
   #   - (String) => String value of requested column/property
-  def self.convert_to_model(model_name, column_name, property)
-    mappings = model_name.to_sym == :hca ? ALEXANDRIA_TO_HCA : ALEXANDRIA_TO_TIM
+  def self.convert_to_model(source_model = :alex, target_model, column_name, property)
+    if source_model.to_sym == :tim
+      mappings = TIM_TO_ALEXANDRIA
+    else
+      mappings = target_model.to_sym == :hca ? ALEXANDRIA_TO_HCA : ALEXANDRIA_TO_TIM
+    end
     # perform lookup, but fall back to provided column name if no match is found
     mappings[column_name.to_sym]&.dig(property.to_sym) || column_name
   end
