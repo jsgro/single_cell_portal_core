@@ -1,4 +1,4 @@
-# class for converting from Alexandria convention names to HCA or TIM metadata model names (i.e. columns, not individual values)
+# class for converting from Alexandria convention names to HCA or TIM metadata model names (i.e. columns, not  values)
 # this is currently for PoC work on XDSS - eventually this will be replaced by an onotology server that can handle
 # conversions programmatically
 class FacetNameConverter
@@ -37,17 +37,18 @@ class FacetNameConverter
   TIM_TO_ALEXANDRIA = ALEXANDRIA_TO_TIM.invert.freeze
   HCA_TO_ALEXANDRIA = ALEXANDRIA_TO_HCA.invert.freeze
 
-  # convert column name from one metadata schema to another
+  # convert a metadata schema column name from one schema to another
+  # e.g. FacetNameConverter.convert_schema_column(:alexandria, :tim, 'species') => 'TerraCore:hasOrganismType'
   #
   # * *params*
-  #   - +source_model+ (String, Symbol) => Name of schema to convert from (:alexandria, :hca or :tim)
-  #   - +target_name+ (String, Symbol) => Name of schema to convert to (:alexandria, :hca or :tim)
-  #   - +column_name+ (String, Symbol) => facet name to convert
+  #   - +source_schema+ (String, Symbol) => Name of schema to convert from (:alexandria, :hca or :tim)
+  #   - +target_schema+ (String, Symbol) => Name of schema to convert to (:alexandria, :hca or :tim)
+  #   - +column_name+ (String, Symbol) => column name to convert from source_schema
   #
   # * *returns*
   #   - (String) => String value of requested column/property
-  def self.convert_to_model(source_model = :alexandria, target_model, column_name)
-    map_name = "FacetNameConverter::#{source_model.upcase}_TO_#{target_model.upcase}"
+  def self.convert_schema_column(source_schema = :alexandria, target_schema, column_name)
+    map_name = "FacetNameConverter::#{source_schema.upcase}_TO_#{target_schema.upcase}"
     if Object.const_defined? map_name
       # perform lookup, but fall back to provided column name if no match is found
       mappings = map_name.constantize

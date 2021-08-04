@@ -167,8 +167,8 @@ class DataRepoClientTest < ActiveSupport::TestCase
         ]
       }
     ]
-    species_field = FacetNameConverter.convert_to_model(:alexandria,:tim, :species)
-    disease_field = FacetNameConverter.convert_to_model(:alexandria,:tim, :disease)
+    species_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :species)
+    disease_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :disease)
     expected_query = "([#{species_field}]:\"NCBITaxon9609\") OR ([#{species_field}]:\"Homo sapiens\") AND " \
                      "([#{disease_field}]:\"MONDO_0018076\") OR ([#{disease_field}]:\"tuberculosis\") OR " \
                      "([#{disease_field}]:\"MONDO_0005109\") OR ([#{disease_field}]:\"HIV infectious disease\")"
@@ -179,8 +179,8 @@ class DataRepoClientTest < ActiveSupport::TestCase
 
   test 'should generate query JSON from keywords' do
     keywords = %w[pulmonary human lung]
-    name_field = FacetNameConverter.convert_to_model(:alexandria,:tim, :study_name)
-    description_field = FacetNameConverter.convert_to_model(:alexandria,:tim, :study_description)
+    name_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_name)
+    description_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_description)
     expected_query = "([#{name_field}]:\"pulmonary\" OR [#{name_field}]:\"human\" OR [#{name_field}]:\"lung\") OR " \
                      "([#{description_field}]:\"pulmonary\" OR [#{description_field}]:\"human\" OR " \
                      "[#{description_field}]:\"lung\")"
@@ -189,10 +189,10 @@ class DataRepoClientTest < ActiveSupport::TestCase
   end
 
   test 'should merge query JSON for facets and keywords' do
-    name_field = FacetNameConverter.convert_to_model(:alexandria, :tim, :study_name)
-    description_field = FacetNameConverter.convert_to_model(:alexandria, :tim, :study_description)
-    species_field = FacetNameConverter.convert_to_model(:alexandria, :tim, :species)
-    disease_field = FacetNameConverter.convert_to_model(:alexandria, :tim, :disease)
+    name_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_name)
+    description_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_description)
+    species_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :species)
+    disease_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :disease)
     selected_facets = [
       { id: :species, filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }] },
       { id: :disease, filters: [
@@ -224,11 +224,11 @@ class DataRepoClientTest < ActiveSupport::TestCase
     original_count = results['result'].count
     assert original_count > 0
     sample_row = results['result'].sample
-    species_field_name = FacetNameConverter.convert_to_model(:alexandria,:tim, :species)
+    species_field_name = FacetNameConverter.convert_schema_column(:alexandria, :tim, :species)
     assert_equal 'Homo sapiens', sample_row[species_field_name]
     expected_project = 'Single-cell RNA-sequencing reveals profibrotic roles of distinct epithelial and mesenchymal ' \
                        'lineages in pulmonary fibrosis'
-    project_title_field = FacetNameConverter.convert_to_model(:alexandria,:tim, :study_name)
+    project_title_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_name)
     assert_equal expected_project, sample_row[project_title_field]
 
     # refine query and re-run

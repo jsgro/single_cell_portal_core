@@ -640,7 +640,7 @@ module Api
           if facet_matches.present?
             facet_matches.each do |mapping|
               mapping.each do |key, val|
-                facet_name = FacetNameConverter.convert_to_model(:tim, :alexandria, key)
+                facet_name = FacetNameConverter.convert_schema_column(:tim, :alexandria, key)
                 simple_TDR_result[facet_name] = val
               end
             end
@@ -730,9 +730,9 @@ module Api
       # handle adding to and checking it.
       def self.process_tdr_result_row(row, results, selected_facets:, terms:, added_file_ids:)
         # get column name mappings for assembling results
-        short_name_field = FacetNameConverter.convert_to_model(:alexandria, :tim, :accession)
-        name_field = FacetNameConverter.convert_to_model(:alexandria, :tim, :study_name)
-        description_field = FacetNameConverter.convert_to_model(:alexandria, :tim, :study_description)
+        short_name_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :accession)
+        name_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_name)
+        description_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_description)
         short_name = row[short_name_field]
         results[short_name] ||= {
           tdr_result: true, # identify this entry as coming from Data Repo
@@ -780,7 +780,7 @@ module Api
 
       # determine facet matches for an individual result row from TDR
       def self.get_facet_match_for_tdr_result(facet, result_row)
-        tdr_name = FacetNameConverter.convert_to_model(:alexandria, :tim, facet[:id])
+        tdr_name = FacetNameConverter.convert_schema_column(:alexandria, :tim, facet[:id])
         if facet[:filters].is_a? Hash
           # this is a numeric facet, so convert to range for match
           # TODO: determine correct unit/datatype and convert
@@ -799,8 +799,8 @@ module Api
 
       # determine term/keyword match for an individual result row from TDR
       def self.get_term_match_for_tdr_result(term, result_row)
-        name_field = FacetNameConverter.convert_to_model(:tim, :alexandria, :study_name)
-        description_field = FacetNameConverter.convert_to_model(:tim, :alexandria, :study_description)
+        name_field = FacetNameConverter.convert_schema_column(:tim, :alexandria, :study_name)
+        description_field = FacetNameConverter.convert_schema_column(:tim, :alexandria, :study_description)
         matches = []
         [name_field, description_field].each do |tdr_name|
           result_row.each_pair do |col, val|

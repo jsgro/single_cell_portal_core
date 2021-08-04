@@ -17,11 +17,11 @@ class FacetNameConverterTest < ActiveSupport::TestCase
   # iterate through all fields and test conversion
   def compare_all_fields(model_name)
     @scp_field_names.each_with_index do |scp_name, index|
-      converted_name = FacetNameConverter.convert_to_model(:alexandria, model_name, scp_name)
+      converted_name = FacetNameConverter.convert_schema_column(:alexandria, model_name, scp_name)
       assert_equal @expected_conversions[model_name][index], converted_name
     end
     # test fallback
-    assert_equal @nonexistent_field, FacetNameConverter.convert_to_model(:alexandria, model_name, @nonexistent_field)
+    assert_equal @nonexistent_field, FacetNameConverter.convert_schema_column(:alexandria, model_name, @nonexistent_field)
   end
 
   test 'should convert to HCA names' do
