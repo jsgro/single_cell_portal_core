@@ -47,8 +47,14 @@ class FacetNameConverter
   # * *returns*
   #   - (String) => String value of requested column/property
   def self.convert_to_model(source_model = :alexandria, target_model, column_name)
-    mappings = "FacetNameConverter::#{source_model.upcase}_TO_#{target_model.upcase}".constantize
-    # perform lookup, but fall back to provided column name if no match is found
-    mappings[column_name.to_sym] || column_name
+    map_name = "FacetNameConverter::#{source_model.upcase}_TO_#{target_model.upcase}"
+    if Object.const_defined? map_name
+      # perform lookup, but fall back to provided column name if no match is found
+      mappings = map_name.constantize
+      mappings[column_name] || column_name
+    else
+      # conversion not possible, so fall back on column_name
+      column_name
+    end
   end
 end
