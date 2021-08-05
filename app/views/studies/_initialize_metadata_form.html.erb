@@ -158,7 +158,6 @@
             validationErrors = await window.SCP.validateFile(file, 'metadata')
           <% end %>
 
-          console.log('validationErrors', validationErrors)
           const numErrors = validationErrors.length
 
           if (numErrors === 0) {

@@ -11,7 +11,6 @@
 /** Get lines and file type from a selected local file */
 export async function readLinesAndType(file, numLines) {
   return new Promise((resolve, reject) => {
-    // Do something with the FileReader object
     const reader = new FileReader()
 
     reader.onload = function(ev) {
@@ -36,6 +35,4 @@ export async function readLinesAndType(file, numLines) {
 
     reader.readAsArrayBuffer(blob)
   })
-
-  // return new Promise((resolve, reject) => {resolve('ok')})
 }
