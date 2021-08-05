@@ -5,7 +5,7 @@ import * as ValidateFile from 'lib/validation/validate-file'
 const mockDir = 'public/mock_data/validation'
 
 describe('Client-side file validation', () => {
-  it('catches metadata TYPE header errors', async () => {
+  it('catches TYPE header errors, works at library interface', async () => {
     const mockPath = `${mockDir}/metadata_example_bad_TYPE.txt`
     const fileContent = fs.readFileSync(mockPath, 'utf8')
 

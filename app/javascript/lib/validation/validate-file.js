@@ -36,8 +36,6 @@ function validateUniqueHeaders(headers) {
     issues.push(['error', 'format', msg])
   }
 
-  console.log('in validateUniqueHeaders, issues:', issues)
-
   return issues
 }
 
@@ -60,8 +58,6 @@ function validateTypeKeyword(annotTypes) {
       `Provided value was "${value}".`
     issues.push(['error', 'format', msg])
   }
-
-  console.log('in validateTypeKeyword, issues:', issues)
 
   return issues
 }
