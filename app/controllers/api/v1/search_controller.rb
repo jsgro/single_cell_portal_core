@@ -294,6 +294,17 @@ module Api
         # perform TDR search, if enabled, and there are facets/terms provided by user
         if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') && (@facets.present? || @term_list.present?)
           @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
+
+          if @facets.present?
+            simple_tdr_results = self.class.simplify_tdr_facet_search_results(@tdr_results, @facets)
+            matched_tdr_studies = self.class.match_studies_by_facet(simple_tdr_results, @facets)
+            
+            if @studies_by_facet.present?
+              @studies_by_facet.merge!(matched_tdr_studies)
+            else
+              @studies_by_facet = matched_tdr_studies
+            end
+          end
           # just log for now
           logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
           logger.info pp @tdr_results if @tdr_results.any?
@@ -619,6 +630,27 @@ module Api
         matches
       end
 
+      # Simplify TDR results to be mappable for the UI badges for faceted search
+      def self.simplify_tdr_facet_search_results(query_results, search_facets)
+        simple_TDR_result = {}
+        simple_TDR_results = []
+        query_results.each_pair do |accession, result|
+          facet_matches = result[:facet_matches]
+          simple_TDR_result[:study_accession] = accession
+          if facet_matches.present?
+            facet_matches.each { |mapping| 
+              mapping.each_pair { |key, val| 
+                short_name_field = FacetNameConverter.convert_to_model(:tim, :alex, key, :name)
+                simple_TDR_result[short_name_field] = val
+              }
+            }
+          end
+          simple_TDR_results << simple_TDR_result
+        end
+        simple_TDR_results
+      end
+
+
       # find matching filters within a given facet based on query parameters
       def self.find_matching_filters(facet:, filter_values:)
         matching_filters = []
@@ -658,29 +690,37 @@ module Api
           match.delete(:name)
           return match
         else
-          return matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] }
+          return matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] || filter[:name] == search_result[result_key]}
         end
       end
 
       # execute a search in TDR and get back normalized results
       def self.get_tdr_results(selected_facets:, terms:)
         results = {}
-        if selected_facets.present?
-          facet_json = ApplicationController.data_repo_client.generate_query_from_facets(selected_facets)
-        end
-        if terms.present?
-          term_json = ApplicationController.data_repo_client.generate_query_from_keywords(terms)
-        end
-        # now we merge the two queries together to perform a single search request
-        query_json = ApplicationController.data_repo_client.merge_query_json(facet_query: facet_json, term_query: term_json)
-        logger.info "Executing TDR query with: #{query_json}"
-        raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json)
-        added_file_ids = {}
-        raw_tdr_results['result'].each do |result_row|
-          results = process_tdr_result_row(result_row, results,
-            selected_facets: selected_facets,
-            terms: terms,
-            added_file_ids: added_file_ids)
+        begin
+          if selected_facets.present?
+            facet_json = ApplicationController.data_repo_client.generate_query_from_facets(selected_facets)
+          end
+          if terms.present?
+            term_json = ApplicationController.data_repo_client.generate_query_from_keywords(terms)
+          end
+          # now we merge the two queries together to perform a single search request
+          query_json = ApplicationController.data_repo_client.merge_query_json(facet_query: facet_json, term_query: term_json)
+          logger.info "Executing TDR query with: #{query_json}"
+          snapshot_ids = AdminConfiguration.get_tdr_snapshot_ids
+          logger.info "Scoping TDR query to snapshots: #{snapshot_ids.join(', ')}" if snapshot_ids.present?
+          raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json,
+                                                                                          snapshot_ids: snapshot_ids)
+          added_file_ids = {}
+          raw_tdr_results['result'].each do |result_row|
+            results = process_tdr_result_row(result_row, results,
+                                             selected_facets: selected_facets,
+                                             terms: terms,
+                                             added_file_ids: added_file_ids)
+          end
+        rescue RestClient::Exception => e
+          Rails.logger.error "Error querying TDR: #{e.class.name} -- #{e.message}"
+          ErrorTracker.report_exception(e, nil, selected_facets, { terms: terms })
         end
         results
       end
@@ -699,6 +739,7 @@ module Api
           accession: short_name,
           name: row[name_field],
           description: row[description_field],
+          project_id: row['project_id'],
           facet_matches: [],
           term_matches: [],
           file_information: []
@@ -748,11 +789,11 @@ module Api
         else
           matches = []
           facet[:filters].each do |filter|
-            # look for match on the column name, and see which filter value also matched (ontology label or id)
-            matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || filter[:id]) }
-                                 .flatten
+            matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || val == filter[:id] ) }
+                                 .flatten                                 
           end
         end
+        matches.reject! { |key, value| key.blank? || value.blank? }
         matches
       end
 

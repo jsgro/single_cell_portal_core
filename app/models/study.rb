@@ -704,7 +704,7 @@ class Study
       self.where(queued_for_deletion: false)
     else
       studies = self.where(queued_for_deletion: false, user_id: user._id)
-      shares = StudyShare.where(email: user.email, permission: 'Edit').map(&:study).select {|s| !s.queued_for_deletion }
+      shares = StudyShare.where(email: /#{user.email}/i, permission: 'Edit').map(&:study).select {|s| !s.queued_for_deletion }
       [studies + shares].flatten.uniq
     end
   end
@@ -718,7 +718,7 @@ class Study
     else
       public = self.where(public: true, queued_for_deletion: false).map(&:id)
       owned = self.where(user_id: user._id, public: false, queued_for_deletion: false).map(&:id)
-      shares = StudyShare.where(email: user.email).map(&:study).select {|s| !s.queued_for_deletion }.map(&:id)
+      shares = StudyShare.where(email: /#{user.email}/i).map(&:study).select {|s| !s.queued_for_deletion }.map(&:id)
       group_shares = []
       if user.registered_for_firecloud && (user.refresh_token.present? || user.api_access_token.present?)
         user_client = FireCloudClient.new(user, FireCloudClient::PORTAL_NAMESPACE)
@@ -737,7 +737,7 @@ class Study
       self.where(queued_for_deletion: false)
     else
       owned = self.where(user_id: user._id, queued_for_deletion: false).map(&:_id)
-      shares = StudyShare.where(email: user.email).map(&:study).select {|s| !s.queued_for_deletion }.map(&:_id)
+      shares = StudyShare.where(email: /#{user.email}/i).map(&:study).select {|s| !s.queued_for_deletion }.map(&:_id)
       group_shares = []
       if user.registered_for_firecloud
         user_client = FireCloudClient.new(user, FireCloudClient::PORTAL_NAMESPACE)
@@ -754,7 +754,7 @@ class Study
     if user.nil?
       false
     else
-      if self.admins.include?(user.email)
+      if self.admins.map(&:downcase).include?(user.email.downcase)
         return true
       else
         self.user_in_group_share?(user, 'Edit')
@@ -768,7 +768,7 @@ class Study
       false
     else
       # use if/elsif with explicit returns to ensure skipping downstream calls
-      if self.study_shares.can_view.include?(user.email)
+      if self.study_shares.can_view.map(&:downcase).include?(user.email.downcase)
         return true
       elsif self.can_edit?(user)
         return true
@@ -786,7 +786,7 @@ class Study
     else
       if self.user == user
         return true
-      elsif self.study_shares.non_reviewers.include?(user.email)
+      elsif self.study_shares.non_reviewers.map(&:downcase).include?(user.email.downcase)
         return true
       else
         self.user_in_group_share?(user, 'View', 'Edit')
