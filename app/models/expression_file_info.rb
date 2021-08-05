@@ -76,7 +76,7 @@ class ExpressionFileInfo
 
   # remove invalid StudyFile ids, as well as nil/empty string values
   def sanitize_raw_counts_associations
-    invalid_ids = raw_counts_associations.map { |study_file_id| StudyFile.find(study_file_id).nil? }
+    invalid_ids = raw_counts_associations.select { |study_file_id| StudyFile.find(study_file_id).nil? }
     raw_counts_associations.reject! { |study_file_id| study_file_id.blank? || invalid_ids.include?(study_file_id) }
   end
 
