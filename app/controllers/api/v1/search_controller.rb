@@ -688,9 +688,9 @@ module Api
         if db_facet.is_numeric?
           match = matching_facet[:filters].dup
           match.delete(:name)
-          return match
+          match
         else
-          return matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] || filter[:name] == search_result[result_key]}
+          matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] || filter[:name] == search_result[result_key]}
         end
       end
 
@@ -739,10 +739,17 @@ module Api
           accession: short_name,
           name: row[name_field],
           description: row[description_field],
-          project_id: row['project_id'],
+          hca_project_id: row['project_id'],
           facet_matches: [],
           term_matches: [],
-          file_information: []
+          file_information: [
+            {
+              url: row['project_id'],
+              file_type: 'Project Manifest',
+              upload_file_size: 1.megabyte, # placeholder filesize as we don't know until manifest is downloaded
+              name: "#{short_name}.tsv"
+            }
+          ]
         }.with_indifferent_access
         result = results[short_name]
         # determine facet filter matches

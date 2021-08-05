@@ -68,7 +68,8 @@ export default function DownloadSelectionTable({
         </div>
       }
       {
-        !isLoading &&
+        // only render table if there are results to show
+        !isLoading && Object.keys(downloadInfo).length > 0 &&
         <table className="table table-terra">
           <thead>
             <tr>
@@ -98,6 +99,7 @@ export default function DownloadSelectionTable({
                   &nbsp;
                   <FontAwesomeIcon data-analytics-name="download-modal-column-info"
                     data-toggle="tooltip"
+                    data-container="terra-table"
                     data-original-title={COLUMNS[colType].info}
                     className="action log-click help-icon"
                     icon={faInfoCircle} />
@@ -156,6 +158,12 @@ const COLUMNS = {
     title: 'Metadata',
     types: ['Metadata'],
     info: 'The listing of all cells in the study, along with associated metadata such as species, cell type, etc.',
+    default: true
+  },
+  project_manifest: {
+    title: 'Project Manifest',
+    types: ['Project Manifest'],
+    info: 'List of available project files and associated project-level metadata.',
     default: true
   },
   analysis: {
@@ -270,12 +278,17 @@ export function getSelectedFileHandles(downloadInfo, selectedBoxes, hashByStudy=
   }
   const fileTypeKeys = Object.keys(selectedBoxes.all).filter(key => key !== 'all')
   downloadInfo.forEach((study, index) => {
+    if (hashByStudy) {
+      // initialize empty array for storing file handles by study accession
+      fileHandles[study.accession] = []
+    }
     fileTypeKeys.forEach(colType => {
       if (selectedBoxes.studies[index][colType]) {
         const filesOfType = study.studyFiles.filter(file => COLUMNS[colType].types.includes(file.file_type))
-        const selectedHandles = filesOfType.map(file => file.url ? { url: file.url, name: file.name } : file.id)
+        {/* eslint-disable-next-line max-len */}
+        const selectedHandles = filesOfType.map(file => file.url ? { url: file.url, name: file.name, file_type: file.file_type } : file.id)
         if (hashByStudy) {
-          fileHandles[study.accession] = selectedHandles
+          fileHandles[study.accession].push(...selectedHandles)
         } else {
           fileHandles.push(...selectedHandles)
         }
