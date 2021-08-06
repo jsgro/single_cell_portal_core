@@ -298,7 +298,7 @@ module Api
           if @facets.present?
             simple_tdr_results = self.class.simplify_tdr_facet_search_results(@tdr_results, @facets)
             matched_tdr_studies = self.class.match_studies_by_facet(simple_tdr_results, @facets)
-            
+
             if @studies_by_facet.present?
               @studies_by_facet.merge!(matched_tdr_studies)
             else
@@ -638,12 +638,12 @@ module Api
           facet_matches = result[:facet_matches]
           simple_TDR_result[:study_accession] = accession
           if facet_matches.present?
-            facet_matches.each { |mapping| 
-              mapping.each_pair { |key, val| 
-                short_name_field = FacetNameConverter.convert_to_model(:tim, :alex, key, :name)
-                simple_TDR_result[short_name_field] = val
-              }
-            }
+            facet_matches.each do |mapping|
+              mapping.each do |key, val|
+                facet_name = FacetNameConverter.convert_schema_column(:tim, :alexandria, key)
+                simple_TDR_result[facet_name] = val
+              end
+            end
           end
           simple_TDR_results << simple_TDR_result
         end
@@ -688,9 +688,9 @@ module Api
         if db_facet.is_numeric?
           match = matching_facet[:filters].dup
           match.delete(:name)
-          return match
+          match
         else
-          return matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] || filter[:name] == search_result[result_key]}
+          matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] || filter[:name] == search_result[result_key]}
         end
       end
 
@@ -730,19 +730,26 @@ module Api
       # handle adding to and checking it.
       def self.process_tdr_result_row(row, results, selected_facets:, terms:, added_file_ids:)
         # get column name mappings for assembling results
-        short_name_field = FacetNameConverter.convert_to_model(:tim, :accession, :name)
-        name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
-        description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :name)
+        short_name_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :accession)
+        name_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_name)
+        description_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_description)
         short_name = row[short_name_field]
         results[short_name] ||= {
           tdr_result: true, # identify this entry as coming from Data Repo
           accession: short_name,
           name: row[name_field],
           description: row[description_field],
-          project_id: row['project_id'],
+          hca_project_id: row['project_id'],
           facet_matches: [],
           term_matches: [],
-          file_information: []
+          file_information: [
+            {
+              url: row['project_id'],
+              file_type: 'Project Manifest',
+              upload_file_size: 1.megabyte, # placeholder filesize as we don't know until manifest is downloaded
+              name: "#{short_name}.tsv"
+            }
+          ]
         }.with_indifferent_access
         result = results[short_name]
         # determine facet filter matches
@@ -780,7 +787,7 @@ module Api
 
       # determine facet matches for an individual result row from TDR
       def self.get_facet_match_for_tdr_result(facet, result_row)
-        tdr_name = FacetNameConverter.convert_to_model(:tim, facet[:id], :name)
+        tdr_name = FacetNameConverter.convert_schema_column(:alexandria, :tim, facet[:id])
         if facet[:filters].is_a? Hash
           # this is a numeric facet, so convert to range for match
           # TODO: determine correct unit/datatype and convert
@@ -790,7 +797,7 @@ module Api
           matches = []
           facet[:filters].each do |filter|
             matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || val == filter[:id] ) }
-                                 .flatten                                 
+                                 .flatten
           end
         end
         matches.reject! { |key, value| key.blank? || value.blank? }
@@ -799,8 +806,8 @@ module Api
 
       # determine term/keyword match for an individual result row from TDR
       def self.get_term_match_for_tdr_result(term, result_row)
-        name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
-        description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :name)
+        name_field = FacetNameConverter.convert_schema_column(:tim, :alexandria, :study_name)
+        description_field = FacetNameConverter.convert_schema_column(:tim, :alexandria, :study_description)
         matches = []
         [name_field, description_field].each do |tdr_name|
           result_row.each_pair do |col, val|

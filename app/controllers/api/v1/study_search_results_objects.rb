@@ -68,6 +68,7 @@ module Api
             description: study[:description],
             public: true,
             detached: false,
+            hca_project_id: study[:hca_project_id],
             cell_count: 0,
             gene_count: 0,
             study_url: '#',

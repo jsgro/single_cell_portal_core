@@ -270,17 +270,17 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
     selected_facets.each do |search_facet|
       facet_id = search_facet[:id]
       # convert to names used in TDR, or fall back to SCP name if not found
-      tdr_column = FacetNameConverter.convert_to_model(:tim, facet_id, :id) || facet_id
+      tdr_column = FacetNameConverter.convert_schema_column(:alexandria, :tim, facet_id) || facet_id
       if search_facet[:filters].is_a? Hash # this is a numeric facet w/ min/max/unit
         # cast to integer for matching; TODO: determine correct unit/datatype and convert
         filters = ["#{search_facet.dig(:filters, :min).to_i}-#{search_facet.dig(:filters, :max).to_i}"]
       else
         filters = search_facet[:filters].map(&:values).flatten
       end
-      elements = filters.map {|filter| "#{tdr_column}:#{filter}" }
-      formatted_elements << "(#{elements.join(' OR ')})"
+      elements = filters.map {|filter| "([#{tdr_column}]:\"#{filter}\")" }
+      formatted_elements << "#{elements.join(' OR ')}"
     end
-    {query_string: {query: formatted_elements.join(' AND ')}}
+    { query_string: { query: formatted_elements.join(' AND ') } }
   end
 
   # generate query json from a list of keywords/terms to search titles/descriptions
@@ -291,15 +291,15 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   # * *returns*
   #   - (Hash) => Hash representation of query in ElasticSearch query DSL (must be cast to JSON for use in DataRepoClient#query_snapshot_indexes)
   def generate_query_from_keywords(term_list)
-    name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :id)
-    desc_field = FacetNameConverter.convert_to_model(:tim, :study_description, :id)
+    name_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_name)
+    desc_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_description)
     formatted_elements = []
     [name_field, desc_field].each do |tdr_column|
-      elements = term_list.map {|term| "#{tdr_column}:#{term}"}
+      elements = term_list.map { |term| "[#{tdr_column}]:\"#{term}\"" }
       formatted_elements << "(#{elements.join(' OR ')})"
     end
     # this is a logical OR query as a match in either name or description is valid
-    {query_string: {query: formatted_elements.join(' OR ')}}
+    { query_string: { query: formatted_elements.join(' OR ') } }
   end
 
   # merge two query json objects together, if necessary
