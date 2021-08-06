@@ -1,6 +1,6 @@
 # Query Human Cell Atlas Azul service for metadata associated with both experimental and analysis data
 # No ServiceAccountManager or GoogleServiceClient includes as all requests are unauthenticated for public data
-class HcaAzulClient < Struct.new(:api_root, :default_catalog)
+class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   include ApiHelpers
 
   GOOGLE_SCOPES = %w[openid email profile].freeze
@@ -8,9 +8,6 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog)
 
   # maximum wait time for manifest generation
   MAX_MANIFEST_TIMEOUT = 30.seconds.freeze
-
-  # list of available HCA catalogs
-  HCA_CATALOGS = %w[dcp1 dcp7 dcp8 lungmap].freeze
 
   # List of accepted formats for manifest files
   MANIFEST_FORMATS = %w[compact full terra.bdbag terra.pfb curl].freeze
@@ -24,9 +21,11 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog)
   # * *return*
   #   - +HcaAzulClient+ object
   def initialize
+    super
     self.api_root = BASE_URL
-    catalogs = get_catalogs
-    self.default_catalog = catalogs['default_catalog']
+    all_catalogs = get_catalogs
+    self.default_catalog = all_catalogs['default_catalog']
+    self.catalogs = all_catalogs['catalogs'].reject { |_, catalog| catalog['internal'] }.keys.sort
   end
 
   ##
@@ -180,17 +179,8 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog)
 
   # validate that a catalog exists by checking the list of available public catalogs
   def validate_catalog_name(catalog)
-    is_valid = true
-    begin
-      all_catalogs = get_catalogs['catalogs']
-      public_catalogs = all_catalogs.reject { |_, catalog_detail| catalog_detail['internal'] }.keys
-      is_valid = public_catalogs.include? catalog
-    rescue RestClient::Exception
-      # fall back to HCA_CATALOGS
-      is_valid = HCA_CATALOGS.include? catalog
-    end
-    unless is_valid
-      error = ArgumentError.new("#{catalog} is not a valid catalog: #{HCA_CATALOGS.join(',')}")
+    unless catalogs.include?(catalog) || get_catalogs['catalogs'].keys.include?(catalog)
+      error = ArgumentError.new("#{catalog} is not a valid catalog: #{catalogs.join(',')}")
       api_method = caller_locations.first.label
       ErrorTracker.report_exception(error, nil, { catalog: catalog, method: api_method })
       raise error
