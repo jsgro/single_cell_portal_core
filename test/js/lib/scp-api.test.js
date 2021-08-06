@@ -20,15 +20,14 @@ describe('JavaScript client for SCP REST API', () => {
     const mockSuccessResponse = {}
     const mockJsonPromise = Promise.resolve(mockSuccessResponse)
     const mockFetchPromise = Promise.resolve({
+      ok: true,
       json: () => {
         mockJsonPromise
       }
     })
     jest.spyOn(global, 'fetch').mockImplementation(() => mockFetchPromise)
 
-    // adding catch() to prevent UnhandledPromiseRejection error
-    // TODO: determine root cause of error coming from scp-api.js#628 and why it is being thrown
-    fetchFacetFilters('disease', 'tuberculosis').catch(e => { console.log(e) })
+    fetchFacetFilters('disease', 'tuberculosis')
     expect(global.fetch).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
