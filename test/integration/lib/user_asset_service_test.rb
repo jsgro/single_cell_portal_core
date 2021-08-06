@@ -79,7 +79,7 @@ class UserAssetServiceTest < ActiveSupport::TestCase
     FileUtils.rm_rf Rails.root.join('public', 'single_cell', 'ckeditor_assets')
     cache_local_state(undo: true)
     cache_dir = Dir.entries(Rails.root.join('public', 'single_cell')).detect { |dir| dir.starts_with? 'test-cache' }
-    FileUtils.rm_rf Rails.root.join('public', 'single_cell', cache_dir)
+    FileUtils.rm_rf Rails.root.join('public', 'single_cell', cache_dir) if cache_dir.present?
   end
 
   test 'should instantiate client' do
