@@ -26,7 +26,7 @@ describe('JavaScript client for SCP REST API', () => {
     })
     jest.spyOn(global, 'fetch').mockImplementation(() => mockFetchPromise)
 
-    fetchFacetFilters('disease', 'tuberculosis')
+    fetchFacetFilters('disease', 'tuberculosis').catch(e => { console.log(e) })
     expect(global.fetch).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
