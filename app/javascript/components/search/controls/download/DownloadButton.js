@@ -49,7 +49,9 @@ export default function DownloadButton({ searchResults={}, showDemoFiles=false }
     ?.map(result => ({
       accession: result.accession,
       name: result.name,
+      study_source: 'TDR',
       description: result.description,
+      hca_project_id: result.hca_project_id,
       studyFiles: showDemoFiles ? enableDemoResults(result.file_information) : result.file_information
     }))
 
