@@ -70,7 +70,7 @@ class UserAssetService
   def self.get_directory_entries(pathname = Dir.pwd)
     Dir.exists?(pathname) ? Dir.entries(pathname).keep_if {|entry| !entry.start_with?('.')} : []
   end
-  
+
   # get a list of all local assets; can scope by asset type
   #
   # * *params*
@@ -174,7 +174,7 @@ class UserAssetService
         create_download_directory(remote_asset.name)
         remote_asset.download local_path
         # make sure file is readable by all, writable only by owner
-        FileUtils.chmod 644, local_path
+        FileUtils.chmod 'a+r', local_path
         localized_files << Pathname.new(local_path)
       end
     end
