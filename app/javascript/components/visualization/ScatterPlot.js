@@ -295,7 +295,7 @@ function countOccurences(array) {
 function traceNameSort(a, b) {
   if (a === UNSPECIFIED_ANNOTATION_NAME) {return 1}
   if (b === UNSPECIFIED_ANNOTATION_NAME) {return -1}
-  return a.localeCompare(b)
+  return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */
@@ -366,7 +366,8 @@ function getPlotlyLayout({ width, height }={}, {
   if (!genes.length && annotParams && annotParams.name) {
     layout.legend = {
       itemsizing: 'constant',
-      title: { text: annotParams.name }
+      title: { text: annotParams.name },
+      y: 0.94
     }
   }
   layout.width = width
