@@ -16,6 +16,11 @@ describe('Download components for faceted search', () => {
     global.fetch = fetch
   })
 
+  // Note: tests that mock global.fetch must be cleared after every test
+  afterEach(() => {
+    // Restores all mocks back to their original value
+    jest.restoreAllMocks()
+  })
 
   it('shows expected tooltip for unauthenticated users', async () => {
     const wrapper = mount((
@@ -44,6 +49,17 @@ describe('Download components for faceted search', () => {
   })
 
   it('is enabled and shows the modal for signed in users who perform a search', async () => {
+    // mock request to prevent TypeError: response.json is not a function error
+    const mockSuccessResponse = {}
+    const mockJsonPromise = Promise.resolve(mockSuccessResponse)
+    const mockFetchPromise = Promise.resolve({
+      ok: true,
+      json: () => {
+        mockJsonPromise
+      }
+    })
+    jest.spyOn(global, 'fetch').mockImplementation(() => mockFetchPromise)
+
     const wrapper = mount((
       <UserContext.Provider value={{ accessToken: 'test'}}>
         <DownloadButton searchResults={{ matchingAccessions: ['SCP1', 'SCP2'], terms: 'foo', facets: [] }}/>
