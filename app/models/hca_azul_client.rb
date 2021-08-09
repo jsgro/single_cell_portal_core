@@ -9,8 +9,8 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog)
   # maximum wait time for manifest generation
   MAX_MANIFEST_TIMEOUT = 30.seconds.freeze
 
-  # list of available public HCA catalogs (used as fallback)
-  HCA_CATALOGS = %w[dcp1 dcp7 lungmap].freeze
+  # list of available HCA catalogs
+  HCA_CATALOGS = %w[dcp1 dcp7 dcp8 lungmap].freeze
 
   # List of accepted formats for manifest files
   MANIFEST_FORMATS = %w[compact full terra.bdbag terra.pfb curl].freeze

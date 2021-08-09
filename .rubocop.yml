@@ -49,3 +49,6 @@ Style/Documentation:
 
 Style/NumericPredicate:
   Enabled: false
+
+Style/ConditionalAssignment:
+  Enabled: false
