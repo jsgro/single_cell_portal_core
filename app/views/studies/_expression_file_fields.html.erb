@@ -5,6 +5,13 @@
   </div>
 </div>
 <div class="form-group">
-  <%= f.fields_for :expression_file_info %>
+  <%= f.fields_for :expression_file_info do |expr_file_info|
+    render partial: 'expression_file_info_fields',
+           locals: {
+             disable_processed: false,
+             disable_raw_counts: false,
+             f: expr_file_info
+           }
+  end %>
 </div>
 

@@ -463,6 +463,7 @@ class StudiesController < ApplicationController
       raw_counts_val = params[:is_raw_counts] == 'true'
       @study_file.expression_file_info.is_raw_counts = raw_counts_val
     end
+    @allow_only = params[:allow_only] ? params[:allow_only] : 'all'
   end
 
   # method to perform chunked uploading of data
@@ -1114,7 +1115,9 @@ class StudiesController < ApplicationController
 
   # set up variables for wizard
   def initialize_wizard_files
-    @expression_files = @study.study_files.by_type(['Expression Matrix', 'MM Coordinate Matrix'])
+    all_expression = @study.study_files.by_type(['Expression Matrix', 'MM Coordinate Matrix'])
+    @raw_matrix_files = all_expression.select { |matrix| matrix.is_raw_counts_file? }
+    @processed_matrix_files = all_expression.select { |matrix| !matrix.is_raw_counts_file? }
     @metadata_file = @study.metadata_file
     @cluster_ordinations = @study.study_files.by_type('Cluster')
     @coordinate_labels = @study.study_files.by_type('Coordinate Labels')
@@ -1123,25 +1126,32 @@ class StudiesController < ApplicationController
     @other_files = @study.study_files.by_type(['Documentation', 'Other'])
 
     # if files don't exist, build them for use later (excluding coordinate labels as we need the data to be current)
-    if @expression_files.empty?
-      @expression_files << @study.build_study_file({file_type: 'Expression Matrix'})
+    if @raw_matrix_files.empty?
+      matrix = @study.build_study_file({ file_type: 'Expression Matrix', expression_file_info: { is_raw_counts: true } })
+      @raw_matrix_files << matrix
+    end
+    if @processed_matrix_files.empty?
+      matrix = @study.build_study_file({ file_type: 'Expression Matrix', expression_file_info: { is_raw_counts: false } })
+      @processed_matrix_files << matrix
     end
     if @metadata_file.nil?
-      @metadata_file = @study.build_study_file({file_type: 'Metadata'})
+      @metadata_file = @study.build_study_file({ file_type: 'Metadata' })
     end
     if @cluster_ordinations.empty?
-      @cluster_ordinations << @study.build_study_file({file_type: 'Cluster'})
+      @cluster_ordinations << @study.build_study_file({ file_type: 'Cluster' })
     end
     if @marker_lists.empty?
-      @marker_lists << @study.build_study_file({file_type: 'Gene List'})
+      @marker_lists << @study.build_study_file({ file_type: 'Gene List' })
     end
     if @fastq_files.empty?
-      @fastq_files << @study.build_study_file({file_type: 'Fastq'})
+      @fastq_files << @study.build_study_file({ file_type: 'Fastq' })
     end
     if @other_files.empty?
-      @other_files << @study.build_study_file({file_type: 'Documentation'})
+      @other_files << @study.build_study_file({ file_type: 'Documentation' })
     end
-    @expression_files.each {|file| file.build_expression_file_info if file.expression_file_info.nil?}
+    (@raw_matrix_files + @processed_matrix_files).each do |file|
+      file.build_expression_file_info if file.expression_file_info.nil?
+    end
   end
 
   def set_user_projects

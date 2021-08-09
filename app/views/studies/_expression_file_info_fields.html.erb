@@ -2,10 +2,12 @@
   <div class="col-lg-2">
     <%= f.label :is_raw_counts, 'Is this a raw counts matrix?' %><br />
     <%= f.radio_button :is_raw_counts, 1,
-                       checked: f.object.is_raw_counts, class: 'raw-counts-radio'  %>
+                       checked: f.object.is_raw_counts, class: 'raw-counts-radio',
+                       disabled: disable_raw_counts %>
     <%= f.label :is_raw_counts, 'Yes', class: 'radio-pad' %>
     <%= f.radio_button :is_raw_counts, 0,
-                       checked: !f.object.is_raw_counts, class: 'raw-counts-radio' %>
+                       checked: !f.object.is_raw_counts, class: 'raw-counts-radio',
+                       disabled: disable_processed %>
     <%= f.label :is_raw_counts, 'No', class: 'radio-pad'  %>
   </div>
   <div class="col-lg-2">

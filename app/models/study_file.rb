@@ -1066,7 +1066,7 @@ class StudyFile
     when 'Coordinate Labels'
       'initialize_labels_form'
     when 'Expression Matrix'
-      'initialize_expression_form'
+      is_raw_counts_file? ? 'initialize_raw_expression_form' : 'initialize_processed_expression_form'
     when 'MM Coordinate Matrix'
       'initialize_expression_form'
     when '10X Genes File'

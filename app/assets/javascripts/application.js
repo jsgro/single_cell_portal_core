@@ -161,7 +161,8 @@ function elementVisible(element) {
 
 // used for keeping track of position in wizard
 var completed = {
-    initialize_expression_form_nav: false,
+    initialize_raw_expression_form_nav: false,
+    initialize_processed_expression_form_nav: false,
     initialize_metadata_form_nav: false,
     initialize_ordinations_form_nav: false,
     initialize_labels_form_nav: false,
