@@ -364,6 +364,7 @@ function getPlotlyLayout({ width, height }={}, {
     Object.assign(layout, props2d)
   }
   if (!genes.length && annotParams && annotParams.name) {
+  if (annotParams && annotParams.name) {
     layout.legend = {
       itemsizing: 'constant',
       title: { text: annotParams.name },
