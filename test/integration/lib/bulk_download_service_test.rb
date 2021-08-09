@@ -1,6 +1,6 @@
-require "test_helper"
+require 'test_helper'
 require 'csv'
-require "bulk_download_helper"
+require 'bulk_download_helper'
 
 class BulkDownloadServiceTest < ActiveSupport::TestCase
   include Minitest::Hooks
@@ -48,32 +48,17 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
   test 'should get requested file sizes by query' do
     file_listing = BulkDownloadService.get_download_info([@study.accession])
-    expected_info = [{
-      :name=>"Testing Study 12cf809a1e48cf84c369f4895a2a4411",
-      :accession=>"SCP15",
-      :description=>"This is the test study.",
-      :study_files=>[{
-        :name=>"expression_matrix_example.txt",
-        :id=>"60734561cc7ba00d899d03d4",
-        :file_type=>"Expression Matrix",
-        :upload_file_size=>1071
-      },{
-        :name=>"metadata_example.txt",
-        :id=>"60734563cc7ba00d899d03d6",
-        :file_type=>"Metadata",
-        :upload_file_size=>10147
-      },{
-        :name=>"cluster_example.txt",
-        :id=>"60734564cc7ba00d899d03d8",
-        :file_type=>"Cluster",
-        :upload_file_size=>680
-      }]
-    }]
-    assert_equal 1, expected_info.count
-    assert expected_info[0][:name].starts_with?('Testing Study')
-    assert_equal 3, expected_info[0][:study_files].count
-    assert_equal ["Expression Matrix", "Metadata", "Cluster"], expected_info[0][:study_files].map{|s| s[:file_type]}
-    assert_equal [1071, 10147, 680], expected_info[0][:study_files].map{|s| s[:upload_file_size]}
+    expected_info = [
+      {
+        name: @study.name,
+        accession: @study.accession,
+        description: @study.description,
+        study_files: @study.study_files.map do |f|
+          { name: f.name, id: f.id.to_s, file_type: f.file_type, upload_file_size: f.upload_file_size }
+        end
+      }
+    ]
+    assert_equal expected_info, file_listing
   end
 
   test 'should get requested directory sizes' do
@@ -183,25 +168,17 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
 
   test 'should generate study manifest file' do
     study = FactoryBot.create(:detached_study, name_prefix: "#{self.method_name}")
-    raw_counts_file =  FactoryBot.create(:study_file,
-      study: study,
-      file_type: 'Expression Matrix',
-      name: 'test_exp_validate.tsv',
-      taxon_id: Taxon.new.id,
-      expression_file_info: ExpressionFileInfo.new(
-        units: 'raw counts',
-        library_preparation_protocol: 'MARS-seq',
-        biosample_input_type: 'Whole cell',
-        modality: 'Transcriptomic: targeted',
-        is_raw_counts: true
-      )
-    )
+    FactoryBot.create(:study_file,
+                      study: study, file_type: 'Expression Matrix', name: 'test_exp_validate.tsv', taxon_id: Taxon.new.id,
+                      expression_file_info: ExpressionFileInfo.new(
+                        units: 'raw counts',
+                        library_preparation_protocol: 'MARS-seq',
+                        biosample_input_type: 'Whole cell',
+                        modality: 'Transcriptomic: targeted',
+                        is_raw_counts: true
+                      ))
 
-    metadata_file =  FactoryBot.create(:study_file,
-      study: study,
-      file_type: 'Metadata',
-      name: 'metadata2.tsv'
-    )
+    FactoryBot.create(:study_file, study: study, file_type: 'Metadata', name: 'metadata2.tsv')
 
     manifest_obj = BulkDownloadService.generate_study_manifest(study)
     # just test basic properties for now, we can add more once the format is finalized
@@ -213,8 +190,19 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     rows = tsv.read
     assert_equal 2, rows.count
     raw_count_row = rows.find {|r| r['filename'] == 'test_exp_validate.tsv'}
-    assert_equal "true", raw_count_row['is_raw_counts']
+    assert_equal 'true', raw_count_row['is_raw_counts']
 
     study.destroy!
+  end
+
+  test 'should create map of study file types to counts' do
+    files = StudyFile.where(queued_for_deletion: false)
+    expression_count = files.select { |file| file.file_type =~ /Matrix/ }.count
+    metadata_count = files.select { |file| file.file_type == 'Metadata' }.count
+    cluster_count = files.select { |file| file.file_type == 'Cluster' }.count
+    file_map = BulkDownloadService.create_file_type_map(files)
+    assert_equal expression_count, file_map['Expression Matrix'] + file_map['MM Coordinate Matrix']
+    assert_equal metadata_count, file_map['Metadata']
+    assert_equal cluster_count, file_map['Cluster']
   end
 end

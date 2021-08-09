@@ -20,6 +20,7 @@ describe('JavaScript client for SCP REST API', () => {
     const mockSuccessResponse = {}
     const mockJsonPromise = Promise.resolve(mockSuccessResponse)
     const mockFetchPromise = Promise.resolve({
+      ok: true,
       json: () => {
         mockJsonPromise
       }

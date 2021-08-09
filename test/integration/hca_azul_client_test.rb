@@ -7,6 +7,8 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   before(:all) do
     @hca_azul_client = ApplicationController.hca_azul_client
     @project_id = 'c1a9a93d-d9de-4e65-9619-a9cec1052eaa'
+    @project_short_name = 'PulmonaryFibrosisGSE135893'
+    @default_catalog = @hca_azul_client.get_catalogs['default_catalog'] || 'dcp7'
   end
 
   test 'should instantiate client' do
@@ -17,13 +19,26 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   test 'should get catalogs' do
     catalogs = @hca_azul_client.get_catalogs
     default_catalog = catalogs['default_catalog']
-    all_catalogs = catalogs['catalogs'].keys
-    assert_equal HcaAzulClient::HCA_CATALOGS.sort, all_catalogs.sort
+    public_catalogs = catalogs['catalogs'].reject { |_, catalog| catalog['internal'] }.keys
+    assert_equal HcaAzulClient::HCA_CATALOGS.sort, public_catalogs.sort
     assert HcaAzulClient::HCA_CATALOGS.include? default_catalog
   end
 
+  test 'should get projects' do
+    projects = @hca_azul_client.get_projects(@default_catalog)
+    assert projects.keys.sort == %w[hits pagination termFacets]
+    assert projects['hits'].any?
+  end
+
+  test 'should get one project' do
+    project = @hca_azul_client.get_project(@default_catalog, @project_id)
+    assert_equal @project_id, project['entryId']
+    project_detail = project['projects'].first
+    assert_equal @project_short_name, project_detail['projectShortname']
+  end
+
   test 'should get HCA metadata tsv link' do
-    manifest_info = @hca_azul_client.get_project_manifest_link('dcp7', @project_id)
+    manifest_info = @hca_azul_client.get_project_manifest_link(@default_catalog, @project_id)
     assert manifest_info.present?
     assert_equal 302, manifest_info['Status']
     # make GET on manifest URL and assert contents are HCA metadata
