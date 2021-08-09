@@ -1,23 +1,57 @@
-require "test_helper"
+require 'test_helper'
 
 class StudyFileTest < ActiveSupport::TestCase
 
-  # load objects and set flags accordingly for test
-  def setup
-    @study = Study.first
-    @expression_matrix = @study.expression_matrix_files.first
-    @expression_matrix.update(parse_status: 'parsed')
-    @metadata_file = @study.metadata_file
+  include Minitest::Hooks
+  include SelfCleaningSuite
+  include TestInstrumentor
+
+  before(:all) do
+    @user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:detached_study, name_prefix: 'Study File Test', test_array: @@studies_to_clean)
+
+    @expression_matrix = FactoryBot.create(:study_file, name: 'dense.txt', file_type: 'Expression Matrix', study: @study)
+
+    @expression_matrix.build_expression_file_info(is_raw_counts: true, units: 'raw counts',
+                                                  library_preparation_protocol: 'MARS-seq',
+                                                  modality: 'Transcriptomic: unbiased',
+                                                  biosample_input_type: 'Whole cell')
+    @expression_matrix.parse_status = 'parsed'
+    @expression_matrix.save!
+
+    @metadata_file = FactoryBot.create(:study_file,
+                                       name: 'metadata.tsv',
+                                       file_type: 'Metadata',
+                                       use_metadata_convention: true,
+                                       study: @study)
     @metadata_file.update(parse_status: 'parsing')
-    @cluster_file = @study.cluster_ordinations_files.first
+    @cluster_file = FactoryBot.create(:cluster_file,
+                                      name: 'cluster.txt', study: @study,
+                                      cell_input: {
+                                        x: [1, 4, 6],
+                                        y: [7, 5, 3],
+                                        z: [2, 8, 9],
+                                        cells: %w[A B C]
+                                      },
+                                      x_axis_label: 'PCA 1',
+                                      y_axis_label: 'PCA 2',
+                                      z_axis_label: 'PCA 3',
+                                      cluster_type: '3d',
+                                      annotation_input: [
+                                        { name: 'Category', type: 'group', values: %w[bar bar baz] },
+                                        { name: 'Intensity', type: 'numeric', values: [1.1, 2.2, 3.3] }
+                                      ])
     @cluster_file.update(parse_status: 'parsing')
     @cluster = @study.cluster_groups.first
     @cluster.update(is_subsampling: true)
   end
 
-  test 'should prevent deletion of study files during parsing or subsampling' do
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
+  teardown do
+    raw_counts_required = FeatureFlag.find_or_create_by(name: 'raw_counts_required_backend')
+    raw_counts_required.update(default_value: false)
+  end
 
+  test 'should prevent deletion of study files during parsing or subsampling' do
     # expression matrix is parsed, so it should be deletable
     assert @expression_matrix.can_delete_safely?,
            'Did not correctly return true for a parsed expression matrix'
@@ -44,14 +78,11 @@ class StudyFileTest < ActiveSupport::TestCase
            'Metadata file is no longer parsing/subsampling and should be deletable'
     assert @cluster_file.can_delete_safely?,
            'Metadata file is no longer parsing/subsampling and should be deletable'
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   test 'expression file data validates' do
     # note that we don't (and shouldn't) actually *save* anything in this test,
     # so we use throwaway objects and ids.
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
 
     invalid_study_file = StudyFile.new(
       study: Study.new,
@@ -81,5 +112,37 @@ class StudyFileTest < ActiveSupport::TestCase
       )
     )
     assert_equal true, valid_study_file.valid?
+  end
+
+  test 'should enforce raw counts associations' do
+    raw_counts_required = FeatureFlag.find_or_create_by(name: 'raw_counts_required_backend')
+    raw_counts_required.update(default_value: true)
+    matrix = FactoryBot.create(:study_file, name: 'dense_2.txt', file_type: 'Expression Matrix', study: @study)
+    matrix.build_expression_file_info(is_raw_counts: false, library_preparation_protocol: 'MARS-seq',
+                                      modality: 'Transcriptomic: unbiased', biosample_input_type: 'Whole cell')
+    refute matrix.valid?
+    matrix.expression_file_info.raw_counts_associations = [@expression_matrix.id.to_s]
+    assert matrix.valid?
+
+    # test exemption functionality
+    matrix.expression_file_info.raw_counts_associations = []
+    refute matrix.valid?
+    study_user = @study.user
+    study_user.feature_flags.merge!({ 'raw_counts_required_backend' => false })
+    study_user.save!
+    matrix.reload # gotcha for picking up new state of exemption
+    assert matrix.valid?
+  end
+
+  test 'should find associated raw/processed matrix files' do
+    matrix = FactoryBot.create(:study_file, name: 'matrix.txt', file_type: 'Expression Matrix', study: @study)
+    matrix.build_expression_file_info(is_raw_counts: false, library_preparation_protocol: 'MARS-seq',
+                                      modality: 'Transcriptomic: unbiased', biosample_input_type: 'Whole cell',
+                                      raw_counts_associations: [@expression_matrix.id.to_s])
+    matrix.save!
+    associated_raw_files = matrix.associated_matrix_files(:raw)
+    assert_equal @expression_matrix, associated_raw_files.first
+    associated_processed_files = @expression_matrix.associated_matrix_files(:processed)
+    assert_equal matrix, associated_processed_files.first
   end
 end
