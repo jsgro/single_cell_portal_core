@@ -68,12 +68,17 @@ module Api
             description: study[:description],
             public: true,
             detached: false,
+            hca_project_id: study[:hca_project_id],
             cell_count: 0,
             gene_count: 0,
             study_url: '#',
             file_information: study[:file_information],
             term_matches: @term_list
           }
+          if @studies_by_facet.present?
+            # faceted search was run, so append filter matches
+            study_obj[:facet_matches] = @studies_by_facet[study[:accession]]
+          end
         end
         study_obj
       end
