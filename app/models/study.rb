@@ -201,6 +201,9 @@ class Study
   # DownloadAgreement (extra user terms for downloading data)
   has_one :download_agreement, dependent: :delete_all
 
+  # Anonymous Reviewer Access
+  has_one :reviewer_access, dependent: :delete_all
+
   # field definitions
   field :name, type: String
   field :embargo, type: Date

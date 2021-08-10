@@ -1,0 +1,30 @@
+<h1 class="text-center">Reviewer Access</h1>
+<div class="row">
+  <div class="col-md-offset-2 col-md-8">
+    <h3 class="text-center">Study: <%= @study.accession %></h3>
+    <p class="lead">
+      Use this page to access the above study as a reviewer.  With reviewer access, you may interact with all enabled study
+      visualizations, but you will not have permission to download any data files until the study has been made public, and
+      any data embargoes have been lifted.
+    </p>
+    <p class="lead">
+      Once granted, you will be redirected to the above study via an authenticated link that will expire
+      <%= ReviewerAccessSession.session_duration_label %> after being issued.  To access this study again, you may return to
+      this page and re-enter the pin to create a new link.
+    </p>
+  </div>
+</div>
+
+<%= form_for(:reviewer_access, url: validate_reviewer_access_path(params[:access_code])) do |f| %>
+  <div class="form-group row">
+    <div class="col-md-offset-5 col-md-2 text-center">
+      <%= f.label :pin, 'Pin Code' %><br />
+      <%= f.password_field :pin, maxlength: 6, class: 'form-control' %>
+    </div>
+  </div>
+  <div class="form-group row">
+    <div class="col-md-12 text-center">
+      <%= f.submit 'Submit', class: 'btn btn-success' %>
+    </div>
+  </div>
+<% end %>

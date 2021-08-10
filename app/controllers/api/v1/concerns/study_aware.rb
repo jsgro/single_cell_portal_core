@@ -7,7 +7,7 @@ module Api
         def set_study
           @study = Study.any_of({accession: params[:study_id]},{id: params[:study_id]}).first
           if @study.nil? || @study.queued_for_deletion?
-            head 404 and return
+            head 404
           end
         end
 
@@ -15,10 +15,14 @@ module Api
         # Permission checks
         ##
         def check_study_view_permission
-          if !@study.public? && !api_user_signed_in?
-            head 401
-          else
-            head 403 unless @study.public? || @study.can_view?(current_api_user)
+          unless @study.public?
+            if !api_user_signed_in? && params[:reviewer_session].present?
+              head 403 unless @study.reviewer_access&.session_valid?(params[:reviewer_session])
+            elsif !api_user_signed_in?
+              head 401
+            else
+              head 403 unless @study.can_view?(current_api_user)
+            end
           end
         end
 
@@ -40,7 +44,7 @@ module Api
 
         def check_study_detached
           if @study.detached?
-            head 410 and return
+            head 410
           end
         end
       end

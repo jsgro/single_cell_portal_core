@@ -15,13 +15,15 @@ class SiteController < ApplicationController
   respond_to :html, :js, :json
 
   before_action :set_study, except: [:index, :search, :legacy_study, :get_viewable_studies, :privacy_policy, :terms_of_service,
-                                     :view_workflow_wdl, :log_action, :get_taxon, :get_taxon_assemblies, :covid19]
+                                     :view_workflow_wdl, :log_action, :get_taxon, :get_taxon_assemblies, :covid19,
+                                     :reviewer_access, :validate_reviewer_access]
   before_action :set_cluster_group, only: [:study, :show_user_annotations_form]
   before_action :set_selected_annotation, only: [:show_user_annotations_form]
   before_action :check_view_permissions, except: [:index, :legacy_study, :get_viewable_studies, :privacy_policy,
                                                   :terms_of_service, :view_workflow_wdl, :log_action, :get_workspace_samples,
                                                   :update_workspace_samples, :get_workflow_options, :get_taxon,
-                                                  :get_taxon_assemblies, :covid19, :record_download_acceptance]
+                                                  :get_taxon_assemblies, :covid19, :record_download_acceptance,
+                                                  :reviewer_access, :validate_reviewer_access]
   before_action :check_compute_permissions, only: [:get_fastq_files, :get_workspace_samples, :update_workspace_samples,
                                                    :delete_workspace_samples, :get_workspace_submissions, :create_workspace_submission,
                                                    :get_submission_workflow, :abort_submission_workflow, :get_submission_errors,
@@ -31,7 +33,7 @@ class SiteController < ApplicationController
                                               :delete_workspace_samples, :get_workspace_submissions, :create_workspace_submission,
                                               :get_submission_workflow, :abort_submission_workflow, :get_submission_errors,
                                               :get_submission_outputs, :delete_submission_files, :get_submission_metadata]
-
+  before_action :set_reviewer_access, only: [:reviewer_access, :validate_reviewer_access]
   COLORSCALE_THEMES = %w(Greys YlGnBu Greens YlOrRd Bluered RdBu Reds Blues Picnic Rainbow Portland Jet Hot Blackbody Earth Electric Viridis Cividis)
 
   ###
@@ -182,6 +184,28 @@ class SiteController < ApplicationController
       respond_to do |format|
         format.js
       end
+    end
+  end
+
+  # reviewer access methods
+  # @reviewer_access is loaded via :set_reviewer_access and will handle redirects on bad access_code values
+  def reviewer_access
+    @study = @reviewer_access.study
+  end
+
+  def validate_reviewer_access
+    if @reviewer_access.authenticate_pin?(reviewer_access_params[:pin])
+      # create a new reviewer access session and redirect
+      session = @reviewer_access.create_new_session
+      study = @reviewer_access.study
+      redirect_to merge_default_redirect_params(view_study_path(accession: study.accession,
+                                                                study_name: study.url_safe_name,
+                                                                reviewer_session: session.session_key),
+                                                scpbr: params[:scpbr])
+    else
+      redirect_to merge_default_redirect_params(reviewer_access_path(access_code: params[:access_code]),
+                                                scpbr: params[:scpbr]), alert: "Invalid pin - please try again.",
+                  status: :unprocessable_entity
     end
   end
 
@@ -714,6 +738,14 @@ class SiteController < ApplicationController
     end
   end
 
+  def set_reviewer_access
+    @reviewer_access = ReviewerAccess.find_by(access_code: params[:access_code])
+    unless @reviewer_access.present?
+      redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
+                  alert: 'Invalid access_code; please check the link and try again.' and return
+    end
+  end
+
   # permit parameters for updating studies on study settings tab (smaller list than in studies controller)
   def study_params
     params.require(:study).permit(:name, :description, :public, :embargo, :cell_count,
@@ -733,10 +765,19 @@ class SiteController < ApplicationController
     params.require(:download_acceptance).permit(:email, :download_agreement_id)
   end
 
+  def reviewer_access_params
+    params.require(:reviewer_access).permit(:pin)
+  end
+
   # make sure user has view permissions for selected study
   def check_view_permissions
     unless @study.public?
-      if (!user_signed_in? && !@study.public?)
+      if !user_signed_in? && params[:reviewer_session].present?
+        unless @study.reviewer_access&.session_valid?(params[:reviewer_session])
+          alert = "Expired session key - please create a new reviewer session to continue."
+          redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
+        end
+      elsif (!user_signed_in? && !@study.public?)
         authenticate_user!
       elsif (user_signed_in? && !@study.can_view?(current_user))
         alert = "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}"
