@@ -195,8 +195,11 @@ export function stringifyQuery(paramObj, sort) {
 *
 * @param {String} studyAccession Study accession
 */
-export async function fetchExplore(studyAccession, mock=false) {
-  const apiUrl = `/studies/${studyAccession}/explore`
+export async function fetchExplore(studyAccession, reviewerSession=null, mock=false) {
+  let apiUrl = `/studies/${studyAccession}/explore`
+  if (reviewerSession) {
+    apiUrl += `?reviewer_session=${reviewerSession}`
+  }
   const [exploreInit] =
     await scpApi(apiUrl, defaultInit(), mock, false)
 
