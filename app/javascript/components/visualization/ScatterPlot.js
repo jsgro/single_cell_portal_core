@@ -14,6 +14,7 @@ import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
 import useErrorMessage from 'lib/error-message'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
+// import { values } from 'core-js/core/array'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
@@ -25,6 +26,26 @@ window.spearman = SpearmanRho
 
 export const defaultScatterColor = 'Reds'
 window.Plotly = Plotly
+
+/** Get map of scatter plot coordinates by annotation label */
+function getValuesByLabel(scatter) {
+  console.log('in gvbt, scatter:', scatter)
+  const valuesByLabel = {}
+
+  const { annotations, cells, x, y } = scatter.data
+  x.forEach((xVal, i) => {
+    const yVal = y[i]
+    const label = annotations[i]
+    if (label in valuesByLabel) {
+      valuesByLabel[label].x.push(xVal)
+      valuesByLabel[label].y.push(yVal)
+    } else {
+      valuesByLabel[label] = { x: [xVal], y: [yVal] }
+    }
+  })
+
+  return valuesByLabel
+}
 
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
@@ -77,13 +98,29 @@ function RawScatterPlot({
       perfTimes
     )
 
+    console.log('plotlyTraces', plotlyTraces)
+    console.log('dimensions', dimensions)
+    console.log('scatter', scatter)
+
+
     if (isCorrelatedScatter) {
       // compute correlation stats asynchronously so it doesn't delay
       // rendering of other visualizations or impact logging
       // in the event these stats become more complex or widely used, consider instrumentation strategies
-      const spearmanRho = new SpearmanRho(scatter.data.x, scatter.data.y)
-      spearmanRho.calc().then(value => setSpearman(value))
+      // const spearmanRho = new SpearmanRho(scatter.data.x, scatter.data.y)
+      // spearmanRho.calc().then(value => setSpearman(value))
+
+      const valuesByLabel = getValuesByLabel(scatter)
+      const correlationsByLabel = {}
+      Object.entries(valuesByLabel).forEach(([label, xyVals]) => {
+        const spearmanRho = new SpearmanRho(xyVals.x, xyVals.y)
+        spearmanRho.calc().then(rho => {
+          correlationsByLabel[label] = rho
+          console.log('correlationsByLabel', correlationsByLabel)
+        })
+      })
     }
+    setSpearman(0.5)
     setScatterData(scatter)
     setShowError(false)
     setIsLoading(false)
