@@ -40,7 +40,8 @@ window.Plotly = Plotly
   */
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
-  isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
+  isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false,
+  plotPointsSelected, dataCache, reviewerSession=null
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [spearman, setSpearman] = useState(null)
@@ -102,7 +103,8 @@ function RawScatterPlot({
       consensus,
       genes,
       isAnnotatedScatter,
-      isCorrelatedScatter
+      isCorrelatedScatter,
+      reviewerSession
     }).then(handleResponse).catch(error => {
       Plotly.purge(graphElementId)
       setErrorContent(error.message)

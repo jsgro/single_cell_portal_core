@@ -20,7 +20,7 @@ export default function ScatterTab({
   const { scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol } = getScatterParams(
     exploreInfo, exploreParams, isGene, isMultiGene
   )
-
+  const reviewerSession = exploreParams.reviewerSession ? exploreParams.reviewerSession : null
   /** helper function for Scatter plot color updates */
   function updateScatterColor(color) {
     updateExploreParams({ scatterColor: color }, false)
@@ -50,6 +50,7 @@ export default function ScatterTab({
                 studyAccession, plotPointsSelected, isCellSelecting, updateScatterColor
               }}
               {...params}
+              reviewerSession={reviewerSession}
               dataCache={dataCache}
               dimensions={getPlotDimensions({
                 isMultiRow,
