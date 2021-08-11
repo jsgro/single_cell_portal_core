@@ -8,20 +8,22 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     @hca_azul_client = ApplicationController.hca_azul_client
     @project_id = 'c1a9a93d-d9de-4e65-9619-a9cec1052eaa'
     @project_short_name = 'PulmonaryFibrosisGSE135893'
-    @default_catalog = @hca_azul_client.get_catalogs['default_catalog'] || 'dcp7'
+    @default_catalog = @hca_azul_client.default_catalog || 'dcp7'
   end
 
   test 'should instantiate client' do
     client = HcaAzulClient.new
     assert_equal HcaAzulClient::BASE_URL, client.api_root
+    assert_equal @default_catalog, client.default_catalog
+    assert client.catalogs.any?
   end
 
   test 'should get catalogs' do
     catalogs = @hca_azul_client.get_catalogs
     default_catalog = catalogs['default_catalog']
     public_catalogs = catalogs['catalogs'].reject { |_, catalog| catalog['internal'] }.keys
-    assert_equal HcaAzulClient::HCA_CATALOGS.sort, public_catalogs.sort
-    assert HcaAzulClient::HCA_CATALOGS.include? default_catalog
+    assert_equal @hca_azul_client.catalogs.sort, public_catalogs.sort
+    assert_equal @hca_azul_client.default_catalog, default_catalog
   end
 
   test 'should get projects' do

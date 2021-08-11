@@ -29,6 +29,8 @@ import {
   logPageView, logClick, logMenuChange, setupPageTransitionLog, log, logCopy, logContextMenu
 } from 'lib/metrics-api'
 import * as ScpApi from 'lib/scp-api'
+import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
+import { validateFile } from 'lib/validation/validate-file'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
 
@@ -67,3 +69,5 @@ window.SCP.log = log
 window.SCP.API = ScpApi
 window.SCP.renderClusterAssociationSelect = renderClusterAssociationSelect
 window.SCP.renderExploreView = renderExploreView
+window.SCP.getFeatureFlagsWithDefaults = getFeatureFlagsWithDefaults
+window.SCP.validateFile = validateFile
