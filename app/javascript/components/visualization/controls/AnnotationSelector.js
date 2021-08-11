@@ -42,7 +42,6 @@ export default function AnnotationControl({
   annotationList,
   cluster,
   annotation,
-  reviewerSession,
   updateClusterParams
 }) {
   if (!annotationList) {
@@ -70,7 +69,7 @@ export default function AnnotationControl({
         getOptionLabel={annotation => annotation.name}
         getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
         onChange={newAnnotation => updateClusterParams(
-          { annotation: newAnnotation, reviewerSession }
+          { annotation: newAnnotation }
         )}
         styles={clusterSelectStyle}/>
     </div>

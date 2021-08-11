@@ -41,7 +41,6 @@ export default function ClusterSelector({
   spatialGroups,
   cluster,
   annotation,
-  reviewerSession,
   updateClusterParams
 }) {
   if (!annotationList) {
@@ -61,7 +60,6 @@ export default function ClusterSelector({
             annotation
           )),
           cluster: newCluster.value,
-          reviewerSession,
           subsample: getDefaultSubsampleForCluster(annotationList, newCluster.value)
         })}
         styles={clusterSelectStyle}
