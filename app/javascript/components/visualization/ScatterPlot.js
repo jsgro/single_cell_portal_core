@@ -71,17 +71,21 @@ function RawScatterPlot({
 
     perfTimes.plot = performance.now() - startTime
 
-    logScatterPlot(
-      { scatter, genes, width: dimensions.width, height: dimensions.height },
-      perfTimes
-    )
+    logScatterPlot({
+      scatter, genes, width: dimensions.width, height: dimensions.height
+    }, perfTimes)
 
     console.log('plotlyTraces', plotlyTraces)
     console.log('dimensions', dimensions)
     console.log('scatter', scatter)
 
     if (isCorrelatedScatter) {
-      computeCorrelations(scatter, setSpearman)
+      const rhoStartTime = performance.now()
+      computeCorrelations(scatter).then(correlations => {
+        const rhoTime = Math.round(performance.now() - rhoStartTime)
+        setSpearman(correlations.all)
+        log('plot:correlations', { perfTime: rhoTime })
+      })
     }
 
     setScatterData(scatter)

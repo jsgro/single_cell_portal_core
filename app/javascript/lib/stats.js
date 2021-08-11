@@ -22,29 +22,26 @@ function getValuesByLabel(scatter) {
 }
 
 /** Compute Spearman correlations, then push state upstream */
-export async function computeCorrelations(scatter, callback) {
-  const t0 = performance.now()
+export async function computeCorrelations(scatter) {
+  const correlations = {}
   // compute correlation stats asynchronously so it doesn't delay
   // rendering of other visualizations or impact logging
   // in the event these stats become more complex or widely used, consider instrumentation strategies
   const spearmanRho = new SpearmanRho(scatter.data.x, scatter.data.y)
 
   const value = await spearmanRho.calc()
-  callback(value)
+  correlations.all = value
 
   // Compute per-label correlations
   const valuesByLabel = getValuesByLabel(scatter)
 
-  const correlationsByLabel = {}
   await Promise.all(
     Object.entries(valuesByLabel).map(async ([label, xyVals]) => {
       const spearmanRhoLabel = new SpearmanRho(xyVals.x, xyVals.y)
       const rho = await spearmanRhoLabel.calc()
-      correlationsByLabel[label] = rho
+      correlations[label] = rho
     })
   )
 
-  const t1 = performance.now()
-  const perfTime = Math.round(t1 - t0)
-  console.log(`Time to compute correlations: ${perfTime} ms`)
+  return correlations
 }
