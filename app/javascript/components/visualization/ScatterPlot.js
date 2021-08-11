@@ -217,7 +217,7 @@ function getLegendEntries(data, pointSize, labelCorrelations) {
     .map((label, index) => {
       let entry = `${label} (${traceCounts[label]} points)`
       if (labelCorrelations) {
-        const correlation = Math.round(labelCorrelations[label] * 1000) / 1000
+        const correlation = Math.round(labelCorrelations[label] * 100) / 100
 
         // ρ = rho = Spearman's rank correlation coefficient
         entry = `${label} (${traceCounts[label]} points, ρ = ${correlation})`
