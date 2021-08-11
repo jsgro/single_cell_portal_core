@@ -160,7 +160,6 @@ export default function ExploreDisplayTabs({
       exploreParamsWithDefaults.annotation?.type !== 'numeric') {
       updateParams.tab = 'annotatedScatter'
     }
-
     updateExploreParams(updateParams)
   }
 

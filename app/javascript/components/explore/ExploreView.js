@@ -26,7 +26,7 @@ function RoutableExploreTab({ studyAccession }) {
 
   useEffect(() => {
     fetchExplore(studyAccession, reviewerSession).then(result => setExploreInfo(result))
-  }, [studyAccession, reviewerSession])
+  }, [studyAccession])
 
   return (
     <div className="study-explore">
@@ -74,7 +74,7 @@ export default function ExploreTab({ studyAccession }) {
 }
 
 /** convenience function for rendering this in a non-React part of the application */
-export function renderExploreView(target, studyAccession, reviewerSession=null) {
+export function renderExploreView(target, studyAccession) {
   ReactDOM.unmountComponentAtNode(target)
   ReactDOM.render(
     <ExploreTab studyAccession={studyAccession}/>,

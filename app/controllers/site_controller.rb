@@ -789,9 +789,9 @@ class SiteController < ApplicationController
           alert = "Expired session key - please create a new reviewer session to continue."
           redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
         end
-      elsif (!user_signed_in? && !@study.public?)
+      elsif !user_signed_in? && !@study.public?
         authenticate_user!
-      elsif (user_signed_in? && !@study.can_view?(current_user))
+      elsif user_signed_in? && !@study.can_view?(current_user)
         alert = "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}"
         respond_to do |format|
           format.js {render js: "alert('#{alert}')" and return}

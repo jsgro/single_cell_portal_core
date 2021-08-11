@@ -34,8 +34,7 @@ function getClusterOptions(annotationList, spatialGroups) {
     @param cluster: the name of the cluster selected
     @param annotation: object specifying name, type and scope
     @param updateClusterParams: update function that accepts changes to cluster, annotation, and/or subsample properties
-    @param reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
- */
+  */
 export default function ClusterSelector({
   annotationList,
   spatialGroups,

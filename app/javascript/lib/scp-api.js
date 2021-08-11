@@ -244,8 +244,8 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  * @param {String} consensus Statistic to use for consensus, e.g. "mean"
  * @param {Boolean} isAnnotatedScatter If showing "Annotated scatter" plot.
  *                  Only applies for numeric (not group) annotations.
- * @param {Boolean} mock If using mock data.  Helps development, tests.
  * @param {String} reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
+ * @param {Boolean} mock If using mock data.  Helps development, tests.
  *
  * Example:
  * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/
@@ -256,8 +256,8 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  */
 export async function fetchCluster({
   studyAccession, cluster, annotation, subsample, consensus, genes=null,
-  isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[], mock=false,
-  reviewerSession=null
+  isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[], reviewerSession=null, mock=false
+
 }) {
   const apiUrl = fetchClusterUrl({
     studyAccession, cluster, annotation, subsample,
@@ -319,8 +319,8 @@ export function fetchClusterUrl({
  * @param {String} annotationName Scope of annotation ("study" or "cluster")
  * @param {String} subsample Subsampling threshold
  * @param {String} consensus method for multi-gene renders ('mean' or 'median')
- * @param {Boolean} mock If using mock data.  Helps development, tests.
  * @param {String} reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
+ * @param {Boolean} mock If using mock data.  Helps development, tests.
  *
  */
 export async function fetchExpressionViolin(
@@ -359,7 +359,9 @@ export async function fetchExpressionViolin(
 
 /** Get URL for a Morpheus-suitable annotation values file */
 export function getAnnotationCellValuesURL(
-  { studyAccession, cluster, annotationName, annotationScope, annotationType, mock=false, reviewerSession=null }
+  {
+    studyAccession, cluster, annotationName, annotationScope, annotationType, reviewerSession=null, mock=false
+  }
 ) {
   const paramObj = {
     cluster,
