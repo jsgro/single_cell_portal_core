@@ -135,7 +135,7 @@ class SiteController < ApplicationController
         reviewer_opts = params.to_unsafe_hash['reviewer_opts']
         if reviewer_opts['reset'] == 'yes'
           logger.info "Rotating credentials for reviewer access in #{@study.accession}"
-          @study.reviewer_access&.rotate_credentials
+          @study.reviewer_access&.rotate_credentials!
         elsif reviewer_opts['enable'] == 'yes' && @study.reviewer_access.nil?
           @study.build_reviewer_access.save!
         elsif reviewer_opts['enable'] == 'no'
@@ -215,8 +215,8 @@ class SiteController < ApplicationController
                                                 scpbr: params[:scpbr])
     else
       redirect_to merge_default_redirect_params(reviewer_access_path(access_code: params[:access_code]),
-                                                scpbr: params[:scpbr]), alert: "Invalid pin - please try again.",
-                  status: :unprocessable_entity
+                                                scpbr: params[:scpbr]), alert: 'Invalid pin - please try again.',
+                  status: :forbidden
     end
   end
 
@@ -641,18 +641,18 @@ class SiteController < ApplicationController
 
   def set_study
     @study = Study.find_by(accession: params[:accession])
-        # redirect if study is not found
+    # redirect if study is not found
     if @study.nil?
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
-                  alert: "You either do not have permission to perform that action, or #{params[:accession]} does not exist.  #{SCP_SUPPORT_EMAIL}" and return
+                  alert: "You either do not have permission to perform that action, or #{params[:accession]} does not " \
+                         "exist.  #{SCP_SUPPORT_EMAIL}" and return
     end
-        #Check if current url_safe_name matches model
+    # Check if current url_safe_name matches model
     unless @study.url_safe_name == params[:study_name]
-           redirect_to merge_default_redirect_params(view_study_path(accession: params[:accession],
-                                                                     study_name: @study.url_safe_name,
-                                                                     scpbr:params[:scpbr])) and return
-      end
-
+      redirect_to merge_default_redirect_params(view_study_path(accession: params[:accession],
+                                                                study_name: @study.url_safe_name,
+                                                                scpbr:params[:scpbr])) and return
+    end
   end
 
   def set_cluster_group
@@ -753,7 +753,7 @@ class SiteController < ApplicationController
     @reviewer_access = ReviewerAccess.find_by(access_code: params[:access_code])
     unless @reviewer_access.present?
       redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]),
-                  alert: 'Invalid access_code; please check the link and try again.' and return
+                  alert: 'Invalid access code; please check the link and try again.' and return
     end
   end
 
@@ -785,18 +785,22 @@ class SiteController < ApplicationController
   def check_view_permissions
     unless @study.public?
       if !user_signed_in? && params[:reviewerSession].present?
-        unless @study.reviewer_access&.session_valid?(params[:reviewerSession])
-          alert = "Expired session key - please create a new reviewer session to continue."
+        reviewer = @study.reviewer_access
+        if reviewer.nil?
+          alert = "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}"
+          redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
+        elsif reviewer.expired?
+          alert = 'The review period for this study has expired.'
+          redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
+        elsif !reviewer.session_valid?(params[:reviewerSession])
+          alert = 'Expired session key - please create a new reviewer session to continue.'
           redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
         end
       elsif !user_signed_in? && !@study.public?
         authenticate_user!
       elsif user_signed_in? && !@study.can_view?(current_user)
         alert = "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}"
-        respond_to do |format|
-          format.js {render js: "alert('#{alert}')" and return}
-          format.html {redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return}
-        end
+        redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
       end
     end
   end

@@ -1,5 +1,5 @@
 # manage anonymous access to private studies via access code & pin
-# will generate a short-lived session
+# will generate a short-lived session for reviewers with valid credentials
 class ReviewerAccess
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -37,11 +37,13 @@ class ReviewerAccess
   # determine if a specified ReviewerAccessSession is still valid
   # will default to false if session_key is not found
   def session_valid?(session_key)
-    !reviewer_access_sessions.by_session_key(session_key)&.expired? || false
+    session = reviewer_access_sessions.by_session_key(session_key)
+    session.present? ? !session.expired? : false
   end
 
-  # rotate access credentials by generating a new access_code and pin
-  def rotate_credentials
+  # rotate access credentials by generating a new access_code and pin, will also clear out all reviewer sessions
+  def rotate_credentials!
+    clear_all_reviewer_sessions!
     generate_credentials
     save!
   end
@@ -51,6 +53,11 @@ class ReviewerAccess
     session = reviewer_access_sessions.build
     session.save!
     session
+  end
+
+  # invalidate all reviewer sessions (generally when rotating credentials)
+  def clear_all_reviewer_sessions!
+    reviewer_access_sessions.delete_all
   end
 
   private
