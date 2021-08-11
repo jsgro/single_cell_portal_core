@@ -26,21 +26,23 @@ export const dotPlotColorScheme = {
   * @param subsample {string} a string for the subsample to be retrieved.
   * @param consensus {string} for multi-gene expression plots
   * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
+  * @param reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
   */
 function RawDotPlot({
   studyAccession, genes=[], cluster, annotation={},
-  subsample, annotationValues
+  subsample, annotationValues, reviewerSession=null
 }) {
   const [graphId] = useState(_uniqueId('dotplot-'))
   const { ErrorComponent, showError, setShowError, setErrorContent } = useErrorMessage()
-  const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster })
+  const expressionValuesURL = getExpressionHeatmapURL({ studyAccession, genes, cluster, reviewerSession })
   const annotationCellValuesURL = getAnnotationCellValuesURL({
     studyAccession,
     cluster,
     annotationName: annotation.name,
     annotationScope: annotation.scope,
     annotationType: annotation.type,
-    subsample
+    subsample,
+    reviewerSession
   })
 
   useEffect(() => {

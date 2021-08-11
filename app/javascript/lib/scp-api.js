@@ -245,6 +245,7 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  * @param {Boolean} isAnnotatedScatter If showing "Annotated scatter" plot.
  *                  Only applies for numeric (not group) annotations.
  * @param {Boolean} mock If using mock data.  Helps development, tests.
+ * @param {String} reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
  *
  * Example:
  * https://localhost:3000/single_cell/api/v1/studies/SCP56/clusters/
@@ -319,6 +320,7 @@ export function fetchClusterUrl({
  * @param {String} subsample Subsampling threshold
  * @param {String} consensus method for multi-gene renders ('mean' or 'median')
  * @param {Boolean} mock If using mock data.  Helps development, tests.
+ * @param {String} reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
  *
  */
 export async function fetchExpressionViolin(
@@ -330,6 +332,7 @@ export async function fetchExpressionViolin(
   annotationScope,
   subsample,
   consensus,
+  reviewerSession=null,
   mock=false
 ) {
   let geneString = genes
@@ -343,7 +346,8 @@ export async function fetchExpressionViolin(
     annotation_scope: annotationScope,
     subsample,
     consensus,
-    genes: geneString
+    genes: geneString,
+    reviewerSession
   }
   const apiUrl = `/studies/${studyAccession}/expression/violin${stringifyQuery(paramObj)}`
   // don't camelcase the keys since those can be cluster names,
@@ -355,12 +359,13 @@ export async function fetchExpressionViolin(
 
 /** Get URL for a Morpheus-suitable annotation values file */
 export function getAnnotationCellValuesURL(
-  { studyAccession, cluster, annotationName, annotationScope, annotationType, mock=false }
+  { studyAccession, cluster, annotationName, annotationScope, annotationType, mock=false, reviewerSession=null }
 ) {
   const paramObj = {
     cluster,
     annotation_scope: annotationScope,
-    annotation_type: annotationType
+    annotation_type: annotationType,
+    reviewerSession
   }
   annotationName = annotationName ? annotationName : '_default'
   let apiUrl = `/studies/${studyAccession}/annotations/${encodeURIComponent(annotationName)}`
@@ -369,8 +374,10 @@ export function getAnnotationCellValuesURL(
 }
 
 /** get URL for Morpheus-suitable annotation values file for a gene list */
-export function getGeneListColsURL({ studyAccession, geneList }) {
-  const apiUrl = `/studies/${studyAccession}/annotations/gene_lists/${encodeURIComponent(geneList)}`
+export function getGeneListColsURL({ studyAccession, geneList, reviewerSession=null }) {
+  const apiUrl = mergeReviewerSessionParam(
+    `/studies/${studyAccession}/annotations/gene_lists/${encodeURIComponent(geneList)}`, reviewerSession
+  )
   return getFullUrl(apiUrl)
 }
 
@@ -382,11 +389,12 @@ export function getGeneListColsURL({ studyAccession, geneList }) {
  * @param {String} studyAccession study accession
  * @param {String} geneList: name of gene list to load (overrides cluster/annotation/subsample values)
  * @param {Array} genes List of gene names to get expression data for
+ * @param {String} reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
  *
  */
 export function getExpressionHeatmapURL({
   studyAccession, genes, cluster,
-  annotation, subsample, heatmapRowCentering, geneList
+  annotation, subsample, heatmapRowCentering, geneList, reviewerSession=null
 }) {
   const paramObj = {
     cluster,
@@ -394,7 +402,8 @@ export function getExpressionHeatmapURL({
     subsample,
     genes: geneArrayToParam(genes),
     row_centered: heatmapRowCentering,
-    gene_list: geneList
+    gene_list: geneList,
+    reviewerSession
   }
   const path = `/studies/${studyAccession}/expression/heatmap${stringifyQuery(paramObj)}`
   return getFullUrl(path)

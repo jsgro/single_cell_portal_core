@@ -32,9 +32,11 @@ export const DEFAULT_FIT = ''
   * @param annotation {obj} an object with name, type, and scope attributes
   * @param subsample {string} a string for the subsampel to be retrieved.
   * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
+  * @param reviewerSession {String} UUID of ReviewerAccessSession for viewing private study anonymously
  */
 function RawHeatmap({
-  studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit, heatmapRowCentering
+  studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit,
+  heatmapRowCentering, reviewerSession=null
 }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
   const morpheusHeatmap = useRef(null)
@@ -43,7 +45,8 @@ function RawHeatmap({
     genes,
     cluster,
     heatmapRowCentering,
-    geneList
+    geneList,
+    reviewerSession
   })
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
@@ -56,10 +59,11 @@ function RawHeatmap({
       annotationName: annotation.name,
       annotationScope: annotation.scope,
       annotationType: annotation.type,
-      subsample
+      subsample,
+      reviewerSession
     })
   } else {
-    annotationCellValuesURL = getGeneListColsURL({ studyAccession, geneList })
+    annotationCellValuesURL = getGeneListColsURL({ studyAccession, geneList, reviewerSession })
   }
 
   useEffect(() => {
