@@ -109,7 +109,7 @@ function buildExploreParamsFromQuery(query) {
   exploreParams.heatmapFit = queryParams.heatmapFit ? queryParams.heatmapFit : ''
   exploreParams.bamFileName = queryParams.bamFileName ? queryParams.bamFileName : ''
   exploreParams.ideogramFileId = queryParams.ideogramFileId ? queryParams.ideogramFileId : ''
-  exploreParams.reviewerSession = queryParams.reviewer_session ? queryParams.reviewer_session : ''
+  exploreParams.reviewerSession = queryParams.reviewerSession ? queryParams.reviewerSession : ''
 
   return exploreParams
 }
@@ -151,7 +151,7 @@ function buildQueryFromParams(exploreParams) {
 /** controls list in which query string params are rendered into URL bar */
 const PARAM_LIST_ORDER = ['geneList', 'genes', 'cluster', 'spatialGroups', 'annotation', 'subsample', 'consensus',
   'tab', 'scatterColor', 'distributionPlot', 'distributionPoints',
-  'heatmapFit', 'heatmapRowCentering', 'bamFileName', 'ideogramFileId', 'reviewer_session']
+  'heatmapFit', 'heatmapRowCentering', 'bamFileName', 'ideogramFileId', 'reviewerSession']
 /** sort function for passing to stringify to ensure url params are specified in a user-friendly order */
 function paramSorter(a, b) {
   return PARAM_LIST_ORDER.indexOf(a) - PARAM_LIST_ORDER.indexOf(b)

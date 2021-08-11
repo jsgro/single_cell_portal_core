@@ -16,8 +16,8 @@ module Api
         ##
         def check_study_view_permission
           unless @study.public?
-            if !api_user_signed_in? && params[:reviewer_session].present?
-              head 403 unless @study.reviewer_access&.session_valid?(params[:reviewer_session])
+            if !api_user_signed_in? && params[:reviewerSession].present?
+              head 403 unless @study.reviewer_access&.session_valid?(params[:reviewerSession])
             elsif !api_user_signed_in?
               head 401
             else

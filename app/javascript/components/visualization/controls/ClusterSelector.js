@@ -34,18 +34,19 @@ function getClusterOptions(annotationList, spatialGroups) {
     @param cluster: the name of the cluster selected
     @param annotation: object specifying name, type and scope
     @param updateClusterParams: update function that accepts changes to cluster, annotation, and/or subsample properties
-  */
+    @param reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
+ */
 export default function ClusterSelector({
   annotationList,
   spatialGroups,
   cluster,
   annotation,
+  reviewerSession,
   updateClusterParams
 }) {
   if (!annotationList) {
     annotationList = { default_cluster: null, default_annotation: null, annotations: [] }
   }
-
   const clusterOptions = getClusterOptions(annotationList, spatialGroups)
 
   return (
@@ -60,6 +61,7 @@ export default function ClusterSelector({
             annotation
           )),
           cluster: newCluster.value,
+          reviewerSession,
           subsample: getDefaultSubsampleForCluster(annotationList, newCluster.value)
         })}
         styles={clusterSelectStyle}

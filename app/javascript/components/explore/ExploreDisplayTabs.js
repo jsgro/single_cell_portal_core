@@ -74,6 +74,9 @@ export default function ExploreDisplayTabs({
     enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs
   } = getEnabledTabs(exploreInfo, exploreParams)
 
+  // UUID for ReviewerAccessSession, if present
+  const reviewerSession = exploreParams.reviewerSession ? exploreParams.reviewerSession : null
+
   // exploreParams object without genes specified, to pass to cluster comparison plots
   const referencePlotDataParams = _clone(exploreParams)
   referencePlotDataParams.genes = []
@@ -150,7 +153,7 @@ export default function ExploreDisplayTabs({
     // also, unset any gene lists as we're about to re-render the explore tab and having gene list selected will show
     // the wrong tabs
     const updateParams = { geneList: '', ideogramFileId: '' }
-    const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
+    const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups', 'reviewerSession']
     clusterParamNames.forEach(param => {
       updateParams[param] = param in newParams ? newParams[param] : exploreParamsWithDefaults[param]
     })
@@ -160,6 +163,7 @@ export default function ExploreDisplayTabs({
       exploreParamsWithDefaults.annotation?.type !== 'numeric') {
       updateParams.tab = 'annotatedScatter'
     }
+
     updateExploreParams(updateParams)
   }
 
@@ -407,6 +411,7 @@ export default function ExploreDisplayTabs({
                 annotationList={annotationList}
                 cluster={exploreParamsWithDefaults.cluster}
                 annotation={exploreParamsWithDefaults.annotation}
+                reviewerSession={reviewerSession}
                 updateClusterParams={updateClusterParams}
                 spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
               {hasSpatialGroups &&
@@ -418,6 +423,7 @@ export default function ExploreDisplayTabs({
                 annotationList={annotationList}
                 cluster={exploreParamsWithDefaults.cluster}
                 annotation={exploreParamsWithDefaults.annotation}
+                reviewerSession={reviewerSession}
                 updateClusterParams={updateClusterParams}/>
               { shownTab === 'scatter' && <CreateAnnotation
                 isSelecting={isCellSelecting}

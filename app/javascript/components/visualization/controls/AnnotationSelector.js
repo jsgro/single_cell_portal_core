@@ -36,11 +36,13 @@ function getAnnotationOptions(annotationList, clusterName) {
     @param cluster: the name of the cluster selected
     @param annotation: object specifying name, type and scope
     @param updateClusterParams: update function that accepts changes to cluster, annotation, and/or subsample properties
-  */
+    @param reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
+ */
 export default function AnnotationControl({
   annotationList,
   cluster,
   annotation,
+  reviewerSession,
   updateClusterParams
 }) {
   if (!annotationList) {
@@ -67,7 +69,9 @@ export default function AnnotationControl({
         isOptionDisabled={annotation => annotation.isDisabled}
         getOptionLabel={annotation => annotation.name}
         getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
-        onChange={newAnnotation => updateClusterParams({ annotation: newAnnotation })}
+        onChange={newAnnotation => updateClusterParams(
+          { annotation: newAnnotation, reviewerSession }
+        )}
         styles={clusterSelectStyle}/>
     </div>
   )

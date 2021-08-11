@@ -200,7 +200,7 @@ class SiteController < ApplicationController
       study = @reviewer_access.study
       redirect_to merge_default_redirect_params(view_study_path(accession: study.accession,
                                                                 study_name: study.url_safe_name,
-                                                                reviewer_session: session.session_key),
+                                                                reviewerSession: session.session_key),
                                                 scpbr: params[:scpbr])
     else
       redirect_to merge_default_redirect_params(reviewer_access_path(access_code: params[:access_code]),
@@ -772,8 +772,8 @@ class SiteController < ApplicationController
   # make sure user has view permissions for selected study
   def check_view_permissions
     unless @study.public?
-      if !user_signed_in? && params[:reviewer_session].present?
-        unless @study.reviewer_access&.session_valid?(params[:reviewer_session])
+      if !user_signed_in? && params[:reviewerSession].present?
+        unless @study.reviewer_access&.session_valid?(params[:reviewerSession])
           alert = "Expired session key - please create a new reviewer session to continue."
           redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
         end

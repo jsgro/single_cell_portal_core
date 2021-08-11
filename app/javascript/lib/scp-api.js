@@ -191,15 +191,13 @@ export function stringifyQuery(paramObj, sort) {
 }
 
 /**
-* Returns initial content for the "Explore" tab in Study Overview
-*
-* @param {String} studyAccession Study accession
+ * Returns initial content for the "Explore" tab in Study Overview
+ *
+ * @param {String} studyAccession Study accession
+ * @param {String} reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
 */
 export async function fetchExplore(studyAccession, reviewerSession=null, mock=false) {
-  let apiUrl = `/studies/${studyAccession}/explore`
-  if (reviewerSession) {
-    apiUrl += `?reviewer_session=${reviewerSession}`
-  }
+  const apiUrl = mergeReviewerSessionParam(`/studies/${studyAccession}/explore`, reviewerSession)
   const [exploreInit] =
     await scpApi(apiUrl, defaultInit(), mock, false)
 
@@ -298,7 +296,7 @@ export function fetchClusterUrl({
     fields: fields.join(','),
     is_annotated_scatter,
     is_correlated_scatter,
-    reviewer_session: reviewerSession
+    reviewerSession
   }
   const params = stringifyQuery(paramObj)
   if (!cluster || cluster === '') {
@@ -552,6 +550,15 @@ export function buildFacetsFromQueryString(facetsParamString) {
 export function getBrandingGroup() {
   const queryParams = queryString.parse(window.location.search)
   return queryParams.scpbr
+}
+
+export function mergeReviewerSessionParam(requestUrl, reviewerSession) {
+  if (reviewerSession) {
+    const queryDelim = requestUrl.indexOf('?') > 0 ? '&' : '?'
+    return `${requestUrl}${queryDelim}reviewerSession=${reviewerSession}`
+  } else {
+    return requestUrl
+  }
 }
 
 /** Get full URL for a given including any extension (or a mocked URL) */
