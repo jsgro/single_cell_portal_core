@@ -4,7 +4,6 @@ window.spearman = SpearmanRho
 
 /** Get map of scatter plot coordinates by annotation label */
 function getValuesByLabel(scatter) {
-  console.log('in gvbt, scatter:', scatter)
   const valuesByLabel = {}
 
   const { annotations, cells, x, y } = scatter.data
@@ -22,23 +21,30 @@ function getValuesByLabel(scatter) {
   return valuesByLabel
 }
 
-/** Computes Spearman correlations, then push state upstream */
-export function computeCorrelations(scatter, callback) {
-// compute correlation stats asynchronously so it doesn't delay
+/** Compute Spearman correlations, then push state upstream */
+export async function computeCorrelations(scatter, callback) {
+  const t0 = performance.now()
+  // compute correlation stats asynchronously so it doesn't delay
   // rendering of other visualizations or impact logging
   // in the event these stats become more complex or widely used, consider instrumentation strategies
   const spearmanRho = new SpearmanRho(scatter.data.x, scatter.data.y)
-  spearmanRho.calc().then(value => callback(value))
+
+  const value = await spearmanRho.calc()
+  callback(value)
 
   // Compute per-label correlations
   const valuesByLabel = getValuesByLabel(scatter)
-  const correlationsByLabel = {}
-  Object.entries(valuesByLabel).forEach(([label, xyVals]) => {
-    const spearmanRhoLabel = new SpearmanRho(xyVals.x, xyVals.y)
-    spearmanRhoLabel.calc().then(rho => {
-      correlationsByLabel[label] = rho
 
-      console.log('correlationsByLabel', correlationsByLabel)
+  const correlationsByLabel = {}
+  await Promise.all(
+    Object.entries(valuesByLabel).map(async ([label, xyVals]) => {
+      const spearmanRhoLabel = new SpearmanRho(xyVals.x, xyVals.y)
+      const rho = await spearmanRhoLabel.calc()
+      correlationsByLabel[label] = rho
     })
-  })
+  )
+
+  const t1 = performance.now()
+  const perfTime = Math.round(t1 - t0)
+  console.log(`Time to compute correlations: ${perfTime} ms`)
 }

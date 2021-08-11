@@ -80,7 +80,6 @@ function RawScatterPlot({
     console.log('dimensions', dimensions)
     console.log('scatter', scatter)
 
-
     if (isCorrelatedScatter) {
       computeCorrelations(scatter, setSpearman)
     }
