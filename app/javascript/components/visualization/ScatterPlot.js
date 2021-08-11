@@ -42,7 +42,8 @@ function RawScatterPlot({
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
 }) {
   const [isLoading, setIsLoading] = useState(false)
-  const [bulkSpearman, setBulkSpearman] = useState(null)
+  const [bulkCorrelation, setBulkCorrelation] = useState(null)
+  const [labelCorrelations, setLabelCorrelations] = useState(null)
   const [scatterData, setScatterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
@@ -50,7 +51,8 @@ function RawScatterPlot({
   function handleResponse(clusterResponse) {
     const [scatter, perfTimes] = clusterResponse
     const layout = getPlotlyLayout(dimensions, scatter)
-    const plotlyTraces = getPlotlyTraces({
+
+    const traceArgs = {
       axes: scatter.axes,
       data: scatter.data,
       annotName: scatter.annotParams.name,
@@ -63,8 +65,10 @@ function RawScatterPlot({
       pointAlpha: scatter.pointAlpha,
       pointSize: scatter.pointSize,
       showPointBorders: scatter.showClusterPointBorders,
-      is3D: scatter.is3D
-    })
+      is3D: scatter.is3D,
+      labelCorrelations
+    }
+    let plotlyTraces = getPlotlyTraces(traceArgs)
 
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
@@ -86,7 +90,10 @@ function RawScatterPlot({
       computeCorrelations(scatter).then(correlations => {
         const rhoTime = Math.round(performance.now() - rhoStartTime)
         console.log('correlations', correlations)
-        setBulkSpearman(correlations.bulk)
+        setBulkCorrelation(correlations.bulk)
+        traceArgs.labelCorrelations = correlations.byLabel
+        plotlyTraces = getPlotlyTraces(traceArgs)
+        Plotly.react(graphElementId, plotlyTraces, layout)
         log('plot:correlations', { perfTime: rhoTime })
       })
     }
@@ -173,7 +180,7 @@ function RawScatterPlot({
           genes={scatterData.genes}
           consensus={scatterData.consensus}
           isCorrelatedScatter={isCorrelatedScatter}
-          correlation={bulkSpearman}/>
+          correlation={bulkCorrelation}/>
       }
       <div
         className="scatter-graph"
@@ -202,6 +209,35 @@ function RawScatterPlot({
 const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
+/** Get entries for scatter plot legend, shown at right of graphic */
+function getLegendEntries(data, pointSize, labelCorrelations) {
+  const traceCounts = countOccurences(data.annotations)
+  const legendEntries = Object.keys(traceCounts)
+    .sort(traceNameSort) // sort keys so we assign colors in the right order
+    .map((label, index) => {
+      let entry = `${label} (${traceCounts[label]} points)`
+      if (labelCorrelations) {
+        const correlation = Math.round(labelCorrelations[label] * 1000) / 1000
+
+        // ρ = rho = Spearman's rank correlation coefficient
+        entry = `${label} (${traceCounts[label]} points, ρ = ${correlation})`
+      }
+
+      return {
+        target: label,
+        value: {
+          name: entry,
+          legendrank: index,
+          marker: {
+            color: getColorBrewerColor(index),
+            size: pointSize
+          }
+        }
+      }
+    })
+
+  return legendEntries
+}
 
 /** get the array of plotly traces for plotting */
 function getPlotlyTraces({
@@ -217,7 +253,8 @@ function getPlotlyTraces({
   pointAlpha,
   pointSize,
   showPointBorders,
-  is3D
+  is3D,
+  labelCorrelations
 }) {
   const trace = {
     type: is3D ? 'scatter3d' : 'scattergl',
@@ -236,26 +273,11 @@ function getPlotlyTraces({
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
   if (annotType === 'group' && !isGeneExpressionForColor) {
     // use plotly's groupby transformation to make the traces
-    const traceCounts = countOccurences(data.annotations)
-    const traceStyles = Object.keys(traceCounts)
-      .sort(traceNameSort) // sort the keys so we assign colors in the right order
-      .map((val, index) => {
-        return {
-          target: val,
-          value: {
-            name: `${val} (${traceCounts[val]} points)`,
-            legendrank: index,
-            marker: {
-              color: getColorBrewerColor(index),
-              size: pointSize
-            }
-          }
-        }
-      })
+    const legendEntries = getLegendEntries(data, pointSize, labelCorrelations)
     trace.transforms = [{
       type: 'groupby',
       groups: data.annotations,
-      styles: traceStyles
+      styles: legendEntries
     }]
   } else {
     trace.marker = {
@@ -283,9 +305,10 @@ function getPlotlyTraces({
   return [trace]
 }
 
-/** return a hash of value=>count for the passed-in array
-    This i actually surprisingly quick even for large arrays, but we'd rather we
-    didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612s
+/**
+ * Return a hash of value=>count for the passed-in array
+ * This is surprisingly quick even for large arrays, but we'd rather we
+ * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
 */
 function countOccurences(array) {
   return array.reduce((acc, curr) => {
