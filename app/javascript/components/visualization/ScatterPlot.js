@@ -42,7 +42,7 @@ function RawScatterPlot({
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
 }) {
   const [isLoading, setIsLoading] = useState(false)
-  const [spearman, setSpearman] = useState(null)
+  const [bulkSpearman, setBulkSpearman] = useState(null)
   const [scatterData, setScatterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
@@ -81,9 +81,12 @@ function RawScatterPlot({
 
     if (isCorrelatedScatter) {
       const rhoStartTime = performance.now()
+
+      // Compute correlations asynchronously, to not block other rendering
       computeCorrelations(scatter).then(correlations => {
         const rhoTime = Math.round(performance.now() - rhoStartTime)
-        setSpearman(correlations.all)
+        console.log('correlations', correlations)
+        setBulkSpearman(correlations.bulk)
         log('plot:correlations', { perfTime: rhoTime })
       })
     }
@@ -170,7 +173,7 @@ function RawScatterPlot({
           genes={scatterData.genes}
           consensus={scatterData.consensus}
           isCorrelatedScatter={isCorrelatedScatter}
-          correlations={{ spearman }}/>
+          correlation={bulkSpearman}/>
       }
       <div
         className="scatter-graph"

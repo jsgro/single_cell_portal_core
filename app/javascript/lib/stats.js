@@ -6,7 +6,7 @@ window.spearman = SpearmanRho
 function getValuesByLabel(scatter) {
   const valuesByLabel = {}
 
-  const { annotations, cells, x, y } = scatter.data
+  const { annotations, x, y } = scatter.data
   x.forEach((xVal, i) => {
     const yVal = y[i]
     const label = annotations[i]
@@ -23,14 +23,11 @@ function getValuesByLabel(scatter) {
 
 /** Compute Spearman correlations, then push state upstream */
 export async function computeCorrelations(scatter) {
-  const correlations = {}
-  // compute correlation stats asynchronously so it doesn't delay
-  // rendering of other visualizations or impact logging
-  // in the event these stats become more complex or widely used, consider instrumentation strategies
+  const correlations = { byLabel: {} }
   const spearmanRho = new SpearmanRho(scatter.data.x, scatter.data.y)
 
   const value = await spearmanRho.calc()
-  correlations.all = value
+  correlations.bulk = value
 
   // Compute per-label correlations
   const valuesByLabel = getValuesByLabel(scatter)
@@ -39,7 +36,7 @@ export async function computeCorrelations(scatter) {
     Object.entries(valuesByLabel).map(async ([label, xyVals]) => {
       const spearmanRhoLabel = new SpearmanRho(xyVals.x, xyVals.y)
       const rho = await spearmanRhoLabel.calc()
-      correlations[label] = rho
+      correlations.byLabel[label] = rho
     })
   )
 
