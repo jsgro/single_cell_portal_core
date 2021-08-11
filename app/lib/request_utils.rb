@@ -4,7 +4,8 @@ class RequestUtils
 
   # list of parameters to reject from :get_cache_key as they will be represented by request.path
   # format is always :json and therefore unnecessary
-  CACHE_PATH_EXCLUDE_LIST = %w(controller action format study_id)
+  # reviewerSession should be ignored as it is not a valid visualization parameter
+  CACHE_PATH_EXCLUDE_LIST = %w(controller action format study_id reviewerSession)
 
   # character regex to convert into underscores (_) for cache path setting
   PATH_REGEX =/(\/|%2C|%2F|%20|\?|&|=|\.|,|\s)/
