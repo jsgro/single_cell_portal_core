@@ -130,6 +130,17 @@ class SiteController < ApplicationController
         set_study_permissions(@study.detached?)
         set_study_default_options
         set_study_download_options
+
+        # manage reviewer access
+        reviewer_opts = params.to_unsafe_hash['reviewer_opts']
+        if reviewer_opts['reset'] == 'yes'
+          logger.info "Rotating credentials for reviewer access in #{@study.accession}"
+          @study.reviewer_access&.rotate_credentials
+        elsif reviewer_opts['enable'] == 'yes' && @study.reviewer_access.nil?
+          @study.build_reviewer_access.save!
+        elsif reviewer_opts['enable'] == 'no'
+          @study.reviewer_access&.destroy
+        end
       else
         set_study_default_options
         @alert = 'You do not have permission to perform that action.'
@@ -194,7 +205,7 @@ class SiteController < ApplicationController
   end
 
   def validate_reviewer_access
-    if @reviewer_access.authenticate_pin?(reviewer_access_params[:pin])
+    if @reviewer_access.authenticate_pin?(validate_reviewer_access_params[:pin])
       # create a new reviewer access session and redirect
       session = @reviewer_access.create_new_session
       study = @reviewer_access.study
@@ -752,7 +763,8 @@ class SiteController < ApplicationController
                                   :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails,
                                                        :cluster_point_size, :cluster_point_alpha, :cluster_point_border],
                                   study_shares_attributes: [:id, :_destroy, :email, :permission],
-                                  study_detail_attributes: [:id, :full_description])
+                                  study_detail_attributes: [:id, :full_description],
+                                  reviewer_access_attributes: [:id, :expires_at])
   end
 
   # permit parameters for creating custom user annotation
@@ -765,7 +777,7 @@ class SiteController < ApplicationController
     params.require(:download_acceptance).permit(:email, :download_agreement_id)
   end
 
-  def reviewer_access_params
+  def validate_reviewer_access_params
     params.require(:reviewer_access).permit(:pin)
   end
 

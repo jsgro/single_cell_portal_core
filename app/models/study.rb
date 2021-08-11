@@ -230,6 +230,7 @@ class Study
   accepts_nested_attributes_for :external_resources, allow_destroy: true
   accepts_nested_attributes_for :study_detail, allow_destroy: true
   accepts_nested_attributes_for :download_agreement, allow_destroy: true
+  accepts_nested_attributes_for :reviewer_access, allow_destroy: true
 
   ##
   #
