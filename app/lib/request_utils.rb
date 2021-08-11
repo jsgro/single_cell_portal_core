@@ -5,10 +5,10 @@ class RequestUtils
   # list of parameters to reject from :get_cache_key as they will be represented by request.path
   # format is always :json and therefore unnecessary
   # reviewerSession should be ignored as it is not a valid visualization parameter
-  CACHE_PATH_EXCLUDE_LIST = %w(controller action format study_id reviewerSession).freeze
+  CACHE_PATH_EXCLUDE_LIST = %w[controller action format study_id reviewerSession].freeze
 
   # character regex to convert into underscores (_) for cache path setting
-  PATH_REGEX = /(\/|%2C|%2F|%20|\?|&|=|\.|,|\s)/.freeze
+  PATH_REGEX = %r{(\/|%2C|%2F|%20|\?|&|=|\.|,|\s)}.freeze
 
   # load same sanitizer as ActionView for stripping html/js from inputs
   # using FullSanitizer as it is the most strict
