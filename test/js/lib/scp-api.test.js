@@ -62,7 +62,7 @@ describe('JavaScript client for SCP REST API', () => {
       })
   })
 
-  it('merges reviewerSession parameter when present', async () => {
+  it('merges reviewerSession parameter when present', () => {
     const reviewerSession = '1e457ce9-ce9c-4ee9-b772-67e6ce970e73'
     let baseUrl = 'https://localhost:3000/single_cell/study/SCP1'
     let mergedUrl = mergeReviewerSessionParam(baseUrl, reviewerSession)
