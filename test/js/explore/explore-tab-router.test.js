@@ -1,7 +1,6 @@
 import * as Reach from '@reach/router'
 import React from 'react'
 import { mount } from 'enzyme';
-import { v4 as uuidv4 } from 'uuid';
 
 import useExploreTabRouter from 'components/explore/ExploreTabRouter'
 
@@ -66,7 +65,7 @@ describe('dataParams are appropriately managed on the url', () => {
   it('persists reviewerSession across requests', async () => {
     const routerNav = jest.spyOn(Reach, 'navigate')
     routerNav.mockImplementation(() => {})
-    const reviewerSession = uuidv4()
+    const reviewerSession = 'd47c606d-3e7f-4ebb-a452-6e649ebb955'
     const searchString = `?cluster=foo&annotation=bar--group--study&reviewerSession=${reviewerSession}`
     const locationMock = jest.spyOn(Reach, 'useLocation')
     locationMock.mockImplementation(() => ({ search: searchString }))
