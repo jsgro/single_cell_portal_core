@@ -6,7 +6,7 @@ class ReviewerAccess
 
   field :access_code, type: String # UUID
   field :pin, type: String # 6 character string
-  field :expires_at, type: Date, default: 2.months.from_now
+  field :expires_at, type: Date, default: 2.months.from_now.to_date
 
   belongs_to :study
   has_many :reviewer_access_sessions, dependent: :delete_all do
