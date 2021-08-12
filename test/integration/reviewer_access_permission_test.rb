@@ -10,10 +10,11 @@ class ReviewerAccessPermissionTest < ActionDispatch::IntegrationTest
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
     @study = FactoryBot.create(:study,
-                               name_prefix: 'Reviewer Access Test', public: false, test_array: @@studies_to_clean)
+                               name_prefix: 'Reviewer Access Test', public: false, user: @user,
+                               test_array: @@studies_to_clean)
     detail = @study.build_study_detail
     detail.update(full_description: "<p>testing</p>")
-    TosAcceptance.find_or_create_by!(email: @user.email)
+    TosAcceptance.create!(email: @user.email)
   end
 
   teardown do

@@ -22,7 +22,7 @@ class ReviewerAccessTest < ActiveSupport::TestCase
   end
 
   teardown do
-    @study.reviewer_access.destroy
+    ReviewerAccess.destroy_all
   end
 
   test 'should initialize reviewer access attributes' do
