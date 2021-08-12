@@ -1,0 +1,22 @@
+NAME	biosample_id	biosample_type	disease	disease__ontology_label	organ	organ__ontology_label	library_preparation_protocol	library_preparation_protocol__ontology_label	donor_id	species	species__ontology_label	sex	is_living	cell_type	cell_type__ontology_label
+TYPE	group	group	group	group	group	group	group	group	group	group	group	group	group	group	group
+AE_1	AE_D06_02	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_2	AE_D06_02	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_3	AE_D06_02	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_4	AE_D06_02	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_5	AE_D06_02	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_6	AE_D06_02	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_7	AE_D06_02	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000075	columnar/cuboidal epithelial cell
+AE_8	AE_D06_02	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_9	AE_D06_02	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000075	columnar/cuboidal epithelial cell
+AE_10	AE_D06_02	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000075	columnar/cuboidal epithelial cell
+AE_11	AE_D06_01	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_12	AE_D06_01	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000094	granulocyte
+AE_13	AE_D06_01	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_14	AE_D06_01	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000075	columnar/cuboidal epithelial cell
+AE_15	AE_D06_01	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_16	AE_D06_01	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_17	AE_D06_01	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_18	AE_D06_01	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
+AE_19	AE_D06_01	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000075	columnar/cuboidal epithelial cell
+AE_20	AE_D06_01	PrimaryBioSample_PrimaryCulture	MONDO_0018076	tuberculosis	UBERON_0000178	blood	EFO_0009899	10x 3' v2	AE_D06	NCBITaxon_9541	Macaca fascicularis	unknown	unknown	CL_0000066	epithelial cell
