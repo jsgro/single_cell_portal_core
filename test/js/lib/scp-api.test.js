@@ -2,7 +2,7 @@
 /* eslint-disable*/
 
 const fetch = require('node-fetch')
-import scpApi, { fetchAuthCode, fetchFacetFilters } from 'lib/scp-api'
+import scpApi, { fetchAuthCode, fetchFacetFilters, mergeReviewerSessionParam } from 'lib/scp-api'
 
 describe('JavaScript client for SCP REST API', () => {
   beforeAll(() => {
@@ -60,5 +60,17 @@ describe('JavaScript client for SCP REST API', () => {
       .catch(error => {
         expect(error.message).toEqual('Internal Server Error')
       })
+  })
+
+  it('merges reviewerSession parameter when present', async () => {
+    const reviewerSession = '1e457ce9-ce9c-4ee9-b772-67e6ce970e73'
+    let baseUrl = 'https://localhost:3000/single_cell/study/SCP1'
+    let mergedUrl = mergeReviewerSessionParam(baseUrl, reviewerSession)
+    expect(mergedUrl).toContain(`?reviewerSession=${reviewerSession}`)
+    baseUrl += '?cluster=foo'
+    mergedUrl = mergeReviewerSessionParam(baseUrl, reviewerSession)
+    expect(mergedUrl).toContain(`&reviewerSession=${reviewerSession}`)
+    mergedUrl = mergeReviewerSessionParam(baseUrl, null)
+    expect(mergedUrl).toEqual(baseUrl)
   })
 })
