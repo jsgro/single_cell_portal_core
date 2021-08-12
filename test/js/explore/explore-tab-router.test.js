@@ -1,6 +1,7 @@
 import * as Reach from '@reach/router'
 import React from 'react'
 import { mount } from 'enzyme';
+import { v4 as uuidv4 } from 'uuid';
 
 import useExploreTabRouter from 'components/explore/ExploreTabRouter'
 
@@ -61,6 +62,27 @@ describe('dataParams are appropriately managed on the url', () => {
     expect(routerNav).toHaveBeenLastCalledWith('?cluster=foo&annotation=bar2--numeric--user#study-visualize', { replace: true })
   })
 
+  // ensure reviewerSession parameter is preserved across requests
+  it('persists reviewerSession across requests', async () => {
+    const routerNav = jest.spyOn(Reach, 'navigate')
+    routerNav.mockImplementation(() => {})
+    const reviewerSession = uuidv4()
+    const searchString = `?cluster=foo&annotation=bar--group--study&reviewerSession=${reviewerSession}`
+    const locationMock = jest.spyOn(Reach, 'useLocation')
+    locationMock.mockImplementation(() => ({ search: searchString }))
+    mockWindowLocationSearch(searchString)
+
+    const testObj = {}
+    const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
+
+    expect(testObj.exploreParams.reviewerSession).toEqual(reviewerSession)
+
+    testObj.updateExploreParams({ annotation: { name: 'foo', type: 'group', scope: 'user' } })
+    const updatedQuery = `?cluster=foo&annotation=foo--group--user&reviewerSession=${reviewerSession}#study-visualize`
+    expect(routerNav).toHaveBeenLastCalledWith(updatedQuery, { replace: true })
+    expect(testObj.exploreParams.reviewerSession).toEqual(reviewerSession)
+  })
+
   /** This test validates that we are parsing data params on URL links in a consistent way
     * Note that if this test breaks, it may indicate that we have changed the parameter names or how
     * we are parsing them, which may break links that our users have previously created
@@ -89,6 +111,7 @@ describe('dataParams are appropriately managed on the url', () => {
       consensus: 'mean',
       heatmapRowCentering: 'z-score',
       ideogramFileId: '604fc5c4e241391a8ff93271',
+      reviewerSession: '',
       distributionPlot: '',
       distributionPoints: '',
       heatmapFit: '',
@@ -107,7 +130,6 @@ describe('dataParams are appropriately managed on the url', () => {
         ideogramFileId: true
       }
     })
-
     testObj.updateExploreParams({ spatialGroups: ['triangle'] })
     let expectedUrlString = '?geneList=My%20List&genes=agpat2%2Capoe&cluster=foo&spatialGroups=triangle&annotation=bar--group--study&subsample=1000'
     expectedUrlString += '&consensus=mean&heatmapRowCentering=z-score&bamFileName=sample1.bam&ideogramFileId=604fc5c4e241391a8ff93271#study-visualize'

@@ -98,6 +98,7 @@ describe('Plot data cache', () => {
       genes: [],
       isAnnotatedScatter: null,
       isCorrelatedScatter: null,
+      reviewerSession: null,
       studyAccession: 'SCP1',
       subsample: undefined
     }
@@ -124,6 +125,7 @@ describe('Plot data cache', () => {
         genes: [],
         isAnnotatedScatter: null,
         isCorrelatedScatter: null,
+        reviewerSession: null,
         studyAccession: 'SCP1',
         subsample: undefined
       }
@@ -158,6 +160,7 @@ describe('Plot data cache', () => {
         genes: ['Apoe'],
         isAnnotatedScatter: null,
         isCorrelatedScatter: null,
+        reviewerSession: null,
         studyAccession: 'SCP1',
         subsample: undefined
       }
@@ -207,7 +210,8 @@ describe('Plot data cache', () => {
       genes: [],
       isAnnotatedScatter: null,
       isCorrelatedScatter: null,
-      studyAccession: 'SCP1',
+       reviewerSession: null,
+       studyAccession: 'SCP1',
       subsample: undefined
     }
 
@@ -249,6 +253,7 @@ describe('cache handles simultaneous gene/cluster plots', () => {
       genes: ['Apoe'],
       isAnnotatedScatter: null,
       isCorrelatedScatter: null,
+      reviewerSession: null,
       studyAccession: 'SCP1',
       subsample: undefined
     }
@@ -297,6 +302,7 @@ describe('cache handles simultaneous gene/cluster plots', () => {
         genes: ['Apoe'],
         isAnnotatedScatter: null,
         isCorrelatedScatter: null,
+        reviewerSession: null,
         studyAccession: 'SCP1',
         subsample: 'all'
       }
