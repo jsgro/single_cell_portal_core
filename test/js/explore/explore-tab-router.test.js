@@ -80,6 +80,10 @@ describe('dataParams are appropriately managed on the url', () => {
     const updatedQuery = `?cluster=foo&annotation=foo--group--user&reviewerSession=${reviewerSession}#study-visualize`
     expect(routerNav).toHaveBeenLastCalledWith(updatedQuery, { replace: true })
     expect(testObj.exploreParams.reviewerSession).toEqual(reviewerSession)
+    testObj.updateExploreParams({ cluster: 'bar', annotation: { name: 'bar', type: 'group', scope: 'study' } })
+    const finalQuery = `?cluster=bar&annotation=bar--group--study&reviewerSession=${reviewerSession}#study-visualize`
+    expect(routerNav).toHaveBeenLastCalledWith(finalQuery, { replace: true })
+    expect(testObj.exploreParams.reviewerSession).toEqual(reviewerSession)
   })
 
   /** This test validates that we are parsing data params on URL links in a consistent way
