@@ -161,3 +161,29 @@
   width: 800px;
   margin: 0px auto;
 }
+
+.overlay-upload {
+  position: relative;
+  background: rgba(244,243,244,1.0);
+}
+
+.overlay-upload:after {
+  content: " ";
+  z-index: 10;
+  display: block;
+  position: absolute;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(244,243,244,0.75);
+}
+
+#block-processed-upload-content {
+  z-index: 1000;
+  display: block;
+  position: absolute;
+  top: 20%;
+  left: 0;
+  right: 0;
+}

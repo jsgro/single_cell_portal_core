@@ -1,5 +1,5 @@
 // find form, select parent and replace contents with updated values
-$("<%= params[:selector] %>").replaceWith("<%= escape_javascript( render params[:partial], {study_file: @study_file}) %>");
+$("<%= params[:selector] %>").replaceWith("<%= escape_javascript(render partial: params[:partial], locals: {study_file: @study_file, allow_only: @allow_only }) %>");
 
 // get instance of new form as ID has changed
 var wizForm = $('.<%= params[:partial] %>').slice(-1)[0];
@@ -37,3 +37,6 @@ $('#study-files-notice-target').html("<%= escape_javascript(render partial: 'upl
 setTimeout(function() {
   $('#upload-success-modal').modal('show');
 }, 500);
+
+// show/hide overlay preventing processed uploads, if needed
+toggleExpressionOverlay(<%= @block_processed_upload %>);

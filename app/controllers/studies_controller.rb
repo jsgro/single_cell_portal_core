@@ -580,6 +580,8 @@ class StudiesController < ApplicationController
         end
       end
     end
+    # determine state for processed matrix overlay
+    set_expression_form_state
   end
 
   # begin uploading a bundled study_file while parent is still uploading
@@ -829,11 +831,17 @@ class StudiesController < ApplicationController
       end
     end
 
+    # determine state for processed matrix overlay
+    set_expression_form_state
+
     is_required = ['Cluster', 'Expression Matrix', 'Metadata'].include?(@file_type)
     @color = is_required ? 'danger' : 'info'
     @status = is_required ? 'Required' : 'Optional'
     @study_file = @study.build_study_file({file_type: @file_type})
-    @study_file.build_expression_file_info
+    @allow_only = params[:allow_only] ? params[:allow_only] : 'all'
+    if @file_type =~ /Matrix/
+      @study_file.build_expression_file_info(is_raw_counts: @allow_only == 'raw' ? true : false)
+    end
 
     unless @file_type.nil?
       @reset_status = @study.study_files.valid.select {|sf| sf.file_type == @file_type && !sf.new_record?}.count == 0
@@ -1063,6 +1071,18 @@ class StudiesController < ApplicationController
 
   private
 
+  def set_expression_form_state
+    # look for any valid raw counts files
+    if @study.study_files.where(file_type: /Matrix/, queued_for_deletion: false,
+                                'expression_file_info.is_raw_counts' => true,).any? ||
+       !User.feature_flag_for_instance(current_user, 'require_raw_counts_frontend')
+      @block_processed_upload = false
+    else
+      @block_processed_upload = true
+    end
+    @allow_only = params[:allow_only] || 'all'
+  end
+
   ###
   #
   # SETTERS
@@ -1118,6 +1138,9 @@ class StudiesController < ApplicationController
     all_expression = @study.study_files.by_type(['Expression Matrix', 'MM Coordinate Matrix'])
     @raw_matrix_files = all_expression.select { |matrix| matrix.is_raw_counts_file? }
     @processed_matrix_files = all_expression.select { |matrix| !matrix.is_raw_counts_file? }
+    # only block upload on frontend if feature flag is turned on
+    @block_processed_upload = @raw_matrix_files.empty? &&
+                              User.feature_flag_for_instance(current_user, 'raw_counts_required_frontend')
     @metadata_file = @study.metadata_file
     @cluster_ordinations = @study.study_files.by_type('Cluster')
     @coordinate_labels = @study.study_files.by_type('Coordinate Labels')
@@ -1256,7 +1279,7 @@ class StudiesController < ApplicationController
       file_type = DirectoryListing.file_type_from_extension(file.name)
       directory_name = DirectoryListing.get_folder_name(file.name)
       if @file_extension_map.has_key?(directory_name) && !@file_extension_map.dig(directory_name, file_type).nil? &&
-          @file_extension_map.dig(directory_name, file_type) >= DirectoryListing::MIN_SIZE
+         @file_extension_map.dig(directory_name, file_type) >= DirectoryListing::MIN_SIZE
         process_directory_listing_file(file, file_type)
       else
         # we are now dealing with singleton files or sequence data, so process accordingly (making sure to ignore directories)

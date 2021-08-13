@@ -720,3 +720,15 @@ function setElementsEnabled(selector, enabled= true) {
     selector.css(elementCss).parent().css(parentCss);
     selector.attr('disabled', enabled ? false : 'disabled')
 }
+
+function toggleExpressionOverlay(allowUploads) {
+  let overlay = $('#block-processed-upload')
+  let disclaimer = $('#block-processed-upload-content')
+  if (allowUploads) {
+    overlay.removeClass('overlay-upload')
+    disclaimer.hide()
+  } else {
+    overlay.addClass('overlay-upload')
+    disclaimer.show()
+  }
+}

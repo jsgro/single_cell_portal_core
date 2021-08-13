@@ -68,6 +68,4 @@ module FeatureFlaggable
       instance.save
     end
   end
-
-
 end

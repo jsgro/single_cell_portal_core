@@ -93,7 +93,9 @@
                      ), class: 'btn btn-sm btn-primary add-expression', 'data-remote' => true %></p>
     </div>
     <div class="tab-pane" id="processed-expression">
-      <div id="processed-expressions-target">
+      <%= render 'block_processed_upload' if @block_processed_upload %>
+        <div id="block-processed-upload" class="<%= @block_processed_upload ? 'overlay-upload' : nil %>">
+        <div id="processed-expressions-target">
         <div class="well well-sm container-fluid upload-wizard">
           <div class="row ">
             <h2 class="col-sm-12">Step 2. Upload Processed Expression File <small class="initialize-label" id="initialize_processed_expression_form_completed"></small></h2>
@@ -124,8 +126,6 @@
             <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank %>  files of this type (e.g. .txt.gz) are accepted as well</p>
           </div>
         </div>
-
-
         <% @processed_matrix_files.each do |study_file| %>
           <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
             <%= render partial: 'initialize_expression_form',
@@ -140,6 +140,12 @@
           </div>
         <% end %>
         <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+          // user clicks the 'Upload Raw Counts' button after seeing disclaimer
+          $('#upload-raw-counts').on('click', function() {
+            console.log('Returning to raw counts tab')
+            $('#initialize_raw_expression_form a').click();
+          })
+
           if (<%= !@processed_matrix_files.first.new_record? %>) {
             completeWizardStep('initialize_processed_expression_form_nav');
             console.log('incrementing status for expression files upload');
@@ -148,7 +154,7 @@
           }
         </script>
       </div>
-      <p><%= link_to "<span class='fas fa-plus'></span> Add an Processed Matrix File".html_safe,
+        <p><%= link_to "<span class='fas fa-plus'></span> Add an Processed Matrix File".html_safe,
                      new_study_file_study_path(@study._id,
                                                file_type: 'Expression Matrix',
                                                target: '#processed-expressions-target',
@@ -156,6 +162,7 @@
                                                is_raw_counts: false,
                                                allow_only: 'processed'
                      ), class: 'btn btn-sm btn-primary add-expression', 'data-remote' => true %></p>
+        </div>
     </div>
     <div class="tab-pane" id="metadata">
       <div class="well well-sm container-fluid upload-wizard">

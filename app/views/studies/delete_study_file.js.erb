@@ -1,7 +1,7 @@
 closeModalSpinner('#delete-modal-spinner', '#delete-modal', function() {
     // replace form with fresh instance if needed
     if (<%= !@message.blank? %>) {
-        $("<%= params[:target] %>").replaceWith("<%= escape_javascript( render partial: @partial, locals: {study_file: @study_file}) %>");
+        $("<%= params[:target] %>").replaceWith("<%= escape_javascript( render partial: @partial, locals: {study_file: @study_file, allow_only: @allow_only}) %>");
         var wizForm = $('.<%= @partial %>').slice(-1)[0];
 
         $(wizForm).find('[data-toggle="tooltip"]').tooltip({container: 'body'});
@@ -25,6 +25,9 @@ closeModalSpinner('#delete-modal-spinner', '#delete-modal', function() {
     if (<%= !@message.blank? %>) {
         $("#study-files-notice-target").html("<%= escape_javascript( render partial: 'studies/study_file_notices', locals: {message: @message}) %>");
     };
+
+    // show/hide overlay preventing processed uploads, if needed
+    toggleExpressionOverlay(<%= @block_processed_upload %>);
 });
 
 
