@@ -721,14 +721,15 @@ function setElementsEnabled(selector, enabled= true) {
     selector.attr('disabled', enabled ? false : 'disabled')
 }
 
-function toggleExpressionOverlay(allowUploads) {
+// show/hide overlay div & buttons blocking processed matrix file uploads
+function setExpressionOverlay(renderOverlay) {
   let overlay = $('#block-processed-upload')
-  let disclaimer = $('#block-processed-upload-content')
-  if (allowUploads) {
-    overlay.removeClass('overlay-upload')
-    disclaimer.hide()
-  } else {
+  let content = $('#block-processed-upload-content')
+  if (renderOverlay) {
     overlay.addClass('overlay-upload')
-    disclaimer.show()
+    content.removeClass('hide-processed-disclaimer').addClass('show-processed-disclaimer')
+  } else {
+    overlay.removeClass('overlay-upload')
+    content.removeClass('show-processed-disclaimer').addClass('hide-processed-disclaimer')
   }
 }

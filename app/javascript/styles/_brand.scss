@@ -179,11 +179,16 @@
   background: rgba(244,243,244,0.75);
 }
 
-#block-processed-upload-content {
+.show-processed-disclaimer {
   z-index: 1000;
   display: block;
   position: absolute;
   top: 20%;
   left: 0;
   right: 0;
+}
+
+.hide-processed-disclaimer {
+  display: none;
+  z-index: -1000;
 }

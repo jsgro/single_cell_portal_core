@@ -13,8 +13,8 @@
 
 <div id="rootwizard">
   <ul class="nav wizard">
-    <li role="presentation" class="wizard-nav" id="initialize_raw_expression_form"><a href="#raw-expression" data-toggle="tab">1. Raw Count Matrix <span id="initialize_expression_form_nav_completed"></span></a></li>
-    <li role="presentation" class="wizard-nav" id="initialize_processed_expression_form_nav"><a href="#processed-expression" data-toggle="tab">2. Processed Matrix <span id="initialize_expression_form_nav_completed"></span></a></li>
+    <li role="presentation" class="wizard-nav" id="initialize_raw_expression_form"><a href="#raw-expression" data-toggle="tab">1. Raw Count Matrix <span id="initialize_raw_expression_form_nav_completed"></span></a></li>
+    <li role="presentation" class="wizard-nav" id="initialize_processed_expression_form_nav"><a href="#processed-expression" data-toggle="tab">2. Processed Matrix <span id="initialize_processed_expression_form_nav_completed"></span></a></li>
     <li role="presentation" class="wizard-nav" id="initialize_metadata_form_nav"><a href="#metadata" data-toggle="tab">3. Metadata <span id="initialize_metadata_form_nav_completed"></span></a></li>
     <li role="presentation" class="wizard-nav" id="initialize_ordinations_form_nav"><a href="#ordinations" data-toggle="tab">4. Clusters / Spatial <span id="initialize_ordinations_form_nav_completed"></span></a></li>
     <li role="presentation" class="wizard-nav" id="initialize_labels_form_nav"><a href="#labels" data-toggle="tab">5. Coordinate Labels <span id="initialize_labels_form_nav_completed"></span></a></li>
@@ -77,9 +77,9 @@
         <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
           if (<%= !@raw_matrix_files.first.new_record? %>) {
             completeWizardStep('initialize_raw_expression_form_nav');
-            console.log('incrementing status for expression files upload');
-            $('#initialize_expression_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_expression_form_completed'}) %>");
-            $('#initialize_expression_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
+            console.log('incrementing status for raw expression files upload');
+            $('#initialize_raw_expression_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_expression_form_completed'}) %>");
+            $('#initialize_raw_expression_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
           }
         </script>
       </div>
@@ -93,7 +93,7 @@
                      ), class: 'btn btn-sm btn-primary add-expression', 'data-remote' => true %></p>
     </div>
     <div class="tab-pane" id="processed-expression">
-      <%= render 'block_processed_upload' if @block_processed_upload %>
+      <%= render 'block_processed_upload_content' %>
         <div id="block-processed-upload" class="<%= @block_processed_upload ? 'overlay-upload' : nil %>">
         <div id="processed-expressions-target">
         <div class="well well-sm container-fluid upload-wizard">
@@ -148,9 +148,9 @@
 
           if (<%= !@processed_matrix_files.first.new_record? %>) {
             completeWizardStep('initialize_processed_expression_form_nav');
-            console.log('incrementing status for expression files upload');
-            $('#initialize_expression_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_expression_form_completed'}) %>");
-            $('#initialize_expression_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
+            console.log('incrementing status for processed expression files upload');
+            $('#initialize_processed_expression_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_expression_form_completed'}) %>");
+            $('#initialize_processed_expression_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
           }
         </script>
       </div>

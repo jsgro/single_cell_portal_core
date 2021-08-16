@@ -62,7 +62,7 @@
 			<%= f.label :actions %>
 			<div class="row">
 				<div class="col-xs-6">
-					<%= f.submit 'Save', class: 'btn btn-block btn-success save-study-file', disabled: (study_file.upload_file_name.nil?) %>
+					<%= f.submit 'Save', class: 'btn btn-block btn-success save-study-file save-expression-file', disabled: (study_file.upload_file_name.nil?) %>
 				</div>
 				<div class="col-xs-6">
           <% if study_file.parsing? || study_file.upload_file_name.nil? %>
@@ -96,6 +96,27 @@
           $(expFormId_<%= allow_only %>).find('.initialize-bundle-target').empty();
         }
       });
+
+    function updateRawCountsAssnSelect() {
+      const rawAssnTarget = $(`${expFormId_<%= allow_only %>} .raw_associations_select`)[0]
+      const pairedHiddenField = $(`${expFormId_<%= allow_only %>} .raw_counts_associations`)[0]
+      <% opts =  @study.study_files.where(file_type: /Matrix/, 'expression_file_info.is_raw_counts': true, queued_for_deletion: false)
+                                         .map { |f| { label: f.name, value: f.id.to_s } }
+         current_values = study_file.expression_file_info.raw_counts_associations
+                                   .map {|aid| opts.find {|opt| opt[:value] == aid }} %>
+      const opts = <%= opts.to_json.html_safe %>
+      const current_values = <%= current_values.to_json.html_safe %>
+      window.SCP.renderRawAssociationSelect(rawAssnTarget, opts, current_values, pairedHiddenField)
+    }
+
+    <% if User.feature_flag_for_instance(current_user, 'raw_counts_required_backend')  %>
+      updateRawCountsAssnSelect()
+
+    // update on all form submissions
+    $('body').on('click', '.save-expression-file, .add-expression', function() {
+      updateRawCountsAssnSelect()
+    })
+    <% end %>
 
 		$(function() {
       $(expFormId_<%= allow_only %>).fileupload({

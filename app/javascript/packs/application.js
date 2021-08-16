@@ -30,6 +30,7 @@ import {
 } from 'lib/metrics-api'
 import * as ScpApi from 'lib/scp-api'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
+import { renderRawAssociationSelect } from 'components/upload/RawAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -66,4 +67,5 @@ window.morpheus = morpheus
 window.SCP.log = log
 window.SCP.API = ScpApi
 window.SCP.renderClusterAssociationSelect = renderClusterAssociationSelect
+window.SCP.renderRawAssociationSelect = renderRawAssociationSelect
 window.SCP.renderExploreView = renderExploreView

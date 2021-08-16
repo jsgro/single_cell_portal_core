@@ -95,7 +95,7 @@ class StudiesController < ApplicationController
     # load any existing files if user restarted for some reason (unlikely)
     initialize_wizard_files
     # check if study has been properly initialized yet, set to true if not
-    if !@cluster_ordinations.last.new_record? && !@expression_files.last.new_record? && !@metadata_file.new_record? && !@study.initialized?
+    if !@cluster_ordinations.last.new_record? && !@all_expression.last.new_record? && !@metadata_file.new_record? && !@study.initialized?
       @study.update_attributes(initialized: true)
     end
   end
@@ -1071,18 +1071,6 @@ class StudiesController < ApplicationController
 
   private
 
-  def set_expression_form_state
-    # look for any valid raw counts files
-    if @study.study_files.where(file_type: /Matrix/, queued_for_deletion: false,
-                                'expression_file_info.is_raw_counts' => true,).any? ||
-       !User.feature_flag_for_instance(current_user, 'require_raw_counts_frontend')
-      @block_processed_upload = false
-    else
-      @block_processed_upload = true
-    end
-    @allow_only = params[:allow_only] || 'all'
-  end
-
   ###
   #
   # SETTERS
@@ -1112,7 +1100,8 @@ class StudiesController < ApplicationController
                                                  :matrix_id, :submission_id, :bam_id, :analysis_name, :visualization_name,
                                                  :cluster_name, :annotation_name],
                                        expression_file_info_attributes: [:id, :library_preparation_protocol, :units,
-                                                                         :biosample_input_type, :modality, :is_raw_counts])
+                                                                         :biosample_input_type, :modality, :is_raw_counts,
+                                                                         raw_counts_associations: []])
   end
 
   def directory_listing_params
@@ -1135,11 +1124,10 @@ class StudiesController < ApplicationController
 
   # set up variables for wizard
   def initialize_wizard_files
-    all_expression = @study.study_files.by_type(['Expression Matrix', 'MM Coordinate Matrix'])
-    @raw_matrix_files = all_expression.select { |matrix| matrix.is_raw_counts_file? }
-    @processed_matrix_files = all_expression.select { |matrix| !matrix.is_raw_counts_file? }
-    # only block upload on frontend if feature flag is turned on
-    @block_processed_upload = @raw_matrix_files.empty? &&
+    @all_expression = @study.study_files.by_type(['Expression Matrix', 'MM Coordinate Matrix'])
+    # divide all expression files into raw/processed bins
+    @raw_matrix_files, @processed_matrix_files = @all_expression.partition(&:is_raw_counts_file?)
+    @block_processed_upload = @raw_matrix_files.empty? && @processed_matrix_files.empty? &&
                               User.feature_flag_for_instance(current_user, 'raw_counts_required_frontend')
     @metadata_file = @study.metadata_file
     @cluster_ordinations = @study.study_files.by_type('Cluster')
@@ -1175,6 +1163,18 @@ class StudiesController < ApplicationController
     (@raw_matrix_files + @processed_matrix_files).each do |file|
       file.build_expression_file_info if file.expression_file_info.nil?
     end
+  end
+
+  def set_expression_form_state
+    # if feature flag is enabled, ensure there are raw counts matrix files
+    if @study.study_files.where(file_type: /Matrix/, queued_for_deletion: false,
+                                'expression_file_info.is_raw_counts' => true).empty? &&
+      User.feature_flag_for_instance(current_user, 'raw_counts_required_frontend')
+      @block_processed_upload = true
+    else
+      @block_processed_upload = false
+    end
+    @allow_only = params[:allow_only] || 'all'
   end
 
   def set_user_projects
