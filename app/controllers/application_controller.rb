@@ -14,6 +14,7 @@ class ApplicationController < ActionController::Base
   ###
 
   before_action :set_csrf_headers
+  before_action :set_cache_control_header
 
   # Prevent CSRF attacks by raising an exception.
   # For APIs, you may want to use :null_session instead.
@@ -293,6 +294,17 @@ class ApplicationController < ActionController::Base
   def set_csrf_headers
     if request.xhr?
       cookies['XSRF-TOKEN'] = form_authenticity_token if cookies['XSRF-TOKEN'].blank?
+    end
+  end
+
+  # if reviewerSession parameter is present, set Cache-Control header to prevent browsers from caching the response
+  # note: this does not impact server-side caching for visualization, this is just browser caching of pages
+  # from: https://stackoverflow.com/questions/49547/how-do-we-control-web-page-caching-across-all-browsers
+  def set_cache_control_header
+    if params[:reviewerSession].present?
+      headers['Cache-Control'] = 'no-cache, no-store, must-revalidate' # HTTP 1.1.
+      headers['Pragma'] = 'no-cache' # HTTP 1.0.
+      headers['Expires'] = '0' # Proxies.
     end
   end
 
