@@ -33,6 +33,3 @@
     </div>
   </div>
 </div>
-<%# render feature flags to html so they can be found by react components #%>
-<input type="hidden" id="feature-flags" value='<%= FeatureFlaggable.feature_flags_for_instances(@selected_branding_group, current_user).to_json %>'/>
-

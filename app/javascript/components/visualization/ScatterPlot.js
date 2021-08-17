@@ -14,7 +14,7 @@ import PlotTitle from './PlotTitle'
 import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
-// import { values } from 'core-js/core/array'
+import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
@@ -86,9 +86,12 @@ function RawScatterPlot({
       computeCorrelations(scatter).then(correlations => {
         const rhoTime = Math.round(performance.now() - rhoStartTime)
         setBulkCorrelation(correlations.bulk)
-        traceArgs.labelCorrelations = correlations.byLabel
-        plotlyTraces = getPlotlyTraces(traceArgs)
-        Plotly.react(graphElementId, plotlyTraces, layout)
+        const flags = getFeatureFlagsWithDefaults()
+        if (flags.correlation_refinements) {
+          traceArgs.labelCorrelations = correlations.byLabel
+          plotlyTraces = getPlotlyTraces(traceArgs)
+          Plotly.react(graphElementId, plotlyTraces, layout)
+        }
         log('plot:correlations', { perfTime: rhoTime })
       })
     }
