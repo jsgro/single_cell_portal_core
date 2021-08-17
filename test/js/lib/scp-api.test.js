@@ -3,15 +3,34 @@
 
 const fetch = require('node-fetch')
 import scpApi, { fetchAuthCode, fetchFacetFilters, mergeReviewerSessionParam } from 'lib/scp-api'
+const oldWindowLocation = window.location
 
 describe('JavaScript client for SCP REST API', () => {
+  // mocking of window.location, from https://www.benmvp.com/blog/mocking-window-location-methods-jest-jsdom/
+  delete window.location
+
   beforeAll(() => {
     global.fetch = fetch
+    window.location = Object.defineProperties(
+      {},
+      {
+        ...Object.getOwnPropertyDescriptors(oldWindowLocation),
+        assign: {
+          configurable: true,
+          value: jest.fn(),
+        },
+      },
+    )
   })
   // Note: tests that mock global.fetch must be cleared after every test
   afterEach(() => {
     // Restores all mocks back to their original value
     jest.restoreAllMocks()
+  })
+
+  afterAll(() => {
+    // restore `window.location` to the `jsdom` `Location` object
+    window.location = oldWindowLocation
   })
 
   it('includes `Authorization: Bearer` in requests when signed in', done => {
@@ -64,12 +83,16 @@ describe('JavaScript client for SCP REST API', () => {
 
   it('merges reviewerSession parameter when present', () => {
     const reviewerSession = '1e457ce9-ce9c-4ee9-b772-67e6ce970e73'
-    let baseUrl = 'https://localhost:3000/single_cell/study/SCP1'
+    let baseUrl = `https://localhost:3000/single_cell/study/SCP1?reviewerSession=${reviewerSession}`
+    window.location.assign(baseUrl)
     let mergedUrl = mergeReviewerSessionParam(baseUrl, reviewerSession)
     expect(mergedUrl).toContain(`?reviewerSession=${reviewerSession}`)
-    baseUrl += '?cluster=foo'
+    baseUrl = `https://localhost:3000/single_cell/study/SCP1?cluster=foo&reviewerSession=${reviewerSession}`
+    window.location.assign(baseUrl)
     mergedUrl = mergeReviewerSessionParam(baseUrl, reviewerSession)
     expect(mergedUrl).toContain(`&reviewerSession=${reviewerSession}`)
+    baseUrl = 'https://localhost:3000/single_cell/study/SCP1'
+    window.location.assign(baseUrl)
     mergedUrl = mergeReviewerSessionParam(baseUrl, null)
     expect(mergedUrl).toEqual(baseUrl)
   })

@@ -98,7 +98,6 @@ describe('Plot data cache', () => {
       genes: [],
       isAnnotatedScatter: null,
       isCorrelatedScatter: null,
-      reviewerSession: null,
       studyAccession: 'SCP1',
       subsample: undefined
     }
@@ -125,7 +124,6 @@ describe('Plot data cache', () => {
         genes: [],
         isAnnotatedScatter: null,
         isCorrelatedScatter: null,
-        reviewerSession: null,
         studyAccession: 'SCP1',
         subsample: undefined
       }
@@ -160,7 +158,6 @@ describe('Plot data cache', () => {
         genes: ['Apoe'],
         isAnnotatedScatter: null,
         isCorrelatedScatter: null,
-        reviewerSession: null,
         studyAccession: 'SCP1',
         subsample: undefined
       }
@@ -202,16 +199,15 @@ describe('Plot data cache', () => {
     })
 
      // it should still only fetch the annotation data, even though the cluster data has not yet arrived
-     const expectedNewAnnotParams = {
-      annotation: {name: 'species', scope: 'study'},
+    const expectedNewAnnotParams = {
+      annotation: { name: 'species', scope: 'study' },
       cluster: '_default',
       consensus: undefined,
       fields: ['annotation'],
       genes: [],
       isAnnotatedScatter: null,
       isCorrelatedScatter: null,
-       reviewerSession: null,
-       studyAccession: 'SCP1',
+      studyAccession: 'SCP1',
       subsample: undefined
     }
 
@@ -253,7 +249,6 @@ describe('cache handles simultaneous gene/cluster plots', () => {
       genes: ['Apoe'],
       isAnnotatedScatter: null,
       isCorrelatedScatter: null,
-      reviewerSession: null,
       studyAccession: 'SCP1',
       subsample: undefined
     }
@@ -302,7 +297,6 @@ describe('cache handles simultaneous gene/cluster plots', () => {
         genes: ['Apoe'],
         isAnnotatedScatter: null,
         isCorrelatedScatter: null,
-        reviewerSession: null,
         studyAccession: 'SCP1',
         subsample: 'all'
       }
