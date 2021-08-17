@@ -3,10 +3,15 @@
 class ReviewerAccess
   include Mongoid::Document
   include Mongoid::Timestamps
+  include ActiveSupport::SecurityUtils
 
   field :access_code, type: String # UUID
   field :pin, type: String # 6 character string
   field :expires_at, type: Date, default: 2.months.from_now.to_date
+
+  PIN_LENGTH = 10
+  # regex to strip all non-alphanumeric characters from a user-supplied pin value
+  PIN_SANITIZER = /(\W|_)/.freeze
 
   belongs_to :study
   has_many :reviewer_access_sessions, dependent: :delete_all do
@@ -21,7 +26,11 @@ class ReviewerAccess
 
   # determine if user-supplied pin is valid
   def authenticate_pin?(pin_value)
-    pin_value.to_s&.strip == pin
+    begin
+      fixed_length_secure_compare(pin, sanitize_pin(pin_value))
+    rescue ArgumentError
+      false
+    end
   end
 
   # user-readable timestamp
@@ -64,6 +73,10 @@ class ReviewerAccess
 
   def generate_credentials
     self.access_code = SecureRandom.uuid
-    self.pin = SecureRandom.hex(3).upcase
+    self.pin = SecureRandom.alphanumeric(PIN_LENGTH).upcase
+  end
+
+  def sanitize_pin(unsafe_pin)
+    unsafe_pin.gsub(PIN_SANITIZER, '').chars.take(PIN_LENGTH).join
   end
 end

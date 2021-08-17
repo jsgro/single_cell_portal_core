@@ -62,6 +62,21 @@ class ReviewerAccessPermissionTest < ActionDispatch::IntegrationTest
     assert_equal request.fullpath, expected_path
   end
 
+  test 'should block authentication with invalid pin' do
+    access = @study.build_reviewer_access
+    access.save!
+    access_params = { reviewer_access: { pin: SecureRandom.alphanumeric(ReviewerAccess::PIN_LENGTH) } }
+    post validate_reviewer_access_path(access_code: access.access_code), params: access_params
+    assert_response :forbidden
+    assert_equal reviewer_access_path(access_code: access.access_code), path
+    # test very large pin value
+    access_params = { reviewer_access: { pin: SecureRandom.alphanumeric(256) } }
+    post validate_reviewer_access_path(access_code: access.access_code), params: access_params
+    assert_response :forbidden
+    assert_equal reviewer_access_path(access_code: access.access_code), path
+    refute access.reviewer_access_sessions.any?
+  end
+
   test 'should invalidate reviewer access sessions' do
     access = @study.build_reviewer_access
     access.save!

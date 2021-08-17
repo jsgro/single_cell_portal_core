@@ -5,7 +5,7 @@ class ReviewerAccessTest < ActiveSupport::TestCase
   include SelfCleaningSuite
   include TestInstrumentor
 
-  UUID_REGEX = %r{[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}.freeze
+  UUID_REGEX = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/.freeze
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
@@ -31,7 +31,7 @@ class ReviewerAccessTest < ActiveSupport::TestCase
     assert @access.access_code.present?
     assert_match UUID_REGEX, @access.access_code
     assert @access.pin.present?
-    assert_equal 6, @access.pin.length
+    assert_equal ReviewerAccess::PIN_LENGTH, @access.pin.length
   end
 
   test 'should authenticate via pin' do

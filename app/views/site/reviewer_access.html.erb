@@ -20,8 +20,8 @@
     <div class="col-md-offset-5 col-md-2">
       <div class="row">
         <div class="col-xs-offset-3 col-xs-6 text-center">
-          <%= f.label :pin, 'Pin' %><br />
-          <%= f.password_field :pin, maxlength: 6, class: 'form-control text-center' %>
+          <%= f.label :pin, 'PIN' %><br />
+          <%= f.password_field :pin, maxlength: ReviewerAccess::PIN_LENGTH, class: 'form-control text-center' %>
         </div>
       </div>
     </div>

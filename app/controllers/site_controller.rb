@@ -212,11 +212,11 @@ class SiteController < ApplicationController
       redirect_to merge_default_redirect_params(view_study_path(accession: study.accession,
                                                                 study_name: study.url_safe_name,
                                                                 reviewerSession: session.session_key),
-                                                scpbr: params[:scpbr])
+                                                scpbr: params[:scpbr]), alert: nil, notice: 'PIN successfully validated.'
     else
-      redirect_to merge_default_redirect_params(reviewer_access_path(access_code: params[:access_code]),
-                                                scpbr: params[:scpbr]), alert: 'Invalid pin - please try again.',
-                  status: :forbidden
+      @study = @reviewer_access.study
+      flash[:alert] = 'Invalid PIN - please try again.'
+      render action: :reviewer_access, status: :forbidden
     end
   end
 
