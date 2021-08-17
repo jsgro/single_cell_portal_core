@@ -37,7 +37,7 @@
           <strong>Accession:</strong> <%= @study.accession %><br />
           <strong>URL:</strong>&nbsp;<%= link_to reviewer_access_url(access_code: f.object.access_code),
                                                  reviewer_access_url(access_code: f.object.access_code) %><br />
-          <strong>Pin:</strong>&nbsp;<span id="reviewer-pin"><%= '*' * ReviewerAccess::PIN_LENGTH %></span>
+          <strong>PIN:</strong>&nbsp;<span id="reviewer-pin"><%= '*' * ReviewerAccess::PIN_LENGTH %></span>
         </p>
       <% else %>
         <h4 class="text-danger">DISABLED</h4>
