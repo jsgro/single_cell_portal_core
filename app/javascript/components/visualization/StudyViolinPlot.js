@@ -39,11 +39,10 @@ export const defaultDistributionPoints = DISTRIBUTION_POINTS_OPTIONS[0].value
  * @param setAnnotationList {function} for global gene search and other places where a single call is used to
  *   fetch both the default expression data and the cluster menu options, a function that will be
  *   called with the annotationList returned by that call.
- * @param reviewerSession {String} UUID of ReviewerAccessSession for viewing private study anonymously
  */
 function RawStudyViolinPlot({
   studyAccession, genes, cluster, annotation, subsample, consensus, distributionPlot, distributionPoints,
-  updateDistributionPlot, setAnnotationList, dimensions={}, reviewerSession=null
+  updateDistributionPlot, setAnnotationList, dimensions={}
 }) {
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
@@ -89,8 +88,7 @@ function RawStudyViolinPlot({
       annotation.type,
       annotation.scope,
       subsample,
-      consensus,
-      reviewerSession
+      consensus
     ).then(renderData).catch(error => {
       Plotly.purge(graphElementId)
       setErrorContent(error.message)

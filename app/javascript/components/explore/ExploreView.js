@@ -18,14 +18,13 @@ function RoutableExploreTab({ studyAccession }) {
   // stores the basic study overview data from the server, used to determine what views are available
   const [exploreInfo, setExploreInfo] = useState(null)
   const { exploreParams, updateExploreParams, clearExploreParams, routerLocation } = useExploreTabRouter()
-  const reviewerSession = exploreParams.reviewerSession ? exploreParams.reviewerSession : null
   // we keep a separate 'exploreParamsWithDefaults' object that updates after defaults are fetched from the server
   // this is kept separate so that the graphs do not see the change in cluster name from '' to
   // '<<default cluster>>' as a change that requires a re-fetch from the server
   const exploreParamsWithDefaults = createExploreParamsWithDefaults(exploreParams, exploreInfo)
 
   useEffect(() => {
-    fetchExplore(studyAccession, reviewerSession).then(result => setExploreInfo(result))
+    fetchExplore(studyAccession).then(result => setExploreInfo(result))
   }, [studyAccession])
 
   return (

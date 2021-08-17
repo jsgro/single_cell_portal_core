@@ -194,10 +194,9 @@ export function stringifyQuery(paramObj, sort) {
  * Returns initial content for the "Explore" tab in Study Overview
  *
  * @param {String} studyAccession Study accession
- * @param {String} reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
 */
-export async function fetchExplore(studyAccession, reviewerSession=null, mock=false) {
-  const apiUrl = mergeReviewerSessionParam(`/studies/${studyAccession}/explore`, reviewerSession)
+export async function fetchExplore(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/explore`
   const [exploreInit] =
     await scpApi(apiUrl, defaultInit(), mock, false)
 
@@ -244,7 +243,6 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  * @param {String} consensus Statistic to use for consensus, e.g. "mean"
  * @param {Boolean} isAnnotatedScatter If showing "Annotated scatter" plot.
  *                  Only applies for numeric (not group) annotations.
- * @param {String} reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
  * @param {Boolean} mock If using mock data.  Helps development, tests.
  *
  * Example:
@@ -256,12 +254,12 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  */
 export async function fetchCluster({
   studyAccession, cluster, annotation, subsample, consensus, genes=null,
-  isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[], reviewerSession=null, mock=false
+  isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[],  mock=false
 
 }) {
   const apiUrl = fetchClusterUrl({
     studyAccession, cluster, annotation, subsample,
-    consensus, genes, isAnnotatedScatter, isCorrelatedScatter, fields, reviewerSession
+    consensus, genes, isAnnotatedScatter, isCorrelatedScatter, fields
   })
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
@@ -273,7 +271,7 @@ export async function fetchCluster({
 /** Helper function for returning a url for fetching cluster data.  See fetchCluster above for documentation */
 export function fetchClusterUrl({
   studyAccession, cluster, annotation, subsample, consensus, genes=null,
-  isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[], reviewerSession=null
+  isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[]
 }) {
   // Digest full annotation name to enable easy validation in API
   let [annotName, annotType, annotScope] = [annotation.name, annotation.type, annotation.scope]
@@ -296,8 +294,7 @@ export function fetchClusterUrl({
     gene: genes,
     fields: fields.join(','),
     is_annotated_scatter,
-    is_correlated_scatter,
-    reviewerSession
+    is_correlated_scatter
   }
   const params = stringifyQuery(paramObj)
   if (!cluster || cluster === '') {
@@ -319,7 +316,6 @@ export function fetchClusterUrl({
  * @param {String} annotationName Scope of annotation ("study" or "cluster")
  * @param {String} subsample Subsampling threshold
  * @param {String} consensus method for multi-gene renders ('mean' or 'median')
- * @param {String} reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
  * @param {Boolean} mock If using mock data.  Helps development, tests.
  *
  */
@@ -332,7 +328,6 @@ export async function fetchExpressionViolin(
   annotationScope,
   subsample,
   consensus,
-  reviewerSession=null,
   mock=false
 ) {
   let geneString = genes
@@ -347,7 +342,6 @@ export async function fetchExpressionViolin(
     subsample,
     consensus,
     genes: geneString,
-    reviewerSession
   }
   const apiUrl = `/studies/${studyAccession}/expression/violin${stringifyQuery(paramObj)}`
   // don't camelcase the keys since those can be cluster names,
@@ -360,14 +354,13 @@ export async function fetchExpressionViolin(
 /** Get URL for a Morpheus-suitable annotation values file */
 export function getAnnotationCellValuesURL(
   {
-    studyAccession, cluster, annotationName, annotationScope, annotationType, reviewerSession=null, mock=false
+    studyAccession, cluster, annotationName, annotationScope, annotationType, mock=false
   }
 ) {
   const paramObj = {
     cluster,
     annotation_scope: annotationScope,
-    annotation_type: annotationType,
-    reviewerSession
+    annotation_type: annotationType
   }
   annotationName = annotationName ? annotationName : '_default'
   let apiUrl = `/studies/${studyAccession}/annotations/${encodeURIComponent(annotationName)}`
@@ -376,10 +369,8 @@ export function getAnnotationCellValuesURL(
 }
 
 /** get URL for Morpheus-suitable annotation values file for a gene list */
-export function getGeneListColsURL({ studyAccession, geneList, reviewerSession=null }) {
-  const apiUrl = mergeReviewerSessionParam(
-    `/studies/${studyAccession}/annotations/gene_lists/${encodeURIComponent(geneList)}`, reviewerSession
-  )
+export function getGeneListColsURL({ studyAccession, geneList }) {
+  const apiUrl = `/studies/${studyAccession}/annotations/gene_lists/${encodeURIComponent(geneList)}`
   return getFullUrl(apiUrl)
 }
 
@@ -391,12 +382,11 @@ export function getGeneListColsURL({ studyAccession, geneList, reviewerSession=n
  * @param {String} studyAccession study accession
  * @param {String} geneList: name of gene list to load (overrides cluster/annotation/subsample values)
  * @param {Array} genes List of gene names to get expression data for
- * @param {String} reviewerSession UUID of ReviewerAccessSession for viewing private study anonymously
  *
  */
 export function getExpressionHeatmapURL({
   studyAccession, genes, cluster,
-  annotation, subsample, heatmapRowCentering, geneList, reviewerSession=null
+  annotation, subsample, heatmapRowCentering, geneList
 }) {
   const paramObj = {
     cluster,
@@ -404,8 +394,7 @@ export function getExpressionHeatmapURL({
     subsample,
     genes: geneArrayToParam(genes),
     row_centered: heatmapRowCentering,
-    gene_list: geneList,
-    reviewerSession
+    gene_list: geneList
   }
   const path = `/studies/${studyAccession}/expression/heatmap${stringifyQuery(paramObj)}`
   return getFullUrl(path)
@@ -563,10 +552,12 @@ export function getBrandingGroup() {
   return queryParams.scpbr
 }
 
-export function mergeReviewerSessionParam(requestUrl, reviewerSession) {
-  if (reviewerSession) {
+// find reviewerSession url parameter and preserve, if present
+export function mergeReviewerSessionParam(requestUrl) {
+  const queryParams = new URLSearchParams(location.search)
+  if (queryParams.has('reviewerSession')) {
     const queryDelim = requestUrl.indexOf('?') > 0 ? '&' : '?'
-    return `${requestUrl}${queryDelim}reviewerSession=${reviewerSession}`
+    return `${requestUrl}${queryDelim}reviewerSession=${queryParams.get('reviewerSession')}`
   } else {
     return requestUrl
   }
@@ -578,7 +569,7 @@ export function getFullUrl(path, mock=false) {
     mock = true
   }
   const basePath = (mock || globalMock) ? `${mockOrigin}/mock_data` : defaultBasePath
-  let fullPath = basePath + path
+  let fullPath = mergeReviewerSessionParam(basePath + path)
   if (mock) {
     fullPath += '.json' // e.g. /mock_data/search/auth_code.json
   } else {

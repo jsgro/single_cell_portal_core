@@ -166,7 +166,7 @@ export function createCache() {
   * returns a promise */
   cache.fetchCluster = ({
     studyAccession, cluster, annotation, subsample, consensus,
-    genes=[], isAnnotatedScatter=null, isCorrelatedScatter=null, reviewerSession=null
+    genes=[], isAnnotatedScatter=null, isCorrelatedScatter=null
   }) => {
     let apiCallPromise = null
     const { fields, promises } = cache._getFieldsToRequest({
@@ -176,7 +176,7 @@ export function createCache() {
     if (fields.length) {
       apiCallPromise = fetchCluster({
         studyAccession, cluster, annotation, subsample, consensus,
-        genes, isAnnotatedScatter, isCorrelatedScatter, fields, reviewerSession
+        genes, isAnnotatedScatter, isCorrelatedScatter, fields
       })
       const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
       if (fields.includes('coordinates')) {
@@ -201,7 +201,7 @@ export function createCache() {
         }, {
           url: fetchClusterUrl({
             studyAccession, cluster, annotation,
-            subsample, consensus, genes, isAnnotatedScatter, reviewerSession
+            subsample, consensus, genes, isAnnotatedScatter
           }),
           legacyBackend: STEP_NOT_NEEDED,
           isClientCache: true,
