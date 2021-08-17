@@ -45,6 +45,7 @@ export default function ClusterSelector({
   if (!annotationList) {
     annotationList = { default_cluster: null, default_annotation: null, annotations: [] }
   }
+
   const clusterOptions = getClusterOptions(annotationList, spatialGroups)
 
   return (

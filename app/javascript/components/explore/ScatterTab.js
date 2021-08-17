@@ -20,6 +20,7 @@ export default function ScatterTab({
   const { scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol } = getScatterParams(
     exploreInfo, exploreParams, isGene, isMultiGene
   )
+
   /** helper function for Scatter plot color updates */
   function updateScatterColor(color) {
     updateExploreParams({ scatterColor: color }, false)

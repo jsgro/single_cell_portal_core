@@ -40,8 +40,7 @@ window.Plotly = Plotly
   */
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
-  isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false,
-  plotPointsSelected, dataCache
+  isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [spearman, setSpearman] = useState(null)

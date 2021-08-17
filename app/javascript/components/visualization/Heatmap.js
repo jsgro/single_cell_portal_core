@@ -34,8 +34,7 @@ export const DEFAULT_FIT = ''
   * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
  */
 function RawHeatmap({
-  studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit,
-  heatmapRowCentering
+  studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit, heatmapRowCentering
 }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
   const morpheusHeatmap = useRef(null)

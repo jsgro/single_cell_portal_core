@@ -39,7 +39,7 @@ export const defaultDistributionPoints = DISTRIBUTION_POINTS_OPTIONS[0].value
  * @param setAnnotationList {function} for global gene search and other places where a single call is used to
  *   fetch both the default expression data and the cluster menu options, a function that will be
  *   called with the annotationList returned by that call.
- */
+*/
 function RawStudyViolinPlot({
   studyAccession, genes, cluster, annotation, subsample, consensus, distributionPlot, distributionPoints,
   updateDistributionPlot, setAnnotationList, dimensions={}
