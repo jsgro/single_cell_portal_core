@@ -5,8 +5,6 @@ class ReviewerAccessTest < ActiveSupport::TestCase
   include SelfCleaningSuite
   include TestInstrumentor
 
-  UUID_REGEX = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/.freeze
-
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
     @study = FactoryBot.create(:detached_study,
@@ -29,7 +27,7 @@ class ReviewerAccessTest < ActiveSupport::TestCase
     assert @access.expires_at.is_a?(Date)
     assert @access.expires_at == 2.months.from_now.to_date # gotcha to discard timestamp info
     assert @access.access_code.present?
-    assert_match UUID_REGEX, @access.access_code
+    assert_match ReviewerAccess::UUID_REGEX, @access.access_code
     assert @access.pin.present?
     assert_equal ReviewerAccess::PIN_LENGTH, @access.pin.length
   end
@@ -72,7 +70,7 @@ class ReviewerAccessTest < ActiveSupport::TestCase
     session = @access.create_new_session
     assert session.persisted?
     assert session.session_key.present?
-    assert_match UUID_REGEX, session.session_key
+    assert_match ReviewerAccess::UUID_REGEX, session.session_key
   end
 
   test 'should enforce session expiration' do

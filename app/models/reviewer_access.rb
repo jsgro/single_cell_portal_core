@@ -12,11 +12,14 @@ class ReviewerAccess
   PIN_LENGTH = 10
   # regex to strip all non-alphanumeric characters from a user-supplied pin value
   PIN_SANITIZER = /(\W|_)/.freeze
+  # regex to validate a session_key is a UUID
+  UUID_REGEX = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.freeze
 
   belongs_to :study
   has_many :reviewer_access_sessions, dependent: :delete_all do
     def by_session_key(session_key)
-      find_by(session_key: session_key)
+      sanitized_key = session_key.match(UUID_REGEX)
+      sanitized_key ? find_by(session_key: sanitized_key.to_s) : nil
     end
   end
 
