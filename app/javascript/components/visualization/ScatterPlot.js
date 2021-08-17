@@ -79,17 +79,12 @@ function RawScatterPlot({
       scatter, genes, width: dimensions.width, height: dimensions.height
     }, perfTimes)
 
-    console.log('plotlyTraces', plotlyTraces)
-    console.log('dimensions', dimensions)
-    console.log('scatter', scatter)
-
     if (isCorrelatedScatter) {
       const rhoStartTime = performance.now()
 
       // Compute correlations asynchronously, to not block other rendering
       computeCorrelations(scatter).then(correlations => {
         const rhoTime = Math.round(performance.now() - rhoStartTime)
-        console.log('correlations', correlations)
         setBulkCorrelation(correlations.bulk)
         traceArgs.labelCorrelations = correlations.byLabel
         plotlyTraces = getPlotlyTraces(traceArgs)
