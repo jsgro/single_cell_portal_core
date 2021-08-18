@@ -209,10 +209,18 @@ class SiteController < ApplicationController
       # create a new reviewer access session and redirect
       session = @reviewer_access.create_new_session
       study = @reviewer_access.study
+      # write a signed cookie for use in validating auth
+      cookies.signed[@reviewer_access.cookie_name] = {
+        value: session.session_key,
+        domain: ApplicationController.default_url_options[:host],
+        expires: session.expires_at,
+        secure: true,
+        httponly: true,
+        same_site: :strict
+      }
       redirect_to merge_default_redirect_params(view_study_path(accession: study.accession,
-                                                                study_name: study.url_safe_name,
-                                                                reviewerSession: session.session_key),
-                                                scpbr: params[:scpbr]), alert: nil, notice: 'PIN successfully validated.'
+                                                                study_name: study.url_safe_name),
+                                                scpbr: params[:scpbr]), alert: nil, notice: 'PIN successfully validated'
     else
       @study = @reviewer_access.study
       flash[:alert] = 'Invalid PIN - please try again.'
@@ -784,7 +792,9 @@ class SiteController < ApplicationController
   # make sure user has view permissions for selected study
   def check_view_permissions
     unless @study.public?
-      if !user_signed_in? && params[:reviewerSession].present?
+      # check for a reviewer_session cookie
+      cookie_name = "reviewer_session_#{@study.accession}".to_sym
+      if !user_signed_in? && cookies.signed[cookie_name].present?
         reviewer = @study.reviewer_access
         if reviewer.nil?
           alert = "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}"
@@ -792,7 +802,7 @@ class SiteController < ApplicationController
         elsif reviewer.expired?
           alert = 'The review period for this study has expired.'
           redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
-        elsif !reviewer.session_valid?(params[:reviewerSession])
+        elsif !reviewer.session_valid?(cookies.signed[cookie_name])
           alert = 'Expired session key - please create a new reviewer session to continue.'
           redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
         end

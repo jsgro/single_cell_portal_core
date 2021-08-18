@@ -30,6 +30,8 @@ class ReviewerAccessTest < ActiveSupport::TestCase
     assert_match ReviewerAccess::UUID_REGEX, @access.access_code
     assert @access.pin.present?
     assert_equal ReviewerAccess::PIN_LENGTH, @access.pin.length
+    expected_cookie_name = "reviewer_session_#{@study.accession}".to_sym
+    assert_equal expected_cookie_name, @access.cookie_name
   end
 
   test 'should authenticate via pin' do

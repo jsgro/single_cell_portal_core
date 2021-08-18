@@ -61,31 +61,6 @@ describe('dataParams are appropriately managed on the url', () => {
     expect(routerNav).toHaveBeenLastCalledWith('?cluster=foo&annotation=bar2--numeric--user#study-visualize', { replace: true })
   })
 
-  // ensure reviewerSession parameter is preserved across requests
-  it('persists reviewerSession across requests', async () => {
-    const routerNav = jest.spyOn(Reach, 'navigate')
-    routerNav.mockImplementation(() => {})
-    const reviewerSession = 'd47c606d-3e7f-4ebb-a452-6e649ebb955'
-    const searchString = `?cluster=foo&annotation=bar--group--study&reviewerSession=${reviewerSession}`
-    const locationMock = jest.spyOn(Reach, 'useLocation')
-    locationMock.mockImplementation(() => ({ search: searchString }))
-    mockWindowLocationSearch(searchString)
-
-    const testObj = {}
-    const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
-
-    expect(testObj.exploreParams.reviewerSession).toEqual(reviewerSession)
-
-    testObj.updateExploreParams({ annotation: { name: 'foo', type: 'group', scope: 'user' } })
-    const updatedQuery = `?cluster=foo&annotation=foo--group--user&reviewerSession=${reviewerSession}#study-visualize`
-    expect(routerNav).toHaveBeenLastCalledWith(updatedQuery, { replace: true })
-    expect(testObj.exploreParams.reviewerSession).toEqual(reviewerSession)
-    testObj.updateExploreParams({ cluster: 'bar', annotation: { name: 'bar', type: 'group', scope: 'study' } })
-    const finalQuery = `?cluster=bar&annotation=bar--group--study&reviewerSession=${reviewerSession}#study-visualize`
-    expect(routerNav).toHaveBeenLastCalledWith(finalQuery, { replace: true })
-    expect(testObj.exploreParams.reviewerSession).toEqual(reviewerSession)
-  })
-
   /** This test validates that we are parsing data params on URL links in a consistent way
     * Note that if this test breaks, it may indicate that we have changed the parameter names or how
     * we are parsing them, which may break links that our users have previously created
@@ -114,7 +89,6 @@ describe('dataParams are appropriately managed on the url', () => {
       consensus: 'mean',
       heatmapRowCentering: 'z-score',
       ideogramFileId: '604fc5c4e241391a8ff93271',
-      reviewerSession: '',
       distributionPlot: '',
       distributionPoints: '',
       heatmapFit: '',

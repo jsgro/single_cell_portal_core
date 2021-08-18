@@ -552,24 +552,13 @@ export function getBrandingGroup() {
   return queryParams.scpbr
 }
 
-// find reviewerSession url parameter and preserve, if present
-export function mergeReviewerSessionParam(requestUrl) {
-  const queryParams = new URLSearchParams(location.search)
-  if (queryParams.has('reviewerSession')) {
-    const queryDelim = requestUrl.indexOf('?') > 0 ? '&' : '?'
-    return `${requestUrl}${queryDelim}reviewerSession=${queryParams.get('reviewerSession')}`
-  } else {
-    return requestUrl
-  }
-}
-
 /** Get full URL for a given including any extension (or a mocked URL) */
 export function getFullUrl(path, mock=false) {
   if (globalMock) {
     mock = true
   }
   const basePath = (mock || globalMock) ? `${mockOrigin}/mock_data` : defaultBasePath
-  let fullPath = mergeReviewerSessionParam(basePath + path)
+  let fullPath = basePath + path
   if (mock) {
     fullPath += '.json' // e.g. /mock_data/search/auth_code.json
   } else {

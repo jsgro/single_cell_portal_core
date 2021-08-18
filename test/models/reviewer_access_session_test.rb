@@ -5,8 +5,6 @@ class ReviewerAccessSessionTest < ActiveSupport::TestCase
   include SelfCleaningSuite
   include TestInstrumentor
 
-  UUID_REGEX = %r{[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}.freeze
-
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
     @study = FactoryBot.create(:detached_study,
@@ -28,7 +26,7 @@ class ReviewerAccessSessionTest < ActiveSupport::TestCase
   test 'should initialize session' do
     assert @session.persisted?
     assert @session.session_key.present?
-    assert_match UUID_REGEX, @session.session_key
+    assert_match ReviewerAccess::UUID_REGEX, @session.session_key
   end
 
   test 'should show expiration date' do

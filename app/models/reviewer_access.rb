@@ -17,8 +17,8 @@ class ReviewerAccess
 
   belongs_to :study
   has_many :reviewer_access_sessions, dependent: :delete_all do
-    def by_session_key(session_key)
-      sanitized_key = session_key.match(UUID_REGEX)
+    def by_session_key(session_key = '')
+      sanitized_key = session_key[0...36].match(UUID_REGEX)
       sanitized_key ? find_by(session_key: sanitized_key.to_s) : nil
     end
   end
@@ -51,6 +51,13 @@ class ReviewerAccess
   def session_valid?(session_key)
     session = reviewer_access_sessions.by_session_key(session_key)
     session.present? ? !session.expired? : false
+  end
+
+  # set the cookie name, since we can't specify a :path value for the cookie
+  # this ensures the cookie is only read for the corresponding study, and allows a reviewer access to multiple studies,
+  # if access has been granted
+  def cookie_name
+    "reviewer_session_#{study.accession}".to_sym
   end
 
   # rotate access credentials by generating a new access_code and pin, will also clear out all reviewer sessions

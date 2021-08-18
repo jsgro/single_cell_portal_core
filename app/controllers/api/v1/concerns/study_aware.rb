@@ -16,9 +16,12 @@ module Api
         ##
         def check_study_view_permission
           unless @study.public?
-            if !api_user_signed_in? && params[:reviewerSession].present?
+            # check for a reviewer_session cookie
+            cookie_name = "reviewer_session_#{@study.accession}".to_sym
+            if !api_user_signed_in? && cookies.signed[cookie_name].present?
               reviewer = @study.reviewer_access
-              head 401 if reviewer.nil? || reviewer.expired? || !reviewer.session_valid?(params[:reviewerSession])
+              head 401 if reviewer.nil? || reviewer.expired? ||
+                          !reviewer.session_valid?(cookies.signed[cookie_name])
             elsif !api_user_signed_in?
               head 401
             else

@@ -150,7 +150,7 @@ export default function ExploreDisplayTabs({
     // also, unset any gene lists as we're about to re-render the explore tab and having gene list selected will show
     // the wrong tabs
     const updateParams = { geneList: '', ideogramFileId: '' }
-    const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups', 'reviewerSession']
+    const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
     clusterParamNames.forEach(param => {
       updateParams[param] = param in newParams ? newParams[param] : exploreParamsWithDefaults[param]
     })

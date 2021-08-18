@@ -1,11 +1,14 @@
 require 'test_helper'
 require 'integration_test_helper'
 
-class ReviewerAccessPermissionTest < ActionDispatch::IntegrationTest
+# controller-based test to validate ReviewerAccess & ReviewerAccessSession functionality
+# uses ActionController::TestCase since ActionDispatch::IntegrationTest doesn't support signed cookies
+class ReviewerAccessPermissionTest < ActionController::TestCase
   include Minitest::Hooks
   include SelfCleaningSuite
   include TestInstrumentor
-  include Devise::Test::IntegrationHelpers
+  include Devise::Test::ControllerHelpers
+  tests SiteController
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
@@ -15,6 +18,7 @@ class ReviewerAccessPermissionTest < ActionDispatch::IntegrationTest
     detail = @study.build_study_detail
     detail.update(full_description: "<p>testing</p>")
     TosAcceptance.create!(email: @user.email)
+    @cookie_name = "reviewer_session_#{@study.accession}".to_sym
   end
 
   teardown do
@@ -26,7 +30,8 @@ class ReviewerAccessPermissionTest < ActionDispatch::IntegrationTest
   test 'should create reviewer access' do
     auth_as_user(@user)
     sign_in @user
-    reviewer_access_params = {
+    study_params = {
+      accession: @study.accession, study_name: @study.url_safe_name,
       study: {
         reviewer_access_attributes: {
           expires_at: 2.months.from_now.to_date.to_s
@@ -37,43 +42,46 @@ class ReviewerAccessPermissionTest < ActionDispatch::IntegrationTest
       }
     }
 
-    post update_study_settings_path(accession: @study.accession, study_name: @study.url_safe_name),
-         params: reviewer_access_params, xhr: true
+    post :update_study_settings, params: study_params, xhr: true
     assert_response :success
     @study.reload
     access = @study.reviewer_access
     assert access.present?
-    get reviewer_access_path(access_code: access.access_code)
+    get :reviewer_access, params: { access_code: access.access_code }
     assert_response :success
   end
 
   test 'should create new reviewer access session' do
     access = @study.build_reviewer_access
     access.save!
-    access_params = { reviewer_access: { pin: access.pin } }
-    post validate_reviewer_access_path(access_code: access.access_code), params: access_params
-    follow_redirect!
-    assert_response :success
+    access_params = { access_code: access.access_code, reviewer_access: { pin: access.pin } }
+    post :validate_reviewer_access, params: access_params
+    assert_redirected_to view_study_path(accession: @study.accession, study_name: @study.url_safe_name)
+    assert cookies.signed[@cookie_name].present?
     access.reload
     assert access.reviewer_access_sessions.any?
-    session = access.reviewer_access_sessions.first
-    expected_path = view_study_path(accession: @study.accession, study_name: @study.url_safe_name,
-                                    reviewerSession: session.session_key)
-    assert_equal request.fullpath, expected_path
   end
 
   test 'should block authentication with invalid pin' do
     access = @study.build_reviewer_access
     access.save!
-    access_params = { reviewer_access: { pin: SecureRandom.alphanumeric(ReviewerAccess::PIN_LENGTH) } }
-    post validate_reviewer_access_path(access_code: access.access_code), params: access_params
+    access_params = {
+      access_code: access.access_code,
+      reviewer_access: {
+        pin: SecureRandom.alphanumeric(ReviewerAccess::PIN_LENGTH)
+      }
+    }
+    post :validate_reviewer_access, params: access_params
     assert_response :forbidden
-    assert_equal reviewer_access_path(access_code: access.access_code), path
     # test very large pin value
-    access_params = { reviewer_access: { pin: SecureRandom.alphanumeric(256) } }
-    post validate_reviewer_access_path(access_code: access.access_code), params: access_params
+    access_params = {
+      access_code: access.access_code,
+      reviewer_access: {
+        pin: SecureRandom.alphanumeric(256)
+      }
+    }
+    post :validate_reviewer_access, params: access_params
     assert_response :forbidden
-    assert_equal reviewer_access_path(access_code: access.access_code), path
     refute access.reviewer_access_sessions.any?
   end
 
@@ -81,12 +89,20 @@ class ReviewerAccessPermissionTest < ActionDispatch::IntegrationTest
     access = @study.build_reviewer_access
     access.save!
     session = access.create_new_session
-    get view_study_path(accession: @study.accession, study_name: @study.url_safe_name,
-                        reviewerSession: session.session_key)
+    # mock cookie generation since we're not testing the form submission here
+    cookies.signed[@cookie_name] = {
+      value: session.session_key,
+      expires: session.expires_at,
+      httponly: true,
+      secure: true,
+      same_site: :strict
+    }
+    get :study, params: { accession: @study.accession, study_name: @study.url_safe_name }
     assert_response :success
     auth_as_user(@user)
     sign_in @user
-    reviewer_access_params = {
+    study_params = {
+      accession: @study.accession, study_name: @study.url_safe_name,
       study: {
         reviewer_access_attributes: {
           expires_at: 2.months.from_now.to_date.to_s
@@ -96,15 +112,14 @@ class ReviewerAccessPermissionTest < ActionDispatch::IntegrationTest
         enable: 'no'
       }
     }
-    post update_study_settings_path(accession: @study.accession, study_name: @study.url_safe_name),
-         params: reviewer_access_params, xhr: true
+
+    post :update_study_settings, params: study_params, xhr: true
     assert_response :success
     @study.reload
     refute @study.reviewer_access.present?
     sign_out @user
     OmniAuth.config.mock_auth[:google] = nil # gotcha to clear any cached auth responses
-    get view_study_path(accession: @study.accession, study_name: @study.url_safe_name,
-                        reviewerSession: session.session_key)
+    get :study, params: { accession: @study.accession, study_name: @study.url_safe_name }
     assert_redirected_to site_path
   end
 
@@ -113,16 +128,14 @@ class ReviewerAccessPermissionTest < ActionDispatch::IntegrationTest
     access.save!
     original_access_code = access.access_code.dup
     original_pin = access.pin.dup
-    get reviewer_access_path(access_code: access.access_code)
+    get :reviewer_access, params: { access_code: access.access_code }
     assert_response :success
-    session = access.create_new_session
-    original_session_key = session.session_key
-    get view_study_path(accession: @study.accession, study_name: @study.url_safe_name,
-                        reviewerSession: original_session_key)
-    assert_response :success
+    get :study, params: { accession: @study.accession, study_name: @study.url_safe_name }
+    assert_redirected_to new_user_session_path
     auth_as_user(@user)
     sign_in @user
     reviewer_access_params = {
+      accession: @study.accession, study_name: @study.url_safe_name,
       study: {
         reviewer_access_attributes: {
           expires_at: 2.months.from_now.to_date.to_s
@@ -132,8 +145,7 @@ class ReviewerAccessPermissionTest < ActionDispatch::IntegrationTest
         reset: 'yes'
       }
     }
-    post update_study_settings_path(accession: @study.accession, study_name: @study.url_safe_name),
-         params: reviewer_access_params, xhr: true
+    post :update_study_settings, params: reviewer_access_params, xhr: true
     assert_response :success
     @study.reload
     access.reload
@@ -142,12 +154,11 @@ class ReviewerAccessPermissionTest < ActionDispatch::IntegrationTest
     refute access.reviewer_access_sessions.any?
     sign_out @user
     OmniAuth.config.mock_auth[:google] = nil # gotcha to clear any cached auth responses
-    get reviewer_access_path(access_code: original_access_code)
+    get :reviewer_access, params: { access_code: original_access_code }
     assert_redirected_to site_path
-    get view_study_path(accession: @study.accession, study_name: @study.url_safe_name,
-                        reviewerSession: original_session_key)
-    assert_redirected_to site_path
-    get reviewer_access_path(access_code: access.access_code)
+    get :study, params: { accession: @study.accession, study_name: @study.url_safe_name }
+    assert_redirected_to new_user_session_path
+    get :reviewer_access, params: { access_code: access.access_code }
     assert_response :success
   end
 end
