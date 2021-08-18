@@ -176,9 +176,8 @@
               }
             });
           } else {
-            // This error UI will be refined before it's generally available
-            const alert = window.SCP.formatAlert(validationErrors)
-            $('#metadata_form').append(alert)
+            const target = document.querySelector('#metadata_form')
+            window.SCP.renderValidationAlert(target, validationErrors)
           }
 				},
 				chunkdone: function(e, data) {
