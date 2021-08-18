@@ -18,8 +18,10 @@ class ReviewerAccess
   belongs_to :study
   has_many :reviewer_access_sessions, dependent: :delete_all do
     def by_session_key(session_key = '')
+      return nil if session_key.nil?
+
       sanitized_key = session_key[0...36].match(UUID_REGEX)
-      sanitized_key ? find_by(session_key: sanitized_key.to_s) : nil
+      find_by(session_key: sanitized_key.to_s)
     end
   end
 

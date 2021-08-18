@@ -793,17 +793,15 @@ class SiteController < ApplicationController
   # make sure user has view permissions for selected study
   def check_view_permissions
     unless @study.public?
-      # check for a reviewer_session cookie
-      cookie_name = "reviewer_session_#{@study.accession}".to_sym
-      if !user_signed_in? && cookies.signed[cookie_name].present?
+      if !user_signed_in? && @study.reviewer_access.present?
         reviewer = @study.reviewer_access
-        if reviewer.nil?
-          alert = "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}"
-          redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
-        elsif reviewer.expired?
+        session_key = cookies.signed[reviewer.cookie_name]
+        if reviewer.expired?
           alert = 'The review period for this study has expired.'
           redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
-        elsif !reviewer.session_valid?(cookies.signed[cookie_name])
+        elsif session_key.blank? # no cookie present, so this may or may not be a reviewer
+          authenticate_user!
+        elsif !reviewer.session_valid?(session_key) # check session cookie for expiry
           alert = 'Your review session has expired - please create a new session to continue.'
           redirect_to merge_default_redirect_params(reviewer_access_path(access_code: reviewer.access_code),
                                                     scpbr: params[:scpbr]), alert: alert and return
