@@ -160,6 +160,8 @@
 
           const numErrors = validationErrors.length
 
+          console.log('numErrors', numErrors)
+
           if (numErrors === 0) {
             var fileName = file.name.replace(FILENAME_SANITIZER, '_');
             $('#metadata_form .filename').val(fileName);
@@ -175,12 +177,8 @@
             });
           } else {
             // This error UI will be refined before it's generally available
-            const errorsTxt = (numErrors === 1) ? 'error' : 'errors'
-            const errorsList = validationErrors.map(errorCols => errorCols[2])
-            const message =
-              `Your metadata file had ${numErrors} ${errorsTxt}:\n\n` +
-                errorsList.join('\n')
-            alert(message)
+            const alert = window.SCP.formatAlert(validationErrors)
+            $('#metadata_form').append(alert)
           }
 				},
 				chunkdone: function(e, data) {
