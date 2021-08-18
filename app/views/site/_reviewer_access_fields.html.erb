@@ -48,15 +48,14 @@
 
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
 
-  const accessPin = '<%= Base64.encode64(f.object.pin).strip %>';
-  const pinMask = '<%= '*' * ReviewerAccess::PIN_LENGTH %>';
-
   $('#reviewer-access-controls > .btn-toggle').click(function() {
     $(this).find('.btn').toggleClass('active');
   });
 
   $('#copy-reviewer-creds').on('click', function() {
-    const pinField = $('#reviewer-pin')
+    let accessPin = '<%= f.object.pin ? Base64.encode64(f.object.pin).strip : '' %>';
+    let pinMask = '<%= '*' * ReviewerAccess::PIN_LENGTH %>';
+    let pinField = $('#reviewer-pin')
     pinField.html(atob(accessPin));
     let range = document.createRange();
     range.selectNode(document.getElementById("access-credentials"));
