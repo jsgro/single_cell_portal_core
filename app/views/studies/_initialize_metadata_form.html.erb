@@ -152,15 +152,18 @@
 					var that = this;
           const file = data.files[0]
 
+
+
+
           let validationErrors = []
           <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
+            $('#metadata-errors').remove() // Remove any prior notice
+            $('#metadata_form').append('<div id="metadata-errors"></div>')
             // Run client-side metadata file validation
             validationErrors = await window.SCP.validateFile(file, 'metadata')
           <% end %>
 
           const numErrors = validationErrors.length
-
-          console.log('numErrors', numErrors)
 
           if (numErrors === 0) {
             var fileName = file.name.replace(FILENAME_SANITIZER, '_');
@@ -176,7 +179,7 @@
               }
             });
           } else {
-            const target = document.querySelector('#metadata_form')
+            const target = document.querySelector('#metadata-errors')
             window.SCP.renderValidationAlert(target, validationErrors)
           }
 				},

@@ -11,8 +11,8 @@ export default function ValidationAlert({ errors }) {
       <p>
       Your metadata file had {numErrors} {errorsTxt}:
       </p>
-      <ul>{errors.map(columns => {
-        return <li>{columns[2]}</li>
+      <ul>{errors.map((columns, i) => {
+        return <li key={i}>{columns[2]}</li>
       })}
       </ul>
     </div>
