@@ -1,6 +1,18 @@
 <div class="well well-sm" id="reviewer-access-controls">
   <div class="form-group row">
     <div class="col-md-2">
+      <% access_enabled = f.object.persisted? %>
+      <%= label_tag :_destroy, 'Access Enabled?' %><br />
+      <div class="btn-group btn-toggle" data-toggle="buttons">
+        <label class="btn btn-default <%= access_enabled ? 'active' : nil %>">
+          <%= radio_button_tag 'reviewer_opts[enable]', :yes, access_enabled, disabled: !access_enabled %> Yes
+        </label>
+        <label class="btn btn-default <%= access_enabled ? nil : 'active' %>">
+          <%= radio_button_tag 'reviewer_opts[enable]', :no, !access_enabled, disabled: !access_enabled %> No
+        </label>
+      </div>
+    </div>
+    <div class="col-md-2">
       <%= f.label :expires_at, 'Expiration Date' %><br />
       <%= f.date_field :expires_at, class: 'form-control' %>
     </div>
@@ -12,18 +24,6 @@
         </label>
         <label class="btn btn-default active">
           <%= radio_button_tag 'reviewer_opts[reset]', :no, true %> No
-        </label>
-      </div>
-    </div>
-    <div class="col-md-2">
-      <% access_enabled = f.object.persisted? %>
-      <%= label_tag :_destroy, 'Access Enabled?' %><br />
-      <div class="btn-group btn-toggle" data-toggle="buttons">
-        <label class="btn btn-default <%= access_enabled ? 'active' : nil %>">
-          <%= radio_button_tag 'reviewer_opts[enable]', :yes, access_enabled, disabled: !access_enabled %> Yes
-        </label>
-        <label class="btn btn-default <%= access_enabled ? nil : 'active' %>">
-          <%= radio_button_tag 'reviewer_opts[enable]', :no, !access_enabled, disabled: !access_enabled %> No
         </label>
       </div>
     </div>

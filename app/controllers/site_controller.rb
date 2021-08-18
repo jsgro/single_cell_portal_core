@@ -218,9 +218,10 @@ class SiteController < ApplicationController
         httponly: true,
         same_site: :strict
       }
+      notice = "PIN successfully validated.  Your session is valid until #{session.expiration_time}"
       redirect_to merge_default_redirect_params(view_study_path(accession: study.accession,
                                                                 study_name: study.url_safe_name),
-                                                scpbr: params[:scpbr]), alert: nil, notice: 'PIN successfully validated'
+                                                scpbr: params[:scpbr]), alert: nil, notice: notice
     else
       @study = @reviewer_access.study
       flash[:alert] = 'Invalid PIN - please try again.'
@@ -803,8 +804,9 @@ class SiteController < ApplicationController
           alert = 'The review period for this study has expired.'
           redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
         elsif !reviewer.session_valid?(cookies.signed[cookie_name])
-          alert = 'Expired session key - please create a new reviewer session to continue.'
-          redirect_to merge_default_redirect_params(site_path, scpbr: params[:scpbr]), alert: alert and return
+          alert = 'Your review session has expired - please create a new session to continue.'
+          redirect_to merge_default_redirect_params(reviewer_access_path(access_code: reviewer.access_code),
+                                                    scpbr: params[:scpbr]), alert: alert and return
         end
       elsif !user_signed_in? && !@study.public?
         authenticate_user!
