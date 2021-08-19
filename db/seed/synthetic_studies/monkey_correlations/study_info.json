@@ -1,0 +1,29 @@
+{
+  "study": {
+    "name": "Monkey correlations",
+    "description": "<p>Synthetic monkey (Cynologus monkey, crab-eating macaque) blood data for testing per-label Spearman correlations. Jean Chang, Eric Weitz, Jon Bistline, Eno-Abasi Augustine-Akpan, Devon Bush, Emily Hanna, Vicky Horst, Tim Tickle, Leyla Tarhan.  Journal of SCP Synthetic Studies.  Volume 1, p10, October 2020.  Assessing the benefits of per-label correlations for single cell transcriptomics analysis.</p>",
+    "data_dir": "test"
+  },
+  "files": [
+    {
+      "type": "Metadata",
+      "filename": "metadata.tsv",
+      "use_metadata_convention": true
+    },
+    {
+      "type": "Expression Matrix",
+      "filename": "expression_matrix.tsv",
+      "species_scientific_name": "Macaca fascicularis",
+      "expression_file_info": {
+        "is_raw_counts": false,
+        "library_preparation_protocol": "Seq-Well v1",
+        "biosample_input_type": "Whole cell",
+        "modality": "Transcriptomic: unbiased"
+      }
+    },
+    {
+      "type": "Cluster",
+      "filename": "cluster.tsv"
+    }
+  ]
+}
