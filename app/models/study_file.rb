@@ -851,6 +851,23 @@ class StudyFile
     end
   end
 
+  # helper to return all expression matrices associated with this file
+  # this only deals with raw <=> processed mappings via expression_file_info, not study_file_bundles
+  def associated_matrix_files(matrix_data_type)
+    case matrix_data_type.to_sym
+    when :raw
+      study_file_ids = expression_file_info&.raw_counts_associations || []
+      StudyFile.where(:id.in => study_file_ids, queued_for_deletion: false)
+    when :processed
+      # lazy-load all other expression matrices in study
+      process_matrices = StudyFile.where(study_id: study.id, file_type: /Matrix/, queued_for_deletion: false,
+                                         :id.ne => id, 'expression_file_info.is_raw_counts' => false)
+      process_matrices.select { |matrix| matrix&.expression_file_info&.raw_counts_associations.include?(id.to_s) }
+    else
+      [] # nil-safe return w/ no association type specified
+    end
+  end
+
   # retrieve the cluster group id from the options hash for a cluster labels file
   def coordinate_labels_font_family
     if self.options[:font_family].blank?

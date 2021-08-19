@@ -874,7 +874,7 @@ class Study
   def associated_users(permission: nil)
     owner = self.user
     shares = permission.present? ? self.study_shares.where(permission: permission) : self.study_shares
-    share_users = shares.map { |share| User.find_by(email: share.email) }.compact
+    share_users = shares.map { |share| User.find_by(email: /#{share.email}/i) }.compact
     [owner] + share_users
   end
 

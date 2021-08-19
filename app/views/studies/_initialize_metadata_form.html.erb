@@ -147,21 +147,41 @@
 				maxChunkSize: 10000000, // 10 MB
 				type: 'PATCH',
 				acceptFileTypes: ALLOWED_FILE_TYPES['plainText'],
-				add: function (e, data) {
+				add: async function (e, data) {
 					fileUploading = true;
 					var that = this;
-					var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
-					$('#metadata_form .filename').val(fileName);
-					$.getJSON("<%= resume_upload_study_path %>", { file: fileName }, function (result) {
-						var file = result.file;
-            if (file == null) {
-                fileUploading = false;
-                $("#study-files-notice-target").html("<%= escape_javascript( render partial: 'studies/study_file_notices', locals: {message: "You have already uploaded this file.  Please select another file."}) %>");
-            } else {
-              data.uploadedBytes = file && file.size;
-              $.blueimp.fileupload.prototype.options.add.call(that, e, data);
-            }
-					});
+          const file = data.files[0]
+
+          let validationErrors = []
+          <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
+            // Run client-side metadata file validation
+            validationErrors = await window.SCP.validateFile(file, 'metadata')
+          <% end %>
+
+          const numErrors = validationErrors.length
+
+          if (numErrors === 0) {
+            var fileName = file.name.replace(FILENAME_SANITIZER, '_');
+            $('#metadata_form .filename').val(fileName);
+            $.getJSON("<%= resume_upload_study_path %>", { file: fileName }, function (result) {
+            	var file = result.file;
+              if (file == null) {
+                  fileUploading = false;
+                  $("#study-files-notice-target").html("<%= escape_javascript( render partial: 'studies/study_file_notices', locals: {message: "You have already uploaded this file.  Please select another file."}) %>");
+              } else {
+                data.uploadedBytes = file && file.size;
+                $.blueimp.fileupload.prototype.options.add.call(that, e, data);
+              }
+            });
+          } else {
+            // This error UI will be refined before it's generally available
+            const errorsTxt = (numErrors === 1) ? 'error' : 'errors'
+            const errorsList = validationErrors.map(errorCols => errorCols[2])
+            const message =
+              `Your metadata file had ${numErrors} ${errorsTxt}:\n\n` +
+                errorsList.join('\n')
+            alert(message)
+          }
 				},
 				chunkdone: function(e, data) {
 					var perc = parseInt(data.loaded / data.total * 100, 10);

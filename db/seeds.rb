@@ -224,8 +224,11 @@ BrandingGroup.create!(name: 'Test Brand', user_id: api_user.id, font_family: 'He
 # Preset search seeds
 PresetSearch.create!(name: 'Test Search', search_terms: ["Testing Study"],
                      facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'], accession_list: %w(SCP1))
+
+# Feature flag seeds
 FeatureFlag.create!(name: 'faceted_search')
 FeatureFlag.create!(name: 'convention_required', default_value: false)
+FeatureFlag.create!(name: 'raw_counts_required_backend', default_value: false)
 
 # seed BQ for search controller test
 begin

@@ -14,6 +14,7 @@ class BulkDownloadService
   #   - +study_bucket_map+ => Map of study IDs to bucket names
   #   - +output_pathname_map+ => Map of study file IDs to output pathnames
   #   - +tdr_files+ => Hash of tdr accessions to arrays of file information including name & url for each file
+  #
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
   def self.generate_curl_configuration(study_files:,
@@ -53,20 +54,34 @@ class BulkDownloadService
     tdr_file_configs = []
 
     if tdr_files.present?
+      hca_client = ApplicationController.hca_azul_client
+      default_catalog = hca_client.default_catalog
       curl_configs << "-H \"Authorization: Bearer #{DataRepoClient.new.access_token['access_token']}\""
       tdr_file_configs = tdr_files.map do |shortname, file_infos|
         file_infos.map do |file_info|
-          file_config = "url=\"#{file_info['url']}\"\n"
+          if file_info['file_type'] == 'Project Manifest'
+            # generate manifest link using HCA project UUID from :url property
+            manifest = hca_client.get_project_manifest_link(default_catalog, file_info['url'])
+            file_config = "--location\n" # add location directive to allow following 302 redirect to manifest location
+            file_config += "url=\"#{manifest['Location']}\"\n"
+          else
+            file_config = "url=\"#{file_info['url']}\"\n"
+            file_config += "output=\"#{shortname}/#{file_info['name']}\""
+          end
           file_config += "output=\"#{shortname}/#{file_info['name']}\""
           file_config
         end
       end
       curl_configs.concat(tdr_file_configs.flatten)
     end
+    file_map = create_file_type_map(study_files)
     MetricsService.log('file-download:curl-config', {
       numFiles: study_files.count,
+      numMetadataFiles: file_map['Metadata'],
+      numExpressionFiles: file_map['Expression Matrix'] + file_map['MM Coordinate Matrix'],
+      numClusterFiles: file_map['Cluster'],
       numStudies: studies.count,
-      studyAccesions: studies.map(&:accession),
+      studyAccessions: studies.map(&:accession),
       numTdrStudies: tdr_studies.count,
       tdrAccessions: tdr_studies,
       numTDRFiles: tdr_file_configs.count
@@ -420,5 +435,14 @@ class BulkDownloadService
       end
     end
     tsv_string
+  end
+
+  # create a map of study file types to counts of each type for reporting metrics
+  def self.create_file_type_map(files)
+    file_types = StudyFile::STUDY_FILE_TYPES
+    # counts of file types are returned from iterating over list of all types and calling :select, :count
+    # Hash[] initializes a new Hash from an nested array of two-element arrays, which are created from Array.zip
+    # e.g. Hash[[:foo, :bar].zip([1,2])] => {foo: 1, bar: 2}
+    Hash[file_types.zip(file_types.map { |type| files.select { |file| file.file_type == type }.count })]
   end
 end

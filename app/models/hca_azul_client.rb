@@ -1,6 +1,6 @@
 # Query Human Cell Atlas Azul service for metadata associated with both experimental and analysis data
 # No ServiceAccountManager or GoogleServiceClient includes as all requests are unauthenticated for public data
-class HcaAzulClient < Struct.new(:api_root)
+class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   include ApiHelpers
 
   GOOGLE_SCOPES = %w[openid email profile].freeze
@@ -8,9 +8,6 @@ class HcaAzulClient < Struct.new(:api_root)
 
   # maximum wait time for manifest generation
   MAX_MANIFEST_TIMEOUT = 30.seconds.freeze
-
-  # list of available HCA catalogs
-  HCA_CATALOGS = %w[dcp1 dcp7 it1 it7 it0lungmap lungmap].freeze
 
   # List of accepted formats for manifest files
   MANIFEST_FORMATS = %w[compact full terra.bdbag terra.pfb curl].freeze
@@ -24,7 +21,11 @@ class HcaAzulClient < Struct.new(:api_root)
   # * *return*
   #   - +HcaAzulClient+ object
   def initialize
+    super
     self.api_root = BASE_URL
+    all_catalogs = get_catalogs
+    self.default_catalog = all_catalogs['default_catalog']
+    self.catalogs = all_catalogs['catalogs'].reject { |_, catalog| catalog['internal'] }.keys.sort
   end
 
   ##
@@ -101,7 +102,40 @@ class HcaAzulClient < Struct.new(:api_root)
   # * *returns*
   #   - (Hash) => Available catalogs, including :default_catalog
   def get_catalogs
-    path = self.api_root + '/index/catalogs'
+    path = "#{api_root}/index/catalogs"
+    process_api_request(:get, path)
+  end
+
+  # get a list of all available projects
+  #
+  # * *params*
+  #   - +catalog+ (String) => HCA catalog name, from HCA_CATALOGS
+  #
+  # * *returns*
+  #   - (Hash) => Available projects
+  #
+  # * *raises*
+  #   - (ArgumentError) => if catalog is not in HCA_CATALOGS or format is not in MANIFEST_FORMATS
+  def get_projects(catalog)
+    validate_catalog_name(catalog)
+    path = "#{api_root}/index/projects"
+    process_api_request(:get, path)
+  end
+
+  # get a list of all available catalogs
+  #
+  # * *params*
+  #   - +catalog+ (String) => HCA catalog name, from HCA_CATALOGS
+  #   - +project_id+ (String) => UUID of HCA project
+  #
+  # * *returns*
+  #   - (Hash) => Available catalogs, including :default_catalog
+  #
+  # * *raises*
+  #   - (ArgumentError) => if catalog is not in HCA_CATALOGS
+  def get_project(catalog, project_id)
+    validate_catalog_name(catalog)
+    path = "#{api_root}/index/projects/#{project_id}?catalog=#{catalog}"
     process_api_request(:get, path)
   end
 
@@ -118,14 +152,10 @@ class HcaAzulClient < Struct.new(:api_root)
   # * *raises*
   #   - (ArgumentError) => if catalog is not in HCA_CATALOGS or format is not in MANIFEST_FORMATS
   def get_project_manifest_link(catalog, project_id, format = 'compact')
-    unless HCA_CATALOGS.include?(catalog)
-      raise ArgumentError, "#{catalog} is not a valid catalog: #{HCA_CATALOGS.join(',')}"
-    end
-    unless MANIFEST_FORMATS.include?(format)
-      raise ArgumentError, "#{format} is not a valid format: #{MANIFEST_FORMATS.join(',')}"
-    end
+    validate_catalog_name(catalog)
+    validate_manifest_format(format)
 
-    path = self.api_root + "/fetch/manifest/files?catalog=#{catalog}"
+    path = "#{api_root}/fetch/manifest/files?catalog=#{catalog}"
     project_filter = { 'projectId' => { 'is' => [project_id] } }
     filter_query = format_hash_as_query_string(project_filter)
     path += "&filters=#{filter_query}&format=#{format}"
@@ -143,5 +173,27 @@ class HcaAzulClient < Struct.new(:api_root)
       manifest_info = process_api_request(:get, path)
     end
     manifest_info
+  end
+
+  private
+
+  # validate that a catalog exists by checking the list of available public catalogs
+  def validate_catalog_name(catalog)
+    unless catalogs.include?(catalog) || get_catalogs['catalogs'].keys.include?(catalog)
+      error = ArgumentError.new("#{catalog} is not a valid catalog: #{catalogs.join(',')}")
+      api_method = caller_locations.first.label
+      ErrorTracker.report_exception(error, nil, { catalog: catalog, method: api_method })
+      raise error
+    end
+  end
+
+  # validate requested format is valid
+  def validate_manifest_format(format)
+    unless MANIFEST_FORMATS.include?(format)
+      error = ArgumentError.new("#{format} is not a valid format: #{MANIFEST_FORMATS.join(',')}")
+      api_method = caller_locations.first.label
+      ErrorTracker.report_exception(error, nil, { format: format, method: api_method })
+      raise error
+    end
   end
 end

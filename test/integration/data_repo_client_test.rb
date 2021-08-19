@@ -167,11 +167,11 @@ class DataRepoClientTest < ActiveSupport::TestCase
         ]
       }
     ]
-    species_field = FacetNameConverter.convert_to_model(:tim, :species, :id)
-    disease_field = FacetNameConverter.convert_to_model(:tim, :disease, :id)
-    expected_query = "(#{species_field}:NCBITaxon9609 OR #{species_field}:Homo sapiens) AND " \
-                     "(#{disease_field}:MONDO_0018076 OR #{disease_field}:tuberculosis OR " \
-                     "#{disease_field}:MONDO_0005109 OR #{disease_field}:HIV infectious disease)"
+    species_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :species)
+    disease_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :disease)
+    expected_query = "([#{species_field}]:\"NCBITaxon9609\") OR ([#{species_field}]:\"Homo sapiens\") AND " \
+                     "([#{disease_field}]:\"MONDO_0018076\") OR ([#{disease_field}]:\"tuberculosis\") OR " \
+                     "([#{disease_field}]:\"MONDO_0005109\") OR ([#{disease_field}]:\"HIV infectious disease\")"
 
     query_json = @data_repo_client.generate_query_from_facets(selected_facets)
     assert_equal expected_query, query_json.dig(:query_string, :query)
@@ -179,19 +179,20 @@ class DataRepoClientTest < ActiveSupport::TestCase
 
   test 'should generate query JSON from keywords' do
     keywords = %w[pulmonary human lung]
-    name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :id)
-    description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :id)
-    expected_query = "(#{name_field}:pulmonary OR #{name_field}:human OR #{name_field}:lung) OR " \
-                     "(#{description_field}:pulmonary OR #{description_field}:human OR #{description_field}:lung)"
+    name_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_name)
+    description_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_description)
+    expected_query = "([#{name_field}]:\"pulmonary\" OR [#{name_field}]:\"human\" OR [#{name_field}]:\"lung\") OR " \
+                     "([#{description_field}]:\"pulmonary\" OR [#{description_field}]:\"human\" OR " \
+                     "[#{description_field}]:\"lung\")"
     query_json = @data_repo_client.generate_query_from_keywords(keywords)
     assert_equal expected_query, query_json.dig(:query_string, :query)
   end
 
   test 'should merge query JSON for facets and keywords' do
-    name_field = FacetNameConverter.convert_to_model(:tim, :study_name, :id)
-    description_field = FacetNameConverter.convert_to_model(:tim, :study_description, :id)
-    species_field = FacetNameConverter.convert_to_model(:tim, :species, :id)
-    disease_field = FacetNameConverter.convert_to_model(:tim, :disease, :id)
+    name_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_name)
+    description_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_description)
+    species_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :species)
+    disease_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :disease)
     selected_facets = [
       { id: :species, filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }] },
       { id: :disease, filters: [
@@ -200,13 +201,16 @@ class DataRepoClientTest < ActiveSupport::TestCase
       }
     ]
     keywords = %w[pulmonary human lung]
-    expected_query = "((#{species_field}:NCBITaxon9609 OR #{species_field}:Homo sapiens) AND " \
-                     "(#{disease_field}:MONDO_0018076 OR #{disease_field}:tuberculosis OR " \
-                     "#{disease_field}:MONDO_0005109 OR #{disease_field}:HIV infectious disease)) AND " \
-                     "((#{name_field}:pulmonary OR #{name_field}:human OR #{name_field}:lung) OR " \
-                     "(#{description_field}:pulmonary OR #{description_field}:human OR #{description_field}:lung))"
-    merged_query = @data_repo_client.merge_query_json(facet_query: @data_repo_client.generate_query_from_facets(selected_facets),
-                                                      term_query: @data_repo_client.generate_query_from_keywords(keywords))
+    expected_query = "(([#{species_field}]:\"NCBITaxon9609\") OR ([#{species_field}]:\"Homo sapiens\") AND " \
+                     "([#{disease_field}]:\"MONDO_0018076\") OR ([#{disease_field}]:\"tuberculosis\") OR (" \
+                     "[#{disease_field}]:\"MONDO_0005109\") OR ([#{disease_field}]:\"HIV infectious disease\")) AND " \
+                     "(([#{name_field}]:\"pulmonary\" OR [#{name_field}]:\"human\" OR [#{name_field}]:\"lung\") OR " \
+                     "([#{description_field}]:\"pulmonary\" OR [#{description_field}]:\"human\" OR " \
+                     "[#{description_field}]:\"lung\"))"
+    merged_query = @data_repo_client.merge_query_json(
+      facet_query: @data_repo_client.generate_query_from_facets(selected_facets),
+      term_query: @data_repo_client.generate_query_from_keywords(keywords)
+    )
     assert_equal expected_query, merged_query.dig(:query_string, :query)
   end
 
@@ -220,11 +224,11 @@ class DataRepoClientTest < ActiveSupport::TestCase
     original_count = results['result'].count
     assert original_count > 0
     sample_row = results['result'].sample
-    species_field_name = FacetNameConverter.convert_to_model(:tim, :species, :name)
+    species_field_name = FacetNameConverter.convert_schema_column(:alexandria, :tim, :species)
     assert_equal 'Homo sapiens', sample_row[species_field_name]
     expected_project = 'Single-cell RNA-sequencing reveals profibrotic roles of distinct epithelial and mesenchymal ' \
                        'lineages in pulmonary fibrosis'
-    project_title_field = FacetNameConverter.convert_to_model(:tim, :study_name, :name)
+    project_title_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_name)
     assert_equal expected_project, sample_row[project_title_field]
 
     # refine query and re-run

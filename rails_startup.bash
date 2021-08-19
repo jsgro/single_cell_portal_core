@@ -28,9 +28,6 @@ then
     sudo -E -u app -H bundle exec rake NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV SECRET_KEY_BASE=$SECRET_KEY_BASE assets:clean
     sudo -E -u app -H NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV yarn install
     if [ $? -ne 0 ]; then
-        # since node-sass has OS-dependent bindings, calling upgrade will force those bindings to install and prevent
-        # the call to rake assets:precompile from failing due to the 'vendor' directory not being there
-        sudo -E -u app -H NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV yarn upgrade node-sass
         sudo -E -u app -H NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV yarn install --force
     fi
     sudo -E -u app -H bundle exec rake NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV SECRET_KEY_BASE=$SECRET_KEY_BASE assets:precompile
