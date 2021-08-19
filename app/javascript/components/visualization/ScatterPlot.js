@@ -29,7 +29,7 @@ window.Plotly = Plotly
   * @param studyAccession {string} e.g. 'SCP213'
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
   * @param annotation {obj} an object with name, type, and scope attributes
-  * @param subsample {string} a string for the subsampel to be retrieved.
+  * @param subsample {string} a string for the subsample to be retrieved.
   * @param consensus {string} for multi-gene expression plots
   * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
   *   this is useful for rendering to hidden divs
@@ -47,6 +47,7 @@ function RawScatterPlot({
   const [scatterData, setScatterData] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
+
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
     const [scatter, perfTimes] = clusterResponse

@@ -21,7 +21,7 @@ export default function PlotTitle({
     geneList.push(<span key="e"> expression</span>)
     content = geneList
   }
-  if (subsample && subsample !== 'all') {
+  if (subsample && subsample !== 'all' && !isCorrelatedScatter) {
     detailContent = `subsample[${subsample}]`
   }
   return <h5 className="plot-title">
