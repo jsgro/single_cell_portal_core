@@ -152,9 +152,6 @@
 					var that = this;
           const file = data.files[0]
 
-
-
-
           let validationErrors = []
           <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
             $('#metadata-errors').remove() // Remove any prior notice
