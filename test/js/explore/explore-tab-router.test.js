@@ -107,7 +107,6 @@ describe('dataParams are appropriately managed on the url', () => {
         ideogramFileId: true
       }
     })
-
     testObj.updateExploreParams({ spatialGroups: ['triangle'] })
     let expectedUrlString = '?geneList=My%20List&genes=agpat2%2Capoe&cluster=foo&spatialGroups=triangle&annotation=bar--group--study&subsample=1000'
     expectedUrlString += '&consensus=mean&heatmapRowCentering=z-score&bamFileName=sample1.bam&ideogramFileId=604fc5c4e241391a8ff93271#study-visualize'

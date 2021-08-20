@@ -127,6 +127,8 @@ class ApplicationController < ActionController::Base
         @default_cluster_annotations['Cannot Display'] << @default_cluster&.formatted_cell_annotation(cell_annotation)
       end
     end
+    # initialize reviewer access object
+    @reviewer_access = @study.reviewer_access.present? ? @study.reviewer_access : @study.build_reviewer_access
   end
 
   # rescue from an invalid csrf token (if user logged out in another window, or some kind of spoofing attack)

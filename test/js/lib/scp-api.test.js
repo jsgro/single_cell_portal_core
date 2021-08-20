@@ -3,15 +3,34 @@
 
 const fetch = require('node-fetch')
 import scpApi, { fetchAuthCode, fetchFacetFilters } from 'lib/scp-api'
+const oldWindowLocation = window.location
 
 describe('JavaScript client for SCP REST API', () => {
+  // mocking of window.location, from https://www.benmvp.com/blog/mocking-window-location-methods-jest-jsdom/
+  delete window.location
+
   beforeAll(() => {
     global.fetch = fetch
+    window.location = Object.defineProperties(
+      {},
+      {
+        ...Object.getOwnPropertyDescriptors(oldWindowLocation),
+        assign: {
+          configurable: true,
+          value: jest.fn(),
+        },
+      },
+    )
   })
   // Note: tests that mock global.fetch must be cleared after every test
   afterEach(() => {
     // Restores all mocks back to their original value
     jest.restoreAllMocks()
+  })
+
+  afterAll(() => {
+    // restore `window.location` to the `jsdom` `Location` object
+    window.location = oldWindowLocation
   })
 
   it('includes `Authorization: Bearer` in requests when signed in', done => {

@@ -231,6 +231,10 @@ Rails.application.routes.draw do
     get 'study/:accession/:study_name/edit_study_description', to: 'site#edit_study_description', as: :edit_study_description
     match 'study/:accession/:study_name/update_settings', to: 'site#update_study_settings', via: [:post, :patch], as: :update_study_settings
 
+    # reviewer access actions
+    get 'reviewer_access/:access_code', to: 'site#reviewer_access', as: :reviewer_access
+    post 'reviewer_access/:access_code', to: 'site#validate_reviewer_access', as: :validate_reviewer_access
+
     # user annotation actions
     get 'study/:accession/:study_name/show_user_annotations_form', to: 'site#show_user_annotations_form', as: :show_user_annotations_form
 

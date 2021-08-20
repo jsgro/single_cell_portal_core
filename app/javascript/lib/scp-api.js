@@ -191,9 +191,9 @@ export function stringifyQuery(paramObj, sort) {
 }
 
 /**
-* Returns initial content for the "Explore" tab in Study Overview
-*
-* @param {String} studyAccession Study accession
+ * Returns initial content for the "Explore" tab in Study Overview
+ *
+ * @param {String} studyAccession Study accession
 */
 export async function fetchExplore(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/explore`
@@ -254,7 +254,7 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
  */
 export async function fetchCluster({
   studyAccession, cluster, annotation, subsample, consensus, genes=null,
-  isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[], mock=false
+  isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[],  mock=false
 }) {
   const apiUrl = fetchClusterUrl({
     studyAccession, cluster, annotation, subsample,
@@ -352,7 +352,9 @@ export async function fetchExpressionViolin(
 
 /** Get URL for a Morpheus-suitable annotation values file */
 export function getAnnotationCellValuesURL(
-  { studyAccession, cluster, annotationName, annotationScope, annotationType, mock=false }
+  {
+    studyAccession, cluster, annotationName, annotationScope, annotationType, mock=false
+  }
 ) {
   const paramObj = {
     cluster,
