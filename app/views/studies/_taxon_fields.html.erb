@@ -1,5 +1,5 @@
 <div class="row">
-  <div class="col-xs-6">
+  <div class="col-xs-12">
     <%= f.label :taxon_id, 'Species' %> <%= render partial: 'taxon_help_popover', locals: {id: f.object.id.to_s} %><br />
     <%= f.select :taxon_id, options_from_collection_for_select(Taxon.sorted, :id, :display_name, f.object.taxon_id.present? ? f.object.taxon_id.to_s : nil),
                  {include_blank: 'None selected...'}, {class: 'form-control taxon-select'} %>
