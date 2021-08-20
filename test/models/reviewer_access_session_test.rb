@@ -26,7 +26,7 @@ class ReviewerAccessSessionTest < ActiveSupport::TestCase
   test 'should initialize session' do
     assert @session.persisted?
     assert @session.session_key.present?
-    assert_match ReviewerAccess::UUID_REGEX, @session.session_key
+    assert UUID.validate(@session.session_key)
   end
 
   test 'should show expiration date' do

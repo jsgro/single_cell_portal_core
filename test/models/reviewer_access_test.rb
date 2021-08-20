@@ -27,7 +27,7 @@ class ReviewerAccessTest < ActiveSupport::TestCase
     assert @access.expires_at.is_a?(Date)
     assert @access.expires_at == 2.months.from_now.to_date # gotcha to discard timestamp info
     assert @access.access_code.present?
-    assert_match ReviewerAccess::UUID_REGEX, @access.access_code
+    assert UUID.validate(@access.access_code)
     assert @access.pin.present?
     assert_equal ReviewerAccess::PIN_LENGTH, @access.pin.length
     expected_cookie_name = "reviewer_session_#{@study.accession}".to_sym
@@ -72,7 +72,7 @@ class ReviewerAccessTest < ActiveSupport::TestCase
     session = @access.create_new_session
     assert session.persisted?
     assert session.session_key.present?
-    assert_match ReviewerAccess::UUID_REGEX, session.session_key
+    assert UUID.validate(session.session_key)
   end
 
   test 'should enforce session expiration' do

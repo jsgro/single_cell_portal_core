@@ -37,7 +37,7 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
           expires_at: 2.months.from_now.to_date.to_s
         }
       },
-      reviewer_opts: {
+      reviewer_access_actions: {
         enable: 'yes'
       }
     }
@@ -108,7 +108,7 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
           expires_at: 2.months.from_now.to_date.to_s
         }
       },
-      reviewer_opts: {
+      reviewer_access_actions: {
         enable: 'no'
       }
     }
@@ -141,7 +141,7 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
           expires_at: 2.months.from_now.to_date.to_s
         }
       },
-      reviewer_opts: {
+      reviewer_access_actions: {
         reset: 'yes'
       }
     }

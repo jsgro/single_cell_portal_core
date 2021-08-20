@@ -5,10 +5,10 @@
       <%= label_tag :_destroy, 'Access Enabled?' %><br />
       <div class="btn-group btn-toggle" data-toggle="buttons">
         <label class="btn btn-default <%= access_enabled ? 'active' : nil %>">
-          <%= radio_button_tag 'reviewer_opts[enable]', :yes, access_enabled, disabled: !access_enabled %> Yes
+          <%= radio_button_tag 'reviewer_access_actions[enable]', :yes, access_enabled, disabled: !access_enabled %> Yes
         </label>
         <label class="btn btn-default <%= access_enabled ? nil : 'active' %>">
-          <%= radio_button_tag 'reviewer_opts[enable]', :no, !access_enabled, disabled: !access_enabled %> No
+          <%= radio_button_tag 'reviewer_access_actions[enable]', :no, !access_enabled, disabled: !access_enabled %> No
         </label>
       </div>
     </div>
@@ -20,16 +20,16 @@
       <%= label_tag :reset, 'Reset Access Credentials?' %><br />
       <div class="btn-group btn-toggle" data-toggle="buttons">
         <label class="btn btn-default">
-          <%= radio_button_tag 'reviewer_opts[reset]', :yes, false %> Yes
+          <%= radio_button_tag 'reviewer_access_actions[reset]', :yes, false %> Yes
         </label>
         <label class="btn btn-default active">
-          <%= radio_button_tag 'reviewer_opts[reset]', :no, true %> No
+          <%= radio_button_tag 'reviewer_access_actions[reset]', :no, true %> No
         </label>
       </div>
     </div>
     <div class="col-md-6 left-border-0-5-gray">
       <h4>Current Access Credentials <a id="copy-reviewer-creds" class="btn btn-default btn-sm btn-copy"
-                                             data-toggle="tooltip" title="" data-original-title="Show pin & copy to clipboard">
+                                             data-toggle="tooltip" title="" data-original-title="Show PIN & copy to clipboard">
                                              <i class="far fa-copy"></i></a>
       </h4>
       <% if access_enabled %>

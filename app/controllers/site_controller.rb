@@ -132,13 +132,13 @@ class SiteController < ApplicationController
         set_study_download_options
 
         # manage reviewer access
-        reviewer_opts = params.to_unsafe_hash['reviewer_opts']
-        if reviewer_opts['reset'] == 'yes'
+        reviewer_access_actions = params.to_unsafe_hash['reviewer_access_actions']
+        if reviewer_access_actions['reset'] == 'yes'
           logger.info "Rotating credentials for reviewer access in #{@study.accession}"
           @study.reviewer_access&.rotate_credentials!
-        elsif reviewer_opts['enable'] == 'yes' && @study.reviewer_access.nil?
+        elsif reviewer_access_actions['enable'] == 'yes' && @study.reviewer_access.nil?
           @study.build_reviewer_access.save!
-        elsif reviewer_opts['enable'] == 'no'
+        elsif reviewer_access_actions['enable'] == 'no'
           @study.reviewer_access&.destroy
         end
       else
@@ -806,7 +806,7 @@ class SiteController < ApplicationController
           redirect_to merge_default_redirect_params(reviewer_access_path(access_code: reviewer.access_code),
                                                     scpbr: params[:scpbr]), alert: alert and return
         end
-      elsif !user_signed_in? && !@study.public?
+      elsif !user_signed_in?
         authenticate_user!
       elsif user_signed_in? && !@study.can_view?(current_user)
         alert = "You do not have permission to perform that action.  #{SCP_SUPPORT_EMAIL}"

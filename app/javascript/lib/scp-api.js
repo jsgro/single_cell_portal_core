@@ -255,7 +255,6 @@ export async function fetchClusterOptions(studyAccession, mock=false) {
 export async function fetchCluster({
   studyAccession, cluster, annotation, subsample, consensus, genes=null,
   isAnnotatedScatter=null, isCorrelatedScatter=null, fields=[],  mock=false
-
 }) {
   const apiUrl = fetchClusterUrl({
     studyAccession, cluster, annotation, subsample,
@@ -341,7 +340,7 @@ export async function fetchExpressionViolin(
     annotation_scope: annotationScope,
     subsample,
     consensus,
-    genes: geneString,
+    genes: geneString
   }
   const apiUrl = `/studies/${studyAccession}/expression/violin${stringifyQuery(paramObj)}`
   // don't camelcase the keys since those can be cluster names,
