@@ -154,6 +154,8 @@
 
           let validationErrors = []
           <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
+            $('#metadata-errors').remove() // Remove any prior notice
+            $('#metadata_form').append('<div id="metadata-errors"></div>')
             // Run client-side metadata file validation
             validationErrors = await window.SCP.validateFile(file, 'metadata')
           <% end %>
@@ -174,13 +176,8 @@
               }
             });
           } else {
-            // This error UI will be refined before it's generally available
-            const errorsTxt = (numErrors === 1) ? 'error' : 'errors'
-            const errorsList = validationErrors.map(errorCols => errorCols[2])
-            const message =
-              `Your metadata file had ${numErrors} ${errorsTxt}:\n\n` +
-                errorsList.join('\n')
-            alert(message)
+            const target = document.querySelector('#metadata-errors')
+            window.SCP.renderValidationAlert(target, validationErrors)
           }
 				},
 				chunkdone: function(e, data) {

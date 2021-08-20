@@ -31,6 +31,7 @@ import {
 import * as ScpApi from 'lib/scp-api'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
 import { validateFile } from 'lib/validation/validate-file'
+import { renderValidationAlert } from 'components/validation/ValidationAlert'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
 
@@ -70,4 +71,5 @@ window.SCP.API = ScpApi
 window.SCP.renderClusterAssociationSelect = renderClusterAssociationSelect
 window.SCP.renderExploreView = renderExploreView
 window.SCP.getFeatureFlagsWithDefaults = getFeatureFlagsWithDefaults
+window.SCP.renderValidationAlert = renderValidationAlert
 window.SCP.validateFile = validateFile

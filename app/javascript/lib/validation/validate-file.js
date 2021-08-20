@@ -106,7 +106,7 @@ async function validateMetadata(file) {
   return issues
 }
 
-/** Validate a local file */
+/** Validate a local file, return list of any detected errors */
 export async function validateFile(file, studyFileType) {
   let issues = []
   if (studyFileType === 'metadata') {issues = await validateMetadata(file)}
