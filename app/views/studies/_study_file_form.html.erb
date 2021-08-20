@@ -34,7 +34,7 @@
     <% elsif study_file.file_type == 'Metadata' %>
       <%= render partial: 'metadata_file_fields', locals: {f: f.dup} %>
     <% elsif study_file.file_type == 'Expression Matrix' || study_file.file_type == 'MM Coordinate Matrix' %>
-      <%= render partial: 'expression_file_fields', locals: {f: f.dup} %>
+      <%= render partial: 'expression_file_fields', locals: {study_file: study_file, f: f.dup} %>
     <% elsif study_file.file_type == '10X Genes File' || study_file.file_type == '10X Barcodes File' %>
       <%= render partial: 'mm_coordinate_association_fields', locals: {f: f.dup} %>
     <% elsif study_file.file_type == 'BAM Index' %>

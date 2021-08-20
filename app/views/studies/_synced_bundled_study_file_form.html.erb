@@ -26,7 +26,7 @@
     <% if study_file.file_type == 'Cluster'  %>
       <%= render partial: 'cluster_axis_fields', locals: {f: f.dup} %>
     <% elsif study_file.file_type == 'Expression Matrix' || study_file.file_type == 'MM Coordinate Matrix' %>
-      <%= render partial: 'expression_file_fields', locals: {f: f.dup} %>
+      <%= render partial: 'expression_file_fields',locals: {study_file: study_file, f: f.dup} %>
     <% end %>
   </div>
   <div class="form-group row">
