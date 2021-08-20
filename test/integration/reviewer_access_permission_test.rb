@@ -120,7 +120,7 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
     sign_out @user
     OmniAuth.config.mock_auth[:google] = nil # gotcha to clear any cached auth responses
     get :study, params: { accession: @study.accession, study_name: @study.url_safe_name }
-    assert_redirected_to site_path
+    assert_redirected_to new_user_session_path
   end
 
   test 'should rotate credentials and invalidate reviewer access sessions' do
