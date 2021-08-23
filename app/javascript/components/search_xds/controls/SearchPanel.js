@@ -42,7 +42,7 @@ const helpModalContent = (<div>
   For more detailed information, visit
   our
   <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006431-Search-Studies"
-    target="_blank" rel="noreferrer">wiki
+    target="_blank" rel="noreferrer">documentation
   </a>.
   <br/>If you are a study creator and would like to provide that metadata for your study to be searchable,
   see our
