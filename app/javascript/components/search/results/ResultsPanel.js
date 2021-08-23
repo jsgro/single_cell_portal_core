@@ -87,7 +87,7 @@ const FacetResultsFooter = ({ studySearchState }) => {
           */}
           Learn more about our search capability on our{' '}
           <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006431-Search-Studies"
-            target="_blank" rel="noreferrer">wiki
+            target="_blank" rel="noreferrer">documentation
           </a>.  Study authors looking to make their studies more accessible can read our{' '}
           {/* eslint-disable-next-line max-len */}
           <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview"
