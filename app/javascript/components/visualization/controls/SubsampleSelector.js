@@ -69,7 +69,7 @@ export default function SubsampleSelector({
 const subsamplingPopover = (
   <Popover id="explore-subsampling-helptext">
     Show a representative subsample of the current clusters
-    (<a href='https://github.com/broadinstitute/single_cell_portal/wiki/Subsampling-Cluster-Files'
+    (<a href='https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling'
       rel="noreferrer" target='_blank'>learn more</a>).
     <br/>
     <span className="detail">

@@ -86,11 +86,11 @@ const FacetResultsFooter = ({ studySearchState }) => {
             per https://docs.google.com/spreadsheets/d/1FSpP2XTrG9FqAqD9X-BHxkCZae9vxZA3cQLow8mn-bk
           */}
           Learn more about our search capability on our{' '}
-          <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies"
+          <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006431-Search-Studies"
             target="_blank" rel="noreferrer">wiki
           </a>.  Study authors looking to make their studies more accessible can read our{' '}
           {/* eslint-disable-next-line max-len */}
-          <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search"
+          <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview"
             target="_blank" rel="noreferrer"> metadata guide
           </a>.
         </div>
