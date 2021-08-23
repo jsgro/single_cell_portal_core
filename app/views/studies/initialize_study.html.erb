@@ -1,3 +1,8 @@
+<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+  // populate window.SCP.currentStudyFiles with information about all known StudyFiles
+  window.SCP.currentStudyFiles = <%= @study.study_files.available.map(&:attributes).to_json.html_safe %>
+</script>
+
 <div class="row">
   <div class="col-sm-10">
     <h1>Upload/Edit Study Data for '<%= @study.name %>' <%= render partial: 'initialize_study_label' %></h1>

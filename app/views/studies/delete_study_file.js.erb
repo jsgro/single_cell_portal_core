@@ -1,4 +1,7 @@
 closeModalSpinner('#delete-modal-spinner', '#delete-modal', function() {
+    // populate window.SCP.currentStudyFiles with information about all known StudyFiles
+    window.SCP.currentStudyFiles = <%= @study.study_files.available.map(&:attributes).to_json.html_safe %>
+
     // replace form with fresh instance if needed
     if (<%= !@message.blank? %>) {
         $("<%= params[:target] %>").replaceWith("<%= escape_javascript( render partial: @partial, locals: {study_file: @study_file, allow_only: @allow_only}) %>");
@@ -28,6 +31,9 @@ closeModalSpinner('#delete-modal-spinner', '#delete-modal', function() {
 
     // show/hide overlay preventing processed uploads, if needed
     setExpressionOverlay(<%= @block_processed_upload %>);
+
+    // emit event to trigger updates to all raw counts select inputs
+    $(window).trigger('updateRawCountsSelect')
 });
 
 

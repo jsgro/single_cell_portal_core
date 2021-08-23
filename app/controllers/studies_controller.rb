@@ -483,6 +483,9 @@ class StudiesController < ApplicationController
         study_file.update!(study_file_params)
       rescue => e
         logger.error "#{study_file.errors.full_messages.join(", ")}"
+        if study_file.errors[:expression_file_info].any?
+          logger.info "#{study_file.errors[:expression_file_info]}"
+        end
         existing_file = StudyFile.find(study_file.id)
         if existing_file
           ErrorTracker.report_exception(e, current_user, params)

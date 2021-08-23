@@ -100,22 +100,19 @@
     function updateRawCountsAssnSelect() {
       const rawAssnTarget = $(`${expFormId_<%= allow_only %>} .raw_associations_select`)[0]
       const pairedHiddenField = $(`${expFormId_<%= allow_only %>} .raw_counts_associations`)[0]
-      <% opts =  @study.study_files.where(file_type: /Matrix/, 'expression_file_info.is_raw_counts': true, queued_for_deletion: false)
-                                         .map { |f| { label: f.name, value: f.id.to_s } }
-         current_values = study_file.expression_file_info.raw_counts_associations
-                                   .map {|aid| opts.find {|opt| opt[:value] == aid }} %>
-      const opts = <%= opts.to_json.html_safe %>
-      const current_values = <%= current_values.to_json.html_safe %>
-      window.SCP.renderRawAssociationSelect(rawAssnTarget, opts, current_values, pairedHiddenField)
+      <% current_values = study_file.associated_matrix_files(:raw)&.map { |sf| { label: sf.name, value: sf.id.to_s } } %>
+      const currentValues = <%= current_values.to_json.html_safe %>
+      const opts = window.SCP.currentStudyFiles.filter(sf => sf?.expression_file_info?.is_raw_counts)
+        ?.map(sf => ({ label: sf.upload_file_name, value: sf['_id']['$oid'] }))
+      window.SCP.renderRawAssociationSelect(rawAssnTarget, currentValues, pairedHiddenField, opts)
     }
 
     <% if User.feature_flag_for_instance(current_user, 'raw_counts_required_backend')  %>
       updateRawCountsAssnSelect()
 
-    // update on all form submissions
-    $('body').on('click', '.save-expression-file, .add-expression', function() {
-      updateRawCountsAssnSelect()
-    })
+      $(window).on('updateRawCountsSelect', function() {
+        updateRawCountsAssnSelect()
+      })
     <% end %>
 
 		$(function() {
@@ -158,7 +155,8 @@
             }
 				},
 				done: function(e, data) {
-				  let stepName = '<%= allow_only == 'raw' ? 'initialize_raw_expression_form_nav' : 'initialize_processed_expression_form_nav' %>';
+          let partial = '<%= allow_only == 'raw' ? 'initialize_raw_expression_form' : 'initialize_processed_expression_form' %>';
+				  let stepName = `${partial}_nav`
           completeWizardStep(stepName);
 					var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
 					$.ajax({
@@ -174,7 +172,7 @@
                       data: {
                           file: fileName,
                           modal_target: '#expression-parse-modal',
-                          partial: 'initialize_expression_form',
+                          partial: partial,
                           selector: expFormId_<%= allow_only %>,
                           allow_only: '<%= allow_only %>'
                       },

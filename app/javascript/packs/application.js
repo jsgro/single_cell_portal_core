@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkMissingAuthToken()
 })
 
+
 window.SCP = window.SCP ? window.SCP : {}
 // SCP expects these variables to be global.
 //
