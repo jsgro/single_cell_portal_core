@@ -721,7 +721,7 @@ class IngestJob
     if self.study_file.file_type == 'Metadata'
       faq_link = "https://singlecell.zendesk.com/hc/en-us/articles/360060610092-Metadata-Validation-Errors-FAQ"
       message_body += "<h3>Common Errors for Metadata Files</h3>"
-      message_body += "<p>You can view a list of common metadata validation errors and solutions on our wiki: "
+      message_body += "<p>You can view a list of common metadata validation errors and solutions in our documentation: "
       message_body += "<a href='#{faq_link}'>#{faq_link}</a></p>"
     end
 
