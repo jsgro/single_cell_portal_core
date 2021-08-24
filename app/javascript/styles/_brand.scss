@@ -15,6 +15,11 @@
   }
 }
 
+.dropdown_scroll {
+  overflow: auto;
+  max-height: 80vh;
+}
+
 @media screen and (max-width: 768px) {
   ul.nav.navbar-nav.pull-right {
     margin-top: -7.5px;
