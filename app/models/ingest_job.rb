@@ -553,7 +553,7 @@ class IngestJob
       # since genes are not ingested for raw counts matrices, report number of cells ingested
       cells = self.study.expression_matrix_cells(self.study_file)
       cell_count = cells.present? ? cells.count : 0
-      job_props.merge!({:numCells => cell_count})
+      job_props.merge!({ numCells: cell_count, is_raw_counts: self.study_file.is_raw_counts_file? })
       if !self.study_file.is_raw_counts_file?
         genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
         job_props.merge!({:numGenes => genes})
