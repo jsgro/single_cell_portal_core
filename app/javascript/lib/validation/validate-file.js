@@ -1,7 +1,6 @@
 /**
 * @fileoverview Validates Single Cell Portal files on the user's computer
 */
-
 import { readLinesAndType } from './io'
 
 /** Remove white spaces and quotes from a string value */

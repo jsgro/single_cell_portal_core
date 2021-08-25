@@ -151,13 +151,14 @@
 					fileUploading = true;
 					var that = this;
           const file = data.files[0]
+          const fileType = 'metadata'
 
           let validationErrors = []
           <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
             $('#metadata-errors').remove() // Remove any prior notice
             $('#metadata_form').append('<div id="metadata-errors"></div>')
             // Run client-side metadata file validation
-            validationErrors = await window.SCP.validateFile(file, 'metadata')
+            validationErrors = await window.SCP.validateFile(file, fileType)
           <% end %>
 
           const numErrors = validationErrors.length
@@ -177,7 +178,9 @@
             });
           } else {
             const target = document.querySelector('#metadata-errors')
-            window.SCP.renderValidationAlert(target, validationErrors)
+            window.SCP.renderValidationAlert(
+              target, validationErrors, fileType
+            )
           }
 				},
 				chunkdone: function(e, data) {
