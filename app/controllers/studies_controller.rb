@@ -1134,7 +1134,7 @@ class StudiesController < ApplicationController
     @all_expression = @study.study_files.by_type(['Expression Matrix', 'MM Coordinate Matrix'])
     # divide all expression files into raw/processed bins
     @raw_matrix_files, @processed_matrix_files = @all_expression.partition(&:is_raw_counts_file?)
-    @block_processed_upload = @raw_matrix_files.empty? && @processed_matrix_files.empty? &&
+    @block_processed_upload = @raw_matrix_files.empty? &&
                               User.feature_flag_for_instance(current_user, 'raw_counts_required_frontend')
     @metadata_file = @study.metadata_file
     @cluster_ordinations = @study.study_files.by_type('Cluster')
