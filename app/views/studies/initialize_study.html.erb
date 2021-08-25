@@ -1,6 +1,6 @@
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   // populate window.SCP.currentStudyFiles with information about all known StudyFiles
-  window.SCP.currentStudyFiles = <%= @study.study_files.available.map(&:attributes).to_json.html_safe %>
+  window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
 </script>
 
 <div class="row">

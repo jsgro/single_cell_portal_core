@@ -1,7 +1,7 @@
 closeModalSpinner('#delete-modal-spinner', '#delete-modal', function() {
     // populate window.SCP.currentStudyFiles with information about all known StudyFiles
     // calling study.reload avoids caching issues in case files have recently updated
-    window.SCP.currentStudyFiles = <%= @study.reload.study_files.available.map(&:attributes).to_json.html_safe %>
+    window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
 
     // replace form with fresh instance if needed
     if (<%= !@message.blank? %>) {

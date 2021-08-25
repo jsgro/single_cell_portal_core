@@ -71,6 +71,11 @@ class Study
     def downloadable
       available.where.any_of({ :generation.ne => nil }, { :human_fastq_url.ne => nil })
     end
+
+    # all files not queued for deletion, ignoring newly built files
+    def persisted
+      available.reject(&:new_record?)
+    end
   end
 
   has_many :study_file_bundles, dependent: :destroy do

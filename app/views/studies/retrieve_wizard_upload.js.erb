@@ -1,6 +1,6 @@
 // populate window.SCP.currentStudyFiles with information about all known StudyFiles
 // calling study.reload avoids caching issues in case files have recently updated
-window.SCP.currentStudyFiles = <%= @study.reload.study_files.available.map(&:attributes).to_json.html_safe %>
+window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
 
 // find form, select parent and replace contents with updated values
 $("<%= params[:selector] %>").replaceWith("<%= escape_javascript(render partial: params[:partial], locals: {study_file: @study_file, allow_only: @allow_only }) %>");
