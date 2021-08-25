@@ -63,6 +63,7 @@ class StudyFile
   embeds_one :expression_file_info
 
   accepts_nested_attributes_for :expression_file_info
+  validate :show_exp_file_info_errors
 
   # field definitions
   field :name, type: String
@@ -1339,6 +1340,13 @@ class StudyFile
     # otherwise, add validation error for :use_metadata_convention
     unless convention_required.include?(false)
       errors.add(:use_metadata_convention, 'must be "true" to ensure data complies with the SCP metadata convention')
+    end
+  end
+
+  def show_exp_file_info_errors
+    if self.expression_file_info.present? && !self.expression_file_info.valid?
+      errors.add(:base, self.expression_file_info.errors.full_messages.join(', '))
+      errors.delete(:expression_file_info) # remove "Expression file info is invalid" message
     end
   end
 end

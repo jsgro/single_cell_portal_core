@@ -2,11 +2,6 @@ import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 import Select from 'react-select'
 
-/** whether or not the given form specifies a raw counts expression form */
-function isInRawForm(parentForm) {
-  return $(parentForm).find('.is_raw_counts_true')[0].checked
-}
-
 /** updates the raw_counts_associations hidden field with the selections, which should be an array of id strings */
 function updateHiddenField(hiddenField, selections) {
   if (hiddenField) {
@@ -18,16 +13,16 @@ function updateHiddenField(hiddenField, selections) {
   }
 }
 
-/** Renders a multiselect for mapping processed matrix to raw matrix files.  Meant to be embedded in
- the rails _initialize_expression_form */
+/** Renders a multiselect for mapping processed matrix to raw matrix files.
+ *
+ * @param {Object} initialValue current selected value
+ * @param {Object} parentForm parent HTML form DOM object
+ * @param {Object} hiddenField hidden HTML form field for tracking associations
+ * @param {Array} opts select form options array
+ */
 export default function RawAssociationSelect({ initialValue, parentForm, hiddenField, opts }) {
   // selected is an array of string for the ids of the associated cluster files
   const [selected, setSelected] = useState(initialValue)
-
-  if (isInRawForm(parentForm)) {
-    updateHiddenField(hiddenField, [])
-    return <span className="hidden-raw-association-select"></span>
-  }
 
   /** handle change events from the multiselect component, and syncing the hidden field */
   function updateSelection(selections) {
@@ -49,7 +44,7 @@ export default function RawAssociationSelect({ initialValue, parentForm, hiddenF
 }
 
 /** convenience method for drawing/updating the component from non-react portions of SCP */
-export function renderRawAssociationSelect(target, initialValue, hiddenField, opts ) {
+export function renderRawAssociationSelect(target, initialValue, hiddenField, opts) {
   const parentForm = $(target).closest('.expression-file-info-fields')[0]
   ReactDOM.render(
     <RawAssociationSelect

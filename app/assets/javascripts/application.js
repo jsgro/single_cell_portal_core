@@ -278,15 +278,21 @@ function enableDefaultActions() {
 
     // reset units dropdown based on is_raw_counts?
     $('body').on('click', '.raw-counts-radio', function() {
-        var isRawCount = $(this).val() == '1'
-        var expFileInfoForm = $(this).closest('.expression-file-info-fields')
-        var unitSelect = expFileInfoForm.find('.counts-unit-dropdown');
-        if ( !isRawCount ) {
-            unitSelect.val('');
-            setElementsEnabled(unitSelect, false);
-        } else {
-            setElementsEnabled(unitSelect, true);
-        }
+      let exprFields = $(this).closest('.expression-file-info-fields')
+      let isRawCounts = exprFields.find('.is_raw_counts_true')[0].checked
+      let unitSelect = exprFields.find('.counts-unit-dropdown')
+      let unitsSelectDiv = exprFields.find('.raw-counts-units-select')
+      let assnSelectDiv = exprFields.find('.raw_associations_select')
+      if ( !isRawCounts ) {
+        unitSelect.val('');
+        setElementsEnabled(unitSelect, false);
+        assnSelectDiv.removeClass('hidden')
+        unitsSelectDiv.addClass('hidden')
+      } else {
+        setElementsEnabled(unitSelect, true);
+        unitsSelectDiv.removeClass('hidden')
+        assnSelectDiv.addClass('hidden')
+      }
     });
 
     // when clicking the main study view page tabs, update the current URL so that when you refresh the tab stays open

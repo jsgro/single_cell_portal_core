@@ -1,3 +1,7 @@
+// populate window.SCP.currentStudyFiles with information about all known StudyFiles
+// calling study.reload avoids caching issues in case files have recently updated
+window.SCP.currentStudyFiles = <%= @study.reload.study_files.available.map(&:attributes).to_json.html_safe %>
+
 $("<%= @selector %>").replaceWith("<%= escape_javascript( render @partial, {study_file: @study_file}) %>");
 $("#study-files-notice-target").html("<%= escape_javascript( render partial: 'studies/study_file_notices', locals: {message: @message}) %>");
 
@@ -5,3 +9,5 @@ $("#study-files-notice-target").html("<%= escape_javascript( render partial: 'st
 var wizForm = $('.<%= params[:partial] %>').slice(-1)[0];
 
 $(wizForm).find('[data-toggle="tooltip"]').tooltip({container: 'body'});
+
+$(window).trigger('updateRawCountsSelect')

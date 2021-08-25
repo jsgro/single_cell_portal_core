@@ -483,9 +483,6 @@ class StudiesController < ApplicationController
         study_file.update!(study_file_params)
       rescue => e
         logger.error "#{study_file.errors.full_messages.join(", ")}"
-        if study_file.errors[:expression_file_info].any?
-          logger.info "#{study_file.errors[:expression_file_info]}"
-        end
         existing_file = StudyFile.find(study_file.id)
         if existing_file
           ErrorTracker.report_exception(e, current_user, params)
@@ -612,6 +609,7 @@ class StudiesController < ApplicationController
   def parse
     @study_file = StudyFile.where(study_id: params[:id], upload_file_name: params[:file]).first
     @status = FileParseService.run_parse_job(@study_file, @study, current_user)
+    @allow_only = params[:allow_only]
     # special handling for coordinate labels
     if @study_file.file_type == 'Coordinate Labels' && @status[:status_code] == 412
       # delete file and inform user of issue as this error is not recoverable
@@ -769,7 +767,7 @@ class StudiesController < ApplicationController
   def delete_study_file
     @study_file = StudyFile.find(params[:study_file_id])
     @message = ""
-    unless @study_file.nil?
+    if @study_file.present?
       if !@study_file.can_delete_safely?
         render action: 'abort_delete_study_file'
       else
@@ -841,13 +839,19 @@ class StudiesController < ApplicationController
     @color = is_required ? 'danger' : 'info'
     @status = is_required ? 'Required' : 'Optional'
     @study_file = @study.build_study_file({file_type: @file_type})
-    @allow_only = params[:allow_only] ? params[:allow_only] : 'all'
+    @allow_only = params[:allow_only] || 'all'
     if @file_type =~ /Matrix/
       @study_file.build_expression_file_info(is_raw_counts: @allow_only == 'raw' ? true : false)
     end
 
-    unless @file_type.nil?
-      @reset_status = @study.study_files.valid.select {|sf| sf.file_type == @file_type && !sf.new_record?}.count == 0
+    # logic for rolling back status bar in upload wizard; need to account for raw vs. processed matrix files
+    if @file_type.present? && @file_type =~ /Matrix/
+      is_raw_counts = @study_file.is_raw_counts_file?
+      @reset_status = @study.study_files.valid.select do |sf|
+        sf.file_type =~ /Matrix/ && !sf.new_record? && (is_raw_counts ? sf.is_raw_counts_file? : !sf.is_raw_counts_file?)
+      end.count == 0
+    elsif @file_type.present?
+      @reset_status = @study.study_files.valid.select { |sf| sf.file_type == @file_type && !sf.new_record? }.count == 0
     else
       @reset_status = false
     end

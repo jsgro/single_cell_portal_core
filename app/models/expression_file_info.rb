@@ -101,9 +101,7 @@ class ExpressionFileInfo
     # first ensure raw matrix is present
     if raw_counts_associations.any?
       raw_counts_associations.each do |study_file_id|
-        Rails.logger.info "validating presence of #{study_file_id} in enforce_raw_counts_associations"
         raw_matrix = StudyFile.find(study_file_id)
-        Rails.logger.info "file: #{raw_matrix.present?}, raw_counts: #{raw_matrix&.is_raw_counts_file?}"
         return true if raw_matrix&.is_raw_counts_file?
       end
     end
@@ -115,7 +113,7 @@ class ExpressionFileInfo
     # if any user account returned false for :raw_counts_required_backed, then allow saving of expression matrix
     # otherwise, add validation error for :raw_counts_associations
     unless raw_counts_required.include?(false)
-      errors.add(:raw_counts_associations, 'must include at least one raw counts matrix filename before saving')
+      errors.add(:base, 'You must specify at least one corresponding raw counts file before saving')
     end
   end
 end

@@ -15,3 +15,25 @@
   end %>
 </div>
 
+<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+  function updateRawCountsAssnSelect() {
+    const formId = '#study-file-<%= f.object.id.to_s %>'
+    const rawAssnTarget = $(`${formId} .raw_associations_select`)[0]
+    const pairedHiddenField = $(`${formId} .raw_counts_associations`)[0]
+    <% current_values = f.object.associated_matrix_files(:raw)&.map { |sf| { label: sf.name, value: sf.id.to_s } } %>
+    const currentValues = <%= current_values.to_json.html_safe %>
+    const opts = window.SCP.currentStudyFiles.filter(sf => sf?.expression_file_info?.is_raw_counts)
+      ?.map(sf => ({ label: sf.upload_file_name, value: sf['_id']['$oid'] }))
+    window.SCP.renderRawAssociationSelect(rawAssnTarget, currentValues, pairedHiddenField, opts)
+  }
+
+  updateRawCountsAssnSelect()
+
+  $(window).on('updateRawCountsSelect', function() {
+    updateRawCountsAssnSelect()
+  })
+
+  $('form').on('change', '.is_raw_counts_true, .is_raw_counts_false', function() {
+    updateRawCountsAssnSelect()
+  })
+</script>

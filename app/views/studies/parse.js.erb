@@ -1,13 +1,16 @@
+// populate window.SCP.currentStudyFiles with information about all known StudyFiles
+// calling study.reload avoids caching issues in case files have recently updated
+window.SCP.currentStudyFiles = <%= @study.reload.study_files.available.map(&:attributes).to_json.html_safe %>
+
 $('<%= params[:modal_target]%>').modal('hide');
 
 // when uploading a file that can have multiple instances, only call completeWizardStep the first time
 // also update progress bar
-<% partials = %w(initialize_ordinations_form initialize_labels_form initialize_marker_genes_form
-                 initialize_primary_data_form initialize_misc_form initialize_raw_expression_form
-                 initialize_processed_expression_form) %>
-<% if partials.include?(params[:partial]) && @study.study_files.by_type(@study_file.file_type).count == 1 %>
-	var step = '<%= params[:partial] %>';
-	completeWizardStep(step + '_nav');
+<% if %w(initialize_ordinations_form initialize_labels_form initialize_marker_genes_form initialize_primary_data_form
+         initialize_misc_form initialize_expression_form).
+         include?(params[:partial]) %>
+	var step = '<%= @allow_only.present? ? "initialize_#{@allow_only}_expression_form" : params[:partial] %>';
+	completeWizardStep(`${step}_nav`);
 	var status = getWizardStatus();
 	setWizardProgress(status);
 	console.log('incrementing status for ' + step + ' upload');

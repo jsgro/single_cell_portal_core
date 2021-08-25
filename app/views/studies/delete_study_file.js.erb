@@ -1,6 +1,7 @@
 closeModalSpinner('#delete-modal-spinner', '#delete-modal', function() {
     // populate window.SCP.currentStudyFiles with information about all known StudyFiles
-    window.SCP.currentStudyFiles = <%= @study.study_files.available.map(&:attributes).to_json.html_safe %>
+    // calling study.reload avoids caching issues in case files have recently updated
+    window.SCP.currentStudyFiles = <%= @study.reload.study_files.available.map(&:attributes).to_json.html_safe %>
 
     // replace form with fresh instance if needed
     if (<%= !@message.blank? %>) {
@@ -14,8 +15,9 @@ closeModalSpinner('#delete-modal-spinner', '#delete-modal', function() {
     }
     // if status needs to be decremented, reset necessary fields
     if (<%= @reset_status %>) {
-        resetWizardStep('<%= @partial %>_nav');
-        var statusLabel = '<%= @partial %>_completed';
+        var step = '<%= @allow_only.present? ? "initialize_#{@allow_only}_expression_form" : params[:partial] %>';
+        resetWizardStep(`${step}_nav`);
+        var statusLabel = `${step}_completed`;
         $('#' + statusLabel).replaceWith("<small class='initialize-label' id='" + statusLabel + "'><span class='label label-<%= @color %>'><%= @status %></span></small>");
     }
 
