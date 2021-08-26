@@ -38,12 +38,17 @@ describe('Client-side file validation', () => {
         'Second row, first column must be "TYPE" (case insensitive). Provided value was "notTYPE".'
       ]
     ]
+    const file = {
+      name: 'metadata_example_bad_TYPE.txt',
+      size: 566,
+      type: 'text/plain'
+    }
     const fileType = 'metadata'
 
     const fakeLog = jest.spyOn(MetricsApi, 'log')
     fakeLog.mockImplementation(() => {})
 
-    render(<ValidationAlert errors={errors} fileType={fileType}/>)
+    render(<ValidationAlert errors={errors} file={file} fileType={fileType}/>)
 
     // Test UI
     const alert = screen.getByTestId('metadata-validation-alert')
@@ -57,6 +62,9 @@ describe('Client-side file validation', () => {
         'fileType': 'metadata',
         'summary': 'Your metadata file had 1 error',
         'numErrors': 1,
+        'file:name': 'metadata_example_bad_TYPE.txt',
+        'file:size': 566,
+        'file:mimeType': 'text/plain',
         'errors': [
           'Second row, first column must be "TYPE" (case insensitive). Provided value was "notTYPE".'
         ]
