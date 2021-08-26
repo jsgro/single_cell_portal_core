@@ -5,6 +5,7 @@ import '@testing-library/jest-dom/extend-expect'
 import * as Io from 'lib/validation/io'
 import * as ValidateFile from 'lib/validation/validate-file'
 import ValidationAlert from 'components/validation/ValidationAlert'
+import * as MetricsApi from 'lib/metrics-api'
 
 const fs = require('fs')
 
@@ -29,7 +30,7 @@ describe('Client-side file validation', () => {
 
   it('renders validation alert, logs error', async () => {
     // This error structure matches that in Ingest Pipeline.
-    // Consistent structure across codebases eases QA and debugging.
+    // Such consistency across codebases eases QA and debugging.
     const errors = [
       [
         'error',
@@ -39,9 +40,27 @@ describe('Client-side file validation', () => {
     ]
     const fileType = 'metadata'
 
+    const fakeLog = jest.spyOn(MetricsApi, 'log')
+    fakeLog.mockImplementation(() => {})
+
     render(<ValidationAlert errors={errors} fileType={fileType}/>)
+
+    // Test UI
     const alert = screen.getByTestId('metadata-validation-alert')
     const expectedContent = `Your metadata file had 1 error:${errors[0][2]}`
     expect(alert).toHaveTextContent(expectedContent)
+
+    // Test analytics
+    expect(fakeLog).toHaveBeenCalledWith(
+      'error:file-validation',
+      {
+        'fileType': 'metadata',
+        'summary': 'Your metadata file had 1 error',
+        'numErrors': 1,
+        'errors': [
+          'Second row, first column must be "TYPE" (case insensitive). Provided value was "notTYPE".'
+        ]
+      }
+    )
   })
 })

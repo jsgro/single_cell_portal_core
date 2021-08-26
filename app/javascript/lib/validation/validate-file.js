@@ -1,5 +1,11 @@
 /**
 * @fileoverview Validates Single Cell Portal files on the user's computer
+*
+* Where feasible, these functions and data structures align with those in
+* Ingest Pipeline [1].  Such consistency across codebases eases QA, debugging,
+* and overall maintainability.
+*
+* [1] E.g. https://github.com/broadinstitute/scp-ingest-pipeline/blob/development/ingest/validation/validate_metadata.py
 */
 import { readLinesAndType } from './io'
 
