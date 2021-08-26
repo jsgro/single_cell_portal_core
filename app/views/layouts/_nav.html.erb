@@ -23,7 +23,7 @@
           <% if @selected_branding_group.present? && @selected_branding_group.external_link_url %>
             <li><%= link_to "<span class='fas fa-fw fa-globe'></span> ".html_safe + @selected_branding_group.external_link_description.html_safe, @selected_branding_group.external_link_url, target: '_blank', class: 'check-upload' %></li>
           <% end %>
-          <li><%= link_to "<span class='fas fa-fw fa-info-circle'></span> Documentation/Wiki".html_safe, 'https://github.com/broadinstitute/single_cell_portal/wiki', target: '_blank' %></li>
+          <li><%= link_to "<span class='fas fa-fw fa-info-circle'></span> Documentation".html_safe, 'https://singlecell.zendesk.com/hc/en-us', target: '_blank' %></li> 
           <li><%= link_to "<span class='fas fa-fw fa-envelope'></span> Contact Us".html_safe, '#', id: 'open-contact-modal' %></li>
           <li><%= link_to "<span class='fab fa-fw fa-github'></span> Portal Source Code".html_safe, 'https://github.com/broadinstitute/single_cell_portal_core', target: '_blank' %></li>
           <li><%= link_to "<span class='fas fa-fw fa-code'></span> REST API Documentation".html_safe, api_v1_swagger_ui_path, target: '_blank' %></li>

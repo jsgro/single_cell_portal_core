@@ -102,10 +102,10 @@
 
     function setMetadataConventionMessage(useMetadataConvention) {
         var message;
-        const advancedUrl = "https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#metadata-powered-advanced-search"
+        const advancedUrl = "https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview"
         const advancedLink = `<a href="${advancedUrl}" target="_blank" rel="noreferrer">advanced search</a>`
         const conventionRequired = <%= convention_required == true %>;
-        const helpUrl = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+        const helpUrl = 'https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention'
         if (conventionRequired) {
           message =
             `Learn <a href="${helpUrl}" target="_blank" rel="noreferrer">how to convert your file</a>.<br/>` +
@@ -116,7 +116,7 @@
             `This makes your data discoverable in ${advancedLink}.<br/>` +
             `If the file fails metadata convention validation, you will be emailed messages to help correct it.`
         } else {
-          const formatUrl = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+          const formatUrl = 'https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention'
           const contactUsLink = '<a href="mailto:scp-support@broadinstitute.zendesk.com">scp-support@broadinstitute.zendesk.com</a>'
           const contactUs = `If you need assistance, please contact us at ${contactUsLink}.`
           message =

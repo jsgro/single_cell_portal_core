@@ -43,10 +43,10 @@ const helpModalContent = (<div>
   <br/><br/>
   For more detailed information, visit
   our{' '}
-  <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Search-Studies"
-    target="_blank" rel="noreferrer">wiki
+  <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006431-Search-Studies"
+    target="_blank" rel="noreferrer">documentation
   </a>.  Study authors looking to make their studies more accessible can read our
-  <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search"
+  <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview"
     target="_blank" rel="noreferrer"> metadata guide
   </a>.
 </div>)
