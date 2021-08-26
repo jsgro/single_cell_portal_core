@@ -1,5 +1,4 @@
 // populate window.SCP.currentStudyFiles with information about all known StudyFiles
-// calling study.reload avoids caching issues in case files have recently updated
 window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
 
 // find form, select parent and replace contents with updated values
@@ -44,6 +43,3 @@ setTimeout(function() {
 
 // show/hide overlay preventing processed uploads, if needed
 setExpressionOverlay(<%= @block_processed_upload %>);
-
-// emit event to trigger updates to all raw counts select inputs
-$(window).trigger('updateRawCountsSelect')

@@ -1,5 +1,4 @@
 // populate window.SCP.currentStudyFiles with information about all known StudyFiles
-// calling study.reload avoids caching issues in case files have recently updated
 window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
 
 $('<%= params[:modal_target]%>').modal('hide');
@@ -18,12 +17,21 @@ $('<%= params[:modal_target]%>').modal('hide');
 	$('#' + step + '_nav_completed').html("<span class='fas fa-check text-success'></span>");
 <% end %>
 
+// emit event to trigger updates to all raw counts select inputs if this file was a raw counts matrix
+if (<%= @study_file.is_raw_counts_file? %>) {
+  $('.expression-file-info-fields').each(function(index, element) {
+    let formId = $(element).closest('form').attr('id')
+    $(`#${formId}`).trigger('updateRawCountsSelect')
+  })
+}
+
 // re-render form upload to get download button and increment completed status
 $.ajax({
     url: "<%= retrieve_wizard_upload_study_path(@study._id) %>",
     data: {
         file: '<%= params[:file] %>',
         selector: '<%= params[:selector] %>',
-        partial: '<%= params[:partial] %>'
+        partial: '<%= params[:partial] %>',
+        allow_only: '<%= @allow_only %>'
     }
 });

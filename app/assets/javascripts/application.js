@@ -739,3 +739,12 @@ function setExpressionOverlay(renderOverlay) {
     content.removeClass('show-processed-disclaimer').addClass('hide-processed-disclaimer')
   }
 }
+
+// update all raw counts association dropdowns with new options
+function updateRawCountsAssnSelect(parentForm, currentValues) {
+  const rawAssnTarget = $(`${parentForm} .raw_associations_select`)[0]
+  const pairedHiddenField = $(`${parentForm} .raw_counts_associations`)[0]
+  const matrixOpts = window.SCP.currentStudyFiles.filter(sf => sf?.expression_file_info?.is_raw_counts)
+    ?.map(sf => ({ label: sf.upload_file_name, value: sf['_id']['$oid'] }))
+  window.SCP.renderRawAssociationSelect(rawAssnTarget, currentValues, pairedHiddenField, matrixOpts)
+}

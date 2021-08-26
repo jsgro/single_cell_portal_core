@@ -46,6 +46,7 @@ export default function RawAssociationSelect({ initialValue, parentForm, hiddenF
 /** convenience method for drawing/updating the component from non-react portions of SCP */
 export function renderRawAssociationSelect(target, initialValue, hiddenField, opts) {
   const parentForm = $(target).closest('.expression-file-info-fields')[0]
+  ReactDOM.unmountComponentAtNode(target)
   ReactDOM.render(
     <RawAssociationSelect
       initialValue={initialValue}

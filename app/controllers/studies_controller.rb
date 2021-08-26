@@ -609,7 +609,7 @@ class StudiesController < ApplicationController
   def parse
     @study_file = StudyFile.where(study_id: params[:id], upload_file_name: params[:file]).first
     @status = FileParseService.run_parse_job(@study_file, @study, current_user)
-    @allow_only = params[:allow_only]
+    @allow_only = params[:allow_only] || 'all'
     # special handling for coordinate labels
     if @study_file.file_type == 'Coordinate Labels' && @status[:status_code] == 412
       # delete file and inform user of issue as this error is not recoverable

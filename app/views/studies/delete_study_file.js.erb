@@ -34,8 +34,10 @@ closeModalSpinner('#delete-modal-spinner', '#delete-modal', function() {
     // show/hide overlay preventing processed uploads, if needed
     setExpressionOverlay(<%= @block_processed_upload %>);
 
-    // emit event to trigger updates to all raw counts select inputs
-    $(window).trigger('updateRawCountsSelect')
+    $('.expression-file-info-fields').each(function(index, element) {
+      let formId = $(element).closest('form').attr('id')
+      $(`#${formId}`).trigger('updateRawCountsSelect')
+    })
 });
 
 

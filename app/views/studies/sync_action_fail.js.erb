@@ -8,4 +8,7 @@ window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes
   $('<%= @form %>').replaceWith("<%= escape_javascript(render partial: 'directory_listing_form', locals: {directory: @directory}) %>");
 <% end %>
 
-$(window).trigger('updateRawCountsSelect')
+$('.expression-file-info-fields').each(function(index, element) {
+  let formId = $(element).closest('form').attr('id')
+  $(`#${formId}`).trigger('updateRawCountsSelect')
+})

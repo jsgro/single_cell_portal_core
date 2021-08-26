@@ -11,4 +11,7 @@ $("<%= @form %>").replaceWith("<%= escape_javascript(render partial: 'synced_stu
 $("#initialized").replaceWith("<%= escape_javascript(render partial: 'initialize_study_label') %>");
 $('.initialize-label').tooltip({container: 'body'});
 
-$(window).trigger('updateRawCountsSelect')
+$('.expression-file-info-fields').each(function(index, element) {
+  let formId = $(element).closest('form').attr('id')
+  $(`#${formId}`).trigger('updateRawCountsSelect')
+})

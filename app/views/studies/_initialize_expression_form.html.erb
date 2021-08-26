@@ -97,26 +97,34 @@
         }
       });
 
-    // render the raw counts association select; if replace is true, allows swapping out units dropdown in raw counts form
-    function updateRawCountsAssnSelect() {
-      const rawAssnTarget = $(`${expFormId_<%= allow_only %>} .raw_associations_select`)[0]
-      const pairedHiddenField = $(`${expFormId_<%= allow_only %>} .raw_counts_associations`)[0]
-      <% current_values = study_file.associated_matrix_files(:raw)&.map { |sf| { label: sf.name, value: sf.id.to_s } } %>
-      const currentValues = <%= current_values.to_json.html_safe %>
-      const opts = window.SCP.currentStudyFiles.filter(sf => sf?.expression_file_info?.is_raw_counts)
-        ?.map(sf => ({ label: sf.upload_file_name, value: sf['_id']['$oid'] }))
-      window.SCP.renderRawAssociationSelect(rawAssnTarget, currentValues, pairedHiddenField, opts)
-    }
+      // wrapper to call updateRawCountsAssnSelect() for updating all raw counts association select inputs after
+      // file uploads
+      function handleRawCountsUpdate() {
+        <% current_values = study_file.associated_matrix_files(:raw)&.map { |sf| { label: sf.name, value: sf.id.to_s } } %>
+        const currentValues = <%= current_values.to_json.html_safe %>
+        updateRawCountsAssnSelect(expFormId_<%= allow_only %>, currentValues)
+      }
 
-    updateRawCountsAssnSelect()
+      handleRawCountsUpdate()
 
-    $(window).on('updateRawCountsSelect', function() {
-      updateRawCountsAssnSelect()
-    })
+      $(expFormId_<%= allow_only %>).on('updateRawCountsSelect', function() {
+        handleRawCountsUpdate()
+      })
 
-    $('form').on('change', '.is_raw_counts_true, .is_raw_counts_false', function() {
-      updateRawCountsAssnSelect()
-    })
+      $(expFormId_<%= allow_only %>).on('change', '.is_raw_counts_true, .is_raw_counts_false', function() {
+        handleRawCountsUpdate()
+      })
+
+      // render the raw counts association select; if replace is true, allows swapping out units dropdown in raw counts form
+      updateRawCountsAssnSelect(expFormId_<%= allow_only %>, <%= current_values.to_json.html_safe %>)
+
+      $(expFormId_<%= allow_only %>).on('updateRawCountsSelect', function() {
+        updateRawCountsAssnSelect(expFormId_<%= allow_only %>, <%= current_values.to_json.html_safe %>)
+      })
+
+      $(expFormId_<%= allow_only %>).on('change', '.is_raw_counts_true, .is_raw_counts_false', function() {
+        updateRawCountsAssnSelect(expFormId_<%= allow_only %>, <%= current_values.to_json.html_safe %>)
+      })
 
 		$(function() {
       $(expFormId_<%= allow_only %>).fileupload({

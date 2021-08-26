@@ -18,5 +18,7 @@ closeModalSpinner('#delete-modal-spinner', '#delete-modal', function() {
   $('.initialize-label').tooltip({container: 'body'});
 });
 
-$(window).trigger('updateRawCountsSelect')
-
+$('.expression-file-info-fields').each(function(index, element) {
+  let formId = $(element).closest('form').attr('id')
+  $(`#${formId}`).trigger('updateRawCountsSelect')
+})
