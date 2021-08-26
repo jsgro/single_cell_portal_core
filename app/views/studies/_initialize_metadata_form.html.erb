@@ -152,11 +152,12 @@
 					var that = this;
           const file = data.files[0]
           const fileType = 'metadata'
+          const containerId = `${fileType}-metadata-container`
 
           let validationErrors = []
           <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
             $('#metadata-errors').remove() // Remove any prior notice
-            $('#metadata_form').append('<div id="metadata-errors"></div>')
+            $('#metadata_form').append(`<div id="${containerId}"></div>`)
             // Run client-side metadata file validation
             validationErrors = await window.SCP.validateFile(file, fileType)
           <% end %>
@@ -177,7 +178,7 @@
               }
             });
           } else {
-            const target = document.querySelector('#metadata-errors')
+            const target = document.querySelector(`#${containerId}`)
             window.SCP.renderValidationAlert(
               target, validationErrors, fileType
             )

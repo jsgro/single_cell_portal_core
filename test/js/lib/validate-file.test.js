@@ -1,8 +1,15 @@
-const fs = require('fs')
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom/extend-expect'
+
 import * as Io from 'lib/validation/io'
 import * as ValidateFile from 'lib/validation/validate-file'
+import ValidationAlert from 'components/validation/ValidationAlert'
+
+const fs = require('fs')
 
 const mockDir = 'public/mock_data/validation'
+
 
 describe('Client-side file validation', () => {
   it('catches TYPE header errors, works at library interface', async () => {
@@ -18,5 +25,23 @@ describe('Client-side file validation', () => {
     const errors = await ValidateFile.validateFile(fileContent, 'metadata')
 
     expect(errors).toHaveLength(1)
+  })
+
+  it('renders validation alert, logs error', async () => {
+    // This error structure matches that in Ingest Pipeline.
+    // Consistent structure across codebases eases QA and debugging.
+    const errors = [
+      [
+        'error',
+        'format',
+        'Second row, first column must be "TYPE" (case insensitive). Provided value was "notTYPE".'
+      ]
+    ]
+    const fileType = 'metadata'
+
+    render(<ValidationAlert errors={errors} fileType={fileType}/>)
+    const alert = screen.getByTestId('metadata-validation-alert')
+    const expectedContent = `Your metadata file had 1 error:${errors[0][2]}`
+    expect(alert).toHaveTextContent(expectedContent)
   })
 })

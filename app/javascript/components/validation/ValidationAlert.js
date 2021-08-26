@@ -21,10 +21,12 @@ export default function ValidationAlert({ errors, fileType }) {
     errors: errors.map(columns => columns[2])
   })
 
+  const testId = `${fileType}-validation-alert`
+
   return (
-    <div className="alert alert-danger">
+    <div className="alert alert-danger" data-testid={testId}>
       <p>
-      Your metadata file had {numErrors} {errorsTerm}:
+      Your {fileType} file had {numErrors} {errorsTerm}:
       </p>
       <ul>{errors.map((columns, i) => {
         return <li key={i}>{columns[2]}</li>

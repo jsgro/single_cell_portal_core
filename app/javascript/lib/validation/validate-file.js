@@ -53,7 +53,7 @@ function validateTypeKeyword(annotTypes) {
     }
   } else {
     const msg =
-      'Second row, first column must be "TYPE" (case insensitive).  ' +
+      'Second row, first column must be "TYPE" (case insensitive). ' +
       `Provided value was "${value}".`
     issues.push(['error', 'format', msg])
   }
