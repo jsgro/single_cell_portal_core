@@ -7,6 +7,8 @@
 *
 * [1] E.g. https://github.com/broadinstitute/scp-ingest-pipeline/blob/development/ingest/validation/validate_metadata.py
 */
+
+import { log } from 'lib/metrics-api'
 import { readLinesAndType } from './io'
 
 /** Remove white spaces and quotes from a string value */
@@ -92,7 +94,7 @@ function sniffDelimiter(lines) {
 
 /** Validate a local metadata file */
 async function validateMetadata(file) {
-  const { lines, fileType } = await readLinesAndType(file, 2)
+  const { lines, fileMimeType } = await readLinesAndType(file, 2)
 
   const delimiter = sniffDelimiter(lines)
   const table = lines.map(line => line.split(delimiter))
@@ -111,16 +113,47 @@ async function validateMetadata(file) {
   return issues
 }
 
+/** Get properties about this validation run to log to Mixpanel */
+function getLogProps(errors, summary, file, fileType) {
+  const defaultProps = {
+    fileType,
+    fileName: file.name,
+    fileSize: file.size,
+    fileMimeType: file.type
+  }
+
+  if (errors.length === 0) {
+    return Object.assign({ status: 'success' }, defaultProps)
+  } else {
+    return Object.assign(defaultProps, {
+      status: 'failure',
+      summary,
+      numErrors: errors.length,
+      errors: errors.map(columns => columns[2])
+    })
+  }
+}
+
 /** Validate a local file, return list of any detected errors */
-export async function validateFile(file, studyFileType) {
+export async function validateFile(file, fileType) {
   let issues = []
-  if (studyFileType === 'metadata') {issues = await validateMetadata(file)}
+  if (fileType === 'metadata') {issues = await validateMetadata(file)}
 
   // Ingest Pipeline reports "issues", which includes "errors" and "warnings".
   // Keep issue type distinction in this module to ease porting, but for now
   // only report errors.
   const errors = issues.filter(issue => issue[0] === 'error')
 
-  return errors
+  let summary = ''
+  if (errors.length > 0) {
+    const numErrors = errors.length
+    const errorsTerm = (numErrors === 1) ? 'error' : 'errors'
+    summary = `Your ${fileType} file had ${numErrors} ${errorsTerm}`
+  }
+
+  const logProps = getLogProps(errors, summary, file, fileType)
+  log('file-validation', logProps)
+
+  return { errors, summary }
 }
 

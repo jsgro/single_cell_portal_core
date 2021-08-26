@@ -13,7 +13,7 @@ const mockDir = 'public/mock_data/validation'
 
 
 describe('Client-side file validation', () => {
-  it('catches TYPE header errors, works at library interface', async () => {
+  it('catches and logs errors via library interface', async () => {
     const mockPath = `${mockDir}/metadata_example_bad_TYPE.txt`
     const fileContent = fs.readFileSync(mockPath, 'utf8')
 
@@ -23,21 +23,6 @@ describe('Client-side file validation', () => {
     const type = 'text-foo/plain-bar'
     readLinesAndType.mockImplementation(() => Promise.resolve({ lines, type }))
 
-    const errors = await ValidateFile.validateFile(fileContent, 'metadata')
-
-    expect(errors).toHaveLength(1)
-  })
-
-  it('renders validation alert, logs error', async () => {
-    // This error structure matches that in Ingest Pipeline.
-    // Such consistency across codebases eases QA and debugging.
-    const errors = [
-      [
-        'error',
-        'format',
-        'Second row, first column must be "TYPE" (case insensitive). Provided value was "notTYPE".'
-      ]
-    ]
     const file = {
       name: 'metadata_example_bad_TYPE.txt',
       size: 566,
@@ -48,27 +33,57 @@ describe('Client-side file validation', () => {
     const fakeLog = jest.spyOn(MetricsApi, 'log')
     fakeLog.mockImplementation(() => {})
 
-    render(<ValidationAlert errors={errors} file={file} fileType={fileType}/>)
+    const expectedSummary = 'Your metadata file had 1 error'
 
-    // Test UI
-    const alert = screen.getByTestId('metadata-validation-alert')
-    const expectedContent = `Your metadata file had 1 error:${errors[0][2]}`
-    expect(alert).toHaveTextContent(expectedContent)
+    const { errors, summary } = await ValidateFile.validateFile(file, fileType)
+
+    // Test library
+    expect(errors).toHaveLength(1)
+    expect(summary).toBe(expectedSummary)
 
     // Test analytics
     expect(fakeLog).toHaveBeenCalledWith(
-      'error:file-validation',
+      'file-validation',
       {
         'fileType': 'metadata',
+        'fileName': 'metadata_example_bad_TYPE.txt',
+        'fileSize': 566,
+        'fileMimeType': 'text/plain',
+        'status': 'failure',
         'summary': 'Your metadata file had 1 error',
         'numErrors': 1,
-        'file:name': 'metadata_example_bad_TYPE.txt',
-        'file:size': 566,
-        'file:mimeType': 'text/plain',
         'errors': [
           'Second row, first column must be "TYPE" (case insensitive). Provided value was "notTYPE".'
         ]
       }
     )
+  })
+
+  it('renders validation alert', async () => {
+    const summary = 'Your metadata file had 1 error'
+
+    // This error structure matches that in Ingest Pipeline.
+    // Such consistency across codebases eases QA and debugging.
+    const errors = [
+      [
+        'error',
+        'format',
+        'Second row, first column must be "TYPE" (case insensitive). Provided value was "notTYPE".'
+      ]
+    ]
+    const fileType = 'metadata'
+
+    render(
+      <ValidationAlert
+        summary={summary}
+        errors={errors}
+        fileType={fileType}
+      />
+    )
+
+    // Test UI
+    const alert = screen.getByTestId('metadata-validation-alert')
+    const expectedContent = `${summary}:${errors[0][2]}`
+    expect(alert).toHaveTextContent(expectedContent)
   })
 })
