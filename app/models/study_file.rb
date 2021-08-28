@@ -16,6 +16,7 @@ class StudyFile
   include Mongoid::Timestamps
   include Rails.application.routes.url_helpers # for accessing download_file_path and download_private_file_path
   include Swagger::Blocks
+  include Mongoid::History::Trackable
 
   # carrierwave settings
   mount_uploader :upload, UploadUploader, mount_on: :upload_file_name
@@ -1349,4 +1350,8 @@ class StudyFile
       errors.delete(:expression_file_info) # remove "Expression file info is invalid" message
     end
   end
+
+  track_history on: [:fields, :embedded_relations],
+                except: [:created_at, :updated_at, :parse_status, :status, :queued_for_deletion, :upload_file_size, :upload_file_content, :generation],
+                modifier_field: nil
 end

@@ -88,4 +88,39 @@ class SummaryStatsUtils
     end
     ingest_jobs
   end
+
+  def self.deleted_studies_info(start_date: Time.zone.today, end_date: Time.zone.today + 1.day)
+    deletions = HistoryTracker.trackers_by_date(Study, action: 'destroy', start_time: start_date, end_time: end_date)
+    deletion_info = deletions.map do |tracker|
+      {
+        title: tracker.original['name'],
+        accession: tracker.original['accession'],
+        study_owner: User.find(tracker.original['user_id']).email
+      }
+    end
+    deletion_info
+  end
+
+  def self.created_studies_info(start_date: Time.zone.today, end_date: Time.zone.today + 1.day)
+    creations = HistoryTracker.trackers_by_date(Study, action: 'create', start_time: start_date, end_time: end_date)
+    creation_info = creations.map do |tracker|
+      user = User.find(tracker.modified['user_id'])
+      study = Study.find(tracker.association_chain.first['id'])
+      other_studies = Study.where(user_id: user.id).pluck(:accession, :created_at)
+      info = {
+        title: tracker.modified['name'],
+        accession: tracker.modified['accession'],
+        study_owner: user.email,
+        other_studies: other_studies
+      }
+      if study.present? # study is not already deleted
+        types_array = study.study_files.pluck(:file_type)
+        # get a hash of the number of each file type present
+        info[:file_types] = types_array.group_by(&:itself).transform_values!(&:size)
+      end
+      info
+    end
+    creation_info
+  end
+
 end

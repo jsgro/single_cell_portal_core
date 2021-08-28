@@ -30,6 +30,40 @@
     </tbody>
   </table>
 </div>
+<% if @creation_info.count > 0 %>
+  <div class="stats">
+    <h3> Studies created - detail </h3>
+    <table>
+      <% @creation_info.each do |study_info| %>
+      <tr>
+        <td>
+          <a href="https://singlecell.broadinstitute.org/single_cell/study/<%= study_info[:accession] %>"><%= study_info[:accession] %></a> <%= study_info[:title] %><br/>
+          <b>files: </b> <%= study_info[:file_types].to_s %> <br/>
+          <b>owner:</b> <%= study_info[:study_owner] %> <br/>
+          <b>other studies by owner:</b>
+            <% study_info[:other_studies].each do |other_study| %>
+              <a href="https://singlecell.broadinstitute.org/single_cell/study/<%= other_study[0] %>"><%= other_study[0] %></a> (<%= other_study[1].to_date.to_s %>) &nbsp;
+            <% end %>
+        </td>
+      </tr>
+      <% end %>
+    </table>
+  </div>
+<% end %>
+<% if @deletion_info.count > 0 %>
+  <div class="stats">
+    <h3> Studies deleted </h3>
+    <table>
+      <% @deletion_info.each do |study_info| %>
+      <tr>
+        <td>
+          <%= study_info[:accession] %>: <%= study_info[:title] %> (<%= study_info[:study_owner] %>)
+        </td>
+      </tr>
+      <% end %>
+    </table>
+  </div>
+<% end %>
 <div class="stats">
   <h3>Disk Usage</h3>
   <table>

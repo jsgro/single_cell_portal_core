@@ -11,6 +11,7 @@ class Study
   include Mongoid::Timestamps
   extend ValidationTools
   include Swagger::Blocks
+  include Mongoid::History::Trackable
 
   ###
   #
@@ -2016,4 +2017,6 @@ class Study
     AnalysisMetadatum.where(study_id: self.id).delete_all
     StudyFileBundle.where(study_id: self.id).delete_all
   end
+
+  track_history except: [:created_at, :updated_at, :cell_count, :gene_count, :initialized, :data_dir], modifier_field: nil
 end

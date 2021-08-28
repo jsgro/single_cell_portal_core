@@ -303,10 +303,13 @@ class SingleCellMailer < ApplicationMailer
     @submissions = SummaryStatsUtils.analysis_submission_count
     @studies_created = SummaryStatsUtils.daily_study_creation_count
 
-    # get number of ingest runs for the day
-    @ingest_runs = SummaryStatsUtils.ingest_run_count
+    @deletion_info = SummaryStatsUtils.deleted_studies_info
+    @creation_info = SummaryStatsUtils.created_studies_info
 
-    # disk usage
+    # get number of ingest runs for the day
+    # @ingest_runs = SummaryStatsUtils.ingest_run_count
+
+    # # disk usage
     @disk_stats = SummaryStatsUtils.disk_usage
 
     # storage sanity check
