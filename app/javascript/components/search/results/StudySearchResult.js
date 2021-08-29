@@ -15,15 +15,26 @@ export function formatDescription(rawDescription, term) {
   return shortenDescription(textDescription, term)
 }
 
+// add highlighted style around matched words keeping original capitalization of text
+function highlightWords(text, term) {
+  const words = text.split(' ')
+  words.forEach(word => {
+    if (term.toUpperCase() === word.toUpperCase()) {
+      text = text.replace(word, `<span class='highlight'>${word}</span>`)
+    }
+  }
+  )
+  return text
+}
+
 export function highlightText(text, termMatches) {
   let matchedIndices = []
   if (termMatches) {
     matchedIndices = termMatches.map(term => text.indexOf(term))
   }
   if (matchedIndices.length > 0) {
-    termMatches.forEach((term, index) => {
-      const regex = RegExp(term, 'gi')
-      text = text.replace(regex, `<span class='highlight'>${term}</span>`)
+    termMatches.forEach(term => {
+      text = highlightWords(text, term)
     })
   }
   return { styledText: text, matchedIndices }
