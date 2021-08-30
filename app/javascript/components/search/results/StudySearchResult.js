@@ -15,7 +15,7 @@ export function formatDescription(rawDescription, term) {
   return shortenDescription(textDescription, term)
 }
 
-// add highlighted style around matched words keeping original capitalization of text
+/** Highlight matched words, keeping original capitalization of text */
 function highlightWords(text, termMatches) {
   let stylizedText = ''
   const words = text.split(' ')
