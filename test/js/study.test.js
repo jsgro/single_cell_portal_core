@@ -6,7 +6,7 @@ describe('highlightText', () => {
   const text = 'Study: Single nucleus RNA-seq of cell diversity in the adult mouse hippocampus (sNuc-Seq)'
   const expectedHighlightedText = 'Study: Single <span class=\'highlight\'>nucleus</span> RNA-seq of cell <span class=\'highlight\'>diversity</span> in the adult mouse hippocampus (sNuc-Seq)'
   const unMatchedTerms = ['tuberculosis', 'population']
-  const matchedTerms = ['nucleus', 'and', 'diversity']
+  const matchedTerms = ['nUcLEus', 'and', 'diVERsity']
 
   it('returns unaltered text when there are no matches', () => {
     const unhighlightedText = highlightText(text, unMatchedTerms).styledText
