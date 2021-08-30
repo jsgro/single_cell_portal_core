@@ -20,16 +20,13 @@ function highlightWords(text, termMatches) {
   let stylizedText = ''
   const words = text.split(' ')
   words.forEach(word => {
-    let alreadyMatched = false
-    termMatches.forEach(term => {
-      if (term.toUpperCase() === word.toUpperCase()) {
-        stylizedText = `${stylizedText} <span class='highlight'>${word}</span>`
-        alreadyMatched = true
-      }
-    })
-    if (!alreadyMatched) {
-      stylizedText = `${stylizedText} ${word}`
+  let stylizedWord = word
+  termMatches.forEach(term => {
+    if (term.toUpperCase() === word.toUpperCase()) {
+      stylizedWord = `<span class='highlight'>${word}</span>`
     }
+  })
+  stylizedText = `${stylizedText} ${stylizedWord}`
   }
   )
   return stylizedText
