@@ -16,15 +16,23 @@ export function formatDescription(rawDescription, term) {
 }
 
 // add highlighted style around matched words keeping original capitalization of text
-function highlightWords(text, term) {
+function highlightWords(text, termMatches) {
+  let stylizedText = ''
   const words = text.split(' ')
   words.forEach(word => {
-    if (term.toUpperCase() === word.toUpperCase()) {
-      text = text.replace(word, `<span class='highlight'>${word}</span>`)
+    let alreadyMatched = false
+    termMatches.forEach(term => {
+      if (term.toUpperCase() === word.toUpperCase()) {
+        stylizedText = `${stylizedText} <span class='highlight'>${word}</span>`
+        alreadyMatched = true
+      }
+    })
+    if (!alreadyMatched) {
+      stylizedText = `${stylizedText} ${word}`
     }
   }
   )
-  return text
+  return stylizedText
 }
 
 export function highlightText(text, termMatches) {
@@ -33,9 +41,7 @@ export function highlightText(text, termMatches) {
     matchedIndices = termMatches.map(term => text.indexOf(term))
   }
   if (matchedIndices.length > 0) {
-    termMatches.forEach(term => {
-      text = highlightWords(text, term)
-    })
+    text = highlightWords(text, termMatches)
   }
   return { styledText: text, matchedIndices }
 }
