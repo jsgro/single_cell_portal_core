@@ -1351,6 +1351,10 @@ class StudyFile
     end
   end
 
+  # we aim to track all fields except fields that are auto-updated.
+  # modifier is set to nil because unfortunately we can't easily track the user who made certain changes
+  # the gem (Mongoid::Userstamp) mongoid-history recommends for doing that (which auto-sets the current_user as the modifier)
+  # does not seem to work with the latest versions of mongoid
   track_history on: [:fields, :embedded_relations],
                 except: [:created_at, :updated_at, :parse_status, :status, :upload_file_size, :upload_file_content, :generation],
                 modifier_field: nil

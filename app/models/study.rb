@@ -2018,5 +2018,9 @@ class Study
     StudyFileBundle.where(study_id: self.id).delete_all
   end
 
+  # we aim to track all fields except fields that are auto-updated.
+  # modifier is set to nil because unfortunately we can't easily track the user who made certain changes
+  # the gem (Mongoid::Userstamp) mongoid-history recommends for doing that (which auto-sets the current_user as the modifier)
+  # does not seem to work with the latest versions of mongoid
   track_history except: [:created_at, :updated_at, :view_count, :cell_count, :gene_count, :initialized, :data_dir], modifier_field: nil
 end

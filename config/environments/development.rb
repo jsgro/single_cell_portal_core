@@ -88,7 +88,7 @@ Rails.application.configure do
   }
   # prevent emails from going to anyone except the developer
   class DeveloperMailInterceptor
-    # send all emails to the user's git email address
+    # send all emails to the developer's git email address
     def self.delivering_email(message)
       email_target = `git config user.email`.strip
       message.subject = "Initially sent to #{message.to}: #{message.subject}"

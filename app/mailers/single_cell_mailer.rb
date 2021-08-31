@@ -322,7 +322,7 @@ class SingleCellMailer < ApplicationMailer
     # get number of ingest runs for the day
     @ingest_runs = SummaryStatsUtils.ingest_run_count
 
-    # # disk usage
+    # disk usage
     @disk_stats = SummaryStatsUtils.disk_usage
 
     # storage sanity check
