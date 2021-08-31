@@ -278,11 +278,11 @@ function enableDefaultActions() {
 
     // reset units dropdown based on is_raw_counts?
     $('body').on('click', '.raw-counts-radio', function() {
-      let exprFields = $(this).closest('.expression-file-info-fields')
-      let isRawCounts = exprFields.find('.is_raw_counts_true')[0].checked
-      let unitSelect = exprFields.find('.counts-unit-dropdown')
-      let unitsSelectDiv = exprFields.find('.raw-counts-units-select')
-      let assnSelectDiv = exprFields.find('.raw_associations_select')
+      const exprFields = $(this).closest('.expression-file-info-fields')
+      const isRawCounts = exprFields.find('.is_raw_counts_true')[0].checked
+      const unitSelect = exprFields.find('.counts-unit-dropdown')
+      const unitsSelectDiv = exprFields.find('.raw-counts-units-select')
+      const assnSelectDiv = exprFields.find('.raw_associations_select')
       if ( !isRawCounts ) {
         unitSelect.val('');
         setElementsEnabled(unitSelect, false);
@@ -629,12 +629,12 @@ function validateCandidateUpload(formId, filename, classSelector) {
         setErrorOnBlank(taxonSelect);
         return false;
     }
-    // enforce units if matrix is raw counts
+    // enforce units if matrix is raw count
     var countsRadio = Array.from(form.find('.raw-counts-radio')).find(radio => radio.checked);
     if ( typeof countsRadio !== 'undefined' && $(countsRadio).val() == '1') {
         var units = form.find('.counts-unit-dropdown');
         if ( $(units).val() == '') {
-            alert('You must specify units for raw counts matrices.');
+            alert('You must specify units for raw count matrices.');
             setErrorOnBlank(units);
             return false;
         }
@@ -729,8 +729,8 @@ function setElementsEnabled(selector, enabled= true) {
 
 // show/hide overlay div & buttons blocking processed matrix file uploads
 function setExpressionOverlay(renderOverlay) {
-  let overlay = $('#block-processed-upload')
-  let content = $('#block-processed-upload-content')
+  const overlay = $('#block-processed-upload')
+  const content = $('#block-processed-upload-content')
   if (renderOverlay) {
     overlay.addClass('overlay-upload')
     content.removeClass('hide-processed-disclaimer').addClass('show-processed-disclaimer')
@@ -745,6 +745,6 @@ function updateRawCountsAssnSelect(parentForm, currentValues) {
   const rawAssnTarget = $(`${parentForm} .raw_associations_select`)[0]
   const pairedHiddenField = $(`${parentForm} .raw_counts_associations`)[0]
   const matrixOpts = window.SCP.currentStudyFiles.filter(sf => sf?.expression_file_info?.is_raw_counts)
-    ?.map(sf => ({ label: sf.upload_file_name, value: sf['_id']['$oid'] }))
+    .map(sf => ({ label: sf.upload_file_name, value: sf['_id']['$oid'] }))
   window.SCP.renderRawAssociationSelect(rawAssnTarget, currentValues, pairedHiddenField, matrixOpts)
 }

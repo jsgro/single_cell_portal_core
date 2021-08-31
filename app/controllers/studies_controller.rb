@@ -841,7 +841,7 @@ class StudiesController < ApplicationController
     @study_file = @study.build_study_file({file_type: @file_type})
     @allow_only = params[:allow_only] || 'all'
     if @file_type =~ /Matrix/
-      @study_file.build_expression_file_info(is_raw_counts: @allow_only == 'raw' ? true : false)
+      @study_file.build_expression_file_info(is_raw_counts: @allow_only == 'raw')
     end
 
     # logic for rolling back status bar in upload wizard; need to account for raw vs. processed matrix files
@@ -1173,7 +1173,7 @@ class StudiesController < ApplicationController
   end
 
   def set_expression_form_state
-    # if feature flag is enabled, ensure there are raw counts matrix files
+    # if feature flag is enabled, ensure there are raw count matrix files
     if @study.study_files.where(file_type: /Matrix/, queued_for_deletion: false,
                                 'expression_file_info.is_raw_counts' => true).empty? &&
       User.feature_flag_for_instance(current_user, 'raw_counts_required_frontend')

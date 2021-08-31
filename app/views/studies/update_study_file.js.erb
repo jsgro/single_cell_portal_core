@@ -10,7 +10,7 @@ var wizForm = $('.<%= params[:partial] %>').slice(-1)[0];
 
 $(wizForm).find('[data-toggle="tooltip"]').tooltip({container: 'body'});
 
-// emit event to trigger updates to all raw counts select inputs if this file was a raw counts matrix
+// emit event to trigger updates to all raw count select inputs if this file was a raw counts matrix
 if (<%= @study_file.is_raw_counts_file? %>) {
   $('.expression-file-info-fields').each(function(index, element) {
     let formId = $(element).closest('form').attr('id')

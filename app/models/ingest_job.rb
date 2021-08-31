@@ -550,7 +550,7 @@ class IngestJob
 
     case file_type
     when /Matrix/
-      # since genes are not ingested for raw counts matrices, report number of cells ingested
+      # since genes are not ingested for raw count matrices, report number of cells ingested
       cells = self.study.expression_matrix_cells(self.study_file)
       cell_count = cells.present? ? cells.count : 0
       job_props.merge!({ numCells: cell_count, is_raw_counts: self.study_file.is_raw_counts_file? })
@@ -612,7 +612,7 @@ class IngestJob
 
     case file_type
     when /Matrix/
-      # since genes are not ingested for raw counts matrices, report number of cells ingested
+      # since genes are not ingested for raw count matrices, report number of cells ingested
       if self.study_file.is_raw_counts_file?
         cells = self.study.expression_matrix_cells(self.study_file).count
         message << "Cells ingested: #{cells}"

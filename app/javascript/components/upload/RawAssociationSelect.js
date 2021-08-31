@@ -32,8 +32,8 @@ export default function RawAssociationSelect({ initialValue, parentForm, hiddenF
 
   // set minWidth to 100% on label to allow select to expand to fill entire column
   return (
-    <label style={{ minWidth: '100%' }}>
-      Corresponding raw count file:
+    <label className="min-width-100">
+      Associated raw count file <i className='text-danger'>*</i>
       <Select options={opts}
               value={selected}
               isMulti={true}

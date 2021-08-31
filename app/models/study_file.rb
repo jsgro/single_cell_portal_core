@@ -259,11 +259,11 @@ class StudyFile
       key :description, 'Expression matrix-specific file information'
       property :is_raw_counts do
         key :type, :boolean
-        key :description, 'Indication of whether matrix contains raw counts data'
+        key :description, 'Indication of whether matrix contains raw count data'
       end
       property :units do
         key :type, :string
-        key :description, 'Type of units for raw counts file'
+        key :description, 'Type of units for raw count file'
         key :enum, ExpressionFileInfo::UNITS_VALUES
       end
       property :biosample_input_type do
@@ -404,11 +404,11 @@ class StudyFile
           key :description, 'Expression matrix-specific file information'
           property :is_raw_counts do
             key :type, :boolean
-            key :description, 'Indication of whether matrix contains raw counts data'
+            key :description, 'Indication of whether matrix contains raw count data'
           end
           property :units do
             key :type, :string
-            key :description, 'Type of units for raw counts file'
+            key :description, 'Type of units for raw count file'
             key :enum, ExpressionFileInfo::UNITS_VALUES
           end
           property :biosample_input_type do
@@ -491,11 +491,11 @@ class StudyFile
           key :description, 'Expression matrix-specific file information'
           property :is_raw_counts do
             key :type, :boolean
-            key :description, 'Indication of whether matrix contains raw counts data'
+            key :description, 'Indication of whether matrix contains raw count data'
           end
           property :units do
             key :type, :string
-            key :description, 'Type of units for raw counts file'
+            key :description, 'Type of units for raw count file'
             key :enum, ExpressionFileInfo::UNITS_VALUES
           end
           property :biosample_input_type do
@@ -861,9 +861,9 @@ class StudyFile
       StudyFile.where(:id.in => study_file_ids, queued_for_deletion: false)
     when :processed
       # lazy-load all other expression matrices in study
-      process_matrices = StudyFile.where(study_id: study.id, file_type: /Matrix/, queued_for_deletion: false,
+      processed_matrices = StudyFile.where(study_id: study.id, file_type: /Matrix/, queued_for_deletion: false,
                                          :id.ne => id, 'expression_file_info.is_raw_counts' => false)
-      process_matrices.select { |matrix| matrix&.expression_file_info&.raw_counts_associations&.include?(id.to_s) }
+      processed_matrices.select { |matrix| matrix&.expression_file_info&.raw_counts_associations&.include?(id.to_s) }
     else
       [] # nil-safe return w/ no association type specified
     end
@@ -948,7 +948,7 @@ class StudyFile
     ['Expression Matrix', 'MM Coordinate Matrix'].include? self.file_type
   end
 
-  # helper to identify if matrix is a raw counts file
+  # helper to identify if matrix is a raw count file
   def is_raw_counts_file?
     self.expression_file_info.present? ? self.expression_file_info.is_raw_counts : false
   end

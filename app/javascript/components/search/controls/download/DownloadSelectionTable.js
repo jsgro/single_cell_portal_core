@@ -145,7 +145,7 @@ const COLUMNS = {
   matrix: {
     title: 'Matrix',
     types: ['Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File'],
-    info: 'Expression matrix files, including processed or raw counts files',
+    info: 'Expression matrix files, including processed or raw count files',
     default: true
   },
   cluster: {
@@ -169,7 +169,7 @@ const COLUMNS = {
   analysis: {
     title: 'Analysis',
     types: ['analysis_file'],
-    info: 'Expression matrix files, including processed or raw counts files',
+    info: 'Expression matrix files, including processed or raw count files',
     default: true
   },
   sequence: {

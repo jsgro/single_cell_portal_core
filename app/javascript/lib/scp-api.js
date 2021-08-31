@@ -62,19 +62,6 @@ function defaultPostInit(mock=false) {
 }
 
 /**
- * Retrieve all study files for a given study
- * Docs: https://singlecell.broadinstitute.org/single_cell/api/v1#/StudyFiles/study_study_files_path
- *
- * @param {String} studyId: BSON ID of study
- * @param {Boolean} mock If using mock data.  Helps development, tests.
- */
-export async function fetchStudyFiles(studyId, mock=false) {
-  const path = `/studies/${studyId}/study_files`
-  const [studyFiles] = await scpApi(path, defaultInit(), mock)
-  return studyFiles
-}
-
-/**
  * Create and return a one-time authorization code for download
  *
  * TODO:
