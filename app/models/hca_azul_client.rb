@@ -1,6 +1,6 @@
 # Query Human Cell Atlas Azul service for metadata associated with both experimental and analysis data
 # No ServiceAccountManager or GoogleServiceClient includes as all requests are unauthenticated for public data
-class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
+class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   include ApiHelpers
 
   GOOGLE_SCOPES = %w[openid email profile].freeze
@@ -11,6 +11,9 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
 
   # List of accepted formats for manifest files
   MANIFEST_FORMATS = %w[compact full terra.bdbag terra.pfb curl].freeze
+
+  # maximum number of results to return
+  MAX_RESULTS = 250
 
   ##
   # Constructors & token management methods
@@ -23,9 +26,9 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   def initialize
     super
     self.api_root = BASE_URL
-    all_catalogs = get_catalogs
-    self.default_catalog = all_catalogs['default_catalog']
-    self.catalogs = all_catalogs['catalogs'].reject { |_, catalog| catalog['internal'] }.keys.sort
+    catalog_list = catalogs
+    self.default_catalog = catalog_list['default_catalog']
+    self.all_catalogs = catalog_list['catalogs'].reject { |_, catalog| catalog['internal'] }.keys.sort
   end
 
   ##
@@ -101,7 +104,7 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   #
   # * *returns*
   #   - (Hash) => Available catalogs, including :default_catalog
-  def get_catalogs
+  def catalogs
     path = "#{api_root}/index/catalogs"
     process_api_request(:get, path)
   end
@@ -109,31 +112,37 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   # get a list of all available projects
   #
   # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from self.catalogs
+  #   - +catalog+ (String) => HCA catalog name, from self.all_catalogs
+  #   - +query+ (Hash) => query object from :format_query_object
+  #   - +terms+ (Array<String>) => Array of terms to use for filtering search results
+  #   - +size+ (Integer) => number of results to return (default is 250)
   #
   # * *returns*
   #   - (Hash) => Available projects
   #
   # * *raises*
-  #   - (ArgumentError) => if catalog is not in self.catalogs or format is not in MANIFEST_FORMATS
-  def get_projects(catalog)
+  #   - (ArgumentError) => if catalog is not in self.all_catalogs or format is not in MANIFEST_FORMATS
+  def projects(catalog: default_catalog, query: {}, terms: [], size: MAX_RESULTS)
     validate_catalog_name(catalog)
-    path = "#{api_root}/index/projects"
-    process_api_request(:get, path)
+    path = "#{api_root}/index/projects?catalog=#{catalog}"
+    path += "&filters=#{format_hash_as_query_string(query)}"
+    path += "&size=#{size}"
+    results = process_api_request(:get, path)['hits'].map { |rows| rows['projects'] }.flatten
+    filter_results_by_terms(results, terms)
   end
 
   # get a list of all available catalogs
   #
   # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from self.catalogs
+  #   - +catalog+ (String) => HCA catalog name, from self.all_catalogs
   #   - +project_id+ (String) => UUID of HCA project
   #
   # * *returns*
   #   - (Hash) => Available catalogs, including :default_catalog
   #
   # * *raises*
-  #   - (ArgumentError) => if catalog is not in self.catalogs
-  def get_project(catalog, project_id)
+  #   - (ArgumentError) => if catalog is not in self.all_catalogs
+  def project(project_id, catalog: default_catalog)
     validate_catalog_name(catalog)
     path = "#{api_root}/index/projects/#{project_id}?catalog=#{catalog}"
     process_api_request(:get, path)
@@ -142,7 +151,7 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   # get a metadata TSV file for a given HCA project UUID
   #
   # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from self.catalogs
+  #   - +catalog+ (String) => HCA catalog name, from self.all_catalogs
   #   - +project_id+ (UUID) => HCA project UUID
   #   - +format+ (string) => manifest file format, from MANIFEST_FORMATS
   #
@@ -150,8 +159,8 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   #   - (Hash) => Hash response including an HTTP status code and a location to download
   #
   # * *raises*
-  #   - (ArgumentError) => if catalog is not in self.catalogs or format is not in MANIFEST_FORMATS
-  def get_project_manifest_link(catalog, project_id, format = 'compact')
+  #   - (ArgumentError) => if catalog is not in self.all_catalogs or format is not in MANIFEST_FORMATS
+  def project_manifest_link(project_id, catalog: default_catalog, format: 'compact')
     validate_catalog_name(catalog)
     validate_manifest_format(format)
 
@@ -175,38 +184,21 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
     manifest_info
   end
 
-  # search for available HCA projects using facets/terms
-  #
-  # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from self.catalogs
-  #   - +facets+ (Array<Hash>) => Array of search facet objects from SearchController#index
-  #
-  # * *returns*
-  #   - (Hash) => List of projects matching query
-  def search_projects(catalog, facets: [])
-    validate_catalog_name(catalog)
-    path = "#{api_root}/index/projects?catalog=#{catalog}"
-    query = format_query_object(facets)
-    query_string = format_hash_as_query_string(query)
-    path += "&filters=#{query_string}"
-    process_api_request(:get, path)
-  end
-
   # search for available files using facets/terms
   #
   # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from self.catalogs
-  #   - +facets+ (Array<Hash>) => Array of search facet objects from SearchController#index
+  #   - +catalog+ (String) => HCA catalog name, from self.all_catalogs
+  #   - +query+ (Hash) => query object from :format_query_object
+  #   - +size+ (Integer) => number of results to return (default is 250)
   #
   # * *returns*
   #   - (Hash) => List of files matching query
-  def search_files(catalog, facets: [])
+  def files(catalog: default_catalog, query: {}, size: MAX_RESULTS)
     validate_catalog_name(catalog)
     path = "#{api_root}/index/files?catalog=#{catalog}"
-    query = format_query_object(facets)
     query_string = format_hash_as_query_string(query)
-    path += "&filters=#{query_string}"
-    process_api_request(:get, path)
+    path += "&filters=#{query_string}&size=#{size}"
+    process_api_request(:get, path)['hits'].map { |rows| rows['files'] }.flatten
   end
 
   # take a list of facets and construct a query object to pass as query string parameters when searching
@@ -216,7 +208,7 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   #
   # * *returns*
   #   - (Hash) => Hash of query object to be fed to :format_hash_as_query_string
-  def format_query_object(facets = [])
+  def format_query_from_facets(facets = [])
     query = {}.with_indifferent_access
     facets.each do |facet|
       safe_facet = facet.with_indifferent_access
@@ -228,11 +220,48 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
     query
   end
 
+  # create a regular expression to use in matching terms against project titles/descriptions or file attributes
+  # returned regular expression is case-insensitive
+  #
+  # * *params*
+  #   - +terms+ (Array<String>) => Array of search terms, can include quoted strings
+  #
+  # * *returns*
+  #   - (Regexp) => regular expression used in matching (case-insensitive)
+  def format_term_regex(terms = [])
+    Regexp.new(terms.map { |t| Regexp.escape(t) }.join('|'), true)
+  end
+
+  # filter search results by term list
+  #
+  # * *params*
+  #   - +results+ (Array<Hash>) => search results from :projects or :files
+  #   - +terms+ (Array<String>) => Array of search terms, can include quoted strings
+  #   - +keys+ (Array<String>) => Names of fields to compare in results hash
+  #
+  # * *returns*
+  #   - (Array<Hash>) => Array of search results, filtered on term matches
+  def filter_results_by_terms(results, terms = [], keys: %w[projectTitle projectDescription])
+    return results if terms.empty?
+
+    term_regex = format_term_regex(terms)
+    matches = []
+    results.each do |result|
+      iterator = keys.any? ? keys : result.keys
+      iterator.each do |key|
+        next unless result[key].is_a?(String) # only compare string fields
+
+        matches << result if result[key] =~ term_regex && !matches.include?(result)
+      end
+    end
+    matches
+  end
+
   private
 
   # validate that a catalog exists by checking the list of available public catalogs
   def validate_catalog_name(catalog)
-    unless catalogs.include?(catalog) || get_catalogs['catalogs'].keys.include?(catalog)
+    unless all_catalogs.include?(catalog) || catalogs['catalogs'].keys.include?(catalog)
       error = ArgumentError.new("#{catalog} is not a valid catalog: #{catalogs.join(',')}")
       api_method = caller_locations.first.label
       ErrorTracker.report_exception(error, nil, { catalog: catalog, method: api_method })

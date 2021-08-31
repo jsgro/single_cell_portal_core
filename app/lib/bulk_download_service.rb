@@ -61,7 +61,7 @@ class BulkDownloadService
         file_infos.map do |file_info|
           if file_info['file_type'] == 'Project Manifest'
             # generate manifest link using HCA project UUID from :url property
-            manifest = hca_client.get_project_manifest_link(default_catalog, file_info['url'])
+            manifest = hca_client.project_manifest_link(file_info['url'])
             file_config = "--location\n" # add location directive to allow following 302 redirect to manifest location
             file_config += "url=\"#{manifest['Location']}\"\n"
           else
