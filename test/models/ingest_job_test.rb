@@ -19,8 +19,10 @@ class IngestJobTest < ActiveSupport::TestCase
                                    name: 'PTEN',
                                    study_file: @basic_study_exp_file,
                                    expression_input: [['A', 0],['B', 3],['C', 1.5]])
-    @basic_study_exp_file.build_expression_file_info(is_raw_counts: false, library_preparation_protocol: 'MARS-seq',
-                                                     modality: 'Transcriptomic: unbiased', biosample_input_type: 'Whole cell')
+    @basic_study_exp_file.build_expression_file_info(is_raw_counts: false,
+                                                     library_preparation_protocol: 'MARS-seq',
+                                                     modality: 'Transcriptomic: unbiased',
+                                                     biosample_input_type: 'Whole cell')
     @basic_study_exp_file.parse_status = 'parsed'
     @basic_study_exp_file.upload_file_size = 1024
     @basic_study_exp_file.save!
@@ -43,31 +45,31 @@ class IngestJobTest < ActiveSupport::TestCase
   test 'should hold ingest until other matrix validates' do
 
     ingest_job = IngestJob.new(study: @basic_study, study_file: @other_matrix, action: :ingest_expression)
-    assert ingest_job.can_launch_ingest?, "Should be able to launch ingest job but can_launch_ingest? returned false"
+    assert ingest_job.can_launch_ingest?, 'Should be able to launch ingest job but can_launch_ingest? returned false'
 
     # simulate parse job is underway, but file has already validated
     @basic_study_exp_file.update_attributes!(parse_status: 'parsing')
     concurrent_job = IngestJob.new(study: @basic_study, study_file: @other_matrix, action: :ingest_expression)
     assert concurrent_job.can_launch_ingest?,
-           "Should be able to launch ingest job of concurrent parse but can_launch_ingest? returned false"
+           'Should be able to launch ingest job of concurrent parse but can_launch_ingest? returned false'
 
     # simulate parse job has not started by removing parsed data
     DataArray.where(study_id: @basic_study.id, study_file_id: @basic_study_exp_file.id).delete_all
     Gene.where(study_id: @basic_study.id, study_file_id: @basic_study_exp_file.id).delete_all
     queued_job = IngestJob.new(study: @basic_study, study_file: @other_matrix, action: :ingest_expression)
     refute queued_job.can_launch_ingest?,
-           "Should not be able to launch ingest job of queued parse but can_launch_ingest? returned true"
+           'Should not be able to launch ingest job of queued parse but can_launch_ingest? returned true'
 
     # show that after 24 hours the job can launch (simulating a failed ingest launch that blocks other parses)
     @basic_study_exp_file.update_attributes!(created_at: 25.hours.ago)
     assert queued_job.can_launch_ingest?,
-           "Should be able to launch ingest job of queued parse after 24 hours but can_launch_ingest? returned false"
+           'Should be able to launch ingest job of queued parse after 24 hours but can_launch_ingest? returned false'
 
     # simulate new matrix is "older" by backdating created_at by 1 week
     @other_matrix.update_attributes!(created_at: 1.week.ago.in_time_zone)
     backdated_job = IngestJob.new(study: @basic_study, study_file: @other_matrix, action: :ingest_expression)
     assert backdated_job.can_launch_ingest?,
-           "Should be able to launch ingest job of backdated parse but can_launch_ingest? returned false"
+           'Should be able to launch ingest job of backdated parse but can_launch_ingest? returned false'
 
     # ensure other matrix types are not gated
     raw_counts_matrix = FactoryBot.create(:study_file,
@@ -76,12 +78,13 @@ class IngestJobTest < ActiveSupport::TestCase
                                           study: @basic_study)
     raw_counts_matrix.build_expression_file_info(is_raw_counts: true, units: 'raw counts',
                                                  library_preparation_protocol: 'MARS-seq',
-                                                 modality: 'Transcriptomic: unbiased', biosample_input_type: 'Whole cell')
+                                                 modality: 'Transcriptomic: unbiased',
+                                                 biosample_input_type: 'Whole cell')
 
     raw_counts_matrix.save!
     raw_counts_ingest = IngestJob.new(study: @basic_study, study_file: raw_counts_matrix, action: :ingest_expression)
     assert raw_counts_ingest.can_launch_ingest?,
-           "Should be able to launch raw counts ingest job but can_launch_ingest? returned false"
+           'Should be able to launch raw counts ingest job but can_launch_ingest? returned false'
 
   end
 
@@ -92,8 +95,8 @@ class IngestJobTest < ActiveSupport::TestCase
     now = DateTime.now.in_time_zone
     mock_metadata = {
       events: [
-        {timestamp: now.to_s},
-        {timestamp: (now + 1.minute).to_s}
+        { timestamp: now.to_s },
+        { timestamp: (now + 1.minute).to_s }
       ]
     }.with_indifferent_access
     mock.expect :metadata, mock_metadata
@@ -126,12 +129,12 @@ class IngestJobTest < ActiveSupport::TestCase
     now = DateTime.now.in_time_zone
     mock_metadata = {
       events: [
-        {timestamp: now.to_s},
-        {timestamp: (now + 2.minutes).to_s}
+        { timestamp: now.to_s },
+        { timestamp: (now + 2.minutes).to_s }
       ]
     }.with_indifferent_access
     mock.expect :metadata, mock_metadata
-    mock.expect :error, {code: 1, message: 'mock message'} # simulate error
+    mock.expect :error, { code: 1, message: 'mock message' } # simulate error
 
     ApplicationController.papi_client.stub :get_pipeline, mock do
       expected_outputs = {
@@ -141,8 +144,9 @@ class IngestJobTest < ActiveSupport::TestCase
         action: :ingest_expression,
         studyAccession: @basic_study.accession,
         jobStatus: 'failed',
-        numGenes: 0,
-        numCells: 0
+        numCells: 0,
+        is_raw_counts: false,
+        numGenes: 0
       }.with_indifferent_access
 
       job_analytics = job.get_job_analytics
