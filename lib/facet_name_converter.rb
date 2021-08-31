@@ -3,7 +3,7 @@
 # conversions programmatically
 class FacetNameConverter
   # controlled list of metadata schema names
-  SCHEMA_NAMES = %i[alexandria tim hca].freeze
+  SCHEMA_NAMES = %i[alexandria tim hca azul].freeze
 
   # map of Alexandria metadata convention names to HCA 'short' names
   ALEXANDRIA_TO_HCA = {
@@ -36,9 +36,26 @@ class FacetNameConverter
     'accession' => 'rdfs:label'
   }.with_indifferent_access.freeze
 
+  # map of alexandria names to HCA Azul facet names (for searching projects/files via the Azul API)
+  ALEXANDRIA_TO_AZUL = {
+    'biosample_id' => 'sampleId',
+    'cell_type' => 'selectedCellType',
+    'disease' => 'sampleDisease',
+    'library_construction_protocol' => 'libraryConstructionApproach',
+    'organ' => 'organ',
+    'organism_age' => 'organismAge',
+    'preservation_method' => 'preservationMethod',
+    'sex' => 'biologicalSex',
+    'species' => 'genusSpecies',
+    'study_accession' => 'projectId',
+    'study_description' => 'projectDescription',
+    'study_name' => 'projectTitle'
+  }.with_indifferent_access.freeze
+
   # inverted mappings of TIM/HCA to Alexandria
   TIM_TO_ALEXANDRIA = ALEXANDRIA_TO_TIM.invert.freeze
   HCA_TO_ALEXANDRIA = ALEXANDRIA_TO_HCA.invert.freeze
+  AZUL_TO_ALEXANDRIA = ALEXANDRIA_TO_AZUL.invert.freeze
 
   # convert a metadata schema column name from one schema to another
   # e.g. FacetNameConverter.convert_schema_column(:alexandria, :tim, 'species') => 'TerraCore:hasOrganismType'

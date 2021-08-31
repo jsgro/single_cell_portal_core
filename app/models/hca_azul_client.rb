@@ -109,13 +109,13 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   # get a list of all available projects
   #
   # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from HCA_CATALOGS
+  #   - +catalog+ (String) => HCA catalog name, from self.catalogs
   #
   # * *returns*
   #   - (Hash) => Available projects
   #
   # * *raises*
-  #   - (ArgumentError) => if catalog is not in HCA_CATALOGS or format is not in MANIFEST_FORMATS
+  #   - (ArgumentError) => if catalog is not in self.catalogs or format is not in MANIFEST_FORMATS
   def get_projects(catalog)
     validate_catalog_name(catalog)
     path = "#{api_root}/index/projects"
@@ -125,14 +125,14 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   # get a list of all available catalogs
   #
   # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from HCA_CATALOGS
+  #   - +catalog+ (String) => HCA catalog name, from self.catalogs
   #   - +project_id+ (String) => UUID of HCA project
   #
   # * *returns*
   #   - (Hash) => Available catalogs, including :default_catalog
   #
   # * *raises*
-  #   - (ArgumentError) => if catalog is not in HCA_CATALOGS
+  #   - (ArgumentError) => if catalog is not in self.catalogs
   def get_project(catalog, project_id)
     validate_catalog_name(catalog)
     path = "#{api_root}/index/projects/#{project_id}?catalog=#{catalog}"
@@ -142,7 +142,7 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   # get a metadata TSV file for a given HCA project UUID
   #
   # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from HCA_CATALOGS
+  #   - +catalog+ (String) => HCA catalog name, from self.catalogs
   #   - +project_id+ (UUID) => HCA project UUID
   #   - +format+ (string) => manifest file format, from MANIFEST_FORMATS
   #
@@ -150,7 +150,7 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   #   - (Hash) => Hash response including an HTTP status code and a location to download
   #
   # * *raises*
-  #   - (ArgumentError) => if catalog is not in HCA_CATALOGS or format is not in MANIFEST_FORMATS
+  #   - (ArgumentError) => if catalog is not in self.catalogs or format is not in MANIFEST_FORMATS
   def get_project_manifest_link(catalog, project_id, format = 'compact')
     validate_catalog_name(catalog)
     validate_manifest_format(format)
@@ -173,6 +173,64 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
       manifest_info = process_api_request(:get, path)
     end
     manifest_info
+  end
+
+  # search for available HCA projects using facets/terms
+  #
+  # * *params*
+  #   - +catalog+ (String) => HCA catalog name, from self.catalogs
+  #   - +query+ (Hash) => query object from :format_query_object
+  #
+  # * *returns*
+  #   - (Hash) => List of projects matching query
+  def search_projects(catalog, query)
+    validate_catalog_name(catalog)
+    path = "#{api_root}/index/projects?catalog=#{catalog}"
+    query_string = format_hash_as_query_string(query)
+    path += "&filters=#{query_string}"
+    process_api_request(:get, path)
+  end
+
+  # search for available files using facets/terms
+  #
+  # * *params*
+  #   - +catalog+ (String) => HCA catalog name, from self.catalogs
+  #   - +query+ (Hash) => query object from :format_query_object
+  #
+  # * *returns*
+  #   - (Hash) => List of files matching query
+  def search_files(catalog, query)
+    validate_catalog_name(catalog)
+    path = "#{api_root}/index/files?catalog=#{catalog}"
+    query_string = format_hash_as_query_string(query)
+    path += "&filters=#{query_string}"
+    process_api_request(:get, path)
+  end
+
+  # take a list of facets & terms and construct a query object to pass as query string parameters when searching
+  #
+  # * *params*
+  #   - +facets+ (Array<Hash>) => Array of search facet objects from SearchController#index
+  #   - +terms+ (Array<String>) => Array of search terms, including quoted multi-token strings
+  #
+  # * *returns*
+  #   - (Hash) => Hash of query object to be fed to :format_hash_as_query_string
+  def format_query_object(facets: [], terms: [])
+    query = {}.with_indifferent_access
+    facets.each do |facet|
+      safe_facet = facet.with_indifferent_access
+      hca_term = FacetNameConverter.convert_schema_column(:alexandria, :azul, safe_facet[:id])
+      filter_values = safe_facet[:filters].map { |filter| filter[:name] }
+      facet_query = { hca_term => { is: filter_values } }
+      query.merge! facet_query
+    end
+    terms.each do |term|
+      query[:projectTitle] ||= { contains: [] }
+      query[:projectDescription] ||= { contains: [] }
+      query[:projectTitle][:contains] << term
+      query[:projectDescription][:contains] << term
+    end
+    query
   end
 
   private
