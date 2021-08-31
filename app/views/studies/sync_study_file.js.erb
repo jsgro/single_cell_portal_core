@@ -24,6 +24,6 @@ $("#initialized").replaceWith("<%= escape_javascript(render partial: 'initialize
 $('.initialize-label').tooltip({container: 'body'});
 
 $('.expression-file-info-fields').each(function(index, element) {
-  let formId = $(element).closest('form').attr('id')
+  const formId = $(element).closest('form').attr('id')
   $(`#${formId}`).trigger('updateRawCountsSelect')
 })
