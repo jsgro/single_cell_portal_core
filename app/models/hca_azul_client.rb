@@ -179,13 +179,14 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   #
   # * *params*
   #   - +catalog+ (String) => HCA catalog name, from self.catalogs
-  #   - +query+ (Hash) => query object from :format_query_object
+  #   - +facets+ (Array<Hash>) => Array of search facet objects from SearchController#index
   #
   # * *returns*
   #   - (Hash) => List of projects matching query
-  def search_projects(catalog, query)
+  def search_projects(catalog, facets: [])
     validate_catalog_name(catalog)
     path = "#{api_root}/index/projects?catalog=#{catalog}"
+    query = format_query_object(facets)
     query_string = format_hash_as_query_string(query)
     path += "&filters=#{query_string}"
     process_api_request(:get, path)
@@ -195,27 +196,27 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
   #
   # * *params*
   #   - +catalog+ (String) => HCA catalog name, from self.catalogs
-  #   - +query+ (Hash) => query object from :format_query_object
+  #   - +facets+ (Array<Hash>) => Array of search facet objects from SearchController#index
   #
   # * *returns*
   #   - (Hash) => List of files matching query
-  def search_files(catalog, query)
+  def search_files(catalog, facets: [])
     validate_catalog_name(catalog)
     path = "#{api_root}/index/files?catalog=#{catalog}"
+    query = format_query_object(facets)
     query_string = format_hash_as_query_string(query)
     path += "&filters=#{query_string}"
     process_api_request(:get, path)
   end
 
-  # take a list of facets & terms and construct a query object to pass as query string parameters when searching
+  # take a list of facets and construct a query object to pass as query string parameters when searching
   #
   # * *params*
   #   - +facets+ (Array<Hash>) => Array of search facet objects from SearchController#index
-  #   - +terms+ (Array<String>) => Array of search terms, including quoted multi-token strings
   #
   # * *returns*
   #   - (Hash) => Hash of query object to be fed to :format_hash_as_query_string
-  def format_query_object(facets: [], terms: [])
+  def format_query_object(facets = [])
     query = {}.with_indifferent_access
     facets.each do |facet|
       safe_facet = facet.with_indifferent_access
@@ -223,12 +224,6 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :catalogs)
       filter_values = safe_facet[:filters].map { |filter| filter[:name] }
       facet_query = { hca_term => { is: filter_values } }
       query.merge! facet_query
-    end
-    terms.each do |term|
-      query[:projectTitle] ||= { contains: [] }
-      query[:projectDescription] ||= { contains: [] }
-      query[:projectTitle][:contains] << term
-      query[:projectDescription][:contains] << term
     end
     query
   end
