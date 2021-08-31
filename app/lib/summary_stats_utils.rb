@@ -61,6 +61,10 @@ class SummaryStatsUtils
   # since the "filter" parameter for list_project_operations doesn't work, check dates manually.
   # defaults to current day
   def self.ingest_run_count(start_date: Time.zone.today, end_date: Time.zone.today + 1.day)
+    # avoid hanging in development mode
+    if Rails.env.development?
+      return 0
+    end
     # make sure we only look at instances of runs for this schema (e.g. exclude test from staging/prod)
     schema = Mongoid::Config.clients["default"]["database"]
     ingest_jobs = 0
@@ -89,6 +93,8 @@ class SummaryStatsUtils
     ingest_jobs
   end
 
+  # returns an array of hashes, each with title, accession, study_owner,
+  # one entry in the array for each study that has been deleted during the time frame
   def self.deleted_studies_info(start_date: Time.zone.today, end_date: Time.zone.today + 1.day)
     deletions = HistoryTracker.trackers_by_date(Study, action: 'destroy', start_time: start_date, end_time: end_date)
     deletion_info = deletions.map do |tracker|
@@ -101,6 +107,8 @@ class SummaryStatsUtils
     deletion_info
   end
 
+  # returns an array of hashes, each with title, accession, study_owner, and other_studies.
+  # one entry in the array for each study that has been created during the time frame
   def self.created_studies_info(start_date: Time.zone.today, end_date: Time.zone.today + 1.day)
     creations = HistoryTracker.trackers_by_date(Study, action: 'create', start_time: start_date, end_time: end_date)
     creation_info = creations.map do |tracker|
@@ -121,6 +129,60 @@ class SummaryStatsUtils
       info
     end
     creation_info
+  end
+
+  # returns an array of hashes, each with title, accession, owner, and updates
+  # one entry in the array for each study that has been updated during the time frame
+  # the 'updates' attribute is a hash of properties to counts of times that property was updated
+  # Updates to study files are tracked as a 'file updates' property in that hash
+  # by default, this excludes reporting on studies that have been created/deleted within the time period
+  def self.updated_studies_info(start_date: Time.zone.today, end_date: Time.zone.today + 1.day, exclude_create_delete: true)
+    updates = HistoryTracker.trackers_by_date(Study, action: 'update', start_time: start_date, end_time: end_date).to_a
+    excluded_ids = []
+    # we typically exclude created and deleted studies from this report, since those are handled separately
+    # however allowing their inclusion can help for testing
+    if exclude_create_delete
+      creates_and_deletes = HistoryTracker.where(scope: 'study', :created_at.gt => start_date, :created_at.lt => end_date, :action.in => ['create', 'delete'])
+      excluded_ids = creates_and_deletes.map{ |tracker| tracker.association_chain.first['id'] }
+    end
+
+    # for each study id, assemble a hash of property names to # of times they've been modified
+    updates_by_id = {}
+    updates.each do |update|
+      study_id = update.association_chain.first['id'].to_s
+      if excluded_ids.to_s.exclude?(study_id)
+        updates_by_id[study_id] ||= {}
+        update['modified'].keys.each {|key| updates_by_id[study_id][key] = updates_by_id[study_id][key].to_i + 1 }
+      end
+    end
+
+    # now update the hash with the number of times a study file has been updated
+    file_updates = HistoryTracker.trackers_by_date(StudyFile, start_time: start_date, end_time: end_date).to_a
+    file_updates.each do |update|
+      study_file_id = update.association_chain.first['id'].to_s
+      study_file = StudyFile.find_by(id: study_file_id)
+      study_id = nil
+      if study_file.present?
+        study_id = study_file.study_id.to_s
+      elsif update['action'] == 'destroy'
+        study_id = update['original']['study_id'].to_s
+      end
+      if study_id.present? && excluded_ids.to_s.exclude?(study_id)
+        updates_by_id[study_id] ||= {}
+        updates_by_id[study_id]['file updates'] = updates_by_id[study_id]['file updates'].to_i + 1
+      end
+    end
+
+    update_info = updates_by_id.map do |id, value|
+      study = Study.find(id)
+      {
+        title: study.name,
+        study_owner: study.user.email,
+        accession: study.accession,
+        updates: value
+      }
+    end
+    update_info
   end
 
 end

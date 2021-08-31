@@ -2018,5 +2018,5 @@ class Study
     StudyFileBundle.where(study_id: self.id).delete_all
   end
 
-  track_history except: [:created_at, :updated_at, :cell_count, :gene_count, :initialized, :data_dir], modifier_field: nil
+  track_history except: [:created_at, :updated_at, :view_count, :cell_count, :gene_count, :initialized, :data_dir], modifier_field: nil
 end

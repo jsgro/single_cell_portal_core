@@ -1352,6 +1352,6 @@ class StudyFile
   end
 
   track_history on: [:fields, :embedded_relations],
-                except: [:created_at, :updated_at, :parse_status, :status, :queued_for_deletion, :upload_file_size, :upload_file_content, :generation],
+                except: [:created_at, :updated_at, :parse_status, :status, :upload_file_size, :upload_file_content, :generation],
                 modifier_field: nil
 end

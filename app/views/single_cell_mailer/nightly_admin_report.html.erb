@@ -1,4 +1,27 @@
 <h1>Nightly Server Report for <%= @today %></h1>
+<% if @missing_files.any? %>
+  <h3>Storage Integrity</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Study</th>
+        <th>Owner</th>
+        <th>Filename</th>
+        <th>Issue</th>
+      </tr>
+    </thead>
+    <tbody>
+    <% @missing_files.each do |missing_file| %>
+      <tr>
+        <td><%= truncate(missing_file[:study], length: 30) %></td>
+        <td><%= missing_file[:owner] %></td>
+        <td><%= missing_file[:filename] %></td>
+        <td><%= missing_file[:reason] %></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+<% end %>
 <div class="stats">
   <h3>Portal Stats</h3>
   <table>
@@ -30,29 +53,10 @@
     </tbody>
   </table>
 </div>
-<% if @creation_info.count > 0 %>
-  <div class="stats">
-    <h3> Studies created - detail </h3>
-    <table>
-      <% @creation_info.each do |study_info| %>
-      <tr>
-        <td>
-          <a href="https://singlecell.broadinstitute.org/single_cell/study/<%= study_info[:accession] %>"><%= study_info[:accession] %></a> <%= study_info[:title] %><br/>
-          <b>files: </b> <%= study_info[:file_types].to_s %> <br/>
-          <b>owner:</b> <%= study_info[:study_owner] %> <br/>
-          <b>other studies by owner:</b>
-            <% study_info[:other_studies].each do |other_study| %>
-              <a href="https://singlecell.broadinstitute.org/single_cell/study/<%= other_study[0] %>"><%= other_study[0] %></a> (<%= other_study[1].to_date.to_s %>) &nbsp;
-            <% end %>
-        </td>
-      </tr>
-      <% end %>
-    </table>
-  </div>
-<% end %>
-<% if @deletion_info.count > 0 %>
-  <div class="stats">
-    <h3> Studies deleted </h3>
+
+<div class="stats">
+  <h3> Deleted studies </h3>
+  <% if @deletion_info.count > 0 %>
     <table>
       <% @deletion_info.each do |study_info| %>
       <tr>
@@ -62,8 +66,61 @@
       </tr>
       <% end %>
     </table>
-  </div>
-<% end %>
+  <% else %>
+    <table><tr><td><span class="detail">none</span></td></tr></table>
+  <% end %>
+</div>
+
+<div class="stats">
+  <h3> Created studies - detail </h3>
+  <% if @creation_info.count > 0 %>
+    <table>
+      <% @creation_info.each do |study_info| %>
+      <tr>
+        <td>
+          <b><a href="<%= "#{RequestUtils.get_base_url}#{Rails.application.routes.url_helpers.legacy_study_path(study_info[:accession])}" %>"><%= study_info[:accession] %></a></b> <%= study_info[:title] %><br/>
+          <div class="indent-block">
+            <b>files: </b> <%= study_info[:file_types].map{|k,v| "#{k}: #{v}"}.join(', ') %> <br/>
+            <b>owner:</b> <%= study_info[:study_owner] %> <br/>
+            <b>also by this owner: </b>
+            <% if study_info[:other_studies].count > 0 %>
+              <% study_info[:other_studies].each do |other_study| %>
+                <a href="<%= "#{RequestUtils.get_base_url}#{Rails.application.routes.url_helpers.legacy_study_path(other_study[0])}" %>"><%= other_study[0] %></a> <span class="detail">(<%= other_study[1].to_date.to_s %>)</span>&nbsp;
+              <% end %>
+            <% else %>
+              <i>none</i>
+            <% end %>
+          </div>
+        </td>
+      </tr>
+      <% end %>
+    </table>
+  <% else %>
+    <table><tr><td><span class="detail">none</span></td></tr></table>
+  <% end %>
+</div>
+
+<div class="stats">
+  <h3> Updated studies </h3>
+  <% if @updated_info.count > 0 %>
+  <table>
+    <% @updated_info.each do |study_info| %>
+      <tr>
+        <td>
+          <b><a href="<%= "#{RequestUtils.get_base_url}#{Rails.application.routes.url_helpers.legacy_study_path(study_info[:accession])}" %>"><%= study_info[:accession] %></a></b> <%= study_info[:title] %><br/>
+          <div class="indent-block">
+            <b>owner:</b> <%= study_info[:study_owner] %> <br/>
+            <b>updates: </b> <%= study_info[:updates].map{|k,v| "#{k}: #{v}"}.join(', ') %>
+          </div>
+        </td>
+      </tr>
+    <% end %>
+  </table>
+  <% else %>
+    <table><tr><td><span class="detail">none</span></td></tr></table>
+  <% end %>
+</div>
+
 <div class="stats">
   <h3>Disk Usage</h3>
   <table>
@@ -92,28 +149,8 @@
   </table>
 </div>
 <div class="clear"></div>
-<h3>Storage Integrity</h3>
-<% if @missing_files.any? %>
-  <table>
-    <thead>
-      <tr>
-        <th>Study</th>
-        <th>Owner</th>
-        <th>Filename</th>
-        <th>Issue</th>
-      </tr>
-    </thead>
-    <tbody>
-    <% @missing_files.each do |missing_file| %>
-      <tr>
-        <td><%= truncate(missing_file[:study], length: 30) %></td>
-        <td><%= missing_file[:owner] %></td>
-        <td><%= missing_file[:filename] %></td>
-        <td><%= missing_file[:reason] %></td>
-      </tr>
-    <% end %>
-    </tbody>
-  </table>
-<% else %>
-  <p>All files accounted for!</p>
+
+<% if @missing_files.empty? %>
+  <h3>Storage Integrity</h3>
+  <span class="detail">All files accounted for</span>
 <% end %>

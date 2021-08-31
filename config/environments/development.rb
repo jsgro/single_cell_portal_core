@@ -75,7 +75,7 @@ Rails.application.configure do
 
   config.action_mailer.default_url_options = { :host => 'localhost', protocol: 'https' }
   config.action_mailer.delivery_method = :smtp
-  config.action_mailer.perform_deliveries = false
+  config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.smtp_settings = {
     address:              'smtp.sendgrid.net',
@@ -86,6 +86,22 @@ Rails.application.configure do
     authentication:       'plain',
     enable_starttls_auto: true
   }
+  # prevent emails from going to anyone except the developer
+  class DeveloperMailInterceptor
+    # send all emails to the user's git email address
+    def self.delivering_email(message)
+      email_target = `git config user.email`.strip
+      message.subject = "Initially sent to #{message.to}: #{message.subject}"
+      # if we have a valid developer email, use it
+      if email_target.present? && email_target.include?('@')
+        message.to = email_target
+      else
+        # otherwise, don't send at all
+        message.perform_deliveries = false
+      end
+    end
+  end
+  ActionMailer::Base.register_interceptor(DeveloperMailInterceptor)
 
   # CUSTOM CONFIGURATION
 
