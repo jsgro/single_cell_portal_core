@@ -101,7 +101,7 @@ class SummaryStatsUtils
       {
         title: tracker.original['name'],
         accession: tracker.original['accession'],
-        study_owner: User.find(tracker.original['user_id']).email
+        study_owner: User.find_by(id: tracker.original['user_id']).try(:email)
       }
     end
     deletion_info
@@ -114,7 +114,10 @@ class SummaryStatsUtils
     creation_info = creations.map do |tracker|
       user = User.find(tracker.modified['user_id'])
       study = Study.find(tracker.association_chain.first['id'])
-      other_studies = Study.where(user_id: user.id).pluck(:accession, :created_at)
+      other_studies = []
+      if user.present?
+        other_studies = Study.where(user_id: user.id).pluck(:accession, :created_at)
+      end
       info = {
         title: tracker.modified['name'],
         accession: tracker.modified['accession'],
@@ -175,13 +178,17 @@ class SummaryStatsUtils
 
     update_info = updates_by_id.map do |id, value|
       study = Study.find(id)
-      {
-        title: study.name,
-        study_owner: study.user.email,
-        accession: study.accession,
-        updates: value
-      }
-    end
+      if study.present?
+        {
+          title: study.name,
+          study_owner: study.user.email,
+          accession: study.accession,
+          updates: value
+        }
+      else
+        nil
+      end
+    end.compact
     update_info
   end
 
