@@ -111,6 +111,7 @@ class IngestJobTest < ActiveSupport::TestCase
         studyAccession: @basic_study.accession,
         jobStatus: 'success',
         numGenes: @basic_study.genes.count,
+        is_raw_counts: false,
         numCells: num_cells
       }.with_indifferent_access
 
