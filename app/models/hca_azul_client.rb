@@ -121,7 +121,7 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   #   - (Hash) => Available projects
   #
   # * *raises*
-  #   - (ArgumentError) => if catalog is not in self.all_catalogs or format is not in MANIFEST_FORMATS
+  #   - (ArgumentError) => if catalog is not in self.all_catalogs
   def projects(catalog: default_catalog, query: {}, terms: [], size: MAX_RESULTS)
     validate_catalog_name(catalog)
     path = "#{api_root}/index/projects?catalog=#{catalog}"
