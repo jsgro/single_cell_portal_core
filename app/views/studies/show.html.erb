@@ -5,7 +5,7 @@
 <p class="lead">Accession: <span id="study-accession"><%= @study.accession %></span></p>
 </p>
 <% if @study.embargo_active? %>
-  <p class="lead text-danger">Embargoed expires on: <%= @study.embargo.to_s(:long) %></p>
+  <p class="lead text-danger">Embargo expires on: <%= @study.embargo.to_s(:long) %></p>
 <% end %>
 
 <%= @study.description.html_safe %>
