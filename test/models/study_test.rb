@@ -118,4 +118,22 @@ class StudyTest < ActiveSupport::TestCase
     refute share.email == share_user.email
     assert study.can_view?(share_user)
   end
+
+  # ensure that user-specified data embargoes expire on the date given
+  test 'should lift embargo on date specified' do
+    study = FactoryBot.create(:detached_study, name_prefix: 'Embargo Test', test_array: @@studies_to_clean)
+    user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    assert_not study.embargo_active?
+    assert_not study.embargoed?(user)
+    today = Time.zone.today
+    study.update(embargo: today + 1.week)
+    assert study.embargo_active?
+    assert study.embargoed?(user)
+    # ensure users with direct access are still not embargoed
+    assert_not study.embargoed?(study.user)
+    # ensure embargo lifts on specified date
+    study.update(embargo: today)
+    assert_not study.embargo_active?
+    assert_not study.embargoed?(user)
+  end
 end
