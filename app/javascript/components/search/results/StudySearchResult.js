@@ -20,13 +20,13 @@ function highlightWords(text, termMatches) {
   let stylizedText = ''
   const words = text.split(' ')
   words.forEach(word => {
-  let stylizedWord = word
-  termMatches.forEach(term => {
-    if (term.toUpperCase() === word.toUpperCase()) {
-      stylizedWord = `<span class='highlight'>${word}</span>`
-    }
-  })
-  stylizedText = `${stylizedText} ${stylizedWord}`
+    let stylizedWord = word
+    termMatches.forEach(term => {
+      if (term.toUpperCase() === word.toUpperCase()) {
+        stylizedWord = `<span class='highlight'>${word}</span>`
+      }
+    })
+    stylizedText = !!stylizedText ? `${stylizedText} ${stylizedWord}` : `${stylizedWord}`
   }
   )
   return stylizedText
@@ -95,7 +95,7 @@ export function shortenDescription(textDescription, term) {
     </>
   }
   const displayedStudyDescription = { __html: styledText.slice(0, descriptionCharacterLimit) }
-  if (textDescription.length > descriptionCharacterLimit) {
+  if (styledText.length > descriptionCharacterLimit) {
     return <>
       <span className="studyDescription" dangerouslySetInnerHTML={displayedStudyDescription}></span>{suffixTag}
     </>
