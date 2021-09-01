@@ -90,7 +90,12 @@ Rails.application.configure do
   class DeveloperMailInterceptor
     # send all emails to the developer's git email address
     def self.delivering_email(message)
-      email_target = `git config user.email`.strip
+      email_target = nil
+      begin
+        `git config user.email`.strip
+      rescue
+        puts "Could not read your git email address. Emails will be disabled."
+      end
       message.subject = "Initially sent to #{message.to}: #{message.subject}"
       # if we have a valid developer email, use it
       if email_target.present? && email_target.include?('@')

@@ -61,10 +61,6 @@ class SummaryStatsUtils
   # since the "filter" parameter for list_project_operations doesn't work, check dates manually.
   # defaults to current day
   def self.ingest_run_count(start_date: Time.zone.today, end_date: Time.zone.today + 1.day)
-    # avoid hanging in development mode
-    if Rails.env.development?
-      return 0
-    end
     # make sure we only look at instances of runs for this schema (e.g. exclude test from staging/prod)
     schema = Mongoid::Config.clients["default"]["database"]
     ingest_jobs = 0
@@ -160,21 +156,7 @@ class SummaryStatsUtils
     end
 
     # now update the hash with the number of times a study file has been updated
-    file_updates = HistoryTracker.trackers_by_date(StudyFile, start_time: start_date, end_time: end_date).to_a
-    file_updates.each do |update|
-      study_file_id = update.association_chain.first['id'].to_s
-      study_file = StudyFile.find_by(id: study_file_id)
-      study_id = nil
-      if study_file.present?
-        study_id = study_file.study_id.to_s
-      elsif update['action'] == 'destroy'
-        study_id = update['original']['study_id'].to_s
-      end
-      if study_id.present? && excluded_ids.to_s.exclude?(study_id)
-        updates_by_id[study_id] ||= {}
-        updates_by_id[study_id]['file updates'] = updates_by_id[study_id]['file updates'].to_i + 1
-      end
-    end
+    study_file_updates(excluded_ids, updates_by_id, start_date: start_date, end_date: end_date)
 
     update_info = updates_by_id.map do |id, value|
       study = Study.find(id)
@@ -192,4 +174,25 @@ class SummaryStatsUtils
     update_info
   end
 
+  # returns a hash of study ids to the number of file updates performed
+  # this number is stored in a "file updates" property on the hash, so it can be merged with other
+  # update properties collected and passed in via the updates_by_id argument
+  def self.study_file_updates(excluded_study_ids, updates_by_id={}, start_date: Time.zone.today, end_date: Time.zone.today + 1.day)
+    file_updates = HistoryTracker.trackers_by_date(StudyFile, start_time: start_date, end_time: end_date).to_a
+    file_updates.each do |update|
+      study_file_id = update.association_chain.first['id'].to_s
+      study_file = StudyFile.find_by(id: study_file_id)
+      study_id = nil
+      if study_file.present?
+        study_id = study_file.study_id.to_s
+      elsif update['action'] == 'destroy'
+        study_id = update['original']['study_id'].to_s
+      end
+      if study_id.present? && excluded_study_ids.to_s.exclude?(study_id)
+        updates_by_id[study_id] ||= {}
+        updates_by_id[study_id]['file updates'] = updates_by_id[study_id]['file updates'].to_i + 1
+      end
+    end
+    updates_by_id
+  end
 end
