@@ -48,7 +48,7 @@ note that Release data is not corrected for batch-effects, but is stratified by 
  and showcases HCA single-cell data that wereprocessed with standardized DCP pipelines, further analyzed by\
  Cumulus (LINK), and annotated using published annotations. In this study, you can explore the biological and\
  technical attributes of the analyzed HCA DCP data. Additionally, you can view all HCA Release study pages and\
- search genes across all projects by visiting the'
+ search genes across all projects by visiting t'
     const keywordTerms = ['study']
     const wrapper = mount(shortenDescription(text, keywordTerms))
     // Find span tag with openingText
