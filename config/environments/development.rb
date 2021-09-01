@@ -92,7 +92,7 @@ Rails.application.configure do
     def self.delivering_email(message)
       email_target = nil
       begin
-        `git config user.email`.strip
+        email_target = `git config user.email`.strip
       rescue
         puts "Could not read your git email address. Emails will be disabled."
       end
