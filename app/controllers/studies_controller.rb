@@ -95,7 +95,7 @@ class StudiesController < ApplicationController
     # load any existing files if user restarted for some reason (unlikely)
     initialize_wizard_files
     # check if study has been properly initialized yet, set to true if not
-    if !@cluster_ordinations.last.new_record? && !@expression_files.last.new_record? && !@metadata_file.new_record? && !@study.initialized?
+    if !@cluster_ordinations.last.new_record? && !@all_expression.last.new_record? && !@metadata_file.new_record? && !@study.initialized?
       @study.update_attributes(initialized: true)
     end
   end
@@ -463,6 +463,7 @@ class StudiesController < ApplicationController
       raw_counts_val = params[:is_raw_counts] == 'true'
       @study_file.expression_file_info.is_raw_counts = raw_counts_val
     end
+    @allow_only = params[:allow_only] ? params[:allow_only] : 'all'
   end
 
   # method to perform chunked uploading of data
@@ -579,6 +580,8 @@ class StudiesController < ApplicationController
         end
       end
     end
+    # determine state for processed matrix overlay
+    set_expression_form_state
   end
 
   # begin uploading a bundled study_file while parent is still uploading
@@ -606,6 +609,7 @@ class StudiesController < ApplicationController
   def parse
     @study_file = StudyFile.where(study_id: params[:id], upload_file_name: params[:file]).first
     @status = FileParseService.run_parse_job(@study_file, @study, current_user)
+    @allow_only = params[:allow_only] || 'all'
     # special handling for coordinate labels
     if @study_file.file_type == 'Coordinate Labels' && @status[:status_code] == 412
       # delete file and inform user of issue as this error is not recoverable
@@ -763,7 +767,7 @@ class StudiesController < ApplicationController
   def delete_study_file
     @study_file = StudyFile.find(params[:study_file_id])
     @message = ""
-    unless @study_file.nil?
+    if @study_file.present?
       if !@study_file.can_delete_safely?
         render action: 'abort_delete_study_file'
       else
@@ -828,14 +832,26 @@ class StudiesController < ApplicationController
       end
     end
 
+    # determine state for processed matrix overlay
+    set_expression_form_state
+
     is_required = ['Cluster', 'Expression Matrix', 'Metadata'].include?(@file_type)
     @color = is_required ? 'danger' : 'info'
     @status = is_required ? 'Required' : 'Optional'
     @study_file = @study.build_study_file({file_type: @file_type})
-    @study_file.build_expression_file_info
+    @allow_only = params[:allow_only] || 'all'
+    if @file_type =~ /Matrix/
+      @study_file.build_expression_file_info(is_raw_counts: @allow_only == 'raw')
+    end
 
-    unless @file_type.nil?
-      @reset_status = @study.study_files.valid.select {|sf| sf.file_type == @file_type && !sf.new_record?}.count == 0
+    # logic for rolling back status bar in upload wizard; need to account for raw vs. processed matrix files
+    if @file_type.present? && @file_type =~ /Matrix/
+      is_raw_counts = @study_file.is_raw_counts_file?
+      @reset_status = @study.study_files.valid.select do |sf|
+        sf.file_type =~ /Matrix/ && !sf.new_record? && (is_raw_counts ? sf.is_raw_counts_file? : !sf.is_raw_counts_file?)
+      end.count == 0
+    elsif @file_type.present?
+      @reset_status = @study.study_files.valid.select { |sf| sf.file_type == @file_type && !sf.new_record? }.count == 0
     else
       @reset_status = false
     end
@@ -1091,7 +1107,8 @@ class StudiesController < ApplicationController
                                                  :matrix_id, :submission_id, :bam_id, :analysis_name, :visualization_name,
                                                  :cluster_name, :annotation_name],
                                        expression_file_info_attributes: [:id, :library_preparation_protocol, :units,
-                                                                         :biosample_input_type, :modality, :is_raw_counts])
+                                                                         :biosample_input_type, :modality, :is_raw_counts,
+                                                                         raw_counts_associations: []])
   end
 
   def directory_listing_params
@@ -1114,7 +1131,11 @@ class StudiesController < ApplicationController
 
   # set up variables for wizard
   def initialize_wizard_files
-    @expression_files = @study.study_files.by_type(['Expression Matrix', 'MM Coordinate Matrix'])
+    @all_expression = @study.study_files.by_type(['Expression Matrix', 'MM Coordinate Matrix'])
+    # divide all expression files into raw/processed bins
+    @raw_matrix_files, @processed_matrix_files = @all_expression.partition(&:is_raw_counts_file?)
+    @block_processed_upload = @raw_matrix_files.empty? &&
+                              User.feature_flag_for_instance(current_user, 'raw_counts_required_frontend')
     @metadata_file = @study.metadata_file
     @cluster_ordinations = @study.study_files.by_type('Cluster')
     @coordinate_labels = @study.study_files.by_type('Coordinate Labels')
@@ -1123,25 +1144,44 @@ class StudiesController < ApplicationController
     @other_files = @study.study_files.by_type(['Documentation', 'Other'])
 
     # if files don't exist, build them for use later (excluding coordinate labels as we need the data to be current)
-    if @expression_files.empty?
-      @expression_files << @study.build_study_file({file_type: 'Expression Matrix'})
+    if @raw_matrix_files.empty?
+      matrix = @study.build_study_file({ file_type: 'Expression Matrix', expression_file_info: { is_raw_counts: true } })
+      @raw_matrix_files << matrix
+    end
+    if @processed_matrix_files.empty?
+      matrix = @study.build_study_file({ file_type: 'Expression Matrix', expression_file_info: { is_raw_counts: false } })
+      @processed_matrix_files << matrix
     end
     if @metadata_file.nil?
-      @metadata_file = @study.build_study_file({file_type: 'Metadata'})
+      @metadata_file = @study.build_study_file({ file_type: 'Metadata' })
     end
     if @cluster_ordinations.empty?
-      @cluster_ordinations << @study.build_study_file({file_type: 'Cluster'})
+      @cluster_ordinations << @study.build_study_file({ file_type: 'Cluster' })
     end
     if @marker_lists.empty?
-      @marker_lists << @study.build_study_file({file_type: 'Gene List'})
+      @marker_lists << @study.build_study_file({ file_type: 'Gene List' })
     end
     if @fastq_files.empty?
-      @fastq_files << @study.build_study_file({file_type: 'Fastq'})
+      @fastq_files << @study.build_study_file({ file_type: 'Fastq' })
     end
     if @other_files.empty?
-      @other_files << @study.build_study_file({file_type: 'Documentation'})
+      @other_files << @study.build_study_file({ file_type: 'Documentation' })
     end
-    @expression_files.each {|file| file.build_expression_file_info if file.expression_file_info.nil?}
+    (@raw_matrix_files + @processed_matrix_files).each do |file|
+      file.build_expression_file_info if file.expression_file_info.nil?
+    end
+  end
+
+  def set_expression_form_state
+    # if feature flag is enabled, ensure there are raw count matrix files
+    if @study.study_files.where(file_type: /Matrix/, queued_for_deletion: false,
+                                'expression_file_info.is_raw_counts' => true).empty? &&
+      User.feature_flag_for_instance(current_user, 'raw_counts_required_frontend')
+      @block_processed_upload = true
+    else
+      @block_processed_upload = false
+    end
+    @allow_only = params[:allow_only] || 'all'
   end
 
   def set_user_projects
@@ -1246,7 +1286,7 @@ class StudiesController < ApplicationController
       file_type = DirectoryListing.file_type_from_extension(file.name)
       directory_name = DirectoryListing.get_folder_name(file.name)
       if @file_extension_map.has_key?(directory_name) && !@file_extension_map.dig(directory_name, file_type).nil? &&
-          @file_extension_map.dig(directory_name, file_type) >= DirectoryListing::MIN_SIZE
+         @file_extension_map.dig(directory_name, file_type) >= DirectoryListing::MIN_SIZE
         process_directory_listing_file(file, file_type)
       else
         # we are now dealing with singleton files or sequence data, so process accordingly (making sure to ignore directories)

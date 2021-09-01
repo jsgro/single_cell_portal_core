@@ -41,29 +41,40 @@ class Study
   belongs_to :user
   belongs_to :branding_group, optional: true
   has_many :study_files, dependent: :delete_all do
+    # all study files not queued for deletion
+    def available
+      where(queued_for_deletion: false)
+    end
+
     def by_type(file_type)
       if file_type.is_a?(Array)
-        where(queued_for_deletion: false, :file_type.in => file_type).to_a
+        available.where(:file_type.in => file_type).to_a
       else
-        where(queued_for_deletion: false, file_type: file_type).to_a
+        available.where(file_type: file_type).to_a
       end
     end
 
     def non_primary_data
-      where(queued_for_deletion: false).not_in(file_type: StudyFile::PRIMARY_DATA_TYPES).to_a
+      available.not_in(file_type: StudyFile::PRIMARY_DATA_TYPES).to_a
     end
 
     def primary_data
-      where(queued_for_deletion: false).in(file_type: StudyFile::PRIMARY_DATA_TYPES).to_a
+      available.in(file_type: StudyFile::PRIMARY_DATA_TYPES).to_a
     end
 
+    # all files that have been pushed to the bucket (will have the generation tag)
     def valid
-      where(queued_for_deletion: false, :generation.ne => nil).to_a
+      available.where(:generation.ne => nil).to_a
     end
 
     # includes links to external data which do not reside in the workspace bucket
     def downloadable
-      where(queued_for_deletion: false).any_of({:generation.ne => nil}, {:human_fastq_url.ne => nil})
+      available.where.any_of({ :generation.ne => nil }, { :human_fastq_url.ne => nil })
+    end
+
+    # all files not queued for deletion, ignoring newly built files
+    def persisted
+      available.reject(&:new_record?)
     end
   end
 

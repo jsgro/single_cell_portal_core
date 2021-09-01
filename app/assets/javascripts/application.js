@@ -161,7 +161,8 @@ function elementVisible(element) {
 
 // used for keeping track of position in wizard
 var completed = {
-    initialize_expression_form_nav: false,
+    initialize_raw_expression_form_nav: false,
+    initialize_processed_expression_form_nav: false,
     initialize_metadata_form_nav: false,
     initialize_ordinations_form_nav: false,
     initialize_labels_form_nav: false,
@@ -277,15 +278,21 @@ function enableDefaultActions() {
 
     // reset units dropdown based on is_raw_counts?
     $('body').on('click', '.raw-counts-radio', function() {
-        var isRawCount = $(this).val() == '1'
-        var expFileInfoForm = $(this).closest('.expression-file-info-fields')
-        var unitSelect = expFileInfoForm.find('.counts-unit-dropdown');
-        if ( !isRawCount ) {
-            unitSelect.val('');
-            setElementsEnabled(unitSelect, false);
-        } else {
-            setElementsEnabled(unitSelect, true);
-        }
+      const exprFields = $(this).closest('.expression-file-info-fields')
+      const isRawCounts = exprFields.find('.is_raw_counts_true')[0].checked
+      const unitSelect = exprFields.find('.counts-unit-dropdown')
+      const unitsSelectDiv = exprFields.find('.raw-counts-units-select')
+      const assnSelectDiv = exprFields.find('.raw_associations_select')
+      if ( !isRawCounts ) {
+        unitSelect.val('');
+        setElementsEnabled(unitSelect, false);
+        assnSelectDiv.removeClass('hidden')
+        unitsSelectDiv.addClass('hidden')
+      } else {
+        setElementsEnabled(unitSelect, true);
+        unitsSelectDiv.removeClass('hidden')
+        assnSelectDiv.addClass('hidden')
+      }
     });
 
     // when clicking the main study view page tabs, update the current URL so that when you refresh the tab stays open
@@ -622,12 +629,12 @@ function validateCandidateUpload(formId, filename, classSelector) {
         setErrorOnBlank(taxonSelect);
         return false;
     }
-    // enforce units if matrix is raw counts
+    // enforce units if matrix is raw count
     var countsRadio = Array.from(form.find('.raw-counts-radio')).find(radio => radio.checked);
     if ( typeof countsRadio !== 'undefined' && $(countsRadio).val() == '1') {
         var units = form.find('.counts-unit-dropdown');
         if ( $(units).val() == '') {
-            alert('You must specify units for raw counts matrices.');
+            alert('You must specify units for raw count matrices.');
             setErrorOnBlank(units);
             return false;
         }
@@ -718,4 +725,26 @@ function setElementsEnabled(selector, enabled= true) {
     };
     selector.css(elementCss).parent().css(parentCss);
     selector.attr('disabled', enabled ? false : 'disabled')
+}
+
+// show/hide overlay div & buttons blocking processed matrix file uploads
+function setExpressionOverlay(renderOverlay) {
+  const overlay = $('#block-processed-upload')
+  const content = $('#block-processed-upload-content')
+  if (renderOverlay) {
+    overlay.addClass('overlay-upload')
+    content.removeClass('hide-processed-disclaimer').addClass('show-processed-disclaimer')
+  } else {
+    overlay.removeClass('overlay-upload')
+    content.removeClass('show-processed-disclaimer').addClass('hide-processed-disclaimer')
+  }
+}
+
+// update all raw counts association dropdowns with new options
+function updateRawCountsAssnSelect(parentForm, currentValues) {
+  const rawAssnTarget = $(`${parentForm} .raw_associations_select`)[0]
+  const pairedHiddenField = $(`${parentForm} .raw_counts_associations`)[0]
+  const matrixOpts = window.SCP.currentStudyFiles.filter(sf => sf?.expression_file_info?.is_raw_counts)
+    .map(sf => ({ label: sf.upload_file_name, value: sf['_id']['$oid'] }))
+  window.SCP.renderRawAssociationSelect(rawAssnTarget, currentValues, pairedHiddenField, matrixOpts)
 }
