@@ -121,7 +121,7 @@ class SummaryStatsUtils
       info = {
         title: tracker.modified['name'],
         accession: tracker.modified['accession'],
-        study_owner: user.email,
+        study_owner: user.try(:email),
         other_studies: other_studies
       }
       if study.present? # study is not already deleted
@@ -181,7 +181,7 @@ class SummaryStatsUtils
       if study.present?
         {
           title: study.name,
-          study_owner: study.user.email,
+          study_owner: study.user.try(:email),
           accession: study.accession,
           updates: value
         }
