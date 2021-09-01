@@ -33,6 +33,7 @@ import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
 import { validateFile } from 'lib/validation/validate-file'
 import { renderValidationAlert } from 'components/validation/ValidationAlert'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
+import { renderUploadWizard } from 'components/upload/UploadWizard'
 import { renderExploreView } from 'components/explore/ExploreView'
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -73,3 +74,4 @@ window.SCP.renderExploreView = renderExploreView
 window.SCP.getFeatureFlagsWithDefaults = getFeatureFlagsWithDefaults
 window.SCP.renderValidationAlert = renderValidationAlert
 window.SCP.validateFile = validateFile
+window.SCP.renderUploadWizard = renderUploadWizard
