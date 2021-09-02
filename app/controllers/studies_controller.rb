@@ -670,6 +670,8 @@ class StudiesController < ApplicationController
       @study_file.invalidate_cache_by_file_type
     end
 
+    set_expression_form_state
+
     if @study_file.update(study_file_params)
       # if a gene list or cluster got updated, we need to update the associated records
       if study_file_params[:file_type] == 'Gene List'

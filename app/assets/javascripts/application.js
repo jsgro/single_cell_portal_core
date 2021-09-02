@@ -741,10 +741,10 @@ function setExpressionOverlay(renderOverlay) {
 }
 
 // update all raw counts association dropdowns with new options
-function updateRawCountsAssnSelect(parentForm, currentValues) {
+function updateRawCountsAssnSelect(parentForm, currentValues, isRequired) {
   const rawAssnTarget = $(`${parentForm} .raw_associations_select`)[0]
   const pairedHiddenField = $(`${parentForm} .raw_counts_associations`)[0]
   const matrixOpts = window.SCP.currentStudyFiles.filter(sf => sf?.expression_file_info?.is_raw_counts)
     .map(sf => ({ label: sf.upload_file_name, value: sf['_id']['$oid'] }))
-  window.SCP.renderRawAssociationSelect(rawAssnTarget, currentValues, pairedHiddenField, matrixOpts)
+  window.SCP.renderRawAssociationSelect(rawAssnTarget, currentValues, pairedHiddenField, matrixOpts, isRequired)
 }
