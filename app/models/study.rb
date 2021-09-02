@@ -897,16 +897,16 @@ class Study
   # check if study is still under embargo or whether given user can bypass embargo
   def embargoed?(user)
     if user.nil?
-      self.check_embargo?
+      embargo_active?
     else
       # must not be viewable by current user & embargoed to be true
-      !self.can_view?(user) && self.check_embargo?
+      !can_view?(user) && embargo_active?
     end
   end
 
   # helper method to check embargo status
-  def check_embargo?
-    self.embargo.nil? || self.embargo.blank? ? false : Date.today <= self.embargo
+  def embargo_active?
+    embargo.blank? ? false : Time.zone.today < embargo
   end
 
   def has_download_agreement?
