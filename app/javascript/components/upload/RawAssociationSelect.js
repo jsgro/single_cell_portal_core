@@ -19,8 +19,11 @@ function updateHiddenField(hiddenField, selections) {
  * @param {Object} parentForm parent HTML form DOM object
  * @param {Object} hiddenField hidden HTML form field for tracking associations
  * @param {Array} opts select form options array
+ * @param {Boolean} isRequired indicator that this association is a required field
  */
-export default function RawAssociationSelect({ initialValue, parentForm, hiddenField, opts }) {
+export default function RawAssociationSelect({
+  initialValue, parentForm, hiddenField, opts, isRequired=false
+}) {
   // selected is an array of string for the ids of the associated cluster files
   const [selected, setSelected] = useState(initialValue)
 
@@ -30,10 +33,12 @@ export default function RawAssociationSelect({ initialValue, parentForm, hiddenF
     updateHiddenField(hiddenField, selections, parentForm)
   }
 
+  const requiredLabel = isRequired ? <i className='text-danger'>*</i> : ''
+
   // set minWidth to 100% on label to allow select to expand to fill entire column
   return (
     <label className="min-width-100">
-      Associated raw count file <i className='text-danger'>*</i>
+      Associated raw count file {requiredLabel}
       <Select options={opts}
               value={selected}
               isMulti={true}
@@ -44,7 +49,7 @@ export default function RawAssociationSelect({ initialValue, parentForm, hiddenF
 }
 
 /** convenience method for drawing/updating the component from non-react portions of SCP */
-export function renderRawAssociationSelect(target, initialValue, hiddenField, opts) {
+export function renderRawAssociationSelect(target, initialValue, hiddenField, opts, isRequired=false) {
   const parentForm = $(target).closest('.expression-file-info-fields')[0]
   ReactDOM.unmountComponentAtNode(target)
   ReactDOM.render(
@@ -52,7 +57,8 @@ export function renderRawAssociationSelect(target, initialValue, hiddenField, op
       initialValue={initialValue}
       parentForm={parentForm}
       hiddenField={hiddenField}
-      opts={opts}/>,
+      opts={opts}
+      isRequired={isRequired}/>,
     target
   )
 }

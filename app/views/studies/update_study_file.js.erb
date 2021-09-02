@@ -2,7 +2,7 @@
 // calling study.reload avoids caching issues in case files have recently updated
 window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
 
-$("<%= @selector %>").replaceWith("<%= escape_javascript( render @partial, {study_file: @study_file}) %>");
+$("<%= @selector %>").replaceWith("<%= escape_javascript( render @partial, {study_file: @study_file, allow_only: @allow_only }) %>");
 $("#study-files-notice-target").html("<%= escape_javascript( render partial: 'studies/study_file_notices', locals: {message: @message}) %>");
 
 // get instance of new form as ID has changed

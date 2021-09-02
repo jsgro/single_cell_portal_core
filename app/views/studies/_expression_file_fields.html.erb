@@ -24,13 +24,13 @@
   <% current_values = f.object.associated_matrix_files(:raw)&.map { |sf| { label: sf.name, value: sf.id.to_s } } %>
 
   // render the raw counts association select; if replace is true, allows swapping out units dropdown in raw counts form
-  updateRawCountsAssnSelect('#study-file-<%= f.object.id.to_s %>', <%= current_values.to_json.html_safe %>)
+  updateRawCountsAssnSelect('#study-file-<%= f.object.id.to_s %>', <%= current_values.to_json.html_safe %>, <%= User.feature_flag_for_instance(current_user, 'raw_counts_required_backend') %>)
 
   $('#study-file-<%= f.object.id.to_s %>').on('updateRawCountsSelect', function() {
-    updateRawCountsAssnSelect('#study-file-<%= f.object.id.to_s %>', <%= current_values.to_json.html_safe %>)
+    updateRawCountsAssnSelect('#study-file-<%= f.object.id.to_s %>', <%= current_values.to_json.html_safe %>, <%= User.feature_flag_for_instance(current_user, 'raw_counts_required_backend') %>)
   })
 
   $('#study-file-<%= f.object.id.to_s %>').on('change', '.is_raw_counts_true, .is_raw_counts_false', function() {
-    updateRawCountsAssnSelect('#study-file-<%= f.object.id.to_s %>', <%= current_values.to_json.html_safe %>)
+    updateRawCountsAssnSelect('#study-file-<%= f.object.id.to_s %>', <%= current_values.to_json.html_safe %>, <%= User.feature_flag_for_instance(current_user, 'raw_counts_required_backend') %>)
   })
 </script>
