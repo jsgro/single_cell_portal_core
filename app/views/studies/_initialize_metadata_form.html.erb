@@ -102,10 +102,10 @@
 
     function setMetadataConventionMessage(useMetadataConvention) {
         var message;
-        const advancedUrl = "https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#metadata-powered-advanced-search"
+        const advancedUrl = "https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview"
         const advancedLink = `<a href="${advancedUrl}" target="_blank" rel="noreferrer">advanced search</a>`
         const conventionRequired = <%= convention_required == true %>;
-        const helpUrl = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+        const helpUrl = 'https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention'
         if (conventionRequired) {
           message =
             `Learn <a href="${helpUrl}" target="_blank" rel="noreferrer">how to convert your file</a>.<br/>` +
@@ -116,7 +116,7 @@
             `This makes your data discoverable in ${advancedLink}.<br/>` +
             `If the file fails metadata convention validation, you will be emailed messages to help correct it.`
         } else {
-          const formatUrl = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#scp-conventional-file-format'
+          const formatUrl = 'https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention'
           const contactUsLink = '<a href="mailto:scp-support@broadinstitute.zendesk.com">scp-support@broadinstitute.zendesk.com</a>'
           const contactUs = `If you need assistance, please contact us at ${contactUsLink}.`
           message =
@@ -151,11 +151,18 @@
 					fileUploading = true;
 					var that = this;
           const file = data.files[0]
+          const fileType = 'metadata'
+          const containerId = `${fileType}-metadata-container`
 
           let validationErrors = []
+          let summary = ''
           <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
+            $('#metadata-errors').remove() // Remove any prior notice
+            $('#metadata_form').append(`<div id="${containerId}"></div>`)
             // Run client-side metadata file validation
-            validationErrors = await window.SCP.validateFile(file, 'metadata')
+            const results = await window.SCP.validateFile(file, fileType)
+            validationErrors = results.errors
+            summary = results.summary
           <% end %>
 
           const numErrors = validationErrors.length
@@ -174,13 +181,10 @@
               }
             });
           } else {
-            // This error UI will be refined before it's generally available
-            const errorsTxt = (numErrors === 1) ? 'error' : 'errors'
-            const errorsList = validationErrors.map(errorCols => errorCols[2])
-            const message =
-              `Your metadata file had ${numErrors} ${errorsTxt}:\n\n` +
-                errorsList.join('\n')
-            alert(message)
+            const target = document.querySelector(`#${containerId}`)
+            window.SCP.renderValidationAlert(
+              target, summary, validationErrors, fileType,
+            )
           }
 				},
 				chunkdone: function(e, data) {

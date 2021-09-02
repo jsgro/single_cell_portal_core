@@ -30,7 +30,7 @@
     <% elsif study_file.file_type == 'Metadata' %>
       <%= render partial: 'metadata_file_fields', locals: {f: f.dup} %>
     <% elsif study_file.file_type == 'Expression Matrix' || study_file.file_type == 'MM Coordinate Matrix' %>
-      <%= render partial: 'expression_file_fields', locals: {f: f.dup} %>
+      <%= render partial: 'expression_file_fields', locals: {study_file: study_file, f: f.dup} %>
     <% end %>
   </div>
   <div class="form-group row">
@@ -45,7 +45,7 @@
       <%= f.label :upload, 'Download' %><br />
       <%= render partial: 'layouts/download_link', locals: {study_file: study_file} %>
     </div>
-    <div class="col-sm-4 taxon-select-target">
+    <div class="col-sm-3 taxon-select-target">
       <% if StudyFile::TAXON_REQUIRED_TYPES.include?(study_file.file_type) || study_file.file_type == 'Analysis Output' %>
         <%= render partial: 'taxon_fields', locals: {f: f.dup} %>
       <% end %>
@@ -54,13 +54,13 @@
       <%= label_tag :reparse, 'Reparse File?' %><br/>
       <%= select_tag :reparse, options_for_select(%w(Yes No), 'No'), {class: 'form-control'} %>
     </div>
-    <div class="col-sm-2">
+    <div class="col-sm-3">
       <%= f.label :actions %>
       <div class="row">
-        <div class="col-xs-6">
+        <div class="col-xs-6 col-sm-12 col-md-6" style="margin-bottom: 8px">
           <%= f.submit 'Update', class: 'btn btn-block btn-success save-study-file', id: "sync-study-file-#{study_file.id}" %>
         </div>
-        <div class="col-xs-6">
+        <div class="col-xs-6 col-sm-12 col-md-6">
           <% if study_file.parsing? %>
             <%= link_to 'Delete', '#/', class: 'btn btn-block btn-danger disabled-delete', disabled: 'disabled', title: 'You must wait until the file has finished parsing before deleting', data: {toggle: 'tooltip'} %>
           <% else %>

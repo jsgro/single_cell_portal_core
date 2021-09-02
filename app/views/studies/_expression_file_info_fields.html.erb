@@ -1,34 +1,46 @@
-<div class="row expression-file-info-fields">
-  <div class="col-lg-2">
-    <%= f.label :is_raw_counts, 'Is this a raw counts matrix?' %><br />
-    <%= f.radio_button :is_raw_counts, 1,
-                       checked: f.object.is_raw_counts, class: 'raw-counts-radio'  %>
-    <%= f.label :is_raw_counts, 'Yes', class: 'radio-pad' %>
-    <%= f.radio_button :is_raw_counts, 0,
-                       checked: !f.object.is_raw_counts, class: 'raw-counts-radio' %>
-    <%= f.label :is_raw_counts, 'No', class: 'radio-pad'  %>
-  </div>
-  <div class="col-lg-2">
-    <%= f.label :units %><br />
-    <%= f.select :units, options_for_select(ExpressionFileInfo::UNITS_VALUES, f.object.units),
-                 {include_blank: true},
-                 class: 'form-control raw-counts-select counts-unit-dropdown', disabled: !f.object.is_raw_counts %>
-  </div>
-  <div class="col-lg-2">
-    <%= f.label :biosample_input_type, label_with_asterisk('Biosample Input Type') %><br />
-    <%= f.select :biosample_input_type, options_for_select(ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES, f.object.biosample_input_type),
-                 {}, class: 'form-control' %>
+<div class="expression-file-info-fields">
+  <div class="row">
+    <div class="col-lg-2">
+      <%= f.label :is_raw_counts, 'Is this a raw count matrix?' %><br />
+      <%= f.radio_button :is_raw_counts, 1,
+                         checked: f.object.is_raw_counts, class: 'raw-counts-radio is_raw_counts_true',
+                         disabled: disable_raw_counts%>
+      <%= f.label :is_raw_counts, 'Yes', class: 'radio-pad' %>
+      <%= f.radio_button :is_raw_counts, 0,
+                         checked: !f.object.is_raw_counts, class: 'raw-counts-radio is_raw_counts_false',
+                         disabled: disable_processed %>
+      <%= f.label :is_raw_counts, 'No', class: 'radio-pad'  %>
+    </div>
+    <div class="col-lg-2 units-or-raw-associations">
+      <div class="raw_associations_select <%= f.object.is_raw_counts ? 'hidden' : nil %>"></div>
+      <div class="<%= !f.object.is_raw_counts ? 'hidden' : nil %> raw-counts-units-select">
+        <%= f.label :units, label_with_asterisk('Units') %><br />
+        <%= f.select :units, options_for_select(ExpressionFileInfo::UNITS_VALUES, f.object.units),
+                     {include_blank: true},
+                     class: 'form-control raw-counts-select counts-unit-dropdown', disabled: !f.object.is_raw_counts %>
+      </div>
+      <%= f.hidden_field :raw_counts_associations,
+                         {
+                           class: "raw_counts_associations", multiple: true
+                         }
+      %>
+    </div>
+    <div class="col-lg-2">
+      <%= f.label :biosample_input_type, label_with_asterisk('Biosample Input Type') %><br />
+      <%= f.select :biosample_input_type, options_for_select(ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES, f.object.biosample_input_type),
+                   {}, class: 'form-control' %>
 
-  </div>
-  <div class="col-lg-2">
-    <%= f.label :library_preparation_protocol, label_with_asterisk('Library Preparation Protocol') %><br />
-    <%= f.select :library_preparation_protocol,
-                 options_for_select(ExpressionFileInfo::LIBRARY_PREPARATION_VALUES, f.object.library_preparation_protocol),
-                 {}, class: 'form-control' %>
-  </div>
-  <div class="col-lg-4">
-    <%= f.label :modality, label_with_asterisk('Modality') %><br />
-    <%= f.select :modality, options_for_select(ExpressionFileInfo::MODALITY_VALUES, f.object.modality),
-                 {}, class: 'form-control' %>
+    </div>
+    <div class="col-lg-2">
+      <%= f.label :library_preparation_protocol, label_with_asterisk('Library Preparation Protocol') %><br />
+      <%= f.select :library_preparation_protocol,
+                   options_for_select(ExpressionFileInfo::LIBRARY_PREPARATION_VALUES, f.object.library_preparation_protocol),
+                   {}, class: 'form-control' %>
+    </div>
+    <div class="col-lg-4">
+      <%= f.label :modality, label_with_asterisk('Modality') %><br />
+      <%= f.select :modality, options_for_select(ExpressionFileInfo::MODALITY_VALUES, f.object.modality),
+                   {}, class: 'form-control' %>
+    </div>
   </div>
 </div>

@@ -11,6 +11,7 @@ class Study
   include Mongoid::Timestamps
   extend ValidationTools
   include Swagger::Blocks
+  include Mongoid::History::Trackable
 
   ###
   #
@@ -41,29 +42,40 @@ class Study
   belongs_to :user
   belongs_to :branding_group, optional: true
   has_many :study_files, dependent: :delete_all do
+    # all study files not queued for deletion
+    def available
+      where(queued_for_deletion: false)
+    end
+
     def by_type(file_type)
       if file_type.is_a?(Array)
-        where(queued_for_deletion: false, :file_type.in => file_type).to_a
+        available.where(:file_type.in => file_type).to_a
       else
-        where(queued_for_deletion: false, file_type: file_type).to_a
+        available.where(file_type: file_type).to_a
       end
     end
 
     def non_primary_data
-      where(queued_for_deletion: false).not_in(file_type: StudyFile::PRIMARY_DATA_TYPES).to_a
+      available.not_in(file_type: StudyFile::PRIMARY_DATA_TYPES).to_a
     end
 
     def primary_data
-      where(queued_for_deletion: false).in(file_type: StudyFile::PRIMARY_DATA_TYPES).to_a
+      available.in(file_type: StudyFile::PRIMARY_DATA_TYPES).to_a
     end
 
+    # all files that have been pushed to the bucket (will have the generation tag)
     def valid
-      where(queued_for_deletion: false, :generation.ne => nil).to_a
+      available.where(:generation.ne => nil).to_a
     end
 
     # includes links to external data which do not reside in the workspace bucket
     def downloadable
-      where(queued_for_deletion: false).any_of({:generation.ne => nil}, {:human_fastq_url.ne => nil})
+      available.where.any_of({ :generation.ne => nil }, { :human_fastq_url.ne => nil })
+    end
+
+    # all files not queued for deletion, ignoring newly built files
+    def persisted
+      available.reject(&:new_record?)
     end
   end
 
@@ -201,6 +213,9 @@ class Study
   # DownloadAgreement (extra user terms for downloading data)
   has_one :download_agreement, dependent: :delete_all
 
+  # Anonymous Reviewer Access
+  has_one :reviewer_access, dependent: :delete_all
+
   # field definitions
   field :name, type: String
   field :embargo, type: Date
@@ -227,6 +242,7 @@ class Study
   accepts_nested_attributes_for :external_resources, allow_destroy: true
   accepts_nested_attributes_for :study_detail, allow_destroy: true
   accepts_nested_attributes_for :download_agreement, allow_destroy: true
+  accepts_nested_attributes_for :reviewer_access, allow_destroy: true
 
   ##
   #
@@ -881,16 +897,16 @@ class Study
   # check if study is still under embargo or whether given user can bypass embargo
   def embargoed?(user)
     if user.nil?
-      self.check_embargo?
+      embargo_active?
     else
       # must not be viewable by current user & embargoed to be true
-      !self.can_view?(user) && self.check_embargo?
+      !can_view?(user) && embargo_active?
     end
   end
 
   # helper method to check embargo status
-  def check_embargo?
-    self.embargo.nil? || self.embargo.blank? ? false : Date.today <= self.embargo
+  def embargo_active?
+    embargo.blank? ? false : Time.zone.today < embargo
   end
 
   def has_download_agreement?
@@ -2001,4 +2017,10 @@ class Study
     AnalysisMetadatum.where(study_id: self.id).delete_all
     StudyFileBundle.where(study_id: self.id).delete_all
   end
+
+  # we aim to track all fields except fields that are auto-updated.
+  # modifier is set to nil because unfortunately we can't easily track the user who made certain changes
+  # the gem (Mongoid::Userstamp) mongoid-history recommends for doing that (which auto-sets the current_user as the modifier)
+  # does not seem to work with the latest versions of mongoid
+  track_history except: [:created_at, :updated_at, :view_count, :cell_count, :gene_count, :data_dir], modifier_field: nil
 end

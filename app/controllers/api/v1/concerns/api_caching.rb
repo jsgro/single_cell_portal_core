@@ -4,13 +4,6 @@ module Api
       module ApiCaching
         extend ActiveSupport::Concern
 
-        # list of parameters to reject from :get_cache_key as they will be represented by request.path
-        # format is always :json and therefore unnecessary
-        CACHE_PATH_BLACKLIST = %w(controller action format study_id)
-
-        # character regex to convert into underscores (_) for cache path setting
-        PATH_REGEX =/(\/|%2C|%2F|%20|\?|&|=|\.|,|\s)/
-
         # check Rails cache for JSON response based off url/params
         # cache expiration is still handled by CacheRemovalJob
         def check_api_cache!

@@ -199,8 +199,8 @@ describe('Plot data cache', () => {
     })
 
      // it should still only fetch the annotation data, even though the cluster data has not yet arrived
-     const expectedNewAnnotParams = {
-      annotation: {name: 'species', scope: 'study'},
+    const expectedNewAnnotParams = {
+      annotation: { name: 'species', scope: 'study' },
       cluster: '_default',
       consensus: undefined,
       fields: ['annotation'],

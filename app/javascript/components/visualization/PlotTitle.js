@@ -2,7 +2,7 @@ import React from 'react'
 
 /** Renders a plot title for scatter plots */
 export default function PlotTitle({
-  cluster, annotation, genes, consensus, subsample, isCorrelatedScatter, correlations
+  cluster, annotation, genes, consensus, subsample, isCorrelatedScatter, correlation
 }) {
   let content = cluster
   let detailContent = ''
@@ -21,15 +21,15 @@ export default function PlotTitle({
     geneList.push(<span key="e"> expression</span>)
     content = geneList
   }
-  if (subsample && subsample !== 'all') {
+  if (subsample && subsample !== 'all' && !isCorrelatedScatter) {
     detailContent = `subsample[${subsample}]`
   }
   return <h5 className="plot-title">
     <span className="cluster-title">{content} </span>
     <span className="detail"> {detailContent} </span>
-    { isCorrelatedScatter && !!correlations.spearman &&
+    { isCorrelatedScatter && !!correlation &&
       <span className="correlation">
-        Spearman rho = { Math.round(correlations.spearman * 1000) / 1000}
+        Spearman rho = { Math.round(correlation * 1000) / 1000}
       </span>
     }
   </h5>

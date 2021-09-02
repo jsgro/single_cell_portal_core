@@ -110,7 +110,6 @@ function buildExploreParamsFromQuery(query) {
   exploreParams.bamFileName = queryParams.bamFileName ? queryParams.bamFileName : ''
   exploreParams.ideogramFileId = queryParams.ideogramFileId ? queryParams.ideogramFileId : ''
 
-
   return exploreParams
 }
 

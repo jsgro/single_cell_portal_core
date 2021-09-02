@@ -31,7 +31,9 @@ import {
 import * as ScpApi from 'lib/scp-api'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
 import { validateFile } from 'lib/validation/validate-file'
+import { renderValidationAlert } from 'components/validation/ValidationAlert'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
+import { renderRawAssociationSelect } from 'components/upload/RawAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -56,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkMissingAuthToken()
 })
 
+
 window.SCP = window.SCP ? window.SCP : {}
 // SCP expects these variables to be global.
 //
@@ -68,6 +71,8 @@ window.morpheus = morpheus
 window.SCP.log = log
 window.SCP.API = ScpApi
 window.SCP.renderClusterAssociationSelect = renderClusterAssociationSelect
+window.SCP.renderRawAssociationSelect = renderRawAssociationSelect
 window.SCP.renderExploreView = renderExploreView
 window.SCP.getFeatureFlagsWithDefaults = getFeatureFlagsWithDefaults
+window.SCP.renderValidationAlert = renderValidationAlert
 window.SCP.validateFile = validateFile

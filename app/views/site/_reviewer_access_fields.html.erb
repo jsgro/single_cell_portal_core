@@ -1,0 +1,69 @@
+<div class="well well-sm" id="reviewer-access-controls">
+  <div class="form-group row">
+    <div class="col-md-2">
+      <% access_enabled = f.object.persisted? %>
+      <%= label_tag :_destroy, 'Access Enabled?' %><br />
+      <div class="btn-group btn-toggle" data-toggle="buttons">
+        <label class="btn btn-default <%= access_enabled ? 'active' : nil %>">
+          <%= radio_button_tag 'reviewer_access_actions[enable]', :yes, access_enabled, disabled: !access_enabled %> Yes
+        </label>
+        <label class="btn btn-default <%= access_enabled ? nil : 'active' %>">
+          <%= radio_button_tag 'reviewer_access_actions[enable]', :no, !access_enabled, disabled: !access_enabled %> No
+        </label>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <%= f.label :expires_at, 'Expiration Date' %><br />
+      <%= f.date_field :expires_at, class: 'form-control' %>
+    </div>
+    <div class="col-md-2">
+      <%= label_tag :reset, 'Reset Access Credentials?' %><br />
+      <div class="btn-group btn-toggle" data-toggle="buttons">
+        <label class="btn btn-default">
+          <%= radio_button_tag 'reviewer_access_actions[reset]', :yes, false %> Yes
+        </label>
+        <label class="btn btn-default active">
+          <%= radio_button_tag 'reviewer_access_actions[reset]', :no, true %> No
+        </label>
+      </div>
+    </div>
+    <div class="col-md-6 left-border-0-5-gray">
+      <h4>Current Reviewer Access Credentials <a id="copy-reviewer-creds" class="btn btn-default btn-sm btn-copy"
+                                             data-toggle="tooltip" title="" data-original-title="Show PIN & copy to clipboard">
+                                             <i class="far fa-copy"></i></a>
+      </h4>
+      <% if access_enabled %>
+        <p id='access-credentials'>
+          <strong>Accession:</strong> <%= @study.accession %><br />
+          <strong>URL:</strong>&nbsp;<%= link_to reviewer_access_url(access_code: f.object.access_code),
+                                                 reviewer_access_url(access_code: f.object.access_code) %><br />
+          <strong>PIN:</strong>&nbsp;<span id="reviewer-pin"><%= '*' * ReviewerAccess::PIN_LENGTH %></span>
+        </p>
+      <% else %>
+        <span class="detail">none</span>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+
+  $('#reviewer-access-controls > .btn-toggle').click(function() {
+    $(this).find('.btn').toggleClass('active');
+  });
+
+  $('#copy-reviewer-creds').on('click', function() {
+    let accessPin = '<%= f.object.pin ? Base64.encode64(f.object.pin).strip : '' %>';
+    let pinMask = '<%= '*' * ReviewerAccess::PIN_LENGTH %>';
+    let pinField = $('#reviewer-pin')
+    pinField.html(atob(accessPin));
+    let range = document.createRange();
+    range.selectNode(document.getElementById("access-credentials"));
+    window.getSelection().removeAllRanges(); // clear current selection
+    window.getSelection().addRange(range); // to select text
+    document.execCommand("copy");
+    setTimeout(function() {
+      pinField.html(pinMask);
+    }, 5000);
+  })
+</script>

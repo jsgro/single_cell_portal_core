@@ -550,10 +550,10 @@ class IngestJob
 
     case file_type
     when /Matrix/
-      # since genes are not ingested for raw counts matrices, report number of cells ingested
+      # since genes are not ingested for raw count matrices, report number of cells ingested
       cells = self.study.expression_matrix_cells(self.study_file)
       cell_count = cells.present? ? cells.count : 0
-      job_props.merge!({:numCells => cell_count})
+      job_props.merge!({ numCells: cell_count, is_raw_counts: self.study_file.is_raw_counts_file? })
       if !self.study_file.is_raw_counts_file?
         genes = Gene.where(study_id: self.study.id, study_file_id: self.study_file.id).count
         job_props.merge!({:numGenes => genes})
@@ -612,7 +612,7 @@ class IngestJob
 
     case file_type
     when /Matrix/
-      # since genes are not ingested for raw counts matrices, report number of cells ingested
+      # since genes are not ingested for raw count matrices, report number of cells ingested
       if self.study_file.is_raw_counts_file?
         cells = self.study.expression_matrix_cells(self.study_file).count
         message << "Cells ingested: #{cells}"
@@ -625,7 +625,7 @@ class IngestJob
       if use_metadata_convention
         project_name = 'alexandria_convention' # hard-coded is fine for now, consider implications if we get more projects
         current_schema_version = get_latest_schema_version(project_name)
-        schema_url = 'https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Convention'
+        schema_url = 'https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention'
         message << "This metadata file was validated against the latest <a href='#{schema_url}'>Metadata Convention</a>"
         message << "Convention version: <strong>#{project_name}/#{current_schema_version}</strong>"
       end
@@ -719,9 +719,9 @@ class IngestJob
     end
 
     if self.study_file.file_type == 'Metadata'
-      faq_link = "https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-Validation-Errors-FAQ"
+      faq_link = "https://singlecell.zendesk.com/hc/en-us/articles/360060610092-Metadata-Validation-Errors-FAQ"
       message_body += "<h3>Common Errors for Metadata Files</h3>"
-      message_body += "<p>You can view a list of common metadata validation errors and solutions on our wiki: "
+      message_body += "<p>You can view a list of common metadata validation errors and solutions in our documentation: "
       message_body += "<a href='#{faq_link}'>#{faq_link}</a></p>"
     end
 

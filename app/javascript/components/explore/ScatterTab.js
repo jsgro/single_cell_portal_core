@@ -39,7 +39,7 @@ export default function ScatterTab({
         const isTwoColRow = isTwoColumn && !(index === 0 && firstRowSingleCol)
         const key = getKeyFromScatterParams(params)
         let rowDivider = <span key={`d${index}`}></span>
-        if (index % 2 === 1) {
+        if (index % 2 === 1 && !isMultiGene) {
           // Use a full-width empty column to make sure plots align into rows, even if they are unequal height
           rowDivider = <div className="col-md-12" key={`d${index}`}></div>
         }
