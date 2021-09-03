@@ -95,7 +95,7 @@ class StudiesController < ApplicationController
     # load any existing files if user restarted for some reason (unlikely)
     initialize_wizard_files
     # check if study has been properly initialized yet, set to true if not
-    if !@cluster_ordinations.last.new_record? && !@all_expression.last.new_record? && !@metadata_file.new_record? && !@study.initialized?
+    if !@cluster_ordinations.last.new_record? && !@processed_matrix_files.last.new_record? && !@metadata_file.new_record? && !@study.initialized?
       @study.update_attributes(initialized: true)
     end
   end
