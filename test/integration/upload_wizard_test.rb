@@ -9,12 +9,11 @@ class UploadWizardTest < ActionDispatch::IntegrationTest
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @study = FactoryBot.create(:detached_study,
+    @study = FactoryBot.create(:study,
                                name_prefix: 'Upload Wizard Test',
                                public: false,
                                user: @user,
                                test_array: @@studies_to_clean)
-    @study.update(detached: false) # workaround to get test to run faster & allow rendering of upload wizard
     TosAcceptance.create!(email: @user.email)
   end
 
