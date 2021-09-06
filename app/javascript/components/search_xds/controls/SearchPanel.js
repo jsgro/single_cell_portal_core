@@ -46,7 +46,7 @@ const helpModalContent = (<div>
   </a>.
   <br/>If you are a study creator and would like to provide that metadata for your study to be searchable,
   see our
-  <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview"
+  <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search"
     target="_blank" rel="noreferrer">metadata guide
   </a>.
 </div>)
