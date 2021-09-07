@@ -16,21 +16,18 @@
   </div>
   <div class="col-lg-2">
     <%= f.label :biosample_input_type, label_with_asterisk('Biosample Input Type') %><br />
-
-    # <% if study_file.present? %>
-    <%= f.select :biosample_input_type, options_for_select(ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES, f.object.biosample_input_type.present? ? f.object.biosample_input_type : nil),
+    <%= f.select :biosample_input_type, options_for_select(ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES, f.object.biosample_input_type),
     {include_blank: 'Select One...'}, class: 'form-control' %>
-
   </div>
   <div class="col-lg-2">
     <%= f.label :library_preparation_protocol, label_with_asterisk('Library Preparation Protocol') %><br />
     <%= f.select :library_preparation_protocol,
-                 options_for_select(ExpressionFileInfo::LIBRARY_PREPARATION_VALUES, f.object.library_preparation_protocol.present? ? f.object.library_preparation_protocol: nil),
+                 options_for_select(ExpressionFileInfo::LIBRARY_PREPARATION_VALUES, f.object.library_preparation_protocol),
                  {include_blank: 'Select One...'}, class: 'form-control' %>
   </div>
   <div class="col-lg-4">
     <%= f.label :modality, label_with_asterisk('Modality') %><br />
-    <%= f.select :modality, options_for_select(ExpressionFileInfo::MODALITY_VALUES, f.object.modality.present? ? f.object.modality : nil),
-    {include_blank: 'Select One...'}, class: 'form-control' %>
-  </div>
+    <%= f.select :modality, options_for_select(ExpressionFileInfo::MODALITY_VALUES, f.object.modality ),
+     {include_blank: 'Select One...'}, class: 'form-control' %>
+  </div>  
 </div>

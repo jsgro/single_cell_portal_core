@@ -5,8 +5,8 @@ class ExpressionFileInfo
 
   field :library_preparation_protocol, type: String
   field :units, type: String
-  field :biosample_input_type, type: String
-  field :modality, type: String
+  field :biosample_input_type, type: String, default: 'Whole cell'
+  field :modality, type: String, default: 'Transcriptomic: unbiased'
   field :is_raw_counts, type: Boolean, default: false
   field :raw_counts_associations, type: Array, default: []
 
