@@ -7,7 +7,7 @@ SCP engineering team and SCP service accounts should have access to the snapshot
 This query can be run manually from the google BigQuery console
 https://console.cloud.google.com/bigquery?project=<Google Cloud project name>
 A refined form of this query is intended to be used as input to the TDE createSearchIndex endpoint:
-curl -X POST "https://jade.datarepo-dev.broadinstitute.org/api/repository/v1/search/<snapshot UUID>/index
+https://jade.datarepo-dev.broadinstitute.org/api/repository/v1/search/<snapshot UUID>/index
 
 This query is based on work from the TDE team which can be found at
 https://github.com/DataBiosphere/jade-data-repo/blob/develop/ops/query.sql
