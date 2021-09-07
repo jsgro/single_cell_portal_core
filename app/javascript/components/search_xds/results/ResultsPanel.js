@@ -95,7 +95,7 @@ const FacetResultsFooter = ({ studySearchState }) => {
           </a>.<br/>
           Study authors looking to make their studies more accessible can read our
           {/* eslint-disable-next-line max-len */}
-          <a href="https://github.com/broadinstitute/single_cell_portal/wiki/Metadata-File#Metadata-powered-Advanced-Search"
+          <a href="https://singlecell.zendesk.com/hc/en-us/articles/4406379107355-Metadata-powered-Advanced-Search"
             target="_blank" rel="noreferrer"> metadata guide
           </a>.
         </div>
