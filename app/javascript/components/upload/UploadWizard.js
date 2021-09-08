@@ -1,44 +1,39 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faDna } from '@fortawesome/free-solid-svg-icons'
+import _cloneDeep from 'lodash/cloneDeep'
+import _isEqual from 'lodash/isEqual'
 
+import UploadSteps, { STEP_ORDER } from './UploadSteps'
+import { fetchStudyFileInfo } from 'lib/scp-api'
 
-function RawCountsUploadForm() {
-  return <span> Raw counts go here</span>
-}
-
-function ProcessedExpressionUploadForm() {
-  return <span> Processed Expresion here</span>
-}
-
-function ClusteringUploadForm() {
-  return <span>cluster all you want</span>
-}
-
-const STEPS = {
-  rawCounts: {
-    stepTitle: 'Raw Counts',
-    formComponent: RawCountsUploadForm
-  },
-  processedExpression: {
-    stepTitle: 'Processed Expression',
-    formComponent: ProcessedExpressionUploadForm
-  },
-  clustering: {
-    stepTitle: 'Clustering',
-    formComponent: ClusteringUploadForm
-  }
-}
-
-const STEP_ORDER = ['rawCounts', 'processedExpression', 'clustering']
-
-
-
+/** shows the upload wizard */
 export default function UploadWizard({ accession, name }) {
   const [currentStep, setCurrentStep] = useState(STEP_ORDER[0])
-  const step = STEPS[currentStep]
-  return <div>
-    <div className="row">
-      <div className="col-md-10 text-center">
+  const [studyState, setStudyState] = useState(null)
+  const [formState, setFormState] = useState(null)
+
+  if (studyState?.files && formState?.files) {
+    formState.files.forEach(file => {
+      const serverFile = studyState.files.find(sFile => sFile.id === file.id)
+      if (!_isEqual(file, serverFile)) {
+        file.isDirty = true
+      }
+    })
+  }
+
+
+  const step = UploadSteps[currentStep]
+  useEffect(() => {
+    fetchStudyFileInfo(accession).then(response => {
+      setStudyState(response)
+      setFormState(_cloneDeep(response))
+    })
+  }, [accession])
+  return <div className="padded">
+    <div className="row padded">
+      <div className="col-md-10">
         <h4>{accession}: {name}</h4>
       </div>
       <div className="col-md-2">
@@ -47,24 +42,53 @@ export default function UploadWizard({ accession, name }) {
     </div>
     <div className="row">
       <div className="col-md-3">
-        <ul>
-          { STEP_ORDER.map((stepName, index) => <StepTitle stepName={stepName} index={index} currentStep={currentStep} setCurrentStep={setCurrentStep}/>) }
+        <ul className="upload-wizard-steps">
+          { STEP_ORDER.map((stepName, index) =>
+            <StepTitle key={index}
+              stepName={stepName}
+              index={index}
+              formState={formState}
+              studyState={studyState}
+              currentStep={currentStep}
+              setCurrentStep={setCurrentStep}/>) }
         </ul>
       </div>
       <div className="col-md-9">
-        <step.formComponent/>
+        { !formState && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+        { !!formState && <step.formComponent
+          formState={formState}
+          setFormState={setFormState}
+          studyState={studyState}
+          setStudyState={setStudyState}/> }
       </div>
     </div>
   </div>
 }
 
-function StepTitle({ stepName, index, currentStep, setCurrentStep }) {
-  const step = STEPS[stepName]
-  return <li className={stepName === currentStep ? 'active' : ''}>
-    <span>{index}. </span>
-    <a className="action link" onClick={() => setCurrentStep(stepName)}>
+/** renders the wizard step header */
+function StepTitle({ stepName, index, currentStep, setCurrentStep, studyState, formState }) {
+  const step = UploadSteps[stepName]
+  let stepFiles = []
+  if (formState && formState.files) {
+    stepFiles = formState.files.filter(step.fileFilter)
+  }
+  return <li className={stepName === currentStep ? 'active' : ''} onClick={() => setCurrentStep(stepName)}>
+    <span className="badge">{index + 1}</span>
+    <a className="action link">
       {step.stepTitle}
     </a>
+    <ul className="fileList">
+      { stepFiles.map(file => {
+        let statusIcon = <span className="statusIcon"></span>
+        if (file.status === 'new') {
+          statusIcon = <span className="statusIcon fas fa-asterisk fa-sm"></span>
+        }
+        return <li key={file.name}>
+          <span className={file.isDirty ? 'dirty' : ''}>{file.name} {statusIcon}</span>
+        </li>
+      })
+      }
+    </ul>
   </li>
 }
 

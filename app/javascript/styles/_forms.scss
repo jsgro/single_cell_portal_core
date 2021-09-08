@@ -78,3 +78,41 @@
     border: 1px solid #eee;
   }
 }
+
+.form-terra {
+  background: #fff;
+  padding: 1em;
+	border-radius: 5px;
+}
+
+.padded {
+	padding: 1em;
+}
+
+.top-margin {
+	margin-top: 1em;
+}
+
+.upload-wizard-steps {
+	list-style: none;
+	width: 100%;
+	padding-left: 0;
+	.dirty {
+		font-style: italic;
+	}
+	.badge {
+		background: $action-color;
+		margin-right: 1em;
+	}
+	li.active {
+		background: #fff
+	}
+	> li {
+		width: 100%;
+		padding: 0.5em;
+		border-bottom: 1px solid #666;
+	}
+	ul {
+		list-style: none;
+	}
+}

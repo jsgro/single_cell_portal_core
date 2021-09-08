@@ -191,6 +191,20 @@ export function stringifyQuery(paramObj, sort) {
 }
 
 /**
+ * Returns initial content for the upload file wizard
+ *
+ * @param {String} studyAccession Study accession
+*/
+export async function fetchStudyFileInfo(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/file_info`
+  const [exploreInit] =
+    await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return exploreInit
+}
+
+
+/**
  * Returns initial content for the "Explore" tab in Study Overview
  *
  * @param {String} studyAccession Study accession

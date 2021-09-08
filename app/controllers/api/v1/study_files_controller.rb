@@ -282,7 +282,6 @@ module Api
 
         # check if the name of the file has changed as we won't be able to tell after we saved
         name_changed = @study_file.name != update_params[:name]
-
         if @study_file.update(update_params)
           # invalidate caches first
           @study_file.delay.invalidate_cache_by_file_type
