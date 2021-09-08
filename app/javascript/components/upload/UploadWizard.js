@@ -31,7 +31,7 @@ export default function UploadWizard({ accession, name }) {
       setFormState(_cloneDeep(response))
     })
   }, [accession])
-  return <div className="padded">
+  return <div className="">
     <div className="row padded">
       <div className="col-md-10">
         <h4>{accession}: {name}</h4>

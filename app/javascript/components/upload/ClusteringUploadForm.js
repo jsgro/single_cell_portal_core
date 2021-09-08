@@ -4,6 +4,7 @@ import _cloneDeep from 'lodash/cloneDeep'
 
 import UploadSteps from './UploadSteps'
 import { bytesToSize } from 'lib/stats'
+import { updateStudyFile, deleteStudyFile } from 'lib/scp-api'
 import { getAccessToken } from 'providers/UserProvider'
 
 /** Renders a form for uploading one or more cluster/spatial files */
@@ -36,6 +37,24 @@ export default function ClusteringUploadForm({ studyState, setStudyState, formSt
   function saveFile(file) {
     if (file.submitData) {
       file.submitData.submit()
+    } else {
+      let fileApiData = formatForApi(studyState.study.id, file)
+      updateStudyFile(studyState.study.id, fileApiData).then(response => {
+        // const newStudyState = _cloneDeep(studyState)
+        // const fileChanged = newStudyState.files.find(f => file.id === f.Id)
+        // Object.assign(fileChanged, response)
+      })
+    }
+  }
+
+  /** save the given file and perform an upload if present */
+  function deleteFile(file) {
+    if (file.status === 'new') {
+      const newFormState = _cloneDeep(formState)
+      newFormState.files = newFormState.files.filter(f => f.id != file.id)
+      setFormState(newFormState)
+    } else {
+      deleteStudyFile(studyState.study.id, file.id)
     }
   }
 
@@ -68,7 +87,7 @@ export default function ClusteringUploadForm({ studyState, setStudyState, formSt
         url,
         maxChunkSize: 10000000,
         type: file.status === 'new' ? 'POST' : 'PATCH',
-        formData: () => formatForApi(studyState.study.id, file),
+        formData: () => formatForBlueImp(studyState.study.id, file),
         add: (e, data) => {
           updateFile(file.id, {
             submitData: data,
@@ -92,7 +111,47 @@ export default function ClusteringUploadForm({ studyState, setStudyState, formSt
   })
 
   return <div>
-    <h4>Clustering files</h4>
+    <div className="row">
+      <h4 className="col-sm-12">4. Cluster / Spatial Files</h4>
+      <p className="text-center"><a href="https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt" target="_blank" rel="noreferrer">Cluster File</a></p>
+    </div>
+    <div className="row">
+      <pre className="code-example col-sm-5 col-sm-offset-4">NAME&#09;X&#09;Y&#09;Z&#09;Category&#09;Intensity<br/>TYPE&#09;numeric&#09;numeric&#09;numeric&#09;group&#09;numeric<br/>CELL_0001&#09;34.472&#09;32.211&#09;60.035&#09;C&#09;0.719<br/>CELL_0002&#09;15.975&#09;10.043&#09;21.424&#09;B&#09;.904<br/>...</pre>
+    </div>
+    <div className="row">
+      <p className="col-sm-12 text-center">A <a href="https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt" target="_blank" rel="noreferrer">cluster file</a> (.txt or .txt.gz) contains any cluster ordinations and optional cluster-specific metadata.  <strong>At minimum </strong> a cluster file has:</p>
+    </div>
+    <div className="row">
+      <div className="col-md-9 col-lg-offset-2 col-md-offset-1">
+        <ul>
+          <li>3 columns</li>
+          <li>A header row containing the value <strong>“NAME”, “X”, “Y”,</strong> optionally <strong>“Z”</strong>, and columns containing cell-level annotations
+          </li>
+          <li>A second row with:</li>
+          <ul >
+            <li>The header of <strong>“TYPE”</strong>to declare metadata types (see below).</li>
+            <li>A value for each metadata column declaring its datatype
+            </li>
+            <ul>
+              <li>The two accepted values are <strong>“group”</strong> (set membership) or <strong>“numeric”</strong> (continuous scores).*</li>
+              <li>The values for the “X”, “Y”, and “Z” columns must be set to “numeric”.</li>
+            </ul>
+          </ul>
+        </ul>
+      </div>
+    </div>
+    <div className="row">
+      <p className="col-sm-12 text-center">Once your cluster file has been successfully ingested, additional representative
+        subsamples of the full resolution data will be stored as well.
+        <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling" target="_blank" rel="noreferrer">Learn More <i className='fas fa-question-circle'></i></a>
+      </p>
+    </div>
+    <div className="row">
+      <p className="col-sm-12"><a href="https://en.wikipedia.org/wiki/Spatial_transcriptomics" target="_blank" rel="noreferrer">Spatial transcriptomics</a> data can also be uploaded with this file format.  The x, y, and z coordinates then represent actual spatial coordinates, as opposed to clustering output.</p>
+    </div>
+    <div className="row">
+      <p className="col-sm-12">* Group values are treated as literal strings, and numerics as floating-point numbers.</p>
+    </div>
     { clusterFiles.map(file => {
       return <div className="row top-margin" key={file.id}>
 
@@ -115,7 +174,24 @@ export default function ClusteringUploadForm({ studyState, setStudyState, formSt
                 type="text"
                 id={`clusterNameInput-${file.id}`}
                 value={file.name}
-                onChange={event => updateFile(file.id, {name: event.target.value})}/>
+                onChange={event => updateFile(file.id, { name: event.target.value })}/>
+            </div>
+            <div className="form-group">
+              <label>Coordinate data type:</label><br/>
+              <label className="sublabel">
+                <input type="radio" name={`clusterFormSpatial-${file.id}`} value="false" checked={!file.is_spatial} onChange={e => updateFile(file.id, { is_spatial: false })} /> Clustering
+              </label>
+              <label className="sublabel">
+                <input type="radio" name={`clusterFormSpatial-${file.id}`} value="true" checked={file.is_spatial} onChange={e => updateFile(file.id, { is_spatial: true })}/> Spatial transcriptomics positions
+              </label>
+            </div>
+            <div className="form-group">
+              <label htmlFor={`clusterDescriptionInput-${file.id}`}>Description</label>
+              <input className="form-control"
+                type="text"
+                id={`clusterDescriptionInput-${file.id}`}
+                value={file.description}
+                onChange={event => updateFile(file.id, { description: event.target.value })}/>
             </div>
 
             <button type="button" className="btn btn-primary" disabled={!file.isDirty} onClick={() => saveFile(file)}>
@@ -124,6 +200,9 @@ export default function ClusteringUploadForm({ studyState, setStudyState, formSt
             </button> &nbsp;
             <button type="button" className="btn btn-secondary cancel" disabled={!file.isDirty}>
               <i className="fas fa-undo"></i> Reset
+            </button>
+            <button type="button" className="btn btn-danger cancel float-right" onClick={() => deleteFile(file)}>
+              <i className="fas fa-trash"></i> Delete
             </button>
           </form>
         </div>
@@ -136,7 +215,18 @@ export default function ClusteringUploadForm({ studyState, setStudyState, formSt
   </div>
 }
 
+/** convert a file object into a hash that the api endpoint expects */
 function formatForApi(studyId, file) {
+  const valueHash = Object.assign({}, file, {
+    study_id: studyId,
+    _id: file.id
+  })
+  valueHash.submitData = undefined
+  return valueHash
+}
+
+/** convert a file object into a hash that the api endpoint expects */
+function formatForBlueImp(studyId, file) {
   const valueHash = Object.assign({}, file, {
     study_id: studyId,
     _id: file.id

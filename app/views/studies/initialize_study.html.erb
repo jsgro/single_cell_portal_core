@@ -327,6 +327,7 @@
   </script>
 <% else %>
   <div id="upload-wizard-target">
+  </div>
   <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
     $(document).ready(function() {
       window.SCP.renderUploadWizard(document.getElementById('upload-wizard-target'), '<%= @study.accession %>', '<%= @study.name %>')

@@ -93,9 +93,19 @@
 	margin-top: 1em;
 }
 
+.float-right {
+	float: right;
+}
+
+.sublabel {
+	margin-left: 1em;
+	font-weight: normal;
+}
+
 .upload-wizard-steps {
 	list-style: none;
-	width: 100%;
+	width: 24%;
+	position: fixed;
 	padding-left: 0;
 	.dirty {
 		font-style: italic;

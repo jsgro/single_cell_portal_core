@@ -86,6 +86,7 @@ module Api
           sf_hash = sf.attributes
           sf_hash[:expression_file_info] = sf.expression_file_info.try(:attributes)
           sf_hash[:id] = sf.id.to_s
+          sf_hash[:description] = sf.description ? sf.description : ''
           sf_hash
         end
         response_obj = {

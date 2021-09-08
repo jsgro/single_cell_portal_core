@@ -205,6 +205,41 @@ export async function fetchStudyFileInfo(studyAccession, mock=false) {
 
 
 /**
+ * Returns initial content for the upload file wizard
+ *
+ * @param {String} studyAccession Study accession
+*/
+export async function updateStudyFile(studyId, studyFileData, mock=false) {
+  const apiUrl = `/studies/${studyId}/study_files/${studyFileData._id}`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'PATCH',
+    body: JSON.stringify(studyFileData)
+  })
+  const [exploreInit] =
+    await scpApi(apiUrl, init, mock, false)
+
+  return exploreInit
+}
+
+/**
+ * Returns initial content for the upload file wizard
+ *
+ * @param {String} studyAccession Study accession
+*/
+export async function deleteStudyFile(studyId, fileId, mock=false) {
+  const apiUrl = `/studies/${studyId}/study_files/${fileId}`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'DELETE'
+  })
+  const [exploreInit] =
+    await scpApi(apiUrl, init, mock, false)
+
+  return exploreInit
+}
+
+
+
+/**
  * Returns initial content for the "Explore" tab in Study Overview
  *
  * @param {String} studyAccession Study accession
