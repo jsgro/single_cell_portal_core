@@ -26,6 +26,17 @@ class SummaryStatsUtils
     Study.where(:created_at => (end_date..(end_date + 1.day))).count
   end
 
+  # get a count of all studies, public studies, and also which of those have compliant metadata
+  def self.study_counts
+    studies = Study.where(queued_for_deletion: false)
+    public = studies.where(public: true)
+    {
+      all: studies.count,
+      public: public.count,
+      compliant: public.select { |s| s.metadata_file&.use_metadata_convention }.count
+    }
+  end
+
   # perform a sanity check to look for any missing files in remote storage
   # returns a list of all missing files for entire portal for use in nightly_server_report
   def self.storage_sanity_check

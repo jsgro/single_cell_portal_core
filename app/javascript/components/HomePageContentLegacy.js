@@ -18,7 +18,7 @@ import * as queryString from 'query-string'
 export function StudySearchView({ advancedSearchDefault }) {
   const studySearchState = useContext(StudySearchContext)
   return <>
-    <SearchPanel advancedSearchDefault={advancedSearchDefault} searchOnLoad={true}/>
+    <SearchPanel searchOnLoad={true}/>
     <ResultsPanel studySearchState={studySearchState} studyComponent={StudyDetails} />
   </>
 }

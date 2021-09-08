@@ -14,16 +14,18 @@ class AdminConfigurationsControllerTest < ActionDispatch::IntegrationTest
     User.find_by(email: 'test_flags_user@gmail.com').destroy
   end
 
+  # as part of SCP-3621, this test is being commented out, but the scaffold left in place in case future feature flags
+  # support opt in/out, in which case this test will be valid again
   test 'should process feature flag data correctly' do
-    @test_user.update!(feature_flags: {})
-
-    AdminConfigurationsController.process_feature_flag_form_data(@test_user, {feature_flag_faceted_search: '1'})
-    assert_equal({'faceted_search' => true}, @test_user.reload.feature_flags)
-
-    AdminConfigurationsController.process_feature_flag_form_data(@test_user, {feature_flag_faceted_search: '0'})
-    assert_equal({'faceted_search' => false}, @test_user.reload.feature_flags)
-
-    AdminConfigurationsController.process_feature_flag_form_data(@test_user, {faceted_search: '-'})
-    assert_equal({}, @test_user.reload.feature_flags)
+    # @test_user.update!(feature_flags: {})
+    #
+    # AdminConfigurationsController.process_feature_flag_form_data(@test_user, {feature_flag_faceted_search: '1'})
+    # assert_equal({'faceted_search' => true}, @test_user.reload.feature_flags)
+    #
+    # AdminConfigurationsController.process_feature_flag_form_data(@test_user, {feature_flag_faceted_search: '0'})
+    # assert_equal({'faceted_search' => false}, @test_user.reload.feature_flags)
+    #
+    # AdminConfigurationsController.process_feature_flag_form_data(@test_user, {faceted_search: '-'})
+    # assert_equal({}, @test_user.reload.feature_flags)
   end
 end
