@@ -4,8 +4,8 @@
 </h1>
 <p class="lead">Accession: <span id="study-accession"><%= @study.accession %></span></p>
 </p>
-<% if @study.check_embargo? %>
-  <p class="lead text-danger">Embargoed until: <%= @study.embargo.to_s(:long) %></p>
+<% if @study.embargo_active? %>
+  <p class="lead text-danger">Data Release Date: <%= @study.embargo.to_s(:long) %></p>
 <% end %>
 
 <%= @study.description.html_safe %>

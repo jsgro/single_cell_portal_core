@@ -112,7 +112,6 @@
 		</table>
 	</div>
 	<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-    console.log("#ordinations_form_<%= study_file._id %>")
     var ordsFormSelector = "#ordinations_form_<%= study_file._id %>"
     $(ordsFormSelector).find('.upload-clusters').click(function() {
         if ($("#ordinations_form_<%= study_file._id %>").find('#study_file_name').val() == '') {

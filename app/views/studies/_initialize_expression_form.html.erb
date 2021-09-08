@@ -1,4 +1,4 @@
-<%= nested_form_for(study_file, url: update_study_file_study_path(@study._id),
+<%= nested_form_for(study_file, url: update_study_file_study_path(@study._id, allow_only: allow_only || 'all'),
                     html: {multipart: true, id: "expression_form_#{study_file._id}",
                            class: "initialize_expression_form #{study_file.new_record? ? 'new-expression-form' : nil}",
                            data: {remote: true}}) do |f| %>
@@ -32,7 +32,14 @@
     </div>
   </div>
   <div class="form-group">
-    <%= f.fields_for :expression_file_info %>
+    <%= f.fields_for :expression_file_info do |expr_file_info|
+      render partial: 'expression_file_info_fields',
+                     locals: {
+                       disable_processed: allow_only == 'raw',
+                       disable_raw_counts: allow_only == 'processed',
+                       f: expr_file_info
+                     }
+      end %>
   </div>
 	<div class="form-group row">
 		<div class="col-sm-4">
@@ -55,13 +62,13 @@
 			<%= f.label :actions %>
 			<div class="row">
 				<div class="col-xs-6">
-					<%= f.submit 'Save', class: 'btn btn-block btn-success save-study-file', disabled: (study_file.upload_file_name.nil?) %>
+					<%= f.submit 'Save', class: 'btn btn-block btn-success save-study-file save-expression-file', disabled: (study_file.upload_file_name.nil?) %>
 				</div>
 				<div class="col-xs-6">
           <% if study_file.parsing? || study_file.upload_file_name.nil? %>
             <%= link_to 'Delete', '#/', class: 'btn btn-block btn-danger disabled-delete', disabled: 'disabled', title: 'You must wait until the file has finished uploading & parsing before deleting', data: {toggle: 'tooltip'} %>
           <% else %>
-            <%= link_to 'Delete', delete_study_file_study_path(@study._id, study_file._id, target: "#expression_form_#{study_file._id}"), method: :delete, class: 'btn btn-block btn-danger delete-file', data: {remote: true} %>
+            <%= link_to 'Delete', delete_study_file_study_path(@study._id, study_file._id, target: "#expression_form_#{study_file._id}", allow_only: allow_only || 'all'), method: :delete, class: 'btn btn-block btn-danger delete-file', data: {remote: true} %>
           <% end %>
 				</div>
 			</div>
@@ -83,16 +90,45 @@
 
 	<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
 
-      var expFormId = "#expression_form_<%= study_file._id %>";
-      $(expFormId).find('.file-type').on('change', function() {
-        if ( $(expFormId + ' #study_file_file_type_expression_matrix').prop("checked") ) {
-          $(expFormId).find('.initialize-bundle-target').empty();
+      var expFormId_<%= allow_only %> = "#expression_form_<%= study_file._id %>";
+      $(expFormId_<%= allow_only %>).find('.file-type').on('change', function() {
+        if ( $(expFormId_<%= allow_only %> + ' #study_file_file_type_expression_matrix').prop("checked") ) {
+          $(expFormId_<%= allow_only %>).find('.initialize-bundle-target').empty();
         }
       });
 
-		$(function() {
+      // wrapper to call updateRawCountsAssnSelect() for updating all raw counts association select inputs after
+      // file uploads
+      function handleRawCountsUpdate() {
+        <% current_values = study_file.associated_matrix_files(:raw)&.map { |sf| { label: sf.name, value: sf.id.to_s } } %>
+        const currentValues = <%= current_values.to_json.html_safe %>
+        const isRequired = <%= User.feature_flag_for_instance(current_user, 'raw_counts_required_backend') %>
+        updateRawCountsAssnSelect(expFormId_<%= allow_only %>, currentValues, isRequired)
+      }
 
-        $(expFormId).fileupload({
+      handleRawCountsUpdate()
+
+      $(expFormId_<%= allow_only %>).on('updateRawCountsSelect', function() {
+        handleRawCountsUpdate()
+      })
+
+      $(expFormId_<%= allow_only %>).on('change', '.is_raw_counts_true, .is_raw_counts_false', function() {
+        handleRawCountsUpdate()
+      })
+
+      // render the raw counts association select; if replace is true, allows swapping out units dropdown in raw counts form
+      updateRawCountsAssnSelect(expFormId_<%= allow_only %>, <%= current_values.to_json.html_safe %>)
+
+      $(expFormId_<%= allow_only %>).on('updateRawCountsSelect', function() {
+        updateRawCountsAssnSelect(expFormId_<%= allow_only %>, <%= current_values.to_json.html_safe %>)
+      })
+
+      $(expFormId_<%= allow_only %>).on('change', '.is_raw_counts_true, .is_raw_counts_false', function() {
+        updateRawCountsAssnSelect(expFormId_<%= allow_only %>, <%= current_values.to_json.html_safe %>)
+      })
+
+		$(function() {
+      $(expFormId_<%= allow_only %>).fileupload({
 				url: "<%= upload_study_path(@study._id) %>",
 				maxChunkSize: 10000000,
 				type: 'PATCH',
@@ -104,10 +140,10 @@
 					// auto-select MM Coordinate Matrix if applicable
           fileExt = fileName.split('.').slice(-1)[0];
           if (fileExt === 'mtx') {
-              $(expFormId + ' #study_file_file_type_mm_coordinate_matrix').prop("checked", true);
+              $(expFormId_<%= allow_only %> + ' #study_file_file_type_mm_coordinate_matrix').prop("checked", true);
           }
-          $(expFormId + ' .filename').val(fileName);
-          var canUpload = validateCandidateUpload(expFormId, fileName, $('.initialize_expression_form .filename'));
+          $(expFormId_<%= allow_only %> + ' .filename').val(fileName);
+          var canUpload = validateCandidateUpload(expFormId_<%= allow_only %>, fileName, $('.initialize_expression_form .filename'));
           if ( canUpload ) {
               $.getJSON("<%= resume_upload_study_path %>", { file: fileName }, function (result) {
                   var file = result.file;
@@ -120,18 +156,19 @@
                   }
               });
           } else {
-              $(expFormId + ' .filename').val('');
+              $(expFormId_<%= allow_only %> + ' .filename').val('');
           }
 				},
 				chunkdone: function(e, data) {
 					var perc = parseInt(data.loaded / data.total * 100, 10);
 					$(data.context).find('h1').html(perc + "% uploaded");
-            if ( $('#<%= study_file.id %>-bundle-btns').length === 0 && $(expFormId + ' #study_file_file_type_mm_coordinate_matrix').prop("checked") ) {
-                $(expFormId).find('.initialize-bundle-target').html("<%= j(render partial: 'study_file_bundle_btns', locals: {study_file_id: study_file.id.to_s, file_type: 'MM Coordinate Matrix'}) %>")
+            if ( $('#<%= study_file.id %>-bundle-btns').length === 0 && $(expFormId_<%= allow_only %> + ' #study_file_file_type_mm_coordinate_matrix').prop("checked") ) {
+                $(expFormId_<%= allow_only %>).find('.initialize-bundle-target').html("<%= j(render partial: 'study_file_bundle_btns', locals: {study_file_id: study_file.id.to_s, file_type: 'MM Coordinate Matrix'}) %>")
             }
 				},
 				done: function(e, data) {
-          completeWizardStep('initialize_expression_form_nav');
+				  let stepName = "initialize_<%= allow_only %>_expression_form_nav"
+          completeWizardStep(stepName);
 					var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
 					$.ajax({
 						  url: "<%= update_status_study_path %>",
@@ -147,7 +184,8 @@
                           file: fileName,
                           modal_target: '#expression-parse-modal',
                           partial: 'initialize_expression_form',
-                          selector: expFormId
+                          selector: expFormId_<%= allow_only %>,
+                          allow_only: '<%= allow_only %>'
                       },
                       dataType: 'script'
                   });
@@ -165,7 +203,9 @@
             console.log('Aborting upload on study_file: <%= study_file.id %>');
             launchModalSpinner('#delete-modal-spinner','#delete-modal', function() {
                 $.ajax({
-                    url: "<%= delete_study_file_study_path(@study._id, study_file._id, target: "#expression_form_#{study_file._id}") %>",
+                    url: "<%= delete_study_file_study_path(@study._id, study_file._id,
+                              target: "#expression_form_#{study_file._id}",
+                              allow_only: allow_only || 'all') %>",
                     type: 'DELETE',
                     dataType: 'script'
                 });
@@ -174,7 +214,7 @@
 			});
 		});
 
-      $(expFormId).on('nested:fieldAdded', function(event){
+      $(expFormId_<%= allow_only %>).on('nested:fieldAdded', function(event){
           $('#add-expression-file-info').tooltip('destroy')
           $('#add-expression-file-info').remove()
       })

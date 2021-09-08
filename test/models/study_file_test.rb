@@ -96,7 +96,15 @@ class StudyFileTest < ActiveSupport::TestCase
       )
     )
     assert_equal false, invalid_study_file.valid?
-    assert_equal({expression_file_info: ["is invalid"]}, invalid_study_file.errors.messages)
+    expected_errors = {
+      base: [
+        'Units is not included in the list, ' \
+        'Biosample input type is not included in the list, ' \
+        'Modality is not included in the list, ' \
+        'Library preparation protocol is not included in the list'
+      ]
+    }
+    assert_equal(expected_errors, invalid_study_file.errors.messages)
 
     valid_study_file = StudyFile.new(
       study: Study.new,

@@ -34,6 +34,7 @@ import { validateFile } from 'lib/validation/validate-file'
 import { renderValidationAlert } from 'components/validation/ValidationAlert'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderUploadWizard } from 'components/upload/UploadWizard'
+import { renderRawAssociationSelect } from 'components/upload/RawAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -58,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkMissingAuthToken()
 })
 
+
 window.SCP = window.SCP ? window.SCP : {}
 // SCP expects these variables to be global.
 //
@@ -70,6 +72,7 @@ window.morpheus = morpheus
 window.SCP.log = log
 window.SCP.API = ScpApi
 window.SCP.renderClusterAssociationSelect = renderClusterAssociationSelect
+window.SCP.renderRawAssociationSelect = renderRawAssociationSelect
 window.SCP.renderExploreView = renderExploreView
 window.SCP.getFeatureFlagsWithDefaults = getFeatureFlagsWithDefaults
 window.SCP.renderValidationAlert = renderValidationAlert
