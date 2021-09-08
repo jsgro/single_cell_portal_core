@@ -19,8 +19,8 @@ export async function readLinesAndType(file, numLines) {
       const enc = new TextDecoder('utf-8')
       const rawString = enc.decode(bufferSlice)
       const lines = rawString.split(/\r?\n/).slice(0, numLines)
-      const fileType = file.type
-      resolve({ lines, fileType })
+      const mimeType = file.type
+      resolve({ lines, mimeType })
     }
 
     reader.onerror = reject

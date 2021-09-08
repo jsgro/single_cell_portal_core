@@ -303,6 +303,22 @@ class SingleCellMailer < ApplicationMailer
     @submissions = SummaryStatsUtils.analysis_submission_count
     @studies_created = SummaryStatsUtils.daily_study_creation_count
 
+    @deletion_info = []
+    @creation_info = []
+    @updated_info = []
+    begin
+      # I suspect there are a LOT of edge cases related to deleted objects/queued for deletion objects
+      # that may throw errors when we are querying records.
+      # I've done my best to handle a few, and I'm wrapping these analytics methods in a separate rescue block
+      # to help ensure they don't mess up the report
+      @deletion_info = SummaryStatsUtils.deleted_studies_info
+      @creation_info = SummaryStatsUtils.created_studies_info
+      @updated_info = SummaryStatsUtils.updated_studies_info
+    rescue => e
+      ErrorTracker.report_exception(e, 'cron')
+    end
+
+
     # get number of ingest runs for the day
     @ingest_runs = SummaryStatsUtils.ingest_run_count
 

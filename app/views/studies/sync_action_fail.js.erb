@@ -1,5 +1,14 @@
+// populate window.SCP.currentStudyFiles with information about all known StudyFiles
+// calling study.reload avoids caching issues in case files have recently updated
+window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
+
 <% if !@study_file.nil? %>
   $('<%= @form %>').replaceWith("<%= escape_javascript(render partial: @partial, locals: {study_file: @study_file}) %>");
 <% else %>
   $('<%= @form %>').replaceWith("<%= escape_javascript(render partial: 'directory_listing_form', locals: {directory: @directory}) %>");
 <% end %>
+
+$('.expression-file-info-fields').each(function(index, element) {
+  let formId = $(element).closest('form').attr('id')
+  $(`#${formId}`).trigger('updateRawCountsSelect')
+})

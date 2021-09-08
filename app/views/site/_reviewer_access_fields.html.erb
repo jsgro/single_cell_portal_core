@@ -28,7 +28,7 @@
       </div>
     </div>
     <div class="col-md-6 left-border-0-5-gray">
-      <h4>Current Access Credentials <a id="copy-reviewer-creds" class="btn btn-default btn-sm btn-copy"
+      <h4>Current Reviewer Access Credentials <a id="copy-reviewer-creds" class="btn btn-default btn-sm btn-copy"
                                              data-toggle="tooltip" title="" data-original-title="Show PIN & copy to clipboard">
                                              <i class="far fa-copy"></i></a>
       </h4>
@@ -40,7 +40,7 @@
           <strong>PIN:</strong>&nbsp;<span id="reviewer-pin"><%= '*' * ReviewerAccess::PIN_LENGTH %></span>
         </p>
       <% else %>
-        <h4 class="text-danger">DISABLED</h4>
+        <span class="detail">none</span>
       <% end %>
     </div>
   </div>

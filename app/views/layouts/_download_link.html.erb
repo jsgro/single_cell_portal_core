@@ -1,5 +1,5 @@
 <% if @user_embargoed %>
-    <span class="label label-warning embargoed-file"><i class="fas fa-ban"></i> Not available until <%= @study.embargo.to_s(:long) %></span>
+    <span class="label label-warning embargoed-file"><i class="fas fa-ban"></i> Data Release Date: <%= @study.embargo.to_s(:long) %></span>
 <% else %>
   <% if study_file.upload_file_name.nil? && study_file.human_data %>
       <%= link_to "<span class='fas fa-cloud-download'></span> External".html_safe, study_file.download_path, class: 'btn btn-primary', target: :_blank, data: {"analytics-name": 'file-download:study-single:external'} %>

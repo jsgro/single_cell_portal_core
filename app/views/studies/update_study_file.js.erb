@@ -1,7 +1,19 @@
-$("<%= @selector %>").replaceWith("<%= escape_javascript( render @partial, {study_file: @study_file}) %>");
+// populate window.SCP.currentStudyFiles with information about all known StudyFiles
+// calling study.reload avoids caching issues in case files have recently updated
+window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
+
+$("<%= @selector %>").replaceWith("<%= escape_javascript( render @partial, {study_file: @study_file, allow_only: @allow_only }) %>");
 $("#study-files-notice-target").html("<%= escape_javascript( render partial: 'studies/study_file_notices', locals: {message: @message}) %>");
 
 // get instance of new form as ID has changed
 var wizForm = $('.<%= params[:partial] %>').slice(-1)[0];
 
 $(wizForm).find('[data-toggle="tooltip"]').tooltip({container: 'body'});
+
+// emit event to trigger updates to all raw count select inputs if this file was a raw counts matrix
+if (<%= @study_file.is_raw_counts_file? %>) {
+  $('.expression-file-info-fields').each(function(index, element) {
+    let formId = $(element).closest('form').attr('id')
+    $(`#${formId}`).trigger('updateRawCountsSelect')
+  })
+}
