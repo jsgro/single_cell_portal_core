@@ -247,6 +247,7 @@ module Api
             "isSubsampled": cluster.subsampled?,
             "isAnnotatedScatter": is_annotated_scatter,
             "isCorrelatedScatter": is_correlated_scatter,
+            "isSpatial": cluster.study_file.is_spatial,
             "numPoints": cluster.points,
             "axes": axes_full,
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
