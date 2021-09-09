@@ -29,8 +29,8 @@ const helpModalContent = (<div>
   <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006431-Search-Studies"
      target="_blank" rel="noreferrer">documentation
   </a>.  Study authors looking to make their studies more accessible can read our
-  <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview"
-     target="_blank" rel="noreferrer"> metadata guide
+  <a href="https://singlecell.zendesk.com/hc/en-us/articles/4406379107355-Metadata-powered-Advanced-Search"
+    target="_blank" rel="noreferrer"> metadata guide
   </a>.
 </div>)
 
