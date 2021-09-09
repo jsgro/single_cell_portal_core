@@ -17,7 +17,6 @@ class BillingProjectsController < ApplicationController
 
   respond_to :html, :js, :json
   before_action :authenticate_user!
-  before_action :check_user_provider, except: :access_request
   before_action :check_firecloud_registration, except: :access_request
   before_action :check_firecloud_status, except: :access_request
   before_action :create_firecloud_client, except: :access_request
@@ -32,8 +31,6 @@ class BillingProjectsController < ApplicationController
 
   # get available billing accounts & projects
   def index
-    billing_accounts = @fire_cloud_client.get_billing_accounts
-    @accounts = billing_accounts.map {|account| [account['displayName'], account['accountName']]}
     @projects = {}
     billing_projects = @fire_cloud_client.get_billing_projects
 
@@ -45,30 +42,6 @@ class BillingProjectsController < ApplicationController
           role: project['role'],
           members: project['role'] == 'Owner' ?  @fire_cloud_client.get_billing_project_members(project_name) : nil
       }
-    end
-  end
-
-  # since we can't redirect to a POST, we must render a page asking for the user to re-authenticate w/ billing scope
-  # this page has link with :POST link
-  def access_request
-
-  end
-
-  # create a firecloud billing project
-  def create
-    project_name = billing_project_params[:project_name]
-    billing_account = billing_project_params[:billing_account]
-    begin
-      # create project
-      @fire_cloud_client.create_billing_project(project_name, billing_account)
-      # add portal service account to project
-      @fire_cloud_client.add_user_to_billing_project(project_name, 'owner', @portal_service_account)
-      redirect_to merge_default_redirect_params(billing_projects_path, scpbr: params[:scpbr]), notice: "Your new project '#{project_name}' was successfully created using '#{billing_account}'" and return
-    rescue => e
-      ErrorTracker.report_exception(e, current_user, params)
-      logger.error "Unable to create new billing project #{project_name} due to error: #{e.message}"
-      redirect_to merge_default_redirect_params(billing_projects_path, scpbr: params[:scpbr]),
-                  alert: "We were unable to create your new project due to the following error: #{e.message}.  #{SCP_SUPPORT_EMAIL}" and return
     end
   end
 
@@ -227,13 +200,6 @@ class BillingProjectsController < ApplicationController
   # AUTH/PERMISSON CHECKS
   #
   ##
-
-  def check_user_provider
-    # when authenticating with cloud-billing.readonly scope, user.provider will be set to 'google_billing'
-    if user_signed_in? && current_user.provider != 'google_billing'
-      redirect_to billing_projects_access_request_path and return
-    end
-  end
 
   # make sure a user is registered for firecloud before showing billing information
   def check_firecloud_registration

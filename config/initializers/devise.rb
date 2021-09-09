@@ -240,17 +240,9 @@ Devise.setup do |config|
   # up on your models and hooks.
   # config.omniauth :github, 'APP_ID', 'APP_SECRET', scope: 'user,public_repo'
 
-  config.omniauth :google, ENV['OAUTH_CLIENT_ID'], ENV['OAUTH_CLIENT_SECRET'],
-                  name: 'google', prompt: 'consent', access_type: 'offline',
-                  strategy_class: OmniAuth::Strategies::GoogleOauth2,
-                  :client_options => {:ssl => {:ca_file => '/etc/pki/tls/certs/ca-bundle.crt'} },
-                  skip_jwt: Rails.env.development? ? true : false
-
-  config.omniauth :google_billing, ENV['OAUTH_CLIENT_ID'], ENV['OAUTH_CLIENT_SECRET'],
-                  name: 'google_billing', prompt: 'consent', access_type: 'offline',
-                  scope: SingleCellPortal::Application::EXTENDED_GOOGLE_SCOPES.join(' '),
-                  strategy_class: OmniAuth::Strategies::GoogleOauth2,
-                  :client_options => {:ssl => {:ca_file => '/etc/pki/tls/certs/ca-bundle.crt'} },
+  config.omniauth :google_oauth2, ENV['OAUTH_CLIENT_ID'], ENV['OAUTH_CLIENT_SECRET'],
+                  prompt: 'consent', access_type: 'offline',
+                  client_options: { ssl: { ca_file: '/etc/pki/tls/certs/ca-bundle.crt' } },
                   skip_jwt: Rails.env.development? ? true : false
 
   # ==> Warden configuration
