@@ -28,7 +28,7 @@
     <div class="col-lg-2">
       <%= f.label :biosample_input_type, label_with_asterisk('Biosample Input Type') %><br />
       <%= f.select :biosample_input_type, options_for_select(ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES, f.object.study_file.name.present? ? f.object.biosample_input_type : 'Whole cell'),
-                   {include_blank: 'Select One...'}, class: 'form-control' %>
+                   {include_blank: 'Select one...'}, class: 'form-control' %>
 
     </div>
     <div class="col-lg-2">
