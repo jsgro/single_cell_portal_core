@@ -44,7 +44,7 @@ class BrandingGroupsController < ApplicationController
         # push all branding assets to remote to ensure consistency
         UserAssetService.delay.push_assets_to_remote(asset_type: :branding_images)
         format.html { redirect_to merge_default_redirect_params(branding_group_path(@branding_group), scpbr: params[:scpbr]),
-                                  notice: "Branding group '#{@branding_group.name}' was successfully created." }
+                                  notice: "Collection '#{@branding_group.name}' was successfully created." }
         format.json { render :show, status: :created, location: @branding_group }
       else
         format.html { render :new }
@@ -59,7 +59,7 @@ class BrandingGroupsController < ApplicationController
     respond_to do |format|
       if @branding_group.update(branding_group_params)
         format.html { redirect_to merge_default_redirect_params(branding_group_path(@branding_group), scpbr: params[:scpbr]),
-                                  notice: "Branding group '#{@branding_group.name}' was successfully updated." }
+                                  notice: "Collection '#{@branding_group.name}' was successfully updated." }
         format.json { render :show, status: :ok, location: @branding_group }
       else
         format.html { render :edit }
@@ -75,7 +75,7 @@ class BrandingGroupsController < ApplicationController
     @branding_group.destroy
     respond_to do |format|
       format.html { redirect_to merge_default_redirect_params(branding_groups_path, scpbr: params[:scpbr]),
-                                notice: "Branding group '#{name}' was successfully destroyed." }
+                                notice: "Collection '#{name}' was successfully destroyed." }
       format.json { head :no_content }
     end
   end
