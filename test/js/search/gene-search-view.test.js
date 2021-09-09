@@ -1,19 +1,10 @@
-import React from 'react';
-import * as ReactAll from 'react';
-import { mount } from 'enzyme';
-import * as Reach from '@reach/router'
-
-const fetch = require('node-fetch');
-
+import React from 'react'
+import { mount } from 'enzyme'
 import GeneSearchView from 'components/search/genes/GeneSearchView'
-import SearchPanel from 'components/search/controls/SearchPanel'
 import { PropsStudySearchProvider } from 'providers/StudySearchProvider'
-import { PropsGeneSearchProvider, GeneSearchContext, emptySearch } from 'providers/GeneSearchProvider'
-import { UserContext } from 'providers/UserProvider'
-import StudyResultsPanel from 'components/search/results/ResultsPanel'
+import { GeneSearchContext, emptySearch } from 'providers/GeneSearchProvider'
 import StudySearchResult from 'components/search/results/StudySearchResult'
-import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
-import * as ScpAPI from 'lib/scp-api'
+
 
 describe('Gene search page landing', () => {
   it('shows study details when empty', async () => {
