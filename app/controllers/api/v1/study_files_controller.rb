@@ -191,24 +191,17 @@ module Api
 
       # POST /single_cell/api/v1/studies/:study_id/study_files
       def create
-        # since there is no species/assembly attribute for study_files, we need to prune that from study_file_params
-        create_params = study_file_params.to_unsafe_hash
-        # manually check first if species/assembly was supplied by name
-        species_name = create_params[:species]
-        create_params.delete(:species)
-        assembly_name = create_params[:assembly]
-        create_params.delete(:assembly)
-        @study_file = @study.study_files.build(create_params)
-        set_taxon_and_assembly_by_name({species: species_name, assembly: assembly_name})
-        if @study_file.save
-          # send data to FireCloud if upload was performed
-          if study_file_params[:upload].present?
-            @study.delay.send_to_firecloud(@study_file)
+        @study_file = StudyFile.new
+        begin
+          result = perform_update(@study_file)
+          if result
+            render :show
+          else
+            render json: {errors: @study_file.errors}, status: :unprocessable_entity
           end
-          @study_file.update(status: 'uploaded') # set status to uploaded on full create
-          render :show
-        else
-          render json: {errors: @study_file.errors}, status: :unprocessable_entity
+        rescue => e
+          byebug
+          render json: {errors: e.message}, status: 500
         end
       end
 
@@ -271,6 +264,22 @@ module Api
 
       # PATCH /single_cell/api/v1/studies/:study_id/study_files/:id
       def update
+        begin
+          result = perform_update(@study_file)
+          if result
+            render :show
+          else
+            render json: {errors: @study_file.errors}, status: :unprocessable_entity
+          end
+        rescue => e
+          byebug
+          render json: {errors: e.message}, status: 500
+        end
+      end
+
+      # update the given study file with the request params and save it
+      # returns true/false depending on the success of the save
+      def perform_update(study_file)
         # since there is no species/assembly attribute for study_files, we need to prune that from study_file_params
         update_params = study_file_params.to_unsafe_hash
         # manually check first if species/assembly was supplied by name
@@ -279,43 +288,44 @@ module Api
         assembly_name = update_params[:assembly]
         update_params.delete(:assembly)
         set_taxon_and_assembly_by_name({species: species_name, assembly: assembly_name})
-
+        # clear the id so that it doesn't get overwritten (which would be a problem for new files)
+        update_params.delete(:_id)
         # check if the name of the file has changed as we won't be able to tell after we saved
-        name_changed = @study_file.name != update_params[:name]
-        if @study_file.update(update_params)
+        name_changed = study_file.persisted? && study_file.name != update_params[:name]
+        if study_file.update(update_params)
           # invalidate caches first
-          @study_file.delay.invalidate_cache_by_file_type
+          study_file.delay.invalidate_cache_by_file_type
 
           # send data to FireCloud if upload was performed
           if study_file_params[:upload].present?
-            @study.delay.send_to_firecloud(@study_file)
+            @study.delay.send_to_firecloud(study_file)
             @study_file.update(status: 'uploaded') # set status to uploaded on full create
           end
 
-          if ['Cluster', 'Coordinate Labels', 'Gene List'].include?(@study_file.file_type) && @study_file.valid?
-            @study_file.invalidate_cache_by_file_type
+          if ['Cluster', 'Coordinate Labels', 'Gene List'].include?(study_file.file_type) && study_file.valid?
+            study_file.invalidate_cache_by_file_type
           end
           # if a gene list or cluster got updated, we need to update the associated records
           if study_file_params[:file_type] == 'Gene List' && name_changed
             @precomputed_entry = PrecomputedScore.find_by(study_file_id: study_file_params[:_id])
             logger.info "Updating gene list #{@precomputed_entry.name} to match #{study_file_params[:name]}"
-            @precomputed_entry.update(name: @study_file.name)
+            @precomputed_entry.update(name: study_file.name)
           elsif study_file_params[:file_type] == 'Cluster' && name_changed
             @cluster = ClusterGroup.find_by(study_file_id: study_file_params[:_id])
             logger.info "Updating cluster #{@cluster.name} to match #{study_file_params[:name]}"
             # before updating, check if the defaults also need to change
             if @study.default_cluster == @cluster
-              @study.default_options[:cluster] = @study_file.name
+              @study.default_options[:cluster] = study_file.name
               @study.save
             end
-            @cluster.update(name: @study_file.name)
+            @cluster.update(name: study_file.name)
           elsif ['Expression Matrix', 'MM Coordinate Matrix'].include?(study_file_params[:file_type]) && !study_file_params[:y_axis_label].blank?
             # if user is supplying an expression axis label, update default options hash
             @study.update(default_options: @study.default_options.merge(expression_label: study_file_params[:y_axis_label]))
           end
-          render :show
+          return true
         else
-          render json: {errors: @study_file.errors}, status: :unprocessable_entity
+          return false
         end
       end
 

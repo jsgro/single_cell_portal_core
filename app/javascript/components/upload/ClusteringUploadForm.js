@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import ReactDOMServer from 'react-dom/server'
 import _cloneDeep from 'lodash/cloneDeep'
+import _uniqueId from 'lodash/uniqueId'
 
 import UploadSteps from './UploadSteps'
 import { bytesToSize } from 'lib/stats'
@@ -17,9 +18,11 @@ export default function ClusteringUploadForm({ studyState, setStudyState, formSt
     const newState = _cloneDeep(formState)
     newState.files.push({
       name: '',
-      id: 'NEW',
+      id: _uniqueId('newClusterFile-'),
       file_type: 'Cluster',
+      is_spatial: false,
       status: 'new',
+      description: '',
       parse_status: 'unparsed'
     })
     setFormState(newState)

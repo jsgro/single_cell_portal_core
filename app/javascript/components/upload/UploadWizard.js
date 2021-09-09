@@ -84,7 +84,7 @@ function StepTitle({ stepName, index, currentStep, setCurrentStep, studyState, f
           statusIcon = <span className="statusIcon fas fa-asterisk fa-sm"></span>
         }
         return <li key={file.name}>
-          <span className={file.isDirty ? 'dirty' : ''}>{file.name} {statusIcon}</span>
+          <span className={file.isDirty ? 'dirty' : ''}>{statusIcon} {file.name}</span>
         </li>
       })
       }
