@@ -34,6 +34,9 @@
   float: left;
   margin-top: 66px;
   margin-left: 35px;
+  img {
+    max-height: 100px;
+  }
 }
 
 #scp-logo {
@@ -200,4 +203,20 @@
 .hide-processed-disclaimer {
   display: none;
   z-index: -1000;
+}
+
+.collections-list li {
+  display: flex;
+  padding: 1em 0em 1em 0em;
+  border-bottom: 1px solid #ccc;
+  .collections-logo {
+    width: 180px;
+    img {
+      max-width: 180px;
+    }
+  }
+  .collections-name {
+    text-align: left;
+    padding-left: 2em;
+  }
 }
