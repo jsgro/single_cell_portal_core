@@ -12,10 +12,9 @@ import StudySearchProvider, { StudySearchContext } from 'providers/StudySearchPr
 import SearchFacetProvider from 'providers/SearchFacetProvider'
 import UserProvider from 'providers/UserProvider'
 import ErrorBoundary from 'lib/ErrorBoundary'
-import * as queryString from 'query-string'
 
 /** include search controls and results */
-export function StudySearchView({ advancedSearchDefault }) {
+export function StudySearchView() {
   const studySearchState = useContext(StudySearchContext)
   return <>
     <SearchPanel searchOnLoad={true}/>
@@ -29,9 +28,7 @@ const LinkableSearchTabs = function(props) {
   const location = useLocation()
   const basePath = location.pathname.includes('covid19') ? '/single_cell/covid19' : '/single_cell'
   const showGenesTab = location.pathname.includes('/app/genes')
-  const queryParams = queryString.parse(location.search)
   // the queryParams object does not support the more typical hasOwnProperty test
-  const advancedSearchDefault = ('advancedSearch' in queryParams)
   return (
     <div>
       <nav className="nav search-links" data-analytics-name="search" role="tablist">
@@ -47,7 +44,7 @@ const LinkableSearchTabs = function(props) {
       <div className="tab-content top-pad">
         <Router basepath={basePath}>
           <GeneSearchView path="app/genes"/>
-          <StudySearchView advancedSearchDefault={advancedSearchDefault} default/>
+          <StudySearchView default/>
         </Router>
       </div>
     </div>

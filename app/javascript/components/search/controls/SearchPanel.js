@@ -20,8 +20,8 @@ const helpModalContent = (<div>
   ~<b>{percentage}% ({compliantStudies} of {publicStudies})</b> public studies in SCP provide this metadata
   information.
   {/*
-  84 of 353 studies as of 2021-06-22,
-  per https://docs.google.com/spreadsheets/d/1FSpP2XTrG9FqAqD9X-BHxkCZae9vxZA3cQLow8mn-bk
+   more information on public/compliant studies available at
+   https://docs.google.com/spreadsheets/d/1FSpP2XTrG9FqAqD9X-BHxkCZae9vxZA3cQLow8mn-bk
 */}
   <br/><br/>
   For more detailed information, visit

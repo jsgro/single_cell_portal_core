@@ -1494,11 +1494,6 @@ class Study
   #
   ###
 
-  # get a quick count of all public studies that have compliant metadata
-  def self.public_compliant
-    self.where(public: true).select { |s| s.metadata_file&.use_metadata_convention? }.count
-  end
-
   # check if all files for this study are still present in the bucket
   # does not check generation tags for consistency - this is just a presence check
   def verify_all_remotes
