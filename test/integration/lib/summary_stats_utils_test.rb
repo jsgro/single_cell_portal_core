@@ -121,4 +121,23 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
     assert_equal({'public' => 1, 'file updates' => 2},  study_update[:updates])
   end
 
+  test 'should get study stats' do
+    studies = Study.where(queued_for_deletion: false)
+    public = studies.where(public: true)
+    existing_public = public.count
+    existing_compliant = public.select { |s| s.metadata_file&.use_metadata_convention }.count
+    stats = SummaryStatsUtils.study_counts
+    assert_equal studies.count, stats[:all]
+    assert_equal existing_public, stats[:public]
+    assert_equal existing_compliant, stats[:compliant]
+    new_study = FactoryBot.create(:detached_study, name_prefix: 'public compliant stats', test_array: @@studies_to_clean)
+    FactoryBot.create(:metadata_file, name: 'compliant.txt', study: new_study, use_metadata_convention: true)
+    updated_stats = SummaryStatsUtils.study_counts
+    updated_studies = studies.count
+    updated_public = public.count
+    updated__compliant = public.select { |s| s.metadata_file&.use_metadata_convention }.count
+    assert_equal updated_studies, updated_stats[:all]
+    assert_equal updated_public, updated_stats[:public]
+    assert_equal updated__compliant, updated_stats[:compliant]
+  end
 end

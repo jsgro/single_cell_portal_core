@@ -58,6 +58,9 @@
       // Where else is `userId` used?  Consider removing this raw global.
       var userId = window.SCP.userId;
 
+      // stats for search UI
+      window.SCP.studyStats = <%= SummaryStatsUtils.study_counts.to_json.html_safe %>;
+
       window.ga=window.ga||function() {(ga.q=ga.q||[]).push(arguments)}; ga.l=+new Date
       ga('create', window.SCP.gaTrackingId, 'auto')
       ga('set', 'userId', window.SCP.userId)

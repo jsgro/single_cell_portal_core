@@ -1,11 +1,10 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StudyResults from './StudyResults'
 import StudySearchResult from './StudySearchResult'
 import SearchQueryDisplay from './SearchQueryDisplay'
-import { UserContext } from 'providers/UserProvider'
 import { getNumFacetsAndFilters } from 'providers/StudySearchProvider'
 import { serverErrorEnd } from 'lib/error-utils'
 
@@ -17,7 +16,6 @@ import { serverErrorEnd } from 'lib/error-utils'
  * will be used
  */
 const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) => {
-  const featureFlagState = useContext(UserContext).featureFlagsWithDefaults
   const results = studySearchState.results
 
   let panelContent
@@ -37,8 +35,7 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
   } else if (results.studies && results.studies.length > 0) {
     panelContent = (
       <>
-        { featureFlagState && featureFlagState.faceted_search &&
-          <SearchQueryDisplay terms={results.termList} facets={results.facets}/> }
+        { <SearchQueryDisplay terms={results.termList} facets={results.facets}/> }
         <StudyResults
           results={results}
           StudyComponent={studyComponent ? studyComponent : StudySearchResult}
