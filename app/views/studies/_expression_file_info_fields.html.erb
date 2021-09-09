@@ -35,7 +35,7 @@
       <%= f.label :library_preparation_protocol, label_with_asterisk('Library Preparation Protocol') %><br />
       <%= f.select :library_preparation_protocol,
                    options_for_select(ExpressionFileInfo::LIBRARY_PREPARATION_VALUES, f.object.study_file.name.present? ? f.object.library_preparation_protocol : nil),
-                   {include_blank: 'Select One...'}, class: 'form-control' %>
+                   {include_blank: 'Select one...'}, class: 'form-control' %>
     </div>
     <div class="col-lg-4">
       <%= f.label :modality, label_with_asterisk('Modality') %><br />
