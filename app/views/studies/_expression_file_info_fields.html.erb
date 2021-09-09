@@ -40,7 +40,7 @@
     <div class="col-lg-4">
       <%= f.label :modality, label_with_asterisk('Modality') %><br />
       <%= f.select :modality, options_for_select(ExpressionFileInfo::MODALITY_VALUES, f.object.study_file.name.present? ? f.object.modality : 'Transcriptomic: unbiased'),
-                   {include_blank: 'Select One...'}, class: 'form-control' %>
+                   {include_blank: 'Select one...'}, class: 'form-control' %>
     </div>
   </div>
 </div>
