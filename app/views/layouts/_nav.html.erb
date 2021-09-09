@@ -40,7 +40,7 @@
               <li><%= link_to "<span class='fas fa-flask fa-fw'></span> Analyses".html_safe, analysis_configurations_path, class: 'check-upload', id: 'analysis-nav' %></li>
               <li><%= link_to "<span class='fas fa-search fa-fw'></span> Preset Searches".html_safe, preset_searches_path, class: 'check-upload', id: 'preset-nav' %></li>
               <li><%= link_to "<span class='fas fa-dna fa-fw'></span> Species".html_safe, taxons_path, class: 'check-upload', id: 'species-nav' %></li>
-              <li><%= scp_link_to "<span class='fas fa-copyright fa-fw'></span> Branding Groups".html_safe, branding_groups_path, class: 'check-upload', id: 'branding-groups-nav' %>
+              <li><%= scp_link_to "<span class='fas fa-copyright fa-fw'></span> Collections".html_safe, branding_groups_path, class: 'check-upload', id: 'branding-groups-nav' %>
             <% end %>
             <% if current_user.acts_like_reporter? %>
               <li><%= link_to "<span class='fas fa-chart-area fa-fw'></span> Reports".html_safe, reports_path, class: 'check-upload', id: 'reports-nav' %></li>
@@ -53,7 +53,7 @@
             <li><%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Create a Study".html_safe, new_study_path, class: 'check-upload' %></li>
             <% if current_user.available_branding_groups.any? %>
               <li role="separator" class="divider"></li>
-              <li class="dropdown-header">My Brands</li>
+              <li class="dropdown-header">My Collections</li>
               <% current_user.available_branding_groups.each do |branding_group| %>
                 <li id="<%= branding_group.name_as_id %>-nav"><%= link_to "<i class='fas fa-copyright fa-fw'></i> #{branding_group.name}".html_safe, site_path(scpbr: branding_group.name_as_id) %></li>
               <% end %>

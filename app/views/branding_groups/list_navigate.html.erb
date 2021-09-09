@@ -1,12 +1,12 @@
 <h2 class="text-center">Collections</h2>
-
+<span>Collections are curated groups of studies which share a common research theme. If your organization is interested in creating a collection within SCP, contact us at <%= mail_to 'scp-support@broadinstitute.zendesk.com', 'scp-support@broadinstitute.zendesk.com' %></span>
 <div class="row">
   <div class="col-md-12">
     <ul class="collections-list">
       <% @branding_groups.each do |branding_group| %>
         <li id="<%= branding_group.name_as_id %>">
           <div class="collections-logo">
-            <% if branding_group.splash_image.url.present? %>
+            <% if branding_group.splash_image.filename.present? %>
               <%= link_to image_tag(branding_group.splash_image.url), site_path(scpbr: branding_group.name_as_id) %>
             <% end %>
           </div>
@@ -19,7 +19,7 @@
               <%= link_to branding_group.external_link_description.html_safe + " <span class='fas fa-fw fa-external-link-alt'></span> ".html_safe , branding_group.external_link_url, target: '_blank'%>
             <% end %>
           </div>
-          <div>
+          <div class="collections-actions">
             <% if @editable_branding_groups.include?(branding_group) %>
               <%= scp_link_to "<i class='fas fa-search'></i> Info".html_safe, branding_group_path(branding_group), class: "btn btn-xs btn-info #{branding_group.name_as_id}-show" %>
               <%= scp_link_to "<i class='fas fa-edit'></i> Edit".html_safe, edit_branding_group_path(branding_group), class: "btn btn-xs btn-primary #{branding_group.name_as_id}-edit" %>
@@ -41,4 +41,3 @@
     </ul>
   </div>
 </div>
-<span>Collections are curated groups of studies which share a common research theme. If your organization is interested in creating a collection within SCP, contact us at <%= mail_to 'scp-support@broadinstitute.zendesk.com', 'scp-support@broadinstitute.zendesk.com' %></span>
