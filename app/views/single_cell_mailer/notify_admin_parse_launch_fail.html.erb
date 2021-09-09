@@ -23,5 +23,6 @@
   study = Study.find_by(accession: '<%= @study.accession %>')
   study_file = study.study_files.detect {|file| file.upload_file_name == '<%= @study_file.upload_file_name %>'}
   user = User.find_by(email: '<%= @user.email %>')
+  study_file.update(parse_status: 'unparsed')
   FileParseService.run_parse_job(study_file, study, user)
 </strong></pre>
