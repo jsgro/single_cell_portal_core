@@ -79,4 +79,16 @@ class FeatureFlagTest < ActiveSupport::TestCase
     exception = assert_raise(Exception) { @user.update!(feature_flags: {'my_feature_flag': 3}) }
     assert_equal 'Invalid feature flag input - value must be boolean', exception.message
   end
+
+  test 'should retire feature flag' do
+    flag_name = :new_flag
+    FeatureFlag.create(name: flag_name.to_s, default_value: false)
+    @user.update(feature_flags: { flag_name => true })
+    @user.reload
+    assert User.feature_flag_for_instance(@user, flag_name)
+    FeatureFlag.retire_feature_flag(flag_name)
+    @user.reload
+    assert_not User.feature_flag_for_instance(@user, flag_name)
+    assert_nil FeatureFlag.find_by(name: flag_name)
+  end
 end
