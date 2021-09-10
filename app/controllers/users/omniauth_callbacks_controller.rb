@@ -46,7 +46,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       # trim auth URL off of name for comparison
       scope_name = scope.starts_with?('https://www.googleapis.com/auth/') ? scope.split('/').last : scope
       if !configured_scopes.include?(scope_name)
-        error_message = "Invalid scope requested in OAuth callback: #{scope_name}, not configured for #{provider}: #{configured_scopes}"
+        error_message = "Invalid scope requested in OAuth callback: #{scope_name}, not in: #{configured_scopes}"
         raise SecurityError.new(error_message)
       end
     end

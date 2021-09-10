@@ -5,7 +5,7 @@ class User::OmniauthCallbacksControllerTest < ActiveSupport::TestCase
   include TestInstrumentor
 
   setup do
-    @google_params = { scope:  SingleCellPortal::Application::BASIC_GOOGLE_SCOPES.join(' ') }
+    @google_params = { scope: SingleCellPortal::Application::BASIC_GOOGLE_SCOPES.join(' ') }
   end
 
   test 'should validate basic scopes from params' do
