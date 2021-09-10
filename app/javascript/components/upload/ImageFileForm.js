@@ -1,0 +1,61 @@
+import React from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faDna } from '@fortawesome/free-solid-svg-icons'
+import Select from 'react-select'
+
+import FileUploadControl from './FileUploadControl'
+import { TextFormField } from './uploadUtils'
+
+/** renders a form for editing/uploading a single cluster file */
+export default function ImageFileForm({
+  file,
+  updateFile,
+  saveFile,
+  deleteFile,
+  handleSaveResponse,
+  associatedClusterFileOptions,
+  updateCorrespondingClusters
+}) {
+
+
+  const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
+  return <div className="row top-margin" key={file._id}>
+    <div className="col-md-12">
+      <form id={`clusterForm-${file._id}`}
+        className="form-terra"
+        acceptCharset="UTF-8">
+        <FileUploadControl
+          handleSaveResponse={handleSaveResponse}
+          file={file}
+          updateFile={updateFile}
+          allowedFileTypes={window.ALLOWED_FILE_TYPES['plainText']}/>
+        <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
+        <div className="form-group">
+          <label>Corresponding clusters / spatial data:</label><br/>
+          <Select options={associatedClusterFileOptions}
+            value={spatialClusterAssocs}
+            isMulti={true}
+            placeholder="None"
+            onChange={val => updateCorrespondingClusters(file, val)}/>
+        </div>
+        <div className="form-group">
+          <TextFormField label="Description / Legend (this will be displayed below image)" fieldName="description" file={file} updateFile={updateFile}/>
+        </div>
+
+        <button type="button" className="btn btn-primary" disabled={!file.isDirty} onClick={() => saveFile(file)}>
+          Save
+          { file.submitData && <span> &amp; Upload</span> }
+        </button> &nbsp;
+        <button type="button" className="btn btn-danger cancel float-right" onClick={() => deleteFile(file)}>
+          <i className="fas fa-trash"></i> Delete
+        </button>
+      </form>
+      { file.isSaving &&
+        <div className="saving-overlay">
+          Saving <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
+        </div>
+      }
+    </div>
+
+  </div>
+}

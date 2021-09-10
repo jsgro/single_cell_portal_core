@@ -1,5 +1,8 @@
-import ClusteringForm from './ClusteringForm'
 import React from 'react'
+
+import ClusteringForm from './ClusteringForm'
+import ImageForm from './ImageForm'
+
 
 function RawCountsUploadForm() {
   return <span> Raw counts go here</span>
@@ -15,7 +18,7 @@ function MetadataUploadForm() {
   return <span>Meta-----data</span>
 }
 
-export const STEP_ORDER = ['rawCounts', 'processedExpression', 'metadata', 'clustering']
+export const STEP_ORDER = ['rawCounts', 'processedExpression', 'metadata', 'clustering', 'images']
 
 export default {
   rawCounts: {
@@ -37,5 +40,10 @@ export default {
     stepTitle: 'Clustering',
     formComponent: ClusteringForm,
     fileFilter: file => file.file_type === 'Cluster'
+  },
+  images: {
+    stepTitle: 'Images',
+    formComponent: ImageForm,
+    fileFilter: file => file.file_type === 'Image'
   }
 }

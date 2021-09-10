@@ -37,7 +37,8 @@ export default function UploadWizard({ accession, name }) {
       is_spatial: false,
       status: 'new',
       description: '',
-      parse_status: 'unparsed'
+      parse_status: 'unparsed',
+      spatial_cluster_associations: []
     }
     Object.assign(newFile, fileProps)
 
