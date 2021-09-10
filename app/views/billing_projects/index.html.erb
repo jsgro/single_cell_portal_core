@@ -49,8 +49,9 @@
 <p>
   <%= scp_link_to "New Billing Project", '#', class: 'btn btn-lg btn-default', disabled: true,
                    data: {
-                     content: 'Please visit <a href="https://app.terra.bio/#billing" target="_blank">Terra</a> ' + \
-                              'to create a new billing project.',
+                     content: "Please visit the #{link_to 'Terra Billing Console',
+                                                          'https://app.terra.bio/#billing', target: :_blank} " + \
+                              "to create a new billing project.",
                      toggle: 'popover',
                      placement: 'right',
                      html: true,

@@ -40,14 +40,13 @@ class BillingProjectsController < ApplicationController
       @projects[project_name] = {
           status: project['creationStatus'],
           role: project['role'],
-          members: project['role'] == 'Owner' ?  @fire_cloud_client.get_billing_project_members(project_name) : nil
+          members: project['role'] == 'Owner' ? @fire_cloud_client.get_billing_project_members(project_name) : nil
       }
     end
   end
 
   # show new user form
-  def new_user
-  end
+  def new_user; end
 
   # create a new user inside a billing project
   def create_user
@@ -97,7 +96,7 @@ class BillingProjectsController < ApplicationController
           @computes[workspace_name] << {"#{user}" => {can_compute: permission['canCompute'], access_level: permission['accessLevel']} }
         end
       rescue => e
-         ErrorTracker.report_exception(e, current_user, params, { workspace: workspace})
+        ErrorTracker.report_exception(e, current_user, params, { workspace: workspace})
         logger.error "Error loading workspaces from #{params[:project_name]} due to error: #{e.message}"
       end
     end
@@ -115,7 +114,7 @@ class BillingProjectsController < ApplicationController
         @acl[user] = {
             can_compute: permissions['canCompute'],
             can_share: permissions['canShare'],
-            access_level: access_level,
+            access_level: access_level
         }
       end
     end
@@ -126,7 +125,6 @@ class BillingProjectsController < ApplicationController
     # construct form ID from user email
     @email = compute_params[:email]
     @form_id = @email.gsub(/[@\.]/, '-')
-
 
     begin
       # create new acl, and cast share & compute values to Booleans
@@ -193,7 +191,6 @@ class BillingProjectsController < ApplicationController
   def load_service_account
     @portal_service_account = ApplicationController.firecloud_client.storage_issuer
   end
-
 
   ##
   #
