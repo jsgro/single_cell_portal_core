@@ -88,6 +88,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
       "isSubsampled"=>false,
       "isAnnotatedScatter"=>false,
       "isCorrelatedScatter"=>false,
+      "isSpatial"=>false,
       "numPoints"=>3,
       "axes"=>{"titles"=>{"x"=>"X", "y"=>"Y", "z"=>"Z", "magnitude" => "Expression"}, "aspects"=>nil},
       "hasCoordinateLabels"=>false,
