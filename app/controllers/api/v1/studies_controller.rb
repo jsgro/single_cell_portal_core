@@ -82,18 +82,10 @@ module Api
 
       # retrun json of the study, all study file objects, and any options values needed for the upload wizard
       def file_info
-        file_hashes = @study.study_files.map do |sf|
-          sf_hash = sf.attributes
-          sf_hash[:expression_file_info] = sf.expression_file_info.try(:attributes)
-          sf_hash[:id] = sf.id.to_s
-          sf_hash[:description] = sf.description ? sf.description : ''
-          sf_hash
-        end
         response_obj = {
           study: @study.attributes,
-          files: file_hashes
+          files: @study.study_files
         }
-        response_obj[:study][:id] = @study.id.to_s
         render json: response_obj
       end
 

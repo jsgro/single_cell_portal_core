@@ -280,6 +280,8 @@ module Api
       # update the given study file with the request params and save it
       # returns true/false depending on the success of the save
       def perform_update(study_file)
+        byebug
+        safe_file_params = study_file_params
         # since there is no species/assembly attribute for study_files, we need to prune that from study_file_params
         update_params = study_file_params.to_unsafe_hash
         # manually check first if species/assembly was supplied by name
@@ -297,7 +299,7 @@ module Api
           study_file.delay.invalidate_cache_by_file_type
 
           # send data to FireCloud if upload was performed
-          if study_file_params[:upload].present?
+          if safe_file_params[:upload].present?
             @study.delay.send_to_firecloud(study_file)
             @study_file.update(status: 'uploaded') # set status to uploaded on full create
           end
@@ -306,22 +308,26 @@ module Api
             study_file.invalidate_cache_by_file_type
           end
           # if a gene list or cluster got updated, we need to update the associated records
-          if study_file_params[:file_type] == 'Gene List' && name_changed
-            @precomputed_entry = PrecomputedScore.find_by(study_file_id: study_file_params[:_id])
-            logger.info "Updating gene list #{@precomputed_entry.name} to match #{study_file_params[:name]}"
-            @precomputed_entry.update(name: study_file.name)
-          elsif study_file_params[:file_type] == 'Cluster' && name_changed
-            @cluster = ClusterGroup.find_by(study_file_id: study_file_params[:_id])
-            logger.info "Updating cluster #{@cluster.name} to match #{study_file_params[:name]}"
-            # before updating, check if the defaults also need to change
-            if @study.default_cluster == @cluster
-              @study.default_options[:cluster] = study_file.name
-              @study.save
+          if safe_file_params[:file_type] == 'Gene List' && name_changed
+            @precomputed_entry = PrecomputedScore.find_by(study_file_id: safe_file_params[:_id])
+            if @precomputed_entry.present?
+              logger.info "Updating gene list #{@precomputed_entry.name} to match #{safe_file_params[:name]}"
+              @precomputed_entry.update(name: study_file.name)
             end
-            @cluster.update(name: study_file.name)
-          elsif ['Expression Matrix', 'MM Coordinate Matrix'].include?(study_file_params[:file_type]) && !study_file_params[:y_axis_label].blank?
+          elsif safe_file_params[:file_type] == 'Cluster' && name_changed
+            @cluster = ClusterGroup.find_by(study_file_id: safe_file_params[:_id])
+            if @cluster.present?
+              logger.info "Updating cluster #{@cluster.name} to match #{safe_file_params[:name]}"
+              # before updating, check if the defaults also need to change
+              if @study.default_cluster == @cluster
+                @study.default_options[:cluster] = study_file.name
+                @study.save
+              end
+              @cluster.update(name: study_file.name)
+            end
+          elsif ['Expression Matrix', 'MM Coordinate Matrix'].include?(safe_file_params[:file_type]) && !safe_file_params[:y_axis_label].blank?
             # if user is supplying an expression axis label, update default options hash
-            @study.update(default_options: @study.default_options.merge(expression_label: study_file_params[:y_axis_label]))
+            @study.update(default_options: @study.default_options.merge(expression_label: safe_file_params[:y_axis_label]))
           end
           return true
         else
