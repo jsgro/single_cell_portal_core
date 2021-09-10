@@ -5,7 +5,7 @@ import { getAccessToken } from 'providers/UserProvider'
 import { formatFileForApi } from './uploadUtils'
 
 /** renders a file upload control for the given file object */
-export default function FileUploadControl({ file, updateFile, handleSaveResponse }) {
+export default function FileUploadControl({ file, updateFile, handleSaveResponse, allowedFileTypes }) {
   const inputId = `fileInput-${file._id}`
 
   /** Initializes a blueimp fileupload widget on the given elementId that will be bound to the
@@ -34,7 +34,7 @@ export default function FileUploadControl({ file, updateFile, handleSaveResponse
         $.blueimp.fileupload.prototype.options.add.call(selector, e, data)
       },
       headers: { Authorization: `Bearer ${getAccessToken()}` },
-      acceptFileTypes: window.ALLOWED_FILE_TYPES['plainText'],
+      acceptFileTypes: allowedFileTypes,
       filesContainer: null,
       uploadTemplateId: null,
       uploadTemplate: uploadObj => '',

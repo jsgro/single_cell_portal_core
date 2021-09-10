@@ -1,7 +1,8 @@
+import React from 'react'
+
 /** properties used to track file state on the form, but that should not be sent to the server
  *  this also includes properties that are only modifiable on the server (and so should also
  * be ignored server side, but for best hygiene are also just not sent ) */
-
 const PROPERTIES_NOT_TO_SEND = [
   'selectedFile',
   'submitData',
@@ -34,4 +35,19 @@ export function formatFileForApi(file) {
   const cleanFile = {...file}
   PROPERTIES_NOT_TO_SEND.forEach(prop => delete cleanFile[prop])
   return cleanFile
+}
+
+/** renders a basic label->value text field in a bootstrap form control */
+export function TextFormField({ label, fieldName, file, updateFile }) {
+  return <div className="form-group">
+    <label>{label}</label><br/>
+    <input className="form-control"
+      type="text"
+      value={file[fieldName] ? file[fieldName] : ''}
+      onChange={event => {
+        const update = {}
+        update[fieldName] = event.target.value
+        updateFile(file._id, update)
+      }}/>
+  </div>
 }

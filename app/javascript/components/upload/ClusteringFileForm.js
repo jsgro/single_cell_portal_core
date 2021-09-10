@@ -4,6 +4,7 @@ import { faDna } from '@fortawesome/free-solid-svg-icons'
 import Select from 'react-select'
 
 import FileUploadControl from './FileUploadControl'
+import { TextFormField } from './uploadUtils'
 
 /** renders a form for editing/uploading a single cluster file */
 export default function ClusteringFileForm({
@@ -23,15 +24,12 @@ export default function ClusteringFileForm({
       <form id={`clusterForm-${file._id}`}
         className="form-terra"
         acceptCharset="UTF-8">
-        <FileUploadControl handleSaveResponse={handleSaveResponse} file={file} updateFile={updateFile}/>
-        <div className="form-group">
-          <label htmlFor={`clusterNameInput-${file._id}`}>Name</label>
-          <input className="form-control"
-            type="text"
-            id={`clusterNameInput-${file._id}`}
-            value={file.name}
-            onChange={event => updateFile(file._id, { name: event.target.value })}/>
-        </div>
+        <FileUploadControl
+          handleSaveResponse={handleSaveResponse}
+          file={file}
+          updateFile={updateFile}
+          allowedFileTypes={window.ALLOWED_FILE_TYPES['plainText']}/>
+        <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         <div className="form-group">
           <label>Coordinate data type:</label><br/>
           <label className="sublabel">
@@ -52,12 +50,35 @@ export default function ClusteringFileForm({
           </div>
         }
         <div className="form-group">
-          <label htmlFor={`clusterDescriptionInput-${file._id}`}>Description</label>
-          <input className="form-control"
-            type="text"
-            id={`clusterDescriptionInput-${file._id}`}
-            value={file.description}
-            onChange={event => updateFile(file._id, { description: event.target.value })}/>
+          <TextFormField label="Description / Figure Legend (this will be displayed below cluster)" fieldName="description" file={file} updateFile={updateFile}/>
+        </div>
+        <div className="row">
+          <div className="col-md-4">
+            <TextFormField label="X Axis Label" fieldName="x_axis_label" file={file} updateFile={updateFile}/>
+          </div>
+          <div className="col-md-4">
+            <TextFormField label="Y Axis Label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-md-2">
+            <TextFormField label="X Domain Min" fieldName="x_axis_min" file={file} updateFile={updateFile}/>
+          </div>
+          <div className="col-md-2">
+            <TextFormField label="X Domain Max" fieldName="x_axis_max" file={file} updateFile={updateFile}/>
+          </div>
+          <div className="col-md-2">
+            <TextFormField label="Y Domain Min" fieldName="z_axis_min" file={file} updateFile={updateFile}/>
+          </div>
+          <div className="col-md-2">
+            <TextFormField label="Y Domain Max" fieldName="z_axis_max" file={file} updateFile={updateFile}/>
+          </div>
+          <div className="col-md-2">
+            <TextFormField label="Z Domain Min" fieldName="z_axis_min" file={file} updateFile={updateFile}/>
+          </div>
+          <div className="col-md-2">
+            <TextFormField label="Z Domain Max" fieldName="z_axis_max" file={file} updateFile={updateFile}/>
+          </div>
         </div>
 
         <button type="button" className="btn btn-primary" disabled={!file.isDirty} onClick={() => saveFile(file)}>
