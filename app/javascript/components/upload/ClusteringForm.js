@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 
 import UploadSteps from './UploadSteps'
-import FileUploadControl from './FileUploadControl'
+import ClusteringFileForm from './ClusteringFileForm'
 
 const DEFAULT_NEW_CLUSTER_FILE = {
   is_spatial: false,
@@ -24,6 +22,17 @@ export default function ClusteringUploadForm({
 }) {
 
   const clusterFiles = formState.files.filter(UploadSteps.clustering.fileFilter)
+  const associatedClusterFileOptions = clusterFiles.filter(file => !file.is_spatial)
+    .map(file => ({ label: file.name, value: file._id }))
+
+  /** handle a change in the associated cluster select */
+  function updateCorrespondingClusters(file, val) {
+    let newVal = []
+    if (val) {
+      newVal = val.map(opt => opt.value)
+    }
+    updateFile(file._id, { spatial_cluster_associations: newVal })
+  }
 
   useEffect(() => {
     if (clusterFiles.length === 0) {
@@ -74,55 +83,15 @@ export default function ClusteringUploadForm({
       <p className="col-sm-12">* Group values are treated as literal strings, and numerics as floating-point numbers.</p>
     </div>
     { clusterFiles.map(file => {
-      return <div className="row top-margin" key={file._id}>
-
-        <div className="col-md-12">
-          <form id={`clusterForm-${file._id}`}
-            className="form-terra"
-            acceptCharset="UTF-8">
-            <FileUploadControl handleSaveResponse={handleSaveResponse} file={file} updateFile={updateFile}/>
-            <div className="form-group">
-              <label htmlFor={`clusterNameInput-${file._id}`}>Name</label>
-              <input className="form-control"
-                type="text"
-                id={`clusterNameInput-${file._id}`}
-                value={file.name}
-                onChange={event => updateFile(file._id, { name: event.target.value })}/>
-            </div>
-            <div className="form-group">
-              <label>Coordinate data type:</label><br/>
-              <label className="sublabel">
-                <input type="radio" name={`clusterFormSpatial-${file._id}`} value="false" checked={!file.is_spatial} onChange={e => updateFile(file._id, { is_spatial: false })} /> Clustering
-              </label>
-              <label className="sublabel">
-                <input type="radio" name={`clusterFormSpatial-${file._id}`} value="true" checked={file.is_spatial} onChange={e => updateFile(file._id, { is_spatial: true })}/> Spatial transcriptomics positions
-              </label>
-            </div>
-            <div className="form-group">
-              <label htmlFor={`clusterDescriptionInput-${file._id}`}>Description</label>
-              <input className="form-control"
-                type="text"
-                id={`clusterDescriptionInput-${file._id}`}
-                value={file.description}
-                onChange={event => updateFile(file._id, { description: event.target.value })}/>
-            </div>
-
-            <button type="button" className="btn btn-primary" disabled={!file.isDirty} onClick={() => saveFile(file)}>
-              Save
-              { file.submitData && <span> &amp; Upload</span> }
-            </button> &nbsp;
-            <button type="button" className="btn btn-danger cancel float-right" onClick={() => deleteFile(file)}>
-              <i className="fas fa-trash"></i> Delete
-            </button>
-          </form>
-          { file.isSaving &&
-            <div className="saving-overlay">
-              Saving <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
-            </div>
-          }
-        </div>
-
-      </div>
+      return <ClusteringFileForm
+        key={file._id}
+        file={file}
+        updateFile={updateFile}
+        saveFile={saveFile}
+        deleteFile={deleteFile}
+        handleSaveResponse={handleSaveResponse}
+        associatedClusterFileOptions={associatedClusterFileOptions}
+        updateCorrespondingClusters={updateCorrespondingClusters}/>
     })}
     <div className="row top-margin">
       <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_CLUSTER_FILE)}><span className="fas fa-plus"></span> Add File</button>

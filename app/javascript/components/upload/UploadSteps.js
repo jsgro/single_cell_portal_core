@@ -1,4 +1,4 @@
-import ClusteringUploadForm from './ClusteringUploadForm'
+import ClusteringForm from './ClusteringForm'
 import React from 'react'
 
 function RawCountsUploadForm() {
@@ -35,7 +35,7 @@ export default {
   },
   clustering: {
     stepTitle: 'Clustering',
-    formComponent: ClusteringUploadForm,
+    formComponent: ClusteringForm,
     fileFilter: file => file.file_type === 'Cluster'
   }
 }

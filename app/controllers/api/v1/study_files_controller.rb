@@ -280,21 +280,19 @@ module Api
       # update the given study file with the request params and save it
       # returns true/false depending on the success of the save
       def perform_update(study_file)
-        byebug
         safe_file_params = study_file_params
-        # since there is no species/assembly attribute for study_files, we need to prune that from study_file_params
-        update_params = study_file_params.to_unsafe_hash
+
         # manually check first if species/assembly was supplied by name
-        species_name = update_params[:species]
-        update_params.delete(:species)
-        assembly_name = update_params[:assembly]
-        update_params.delete(:assembly)
+        species_name = safe_file_params[:species]
+        safe_file_params.delete(:species)
+        assembly_name = safe_file_params[:assembly]
+        safe_file_params.delete(:assembly)
         set_taxon_and_assembly_by_name({species: species_name, assembly: assembly_name})
         # clear the id so that it doesn't get overwritten (which would be a problem for new files)
-        update_params.delete(:_id)
+        safe_file_params.delete(:_id)
         # check if the name of the file has changed as we won't be able to tell after we saved
-        name_changed = study_file.persisted? && study_file.name != update_params[:name]
-        if study_file.update(update_params)
+        name_changed = study_file.persisted? && study_file.name != safe_file_params[:name]
+        if study_file.update(safe_file_params)
           # invalidate caches first
           study_file.delay.invalidate_cache_by_file_type
 
@@ -596,6 +594,7 @@ module Api
                                            :description, :is_spatial, :file_type, :status, :human_fastq_url, :human_data, :use_metadata_convention,
                                            :cluster_type, :generation, :x_axis_label, :y_axis_label, :z_axis_label, :x_axis_min,
                                            :x_axis_max, :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :species, :assembly,
+                                           spatial_cluster_associations: [],
                                            options: [:cluster_group_id, :font_family, :font_size, :font_color, :matrix_id,
                                                      :submission_id, :bam_id, :analysis_name, :visualization_name, :cluster_name,
                                                      :annotation_name],
