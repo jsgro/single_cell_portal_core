@@ -20,6 +20,8 @@ function clean(value) {
  * Verify headers are unique and not empty
  */
 function validateUniqueHeaders(headers) {
+  // eslint-disable-next-line max-len
+  // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/0b6289dd91f877e5921a871680602d776271217f/ingest/annotations.py#L233
   const issues = []
   const uniques = new Set(headers)
 
@@ -47,26 +49,47 @@ function validateUniqueHeaders(headers) {
 }
 
 /**
- * Verify second row starts with TYPE (case-insensitive)
+ * Helper function to verify first pair of headers is NAME or TYPE
  */
-function validateTypeKeyword(annotTypes) {
+function validateKeyword(values, expectedValue) {
   const issues = []
 
-  const value = annotTypes[0]
+  const ordinal = (expectedValue === 'NAME') ? 'First' : 'Second'
+  const location = `${ordinal} row, first column`
+  const value = values[0]
+  const actual = `Provided value was "${value}".`
 
-  if (value.toUpperCase() === 'TYPE') {
-    if (value !== 'TYPE') {
-      const msg = `File keyword "TYPE" provided as "${value}"`
+  if (value.toUpperCase() === expectedValue) {
+    if (value !== expectedValue) {
+      const msg =
+        `${location} should be ${expectedValue}. ${actual}`
       issues.push(['warn', 'format', msg])
     }
   } else {
     const msg =
-      'Second row, first column must be "TYPE" (case insensitive). ' +
-      `Provided value was "${value}".`
+      `${location} must be "${expectedValue}" (case insensitive). ${actual}`
     issues.push(['error', 'format', msg])
   }
 
   return issues
+}
+
+/**
+ * Verify second row starts with NAME (case-insensitive)
+ */
+function validateNameKeyword(headers) {
+  // eslint-disable-next-line max-len
+  // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/0b6289dd91f877e5921a871680602d776271217f/ingest/annotations.py#L216
+  return validateKeyword(headers, 'NAME')
+}
+
+/**
+ * Verify second row starts with TYPE (case-insensitive)
+ */
+function validateTypeKeyword(annotTypes) {
+  // eslint-disable-next-line max-len
+  // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/0b6289dd91f877e5921a871680602d776271217f/ingest/annotations.py#L258
+  return validateKeyword(annotTypes, 'TYPE')
 }
 
 /**
@@ -107,6 +130,7 @@ async function validateMetadata(file) {
 
   issues = issues.concat(
     validateUniqueHeaders(headers),
+    validateNameKeyword(headers),
     validateTypeKeyword(annotTypes)
   )
 
