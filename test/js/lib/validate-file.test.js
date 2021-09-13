@@ -18,7 +18,7 @@ function mockReadLinesAndType(mockPath) {
   /** Mock function that uses FileReader, which isn't available in Node */
   const readLinesAndType = jest.spyOn(Io, 'readLinesAndType')
   const lines = fileContent.split(/\r?\n/).slice()
-  const type = 'text-foo/plain-bar'
+  const type = 'text/tab-separated-values'
   readLinesAndType.mockImplementation(() => Promise.resolve({ lines, type }))
 
   return readLinesAndType
@@ -60,18 +60,18 @@ describe('Client-side file validation', () => {
         'summary': 'Your metadata file had 1 error',
         'numErrors': 1,
         'errors': [
-          'Second row, first column must be "TYPE" (case insensitive). Provided value was "notTYPE".'
+          'Second row, first column must be "TYPE" (case insensitive). Your value was "notTYPE".'
         ]
       }
     )
   })
 
   it('catches duplicate headers', async () => {
-    const mockPath = `${mockDir}/dup_headers.tsv`
+    const mockPath = `${mockDir}/dup_headers_v2.0.0.tsv`
     mockReadLinesAndType(mockPath)
 
     const file = {
-      name: 'dup_headers.tsv',
+      name: 'dup_headers_v2.0.0.tsv',
       size: 555,
       type: 'text/plain'
     }
@@ -115,7 +115,7 @@ describe('Client-side file validation', () => {
       [
         'error',
         'format',
-        'Second row, first column must be "TYPE" (case insensitive). Provided value was "notTYPE".'
+        'Second row, first column must be "TYPE" (case insensitive). Your value was "notTYPE".'
       ]
     ]
     const fileType = 'metadata'
