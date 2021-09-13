@@ -127,7 +127,7 @@
 	}
 }
 
-.saving-overlay {
+.file-upload-overlay {
 	position: absolute;
   left: 0;
   top: 0;
@@ -138,6 +138,13 @@
   padding-top: 3em;
   font-size: 1.5em;
   color: #888;
+  .error-message {
+    background: #fff;
+    margin: 2em;
+    padding: 1em;
+    border-radius: 5px;
+    border: 2px solid red;
+  }
 }
 
 .preview-image {

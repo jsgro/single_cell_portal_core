@@ -197,9 +197,24 @@ export function stringifyQuery(paramObj, sort) {
 */
 export async function fetchStudyFileInfo(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/file_info`
-  const [exploreInit] =
-    await scpApi(apiUrl, defaultInit(), mock, false)
+  const [exploreInit] = await scpApi(apiUrl, defaultInit(), mock, false)
+  return exploreInit
+}
 
+/**
+ * Creates a new study file
+ *
+ * @param {String} studyAccession Study accession
+ * @param {FormData} studyFileData html FormData object with the file data
+*/
+export async function createStudyFile(studyId, studyFileData, mock=false) {
+  const apiUrl = `/studies/${studyId}/study_files`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'POST',
+    body: studyFileData
+  })
+  delete init.headers['Content-Type']
+  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
   return exploreInit
 }
 
@@ -208,32 +223,31 @@ export async function fetchStudyFileInfo(studyAccession, mock=false) {
  * Returns initial content for the upload file wizard
  *
  * @param {String} studyAccession Study accession
+ * @param {FormData} studyFileData html FormData object with the file data
 */
 export async function updateStudyFile(studyId, studyFileData, mock=false) {
   const apiUrl = `/studies/${studyId}/study_files/${studyFileData._id}`
   const init = Object.assign({}, defaultInit(), {
     method: 'PATCH',
-    body: JSON.stringify(studyFileData)
+    body: studyFileData
   })
-  const [exploreInit] =
-    await scpApi(apiUrl, init, mock, false)
-
+  delete init.headers['Content-Type']
+  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
   return exploreInit
 }
 
 /**
- * Returns initial content for the upload file wizard
+ * Deletes the given file
  *
  * @param {String} studyAccession Study accession
+ * @param {fileId} the guid of the file to delete
 */
 export async function deleteStudyFile(studyId, fileId, mock=false) {
   const apiUrl = `/studies/${studyId}/study_files/${fileId}`
   const init = Object.assign({}, defaultInit(), {
     method: 'DELETE'
   })
-  const [exploreInit] =
-    await scpApi(apiUrl, init, mock, false)
-
+  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
   return exploreInit
 }
 
@@ -676,7 +690,7 @@ export default async function scpApi(
   }
   if (toJson) {
     const json = await response.json()
-    throw new Error(json.error)
+    throw new Error(json.error || json.errors)
   }
   throw new Error(response)
 }

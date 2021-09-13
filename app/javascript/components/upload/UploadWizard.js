@@ -8,7 +8,7 @@ import _uniqueId from 'lodash/uniqueId'
 
 import UploadSteps, { STEP_ORDER } from './UploadSteps'
 import { formatFileFromServer, formatFileForApi } from './uploadUtils'
-import { updateStudyFile, deleteStudyFile, fetchStudyFileInfo } from 'lib/scp-api'
+import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo } from 'lib/scp-api'
 
 /** shows the upload wizard */
 export default function UploadWizard({ accession, name }) {
@@ -66,7 +66,6 @@ export default function UploadWizard({ accession, name }) {
     })
   }
 
-
   /** Updates file fields by merging in the 'updates', does not perform any validation, and
    *  does not save to the server */
   function updateFile(fileId, updates) {
@@ -79,13 +78,23 @@ export default function UploadWizard({ accession, name }) {
   }
 
   /** save the given file and perform an upload if present */
-  function saveFile(file) {
+  async function saveFile(file) {
     updateFile(file._id, { isSaving: true })
-    if (file.submitData) {
-      file.submitData.submit()
-    } else {
-      const fileApiData = formatFileForApi(file)
-      updateStudyFile(file.study_id, fileApiData).then(handleSaveResponse)
+    const fileApiData = formatFileForApi(file)
+    try {
+      let response
+      if (file.status === 'new') {
+        response = await createStudyFile(file.study_id, fileApiData)
+      } else {
+        response = await updateStudyFile(file.study_id, fileApiData)
+      }
+      handleSaveResponse(response)
+    } catch (error) {
+      updateFile(file._id, {
+        isError: true,
+        isSaving: false,
+        errorMessage: error.message
+      })
     }
   }
 

@@ -41,11 +41,11 @@ export default function ImageForm({
 
   return <div>
     <div className="row">
-      <h4 className="col-sm-12">5. Image Files</h4>
+      <h4 className="col-sm-12">5. Reference Images</h4>
     </div>
     <div className="row">
       <br/>
-      <p className="col-sm-12 text-center">An image file is a static image (.png, .jpeg) that is intended for view alongside cluster and/or expression data. </p>
+      <p className="col-sm-12 text-center">An image file is a static image (.png, .jpeg) that is intended for view alongside cluster and/or expression data.  For example, an anatomical reference image to be dispalyed alongside spatial transcriptomics data</p>
       <p className="col-sm-12 text-center">Note also that if you want images to appear within your study <i>description</i> you can edit your description and use the toolbar to upload images inline</p>
     </div>
 

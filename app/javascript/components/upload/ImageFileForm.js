@@ -4,9 +4,9 @@ import { faDna } from '@fortawesome/free-solid-svg-icons'
 import Select from 'react-select'
 
 import FileUploadControl from './FileUploadControl'
-import { TextFormField } from './uploadUtils'
+import { TextFormField, SavingOverlay } from './uploadUtils'
 
-/** renders a form for editing/uploading a single cluster file */
+/** renders a form for editing/uploading an image file */
 export default function ImageFileForm({
   file,
   updateFile,
@@ -17,11 +17,10 @@ export default function ImageFileForm({
   updateCorrespondingClusters
 }) {
 
-
   const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
   let imagePreviewUrl = '#'
-  if (file.selectedFile) {
-    imagePreviewUrl = URL.createObjectURL(file.selectedFile)
+  if (file.uploadSelection) {
+    imagePreviewUrl = URL.createObjectURL(file.uploadSelection)
   }
 
   return <div className="row top-margin" key={file._id}>
@@ -38,7 +37,7 @@ export default function ImageFileForm({
               allowedFileTypes={window.ALLOWED_FILE_TYPES['plainText']}/>
           </div>
           <div className="col-md-6">
-            { file.selectedFile && <img className="preview-image" src={imagePreviewUrl} alt={file.selectedFile.name} /> }
+            { file.uploadSelection && <img className="preview-image" src={imagePreviewUrl} alt={file.uploadSelection.name} /> }
           </div>
         </div>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
@@ -62,12 +61,7 @@ export default function ImageFileForm({
           <i className="fas fa-trash"></i> Delete
         </button>
       </form>
-      { file.isSaving &&
-        <div className="saving-overlay">
-          Saving <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
-        </div>
-      }
     </div>
-
+    <SavingOverlay file={file} updateFile={updateFile}/>
   </div>
 }

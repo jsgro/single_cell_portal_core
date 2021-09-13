@@ -47,16 +47,25 @@ export default function FileUploadControl({ file, updateFile, handleSaveResponse
     })
   }
 
-  useEffect(() => {
-    initializeUploadWidget()
-  })
+  /** handle user interaction with the file input */
+  function handleFileSelection(e) {
+    const selectedFile = e.target.files[0]
+    updateFile(file._id, {
+      upload: selectedFile,
+      name: file.name ? file.name : selectedFile.name
+    })
+  }
+
+  // useEffect(() => {
+  //   initializeUploadWidget()
+  // })
 
   return <div className="form-group">
     <label>File{ file.status !== 'new' && <span>: {file.upload_file_name}</span> }</label>
     <br/>
     <button className="fileinput-button btn btn-secondary" id={`fileButton-${file._id}`}>
       { file.upload_file_name ? 'Change file' : 'Choose file' }
-      <input className="file-upload" type="file" name="study_file[upload]" id={inputId}/>
+      <input className="file-upload-input" type="file" name="study_file[upload]" id={inputId} onChange={handleFileSelection}/>
     </button>
     { file.selectedFile &&
       <span> {file.selectedFile.name} ({bytesToSize(file.selectedFile.size)})</span>

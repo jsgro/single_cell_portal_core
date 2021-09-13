@@ -42,7 +42,7 @@ export default {
     fileFilter: file => file.file_type === 'Cluster'
   },
   images: {
-    stepTitle: 'Images',
+    stepTitle: 'Reference Images',
     formComponent: ImageForm,
     fileFilter: file => file.file_type === 'Image'
   }
