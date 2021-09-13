@@ -46,7 +46,10 @@
   }
   let table
   $('.view-report').on('click', function(event) {
-    reportTarget.empty()
+    if ($.fn.dataTable.isDataTable(reportTarget)) {
+      reportTarget.empty()
+      table.fnDestroy()
+    }
     reportTarget.append("<h3 class='text-center'><i class='fas fa-lg fa-spin fa-spinner'></i></h3>")
     let target = $(event.target)
     let report = target.attr('id')
@@ -63,9 +66,6 @@
         let columns = lines.shift().map( (header) => {
           return { title: header }
         })
-        if ($.fn.dataTable.isDataTable(reportTarget)) {
-          table.fnDestroy()
-        }
         table = reportTarget.dataTable({
           columns: columns,
           data: lines
