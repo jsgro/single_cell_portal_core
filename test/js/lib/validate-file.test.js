@@ -59,6 +59,32 @@ describe('Client-side file validation', () => {
     )
   })
 
+  it('catches duplicate headers', async () => {
+    const mockPath = `${mockDir}/dup_headers.tsv`
+    const fileContent = fs.readFileSync(mockPath, 'utf8')
+
+    /** Mock function that uses FileReader, which isn't available in Node */
+    const readLinesAndType = jest.spyOn(Io, 'readLinesAndType')
+    const lines = fileContent.split(/\r?\n/).slice()
+    const type = 'text-foo/plain-bar'
+    readLinesAndType.mockImplementation(() => Promise.resolve({ lines, type }))
+
+    const file = {
+      name: 'dup_headers.tsv',
+      size: 555,
+      type: 'text/plain'
+    }
+    const fileType = 'metadata'
+
+    const expectedSummary = 'Your metadata file had 1 error'
+
+    const { errors, summary } = await ValidateFile.validateFile(file, fileType)
+
+    // Test library
+    expect(errors).toHaveLength(1)
+    expect(summary).toBe(expectedSummary)
+  })
+
   it('renders validation alert', async () => {
     const summary = 'Your metadata file had 1 error'
 
