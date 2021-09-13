@@ -1,6 +1,4 @@
 import React from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 import Select from 'react-select'
 
 import FileUploadControl from './FileUploadControl'
@@ -61,7 +59,7 @@ export default function ImageFileForm({
           <i className="fas fa-trash"></i> Delete
         </button>
       </form>
+      <SavingOverlay file={file} updateFile={updateFile}/>
     </div>
-    <SavingOverlay file={file} updateFile={updateFile}/>
   </div>
 }

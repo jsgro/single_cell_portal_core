@@ -1,10 +1,8 @@
 import React from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 import Select from 'react-select'
 
 import FileUploadControl from './FileUploadControl'
-import { TextFormField } from './uploadUtils'
+import { TextFormField, SavingOverlay } from './uploadUtils'
 
 /** renders a form for editing/uploading a single cluster file */
 export default function ClusteringFileForm({
@@ -89,11 +87,7 @@ export default function ClusteringFileForm({
           <i className="fas fa-trash"></i> Delete
         </button>
       </form>
-      { file.isSaving &&
-        <div className="saving-overlay">
-          Saving <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
-        </div>
-      }
+      <SavingOverlay file={file} updateFile={updateFile}/>
     </div>
 
   </div>

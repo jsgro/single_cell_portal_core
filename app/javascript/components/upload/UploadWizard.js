@@ -77,7 +77,7 @@ export default function UploadWizard({ accession, name }) {
     })
   }
 
-  /** save the given file and perform an upload if present */
+  /** save the given file and perform an upload if a selected file is present */
   async function saveFile(file) {
     updateFile(file._id, { isSaving: true })
     const fileApiData = formatFileForApi(file)
@@ -86,7 +86,7 @@ export default function UploadWizard({ accession, name }) {
       if (file.status === 'new') {
         response = await createStudyFile(file.study_id, fileApiData)
       } else {
-        response = await updateStudyFile(file.study_id, fileApiData)
+        response = await updateStudyFile(file.study_id, file._id, fileApiData)
       }
       handleSaveResponse(response)
     } catch (error) {
@@ -112,13 +112,14 @@ export default function UploadWizard({ accession, name }) {
     if (file.status === 'new') {
       deleteFileFromForm(file._id)
     } else {
+      updateFile(file._id, { isSaving: true })
       deleteStudyFile(file.study_id, file._id).then(response => {
-        deleteFileFromForm(file._id)
         setStudyState(prevStudyState => {
           const newStudyState = _cloneDeep(prevStudyState)
           newStudyState.files = newStudyState.files.filter(f => f._id != file._id)
           return newStudyState
         })
+        deleteFileFromForm(file._id)
       })
     }
   }

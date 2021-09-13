@@ -204,7 +204,7 @@ export async function fetchStudyFileInfo(studyAccession, mock=false) {
 /**
  * Creates a new study file
  *
- * @param {String} studyAccession Study accession
+ * @param {String} studyId Study id
  * @param {FormData} studyFileData html FormData object with the file data
 */
 export async function createStudyFile(studyId, studyFileData, mock=false) {
@@ -222,11 +222,12 @@ export async function createStudyFile(studyId, studyFileData, mock=false) {
 /**
  * Returns initial content for the upload file wizard
  *
- * @param {String} studyAccession Study accession
+ * @param {String} studyId Study id
+ * @param {String} studyFileId Study file id
  * @param {FormData} studyFileData html FormData object with the file data
 */
-export async function updateStudyFile(studyId, studyFileData, mock=false) {
-  const apiUrl = `/studies/${studyId}/study_files/${studyFileData._id}`
+export async function updateStudyFile(studyId, studyFileId, studyFileData, mock=false) {
+  const apiUrl = `/studies/${studyId}/study_files/${studyFileId}`
   const init = Object.assign({}, defaultInit(), {
     method: 'PATCH',
     body: studyFileData
@@ -656,7 +657,7 @@ export default async function scpApi(
   }
 
   if (response.ok) {
-    if (toJson) {
+    if (toJson && response.status !== 204) {
       const jsonPerfTimeStart = performance.now()
       const json = await response.json()
       perfTimes.parse = performance.now() - jsonPerfTimeStart

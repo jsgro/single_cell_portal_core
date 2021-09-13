@@ -11,6 +11,7 @@ const PROPERTIES_NOT_TO_SEND = [
   'submitData',
   'isDirty',
   'isSaving',
+  'isError',
   'generation',
   'created_at',
   'updated_at',
