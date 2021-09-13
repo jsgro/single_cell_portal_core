@@ -11,17 +11,24 @@ const fs = require('fs')
 
 const mockDir = 'public/mock_data/validation'
 
+/** Mock function that uses FileReader, which isn't available in Node */
+function mockReadLinesAndType(mockPath) {
+  const fileContent = fs.readFileSync(mockPath, 'utf8')
+
+  /** Mock function that uses FileReader, which isn't available in Node */
+  const readLinesAndType = jest.spyOn(Io, 'readLinesAndType')
+  const lines = fileContent.split(/\r?\n/).slice()
+  const type = 'text-foo/plain-bar'
+  readLinesAndType.mockImplementation(() => Promise.resolve({ lines, type }))
+
+  return readLinesAndType
+}
 
 describe('Client-side file validation', () => {
   it('catches and logs errors via library interface', async () => {
     const mockPath = `${mockDir}/metadata_example_bad_TYPE.txt`
-    const fileContent = fs.readFileSync(mockPath, 'utf8')
 
-    /** Mock function that uses FileReader, which isn't available in Node */
-    const readLinesAndType = jest.spyOn(Io, 'readLinesAndType')
-    const lines = fileContent.split(/\r?\n/).slice()
-    const type = 'text-foo/plain-bar'
-    readLinesAndType.mockImplementation(() => Promise.resolve({ lines, type }))
+    mockReadLinesAndType(mockPath)
 
     const file = {
       name: 'metadata_example_bad_TYPE.txt',
@@ -61,13 +68,7 @@ describe('Client-side file validation', () => {
 
   it('catches duplicate headers', async () => {
     const mockPath = `${mockDir}/dup_headers.tsv`
-    const fileContent = fs.readFileSync(mockPath, 'utf8')
-
-    /** Mock function that uses FileReader, which isn't available in Node */
-    const readLinesAndType = jest.spyOn(Io, 'readLinesAndType')
-    const lines = fileContent.split(/\r?\n/).slice()
-    const type = 'text-foo/plain-bar'
-    readLinesAndType.mockImplementation(() => Promise.resolve({ lines, type }))
+    mockReadLinesAndType(mockPath)
 
     const file = {
       name: 'dup_headers.tsv',
