@@ -18,8 +18,8 @@ function mockReadLinesAndType(mockPath) {
   /** Mock function that uses FileReader, which isn't available in Node */
   const readLinesAndType = jest.spyOn(Io, 'readLinesAndType')
   const lines = fileContent.split(/\r?\n/).slice()
-  const type = 'text/tab-separated-values'
-  readLinesAndType.mockImplementation(() => Promise.resolve({ lines, type }))
+  const mimeType = 'text/tab-separated-values'
+  readLinesAndType.mockImplementation(() => Promise.resolve({ lines, mimeType }))
 
   return readLinesAndType
 }
@@ -74,6 +74,26 @@ describe('Client-side file validation', () => {
       name: 'dup_headers_v2.0.0.tsv',
       size: 555,
       type: 'text/plain'
+    }
+    const fileType = 'metadata'
+
+    const expectedSummary = 'Your metadata file had 1 error'
+
+    const { errors, summary } = await ValidateFile.validateFile(file, fileType)
+
+    // Test library
+    expect(errors).toHaveLength(1)
+    expect(summary).toBe(expectedSummary)
+  })
+
+  it('catches mismatched header counts', async () => {
+    const mockPath = `${mockDir}/header_count_mismatch.tsv`
+    mockReadLinesAndType(mockPath)
+
+    const file = {
+      name: 'header_count_mismatch.tsv',
+      size: 555,
+      type: 'text/tab-separated-values'
     }
     const fileType = 'metadata'
 
