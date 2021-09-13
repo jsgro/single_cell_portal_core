@@ -1,3 +1,10 @@
+/** React component for displaying the file upload wizard
+ *
+ * All the state for both the user's changes, and the state of the study as known from the server are
+ * managed here as formState, and serverState, respectively.  This component owns many state-maniuplation
+ * methods, like updateFile.  Any update to any file will trigger a re-render of the entire upload widget.
+ */
+
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -13,13 +20,15 @@ import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo }
 /** shows the upload wizard */
 export default function UploadWizard({ accession, name }) {
   const [currentStep, setCurrentStep] = useState(STEP_ORDER[0])
-  const [studyState, setStudyState] = useState(null)
+  const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
 
   const step = UploadSteps[currentStep]
-  if (studyState?.files && formState?.files) {
+
+  // go through the files and compute any relevant derived properties, notably 'isDirty'
+  if (serverState?.files && formState?.files) {
     formState.files.forEach(file => {
-      const serverFile = studyState.files.find(sFile => sFile._id === file._id)
+      const serverFile = serverState.files.find(sFile => sFile._id === file._id)
       // use isMatch to confirm that specified properties are equal, but ignore properties (like isDirty)
       // that only exist on the form state objects
       if (!_isMatch(file, serverFile)) {
@@ -31,10 +40,9 @@ export default function UploadWizard({ accession, name }) {
   /** adds an empty file, merging in the given fileProps. Does not communicate anything to the server */
   function addNewFile(fileProps) {
     const newFile = {
-      study_id: studyState.study._id.$oid,
+      study_id: serverState.study._id.$oid,
       name: '',
-      _id: _uniqueId('newFile-'),
-      is_spatial: false,
+      _id: _uniqueId('newFile-'), // we just need a temp id to give to form controls, the real id will come from the server
       status: 'new',
       description: '',
       parse_status: 'unparsed',
@@ -49,15 +57,17 @@ export default function UploadWizard({ accession, name }) {
     })
   }
 
-  /** handle response from server after an upload by updating the studyState with the updated file response */
+  /** handle response from server after an upload by updating the serverState with the updated file response */
   function handleSaveResponse(response) {
     const updatedFile = formatFileFromServer(response)
-    setStudyState(prevStudyState => {
-      const newStudyState = _cloneDeep(studyState)
-      const fileIndex = newStudyState.files.findIndex(f => f._id === updatedFile._id)
-      newStudyState.files[fileIndex] = updatedFile
-      return newStudyState
+    // first update the serverState
+    setServerState(prevServerState => {
+      const newServerState = _cloneDeep(prevServerState)
+      const fileIndex = newServerState.files.findIndex(f => f._id === updatedFile._id)
+      newServerState.files[fileIndex] = updatedFile
+      return newServerState
     })
+    // then update the form state
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
       const fileIndex = newFormState.files.findIndex(f => f._id === updatedFile._id)
@@ -98,7 +108,7 @@ export default function UploadWizard({ accession, name }) {
     }
   }
 
-  /** removes a file from the form, does not touch server data */
+  /** removes a file from the form only, does not touch server data */
   function deleteFileFromForm(fileId) {
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
@@ -114,20 +124,21 @@ export default function UploadWizard({ accession, name }) {
     } else {
       updateFile(file._id, { isSaving: true })
       deleteStudyFile(file.study_id, file._id).then(response => {
-        setStudyState(prevStudyState => {
-          const newStudyState = _cloneDeep(prevStudyState)
-          newStudyState.files = newStudyState.files.filter(f => f._id != file._id)
-          return newStudyState
+        setServerState(prevServerState => {
+          const newServerState = _cloneDeep(prevServerState)
+          newServerState.files = newServerState.files.filter(f => f._id != file._id)
+          return newServerState
         })
         deleteFileFromForm(file._id)
       })
     }
   }
 
+  // on initial load, load all the details of the study and study files
   useEffect(() => {
     fetchStudyFileInfo(accession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
-      setStudyState(response)
+      setServerState(response)
       setFormState(_cloneDeep(response))
     })
   }, [accession])
@@ -149,7 +160,7 @@ export default function UploadWizard({ accession, name }) {
               stepName={stepName}
               index={index}
               formState={formState}
-              studyState={studyState}
+              serverState={serverState}
               currentStep={currentStep}
               setCurrentStep={setCurrentStep}/>) }
         </ul>
@@ -158,7 +169,7 @@ export default function UploadWizard({ accession, name }) {
         { !formState && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
         { !!formState && <step.formComponent
           formState={formState}
-          studyState={studyState}
+          serverState={serverState}
           deleteFile={deleteFile}
           updateFile={updateFile}
           saveFile={saveFile}
@@ -170,8 +181,8 @@ export default function UploadWizard({ accession, name }) {
   </div>
 }
 
-/** renders the wizard step header */
-function StepTitle({ stepName, index, currentStep, setCurrentStep, studyState, formState }) {
+/** renders the wizard step header for a given step */
+function StepTitle({ stepName, index, currentStep, setCurrentStep, serverState, formState }) {
   const step = UploadSteps[stepName]
   let stepFiles = []
   if (formState && formState.files) {

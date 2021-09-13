@@ -9,10 +9,7 @@ const DEFAULT_NEW_IMAGE_FILE = {
 
 /** Renders a form for uploading one or more cluster/spatial files */
 export default function ImageForm({
-  studyState,
-  setStudyState,
   formState,
-  setFormState,
   addNewFile,
   updateFile,
   saveFile,
