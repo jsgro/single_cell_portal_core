@@ -157,7 +157,7 @@
           let validationErrors = []
           let summary = ''
           <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
-            $('#metadata-errors').remove() // Remove any prior notice
+            $(`#${containerId}`).remove() // Remove any prior notice
             $('#metadata_form').append(`<div id="${containerId}"></div>`)
             // Run client-side metadata file validation
             const results = await window.SCP.validateFile(file, fileType)
