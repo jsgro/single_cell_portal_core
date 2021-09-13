@@ -135,8 +135,8 @@ function validateHeaderCount(headers, annotTypes) {
   if (headers.length > annotTypes.length) {
     const msg =
       'First row must have same number of columns as second row. ' +
-      `Your first row had ${headers.length} header columns and ` +
-      `your second row had ${annotTypes.length} annotation type columns.`
+      `Your first row has ${headers.length} header columns and ` +
+      `your second row has ${annotTypes.length} annotation type columns.`
     issues.push(['error', 'format', msg])
   }
 
@@ -149,7 +149,7 @@ function validateHeaderCount(headers, annotTypes) {
  * Consider using `papaparse` NPM package once it supports ES modules.
  * Upstream task: https://github.com/mholt/PapaParse/pull/875
  */
-function sniffDelimiter(lines) {
+function sniffDelimiter(lines, mimeType) {
   const [line1, line2] = lines.slice(0, 2)
   const delimiters = [',', '\t']
   let bestDelimiter
@@ -163,14 +163,20 @@ function sniffDelimiter(lines) {
     }
   })
 
+  if (typeof bestDelimiter === 'undefined') {
+    if (mimeType === 'text/tab-separated-values') {
+      bestDelimiter = '\t'
+    }
+  }
+
   return bestDelimiter
 }
 
 /** Validate a local metadata file */
 async function validateFormat(file) {
-  const { lines, fileMimeType } = await readLinesAndType(file, 2)
+  const { lines, mimeType } = await readLinesAndType(file, 2)
 
-  const delimiter = sniffDelimiter(lines)
+  const delimiter = sniffDelimiter(lines, mimeType)
   const table = lines.map(line => line.split(delimiter))
 
   let issues = []
