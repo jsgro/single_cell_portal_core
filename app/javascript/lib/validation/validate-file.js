@@ -28,7 +28,7 @@ function validateUniqueHeaders(headers) {
     const seen = new Set()
     const duplicates = new Set()
     headers.forEach(header => {
-      if (header in seen) {duplicates.add(header)}
+      if (seen.has(header)) {duplicates.add(header)}
       seen.add(header)
     })
 
