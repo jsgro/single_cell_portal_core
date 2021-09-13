@@ -1,7 +1,6 @@
 module Api
   module V1
     class MetadataSchemasController < ApiBaseController
-      include Swagger::Blocks
       include Concerns::ConventionSchemas
 
       swagger_path '/metadata_schemas' do

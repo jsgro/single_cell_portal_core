@@ -1,9 +1,6 @@
 module Api
   module V1
     class SiteController < ApiBaseController
-      include Concerns::Authenticator
-      include Swagger::Blocks
-
       before_action :set_current_api_user!
       before_action :authenticate_api_user!, only: [:download_data, :stream_data, :get_study_analysis_config,
                                                     :submit_study_analysis, :get_study_submissions,

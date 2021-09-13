@@ -25,6 +25,10 @@ module Api
           head 401 unless api_user_signed_in?
         end
 
+        def authenticate_admin_api_user!
+          head 403 unless api_user_signed_in? && current_api_user.admin
+        end
+
         def set_current_api_user!
           current_api_user
         end
