@@ -165,9 +165,7 @@
             summary = results.summary
           <% end %>
 
-          const numErrors = validationErrors.length
-
-          if (numErrors === 0) {
+          if (validationErrors.length === 0) {
             var fileName = file.name.replace(FILENAME_SANITIZER, '_');
             $('#metadata_form .filename').val(fileName);
             $.getJSON("<%= resume_upload_study_path %>", { file: fileName }, function (result) {

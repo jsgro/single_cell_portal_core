@@ -57,7 +57,7 @@ function validateKeyword(values, expectedValue) {
   const ordinal = (expectedValue === 'NAME') ? 'First' : 'Second'
   const location = `${ordinal} row, first column`
   const value = values[0]
-  const actual = `Provided value was "${value}".`
+  const actual = `Your value was "${value}".`
 
   if (value.toUpperCase() === expectedValue) {
     if (value !== expectedValue) {
@@ -118,8 +118,25 @@ function validateTypeAnnotations(annotTypes) {
     const badValues = `"${invalidTypes.join('", "')}"`
     const msg =
       'Second row, all columns after first must be "group" or "numeric". ' +
-      `Provided values included ${badValues}`
+      `Your values included ${badValues}`
 
+    issues.push(['error', 'format', msg])
+  }
+
+  return issues
+}
+
+/**
+ * Verify equal counts for headers and annotation types.
+ */
+function validateHeaderCount(headers, annotTypes) {
+  const issues = []
+
+  if (headers.length > annotTypes.length) {
+    const msg =
+      'First row must have same number of columns as second row. ' +
+      `Your first row had ${headers.length} header columns and ` +
+      `your second row had ${annotTypes.length} annotation type columns.`
     issues.push(['error', 'format', msg])
   }
 
@@ -150,7 +167,7 @@ function sniffDelimiter(lines) {
 }
 
 /** Validate a local metadata file */
-async function validateMetadata(file) {
+async function validateFormat(file) {
   const { lines, fileMimeType } = await readLinesAndType(file, 2)
 
   const delimiter = sniffDelimiter(lines)
@@ -166,7 +183,8 @@ async function validateMetadata(file) {
     validateUniqueHeaders(headers),
     validateNameKeyword(headers),
     validateTypeKeyword(annotTypes),
-    validateTypeAnnotations(annotTypes)
+    validateTypeAnnotations(annotTypes),
+    validateHeaderCount(headers, annotTypes)
   )
 
   return issues
@@ -196,7 +214,8 @@ function getLogProps(errors, summary, file, fileType) {
 /** Validate a local file, return list of any detected errors */
 export async function validateFile(file, fileType) {
   let issues = []
-  if (fileType === 'metadata') {issues = await validateMetadata(file)}
+  if (fileType === 'metadata') {issues = await validateFormat(file)}
+  if (fileType === 'cluster') {issues = await validateFormat(file)}
 
   // Ingest Pipeline reports "issues", which includes "errors" and "warnings".
   // Keep issue type distinction in this module to ease porting, but for now
