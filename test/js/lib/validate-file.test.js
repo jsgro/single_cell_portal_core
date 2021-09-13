@@ -193,7 +193,7 @@ describe('Client-side file validation', () => {
     // Confirms this validation does not report false positives
     //
     // eslint-disable-next-line max-len
-    // https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L17
+    // https:// github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L31
     const mockPath = `${mockDir}/metadata_example.txt`
     mockReadLinesAndType(mockPath)
 
@@ -209,8 +209,6 @@ describe('Client-side file validation', () => {
     // Test library
     expect(errors).toHaveLength(0)
   })
-
-  https:// github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L31
 
   it('renders validation alert', async () => {
     const summary = 'Your metadata file had 1 error'
