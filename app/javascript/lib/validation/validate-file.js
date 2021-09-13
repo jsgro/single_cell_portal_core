@@ -172,8 +172,8 @@ function sniffDelimiter(lines, mimeType) {
   return bestDelimiter
 }
 
-/** Validate a local metadata file */
-async function validateFormat(file) {
+/** Validate a local cluster or metadata file */
+async function validateFormat(file, fileType) {
   const { lines, mimeType } = await readLinesAndType(file, 2)
 
   const delimiter = sniffDelimiter(lines, mimeType)
@@ -192,6 +192,50 @@ async function validateFormat(file) {
     validateTypeAnnotations(annotTypes),
     validateHeaderCount(headers, annotTypes)
   )
+
+  if (fileType === 'metadata') {
+    validateNoCoordinateHeaders(headers)
+  } else {
+    validateCoordinateHeaders(headers)
+  }
+
+  return issues
+}
+
+/** Verifies metadata file has no X, Y, or Z coordinate headers */
+function validateNoCoordinateHeaders(headers) {
+  const issues = []
+
+  const invalidHeaders = headers.filter(header => {
+    return ['x', 'y', 'z'].includes(header.toLowerCase())
+  })
+
+  if (invalidHeaders.length > 0) {
+    const badValues = `"${invalidHeaders.join('", "')}"`
+    const msg =
+      'First row must not include coordinates X, Y, or Z ' +
+      '(case insensitive) as column header values. ' +
+      `Your values included ${badValues}.`
+    issues.push(['error', 'format', msg])
+  }
+
+  return issues
+}
+
+/** Verifies cluster file has X and Y coordinate headers */
+function validateCoordinateHeaders(headers) {
+  const issues = []
+
+  const xyHeaders = headers.filter(header => {
+    return ['x', 'y'].includes(header.toLowerCase())
+  })
+
+  if (xyHeaders.length < 2) {
+    const msg =
+      'First row must include coordinates X and Y ' +
+      '(case insensitive) as column header values.'
+    issues.push(['error', 'format', msg])
+  }
 
   return issues
 }
@@ -220,8 +264,9 @@ function getLogProps(errors, summary, file, fileType) {
 /** Validate a local file, return list of any detected errors */
 export async function validateFile(file, fileType) {
   let issues = []
-  if (fileType === 'metadata') {issues = await validateFormat(file)}
-  if (fileType === 'cluster') {issues = await validateFormat(file)}
+  if (['cluster', 'metadata'].includes(fileType)) {
+    issues = await validateFormat(file, fileType)
+  }
 
   // Ingest Pipeline reports "issues", which includes "errors" and "warnings".
   // Keep issue type distinction in this module to ease porting, but for now

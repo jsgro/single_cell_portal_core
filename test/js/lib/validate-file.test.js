@@ -26,12 +26,12 @@ function mockReadLinesAndType(mockPath) {
 
 describe('Client-side file validation', () => {
   it('catches and logs errors via library interface', async () => {
-    const mockPath = `${mockDir}/metadata_example_bad_TYPE.txt`
+    const mockPath = `${mockDir}/metadata_bad_type_header.txt`
 
     mockReadLinesAndType(mockPath)
 
     const file = {
-      name: 'metadata_example_bad_TYPE.txt',
+      name: 'metadata_bad_type_header.txt',
       size: 566,
       type: 'text/plain'
     }
@@ -53,7 +53,7 @@ describe('Client-side file validation', () => {
       'file-validation',
       {
         'fileType': 'metadata',
-        'fileName': 'metadata_example_bad_TYPE.txt',
+        'fileName': 'metadata_bad_type_header.txt',
         'fileSize': 566,
         'fileMimeType': 'text/plain',
         'status': 'failure',
@@ -106,7 +106,7 @@ describe('Client-side file validation', () => {
     expect(summary).toBe(expectedSummary)
   })
 
-  it('catches header errors', async () => {
+  it('catches multiple header errors', async () => {
     const mockPath = `${mockDir}/error_headers_v2.0.0.tsv`
     mockReadLinesAndType(mockPath)
 
@@ -125,6 +125,92 @@ describe('Client-side file validation', () => {
     expect(errors).toHaveLength(3)
     expect(summary).toBe(expectedSummary)
   })
+
+  it('reports error for true positive of no coordinates in cluster file', async () => {
+    // Confirms this validation does not report false negatives
+    //
+    // eslint-disable-next-line max-len
+    // https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cluster.py#L9
+    const mockPath = `${mockDir}/cluster_bad_no_coordinates.txt`
+    mockReadLinesAndType(mockPath)
+
+    const file = {
+      name: 'cluster_bad_no_coordinates.txt',
+      size: 555,
+      type: 'text/plain'
+    }
+    const fileType = 'cluster'
+
+    const { errors } = await ValidateFile.validateFile(file, fileType)
+
+    // Test library
+    expect(errors).toHaveLength(0)
+  })
+
+  it('reports no error for true negative of no coordinates in cluster file', async () => {
+    // Confirms this validation does not report false positive
+    //
+    // eslint-disable-next-line max-len
+    // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cluster.py#L21
+    const mockPath = `${mockDir}/cluster_example.txt`
+    mockReadLinesAndType(mockPath)
+
+    const file = {
+      name: 'cluster_example.txt',
+      size: 555,
+      type: 'text/plain'
+    }
+    const fileType = 'cluster'
+
+    const { errors } = await ValidateFile.validateFile(file, fileType)
+
+    // Test library
+    expect(errors).toHaveLength(0)
+  })
+
+  it('reports error for true positive of coordinates in metadata file', async () => {
+    // Confirms this validation does not report false negatives
+    //
+    // eslint-disable-next-line max-len
+    // https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L17
+    const mockPath = `${mockDir}/metadata_bad_has_coordinates.txt`
+    mockReadLinesAndType(mockPath)
+
+    const file = {
+      name: 'metadata_bad_has_coordinates.txt',
+      size: 555,
+      type: 'text/plain'
+    }
+    const fileType = 'cluster'
+
+    const { errors } = await ValidateFile.validateFile(file, fileType)
+
+    // Test library
+    expect(errors).toHaveLength(0)
+  })
+
+  it('reports no error for true negative of coordinates in metadata file', async () => {
+    // Confirms this validation does not report false positives
+    //
+    // eslint-disable-next-line max-len
+    // https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L17
+    const mockPath = `${mockDir}/metadata_example.txt`
+    mockReadLinesAndType(mockPath)
+
+    const file = {
+      name: 'metadata_example.txt',
+      size: 555,
+      type: 'text/plain'
+    }
+    const fileType = 'cluster'
+
+    const { errors } = await ValidateFile.validateFile(file, fileType)
+
+    // Test library
+    expect(errors).toHaveLength(0)
+  })
+
+  https:// github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L31
 
   it('renders validation alert', async () => {
     const summary = 'Your metadata file had 1 error'
