@@ -93,6 +93,40 @@ function validateTypeKeyword(annotTypes) {
 }
 
 /**
+ * Verify second row contains only "group" or "numeric"
+ */
+function validateTypeAnnotations(annotTypes) {
+  const issues = []
+  const invalidTypes = []
+
+  // Skip the TYPE keyword
+  const types = annotTypes.slice(1)
+
+  types.forEach(type => {
+    if (!['group', 'numeric'].includes(type.toLowerCase())) {
+      if (type === '') {
+        // If the value is a blank space, store a higher visibility
+        // string for error reporting
+        invalidTypes.push('<empty value>')
+      } else {
+        invalidTypes.push(type)
+      }
+    }
+  })
+
+  if (invalidTypes.length > 0) {
+    const badValues = `"${invalidTypes.join('", "')}"`
+    const msg =
+      'Second row, all columns after first must be "group" or "numeric". ' +
+      `Provided values included ${badValues}`
+
+    issues.push(['error', 'format', msg])
+  }
+
+  return issues
+}
+
+/**
  * Guess whether column delimiter is comma or tab.
  *
  * Consider using `papaparse` NPM package once it supports ES modules.
@@ -131,7 +165,8 @@ async function validateMetadata(file) {
   issues = issues.concat(
     validateUniqueHeaders(headers),
     validateNameKeyword(headers),
-    validateTypeKeyword(annotTypes)
+    validateTypeKeyword(annotTypes),
+    validateTypeAnnotations(annotTypes)
   )
 
   return issues

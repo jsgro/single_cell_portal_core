@@ -86,30 +86,23 @@ describe('Client-side file validation', () => {
     expect(summary).toBe(expectedSummary)
   })
 
-  it('catches multiple errors', async () => {
-    // Note that an "error" is actually an "error type", so
-    // if there are 3 instances of a validation problem, e.g.:
-    //  1.  "TYPE" header has value "notTYPE"
-    //  2.  "is_living" header is duplicated
-    //  3.  "preservation_method" header is duplicated
-    // The file will be noted as having 2 (not 3) errors, because instances
-    // 2 and 3 are of the same type (duplicate headers).
-    const mockPath = `${mockDir}/two_dup_headers_and_bad_TYPE.tsv`
+  it('catches header errors', async () => {
+    const mockPath = `${mockDir}/error_headers_v2.0.0.tsv`
     mockReadLinesAndType(mockPath)
 
     const file = {
-      name: 'two_dup_headers_and_bad_TYPE.tsv',
+      name: 'error_headers_v2.0.0.tsv',
       size: 555,
       type: 'text/plain'
     }
     const fileType = 'metadata'
 
-    const expectedSummary = 'Your metadata file had 2 errors'
+    const expectedSummary = 'Your metadata file had 3 errors'
 
     const { errors, summary } = await ValidateFile.validateFile(file, fileType)
 
     // Test library
-    expect(errors).toHaveLength(2)
+    expect(errors).toHaveLength(3)
     expect(summary).toBe(expectedSummary)
   })
 
