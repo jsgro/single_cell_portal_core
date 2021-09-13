@@ -281,7 +281,7 @@ module Api
       # returns true/false depending on the success of the save
       def perform_update(study_file)
         safe_file_params = study_file_params
-        byebug
+
         # manually check first if species/assembly was supplied by name
         species_name = safe_file_params[:species]
         safe_file_params.delete(:species)
