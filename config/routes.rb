@@ -41,7 +41,6 @@ Rails.application.routes.draw do
             post 'sync', to: 'studies#sync_study'
             get 'manifest', to: 'studies#generate_manifest'
             get 'file_info', to: 'studies#file_info'
-            patch 'upload', to: 'studies#upload'
           end
 
           resource :explore, controller: 'visualization/explore', only: [:show] do
