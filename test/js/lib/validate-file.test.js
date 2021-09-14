@@ -101,17 +101,17 @@ describe('Client-side file validation', () => {
     expect(summary).toBe('Your metadata file had 3 errors')
   })
 
-  it('reports error for true positive of no coordinates in cluster file', async () => {
+  it('fails when no coordinates in cluster file', async () => {
     // Confirms this validation does not report false negatives
     //
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cluster.py#L9
     mockReadLinesAndType('cluster_bad_no_coordinates.txt')
     const { errors } = await validateFile({}, 'cluster')
-    expect(errors).toHaveLength(0)
+    expect(errors).toHaveLength(1)
   })
 
-  it('reports no error for true negative of no coordinates in cluster file', async () => {
+  it('passes when no coordinates in cluster file', async () => {
     // Confirms this validation does not report false positive
     //
     // eslint-disable-next-line max-len
@@ -121,17 +121,17 @@ describe('Client-side file validation', () => {
     expect(errors).toHaveLength(0)
   })
 
-  it('reports error for true positive of coordinates in metadata file', async () => {
+  it('fails when coordinates in metadata file', async () => {
     // Confirms this validation does not report false negatives
     //
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L17
     mockReadLinesAndType('metadata_bad_has_coordinates.txt')
     const { errors } = await validateFile({}, 'metadata')
-    expect(errors).toHaveLength(0)
+    expect(errors).toHaveLength(1)
   })
 
-  it('reports no error for true negative of coordinates in metadata file', async () => {
+  it('passes when no coordinates in metadata file', async () => {
     // Confirms this validation does not report false positives
     //
     // eslint-disable-next-line max-len

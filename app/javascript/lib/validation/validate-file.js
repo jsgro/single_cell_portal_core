@@ -190,9 +190,9 @@ async function validateFormat(table, fileType) {
   )
 
   if (fileType === 'metadata') {
-    validateNoMetadataCoordinates(headers)
+    issues = issues.concat(validateNoMetadataCoordinates(headers))
   } else {
-    validateClusterCoordinates(headers)
+    issues = issues.concat(validateClusterCoordinates(headers))
   }
 
   return issues
