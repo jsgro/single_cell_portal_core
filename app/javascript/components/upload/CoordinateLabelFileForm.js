@@ -1,7 +1,7 @@
 import React from 'react'
 import Select from 'react-select'
 
-import FileUploadControl from './FileUploadControl'
+import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 
 /** renders a form for editing/uploading an image file */
@@ -16,10 +16,6 @@ export default function CoordinateLabelForm({
 }) {
 
   const associatedCluster = associatedClusterFileOptions.find(opt => opt.value === file.options.cluster_file_id)
-  let imagePreviewUrl = '#'
-  if (file.uploadSelection) {
-    imagePreviewUrl = URL.createObjectURL(file.uploadSelection)
-  }
 
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
@@ -27,15 +23,12 @@ export default function CoordinateLabelForm({
         className="form-terra"
         acceptCharset="UTF-8">
         <div className="row">
-          <div className="col-md-6">
+          <div className="col-md-12">
             <FileUploadControl
               handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}
-              allowedFileTypes={window.ALLOWED_FILE_TYPES['plainText']}/>
-          </div>
-          <div className="col-md-6">
-            { file.uploadSelection && <img className="preview-image" src={imagePreviewUrl} alt={file.uploadSelection.name} /> }
+              allowedFileTypes={FileTypeExtensions.plainText}/>
           </div>
         </div>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>

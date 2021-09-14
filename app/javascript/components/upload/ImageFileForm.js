@@ -1,7 +1,7 @@
 import React from 'react'
 import Select from 'react-select'
 
-import FileUploadControl from './FileUploadControl'
+import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 
 /** renders a form for editing/uploading an image file */
@@ -32,7 +32,7 @@ export default function ImageFileForm({
               handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}
-              allowedFileTypes={window.ALLOWED_FILE_TYPES['plainText']}/>
+              allowedFileTypes={FileTypeExtensions.image}/>
           </div>
           <div className="col-md-6">
             { file.uploadSelection && <img className="preview-image" src={imagePreviewUrl} alt={file.uploadSelection.name} /> }

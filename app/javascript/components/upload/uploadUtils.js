@@ -93,7 +93,7 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile }) {
   return <div>
     <button type="button" className="btn btn-primary" disabled={!file.isDirty} onClick={() => saveFile(file)}>
       Save
-      { file.submitData && <span> &amp; Upload</span> }
+      { file.uploadSelection && <span> &amp; Upload</span> }
     </button> &nbsp;
     <button type="button" className="btn btn-secondary float-right" onClick={() => deleteFile(file)}>
       <i className="fas fa-trash"></i> Delete

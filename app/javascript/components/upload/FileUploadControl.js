@@ -2,8 +2,13 @@ import React from 'react'
 
 import { bytesToSize } from 'lib/stats'
 
+export const FileTypeExtensions = {
+  plainText: ['.txt', '.tsv', '.text', '.csv', '.txt.gz', '.tsv.gz', '.text.gz', '.csv.gz'],
+  image: ['.jpeg', '.jpg', '.png', '.bmp']
+}
+
 /** renders a file upload control for the given file object */
-export default function FileUploadControl({ file, updateFile, handleSaveResponse, allowedFileTypes }) {
+export default function FileUploadControl({ file, updateFile, handleSaveResponse, allowedFileTypes=['*'] }) {
   const inputId = `fileInput-${file._id}`
 
   /** handle user interaction with the file input */
@@ -20,10 +25,14 @@ export default function FileUploadControl({ file, updateFile, handleSaveResponse
     <br/>
     <button className="fileinput-button btn btn-secondary" id={`fileButton-${file._id}`}>
       { file.upload_file_name ? 'Change file' : 'Choose file' }
-      <input className="file-upload-input" type="file" name="study_file[upload]" id={inputId} onChange={handleFileSelection}/>
+      <input className="file-upload-input"
+        type="file"
+        id={inputId}
+        onChange={handleFileSelection}
+        accept={allowedFileTypes.join(',')}/>
     </button>
-    { file.selectedFile &&
-      <span> {file.selectedFile.name} ({bytesToSize(file.selectedFile.size)})</span>
+    { file.uploadSelection &&
+      <span> {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})</span>
     }
     <div className="file-container" id={`clusterFileList-${file._id}`}></div>
   </div>
