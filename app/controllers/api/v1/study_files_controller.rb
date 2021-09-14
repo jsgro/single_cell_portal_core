@@ -303,6 +303,7 @@ module Api
           if ['Cluster', 'Coordinate Labels', 'Gene List'].include?(study_file.file_type) && study_file.valid?
             study_file.invalidate_cache_by_file_type
           end
+
           # if a gene list or cluster got updated, we need to update the associated records
           if safe_file_params[:file_type] == 'Gene List' && name_changed
             @precomputed_entry = PrecomputedScore.find_by(study_file_id: safe_file_params[:_id])
@@ -595,7 +596,7 @@ module Api
                                            spatial_cluster_associations: [],
                                            options: [:cluster_group_id, :font_family, :font_size, :font_color, :matrix_id,
                                                      :submission_id, :bam_id, :analysis_name, :visualization_name, :cluster_name,
-                                                     :annotation_name],
+                                                     :annotation_name, :cluster_file_id],
                                            expression_file_info_attributes: [:id, :_destroy, :library_preparation_protocol, :units,
                                                                              :biosample_input_type, :modality, :is_raw_counts])
       end
