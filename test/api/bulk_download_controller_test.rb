@@ -70,7 +70,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
 
 
   teardown do
-    OmniAuth.config.mock_auth[:google] = nil
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
     @taxon.destroy
   end
 

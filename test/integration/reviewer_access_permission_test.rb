@@ -24,7 +24,7 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
   teardown do
     ReviewerAccessSession.destroy_all
     ReviewerAccess.destroy_all
-    OmniAuth.config.mock_auth[:google] = nil
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
   end
 
   test 'should create reviewer access' do
@@ -118,7 +118,7 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
     @study.reload
     refute @study.reviewer_access.present?
     sign_out @user
-    OmniAuth.config.mock_auth[:google] = nil # gotcha to clear any cached auth responses
+    OmniAuth.config.mock_auth[:google_oauth2] = nil # gotcha to clear any cached auth responses
     get :study, params: { accession: @study.accession, study_name: @study.url_safe_name }
     assert_redirected_to new_user_session_path
   end
@@ -153,7 +153,7 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
     assert_not_equal original_pin, access.pin
     refute access.reviewer_access_sessions.any?
     sign_out @user
-    OmniAuth.config.mock_auth[:google] = nil # gotcha to clear any cached auth responses
+    OmniAuth.config.mock_auth[:google_oauth2] = nil # gotcha to clear any cached auth responses
     get :reviewer_access, params: { access_code: original_access_code }
     assert_redirected_to site_path
     get :study, params: { accession: @study.accession, study_name: @study.url_safe_name }

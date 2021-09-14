@@ -15,7 +15,7 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    OmniAuth.config.mock_auth[:google] = nil
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
   end
 
   test 'access control enforced' do
