@@ -21,10 +21,10 @@
                 <td><%= taxon.common_name %></td>
                 <td><%= taxon.scientific_name %></td>
                 <td><%= taxon.restricted? ? "<span class='label label-danger'>Restricted</span>".html_safe : "<span class='label label-success'>Unrestricted</span>".html_safe %></td>
-                <td><%= link_to taxon.ncbi_taxid, "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=#{taxon.ncbi_taxid}", target: :_blank %></td>
+                <td><%= link_to taxon.ncbi_taxid, "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=#{taxon.ncbi_taxid}", target: :_blank, rel: 'noopener noreferrer' %></td>
                 <td>
                   <% taxon.genome_assemblies.each do |assembly| %>
-                    <%= link_to assembly.name, "https://www.ncbi.nlm.nih.gov/assembly/?term=#{assembly.name}", target: :_blank %>&nbsp;
+                    <%= link_to assembly.name, "https://www.ncbi.nlm.nih.gov/assembly/?term=#{assembly.name}", target: :_blank, rel: 'noopener noreferrer' %>&nbsp;
                     <% assembly.genome_annotations.each do |annotation| %>
                       <%= link_to "#{annotation.display_name} <i class='fas fa-download'></i>".html_safe, download_genome_annotation_path(id: annotation.id), class: 'btn btn-xs btn-warning' %>
                     <% end %>

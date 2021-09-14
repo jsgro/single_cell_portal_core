@@ -160,6 +160,7 @@ export function logScatterPlot(
     'annotScope': scatter.annotParams.scope,
     'isCorrelatedScatter': scatter.isCorrelatedScatter,
     'isAnnotatedScatter': scatter.isAnnotatedScatter,
+    'isSpatial': scatter.isSpatial,
     perfTimes
   }
 
