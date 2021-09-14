@@ -136,7 +136,7 @@ describe('Client-side file validation', () => {
     //
     // eslint-disable-next-line max-len
     // Mirrors https:// github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L31
-    mockReadLinesAndType('metadata_example.txt')
+    mockReadLinesAndType('metadata_good_v2-0-0.txt')
     const { errors } = await validateFile({}, 'metadata')
     expect(errors).toHaveLength(0)
   })
