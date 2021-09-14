@@ -55,7 +55,7 @@
                               class: 'check-upload', id: 'preset-nav' %></li>
               <li><%= link_to "<span class='fas fa-dna fa-fw'></span> Species".html_safe, taxons_path, class: 'check-upload',
                               id: 'species-nav' %></li>
-              <li><%= scp_link_to "<span class='fas fa-copyright fa-fw'></span> Collections".html_safe, branding_groups_path,
+              <li><%= scp_link_to "<span class='fas fa-copyright fa-fw'></span> Branding Groups".html_safe, branding_groups_path,
                                   class: 'check-upload', id: 'branding-groups-nav' %>
             <% end %>
             <% if current_user.acts_like_reporter? %>
