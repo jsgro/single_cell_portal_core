@@ -200,7 +200,6 @@ module Api
             render json: {errors: @study_file.errors}, status: :unprocessable_entity
           end
         rescue => e
-          byebug
           render json: {errors: e.message}, status: 500
         end
       end
@@ -272,7 +271,6 @@ module Api
             render json: {errors: @study_file.errors}, status: :unprocessable_entity
           end
         rescue => e
-          byebug
           render json: {errors: e.message}, status: 500
         end
       end
@@ -281,7 +279,7 @@ module Api
       # returns true/false depending on the success of the save
       def perform_update(study_file)
         safe_file_params = study_file_params
-
+        byebug
         # manually check first if species/assembly was supplied by name
         species_name = safe_file_params[:species]
         safe_file_params.delete(:species)
@@ -299,7 +297,7 @@ module Api
           # send data to FireCloud if upload was performed
           if safe_file_params[:upload].present?
             @study.delay.send_to_firecloud(study_file)
-            @study_file.update(status: 'uploaded') # set status to uploaded on full create
+            study_file.update(status: 'uploaded') # set status to uploaded on full create
           end
 
           if ['Cluster', 'Coordinate Labels', 'Gene List'].include?(study_file.file_type) && study_file.valid?

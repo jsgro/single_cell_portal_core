@@ -213,6 +213,8 @@ export async function createStudyFile(studyId, studyFileData, mock=false) {
     method: 'POST',
     body: studyFileData
   })
+  // we want the browser to auto-set the content type with the right form boundaries
+  // see https://stackoverflow.com/questions/36067767/how-do-i-upload-a-file-with-the-js-fetch-api
   delete init.headers['Content-Type']
   const [exploreInit] = await scpApi(apiUrl, init, mock, false)
   return exploreInit
@@ -232,6 +234,8 @@ export async function updateStudyFile(studyId, studyFileId, studyFileData, mock=
     method: 'PATCH',
     body: studyFileData
   })
+  // we want the browser to auto-set the content type with the right form boundaries
+  // see https://stackoverflow.com/questions/36067767/how-do-i-upload-a-file-with-the-js-fetch-api
   delete init.headers['Content-Type']
   const [exploreInit] = await scpApi(apiUrl, init, mock, false)
   return exploreInit
