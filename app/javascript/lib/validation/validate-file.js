@@ -199,7 +199,7 @@ async function validateCapFormat(table, fileType) {
     validateEqualCount(headers, annotTypes)
   )
 
-  // Validate
+  // Check format rules specific to either metadata or cluster file
   if (fileType === 'metadata') {
     issues = issues.concat(validateNoMetadataCoordinates(headers))
   } else {
