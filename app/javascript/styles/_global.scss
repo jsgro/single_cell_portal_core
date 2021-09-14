@@ -504,6 +504,11 @@ h6,
   font-size: 14px;
 }
 
+/* Slightly override container settings, e.g. for cluster validation errors */
+.alert.alert-danger ul {
+  color: $danger-color;
+}
+
 .message-text {
 	text-align: center;
 	padding: 3em;
