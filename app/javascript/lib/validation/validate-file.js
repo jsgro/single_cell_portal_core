@@ -223,7 +223,7 @@ function validateNoMetadataCoordinates(headers) {
       'First row must not include coordinates X, Y, or Z ' +
       '(case insensitive) as column header values. ' +
       `Your values included ${badValues}.`
-    issues.push(['error', 'format:cap:no-metadata-coordinates', msg])
+    issues.push(['error', 'format:cap:metadata-no-coordinates', msg])
   }
 
   return issues
