@@ -81,7 +81,9 @@
 
   </div>
   <div class="form-group">
-    <%= f.label :font_family, "Font Family #{link_to "<i class='fas fa-fw fa-eye'></i>".html_safe, 'https://www.cssfontstack.com', title: 'View Options', data: {toggle: 'tooltip'}, target: :_blank}".html_safe %><br>
+    <%= f.label :font_family, "Font Family #{link_to "<i class='fas fa-fw fa-eye'></i>".html_safe, 'https://www.cssfontstack.com',
+                                                     title: 'View Options', data: {toggle: 'tooltip'}, target: :_blank,
+                                                     rel: 'noopener noreferrer'}".html_safe %><br>
     <%= f.select :font_family, grouped_options_for_select(web_safe_fonts, @branding_group.font_family), {}, class: 'form-control' %>
   </div>
 

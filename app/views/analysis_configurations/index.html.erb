@@ -18,7 +18,8 @@
             <% @analysis_configurations.each do |analysis_configuration| %>
               <tr id="<%= analysis_configuration.dom_identifier %>" class="analysis-configuration-entry">
                 <td class="analysis-config-identifer">
-                  <%= link_to analysis_configuration.identifier, analysis_configuration.method_repo_url, target: :_blank %>
+                  <%= link_to analysis_configuration.identifier, analysis_configuration.method_repo_url,
+                              target: :_blank, rel: 'noopener noreferrer' %>
                 </td>
                 <td class="analysis-config-synopsis"><%= analysis_configuration.synopsis %></td>
                 <td class="analysis-config-user"><%= analysis_configuration.user.email %></td>
