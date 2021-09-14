@@ -16,7 +16,7 @@ export default {
   fileFilter: imageFileFilter
 }
 
-/** Renders a form for uploading one or more cluster/spatial files */
+/** Renders a form for uploading one or more image files */
 export function ImageForm({
   formState,
   addNewFile,

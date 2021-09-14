@@ -6,7 +6,8 @@ export default function StepTitle({ step, index, currentStep, setCurrentStep, se
   if (formState && formState.files) {
     stepFiles = formState.files.filter(step.fileFilter)
   }
-  return <li className={step.name === currentStep.name ? 'active' : ''} onClick={() => setCurrentStep(step)}>
+  const className = step.name === currentStep.name ? 'active' : ''
+  return <li className={className} onClick={() => setCurrentStep(step)}>
     <span className="badge">{index + 1}</span>
     <a className="action link">
       {step.title}

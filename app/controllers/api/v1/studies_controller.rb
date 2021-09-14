@@ -82,7 +82,7 @@ module Api
       def show
       end
 
-      # retrun json of the study, all study file objects, and any options values needed for the upload wizard
+      # return JSON of the study, all study file objects, and any options values needed for the upload wizard
       def file_info
         response_obj = {
           study: @study.attributes,

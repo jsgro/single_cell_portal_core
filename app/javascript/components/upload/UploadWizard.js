@@ -87,7 +87,7 @@ export default function UploadWizard({ accession, name }) {
   function updateFile(fileId, updates) {
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
-      const fileChanged = newFormState.files.find(file => file._id === fileId)
+      const fileChanged = newFormState.files.find(f => f._id === fileId)
       Object.assign(fileChanged, updates)
       return newFormState
     })
