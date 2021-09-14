@@ -58,7 +58,7 @@
             created a Google billing account to bill against, and granted Terra access to that account.</p>
           <p class="text-center"><%= link_to 'Instructions on creating Google billing accounts',
                                              'https://support.terra.bio/hc/en-us/articles/360026182251#How%20to%20create%20your%20own%20Google%20Billing%20Account',
-                                             target: :_blank, class: 'btn btn-default' %></p>
+                                             target: :_blank, class: 'btn btn-default', rel: 'noopener noreferrer' %></p>
         </div>
         <%= form_for(:billing_project, url: create_billing_project_path, html: {class: 'form', id: 'new-billing-project'}) do |f| %>
           <%= hidden_field_tag :scpbr, params[:scpbr] %>

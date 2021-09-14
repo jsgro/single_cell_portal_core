@@ -24,7 +24,8 @@
               <td><%= preset_search.identifier %></td>
               <td>
                 <% preset_search.accession_list.each do |accession| %>
-                  <span class="btn btn-default"><%= scp_link_to accession, legacy_study_path(identifier: accession), target: :_blank %></span>
+                  <span class="btn btn-default"><%= scp_link_to accession, legacy_study_path(identifier: accession),
+                                                                target: :_blank, rel: 'noopener noreferrer' %></span>
                 <% end %>
               </td>
               <td><%= preset_search.search_terms.join(', ') %></td>
