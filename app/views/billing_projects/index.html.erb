@@ -47,15 +47,9 @@
   </div>
 </div>
 <p>
-  <%= scp_link_to "New Billing Project", '#', class: 'btn btn-lg btn-default', disabled: true,
-                   data: {
-                     content: "Please visit the #{link_to 'Terra Billing Console',
-                                                          'https://app.terra.bio/#billing', target: :_blank} " + \
-                              "to create a new billing project.",
-                     toggle: 'popover',
-                     placement: 'right',
-                     html: true,
-                   } %>
+  <%= scp_link_to "Create a Billing Project <i class='fas fa-external-link-alt'></i>".html_safe, 'https://app.terra.bio/#billing',
+                  class: 'btn btn-lg btn-default', target: :_blank, rel: 'noopener noreferrer', data: { toggle: 'tooltip' },
+                  title: 'Please visit the Terra Billing Console to create a new billing project' %>
 </p>
 
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
