@@ -3,12 +3,23 @@
   <div class="row section-pad" id="main-body">
     <div class="col-md-12">
 
-      <% if @selected_branding_group.nil? %>
-        <div class="home-nav" id="collections-tab"
-            style="float:right;">
-          <a href="/single_cell/collections" class="btn btn-primary"
-             style="display: inline-block; font-size:16px;">
-            Browse Collections <span class="fas fa-bacteria"></span><span class="fas-fa-bacteria"></span>
+      <% if User.feature_flag_for_instance(current_user, 'covid19_page') && @selected_branding_group.nil? %>
+        <div class="home-nav" id="covid19-tab"
+            style="float:right;
+                   background: url(<%= image_url 'covid19-button.png' %>);
+                   background-position: right;
+                   background-repeat: no-repeat;
+                   background-color: #1d1e20;
+                   border-radius: 5px;
+                   background-size: contain;">
+          <a href="/single_cell/covid19"
+             style="color: #fff;
+                    font-size: normal;
+                    width:250px;
+                    padding: 10px 15px;
+                    font-size: 16.8px;
+                    display: inline-block">
+            COVID-19 Studies
           </a>
         </div>
       <% end %>
