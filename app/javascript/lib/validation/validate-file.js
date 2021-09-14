@@ -19,7 +19,7 @@ function clean(value) {
 /**
  * Verify headers are unique and not empty
  */
-function validateUniqueHeaders(headers) {
+function validateUnique(headers) {
   // eslint-disable-next-line max-len
   // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/0b6289dd91f877e5921a871680602d776271217f/ingest/annotations.py#L233
   const issues = []
@@ -36,13 +36,13 @@ function validateUniqueHeaders(headers) {
 
     const dupString = [...duplicates].join(', ')
     const msg = `Duplicate header names are not allowed: ${dupString}`
-    issues.push(['error', 'format', msg])
+    issues.push(['error', 'format:header:unique', msg])
   }
 
   // Are all headers non-empty?
   if (uniques.has('')) {
     const msg = 'Headers cannot contain empty values'
-    issues.push(['error', 'format', msg])
+    issues.push(['error', 'format:header:no-empty', msg])
   }
 
   return issues
@@ -68,7 +68,8 @@ function validateKeyword(values, expectedValue) {
   } else {
     const msg =
       `${location} must be "${expectedValue}" (case insensitive). ${actual}`
-    issues.push(['error', 'format', msg])
+    const logType = expectedValue.toLowerCase()
+    issues.push(['error', `format:header:${logType}`, msg])
   }
 
   return issues
@@ -93,9 +94,9 @@ function validateTypeKeyword(annotTypes) {
 }
 
 /**
- * Verify second row contains only "group" or "numeric"
+ * Verify type annotations (second row) contain only "group" or "numeric"
  */
-function validateTypeAnnotations(annotTypes) {
+function validateGroupOrNumeric(annotTypes) {
   const issues = []
   const invalidTypes = []
 
@@ -120,16 +121,16 @@ function validateTypeAnnotations(annotTypes) {
       'Second row, all columns after first must be "group" or "numeric". ' +
       `Your values included ${badValues}`
 
-    issues.push(['error', 'format', msg])
+    issues.push(['error', 'format:header:group-or-numeric', msg])
   }
 
   return issues
 }
 
 /**
- * Verify equal counts for headers and annotation types.
+ * Verify equal counts for headers and annotation types
  */
-function validateHeaderCount(headers, annotTypes) {
+function validateEqualCount(headers, annotTypes) {
   const issues = []
 
   if (headers.length > annotTypes.length) {
@@ -137,14 +138,14 @@ function validateHeaderCount(headers, annotTypes) {
       'First row must have same number of columns as second row. ' +
       `Your first row has ${headers.length} header columns and ` +
       `your second row has ${annotTypes.length} annotation type columns.`
-    issues.push(['error', 'format', msg])
+    issues.push(['error', 'format:header:count', msg])
   }
 
   return issues
 }
 
 /**
- * Guess whether column delimiter is comma or tab.
+ * Guess whether column delimiter is comma or tab
  *
  * Consider using `papaparse` NPM package once it supports ES modules.
  * Upstream task: https://github.com/mholt/PapaParse/pull/875
@@ -186,24 +187,24 @@ async function validateFormat(file, fileType) {
   const annotTypes = table[1].map(type => clean(type))
 
   issues = issues.concat(
-    validateUniqueHeaders(headers),
+    validateUnique(headers),
     validateNameKeyword(headers),
     validateTypeKeyword(annotTypes),
-    validateTypeAnnotations(annotTypes),
-    validateHeaderCount(headers, annotTypes)
+    validateGroupOrNumeric(annotTypes),
+    validateEqualCount(headers, annotTypes)
   )
 
   if (fileType === 'metadata') {
-    validateNoCoordinateHeaders(headers)
+    validateNoMetadataCoordinates(headers)
   } else {
-    validateCoordinateHeaders(headers)
+    validateClusterCoordinates(headers)
   }
 
   return issues
 }
 
 /** Verifies metadata file has no X, Y, or Z coordinate headers */
-function validateNoCoordinateHeaders(headers) {
+function validateNoMetadataCoordinates(headers) {
   const issues = []
 
   const invalidHeaders = headers.filter(header => {
@@ -216,14 +217,14 @@ function validateNoCoordinateHeaders(headers) {
       'First row must not include coordinates X, Y, or Z ' +
       '(case insensitive) as column header values. ' +
       `Your values included ${badValues}.`
-    issues.push(['error', 'format', msg])
+    issues.push(['error', 'format:header:no-metadata-coordinates', msg])
   }
 
   return issues
 }
 
 /** Verifies cluster file has X and Y coordinate headers */
-function validateCoordinateHeaders(headers) {
+function validateClusterCoordinates(headers) {
   const issues = []
 
   const xyHeaders = headers.filter(header => {
@@ -234,7 +235,7 @@ function validateCoordinateHeaders(headers) {
     const msg =
       'First row must include coordinates X and Y ' +
       '(case insensitive) as column header values.'
-    issues.push(['error', 'format', msg])
+    issues.push(['error', 'format:header:cluster-coordinates', msg])
   }
 
   return issues
