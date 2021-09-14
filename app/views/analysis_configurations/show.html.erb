@@ -2,7 +2,7 @@
   <%= link_to "Preview <i class='fas fa-search'></i>".html_safe,
               submission_preview_analysis_configuration_path(@analysis_configuration), class: 'btn btn-sm btn-info  ',
               title: 'Preview the submission form that a user would see when submitting this analysis', target: :_blank,
-              data: {toggle: 'tooltip', placement: 'right'} %>
+              data: {toggle: 'tooltip', placement: 'right'}, rel: 'noopener noreferrer' %>
   <%= link_to "Reset <i class='fas fa-undo-alt'></i>".html_safe,
               reset_analysis_parameters_analysis_configuration_path(@analysis_configuration), class: 'btn btn-sm btn-danger',
               title: 'Reset all input/output parameters to defaults from Methods Repository', method: :put,
@@ -14,9 +14,11 @@
 <p class="lead"><%= @analysis_configuration.synopsis %></p>
 <dl class="dl-horizontal">
   <dt>Analysis</dt>
-  <dd><%= link_to "#{@analysis_configuration.identifier} <i class='fas fa-external-link-square-alt'></i>".html_safe, @analysis_configuration.method_repo_url, target: :_blank %></dd>
+  <dd><%= link_to "#{@analysis_configuration.identifier} <i class='fas fa-external-link-square-alt'></i>".html_safe,
+                  @analysis_configuration.method_repo_url, target: :_blank, rel: 'noopener noreferrer' %></dd>
   <dt>Configuration</dt>
-  <dd><%= link_to "#{@analysis_configuration.configuration_identifier} <i class='fas fa-external-link-square-alt'></i>".html_safe, @analysis_configuration.method_repo_config_url, target: :_blank %></dd>
+  <dd><%= link_to "#{@analysis_configuration.configuration_identifier} <i class='fas fa-external-link-square-alt'></i>".html_safe,
+                  @analysis_configuration.method_repo_config_url, target: :_blank, rel: 'noopener noreferrer' %></dd>
   <dt>Entity Type</dt>
   <dd><%= @analysis_configuration.entity_type %></dd>
 </dl>
