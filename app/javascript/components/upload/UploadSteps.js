@@ -2,6 +2,7 @@ import React from 'react'
 
 import ClusteringForm from './ClusteringForm'
 import ImageForm from './ImageForm'
+import CoordinateLabelForm from './CoordinateLabelForm'
 
 
 function RawCountsUploadForm() {
@@ -18,7 +19,7 @@ function MetadataUploadForm() {
   return <span>Meta-----data</span>
 }
 
-export const STEP_ORDER = ['rawCounts', 'processedExpression', 'metadata', 'clustering', 'images']
+export const STEP_ORDER = ['rawCounts', 'processedExpression', 'metadata', 'clustering', 'images', 'coordinateLabels']
 
 export default {
   rawCounts: {
@@ -45,5 +46,10 @@ export default {
     stepTitle: 'Reference Images',
     formComponent: ImageForm,
     fileFilter: file => file.file_type === 'Image'
+  },
+  coordinateLabels: {
+    stepTitle: 'Coordinate Labels',
+    formComponent: CoordinateLabelForm,
+    fileFilter: file => file.file_type === 'Coordinate Labels'
   }
 }

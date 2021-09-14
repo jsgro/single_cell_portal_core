@@ -5,7 +5,7 @@ import FileUploadControl from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 
 /** renders a form for editing/uploading an image file */
-export default function ImageFileForm({
+export default function CoordinateLabelForm({
   file,
   updateFile,
   saveFile,
@@ -15,7 +15,7 @@ export default function ImageFileForm({
   updateCorrespondingClusters
 }) {
 
-  const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
+  const associatedCluster = associatedClusterFileOptions.find(opt => opt.value === file.options.cluster_file_id)
   let imagePreviewUrl = '#'
   if (file.uploadSelection) {
     imagePreviewUrl = URL.createObjectURL(file.uploadSelection)
@@ -42,9 +42,8 @@ export default function ImageFileForm({
         <div className="form-group">
           <label>Corresponding clusters / spatial data:</label><br/>
           <Select options={associatedClusterFileOptions}
-            value={spatialClusterAssocs}
-            isMulti={true}
-            placeholder="None"
+            value={associatedCluster}
+            placeholder="Select one"
             onChange={val => updateCorrespondingClusters(file, val)}/>
         </div>
         <div className="form-group">
@@ -52,6 +51,7 @@ export default function ImageFileForm({
         </div>
         <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
       </form>
+
       <SavingOverlay file={file} updateFile={updateFile}/>
     </div>
   </div>

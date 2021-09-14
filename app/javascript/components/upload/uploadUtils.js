@@ -45,6 +45,11 @@ export function formatFileForApi(file) {
   if (file.uploadSelection) {
     data.append('study_file[upload]', file.uploadSelection)
   }
+  if (file.options) {
+    Object.keys(file.options).forEach(key => {
+      data.append(`study_file[options][${key}]`, file.options[key])
+    })
+  }
   return data
 }
 
@@ -81,5 +86,18 @@ export function SavingOverlay({ file, updateFile }) {
       </div>
     }
   </>
+}
+
+/** renders save and delete buttons for a given file */
+export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile }) {
+  return <div>
+    <button type="button" className="btn btn-primary" disabled={!file.isDirty} onClick={() => saveFile(file)}>
+      Save
+      { file.submitData && <span> &amp; Upload</span> }
+    </button> &nbsp;
+    <button type="button" className="btn btn-secondary float-right" onClick={() => deleteFile(file)}>
+      <i className="fas fa-trash"></i> Delete
+    </button>
+  </div>
 }
 

@@ -13,6 +13,8 @@ module Api
 
       respond_to :json
 
+      SUPPORTED_LABEL_FONTS = ['Helvetica Neue', 'Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Trebuchet MS', 'Impact']
+
       swagger_path '/studies' do
         operation :get do
           key :tags, [
@@ -84,7 +86,10 @@ module Api
       def file_info
         response_obj = {
           study: @study.attributes,
-          files: @study.study_files
+          files: @study.study_files,
+          menu_options: {
+            fonts: SUPPORTED_LABEL_FONTS
+          }
         }
         render json: response_obj
       end

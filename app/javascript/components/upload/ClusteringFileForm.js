@@ -2,7 +2,7 @@ import React from 'react'
 import Select from 'react-select'
 
 import FileUploadControl from './FileUploadControl'
-import { TextFormField, SavingOverlay } from './uploadUtils'
+import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 
 /** renders a form for editing/uploading a single cluster file */
 export default function ClusteringFileForm({
@@ -78,14 +78,7 @@ export default function ClusteringFileForm({
             <TextFormField label="Z Domain Max" fieldName="z_axis_max" file={file} updateFile={updateFile}/>
           </div>
         </div>
-
-        <button type="button" className="btn btn-primary" disabled={!file.isDirty} onClick={() => saveFile(file)}>
-          Save
-          { file.submitData && <span> &amp; Upload</span> }
-        </button> &nbsp;
-        <button type="button" className="btn btn-danger cancel float-right" onClick={() => deleteFile(file)}>
-          <i className="fas fa-trash"></i> Delete
-        </button>
+        <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
       </form>
       <SavingOverlay file={file} updateFile={updateFile}/>
     </div>
