@@ -8,7 +8,7 @@ import * as MetricsApi from 'lib/metrics-api'
 
 const fs = require('fs')
 
-const mockDir = 'public/mock_data/validation/'
+const mockDir = 'test/test_data/validation/'
 
 /** Mock function that uses FileReader, which is not available in Node */
 function mockReadLinesAndType(mockFileName) {

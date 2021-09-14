@@ -263,7 +263,6 @@ function getLogProps(fileObj, fileType, errorObj) {
     fileMimeType: file.type
   }
 
-
   if (errors.length === 0) {
     return Object.assign({ status: 'success' }, defaultProps)
   } else {
