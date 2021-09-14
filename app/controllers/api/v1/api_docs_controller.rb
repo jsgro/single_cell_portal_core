@@ -1,6 +1,9 @@
 module Api
   module V1
     class ApiDocsController < ActionController::Base
+      include Swagger::Blocks
+      include Concerns::CspHeaderBypass
+
       respond_to :json
 
       swagger_root do
