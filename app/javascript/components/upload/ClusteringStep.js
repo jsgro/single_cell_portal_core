@@ -1,15 +1,25 @@
 import React, { useEffect } from 'react'
 
-import UploadSteps from './UploadSteps'
 import ClusteringFileForm from './ClusteringFileForm'
+
 
 const DEFAULT_NEW_CLUSTER_FILE = {
   is_spatial: false,
   file_type: 'Cluster'
 }
 
+export const clusterFileFilter = file => file.file_type === 'Cluster'
+
+export default {
+  title: 'Clustering',
+  name: 'clustering',
+  component: ClusteringUploadForm,
+  fileFilter: clusterFileFilter
+}
+
+
 /** Renders a form for uploading one or more cluster/spatial files */
-export default function ClusteringUploadForm({
+export function ClusteringUploadForm({
   formState,
   addNewFile,
   updateFile,
@@ -17,8 +27,7 @@ export default function ClusteringUploadForm({
   deleteFile,
   handleSaveResponse
 }) {
-
-  const clusterFiles = formState.files.filter(UploadSteps.clustering.fileFilter)
+  const clusterFiles = formState.files.filter(clusterFileFilter)
   const associatedClusterFileOptions = clusterFiles.filter(file => !file.is_spatial)
     .map(file => ({ label: file.name, value: file._id }))
 

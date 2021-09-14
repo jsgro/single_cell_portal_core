@@ -13,17 +13,23 @@ import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
 import _uniqueId from 'lodash/uniqueId'
 
-import UploadSteps, { STEP_ORDER } from './UploadSteps'
 import { formatFileFromServer, formatFileForApi } from './uploadUtils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo } from 'lib/scp-api'
 
+import StepTabHeader from './StepTabHeader'
+import ClusteringStep from './ClusteringStep'
+import ImageStep from './ImageStep'
+import CoordinateLabelStep from './CoordinateLabelStep'
+import RawCountsStep from './RawCountsStep'
+import ProcessedExpressionStep from './ProcessedExpressionStep'
+
+const STEPS = [RawCountsStep, ProcessedExpressionStep, ClusteringStep, CoordinateLabelStep, ImageStep]
+
 /** shows the upload wizard */
 export default function UploadWizard({ accession, name }) {
-  const [currentStep, setCurrentStep] = useState(STEP_ORDER[0])
+  const [currentStep, setCurrentStep] = useState(STEPS[0])
   const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
-
-  const step = UploadSteps[currentStep]
 
   // go through the files and compute any relevant derived properties, notably 'isDirty'
   if (serverState?.files && formState?.files) {
@@ -155,9 +161,9 @@ export default function UploadWizard({ accession, name }) {
     <div className="row">
       <div className="col-md-3">
         <ul className="upload-wizard-steps">
-          { STEP_ORDER.map((stepName, index) =>
-            <StepTitle key={index}
-              stepName={stepName}
+          { STEPS.map((step, index) =>
+            <StepTabHeader key={index}
+              step={step}
               index={index}
               formState={formState}
               serverState={serverState}
@@ -167,7 +173,7 @@ export default function UploadWizard({ accession, name }) {
       </div>
       <div className="col-md-9">
         { !formState && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
-        { !!formState && <step.formComponent
+        { !!formState && <currentStep.component
           formState={formState}
           serverState={serverState}
           deleteFile={deleteFile}
@@ -179,29 +185,6 @@ export default function UploadWizard({ accession, name }) {
       </div>
     </div>
   </div>
-}
-
-/** renders the wizard step header for a given step */
-function StepTitle({ stepName, index, currentStep, setCurrentStep, serverState, formState }) {
-  const step = UploadSteps[stepName]
-  let stepFiles = []
-  if (formState && formState.files) {
-    stepFiles = formState.files.filter(step.fileFilter)
-  }
-  return <li className={stepName === currentStep ? 'active' : ''} onClick={() => setCurrentStep(stepName)}>
-    <span className="badge">{index + 1}</span>
-    <a className="action link">
-      {step.stepTitle}
-    </a>
-    <ul className="fileList">
-      { stepFiles.map(file => {
-        return <li key={file.name}>
-          <span className={file.isDirty ? 'dirty' : ''}>{file.name}</span>
-        </li>
-      })
-      }
-    </ul>
-  </li>
 }
 
 /** convenience method for drawing/updating the component from non-react portions of SCP */

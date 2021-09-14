@@ -1,14 +1,22 @@
 import React, { useEffect } from 'react'
 
-import UploadSteps from './UploadSteps'
 import CoordinateLabelFileForm from './CoordinateLabelFileForm'
 
-const DEFAULT_NEW_IMAGE_FILE = {
+const DEFAULT_NEW_LABEL_FILE = {
   file_type: 'Coordinate Labels'
 }
 
+const coordinateLabelFileFilter = file => file.file_type === 'Coordinate Labels'
+
+export default {
+  title: 'Coordinate Labels',
+  name: 'coordinateLabels',
+  component: CoordinateLabelForm,
+  fileFilter: coordinateLabelFileFilter
+}
+
 /** Renders a form for uploading one or more cluster/spatial files */
-export default function CoordinateLabelForm({
+function CoordinateLabelForm({
   formState,
   addNewFile,
   updateFile,
@@ -16,9 +24,8 @@ export default function CoordinateLabelForm({
   deleteFile,
   handleSaveResponse
 }) {
-
-  const coordinateFiles = formState.files.filter(UploadSteps.coordinateLabels.fileFilter)
-  const associatedClusterFileOptions = formState.files.filter(UploadSteps.clustering.fileFilter)
+  const coordinateFiles = formState.files.filter(coordinateLabelFileFilter)
+  const associatedClusterFileOptions = formState.files.filter(coordinateLabelFileFilter)
     .map(file => ({ label: file.name, value: file._id }))
 
   /** handle a change in the associated cluster select */
@@ -32,7 +39,7 @@ export default function CoordinateLabelForm({
 
   useEffect(() => {
     if (coordinateFiles.length === 0) {
-      addNewFile(DEFAULT_NEW_IMAGE_FILE)
+      addNewFile(DEFAULT_NEW_LABEL_FILE)
     }
   }, [coordinateFiles.length])
 
@@ -80,7 +87,7 @@ export default function CoordinateLabelForm({
         updateCorrespondingClusters={updateCorrespondingClusters}/>
     })}
     <div className="row top-margin">
-      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_IMAGE_FILE)}><span className="fas fa-plus"></span> Add File</button>
+      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_LABEL_FILE)}><span className="fas fa-plus"></span> Add File</button>
     </div>
   </div>
 }

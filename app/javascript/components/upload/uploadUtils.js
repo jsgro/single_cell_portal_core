@@ -81,7 +81,7 @@ export function SavingOverlay({ file, updateFile }) {
         <div className="error-message">
           An error occurred while saving the file<br/>
           { file.errorMessage }<br/><br/>
-          <button className="btn btn-secondary" onClick={() => updateFile(file._id, { isError: false})}>Ok</button>
+          <button className="btn btn-secondary" onClick={() => updateFile(file._id, { isError: false })}>Ok</button>
         </div>
       </div>
     }

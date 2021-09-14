@@ -1,14 +1,23 @@
 import React, { useEffect } from 'react'
 
-import UploadSteps from './UploadSteps'
 import ImageFileForm from './ImageFileForm'
+import { clusterFileFilter } from './ClusteringStep'
 
 const DEFAULT_NEW_IMAGE_FILE = {
   file_type: 'Image'
 }
 
+const imageFileFilter = file => file.file_type === 'Image'
+
+export default {
+  title: 'Reference Images',
+  name: 'images',
+  component: ImageForm,
+  fileFilter: imageFileFilter
+}
+
 /** Renders a form for uploading one or more cluster/spatial files */
-export default function ImageForm({
+export function ImageForm({
   formState,
   addNewFile,
   updateFile,
@@ -16,9 +25,8 @@ export default function ImageForm({
   deleteFile,
   handleSaveResponse
 }) {
-
-  const imageFiles = formState.files.filter(UploadSteps.images.fileFilter)
-  const associatedClusterFileOptions = formState.files.filter(UploadSteps.clustering.fileFilter)
+  const imageFiles = formState.files.filter(imageFileFilter)
+  const associatedClusterFileOptions = formState.files.filter(clusterFileFilter)
     .map(file => ({ label: file.name, value: file._id }))
 
   /** handle a change in the associated cluster select */
