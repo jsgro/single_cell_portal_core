@@ -63,7 +63,7 @@ describe('Client-side file validation', () => {
           'Second row, first column must be "TYPE" (case insensitive). Your value was "notTYPE".'
         ],
         'errorTypes': [
-          'format:header:type'
+          'format:cap:type'
         ]
       }
     )

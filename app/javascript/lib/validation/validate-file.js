@@ -36,13 +36,13 @@ function validateUnique(headers) {
 
     const dupString = [...duplicates].join(', ')
     const msg = `Duplicate header names are not allowed: ${dupString}`
-    issues.push(['error', 'format:header:unique', msg])
+    issues.push(['error', 'format:cap:unique', msg])
   }
 
   // Are all headers non-empty?
   if (uniques.has('')) {
     const msg = 'Headers cannot contain empty values'
-    issues.push(['error', 'format:header:no-empty', msg])
+    issues.push(['error', 'format:cap:no-empty', msg])
   }
 
   return issues
@@ -69,7 +69,7 @@ function validateKeyword(values, expectedValue) {
     const msg =
       `${location} must be "${expectedValue}" (case insensitive). ${actual}`
     const logType = expectedValue.toLowerCase()
-    issues.push(['error', `format:header:${logType}`, msg])
+    issues.push(['error', `format:cap:${logType}`, msg])
   }
 
   return issues
@@ -121,7 +121,7 @@ function validateGroupOrNumeric(annotTypes) {
       'Second row, all columns after first must be "group" or "numeric". ' +
       `Your values included ${badValues}`
 
-    issues.push(['error', 'format:header:group-or-numeric', msg])
+    issues.push(['error', 'format:cap:group-or-numeric', msg])
   }
 
   return issues
@@ -138,7 +138,7 @@ function validateEqualCount(headers, annotTypes) {
       'First row must have same number of columns as second row. ' +
       `Your first row has ${headers.length} header columns and ` +
       `your second row has ${annotTypes.length} annotation type columns.`
-    issues.push(['error', 'format:header:count', msg])
+    issues.push(['error', 'format:cap:count', msg])
   }
 
   return issues
@@ -173,14 +173,24 @@ function sniffDelimiter(lines, mimeType) {
   return bestDelimiter
 }
 
-/** Validate a local cluster or metadata file */
-async function validateFormat(table, fileType) {
+/**
+ * Verify cap format for a cluster or metadata file
+ *
+ * The "cap" of an SCP study file is its first two lines, i.e.:
+ *  - Header (row 1), and
+ *  - Annotation types (row 2)
+ *
+ * Cap lines are like meta-information lines in other file formats
+ * (e.g. VCF), but do not begin with pound signs (#).
+ */
+async function validateCapFormat(table, fileType) {
   let issues = []
 
-  // Remove white spaces and quotes, and lowercase annotTypes
+  // Trim spaces and quotes
   const headers = table[0].map(header => clean(header))
   const annotTypes = table[1].map(type => clean(type))
 
+  // Check format rules that apply to both metadata and cluster files
   issues = issues.concat(
     validateUnique(headers),
     validateNameKeyword(headers),
@@ -189,6 +199,7 @@ async function validateFormat(table, fileType) {
     validateEqualCount(headers, annotTypes)
   )
 
+  // Validate
   if (fileType === 'metadata') {
     issues = issues.concat(validateNoMetadataCoordinates(headers))
   } else {
@@ -212,7 +223,7 @@ function validateNoMetadataCoordinates(headers) {
       'First row must not include coordinates X, Y, or Z ' +
       '(case insensitive) as column header values. ' +
       `Your values included ${badValues}.`
-    issues.push(['error', 'format:header:no-metadata-coordinates', msg])
+    issues.push(['error', 'format:cap:no-metadata-coordinates', msg])
   }
 
   return issues
@@ -230,7 +241,7 @@ function validateClusterCoordinates(headers) {
     const msg =
       'First row must include coordinates X and Y ' +
       '(case insensitive) as column header values.'
-    issues.push(['error', 'format:header:cluster-coordinates', msg])
+    issues.push(['error', 'format:cap:cluster-coordinates', msg])
   }
 
   return issues
@@ -286,7 +297,7 @@ export async function validateFile(file, fileType) {
   const table = lines.map(line => line.split(delimiter))
 
   if (['cluster', 'metadata'].includes(fileType)) {
-    issues = await validateFormat(table, fileType)
+    issues = await validateCapFormat(table, fileType)
   }
 
   // Ingest Pipeline reports "issues", which includes "errors" and "warnings".
