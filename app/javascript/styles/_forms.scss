@@ -82,54 +82,54 @@
 .form-terra {
   background: #fff;
   padding: 1em;
-	border-radius: 5px;
+  border-radius: 5px;
 }
 
 .padded {
-	padding: 1em;
+  padding: 1em;
 }
 
 .top-margin {
-	margin-top: 1em;
+  margin-top: 1em;
 }
 
 .float-right {
-	float: right;
+  float: right;
 }
 
 .sublabel {
-	margin-left: 1em;
-	font-weight: normal;
+  margin-left: 1em;
+  font-weight: normal;
 }
 
 .upload-wizard-steps {
-	list-style: none;
-	width: 24%;
-	position: fixed;
-	padding-left: 0;
-	.dirty {
-		font-style: italic;
-	}
-	.badge {
-		background: $action-color;
-		margin-right: 1em;
-	}
-	li.active {
-		background: #fff
-	}
-	> li {
+  list-style: none;
+  width: 24%;
+  position: fixed;
+  padding-left: 0;
+  .dirty {
+    font-style: italic;
+  }
+  .badge {
+    background: $action-color;
+    margin-right: 1em;
+  }
+  li.active {
+    background: #fff
+  }
+  > li {
     cursor: pointer;
-		width: 100%;
-		padding: 0.5em;
-		border-bottom: 1px solid #666;
-	}
-	ul {
-		list-style: none;
-	}
+    width: 100%;
+    padding: 0.5em;
+    border-bottom: 1px solid #666;
+  }
+  ul {
+    list-style: none;
+  }
 }
 
 .file-upload-overlay {
-	position: absolute;
+  position: absolute;
   left: 0;
   top: 0;
   width: 100%;
@@ -149,5 +149,5 @@
 }
 
 .preview-image {
-	max-height: 100px;
+  max-height: 100px;
 }

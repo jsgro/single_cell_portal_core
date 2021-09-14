@@ -33,8 +33,9 @@ export default function CoordinateLabelForm({
         </div>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         <div className="form-group">
-          <label>Corresponding clusters / spatial data:</label><br/>
+          <label htmlFor={`coordCluster-${file._id}`}>Corresponding clusters / spatial data:</label><br/>
           <Select options={associatedClusterFileOptions}
+            id={`coordCluster-${file._id}`}
             value={associatedCluster}
             placeholder="Select one"
             onChange={val => updateCorrespondingClusters(file, val)}/>

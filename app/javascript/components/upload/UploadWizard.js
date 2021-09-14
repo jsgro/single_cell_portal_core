@@ -11,9 +11,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
-import _uniqueId from 'lodash/uniqueId'
 
-import { formatFileFromServer, formatFileForApi } from './uploadUtils'
+import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './uploadUtils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo } from 'lib/scp-api'
 
 import StepTabHeader from './StepTabHeader'
@@ -45,15 +44,7 @@ export default function UploadWizard({ accession, name }) {
 
   /** adds an empty file, merging in the given fileProps. Does not communicate anything to the server */
   function addNewFile(fileProps) {
-    const newFile = {
-      study_id: serverState.study._id.$oid,
-      name: '',
-      _id: _uniqueId('newFile-'), // we just need a temp id to give to form controls, the real id will come from the server
-      status: 'new',
-      description: '',
-      parse_status: 'unparsed',
-      spatial_cluster_associations: []
-    }
+    const newFile = newStudyFileObj(serverState.study._id.$oid)
     Object.assign(newFile, fileProps)
 
     setFormState(prevFormState => {
@@ -100,9 +91,9 @@ export default function UploadWizard({ accession, name }) {
     try {
       let response
       if (file.status === 'new') {
-        response = await createStudyFile(file.study_id, fileApiData)
+        response = await createStudyFile(accession, fileApiData)
       } else {
-        response = await updateStudyFile(file.study_id, file._id, fileApiData)
+        response = await updateStudyFile(accession, file._id, fileApiData)
       }
       handleSaveResponse(response)
     } catch (error) {
@@ -124,19 +115,26 @@ export default function UploadWizard({ accession, name }) {
   }
 
   /** delete the file from the form, and also the server if it exists there */
-  function deleteFile(file) {
+  async function deleteFile(file) {
     if (file.status === 'new') {
       deleteFileFromForm(file._id)
     } else {
-      updateFile(file._id, { isSaving: true })
-      deleteStudyFile(file.study_id, file._id).then(response => {
+      updateFile(file._id, { isDeleting: true })
+      try {
+        await deleteStudyFile(accession, file._id)
         setServerState(prevServerState => {
           const newServerState = _cloneDeep(prevServerState)
           newServerState.files = newServerState.files.filter(f => f._id != file._id)
           return newServerState
         })
         deleteFileFromForm(file._id)
-      })
+      } catch (error) {
+        updateFile(file._id, {
+          isError: true,
+          isDeleting: false,
+          errorMessage: error.message
+        })
+      }
     }
   }
 

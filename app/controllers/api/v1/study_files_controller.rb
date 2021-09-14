@@ -5,10 +5,11 @@ module Api
       include Concerns::FireCloudStatus
       include Concerns::Authenticator
       include Swagger::Blocks
+      include Concerns::StudyAware
 
       before_action :authenticate_api_user!
       before_action :set_study
-      before_action :check_study_permission
+      before_action :check_study_edit_permission
       before_action :set_study_file, except: [:index, :create, :bundle]
 
       respond_to :json
@@ -288,6 +289,10 @@ module Api
         set_taxon_and_assembly_by_name({species: species_name, assembly: assembly_name})
         # clear the id so that it doesn't get overwritten (which would be a problem for new files)
         safe_file_params.delete(:_id)
+
+        parse_on_upload = safe_file_params[:parse_on_upload]
+        safe_file_params.delete(:parse_on_upload)
+
         # check if the name of the file has changed as we won't be able to tell after we saved
         name_changed = study_file.persisted? && study_file.name != safe_file_params[:name]
         if study_file.update(safe_file_params)
@@ -322,10 +327,22 @@ module Api
               end
               @cluster.update(name: study_file.name)
             end
-          elsif ['Expression Matrix', 'MM Coordinate Matrix'].include?(safe_file_params[:file_type]) && !safe_file_params[:y_axis_label].blank?
+          end
+
+          if ['Expression Matrix', 'MM Coordinate Matrix'].include?(safe_file_params[:file_type]) && !safe_file_params[:y_axis_label].blank?
             # if user is supplying an expression axis label, update default options hash
             @study.update(default_options: @study.default_options.merge(expression_label: safe_file_params[:y_axis_label]))
           end
+
+          if parse_on_upload &&
+            study_file.parseable? &&
+            !study_file.parsing? &&
+            study_file.parse_status == 'unparsed' &&
+            study_file.status == 'uploaded' &&
+            safe_file_params[:upload].present?
+            FileParseService.run_parse_job(@study_file, @study, current_api_user)
+          end
+
           return true
         else
           return false
@@ -566,15 +583,6 @@ module Api
         end
       end
 
-      def set_study
-        @study = Study.find_by(id: params[:study_id])
-        if @study.nil? || @study.queued_for_deletion?
-          head 404 and return
-        elsif @study.detached?
-          head 410 and return
-        end
-      end
-
       def set_study_file
         @study_file = StudyFile.find_by(id: params[:id])
         if @study_file.nil? || @study_file.queued_for_deletion?
@@ -593,7 +601,7 @@ module Api
                                            :description, :is_spatial, :file_type, :status, :human_fastq_url, :human_data, :use_metadata_convention,
                                            :cluster_type, :generation, :x_axis_label, :y_axis_label, :z_axis_label, :x_axis_min,
                                            :x_axis_max, :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :species, :assembly,
-                                           spatial_cluster_associations: [],
+                                           :parse_on_upload, spatial_cluster_associations: [],
                                            options: [:cluster_group_id, :font_family, :font_size, :font_color, :matrix_id,
                                                      :submission_id, :bam_id, :analysis_name, :visualization_name, :cluster_name,
                                                      :annotation_name, :cluster_file_id],

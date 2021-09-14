@@ -204,11 +204,11 @@ export async function fetchStudyFileInfo(studyAccession, mock=false) {
 /**
  * Creates a new study file
  *
- * @param {String} studyId Study id
+ * @param {String} studyAccession study accession
  * @param {FormData} studyFileData html FormData object with the file data
 */
-export async function createStudyFile(studyId, studyFileData, mock=false) {
-  const apiUrl = `/studies/${studyId}/study_files`
+export async function createStudyFile(studyAccession, studyFileData, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/study_files`
   const init = Object.assign({}, defaultInit(), {
     method: 'POST',
     body: studyFileData
@@ -224,12 +224,12 @@ export async function createStudyFile(studyId, studyFileData, mock=false) {
 /**
  * Returns initial content for the upload file wizard
  *
- * @param {String} studyId Study id
+ * @param {String} studyAccession study accession
  * @param {String} studyFileId Study file id
  * @param {FormData} studyFileData html FormData object with the file data
 */
-export async function updateStudyFile(studyId, studyFileId, studyFileData, mock=false) {
-  const apiUrl = `/studies/${studyId}/study_files/${studyFileId}`
+export async function updateStudyFile(studyAccession, studyFileId, studyFileData, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}`
   const init = Object.assign({}, defaultInit(), {
     method: 'PATCH',
     body: studyFileData
@@ -247,8 +247,8 @@ export async function updateStudyFile(studyId, studyFileId, studyFileData, mock=
  * @param {String} studyAccession Study accession
  * @param {fileId} the guid of the file to delete
 */
-export async function deleteStudyFile(studyId, fileId, mock=false) {
-  const apiUrl = `/studies/${studyId}/study_files/${fileId}`
+export async function deleteStudyFile(studyAccession, fileId, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/study_files/${fileId}`
   const init = Object.assign({}, defaultInit(), {
     method: 'DELETE'
   })
