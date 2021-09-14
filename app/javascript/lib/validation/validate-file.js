@@ -174,12 +174,7 @@ function sniffDelimiter(lines, mimeType) {
 }
 
 /** Validate a local cluster or metadata file */
-async function validateFormat(file, fileType) {
-  const { lines, mimeType } = await readLinesAndType(file, 2)
-
-  const delimiter = sniffDelimiter(lines, mimeType)
-  const table = lines.map(line => line.split(delimiter))
-
+async function validateFormat(table, fileType) {
   let issues = []
 
   // Remove white spaces and quotes, and lowercase annotTypes
@@ -242,13 +237,32 @@ function validateClusterCoordinates(headers) {
 }
 
 /** Get properties about this validation run to log to Mixpanel */
-function getLogProps(errors, summary, file, fileType) {
+function getLogProps(fileObj, fileType, errorObj) {
+  const { file, lines, delimiter } = fileObj
+  const { errors, summary } = errorObj
+
+  // Avoid needless gotchas in downstream analysis
+  let friendlyDelimiter = 'tab'
+  if (delimiter === ',') {
+    friendlyDelimiter = 'comma'
+  } else if (delimiter === ' ') {
+    friendlyDelimiter = 'space'
+  }
+
+  const numRows = lines.length
+  const numColumns = lines[0].split(delimiter).length
+
   const defaultProps = {
     fileType,
+    numRows,
+    numColumns,
+    numTableCells: numRows * numColumns,
+    delimiter: friendlyDelimiter,
     fileName: file.name,
     fileSize: file.size,
     fileMimeType: file.type
   }
+
 
   if (errors.length === 0) {
     return Object.assign({ status: 'success' }, defaultProps)
@@ -257,7 +271,8 @@ function getLogProps(errors, summary, file, fileType) {
       status: 'failure',
       summary,
       numErrors: errors.length,
-      errors: errors.map(columns => columns[2])
+      errors: errors.map(columns => columns[2]),
+      errorTypes: errors.map(columns => columns[1])
     })
   }
 }
@@ -265,8 +280,14 @@ function getLogProps(errors, summary, file, fileType) {
 /** Validate a local file, return list of any detected errors */
 export async function validateFile(file, fileType) {
   let issues = []
+
+  const { lines, mimeType } = await readLinesAndType(file, 2)
+
+  const delimiter = sniffDelimiter(lines, mimeType)
+  const table = lines.map(line => line.split(delimiter))
+
   if (['cluster', 'metadata'].includes(fileType)) {
-    issues = await validateFormat(file, fileType)
+    issues = await validateFormat(table, fileType)
   }
 
   // Ingest Pipeline reports "issues", which includes "errors" and "warnings".
@@ -281,7 +302,9 @@ export async function validateFile(file, fileType) {
     summary = `Your ${fileType} file had ${numErrors} ${errorsTerm}`
   }
 
-  const logProps = getLogProps(errors, summary, file, fileType)
+  const fileObj = { file, lines, delimiter }
+  const errorObj = { errors, summary }
+  const logProps = getLogProps(fileObj, fileType, errorObj)
   log('file-validation', logProps)
 
   return { errors, summary }

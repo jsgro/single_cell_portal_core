@@ -48,6 +48,10 @@ describe('Client-side file validation', () => {
     expect(fakeLog).toHaveBeenCalledWith(
       'file-validation',
       {
+        'delimiter': 'tab',
+        'numColumns': 4,
+        'numRows': 17,
+        'numTableCells': 68,
         'fileType': 'metadata',
         'fileName': 'metadata_bad_type_header.txt',
         'fileSize': 566,
@@ -57,6 +61,9 @@ describe('Client-side file validation', () => {
         'numErrors': 1,
         'errors': [
           'Second row, first column must be "TYPE" (case insensitive). Your value was "notTYPE".'
+        ],
+        'errorTypes': [
+          'format:header:type'
         ]
       }
     )
