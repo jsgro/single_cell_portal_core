@@ -1,4 +1,9 @@
-<h1>My Terra Billing Projects</h1>
+<h1 class="bottom-pad">My Terra Billing Projects
+  <%= scp_link_to "Create a Billing Project <i class='fas fa-external-link-alt'></i>".html_safe, 'https://app.terra.bio/#billing',
+                  class: 'btn btn-default pull-right', target: :_blank, rel: 'noopener noreferrer',
+                  data: { toggle: 'tooltip', placement: 'left' },
+                  title: 'Please visit the Terra Billing Console to create a new billing project' %>
+</h1>
 
 <div class="table-responsive">
   <div class="well well-lg">
@@ -46,11 +51,6 @@
     </table>
   </div>
 </div>
-<p>
-  <%= scp_link_to "Create a Billing Project <i class='fas fa-external-link-alt'></i>".html_safe, 'https://app.terra.bio/#billing',
-                  class: 'btn btn-lg btn-default', target: :_blank, rel: 'noopener noreferrer', data: { toggle: 'tooltip' },
-                  title: 'Please visit the Terra Billing Console to create a new billing project' %>
-</p>
 
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
     var projectsTable = $('#firecloud-billing').DataTable({
