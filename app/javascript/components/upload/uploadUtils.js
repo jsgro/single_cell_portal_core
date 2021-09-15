@@ -26,6 +26,10 @@ const PROPERTIES_NOT_TO_SEND = [
   'parse_status'
 ]
 
+const ARRAY_PROPERTIES = [
+  'spatial_cluster_associations'
+]
+
 /** gets an object representing a new, empty study file.  Does not communicate to server */
 export function newStudyFileObj(studyId) {
   return {
@@ -55,7 +59,11 @@ export function formatFileFromServer(file) {
 export function formatFileForApi(file) {
   const data = new FormData()
   Object.keys(file).filter(key => !PROPERTIES_NOT_TO_SEND.includes(key)).forEach(key => {
-    data.append(`study_file[${key}]`, file[key])
+    if (ARRAY_PROPERTIES.includes(key)) {
+      data.append(`study_file[${key}][]`, file[key])
+    } else {
+      data.append(`study_file[${key}]`, file[key])
+    }
   })
   if (file.uploadSelection) {
     data.append('study_file[upload]', file.uploadSelection)

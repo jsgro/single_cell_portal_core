@@ -257,6 +257,27 @@ export async function deleteStudyFile(studyAccession, fileId, mock=false) {
 }
 
 
+/**
+ * Fetches a given resource from a GCP bucket -- this handles adding the
+ * appropriate bearer token
+ *
+ * @param {String} bucketName bucket name
+ * @param {String} fileName file name
+*/
+export async function fetchBucketFile(bucketName, fileName, mock=false) {
+  const init = {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${window.SCP.readOnlyToken}`
+    }
+  }
+  const url = `https://storage.googleapis.com/download/storage/v1/b/${bucketName}/o/${fileName}?alt=media`
+
+  const response = await fetch(url, init).catch(error => error)
+
+  return response
+}
+
 
 /**
  * Returns initial content for the "Explore" tab in Study Overview

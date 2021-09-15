@@ -14,6 +14,7 @@ import _isMatch from 'lodash/isEqual'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './uploadUtils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo } from 'lib/scp-api'
+import MessageModal from 'lib/MessageModal'
 
 import StepTabHeader from './StepTabHeader'
 import ClusteringStep from './ClusteringStep'
@@ -60,14 +61,14 @@ export default function UploadWizard({ accession, name }) {
     // first update the serverState
     setServerState(prevServerState => {
       const newServerState = _cloneDeep(prevServerState)
-      const fileIndex = newServerState.files.findIndex(f => f._id === updatedFile._id)
+      const fileIndex = newServerState.files.findIndex(f => f.name === updatedFile.name)
       newServerState.files[fileIndex] = updatedFile
       return newServerState
     })
     // then update the form state
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
-      const fileIndex = newFormState.files.findIndex(f => f._id === updatedFile._id)
+      const fileIndex = newFormState.files.findIndex(f => f.name === updatedFile.name)
       newFormState.files[fileIndex] = updatedFile
       return newFormState
     })
@@ -182,6 +183,7 @@ export default function UploadWizard({ accession, name }) {
         /> }
       </div>
     </div>
+    <MessageModal/>
   </div>
 }
 
