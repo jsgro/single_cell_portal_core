@@ -1,6 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 
+import { supportEmailLink } from 'lib/error-utils'
+
+const supportMessage = <div>
+  If you need help, let us know at {supportEmailLink}.
+  Please include the above errors, your file, and study accession.
+</div>
+
 /** Renders a report of file validation errors for upload UI */
 export default function ValidationAlert({ summary, errors, fileType }) {
   return (
@@ -13,6 +20,8 @@ export default function ValidationAlert({ summary, errors, fileType }) {
         return <li key={i}>{columns[2]}</li>
       })}
       </ul>
+      <br/>
+      {supportMessage}
     </div>
   )
 }
