@@ -3,8 +3,6 @@ module Api
     class CurrentUserController < ApiBaseController
       # collection of API methods related to the current user object.
       # for security reasons, the methods in this controller should be extremely tightly controlled
-      include Concerns::Authenticator
-      include Concerns::StudyAware
 
       before_action :authenticate_api_user!
 

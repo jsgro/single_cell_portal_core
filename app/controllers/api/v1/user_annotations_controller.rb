@@ -1,12 +1,8 @@
 module Api
   module V1
     # API methods for user annotations
-
     class UserAnnotationsController < ApiBaseController
-      include Concerns::Authenticator
       include Concerns::ApiCaching
-      include Concerns::StudyAware
-      include Swagger::Blocks
 
       before_action :set_current_api_user!
       before_action :set_study

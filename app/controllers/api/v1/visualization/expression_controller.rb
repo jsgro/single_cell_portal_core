@@ -4,10 +4,7 @@ module Api
       # API methods for visualizing expression data
       # does NOT contain methods for editing expression data
       class ExpressionController < ApiBaseController
-        include Concerns::Authenticator
-        include Concerns::StudyAware
         include Concerns::ApiCaching
-        include Swagger::Blocks
 
         before_action :set_current_api_user!
         before_action :set_study

@@ -1,8 +1,6 @@
 module Api
   module V1
     class SearchController < ApiBaseController
-      include Concerns::Authenticator
-      include Swagger::Blocks
       include StudySearchResultsObjects
 
       before_action :set_current_api_user!
