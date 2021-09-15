@@ -699,23 +699,25 @@ module Api
       # and a second to retrieve all result rows for those projects
       # this is to address issues in sparsity of ES index with regards to some data (like species, disease, etc)
       def self.get_tdr_results(selected_facets:, terms:)
+        client = ApplicationController.data_repo_client
         results = {}
         begin
           if selected_facets.present?
-            facet_json = ApplicationController.data_repo_client.generate_query_from_facets(selected_facets)
+            facet_json = client.generate_query_from_facets(selected_facets)
           end
           if terms.present?
-            term_json = ApplicationController.data_repo_client.generate_query_from_keywords(terms)
+            term_json = client.generate_query_from_keywords(terms)
           end
           # now we merge the two queries together to perform a single search request
-          query_json = ApplicationController.data_repo_client.merge_query_json(facet_query: facet_json, term_query: term_json)
+          query_json = client.merge_query_json(facet_query: facet_json, term_query: term_json)
           logger.info "Executing TDR query with: #{query_json}"
           snapshot_ids = AdminConfiguration.get_tdr_snapshot_ids
           logger.info "Scoping TDR query to snapshots: #{snapshot_ids.join(', ')}" if snapshot_ids.present?
           # first request is to only retrieve project IDs, then the second is for actual row-level results
-          projects = ApplicationController.data_repo_client.query_snapshot_indexes(query_json,
-                                                                                   snapshot_ids: snapshot_ids)
+          projects = client.query_snapshot_indexes(query_json, snapshot_ids: snapshot_ids)['result']
           project_ids = projects.map { |row| row['project_id'] }.uniq.compact
+          project_query = client.generate_query_for_projects(project_ids)
+          raw_tdr_results = client.query_snapshot_indexes(project_query, snapshot_ids: snapshot_ids)
           added_file_ids = {}
           raw_tdr_results['result'].each do |result_row|
             results = process_tdr_result_row(result_row, results,
@@ -776,14 +778,12 @@ module Api
             end
           end
         end
-        # if the output_id is a drs_id, add it and the output_type to the file_information array,
-        if row['output_id']&.starts_with?('drs')
-          drs_id = row['output_id']
-          if !added_file_ids[drs_id]
-            result[:file_information] << {
-              drs_id: drs_id,
-              file_type: row['output_type']
-            }
+        # gather file information for sequence_file and analysis_file entries
+        if row['output_type'] =~ /_file/
+          file_info = extract_file_information(row)
+          drs_id = file_info[:drs_id]
+          unless added_file_ids[drs_id]
+            result[:file_information] << file_info
             added_file_ids[drs_id] = true
           end
         end
@@ -822,6 +822,36 @@ module Api
           end
         end
         matches
+      end
+
+      # extract file information from row-level TDR results for sequence_file and analysis_file entries
+      def self.extract_file_information(result_row)
+        safe_entry = result_row.with_indifferent_access
+        output_type = safe_entry['output_type']
+        case output_type
+        when 'sequence_file'
+          filename = safe_entry[:sequence_file_name]
+          format_parts = filename.split('.')
+          # make a guess at the file format, controlling for gzipped files
+          # this is a fallback if file_type hasn't been set in the row
+          file_format = format_parts.last == 'gz' ? format_parts.slice(-2) : format_parts.last
+          {
+            'name' => filename,
+            'upload_file_size' => safe_entry[:sequence_file_size],
+            'file_type' => output_type,
+            'file_format' => safe_entry[:file_type] || file_format,
+            'drs_id' => safe_entry['output_id']
+          }.with_indifferent_access
+        when 'analysis_file'
+          {
+            'name' => safe_entry[:analysis_file_name],
+            'upload_file_size' => safe_entry[:analysis_file_size],
+            'file_type' => output_type,
+            'file_format' => safe_entry[:analysis_format],
+            'drs_id' => safe_entry['drs_id']
+          }.with_indifferent_access
+        end
+
       end
     end
   end
