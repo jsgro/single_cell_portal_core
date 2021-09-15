@@ -9,16 +9,18 @@ export default function BucketImage({ bucketName, fileName }) {
   /** If there is a remote file, try to load it and render it on the page */
   useEffect(() => {
     setRemoteImageUrl(null)
-    fetchBucketFile('fc-458fcddb-bbef-4eb3-b0c6-3d2253df623e', 'chicken.jpeg')
-      .then(response => response.blob())
-      .then(imageBlob => {
-        const imageObjectURL = URL.createObjectURL(imageBlob)
-        setRemoteImageUrl(imageObjectURL)
-      })
+    getBucketImageLocalUrl(bucketName, fileName).then(setRemoteImageUrl)
   }, [bucketName, fileName])
 
   if (!remoteImageUrl) {
     return <></>
   }
   return <img src={remoteImageUrl} alt={fileName}/>
+}
+
+/** downloads the given remote image and constructs a local url, suitable for use in an img tag */
+export async function getBucketImageLocalUrl(bucketName, fileName) {
+  const response = await fetchBucketFile(bucketName, fileName)
+  const imageBlob = await response.blob()
+  return URL.createObjectURL(imageBlob)
 }

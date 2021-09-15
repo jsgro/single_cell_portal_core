@@ -50,7 +50,7 @@ export function newStudyFileObj(studyId) {
 export function formatFileFromServer(file) {
   file._id = file._id.$oid
   file.description = file.description ? file.description : ''
-  file.study_id = file.study_id.$oid
+  delete file.study_id
   return file
 }
 

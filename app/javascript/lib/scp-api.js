@@ -259,7 +259,7 @@ export async function deleteStudyFile(studyAccession, fileId, mock=false) {
 
 /**
  * Fetches a given resource from a GCP bucket -- this handles adding the
- * appropriate bearer token
+ * appropriate SCP readonly bearer token, and using the Google API URL that allows CORS
  *
  * @param {String} bucketName bucket name
  * @param {String} fileName file name

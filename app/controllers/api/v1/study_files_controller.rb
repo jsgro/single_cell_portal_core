@@ -192,7 +192,7 @@ module Api
 
       # POST /single_cell/api/v1/studies/:study_id/study_files
       def create
-        @study_file = StudyFile.new
+        @study_file = StudyFile.new(study: @study)
         begin
           result = perform_update(@study_file)
           if result
@@ -584,7 +584,8 @@ module Api
       end
 
       def set_study_file
-        @study_file = StudyFile.find_by(id: params[:id])
+        # get the study file and confirm that it is part of the given study
+        @study_file = StudyFile.find_by(id: params[:id], study_id: @study)
         if @study_file.nil? || @study_file.queued_for_deletion?
           head 404 and return
         end
@@ -596,7 +597,7 @@ module Api
 
       # study file params list
       def study_file_params
-        params.require(:study_file).permit(:_id, :study_id, :taxon_id, :genome_assembly_id, :study_file_bundle_id, :name,
+        params.require(:study_file).permit(:_id, :taxon_id, :genome_assembly_id, :study_file_bundle_id, :name,
                                            :upload, :upload_file_name, :upload_content_type, :upload_file_size, :remote_location,
                                            :description, :is_spatial, :file_type, :status, :human_fastq_url, :human_data, :use_metadata_convention,
                                            :cluster_type, :generation, :x_axis_label, :y_axis_label, :z_axis_label, :x_axis_min,
