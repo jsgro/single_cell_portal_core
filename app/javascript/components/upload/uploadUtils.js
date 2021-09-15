@@ -60,7 +60,11 @@ export function formatFileForApi(file) {
   const data = new FormData()
   Object.keys(file).filter(key => !PROPERTIES_NOT_TO_SEND.includes(key)).forEach(key => {
     if (ARRAY_PROPERTIES.includes(key)) {
-      data.append(`study_file[${key}][]`, file[key])
+      // because we are sending as FormData, rather than JSON, we need to split
+      // arrays across multiple entries to deliver what Rails expects.
+      file[key].map(val => {
+        data.append(`study_file[${key}][]`, val)
+      })
     } else {
       data.append(`study_file[${key}]`, file[key])
     }

@@ -3,7 +3,7 @@ import Select from 'react-select'
 
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
-import BucketImage from './BucketImage'
+import BucketImage from 'components/visualization/BucketImage'
 
 
 /** renders a form for editing/uploading an image file */

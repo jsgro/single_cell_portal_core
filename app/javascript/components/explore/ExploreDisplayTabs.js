@@ -21,6 +21,7 @@ import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import DotPlot from 'components/visualization/DotPlot'
 import Heatmap from 'components/visualization/Heatmap'
 import GenomeView from './GenomeView'
+import ImageTab from './ImageTab'
 import { getAnnotationValues, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
 import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from 'components/visualization/InferCNVIdeogram'
@@ -38,7 +39,8 @@ const tabList = [
   { key: 'heatmap', label: 'Heatmap' },
   { key: 'spatial', label: 'Spatial' },
   { key: 'genome', label: 'Genome' },
-  { key: 'infercnv-genome', label: 'Genome (inferCNV)' }
+  { key: 'infercnv-genome', label: 'Genome (inferCNV)' },
+  { key: 'images', label: 'Images' }
 ]
 
 const ideogramHeight = 140
@@ -106,7 +108,7 @@ export default function ExploreDisplayTabs({
     currentTaxon = exploreInfo.taxonNames[0]
     searchedGene = exploreParams.genes[0]
   }
-  const showClusterControls = !(['genome', 'infercnv-genome'].includes(shownTab))
+  const showClusterControls = !(['genome', 'infercnv-genome', 'images'].includes(shownTab))
 
   const annotationList = exploreInfo ? exploreInfo.annotationList : null
 
@@ -288,8 +290,7 @@ export default function ExploreDisplayTabs({
                   {...exploreParams}
                   isAnnotatedScatter={true}
                   dimensions={getPlotDimensions({
-                    numColumns: 1,
-                    numRows: exploreParams?.spatialGroups.length ? 2 : 1,
+                    isMultiRow: !!exploreParams?.spatialGroups.length,
                     hasTitle: true,
                     showRelatedGenesIdeogram
                   })}
@@ -305,8 +306,6 @@ export default function ExploreDisplayTabs({
                   {...exploreParams}
                   isCorrelatedScatter={true}
                   dimensions={getPlotDimensions({
-                    numColumns: 1,
-                    numRows: 1,
                     hasTitle: true,
                     showRelatedGenesIdeogram: false
                   })}
@@ -384,10 +383,24 @@ export default function ExploreDisplayTabs({
               />
             </div>
             }
+            { enabledTabs.includes('images') &&
+              <div className={shownTab === 'images' ? '' : 'hidden'}>
+                <ImageTab
+                  studyAccession={studyAccession}
+                  imageFiles={exploreInfo.imageFiles}
+                  bucketName={exploreInfo.bucket_id}
+                  isCellSelecting={isCellSelecting}
+                  isVisible={shownTab === 'images'}
+                  getPlotDimensions={getPlotDimensions}
+                  exploreParams={exploreParams}
+                  plotPointsSelected={plotPointsSelected}
+                />
+              </div>
+            }
             { enabledTabs.includes('loading') &&
-            <div className={shownTab === 'loading' ? '' : 'hidden'}>
-              <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
-            </div>
+              <div className={shownTab === 'loading' ? '' : 'hidden'}>
+                <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
+              </div>
             }
           </div>
         </div>
@@ -493,6 +506,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   const hasSpatialGroups = exploreParams.spatialGroups?.length > 0
   const hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
   const hasIdeogramOutputs = !!exploreInfo?.inferCNVIdeogramFiles
+  const hasImages = exploreInfo?.imageFiles?.length > 0
 
   let enabledTabs = []
   if (isGeneList) {
@@ -526,6 +540,9 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   }
   if (hasIdeogramOutputs) {
     enabledTabs.push('infercnv-genome')
+  }
+  if (hasImages) {
+    enabledTabs.push('images')
   }
 
   if (!exploreInfo) {
