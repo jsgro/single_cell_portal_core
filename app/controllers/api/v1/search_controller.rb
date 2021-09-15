@@ -695,6 +695,9 @@ module Api
       end
 
       # execute a search in TDR and get back normalized results
+      # will actually issue 2 search requests, first to extract unique project_ids that match the query,
+      # and a second to retrieve all result rows for those projects
+      # this is to address issues in sparsity of ES index with regards to some data (like species, disease, etc)
       def self.get_tdr_results(selected_facets:, terms:)
         results = {}
         begin
@@ -709,8 +712,10 @@ module Api
           logger.info "Executing TDR query with: #{query_json}"
           snapshot_ids = AdminConfiguration.get_tdr_snapshot_ids
           logger.info "Scoping TDR query to snapshots: #{snapshot_ids.join(', ')}" if snapshot_ids.present?
-          raw_tdr_results = ApplicationController.data_repo_client.query_snapshot_indexes(query_json,
-                                                                                          snapshot_ids: snapshot_ids)
+          # first request is to only retrieve project IDs, then the second is for actual row-level results
+          projects = ApplicationController.data_repo_client.query_snapshot_indexes(query_json,
+                                                                                   snapshot_ids: snapshot_ids)
+          project_ids = projects.map { |row| row['project_id'] }.uniq.compact
           added_file_ids = {}
           raw_tdr_results['result'].each do |result_row|
             results = process_tdr_result_row(result_row, results,
