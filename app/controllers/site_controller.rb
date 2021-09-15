@@ -883,7 +883,7 @@ class SiteController < ApplicationController
 
     if access_settings['reset'] == 'yes'
       logger.info "Rotating credentials for reviewer access in #{study.accession}"
-      @study.reviewer_access&.rotate_credentials!
+      study.reviewer_access&.rotate_credentials!
     elsif access_settings['enable'] == 'yes' && study.reviewer_access.nil?
       study.build_reviewer_access.save!
     elsif access_settings['enable'] == 'no'
