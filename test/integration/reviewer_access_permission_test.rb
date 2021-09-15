@@ -161,4 +161,24 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
     get :reviewer_access, params: { access_code: access.access_code }
     assert_response :success
   end
+
+  # handles regression found in SCP-3680
+  test 'should update study description w/o reviewer access settings' do
+    auth_as_user(@user)
+    sign_in @user
+    new_description = "<p>This is the updated description</p>"
+    study_params = {
+      accession: @study.accession, study_name: @study.url_safe_name,
+      study: {
+        study_detail_attributes: {
+          full_description: new_description,
+          id: @study.study_detail.id.to_s
+        }
+      }
+    }
+    post :update_study_settings, params: study_params, xhr: true
+    assert_response :success
+    @study.reload
+    assert_equal @study.full_description, new_description
+  end
 end

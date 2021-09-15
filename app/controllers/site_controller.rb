@@ -131,16 +131,9 @@ class SiteController < ApplicationController
         set_study_default_options
         set_study_download_options
 
-        # manage reviewer access
+        # handle updates to reviewer access settings
         reviewer_access_actions = params.to_unsafe_hash['reviewer_access_actions']
-        if reviewer_access_actions['reset'] == 'yes'
-          logger.info "Rotating credentials for reviewer access in #{@study.accession}"
-          @study.reviewer_access&.rotate_credentials!
-        elsif reviewer_access_actions['enable'] == 'yes' && @study.reviewer_access.nil?
-          @study.build_reviewer_access.save!
-        elsif reviewer_access_actions['enable'] == 'no'
-          @study.reviewer_access&.destroy
-        end
+        manage_reviewer_access(@study, reviewer_access_actions)
       else
         set_study_default_options
         @alert = 'You do not have permission to perform that action.'
@@ -881,6 +874,20 @@ class SiteController < ApplicationController
       workflow_status = submission['workflowStatuses'].keys.first # this only works for single-workflow analyses
       analysis_submission.update(status: workflow_status)
       analysis_submission.delay.set_completed_on # run in background to avoid UI blocking
+    end
+  end
+
+  # handle updates to reviewer access settings
+  def manage_reviewer_access(study, access_settings)
+    return if access_settings.blank?
+
+    if access_settings['reset'] == 'yes'
+      logger.info "Rotating credentials for reviewer access in #{study.accession}"
+      @study.reviewer_access&.rotate_credentials!
+    elsif access_settings['enable'] == 'yes' && study.reviewer_access.nil?
+      study.build_reviewer_access.save!
+    elsif access_settings['enable'] == 'no'
+      study.reviewer_access&.destroy
     end
   end
 end
