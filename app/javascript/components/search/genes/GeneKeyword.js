@@ -72,6 +72,26 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
     }
   }
 
+  /** handle a user pressing the 'x' to clear the field */
+  function handleClear() {
+    setGeneArray([])
+    setInputText('')
+    geneSearchState.updateSearch(
+      { genes: '' },
+      studySearchState
+    )
+  }
+
+  /** handles the change event corresponding a a user adding or clearing one or more genes */
+  function handleSelectChange(value, event) {
+    if (event.action === 'clear') {
+      handleClear()
+    } else {
+      const newValue = value ? value : []
+      setGeneArray(newValue)
+    }
+  }
+
   return (
     <form className="gene-keyword-search form-horizontal" onSubmit={handleSubmit}>
       <div className="input-group">
@@ -80,10 +100,10 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
           inputValue={inputText}
           value={geneArray}
           className="gene-keyword-search-input"
-          isClearable
           isMulti
+          isClearable
           menuIsOpen={false}
-          onChange={value => setGeneArray(value ? value : [])}
+          onChange={handleSelectChange}
           onInputChange={inputValue => setInputText(inputValue)}
           onKeyDown={handleKeyDown}
           // the default blur behavior removes any entered free text,
