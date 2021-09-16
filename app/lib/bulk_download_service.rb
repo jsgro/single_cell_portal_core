@@ -75,14 +75,8 @@ class BulkDownloadService
             file_config = "url=\"#{access.dig('access_url', 'url')}\"\n"
             file_config += "output=\"#{shortname}/#{file_info['name']}\""
             tdr_file_configs << file_config
-          rescue RestClient::Exception => e
-            # DataRepoClient only emits RestClient::Exception errors, and the error will have already been reported
-            # to Sentry, so also report to Mixpanel
-            MetricsService.report_error(e, request, current_api_user)
-            {
-              drs_id: drs_id,
-              error: e.message
-            }
+          rescue => e
+            ErrorTracker.report_exception(e, user, { file_info: file_info, drs_info: drs_info })
           end
         end
       end
