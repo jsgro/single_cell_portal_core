@@ -62,6 +62,10 @@ module Api
           key :description, 'Metadata Convention schema definitions'
         end
         tag do
+          key :name, 'Reports'
+          key :description, 'Reports/Portal Stats'
+        end
+        tag do
           key :name, 'Schemas'
           key :description, 'Descriptions of SCP model schemas'
         end
@@ -120,7 +124,8 @@ module Api
           Api::V1::Visualization::AnnotationsController,
           Api::V1::Visualization::ExpressionController,
           Api::V1::Visualization::ExploreController,
-          Api::V1::UserAnnotationsController
+          Api::V1::UserAnnotationsController,
+          Api::V1::ReportsController
       ].freeze
 
       def index

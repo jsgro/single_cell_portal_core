@@ -1,9 +1,6 @@
 module Api
   module V1
     class StudyFileBundlesController < ApiBaseController
-      include Concerns::Authenticator
-      include Swagger::Blocks
-
       before_action :authenticate_api_user!
       before_action :set_study
       before_action :check_study_permission
@@ -161,7 +158,7 @@ module Api
           extend SwaggerResponses::ValidationFailureResponse
         end
       end
-      
+
 
       # POST /single_cell/api/v1/studies/:study_id/study_file_bundles
       def create

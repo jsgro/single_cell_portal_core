@@ -99,11 +99,10 @@ class StudyFileTest < ActiveSupport::TestCase
     expected_errors = {
       base: [
         'Units is not included in the list, ' \
-        'Biosample input type is not included in the list, ' \
-        'Modality is not included in the list, ' \
         'Library preparation protocol is not included in the list'
       ]
     }
+    # Modality and Library preparation protocol will be populated with default values if undefined
     assert_equal(expected_errors, invalid_study_file.errors.messages)
 
     valid_study_file = StudyFile.new(

@@ -36,9 +36,5 @@ module SingleCellPortal
     # Google OAuth2 Scopes
     # basic scopes are user profile, email, and openid, and do not require user consent to request during auth handshake
     BASIC_GOOGLE_SCOPES = %w(email profile userinfo.email userinfo.profile openid)
-
-    # extended scopes add cloud-billing.readonly which requires user consent
-    # these are only requested when users attempt to visit the "My Billing Projects" page
-    EXTENDED_GOOGLE_SCOPES = BASIC_GOOGLE_SCOPES.dup + %w(cloud-billing.readonly)
   end
 end

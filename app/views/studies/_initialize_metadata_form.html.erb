@@ -102,7 +102,7 @@
 
     function setMetadataConventionMessage(useMetadataConvention) {
         var message;
-        const advancedUrl = "https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview"
+        const advancedUrl = "https://singlecell.zendesk.com/hc/en-us/articles/4406379107355-Metadata-powered-Advanced-Search"
         const advancedLink = `<a href="${advancedUrl}" target="_blank" rel="noreferrer">advanced search</a>`
         const conventionRequired = <%= convention_required == true %>;
         const helpUrl = 'https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention'
@@ -157,7 +157,7 @@
           let validationErrors = []
           let summary = ''
           <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
-            $('#metadata-errors').remove() // Remove any prior notice
+            $(`#${containerId}`).remove() // Remove any prior notice
             $('#metadata_form').append(`<div id="${containerId}"></div>`)
             // Run client-side metadata file validation
             const results = await window.SCP.validateFile(file, fileType)
@@ -165,9 +165,7 @@
             summary = results.summary
           <% end %>
 
-          const numErrors = validationErrors.length
-
-          if (numErrors === 0) {
+          if (validationErrors.length === 0) {
             var fileName = file.name.replace(FILENAME_SANITIZER, '_');
             $('#metadata_form .filename').val(fileName);
             $.getJSON("<%= resume_upload_study_path %>", { file: fileName }, function (result) {

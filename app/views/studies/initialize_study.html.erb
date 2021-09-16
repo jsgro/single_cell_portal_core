@@ -41,8 +41,8 @@
               without normalization or other processing performed.  Gene expression scores can be represented either as an:</p>
           </div>
           <div class="row">
-            <p class="col-sm-3 col-sm-offset-1 text-center"><%= link_to 'Expression Matrix', 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/expression_example.txt', target: :_blank %></p>
-            <p class="text-center col-sm-4 col-sm-offset-2"><%= link_to 'MM Coordinate Matrix file*', 'https://github.com/broadinstitute/single_cell_portal_core/blob/master/test/test_data/GRCh38/matrix.mtx', target: :_blank %></p>
+            <p class="col-sm-3 col-sm-offset-1 text-center"><%= link_to 'Expression Matrix', 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/expression_example.txt', target: :_blank, rel: 'noopener noreferrer' %></p>
+            <p class="text-center col-sm-4 col-sm-offset-2"><%= link_to 'MM Coordinate Matrix file*', 'https://github.com/broadinstitute/single_cell_portal_core/blob/master/test/test_data/GRCh38/matrix.mtx', target: :_blank, rel: 'noopener noreferrer' %></p>
           </div>
           <div class="row code-div">
             <div class="col-sm-3 col-sm-offset-1">
@@ -54,14 +54,14 @@
           </div>
           <div class="row ">
             <i class="col-sm-5  text-center">An “Expression Matrix” is a dense matrix (.txt, .tsv, or .csv)** that has a header row containing the value “GENE” in the first column, and single cell names in each successive column.</i>
-            <i class="col-sm-4  col-sm-offset-1 text-center">An “MM Coordinate Matrix” *, as seen in <%= link_to '10x Genomics', 'https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices', target: :_blank %>,
+            <i class="col-sm-4  col-sm-offset-1 text-center">An “MM Coordinate Matrix” *, as seen in <%= link_to '10x Genomics', 'https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices', target: :_blank, rel: 'noopener noreferrer' %>,
               is a Matrix Market file (.mtx, .mm, or .txt)** that contains a sparse matrix in coordinate form. </i>
           </div>
           </br>
           <div class="row">
-            <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.csv or .tsv) and
+            <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.csv or .tsv) and
               <%= link_to 'barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.tsv or .csv) files separately.</p>
-            <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank %>  files of this type (e.g. .txt.gz) are accepted as well</p>
+            <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank, rel: 'noopener noreferrer' %>  files of this type (e.g. .txt.gz) are accepted as well</p>
           </div>
         </div>
 
@@ -108,8 +108,8 @@
               scores can be represented either as an:</p>
           </div>
           <div class="row">
-            <p class="col-sm-3 col-sm-offset-1 text-center"><%= link_to 'Expression Matrix', 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/expression_example.txt', target: :_blank %></p>
-            <p class="text-center col-sm-4 col-sm-offset-2"><%= link_to 'MM Coordinate Matrix file*', 'https://github.com/broadinstitute/single_cell_portal_core/blob/master/test/test_data/GRCh38/matrix.mtx', target: :_blank %></p>
+            <p class="col-sm-3 col-sm-offset-1 text-center"><%= link_to 'Expression Matrix', 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/expression_example.txt', target: :_blank, rel: 'noopener noreferrer' %></p>
+            <p class="text-center col-sm-4 col-sm-offset-2"><%= link_to 'MM Coordinate Matrix file*', 'https://github.com/broadinstitute/single_cell_portal_core/blob/master/test/test_data/GRCh38/matrix.mtx', target: :_blank, rel: 'noopener noreferrer' %></p>
           </div>
           <div class="row code-div">
             <div class="col-sm-3 col-sm-offset-1">
@@ -121,14 +121,14 @@
           </div>
           <div class="row ">
             <i class="col-sm-5  text-center">An “Expression Matrix” is a dense matrix (.txt, .tsv, or .csv)** that has a header row containing the value “GENE” in the first column, and single cell names in each successive column.</i>
-            <i class="col-sm-4  col-sm-offset-1 text-center">An “MM Coordinate Matrix” *, as seen in <%= link_to '10x Genomics', 'https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices', target: :_blank %>,
+            <i class="col-sm-4  col-sm-offset-1 text-center">An “MM Coordinate Matrix” *, as seen in <%= link_to '10x Genomics', 'https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices', target: :_blank, rel: 'noopener noreferrer' %>,
               is a Matrix Market file (.mtx, .mm, or .txt)** that contains a sparse matrix in coordinate form. </i>
           </div>
           </br>
           <div class="row">
-            <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.csv or .tsv) and
-              <%= link_to 'barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.tsv or .csv) files separately.</p>
-            <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank %>  files of this type (e.g. .txt.gz) are accepted as well</p>
+            <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.csv or .tsv) and
+              <%= link_to 'barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.tsv or .csv) files separately.</p>
+            <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank, rel: 'noopener noreferrer' %>  files of this type (e.g. .txt.gz) are accepted as well</p>
           </div>
         </div>
         <% @processed_matrix_files.each do |study_file| %>
@@ -195,7 +195,7 @@
             <pre class="code-example col-sm-5 col-sm-offset-4">NAME&#09;X&#09;Y&#09;Z&#09;Category&#09;Intensity<br/>TYPE&#09;numeric&#09;numeric&#09;numeric&#09;group&#09;numeric<br/>CELL_0001&#09;34.472&#09;32.211&#09;60.035&#09;C&#09;0.719<br/>CELL_0002&#09;15.975&#09;10.043&#09;21.424&#09;B&#09;.904<br/>...</pre>
           </div>
           <div class="row">
-            <p class="col-sm-12 text-center">A <%= link_to 'cluster file', 'https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt', target: :_blank %> (.txt or .txt.gz) contains any cluster ordinations and optional cluster-specific metadata.  <strong>At minimum </strong> a cluster file has:</p>
+            <p class="col-sm-12 text-center">A <%= link_to 'cluster file', 'https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt', target: :_blank, rel: 'noopener noreferrer' %> (.txt or .txt.gz) contains any cluster ordinations and optional cluster-specific metadata.  <strong>At minimum </strong> a cluster file has:</p>
           </div>
           <div class="col-md-9 col-lg-offset-2 col-md-offset-1">
             <ul>
@@ -218,7 +218,7 @@
             <p class="col-sm-12 text-center">Once your cluster file has been successfully ingested, additional representative
               subsamples of the full resolution data will be stored as well. <%= link_to "Learn More <i class='fas fa-question-circle'></i>".html_safe,
                           'https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling', target: :_blank,
-                                                       class: 'btn btn-default'%>
+                                                       class: 'btn btn-default', rel: 'noopener noreferrer' %>
             </p>
           </div>
           <div class="row">
@@ -275,11 +275,11 @@
         <div class="well well-sm">
           <h2>Step 6. Upload Sequence Data Files <small class="initialize-label" id="initialize_primary_data_form_completed"><span class="label label-info">Optional</span></small></h2>
           <p class="lead"><strong>Primary Human Data</strong>: Primary sequence data derived from humans should be stored in other biological databases and can be linked here by selecting 'Yes' for 'Primary Human Data' and then providing a link in the text field.</p>
-          <p class="lead"><strong>Non-human Data</strong>: If you have a few, small (under 2GB) non-human sequence files, they can be uploaded here. For uploading many or larger files, please refer to the instructions <%= link_to 'in our documentation', 'https://singlecell.zendesk.com/hc/en-us/articles/360061006011-Uploading-Large-Files-Using-Gsutil-Tool', target: :_blank %>.</p>
+          <p class="lead"><strong>Non-human Data</strong>: If you have a few, small (under 2GB) non-human sequence files, they can be uploaded here. For uploading many or larger files, please refer to the instructions <%= link_to 'in our documentation', 'https://singlecell.zendesk.com/hc/en-us/articles/360061006011-Uploading-Large-Files-Using-Gsutil-Tool', target: :_blank, rel: 'noopener noreferrer' %>.</p>
           <p class="lead">If you already have <code>gsutil</code> installed you can upload files directly using the following command:</p>
           <pre class="lead">gsutil -m cp /path/to/files gs://<%= @study.bucket_id %></pre>
           <p class="lead"><strong class="text-danger">If you are uploading sequence files through the wizard, we recommend that they be compressed first using gzip.</strong></p>
-          <p><%= link_to "FASTQ File Format <span class='fas fa-info-circle'></span>".html_safe, 'https://en.wikipedia.org/wiki/FASTQ_format#Format', class: 'btn btn-default', target: :_blank %>&nbsp;<%= link_to "BAM File Format <span class='fas fa-info-circle'></span>".html_safe, 'https://www.ncbi.nlm.nih.gov/sra/docs/submitformats/#bam-files', class: 'btn btn-default', target: :_blank %>&nbsp;<%= link_to "gzip Documentation <span class='fas fa-info-circle'></span>".html_safe, 'http://www.gnu.org/software/gzip/manual/gzip.html', class: 'btn btn-default', target: :_blank %></p>
+          <p><%= link_to "FASTQ File Format <span class='fas fa-info-circle'></span>".html_safe, 'https://en.wikipedia.org/wiki/FASTQ_format#Format', class: 'btn btn-default', target: :_blank, rel: 'noopener noreferrer' %>&nbsp;<%= link_to "BAM File Format <span class='fas fa-info-circle'></span>".html_safe, 'https://www.ncbi.nlm.nih.gov/sra/docs/submitformats/#bam-files', class: 'btn btn-default', target: :_blank, rel: 'noopener noreferrer' %>&nbsp;<%= link_to "gzip Documentation <span class='fas fa-info-circle'></span>".html_safe, 'http://www.gnu.org/software/gzip/manual/gzip.html', class: 'btn btn-default', target: :_blank %></p>
         </div>
         <% @fastq_files.each do |study_file| %>
           <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">

@@ -4,8 +4,6 @@ module Api
       # API methods for visualizing annotation-related data
       # does NOT contain methods for editing annotations
       class AnnotationsController < ApiBaseController
-        include Concerns::Authenticator
-        include Concerns::StudyAware
         include Concerns::ApiCaching
         include Swagger::Blocks
 
