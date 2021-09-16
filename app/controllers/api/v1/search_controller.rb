@@ -296,9 +296,8 @@ module Api
           @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
 
           if @facets.present?
-            simple_tdr_results = self.class.simplify_tdr_facet_search_results(@tdr_results, @facets)
+            simple_tdr_results = self.class.simplify_tdr_facet_search_results(@tdr_results)
             matched_tdr_studies = self.class.match_studies_by_facet(simple_tdr_results, @facets)
-
             if @studies_by_facet.present?
               @studies_by_facet.merge!(matched_tdr_studies)
             else
@@ -630,23 +629,22 @@ module Api
       end
 
       # Simplify TDR results to be mappable for the UI badges for faceted search
-      def self.simplify_tdr_facet_search_results(query_results, search_facets)
-        simple_TDR_result = {}
-        simple_TDR_results = []
+      def self.simplify_tdr_facet_search_results(query_results)
+        tdr_results = []
         query_results.each_pair do |accession, result|
           facet_matches = result[:facet_matches]
-          simple_TDR_result[:study_accession] = accession
           if facet_matches.present?
+            simple_result = { study_accession: accession }
             facet_matches.each do |mapping|
               mapping.each do |key, val|
                 facet_name = FacetNameConverter.convert_schema_column(:tim, :alexandria, key)
-                simple_TDR_result[facet_name] = val
+                simple_result[facet_name] = val
               end
             end
           end
-          simple_TDR_results << simple_TDR_result
+          tdr_results << simple_result
         end
-        simple_TDR_results
+        tdr_results
       end
 
 
