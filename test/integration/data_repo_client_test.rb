@@ -6,12 +6,12 @@ class DataRepoClientTest < ActiveSupport::TestCase
 
   before(:all) do
     @data_repo_client = ApplicationController.data_repo_client
-    @dataset_id = 'd918e6f2-e63b-4d9c-82a6-f0d44c6bcc0d' # dataset for snapshot, we don't actually have access to this
-    @snapshot_id = '257c5646-689a-4f25-8396-2500c849cb4f' # dev PulmonaryFibrosisGSE135893 snapshot
-    @file_id = '5009a1f8-c2ee-4ceb-8ddb-40c3ddee5472' # ID of sequence file in PulmonaryFibrosisGSE135893 snapshot
-    @filename = 'IPF_VUILD54_1_LU_Whole_C1_X5SCR_F00207_HMWLCBGX7_ATTTGCTA_L001_R1_001.fastq.gz' # name of above file
+    @dataset_id = '5813840c-46e4-47ab-89fe-d4da28834698' # dataset for snapshot, we don't actually have access to this
+    @snapshot_id = '25740be5-b493-4185-84b0-bebf425c5072' # dev PulmonaryFibrosisGSE135893 snapshot
+    @file_id = '1c36ad71-755d-4623-8a5c-c336ecf80073' # ID of loom file in PulmonaryFibrosisGSE135893 snapshot
+    @filename = 'pulmonary-fibrosis-human-lung-10XV2.loom' # name of above file
     @drs_file_id = "drs://#{DataRepoClient::REPOSITORY_HOSTNAME}/v1_#{@snapshot_id}_#{@file_id}" # computed DRS id
-    bucket_id = 'broad-jade-dev-data-bucket'
+    bucket_id = 'datarepo-dev-54946186-bucket'
     @gs_url = "gs://#{bucket_id}/#{@dataset_id}/#{@file_id}/#{@filename}" # computed GS url
     @https_url = "https://www.googleapis.com/storage/v1/b/#{bucket_id}/o/#{@dataset_id}%2F#{@file_id}%2F#{@filename}?alt=media"
   end
@@ -185,6 +185,14 @@ class DataRepoClientTest < ActiveSupport::TestCase
                      "([#{description_field}]:\"pulmonary\" OR [#{description_field}]:\"human\" OR " \
                      "[#{description_field}]:\"lung\")"
     query_json = @data_repo_client.generate_query_from_keywords(keywords)
+    assert_equal expected_query, query_json.dig(:query_string, :query)
+  end
+
+  test 'should generate query JSON from HCA project IDs' do
+    project_id = '2c1a9a93d-d9de-4e65-9619-a9cec1052eaa'
+    project_ids = [project_id]
+    query_json = @data_repo_client.generate_query_for_projects(project_ids)
+    expected_query = "(project_id: #{project_id})"
     assert_equal expected_query, query_json.dig(:query_string, :query)
   end
 

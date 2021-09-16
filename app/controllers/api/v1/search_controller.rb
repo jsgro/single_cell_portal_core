@@ -307,8 +307,8 @@ module Api
           end
           # just log for now
           logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
-          logger.info pp @tdr_results if @tdr_results.any?
-          @tdr_results.each do |short_name, tdr_result|
+          logger.info "#{@tdr_results.map {|name, info| { name => info['facet_matches']}}}"
+          @tdr_results.each do |_, tdr_result|
             @studies << tdr_result
           end
         end
@@ -837,7 +837,7 @@ module Api
           file_format = format_parts.last == 'gz' ? format_parts.slice(-2) : format_parts.last
           {
             'name' => filename,
-            'upload_file_size' => safe_entry[:sequence_file_size],
+            'upload_file_size' => safe_entry[:sequence_file_size].to_i,
             'file_type' => output_type,
             'file_format' => safe_entry[:file_type] || file_format,
             'drs_id' => safe_entry['output_id']
@@ -845,13 +845,12 @@ module Api
         when 'analysis_file'
           {
             'name' => safe_entry[:analysis_file_name],
-            'upload_file_size' => safe_entry[:analysis_file_size],
+            'upload_file_size' => safe_entry[:analysis_file_size].to_i,
             'file_type' => output_type,
             'file_format' => safe_entry[:analysis_format],
             'drs_id' => safe_entry['drs_id']
           }.with_indifferent_access
         end
-
       end
     end
   end

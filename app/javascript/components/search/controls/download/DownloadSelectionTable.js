@@ -175,7 +175,7 @@ const COLUMNS = {
   sequence: {
     title: 'Sequence',
     types: ['sequence_file'],
-    info: 'Sequence files, such as BAM or BAI files',
+    info: 'Sequence files, such as Fastq, BAM or BAI files',
     default: false
   }
 }
@@ -286,7 +286,7 @@ export function getSelectedFileHandles(downloadInfo, selectedBoxes, hashByStudy=
       if (selectedBoxes.studies[index][colType]) {
         const filesOfType = study.studyFiles.filter(file => COLUMNS[colType].types.includes(file.file_type))
         {/* eslint-disable-next-line max-len */}
-        const selectedHandles = filesOfType.map(file => file.url ? { url: file.url, name: file.name, file_type: file.file_type } : file.id)
+        const selectedHandles = filesOfType.map(file => hashByStudy ? { drs_id: file.drs_id, url: file.url, name: file.name, file_type: file.file_type } : file.id)
         if (hashByStudy) {
           fileHandles[study.accession].push(...selectedHandles)
         } else {
