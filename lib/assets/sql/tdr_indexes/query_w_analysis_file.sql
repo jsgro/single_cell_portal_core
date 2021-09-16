@@ -29,6 +29,19 @@ https://docs.google.com/document/d/1KJcF6aWLub--yvTIeZkd_VgTBChinuFqK2aCzSo6hgQ/
 Swagger docs for TDR-dev API
 https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/
 
+Changes:
+previous SQL extracted ".text" values, now using ".ontology_label" values
+TIM model does not have nomenclature for ".ontology" values,
+  using SCP conventional names for ".ontology" values until data model is extended
+Removed duplicate "$.library_construction_method.text",
+  assigning "$.library_construction_method.ontology_label" to TIM-style metadata name
+NOTE: organism_age is HCA terminology, string value that would require parsing to conform to TIM model
+(not implemented) approximate organism_age parsing logic:
+  if value is numeric, set as tim__a__terraa__corec__hasa__uppera__bound
+  if value is non-numeric, should parse as two numeric values separated by a hyphen
+    first value, set as tim__a__terraa__corec__hasa__lowera__bound
+    second value, set as tim__a__terraa__corec__hasa__uppera__bound
+
 */
 WITH links AS
 (SELECT project.datarepo_row_id AS project_datarepo_row_id, links.datarepo_row_id AS links_datarepo_row_id, links_id, links.project_id, project.content AS project_content, links.content AS links_content
@@ -69,14 +82,16 @@ JSON_EXTRACT_SCALAR(cell_suspension.content, '$.selected_cell_type') AS tim__a__
 JSON_EXTRACT_SCALAR(donor_organism.content, '$.biomaterial_core.biomaterial_id') AS tim__provc__wasa__deriveda__from,
 JSON_EXTRACT_SCALAR(donor_organism.content, '$.sex') AS tim__a__terraa__corec__hasa__sex,
 JSON_EXTRACT_SCALAR(donor_organism.content, '$.organism_age') AS organism_age,
-JSON_EXTRACT_SCALAR(donor_organism.content, '$.organism_age_unit.text') AS tim__a__terraa__corec__hasa__agea__unit,
-JSON_EXTRACT_SCALAR(donor_organism_species, '$.text') AS tim__a__terraa__corec__hasa__organisma__type,
-JSON_EXTRACT_SCALAR(specimen_from_organism.content, '$.organ.ontology') AS tim__a__terraa__corec__hasa__anatomical__site__ontology,
-JSON_EXTRACT_SCALAR(specimen_from_organism.content, '$.organ.ontology_label') AS tim__a__terraa__corec__hasa__anatomical__site,
-JSON_EXTRACT_SCALAR(diseases, '$.text') AS tim__a__terraa__corec__hasa__disease,
-JSON_EXTRACT_SCALAR(library_preparation_protocol.content, '$.library_construction_method.text') AS tim__a__terraa__corec__hasa__librarya__prep,
-JSON_EXTRACT_SCALAR(library_preparation_protocol.content, '$.library_construction_method.ontology') AS library_construction_method_ontology,
-JSON_EXTRACT_SCALAR(library_preparation_protocol.content, '$.library_construction_method.ontology_label') AS library_construction_method_ontology_label
+JSON_EXTRACT_SCALAR(donor_organism.content, '$.organism_age_unit.ontology_label') AS tim__a__terraa__corec__hasa__agea__unit,
+JSON_EXTRACT_SCALAR(donor_organism.content, '$.organism_age_unit.ontology') AS organism_age__unit,
+JSON_EXTRACT_SCALAR(donor_organism_species, '$.ontology_label') AS tim__a__terraa__corec__hasa__organisma__type,
+JSON_EXTRACT_SCALAR(donor_organism_species, '$.ontology') AS species,
+JSON_EXTRACT_SCALAR(specimen_from_organism.content, '$.organ.ontology') AS organ,
+JSON_EXTRACT_SCALAR(specimen_from_organism.content, '$.organ.ontology_label') AS tim__a__terraa__corec__hasa__anatomicala__site,
+JSON_EXTRACT_SCALAR(diseases, '$.ontology_label') AS tim__a__terraa__corec__hasa__disease,
+JSON_EXTRACT_SCALAR(diseases, '$.ontology') AS disease,
+JSON_EXTRACT_SCALAR(library_preparation_protocol.content, '$.library_construction_method.ontology_label') AS tim__a__terraa__corec__hasa__librarya__prep,
+JSON_EXTRACT_SCALAR(library_preparation_protocol.content, '$.library_construction_method.ontology') AS library_preparation_protocol,
 FROM links
 LEFT JOIN UNNEST(JSON_EXTRACT_ARRAY(links.links_content, '$.links')) AS link
 LEFT JOIN UNNEST(JSON_EXTRACT_ARRAY(link, '$.inputs')) AS input
