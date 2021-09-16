@@ -307,7 +307,6 @@ module Api
           end
           # just log for now
           logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
-          logger.info "#{@tdr_results.map {|name, info| { name => info['facet_matches']}}}"
           @tdr_results.each do |_, tdr_result|
             @studies << tdr_result
           end
