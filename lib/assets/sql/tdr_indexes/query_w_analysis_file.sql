@@ -29,12 +29,11 @@ https://docs.google.com/document/d/1KJcF6aWLub--yvTIeZkd_VgTBChinuFqK2aCzSo6hgQ/
 Swagger docs for TDR-dev API
 https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/
 
-Changes:
-previous SQL extracted ".text" values, now using ".ontology_label" values
+Rationale for current implementation:
+Using ".ontology_label" values, instead of ".text". 
+  In cases where they differ, ontology_label should be what SCP needs.
 TIM model does not have nomenclature for ".ontology" values,
   using SCP conventional names for ".ontology" values until data model is extended
-Removed duplicate "$.library_construction_method.text",
-  assigning "$.library_construction_method.ontology_label" to TIM-style metadata name
 NOTE: organism_age is HCA terminology, string value that would require parsing to conform to TIM model
 (not implemented) approximate organism_age parsing logic:
   if value is numeric, set as tim__a__terraa__corec__hasa__uppera__bound
