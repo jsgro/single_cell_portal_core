@@ -224,8 +224,10 @@ class DataRepoClientTest < ActiveSupport::TestCase
 
   test 'should query snapshot index' do
     skip_if_api_down
+    hca_project_id = 'c1a9a93d-d9de-4e65-9619-a9cec1052eaa'
     selected_facets = [
-      { id: :species, filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }] }
+      { id: :species, filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }] },
+      { id: :project_id, filters: [{ name: hca_project_id, id: hca_project_id }] }
     ]
     query_json = @data_repo_client.generate_query_from_facets(selected_facets)
     results = @data_repo_client.query_snapshot_indexes(query_json, snapshot_ids: [@snapshot_id])
@@ -240,10 +242,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
     assert_equal expected_project, sample_row[project_title_field]
 
     # refine query and re-run
-    selected_facets = [
-      { id: :species, filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }] },
-      { id: :organism_age, filters: { min: 46, max: 72, unit: 'years' } }
-    ]
+    selected_facets << { id: :organism_age, filters: { min: 46, max: 72, unit: 'years' } }
     query_json = @data_repo_client.generate_query_from_facets(selected_facets)
     results = @data_repo_client.query_snapshot_indexes(query_json, snapshot_ids: [@snapshot_id])
     new_count = results['result'].count
