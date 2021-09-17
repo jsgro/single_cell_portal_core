@@ -22,9 +22,10 @@ import ImageStep from './ImageStep'
 import CoordinateLabelStep from './CoordinateLabelStep'
 import RawCountsStep from './RawCountsStep'
 import ProcessedExpressionStep from './ProcessedExpressionStep'
+import MetadataStep from './MetadataStep'
 
 const CHUNK_SIZE = 10000000
-const STEPS = [RawCountsStep, ProcessedExpressionStep, ClusteringStep, CoordinateLabelStep, ImageStep]
+const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, CoordinateLabelStep, ImageStep]
 
 /** shows the upload wizard */
 export default function UploadWizard({ studyAccession, name }) {
