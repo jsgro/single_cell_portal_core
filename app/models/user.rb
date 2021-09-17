@@ -210,11 +210,14 @@ class User
   # uses SAM pet service accounts to issue token on user's behalf by adding the
   # https://www.googleapis.com/auth/devstorage.read_only scope to the token
   # will return nil if user is not registered for Terra as API call would return 401
-  def token_for_storage_object(project=FireCloudClient::PORTAL_NAMESPACE)
+  # since workspaces can now be in a different GCP project, we need to source that from the workspace JSON
+  def token_for_storage_object(study)
     if self.refresh_token.present? && self.registered_for_firecloud
       begin
-        client = FireCloudClient.new(self, project)
-        client.get_pet_service_account_token(project)
+        workspace = ApplicationController.firecloud_client.get_workspace(study.firecloud_project, study.firecloud_workspace)
+        project_name = workspace.dig('workspace', 'googleProject') || FireCloudClient::PORTAL_NAMESPACE
+        client = FireCloudClient.new(self, project_name)
+        client.get_pet_service_account_token(project_name)
       rescue RuntimeError => e
         # returning nil here will be caught at the UI level and show an error message
         # see UserProvider.js -> getReadOnlyToken() and userHasTerraProfile()
