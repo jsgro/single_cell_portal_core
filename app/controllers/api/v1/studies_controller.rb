@@ -13,6 +13,8 @@ module Api
 
       respond_to :json
 
+      SUPPORTED_LABEL_FONTS = ['Helvetica Neue', 'Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Trebuchet MS', 'Impact']
+
       swagger_path '/studies' do
         operation :get do
           key :tags, [
@@ -78,6 +80,18 @@ module Api
 
       # GET /single_cell/api/v1/studies/:id
       def show
+      end
+
+      # return JSON of the study, all study file objects, and any options values needed for the upload wizard
+      def file_info
+        response_obj = {
+          study: @study.attributes,
+          files: @study.study_files,
+          menu_options: {
+            fonts: SUPPORTED_LABEL_FONTS
+          }
+        }
+        render json: response_obj
       end
 
       swagger_path '/studies' do

@@ -1,414 +1,424 @@
-<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-  // populate window.SCP.currentStudyFiles with information about all known StudyFiles
-  window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
-</script>
+<% if !User.feature_flag_for_instance(current_user, 'react_upload_wizard')  %>
+  <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+    // populate window.SCP.currentStudyFiles with information about all known StudyFiles
+    window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
+  </script>
 
-<div class="row">
-  <div class="col-sm-10">
-    <h1>Upload/Edit Study Data for '<%= @study.name %>' <%= render partial: 'initialize_study_label' %></h1>
+  <div class="row">
+    <div class="col-sm-10">
+      <h1>Upload/Edit Study Data for '<%= @study.name %>' <%= render partial: 'initialize_study_label' %></h1>
+    </div>
+    <div class="col-sm-2">
+      <p class="top-pad pull-right">
+        <%= scp_link_to "<span class='fas fa-eye'></span> View Study".html_safe,
+                        view_study_path(accession: @study.accession, study_name: @study.url_safe_name),
+                        class: 'btn btn-primary', title: 'View Live', data: {toggle: 'tooltip', placement: 'left'} %>
+      </p>
+    </div>
   </div>
-  <div class="col-sm-2">
-    <p class="top-pad pull-right">
-      <%= scp_link_to "<span class='fas fa-eye'></span> View Study".html_safe,
-                      view_study_path(accession: @study.accession, study_name: @study.url_safe_name),
-                      class: 'btn btn-primary', title: 'View Live', data: {toggle: 'tooltip', placement: 'left'} %>
-    </p>
-  </div>
-</div>
 
-<div id="rootwizard">
-  <ul class="nav wizard">
-    <li role="presentation" class="wizard-nav" id="initialize_raw_expression_form"><a href="#raw-expression" data-toggle="tab">1. Raw Count Matrix <span id="initialize_raw_expression_form_nav_completed"></span></a></li>
-    <li role="presentation" class="wizard-nav" id="initialize_processed_expression_form_nav"><a href="#processed-expression" data-toggle="tab">2. Processed Matrix <span id="initialize_processed_expression_form_nav_completed"></span></a></li>
-    <li role="presentation" class="wizard-nav" id="initialize_metadata_form_nav"><a href="#metadata" data-toggle="tab">3. Metadata <span id="initialize_metadata_form_nav_completed"></span></a></li>
-    <li role="presentation" class="wizard-nav" id="initialize_ordinations_form_nav"><a href="#ordinations" data-toggle="tab">4. Clusters / Spatial <span id="initialize_ordinations_form_nav_completed"></span></a></li>
-    <li role="presentation" class="wizard-nav" id="initialize_labels_form_nav"><a href="#labels" data-toggle="tab">5. Coordinate Labels <span id="initialize_labels_form_nav_completed"></span></a></li>
-    <li role="presentation" class="wizard-nav" id="initialize_primary_data_form_nav"><a href="#primary-data" data-toggle="tab">6. Sequence Data <span id="initialize_primary_data_form_nav_completed"></span></a></li>
-    <li role="presentation" class="wizard-nav" id="initialize_marker_genes_form_nav"><a href="#marker-genes" data-toggle="tab">7. Gene Lists <span id="initialize_marker_genes_form_nav_completed"></span></a></li>
-    <li role="presentation" class="wizard-nav" id="initialize_misc_form_nav"><a href="#misc" data-toggle="tab">8. Miscellaneous <span id="initialize_misc_form_nav_completed"></span></a></li>
-  </ul>
+  <div id="rootwizard">
+    <ul class="nav wizard">
+      <li role="presentation" class="wizard-nav" id="initialize_raw_expression_form"><a href="#raw-expression" data-toggle="tab">1. Raw Count Matrix <span id="initialize_raw_expression_form_nav_completed"></span></a></li>
+      <li role="presentation" class="wizard-nav" id="initialize_processed_expression_form_nav"><a href="#processed-expression" data-toggle="tab">2. Processed Matrix <span id="initialize_processed_expression_form_nav_completed"></span></a></li>
+      <li role="presentation" class="wizard-nav" id="initialize_metadata_form_nav"><a href="#metadata" data-toggle="tab">3. Metadata <span id="initialize_metadata_form_nav_completed"></span></a></li>
+      <li role="presentation" class="wizard-nav" id="initialize_ordinations_form_nav"><a href="#ordinations" data-toggle="tab">4. Clusters / Spatial <span id="initialize_ordinations_form_nav_completed"></span></a></li>
+      <li role="presentation" class="wizard-nav" id="initialize_labels_form_nav"><a href="#labels" data-toggle="tab">5. Coordinate Labels <span id="initialize_labels_form_nav_completed"></span></a></li>
+      <li role="presentation" class="wizard-nav" id="initialize_primary_data_form_nav"><a href="#primary-data" data-toggle="tab">6. Sequence Data <span id="initialize_primary_data_form_nav_completed"></span></a></li>
+      <li role="presentation" class="wizard-nav" id="initialize_marker_genes_form_nav"><a href="#marker-genes" data-toggle="tab">7. Gene Lists <span id="initialize_marker_genes_form_nav_completed"></span></a></li>
+      <li role="presentation" class="wizard-nav" id="initialize_misc_form_nav"><a href="#misc" data-toggle="tab">8. Miscellaneous <span id="initialize_misc_form_nav_completed"></span></a></li>
+    </ul>
 
-  <div id="bar" class="progress">
-    <div class="progress-bar"><span id="progress-count"></span></div>
-  </div>
-  <div class="tab-content">
-    <div class="tab-pane" id="raw-expression">
-      <div id="raw-expressions-target">
-        <div class="well well-sm container-fluid upload-wizard">
-          <div class="row ">
-            <h2 class="col-sm-12">Step 1. Upload Raw Count Expression File <small class="initialize-label" id="initialize_raw_expression_form_completed"></small></h2>
-            <p class="col-sm-12">Raw count data enables data reuse in new analyses.  Ideal raw count data is unfiltered,
-              without normalization or other processing performed.  Gene expression scores can be represented either as an:</p>
-          </div>
-          <div class="row">
-            <p class="col-sm-3 col-sm-offset-1 text-center"><%= link_to 'Expression Matrix', 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/expression_example.txt', target: :_blank %></p>
-            <p class="text-center col-sm-4 col-sm-offset-2"><%= link_to 'MM Coordinate Matrix file*', 'https://github.com/broadinstitute/single_cell_portal_core/blob/master/test/test_data/GRCh38/matrix.mtx', target: :_blank %></p>
-          </div>
-          <div class="row code-div">
-            <div class="col-sm-3 col-sm-offset-1">
-              <pre class="code-example">GENE&#09;CELL_1&#9;CELL_2&#09;CELL_3&#09;...<br/>It2ma&#09;0&#09;0&#09;0&#09;...<br/>Sergef&#09;0&#09;7.092&#09;0&#09;...<br/>Chil5&#09;0&#09;0&#09;0&#09;...<br/>Fgfr3&#09;0&#9;0&#09;0.978&#09;<br/>...</pre>
+    <div id="bar" class="progress">
+      <div class="progress-bar"><span id="progress-count"></span></div>
+    </div>
+    <div class="tab-content">
+      <div class="tab-pane" id="raw-expression">
+        <div id="raw-expressions-target">
+          <div class="well well-sm container-fluid upload-wizard">
+            <div class="row ">
+              <h2 class="col-sm-12">Step 1. Upload Raw Count Expression File <small class="initialize-label" id="initialize_raw_expression_form_completed"></small></h2>
+              <p class="col-sm-12">Raw count data enables data reuse in new analyses.  Ideal raw count data is unfiltered,
+                without normalization or other processing performed.  Gene expression scores can be represented either as an:</p>
             </div>
-            <div class="col-sm-4 col-sm-offset-2" >
-              <pre class="code-example">%%MatrixMarket matrix coordinate real general<br/>%<br>17123 31231 124124<br>1 1241 1.0<br/>1 1552 2.0<br/>...</pre>
+            <div class="row">
+              <p class="col-sm-3 col-sm-offset-1 text-center"><%= link_to 'Expression Matrix', 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/expression_example.txt', target: :_blank %></p>
+              <p class="text-center col-sm-4 col-sm-offset-2"><%= link_to 'MM Coordinate Matrix file*', 'https://github.com/broadinstitute/single_cell_portal_core/blob/master/test/test_data/GRCh38/matrix.mtx', target: :_blank %></p>
+            </div>
+            <div class="row code-div">
+              <div class="col-sm-3 col-sm-offset-1">
+                <pre class="code-example">GENE&#09;CELL_1&#9;CELL_2&#09;CELL_3&#09;...<br/>It2ma&#09;0&#09;0&#09;0&#09;...<br/>Sergef&#09;0&#09;7.092&#09;0&#09;...<br/>Chil5&#09;0&#09;0&#09;0&#09;...<br/>Fgfr3&#09;0&#9;0&#09;0.978&#09;<br/>...</pre>
+              </div>
+              <div class="col-sm-4 col-sm-offset-2" >
+                <pre class="code-example">%%MatrixMarket matrix coordinate real general<br/>%<br>17123 31231 124124<br>1 1241 1.0<br/>1 1552 2.0<br/>...</pre>
+              </div>
+            </div>
+            <div class="row ">
+              <i class="col-sm-5  text-center">An “Expression Matrix” is a dense matrix (.txt, .tsv, or .csv)** that has a header row containing the value “GENE” in the first column, and single cell names in each successive column.</i>
+              <i class="col-sm-4  col-sm-offset-1 text-center">An “MM Coordinate Matrix” *, as seen in <%= link_to '10x Genomics', 'https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices', target: :_blank %>,
+                is a Matrix Market file (.mtx, .mm, or .txt)** that contains a sparse matrix in coordinate form. </i>
+            </div>
+            </br>
+            <div class="row">
+              <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.csv or .tsv) and
+                <%= link_to 'barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.tsv or .csv) files separately.</p>
+              <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank %>  files of this type (e.g. .txt.gz) are accepted as well</p>
             </div>
           </div>
-          <div class="row ">
-            <i class="col-sm-5  text-center">An “Expression Matrix” is a dense matrix (.txt, .tsv, or .csv)** that has a header row containing the value “GENE” in the first column, and single cell names in each successive column.</i>
-            <i class="col-sm-4  col-sm-offset-1 text-center">An “MM Coordinate Matrix” *, as seen in <%= link_to '10x Genomics', 'https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices', target: :_blank %>,
-              is a Matrix Market file (.mtx, .mm, or .txt)** that contains a sparse matrix in coordinate form. </i>
-          </div>
-          </br>
-          <div class="row">
-            <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.csv or .tsv) and
-              <%= link_to 'barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.tsv or .csv) files separately.</p>
-            <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank %>  files of this type (e.g. .txt.gz) are accepted as well</p>
-          </div>
-        </div>
 
 
-        <% @raw_matrix_files.each do |study_file| %>
-          <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
-            <%= render partial: 'initialize_expression_form',
-                       locals: { study_file: study_file, allow_only: 'raw' }
-            %>
-            <% if study_file.bundled_files.any? %>
-              <h4>Bundled Files</h4>
-              <% study_file.bundled_files.each do |bundled_file| %>
-                <%= render partial: 'initialize_bundled_file_form', locals: {study_file: bundled_file} %>
+          <% @raw_matrix_files.each do |study_file| %>
+            <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
+              <%= render partial: 'initialize_expression_form',
+                         locals: { study_file: study_file, allow_only: 'raw' }
+              %>
+              <% if study_file.bundled_files.any? %>
+                <h4>Bundled Files</h4>
+                <% study_file.bundled_files.each do |bundled_file| %>
+                  <%= render partial: 'initialize_bundled_file_form', locals: {study_file: bundled_file} %>
+                <% end %>
               <% end %>
-            <% end %>
-          </div>
-        <% end %>
-        <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-          if (<%= !@raw_matrix_files.first.new_record? %>) {
-            completeWizardStep('initialize_raw_expression_form_nav');
-            console.log('incrementing status for raw expression files upload');
-            $('#initialize_raw_expression_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_expression_form_completed'}) %>");
-            $('#initialize_raw_expression_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
-          }
-        </script>
-      </div>
-      <p><%= link_to "<span class='fas fa-plus'></span> Add a Raw Count Expression File".html_safe,
-                     new_study_file_study_path(@study._id,
-                                               file_type: 'Expression Matrix',
-                                               target: '#raw-expressions-target',
-                                               form: 'initialize_expression_form',
-                                               is_raw_counts: true,
-                                               allow_only: 'raw'
-                     ), class: 'btn btn-sm btn-primary add-expression', 'data-remote' => true %></p>
-    </div>
-    <div class="tab-pane" id="processed-expression">
-      <%= render 'block_processed_upload_content' %>
-        <div id="block-processed-upload" class="<%= @block_processed_upload ? 'overlay-upload' : nil %>">
-        <div id="processed-expressions-target">
-        <div class="well well-sm container-fluid upload-wizard">
-          <div class="row ">
-            <h2 class="col-sm-12">Step 2. Upload Processed Expression File <small class="initialize-label" id="initialize_processed_expression_form_completed"></small></h2>
-            <p class="col-sm-12">Processed matrix data is used to support gene expression visualizations.  Gene expression
-              scores can be represented either as an:</p>
-          </div>
-          <div class="row">
-            <p class="col-sm-3 col-sm-offset-1 text-center"><%= link_to 'Expression Matrix', 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/expression_example.txt', target: :_blank %></p>
-            <p class="text-center col-sm-4 col-sm-offset-2"><%= link_to 'MM Coordinate Matrix file*', 'https://github.com/broadinstitute/single_cell_portal_core/blob/master/test/test_data/GRCh38/matrix.mtx', target: :_blank %></p>
-          </div>
-          <div class="row code-div">
-            <div class="col-sm-3 col-sm-offset-1">
-              <pre class="code-example">GENE&#09;CELL_1&#9;CELL_2&#09;CELL_3&#09;...<br/>It2ma&#09;0&#09;0&#09;0&#09;...<br/>Sergef&#09;0&#09;7.092&#09;0&#09;...<br/>Chil5&#09;0&#09;0&#09;0&#09;...<br/>Fgfr3&#09;0&#9;0&#09;0.978&#09;<br/>...</pre>
             </div>
-            <div class="col-sm-4 col-sm-offset-2" >
-              <pre class="code-example">%%MatrixMarket matrix coordinate real general<br/>%<br>17123 31231 124124<br>1 1241 1.0<br/>1 1552 2.0<br/>...</pre>
-            </div>
-          </div>
-          <div class="row ">
-            <i class="col-sm-5  text-center">An “Expression Matrix” is a dense matrix (.txt, .tsv, or .csv)** that has a header row containing the value “GENE” in the first column, and single cell names in each successive column.</i>
-            <i class="col-sm-4  col-sm-offset-1 text-center">An “MM Coordinate Matrix” *, as seen in <%= link_to '10x Genomics', 'https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices', target: :_blank %>,
-              is a Matrix Market file (.mtx, .mm, or .txt)** that contains a sparse matrix in coordinate form. </i>
-          </div>
-          </br>
-          <div class="row">
-            <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.csv or .tsv) and
-              <%= link_to 'barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.tsv or .csv) files separately.</p>
-            <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank %>  files of this type (e.g. .txt.gz) are accepted as well</p>
-          </div>
+          <% end %>
+          <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+            if (<%= !@raw_matrix_files.first.new_record? %>) {
+              completeWizardStep('initialize_raw_expression_form_nav');
+              console.log('incrementing status for raw expression files upload');
+              $('#initialize_raw_expression_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_expression_form_completed'}) %>");
+              $('#initialize_raw_expression_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
+            }
+          </script>
         </div>
-        <% @processed_matrix_files.each do |study_file| %>
-          <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
-            <%= render partial: 'initialize_expression_form',
-                       locals: { study_file: study_file, allow_only: 'processed' }
-            %>
-            <% if study_file.bundled_files.any? %>
-              <h4>Bundled Files</h4>
-              <% study_file.bundled_files.each do |bundled_file| %>
-                <%= render partial: 'initialize_bundled_file_form', locals: {study_file: bundled_file} %>
+        <p><%= link_to "<span class='fas fa-plus'></span> Add a Raw Count Expression File".html_safe,
+                       new_study_file_study_path(@study._id,
+                                                 file_type: 'Expression Matrix',
+                                                 target: '#raw-expressions-target',
+                                                 form: 'initialize_expression_form',
+                                                 is_raw_counts: true,
+                                                 allow_only: 'raw'
+                       ), class: 'btn btn-sm btn-primary add-expression', 'data-remote' => true %></p>
+      </div>
+      <div class="tab-pane" id="processed-expression">
+        <%= render 'block_processed_upload_content' %>
+          <div id="block-processed-upload" class="<%= @block_processed_upload ? 'overlay-upload' : nil %>">
+          <div id="processed-expressions-target">
+          <div class="well well-sm container-fluid upload-wizard">
+            <div class="row ">
+              <h2 class="col-sm-12">Step 2. Upload Processed Expression File <small class="initialize-label" id="initialize_processed_expression_form_completed"></small></h2>
+              <p class="col-sm-12">Processed matrix data is used to support gene expression visualizations.  Gene expression
+                scores can be represented either as an:</p>
+            </div>
+            <div class="row">
+              <p class="col-sm-3 col-sm-offset-1 text-center"><%= link_to 'Expression Matrix', 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/expression_example.txt', target: :_blank %></p>
+              <p class="text-center col-sm-4 col-sm-offset-2"><%= link_to 'MM Coordinate Matrix file*', 'https://github.com/broadinstitute/single_cell_portal_core/blob/master/test/test_data/GRCh38/matrix.mtx', target: :_blank %></p>
+            </div>
+            <div class="row code-div">
+              <div class="col-sm-3 col-sm-offset-1">
+                <pre class="code-example">GENE&#09;CELL_1&#9;CELL_2&#09;CELL_3&#09;...<br/>It2ma&#09;0&#09;0&#09;0&#09;...<br/>Sergef&#09;0&#09;7.092&#09;0&#09;...<br/>Chil5&#09;0&#09;0&#09;0&#09;...<br/>Fgfr3&#09;0&#9;0&#09;0.978&#09;<br/>...</pre>
+              </div>
+              <div class="col-sm-4 col-sm-offset-2" >
+                <pre class="code-example">%%MatrixMarket matrix coordinate real general<br/>%<br>17123 31231 124124<br>1 1241 1.0<br/>1 1552 2.0<br/>...</pre>
+              </div>
+            </div>
+            <div class="row ">
+              <i class="col-sm-5  text-center">An “Expression Matrix” is a dense matrix (.txt, .tsv, or .csv)** that has a header row containing the value “GENE” in the first column, and single cell names in each successive column.</i>
+              <i class="col-sm-4  col-sm-offset-1 text-center">An “MM Coordinate Matrix” *, as seen in <%= link_to '10x Genomics', 'https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices', target: :_blank %>,
+                is a Matrix Market file (.mtx, .mm, or .txt)** that contains a sparse matrix in coordinate form. </i>
+            </div>
+            </br>
+            <div class="row">
+              <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.csv or .tsv) and
+                <%= link_to 'barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.tsv or .csv) files separately.</p>
+              <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank %>  files of this type (e.g. .txt.gz) are accepted as well</p>
+            </div>
+          </div>
+          <% @processed_matrix_files.each do |study_file| %>
+            <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
+              <%= render partial: 'initialize_expression_form',
+                         locals: { study_file: study_file, allow_only: 'processed' }
+              %>
+              <% if study_file.bundled_files.any? %>
+                <h4>Bundled Files</h4>
+                <% study_file.bundled_files.each do |bundled_file| %>
+                  <%= render partial: 'initialize_bundled_file_form', locals: {study_file: bundled_file} %>
+                <% end %>
               <% end %>
-            <% end %>
-          </div>
-        <% end %>
-        <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-          // user clicks the 'Upload Raw Count' button after seeing disclaimer
-          $('#upload-raw-counts').on('click', function() {
-            console.log('Returning to raw count tab')
-            $('#initialize_raw_expression_form a').click();
-          })
+            </div>
+          <% end %>
+          <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+            // user clicks the 'Upload Raw Count' button after seeing disclaimer
+            $('#upload-raw-counts').on('click', function() {
+              console.log('Returning to raw count tab')
+              $('#initialize_raw_expression_form a').click();
+            })
 
-          if (<%= !@processed_matrix_files.first.new_record? %>) {
-            completeWizardStep('initialize_processed_expression_form_nav');
-            console.log('incrementing status for processed expression files upload');
-            $('#initialize_processed_expression_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_expression_form_completed'}) %>");
-            $('#initialize_processed_expression_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
-          }
-        </script>
-      </div>
-        <p><%= link_to "<span class='fas fa-plus'></span> Add an Processed Matrix File".html_safe,
-                     new_study_file_study_path(@study._id,
-                                               file_type: 'Expression Matrix',
-                                               target: '#processed-expressions-target',
-                                               form: 'initialize_expression_form',
-                                               is_raw_counts: false,
-                                               allow_only: 'processed'
-                     ), class: 'btn btn-sm btn-primary add-expression', 'data-remote' => true %></p>
+            if (<%= !@processed_matrix_files.first.new_record? %>) {
+              completeWizardStep('initialize_processed_expression_form_nav');
+              console.log('incrementing status for processed expression files upload');
+              $('#initialize_processed_expression_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_expression_form_completed'}) %>");
+              $('#initialize_processed_expression_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
+            }
+          </script>
         </div>
-    </div>
-    <div class="tab-pane" id="metadata">
-      <div class="well well-sm container-fluid upload-wizard">
-        <div class="row">
-          <h2 class="col-sm-12">Step 3. Upload Metadata File <small class="initialize-label" id="initialize_metadata_form_completed"></small></h2>
-          <div class="col-sm-12" id="metadata-convention-explainer">
-            <%= image_tag "metadata-convention-explainer.jpg" %>
+          <p><%= link_to "<span class='fas fa-plus'></span> Add an Processed Matrix File".html_safe,
+                       new_study_file_study_path(@study._id,
+                                                 file_type: 'Expression Matrix',
+                                                 target: '#processed-expressions-target',
+                                                 form: 'initialize_expression_form',
+                                                 is_raw_counts: false,
+                                                 allow_only: 'processed'
+                       ), class: 'btn btn-sm btn-primary add-expression', 'data-remote' => true %></p>
           </div>
-        </div>
-        <a id="metadata-convention-example-link" href="https://singlecell.zendesk.com/hc/en-us/articles/360060609852-Required-Metadata" target="_blank" rel="noreferrer">View required conventional metadata</a>
       </div>
+      <div class="tab-pane" id="metadata">
+        <div class="well well-sm container-fluid upload-wizard">
+          <div class="row">
+            <h2 class="col-sm-12">Step 3. Upload Metadata File <small class="initialize-label" id="initialize_metadata_form_completed"></small></h2>
+            <div class="col-sm-12" id="metadata-convention-explainer">
+              <%= image_tag "metadata-convention-explainer.jpg" %>
+            </div>
+          </div>
+          <a id="metadata-convention-example-link" href="https://singlecell.zendesk.com/hc/en-us/articles/360060609852-Required-Metadata" target="_blank" rel="noreferrer">View required conventional metadata</a>
+        </div>
 
-      <div id="container-<%= @metadata_file.id %>">
-        <%= render partial: 'initialize_metadata_form', locals: {study_file: @metadata_file} %>
+        <div id="container-<%= @metadata_file.id %>">
+          <%= render partial: 'initialize_metadata_form', locals: {study_file: @metadata_file} %>
+        </div>
       </div>
-    </div>
-    <div class="tab-pane" id="ordinations">
-      <div id="ordinations-target">
-        <div class="well well-sm upload-wizard">
-          <div class="row">
-            <h2 class="col-sm-12">Step 4. Upload Cluster / Spatial Files <small class="initialize-label" id="initialize_ordinations_form_completed"></small></h2>
-            <p class="text-center"><%= link_to 'Cluster File', 'https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt', target: :_blank %></p>
-          </div>
-          <div class="row">
-            <pre class="code-example col-sm-5 col-sm-offset-4">NAME&#09;X&#09;Y&#09;Z&#09;Category&#09;Intensity<br/>TYPE&#09;numeric&#09;numeric&#09;numeric&#09;group&#09;numeric<br/>CELL_0001&#09;34.472&#09;32.211&#09;60.035&#09;C&#09;0.719<br/>CELL_0002&#09;15.975&#09;10.043&#09;21.424&#09;B&#09;.904<br/>...</pre>
-          </div>
-          <div class="row">
-            <p class="col-sm-12 text-center">A <%= link_to 'cluster file', 'https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt', target: :_blank %> (.txt or .txt.gz) contains any cluster ordinations and optional cluster-specific metadata.  <strong>At minimum </strong> a cluster file has:</p>
-          </div>
-          <div class="col-md-9 col-lg-offset-2 col-md-offset-1">
-            <ul>
-              <li>3 columns</li>
-              <li>A header row containing the value <strong>“NAME”, “X”, “Y”,</strong> optionally <strong>“Z”</strong>, and columns containing cell-level annotations
-              </li>
-              <li>A second row with:</li>
-              <ul >
-                <li>The header of <strong>“TYPE”</strong>to declare metadata types (see below).</li>
-                <li>A value for each metadata column declaring its datatype
+      <div class="tab-pane" id="ordinations">
+        <div id="ordinations-target">
+          <div class="well well-sm upload-wizard">
+            <div class="row">
+              <h2 class="col-sm-12">Step 4. Upload Cluster / Spatial Files <small class="initialize-label" id="initialize_ordinations_form_completed"></small></h2>
+              <p class="text-center"><%= link_to 'Cluster File', 'https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt', target: :_blank %></p>
+            </div>
+            <div class="row">
+              <pre class="code-example col-sm-5 col-sm-offset-4">NAME&#09;X&#09;Y&#09;Z&#09;Category&#09;Intensity<br/>TYPE&#09;numeric&#09;numeric&#09;numeric&#09;group&#09;numeric<br/>CELL_0001&#09;34.472&#09;32.211&#09;60.035&#09;C&#09;0.719<br/>CELL_0002&#09;15.975&#09;10.043&#09;21.424&#09;B&#09;.904<br/>...</pre>
+            </div>
+            <div class="row">
+              <p class="col-sm-12 text-center">A <%= link_to 'cluster file', 'https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt', target: :_blank %> (.txt or .txt.gz) contains any cluster ordinations and optional cluster-specific metadata.  <strong>At minimum </strong> a cluster file has:</p>
+            </div>
+            <div class="col-md-9 col-lg-offset-2 col-md-offset-1">
+              <ul>
+                <li>3 columns</li>
+                <li>A header row containing the value <strong>“NAME”, “X”, “Y”,</strong> optionally <strong>“Z”</strong>, and columns containing cell-level annotations
                 </li>
-                <ul>
-                  <li>The two accepted values are <strong>“group”</strong> (set membership) or <strong>“numeric”</strong> (continuous scores).*</li>
-                  <li>The values for the “X”, “Y”, and “Z” columns must be set to “numeric”.</li>
+                <li>A second row with:</li>
+                <ul >
+                  <li>The header of <strong>“TYPE”</strong>to declare metadata types (see below).</li>
+                  <li>A value for each metadata column declaring its datatype
+                  </li>
+                  <ul>
+                    <li>The two accepted values are <strong>“group”</strong> (set membership) or <strong>“numeric”</strong> (continuous scores).*</li>
+                    <li>The values for the “X”, “Y”, and “Z” columns must be set to “numeric”.</li>
+                  </ul>
                 </ul>
               </ul>
-            </ul>
+            </div>
+            <div class="row">
+              <p class="col-sm-12 text-center">Once your cluster file has been successfully ingested, additional representative
+                subsamples of the full resolution data will be stored as well. <%= link_to "Learn More <i class='fas fa-question-circle'></i>".html_safe,
+                            'https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling', target: :_blank,
+                                                         class: 'btn btn-default'%>
+              </p>
+            </div>
+            <div class="row">
+              <p class="col-sm-12"><a href="https://en.wikipedia.org/wiki/Spatial_transcriptomics" target="_blank" rel="noreferrer">Spatial transcriptomics</a> data can also be uploaded with this file format.  The x, y, and z coordinates then represent actual spatial coordinates, as opposed to clustering output.</p>
+            </div>
+            <div class="row">
+              <p class="col-sm-12">* Group values are treated as literal strings, and numerics as floating-point numbers.</p>
+            </div>
           </div>
-          <div class="row">
-            <p class="col-sm-12 text-center">Once your cluster file has been successfully ingested, additional representative
-              subsamples of the full resolution data will be stored as well. <%= link_to "Learn More <i class='fas fa-question-circle'></i>".html_safe,
-                          'https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling', target: :_blank,
-                                                       class: 'btn btn-default'%>
-            </p>
-          </div>
-          <div class="row">
-            <p class="col-sm-12"><a href="https://en.wikipedia.org/wiki/Spatial_transcriptomics" target="_blank" rel="noreferrer">Spatial transcriptomics</a> data can also be uploaded with this file format.  The x, y, and z coordinates then represent actual spatial coordinates, as opposed to clustering output.</p>
-          </div>
-          <div class="row">
-            <p class="col-sm-12">* Group values are treated as literal strings, and numerics as floating-point numbers.</p>
-          </div>
-        </div>
-        <% @cluster_ordinations.each do |study_file| %>
-          <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
-            <%= render partial: 'initialize_ordinations_form', locals: {study_file: study_file} %>
-          </div>
-        <% end %>
-        <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-          if (<%= !@cluster_ordinations.first.new_record? %>) {
-            completeWizardStep('initialize_ordinations_form_nav');
-            console.log('incrementing status for cluster ordinations upload');
-            $('#initialize_ordinations_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_ordinations_form_completed'}) %>");
-            $('#initialize_ordinations_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
-          }
-        </script>
-      </div>
-      <p><%= link_to "<span class='fas fa-plus'></span> Add a Cluster File".html_safe, new_study_file_study_path(@study._id, file_type: 'Cluster', target: '#ordinations-target', form: 'initialize_ordinations_form'), class: 'btn btn-sm btn-primary add-cluster', 'data-remote' => true %></p>
-    </div>
-    <div class="tab-pane" id="labels">
-      <div id="labels-target">
-        <div class="well well-sm">
-          <h2>Step 5. Upload Coordinate Labels <small class="initialize-label" id="initialize_labels_form_completed"><span class="label label-info">Optional</span></small></h2>
-          <p class="lead">Upload a tab- or comma-delimited text file containing any 2d or 3d spatial coordinates and labels to display.  <strong class="text-danger">These are not cluster files - they are annotations to overlay on top of a cluster.</strong>
-            The file must be a plain text (.txt) file with at least 3 columns and a header row containing the values '<strong>X</strong>', '<strong>Y</strong>', and '<strong>LABELS</strong>'.  The file may have an optional column of '<strong>Z</strong>' (for 3d clusters).
-            The last column must contain text labels to display at the specified coordinates.</p>
-          <p class="lead"><i class="fas fa-fw fa-exclamation-triangle text-warning"></i> The coordinates of the labels must fall inside the ranges of the cluster they are associated with for them to render.</p>
-          <p><%= link_to "Example Coordinate Label File <span class='fas fa-download'></span>".html_safe, 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/coordinate_labels_example.txt', class: 'btn btn-default', download: 'coordinate_labels_example.txt' %></p>
-        </div>
-        <% @coordinate_labels.each do |study_file| %>
-          <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
-            <%= render partial: 'initialize_labels_form', locals: {study_file: study_file} %>
-          </div>
-        <% end %>
-        <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-            if (<%= @coordinate_labels.any? && !@coordinate_labels.first.new_record? %>) {
-                completeWizardStep('initialize_labels_form_nav');
-                console.log('incrementing status for coordinate labels upload');
-                $('#initialize_labels_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_labels_form_completed'}) %>");
-                $('#initialize_labels_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
+          <% @cluster_ordinations.each do |study_file| %>
+            <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
+              <%= render partial: 'initialize_ordinations_form', locals: {study_file: study_file} %>
+            </div>
+          <% end %>
+          <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+            if (<%= !@cluster_ordinations.first.new_record? %>) {
+              completeWizardStep('initialize_ordinations_form_nav');
+              console.log('incrementing status for cluster ordinations upload');
+              $('#initialize_ordinations_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_ordinations_form_completed'}) %>");
+              $('#initialize_ordinations_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
             }
-        </script>
-      </div>
-      <p><%= link_to "<span class='fas fa-plus'></span> Add a Coordinate Labels File".html_safe, new_study_file_study_path(@study._id, file_type: 'Coordinate Labels', target: '#labels-target', form: 'initialize_labels_form'), class: "btn btn-sm btn-primary add-coordinate-labels #{!@study.has_cluster_data? ? 'hidden' : nil}", id: 'add-coordinate-label-btn', 'data-remote' => true %></p>
-    </div>
-    <div class="tab-pane" id="primary-data">
-      <div id="primary-data-target">
-        <div class="well well-sm">
-          <h2>Step 6. Upload Sequence Data Files <small class="initialize-label" id="initialize_primary_data_form_completed"><span class="label label-info">Optional</span></small></h2>
-          <p class="lead"><strong>Primary Human Data</strong>: Primary sequence data derived from humans should be stored in other biological databases and can be linked here by selecting 'Yes' for 'Primary Human Data' and then providing a link in the text field.</p>
-          <p class="lead"><strong>Non-human Data</strong>: If you have a few, small (under 2GB) non-human sequence files, they can be uploaded here. For uploading many or larger files, please refer to the instructions <%= link_to 'in our documentation', 'https://singlecell.zendesk.com/hc/en-us/articles/360061006011-Uploading-Large-Files-Using-Gsutil-Tool', target: :_blank %>.</p>
-          <p class="lead">If you already have <code>gsutil</code> installed you can upload files directly using the following command:</p>
-          <pre class="lead">gsutil -m cp /path/to/files gs://<%= @study.bucket_id %></pre>
-          <p class="lead"><strong class="text-danger">If you are uploading sequence files through the wizard, we recommend that they be compressed first using gzip.</strong></p>
-          <p><%= link_to "FASTQ File Format <span class='fas fa-info-circle'></span>".html_safe, 'https://en.wikipedia.org/wiki/FASTQ_format#Format', class: 'btn btn-default', target: :_blank %>&nbsp;<%= link_to "BAM File Format <span class='fas fa-info-circle'></span>".html_safe, 'https://www.ncbi.nlm.nih.gov/sra/docs/submitformats/#bam-files', class: 'btn btn-default', target: :_blank %>&nbsp;<%= link_to "gzip Documentation <span class='fas fa-info-circle'></span>".html_safe, 'http://www.gnu.org/software/gzip/manual/gzip.html', class: 'btn btn-default', target: :_blank %></p>
+          </script>
         </div>
-        <% @fastq_files.each do |study_file| %>
-          <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
-            <%= render partial: 'initialize_primary_data_form', locals: {study_file: study_file} %>
-            <% if study_file.bundled_files.any? %>
-              <h4>Bundled Files</h4>
-              <% study_file.bundled_files.each do |bundled_file| %>
-                <%= render partial: 'initialize_bundled_file_form', locals: {study_file: bundled_file} %>
+        <p><%= link_to "<span class='fas fa-plus'></span> Add a Cluster File".html_safe, new_study_file_study_path(@study._id, file_type: 'Cluster', target: '#ordinations-target', form: 'initialize_ordinations_form'), class: 'btn btn-sm btn-primary add-cluster', 'data-remote' => true %></p>
+      </div>
+      <div class="tab-pane" id="labels">
+        <div id="labels-target">
+          <div class="well well-sm">
+            <h2>Step 5. Upload Coordinate Labels <small class="initialize-label" id="initialize_labels_form_completed"><span class="label label-info">Optional</span></small></h2>
+            <p class="lead">Upload a tab- or comma-delimited text file containing any 2d or 3d spatial coordinates and labels to display.  <strong class="text-danger">These are not cluster files - they are annotations to overlay on top of a cluster.</strong>
+              The file must be a plain text (.txt) file with at least 3 columns and a header row containing the values '<strong>X</strong>', '<strong>Y</strong>', and '<strong>LABELS</strong>'.  The file may have an optional column of '<strong>Z</strong>' (for 3d clusters).
+              The last column must contain text labels to display at the specified coordinates.</p>
+            <p class="lead"><i class="fas fa-fw fa-exclamation-triangle text-warning"></i> The coordinates of the labels must fall inside the ranges of the cluster they are associated with for them to render.</p>
+            <p><%= link_to "Example Coordinate Label File <span class='fas fa-download'></span>".html_safe, 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/coordinate_labels_example.txt', class: 'btn btn-default', download: 'coordinate_labels_example.txt' %></p>
+          </div>
+          <% @coordinate_labels.each do |study_file| %>
+            <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
+              <%= render partial: 'initialize_labels_form', locals: {study_file: study_file} %>
+            </div>
+          <% end %>
+          <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+              if (<%= @coordinate_labels.any? && !@coordinate_labels.first.new_record? %>) {
+                  completeWizardStep('initialize_labels_form_nav');
+                  console.log('incrementing status for coordinate labels upload');
+                  $('#initialize_labels_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_labels_form_completed'}) %>");
+                  $('#initialize_labels_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
+              }
+          </script>
+        </div>
+        <p><%= link_to "<span class='fas fa-plus'></span> Add a Coordinate Labels File".html_safe, new_study_file_study_path(@study._id, file_type: 'Coordinate Labels', target: '#labels-target', form: 'initialize_labels_form'), class: "btn btn-sm btn-primary add-coordinate-labels #{!@study.has_cluster_data? ? 'hidden' : nil}", id: 'add-coordinate-label-btn', 'data-remote' => true %></p>
+      </div>
+      <div class="tab-pane" id="primary-data">
+        <div id="primary-data-target">
+          <div class="well well-sm">
+            <h2>Step 6. Upload Sequence Data Files <small class="initialize-label" id="initialize_primary_data_form_completed"><span class="label label-info">Optional</span></small></h2>
+            <p class="lead"><strong>Primary Human Data</strong>: Primary sequence data derived from humans should be stored in other biological databases and can be linked here by selecting 'Yes' for 'Primary Human Data' and then providing a link in the text field.</p>
+            <p class="lead"><strong>Non-human Data</strong>: If you have a few, small (under 2GB) non-human sequence files, they can be uploaded here. For uploading many or larger files, please refer to the instructions <%= link_to 'in our documentation', 'https://singlecell.zendesk.com/hc/en-us/articles/360061006011-Uploading-Large-Files-Using-Gsutil-Tool', target: :_blank %>.</p>
+            <p class="lead">If you already have <code>gsutil</code> installed you can upload files directly using the following command:</p>
+            <pre class="lead">gsutil -m cp /path/to/files gs://<%= @study.bucket_id %></pre>
+            <p class="lead"><strong class="text-danger">If you are uploading sequence files through the wizard, we recommend that they be compressed first using gzip.</strong></p>
+            <p><%= link_to "FASTQ File Format <span class='fas fa-info-circle'></span>".html_safe, 'https://en.wikipedia.org/wiki/FASTQ_format#Format', class: 'btn btn-default', target: :_blank %>&nbsp;<%= link_to "BAM File Format <span class='fas fa-info-circle'></span>".html_safe, 'https://www.ncbi.nlm.nih.gov/sra/docs/submitformats/#bam-files', class: 'btn btn-default', target: :_blank %>&nbsp;<%= link_to "gzip Documentation <span class='fas fa-info-circle'></span>".html_safe, 'http://www.gnu.org/software/gzip/manual/gzip.html', class: 'btn btn-default', target: :_blank %></p>
+          </div>
+          <% @fastq_files.each do |study_file| %>
+            <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
+              <%= render partial: 'initialize_primary_data_form', locals: {study_file: study_file} %>
+              <% if study_file.bundled_files.any? %>
+                <h4>Bundled Files</h4>
+                <% study_file.bundled_files.each do |bundled_file| %>
+                  <%= render partial: 'initialize_bundled_file_form', locals: {study_file: bundled_file} %>
+                <% end %>
               <% end %>
-            <% end %>
-          </div>
-        <% end %>
-        <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-          if (<%= !@fastq_files.first.new_record? %>) {
-            completeWizardStep('initialize_primary_data_form_nav');
-            console.log('incrementing status for fastq upload');
-            $('#initialize_primary_data_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_primary_data_form_completed'}) %>");
-            $('#initialize_primary_data_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
-          }
-        </script>
-      </div>
-      <p><%= link_to "<span class='fas fa-plus'></span> Add a Primary Data File".html_safe, new_study_file_study_path(@study._id, file_type: 'Fastq', target: '#primary-data-target', form: 'initialize_primary_data_form'), class: 'btn btn-sm btn-primary add-primary-data', 'data-remote' => true %></p>
-
-    </div>
-    <div class="tab-pane" id="marker-genes">
-      <div id="marker-genes-target">
-        <div class="well well-sm">
-          <h2>Step 7. Upload Gene List File <small class="initialize-label" id="initialize_marker_genes_form_completed"><span class="label label-info">Optional</span></small></h2>
-          <p class="lead">Upload a tab- or comma-delimited text file containing a list of genes and their mean expression values across any clusters.  The file must be a plain text (.txt) with the value 'GENE NAMES' in the first column, and cluster names in each successive column.</p>
-          <p><%= link_to "Example Gene List <span class='fas fa-download'></span>".html_safe, 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/marker_gene_list_example.txt', class: 'btn btn-default', download: 'marker_gene_list_example.txt' %></p>
+            </div>
+          <% end %>
+          <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+            if (<%= !@fastq_files.first.new_record? %>) {
+              completeWizardStep('initialize_primary_data_form_nav');
+              console.log('incrementing status for fastq upload');
+              $('#initialize_primary_data_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_primary_data_form_completed'}) %>");
+              $('#initialize_primary_data_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
+            }
+          </script>
         </div>
-        <% @marker_lists.each do |study_file| %>
-          <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
-            <%= render partial: 'initialize_marker_genes_form', locals: {study_file: study_file} %>
-          </div>
-        <% end %>
-        <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-          if (<%= !@marker_lists.first.new_record? %>) {
-            completeWizardStep('initialize_marker_genes_form_nav');
-            console.log('incrementing status for marker gene upload');
-            $('#initialize_marker_genes_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_marker_genes_form_completed'}) %>");
-            $('#initialize_marker_genes_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
-          }
-        </script>
-      </div>
-      <p><%= link_to "<span class='fas fa-plus'></span> Add a Gene List File".html_safe, new_study_file_study_path(@study._id, file_type: 'Gene List', target: '#marker-genes-target', form: 'initialize_marker_genes_form'), class: 'btn btn-sm btn-primary add-gene-list', 'data-remote' => true %></p>
+        <p><%= link_to "<span class='fas fa-plus'></span> Add a Primary Data File".html_safe, new_study_file_study_path(@study._id, file_type: 'Fastq', target: '#primary-data-target', form: 'initialize_primary_data_form'), class: 'btn btn-sm btn-primary add-primary-data', 'data-remote' => true %></p>
 
-    </div>
-    <div class="tab-pane" id="misc">
-      <div id="misc-target">
-        <div class="well well-sm">
-          <h2>Step 8. Upload Documentation/Other Files <small class="initialize-label" id="initialize_misc_form_completed"><span class="label label-info">Optional</span></small></h2>
-          <p class="lead">Upload any documentation or other support files you have.</p>
+      </div>
+      <div class="tab-pane" id="marker-genes">
+        <div id="marker-genes-target">
+          <div class="well well-sm">
+            <h2>Step 7. Upload Gene List File <small class="initialize-label" id="initialize_marker_genes_form_completed"><span class="label label-info">Optional</span></small></h2>
+            <p class="lead">Upload a tab- or comma-delimited text file containing a list of genes and their mean expression values across any clusters.  The file must be a plain text (.txt) with the value 'GENE NAMES' in the first column, and cluster names in each successive column.</p>
+            <p><%= link_to "Example Gene List <span class='fas fa-download'></span>".html_safe, 'https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/marker_gene_list_example.txt', class: 'btn btn-default', download: 'marker_gene_list_example.txt' %></p>
+          </div>
+          <% @marker_lists.each do |study_file| %>
+            <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
+              <%= render partial: 'initialize_marker_genes_form', locals: {study_file: study_file} %>
+            </div>
+          <% end %>
+          <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+            if (<%= !@marker_lists.first.new_record? %>) {
+              completeWizardStep('initialize_marker_genes_form_nav');
+              console.log('incrementing status for marker gene upload');
+              $('#initialize_marker_genes_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_marker_genes_form_completed'}) %>");
+              $('#initialize_marker_genes_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
+            }
+          </script>
         </div>
-        <% @other_files.each do |study_file| %>
-          <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
-            <%= render partial: 'initialize_misc_form', locals: {study_file: study_file} %>
-          </div>
-        <% end %>
-        <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-          if (<%= !@other_files.first.new_record? %>) {
-            completeWizardStep('initialize_misc_form_nav');
-            console.log('incrementing status for other upload');
-            $('#initialize_misc_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_misc_form_completed'}) %>");
-            $('#initialize_misc_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
-          }
-        </script>
-      </div>
-      <p><%= link_to "<span class='fas fa-plus'></span> Add a Study File".html_safe, new_study_file_study_path(@study._id, file_type: 'Documentation',  target: '#misc-target', form: 'initialize_misc_form'), class: 'btn btn-sm btn-primary add-misc', 'data-remote' => true %></p>
+        <p><%= link_to "<span class='fas fa-plus'></span> Add a Gene List File".html_safe, new_study_file_study_path(@study._id, file_type: 'Gene List', target: '#marker-genes-target', form: 'initialize_marker_genes_form'), class: 'btn btn-sm btn-primary add-gene-list', 'data-remote' => true %></p>
 
+      </div>
+      <div class="tab-pane" id="misc">
+        <div id="misc-target">
+          <div class="well well-sm">
+            <h2>Step 8. Upload Documentation/Other Files <small class="initialize-label" id="initialize_misc_form_completed"><span class="label label-info">Optional</span></small></h2>
+            <p class="lead">Upload any documentation or other support files you have.</p>
+          </div>
+          <% @other_files.each do |study_file| %>
+            <div class="bs-callout bs-callout-info" id="<%= study_file.form_container_id %>">
+              <%= render partial: 'initialize_misc_form', locals: {study_file: study_file} %>
+            </div>
+          <% end %>
+          <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+            if (<%= !@other_files.first.new_record? %>) {
+              completeWizardStep('initialize_misc_form_nav');
+              console.log('incrementing status for other upload');
+              $('#initialize_misc_form_completed').replaceWith("<%= escape_javascript(render partial: 'step_completed', locals: {id: 'initialize_misc_form_completed'}) %>");
+              $('#initialize_misc_form_nav_completed').html("<span class='fas fa-check text-success'></span>");
+            }
+          </script>
+        </div>
+        <p><%= link_to "<span class='fas fa-plus'></span> Add a Study File".html_safe, new_study_file_study_path(@study._id, file_type: 'Documentation',  target: '#misc-target', form: 'initialize_misc_form'), class: 'btn btn-sm btn-primary add-misc', 'data-remote' => true %></p>
+
+      </div>
+      <ul class="pager wizard">
+        <li class="previous"><a href="#" id="prev-btn">Previous</a></li>
+        <li class="next"><a href="#" id="next-btn">Next</a></li>
+        <li class="next finish" style="display:none;"><%= scp_link_to "Finish", study_path(@study), id: 'finish-btn' %></li>
+      </ul>
     </div>
-    <ul class="pager wizard">
-      <li class="previous"><a href="#" id="prev-btn">Previous</a></li>
-      <li class="next"><a href="#" id="next-btn">Next</a></li>
-      <li class="next finish" style="display:none;"><%= scp_link_to "Finish", study_path(@study), id: 'finish-btn' %></li>
-    </ul>
   </div>
-</div>
-<div id="study-files-notice-target"></div>
-<%= render 'fileupload_templates' %>
+  <div id="study-files-notice-target"></div>
+  <%= render 'fileupload_templates' %>
 
-<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-  $(document).ready(function() {
-    var wizard = $('#rootwizard');
-    wizard.bootstrapWizard({'tabClass': 'nav-tabs',
-      onTabShow: function(tab, navigation, index, clickedIndex, clickedTab) {
-        var step = $(tab[0]).attr('id');
-        var total = navigation.find('li').length;
-        var done = getWizardStatus();
-        var pctCompleted = Math.round((done/total) * 100);
-        $('#bar').find('.progress-bar').css({width:pctCompleted+'%'});
-        $('#progress-count').html(pctCompleted+'% Completed');
-        // user has finished wizard, show finish button
-        if (index > 0) {
+  <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+    $(document).ready(function() {
+      var wizard = $('#rootwizard');
+      wizard.bootstrapWizard({'tabClass': 'nav-tabs',
+        onTabShow: function(tab, navigation, index, clickedIndex, clickedTab) {
+          var step = $(tab[0]).attr('id');
+          var total = navigation.find('li').length;
+          var done = getWizardStatus();
+          var pctCompleted = Math.round((done/total) * 100);
+          $('#bar').find('.progress-bar').css({width:pctCompleted+'%'});
+          $('#progress-count').html(pctCompleted+'% Completed');
+          // user has finished wizard, show finish button
+          if (index > 0) {
+            wizard.find('.pager .previous').removeClass('disabled dimmed');
+          }
+          if (step == 'initialize_misc_form_nav') {
+            wizard.find('.pager .next').hide();
+            wizard.find('.pager .finish').show();
+            wizard.find('.pager .finish').removeClass('disabled dimmed');
+            wizard.find('.pager .finish').addClass('enabled');
+            // next step is ready to be done, enable button
+          } else {
+            wizard.find('.pager .next').show();
+          }
+        },
+        onNext: function(tab, navigation, index) {
           wizard.find('.pager .previous').removeClass('disabled dimmed');
+          return true;
         }
-        if (step == 'initialize_misc_form_nav') {
-          wizard.find('.pager .next').hide();
-          wizard.find('.pager .finish').show();
-          wizard.find('.pager .finish').removeClass('disabled dimmed');
-          wizard.find('.pager .finish').addClass('enabled');
-          // next step is ready to be done, enable button
-        } else {
-          wizard.find('.pager .next').show();
-        }
-      },
-      onNext: function(tab, navigation, index) {
-        wizard.find('.pager .previous').removeClass('disabled dimmed');
-        return true;
-      }
-    });
+      });
 
-    $('#show-gsutil-command').click(function() {
-       $('#gsutil-command-wrapper').slideToggle('slow');
-    });
+      $('#show-gsutil-command').click(function() {
+         $('#gsutil-command-wrapper').slideToggle('slow');
+      });
 
-    $('.clear-alert-modal').click(function() {
-      $("#message_modal").modal("hide");
+      $('.clear-alert-modal').click(function() {
+        $("#message_modal").modal("hide");
+      })
+
+      $('.tab-content').on('click', '.initialize-bundled-file', function() {
+          var url = "<%= initialize_bundled_file_study_path(@study) %>";
+          var dataAttr = $(this).data();
+          url += "?file_type=" + dataAttr.fileType + "&study_file_id=" + dataAttr.studyFileId;
+          $.ajax({
+              url: url,
+              method: 'POST',
+              dataType: 'script'
+          });
+      });
+    });
+  </script>
+<% else %>
+  <div id="upload-wizard-target">
+  </div>
+  <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+    $(document).ready(function() {
+      window.SCP.renderUploadWizard(document.getElementById('upload-wizard-target'), '<%= @study.accession %>', '<%= @study.name %>')
     })
-
-    $('.tab-content').on('click', '.initialize-bundled-file', function() {
-        var url = "<%= initialize_bundled_file_study_path(@study) %>";
-        var dataAttr = $(this).data();
-        url += "?file_type=" + dataAttr.fileType + "&study_file_id=" + dataAttr.studyFileId;
-        $.ajax({
-            url: url,
-            method: 'POST',
-            dataType: 'script'
-        });
-    });
-  });
-</script>
+  </script>
+<% end %>

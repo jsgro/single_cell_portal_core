@@ -191,6 +191,74 @@ export function stringifyQuery(paramObj, sort) {
 }
 
 /**
+ * Returns initial content for the upload file wizard
+ *
+ * @param {String} studyAccession Study accession
+*/
+export async function fetchStudyFileInfo(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/file_info`
+  const [exploreInit] = await scpApi(apiUrl, defaultInit(), mock, false)
+  return exploreInit
+}
+
+/**
+ * Creates a new study file
+ *
+ * @param {String} studyAccession study accession
+ * @param {FormData} studyFileData html FormData object with the file data
+*/
+export async function createStudyFile(studyAccession, studyFileData, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/study_files`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'POST',
+    body: studyFileData
+  })
+  // we want the browser to auto-set the content type with the right form boundaries
+  // see https://stackoverflow.com/questions/36067767/how-do-i-upload-a-file-with-the-js-fetch-api
+  delete init.headers['Content-Type']
+  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
+  return exploreInit
+}
+
+
+/**
+ * Returns initial content for the upload file wizard
+ *
+ * @param {String} studyAccession study accession
+ * @param {String} studyFileId Study file id
+ * @param {FormData} studyFileData html FormData object with the file data
+*/
+export async function updateStudyFile(studyAccession, studyFileId, studyFileData, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'PATCH',
+    body: studyFileData
+  })
+  // we want the browser to auto-set the content type with the right form boundaries
+  // see https://stackoverflow.com/questions/36067767/how-do-i-upload-a-file-with-the-js-fetch-api
+  delete init.headers['Content-Type']
+  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
+  return exploreInit
+}
+
+/**
+ * Deletes the given file
+ *
+ * @param {String} studyAccession Study accession
+ * @param {fileId} the guid of the file to delete
+*/
+export async function deleteStudyFile(studyAccession, fileId, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/study_files/${fileId}`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'DELETE'
+  })
+  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
+  return exploreInit
+}
+
+
+
+/**
  * Returns initial content for the "Explore" tab in Study Overview
  *
  * @param {String} studyAccession Study accession
@@ -593,7 +661,7 @@ export default async function scpApi(
   }
 
   if (response.ok) {
-    if (toJson) {
+    if (toJson && response.status !== 204) {
       const jsonPerfTimeStart = performance.now()
       const json = await response.json()
       perfTimes.parse = performance.now() - jsonPerfTimeStart
@@ -627,7 +695,7 @@ export default async function scpApi(
   }
   if (toJson) {
     const json = await response.json()
-    throw new Error(json.error)
+    throw new Error(json.error || json.errors)
   }
   throw new Error(response)
 }
