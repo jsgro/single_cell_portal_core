@@ -273,7 +273,9 @@ module Api
       end
 
       # update the given study file with the request params and save it
-      # returns true/false depending on the success of the save
+      # raises ArgumentError if the save fails due to model validations
+      # if the save is successful and includes a complete upload, will send it to firecloud
+      # and kick off a parse job if requested
       def perform_update(study_file)
         safe_file_params = study_file_params
 
@@ -341,25 +343,31 @@ module Api
           # if user is supplying an expression axis label, update default options hash
           @study.update(default_options: @study.default_options.merge(expression_label: safe_file_params[:y_axis_label]))
         end
-        byebug
+
         if safe_file_params[:upload].present? && !is_chunked
           do_upload_complete_processing(study_file, parse_on_upload)
         end
       end
 
+
+      # handles adding an additional chunk to a file upload.  Note that create/update must be
+      # called first with the first chunk of the file, in order to initialize the process
+      # if this is the last chunk, it will handle sending to firecloud and launching a
+      # parse job if requested
       def chunk
         begin
           safe_file_params = study_file_params
           upload = safe_file_params[:upload]
           content_range = RequestUtils.parse_content_range_header(request.headers)
           if content_range.present?
-            is_chunked = true
             if content_range[:first_byte] == 0
-              render json: {errors: 'create/update should be used for the first chunk'}
+              render json: {errors: 'create/update should be used for uploading the first chunk'}
             end
-            if content_range[:last_byte]== content_range[:total_size] - 1
-              is_chunked = false # the chunk sent happens to be the entire file
+            if content_range[:first_byte] != @study_file.upload_file_size
+              render json: {errors: "Incorrect chunk sent: expected bytes starting with #{@study_file.upload_file_size}, received #{content_range[:first_byte]}" }
             end
+          else
+            render json: {errors: 'Missing Content-Range header'}
           end
 
           File.open(@study_file.upload.path, "ab") do |f|
