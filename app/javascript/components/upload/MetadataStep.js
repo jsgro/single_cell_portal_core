@@ -61,61 +61,64 @@ function MetadataForm({
       </div>
 
     </div>
-    <div className="row top-margin" key={file._id}>
-      <div className="col-md-12">
-        <form id={`metadataForm-${file._id}`}
-          className="form-terra"
-          acceptCharset="UTF-8">
-          <div className="row">
-            <div className="col-md-12">
-              <FileUploadControl
-                handleSaveResponse={handleSaveResponse}
-                file={file}
-                updateFile={updateFile}
-                allowedFileTypes={FileTypeExtensions.plainText}/>
+    { file &&
+      <div className="row top-margin" key={file._id}>
+        <div className="col-md-12">
+          <form id={`metadataForm-${file._id}`}
+            className="form-terra"
+            acceptCharset="UTF-8"
+            onSubmit={() => { console.log('submitting'); return false}}>
+            <div className="row">
+              <div className="col-md-12">
+                <FileUploadControl
+                  handleSaveResponse={handleSaveResponse}
+                  file={file}
+                  updateFile={updateFile}
+                  allowedFileTypes={FileTypeExtensions.plainText}/>
+              </div>
             </div>
-          </div>
-          <div className="form-group">
-            <label>Do you use SCP conventional names for required metadata column headers? </label>
-            <OverlayTrigger trigger="click" rootClose placement="top" overlay={whyConventionPopover}>
-              <span> <FontAwesomeIcon data-analytics-name="metadata-convention-popover"
-                className="action log-click help-icon" icon={faInfoCircle}/></span>
-            </OverlayTrigger><br/>
-            <label className="sublabel">
-              <input type="radio"
-                name={`metadataFormYes-${file._id}`}
-                value="true"
-                disabled={conventionRequired}
-                checked={file.use_metadata_convention}
-                onChange={e => updateFile(file._id, { use_metadata_convention: true })} /> Yes
-            </label>
-            <label className="sublabel">
-              <input type="radio"
-                name={`metadataFormNo-${file._id}`}
-                value="false"
-                disabled={conventionRequired}
-                checked={!file.use_metadata_convention}
-                onChange={e => updateFile(file._id, { use_metadata_convention: false })} /> No
-            </label> &nbsp; &nbsp;
-            <OverlayTrigger trigger="click" rootClose placement="top" overlay={conventionIssuePopover}>
-              <span className="action log-click"> Using conventional names is an issue for my study</span>
-            </OverlayTrigger><br/>
-            Learn <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention"
-              target="_blank"
-              rel="noopener noreferrer">how to convert your file.</a><br/>
-            If the file fails metadata convention validation, you will be emailed messages to help correct it.
-          </div>
-          <div className="form-group">
-            <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
-          </div>
-          <div className="form-group">
-            <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
-          </div>
-          <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
-        </form>
-        <SavingOverlay file={file} updateFile={updateFile}/>
+            <div className="form-group">
+              <label>Do you use SCP conventional names for required metadata column headers? </label>
+              <OverlayTrigger trigger="click" rootClose placement="top" overlay={whyConventionPopover}>
+                <span> <FontAwesomeIcon data-analytics-name="metadata-convention-popover"
+                  className="action log-click help-icon" icon={faInfoCircle}/></span>
+              </OverlayTrigger><br/>
+              <label className="sublabel">
+                <input type="radio"
+                  name={`metadataFormYes-${file._id}`}
+                  value="true"
+                  disabled={conventionRequired}
+                  checked={file.use_metadata_convention}
+                  onChange={e => updateFile(file._id, { use_metadata_convention: true })} /> Yes
+              </label>
+              <label className="sublabel">
+                <input type="radio"
+                  name={`metadataFormNo-${file._id}`}
+                  value="false"
+                  disabled={conventionRequired}
+                  checked={!file.use_metadata_convention}
+                  onChange={e => updateFile(file._id, { use_metadata_convention: false })} /> No
+              </label> &nbsp; &nbsp;
+              <OverlayTrigger trigger="click" rootClose placement="top" overlay={conventionIssuePopover}>
+                <span className="action log-click"> Using conventional names is an issue for my study</span>
+              </OverlayTrigger><br/>
+              Learn <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention"
+                target="_blank"
+                rel="noopener noreferrer">how to convert your file.</a><br/>
+              If the file fails metadata convention validation, you will be emailed messages to help correct it.
+            </div>
+            <div className="form-group">
+              <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
+            </div>
+            <div className="form-group">
+              <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
+            </div>
+            <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
+          </form>
+          <SavingOverlay file={file} updateFile={updateFile}/>
+        </div>
       </div>
-    </div>
+    }
   </div>
 }
 
