@@ -11,7 +11,7 @@ class AnalysisConfigurationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    OmniAuth.config.mock_auth[:google] = nil
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
   end
 
   test 'should get index page' do

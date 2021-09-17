@@ -11,8 +11,8 @@ class DirectoryListingsControllerTest < ActionDispatch::IntegrationTest
     @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
     @study = Study.find_by(name: "API Test Study #{@random_seed}")
     @directory_listing = @study.directory_listings.first
-    OmniAuth.config.mock_auth[:google] = OmniAuth::AuthHash.new({
-                                                                           :provider => 'google',
+    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
+                                                                           :provider => 'google_oauth2',
                                                                            :uid => '123545',
                                                                            :email => 'testing.user@gmail.com'
                                                                        })
@@ -21,7 +21,7 @@ class DirectoryListingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    OmniAuth.config.mock_auth[:google] = nil
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
     reset_user_tokens
   end
 

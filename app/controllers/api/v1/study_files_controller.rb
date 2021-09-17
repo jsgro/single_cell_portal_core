@@ -1,11 +1,7 @@
 module Api
   module V1
     class StudyFilesController < ApiBaseController
-
       include Concerns::FireCloudStatus
-      include Concerns::Authenticator
-      include Swagger::Blocks
-      include Concerns::StudyAware
 
       before_action :authenticate_api_user!
       before_action :set_study

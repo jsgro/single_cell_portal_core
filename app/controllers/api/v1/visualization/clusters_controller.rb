@@ -4,8 +4,6 @@ module Api
       # API methods for visualizing cluster data
       # does NOT contain methods for editing clusters
       class ClustersController < ApiBaseController
-        include Concerns::Authenticator
-        include Concerns::StudyAware
         include Concerns::ApiCaching
         include Swagger::Blocks
 
@@ -247,6 +245,7 @@ module Api
             "isSubsampled": cluster.subsampled?,
             "isAnnotatedScatter": is_annotated_scatter,
             "isCorrelatedScatter": is_correlated_scatter,
+            "isSpatial": cluster.study_file.is_spatial,
             "numPoints": cluster.points,
             "axes": axes_full,
             "hasCoordinateLabels": cluster.has_coordinate_labels?,
