@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
-import Modal from 'react-bootstrap/lib/Modal'
 import CreatableSelect from 'react-select/creatable'
 
 import { GeneSearchContext } from 'providers/GeneSearchProvider'
@@ -29,7 +28,7 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
   const [geneArray, setGeneArray] = useState(geneParamAsArray)
   const [inputText, setInputText] = useState('')
 
-  const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
+  // const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
 
   /** handles a user submitting a gene search */
   function handleSubmit(event) {
@@ -42,7 +41,10 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
         studySearchState
       )
     } else {
-      setShowEmptySearchModal(true)
+      geneSearchState.updateSearch(
+        { genes: '' },
+        studySearchState
+      )
     }
   }
 
@@ -72,26 +74,6 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
     }
   }
 
-  /** handle a user pressing the 'x' to clear the field */
-  function handleClear() {
-    setGeneArray([])
-    setInputText('')
-    geneSearchState.updateSearch(
-      { genes: '' },
-      studySearchState
-    )
-  }
-
-  /** handles the change event corresponding a a user adding or clearing one or more genes */
-  function handleSelectChange(value, event) {
-    if (event.action === 'clear') {
-      handleClear()
-    } else {
-      const newValue = value ? value : []
-      setGeneArray(newValue)
-    }
-  }
-
   return (
     <form className="gene-keyword-search form-horizontal" onSubmit={handleSubmit}>
       <div className="input-group">
@@ -103,7 +85,7 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
           isMulti
           isClearable
           menuIsOpen={false}
-          onChange={handleSelectChange}
+          onChange={value => setGeneArray(value ? value : [])}
           onInputChange={inputValue => setInputText(inputValue)}
           onKeyDown={handleKeyDown}
           // the default blur behavior removes any entered free text,
@@ -117,16 +99,6 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
           </Button>
         </div>
       </div>
-
-      <Modal
-        show={showEmptySearchModal}
-        onHide={() => {setShowEmptySearchModal(false)}}
-        animation={false}
-        bsSize='small'>
-        <Modal.Body className="text-center">
-          You must enter at least one gene to search
-        </Modal.Body>
-      </Modal>
     </form>
   )
 }
