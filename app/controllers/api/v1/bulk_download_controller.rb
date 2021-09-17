@@ -1,9 +1,6 @@
 module Api
   module V1
     class BulkDownloadController < ApiBaseController
-      include Concerns::Authenticator
-      include Swagger::Blocks
-
       before_action :authenticate_api_user!
 
       DEFAULT_BULK_FILE_TYPES = ['Cluster', 'Metadata', 'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File']

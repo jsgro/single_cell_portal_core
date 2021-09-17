@@ -24,7 +24,7 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
   teardown do
     ReviewerAccessSession.destroy_all
     ReviewerAccess.destroy_all
-    OmniAuth.config.mock_auth[:google] = nil
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
   end
 
   test 'should create reviewer access' do
@@ -118,7 +118,7 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
     @study.reload
     refute @study.reviewer_access.present?
     sign_out @user
-    OmniAuth.config.mock_auth[:google] = nil # gotcha to clear any cached auth responses
+    OmniAuth.config.mock_auth[:google_oauth2] = nil # gotcha to clear any cached auth responses
     get :study, params: { accession: @study.accession, study_name: @study.url_safe_name }
     assert_redirected_to new_user_session_path
   end
@@ -153,12 +153,32 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
     assert_not_equal original_pin, access.pin
     refute access.reviewer_access_sessions.any?
     sign_out @user
-    OmniAuth.config.mock_auth[:google] = nil # gotcha to clear any cached auth responses
+    OmniAuth.config.mock_auth[:google_oauth2] = nil # gotcha to clear any cached auth responses
     get :reviewer_access, params: { access_code: original_access_code }
     assert_redirected_to site_path
     get :study, params: { accession: @study.accession, study_name: @study.url_safe_name }
     assert_redirected_to new_user_session_path
     get :reviewer_access, params: { access_code: access.access_code }
     assert_response :success
+  end
+
+  # handles regression found in SCP-3680
+  test 'should update study description w/o reviewer access settings' do
+    auth_as_user(@user)
+    sign_in @user
+    new_description = "<p>This is the updated description</p>"
+    study_params = {
+      accession: @study.accession, study_name: @study.url_safe_name,
+      study: {
+        study_detail_attributes: {
+          full_description: new_description,
+          id: @study.study_detail.id.to_s
+        }
+      }
+    }
+    post :update_study_settings, params: study_params, xhr: true
+    assert_response :success
+    @study.reload
+    assert_equal @study.full_description, new_description
   end
 end

@@ -1,22 +1,35 @@
 <h1>New Study</h1>
 <div class="bs-callout bs-callout-default" id="firecloud-disclaimer">
   <h4>Data File Storage & Workspaces</h4>
-  <p>All uploaded data files for studies are stored in <%= link_to 'Terra', 'https://app.terra.bio/', target: :_blank %> workspaces.
+  <p>All uploaded data files for studies are stored in <%= link_to 'Terra', 'https://app.terra.bio/', target: :_blank,
+                                                                   rel: 'noopener noreferrer' %> workspaces.
     If you do not already have a Terra account, you will receive an invitation email after you create your study.
-    While you can interact with your uploaded files directly through the Single Cell Portal, you must complete the Terra registration process
-    before you can see or use your files in your Terra workspace.  You will also receive an email letting you know that the Single Cell Portal
-    service account has shared the study workspace with you.</p>
-  <p>You may also create a study based on an existing workspace you already own.  To do so, select <strong>'Yes'</strong> under <strong>'Use Existing Workspace'</strong>
-    and then provide the name in the text box.</p>
+    While you can interact with your uploaded files directly through the Single Cell Portal, you must complete the Terra
+    registration process before you can see or use your files in your Terra workspace.  You will also receive an email
+    letting you know that the Single Cell Portal service account has shared the study workspace with you.</p>
+  <p>You may also create a study based on an existing workspace you already own.  To do so, select <strong>'Yes'</strong>
+    under <strong>'Use Existing Workspace'</strong> and then provide the name in the text box.</p>
   <h4>Billing Projects</h4>
-  <p>You must select a billing project when creating your study.  You may use the default project, but you will not be allowed to run any computes in your workspace.  If you
-    wish to run computes, then you must <%= scp_link_to 'create a billing project', billing_projects_path %> (using a Google billing account that you own) first before creating this study.
-    <strong>By selecting a project for your study other than the default project, you will be granting the Single Cell Portal access to your billing project</strong>
-      (billing projects created through the portal also give access to Single Cell Portal).</p>
-  <p class="text-danger"><strong><i class="fas fa-fw fa-exclamation-triangle"></i> You cannot change the billing project of a workspace once it has been created.</strong></p>
+  <p>You must select a billing project when creating your study.  You may use the default project, but you will not be
+    allowed to run any computes in your workspace.  If you wish to run computes, then you must
+    <%= scp_link_to 'create a billing project', billing_projects_path %> (using a Google billing account that you own)
+    first before creating this study.  <strong>By selecting a project for your study other than the default project, you
+    will be granting the Single Cell Portal access to your billing project</strong> (billing projects created through
+    the portal also give access to Single Cell Portal).</p>
+  <p class="text-danger"><strong><i class="fas fa-fw fa-exclamation-triangle"></i> You cannot change the billing project
+    of a workspace once it has been created.</strong></p>
   <br/>
   <h4>Required file format & ontologies</h4>
-  <p>Studies must have a metadata file specifying: <strong>species</strong>, <strong>disease</strong>, <strong>organ</strong>, <strong>library_preparation_protocol</strong>, <strong>sex</strong>, <strong>cell name</strong>, <strong>biosample_id</strong>, and <strong>donor_id</strong>.</p>  Metadata files must provide this information using <%= link_to 'SCP Conventional File Format', 'https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention', target: :_blank %>. Select ontology terms from <%= link_to 'designated ontologies', 'https://singlecell.zendesk.com/hc/en-us/articles/360060609852-Required-Metadata', target: :_blank %> to adhere to <%= link_to 'metadata validation rules', 'https://singlecell.zendesk.com/hc/en-us/articles/360060610012-Metadata-Validation', target: :_blank %>.  These requirements make your study data discoverable through Single Cell Portal's Advanced Search feature.
+  <p>Studies must have a metadata file specifying: <strong>species</strong>, <strong>disease</strong>, <strong>organ</strong>,
+    <strong>library_preparation_protocol</strong>, <strong>sex</strong>, <strong>cell name</strong>, <strong>biosample_id</strong>,
+    and <strong>donor_id</strong>.</p>  Metadata files must provide this information using
+  <%= link_to 'SCP Conventional File Format', 'https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention',
+              target: :_blank, rel: 'noopener noreferrer' %>. Select ontology terms from
+  <%= link_to 'designated ontologies', 'https://singlecell.zendesk.com/hc/en-us/articles/360060609852-Required-Metadata',
+              target: :_blank, rel: 'noopener noreferrer' %> to adhere to
+  <%= link_to 'metadata validation rules', 'https://singlecell.zendesk.com/hc/en-us/articles/360060610012-Metadata-Validation',
+              target: :_blank, rel: 'noopener noreferrer' %>.  These requirements make your study data discoverable
+  through Single Cell Portal's Advanced Search feature.
 </div>
 
 <%= render 'form' %>

@@ -35,7 +35,7 @@
           commas between filter values.
           <%= link_to "List of Available Facets <i class='fas fa-external-link-alt'></i>".html_safe,
                       api_v1_swagger_ui_path + '#/Search/search_facets_path',
-                      class: 'btn btn-default btn-xs', target: :_blank %><br />
+                      class: 'btn btn-default btn-xs', target: :_blank, rel: 'noopener noreferrer' %><br />
           <span class="help-block">Example: <code>disease:MONDO_0000001,MONDO_0018076+species:NCBITaxon_9606,NCBITaxon_10090</code></span>
         </p>
       </div>

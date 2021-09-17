@@ -25,7 +25,7 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    OmniAuth.config.mock_auth[:google] = nil
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
     Study.find_by(name: "Download Agreement #{@random_seed}").destroy_and_remove_workspace
   end
 
