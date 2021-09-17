@@ -261,7 +261,7 @@ module Api
         begin
           result = perform_update(@study_file)
           render :show
-        rescue ArgumentError => e
+        rescue Mongoid::Errors::Validations => e
           render json: {errors: e.message}, status: :unprocessable_entity
         rescue => e
           render json: {errors: e.message}, status: 500
@@ -305,7 +305,7 @@ module Api
         begin
           study_file.update!(safe_file_params)
         rescue => e
-          raise ArgumentError, study_file.errors
+          raise e.class, study_file.errors.full_messages
         end
 
         # invalidate caches first
@@ -317,14 +317,14 @@ module Api
 
         # if a gene list or cluster got updated, we need to update the associated records
         if safe_file_params[:file_type] == 'Gene List' && name_changed
-          @precomputed_entry = PrecomputedScore.find_by(study_file_id: safe_file_params[:_id])
-          if @precomputed_entry.present?
+          precomputed_entry = PrecomputedScore.find_by(study_file_id: safe_file_params[:_id])
+          if precomputed_entry.present?
             logger.info "Updating gene list #{@precomputed_entry.name} to match #{safe_file_params[:name]}"
-            @precomputed_entry.update(name: study_file.name)
+            precomputed_entry.update(name: study_file.name)
           end
         elsif safe_file_params[:file_type] == 'Cluster' && name_changed
-          @cluster = ClusterGroup.find_by(study_file_id: safe_file_params[:_id])
-          if @cluster.present?
+          cluster = ClusterGroup.find_by(study_file_id: safe_file_params[:_id])
+          if cluster.present?
             logger.info "Updating cluster #{@cluster.name} to match #{safe_file_params[:name]}"
             # before updating, check if the defaults also need to change
             if @study.default_cluster == @cluster
@@ -337,11 +337,13 @@ module Api
 
         if ['Expression Matrix', 'MM Coordinate Matrix'].include?(safe_file_params[:file_type]) && !safe_file_params[:y_axis_label].blank?
           # if user is supplying an expression axis label, update default options hash
-          @study.update(default_options: @study.default_options.merge(expression_label: safe_file_params[:y_axis_label]))
+          options = @study.default_options.dup
+          options.merge!(expression_label: safe_file_params[:y_axis_label])
+          @study.update(default_options: options)
         end
 
         if safe_file_params[:upload].present? && !is_chunked
-          do_upload_complete_processing(study_file, parse_on_upload)
+          complete_upload_process(study_file, parse_on_upload)
         end
       end
 
@@ -351,39 +353,35 @@ module Api
       # if this is the last chunk, it will handle sending to firecloud and launching a
       # parse job if requested
       def chunk
-        begin
-          safe_file_params = study_file_params
-          upload = safe_file_params[:upload]
-          content_range = RequestUtils.parse_content_range_header(request.headers)
-          if content_range.present?
-            if content_range[:first_byte] == 0
-              render json: {errors: 'create/update should be used for uploading the first chunk'}
-            end
-            if content_range[:first_byte] != @study_file.upload_file_size
-              render json: {errors: "Incorrect chunk sent: expected bytes starting with #{@study_file.upload_file_size}, received #{content_range[:first_byte]}" }
-            end
-          else
-            render json: {errors: 'Missing Content-Range header'}
+        safe_file_params = study_file_params
+        upload = safe_file_params[:upload]
+        content_range = RequestUtils.parse_content_range_header(request.headers)
+        if content_range.present?
+          if content_range[:first_byte] == 0
+            render json: {errors: 'create/update should be used for uploading the first chunk'}, status: :unprocessable_entity
           end
-
-          File.open(@study_file.upload.path, "ab") do |f|
-            f.write upload.read
+          if content_range[:first_byte] != @study_file.upload_file_size
+            render json: {errors: "Incorrect chunk sent: expected bytes starting with #{@study_file.upload_file_size}, received #{content_range[:first_byte]}" }, status: :unprocessable_entity
           end
+        else
+          render json: {errors: 'Missing Content-Range header'}, status: :unprocessable_entity
+        end
 
-          # Update the upload_file_size attribute
-          @study_file.upload_file_size = @study_file.upload_file_size.nil? ? upload.size : @study_file.upload_file_size + upload.size
-          @study_file.save!
+        File.open(@study_file.upload.path, "ab") do |f|
+          f.write upload.read
+        end
 
-          if @study_file.upload_file_size >= content_range[:total_size]
-            # this was the last chunk
-            do_upload_complete_processing(@study_file, safe_file_params[:parse_on_upload])
-          end
-        rescue => e
-          render json: {errors: e.message}
+        # Update the upload_file_size attribute
+        @study_file.upload_file_size = @study_file.upload_file_size.nil? ? upload.size : @study_file.upload_file_size + upload.size
+        @study_file.save!
+
+        if @study_file.upload_file_size >= content_range[:total_size]
+          # this was the last chunk
+          complete_upload_process(@study_file, safe_file_params[:parse_on_upload])
         end
       end
 
-      def do_upload_complete_processing(study_file, parse_on_upload)
+      def complete_upload_process(study_file, parse_on_upload)
         @study.delay.send_to_firecloud(study_file) # send data to FireCloud if upload was performed
         study_file.update(status: 'uploaded') # set status to uploaded on full create
 
