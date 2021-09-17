@@ -195,11 +195,9 @@ module Api
         @study_file = StudyFile.new(study: @study)
         begin
           result = perform_update(@study_file)
-          if result
-            render :show
-          else
-            render json: {errors: @study_file.errors}, status: :unprocessable_entity
-          end
+          render :show
+        rescue ArgumentError => e
+          render json: {errors: e.message}, status: :unprocessable_entity
         rescue => e
           render json: {errors: e.message}, status: 500
         end
@@ -266,11 +264,9 @@ module Api
       def update
         begin
           result = perform_update(@study_file)
-          if result
-            render :show
-          else
-            render json: {errors: @study_file.errors}, status: :unprocessable_entity
-          end
+          render :show
+        rescue ArgumentError => e
+          render json: {errors: e.message}, status: :unprocessable_entity
         rescue => e
           render json: {errors: e.message}, status: 500
         end
@@ -280,6 +276,18 @@ module Api
       # returns true/false depending on the success of the save
       def perform_update(study_file)
         safe_file_params = study_file_params
+
+        is_chunked = false
+        content_range = RequestUtils.parse_content_range_header(request.headers)
+        if content_range.present?
+          is_chunked = true
+          if content_range[:first_byte] != 0
+            raise ArgumentError, 'Beginning of file expected'
+          end
+          if content_range[:last_byte] == content_range[:total_size] - 1
+            is_chunked = false # the chunk sent happens to be the entire file
+          end
+        end
 
         # manually check first if species/assembly was supplied by name
         species_name = safe_file_params[:species]
@@ -295,59 +303,91 @@ module Api
 
         # check if the name of the file has changed as we won't be able to tell after we saved
         name_changed = study_file.persisted? && study_file.name != safe_file_params[:name]
-        if study_file.update(safe_file_params)
-          # invalidate caches first
-          study_file.delay.invalidate_cache_by_file_type
 
-          # send data to FireCloud if upload was performed
-          if safe_file_params[:upload].present?
-            @study.delay.send_to_firecloud(study_file)
-            study_file.update(status: 'uploaded') # set status to uploaded on full create
+        begin
+          study_file.update!(safe_file_params)
+        rescue => e
+          raise ArgumentError, study_file.errors
+        end
+
+        # invalidate caches first
+        study_file.delay.invalidate_cache_by_file_type
+
+        if ['Cluster', 'Coordinate Labels', 'Gene List'].include?(study_file.file_type) && study_file.valid?
+          study_file.invalidate_cache_by_file_type
+        end
+
+        # if a gene list or cluster got updated, we need to update the associated records
+        if safe_file_params[:file_type] == 'Gene List' && name_changed
+          @precomputed_entry = PrecomputedScore.find_by(study_file_id: safe_file_params[:_id])
+          if @precomputed_entry.present?
+            logger.info "Updating gene list #{@precomputed_entry.name} to match #{safe_file_params[:name]}"
+            @precomputed_entry.update(name: study_file.name)
           end
-
-          if ['Cluster', 'Coordinate Labels', 'Gene List'].include?(study_file.file_type) && study_file.valid?
-            study_file.invalidate_cache_by_file_type
-          end
-
-          # if a gene list or cluster got updated, we need to update the associated records
-          if safe_file_params[:file_type] == 'Gene List' && name_changed
-            @precomputed_entry = PrecomputedScore.find_by(study_file_id: safe_file_params[:_id])
-            if @precomputed_entry.present?
-              logger.info "Updating gene list #{@precomputed_entry.name} to match #{safe_file_params[:name]}"
-              @precomputed_entry.update(name: study_file.name)
+        elsif safe_file_params[:file_type] == 'Cluster' && name_changed
+          @cluster = ClusterGroup.find_by(study_file_id: safe_file_params[:_id])
+          if @cluster.present?
+            logger.info "Updating cluster #{@cluster.name} to match #{safe_file_params[:name]}"
+            # before updating, check if the defaults also need to change
+            if @study.default_cluster == @cluster
+              @study.default_options[:cluster] = study_file.name
+              @study.save
             end
-          elsif safe_file_params[:file_type] == 'Cluster' && name_changed
-            @cluster = ClusterGroup.find_by(study_file_id: safe_file_params[:_id])
-            if @cluster.present?
-              logger.info "Updating cluster #{@cluster.name} to match #{safe_file_params[:name]}"
-              # before updating, check if the defaults also need to change
-              if @study.default_cluster == @cluster
-                @study.default_options[:cluster] = study_file.name
-                @study.save
-              end
-              @cluster.update(name: study_file.name)
-            end
+            @cluster.update(name: study_file.name)
           end
+        end
 
-          if ['Expression Matrix', 'MM Coordinate Matrix'].include?(safe_file_params[:file_type]) && !safe_file_params[:y_axis_label].blank?
-            # if user is supplying an expression axis label, update default options hash
-            @study.update(default_options: @study.default_options.merge(expression_label: safe_file_params[:y_axis_label]))
-          end
-
-          if parse_on_upload &&
-            study_file.parseable? &&
-            !study_file.parsing? &&
-            study_file.parse_status == 'unparsed' &&
-            study_file.status == 'uploaded' &&
-            safe_file_params[:upload].present?
-            FileParseService.run_parse_job(@study_file, @study, current_api_user)
-          end
-
-          return true
-        else
-          return false
+        if ['Expression Matrix', 'MM Coordinate Matrix'].include?(safe_file_params[:file_type]) && !safe_file_params[:y_axis_label].blank?
+          # if user is supplying an expression axis label, update default options hash
+          @study.update(default_options: @study.default_options.merge(expression_label: safe_file_params[:y_axis_label]))
+        end
+        byebug
+        if safe_file_params[:upload].present? && !is_chunked
+          do_upload_complete_processing(study_file, parse_on_upload)
         end
       end
+
+      def chunk
+        begin
+          safe_file_params = study_file_params
+          upload = safe_file_params[:upload]
+          content_range = RequestUtils.parse_content_range_header(request.headers)
+          if content_range.present?
+            is_chunked = true
+            if content_range[:first_byte] == 0
+              render json: {errors: 'create/update should be used for the first chunk'}
+            end
+            if content_range[:last_byte]== content_range[:total_size] - 1
+              is_chunked = false # the chunk sent happens to be the entire file
+            end
+          end
+
+          File.open(@study_file.upload.path, "ab") do |f|
+            f.write upload.read
+          end
+
+          # Update the upload_file_size attribute
+          @study_file.upload_file_size = @study_file.upload_file_size.nil? ? upload.size : @study_file.upload_file_size + upload.size
+          @study_file.save!
+
+          if @study_file.upload_file_size >= content_range[:total_size]
+            # this was the last chunk
+            do_upload_complete_processing(@study_file, safe_file_params[:parse_on_upload])
+          end
+        rescue => e
+          render json: {errors: e.message}
+        end
+      end
+
+      def do_upload_complete_processing(study_file, parse_on_upload)
+        @study.delay.send_to_firecloud(study_file) # send data to FireCloud if upload was performed
+        study_file.update(status: 'uploaded') # set status to uploaded on full create
+
+        if (parse_on_upload && study_file.parseable? && !study_file.parsing? && study_file.parse_status == 'unparsed')
+          FileParseService.run_parse_job(@study_file, @study, current_api_user)
+        end
+      end
+
 
       swagger_path '/studies/{study_id}/study_files/{id}' do
         operation :delete do

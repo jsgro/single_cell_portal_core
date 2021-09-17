@@ -35,7 +35,7 @@ export default function ImageFileForm({
               handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}
-              allowedFileTypes={FileTypeExtensions.image}/>
+              allowedFileTypes={["*"]}/>
           </div>
           <div className="col-md-6">
             { file.uploadSelection && <img className="preview-image" src={imagePreviewUrl} alt={file.uploadSelection.name} /> }

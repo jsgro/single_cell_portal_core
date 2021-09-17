@@ -31,6 +31,7 @@ Rails.application.routes.draw do
           resources :study_files, only: [:index, :show, :create, :update, :destroy] do
             member do
               post 'parse', to: 'study_files#parse'
+              patch 'chunk', to: 'study_files#chunk'
             end
           end
           resources :study_file_bundles, only: [:index, :show, :create, :destroy]

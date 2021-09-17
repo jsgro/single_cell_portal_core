@@ -8,6 +8,7 @@ export default function BucketImage({ bucketName, fileName }) {
 
   /** If there is a remote file, try to load it and render it on the page */
   useEffect(() => {
+    console.log('useEffect!!!')
     setRemoteImageUrl(null)
     getBucketImageLocalUrl(bucketName, fileName).then(setRemoteImageUrl)
   }, [bucketName, fileName])
@@ -15,6 +16,7 @@ export default function BucketImage({ bucketName, fileName }) {
   if (!remoteImageUrl) {
     return <></>
   }
+  console.log(`remote url: ${remoteImageUrl}`)
   return <img src={remoteImageUrl} alt={fileName}/>
 }
 

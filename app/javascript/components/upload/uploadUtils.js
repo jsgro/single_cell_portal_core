@@ -18,6 +18,7 @@ const PROPERTIES_NOT_TO_SEND = [
   'created_at',
   'updated_at',
   'queued_for_deletion',
+  'upload_file_size',
   'data_dir',
   'options',
   'version',
@@ -33,7 +34,6 @@ const ARRAY_PROPERTIES = [
 /** gets an object representing a new, empty study file.  Does not communicate to server */
 export function newStudyFileObj(studyId) {
   return {
-    study_id: studyId,
     name: '',
     _id: _uniqueId('newFile-'), // we just need a temp id to give to form controls, the real id will come from the server
     status: 'new',
@@ -56,7 +56,7 @@ export function formatFileFromServer(file) {
 
 /** return a new FormData based on the given file object, formatted as the api endpoint expects,
     cleaning out any excess params */
-export function formatFileForApi(file) {
+export function formatFileForApi(file, chunkStart, chunkEnd) {
   const data = new FormData()
   Object.keys(file).filter(key => !PROPERTIES_NOT_TO_SEND.includes(key)).forEach(key => {
     if (ARRAY_PROPERTIES.includes(key)) {
@@ -70,7 +70,11 @@ export function formatFileForApi(file) {
     }
   })
   if (file.uploadSelection) {
-    data.append('study_file[upload]', file.uploadSelection)
+    if (chunkStart || chunkEnd) {
+      data.append('study_file[upload]', file.uploadSelection.slice(chunkStart, chunkEnd), file.name)
+    } else {
+      data.append('study_file[upload]', file.uploadSelection)
+    }
     data.append('study_file[parse_on_upload]', true)
   }
   if (file.options) {

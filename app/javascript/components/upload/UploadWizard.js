@@ -13,7 +13,7 @@ import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './uploadUtils'
-import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo } from 'lib/scp-api'
+import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
 import MessageModal from 'lib/MessageModal'
 
 import StepTabHeader from './StepTabHeader'
@@ -23,10 +23,11 @@ import CoordinateLabelStep from './CoordinateLabelStep'
 import RawCountsStep from './RawCountsStep'
 import ProcessedExpressionStep from './ProcessedExpressionStep'
 
+const CHUNK_SIZE = 10000000
 const STEPS = [RawCountsStep, ProcessedExpressionStep, ClusteringStep, CoordinateLabelStep, ImageStep]
 
 /** shows the upload wizard */
-export default function UploadWizard({ accession, name }) {
+export default function UploadWizard({ studyAccession, name }) {
   const [currentStep, setCurrentStep] = useState(STEPS[0])
   const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
@@ -56,7 +57,7 @@ export default function UploadWizard({ accession, name }) {
   }
 
   /** handle response from server after an upload by updating the serverState with the updated file response */
-  function handleSaveResponse(response) {
+  function handleSaveResponse(response, uploadingMoreChunks) {
     const updatedFile = formatFileFromServer(response)
     // first update the serverState
     setServerState(prevServerState => {
@@ -69,7 +70,11 @@ export default function UploadWizard({ accession, name }) {
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
       const fileIndex = newFormState.files.findIndex(f => f.name === updatedFile.name)
-      newFormState.files[fileIndex] = updatedFile
+      const formFile = _cloneDeep(updatedFile)
+      if (uploadingMoreChunks) {
+        formFile.isSaving = true
+      }
+      newFormState.files[fileIndex] = formFile
       return newFormState
     })
   }
@@ -80,6 +85,9 @@ export default function UploadWizard({ accession, name }) {
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
       const fileChanged = newFormState.files.find(f => f._id === fileId)
+      if (!fileChanged) { // we're updating a stale/no-longer existent file -- discard it
+        return prevFormState
+      }
       Object.assign(fileChanged, updates)
       return newFormState
     })
@@ -87,18 +95,41 @@ export default function UploadWizard({ accession, name }) {
 
   /** save the given file and perform an upload if a selected file is present */
   async function saveFile(file) {
-    updateFile(file._id, { isSaving: true })
-    const fileApiData = formatFileForApi(file)
+    let studyFileId = file._id
+    updateFile(studyFileId, { isSaving: true })
+    const fileSize = file.uploadSelection?.size
+    const isChunked = fileSize > CHUNK_SIZE
+    let chunkStart = 0
+    let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
+
+    const studyFileData = formatFileForApi(file, chunkStart, chunkEnd)
     try {
       let response
       if (file.status === 'new') {
-        response = await createStudyFile(accession, fileApiData)
+        response = await createStudyFile({
+          studyAccession, studyFileData, isChunked, chunkStart, chunkEnd, fileSize
+        })
       } else {
-        response = await updateStudyFile(accession, file._id, fileApiData)
+        response = await updateStudyFile({
+          studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize
+        })
       }
-      handleSaveResponse(response)
+      handleSaveResponse(response, isChunked)
+      studyFileId = response._id
+      if (isChunked) {
+        while (chunkEnd < fileSize) {
+          chunkStart += CHUNK_SIZE
+          chunkEnd = Math.min(chunkEnd + CHUNK_SIZE, fileSize)
+          const chunkApiData = formatFileForApi(file, chunkStart, chunkEnd)
+          response = await sendStudyFileChunk({
+            studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize
+          })
+        }
+        updateFile(studyFileId, { isSaving: false })
+      }
+
     } catch (error) {
-      updateFile(file._id, {
+      updateFile(studyFileId, {
         isError: true,
         isSaving: false,
         errorMessage: error.message
@@ -122,7 +153,7 @@ export default function UploadWizard({ accession, name }) {
     } else {
       updateFile(file._id, { isDeleting: true })
       try {
-        await deleteStudyFile(accession, file._id)
+        await deleteStudyFile(studyAccession, file._id)
         setServerState(prevServerState => {
           const newServerState = _cloneDeep(prevServerState)
           newServerState.files = newServerState.files.filter(f => f._id != file._id)
@@ -141,20 +172,20 @@ export default function UploadWizard({ accession, name }) {
 
   // on initial load, load all the details of the study and study files
   useEffect(() => {
-    fetchStudyFileInfo(accession).then(response => {
+    fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
       setServerState(response)
       setFormState(_cloneDeep(response))
     })
-  }, [accession])
+  }, [studyAccession])
 
   return <div className="">
     <div className="row padded">
       <div className="col-md-10">
-        <h4>{accession}: {name}</h4>
+        <h4>{studyAccession}: {name}</h4>
       </div>
       <div className="col-md-2">
-        <a href={`/single_cell/study/${accession}`}>View Study</a>
+        <a href={`/single_cell/study/${studyAccession}`}>View Study</a>
       </div>
     </div>
     <div className="row">
@@ -191,7 +222,7 @@ export default function UploadWizard({ accession, name }) {
 export function renderUploadWizard(target, accession, name) {
   ReactDOM.render(
     <UploadWizard
-      accession={accession}
+      studyAccession={accession}
       name={name}/>,
     target
   )
