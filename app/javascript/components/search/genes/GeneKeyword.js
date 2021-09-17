@@ -28,8 +28,6 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
   const [geneArray, setGeneArray] = useState(geneParamAsArray)
   const [inputText, setInputText] = useState('')
 
-  // const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
-
   /** handles a user submitting a gene search */
   function handleSubmit(event) {
     event.preventDefault()
