@@ -205,6 +205,13 @@
   z-index: -1000;
 }
 
+#collections-tab {
+  float: right;
+  a {
+    font-size: 16px;
+  }
+}
+
 .collections-list {
   background: #fff;
   padding: 0em 1em;
