@@ -5,6 +5,9 @@ module Api
       include Swagger::Blocks
       include StudySearchResultsObjects
 
+      # regex to match on 'sequence_file' and 'analysis_file' entries from TDR
+      TDR_FILE_OUTPUT_TYPE_MATCH = /_file/.freeze
+
       before_action :set_current_api_user!
       before_action :authenticate_api_user!, only: [:create_auth_code]
       before_action :set_search_facet, only: :facet_filters
@@ -776,7 +779,7 @@ module Api
           end
         end
         # gather file information for sequence_file and analysis_file entries
-        if row['output_type'] =~ /_file/
+        if row['output_type'] =~ TDR_FILE_OUTPUT_TYPE_MATCH
           file_info = extract_file_information(row)
           drs_id = file_info[:drs_id]
           unless added_file_ids[drs_id]
@@ -824,7 +827,7 @@ module Api
       # extract file information from row-level TDR results for sequence_file and analysis_file entries
       def self.extract_file_information(result_row)
         safe_entry = result_row.with_indifferent_access
-        output_type = safe_entry['output_type']
+        output_type = safe_entry[:output_type]
         case output_type
         when 'sequence_file'
           filename = safe_entry[:sequence_file_name]
@@ -837,7 +840,7 @@ module Api
             'upload_file_size' => safe_entry[:sequence_file_size].to_i,
             'file_type' => output_type,
             'file_format' => safe_entry[:file_type] || file_format,
-            'drs_id' => safe_entry['output_id']
+            'drs_id' => safe_entry[:output_id]
           }.with_indifferent_access
         when 'analysis_file'
           {
@@ -845,7 +848,7 @@ module Api
             'upload_file_size' => safe_entry[:analysis_file_size].to_i,
             'file_type' => output_type,
             'file_format' => safe_entry[:analysis_format],
-            'drs_id' => safe_entry['drs_id']
+            'drs_id' => safe_entry[:drs_id]
           }.with_indifferent_access
         end
       end
