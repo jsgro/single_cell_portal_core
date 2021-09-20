@@ -125,7 +125,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     assert_equal expected_response.to_json, json.to_json
   end
 
-  test 'bulk download should exclude external sequence data by default' do
+  test 'single-study bulk download should inlcude all study files' do
     study = @basic_study
     execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
     assert_response :success
@@ -136,7 +136,32 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     )
     assert_response :success
 
-    excluded_file = study.study_files.by_type('Fastq').first
+    study.study_files.each do |study_file|
+      assert json.include?(study_file.name), "Bulk download config did not include #{study_file.name}"
+    end
+  end
+
+  test 'multi-study bulk download should exclude sequence data' do
+    # negative test, ensure that multi-study bulk download excludes sequence data
+    new_study = FactoryBot.create(:detached_study,
+                                  name_prefix: 'Extra Study',
+                                  public: false,
+                                  user: @user,
+                                  test_array: @@studies_to_clean)
+    new_study_cluster_file = FactoryBot.create(:cluster_file,
+                                               name: 'cluster.txt',
+                                               study: new_study,
+                                               upload_file_size: 100)
+    execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
+    assert_response :success
+    auth_code = json['auth_code']
+
+    execute_http_request(:get, api_v1_bulk_download_generate_curl_config_path(
+      auth_code: auth_code, accessions: [@basic_study.accession, new_study.accession])
+    )
+    assert_response :success
+
+    excluded_file = @basic_study.study_files.by_type('Fastq').first
     refute json.include?(excluded_file.name), 'Bulk download config did not exclude external fastq link'
   end
 
