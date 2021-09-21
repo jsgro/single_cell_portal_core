@@ -697,7 +697,7 @@ module Api
       # execute a search in TDR and get back normalized results
       # will actually issue 2 search requests, first to extract unique project_ids that match the query,
       # and a second to retrieve all result rows for those projects
-      # this is to address issues in sparsity of ES index with regards to some data (like species, disease, etc)
+      # this is to address issues in sparsity of Elasticsearch index with regards to some data (like species, disease, etc)
       def self.get_tdr_results(selected_facets:, terms:)
         client = ApplicationController.data_repo_client
         results = {}

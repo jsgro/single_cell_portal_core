@@ -175,7 +175,7 @@ const COLUMNS = {
   sequence: {
     title: 'Sequence',
     types: ['sequence_file'],
-    info: 'Sequence files, such as Fastq, BAM or BAI files',
+    info: 'Sequence files, such as FASTQ, BAM or BAI files',
     default: false
   }
 }

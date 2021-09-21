@@ -63,9 +63,8 @@ class BulkDownloadService
         manifests, files = file_infos.partition { |f| f['file_type'] == 'Project Manifest' }
         manifest_info = manifests.first
         manifest = hca_client.get_project_manifest_link(default_catalog, manifest_info['url'])
-        manifest_config = "--location\n" # add location directive to allow following 302 redirect to manifest location
-        manifest_config += "url=\"#{manifest['Location']}\"\n"
-        manifest_config += "output=\"#{shortname}/#{manifest_info['name']}\""
+        # add location directive to allow following 302 redirect to manifest location
+        manifest_config = "--location\nurl=\"#{manifest['Location']}\"\noutput=\"#{shortname}/#{manifest_info['name']}\""
         tdr_file_configs << manifest_config
         # now process remainder of analysis/sequence files for download in parallel to speed up process
         Parallel.map(files, in_threads: 100) do |file_info|
