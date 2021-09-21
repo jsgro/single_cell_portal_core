@@ -193,6 +193,7 @@ module Api
           result = perform_update(@study_file)
           render :show
         rescue ArgumentError => e
+          MetricsService.log('file-save:invalid', format_log_props(e.message), current_api_user)
           render json: {errors: e.message}, status: :unprocessable_entity
         end
       end
@@ -260,8 +261,22 @@ module Api
           result = perform_update(@study_file)
           render :show
         rescue Mongoid::Errors::Validations => e
+          MetricsService.log('file-save:invalid', format_log_props(e.message), current_api_user)
           render json: {errors: e.message}, status: :unprocessable_entity
         end
+      end
+
+      def format_log_props(error_message)
+        log_props = study_file_params.to_unsafe_hash
+        # do not send the actual file to the log
+        log_props.delete(:upload)
+        # don't log file paths that may contain sensitive data
+        log_props.delete(:remote_location)
+        {
+          studyAccession: @study.accession,
+          error: error_message,
+          params: log_props
+        }
       end
 
       # update the given study file with the request params and save it
