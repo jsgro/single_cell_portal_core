@@ -26,7 +26,7 @@
   <div class="form-group">
     <%= f.label :user_id, 'Associated User' %><br />
     <%= f.select :user_id, options_from_collection_for_select(User.all, :id, :email, @branding_group.new_record? ? nil : @branding_group.user_id),
-                 {include_blank: 'Please select a user account'}, class: 'form-control' %>
+                 {include_blank: 'Select a user account'}, class: 'form-control' %>
   </div>
 
   <div class="form-group">
