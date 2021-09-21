@@ -85,9 +85,6 @@ export function ClusteringUploadForm({
             </p>
           </div>
           <div className="row">
-            <p className="col-sm-12"><a href="https://en.wikipedia.org/wiki/Spatial_transcriptomics" target="_blank" rel="noreferrer">Spatial transcriptomics</a> data can also be uploaded with this file format.  The x, y, and z coordinates then represent actual spatial coordinates, as opposed to clustering output.</p>
-          </div>
-          <div className="row">
             <p className="col-sm-12">* Group values are treated as literal strings, and numerics as floating-point numbers.</p>
           </div>
         </div>
