@@ -87,7 +87,7 @@ module Api
             imageFiles: image_options,
             clusterPointAlpha: @study.default_cluster_point_alpha,
             colorProfile: @study.default_color_profile,
-            bucket_id: @study.bucket_id
+            bucketId: @study.bucket_id
           }
 
           render json: explore_props

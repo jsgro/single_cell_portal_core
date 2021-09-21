@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import BucketImage from 'components/visualization/BucketImage'
 import ScatterPlot from 'components/visualization/ScatterPlot'
 
-/** Component for displaying IGV for any BAM/BAI files provided with the study */
+/** Display reference images (e.g. tissue stains) beside spatial scatter plots */
 export default function ImageTab({
   studyAccession,
   exploreParams,
