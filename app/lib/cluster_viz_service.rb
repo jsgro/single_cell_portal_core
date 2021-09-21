@@ -65,21 +65,22 @@ class ClusterVizService
 
   def self.load_image_options(study)
     # grab all the image files for this study
-    image_file_info = StudyFile.where(study: study, file_type: 'Image')
-                                 .pluck(:name, :spatial_cluster_associations, :upload_file_name, :description)
+    attrs = [:name, :spatial_cluster_associations, :upload_file_name, :description]
+    image_file_info = ActiveRecordUtils.pluck_to_hash(StudyFile.where(study: study, file_type: 'Image'), attrs)
 
+    associated_cluster_ids = image_file_info.map{ |si| si[:spatial_cluster_associations] }.flatten.uniq
     # now grab any non spatial cluster files for the study that had ids specified in the image files above
     # and put them in an id=>name hash
-    associated_clusters = StudyFile.where(study: study, :id.in => image_file_info.map{ |si| si[1] }.flatten.uniq)
+    associated_clusters = StudyFile.where(study: study, :id.in => associated_cluster_ids)
                                    .pluck(:id, :name)
                                    .map{ |a| [a[0].to_s, a[1]] }.to_h
     # now return an array of objects with names and associated cluster names
     image_file_info.map do |file|
-      associated_cluster_names = file[1].map{ |id| associated_clusters[id] }
-      { name: file[0],
+      associated_cluster_names = file[:spatial_cluster_associations].map{ |id| associated_clusters[id] }
+      { name: file[:name],
         associated_clusters: associated_cluster_names,
-        upload_file_name: file[2],
-        description: file[3] }
+        upload_file_name: file[:upload_file_name],
+        description: file[:description] }
     end
   end
 

@@ -58,7 +58,7 @@ export default function ImageTab({
       return <div className="row" key={file.name}>
         <div className={imageColClass}>
           <h5 className="plot-title">{file.name}</h5>
-          <BucketImage fileName={file.bucket_file_name} bucketName={bucketName}/>
+          <BucketImage fileName={file.upload_file_name} bucketName={bucketName}/>
           <p className="help-block">
             { file.description &&
               <span>{file.description}</span>

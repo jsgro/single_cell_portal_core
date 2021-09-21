@@ -194,8 +194,6 @@ module Api
           render :show
         rescue ArgumentError => e
           render json: {errors: e.message}, status: :unprocessable_entity
-        rescue => e
-          render json: {errors: e.message}, status: 500
         end
       end
 
@@ -263,8 +261,6 @@ module Api
           render :show
         rescue Mongoid::Errors::Validations => e
           render json: {errors: e.message}, status: :unprocessable_entity
-        rescue => e
-          render json: {errors: e.message}, status: 500
         end
       end
 
@@ -310,10 +306,6 @@ module Api
 
         # invalidate caches first
         study_file.delay.invalidate_cache_by_file_type
-
-        if ['Cluster', 'Coordinate Labels', 'Gene List'].include?(study_file.file_type) && study_file.valid?
-          study_file.invalidate_cache_by_file_type
-        end
 
         # if a gene list or cluster got updated, we need to update the associated records
         if safe_file_params[:file_type] == 'Gene List' && name_changed
