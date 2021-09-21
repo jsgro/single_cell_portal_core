@@ -126,7 +126,7 @@ export function buildParamsFromQuery(query, preset) {
   }
 }
 
-/** strip any begining or end quotes from a gene param*/
+/** strip any beginning or end quotes from a gene param */
 function stripOffQuotes(geneParam) {
   const cleanedWord = geneParam.replace(/"\B/, '').replace(/\B"/, '').trim()
   return cleanedWord
