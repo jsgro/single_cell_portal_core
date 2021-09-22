@@ -57,6 +57,8 @@ function MetadataForm({
               A <b>metadata file</b> lists all cells in the study
               <img src={metadataExplainerImage}/>
             </div>
+          </div>
+          <div className="row">
             <div className="col-md-12">
               <a id="metadata-convention-example-link"
                 href="https://singlecell.zendesk.com/hc/en-us/articles/360060609852-Required-Metadata"
