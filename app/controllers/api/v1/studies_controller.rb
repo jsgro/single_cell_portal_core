@@ -85,7 +85,13 @@ module Api
           study: @study.attributes,
           files: @study.study_files,
           menu_options: {
-            fonts: SUPPORTED_LABEL_FONTS
+            fonts: SUPPORTED_LABEL_FONTS,
+            species: ActiveRecordUtils.pluck_to_hash(Taxon.sorted, [:id, :common_name])
+              .map{ |k| k[:id] = k[:id].to_s; k },
+            units: ExpressionFileInfo::UNITS_VALUES,
+            library_preparation_protocol: ExpressionFileInfo::LIBRARY_PREPARATION_VALUES,
+            modality: ExpressionFileInfo::MODALITY_VALUES,
+            biosample_input_type: ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
           }
         }
         render json: response_obj

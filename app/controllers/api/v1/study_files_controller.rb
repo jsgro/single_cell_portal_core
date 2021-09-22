@@ -313,11 +313,7 @@ module Api
         # check if the name of the file has changed as we won't be able to tell after we saved
         name_changed = study_file.persisted? && study_file.name != safe_file_params[:name]
 
-        begin
-          study_file.update!(safe_file_params)
-        rescue => e
-          raise e.class, study_file.errors.full_messages
-        end
+        study_file.update!(safe_file_params)
 
         # invalidate caches first
         study_file.delay.invalidate_cache_by_file_type

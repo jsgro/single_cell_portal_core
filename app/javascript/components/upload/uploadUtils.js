@@ -39,7 +39,8 @@ export function newStudyFileObj(studyId) {
     status: 'new',
     description: '',
     parse_status: 'unparsed',
-    spatial_cluster_associations: []
+    spatial_cluster_associations: [],
+    expression_file_info: {}
   }
 }
 
@@ -51,6 +52,12 @@ export function formatFileFromServer(file) {
   file._id = file._id.$oid
   file.description = file.description ? file.description : ''
   delete file.study_id
+  if (file.taxon_id) {
+    file.taxon_id = file.taxon_id.$oid
+  }
+  if (!file.expression_file_info) {
+    file.expression_file_info = {}
+  }
   return file
 }
 
@@ -64,6 +71,10 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
       // arrays across multiple entries to deliver what Rails expects.
       file[key].map(val => {
         data.append(`study_file[${key}][]`, val)
+      })
+    } else if (key === 'expression_file_info') {
+      Object.keys(file.expression_file_info).forEach(expKey => {
+        data.append(`study_file[expression_file_info_attributes][${expKey}]`, file.expression_file_info[expKey])
       })
     } else {
       data.append(`study_file[${key}]`, file[key])
