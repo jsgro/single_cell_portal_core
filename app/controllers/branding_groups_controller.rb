@@ -57,7 +57,15 @@ class BrandingGroupsController < ApplicationController
   # PATCH/PUT /branding_groups/1.json
   def update
     respond_to do |format|
-      if @branding_group.update(branding_group_params)
+      clean_params = branding_group_params.to_h
+      ['splash_image', 'banner_image', 'footer_image'].each do |image_name|
+        if clean_params["reset_#{image_name}"] == 'on'
+          clean_params[image_name] = nil
+        end
+        clean_params.delete("reset_#{image_name}")
+      end
+
+      if @branding_group.update(clean_params)
         format.html { redirect_to merge_default_redirect_params(branding_group_path(@branding_group), scpbr: params[:scpbr]),
                                   notice: "Collection '#{@branding_group.name}' was successfully updated." }
         format.json { render :show, status: :ok, location: @branding_group }
@@ -90,6 +98,7 @@ class BrandingGroupsController < ApplicationController
   # Never trust parameters from the scary internet, only allow the permit list through.
   def branding_group_params
     params.require(:branding_group).permit(:name, :tag_line, :public, :background_color, :font_family, :font_color, :user_id,
-                                           :splash_image, :banner_image, :footer_image, :external_link_url, :external_link_description)
+                                           :splash_image, :banner_image, :footer_image, :external_link_url, :external_link_description,
+                                           :reset_splash_image, :reset_footer_image, :reset_banner_image)
   end
 end

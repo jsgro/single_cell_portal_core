@@ -45,16 +45,27 @@
     <% if @branding_group.banner_image.present? %>
       <p class="help-block">Current file: <%= link_to "<i class='fas fa-download'></i> #{@branding_group.banner_image_file_name} (#{ number_to_human_size @branding_group.banner_image_file_size})".html_safe,
                                                       @branding_group.banner_image.url, download: @branding_group.banner_image_file_name,
-                                                      class: 'btn btn-xs btn-primary' %></p>
+                                                      class: 'btn btn-xs btn-primary' %>
+        <label>
+          Clear/Reset to default
+          <input type="checkbox" name="branding_group[reset_banner_image]"/>
+        </label>
+      </p>
+
     <% end %>
   </div>
   <div class="form-group">
     <%= f.label :splash_image, 'Splash Image (suggested size: 383x89)' %><br/>
     <%= f.file_field :splash_image, class: 'btn btn-default fileinput-button' %>
     <% if @branding_group.splash_image.present? %>
-      <span class="help-block">Current file: <%= link_to "<i class='fas fa-download'></i> #{@branding_group.splash_image_file_name} (#{ number_to_human_size @branding_group.splash_image_file_size})".html_safe,
+      <p class="help-block">Current file: <%= link_to "<i class='fas fa-download'></i> #{@branding_group.splash_image_file_name} (#{ number_to_human_size @branding_group.splash_image_file_size})".html_safe,
                                                       @branding_group.splash_image.url, download: @branding_group.splash_image_file_name,
-                                                      class: 'btn btn-xs btn-primary' %></span>
+                                                      class: 'btn btn-xs btn-primary' %>
+        <label>
+          Clear/Reset to default
+          <input type="checkbox" name="branding_group[reset_splash_image]"/>
+        </label>
+                                                      </p>
     <% end %>
   </div>
   <div class="form-group">
@@ -63,7 +74,12 @@
     <% if @branding_group.footer_image.present? %>
       <p class="help-block">Current file: <%= link_to "<i class='fas fa-download'></i> #{@branding_group.footer_image_file_name} (#{ number_to_human_size @branding_group.footer_image_file_size})".html_safe,
                                                       @branding_group.footer_image.url, download: @branding_group.footer_image_file_name,
-                                                      class: 'btn btn-xs btn-primary' %></p>
+                                                      class: 'btn btn-xs btn-primary' %>
+        <label>
+          &nbsp; Clear/Reset to default
+          <input type="checkbox" name="branding_group[reset_footer_image]"/>
+        </label>
+      </p>
     <% end %>
   </div>
 
