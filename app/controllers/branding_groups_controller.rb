@@ -58,10 +58,12 @@ class BrandingGroupsController < ApplicationController
   def update
     respond_to do |format|
       clean_params = branding_group_params.to_h
+      # iterate through each image type to check if the user wants to clear it from the reset checkbox
       ['splash_image', 'banner_image', 'footer_image'].each do |image_name|
         if clean_params["reset_#{image_name}"] == 'on'
           clean_params[image_name] = nil
         end
+        # delete the param since it is not a real model param
         clean_params.delete("reset_#{image_name}")
       end
 
