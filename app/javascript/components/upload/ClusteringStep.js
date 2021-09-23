@@ -25,7 +25,9 @@ export function ClusteringUploadForm({
   updateFile,
   saveFile,
   deleteFile,
-  handleSaveResponse
+  handleSaveResponse,
+  bucketName
+
 }) {
   const clusterFiles = formState.files.filter(clusterFileFilter)
   const associatedClusterFileOptions = clusterFiles.filter(file => !file.is_spatial)
@@ -97,7 +99,9 @@ export function ClusteringUploadForm({
         deleteFile={deleteFile}
         handleSaveResponse={handleSaveResponse}
         associatedClusterFileOptions={associatedClusterFileOptions}
-        updateCorrespondingClusters={updateCorrespondingClusters}/>
+        updateCorrespondingClusters={updateCorrespondingClusters}
+        bucketName={formState.study.bucket_id}
+        />
     })}
     <div className="row top-margin">
       <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_CLUSTER_FILE)}><span className="fas fa-plus"></span> Add File</button>

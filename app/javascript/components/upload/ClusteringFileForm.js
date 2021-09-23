@@ -2,6 +2,8 @@ import React from 'react'
 import Select from 'react-select'
 
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
+import FileDownloadControl from 'components/download/FileDownloadControl'
+
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 
 /** renders a form for editing/uploading a single cluster file */
@@ -12,7 +14,8 @@ export default function ClusteringFileForm({
   deleteFile,
   handleSaveResponse,
   associatedClusterFileOptions,
-  updateCorrespondingClusters
+  updateCorrespondingClusters,
+  bucketName
 }) {
 
 
@@ -27,6 +30,11 @@ export default function ClusteringFileForm({
           file={file}
           updateFile={updateFile}
           allowedFileTypes={FileTypeExtensions.plainText}/>
+          <FileDownloadControl
+          file={file}
+          handleSaveResponse={handleSaveResponse}
+          bucketName={bucketName}
+          />
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         <div className="form-group">
           <label>Coordinate data type:</label><br/>

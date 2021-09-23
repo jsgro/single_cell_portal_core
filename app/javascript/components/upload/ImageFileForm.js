@@ -3,6 +3,8 @@ import Select from 'react-select'
 
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
+import FileDownloadControl from 'components/download/FileDownloadControl'
+
 
 /** renders a form for editing/uploading an image file */
 export default function ImageFileForm({
@@ -13,6 +15,7 @@ export default function ImageFileForm({
   handleSaveResponse,
   associatedClusterFileOptions,
   updateCorrespondingClusters
+  // bucketName
 }) {
 
   const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
@@ -28,6 +31,10 @@ export default function ImageFileForm({
         acceptCharset="UTF-8">
         <div className="row">
           <div className="col-md-6">
+          {/* <FileDownloadControl
+          file={file}
+          handleSaveResponse={handleSaveResponse}
+          /> */}
             <FileUploadControl
               handleSaveResponse={handleSaveResponse}
               file={file}
