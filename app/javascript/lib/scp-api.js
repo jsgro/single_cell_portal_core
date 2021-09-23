@@ -207,36 +207,83 @@ export async function fetchStudyFileInfo(studyAccession, mock=false) {
  * @param {String} studyAccession study accession
  * @param {FormData} studyFileData html FormData object with the file data
 */
-export async function createStudyFile(studyAccession, studyFileData, mock=false) {
+export async function createStudyFile({
+  studyAccession,
+  studyFileData,
+  isChunked=false,
+  chunkStart,
+  chunkEnd,
+  fileSize,
+  mock=false }) {
   const apiUrl = `/studies/${studyAccession}/study_files`
   const init = Object.assign({}, defaultInit(), {
     method: 'POST',
     body: studyFileData
   })
-  // we want the browser to auto-set the content type with the right form boundaries
-  // see https://stackoverflow.com/questions/36067767/how-do-i-upload-a-file-with-the-js-fetch-api
-  delete init.headers['Content-Type']
+
+  setFileFormHeaders(init.headers, isChunked, chunkStart, chunkEnd, fileSize)
   const [exploreInit] = await scpApi(apiUrl, init, mock, false)
   return exploreInit
 }
 
+/** Adds a content range header if needed */
+function setFileFormHeaders(headers, isChunked, chunkStart, chunkEnd, fileSize) {
+  // we want the browser to auto-set the content type with the right form boundaries
+  // see https://stackoverflow.com/questions/36067767/how-do-i-upload-a-file-with-the-js-fetch-api
+  delete headers['Content-Type']
+  if (isChunked) {
+    headers['Content-Range'] = `bytes ${chunkStart}-${chunkEnd-1}/${fileSize}`
+  }
+}
+
 
 /**
- * Returns initial content for the upload file wizard
+ * Updates a study file
  *
  * @param {String} studyAccession study accession
  * @param {String} studyFileId Study file id
  * @param {FormData} studyFileData html FormData object with the file data
 */
-export async function updateStudyFile(studyAccession, studyFileId, studyFileData, mock=false) {
+export async function updateStudyFile({
+  studyAccession,
+  studyFileId,
+  studyFileData,
+  isChunked=false,
+  chunkStart,
+  chunkEnd,
+  fileSize,
+  mock=false }) {
   const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}`
   const init = Object.assign({}, defaultInit(), {
     method: 'PATCH',
     body: studyFileData
   })
-  // we want the browser to auto-set the content type with the right form boundaries
-  // see https://stackoverflow.com/questions/36067767/how-do-i-upload-a-file-with-the-js-fetch-api
-  delete init.headers['Content-Type']
+  setFileFormHeaders(init.headers, isChunked, chunkStart, chunkEnd, fileSize)
+  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
+  return exploreInit
+}
+
+/**
+ * Updates a study file
+ *
+ * @param {String} studyAccession study accession
+ * @param {String} studyFileId Study file id
+ * @param {FormData} studyFileData html FormData object with the file data
+*/
+export async function sendStudyFileChunk({
+  studyAccession,
+  studyFileId,
+  studyFileData,
+  chunkStart,
+  chunkEnd,
+  fileSize,
+  mock=false }) {
+  const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}/chunk`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'PATCH',
+    body: studyFileData
+  })
+  setFileFormHeaders(init.headers, true, chunkStart, chunkEnd, fileSize)
   const [exploreInit] = await scpApi(apiUrl, init, mock, false)
   return exploreInit
 }
@@ -256,6 +303,27 @@ export async function deleteStudyFile(studyAccession, fileId, mock=false) {
   return exploreInit
 }
 
+
+/**
+ * Fetches a given resource from a GCP bucket -- this handles adding the
+ * appropriate SCP readonly bearer token, and using the Google API URL that allows CORS
+ *
+ * @param {String} bucketName bucket name
+ * @param {String} fileName file name
+*/
+export async function fetchBucketFile(bucketName, fileName, mock=false) {
+  const init = {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${window.SCP.readOnlyToken}`
+    }
+  }
+  const url = `https://storage.googleapis.com/download/storage/v1/b/${bucketName}/o/${fileName}?alt=media`
+
+  const response = await fetch(url, init).catch(error => error)
+
+  return response
+}
 
 
 /**

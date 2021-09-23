@@ -62,6 +62,7 @@ export function ImageForm({
         saveFile={saveFile}
         deleteFile={deleteFile}
         handleSaveResponse={handleSaveResponse}
+        bucketName={formState.study.bucket_id}
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}/>
     })}

@@ -3,6 +3,8 @@ import Select from 'react-select'
 
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
+import BucketImage from 'components/visualization/BucketImage'
+
 
 /** renders a form for editing/uploading an image file */
 export default function ImageFileForm({
@@ -12,7 +14,8 @@ export default function ImageFileForm({
   deleteFile,
   handleSaveResponse,
   associatedClusterFileOptions,
-  updateCorrespondingClusters
+  updateCorrespondingClusters,
+  bucketName
 }) {
 
   const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
@@ -32,10 +35,11 @@ export default function ImageFileForm({
               handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}
-              allowedFileTypes={FileTypeExtensions.image}/>
+              allowedFileTypes={["*"]}/>
           </div>
           <div className="col-md-6">
             { file.uploadSelection && <img className="preview-image" src={imagePreviewUrl} alt={file.uploadSelection.name} /> }
+            { file.status == 'uploaded' && <BucketImage fileName={file.upload_file_name} bucketName={bucketName}/> }
           </div>
         </div>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
