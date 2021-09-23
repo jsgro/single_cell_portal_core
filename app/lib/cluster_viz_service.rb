@@ -48,9 +48,9 @@ class ClusterVizService
   # return an array of hashes with spatial file names and associated_clusters  specified, where associated_clusters is the names of
   # the clusters
   def self.load_spatial_options(study)
-    # grab all the spatial files for this study, and create a name=>associations hash
+    # grab all the spatial files for this study
     spatial_file_info = StudyFile.where(study: study, is_spatial: true, file_type: 'Cluster')
-                                 .pluck(:name, :spatial_cluster_associations).to_h
+                                 .pluck(:name, :spatial_cluster_associations)
     # now grab any non spatial cluster files for the study that had ids specified in the spatial_cluster_associations above
     # and put them in an id=>name hash
     associated_clusters = StudyFile.where(study: study, :id.in => spatial_file_info.map{ |si| si[1] }.flatten.uniq)
@@ -59,9 +59,31 @@ class ClusterVizService
     # now return an array of objects with names and associated cluster names
     spatial_file_info.map do |cluster|
       associated_cluster_names = cluster[1].map{ |id| associated_clusters[id] }
-      { name: cluster[0], associated_clusters: associated_cluster_names }
+      { name: cluster[0], associated_clusters: associated_cluster_names, bucket_file_name: cluster[2] }
     end
   end
+
+  def self.load_image_options(study)
+    # grab all the image files for this study
+    attrs = [:name, :spatial_cluster_associations, :upload_file_name, :description]
+    image_file_info = ActiveRecordUtils.pluck_to_hash(StudyFile.where(study: study, file_type: 'Image'), attrs)
+
+    associated_cluster_ids = image_file_info.map{ |si| si[:spatial_cluster_associations] }.flatten.uniq
+    # now grab any non spatial cluster files for the study that had ids specified in the image files above
+    # and put them in an id=>name hash
+    associated_clusters = StudyFile.where(study: study, :id.in => associated_cluster_ids)
+                                   .pluck(:id, :name)
+                                   .map{ |a| [a[0].to_s, a[1]] }.to_h
+    # now return an array of objects with names and associated cluster names
+    image_file_info.map do |file|
+      associated_cluster_names = file[:spatial_cluster_associations].map{ |id| associated_clusters[id] }
+      { name: file[:name],
+        associated_clusters: associated_cluster_names,
+        upload_file_name: file[:upload_file_name],
+        description: file[:description] }
+    end
+  end
+
 
   # return an array of values to use for subsampling dropdown scaled to number of cells in study
   # only options allowed are 1000, 10000, 20000, and 100000

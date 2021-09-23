@@ -123,4 +123,25 @@ class RequestUtils
   def self.split_query_param_on_delim(parameter:, delimiter: ',')
     parameter.is_a?(Array) ? parameter : parameter.to_s.split(delimiter).map(&:strip)
   end
+
+  # returns nil if no header present, throws ArgumentError if unparseable/invalid
+  # otherwise returns a hash of first_byte, last_byte, total_size
+  def self.parse_content_range_header(headers)
+    content_range = headers['Content-Range']
+    if content_range.present?
+      is_chunked = true
+      range_match = content_range.match(/bytes\ (\d*)-(\d*)\/(\d*)$/)
+      if range_match.nil?
+        raise ArgumentError, 'Could not parse Content-Range header'
+      end
+      first_byte, last_byte, total_size = range_match[1..3].map{ |num| num.to_i }
+      if first_byte >= last_byte || last_byte > total_size
+        raise ArgumentError, 'Invalid Content-Range header range'
+      end
+      return {
+        first_byte: first_byte, last_byte: last_byte, total_size: total_size
+      }
+    end
+    return nil
+  end
 end

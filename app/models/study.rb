@@ -1537,6 +1537,7 @@ class Study
       first_two_bytes = File.open(file_location).read(2)
       gzip_signature = StudyFile::GZIP_MAGIC_NUMBER # per IETF
       file_is_gzipped = (first_two_bytes == gzip_signature)
+
       opts = {}
       if file_is_gzipped or file.upload_file_name.last(4) == '.bam' or file.upload_file_name.last(5) == '.cram'
         # log that file is already compressed

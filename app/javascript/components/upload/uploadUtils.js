@@ -18,6 +18,7 @@ const PROPERTIES_NOT_TO_SEND = [
   'created_at',
   'updated_at',
   'queued_for_deletion',
+  'upload_file_size',
   'data_dir',
   'options',
   'version',
@@ -26,10 +27,13 @@ const PROPERTIES_NOT_TO_SEND = [
   'parse_status'
 ]
 
+const ARRAY_PROPERTIES = [
+  'spatial_cluster_associations'
+]
+
 /** gets an object representing a new, empty study file.  Does not communicate to server */
 export function newStudyFileObj(studyId) {
   return {
-    study_id: studyId,
     name: '',
     _id: _uniqueId('newFile-'), // we just need a temp id to give to form controls, the real id will come from the server
     status: 'new',
@@ -46,19 +50,31 @@ export function newStudyFileObj(studyId) {
 export function formatFileFromServer(file) {
   file._id = file._id.$oid
   file.description = file.description ? file.description : ''
-  file.study_id = file.study_id.$oid
+  delete file.study_id
   return file
 }
 
 /** return a new FormData based on the given file object, formatted as the api endpoint expects,
     cleaning out any excess params */
-export function formatFileForApi(file) {
+export function formatFileForApi(file, chunkStart, chunkEnd) {
   const data = new FormData()
   Object.keys(file).filter(key => !PROPERTIES_NOT_TO_SEND.includes(key)).forEach(key => {
-    data.append(`study_file[${key}]`, file[key])
+    if (ARRAY_PROPERTIES.includes(key)) {
+      // because we are sending as FormData, rather than JSON, we need to split
+      // arrays across multiple entries to deliver what Rails expects.
+      file[key].map(val => {
+        data.append(`study_file[${key}][]`, val)
+      })
+    } else {
+      data.append(`study_file[${key}]`, file[key])
+    }
   })
   if (file.uploadSelection) {
-    data.append('study_file[upload]', file.uploadSelection)
+    if (chunkStart || chunkEnd) {
+      data.append('study_file[upload]', file.uploadSelection.slice(chunkStart, chunkEnd), file.name)
+    } else {
+      data.append('study_file[upload]', file.uploadSelection)
+    }
     data.append('study_file[parse_on_upload]', true)
   }
   if (file.options) {
