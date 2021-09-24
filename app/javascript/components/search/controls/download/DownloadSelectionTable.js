@@ -1,7 +1,9 @@
 import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import _cloneDeep from 'lodash/cloneDeep'
+
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 /** component that renders a list of studies so that individual studies/files can be selected
   * @param {Object} downloadInfo study download information as provided by fetchDownloadInfo from scp-api.
@@ -60,11 +62,7 @@ export default function DownloadSelectionTable({
         isLoading &&
         <div className="text-center greyed">
           Loading file information<br/>
-          <FontAwesomeIcon
-            icon={faDna}
-            data-testid="bulk-download-loading-icon"
-            className="gene-load-spinner"
-          />
+          <LoadingSpinner data-testid="bulk-download-loading-icon"/>
         </div>
       }
       {
@@ -194,10 +192,7 @@ function StudyFileCheckbox({ study, studyIndex, selectedBoxes, colType, updateSe
   let sizeIndicator = null
   if (fileSize === undefined || fileSize === 0) {
     // the file sizes are still loading from TDR
-    sizeIndicator = <FontAwesomeIcon
-      icon={faDna}
-      data-testid="bulk-download-loading-icon"
-      className="gene-load-spinner"/>
+    sizeIndicator = <LoadingSpinner data-testid="bulk-download-loading-icon"/>
   } else {
     sizeIndicator = bytesToSize(fileSize)
   }
