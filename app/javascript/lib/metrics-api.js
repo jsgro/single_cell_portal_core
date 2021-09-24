@@ -250,9 +250,6 @@ function logClickInput(target) {
   }
   const element = `input-${target.type}`
   log(`click:${element}`, props)
-
-  // Google Analytics fallback: remove once Bard and Mixpanel are ready for SCP
-  ga('send', 'event', 'click', element) // eslint-disable-line no-undef
 }
 
 /** Log text of selected option when dropdown menu (i.e., select) changes */
