@@ -1,6 +1,6 @@
 import React from 'react'
 import Panel from 'react-bootstrap/lib/Panel'
-import Select from 'react-select'
+import Select from 'lib/InstrumentedSelect'
 
 import { SCATTER_COLOR_OPTIONS, defaultScatterColor } from 'components/visualization/ScatterPlot'
 import { DISTRIBUTION_PLOT_OPTIONS, DISTRIBUTION_POINTS_OPTIONS } from 'components/visualization/StudyViolinPlot'
@@ -45,14 +45,14 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
           </Panel.Title>
         </Panel.Heading>
         <Panel.Body>
-          <label htmlFor="colorscale-picker">Continuous color scale
+          <label className="labeled-select">Continuous color scale
             <span className="detail"> (for numeric data)</span>
+            <Select
+              options={SCATTER_COLOR_OPTIONS.map(opt => ({ label: opt, value: opt }))}
+              value={{ label: scatterColorValue, value: scatterColorValue }}
+              clearable={false}
+              onChange={option => updateExploreParams({ scatterColor: option.value })}/>
           </label>
-          <Select name="colorscale-picker"
-            options={SCATTER_COLOR_OPTIONS.map(opt => ({ label: opt, value: opt }))}
-            value={{ label: scatterColorValue, value: scatterColorValue }}
-            clearable={false}
-            onChange={option => updateExploreParams({ scatterColor: option.value })}/>
         </Panel.Body>
       </Panel>
       <Panel className={shownTab === 'distribution' ? '' : 'hidden'}>
