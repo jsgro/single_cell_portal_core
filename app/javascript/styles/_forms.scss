@@ -56,6 +56,13 @@
   }
 }
 
+.labeled-select {
+  width: 100%;
+  > div {
+    font-weight: normal;
+  }
+}
+
 .table-terra {
   thead {
     background: #f4f4f4;

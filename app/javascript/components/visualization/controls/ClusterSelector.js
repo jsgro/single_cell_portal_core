@@ -1,10 +1,10 @@
 import React from 'react'
-import Select from 'react-select'
 
 import {
   getDefaultSubsampleForCluster, annotationKeyProperties,
   getDefaultAnnotationForCluster, clusterSelectStyle
 } from 'lib/cluster-utils'
+import Select from 'lib/InstrumentedSelect'
 
 
 /** takes the server response and returns cluster options suitable for react-select */
@@ -50,20 +50,22 @@ export default function ClusterSelector({
 
   return (
     <div className="form-group">
-      <label>Clustering</label>
-      <Select options={clusterOptions}
-        value={{ label: cluster, value: cluster }}
-        onChange={newCluster => updateClusterParams({
-          annotation: annotationKeyProperties(getDefaultAnnotationForCluster(
-            annotationList,
-            newCluster.value,
-            annotation
-          )),
-          cluster: newCluster.value,
-          subsample: getDefaultSubsampleForCluster(annotationList, newCluster.value)
-        })}
-        styles={clusterSelectStyle}
-      />
+      <label className="labeled-select">Clustering
+        <Select options={clusterOptions}
+          value={{ label: cluster, value: cluster }}
+          data-analytics-name="cluster-select"
+          onChange={newCluster => updateClusterParams({
+            annotation: annotationKeyProperties(getDefaultAnnotationForCluster(
+              annotationList,
+              newCluster.value,
+              annotation
+            )),
+            cluster: newCluster.value,
+            subsample: getDefaultSubsampleForCluster(annotationList, newCluster.value)
+          })}
+          styles={clusterSelectStyle}
+        />
+      </label>
     </div>
   )
 }

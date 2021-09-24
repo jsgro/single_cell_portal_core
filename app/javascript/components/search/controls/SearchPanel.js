@@ -27,7 +27,7 @@ const helpModalContent = (<div>
   For more detailed information, visit
   our{' '}
   <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006431-Search-Studies"
-     target="_blank" rel="noreferrer">documentation
+    target="_blank" rel="noreferrer">documentation
   </a>.  Study authors looking to make their studies more accessible can read our
   <a href="https://singlecell.zendesk.com/hc/en-us/articles/4406379107355-Metadata-powered-Advanced-Search"
     target="_blank" rel="noreferrer"> metadata guide
@@ -42,7 +42,6 @@ const helpModalContent = (<div>
 export default function SearchPanel({
   searchOnLoad
 }) {
-
   // Note: This might become  a Higher-Order Component (HOC).
   // This search component is currently specific to the "Studies" tab, but
   // could possibly also enable search for "Genes" and "Cells" tabs.
@@ -54,7 +53,7 @@ export default function SearchPanel({
 
   searchButtons = <FacetsPanel/>
   downloadButtons = <DownloadButton searchResults={searchState.results}/>
-  let advancedOptsLink = <a className="action advanced-opts"
+  const advancedOptsLink = <a className="action advanced-opts"
     onClick={() => setShowSearchHelpModal(true)}
     data-analytics-name="search-help">
     <FontAwesomeIcon icon={faQuestionCircle} />

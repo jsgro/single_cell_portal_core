@@ -1,6 +1,6 @@
 import React from 'react'
-import Select from 'react-select'
 
+import Select from 'lib/InstrumentedSelect'
 import { clusterSelectStyle } from 'lib/cluster-utils'
 
 // value to render in select menu if user has not selected a gene list
@@ -44,13 +44,15 @@ export default function InferCNVIdeogramSelector({
   const matchedIdeogramOption = getMatchedIdeogramOption(inferCNVIdeogramFile, inferCNVIdeogramOptions)
   return (
     <div className="form-group">
-      <label>Ideogram Files</label>
-      <Select
-        value={matchedIdeogramOption}
-        options={inferCNVIdeogramOptions}
-        styles={clusterSelectStyle}
-        onChange={newInferCNVIdeogramFile => updateInferCNVIdeogramFile(newInferCNVIdeogramFile.value)}
-      />
+      <label className="labeled-select">Ideogram Files
+        <Select
+          data-analytics-name="infercnv-select"
+          value={matchedIdeogramOption}
+          options={inferCNVIdeogramOptions}
+          styles={clusterSelectStyle}
+          onChange={newInferCNVIdeogramFile => updateInferCNVIdeogramFile(newInferCNVIdeogramFile.value)}
+        />
+      </label>
     </div>
   )
 }
