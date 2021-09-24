@@ -16,7 +16,7 @@ export default function InstrumentedSelect(props) {
       label = getLabelTextForElement(selectEl, true)
     }
     log('menu:change', {
-      value: opt?.value,
+      value: opt?.label || opt?.name || opt?.value,
       action: action.action,
       label,
       text: props['data-analytics-name'] || props['name']
