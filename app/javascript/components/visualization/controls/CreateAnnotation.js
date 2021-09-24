@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import Panel from 'react-bootstrap/lib/Panel'
 import Switch from 'react-switch'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faMinus, faTimes, faListUl, faDna } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faMinus, faTimes, faListUl } from '@fortawesome/free-solid-svg-icons'
 import _difference from 'lodash/difference'
 import Modal from 'react-bootstrap/lib/Modal'
 
@@ -12,6 +12,7 @@ import { getIdentifierForAnnotation, getDefaultAnnotationForCluster } from 'lib/
 import { createUserAnnotation } from 'lib/scp-api'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { serverErrorEnd } from 'lib/error-utils'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 
 /** A control for adding a new user-defined annotation */
@@ -191,7 +192,7 @@ function CreateAnnotation({
       <Panel className="create-annotation" expanded={showControl} onToggle={handlePanelToggle}>
         <Panel.Collapse>
           <Panel.Body>
-            { isLoading && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+            { isLoading && <LoadingSpinner/> }
             { !isLoading &&
               <>
                 <input
