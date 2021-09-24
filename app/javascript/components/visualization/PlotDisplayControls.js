@@ -48,6 +48,7 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
           <label className="labeled-select">Continuous color scale
             <span className="detail"> (for numeric data)</span>
             <Select
+              data-analytics-name="scatter-color-picker"
               options={SCATTER_COLOR_OPTIONS.map(opt => ({ label: opt, value: opt }))}
               value={{ label: scatterColorValue, value: scatterColorValue }}
               clearable={false}
@@ -62,26 +63,28 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
           </Panel.Title>
         </Panel.Heading>
         <Panel.Body>
-          <label htmlFor="distribution-plot-picker">Plot type </label>
-          <Select name="distribution-plot-picker"
-            options={DISTRIBUTION_PLOT_OPTIONS}
-            value={distributionPlotValue}
-            clearable={false}
-            isSearchable={false}
-            onChange={option => updateExploreParams({
-              distributionPlot: option.value,
-              distributionPoints: distributionPointsValue.value
-            })}/>
-          <label htmlFor="distribution-plot-picker">Data points </label>
-          <Select name="distribution-points-picker"
-            options={DISTRIBUTION_POINTS_OPTIONS}
-            value={distributionPointsValue}
-            clearable={false}
-            isSearchable={false}
-            onChange={option => updateExploreParams({
-              distributionPlot: distributionPlotValue.value,
-              distributionPoints: option.value
-            })}/>
+          <label className="labeled-select">Plot type
+            <Select data-analytics-name="distribution-plot-picker"
+              options={DISTRIBUTION_PLOT_OPTIONS}
+              value={distributionPlotValue}
+              clearable={false}
+              isSearchable={false}
+              onChange={option => updateExploreParams({
+                distributionPlot: option.value,
+                distributionPoints: distributionPointsValue.value
+              })}/>
+          </label>
+          <label className="labeled-select">Data points
+            <Select data-analytics-name="distribution-points-picker"
+              options={DISTRIBUTION_POINTS_OPTIONS}
+              value={distributionPointsValue}
+              clearable={false}
+              isSearchable={false}
+              onChange={option => updateExploreParams({
+                distributionPlot: distributionPlotValue.value,
+                distributionPoints: option.value
+              })}/>
+          </label>
         </Panel.Body>
       </Panel>
       <Panel className={shownTab === 'heatmap' ? '' : 'hidden'}>
@@ -91,20 +94,22 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
           </Panel.Title>
         </Panel.Heading>
         <Panel.Body>
-          <label htmlFor="row-centering-picker">Row centering </label>
-          <Select name="row-centering-picker"
-            options={ROW_CENTERING_OPTIONS}
-            value={heatmapRowCenteringValue}
-            clearable={false}
-            isSearchable={false}
-            onChange={option => updateExploreParams({ heatmapRowCentering: option.value })}/>
-          <label htmlFor="fit-picker">Fit options </label>
-          <Select name="fit-picker"
-            options={FIT_OPTIONS}
-            value={heatmapFitValue}
-            clearable={false}
-            isSearchable={false}
-            onChange={option => updateExploreParams({ heatmapFit: option.value })}/>
+          <label className="labeled-select">Row centering
+            <Select data-analytics-name="row-centering-picker"
+              options={ROW_CENTERING_OPTIONS}
+              value={heatmapRowCenteringValue}
+              clearable={false}
+              isSearchable={false}
+              onChange={option => updateExploreParams({ heatmapRowCentering: option.value })}/>
+          </label>
+          <label className="labeled-select">Fit options
+            <Select data-analytics-name="fit-picker"
+              options={FIT_OPTIONS}
+              value={heatmapFitValue}
+              clearable={false}
+              isSearchable={false}
+              onChange={option => updateExploreParams({ heatmapFit: option.value })}/>
+          </label>
         </Panel.Body>
       </Panel>
     </div>
