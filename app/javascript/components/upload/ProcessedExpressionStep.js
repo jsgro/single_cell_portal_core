@@ -6,12 +6,21 @@ import { UserContext } from 'providers/UserProvider'
 
 const DEFAULT_NEW_PROCESSED_FILE = {
   is_spatial: false,
-  expression_file_info: { is_raw_counts: false, biosample_input_type: 'Whole cell', modality: 'Transcriptomic: unbiased' },
+  expression_file_info: {
+    is_raw_counts: false,
+    biosample_input_type: 'Whole cell',
+    modality: 'Transcriptomic: unbiased'
+  },
   file_type: 'Expression Matrix'
 }
+const fileTypes = ['Expression Matrix', '10X Genes File', '10X Barcodes File', 'MM Coordinate Matrix']
+export const parentFileTypes = ['Expression Matrix', 'MM Coordinate Matrix']
+const processedFilter = file => fileTypes.includes(file.file_type) && !file.expression_file_info?.is_raw_counts
 
-
-const processedFilter = file => file.file_type === 'Expression Matrix' && !file.expression_file_info?.is_raw_counts
+/** find the bundle children of 'file', if any, in the given 'files' list */
+export function findBundleChildren(file, files) {
+  return files.filter(f => f.options.matrix_file_name === file.name || f.options.matrix_id === file._id)
+}
 
 export default {
   title: 'Processed Matrix',
@@ -31,6 +40,7 @@ function ProcessedUploadForm({
   handleSaveResponse
 }) {
   const processedFiles = formState.files.filter(processedFilter)
+  const processedParentFiles = processedFiles.filter(file => parentFileTypes.includes(file.file_type))
   const fileMenuOptions = serverState.menu_options
 
   const userState = useContext(UserContext)
@@ -92,15 +102,19 @@ function ProcessedUploadForm({
         </div>
       </div>
 
-      { processedFiles.map(file => {
+      { processedParentFiles.map(file => {
+        const associatedChildren = findBundleChildren(file, processedFiles)
+
         return <ExpressionFileForm
           key={file._id}
           file={file}
           updateFile={updateFile}
           saveFile={saveFile}
           deleteFile={deleteFile}
+          addNewFile={addNewFile}
           handleSaveResponse={handleSaveResponse}
-          fileMenuOptions={fileMenuOptions}/>
+          fileMenuOptions={fileMenuOptions}
+          associatedChildren={associatedChildren}/>
       })}
       <div className="row top-margin">
         <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_PROCESSED_FILE)}><span className="fas fa-plus"></span> Add File</button>

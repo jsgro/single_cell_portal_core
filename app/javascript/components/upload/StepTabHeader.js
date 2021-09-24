@@ -17,7 +17,7 @@ export default function StepTitle({ step, index, currentStep, setCurrentStep, se
       </a>
       <ul className="file-list">
         { stepFiles.map(file => {
-          return <li key={file.name}>
+          return <li key={file._id}>
             <span className={file.isDirty ? 'dirty' : ''}>{file.name}</span>
           </li>
         })

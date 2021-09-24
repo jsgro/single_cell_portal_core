@@ -7,8 +7,16 @@ const DEFAULT_NEW_RAW_COUNTS_FILE = {
   expression_file_info: { is_raw_counts: true, biosample_input_type: 'Whole cell', modality: 'Transcriptomic: unbiased' },
   file_type: 'Expression Matrix'
 }
+export const fileTypes = ['Expression Matrix', '10X Genes File', '10X Barcodes File', 'MM Coordinate Matrix']
+export const parentFileTypes = ['Expression Matrix', 'MM Coordinate Matrix']
 
-export const rawCountsFileFilter = file => file.file_type === 'Expression Matrix' && file.expression_file_info?.is_raw_counts
+export const rawCountsFileFilter = file => fileTypes.includes(file.file_type) && file.expression_file_info?.is_raw_counts
+
+/** find the bundle children of 'file', if any, in the given 'files' list */
+export function findBundleChildren(file, files) {
+  return files.filter(f => f.options?.matrix_file_name === file.name || f.options?.matrix_id === file._id)
+}
+
 
 export default {
   title: 'Raw Count Files',
@@ -28,6 +36,7 @@ function RawCountsUploadForm({
   handleSaveResponse
 }) {
   const rawCountFiles = formState.files.filter(rawCountsFileFilter)
+  const rawParentFiles = rawCountFiles.filter(file => parentFileTypes.includes(file.file_type))
   const fileMenuOptions = serverState.menu_options
 
   useEffect(() => {
@@ -55,15 +64,18 @@ function RawCountsUploadForm({
       </div>
     </div>
 
-    { rawCountFiles.map(file => {
+    { rawParentFiles.map(file => {
+      const associatedChildren = findBundleChildren(file, rawCountFiles)
       return <ExpressionFileForm
         key={file._id}
         file={file}
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
+        addNewFile={addNewFile}
         handleSaveResponse={handleSaveResponse}
-        fileMenuOptions={fileMenuOptions}/>
+        fileMenuOptions={fileMenuOptions}
+        associatedChildren={associatedChildren}/>
     })}
     <div className="row top-margin">
       <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_RAW_COUNTS_FILE)}><span className="fas fa-plus"></span> Add File</button>
