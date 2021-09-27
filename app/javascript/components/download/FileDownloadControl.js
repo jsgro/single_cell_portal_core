@@ -32,10 +32,12 @@ else {
 
 if (!file.upload_file_name && file.human_data) { 
 
-return  <button className="fas fa-cloud-download btn btn-primary">
+return  <p> <label> Link to file </label>
+<button className="fas fa-cloud-download btn btn-primary">
   type="button"
   <a href rel="noreferrer" target="_blank"> {'External'}</a> 
   </button>
+  </p>
 }
 else if (!file.generation) { 
   return <span className="label label-warning no-download-available" >
@@ -44,8 +46,12 @@ else if (!file.generation) {
 } else {
   console.log('remoteImageUrl:', remoteImageUrl)
   
-  return <div className="form-group"> <a href={remoteImageUrl} rel="noreferrer" className= "btn btn-primary fas fa-download" target="_blank"> {`${bytesToSize(file.upload_file_size)}`} </a>
-</div>
+  return <p> <label> Link to file </label>
+  <br></br>
+   <a href={remoteImageUrl} rel="noreferrer" className= "btn btn-primary dl-link" target="_blank"> 
+   {<span class="fas fa-download"> {bytesToSize(file.upload_file_size)} </span>} 
+   </a>
+</p>
 }
 }
 }

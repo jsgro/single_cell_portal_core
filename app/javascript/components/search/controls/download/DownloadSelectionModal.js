@@ -4,9 +4,8 @@ import _cloneDeep from 'lodash/cloneDeep'
 
 import DownloadCommand from './DownloadCommand'
 import DownloadSelectionTable, {
-  newSelectedBoxesState, getSelectedFileHandles, getSelectedFileStats
+  newSelectedBoxesState, getSelectedFileHandles, getSelectedFileStats, bytesToSize
 } from './DownloadSelectionTable'
-import { bytesToSize } from 'lib/stats'
 
 import { fetchDownloadInfo, fetchDrsInfo } from 'lib/scp-api'
 
