@@ -48,19 +48,26 @@ export function getURLSafeAccessToken() {
 
 /** Returns the feature flags with defaults for the current user */
 export function getFeatureFlagsWithDefaults() {
-  // for now, read it off the home page.  Eventually, this will want to be an API call
-  let flags = {}
-  const pageFlagElement = $('#feature-flags')
-  if (pageFlagElement.length) {
-    flags = JSON.parse(pageFlagElement.attr('value'))
-  }
+  const flags = readUserInfoFromPage().featureFlags
+  console.log(flags)
   return flags
+}
+
+/** for now, read it off the home page.  Eventually, this will want to be an API call */
+function readUserInfoFromPage() {
+  let userInfo = {}
+  const userElement = document.getElementById('user-provider-info')
+  if (userElement) {
+    userInfo = JSON.parse(userElement.value)
+  }
+  return userInfo
 }
 
 const defaultUserState = {
   accessToken: null,
   isAnonymous: true,
   featureFlagsWithDefaults: null,
+  email: null,
   updateFlags: () => {
     throw new Error(
       'You are trying to use this context outside of a Provider container'
@@ -78,13 +85,11 @@ export const UserContext = React.createContext(defaultUserState)
   * e.g. in metrics-api
   */
 export default function UserProvider({ user, children }) {
-  const [userState, setUserState] = useState(user ? user : defaultUserState)
+  const [userState, setUserState] = useState(user ? user : readUserInfoFromPage())
 
   userState.updateFeatureFlags = updateFeatureFlags
   userState.accessToken = getAccessToken()
   userState.isAnonymous = !userState.accessToken
-  userState.featureFlagsWithDefaults = userState.featureFlagsWithDefaults ?
-    userState.featureFlagsWithDefaults : getFeatureFlagsWithDefaults()
 
   /** update the user's feature flags on the server */
   async function updateFeatureFlags(updatedFlags) {

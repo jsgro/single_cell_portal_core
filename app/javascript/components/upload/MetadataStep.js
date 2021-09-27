@@ -24,6 +24,7 @@ export default {
 
 /** Renders a form for uploading one or more cluster/spatial files */
 function MetadataForm({
+  serverState,
   formState,
   addNewFile,
   updateFile,
@@ -99,7 +100,10 @@ function MetadataForm({
                   checked={!file.use_metadata_convention}
                   onChange={e => updateFile(file._id, { use_metadata_convention: false })} /> No
               </label> &nbsp; &nbsp;
-              <OverlayTrigger trigger="click" rootClose placement="top" overlay={conventionIssuePopover}>
+              <OverlayTrigger trigger="click"
+                rootClose
+                placement="top"
+                overlay={<ConventionIssuePopover studyAccession={serverState.study.accession} email={userState.email}/>}>
                 <span className="action log-click"> Using conventional names is an issue for my study</span>
               </OverlayTrigger><br/>
               Learn <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention"
@@ -131,11 +135,18 @@ const whyConventionPopover = (
   </Popover>
 )
 
-const conventionIssuePopover = (
-  <Popover id="convention-issues">
+
+/** Popover with the zendesk form url so that the user's info is prepopulated */
+function ConventionIssuePopover({ email, studyAccession, ...props }) {
+  /** return the zendesk form url so that the user's info is prepopulated */
+  const formUrl= `https://singlecell.zendesk.com/hc/en-us/requests/new?ticket_form_id=1260811597230
+&tf_1260822624790=${studyAccession}&tf_anonymous_requester_email=${email}
+&tf_1900002173444=metadata_convention_exemption&tf_subject=
+Metadata%20Convention%20Exemption%20Request%20for%20${studyAccession}`
+  return <Popover id="convention-issues" {...props}>
     Using the convention is now required.  If this presents a particular issue for your study,
-    please contact us at <a href='mailto:scp-support@broadinstitute.zendesk.com'>scp-support@broadinstitute.zendesk.com</a>
-    so we can help or make any updates to the convention.
+    please use this <a href={formUrl} target="_blank" rel="noopener noreferrer">contact form </a>
+    so we can assist you with your metadata.
   </Popover>
-)
+}
 

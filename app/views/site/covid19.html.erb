@@ -60,7 +60,11 @@
     </div>
   </div>
 </div>
-<input type="hidden" id="feature-flags" value='<%= User.feature_flags_for_instance(current_user).to_json %>'/>
+<input type="hidden" id="user-provider-info" value='<%=
+  {
+    email: current_user&.email,
+    feature_flags: FeatureFlaggable.feature_flags_for_instances(@selected_branding_group, current_user)
+  }.to_json %>'/>
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
     $(document).ready(function() {
       var main = $('.home-page-fix');
