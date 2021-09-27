@@ -41,7 +41,7 @@
         <% if convention_required %>
 
           <a href="#/" style="color:#999" id="convention-decline-label-<%= f.object.id.to_s %>"
-             data-content="Using the convention is now required.  If this presents a particular issue for your study, please use this <a href='<%= exemption_form %>'>contact form</a> so we can assist you with your metadata."
+             data-content="The convention is required.  If this is a problem for your study, please <a data-analytics-name='exemption-contact-us-link' href='<%= exemption_form %>'>contact us</a>."
              data-toggle="popover"
              data-analytics-name="convention-decline-label">
             <%= f.radio_button :use_metadata_convention, false, checked: false, disabled: true %>
@@ -55,7 +55,7 @@
       <% end %>
       &nbsp; &nbsp; <a href="#/" id="convention-decline-helplink-<%= f.object.id.to_s %>"
         data-toggle="popover"
-        data-content="Please use this <a href='<%= exemption_form %>'>contact form</a> so we can assist you with your metadata."
+        data-content="Please use this <a data-analytics-name='exemption-contact-us-link' href='<%= exemption_form %>'>contact form</a> so we can assist you with your metadata."
         data-analytics-name="convention-decline-helplink">
         Using conventional names is an issue for my study
       </a>
