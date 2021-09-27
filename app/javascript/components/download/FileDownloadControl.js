@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fetchBucketFile } from 'lib/scp-api'
+import { UserContext } from 'providers/UserProvider'
 
 export const FileTypeExtensions = {
   plainText: ['.txt', '.tsv', '.text', '.csv', '.txt.gz', '.tsv.gz', '.text.gz', '.csv.gz'],
@@ -8,51 +9,40 @@ export const FileTypeExtensions = {
 
 /** renders a file upload control for the given file object */
 export default function FileDownloadControl({ file, bucketName }) {
-  console.log('file:', file)
-  console.log('filedownload_path:', file.upload_file_name)
-  console.log('filedownl:', file?.upload?.url)
-  console.log('bucketName:', bucketName)
-
   const [remoteImageUrl, setRemoteImageUrl] = useState(null)
   const fileName = file.upload_file_name
-  console.log('fileName:', fileName)
 
-
-    /** If there is a remote file, try to load it and render it on the page */
-    useEffect(() => {
-      setRemoteImageUrl('l')
-      getBucketLocalUrl(bucketName, fileName).then(setRemoteImageUrl)
-    }, [bucketName, fileName])
-
+  /** If there is a remote file, try to load it and render it on the page */
+  useEffect(() => {
+    setRemoteImageUrl(null)
+    getBucketLocalUrl(bucketName, fileName).then(setRemoteImageUrl)
+  }, [bucketName, fileName])
 
   async function getBucketLocalUrl(bucketName, fileName) {
     const response = await fetchBucketFile(bucketName, fileName)
-    const imageBlob = await response.blob()
-    console.log('resp:', response)
-    console.log('respurl:', imageBlob)
-
-    return URL.createObjectURL(imageBlob)
+    const filefrombucket = await response
+    return URL.createObjectURL(filefrombucket)
   }
 
-  console.log('remoteImageUrl:', remoteImageUrl)
+  console.log('file:', file)
+  console.log('UserContext:', UserContext)
 
-
-// console.log('s:', study_file)
-  return file.upload_file_name ? 
-  <div className="form-group">
-    <br/>
-    <button className="fas fa-download">
-    <a href = {remoteImageUrl} rel="noreferrer" target="_blank"> {file.upload_file_name}</a>
-
-          </button>
-    {/* { file.uploadSelection &&
-      <span> {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})</span>
-    } */}
-    {/* <div className="file-container" id={`clusterFileList-${file._id}`}></div> */}
-  </div> :
-   null 
+  if (!file.upload_file_name) {
+      return null 
+  } 
+  else {
+    if (!file.upload_file_name && file.human_data) { 
+      return  <button className="fas fa-cloud-download btn btn-primary"> type="button"
+              <a href rel="noreferrer" target="_blank"> {'External'}</a> 
+              </button>
+    }
+    else if (!file.generation) { 
+      return <span className="label label-warning no-download-available" >
+        You will be able to download this file once it has been uploaded to our remote data store.  Check back soon.
+        </span>
+    } else {
+      console.log('remoteImageUrl:', remoteImageUrl)
+      return <a href={remoteImageUrl} rel="noreferrer" target="_blank"> <button>File</button> </a>
+    }
+  }
 }
-
-// <% if study_file.upload_file_name.nil? && study_file.human_data %>
-//       <%= link_to "<span class='fas fa-cloud-download'></span> External".html_safe, study_file.download_path, class: 'btn btn-primary',
-//                   target: :_blank, rel: 'noopener noreferrer', data: {"analytics-name": 'file-download:study-single:external'} %>
