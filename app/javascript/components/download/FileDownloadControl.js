@@ -49,7 +49,7 @@ else if (!file.generation) {
   return <p> <label> Link to file </label>
   <br></br>
    <a href={remoteImageUrl} rel="noreferrer" className= "btn btn-primary dl-link" target="_blank"> 
-   {<span class="fas fa-download"> {bytesToSize(file.upload_file_size)} </span>} 
+   {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}
    </a>
 </p>
 }
