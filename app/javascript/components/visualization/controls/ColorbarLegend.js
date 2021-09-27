@@ -13,19 +13,8 @@ const scaledPopover = (
   </Popover>
 )
 
-/** renders an svg legend for a dotplot with color and size indicators */
+/** Render SVG legend for heatmap with color indicators */
 export default function DotPlotLegend() {
-  // Sarah N. asked for a note about non-zero in the legend, but it's unclear
-  // if Morpheus supports non-zero.  It might, per the Collapse properties
-  //
-  //    pass_expression: '>',
-  //    pass_value: '0',
-  //
-  // used below, but Morpheus still shows dots with "0.00".  This seems like a
-  // contradiction.  So keep the note code, but don't show the note in the
-  // legend until we can clarify.
-  //
-  // const nonzeroNote = '<text x="9" y="66">(non-zero)</text>';
 
   const gradientId = _uniqueId('dotPlotGrad-')
   const colorBarWidth = 100

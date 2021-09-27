@@ -7,10 +7,10 @@ import Plotly from 'plotly.js-dist'
 import { fetchCluster } from 'lib/scp-api'
 import { logScatterPlot } from 'lib/scp-api-metrics'
 import { log } from 'lib/metrics-api'
-import { labelFont, getColorBrewerColor } from 'lib/plot'
 import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
+import ScatterPlotLegend from './controls/ScatterPlotLegend'
 import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
@@ -186,13 +186,18 @@ function RawScatterPlot({
         id={graphElementId}
         data-testid={graphElementId}
       >
+        { scatterData &&
+        <ScatterPlotLegend
+          data={scatterData.data}
+          pointSize={scatterData.pointSize}
+          labelCorrelations={labelCorrelations}/>
+        }
       </div>
       <p className="help-block">
         { scatterData && scatterData.description &&
           <span>{scatterData.description}</span>
         }
       </p>
-
       {
         isLoading &&
         <FontAwesomeIcon
@@ -207,36 +212,6 @@ function RawScatterPlot({
 
 const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
-
-/** Get entries for scatter plot legend, shown at right of graphic */
-function getLegendEntries(data, pointSize, labelCorrelations) {
-  const traceCounts = countOccurences(data.annotations)
-  const legendEntries = Object.keys(traceCounts)
-    .sort(traceNameSort) // sort keys so we assign colors in the right order
-    .map((label, index) => {
-      let entry = `${label} (${traceCounts[label]} points)`
-      if (labelCorrelations) {
-        const correlation = Math.round(labelCorrelations[label] * 100) / 100
-
-        // ρ = rho = Spearman's rank correlation coefficient
-        entry = `${label} (${traceCounts[label]} points, ρ = ${correlation})`
-      }
-
-      return {
-        target: label,
-        value: {
-          name: entry,
-          legendrank: index,
-          marker: {
-            color: getColorBrewerColor(index),
-            size: pointSize
-          }
-        }
-      }
-    })
-
-  return legendEntries
-}
 
 /** get the array of plotly traces for plotting */
 function getPlotlyTraces({
@@ -272,11 +247,11 @@ function getPlotlyTraces({
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
   if (annotType === 'group' && !isGeneExpressionForColor) {
     // use plotly's groupby transformation to make the traces
-    const legendEntries = getLegendEntries(data, pointSize, labelCorrelations)
+    // const legendEntries = getLegendEntries(data, pointSize, labelCorrelations)
     trace.transforms = [{
       type: 'groupby',
-      groups: data.annotations,
-      styles: legendEntries
+      groups: data.annotations
+      // styles: legendEntries
     }]
   } else {
     trace.marker = {
@@ -302,29 +277,6 @@ function getPlotlyTraces({
   }
   addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
   return [trace]
-}
-
-/**
- * Return a hash of value=>count for the passed-in array
- * This is surprisingly quick even for large arrays, but we'd rather we
- * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
-*/
-function countOccurences(array) {
-  return array.reduce((acc, curr) => {
-    if (!acc[curr]) {
-      acc[curr] = 1
-    } else {
-      acc[curr] += 1
-    }
-    return acc
-  }, {})
-}
-
-/** sort trace names lexically, but always putting 'unspecified' last */
-function traceNameSort(a, b) {
-  if (a === UNSPECIFIED_ANNOTATION_NAME) {return 1}
-  if (b === UNSPECIFIED_ANNOTATION_NAME) {return -1}
-  return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */
@@ -373,7 +325,7 @@ function getPlotlyLayout({ width, height }={}, {
 }) {
   const layout = {
     hovermode: 'closest',
-    font: labelFont,
+    // font: labelFont,
     dragmode: getDragMode(isCellSelecting)
   }
   if (is3D) {
@@ -393,12 +345,13 @@ function getPlotlyLayout({ width, height }={}, {
     Object.assign(layout, props2d)
   }
   if (annotParams && annotParams.name) {
-    layout.legend = {
-      itemsizing: 'constant',
-      title: { text: annotParams.name },
-      y: 0.94
-    }
+    // layout.legend = {
+    //   itemsizing: 'constant',
+    //   title: { text: annotParams.name },
+    //   y: 0.94
+    // }
   }
+  layout.showlegend = false
   layout.width = width
   layout.height = height
   return layout
