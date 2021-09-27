@@ -18,6 +18,8 @@ export default function ClusteringFileForm({
   bucketName
 }) {
 
+  console.log('associatedClusterFileOptions:', associatedClusterFileOptions)
+
 
   const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
   return <div className="row top-margin" key={file._id}>
@@ -25,6 +27,7 @@ export default function ClusteringFileForm({
       <form id={`clusterForm-${file._id}`}
         className="form-terra"
         acceptCharset="UTF-8">
+         <div className="form-group">
         <FileUploadControl
           handleSaveResponse={handleSaveResponse}
           file={file}
@@ -35,6 +38,8 @@ export default function ClusteringFileForm({
           handleSaveResponse={handleSaveResponse}
           bucketName={bucketName}
           />
+                    </div>
+
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         <div className="form-group">
           <label>Coordinate data type:</label><br/>
