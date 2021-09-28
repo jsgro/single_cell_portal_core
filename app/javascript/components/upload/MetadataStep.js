@@ -3,6 +3,8 @@ import metadataExplainerImage from 'images/metadata-convention-explainer.jpg'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
+import FileDownloadControl from 'components/download/FileDownloadControl'
+
 
 import { UserContext } from 'providers/UserProvider'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
@@ -86,6 +88,11 @@ function MetadataForm({
                   file={file}
                   updateFile={updateFile}
                   allowedFileTypes={FileTypeExtensions.plainText}/>
+                <FileDownloadControl
+                  file={file}
+                  handleSaveResponse={handleSaveResponse}
+                  bucketName={formState.study.bucket_id}
+                />
               </div>
             </div>
             <div className="form-group">
