@@ -5,7 +5,7 @@ import MTXBundledFilesForm from './MTXBundledFilesForm'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 
-/** renders a form for editing/uploading a single cluster file */
+/** renders a form for editing/uploading an expression file (raw or processed) and any bundle children */
 export default function ExpressionFileForm({
   file,
   updateFile,

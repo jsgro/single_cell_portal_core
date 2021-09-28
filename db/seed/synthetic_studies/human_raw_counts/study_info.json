@@ -11,23 +11,34 @@
       "use_metadata_convention": false
     },
     {
-      "type": "MM Coordinate Matrix",
-      "filename": "raw1_human_5k_cells_80_genes.processed_sparse.mtx",
-      "species_scientific_name": "Homo sapiens"
-    },
-    {
-      "type": "10X Barcodes File",
-      "filename": "raw1_human_5k_cells_80_genes.barcodes.tsv",
-      "matrix_file_name": "raw1_human_5k_cells_80_genes.processed_sparse.mtx"
-    },
-    {
-      "type": "10X Genes File",
-      "filename": "raw1_human_5k_cells_80_genes.genes.tsv",
-      "matrix_file_name": "raw1_human_5k_cells_80_genes.processed_sparse.mtx"
+      "type": "Expression Matrix",
+      "filename": "raw1_human_5k_cells_80_genes.raw_dense.txt",
+      "species_scientific_name": "Homo sapiens",
+      "expression_file_info": {
+        "is_raw_counts": true,
+        "library_preparation_protocol": "10x 3' v2",
+        "units": "UMI-corrected raw counts",
+        "biosample_input_type": "Whole cell",
+        "modality": "Transcriptomic: targeted"
+      }
     },
     {
       "type": "Cluster",
       "filename": "raw1_human_5k_cells_80_genes.cluster_2D.txt"
+    },
+    {
+      "type": "Cluster",
+      "filename": "raw1_human_5k_cells_80_genes.cluster_3D.txt"
+    },
+    {
+      "type": "Expression Matrix",
+      "filename": "raw1_human_5k_cells_80_genes.processed_dense.txt",
+      "species_scientific_name": "Homo sapiens"
+    },
+    {
+      "type": "Coordinate Labels",
+      "filename": "coordinate_labels.tsv",
+      "cluster_file_name": "raw1_human_5k_cells_80_genes.cluster_3D.txt"
     }
   ]
 }
