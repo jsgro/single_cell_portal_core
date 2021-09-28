@@ -319,12 +319,7 @@ export async function fetchBucketFile(bucketName, fileName, mock=false) {
     }
   }
   const url = `https://storage.googleapis.com/download/storage/v1/b/${bucketName}/o/${fileName}?alt=media`
-  console.log('url is:', url)
   const response = await fetch(url, init).catch(error => error)
-  console.log('r:', response.status)
-  console.log('ur:', response.url)
-
-  
   return response
 }
 
