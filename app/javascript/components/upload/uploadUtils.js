@@ -54,6 +54,7 @@ export function formatFileFromServer(file) {
   file.description = file.description ? file.description : ''
   delete file.study_id
   if (file.taxon_id) {
+    // Note that taxon_id here is a MongoDB object ID, not an NCBI Taxonomy ID like "9606".
     file.taxon_id = file.taxon_id.$oid
   }
   if (!file.expression_file_info) {
@@ -171,7 +172,7 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, save
       animation={false}>
       <Modal.Body className="">
         Are you sure you want to delete { file.name }?<br/>
-        <span>The file will be removed from the workspace and all corresponding database records deleted</span>
+        <span>The file will be removed from the workspace and all corresponding database records deleted.</span>
       </Modal.Body>
       <Modal.Footer>
         <button className="btn btn-md btn-primary" onClick={() => {
