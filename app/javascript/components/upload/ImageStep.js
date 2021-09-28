@@ -46,12 +46,17 @@ export function ImageForm({
 
   return <div>
     <div className="row">
-      <h4 className="col-sm-12">5. Reference Images</h4>
+      <div className="col-md-12">
+       <h4>Reference Images</h4>
+      </div>
     </div>
     <div className="row">
-      <br/>
-      <p className="col-sm-12 text-center">An image file is a static image (.png, .jpeg) that is intended for view alongside cluster and/or expression data.  For example, an anatomical reference image to be dispalyed alongside spatial transcriptomics data</p>
-      <p className="col-sm-12 text-center">Note also that if you want images to appear within your study <i>description</i> you can edit your description and use the toolbar to upload images inline</p>
+      <div className="col-md-12">
+        <div className="form-terra">
+          <p>An image file is a static image (.png, .jpeg) that is intended for view alongside cluster and/or expression data.  For example, an anatomical reference image to be dispalyed alongside spatial transcriptomics data</p>
+          <p>Note also that if you want images to appear within your study <i>description</i> you can edit your description and use the toolbar to upload images inline</p>
+        </div>
+      </div>
     </div>
 
     { imageFiles.map(file => {

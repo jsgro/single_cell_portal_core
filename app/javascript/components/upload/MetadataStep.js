@@ -46,25 +46,35 @@ function MetadataForm({
 
   return <div>
     <div className="row">
-      <h4 className="col-sm-12">3. Metadata</h4>
+      <div className="col-md-12">
+        <h4>Metadata</h4>
+      </div>
     </div>
     <div className="row">
-      <div className="col-md-12" id="metadata-convention-explainer">
-        <img src={metadataExplainerImage}/>
-
-      </div>
       <div className="col-md-12">
-        <a id="metadata-convention-example-link"
-          href="https://singlecell.zendesk.com/hc/en-us/articles/360060609852-Required-Metadata"
-          target="_blank" rel="noopener noreferrer">
-          View required conventional metadata
-        </a>
+        <div className="form-terra">
+          <div className="row">
+            <div className="col-md-12" id="metadata-convention-explainer">
+              A <b>metadata file</b> lists all cells in the study
+              <img src={metadataExplainerImage}/>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-12">
+              <a id="metadata-convention-example-link"
+                href="https://singlecell.zendesk.com/hc/en-us/articles/360060609852-Required-Metadata"
+                target="_blank" rel="noopener noreferrer">
+                View required conventional metadata
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
-
     </div>
+
     { file &&
       <div className="row top-margin" key={file._id}>
-        <div className="col-md-12">
+        <div className="col-md-12 ">
           <form id={`metadataForm-${file._id}`}
             className="form-terra"
             acceptCharset="UTF-8"
