@@ -68,7 +68,7 @@ function MetadataForm({
           <form id={`metadataForm-${file._id}`}
             className="form-terra"
             acceptCharset="UTF-8"
-            onSubmit={() => { console.log('submitting'); return false}}>
+            onSubmit={() => { return false }}>
             <div className="row">
               <div className="col-md-12">
                 <FileUploadControl
@@ -146,7 +146,7 @@ Metadata%20Convention%20Exemption%20Request%20for%20${studyAccession}`
   return <Popover id="convention-issues" {...props}>
     Using the convention is now required.  If this presents a particular issue for your study,
     please use this <a href={formUrl} target="_blank" rel="noopener noreferrer">contact form </a>
-    so we can assist you with your metadata.
+    &nbsp;so we can assist you with your metadata.
   </Popover>
 }
 
