@@ -1,9 +1,11 @@
 import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import _cloneDeep from 'lodash/cloneDeep'
 
 import { bytesToSize } from 'lib/stats'
+import LoadingSpinner from 'lib/LoadingSpinner'
+
 
 /** component that renders a list of studies so that individual studies/files can be selected
   * @param {Object} downloadInfo study download information as provided by fetchDownloadInfo from scp-api.
@@ -62,11 +64,7 @@ export default function DownloadSelectionTable({
         isLoading &&
         <div className="text-center greyed">
           Loading file information<br/>
-          <FontAwesomeIcon
-            icon={faDna}
-            data-testid="bulk-download-loading-icon"
-            className="gene-load-spinner"
-          />
+          <LoadingSpinner data-testid="bulk-download-loading-icon"/>
         </div>
       }
       {
@@ -177,7 +175,7 @@ const COLUMNS = {
   sequence: {
     title: 'Sequence',
     types: ['sequence_file'],
-    info: 'Sequence files, such as BAM or BAI files',
+    info: 'Sequence files, such as FASTQ, BAM or BAI files',
     default: false
   }
 }
@@ -196,10 +194,7 @@ function StudyFileCheckbox({ study, studyIndex, selectedBoxes, colType, updateSe
   let sizeIndicator = null
   if (fileSize === undefined || fileSize === 0) {
     // the file sizes are still loading from TDR
-    sizeIndicator = <FontAwesomeIcon
-      icon={faDna}
-      data-testid="bulk-download-loading-icon"
-      className="gene-load-spinner"/>
+    sizeIndicator = <LoadingSpinner data-testid="bulk-download-loading-icon"/>
   } else {
     sizeIndicator = bytesToSize(fileSize)
   }
@@ -288,7 +283,7 @@ export function getSelectedFileHandles(downloadInfo, selectedBoxes, hashByStudy=
       if (selectedBoxes.studies[index][colType]) {
         const filesOfType = study.studyFiles.filter(file => COLUMNS[colType].types.includes(file.file_type))
         {/* eslint-disable-next-line max-len */}
-        const selectedHandles = filesOfType.map(file => file.url ? { url: file.url, name: file.name, file_type: file.file_type } : file.id)
+        const selectedHandles = filesOfType.map(file => hashByStudy ? { drs_id: file.drs_id, url: file.url, name: file.name, file_type: file.file_type } : file.id)
         if (hashByStudy) {
           fileHandles[study.accession].push(...selectedHandles)
         } else {

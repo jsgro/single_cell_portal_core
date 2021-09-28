@@ -9,12 +9,30 @@
       <p>Background color: <span id="branding_group_background_color"><%= @branding_group.background_color %></span></p>
     </div>
     <div class="col-md-9">
-      <p>Splash Image: <span id="branding_group_splash_image"><%= @branding_group.splash_image_file_name %></span></p>
-      <%= image_tag @branding_group.splash_image.url, class: 'img-thumbnail' %>
-      <p>Banner Image: <span id="branding_group_banner_image"><%= @branding_group.banner_image_file_name %></span></p>
-      <%= image_tag @branding_group.banner_image.url, class: 'img-thumbnail' %>
-      <p>Footer Image: <span id="branding_group_footer_image"><%= @branding_group.footer_image_file_name %></span></p>
-      <%= image_tag @branding_group.footer_image.url, class: 'img-thumbnail' %>
+      <p>Splash Image:
+        <% if @branding_group.splash_image.present? %>
+          <span id="branding_group_splash_image"><%= @branding_group.splash_image_file_name %></span>
+          <%= image_tag @branding_group.splash_image.url, class: 'img-thumbnail' %>
+        <% else %>
+          <span class="detail"> default</span>
+        <% end %>
+      </p>
+      <p>Banner Image: :
+        <% if @branding_group.banner_image.present? %>
+          <span id="branding_group_banner_image"><%= @branding_group.splash_image_file_name %></span>
+          <%= image_tag @branding_group.banner_image.url, class: 'img-thumbnail' %>
+        <% else %>
+          <span class="detail"> default</span>
+        <% end %>
+      </p>
+      <p>Footer Image:
+        <% if @branding_group.footer_image.present? %>
+          <span id="branding_group_footer_image"><%= @branding_group.splash_image_file_name %></span>
+          <%= image_tag @branding_group.footer_image.url, class: 'img-thumbnail' %>
+        <% else %>
+          <span class="detail"> default</span>
+        <% end %>
+      </p>
     </div>
   </div>
   <div class="row">
