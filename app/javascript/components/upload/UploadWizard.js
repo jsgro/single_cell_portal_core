@@ -7,11 +7,8 @@
 
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
-import { Router, navigate, useLocation } from '@reach/router'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './uploadUtils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
@@ -26,6 +23,7 @@ import CoordinateLabelStep from './CoordinateLabelStep'
 import RawCountsStep from './RawCountsStep'
 import ProcessedExpressionStep from './ProcessedExpressionStep'
 import MetadataStep from './MetadataStep'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 const CHUNK_SIZE = 10000000
 const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, SpatialStep, CoordinateLabelStep, ImageStep]
@@ -209,7 +207,7 @@ export default function UploadWizard({ studyAccession, name }) {
           </div>
         </div>
         <div className="col-md-9">
-          { !formState && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+          { !formState && <LoadingSpinner/> }
           { !!formState && <currentStep.component
             formState={formState}
             serverState={serverState}

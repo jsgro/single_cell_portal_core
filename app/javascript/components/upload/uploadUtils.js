@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
 import Modal from 'react-bootstrap/lib/Modal'
+
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 /** properties used to track file state on the form, but that should not be sent to the server
  *  this also includes properties that are only modifiable on the server (and so should also
@@ -129,7 +129,7 @@ export function SavingOverlay({ file, updateFile }) {
   return <div className="file-upload-overlay ">
     { (file.isSaving || file.isDeleting) &&
       <div className="file-upload-overlay">
-        { file.isSaving ? 'Saving' : 'Deleting' } <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
+        { file.isSaving ? 'Saving' : 'Deleting' } <LoadingSpinner/>
       </div>
     }
     { file.isError &&
