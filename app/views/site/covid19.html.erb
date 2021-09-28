@@ -63,7 +63,7 @@
 <input type="hidden" id="user-provider-info" value='<%=
   {
     email: current_user&.email,
-    feature_flags: FeatureFlaggable.feature_flags_for_instances(@selected_branding_group, current_user)
+    featureFlagsWithDefaults: FeatureFlaggable.feature_flags_for_instances(@selected_branding_group, current_user)
   }.to_json %>'/>
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
     $(document).ready(function() {

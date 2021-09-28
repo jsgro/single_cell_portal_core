@@ -60,14 +60,14 @@ export default function MTXBundledFilesForm({
   // don't allow saving until parent file is saved
   const parentSaved = parentFile._id && !parentFile._id.includes('newFile')
   if (!parentSaved) {
-    validationMessage = 'Parent file must be saved first'
+    validationMessage = 'Matrix file must be saved first'
   }
 
   return <div>
     <div className="row">
       <div className="col-md-12 ">
         <div className="sub-form">
-          <h5>10X Genes File</h5>
+          <h5>10x Genes File</h5>
           <FileUploadControl
             handleSaveResponse={handleSaveResponse}
             file={genesFile}
@@ -88,7 +88,7 @@ export default function MTXBundledFilesForm({
     <div className="row">
       <div className="col-md-12">
         <div className="sub-form">
-          <h5>10X Barcodes File</h5>
+          <h5>10x Barcodes File</h5>
           <FileUploadControl
             handleSaveResponse={handleSaveResponse}
             file={barcodesFile}
