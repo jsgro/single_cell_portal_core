@@ -1,6 +1,6 @@
 import React from 'react'
-import Select from 'react-select'
 
+import Select from 'lib/InstrumentedSelect'
 import MTXBundledFilesForm from './MTXBundledFilesForm'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
@@ -55,11 +55,13 @@ export default function ExpressionFileForm({
         <TextFormField label="Expression Axis Label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
 
         <div className="form-group">
-          <label>Species</label><br/>
-          <Select options={speciesOptions}
-            value={selectedSpecies}
-            placeholder="Select one..."
-            onChange={val => updateFile(file._id, { taxon_id: val.value })}/>
+          <label className="labeled-select">Species
+            <Select options={speciesOptions}
+              data-analytics-name="expression-species-select"
+              value={selectedSpecies}
+              placeholder="Select one..."
+              onChange={val => updateFile(file._id, { taxon_id: val.value })}/>
+          </label>
         </div>
 
         { file.expression_file_info.is_raw_counts &&
@@ -105,15 +107,17 @@ function ExpressionFileInfoSelect({ label, propertyName, rawOptions, file, updat
   const selectOptions = rawOptions.map(opt => ({ label: opt, value: opt }))
   const selectedOption = selectOptions.find(opt => opt.value === file.expression_file_info[propertyName])
   return <div className="form-group">
-    <label>{label}</label><br/>
-    <Select options={selectOptions}
-      value={selectedOption}
-      placeholder="Select one..."
-      onChange={val => {
-        const expInfo = {}
-        expInfo[propertyName] = val.value
-        updateFile(file._id, { expression_file_info: expInfo })
-      }}/>
+    <label className="labeled-select">{label}
+      <Select options={selectOptions}
+        data-analytics-name={`expression-${propertyName}-select`}
+        value={selectedOption}
+        placeholder="Select one..."
+        onChange={val => {
+          const expInfo = {}
+          expInfo[propertyName] = val.value
+          updateFile(file._id, { expression_file_info: expInfo })
+        }}/>
+    </label>
   </div>
 }
 

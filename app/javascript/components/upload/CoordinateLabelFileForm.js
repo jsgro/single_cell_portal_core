@@ -1,6 +1,6 @@
 import React from 'react'
-import Select from 'react-select'
 
+import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 
@@ -33,12 +33,14 @@ export default function CoordinateLabelForm({
         </div>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         <div className="form-group">
-          <label htmlFor={`coordCluster-${file._id}`}>Corresponding clusters / spatial data:</label><br/>
-          <Select options={associatedClusterFileOptions}
-            id={`coordCluster-${file._id}`}
-            value={associatedCluster}
-            placeholder="Select one"
-            onChange={val => updateCorrespondingClusters(file, val)}/>
+          <label className="labeled-select">Corresponding clusters / spatial data:
+            <Select options={associatedClusterFileOptions}
+              data-analytics-name="label-corresponding-cluster"
+              id={`coordCluster-${file._id}`}
+              value={associatedCluster}
+              placeholder="Select one"
+              onChange={val => updateCorrespondingClusters(file, val)}/>
+          </label>
         </div>
         <div className="form-group">
           <TextFormField label="Description / Legend (this will be displayed below image)" fieldName="description" file={file} updateFile={updateFile}/>

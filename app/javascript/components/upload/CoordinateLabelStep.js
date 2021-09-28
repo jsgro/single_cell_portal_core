@@ -26,7 +26,7 @@ function CoordinateLabelForm({
   handleSaveResponse
 }) {
   const coordinateFiles = formState.files.filter(coordinateLabelFileFilter)
-  const associatedClusterFileOptions = formState.files.filter(coordinateLabelFileFilter)
+  const associatedClusterFileOptions = formState.files.filter(f => f.file_type === 'Cluster')
     .map(file => ({ label: file.name, value: file._id }))
 
   /** handle a change in the associated cluster select */
