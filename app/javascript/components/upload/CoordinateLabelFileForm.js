@@ -3,8 +3,6 @@ import Select from 'react-select'
 
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
-import FileDownloadControl from 'components/download/FileDownloadControl'
-
 
 /** renders a form for editing/uploading an image file */
 export default function CoordinateLabelForm({
@@ -32,10 +30,6 @@ export default function CoordinateLabelForm({
               file={file}
               updateFile={updateFile}
               allowedFileTypes={FileTypeExtensions.plainText}/>
-            {/* <FileDownloadControl
-              file={file}
-              handleSaveResponse={handleSaveResponse}
-            /> */}
           </div>
         </div>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>

@@ -111,7 +111,8 @@ export function SpatialUploadForm({
         deleteFile={deleteFile}
         handleSaveResponse={handleSaveResponse}
         associatedClusterFileOptions={associatedClusterFileOptions}
-        updateCorrespondingClusters={updateCorrespondingClusters}/>
+        updateCorrespondingClusters={updateCorrespondingClusters}
+        bucketName={formState.study.bucket_id}/>
     })}
     <div className="row top-margin">
       <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_SPATIAL_FILE)}><span className="fas fa-plus"></span> Add File</button>
