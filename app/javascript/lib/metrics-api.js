@@ -81,7 +81,14 @@ export function logClick(event) {
 
   if (typeof event.isTrigger !== 'undefined') {return}
 
+
   const target = $(event.target)
+  // don't double-log clicks we have otherwise instrumented
+  const EXCLUDED_CLICK_SELECTOR = '.labeled-select'
+  if (target.closest(EXCLUDED_CLICK_SELECTOR).length) {
+    return
+  }
+
   // we use closest() so we don't lose clicks on, e.g. icons within a link/button
   // (and we have to use $.closest since IE still doesn't have built-in support for it)
   if (target.closest('a').length) {
@@ -174,31 +181,51 @@ function logClickButton(target) {
 }
 
 /**
- * Get label elements for an input element
- *
+ * Get associated or nearest parent label text for an input element
+ * returns empty string if none
  * From https://stackoverflow.com/a/15061155
  */
-function getLabelsForElement(element) {
+export function getLabelTextForElement(element, excludeElementText) {
   if (metricsApiMock === true) {return []} // Needed for metrics-api.test.js
 
-  let labels
-  const id = element.id
+  let label = null
+  let labelText = ''
 
-  if (element.labels) {
-    return element.labels
+  if (element.labels && element.labels[0]) {
+    label = element.labels[0]
   }
-
-  if (id) {
-    labels = Array.from(document.querySelector(`label[for='${id}']`))
+  if (!label) {
+    const id = element.id
+    if (id) {
+      label = document.querySelector(`label[for='${id}']`)
+    }
   }
-
-  while (element = element.parentNode) {
-    if (element.tagName.toLowerCase() == 'label') {
-      labels.push(element)
+  if (!label) { // traverse parents looking for label
+    let parent = element
+    while (parent = parent.parentNode) {
+      if (parent.tagName?.toLowerCase() == 'label') {
+        label = parent
+        break
+      }
     }
   }
 
-  return labels
+  if (label) {
+    // iterate over the label's children, getting their text, excluding the target element if specified
+    let child = label.firstChild
+    const texts = []
+    while (child) {
+      if (child.nodeType == 3) { // text node
+        texts.push(child.data)
+      } else if (child != element || !excludeElementText) {
+        texts.push(child.innerText)
+      }
+      child = child.nextSibling
+    }
+    labelText = texts.join('')
+  }
+
+  return labelText
 };
 
 /**
@@ -212,10 +239,7 @@ function logClickInput(target) {
     const value = target.value
     props = { id, 'input-name': inputName, value }
   } else {
-    const domLabels = getLabelsForElement(target)
-
-    // User-facing label
-    const label = domLabels.length > 0 ? getNameForClickTarget(domLabels[0]) : ''
+    const label = getLabelTextForElement(target)
 
     props = { label }
     if (target.dataset.analyticsName) {
@@ -226,16 +250,12 @@ function logClickInput(target) {
   }
   const element = `input-${target.type}`
   log(`click:${element}`, props)
-
-  // Google Analytics fallback: remove once Bard and Mixpanel are ready for SCP
-  ga('send', 'event', 'click', element) // eslint-disable-line no-undef
 }
 
 /** Log text of selected option when dropdown menu (i.e., select) changes */
 export function logMenuChange(event) {
   // Get user-facing label
-  const domLabels = getLabelsForElement(event.target)
-  const label = domLabels.length > 0 ? domLabels[0].innerText : ''
+  const label = getLabelTextForElement(event.target)
 
   // Get newly-selected option
   const options = event.target.options

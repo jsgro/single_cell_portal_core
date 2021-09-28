@@ -1,6 +1,6 @@
 class BrandingGroupsController < ApplicationController
   before_action :set_branding_group, only: [:show, :edit, :update, :destroy]
-  before_action do
+  before_action except: [:list_navigate] do
     authenticate_user!
     authenticate_admin
   end
@@ -9,6 +9,15 @@ class BrandingGroupsController < ApplicationController
   # GET /branding_groups.json
   def index
     @branding_groups = BrandingGroup.all
+  end
+
+  # show a list for display and linking, editable only if the user has appropriate permissions
+  def list_navigate
+    @editable_branding_groups = []
+    @branding_groups = BrandingGroup.visible_groups_to_user(current_user)
+    if current_user.present?
+      @editable_branding_groups = current_user.available_branding_groups.to_a
+    end
   end
 
   # GET /branding_groups/1
@@ -35,7 +44,7 @@ class BrandingGroupsController < ApplicationController
         # push all branding assets to remote to ensure consistency
         UserAssetService.delay.push_assets_to_remote(asset_type: :branding_images)
         format.html { redirect_to merge_default_redirect_params(branding_group_path(@branding_group), scpbr: params[:scpbr]),
-                                  notice: "Branding group '#{@branding_group.name}' was successfully created." }
+                                  notice: "Collection '#{@branding_group.name}' was successfully created." }
         format.json { render :show, status: :created, location: @branding_group }
       else
         format.html { render :new }
@@ -48,9 +57,19 @@ class BrandingGroupsController < ApplicationController
   # PATCH/PUT /branding_groups/1.json
   def update
     respond_to do |format|
-      if @branding_group.update(branding_group_params)
+      clean_params = branding_group_params.to_h
+      # iterate through each image type to check if the user wants to clear it from the reset checkbox
+      ['splash_image', 'banner_image', 'footer_image'].each do |image_name|
+        if clean_params["reset_#{image_name}"] == 'on'
+          clean_params[image_name] = nil
+        end
+        # delete the param since it is not a real model param
+        clean_params.delete("reset_#{image_name}")
+      end
+
+      if @branding_group.update(clean_params)
         format.html { redirect_to merge_default_redirect_params(branding_group_path(@branding_group), scpbr: params[:scpbr]),
-                                  notice: "Branding group '#{@branding_group.name}' was successfully updated." }
+                                  notice: "Collection '#{@branding_group.name}' was successfully updated." }
         format.json { render :show, status: :ok, location: @branding_group }
       else
         format.html { render :edit }
@@ -66,7 +85,7 @@ class BrandingGroupsController < ApplicationController
     @branding_group.destroy
     respond_to do |format|
       format.html { redirect_to merge_default_redirect_params(branding_groups_path, scpbr: params[:scpbr]),
-                                notice: "Branding group '#{name}' was successfully destroyed." }
+                                notice: "Collection '#{name}' was successfully destroyed." }
       format.json { head :no_content }
     end
   end
@@ -80,7 +99,8 @@ class BrandingGroupsController < ApplicationController
 
   # Never trust parameters from the scary internet, only allow the permit list through.
   def branding_group_params
-    params.require(:branding_group).permit(:name, :tag_line, :background_color, :font_family, :font_color, :user_id,
-                                           :splash_image, :banner_image, :footer_image, :external_link_url, :external_link_description)
+    params.require(:branding_group).permit(:name, :tag_line, :public, :background_color, :font_family, :font_color, :user_id,
+                                           :splash_image, :banner_image, :footer_image, :external_link_url, :external_link_description,
+                                           :reset_splash_image, :reset_footer_image, :reset_banner_image)
   end
 end

@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
 import _capitalize from 'lodash/capitalize'
 import { fetchExpressionViolin } from 'lib/scp-api'
@@ -11,7 +9,7 @@ import { useUpdateEffect } from 'hooks/useUpdate'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import useErrorMessage from 'lib/error-message'
 import { logViolinPlot } from 'lib/scp-api-metrics'
-
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 export const DISTRIBUTION_PLOT_OPTIONS = [
   { label: 'Violin plot', value: 'violin' },
@@ -138,12 +136,7 @@ function RawStudyViolinPlot({
       >
       </div>
       {
-        isLoading &&
-        <FontAwesomeIcon
-          icon={faDna}
-          data-testid={`${graphElementId}-loading-icon`}
-          className="gene-load-spinner"
-        />
+        isLoading && <LoadingSpinner data-testid={`${graphElementId}-loading-icon`}/>
       }
       {/* we have to explicitly test length > 0 below, just asserting .length would
        sometimes render a zero to the page*/}

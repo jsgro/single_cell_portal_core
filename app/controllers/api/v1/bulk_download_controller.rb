@@ -291,7 +291,7 @@ module Api
           end
         else
           valid_accessions = self.class.find_matching_accessions(params[:accessions])
-          sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
+          sanitized_file_types = self.class.find_matching_file_types(params[:file_types], accessions: valid_accessions)
         end
 
         # if they provided file_ids (either directly or via download_id), get the corresponding studies
@@ -376,13 +376,19 @@ module Api
       end
 
       # find valid bulk download types from query parameters
-      def self.find_matching_file_types(raw_file_types)
+      def self.find_matching_file_types(raw_file_types, accessions:)
         file_types = RequestUtils.split_query_param_on_delim(parameter: raw_file_types)
         if file_types.count > 0
           return StudyFile::BULK_DOWNLOAD_TYPES & file_types # find array intersection
         end
         # default is return all types
-        DEFAULT_BULK_FILE_TYPES
+        # if this is a single-study bulk download w/o file types, return all file types present in that study
+        if accessions.size == 1
+          study = Study.find_by(accession: accessions.first)
+          study.study_files.pluck(:file_type).uniq
+        else
+          DEFAULT_BULK_FILE_TYPES
+        end
       end
 
       # find matching directories in a given study
@@ -392,7 +398,9 @@ module Api
         study = Study.find_by(accession: accession)
         sanitized_dirname = URI.decode(directory_name)
         selector = DirectoryListing.where(study_id: study.id, sync_status: true)
-        if sanitized_dirname.downcase != 'all'
+        if sanitized_dirname.downcase == 'nodirs'
+          return [] # for study file download only
+        elsif sanitized_dirname.downcase != 'all'
           selector = selector.where(name: sanitized_dirname)
         end
         selector

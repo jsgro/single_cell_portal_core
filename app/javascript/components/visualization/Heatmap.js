@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna, faArrowsAltV, faArrowsAltH, faArrowsAlt } from '@fortawesome/free-solid-svg-icons'
+import { faArrowsAltV, faArrowsAltH, faArrowsAlt } from '@fortawesome/free-solid-svg-icons'
 
 import { log } from 'lib/metrics-api'
 import { getExpressionHeatmapURL, getAnnotationCellValuesURL, getGeneListColsURL } from 'lib/scp-api'
@@ -9,6 +9,7 @@ import { morpheusTabManager, logMorpheusPerfTime } from './DotPlot'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import useErrorMessage, { morpheusErrorHandler } from 'lib/error-message'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 export const ROW_CENTERING_OPTIONS = [
   { label: 'None', value: '' },
@@ -111,7 +112,7 @@ function RawHeatmap({
       { ErrorComponent }
       { cluster &&
         <div id={graphId} className="heatmap-graph" style={{ minWidth: '80vw' }}></div> }
-      { !cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+      { !cluster && <LoadingSpinner/> }
     </div>
   )
 }
