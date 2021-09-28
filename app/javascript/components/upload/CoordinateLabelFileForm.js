@@ -22,7 +22,7 @@ export default function CoordinateLabelForm({
 
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
-      <form id={`clusterForm-${file._id}`}
+      <form id={`labelForm-${file._id}`}
         className="form-terra"
         acceptCharset="UTF-8">
         <div className="row">

@@ -50,28 +50,31 @@ function CoordinateLabelForm({
     <div className="row">
       <div className="col-md-12">
         <p className="text-center">
-          <a href="https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/coordinate_labels_example.txt" target="_blank" rel="noopener noreferrer">Coordinate Label File</a>
+
         </p>
       </div>
     </div>
 
     <div className="row">
       <div className="col-md-12">
-        <pre className="code-example col-sm-5 col-sm-offset-4">
-          X&#09;Y&#09;Z&#09;LABELS<br/>
-          35.47&#09;33.21&#09;61.03&#09;Region 1<br/>
-          -10.68&#09;-52.64&#09;-57.34&#09;Region 2<br/>
-          ...
-        </pre>
-      </div>
-    </div>
-    <div className="row">
-      <div className="col-md-12">
-        <p>A tab- or comma-delimited text file containing labels to display at specified coordinates of a cluster. <br/>
-          <strong className="text-danger">These are not cluster files - they are annotations to overlay on top of a cluster.</strong><br/>
+        <div className="form-terra">
+          <p>
+            A <a href="https://raw.githubusercontent.com/broadinstitute/single_cell_portal/master/demo_data/coordinate_labels_example.txt" target="_blank" rel="noopener noreferrer">Coordinate Label File</a>
+            &nbsp;specifies labels to display at specified coordinates of a cluster.
+          </p>
+          <pre>
+            X&#09;Y&#09;Z&#09;LABELS<br/>
+            35.47&#09;33.21&#09;61.03&#09;Region 1<br/>
+            -10.68&#09;-52.64&#09;-57.34&#09;Region 2<br/>
+            ...
+          </pre>
+        <p>
+          <strong>These are not cluster files</strong> - they are annotations to overlay on top of a cluster.<br/>
           The file must be a plain text (.txt) file with at least 3 columns and a header row containing the values <strong>X</strong>, <strong>Y</strong>, and <strong>LABELS</strong>.  The file may have an optional column of <strong>Z</strong> (for 3d clusters).
-          The last column must contain text labels to display at the specified coordinates.</p>
+          The last column must contain text labels to display at the specified coordinates.
+        </p>
         <p><i className="fas fa-fw fa-exclamation-triangle text-warning"></i> The coordinates of the labels must fall inside the ranges of the cluster they are associated with for them to render.</p>
+        </div>
       </div>
     </div>
 

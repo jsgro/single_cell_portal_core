@@ -1,54 +1,65 @@
 import React, { useEffect } from 'react'
 
 import ClusteringFileForm from './ClusteringFileForm'
+import { clusterFileFilter } from './ClusteringStep'
 
 
-const DEFAULT_NEW_CLUSTER_FILE = {
-  is_spatial: false,
+const DEFAULT_NEW_SPATIAL_FILE = {
+  is_spatial: true,
   file_type: 'Cluster'
 }
 
-export const clusterFileFilter = file => file.file_type === 'Cluster' && !file.is_spatial
+export const spatialFileFilter = file => file.file_type === 'Cluster' && file.is_spatial
 
 export default {
-  title: 'Clustering',
-  name: 'clustering',
-  component: ClusteringUploadForm,
-  fileFilter: clusterFileFilter
+  title: 'Spatial Transcriptomics',
+  name: 'spatial',
+  component: SpatialUploadForm,
+  fileFilter: spatialFileFilter
 }
 
 
 /** Renders a form for uploading one or more cluster/spatial files */
-export function ClusteringUploadForm({
+export function SpatialUploadForm({
   formState,
   addNewFile,
   updateFile,
   saveFile,
   deleteFile,
-  handleSaveResponse,
-  bucketName
-
+  handleSaveResponse
 }) {
-  const clusterFiles = formState.files.filter(clusterFileFilter)
+  const spatialFiles = formState.files.filter(spatialFileFilter)
+  const associatedClusterFileOptions = formState.files.filter(clusterFileFilter)
+    .map(file => ({ label: file.name, value: file._id }))
+
+  /** handle a change in the associated cluster select */
+  function updateCorrespondingClusters(file, val) {
+    let newVal = []
+    if (val) {
+      newVal = val.map(opt => opt.value)
+    }
+    updateFile(file._id, { spatial_cluster_associations: newVal })
+  }
 
   useEffect(() => {
-    if (clusterFiles.length === 0) {
-      addNewFile(DEFAULT_NEW_CLUSTER_FILE)
+    if (spatialFiles.length === 0) {
+      addNewFile(DEFAULT_NEW_SPATIAL_FILE)
     }
-  }, [clusterFiles.length])
+  }, [spatialFiles.length])
 
   return <div>
     <div className="row">
-      <div className="col-md-12">
-         <h4>Clustering files</h4>
-      </div>
+      <h4 className="col-sm-12">Spatial files</h4>
     </div>
     <div className="row">
       <div className="col-md-12">
         <div className="form-terra">
           <div className="row">
             <div className="col-md-12">
-              <p>A <a href="https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt" target="_blank" rel="noreferrer">cluster file</a> (.txt or .txt.gz) contains any cluster ordinations and optional cluster-specific metadata.</p>
+              <p>
+                A <a href="https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/spatial_example.txt" target="_blank" rel="noreferrer">spatial file</a>
+                &nbsp;(.txt or .txt.gz) contains <a href="https://en.wikipedia.org/wiki/Spatial_transcriptomics" target="_blank" rel="noreferrer">spatial transcriptomics</a> cell coordinates and optional metadata.
+              </p>
             </div>
           </div>
           <div className="row">
@@ -58,7 +69,7 @@ export function ClusteringUploadForm({
           </div>
           <div className="row">
             <div className="col-md-6">
-              <p><strong>At minimum </strong> a cluster file has:</p>
+              <p><strong>At minimum </strong> a spatial file has:</p>
             </div>
           </div>
           <div className="row">
@@ -79,9 +90,8 @@ export function ClusteringUploadForm({
                 </ul>
               </ul>
             </div>
-          </div>
-          <div className="row">
-            <p className="col-sm-12 text-center">Once your cluster file has been successfully ingested, additional representative
+
+            <p className="col-sm-12 text-center">Once your spatial file has been successfully ingested, additional representative
               subsamples of the full resolution data will be stored as well.
               <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling" target="_blank" rel="noreferrer"> Learn More <i className='fas fa-question-circle'></i></a>
             </p>
@@ -92,8 +102,7 @@ export function ClusteringUploadForm({
         </div>
       </div>
     </div>
-
-    { clusterFiles.map(file => {
+    { spatialFiles.map(file => {
       return <ClusteringFileForm
         key={file._id}
         file={file}
@@ -101,11 +110,11 @@ export function ClusteringUploadForm({
         saveFile={saveFile}
         deleteFile={deleteFile}
         handleSaveResponse={handleSaveResponse}
-        bucketName={formState.study.bucket_id}
-      />
+        associatedClusterFileOptions={associatedClusterFileOptions}
+        updateCorrespondingClusters={updateCorrespondingClusters}/>
     })}
     <div className="row top-margin">
-      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_CLUSTER_FILE)}><span className="fas fa-plus"></span> Add File</button>
+      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_SPATIAL_FILE)}><span className="fas fa-plus"></span> Add File</button>
     </div>
   </div>
 }

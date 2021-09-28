@@ -26,7 +26,7 @@ export default function ImageFileForm({
 
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
-      <form id={`clusterForm-${file._id}`}
+      <form id={`imageForm-${file._id}`}
         className="form-terra"
         acceptCharset="UTF-8">
         <div className="row">
@@ -39,7 +39,7 @@ export default function ImageFileForm({
               handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}
-              allowedFileTypes={["*"]}/>
+              allowedFileTypes={FileTypeExtensions.image}/>
           </div>
           <div className="col-md-6">
             { file.uploadSelection && <img className="preview-image" src={imagePreviewUrl} alt={file.uploadSelection.name} /> }

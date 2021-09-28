@@ -15,16 +15,19 @@ import _isMatch from 'lodash/isEqual'
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './uploadUtils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
 import MessageModal from 'lib/MessageModal'
+import UserProvider from 'providers/UserProvider'
 
 import StepTabHeader from './StepTabHeader'
 import ClusteringStep from './ClusteringStep'
+import SpatialStep from './SpatialStep'
 import ImageStep from './ImageStep'
 import CoordinateLabelStep from './CoordinateLabelStep'
 import RawCountsStep from './RawCountsStep'
 import ProcessedExpressionStep from './ProcessedExpressionStep'
+import MetadataStep from './MetadataStep'
 
 const CHUNK_SIZE = 10000000
-const STEPS = [RawCountsStep, ProcessedExpressionStep, ClusteringStep, CoordinateLabelStep, ImageStep]
+const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, SpatialStep, CoordinateLabelStep, ImageStep]
 
 /** shows the upload wizard */
 export default function UploadWizard({ studyAccession, name }) {
@@ -179,43 +182,42 @@ export default function UploadWizard({ studyAccession, name }) {
     })
   }, [studyAccession])
 
-  return <div className="">
-    <div className="row padded">
-      <div className="col-md-10">
-        <h4>{studyAccession}: {name}</h4>
+  return <UserProvider>
+    <div className="upload-wizard-react">
+      <div className="row">
+        <div className="col-md-3">
+          <div className="position-fixed">
+            <div className="padded">
+              <h5><a href={`/single_cell/study/${studyAccession}`}>{studyAccession}</a>: {name}</h5>
+            </div>
+            <ul className="upload-wizard-steps">
+              { STEPS.map((step, index) =>
+                <StepTabHeader key={index}
+                  step={step}
+                  index={index}
+                  formState={formState}
+                  serverState={serverState}
+                  currentStep={currentStep}
+                  setCurrentStep={setCurrentStep}/>) }
+            </ul>
+          </div>
+        </div>
+        <div className="col-md-9">
+          { !formState && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+          { !!formState && <currentStep.component
+            formState={formState}
+            serverState={serverState}
+            deleteFile={deleteFile}
+            updateFile={updateFile}
+            saveFile={saveFile}
+            addNewFile={addNewFile}
+            handleSaveResponse={handleSaveResponse}
+          /> }
+        </div>
       </div>
-      <div className="col-md-2">
-        <a href={`/single_cell/study/${studyAccession}`}>View Study</a>
-      </div>
+      <MessageModal/>
     </div>
-    <div className="row">
-      <div className="col-md-3">
-        <ul className="upload-wizard-steps">
-          { STEPS.map((step, index) =>
-            <StepTabHeader key={index}
-              step={step}
-              index={index}
-              formState={formState}
-              serverState={serverState}
-              currentStep={currentStep}
-              setCurrentStep={setCurrentStep}/>) }
-        </ul>
-      </div>
-      <div className="col-md-9">
-        { !formState && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
-        { !!formState && <currentStep.component
-          formState={formState}
-          serverState={serverState}
-          deleteFile={deleteFile}
-          updateFile={updateFile}
-          saveFile={saveFile}
-          addNewFile={addNewFile}
-          handleSaveResponse={handleSaveResponse}
-        /> }
-      </div>
-    </div>
-    <MessageModal/>
-  </div>
+  </UserProvider>
 }
 
 /** convenience method for drawing/updating the component from non-react portions of SCP */
