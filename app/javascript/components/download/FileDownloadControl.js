@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { fetchBucketFile } from 'lib/scp-api'
-import { UserContext } from 'providers/UserProvider'
 import { bytesToSize } from 'lib/stats'
 
-/** renders a file upload control for the given file object */
+/** renders a file download control for the given file object */
 export default function FileDownloadControl({ file, bucketName }) {
   const [remoteImageUrl, setRemoteImageUrl] = useState(null)
   const fileName = file.upload_file_name
@@ -14,44 +13,37 @@ export default function FileDownloadControl({ file, bucketName }) {
     getBucketLocalUrl(bucketName, fileName).then(setRemoteImageUrl)
   }, [bucketName, fileName])
 
-  /** TODO */
+  /** get the remote file path */
   async function getBucketLocalUrl(bucketName, fileName) {
     const response = await fetchBucketFile(bucketName, fileName)
     const filefrombucket = await response
-    const respBlob = await response.blob()
+    const respBlob = await filefrombucket.blob()
     return URL.createObjectURL(respBlob)
   }
 
-  console.log('file:', file)
-  console.log('UserContext:', UserContext)
+  let contentsForFileDownload = null
 
-   if (!file.upload_file_name) {
-  return null 
-} 
-else {
-
-if (!file.upload_file_name && file.human_data) { 
-
-return  <p> <label> Link to file </label>
-<button className="fas fa-cloud-download btn btn-primary">
+  if (!file.upload_file_name) {
+      return null 
+  } else {
+// to do
+    if (!file.upload_file_name && file.human_data) { 
+      contentsForFileDownload =  <button className="fas fa-cloud-download btn btn-primary">
   type="button"
   <a href rel="noreferrer" target="_blank"> {'External'}</a> 
   </button>
-  </p>
 }
+//to do
 else if (!file.generation) { 
-  return <span className="label label-warning no-download-available" >
-    You will be able to download this file once it has been uploaded to our remote data store.  Check back soon.
-  </span>
-} else {
-  console.log('remoteImageUrl:', remoteImageUrl)
-  
-  return <p> <label> Link to file </label>
-  <br></br>
-   <a href={remoteImageUrl} rel="noreferrer" className= "btn btn-primary dl-link" target="_blank"> 
-   {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}
-   </a>
-</p>
+  contentsForFileDownload = <span className="label label-warning no-download-available" data-toggle="tooltip" title='You will be able to download this file once it has been uploaded to our remote data store.  Check back soon.'>
+      {<span className="fas fa-ban"></span> } Awaiting remote file
+    </span>
+} else {  
+  contentsForFileDownload = <a href={remoteImageUrl} rel="noreferrer" className= "btn btn-primary dl-link" target="_blank"> 
+      {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}
+    </a>
 }
 }
+
+return <p> <label> Link to file </label> <br></br>{contentsForFileDownload}</p>
 }
