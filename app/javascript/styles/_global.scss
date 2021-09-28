@@ -1,44 +1,6 @@
 @import './_colors.scss';
 
 /* SCP-specific styles */
-
-.plot-container.plotly {
-  display: inline-block;
-  float: left;
-}
-
-.scp-scatter-legend {
-  display: inline-block;
-  width: 250px;
-  background-color: #EEF;
-}
-
-.scp-scatter-legend-row {
-  height: 25px;
-  cursor: pointer;
-  background-color: #FFF;
-  border: 1px solid #DDD;
-  border-radius: 3px;
-  margin-top: 3px;
-}
-
-.scp-scatter-legend-row:hover {
-  border-color: #AAB;
-}
-
-.scp-scatter-legend-icon {
-  width: 23px;
-  height: 23px;
-  margin: 0 10px 0 -1px;
-  float: left;
-  border-radius: 2px 0 0 2px
-}
-
-.scp-scatter-legend-entry {
-  position: relative;
-  top: 2px;
-}
-
 html,
 body {
   height: 100%;

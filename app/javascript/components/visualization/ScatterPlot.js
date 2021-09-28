@@ -25,6 +25,23 @@ export const SCATTER_COLOR_OPTIONS = [
 export const defaultScatterColor = 'Reds'
 window.Plotly = Plotly
 
+/**
+ * Return a hash of value=>count for the passed-in array
+ * This is surprisingly quick even for large arrays, but we'd rather we
+ * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
+*/
+function countValues(array) {
+  return array.reduce((acc, curr) => {
+    if (!acc[curr]) {
+      acc[curr] = 1
+    } else {
+      acc[curr] += 1
+    }
+    return acc
+  }, {})
+}
+
+
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
@@ -45,6 +62,7 @@ function RawScatterPlot({
   const [bulkCorrelation, setBulkCorrelation] = useState(null)
   const [labelCorrelations, setLabelCorrelations] = useState(null)
   const [scatterData, setScatterData] = useState(null)
+  const [countsByLabel, setCountsByLabel] = useState(null)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
@@ -97,7 +115,12 @@ function RawScatterPlot({
       })
     }
 
+    // const labelCounts = countValues(scatter.data.annotations)
+    // console.log('labelCounts', labelCounts)
+
+    setCountsByLabel(countValues(scatter.data.annotations))
     setScatterData(scatter)
+    console.log('countsByLabel', countsByLabel)
     setShowError(false)
     setIsLoading(false)
   }
@@ -188,9 +211,9 @@ function RawScatterPlot({
       >
         { scatterData &&
         <ScatterPlotLegend
-          data={scatterData.data}
-          pointSize={scatterData.pointSize}
-          labelCorrelations={labelCorrelations}/>
+          name={scatterData.annotParams.name}
+          countsByLabel={countsByLabel}
+          correlations={labelCorrelations}/>
         }
       </div>
       <p className="help-block">
