@@ -25,10 +25,8 @@ export default function FileDownloadControl({ file, bucketName }) {
     return null
   } else {
     if (!file.upload_file_name && file.human_data) {
-      return <a href={remoteImageUrl} rel="noreferrer"
-        className= "btn btn-primary dl-link" target="_blank">
-        {<span className="fas fa-download"></span> } {'External Link'}
-      </a>
+      return null
+      // TODO once the Sequence Data tab is added update this section for handling external human data files
     } else {
       return <p> <label> Link to file </label>
         <br></br>
