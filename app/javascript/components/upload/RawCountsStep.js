@@ -1,22 +1,17 @@
 import React, { useEffect } from 'react'
 
 import ExpressionFileForm from './ExpressionFileForm'
+import { findBundleChildren } from './uploadUtils'
 
 const DEFAULT_NEW_RAW_COUNTS_FILE = {
   is_spatial: false,
   expression_file_info: { is_raw_counts: true, biosample_input_type: 'Whole cell', modality: 'Transcriptomic: unbiased' },
   file_type: 'Expression Matrix'
 }
-export const fileTypes = ['Expression Matrix', '10X Genes File', '10X Barcodes File', 'MM Coordinate Matrix']
-export const parentFileTypes = ['Expression Matrix', 'MM Coordinate Matrix']
+
+export const fileTypes = ['Expression Matrix', 'MM Coordinate Matrix']
 
 export const rawCountsFileFilter = file => fileTypes.includes(file.file_type) && file.expression_file_info?.is_raw_counts
-
-/** find the bundle children of 'file', if any, in the given 'files' list */
-export function findBundleChildren(file, files) {
-  return files.filter(f => f.options?.matrix_file_name === file.name || f.options?.matrix_id === file._id)
-}
-
 
 export default {
   title: 'Raw Count Files',
@@ -25,7 +20,7 @@ export default {
   fileFilter: rawCountsFileFilter
 }
 
-/** placeholder */
+/** form for uploading a parent expression file and any children */
 function RawCountsUploadForm({
   formState,
   serverState,
@@ -35,15 +30,14 @@ function RawCountsUploadForm({
   deleteFile,
   handleSaveResponse
 }) {
-  const rawCountFiles = formState.files.filter(rawCountsFileFilter)
-  const rawParentFiles = rawCountFiles.filter(file => parentFileTypes.includes(file.file_type))
+  const rawParentFiles = formState.files.filter(rawCountsFileFilter)
   const fileMenuOptions = serverState.menu_options
 
   useEffect(() => {
-    if (rawCountFiles.length === 0) {
+    if (rawParentFiles.length === 0) {
       addNewFile(DEFAULT_NEW_RAW_COUNTS_FILE)
     }
-  }, [rawCountFiles.length])
+  }, [rawParentFiles.length])
 
   return <div>
     <div className="row">
@@ -65,7 +59,7 @@ function RawCountsUploadForm({
     </div>
 
     { rawParentFiles.map(file => {
-      const associatedChildren = findBundleChildren(file, rawCountFiles)
+      const associatedChildren = findBundleChildren(file, formState.files)
       return <ExpressionFileForm
         key={file._id}
         file={file}

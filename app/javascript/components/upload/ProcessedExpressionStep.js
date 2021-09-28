@@ -3,6 +3,7 @@ import React, { useEffect, useContext } from 'react'
 import ExpressionFileForm from './ExpressionFileForm'
 import { rawCountsFileFilter, expressionFileStructureHelp } from './RawCountsStep'
 import { UserContext } from 'providers/UserProvider'
+import { findBundleChildren } from './uploadUtils'
 
 const DEFAULT_NEW_PROCESSED_FILE = {
   is_spatial: false,
@@ -13,14 +14,9 @@ const DEFAULT_NEW_PROCESSED_FILE = {
   },
   file_type: 'Expression Matrix'
 }
-const fileTypes = ['Expression Matrix', '10X Genes File', '10X Barcodes File', 'MM Coordinate Matrix']
-export const parentFileTypes = ['Expression Matrix', 'MM Coordinate Matrix']
-const processedFilter = file => fileTypes.includes(file.file_type) && !file.expression_file_info?.is_raw_counts
 
-/** find the bundle children of 'file', if any, in the given 'files' list */
-export function findBundleChildren(file, files) {
-  return files.filter(f => f.options.matrix_file_name === file.name || f.options.matrix_id === file._id)
-}
+export const fileTypes = ['Expression Matrix', 'MM Coordinate Matrix']
+const processedFilter = file => fileTypes.includes(file.file_type) && !file.expression_file_info?.is_raw_counts
 
 export default {
   title: 'Processed Matrix',
@@ -29,7 +25,7 @@ export default {
   fileFilter: processedFilter
 }
 
-/** placeholder */
+/** form for uploading a parent expression file and any children */
 function ProcessedUploadForm({
   formState,
   serverState,
@@ -39,8 +35,7 @@ function ProcessedUploadForm({
   deleteFile,
   handleSaveResponse
 }) {
-  const processedFiles = formState.files.filter(processedFilter)
-  const processedParentFiles = processedFiles.filter(file => parentFileTypes.includes(file.file_type))
+  const processedParentFiles = formState.files.filter(processedFilter)
   const fileMenuOptions = serverState.menu_options
 
   const userState = useContext(UserContext)
@@ -51,10 +46,10 @@ function ProcessedUploadForm({
   const isEnabled = !rawCountsRequired || hasRawCounts
 
   useEffect(() => {
-    if (processedFiles.length === 0) {
+    if (processedParentFiles.length === 0) {
       addNewFile(DEFAULT_NEW_PROCESSED_FILE)
     }
-  }, [processedFiles.length])
+  }, [processedParentFiles.length])
 
   return <div>
     <div className="row">
@@ -103,7 +98,7 @@ function ProcessedUploadForm({
       </div>
 
       { processedParentFiles.map(file => {
-        const associatedChildren = findBundleChildren(file, processedFiles)
+        const associatedChildren = findBundleChildren(file, formState.files)
 
         return <ExpressionFileForm
           key={file._id}

@@ -385,11 +385,13 @@ module Api
       end
 
       def complete_upload_process(study_file, parse_on_upload)
-        @study.delay.send_to_firecloud(study_file) # send data to FireCloud if upload was performed
-        study_file.update(status: 'uploaded', parse_status: 'unparsed') # set status to uploaded on full create
-
-        if (parse_on_upload && study_file.parseable? && !study_file.parsing? && study_file.parse_status == 'unparsed')
-          FileParseService.run_parse_job(@study_file, @study, current_api_user)
+        study_file.update!(status: 'uploaded', parse_status: 'unparsed') # set status to uploaded on full create
+        if parse_on_upload
+          if study_file.parseable?
+            FileParseService.run_parse_job(@study_file, @study, current_api_user)
+          else
+            @study.delay.send_to_firecloud(study_file) # send data to FireCloud if upload was performed
+          end
         end
       end
 

@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
+import Modal from 'react-bootstrap/lib/Modal'
 
 /** properties used to track file state on the form, but that should not be sent to the server
  *  this also includes properties that are only modifiable on the server (and so should also
@@ -59,6 +60,11 @@ export function formatFileFromServer(file) {
     file.expression_file_info = {}
   }
   return file
+}
+
+/** find the bundle children of 'file', if any, in the given 'files' list */
+export function findBundleChildren(file, files) {
+  return files.filter(f => f.options?.matrix_file_name === file.name || f.options?.matrix_id === file._id)
 }
 
 /** return a new FormData based on the given file object, formatted as the api endpoint expects,
@@ -136,15 +142,47 @@ export function SavingOverlay({ file, updateFile }) {
 }
 
 /** renders save and delete buttons for a given file */
-export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile }) {
-  return <div>
-    <button type="button" className="btn btn-primary" disabled={!file.isDirty} onClick={() => saveFile(file)}>
-      Save
-      { file.uploadSelection && <span> &amp; Upload</span> }
-    </button> &nbsp;
-    <button type="button" className="btn btn-secondary float-right" onClick={() => deleteFile(file)}>
+export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, saveEnabled=true, validationMessage }) {
+  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
+
+  /** delete file with/without confirmation dialog as appropriate */
+  function handleDeletePress() {
+    if (file.status === 'new') {
+      // it hasn't been uploaded yet, just delete it
+      deleteFile(file)
+    } else {
+      setShowConfirmDeleteModal(true)
+    }
+  }
+
+  return <div className="flexbox button-panel">
+    <div data-role="tooltip" title={validationMessage ? validationMessage : 'Save'}>
+      <button type="button" className="btn btn-primary margin-right" disabled={!file.isDirty || !saveEnabled} onClick={() => saveFile(file)}>
+        Save
+        { file.uploadSelection && <span> &amp; Upload</span> }
+      </button>
+    </div>
+    <button type="button" className="btn btn-secondary" onClick={handleDeletePress}>
       <i className="fas fa-trash"></i> Delete
     </button>
+    <Modal
+      show={showConfirmDeleteModal}
+      onHide={() => setShowConfirmDeleteModal(false)}
+      animation={false}>
+      <Modal.Body className="">
+        Are you sure you want to delete { file.name }?<br/>
+        <span>The file will be removed from the workspace and all corresponding database records deleted</span>
+      </Modal.Body>
+      <Modal.Footer>
+        <button className="btn btn-md btn-primary" onClick={() => {
+          deleteFile(file)
+          setShowConfirmDeleteModal(false)
+        }}>Delete</button>
+        <button className="btn btn-md btn-secondary" onClick={() => {
+          setShowConfirmDeleteModal(false)
+        }}>Cancel</button>
+      </Modal.Footer>
+    </Modal>
   </div>
 }
 
