@@ -13,7 +13,6 @@ export default function CoordinateLabelForm({
   handleSaveResponse,
   associatedClusterFileOptions,
   updateCorrespondingClusters
-  // bucketName
 }) {
 
   const associatedCluster = associatedClusterFileOptions.find(opt => opt.value === file.options.cluster_file_id)

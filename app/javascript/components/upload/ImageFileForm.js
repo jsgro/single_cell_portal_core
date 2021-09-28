@@ -4,7 +4,7 @@ import Select from 'react-select'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 import BucketImage from 'components/visualization/BucketImage'
-
+import FileDownloadControl from 'components/download/FileDownloadControl'
 
 /** renders a form for editing/uploading an image file */
 export default function ImageFileForm({
@@ -31,15 +31,16 @@ export default function ImageFileForm({
         acceptCharset="UTF-8">
         <div className="row">
           <div className="col-md-6">
-          {/* <FileDownloadControl
-          file={file}
-          handleSaveResponse={handleSaveResponse}
-          /> */}
             <FileUploadControl
               handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}
               allowedFileTypes={FileTypeExtensions.image}/>
+            <FileDownloadControl
+              file={file}
+              handleSaveResponse={handleSaveResponse}
+              bucketName={bucketName}
+            />
           </div>
           <div className="col-md-6">
             { file.uploadSelection && <img className="preview-image" src={imagePreviewUrl} alt={file.uploadSelection.name} /> }

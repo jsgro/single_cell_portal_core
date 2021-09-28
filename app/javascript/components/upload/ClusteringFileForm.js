@@ -23,18 +23,16 @@ export default function ClusteringFileForm({
       <form id={`clusterForm-${file._id}`}
         className="form-terra"
         acceptCharset="UTF-8">
-        <div className="form-group">
-          <FileUploadControl
-            handleSaveResponse={handleSaveResponse}
-            file={file}
-            updateFile={updateFile}
-            allowedFileTypes={FileTypeExtensions.plainText}/>
-          <FileDownloadControl
-            file={file}
-            handleSaveResponse={handleSaveResponse}
-            bucketName={bucketName}
-          />
-        </div>
+        <FileUploadControl
+          handleSaveResponse={handleSaveResponse}
+          file={file}
+          updateFile={updateFile}
+          allowedFileTypes={FileTypeExtensions.plainText}/>
+        <FileDownloadControl
+          file={file}
+          handleSaveResponse={handleSaveResponse}
+          bucketName={bucketName}
+        />
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         <div className="form-group">
           <label>Coordinate data type:</label><br/>

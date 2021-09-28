@@ -3,6 +3,7 @@ import React, { useEffect } from 'react'
 import ImageFileForm from './ImageFileForm'
 import { clusterFileFilter } from './ClusteringStep'
 
+
 const DEFAULT_NEW_IMAGE_FILE = {
   file_type: 'Image'
 }
@@ -47,7 +48,7 @@ export function ImageForm({
   return <div>
     <div className="row">
       <div className="col-md-12">
-       <h4>Reference Images</h4>
+        <h4>Reference Images</h4>
       </div>
     </div>
     <div className="row">
