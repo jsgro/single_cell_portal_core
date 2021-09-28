@@ -349,8 +349,8 @@ module ApplicationHelper
   def get_read_access_token(study, user)
     if study.present? && study.public? && ApplicationController.read_only_firecloud_client.present?
       ApplicationController.read_only_firecloud_client.valid_access_token["access_token"]
-    elsif user.present? && user.registered_for_firecloud
-      user.token_for_storage_object
+    elsif user.present? && user.registered_for_firecloud && study.present?
+      user.token_for_storage_object(study)
     else
       nil # there is no 'safe' token that will work as user has no Terra profile
     end
