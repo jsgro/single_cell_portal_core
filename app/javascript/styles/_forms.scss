@@ -83,6 +83,9 @@
   background: #fff;
   padding: 1em;
   border-radius: 5px;
+  #metadata-convention-example img {
+    border: 2px solid #888;
+  }
 }
 
 .padded {
@@ -102,27 +105,49 @@
   font-weight: normal;
 }
 
-.upload-wizard-steps {
-  list-style: none;
+.position-fixed {
   width: 24%;
   position: fixed;
+}
+
+.upload-wizard-react {
+  h4 {
+    margin-top: 1em;
+  }
+}
+
+.upload-wizard-steps {
+  list-style: none;
+  width: 100%;
   padding-left: 0;
   .dirty {
     font-style: italic;
   }
   .badge {
-    background: $action-color;
+    background: #fff;
+    color: $action-color;
     margin-right: 1em;
+    border-radius: 1em;
+    padding: 0.5em 0.75em;
   }
   li.active {
-    background: #fff
+    background: lighten($action-color, 40%);
+    padding-left: 1.25em;
   }
   > li {
     cursor: pointer;
     width: 100%;
     padding: 0.5em;
-    border-bottom: 1px solid #666;
+    border-radius: 5px;
     overflow-x: hidden;
+    display: flex;
+  }
+  .file-list {
+    padding-inline-start: 0px;
+    font-size: 0.9em;
+    li {
+      padding: 0.1em 0em;
+    }
   }
   ul {
     list-style: none;
