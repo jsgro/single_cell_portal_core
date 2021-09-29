@@ -36,12 +36,12 @@ function MiscellaneousForm({
 
   return <div>
     <div className="row">
-      <h4 className="col-sm-12">Documentation &amp; Other files</h4>
+      <h4 className="col-sm-12">Documentation &amp; Other Files</h4>
     </div>
     <div className="row">
       <div className="col-md-12">
         <p className="text-center">
-          Any documentation or other support files. These will not be displayed directly, but will be avaialble for users to download
+          Any documentation or other support files. These will not be displayed directly, but will be avaialble for users to download.
         </p>
       </div>
     </div>
@@ -57,7 +57,9 @@ function MiscellaneousForm({
         handleSaveResponse={handleSaveResponse}/>
     })}
     <div className="row top-margin">
-      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_OTHER_FILE)}><span className="fas fa-plus"></span> Add File</button>
+      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_OTHER_FILE)}>
+        <span className="fas fa-plus"></span> Add File
+      </button>
     </div>
   </div>
 }

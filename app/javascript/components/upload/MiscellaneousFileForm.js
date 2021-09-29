@@ -15,7 +15,7 @@ export default function MiscellaneousFileForm({
 }) {
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
-      <form id={`miscFileForm-${file._id}`}
+      <form id={`misc-file-form-${file._id}`}
         className="form-terra"
         acceptCharset="UTF-8">
         <div className="row">
