@@ -1,6 +1,6 @@
 import React from 'react'
-import Select from 'react-select'
 
+import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 
@@ -30,12 +30,14 @@ export default function ClusteringFileForm({
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         { file.is_spatial &&
           <div className="form-group">
-            <label>Corresponding clusters:</label><br/>
-            <Select options={associatedClusterFileOptions}
-              value={spatialClusterAssocs}
-              isMulti={true}
-              placeholder="None"
-              onChange={val => updateCorrespondingClusters(file, val)}/>
+            <label className="labeled-select">Corresponding clusters
+              <Select options={associatedClusterFileOptions}
+                data-analytics-name="spatial-associated-clusters"
+                value={spatialClusterAssocs}
+                isMulti={true}
+                placeholder="None"
+                onChange={val => updateCorrespondingClusters(file, val)}/>
+            </label>
           </div>
         }
         <div className="form-group">

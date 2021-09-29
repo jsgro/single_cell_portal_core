@@ -7,11 +7,8 @@
 
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
-import { Router, navigate, useLocation } from '@reach/router'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './uploadUtils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
@@ -26,9 +23,11 @@ import CoordinateLabelStep from './CoordinateLabelStep'
 import RawCountsStep from './RawCountsStep'
 import ProcessedExpressionStep from './ProcessedExpressionStep'
 import MetadataStep from './MetadataStep'
+import MiscellaneousStep from './MiscellaneousStep'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 const CHUNK_SIZE = 10000000
-const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, SpatialStep, CoordinateLabelStep, ImageStep]
+const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, SpatialStep, CoordinateLabelStep, ImageStep, MiscellaneousStep]
 
 /** shows the upload wizard */
 export default function UploadWizard({ studyAccession, name }) {
@@ -66,7 +65,11 @@ export default function UploadWizard({ studyAccession, name }) {
     // first update the serverState
     setServerState(prevServerState => {
       const newServerState = _cloneDeep(prevServerState)
-      const fileIndex = newServerState.files.findIndex(f => f.name === updatedFile.name)
+      let fileIndex = newServerState.files.findIndex(f => f.name === updatedFile.name)
+      if (fileIndex < 0) {
+        // this is a new file -- add it to the end of the list
+        fileIndex = newServerState.files.length
+      }
       newServerState.files[fileIndex] = updatedFile
       return newServerState
     })
@@ -209,7 +212,7 @@ export default function UploadWizard({ studyAccession, name }) {
           </div>
         </div>
         <div className="col-md-9">
-          { !formState && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+          { !formState && <LoadingSpinner/> }
           { !!formState && <currentStep.component
             formState={formState}
             serverState={serverState}
