@@ -97,6 +97,7 @@ class SyntheticStudyPopulator
         study_file_params.merge!(process_coordinate_file_params(study, finfo))
         study_file_params.merge!(process_expression_file_params(study, finfo))
         study_file_params.merge!(process_label_file_params(study, finfo))
+        study_file_params.merge!(process_mtx_file_params(study, finfo))
         study_file_params.merge!(process_sequence_file_params(study, finfo))
 
         study_file = StudyFile.create!(study_file_params)
@@ -145,6 +146,22 @@ class SyntheticStudyPopulator
         throw "No cluster file with name #{file_info['cluster_file_name']} to match coordinate labels"
       end
       params[:options] = {'cluster_file_id' => matching_cluster_file.id.to_s}
+    end
+    params
+  end
+
+  def self.process_mtx_file_params(study, file_info)
+    params = {}
+    if file_info['type'] == '10X Barcodes File' || file_info['type'] == '10X Genes File'
+      matrix_name = file_info['matrix_file_name']
+      if !matrix_name
+        throw 'Barcodes and Genes files must specify a matrix_file_name'
+      end
+      matching_mtx_file = StudyFile.find_by(name: matrix_name, study: study)
+      if matching_mtx_file.nil?
+        throw "No MTX file with name #{matrix_name} to match #{file_info['filename']}"
+      end
+      params[:options] = {'matrix_id' => matching_mtx_file.id.to_s}
     end
     params
   end

@@ -118,10 +118,28 @@ export function PropsGeneSearchProvider(props) {
 /** returns an object built from the query params and defaults */
 export function buildParamsFromQuery(query, preset) {
   const queryParams = queryString.parse(query)
+  const cleanGeneParams = sanitizeGeneParams(queryParams)
   return {
     page: queryParams.genePage ? parseInt(queryParams.genePage) : 1,
-    genes: queryParams.genes ? queryParams.genes : '',
+    genes: cleanGeneParams,
     preset: preset ? preset : queryString.preset_search
+  }
+}
+
+/** strip any beginning or end quotes from a gene param */
+function stripOffQuotes(geneParam) {
+  const cleanedWord = geneParam.replace(/"\B/, '').replace(/\B"/, '').trim()
+  return cleanedWord
+}
+
+/** sanitize gene params */
+function sanitizeGeneParams(queryParams) {
+  if (!queryParams.genes) {
+    return ''
+  } else {
+    const geneParamArray = queryParams.genes.split(' ')
+    const sanitizedGeneParams = geneParamArray.map(stripOffQuotes)
+    return sanitizedGeneParams.join(' ')
   }
 }
 

@@ -48,7 +48,7 @@ export function getURLSafeAccessToken() {
 
 /** Returns the feature flags with defaults for the current user */
 export function getFeatureFlagsWithDefaults() {
-  const flags = readUserInfoFromPage().featureFlags
+  const flags = readUserInfoFromPage().featureFlagsWithDefaults
   return flags
 }
 

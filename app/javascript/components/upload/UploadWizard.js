@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
+import { Router, navigate, useLocation } from '@reach/router'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './uploadUtils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
@@ -90,6 +91,11 @@ export default function UploadWizard({ studyAccession, name }) {
       const fileChanged = newFormState.files.find(f => f._id === fileId)
       if (!fileChanged) { // we're updating a stale/no-longer existent file -- discard it
         return prevFormState
+      }
+      if (updates.expression_file_info) {
+        // merge expression file info properties
+        Object.assign(fileChanged.expression_file_info, updates.expression_file_info)
+        delete updates.expression_file_info
       }
       Object.assign(fileChanged, updates)
       return newFormState
@@ -221,10 +227,10 @@ export default function UploadWizard({ studyAccession, name }) {
 }
 
 /** convenience method for drawing/updating the component from non-react portions of SCP */
-export function renderUploadWizard(target, accession, name) {
+export function renderUploadWizard(target, studyAccession, name) {
   ReactDOM.render(
     <UploadWizard
-      studyAccession={accession}
+      studyAccession={studyAccession}
       name={name}/>,
     target
   )

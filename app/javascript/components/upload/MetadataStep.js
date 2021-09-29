@@ -122,9 +122,6 @@ function MetadataForm({
               If the file fails metadata convention validation, you will be emailed messages to help correct it.
             </div>
             <div className="form-group">
-              <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
-            </div>
-            <div className="form-group">
               <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
             </div>
             <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>

@@ -28,15 +28,6 @@ export default function ClusteringFileForm({
           updateFile={updateFile}
           allowedFileTypes={FileTypeExtensions.plainText}/>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
-        <div className="form-group">
-          <label>Coordinate data type:</label><br/>
-          <label className="sublabel">
-            <input type="radio" name={`clusterFormSpatial-${file._id}`} value="false" checked={!file.is_spatial} onChange={e => updateFile(file._id, { is_spatial: false })} /> Clustering
-          </label>
-          <label className="sublabel">
-            <input type="radio" name={`clusterFormSpatial-${file._id}`} value="true" checked={file.is_spatial} onChange={e => updateFile(file._id, { is_spatial: true })}/> Spatial transcriptomics positions
-          </label>
-        </div>
         { file.is_spatial &&
           <div className="form-group">
             <label>Corresponding clusters:</label><br/>

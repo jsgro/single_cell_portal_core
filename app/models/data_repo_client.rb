@@ -277,7 +277,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
       else
         filters = search_facet[:filters].map(&:values).flatten
       end
-      elements = filters.map {|filter| "([#{tdr_column}]:\"#{filter}\")" }
+      elements = filters.map {|filter| "([#{tdr_column}]:\"#{filter}\")" }.uniq
       formatted_elements << "#{elements.join(' OR ')}"
     end
     { query_string: { query: formatted_elements.join(' AND ') } }
@@ -300,6 +300,19 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
     end
     # this is a logical OR query as a match in either name or description is valid
     { query_string: { query: formatted_elements.join(' OR ') } }
+  end
+
+  # generate a query json using only a list of project_ids
+  # will return all result rows for the given project(s) to ensure all available files are found
+  #
+  # * *params*
+  #   - +project_ids+ (Array<String>) => Array of HCA project UUIDs
+  #
+  # * *returns*
+  #   - (Hash) => Hash representation of query in ElasticSearch query DSL (must be cast to JSON for use in DataRepoClient#query_snapshot_indexes)
+  def generate_query_for_projects(project_ids)
+    project_query = project_ids.map { |project_id| "(project_id: #{project_id})" }
+    { query_string: { query: project_query.join(' OR ') } }
   end
 
   # merge two query json objects together, if necessary

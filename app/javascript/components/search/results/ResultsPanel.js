@@ -1,12 +1,13 @@
 import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StudyResults from './StudyResults'
 import StudySearchResult from './StudySearchResult'
 import SearchQueryDisplay from './SearchQueryDisplay'
 import { getNumFacetsAndFilters } from 'providers/StudySearchProvider'
 import { serverErrorEnd } from 'lib/error-utils'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 
 /**
@@ -29,7 +30,7 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
     panelContent = (
       <div className="loading-panel">
         Loading &nbsp;
-        <FontAwesomeIcon icon={faDna} className="gene-load-spinner" />
+        <LoadingSpinner />
       </div>
     )
   } else if (results.studies && results.studies.length > 0) {

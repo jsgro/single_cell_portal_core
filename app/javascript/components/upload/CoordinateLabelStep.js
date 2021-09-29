@@ -3,7 +3,8 @@ import React, { useEffect } from 'react'
 import CoordinateLabelFileForm from './CoordinateLabelFileForm'
 
 const DEFAULT_NEW_LABEL_FILE = {
-  file_type: 'Coordinate Labels'
+  file_type: 'Coordinate Labels',
+  options: {}
 }
 
 const coordinateLabelFileFilter = file => file.file_type === 'Coordinate Labels'
@@ -45,7 +46,7 @@ function CoordinateLabelForm({
 
   return <div>
     <div className="row">
-      <h4 className="col-sm-12">6. Coordinate Labels</h4>
+      <h4 className="col-sm-12">Coordinate Labels</h4>
     </div>
     <div className="row">
       <div className="col-md-12">

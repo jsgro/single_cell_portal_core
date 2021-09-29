@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
-import Select from 'react-select'
+
+import Select from 'lib/InstrumentedSelect'
 
 /** updates the raw_counts_associations hidden field with the selections, which should be an array of id strings */
 function updateHiddenField(hiddenField, selections) {
@@ -35,15 +36,14 @@ export default function RawAssociationSelect({
 
   const requiredLabel = isRequired ? <i className='text-danger'>*</i> : ''
 
-  // set minWidth to 100% on label to allow select to expand to fill entire column
   return (
-    <label className="min-width-100">
+    <label className="labeled-select">
       Associated raw count file {requiredLabel}
       <Select options={opts}
-              value={selected}
-              isMulti={true}
-              placeholder="None"
-              onChange={updateSelection}/>
+        value={selected}
+        isMulti={true}
+        placeholder="None"
+        onChange={updateSelection}/>
     </label>
   )
 }
