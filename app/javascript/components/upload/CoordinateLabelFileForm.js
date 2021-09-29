@@ -31,7 +31,6 @@ export default function CoordinateLabelForm({
               allowedFileTypes={FileTypeExtensions.plainText}/>
           </div>
         </div>
-        <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         <div className="form-group">
           <label className="labeled-select">Corresponding clusters / spatial data:
             <Select options={associatedClusterFileOptions}

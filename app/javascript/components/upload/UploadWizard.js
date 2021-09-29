@@ -23,10 +23,11 @@ import CoordinateLabelStep from './CoordinateLabelStep'
 import RawCountsStep from './RawCountsStep'
 import ProcessedExpressionStep from './ProcessedExpressionStep'
 import MetadataStep from './MetadataStep'
+import MiscellaneousStep from './MiscellaneousStep'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 const CHUNK_SIZE = 10000000
-const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, SpatialStep, CoordinateLabelStep, ImageStep]
+const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, SpatialStep, CoordinateLabelStep, ImageStep, MiscellaneousStep]
 
 /** shows the upload wizard */
 export default function UploadWizard({ studyAccession, name }) {
@@ -64,7 +65,11 @@ export default function UploadWizard({ studyAccession, name }) {
     // first update the serverState
     setServerState(prevServerState => {
       const newServerState = _cloneDeep(prevServerState)
-      const fileIndex = newServerState.files.findIndex(f => f.name === updatedFile.name)
+      let fileIndex = newServerState.files.findIndex(f => f.name === updatedFile.name)
+      if (fileIndex < 0) {
+        // this is a new file -- add it to the end of the list
+        fileIndex = newServerState.files.length
+      }
       newServerState.files[fileIndex] = updatedFile
       return newServerState
     })
