@@ -4,22 +4,18 @@ import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 
-/** renders a form for editing/uploading an image file */
-export default function CoordinateLabelForm({
+/** renders a form for editing/uploading a miscellaneous file */
+export default function MiscellaneousFileForm({
   file,
   updateFile,
   saveFile,
   deleteFile,
   handleSaveResponse,
-  associatedClusterFileOptions,
-  updateCorrespondingClusters
+  miscFileTypes
 }) {
-
-  const associatedCluster = associatedClusterFileOptions.find(opt => opt.value === file.options.cluster_file_id)
-
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
-      <form id={`labelForm-${file._id}`}
+      <form id={`miscFileForm-${file._id}`}
         className="form-terra"
         acceptCharset="UTF-8">
         <div className="row">
@@ -27,22 +23,19 @@ export default function CoordinateLabelForm({
             <FileUploadControl
               handleSaveResponse={handleSaveResponse}
               file={file}
-              updateFile={updateFile}
-              allowedFileTypes={FileTypeExtensions.plainText}/>
+              updateFile={updateFile}/>
           </div>
         </div>
         <div className="form-group">
-          <label className="labeled-select">Corresponding clusters / spatial data:
-            <Select options={associatedClusterFileOptions}
-              data-analytics-name="label-corresponding-cluster"
-              id={`coordCluster-${file._id}`}
-              value={associatedCluster}
-              placeholder="Select one"
-              onChange={val => updateCorrespondingClusters(file, val)}/>
+          <label className="labeled-select">File type:
+            <Select options={miscFileTypes.map(ft => ({ label: ft, value: ft }))}
+              data-analytics-name="misc-file-type"
+              value={{ label: file.file_type, value: file.file_type }}
+              onChange={val => updateFile(file._id, {file_type: val.value})}/>
           </label>
         </div>
         <div className="form-group">
-          <TextFormField label="Description / Legend (this will be displayed below image)" fieldName="description" file={file} updateFile={updateFile}/>
+          <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
         </div>
         <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
       </form>
