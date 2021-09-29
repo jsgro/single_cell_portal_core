@@ -50,11 +50,13 @@
                   <thead>
                     <tr>
                       <th>Folder</th>
+                      <th>File Type</th>
                       <th>Download command</th>
                     </tr>
                     <% @directories.each do |directory| %>
                       <tr>
                         <td><%= directory.name %></td>
+                        <td><%= directory.file_type %></td>
                         <td class="command-container" id="command-container-<%= directory.url_safe_name %>">
                           <%= link_to "<i class='fas fa-download'></i> Get download command".html_safe, '#/',
                                       class: 'btn btn-default get-download-command', id: "get-download-command__#{directory.url_safe_name}",
@@ -117,7 +119,8 @@
               var expiresMinutes = timeInterval / 60;
               const accession = "<%= @study.accession %>"
               const curlSecureFlag = "<%= Rails.env.development? ? '-k' : '' %>"
-              const downloadObjectName = downloadObject == 'root-dir' ? '%2F' : downloadObject
+              const matcher = /root-dir/
+              const downloadObjectName = downloadObject.match(matcher) ? downloadObject.replace(matcher, '%2F') : downloadObject
               // Gets a curl configuration ("cfg.txt") containing signed
               // URLs and output names for all files in the download object.
               var url = (
