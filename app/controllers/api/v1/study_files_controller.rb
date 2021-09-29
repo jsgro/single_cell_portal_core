@@ -361,13 +361,13 @@ module Api
         content_range = RequestUtils.parse_content_range_header(request.headers)
         if content_range.present?
           if content_range[:first_byte] == 0
-            render json: {errors: 'create/update should be used for uploading the first chunk'}, status: :unprocessable_entity and return
+            render json: {errors: 'create/update should be used for uploading the first chunk'}, status: :bad_request and return
           end
           if content_range[:first_byte] != @study_file.upload_file_size
-            render json: {errors: "Incorrect chunk sent: expected bytes starting with #{@study_file.upload_file_size}, received #{content_range[:first_byte]}" }, status: :unprocessable_entity and return
+            render json: {errors: "Incorrect chunk sent: expected bytes starting with #{@study_file.upload_file_size}, received #{content_range[:first_byte]}" }, status: :bad_request and return
           end
         else
-          render json: {errors: 'Missing Content-Range header'}, status: :unprocessable_entity and return
+          render json: {errors: 'Missing Content-Range header'}, status: :bad_request and return
         end
 
         File.open(@study_file.upload.path, "ab") do |f|

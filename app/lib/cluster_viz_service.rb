@@ -79,7 +79,7 @@ class ClusterVizService
       associated_cluster_names = file[:spatial_cluster_associations].map{ |id| associated_clusters[id] }
       { name: file[:name],
         associated_clusters: associated_cluster_names,
-        upload_file_name: file[:upload_file_name],
+        bucket_file_name: file[:upload_file_name],
         description: file[:description] }
     end
   end
