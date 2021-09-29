@@ -1,7 +1,7 @@
 import React from 'react'
 
 import Select from 'lib/InstrumentedSelect'
-import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
+import FileUploadControl from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 
 /** renders a form for editing/uploading a miscellaneous file */
@@ -17,6 +17,7 @@ export default function MiscellaneousFileForm({
     <div className="col-md-12">
       <form id={`misc-file-form-${file._id}`}
         className="form-terra"
+        onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
         <div className="row">
           <div className="col-md-12">

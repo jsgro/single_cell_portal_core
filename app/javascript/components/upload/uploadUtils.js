@@ -11,6 +11,7 @@ const PROPERTIES_NOT_TO_SEND = [
   'selectedFile',
   'uploadSelection',
   'submitData',
+  'saveProgress',
   'isDirty',
   'isSaving',
   'isDeleting',
@@ -130,6 +131,10 @@ export function SavingOverlay({ file, updateFile }) {
     { (file.isSaving || file.isDeleting) &&
       <div className="file-upload-overlay">
         { file.isSaving ? 'Saving' : 'Deleting' } <LoadingSpinner/>
+        <br/>
+        { file.saveProgress &&
+          <progress value={file.saveProgress} max="100">{file.saveProgress}%</progress>
+        }
       </div>
     }
     { file.isError &&

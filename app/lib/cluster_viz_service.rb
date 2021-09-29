@@ -59,7 +59,7 @@ class ClusterVizService
     # now return an array of objects with names and associated cluster names
     spatial_file_info.map do |cluster|
       associated_cluster_names = cluster[1].map{ |id| associated_clusters[id] }
-      { name: cluster[0], associated_clusters: associated_cluster_names, bucket_file_name: cluster[2] }
+      { name: cluster[0], associated_clusters: associated_cluster_names }
     end
   end
 

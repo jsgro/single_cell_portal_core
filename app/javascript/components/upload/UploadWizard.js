@@ -105,6 +105,17 @@ export default function UploadWizard({ studyAccession, name }) {
     })
   }
 
+  /** handler for progress events from an XMLHttpRequest call.
+   *    Updates the overall save progress of the file
+   */
+  function handleSaveProgress(progressEvent, fileId, fileSize, chunkStart) {
+    if (!fileSize) {
+      return // this is just a field update with no upload, so no need to show progress
+    }
+    const overallCompletePercent = (chunkStart + progressEvent.loaded) / fileSize * 100
+    updateFile(fileId, { saveProgress: overallCompletePercent })
+  }
+
   /** save the given file and perform an upload if a selected file is present */
   async function saveFile(file) {
     let studyFileId = file._id
@@ -119,11 +130,13 @@ export default function UploadWizard({ studyAccession, name }) {
       let response
       if (file.status === 'new') {
         response = await createStudyFile({
-          studyAccession, studyFileData, isChunked, chunkStart, chunkEnd, fileSize
+          studyAccession, studyFileData, isChunked, chunkStart, chunkEnd, fileSize,
+          onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
         })
       } else {
         response = await updateStudyFile({
-          studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize
+          studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize,
+          onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
         })
       }
       handleSaveResponse(response, isChunked)
@@ -134,10 +147,11 @@ export default function UploadWizard({ studyAccession, name }) {
           chunkEnd = Math.min(chunkEnd + CHUNK_SIZE, fileSize)
           const chunkApiData = formatFileForApi(file, chunkStart, chunkEnd)
           response = await sendStudyFileChunk({
-            studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize
+            studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize,
+            onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
           })
         }
-        updateFile(studyFileId, { isSaving: false })
+        handleSaveResponse(response, false)
       }
 
     } catch (error) {
