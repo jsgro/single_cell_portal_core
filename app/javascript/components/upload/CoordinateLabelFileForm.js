@@ -35,10 +35,10 @@ export default function CoordinateLabelForm({
         <div className="form-group">
           <label className="labeled-select">Corresponding clusters / spatial data:
             <Select options={associatedClusterFileOptions}
-              data-analytics-name="label-corresponding-cluster"
+              data-analytics-name="coordinate-labels-corresponding-cluster"
               id={`coordCluster-${file._id}`}
               value={associatedCluster}
-              placeholder="Select one"
+              placeholder="Select one..."
               onChange={val => updateCorrespondingClusters(file, val)}/>
           </label>
         </div>
