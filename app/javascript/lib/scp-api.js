@@ -214,7 +214,9 @@ export async function createStudyFile({
   chunkStart,
   chunkEnd,
   fileSize,
-  mock=false }) {
+  onProgress,
+  mock=false
+}) {
   const apiUrl = `/studies/${studyAccession}/study_files`
   const init = Object.assign({}, defaultInit(), {
     method: 'POST',
@@ -222,8 +224,7 @@ export async function createStudyFile({
   })
 
   setFileFormHeaders(init.headers, isChunked, chunkStart, chunkEnd, fileSize)
-  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
-  return exploreInit
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress })
 }
 
 /** Adds a content range header if needed */
@@ -252,15 +253,15 @@ export async function updateStudyFile({
   chunkStart,
   chunkEnd,
   fileSize,
-  mock=false }) {
+  onProgress,
+  mock=false
+}) {
   const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}`
   const init = Object.assign({}, defaultInit(), {
-    method: 'PATCH',
-    body: studyFileData
+    method: 'PATCH'
   })
   setFileFormHeaders(init.headers, isChunked, chunkStart, chunkEnd, fileSize)
-  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
-  return exploreInit
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress })
 }
 
 /**
@@ -277,15 +278,16 @@ export async function sendStudyFileChunk({
   chunkStart,
   chunkEnd,
   fileSize,
-  mock=false }) {
+  onProgress,
+  mock=false
+}) {
   const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}/chunk`
   const init = Object.assign({}, defaultInit(), {
     method: 'PATCH',
     body: studyFileData
   })
   setFileFormHeaders(init.headers, true, chunkStart, chunkEnd, fileSize)
-  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
-  return exploreInit
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress })
 }
 
 /**
@@ -766,4 +768,39 @@ export default async function scpApi(
     throw new Error(json.error || json.errors)
   }
   throw new Error(response)
+}
+
+/**
+  * similar functionality to scpApi, but uses XMLHttpRequest to enable support for progress events.
+  * fetch does not yet support them.
+  * See https://stackoverflow.com/questions/35711724/upload-progress-indicators-for-fetch
+  */
+async function scpApiXmlHttp({ apiUrl, init, formData, onProgress }) {
+  const url = getFullUrl(apiUrl, false)
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest()
+
+    request.open(init.method, url)
+    Object.keys(init.headers).forEach(key => {
+      request.setRequestHeader(key, init.headers[key])
+    })
+    if (onProgress) {
+      request.upload.addEventListener('progress', onProgress)
+    }
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        let response = {}
+        if (request.status != 204) {
+          response = JSON.parse(request.response)
+        }
+        resolve(response)
+      } else {
+        reject(JSON.parse(request.response))
+      }
+    }
+    request.onerror = () => {
+      reject(request.statusText)
+    }
+    request.send(formData)
+  })
 }
