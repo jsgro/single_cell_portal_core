@@ -1,4 +1,5 @@
 import React from 'react'
+import _kebabCase from 'lodash/kebabCase'
 
 import Select from 'lib/InstrumentedSelect'
 import MTXBundledFilesForm from './MTXBundledFilesForm'
@@ -109,7 +110,7 @@ function ExpressionFileInfoSelect({ label, propertyName, rawOptions, file, updat
   return <div className="form-group">
     <label className="labeled-select">{label}
       <Select options={selectOptions}
-        data-analytics-name={`expression-${propertyName}-select`}
+        data-analytics-name={`expression-select-${_kebabCase(propertyName)}`}
         value={selectedOption}
         placeholder="Select one..."
         onChange={val => {
