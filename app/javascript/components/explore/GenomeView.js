@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 import igv from '@single-cell-portal/igv'
 import _uniqueId from 'lodash/uniqueId'
 
+import LoadingSpinner from 'lib/LoadingSpinner'
 import { log } from 'lib/metrics-api'
 import { fetchBamFileInfo } from 'lib/scp-api'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
@@ -88,11 +87,7 @@ function GenomeView({ studyAccession, bamFileName, uniqueGenes, isVisible, updat
 
   return <div>
     { isLoading &&
-      <FontAwesomeIcon
-        icon={faDna}
-        data-testid="genome-view-loading-icon"
-        className="gene-load-spinner"
-      />
+      <LoadingSpinner data-testid="genome-view-loading-icon"/>
     }
     <div>
       <div id={igvContainerId}></div>

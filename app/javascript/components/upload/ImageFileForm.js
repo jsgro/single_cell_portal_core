@@ -1,8 +1,8 @@
 import React from 'react'
-import Select from 'react-select'
 
+import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
-import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
+import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 import BucketImage from 'components/visualization/BucketImage'
 import FileDownloadControl from 'components/download/FileDownloadControl'
 
@@ -28,6 +28,7 @@ export default function ImageFileForm({
     <div className="col-md-12">
       <form id={`imageForm-${file._id}`}
         className="form-terra"
+        onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
         <div className="row">
           <div className="col-md-6 flexbox-align-center">
@@ -48,12 +49,14 @@ export default function ImageFileForm({
         </div>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         <div className="form-group">
-          <label>Corresponding clusters / spatial data:</label><br/>
-          <Select options={associatedClusterFileOptions}
-            value={spatialClusterAssocs}
-            isMulti={true}
-            placeholder="None"
-            onChange={val => updateCorrespondingClusters(file, val)}/>
+          <label className="labeled-select">Corresponding clusters / spatial data:
+            <Select options={associatedClusterFileOptions}
+              data-analytics-name="image-associated-cluster"
+              value={spatialClusterAssocs}
+              isMulti={true}
+              placeholder="None"
+              onChange={val => updateCorrespondingClusters(file, val)}/>
+          </label>
         </div>
         <div className="form-group">
           <TextFormField label="Description / Legend (this will be displayed below image)" fieldName="description" file={file} updateFile={updateFile}/>

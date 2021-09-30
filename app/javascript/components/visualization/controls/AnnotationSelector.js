@@ -1,7 +1,7 @@
 import React from 'react'
 import _clone from 'lodash/clone'
-import Select from 'react-select'
 
+import Select from 'lib/InstrumentedSelect'
 import { annotationKeyProperties, getMatchedAnnotation, clusterSelectStyle } from 'lib/cluster-utils'
 
 /** takes the server response and returns annotation options suitable for react-select */
@@ -61,14 +61,16 @@ export default function AnnotationControl({
 
   return (
     <div className="form-group">
-      <label>Annotation</label>
-      <Select options={annotationOptions}
-        value={shownAnnotation}
-        isOptionDisabled={annotation => annotation.isDisabled}
-        getOptionLabel={annotation => annotation.name}
-        getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
-        onChange={newAnnotation => updateClusterParams({ annotation: newAnnotation })}
-        styles={clusterSelectStyle}/>
+      <label className="labeled-select">Annotation
+        <Select options={annotationOptions}
+          data-analytics-name="annotation-select"
+          value={shownAnnotation}
+          isOptionDisabled={annotation => annotation.isDisabled}
+          getOptionLabel={annotation => annotation.name}
+          getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
+          onChange={newAnnotation => updateClusterParams({ annotation: newAnnotation })}
+          styles={clusterSelectStyle}/>
+      </label>
     </div>
   )
 }

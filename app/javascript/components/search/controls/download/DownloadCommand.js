@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 
+import LoadingSpinner from 'lib/LoadingSpinner'
 import { fetchAuthCode, stringifyQuery } from 'lib/scp-api'
 
 /** component for rendering a copyable bulk download command for an array of file ids.
@@ -35,11 +34,7 @@ export default function DownloadCommand({ fileIds=[], tdrFiles }) {
       isLoading &&
       <div className="text-center">
         Authorizing<br/>
-        <FontAwesomeIcon
-          icon={faDna}
-          data-testid="bulk-download-loading-icon"
-          className="gene-load-spinner"
-        />
+        <LoadingSpinner data-testid="bulk-download-loading-icon"/>
       </div>
     }
     {

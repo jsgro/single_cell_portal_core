@@ -7,12 +7,10 @@
 
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
 
-import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './uploadUtils'
+import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
 import MessageModal from 'lib/MessageModal'
 import UserProvider from 'providers/UserProvider'
@@ -25,9 +23,12 @@ import CoordinateLabelStep from './CoordinateLabelStep'
 import RawCountsStep from './RawCountsStep'
 import ProcessedExpressionStep from './ProcessedExpressionStep'
 import MetadataStep from './MetadataStep'
+import MiscellaneousStep from './MiscellaneousStep'
+import SequenceFileStep from './SequenceFileStep'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 const CHUNK_SIZE = 10000000
-const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, SpatialStep, CoordinateLabelStep, ImageStep]
+const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, SpatialStep, CoordinateLabelStep, ImageStep, SequenceFileStep, MiscellaneousStep]
 
 /** shows the upload wizard */
 export default function UploadWizard({ studyAccession, name }) {
@@ -65,7 +66,11 @@ export default function UploadWizard({ studyAccession, name }) {
     // first update the serverState
     setServerState(prevServerState => {
       const newServerState = _cloneDeep(prevServerState)
-      const fileIndex = newServerState.files.findIndex(f => f.name === updatedFile.name)
+      let fileIndex = newServerState.files.findIndex(f => f.name === updatedFile.name)
+      if (fileIndex < 0) {
+        // this is a new file -- add it to the end of the list
+        fileIndex = newServerState.files.length
+      }
       newServerState.files[fileIndex] = updatedFile
       return newServerState
     })
@@ -73,9 +78,13 @@ export default function UploadWizard({ studyAccession, name }) {
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
       const fileIndex = newFormState.files.findIndex(f => f.name === updatedFile.name)
+      const oldFileId = formState.files[fileIndex]._id
       const formFile = _cloneDeep(updatedFile)
       if (uploadingMoreChunks) {
         formFile.isSaving = true
+      }
+      if (oldFileId != updatedFile._id) { // we saved the file and got back a fresh id
+        formFile.oldId = oldFileId
       }
       newFormState.files[fileIndex] = formFile
       return newFormState
@@ -91,9 +100,25 @@ export default function UploadWizard({ studyAccession, name }) {
       if (!fileChanged) { // we're updating a stale/no-longer existent file -- discard it
         return prevFormState
       }
+      if (updates.expression_file_info) {
+        // merge expression file info properties
+        Object.assign(fileChanged.expression_file_info, updates.expression_file_info)
+        delete updates.expression_file_info
+      }
       Object.assign(fileChanged, updates)
       return newFormState
     })
+  }
+
+  /** handler for progress events from an XMLHttpRequest call.
+   *    Updates the overall save progress of the file
+   */
+  function handleSaveProgress(progressEvent, fileId, fileSize, chunkStart) {
+    if (!fileSize) {
+      return // this is just a field update with no upload, so no need to show progress
+    }
+    const overallCompletePercent = (chunkStart + progressEvent.loaded) / fileSize * 100
+    updateFile(fileId, { saveProgress: overallCompletePercent })
   }
 
   /** save the given file and perform an upload if a selected file is present */
@@ -110,11 +135,13 @@ export default function UploadWizard({ studyAccession, name }) {
       let response
       if (file.status === 'new') {
         response = await createStudyFile({
-          studyAccession, studyFileData, isChunked, chunkStart, chunkEnd, fileSize
+          studyAccession, studyFileData, isChunked, chunkStart, chunkEnd, fileSize,
+          onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
         })
       } else {
         response = await updateStudyFile({
-          studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize
+          studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize,
+          onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
         })
       }
       handleSaveResponse(response, isChunked)
@@ -125,10 +152,11 @@ export default function UploadWizard({ studyAccession, name }) {
           chunkEnd = Math.min(chunkEnd + CHUNK_SIZE, fileSize)
           const chunkApiData = formatFileForApi(file, chunkStart, chunkEnd)
           response = await sendStudyFileChunk({
-            studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize
+            studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize,
+            onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
           })
         }
-        updateFile(studyFileId, { isSaving: false })
+        handleSaveResponse(response, false)
       }
 
     } catch (error) {
@@ -203,7 +231,7 @@ export default function UploadWizard({ studyAccession, name }) {
           </div>
         </div>
         <div className="col-md-9">
-          { !formState && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+          { !formState && <LoadingSpinner/> }
           { !!formState && <currentStep.component
             formState={formState}
             serverState={serverState}
@@ -221,10 +249,10 @@ export default function UploadWizard({ studyAccession, name }) {
 }
 
 /** convenience method for drawing/updating the component from non-react portions of SCP */
-export function renderUploadWizard(target, accession, name) {
+export function renderUploadWizard(target, studyAccession, name) {
   ReactDOM.render(
     <UploadWizard
-      studyAccession={accession}
+      studyAccession={studyAccession}
       name={name}/>,
     target
   )

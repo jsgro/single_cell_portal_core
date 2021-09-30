@@ -2,9 +2,14 @@ import React from 'react'
 
 import { bytesToSize } from 'lib/stats'
 
+const plainTextExtensions = ['.txt', '.tsv', '.text', '.csv']
+const mtxExtensions = ['.mtx', '.mm', '.txt', '.text']
+const imageExtensions = ['.jpeg', '.jpg', '.png', '.bmp']
+
 export const FileTypeExtensions = {
-  plainText: ['.txt', '.tsv', '.text', '.csv', '.txt.gz', '.tsv.gz', '.text.gz', '.csv.gz'],
-  image: ['.jpeg', '.jpg', '.png', '.bmp']
+  plainText: plainTextExtensions.concat(plainTextExtensions.map(ext => `${ext}.gz`)),
+  mtx: mtxExtensions.concat(mtxExtensions.map(ext => `${ext}.gz`)),
+  image: imageExtensions
 }
 
 /** renders a file upload control for the given file object */

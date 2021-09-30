@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 
 import ImageFileForm from './ImageFileForm'
 import { clusterFileFilter } from './ClusteringStep'
+import { AddFileButton } from './form-components'
 
 
 const DEFAULT_NEW_IMAGE_FILE = {
@@ -59,7 +60,6 @@ export function ImageForm({
         </div>
       </div>
     </div>
-
     { imageFiles.map(file => {
       return <ImageFileForm
         key={file._id}
@@ -72,8 +72,6 @@ export function ImageForm({
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}/>
     })}
-    <div className="row top-margin">
-      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_IMAGE_FILE)}><span className="fas fa-plus"></span> Add File</button>
-    </div>
+    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_IMAGE_FILE}/>
   </div>
 }

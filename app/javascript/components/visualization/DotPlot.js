@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import _uniqueId from 'lodash/uniqueId'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 
 import { log } from 'lib/metrics-api'
 import { getColorBrewerColor } from 'lib/plot'
@@ -9,6 +7,7 @@ import DotPlotLegend from './DotPlotLegend'
 import { getAnnotationCellValuesURL, getExpressionHeatmapURL } from 'lib/scp-api'
 import useErrorMessage, { morpheusErrorHandler } from 'lib/error-message'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 export const dotPlotColorScheme = {
   // Blue, purple, red.  These red and blue hues are accessible, per WCAG.
@@ -75,7 +74,7 @@ function RawDotPlot({
         <div id={graphId} className="dotplot-graph"></div>
         { !showError && <DotPlotLegend/> }
       </> }
-      { !cluster && <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/> }
+      { !cluster && <LoadingSpinner/> }
     </div>
   )
 }

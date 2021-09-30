@@ -1,6 +1,3 @@
-import React from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
 
 /** properties used to track file state on the form, but that should not be sent to the server
@@ -10,10 +7,12 @@ const PROPERTIES_NOT_TO_SEND = [
   'selectedFile',
   'uploadSelection',
   'submitData',
+  'saveProgress',
   'isDirty',
   'isSaving',
   'isDeleting',
   'isError',
+  'oldId',
   'generation',
   'created_at',
   'updated_at',
@@ -39,7 +38,8 @@ export function newStudyFileObj(studyId) {
     status: 'new',
     description: '',
     parse_status: 'unparsed',
-    spatial_cluster_associations: []
+    spatial_cluster_associations: [],
+    expression_file_info: {}
   }
 }
 
@@ -51,7 +51,25 @@ export function formatFileFromServer(file) {
   file._id = file._id.$oid
   file.description = file.description ? file.description : ''
   delete file.study_id
+  if (file.taxon_id) {
+    // Note that taxon_id here is a MongoDB object ID, not an NCBI Taxonomy ID like "9606".
+    file.taxon_id = file.taxon_id.$oid
+  }
+  if (file.genome_assembly_id) {
+    file.genome_assembly_id = file.genome_assembly_id.$oid
+  }
+  if (!file.expression_file_info) {
+    file.expression_file_info = {}
+  }
   return file
+}
+
+/** find the bundle children of 'file', if any, in the given 'files' list */
+export function findBundleChildren(file, files) {
+  return files.filter(f => {
+    const parentFields = [f.options?.matrix_id, f.options?.bam_id, f.options?.cluster_file_id]
+    return parentFields.includes(file._id) || (file.oldId && parentFields.includes(file.oldId))
+  })
 }
 
 /** return a new FormData based on the given file object, formatted as the api endpoint expects,
@@ -64,6 +82,10 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
       // arrays across multiple entries to deliver what Rails expects.
       file[key].map(val => {
         data.append(`study_file[${key}][]`, val)
+      })
+    } else if (key === 'expression_file_info') {
+      Object.keys(file.expression_file_info).forEach(expKey => {
+        data.append(`study_file[expression_file_info_attributes][${expKey}]`, file.expression_file_info[expKey])
       })
     } else {
       data.append(`study_file[${key}]`, file[key])
@@ -85,55 +107,4 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
   return data
 }
 
-/** renders a basic label->value text field in a bootstrap form control */
-export function TextFormField({ label, fieldName, file, updateFile }) {
-  const fieldId = `${fieldName}-input-${file._id}`
-  return <div className="form-group">
-    <label htmlFor={fieldId}>{label}</label><br/>
-    <input className="form-control"
-      type="text"
-      id={fieldId}
-      value={file[fieldName] ? file[fieldName] : ''}
-      onChange={event => {
-        const update = {}
-        update[fieldName] = event.target.value
-        updateFile(file._id, update)
-      }}/>
-  </div>
-}
-
-/** renders an overlay if the file is saving, and also displays server error messages */
-export function SavingOverlay({ file, updateFile }) {
-  const showOverlay = file.isSaving || file.isDeleting || file.isError
-  if (!showOverlay) {
-    return <></>
-  }
-  return <div className="file-upload-overlay ">
-    { (file.isSaving || file.isDeleting) &&
-      <div className="file-upload-overlay">
-        { file.isSaving ? 'Saving' : 'Deleting' } <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
-      </div>
-    }
-    { file.isError &&
-      <div className="error-message">
-        An error occurred:<br/>
-        { file.errorMessage }<br/><br/>
-        <button className="btn btn-secondary" onClick={() => updateFile(file._id, { isError: false })}>Ok</button>
-      </div>
-    }
-  </div>
-}
-
-/** renders save and delete buttons for a given file */
-export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile }) {
-  return <div>
-    <button type="button" className="btn btn-primary" disabled={!file.isDirty} onClick={() => saveFile(file)}>
-      Save
-      { file.uploadSelection && <span> &amp; Upload</span> }
-    </button> &nbsp;
-    <button type="button" className="btn btn-secondary float-right" onClick={() => deleteFile(file)}>
-      <i className="fas fa-trash"></i> Delete
-    </button>
-  </div>
-}
 

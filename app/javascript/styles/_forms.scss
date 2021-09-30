@@ -56,6 +56,13 @@
   }
 }
 
+.labeled-select {
+  width: 100%;
+  > div {
+    font-weight: normal;
+  }
+}
+
 .table-terra {
   thead {
     background: #f4f4f4;
@@ -88,6 +95,15 @@
   }
 }
 
+.sub-form {
+  padding: 1em;
+  margin-top: 1em;
+  border-left: 2px solid lighten($action-color, 30%);
+  background: lighten($action-color, 50%);
+  border-radius: 5px;
+  h5 { margin-bottom: 1em;}
+}
+
 .padded {
   padding: 1em;
 }
@@ -96,8 +112,8 @@
   margin-top: 1em;
 }
 
-.float-right {
-  float: right;
+.margin-right {
+  margin-right: 2em;
 }
 
 .sublabel {
@@ -105,10 +121,15 @@
   font-weight: normal;
 }
 
-.position-fixed {
-  width: 24%;
-  position: fixed;
+.upload-wizard-react {
+  .position-fixed {
+    width: 24%;
+    position: fixed;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
 }
+
 
 .upload-wizard-react {
   h4 {
@@ -132,7 +153,6 @@
   }
   li.active {
     background: lighten($action-color, 40%);
-    padding-left: 1.25em;
   }
   > li {
     cursor: pointer;

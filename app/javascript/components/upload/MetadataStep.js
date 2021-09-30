@@ -8,7 +8,7 @@ import FileDownloadControl from 'components/download/FileDownloadControl'
 
 import { UserContext } from 'providers/UserProvider'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
-import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
+import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
 const DEFAULT_NEW_METADATA_FILE = {
   file_type: 'Metadata',
@@ -126,9 +126,6 @@ function MetadataForm({
                 target="_blank"
                 rel="noopener noreferrer">how to convert your file.</a><br/>
               If the file fails metadata convention validation, you will be emailed messages to help correct it.
-            </div>
-            <div className="form-group">
-              <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
             </div>
             <div className="form-group">
               <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>

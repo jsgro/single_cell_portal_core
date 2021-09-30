@@ -1,10 +1,10 @@
 import React from 'react'
-import Select from 'react-select'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
 
 import { clusterSelectStyle } from 'lib/cluster-utils'
+import Select from 'lib/InstrumentedSelect'
 
 
 /** takes the server response and returns subsample options suitable for react-select */
@@ -46,22 +46,23 @@ export default function SubsampleSelector({
 
   return (
     <div className="form-group">
-      <label>
+      <label className="labeled-select">
         <OverlayTrigger trigger="click" rootClose placement="top" overlay={subsamplingPopover}>
           <span>Subsampling <FontAwesomeIcon data-analytics-name="subsampling-help-icon"
             className="action log-click help-icon" icon={faInfoCircle}/>
           </span>
         </OverlayTrigger>
+        <Select options={subsampleOptions}
+          data-analytics-name="subsample-select"
+          value={{
+            label: subsample == 'all' ? 'All Cells' : `${subsample}`,
+            value: `${subsample}`
+          }}
+          onChange={newSubsample => updateClusterParams({
+            subsample: newSubsample.value
+          })}
+          styles={clusterSelectStyle}/>
       </label>
-      <Select options={subsampleOptions}
-        value={{
-          label: subsample == 'all' ? 'All Cells' : `${subsample}`,
-          value: `${subsample}`
-        }}
-        onChange={newSubsample => updateClusterParams({
-          subsample: newSubsample.value
-        })}
-        styles={clusterSelectStyle}/>
     </div>
   )
 }

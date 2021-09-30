@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
 import Plotly from 'plotly.js-dist'
 
@@ -15,6 +13,7 @@ import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
@@ -195,11 +194,7 @@ function RawScatterPlot({
 
       {
         isLoading &&
-        <FontAwesomeIcon
-          icon={faDna}
-          data-testid={`${graphElementId}-loading-icon`}
-          className="gene-load-spinner"
-        />
+        <LoadingSpinner data-testid={`${graphElementId}-loading-icon`}/>
       }
     </div>
   )

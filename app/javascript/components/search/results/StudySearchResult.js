@@ -26,7 +26,7 @@ function highlightWords(text, termMatches) {
         stylizedWord = `<span class='highlight'>${word}</span>`
       }
     })
-    stylizedText = !!stylizedText ? `${stylizedText} ${stylizedWord}` : `${stylizedWord}`
+    stylizedText = stylizedText ? `${stylizedText} ${stylizedWord}` : `${stylizedWord}`
   }
   )
   return stylizedText

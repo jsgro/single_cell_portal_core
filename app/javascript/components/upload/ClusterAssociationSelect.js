@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
-import Select from 'react-select'
+
+import Select from 'lib/InstrumentedSelect'
 
 /** find the forms on the page that are not the form this component is rendered in, and non-spatial */
 // function getOtherNonSpatialForms(parentForm) {
@@ -59,11 +60,11 @@ export default function ClusterAssociationSelect({ initialValue, parentForm, hid
     setSelected(selections)
     updateHiddenField(hiddenField, selections)
   }
-
   return (
-    <label>
+    <label className="labeled-select">
       Corresponding cluster:
       <Select options={opts}
+        data-analytics-name="cluster-association-select"
         value={selected}
         isMulti={true}
         placeholder="None"

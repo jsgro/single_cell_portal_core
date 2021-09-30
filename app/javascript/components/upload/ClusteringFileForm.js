@@ -1,10 +1,10 @@
 import React from 'react'
-import Select from 'react-select'
 
+import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import FileDownloadControl from 'components/download/FileDownloadControl'
+import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
-import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
 
 /** renders a form for editing/uploading a single cluster file */
 export default function ClusteringFileForm({
@@ -22,6 +22,7 @@ export default function ClusteringFileForm({
     <div className="col-md-12">
       <form id={`clusterForm-${file._id}`}
         className="form-terra"
+        onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
         <div className="flexbox-align-center">
           <FileUploadControl
@@ -35,23 +36,16 @@ export default function ClusteringFileForm({
           />
         </div>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
-        <div className="form-group">
-          <label>Coordinate data type:</label><br/>
-          <label className="sublabel">
-            <input type="radio" name={`clusterFormSpatial-${file._id}`} value="false" checked={!file.is_spatial} onChange={e => updateFile(file._id, { is_spatial: false })} /> Clustering
-          </label>
-          <label className="sublabel">
-            <input type="radio" name={`clusterFormSpatial-${file._id}`} value="true" checked={file.is_spatial} onChange={e => updateFile(file._id, { is_spatial: true })}/> Spatial transcriptomics positions
-          </label>
-        </div>
         { file.is_spatial &&
           <div className="form-group">
-            <label>Corresponding clusters:</label><br/>
-            <Select options={associatedClusterFileOptions}
-              value={spatialClusterAssocs}
-              isMulti={true}
-              placeholder="None"
-              onChange={val => updateCorrespondingClusters(file, val)}/>
+            <label className="labeled-select">Corresponding clusters
+              <Select options={associatedClusterFileOptions}
+                data-analytics-name="spatial-associated-clusters"
+                value={spatialClusterAssocs}
+                isMulti={true}
+                placeholder="None"
+                onChange={val => updateCorrespondingClusters(file, val)}/>
+            </label>
           </div>
         }
         <div className="form-group">

@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react'
 
 import CoordinateLabelFileForm from './CoordinateLabelFileForm'
+import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_LABEL_FILE = {
-  file_type: 'Coordinate Labels'
+  file_type: 'Coordinate Labels',
+  options: {}
 }
 
 const coordinateLabelFileFilter = file => file.file_type === 'Coordinate Labels'
@@ -25,7 +27,7 @@ function CoordinateLabelForm({
   handleSaveResponse
 }) {
   const coordinateFiles = formState.files.filter(coordinateLabelFileFilter)
-  const associatedClusterFileOptions = formState.files.filter(coordinateLabelFileFilter)
+  const associatedClusterFileOptions = formState.files.filter(f => f.file_type === 'Cluster')
     .map(file => ({ label: file.name, value: file._id }))
 
   /** handle a change in the associated cluster select */
@@ -45,7 +47,7 @@ function CoordinateLabelForm({
 
   return <div>
     <div className="row">
-      <h4 className="col-sm-12">6. Coordinate Labels</h4>
+      <h4 className="col-sm-12">Coordinate Labels</h4>
     </div>
     <div className="row">
       <div className="col-md-12">
@@ -77,7 +79,6 @@ function CoordinateLabelForm({
         </div>
       </div>
     </div>
-
     { coordinateFiles.map(file => {
       return <CoordinateLabelFileForm
         key={file._id}
@@ -89,8 +90,6 @@ function CoordinateLabelForm({
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}/>
     })}
-    <div className="row top-margin">
-      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_LABEL_FILE)}><span className="fas fa-plus"></span> Add File</button>
-    </div>
+    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_LABEL_FILE}/>
   </div>
 }
