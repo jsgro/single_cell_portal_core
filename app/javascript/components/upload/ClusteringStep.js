@@ -101,7 +101,7 @@ export function ClusteringUploadForm({
         saveFile={saveFile}
         deleteFile={deleteFile}
         handleSaveResponse={handleSaveResponse}
-        bucketName={formState.study.bucket_id}
+        bucketName={bucketName}
       />
     })}
     <div className="row top-margin">

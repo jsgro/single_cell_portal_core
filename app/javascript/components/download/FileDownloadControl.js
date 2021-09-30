@@ -23,7 +23,7 @@ export default function FileDownloadControl({ file, bucketName }) {
   } else {
     if (!file.upload_file_name && file.human_data) {
       return null
-    // TODO once the Sequence Data tab is added update this section for handling external human data files
+    // TODO (SCP-3719): Once the Sequence Data tab is added update this section for handling external human data files
     } else {
       return <p>
         <br></br>
