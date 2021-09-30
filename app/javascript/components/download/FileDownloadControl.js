@@ -7,7 +7,7 @@ export default function FileDownloadControl({ file, bucketName }) {
   const fileName = file.upload_file_name
 
   /** Load file when button is clicked */
-  const handleOnClick = () => {
+  const handleDownloadClick = () => {
     getBucketLocalUrl(bucketName, fileName).then(value => window.open(value))
   }
 
