@@ -48,9 +48,8 @@ export default function ClusteringFileForm({
             </label>
           </div>
         }
-        <div className="form-group">
-          <TextFormField label="Description / Figure Legend (this will be displayed below cluster)" fieldName="description" file={file} updateFile={updateFile}/>
-        </div>
+        <TextFormField label="Description / Figure Legend (this will be displayed below cluster)" fieldName="description" file={file} updateFile={updateFile}/>
+
         <div className="row">
           <div className="col-md-4">
             <TextFormField label="X Axis Label" fieldName="x_axis_label" file={file} updateFile={updateFile}/>

@@ -25,10 +25,22 @@ import ProcessedExpressionStep from './ProcessedExpressionStep'
 import MetadataStep from './MetadataStep'
 import MiscellaneousStep from './MiscellaneousStep'
 import SequenceFileStep from './SequenceFileStep'
+import GeneListStep from './GeneListStep'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 const CHUNK_SIZE = 10000000
-const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, SpatialStep, CoordinateLabelStep, ImageStep, SequenceFileStep, MiscellaneousStep]
+const STEPS = [
+  RawCountsStep,
+  ProcessedExpressionStep,
+  MetadataStep,
+  ClusteringStep,
+  SpatialStep,
+  CoordinateLabelStep,
+  ImageStep,
+  SequenceFileStep,
+  GeneListStep,
+  MiscellaneousStep
+]
 
 /** shows the upload wizard */
 export default function UploadWizard({ studyAccession, name }) {
