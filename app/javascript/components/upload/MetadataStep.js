@@ -80,9 +80,9 @@ function MetadataForm({
           <form id={`metadataForm-${file._id}`}
             className="form-terra"
             acceptCharset="UTF-8"
-            onSubmit={() => { return false }}>
+            onSubmit={() => {return false}}>
             <div className="row">
-              <div className="col-md-12">
+              <div className="col-md-12 file-upload-download-container">
                 <FileUploadControl
                   handleSaveResponse={handleSaveResponse}
                   file={file}
@@ -90,7 +90,6 @@ function MetadataForm({
                   allowedFileTypes={FileTypeExtensions.plainText}/>
                 <FileDownloadControl
                   file={file}
-                  handleSaveResponse={handleSaveResponse}
                   bucketName={formState.study.bucket_id}
                 />
               </div>
