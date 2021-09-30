@@ -26,9 +26,9 @@ export default function GeneListFileForm({
               updateFile={updateFile}/>
           </div>
         </div>
-        <div className="form-group">
-          <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
-        </div>
+
+        <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
+
         <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
       </form>
 

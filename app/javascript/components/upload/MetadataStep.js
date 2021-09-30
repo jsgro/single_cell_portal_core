@@ -121,9 +121,8 @@ function MetadataForm({
                 rel="noopener noreferrer">how to convert your file.</a><br/>
               If the file fails metadata convention validation, you will be emailed messages to help correct it.
             </div>
-            <div className="form-group">
-              <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
-            </div>
+            <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
+
             <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
           </form>
           <SavingOverlay file={file} updateFile={updateFile}/>

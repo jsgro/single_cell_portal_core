@@ -102,9 +102,8 @@ export default function SequenceFileForm({
             </label>
           </div>
         }
-        <div className="form-group">
-          <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
-        </div>
+        <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
+
         <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
         { (file.file_type === 'BAM' || associatedBaiFile) &&
           <BamIndexFileForm parentFile={file}

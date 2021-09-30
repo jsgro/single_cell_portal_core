@@ -42,9 +42,7 @@ export default function CoordinateLabelForm({
               onChange={val => updateCorrespondingClusters(file, val)}/>
           </label>
         </div>
-        <div className="form-group">
-          <TextFormField label="Description / Legend (this will be displayed below image)" fieldName="description" file={file} updateFile={updateFile}/>
-        </div>
+        <TextFormField label="Description / Legend (this will be displayed below image)" fieldName="description" file={file} updateFile={updateFile}/>
         <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
       </form>
 

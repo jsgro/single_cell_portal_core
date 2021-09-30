@@ -35,9 +35,9 @@ export default function MiscellaneousFileForm({
               onChange={val => updateFile(file._id, {file_type: val.value})}/>
           </label>
         </div>
-        <div className="form-group">
-          <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
-        </div>
+
+        <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
+
         <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
       </form>
 
