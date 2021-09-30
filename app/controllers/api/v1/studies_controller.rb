@@ -87,11 +87,18 @@ module Api
           menu_options: {
             fonts: SUPPORTED_LABEL_FONTS,
             species: ActiveRecordUtils.pluck_to_hash(Taxon.sorted, [:id, :common_name])
-              .map{ |k| k[:id] = k[:id].to_s; k },
+              .map { |k| k[:id] = k[:id].to_s; k }, # return the hash but with ids converted to strings
             units: ExpressionFileInfo::UNITS_VALUES,
             library_preparation_protocol: ExpressionFileInfo::LIBRARY_PREPARATION_VALUES,
             modality: ExpressionFileInfo::MODALITY_VALUES,
-            biosample_input_type: ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
+            biosample_input_type: ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES,
+            sequence_file_types: ['Fastq', 'BAM'],
+            genome_assemblies: ActiveRecordUtils.pluck_to_hash(GenomeAssembly, [:id, :name, :taxon_id])
+              .map do |k| # return the hash but with ids converted to strings
+                k[:id] = k[:id].to_s
+                k[:taxon_id] = k[:taxon_id].to_s;
+                k
+              end
           }
         }
         render json: response_obj

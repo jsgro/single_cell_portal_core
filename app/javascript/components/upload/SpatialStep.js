@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 
 import ClusteringFileForm from './ClusteringFileForm'
 import { clusterFileFilter } from './ClusteringStep'
-
+import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_SPATIAL_FILE = {
   is_spatial: true,
@@ -113,8 +113,6 @@ export function SpatialUploadForm({
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}/>
     })}
-    <div className="row top-margin">
-      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_SPATIAL_FILE)}><span className="fas fa-plus"></span> Add File</button>
-    </div>
+    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SPATIAL_FILE}/>
   </div>
 }

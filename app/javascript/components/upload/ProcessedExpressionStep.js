@@ -3,7 +3,8 @@ import React, { useEffect, useContext } from 'react'
 import ExpressionFileForm from './ExpressionFileForm'
 import { rawCountsFileFilter, expressionFileStructureHelp } from './RawCountsStep'
 import { UserContext } from 'providers/UserProvider'
-import { findBundleChildren } from './uploadUtils'
+import { findBundleChildren } from './upload-utils'
+import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_PROCESSED_FILE = {
   is_spatial: false,
@@ -96,7 +97,6 @@ function ProcessedUploadForm({
           </div>
         </div>
       </div>
-
       { processedParentFiles.map(file => {
         const associatedChildren = findBundleChildren(file, formState.files)
 
@@ -111,9 +111,7 @@ function ProcessedUploadForm({
           fileMenuOptions={fileMenuOptions}
           associatedChildren={associatedChildren}/>
       })}
-      <div className="row top-margin">
-        <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_PROCESSED_FILE)}><span className="fas fa-plus"></span> Add File</button>
-      </div>
+      <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
     </> }
 
   </div>

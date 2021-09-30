@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 
 import ClusteringFileForm from './ClusteringFileForm'
-
+import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_CLUSTER_FILE = {
   is_spatial: false,
@@ -90,7 +90,6 @@ export function ClusteringUploadForm({
         </div>
       </div>
     </div>
-
     { clusterFiles.map(file => {
       return <ClusteringFileForm
         key={file._id}
@@ -100,8 +99,6 @@ export function ClusteringUploadForm({
         deleteFile={deleteFile}
         handleSaveResponse={handleSaveResponse}/>
     })}
-    <div className="row top-margin">
-      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_CLUSTER_FILE)}><span className="fas fa-plus"></span> Add File</button>
-    </div>
+    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_CLUSTER_FILE}/>
   </div>
 }

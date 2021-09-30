@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react'
 
 import ExpressionFileForm from './ExpressionFileForm'
-import { findBundleChildren } from './uploadUtils'
+import { findBundleChildren } from './upload-utils'
+import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_RAW_COUNTS_FILE = {
   is_spatial: false,
@@ -57,7 +58,6 @@ function RawCountsUploadForm({
         </div>
       </div>
     </div>
-
     { rawParentFiles.map(file => {
       const associatedChildren = findBundleChildren(file, formState.files)
       return <ExpressionFileForm
@@ -71,9 +71,7 @@ function RawCountsUploadForm({
         fileMenuOptions={fileMenuOptions}
         associatedChildren={associatedChildren}/>
     })}
-    <div className="row top-margin">
-      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_RAW_COUNTS_FILE)}><span className="fas fa-plus"></span> Add File</button>
-    </div>
+    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/>
   </div>
 }
 
