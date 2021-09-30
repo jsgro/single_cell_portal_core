@@ -8,7 +8,7 @@ export default function FileDownloadControl({ file, bucketName }) {
 
   /** Load file when button is clicked */
   const handleOnClick = () => {
-    getBucketLocalUrl(bucketName, fileName).then(value => window.open(value))
+    getBucketLocalUrl(bucketName, fileName).then(value => window.open(value, '_blank', 'noopener,noreferrer'))
   }
 
   /** get the remote file path */
@@ -31,7 +31,7 @@ export default function FileDownloadControl({ file, bucketName }) {
           title='You can download this file once it has been fully uploaded. Check back soon.'>
           {<span className="fas fa-ban"></span> } Awaiting remote file
         </span> :
-          <a onClick={() => handleOnClick()} >
+          <a onClick={() => handleOnClick()} className="btn action">
             {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}
           </a>
         }

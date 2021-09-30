@@ -82,7 +82,7 @@ function MetadataForm({
             acceptCharset="UTF-8"
             onSubmit={() => {return false}}>
             <div className="row">
-              <div className="col-md-12 file-upload-download-container">
+              <div className="col-md-12 flexbox-align-center">
                 <FileUploadControl
                   handleSaveResponse={handleSaveResponse}
                   file={file}

@@ -23,7 +23,7 @@ export default function ClusteringFileForm({
       <form id={`clusterForm-${file._id}`}
         className="form-terra"
         acceptCharset="UTF-8">
-        <div className="file-upload-download-container">
+        <div className="flexbox-align-center">
           <FileUploadControl
             handleSaveResponse={handleSaveResponse}
             file={file}
