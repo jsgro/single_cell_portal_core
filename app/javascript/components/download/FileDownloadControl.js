@@ -9,6 +9,7 @@ export default function FileDownloadControl({ file, bucketName }) {
   /** Load file when button is clicked */
   const handleDownloadClick = () => {
     getBucketLocalUrl(bucketName, fileName).then(value => window.open(value, '_blank', 'noopener,noreferrer'))
+  }
 
   /** get the remote file path */
   async function getBucketLocalUrl() {
