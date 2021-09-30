@@ -87,7 +87,7 @@ module Api
           menu_options: {
             fonts: SUPPORTED_LABEL_FONTS,
             species: ActiveRecordUtils.pluck_to_hash(Taxon.sorted, [:id, :common_name])
-              .map{ |k| k[:id] = k[:id].to_s; k }, # return the hash but with ids converted to strings
+              .map { |k| k[:id] = k[:id].to_s; k }, # return the hash but with ids converted to strings
             units: ExpressionFileInfo::UNITS_VALUES,
             library_preparation_protocol: ExpressionFileInfo::LIBRARY_PREPARATION_VALUES,
             modality: ExpressionFileInfo::MODALITY_VALUES,
