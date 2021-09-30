@@ -30,8 +30,7 @@ export default function ImageFileForm({
         className="form-terra"
         acceptCharset="UTF-8">
         <div className="row">
-          {/* TO DO HERE */}
-        <div className="col-md-6 file-upload-download-container">
+          <div className="col-md-6 file-upload-download-container">
             <FileUploadControl
               handleSaveResponse={handleSaveResponse}
               file={file}
