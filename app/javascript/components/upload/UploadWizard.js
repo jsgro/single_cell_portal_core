@@ -24,10 +24,11 @@ import RawCountsStep from './RawCountsStep'
 import ProcessedExpressionStep from './ProcessedExpressionStep'
 import MetadataStep from './MetadataStep'
 import MiscellaneousStep from './MiscellaneousStep'
+import SequenceFileStep from './SequenceFileStep'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 const CHUNK_SIZE = 10000000
-const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, SpatialStep, CoordinateLabelStep, ImageStep, MiscellaneousStep]
+const STEPS = [RawCountsStep, ProcessedExpressionStep, MetadataStep, ClusteringStep, SpatialStep, CoordinateLabelStep, ImageStep, SequenceFileStep, MiscellaneousStep]
 
 /** shows the upload wizard */
 export default function UploadWizard({ studyAccession, name }) {
@@ -77,9 +78,13 @@ export default function UploadWizard({ studyAccession, name }) {
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
       const fileIndex = newFormState.files.findIndex(f => f.name === updatedFile.name)
+      const oldFileId = formState.files[fileIndex]._id
       const formFile = _cloneDeep(updatedFile)
       if (uploadingMoreChunks) {
         formFile.isSaving = true
+      }
+      if (oldFileId != updatedFile._id) { // we saved the file and got back a fresh id
+        formFile.oldId = oldFileId
       }
       newFormState.files[fileIndex] = formFile
       return newFormState

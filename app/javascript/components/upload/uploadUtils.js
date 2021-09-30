@@ -16,6 +16,7 @@ const PROPERTIES_NOT_TO_SEND = [
   'isSaving',
   'isDeleting',
   'isError',
+  'oldId',
   'generation',
   'created_at',
   'updated_at',
@@ -58,6 +59,9 @@ export function formatFileFromServer(file) {
     // Note that taxon_id here is a MongoDB object ID, not an NCBI Taxonomy ID like "9606".
     file.taxon_id = file.taxon_id.$oid
   }
+  if (file.genome_assembly_id) {
+    file.genome_assembly_id = file.genome_assembly_id.$oid
+  }
   if (!file.expression_file_info) {
     file.expression_file_info = {}
   }
@@ -66,7 +70,10 @@ export function formatFileFromServer(file) {
 
 /** find the bundle children of 'file', if any, in the given 'files' list */
 export function findBundleChildren(file, files) {
-  return files.filter(f => f.options?.matrix_file_name === file.name || f.options?.matrix_id === file._id)
+  return files.filter(f => {
+    const parentFields = [f.options?.matrix_id, f.options?.bam_id, f.options?.cluster_file_id]
+    return parentFields.includes(file._id) || (file.oldId && parentFields.includes(file.oldId))
+  })
 }
 
 /** return a new FormData based on the given file object, formatted as the api endpoint expects,
@@ -102,6 +109,15 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
     })
   }
   return data
+}
+
+/** renders a 'Add File' button that occupies a full row */
+export function AddFileButton({ newFileTemplate, addNewFile }) {
+  return <div className="row top-margin">
+    <button className="btn btn-secondary action" onClick={() => addNewFile(newFileTemplate)}>
+      <span className="fas fa-plus"></span> Add File
+    </button>
+  </div>
 }
 
 /** renders a basic label->value text field in a bootstrap form control */

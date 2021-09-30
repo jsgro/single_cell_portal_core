@@ -121,10 +121,15 @@
   font-weight: normal;
 }
 
-.position-fixed {
-  width: 24%;
-  position: fixed;
+.upload-wizard-react {
+  .position-fixed {
+    width: 24%;
+    position: fixed;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
 }
+
 
 .upload-wizard-react {
   h4 {
