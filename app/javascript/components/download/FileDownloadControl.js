@@ -8,7 +8,7 @@ export default function FileDownloadControl({ file, bucketName }) {
 
   /** Load file when button is clicked */
   const handleOnClick = () => {
-    getBucketLocalUrl(bucketName, fileName).then(value => window.location = value)
+    getBucketLocalUrl(bucketName, fileName).then(value => window.open(value))
   }
 
   /** get the remote file path */
@@ -35,7 +35,6 @@ export default function FileDownloadControl({ file, bucketName }) {
             {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}
           </a>
         }
-
       </p>
     }
   }
