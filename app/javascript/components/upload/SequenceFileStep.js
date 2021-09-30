@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react'
 
 import SequenceFileForm from './SequenceFileForm'
-import { AddFileButton, findBundleChildren } from './uploadUtils'
+import { findBundleChildren } from './upload-utils'
+import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_SEQUENCE_FILE = {
   file_type: 'Fastq',
@@ -20,7 +21,7 @@ export default {
   fileFilter: sequenceFileFilter
 }
 
-/** Renders a form for uploading one or more miscellaneous files */
+/** Renders a form for uploading one or more sequence files */
 function SequenceForm({
   formState,
   serverState,
@@ -66,7 +67,6 @@ function SequenceForm({
         </div>
       </div>
     </div>
-    {sequenceFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SEQUENCE_FILE}/> }
     { sequenceFiles.map(file => {
       const associatedBaiFile = findBundleChildren(file, formState.files)[0]
       return <SequenceFileForm

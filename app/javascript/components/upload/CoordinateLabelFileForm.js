@@ -2,7 +2,7 @@ import React from 'react'
 
 import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
-import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
+import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
 /** renders a form for editing/uploading an image file */
 export default function CoordinateLabelForm({
@@ -21,6 +21,7 @@ export default function CoordinateLabelForm({
     <div className="col-md-12">
       <form id={`labelForm-${file._id}`}
         className="form-terra"
+        onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
         <div className="row">
           <div className="col-md-12">

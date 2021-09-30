@@ -10,7 +10,7 @@ import ReactDOM from 'react-dom'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
 
-import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './uploadUtils'
+import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
 import MessageModal from 'lib/MessageModal'
 import UserProvider from 'providers/UserProvider'

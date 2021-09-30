@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 
 import MiscellaneousFileForm from './MiscellaneousFileForm'
+import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_OTHER_FILE = {
   file_type: 'Documentation',
@@ -45,7 +46,6 @@ function MiscellaneousForm({
         </p>
       </div>
     </div>
-
     { miscFiles.map(file => {
       return <MiscellaneousFileForm
         key={file._id}
@@ -56,10 +56,6 @@ function MiscellaneousForm({
         miscFileTypes={miscFileTypes}
         handleSaveResponse={handleSaveResponse}/>
     })}
-    <div className="row top-margin">
-      <button className="btn btn-secondary action" onClick={() => addNewFile(DEFAULT_NEW_OTHER_FILE)}>
-        <span className="fas fa-plus"></span> Add File
-      </button>
-    </div>
+    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_OTHER_FILE}/>
   </div>
 }

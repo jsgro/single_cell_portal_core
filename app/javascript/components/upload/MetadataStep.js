@@ -6,7 +6,7 @@ import { Popover, OverlayTrigger } from 'react-bootstrap'
 
 import { UserContext } from 'providers/UserProvider'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
-import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
+import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
 const DEFAULT_NEW_METADATA_FILE = {
   file_type: 'Metadata',

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { findBundleChildren } from './uploadUtils'
+import { findBundleChildren } from './upload-utils'
 
 /** renders the wizard step header for a given step */
 export default function StepTitle({ step, index, currentStep, setCurrentStep, serverState, formState }) {

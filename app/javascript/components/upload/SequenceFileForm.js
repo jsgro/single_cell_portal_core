@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 
 import Select from 'lib/InstrumentedSelect'
 import FileUploadControl from './FileUploadControl'
-import { TextFormField, SavingOverlay, SaveDeleteButtons } from './uploadUtils'
+import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
 /** renders a form for editing/uploading a sequence file and any assoicated bundle files */
 export default function SequenceFileForm({

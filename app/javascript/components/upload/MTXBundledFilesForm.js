@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
-import { TextFormField, SaveDeleteButtons, SavingOverlay } from './uploadUtils'
+import { TextFormField, SaveDeleteButtons, SavingOverlay } from './form-components'
 
 
 /** return a blank barcodes file associated with the parent */
