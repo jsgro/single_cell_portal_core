@@ -14,7 +14,7 @@ export default function GeneListFileForm({
 }) {
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
-      <form id={`misc-file-form-${file._id}`}
+      <form id={`gene-list-form-${file._id}`}
         className="form-terra"
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
