@@ -4,7 +4,7 @@ import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 import BucketImage from 'components/visualization/BucketImage'
-
+import FileDownloadControl from 'components/download/FileDownloadControl'
 
 /** renders a form for editing/uploading an image file */
 export default function ImageFileForm({
@@ -31,12 +31,16 @@ export default function ImageFileForm({
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
         <div className="row">
-          <div className="col-md-6">
+          <div className="col-md-6 flexbox-align-center">
             <FileUploadControl
               handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}
               allowedFileTypes={FileTypeExtensions.image}/>
+            <FileDownloadControl
+              file={file}
+              bucketName={bucketName}
+            />
           </div>
           <div className="col-md-6">
             { file.uploadSelection && <img className="preview-image" src={imagePreviewUrl} alt={file.uploadSelection.name} /> }

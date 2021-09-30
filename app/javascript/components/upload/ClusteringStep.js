@@ -97,7 +97,9 @@ export function ClusteringUploadForm({
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
-        handleSaveResponse={handleSaveResponse}/>
+        handleSaveResponse={handleSaveResponse}
+        bucketName={formState.study.bucket_id}
+      />
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_CLUSTER_FILE}/>
   </div>
