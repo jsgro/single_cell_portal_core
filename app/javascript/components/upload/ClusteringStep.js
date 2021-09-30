@@ -25,9 +25,7 @@ export function ClusteringUploadForm({
   updateFile,
   saveFile,
   deleteFile,
-  handleSaveResponse,
-  bucketName
-
+  handleSaveResponse
 }) {
   const clusterFiles = formState.files.filter(clusterFileFilter)
 
@@ -101,7 +99,7 @@ export function ClusteringUploadForm({
         saveFile={saveFile}
         deleteFile={deleteFile}
         handleSaveResponse={handleSaveResponse}
-        bucketName={bucketName}
+        bucketName={formState.study.bucket_id}
       />
     })}
     <div className="row top-margin">
