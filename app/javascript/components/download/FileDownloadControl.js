@@ -28,7 +28,7 @@ export default function FileDownloadControl({ file, bucketName }) {
       return <p>
         <br></br>
         {!file.generation ? <span className="label label-warning no-download-available" data-toggle="tooltip"
-          title='You will be able to download this file once it has been uploaded to our remote data store. Check back soon.'>
+          title='You can download this file once it has been fully uploaded. Check back soon.'>
           {<span className="fas fa-ban"></span> } Awaiting remote file
         </span> :
           <a onClick={() => handleOnClick()} >
