@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
+import _kebabCase from 'lodash/kebabCase'
+import _remove from 'lodash/remove'
+import _cloneDeep from 'lodash/cloneDeep'
 import Plotly from 'plotly.js-dist'
 
 import { fetchCluster } from 'lib/scp-api'
 import { logScatterPlot } from 'lib/scp-api-metrics'
 import { log } from 'lib/metrics-api'
-import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
 import ScatterPlotLegend from './controls/ScatterPlotLegend'
@@ -15,6 +17,7 @@ import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
+
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
@@ -41,6 +44,17 @@ function countValues(array) {
   }, {})
 }
 
+/** Handle user interaction with a filter */
+function updateFilters(props, filterId, value) {
+  const newFilters = props.filters.slice()
+  if (value && !newFilters.includes(filterId)) {
+    newFilters.push(filterId)
+  }
+  if (!value) {
+    _remove(newFilters, id => {return id === filterId})
+  }
+  props.setFilters(newFilters)
+}
 
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
@@ -63,6 +77,7 @@ function RawScatterPlot({
   const [labelCorrelations, setLabelCorrelations] = useState(null)
   const [scatterData, setScatterData] = useState(null)
   const [countsByLabel, setCountsByLabel] = useState(null)
+  const [filters, setFilters] = useState([])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
@@ -70,6 +85,28 @@ function RawScatterPlot({
   function handleResponse(clusterResponse) {
     const [scatter, perfTimes] = clusterResponse
     const layout = getPlotlyLayout(dimensions, scatter)
+
+    const newAnnots = []
+    const newCells = []
+    const newX = []
+    const newY = []
+    console.log('filters', filters)
+    scatter.data.annotations.forEach((label, i) => {
+      const canonicalLabel = _kebabCase(label)
+      if (!filters.includes(canonicalLabel)) {
+        console.log('canonicalLabel, label, i', canonicalLabel, label, i)
+        newAnnots.push(scatter.data.annotations[i])
+        newCells.push(scatter.data.cells[i])
+        newX.push(scatter.data.x[i])
+        newY.push(scatter.data.y[i])
+      }
+    })
+
+    const originalData = _cloneDeep(scatter.data)
+    scatter.data.annotations = newAnnots
+    scatter.data.cells = newCells
+    scatter.data.x = newX
+    scatter.data.y = newY
 
     const traceArgs = {
       axes: scatter.axes,
@@ -85,9 +122,12 @@ function RawScatterPlot({
       pointSize: scatter.pointSize,
       showPointBorders: scatter.showClusterPointBorders,
       is3D: scatter.is3D,
-      labelCorrelations
+      labelCorrelations,
+      filters
     }
     let plotlyTraces = getPlotlyTraces(traceArgs)
+
+    console.log('plotlyTraces', plotlyTraces)
 
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
@@ -115,12 +155,8 @@ function RawScatterPlot({
       })
     }
 
-    // const labelCounts = countValues(scatter.data.annotations)
-    // console.log('labelCounts', labelCounts)
-
-    setCountsByLabel(countValues(scatter.data.annotations))
+    setCountsByLabel(countValues(originalData.annotations))
     setScatterData(scatter)
-    console.log('countsByLabel', countsByLabel)
     setShowError(false)
     setIsLoading(false)
   }
@@ -145,7 +181,7 @@ function RawScatterPlot({
       setShowError(true)
       setIsLoading(false)
     })
-  }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
+  }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter, filters])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
@@ -180,13 +216,14 @@ function RawScatterPlot({
 
 
   useEffect(() => {
-    $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
-    $(`#${graphElementId}`).on('plotly_legendclick', logLegendClick)
-    $(`#${graphElementId}`).on('plotly_legenddoubleclick', logLegendDoubleClick)
+    const jqScatterGraph = $(`#${graphElementId}`)
+    jqScatterGraph.on('plotly_selected', plotPointsSelected)
+    jqScatterGraph.on('plotly_legendclick', logLegendClick)
+    jqScatterGraph.on('plotly_legenddoubleclick', logLegendDoubleClick)
     return () => {
-      $(`#${graphElementId}`).off('plotly_selected')
-      $(`#${graphElementId}`).off('plotly_legendclick')
-      $(`#${graphElementId}`).off('plotly_legenddoubleclick')
+      jqScatterGraph.off('plotly_selected')
+      jqScatterGraph.off('plotly_legendclick')
+      jqScatterGraph.off('plotly_legenddoubleclick')
       Plotly.purge(graphElementId)
     }
   }, [])
@@ -213,7 +250,11 @@ function RawScatterPlot({
         <ScatterPlotLegend
           name={scatterData.annotParams.name}
           countsByLabel={countsByLabel}
-          correlations={labelCorrelations}/>
+          correlations={labelCorrelations}
+          filters={filters}
+          setFilters={setFilters}
+          updateFilters={updateFilters}
+        />
         }
       </div>
       <p className="help-block">
@@ -251,7 +292,8 @@ function getPlotlyTraces({
   pointSize,
   showPointBorders,
   is3D,
-  labelCorrelations
+  labelCorrelations,
+  filters
 }) {
   const trace = {
     type: is3D ? 'scatter3d' : 'scattergl',

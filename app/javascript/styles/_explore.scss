@@ -182,7 +182,7 @@
 }
 
 .scatter-legend-row {
-  height: 25px;
+  height: 30px;
   cursor: pointer;
   background-color: #FFF;
   border: 1px solid #DDD;
@@ -200,8 +200,8 @@
 }
 
 .scatter-legend-icon {
-  width: 23px;
-  height: 23px;
+  width: 29px;
+  height: 29px;
   margin: 0 10px 0 -1px;
   float: left;
   border-radius: 2px 0 0 2px
@@ -209,7 +209,7 @@
 
 .scatter-legend-entry {
   position: relative;
-  top: 2px;
+  top: 5px;
 }
 
 .filtered {

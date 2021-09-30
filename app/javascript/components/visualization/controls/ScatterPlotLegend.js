@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import _kebabCase from 'lodash/kebabCase'
-import _remove from 'lodash/remove'
 
 import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 import { getColorBrewerColor } from 'lib/plot'
@@ -12,22 +11,10 @@ function labelSort(a, b) {
   return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
 }
 
-/** Handle user interaction with a filter */
-function updateSelection(props, filterId, value) {
-  const newSelection = props.selection.slice()
-  if (value && !newSelection.includes(filterId)) {
-    newSelection.push(filterId)
-  }
-  if (!value) {
-    _remove(newSelection, id => {return id === filterId})
-  }
-  props.setSelection(newSelection)
-}
-
 /** Row in legend */
 function LegendEntry({
   label, numPoints, iconColor, labelCorrelations,
-  selection, setSelection
+  filters, setFilters, updateFilters
 }) {
   let entry = `${label} (${numPoints} points)`
   if (labelCorrelations) {
@@ -40,7 +27,7 @@ function LegendEntry({
   const id = _kebabCase(label)
   const domId = `legend-entry-${id}`
 
-  const isSelected = selection.includes(id)
+  const isSelected = filters.includes(id)
 
   const iconStyle = { backgroundColor: iconColor }
   const selectedClass = (isSelected ? 'selected' : '')
@@ -48,8 +35,8 @@ function LegendEntry({
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
     const state = !isSelected
-    selection[label] = state
-    updateSelection({ selection, setSelection }, id, state)
+    filters[label] = state
+    updateFilters({ filters, setFilters }, id, state)
   }
 
   return (
@@ -65,9 +52,7 @@ function LegendEntry({
 }
 
 /** Custom legend for scatter plots */
-export default function ScatterPlotLegend({ name, countsByLabel, correlations }) {
-  const [selection, setSelection] = useState([])
-
+export default function ScatterPlotLegend({ name, countsByLabel, correlations, filters, setFilters, updateFilters }) {
   console.log('name, countsByLabel, correlations', name, countsByLabel, correlations)
 
   const labels = Object.keys(countsByLabel)
@@ -84,18 +69,18 @@ export default function ScatterPlotLegend({ name, countsByLabel, correlations })
           numPoints={numPoints}
           iconColor={iconColor}
           correlations={correlations}
-          selection={selection}
-          setSelection={setSelection}
+          filters={filters}
+          setFilters={setFilters}
+          updateFilters={updateFilters}
         />
       )
     })
 
-  console.log('selections', selection)
+  console.log('filters', filters)
 
   console.log('legendEntries', legendEntries)
 
-  console.log('selections', selection)
-  const filteredClass = (selection.length > 0) ? 'filtered' : ''
+  const filteredClass = (filters.length > 0) ? 'filtered' : ''
   return (
     <div className={`scatter-legend ${filteredClass}`}>
       <p className="scatter-legend-name">{name}</p>
