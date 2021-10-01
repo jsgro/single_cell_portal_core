@@ -27,7 +27,7 @@ function LegendEntry({
   const id = _kebabCase(label)
   const domId = `legend-entry-${id}`
 
-  const isSelected = filters.includes(id)
+  const isSelected = filters.includes(label)
 
   const iconStyle = { backgroundColor: iconColor }
   const selectedClass = (isSelected ? 'selected' : '')
@@ -35,8 +35,8 @@ function LegendEntry({
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
     const state = !isSelected
-    filters[label] = state
-    updateFilters({ filters, setFilters }, id, state)
+    // console.log('in toggleSelection. filters, label, state:', filters, label, state)
+    updateFilters({ filters, setFilters }, label, state)
   }
 
   return (
@@ -53,7 +53,7 @@ function LegendEntry({
 
 /** Custom legend for scatter plots */
 export default function ScatterPlotLegend({ name, countsByLabel, correlations, filters, setFilters, updateFilters }) {
-  console.log('name, countsByLabel, correlations', name, countsByLabel, correlations)
+  // console.log('name, countsByLabel, correlations', name, countsByLabel, correlations)
 
   const labels = Object.keys(countsByLabel)
 
@@ -78,7 +78,7 @@ export default function ScatterPlotLegend({ name, countsByLabel, correlations, f
 
   console.log('filters', filters)
 
-  console.log('legendEntries', legendEntries)
+  // console.log('legendEntries', legendEntries)
 
   const filteredClass = (filters.length > 0) ? 'filtered' : ''
   return (

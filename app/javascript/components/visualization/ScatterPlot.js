@@ -86,28 +86,6 @@ function RawScatterPlot({
     const [scatter, perfTimes] = clusterResponse
     const layout = getPlotlyLayout(dimensions, scatter)
 
-    const newAnnots = []
-    const newCells = []
-    const newX = []
-    const newY = []
-    console.log('filters', filters)
-    scatter.data.annotations.forEach((label, i) => {
-      const canonicalLabel = _kebabCase(label)
-      if (!filters.includes(canonicalLabel)) {
-        console.log('canonicalLabel, label, i', canonicalLabel, label, i)
-        newAnnots.push(scatter.data.annotations[i])
-        newCells.push(scatter.data.cells[i])
-        newX.push(scatter.data.x[i])
-        newY.push(scatter.data.y[i])
-      }
-    })
-
-    const originalData = _cloneDeep(scatter.data)
-    scatter.data.annotations = newAnnots
-    scatter.data.cells = newCells
-    scatter.data.x = newX
-    scatter.data.y = newY
-
     const traceArgs = {
       axes: scatter.axes,
       data: scatter.data,
@@ -126,8 +104,6 @@ function RawScatterPlot({
       filters
     }
     let plotlyTraces = getPlotlyTraces(traceArgs)
-
-    console.log('plotlyTraces', plotlyTraces)
 
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
@@ -155,7 +131,7 @@ function RawScatterPlot({
       })
     }
 
-    setCountsByLabel(countValues(originalData.annotations))
+    setCountsByLabel(countValues(scatter.data.annotations))
     setScatterData(scatter)
     setShowError(false)
     setIsLoading(false)
@@ -308,16 +284,33 @@ function getPlotlyTraces({
     trace.z = data.z
   }
 
+  console.log('in getPlotlyTraces.  dataScatterColor, scatterColor:', dataScatterColor, scatterColor)
+
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
   if (annotType === 'group' && !isGeneExpressionForColor) {
     // use plotly's groupby transformation to make the traces
     // const legendEntries = getLegendEntries(data, pointSize, labelCorrelations)
-    trace.transforms = [{
-      type: 'groupby',
-      groups: data.annotations
-      // styles: legendEntries
-    }]
+    trace.transforms = [
+      {
+        type: 'groupby',
+        groups: data.annotations
+        // styles: legendEntries
+      }
+    ]
+
+    if (filters.length > 0) {
+      trace.transforms.push({
+        type: 'filter',
+        target: data.annotations,
+        // For available operations, see:
+        // - https://github.com/plotly/plotly.js/blob/623fcd1fea9d9bfb86e5e0d44d8047cd8636881c/src/transforms/filter.js
+        // - https://github.com/plotly/plotly.js/blob/623fcd1fea9d9bfb86e5e0d44d8047cd8636881c/src/constants/filter_ops.js
+        // Plotly docs are rather sparse here.
+        operation: '{}',
+        value: filters
+      })
+    }
   } else {
     trace.marker = {
       line: { color: 'rgb(40,40,40)', width: 0 },
@@ -341,6 +334,8 @@ function getPlotlyTraces({
     }
   }
   addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
+
+  console.log('trace', trace)
   return [trace]
 }
 
@@ -363,14 +358,11 @@ function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, i
   trace.hovertemplate = groupHoverTemplate
 }
 
-/** sets the scatter color on the given races.  If no color is sspecified, it reads the color from the data */
+/** Gets color on the given traces.  If no color is specified, use color from data */
 function getScatterColorToApply(dataScatterColor, scatterColor) {
   // Set color scale
   if (!scatterColor) {
     scatterColor = dataScatterColor
-  }
-  if (!scatterColor) {
-    scatterColor = defaultScatterColor
   }
   return scatterColor
 }
