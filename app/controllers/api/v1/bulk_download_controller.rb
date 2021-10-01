@@ -311,7 +311,8 @@ module Api
         # if this is a single-study download, allow for DirectoryListing downloads
         if valid_accessions.size == 1 && params[:directory].present?
           study_accession = valid_accessions.first
-          directories = self.class.find_matching_directories(params[:directory], study_accession)
+          directory_name, file_type = params[:directory].split('--')
+          directories = self.class.find_matching_directories(directory_name, file_type, study_accession)
           directory_files = ::BulkDownloadService.get_requested_directory_files(directories)
         else
           directories = []
@@ -331,7 +332,9 @@ module Api
 
         # create maps to avoid Mongo timeouts when generating curl commands in parallel processes
         bucket_map = ::BulkDownloadService.generate_study_bucket_map(valid_accessions) if valid_accessions.any?
-        pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories) if files_requested.any?
+        if files_requested.any? || directories.any?
+          pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories)
+        end
 
         # generate curl config file
         logger.info "Beginning creation of curl configuration for user_id, auth token: #{current_api_user.id}"
@@ -393,17 +396,18 @@ module Api
 
       # find matching directories in a given study
       # this only works for single-study bulk download, not from advanced/faceted search
-      # can be 'all', or a single directory
-      def self.find_matching_directories(directory_name, accession)
+      # can be 'all', or a single directory (with specified file_type as well)
+      def self.find_matching_directories(directory_name, file_type, accession)
         study = Study.find_by(accession: accession)
         sanitized_dirname = URI.decode(directory_name)
-        selector = DirectoryListing.where(study_id: study.id, sync_status: true)
-        if sanitized_dirname.downcase == 'nodirs'
-          return [] # for study file download only
-        elsif sanitized_dirname.downcase != 'all'
-          selector = selector.where(name: sanitized_dirname)
+        case sanitized_dirname.downcase
+        when 'nodirs'
+          []
+        when 'all'
+          study.directory_listings.all
+        else
+          DirectoryListing.where(name: sanitized_dirname, study_id: study.id, sync_status: true, file_type: file_type)
         end
-        selector
       end
 
       # find matching study files, either directly by id, or via a list of accessions and file types

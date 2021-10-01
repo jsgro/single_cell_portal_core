@@ -120,12 +120,11 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:get, api_v1_bulk_download_summary_path(accessions: study.accession), user: @user)
     assert_response :success
 
-    expected_files = study.study_files
     expected_response = BulkDownloadService.get_download_info([@basic_study.accession])
     assert_equal expected_response.to_json, json.to_json
   end
 
-  test 'single-study bulk download should inlcude all study files' do
+  test 'single-study bulk download should include all study files' do
     study = @basic_study
     execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
     assert_response :success
@@ -138,6 +137,73 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
 
     study.study_files.each do |study_file|
       assert json.include?(study_file.name), "Bulk download config did not include #{study_file.name}"
+    end
+  end
+
+  test 'should honor directory parameter for single-study bulk download' do
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'Directory Study',
+                              public: false,
+                              user: @user,
+                              test_array: @@studies_to_clean)
+    file_types = %w[csv xlsx]
+    file_types.each do |file_type|
+      files = 1.upto(5).map { |i| "#{file_type}/file_#{i}.#{file_type}" }
+      file_list = files.map { |file| { generation: 12345, name: file, size: 100 }.with_indifferent_access }
+      directory = DirectoryListing.create!(study: study, file_type: file_type, name: file_type,
+                                           files: file_list, sync_status: true)
+      assert directory.persisted?
+      execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
+      assert_response :success
+      auth_code = json['auth_code']
+      mock = Minitest::Mock.new
+      files.each do |file|
+        mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/#{file_type}/#{file}"
+        mock.expect :execute_gcloud_method, mock_signed_url,
+                    [:generate_signed_url, 0, study.bucket_id, file, { expires: 1.day.to_i }]
+      end
+      FireCloudClient.stub :new, mock do
+        execute_http_request(:get,
+                             api_v1_bulk_download_generate_curl_config_path(
+                               auth_code: auth_code,
+                               accessions: [study.accession],
+                               directory: "#{file_type}--#{file_type}"
+                             )
+        )
+        assert_response :success
+        mock.verify
+        files.each do |file|
+          assert json.include? file
+        end
+      end
+    end
+    execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
+    assert_response :success
+    auth_code = json['auth_code']
+    mock = Minitest::Mock.new
+    file_types.each do |file_type|
+      files = 1.upto(5).map { |i| "#{file_type}/file_#{i}.#{file_type}" }
+      files.each do |file|
+        mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/#{file_type}/#{file}"
+        mock.expect :execute_gcloud_method, mock_signed_url,
+                    [:generate_signed_url, 0, study.bucket_id, file, { expires: 1.day.to_i }]
+      end
+    end
+    FireCloudClient.stub :new, mock do
+      execute_http_request(:get,
+                           api_v1_bulk_download_generate_curl_config_path(
+                             auth_code: auth_code,
+                             accessions: [study.accession],
+                             directory: 'all'
+                           )
+      )
+      assert_response :success
+      mock.verify
+      file_types.each do |file_type|
+        1.upto(5).each do |i|
+          assert json.include? "#{file_type}/file_#{i}.#{file_type}"
+        end
+      end
     end
   end
 
