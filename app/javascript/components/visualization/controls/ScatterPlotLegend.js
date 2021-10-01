@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import _kebabCase from 'lodash/kebabCase'
 
 import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
@@ -11,7 +11,57 @@ function labelSort(a, b) {
   return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
 }
 
-/** Row in legend */
+
+/**
+ * Return a hash of value=>count for the passed-in array
+ * This is surprisingly quick even for large arrays, but we'd rather we
+ * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
+*/
+function countValues(array) {
+  return array.reduce((acc, curr) => {
+    if (!acc[curr]) {
+      acc[curr] = 1
+    } else {
+      acc[curr] += 1
+    }
+    return acc
+  }, {})
+}
+
+
+/**
+ * Get value for `style` prop in Plotly scatter plot `trace.transforms`.
+ * Also calculate point counts for each label, `countsByLabel`.
+ *
+ * This is needed so that colors match between the custom Plotly legend
+ * entries and each graphical trace in the plot.  (Without this, point
+ * set "Foo" could be green in the legend, but red in the plot.)
+ *
+*/
+export function getStyles(data, pointSize) {
+  const countsByLabel = countValues(data.annotations)
+
+  const labels = Object.keys(countsByLabel)
+
+  const legendStyles = labels
+    .sort(labelSort) // sort keys so we assign colors in the right order
+    .map((label, index) => {
+      return {
+        target: label,
+        value: {
+          legendrank: index,
+          marker: {
+            color: getColorBrewerColor(index),
+            size: pointSize
+          }
+        }
+      }
+    })
+
+  return [legendStyles, countsByLabel]
+}
+
+/** Component for row in legend */
 function LegendEntry({
   label, numPoints, iconColor, labelCorrelations,
   filters, setFilters, updateFilters
@@ -35,7 +85,6 @@ function LegendEntry({
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
     const state = !isSelected
-    // console.log('in toggleSelection. filters, label, state:', filters, label, state)
     updateFilters({ filters, setFilters }, label, state)
   }
 
@@ -51,10 +100,12 @@ function LegendEntry({
   )
 }
 
-/** Custom legend for scatter plots */
-export default function ScatterPlotLegend({ name, countsByLabel, correlations, filters, setFilters, updateFilters }) {
-  // console.log('name, countsByLabel, correlations', name, countsByLabel, correlations)
 
+/** Component for custom legend for scatter plots */
+export default function ScatterPlotLegend({
+  name, countsByLabel, correlations,
+  filters, setFilters, updateFilters
+}) {
   const labels = Object.keys(countsByLabel)
 
   const legendEntries = labels
@@ -75,10 +126,6 @@ export default function ScatterPlotLegend({ name, countsByLabel, correlations, f
         />
       )
     })
-
-  console.log('filters', filters)
-
-  // console.log('legendEntries', legendEntries)
 
   const filteredClass = (filters.length > 0) ? 'filtered' : ''
   return (

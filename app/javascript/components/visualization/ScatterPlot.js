@@ -12,7 +12,7 @@ import { logScatterPlot } from 'lib/scp-api-metrics'
 import { log } from 'lib/metrics-api'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
-import ScatterPlotLegend from './controls/ScatterPlotLegend'
+import ScatterPlotLegend, { getStyles } from './controls/ScatterPlotLegend'
 import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
@@ -27,22 +27,6 @@ export const SCATTER_COLOR_OPTIONS = [
 
 export const defaultScatterColor = 'Reds'
 window.Plotly = Plotly
-
-/**
- * Return a hash of value=>count for the passed-in array
- * This is surprisingly quick even for large arrays, but we'd rather we
- * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
-*/
-function countValues(array) {
-  return array.reduce((acc, curr) => {
-    if (!acc[curr]) {
-      acc[curr] = 1
-    } else {
-      acc[curr] += 1
-    }
-    return acc
-  }, {})
-}
 
 /** Handle user interaction with a filter */
 function updateFilters(props, filterId, value) {
@@ -103,7 +87,9 @@ function RawScatterPlot({
       labelCorrelations,
       filters
     }
-    let plotlyTraces = getPlotlyTraces(traceArgs)
+    const [traces, labelCounts] = getPlotlyTraces(traceArgs)
+    let plotlyTraces = [traces]
+    setCountsByLabel(labelCounts)
 
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
@@ -131,7 +117,6 @@ function RawScatterPlot({
       })
     }
 
-    setCountsByLabel(countValues(scatter.data.annotations))
     setScatterData(scatter)
     setShowError(false)
     setIsLoading(false)
@@ -284,18 +269,19 @@ function getPlotlyTraces({
     trace.z = data.z
   }
 
-  console.log('in getPlotlyTraces.  dataScatterColor, scatterColor:', dataScatterColor, scatterColor)
+  let countsByLabel = null
 
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
   if (annotType === 'group' && !isGeneExpressionForColor) {
     // use plotly's groupby transformation to make the traces
-    // const legendEntries = getLegendEntries(data, pointSize, labelCorrelations)
+    const [legendStyles, labelCounts] = getStyles(data, pointSize)
+    countsByLabel = labelCounts
     trace.transforms = [
       {
         type: 'groupby',
-        groups: data.annotations
-        // styles: legendEntries
+        groups: data.annotations,
+        styles: legendStyles
       }
     ]
 
@@ -335,8 +321,7 @@ function getPlotlyTraces({
   }
   addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
 
-  console.log('trace', trace)
-  return [trace]
+  return [trace, countsByLabel]
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */
