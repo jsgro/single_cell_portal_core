@@ -98,18 +98,16 @@ function ProcessedUploadForm({
         </div>
       </div>
       { processedParentFiles.map(file => {
-        const associatedChildren = findBundleChildren(file, formState.files)
-
         return <ExpressionFileForm
           key={file._id}
           file={file}
+          allFiles={formState.files}
           updateFile={updateFile}
           saveFile={saveFile}
           deleteFile={deleteFile}
           addNewFile={addNewFile}
           handleSaveResponse={handleSaveResponse}
-          fileMenuOptions={fileMenuOptions}
-          associatedChildren={associatedChildren}/>
+          fileMenuOptions={fileMenuOptions}/>
       })}
       <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
     </> }

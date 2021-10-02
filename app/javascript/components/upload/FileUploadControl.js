@@ -13,7 +13,12 @@ export const FileTypeExtensions = {
 }
 
 /** renders a file upload control for the given file object */
-export default function FileUploadControl({ file, updateFile, handleSaveResponse, allowedFileTypes=['*'] }) {
+export default function FileUploadControl({
+  file, updateFile,
+  handleSaveResponse,
+  allowedFileTypes=['*'],
+  validationMessages={}
+}) {
   const inputId = `fileInput-${file._id}`
 
   /** handle user interaction with the file input */
@@ -39,6 +44,8 @@ export default function FileUploadControl({ file, updateFile, handleSaveResponse
     { file.uploadSelection &&
       <span> {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})</span>
     }
-    <div className="file-container" id={`clusterFileList-${file._id}`}></div>
+    { validationMessages['fileName'] && <div className="validation-error">
+      { validationMessages['fileName'] }
+    </div>}
   </div>
 }

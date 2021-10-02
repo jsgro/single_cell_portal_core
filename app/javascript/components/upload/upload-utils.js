@@ -1,4 +1,5 @@
 import _uniqueId from 'lodash/uniqueId'
+import _get from 'lodash/get'
 
 /** properties used to track file state on the form, but that should not be sent to the server
  *  this also includes properties that are only modifiable on the server (and so should also
@@ -105,6 +106,33 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
     })
   }
   return data
+}
+
+/** Does basic validation of the file, including file existence, name, file type, and required fields
+ * returns a hash of message keys to validation messages */
+export function validateFile({ file, allFiles, allowedFileTypes, requiredFields=[] }) {
+  const allOtherFiles = allFiles.filter(f => f._id != file._id)
+  const validationMessages = {}
+  if (file.status === 'new') {
+    if (!file.uploadSelection) {
+      validationMessages.uploadSelection = 'You must select a file to upload'
+    }
+  }
+  if (file.uploadSelection) {
+    if (!allowedFileTypes.some(ext => file.uploadSelection.name.endsWith(ext))) {
+      validationMessages.fileName = `allowed extensions are ${allowedFileTypes.join(' ')}`
+    } else if (allOtherFiles.map(f => f.upload_file_name).includes(file.uploadSelection.name) ||
+      allOtherFiles.map(f => f.uploadSelection?.name).includes(file.uploadSelection.name)) {
+      validationMessages.fileName = `A file named ${file.uploadSelection.name} already exists in your study`
+    }
+  }
+
+  requiredFields.forEach(field => {
+    if (!_get(file, field.propertyName)) {
+      validationMessages[field.propertyName] = `You must specify ${field.label}`
+    }
+  })
+  return validationMessages
 }
 
 

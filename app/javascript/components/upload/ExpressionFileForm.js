@@ -5,26 +5,39 @@ import Select from 'lib/InstrumentedSelect'
 import MTXBundledFilesForm from './MTXBundledFilesForm'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
+import { findBundleChildren, validateFile } from './upload-utils'
+
+const REQUIRED_FIELDS = [{ label: 'species', propertyName: 'taxon_id' },
+  { label: 'Biosample input type', propertyName: 'expression_file_info.biosample_input_type' },
+  { label: 'Library preparation protocol', propertyName: 'expression_file_info.library_preparation_protocol' },
+  { label: 'Modality', propertyName: 'expression_file_info.modality' }]
+const RAW_COUNTS_REQUIRED_FIELDS = REQUIRED_FIELDS.concat([{
+  label: 'units', propertyName: 'expression_file_info.units'
+}])
 
 /** renders a form for editing/uploading an expression file (raw or processed) and any bundle children */
 export default function ExpressionFileForm({
   file,
+  allFiles,
   updateFile,
   saveFile,
   deleteFile,
   addNewFile,
   handleSaveResponse,
-  fileMenuOptions,
-  associatedChildren
+  fileMenuOptions
 }) {
-
+  const associatedChildren = findBundleChildren(file, allFiles)
   const speciesOptions = fileMenuOptions.species.map(spec => ({ label: spec.common_name, value: spec.id }))
   const selectedSpecies = speciesOptions.find(opt => opt.value === file.taxon_id)
   const isMtxFile = file.file_type === 'MM Coordinate Matrix'
+  const isRawCountsFile = file.expression_file_info.is_raw_counts
+  const allowedFileTypes = isMtxFile ? FileTypeExtensions.mtx : FileTypeExtensions.plainText
+  const requiredFields = isRawCountsFile ? RAW_COUNTS_REQUIRED_FIELDS : REQUIRED_FIELDS
+  const validationMessages = validateFile({ file, allFiles, allowedFileTypes, requiredFields })
 
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
-      <form id={`clusterForm-${file._id}`}
+      <form id={`expForm-${file._id}`}
         className="form-terra"
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
@@ -33,12 +46,13 @@ export default function ExpressionFileForm({
           handleSaveResponse={handleSaveResponse}
           file={file}
           updateFile={updateFile}
-          allowedFileTypes={isMtxFile ? FileTypeExtensions.mtx : FileTypeExtensions.plainText}/>
+          validationMessages={validationMessages}
+          allowedFileTypes={allowedFileTypes}/>
         <div className="form-group">
           <label>Matrix file type:</label><br/>
           <label className="sublabel">
             <input type="radio"
-              name={`rawCountsType-${file._id}`}
+              name={`expMatrixType-${file._id}`}
               value="false"
               checked={!isMtxFile}
               onChange={e => updateFile(file._id, { file_type: 'Expression Matrix' })} />
@@ -46,18 +60,15 @@ export default function ExpressionFileForm({
           </label>
           <label className="sublabel">
             <input type="radio"
-              name={`rawCountsType-${file._id}`}
+              name={`expMatrixType-${file._id}`}
               value="true" checked={isMtxFile}
               onChange={e => updateFile(file._id, { file_type: 'MM Coordinate Matrix' })}/>
               &nbsp;MM Coordinate Matrix
           </label>
         </div>
 
-        <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
-        <TextFormField label="Expression Axis Label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
-
         <div className="form-group">
-          <label className="labeled-select">Species
+          <label className="labeled-select">Species *
             <Select options={speciesOptions}
               data-analytics-name="expression-species-select"
               value={selectedSpecies}
@@ -66,33 +77,36 @@ export default function ExpressionFileForm({
           </label>
         </div>
 
-        { file.expression_file_info.is_raw_counts &&
-          <ExpressionFileInfoSelect label="Units"
+        { isRawCountsFile &&
+          <ExpressionFileInfoSelect label="Units *"
             propertyName="units"
             rawOptions={fileMenuOptions.units}
             file={file}
             updateFile={updateFile}/>
         }
 
-        <ExpressionFileInfoSelect label="Biosample Input Type"
+        <ExpressionFileInfoSelect label="Biosample Input Type *"
           propertyName="biosample_input_type"
           rawOptions={fileMenuOptions.biosample_input_type}
           file={file}
           updateFile={updateFile}/>
 
-        <ExpressionFileInfoSelect label="Library Preparation Protocol"
+        <ExpressionFileInfoSelect label="Library Preparation Protocol *"
           propertyName="library_preparation_protocol"
           rawOptions={fileMenuOptions.library_preparation_protocol}
           file={file}
           updateFile={updateFile}/>
 
-        <ExpressionFileInfoSelect label="Modality"
+        <ExpressionFileInfoSelect label="Modality *"
           propertyName="modality"
           rawOptions={fileMenuOptions.modality}
           file={file}
           updateFile={updateFile}/>
 
-        <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
+        <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
+        <TextFormField label="Expression Axis Label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
+
+        <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
         { isMtxFile &&
           <MTXBundledFilesForm {...{ parentFile: file, updateFile, saveFile, deleteFile, handleSaveResponse, addNewFile, associatedChildren }}/>
         }

@@ -70,7 +70,7 @@ export default function ScatterTab({
                 hasTitle: true
               })}
             />
-            { associatedImages.map(imageFile => <ImageDisplay key={imageFile.name} file={imageFile} bucketName={exploreInfo.bucket_name}/>) }
+            { associatedImages.map(imageFile => <ImageDisplay key={imageFile.name} file={imageFile} bucketName={exploreInfo.bucketId}/>) }
           </div>,
           rowDivider
         ]

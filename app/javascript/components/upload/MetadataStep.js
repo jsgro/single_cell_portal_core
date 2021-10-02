@@ -9,6 +9,7 @@ import FileDownloadControl from 'components/download/FileDownloadControl'
 import { UserContext } from 'providers/UserProvider'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
+import { validateFile } from './upload-utils'
 
 const DEFAULT_NEW_METADATA_FILE = {
   file_type: 'Metadata',
@@ -39,6 +40,12 @@ function MetadataForm({
   const conventionRequired = featureFlagState && featureFlagState.convention_required
 
   const file = formState.files.find(metadataFileFilter)
+  const validationMessages = validateFile({
+    file,
+    allFiles: formState.files,
+    allowedFileTypes: FileTypeExtensions.plainText,
+    requiredFields: []
+  })
 
   useEffect(() => {
     if (!file) {
@@ -82,12 +89,13 @@ function MetadataForm({
             acceptCharset="UTF-8"
             onSubmit={() => {return false}}>
             <div className="row">
-              <div className="col-md-12 flexbox-align-center">
+              <div className="col-md-12 flexbox">
                 <FileUploadControl
                   handleSaveResponse={handleSaveResponse}
                   file={file}
                   updateFile={updateFile}
-                  allowedFileTypes={FileTypeExtensions.plainText}/>
+                  allowedFileTypes={FileTypeExtensions.plainText}
+                  validationMessages={validationMessages}/>
                 <FileDownloadControl
                   file={file}
                   bucketName={formState.study.bucket_id}
@@ -129,7 +137,7 @@ function MetadataForm({
             </div>
             <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
 
-            <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
+            <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
           </form>
           <SavingOverlay file={file} updateFile={updateFile}/>
         </div>

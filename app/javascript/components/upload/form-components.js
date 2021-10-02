@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Modal from 'react-bootstrap/lib/Modal'
+import { Popover, OverlayTrigger } from 'react-bootstrap'
 
 import LoadingSpinner from 'lib/LoadingSpinner'
 
@@ -56,7 +57,7 @@ export function SavingOverlay({ file, updateFile }) {
 }
 
 /** renders save and delete buttons for a given file */
-export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, saveEnabled=true, validationMessage }) {
+export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, validationMessages={} }) {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
 
   /** delete file with/without confirmation dialog as appropriate */
@@ -69,13 +70,27 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, save
     }
   }
 
+  const saveDisabled = Object.keys(validationMessages).length > 0
+  let saveButton = <button
+    style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
+    type="button"
+    className="btn btn-primary margin-right"
+    onClick={() => saveFile(file)}
+    disabled={saveDisabled}>
+    Save { file.uploadSelection && <span>&amp; Upload</span> }
+  </button>
+  if (saveDisabled) {
+    // if saving is disabled, wrap the disabled button in a popover that will show the errors
+    const validationPopup = <Popover id={`save-invalid-${file._id}`}>
+      { Object.keys(validationMessages).map(key => <div key={key}>{validationMessages[key]}</div>) }
+    </Popover>
+    saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={validationPopup}>
+      <div>{ saveButton }</div>
+    </OverlayTrigger>
+  }
+
   return <div className="flexbox button-panel">
-    <div data-role="tooltip" title={validationMessage ? validationMessage : 'Save'}>
-      <button type="button" className="btn btn-primary margin-right" disabled={!file.isDirty || !saveEnabled} onClick={() => saveFile(file)}>
-        Save
-        { file.uploadSelection && <span> &amp; Upload</span> }
-      </button>
-    </div>
+    { saveButton }
     <button type="button" className="btn btn-secondary" onClick={handleDeletePress}>
       <i className="fas fa-trash"></i> Delete
     </button>
