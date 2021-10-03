@@ -50,6 +50,7 @@ function MiscellaneousForm({
       return <MiscellaneousFileForm
         key={file._id}
         file={file}
+        allFiles={formState.files}
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}

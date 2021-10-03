@@ -108,7 +108,10 @@ export default function ExpressionFileForm({
 
         <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
         { isMtxFile &&
-          <MTXBundledFilesForm {...{ parentFile: file, updateFile, saveFile, deleteFile, handleSaveResponse, addNewFile, associatedChildren }}/>
+          <MTXBundledFilesForm {...{
+            parentFile: file, allFiles, updateFile, saveFile, deleteFile, handleSaveResponse,
+            addNewFile, associatedChildren
+          }}/>
         }
 
       </form>

@@ -1,18 +1,21 @@
 import React from 'react'
 
 import Select from 'lib/InstrumentedSelect'
-import FileUploadControl from './FileUploadControl'
+import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
+import { validateFile } from './upload-utils'
 
 /** renders a form for editing/uploading a miscellaneous file */
 export default function MiscellaneousFileForm({
   file,
+  allFiles,
   updateFile,
   saveFile,
   deleteFile,
   handleSaveResponse,
   miscFileTypes
 }) {
+  const validationMessages = validateFile({ file, allFiles, allowedFileTypes: FileTypeExtensions.misc })
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
       <form id={`misc-file-form-${file._id}`}
@@ -24,7 +27,9 @@ export default function MiscellaneousFileForm({
             <FileUploadControl
               handleSaveResponse={handleSaveResponse}
               file={file}
-              updateFile={updateFile}/>
+              updateFile={updateFile}
+              allowedFileTypes={FileTypeExtensions.misc}
+              validationMessages={validationMessages}/>
           </div>
         </div>
         <div className="form-group">
@@ -32,13 +37,13 @@ export default function MiscellaneousFileForm({
             <Select options={miscFileTypes.map(ft => ({ label: ft, value: ft }))}
               data-analytics-name="misc-file-type"
               value={{ label: file.file_type, value: file.file_type }}
-              onChange={val => updateFile(file._id, {file_type: val.value})}/>
+              onChange={val => updateFile(file._id, { file_type: val.value })}/>
           </label>
         </div>
 
         <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
 
-        <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
+        <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
       </form>
 
       <SavingOverlay file={file} updateFile={updateFile}/>

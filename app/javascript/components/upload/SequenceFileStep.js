@@ -72,6 +72,7 @@ function SequenceForm({
       return <SequenceFileForm
         key={file._id}
         file={file}
+        allFiles={formState.files}
         updateFile={updateFile}
         saveFile={saveFile}
         addNewFile={addNewFile}

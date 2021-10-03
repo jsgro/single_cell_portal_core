@@ -18,7 +18,11 @@ export default function CoordinateLabelForm({
 }) {
 
   const associatedCluster = associatedClusterFileOptions.find(opt => opt.value === file.options.cluster_file_id)
-  const validationMessages = validateFile({ file, allFiles, allowedFileTypes: FileTypeExtensions.plainText })
+  const validationMessages = validateFile({
+    file, allFiles,
+    requiredFields: [{ label: 'Associated file', propertyName: 'options.cluster_file_id' }],
+     allowedFileTypes: FileTypeExtensions.plainText
+  })
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
       <form id={`labelForm-${file._id}`}
@@ -36,7 +40,7 @@ export default function CoordinateLabelForm({
           </div>
         </div>
         <div className="form-group">
-          <label className="labeled-select">Corresponding clusters / spatial data:
+          <label className="labeled-select">Corresponding clusters / spatial data *
             <Select options={associatedClusterFileOptions}
               data-analytics-name="coordinate-labels-corresponding-cluster"
               id={`coordCluster-${file._id}`}

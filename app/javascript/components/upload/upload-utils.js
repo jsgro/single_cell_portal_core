@@ -111,6 +111,10 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
 /** Does basic validation of the file, including file existence, name, file type, and required fields
  * returns a hash of message keys to validation messages */
 export function validateFile({ file, allFiles, allowedFileTypes, requiredFields=[] }) {
+  if (!file) {
+    // edge case where the form is rendered but hook to add an empty file has not yet finished
+    return { file: 'File not yet initialized' }
+  }
   const allOtherFiles = allFiles.filter(f => f._id != file._id)
   const validationMessages = {}
   if (file.status === 'new') {
@@ -124,6 +128,15 @@ export function validateFile({ file, allFiles, allowedFileTypes, requiredFields=
     } else if (allOtherFiles.map(f => f.upload_file_name).includes(file.uploadSelection.name) ||
       allOtherFiles.map(f => f.uploadSelection?.name).includes(file.uploadSelection.name)) {
       validationMessages.fileName = `A file named ${file.uploadSelection.name} already exists in your study`
+    }
+  }
+
+  const parentId = file.options?.matrix_id || file.options?.bam_id || file.options?.cluster_file_id
+  if (parentId) {
+    // don't allow saving until parent file is saved
+    const parentSaved = !parentId.includes('newFile')
+    if (!parentSaved) {
+      validationMessages['parentSaved'] = 'Parent file must be saved first'
     }
   }
 

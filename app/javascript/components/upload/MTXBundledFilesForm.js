@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SaveDeleteButtons, SavingOverlay } from './form-components'
-
+import { validateFile } from './upload-utils'
 
 /** return a blank barcodes file associated with the parent */
 function newBarcodesFile(parent) {
@@ -28,6 +28,7 @@ function newGenesFile(parent) {
 export default function MTXBundledFilesForm({
   parentFile,
   updateFile,
+  allFiles,
   saveFile,
   deleteFile,
   addNewFile,
@@ -55,13 +56,8 @@ export default function MTXBundledFilesForm({
   if (!barcodesFile || !genesFile) {
     return <div>After you&apos;ve selected an mtx file, you&apos;ll be prompted for genes and barcodes files</div>
   }
-
-  let validationMessage = ''
-  // don't allow saving until parent file is saved
-  const parentSaved = parentFile._id && !parentFile._id.includes('newFile')
-  if (!parentSaved) {
-    validationMessage = 'Matrix file must be saved first'
-  }
+  const barcodesValidationMessages = validateFile({ barcodesFile, allFiles, allowedFileTypes: FileTypeExtensions.plainText })
+  const genesValidationMessages = validateFile({ genesFile, allFiles, allowedFileTypes: FileTypeExtensions.plainText })
 
   return <div>
     <div className="row">
@@ -72,6 +68,7 @@ export default function MTXBundledFilesForm({
             handleSaveResponse={handleSaveResponse}
             file={genesFile}
             updateFile={updateFile}
+            validationMessages={genesValidationMessages}
             allowedFileTypes={FileTypeExtensions.plainText}/>
           <TextFormField label="Description" fieldName="description" file={genesFile} updateFile={updateFile}/>
           <SaveDeleteButtons
@@ -80,7 +77,7 @@ export default function MTXBundledFilesForm({
             saveFile={saveFile}
             deleteFile={deleteFile}
             saveEnabled={parentSaved}
-            validationMessage={validationMessage} />
+            validationMessages={genesValidationMessages} />
         </div>
         <SavingOverlay file={genesFile} updateFile={updateFile}/>
       </div>
@@ -93,6 +90,7 @@ export default function MTXBundledFilesForm({
             handleSaveResponse={handleSaveResponse}
             file={barcodesFile}
             updateFile={updateFile}
+            validationMessages={genesValidationMessages}
             allowedFileTypes={FileTypeExtensions.plainText}/>
           <TextFormField label="Description" fieldName="description" file={barcodesFile} updateFile={updateFile}/>
           <SaveDeleteButtons
@@ -101,7 +99,7 @@ export default function MTXBundledFilesForm({
             saveFile={saveFile}
             deleteFile={deleteFile}
             saveEnabled={parentSaved}
-            validationMessage={validationMessage}/>
+            validationMessages={genesValidationMessages}/>
         </div>
       </div>
       <SavingOverlay file={barcodesFile} updateFile={updateFile}/>
