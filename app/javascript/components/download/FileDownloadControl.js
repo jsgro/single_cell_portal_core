@@ -27,11 +27,11 @@ export default function FileDownloadControl({ file, bucketName }) {
     } else {
       return <p>
         <br></br>
-        {!file.generation ? <span className="label label-warning no-download-available" data-toggle="tooltip"
+        {!file.generation ? <span style={{ marginLeft: '5px' }} className="label label-warning no-download-available" data-toggle="tooltip"
           title='You can download this file once it has been fully uploaded. Check back soon.'>
           {<span className="fas fa-ban"></span> } Awaiting remote file
         </span> :
-          <a onClick={() => handleDownloadClick()} className="btn action">
+          <a onClick={() => handleDownloadClick()} className="btn action" style={{ marginLeft: '5px' }} >
             {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}
           </a>
         }

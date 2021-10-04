@@ -64,7 +64,9 @@ function GeneListForm({
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
-        handleSaveResponse={handleSaveResponse}/>
+        handleSaveResponse={handleSaveResponse}
+        bucketName={formState.study.bucket_id}
+        />
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_GENE_LIST_FILE}/>
   </div>

@@ -69,7 +69,8 @@ function RawCountsUploadForm({
         addNewFile={addNewFile}
         handleSaveResponse={handleSaveResponse}
         fileMenuOptions={fileMenuOptions}
-        associatedChildren={associatedChildren}/>
+        associatedChildren={associatedChildren}
+        bucketName={formState.study.bucket_id}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/>
   </div>

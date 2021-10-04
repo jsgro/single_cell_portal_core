@@ -4,6 +4,8 @@ import _kebabCase from 'lodash/kebabCase'
 import Select from 'lib/InstrumentedSelect'
 import MTXBundledFilesForm from './MTXBundledFilesForm'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
+import FileDownloadControl from 'components/download/FileDownloadControl'
+
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
 /** renders a form for editing/uploading an expression file (raw or processed) and any bundle children */
@@ -15,7 +17,8 @@ export default function ExpressionFileForm({
   addNewFile,
   handleSaveResponse,
   fileMenuOptions,
-  associatedChildren
+  associatedChildren,
+  bucketName
 }) {
 
   const speciesOptions = fileMenuOptions.species.map(spec => ({ label: spec.common_name, value: spec.id }))
@@ -28,12 +31,17 @@ export default function ExpressionFileForm({
         className="form-terra"
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
-
-        <FileUploadControl
-          handleSaveResponse={handleSaveResponse}
-          file={file}
-          updateFile={updateFile}
-          allowedFileTypes={isMtxFile ? FileTypeExtensions.mtx : FileTypeExtensions.plainText}/>
+        <div className='flexbox-align-center'>
+          <FileUploadControl
+            handleSaveResponse={handleSaveResponse}
+            file={file}
+            updateFile={updateFile}
+            allowedFileTypes={isMtxFile ? FileTypeExtensions.mtx : FileTypeExtensions.plainText}/>
+          <FileDownloadControl
+            file={file}
+            bucketName={bucketName}
+          />
+        </div>
         <div className="form-group">
           <label>Matrix file type:</label><br/>
           <label className="sublabel">

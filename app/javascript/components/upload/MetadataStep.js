@@ -73,7 +73,6 @@ function MetadataForm({
         </div>
       </div>
     </div>
-
     { file &&
       <div className="row top-margin" key={file._id}>
         <div className="col-md-12 ">

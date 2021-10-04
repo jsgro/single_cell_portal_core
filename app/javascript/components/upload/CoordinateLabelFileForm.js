@@ -2,6 +2,7 @@ import React from 'react'
 
 import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
+import FileDownloadControl from 'components/download/FileDownloadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
 /** renders a form for editing/uploading an image file */
@@ -12,7 +13,8 @@ export default function CoordinateLabelForm({
   deleteFile,
   handleSaveResponse,
   associatedClusterFileOptions,
-  updateCorrespondingClusters
+  updateCorrespondingClusters,
+  bucketName
 }) {
 
   const associatedCluster = associatedClusterFileOptions.find(opt => opt.value === file.options.cluster_file_id)
@@ -24,12 +26,16 @@ export default function CoordinateLabelForm({
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
         <div className="row">
-          <div className="col-md-12">
+          <div className="col-md-12 flexbox-align-center">
             <FileUploadControl
               handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}
               allowedFileTypes={FileTypeExtensions.plainText}/>
+            <FileDownloadControl
+              file={file}
+              bucketName={bucketName}
+            />
           </div>
         </div>
         <div className="form-group">

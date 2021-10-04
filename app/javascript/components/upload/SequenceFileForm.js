@@ -2,6 +2,8 @@ import React, { useEffect } from 'react'
 
 import Select from 'lib/InstrumentedSelect'
 import FileUploadControl from './FileUploadControl'
+import FileDownloadControl from 'components/download/FileDownloadControl'
+
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
 /** renders a form for editing/uploading a sequence file and any assoicated bundle files */
@@ -14,7 +16,8 @@ export default function SequenceFileForm({
   handleSaveResponse,
   sequenceFileTypes,
   fileMenuOptions,
-  associatedBaiFile
+  associatedBaiFile,
+  bucketName
 }) {
   const speciesOptions = fileMenuOptions.species.map(spec => ({ label: spec.common_name, value: spec.id }))
   const selectedSpecies = speciesOptions.find(opt => opt.value === file.taxon_id)
@@ -53,11 +56,15 @@ export default function SequenceFileForm({
         </div>
         { !file.human_data && <>
           <div className="row">
-            <div className="col-md-12">
+            <div className="col-md-12 flexbox-align-center">
               <FileUploadControl
                 handleSaveResponse={handleSaveResponse}
                 file={file}
                 updateFile={updateFile}/>
+              <FileDownloadControl
+                file={file}
+                bucketName={bucketName}
+              />
             </div>
           </div>
           <div className="form-group">
@@ -112,7 +119,8 @@ export default function SequenceFileForm({
             saveFile={saveFile}
             deleteFile={deleteFile}
             handleSaveResponse={handleSaveResponse}
-            addNewFile={addNewFile}/>
+            addNewFile={addNewFile}
+            bucketName={bucketName}/>
         }
 
       </form>
@@ -130,7 +138,8 @@ function BamIndexFileForm({
   saveFile,
   deleteFile,
   addNewFile,
-  handleSaveResponse
+  handleSaveResponse,
+  bucketName
 }) {
   let validationMessage = ''
   // don't allow saving until parent file is saved
@@ -165,10 +174,16 @@ function BamIndexFileForm({
     <div className="col-md-12 ">
       <div className="sub-form">
         <h5>BAM Index File</h5>
-        <FileUploadControl
-          handleSaveResponse={handleSaveResponse}
-          file={file}
-          updateFile={updateFile}/>
+        <div className='flexbox-align-center'>
+          <FileUploadControl
+            handleSaveResponse={handleSaveResponse}
+            file={file}
+            updateFile={updateFile}/>
+          <FileDownloadControl
+            file={file}
+            bucketName={bucketName}
+          />
+        </div>
         <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
         <SaveDeleteButtons
           file={file}

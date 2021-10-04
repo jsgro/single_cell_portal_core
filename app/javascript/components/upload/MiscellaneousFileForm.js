@@ -2,6 +2,8 @@ import React from 'react'
 
 import Select from 'lib/InstrumentedSelect'
 import FileUploadControl from './FileUploadControl'
+import FileDownloadControl from 'components/download/FileDownloadControl'
+
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
 /** renders a form for editing/uploading a miscellaneous file */
@@ -11,7 +13,8 @@ export default function MiscellaneousFileForm({
   saveFile,
   deleteFile,
   handleSaveResponse,
-  miscFileTypes
+  miscFileTypes,
+  bucketName
 }) {
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
@@ -20,11 +23,15 @@ export default function MiscellaneousFileForm({
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
         <div className="row">
-          <div className="col-md-12">
+          <div className="col-md-12 flexbox-align-center">
             <FileUploadControl
               handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}/>
+            <FileDownloadControl
+              file={file}
+              bucketName={bucketName}
+            />
           </div>
         </div>
         <div className="form-group">
