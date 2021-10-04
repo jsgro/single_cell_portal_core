@@ -122,25 +122,37 @@ export function validateFile({ file, allFiles, allowedFileTypes, requiredFields=
       validationMessages.uploadSelection = 'You must select a file to upload'
     }
   }
+
+  const allOtherNames = allOtherFiles.map(f => f.name)
+  const allOtherUploadFileNames = allOtherFiles.map(f => f.upload_file_name)
+  const allOtherSelectedFileNames = allOtherFiles.map(f => f.uploadSelection?.name)
   if (file.uploadSelection) {
     if (!allowedFileTypes.some(ext => file.uploadSelection.name.endsWith(ext))) {
-      validationMessages.fileName = `allowed extensions are ${allowedFileTypes.join(' ')}`
-    } else if (allOtherFiles.map(f => f.upload_file_name).includes(file.uploadSelection.name) ||
-      allOtherFiles.map(f => f.uploadSelection?.name).includes(file.uploadSelection.name)) {
+      validationMessages.fileName = `Allowed extensions are ${allowedFileTypes.join(' ')}`
+    }
+    if (allOtherNames.includes(file.uploadSelection.name) ||
+      allOtherUploadFileNames.includes(file.uploadSelection.name) ||
+      allOtherSelectedFileNames.includes(file.uploadSelection.name)) {
       validationMessages.fileName = `A file named ${file.uploadSelection.name} already exists in your study`
     }
+  }
+  if (allOtherNames.includes(file.name)) {
+    validationMessages.fileName = `A file named ${file.name} already exists in your study`
   }
 
   const parentId = file.options?.matrix_id || file.options?.bam_id || file.options?.cluster_file_id
   if (parentId) {
-    // don't allow saving until parent file is saved
-    const parentSaved = !parentId.includes('newFile')
+    // don't allow saving until parent file is saved and a real id is returned from the server
+    const parentSaved = parent.status != 'new' && !parentId.includes('newFile')
     if (!parentSaved) {
       validationMessages['parentSaved'] = 'Parent file must be saved first'
     }
   }
 
-  requiredFields.forEach(field => {
+  // 'name' is always required
+  const fullRequiredFields = requiredFields.concat({ label: 'name', propertyName: 'name' })
+
+  fullRequiredFields.forEach(field => {
     if (!_get(file, field.propertyName)) {
       validationMessages[field.propertyName] = `You must specify ${field.label}`
     }
