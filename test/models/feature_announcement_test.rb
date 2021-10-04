@@ -12,6 +12,7 @@ class FeatureAnnouncementTest< ActiveSupport::TestCase
       doc_link: 'https://singlecell.zendesk.com/hc/en-us',
       published: true
     )
+    @today = Date.today.in_time_zone.strftime('%F')
   end
 
   after(:all) do
@@ -23,10 +24,10 @@ class FeatureAnnouncementTest< ActiveSupport::TestCase
   end
 
   test 'should set slug on save' do
-    assert_equal 'amazing-new-feature', @feature_announcement.slug
+    assert_equal "#{@today}-amazing-new-feature", @feature_announcement.slug
     @feature_announcement.update(title: 'Announcing a New Feature!!')
     @feature_announcement.reload
-    assert_equal 'announcing-a-new-feature', @feature_announcement.slug
+    assert_equal "#{@today}-announcing-a-new-feature", @feature_announcement.slug
   end
 
   test 'should determine if there are published features' do

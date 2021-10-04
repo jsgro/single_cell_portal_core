@@ -8,6 +8,7 @@ class FeatureAnnouncementsControllerTest < ActionDispatch::IntegrationTest
   include ::TestInstrumentor
 
   before(:all) do
+    @today = Date.today.in_time_zone.strftime('%F')
     @feature_announcement = FeatureAnnouncement.create(
       title: 'New Feature Announcement',
       content: '<p>This is the content.</p>',
@@ -57,7 +58,7 @@ class FeatureAnnouncementsControllerTest < ActionDispatch::IntegrationTest
     }
     follow_redirect!
     assert_response :success
-    assert FeatureAnnouncement.where(slug: 'different-title').exists?
+    assert FeatureAnnouncement.where(slug: "#{@today}-different-title").exists?
   end
 
   test 'should update feature_announcement' do

@@ -4,7 +4,7 @@ class FeatureAnnouncementsController < ApplicationController
   before_action :set_feature_announcement, only: %i[edit update destroy]
 
   def latest
-    @feature_announcements = FeatureAnnouncement.order(created_at: :desc).paginate(
+    @feature_announcements = FeatureAnnouncement.published.order(created_at: :desc).paginate(
       page: params[:page], per_page: FeatureAnnouncement.per_page)
   end
 

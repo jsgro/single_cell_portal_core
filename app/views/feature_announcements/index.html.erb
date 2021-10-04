@@ -20,7 +20,7 @@
           <tbody>
           <% @feature_announcements.each do |feature_announcement| %>
             <tr>
-              <td><%= feature_announcement.created_at.to_s(:db) %></td>
+              <td><%= feature_announcement.display_date %></td>
               <td><%= link_to feature_announcement.title, view_feature_announcement_path(feature_announcement.slug) %></td>
               <td><%= strip_tags(feature_announcement.content).truncate_words(25, omission: '...') %></td>
               <td><%= link_to feature_announcement.doc_link, feature_announcement.doc_link,

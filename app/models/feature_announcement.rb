@@ -7,16 +7,21 @@ class FeatureAnnouncement
   field :doc_link, type: String
   field :published, type: Mongoid::Boolean, default: true
 
-  validates :title, :slug, :content, presence: true, uniqueness: true
+  validates :title, :content, presence: true
+  validates :slug, uniqueness: true, presence: true
   before_validation :set_slug
 
   def display_date
     created_at.strftime('%F %r')
   end
 
+  def self.published
+    where(published: true)
+  end
+
   # helper to hide "New Features" button on the home page if there are no published announcements
   def self.published_features?
-    where(published: true).any?
+    published.any?
   end
 
   def self.per_page
@@ -26,6 +31,7 @@ class FeatureAnnouncement
   private
 
   def set_slug
-    self.slug = self.title.downcase.gsub(/[^a-zA-Z0-9]+/, '-').chomp('-')
+    today = created_at.nil? ? Date.today.in_time_zone : created_at
+    self.slug = "#{today.strftime('%F')}-#{title.downcase.gsub(/[^a-zA-Z0-9]+/, '-').chomp('-')}"
   end
 end
