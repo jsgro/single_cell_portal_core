@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDna } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
-import _kebabCase from 'lodash/kebabCase'
 import _remove from 'lodash/remove'
-import _cloneDeep from 'lodash/cloneDeep'
 import Plotly from 'plotly.js-dist'
 
 import { fetchCluster } from 'lib/scp-api'
@@ -88,7 +86,7 @@ function RawScatterPlot({
       filters
     }
     const [traces, labelCounts] = getPlotlyTraces(traceArgs)
-    let plotlyTraces = [traces]
+    const plotlyTraces = [traces]
     setCountsByLabel(labelCounts)
 
     const startTime = performance.now()
@@ -109,9 +107,7 @@ function RawScatterPlot({
         setBulkCorrelation(correlations.bulk)
         const flags = getFeatureFlagsWithDefaults()
         if (flags.correlation_refinements) {
-          traceArgs.labelCorrelations = correlations.byLabel
-          plotlyTraces = getPlotlyTraces(traceArgs)
-          Plotly.react(graphElementId, plotlyTraces, layout)
+          setLabelCorrelations(correlations.byLabel)
         }
         log('plot:correlations', { perfTime: rhoTime })
       })
@@ -253,7 +249,6 @@ function getPlotlyTraces({
   pointSize,
   showPointBorders,
   is3D,
-  labelCorrelations,
   filters
 }) {
   const trace = {
@@ -290,8 +285,8 @@ function getPlotlyTraces({
         type: 'filter',
         target: data.annotations,
         // For available operations, see:
-        // - https://github.com/plotly/plotly.js/blob/623fcd1fea9d9bfb86e5e0d44d8047cd8636881c/src/transforms/filter.js
-        // - https://github.com/plotly/plotly.js/blob/623fcd1fea9d9bfb86e5e0d44d8047cd8636881c/src/constants/filter_ops.js
+        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/transforms/filter.js
+        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/constants/filter_ops.js
         // Plotly docs are rather sparse here.
         operation: '{}',
         value: filters

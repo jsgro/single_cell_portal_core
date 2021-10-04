@@ -63,15 +63,15 @@ export function getStyles(data, pointSize) {
 
 /** Component for row in legend */
 function LegendEntry({
-  label, numPoints, iconColor, labelCorrelations,
+  label, numPoints, iconColor, correlations,
   filters, setFilters, updateFilters
 }) {
   let entry = `${label} (${numPoints} points)`
-  if (labelCorrelations) {
-    const correlation = Math.round(labelCorrelations[label] * 100) / 100
+  if (correlations) {
+    const correlation = Math.round(correlations[label] * 100) / 100
 
     // ρ = rho = Spearman's rank correlation coefficient
-    entry = `${label} (${numPoints}} points, ρ = ${correlation})`
+    entry = `${label} (${numPoints} points, ρ = ${correlation})`
   }
 
   const id = _kebabCase(label)
@@ -123,6 +123,7 @@ export default function ScatterPlotLegend({
           filters={filters}
           setFilters={setFilters}
           updateFilters={updateFilters}
+          key={`legend-entry-container-${index}`}
         />
       )
     })
