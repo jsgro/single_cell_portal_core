@@ -93,7 +93,7 @@ export function SpatialUploadForm({
 
             <p className="col-sm-12 text-center">Once your spatial file has been successfully ingested, additional representative
               subsamples of the full resolution data will be stored as well.
-              <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling" target="_blank" rel="noreferrer"> Learn More <i className='fas fa-question-circle'></i></a>
+            <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling" target="_blank" rel="noreferrer"> Learn More <i className='fas fa-question-circle'></i></a>
             </p>
           </div>
           <div className="row">

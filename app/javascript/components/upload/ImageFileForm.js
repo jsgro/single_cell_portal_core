@@ -19,7 +19,6 @@ export default function ImageFileForm({
   updateCorrespondingClusters,
   bucketName
 }) {
-
   const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
   const validationMessages = validateFile({ file, allFiles, allowedFileTypes: FileTypeExtensions.image })
   let imagePreviewUrl = '#'

@@ -16,12 +16,11 @@ export default function CoordinateLabelForm({
   associatedClusterFileOptions,
   updateCorrespondingClusters
 }) {
-
   const associatedCluster = associatedClusterFileOptions.find(opt => opt.value === file.options.cluster_file_id)
   const validationMessages = validateFile({
     file, allFiles,
     requiredFields: [{ label: 'Associated file', propertyName: 'options.cluster_file_id' }],
-     allowedFileTypes: FileTypeExtensions.plainText
+    allowedFileTypes: FileTypeExtensions.plainText
   })
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
@@ -49,7 +48,8 @@ export default function CoordinateLabelForm({
               onChange={val => updateCorrespondingClusters(file, val)}/>
           </label>
         </div>
-        <TextFormField label="Description / Legend (this will be displayed below image)" fieldName="description" file={file} updateFile={updateFile}/>
+        <TextFormField label="Description / Legend (this will be displayed below image)"
+          fieldName="description" file={file} updateFile={updateFile}/>
         <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
       </form>
 

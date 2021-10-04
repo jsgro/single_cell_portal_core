@@ -56,7 +56,9 @@ export default function MTXBundledFilesForm({
   if (!barcodesFile || !genesFile) {
     return <div>After you&apos;ve selected an mtx file, you&apos;ll be prompted for genes and barcodes files</div>
   }
-  const barcodesValidationMessages = validateFile({ barcodesFile, allFiles, allowedFileTypes: FileTypeExtensions.plainText })
+  const barcodesValidationMessages = validateFile({
+    barcodesFile, allFiles, allowedFileTypes: FileTypeExtensions.plainText
+  })
   const genesValidationMessages = validateFile({ genesFile, allFiles, allowedFileTypes: FileTypeExtensions.plainText })
 
   return <div>
@@ -76,7 +78,6 @@ export default function MTXBundledFilesForm({
             updateFile={updateFile}
             saveFile={saveFile}
             deleteFile={deleteFile}
-            saveEnabled={parentSaved}
             validationMessages={genesValidationMessages} />
         </div>
         <SavingOverlay file={genesFile} updateFile={updateFile}/>
@@ -98,8 +99,7 @@ export default function MTXBundledFilesForm({
             updateFile={updateFile}
             saveFile={saveFile}
             deleteFile={deleteFile}
-            saveEnabled={parentSaved}
-            validationMessages={genesValidationMessages}/>
+            validationMessages={barcodesValidationMessages}/>
         </div>
       </div>
       <SavingOverlay file={barcodesFile} updateFile={updateFile}/>

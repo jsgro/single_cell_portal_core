@@ -170,7 +170,6 @@ export default function UploadWizard({ studyAccession, name }) {
         }
         handleSaveResponse(response, false)
       }
-
     } catch (error) {
       updateFile(studyFileId, {
         isError: true,

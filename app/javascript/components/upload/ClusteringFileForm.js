@@ -6,7 +6,7 @@ import FileDownloadControl from 'components/download/FileDownloadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 import { validateFile } from './upload-utils'
 
-const REQUIRED_FIELDS = [{label: 'Name', propertyName: 'name'}]
+const REQUIRED_FIELDS = [{ label: 'Name', propertyName: 'name' }]
 
 /** renders a form for editing/uploading a single cluster file */
 export default function ClusteringFileForm({
@@ -20,7 +20,8 @@ export default function ClusteringFileForm({
   updateCorrespondingClusters,
   bucketName
 }) {
-  const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
+  const spatialClusterAssocs = file.spatial_cluster_associations
+    .map(id => associatedClusterFileOptions.find(opt => opt.value === id))
   const validationMessages = validateFile({
     file, allFiles, allowedFileTypes: FileTypeExtensions.plainText, requiredFields: REQUIRED_FIELDS
   })
@@ -55,7 +56,8 @@ export default function ClusteringFileForm({
             </label>
           </div>
         }
-        <TextFormField label="Description / Figure Legend (this will be displayed below cluster)" fieldName="description" file={file} updateFile={updateFile}/>
+        <TextFormField label="Description / Figure Legend (this will be displayed below cluster)"
+          fieldName="description" file={file} updateFile={updateFile}/>
 
         <div className="row">
           <div className="col-md-4">

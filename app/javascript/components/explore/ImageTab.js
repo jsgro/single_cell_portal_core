@@ -40,7 +40,7 @@ export default function ImageTab({
 
   return <div>
     { hasAssociatedClusters &&
-      <div className="row padded" style={{ borderBottom:'1px solid #ccc' }}>
+      <div className="row padded" style={{ borderBottom: '1px solid #ccc' }}>
         <div className="col-md-6 ">
           <h5 className="text-center">Images</h5>
         </div>

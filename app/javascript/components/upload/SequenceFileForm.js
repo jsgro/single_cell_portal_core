@@ -100,7 +100,6 @@ export default function SequenceFileForm({
           </div>
         }
 
-
         <div className="form-group">
           <label className="labeled-select">Species *
             <Select options={speciesOptions}

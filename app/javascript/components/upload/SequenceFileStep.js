@@ -62,7 +62,7 @@ function SequenceForm({
           <p>
             <b>Primary Human Data</b><br/>
             Primary sequence data derived from humans should be stored in other biological databases and can be linked here
-            by selecting 'Yes' for 'Primary Human Data' and then providing a link in the text field.
+            by selecting &apos;Yes&apos; for &apos;Primary Human Data&apos; and then providing a link in the text field.
           </p>
         </div>
       </div>

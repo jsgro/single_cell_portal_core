@@ -3,7 +3,6 @@ import React, { useEffect, useContext } from 'react'
 import ExpressionFileForm from './ExpressionFileForm'
 import { rawCountsFileFilter, expressionFileStructureHelp } from './RawCountsStep'
 import { UserContext } from 'providers/UserProvider'
-import { findBundleChildren } from './upload-utils'
 import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_PROCESSED_FILE = {

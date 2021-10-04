@@ -23,7 +23,6 @@ export default function ScatterTab({
   const { scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol } = getScatterParams(
     exploreInfo, exploreParams, isGene, isMultiGene
   )
-  const [showImages, setShowImages] = useState(true)
 
   const imagesForClusters = {}
   exploreInfo.imageFiles.map(file => {
@@ -70,7 +69,10 @@ export default function ScatterTab({
                 hasTitle: true
               })}
             />
-            { associatedImages.map(imageFile => <ImageDisplay key={imageFile.name} file={imageFile} bucketName={exploreInfo.bucketId}/>) }
+            { associatedImages.map(imageFile => <ImageDisplay
+              key={imageFile.name}
+              file={imageFile}
+              bucketName={exploreInfo.bucketId}/>) }
           </div>,
           rowDivider
         ]
