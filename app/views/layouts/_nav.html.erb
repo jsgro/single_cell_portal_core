@@ -57,6 +57,8 @@
                               id: 'species-nav' %></li>
               <li><%= scp_link_to "<span class='fas fa-copyright fa-fw'></span> Branding Groups".html_safe, branding_groups_path,
                                   class: 'check-upload', id: 'branding-groups-nav' %>
+              <li><%= scp_link_to "<span class='fas fa-bullhorn fa-fw'></span> Feature Announcements".html_safe,
+                                  feature_announcements_path, class: 'check-upload', id: 'feature-announcements-nav' %>
             <% end %>
             <% if current_user.acts_like_reporter? %>
               <li><%= link_to "<span class='fas fa-chart-area fa-fw'></span> Reports".html_safe, reports_path,

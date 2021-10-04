@@ -1,0 +1,64 @@
+<%= form_with(model: feature_announcement, id: 'feature-announcement') do |form| %>
+  <% if feature_announcement.errors.any? %>
+    <div class="bs-callout bs-callout-danger" id="feature-announcement-errors-block">
+      <h2><%= pluralize(feature_announcement.errors.count, "error") %> prohibited this feature announcement from being saved:</h2>
+
+      <ul>
+        <% feature_announcement.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group row">
+    <div class="col-md-5">
+      <%= form.label :title %>
+      <%= form.text_field :title, class: 'form-control' %>
+    </div>
+    <div class="col-md-5">
+      <%= form.label :doc_link, 'Documentation/Link' %>
+      <%= form.text_field :doc_link, class: 'form-control' %>
+    </div>
+    <div class="col-md-2">
+      <%= form.label :published, 'Published?' %>
+      <div class="row">
+        <div class="col-xs-6">
+          <div class="radio">
+            <label for='feature_announcement_published_1'>
+              <%= form.radio_button :published, 1, checked: feature_announcement.published %> Yes
+            </label>
+          </div>
+        </div>
+        <div class="col-xs-6">
+          <div class="radio">
+            <label for='feature_announcement_published_0'>
+              <%= form.radio_button :published, 0, checked: !feature_announcement.published %> No
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <%= form.label :content %>
+    <%= form.text_area :content %>
+  </div>
+
+  <div class="form-group">
+    <%= form.submit 'Save', class: 'btn btn-lg btn-success', id: 'save-feature-announcement' %>
+  </div>
+<% end %>
+
+<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+  ClassicEditor
+    .create( document.querySelector( '#feature_announcement_content' ),
+      fullCKEditorConfig
+    )
+    .catch( function(error) {
+        console.error( error );
+      }
+    );
+
+</script>

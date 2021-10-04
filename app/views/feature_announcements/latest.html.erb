@@ -1,0 +1,42 @@
+<h1><%= link_to "Home", site_path %> / Latest Features</h1>
+<div class="row">
+  <div class="col-md-12">
+    <ul class="collections-list" id="latest-features">
+      <% @feature_announcements.each do |feature_announcement| %>
+        <li id="<%= feature_announcement.slug %>">
+          <div class="row">
+            <div class="col-md-12">
+              <h3>
+                <%= scp_link_to feature_announcement.title, view_feature_announcement_path(feature_announcement.slug) %>
+                <span class="pull-right text-muted">
+                  <small><i><%= feature_announcement.display_date %></i></small>
+                </span>
+              </h3>
+            </div>
+            <div class="col-md-12">
+              <div class="ck-content">
+                <%= feature_announcement.content.truncate_words(150).html_safe %>
+              </div>
+            </div>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+    <div class="col-md-offset-4 col-md-4">
+      <p class="text-center">
+        <%= scp_link_to "<i class='fas fa-angle-double-left'></i>".html_safe, latest_feature_announcements_path,
+                    class: 'btn btn-xs btn-default' %>
+        <%= scp_link_to "<i class='fas fa-angle-left'></i>".html_safe,
+                        latest_feature_announcements_path(page: @feature_announcements.previous_page),
+                        class: 'btn btn-xs btn-default', disabled: @feature_announcements.previous_page.nil? %>
+        Page <%= params[:page] ? params[:page] : 1 %> of <%= @feature_announcements.total_pages %>
+        <%= scp_link_to "<i class='fas fa-angle-right'></i>".html_safe,
+                        latest_feature_announcements_path(page: @feature_announcements.next_page),
+                        class: 'btn btn-xs btn-default', disabled: @feature_announcements.next_page.nil? %>
+        <%= scp_link_to "<i class='fas fa-angle-double-right'></i>".html_safe,
+                        latest_feature_announcements_path(page: @feature_announcements.total_pages),
+                        class: 'btn btn-xs btn-default', disabled: @feature_announcements.next_page.nil? %>
+      </p>
+    </div>
+  </div>
+</div>

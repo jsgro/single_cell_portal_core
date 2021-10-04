@@ -1,0 +1,59 @@
+<h1>
+  Feature Announcements
+  <%= link_to "View Feed", latest_feature_announcements_path, class: 'pull-right btn btn-default' %>
+</h1>
+<div class="row">
+  <div class="col-md-12">
+    <div class="table-responsive">
+      <div class="well">
+        <table class="table table-striped" id="feature-announcements">
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Title</th>
+              <th>Content</th>
+              <th>Link</th>
+              <th>Published</th>
+              <th class="actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% @feature_announcements.each do |feature_announcement| %>
+            <tr>
+              <td><%= feature_announcement.created_at.to_s(:db) %></td>
+              <td><%= link_to feature_announcement.title, view_feature_announcement_path(feature_announcement.slug) %></td>
+              <td><%= strip_tags(feature_announcement.content).truncate_words(25, omission: '...') %></td>
+              <td><%= link_to feature_announcement.doc_link, feature_announcement.doc_link,
+                              target: :_blank, rel: 'noopener noreferrer' %></td>
+              <td><%= get_boolean_label feature_announcement.published %></td>
+              <td>
+                <%= link_to "<i class='fas fa-edit'></i> Edit".html_safe, edit_feature_announcement_path(feature_announcement),
+                            class: 'btn btn-xs btn-primary' %>
+                <%= link_to "<i class='fas fa-trash'></i> Destroy".html_safe, feature_announcement, method: :delete,
+                            class: 'btn btn-xs btn-danger', data: {
+                              confirm: "Are you sure you want to delete the announcement '#{feature_announcement.title}'?"
+                            } %>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p><%= link_to 'New Announcement', new_feature_announcement_path, class: 'btn btn-lg btn-success' %></p>
+
+<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+
+  $('#feature-announcements').dataTable({
+    pagingType: "full_numbers",
+    pageLength: 10,
+    order: [[0, 'desc']],
+    language: {
+      search: "Filter Results By: "
+    }
+  });
+
+</script>

@@ -1,5 +1,9 @@
 <div class="mask" id="main-banner">
-
+  <% if FeatureAnnouncement.published_features? %>
+    <%= scp_link_to "New Features <i class='fas fa-star'></i>".html_safe, latest_feature_announcements_path,
+                    class: 'btn btn-warning', id: 'latest-features-btn', data: { toggle: 'tooltip', placement: 'left' },
+                    title: 'Learn about new Single Cell Portal features!' %>
+  <% end %>
   <% if @selected_branding_group.present? %>
     <% if @selected_branding_group.banner_image.file %>
       <style>
@@ -27,5 +31,4 @@
       <span class="blue-count"><%= number_with_delimiter @cell_count %></span> <%= pluralize_without_count(@cell_count, 'cell') %>
     </span>
   </div>
-
 </div>
