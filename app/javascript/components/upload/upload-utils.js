@@ -26,10 +26,6 @@ const PROPERTIES_NOT_TO_SEND = [
   'parse_status'
 ]
 
-const ARRAY_PROPERTIES = [
-  'spatial_cluster_associations'
-]
-
 /** gets an object representing a new, empty study file.  Does not communicate to server */
 export function newStudyFileObj(studyId) {
   return {
@@ -60,6 +56,11 @@ export function formatFileFromServer(file) {
   }
   if (!file.expression_file_info) {
     file.expression_file_info = {}
+  } else {
+    delete file.expression_file_info._id
+  }
+  if (!file.expression_file_info.raw_counts_associations) {
+    file.expression_file_info.raw_counts_associations = []
   }
   return file
 }
@@ -77,19 +78,7 @@ export function findBundleChildren(file, files) {
 export function formatFileForApi(file, chunkStart, chunkEnd) {
   const data = new FormData()
   Object.keys(file).filter(key => !PROPERTIES_NOT_TO_SEND.includes(key)).forEach(key => {
-    if (ARRAY_PROPERTIES.includes(key)) {
-      // because we are sending as FormData, rather than JSON, we need to split
-      // arrays across multiple entries to deliver what Rails expects.
-      file[key].map(val => {
-        data.append(`study_file[${key}][]`, val)
-      })
-    } else if (key === 'expression_file_info') {
-      Object.keys(file.expression_file_info).forEach(expKey => {
-        data.append(`study_file[expression_file_info_attributes][${expKey}]`, file.expression_file_info[expKey])
-      })
-    } else {
-      data.append(`study_file[${key}]`, file[key])
-    }
+    addObjectPropertyToForm(file, key, data)
   })
   if (file.uploadSelection) {
     if (chunkStart || chunkEnd) {
@@ -105,6 +94,40 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
     })
   }
   return data
+}
+
+/** Because we are sending as FormData, rather than JSON, we need to split
+    arrays and nested objects across multiple entries to deliver what Rails expects.
+    The function below is informed by concepts from
+    https://stackoverflow.com/questions/22783108/convert-js-object-to-form-data
+    */
+export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
+  let propString = `study_file[${propertyName}]`
+  if (nested) {
+    propString = `study_file[${nested}_attributes][${propertyName}]`
+  }
+  if (Array.isArray(obj[propertyName])) {
+    if (obj[propertyName].length == 0) {
+      // if the array is empty, send an empty string as an indication that it is cleared
+      formData.append(`${propString}[]`, '')
+    } else {
+      // add each array entry as a separate form data entry
+      obj[propertyName].forEach(val => {
+        formData.append(`${propString}[]`, val)
+      })
+    }
+  } else if (obj[propertyName] && typeof obj[propertyName] === 'object') {
+    // iterate over the keys and add each as a nested form property
+    Object.keys(obj[propertyName]).forEach(subKey => {
+      addObjectPropertyToForm(obj[propertyName], subKey, formData, propertyName)
+    })
+  } else {
+    // don't set null properties -- those are ones that haven't changed
+    // and having them be sent as 'null' or '' can throw off validations
+    if (obj[propertyName] != null) {
+      formData.append(propString, obj[propertyName])
+    }
+  }
 }
 
 
