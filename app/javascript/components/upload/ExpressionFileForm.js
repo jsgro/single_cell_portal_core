@@ -23,16 +23,23 @@ export default function ExpressionFileForm({
   saveFile,
   deleteFile,
   addNewFile,
-  fileMenuOptions
+  fileMenuOptions,
+  rawCountsOptions
 }) {
   const associatedChildren = findBundleChildren(file, allFiles)
   const speciesOptions = fileMenuOptions.species.map(spec => ({ label: spec.common_name, value: spec.id }))
   const selectedSpecies = speciesOptions.find(opt => opt.value === file.taxon_id)
   const isMtxFile = file.file_type === 'MM Coordinate Matrix'
   const isRawCountsFile = file.expression_file_info.is_raw_counts
+
   const allowedFileTypes = isMtxFile ? FileTypeExtensions.mtx : FileTypeExtensions.plainText
   const requiredFields = isRawCountsFile ? RAW_COUNTS_REQUIRED_FIELDS : REQUIRED_FIELDS
   const validationMessages = validateFile({ file, allFiles, allowedFileTypes, requiredFields })
+
+  const associatedRawCounts = file.expression_file_info.raw_counts_associations.map(id => ({
+    label: rawCountsOptions.find(rf => rf.value == id)?.label,
+    value: id
+  }))
 
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
@@ -64,6 +71,26 @@ export default function ExpressionFileForm({
               &nbsp;MM Coordinate Matrix
           </label>
         </div>
+
+        <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
+        <TextFormField label="Expression Axis Label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
+
+        { !isRawCountsFile &&
+          <div className="form-group">
+            <label className="labeled-select">Associated Raw Counts Files
+              <Select options={rawCountsOptions}
+                data-analytics-name="expression-raw-counts-select"
+                value={associatedRawCounts}
+                placeholder="Select one..."
+                isMulti={true}
+                onChange={val => updateFile(file._id, {
+                  expression_file_info: {
+                    raw_counts_associations: val ? val.map(opt => opt.value) : []
+                  }
+                })}/>
+            </label>
+          </div>
+        }
 
         <div className="form-group">
           <label className="labeled-select" data-testid="expression-select-taxon_id">Species *

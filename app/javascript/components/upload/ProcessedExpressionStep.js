@@ -36,12 +36,14 @@ function ProcessedUploadForm({
 }) {
   const processedParentFiles = formState.files.filter(processedFilter)
   const fileMenuOptions = serverState.menu_options
+  const rawCountsFiles = formState.files.filter(rawCountsFileFilter)
+  const rawCountsOptions = rawCountsFiles.map(rf => ({ label: rf.name, value: rf._id }))
 
   const userState = useContext(UserContext)
   const featureFlagState = userState.featureFlagsWithDefaults
   const rawCountsRequired = featureFlagState && featureFlagState.raw_counts_required_frontend
 
-  const hasRawCounts = !!formState.files.filter(rawCountsFileFilter).filter(file => file.status === 'uploaded').length
+  const hasRawCounts = !!rawCountsFiles.filter(file => file.status === 'uploaded').length
   const isEnabled = !rawCountsRequired || hasRawCounts
 
   useEffect(() => {
@@ -104,6 +106,7 @@ function ProcessedUploadForm({
           saveFile={saveFile}
           deleteFile={deleteFile}
           addNewFile={addNewFile}
+          rawCountsOptions={rawCountsOptions}
           fileMenuOptions={fileMenuOptions}/>
       })}
       <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
