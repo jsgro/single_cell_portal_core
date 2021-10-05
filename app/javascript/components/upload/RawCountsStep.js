@@ -8,7 +8,8 @@ const DEFAULT_NEW_RAW_COUNTS_FILE = {
   expression_file_info: {
     is_raw_counts: true,
     biosample_input_type: 'Whole cell',
-    modality: 'Transcriptomic: unbiased'
+    modality: 'Transcriptomic: unbiased',
+    raw_counts_associations: []
   },
   file_type: 'Expression Matrix'
 }

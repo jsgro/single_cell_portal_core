@@ -131,9 +131,7 @@ export function validateFile({ file, allFiles, allowedFileTypes=[], requiredFiel
 
 /** checks required fields are present */
 function validateRequiredFields(file, requiredFields, validationMessages) {
-  // 'name' is always required
-  const fullRequiredFields = requiredFields.concat({ label: 'name', propertyName: 'name' })
-  fullRequiredFields.forEach(field => {
+  requiredFields.forEach(field => {
     if (!_get(file, field.propertyName)) {
       validationMessages[field.propertyName] = `You must specify ${field.label}`
     }
