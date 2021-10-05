@@ -8,6 +8,11 @@ class FeatureAnnouncementsController < ApplicationController
       page: params[:page], per_page: FeatureAnnouncement.per_page)
   end
 
+  def archived
+    @feature_announcements = FeatureAnnouncement.archived.order(created_at: :desc).paginate(
+      page: params[:page], per_page: FeatureAnnouncement.per_page)
+  end
+
   def view_announcement
     @feature_announcement = FeatureAnnouncement.find_by(slug: params[:slug])
   end
@@ -73,6 +78,6 @@ class FeatureAnnouncementsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def feature_announcement_params
-    params.require(:feature_announcement).permit(:title, :content, :doc_link, :published)
+    params.require(:feature_announcement).permit(:title, :content, :doc_link, :published, :archived)
   end
 end

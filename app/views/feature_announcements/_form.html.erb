@@ -20,24 +20,15 @@
       <%= form.label :doc_link, 'Documentation/Link' %>
       <%= form.text_field :doc_link, class: 'form-control' %>
     </div>
-    <div class="col-md-2">
-      <%= form.label :published, 'Published?' %>
-      <div class="row">
-        <div class="col-xs-6">
-          <div class="radio">
-            <label for='feature_announcement_published_1'>
-              <%= form.radio_button :published, 1, checked: feature_announcement.published %> Yes
-            </label>
-          </div>
-        </div>
-        <div class="col-xs-6">
-          <div class="radio">
-            <label for='feature_announcement_published_0'>
-              <%= form.radio_button :published, 0, checked: !feature_announcement.published %> No
-            </label>
-          </div>
-        </div>
-      </div>
+    <div class="col-md-1">
+      <%= form.label :published, "Published <i class='fas fa-question-circle'></i>".html_safe,
+                     data: { toggle: 'tooltip' }, title: 'Uncheck to hide this announcement in all lists' %><br />
+      <%= form.check_box :published, checked: feature_announcement.published %>
+    </div>
+    <div class="col-md-1">
+      <%= form.label :archived, "Archived <i class='fas fa-question-circle'></i>".html_safe,
+                     data: { toggle: 'tooltip' }, title: "Check to move this to the 'Archived' list" %><br />
+      <%= form.check_box :archived, checked: feature_announcement.archived %>
     </div>
   </div>
 

@@ -123,6 +123,7 @@ Rails.application.routes.draw do
     resources :preset_searches
 
     get 'features/latest', to: 'feature_announcements#latest', as: :latest_feature_announcements
+    get 'features/archived', to: 'feature_announcements#archived', as: :archived_feature_announcements
     get 'features/:slug', to: 'feature_announcements#view_announcement', as: :view_feature_announcement
     resources :feature_announcements
 
