@@ -13,7 +13,8 @@ class FeatureAnnouncementsControllerTest < ActionDispatch::IntegrationTest
       title: 'New Feature Announcement',
       content: '<p>This is the content.</p>',
       doc_link: 'https://singlecell.zendesk.com/hc/en-us',
-      published: true
+      published: true,
+      archived: false
     )
     @admin = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
@@ -32,7 +33,7 @@ class FeatureAnnouncementsControllerTest < ActionDispatch::IntegrationTest
 
   teardown do
     OmniAuth.config.mock_auth[:google] = nil
-    FeatureAnnouncement.update_all(published: true)
+    FeatureAnnouncement.update_all(published: true, archived: false)
   end
 
   test 'should get index' do
@@ -53,6 +54,7 @@ class FeatureAnnouncementsControllerTest < ActionDispatch::IntegrationTest
         content: '<p>This is new content.<p>',
         doc_link: 'https://singlecell.zendesk.com/hc/en-us',
         published: true,
+        archived: false,
         title: 'Different Title'
       }
     }
@@ -68,6 +70,7 @@ class FeatureAnnouncementsControllerTest < ActionDispatch::IntegrationTest
         content: updated_content,
         doc_link: @feature_announcement.doc_link,
         published: @feature_announcement.published,
+        archived: @feature_announcement.archived,
         title: @feature_announcement.title
       }
     }
@@ -81,7 +84,8 @@ class FeatureAnnouncementsControllerTest < ActionDispatch::IntegrationTest
     announcement = FeatureAnnouncement.create(
       title: 'Delete',
       content: '<p>Delete</p>',
-      published: true
+      published: true,
+      archived: false
     )
     delete feature_announcement_url(announcement)
     follow_redirect!
@@ -108,7 +112,16 @@ class FeatureAnnouncementsControllerTest < ActionDispatch::IntegrationTest
   test 'should get latest features page' do
     get latest_feature_announcements_path
     assert_response :success
-    assert_select 'ul#latest-features', 1
+    assert_select 'ul#features-list', 1
+    assert_select 'li.feature-announcement-entry'
+  end
+
+  test 'should get archived features page' do
+    FeatureAnnouncement.update_all(archived: true)
+    get archived_feature_announcements_path
+    assert_response :success
+    assert_select 'ul#features-list', 1
+    assert_select 'li.feature-announcement-entry'
   end
 
   test 'should hide home page button if nothing published' do

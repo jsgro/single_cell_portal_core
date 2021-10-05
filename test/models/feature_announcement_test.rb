@@ -10,7 +10,8 @@ class FeatureAnnouncementTest< ActiveSupport::TestCase
       title: 'Amazing New Feature',
       content: '<p>This is the content.</p>',
       doc_link: 'https://singlecell.zendesk.com/hc/en-us',
-      published: true
+      published: true,
+      archived: false
     )
     @today = Date.today.in_time_zone.strftime('%F')
   end
@@ -20,7 +21,7 @@ class FeatureAnnouncementTest< ActiveSupport::TestCase
   end
 
   teardown do
-    FeatureAnnouncement.update_all(published: true)
+    FeatureAnnouncement.update_all(published: true, archived: false)
   end
 
   test 'should set slug on save' do
@@ -33,6 +34,12 @@ class FeatureAnnouncementTest< ActiveSupport::TestCase
   test 'should determine if there are published features' do
     assert FeatureAnnouncement.published_features?
     FeatureAnnouncement.update_all(published: false)
+    assert_not FeatureAnnouncement.published_features?
+  end
+
+  test 'should determine if there are archived features' do
+    assert_not FeatureAnnouncement.archived_features?
+    FeatureAnnouncement.update_all(archived: true)
     assert_not FeatureAnnouncement.published_features?
   end
 end
