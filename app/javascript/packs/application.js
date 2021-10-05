@@ -30,7 +30,7 @@ import {
 } from 'lib/metrics-api'
 import * as ScpApi from 'lib/scp-api'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
-import { validateFile } from 'lib/validation/validate-file'
+import { validateFileContent } from 'lib/validation/validate-file-content'
 import { renderValidationAlert } from 'components/validation/ValidationAlert'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderUploadWizard } from 'components/upload/UploadWizard'
@@ -76,5 +76,5 @@ window.SCP.renderRawAssociationSelect = renderRawAssociationSelect
 window.SCP.renderExploreView = renderExploreView
 window.SCP.getFeatureFlagsWithDefaults = getFeatureFlagsWithDefaults
 window.SCP.renderValidationAlert = renderValidationAlert
-window.SCP.validateFile = validateFile
+window.SCP.validateFileContent = validateFileContent
 window.SCP.renderUploadWizard = renderUploadWizard

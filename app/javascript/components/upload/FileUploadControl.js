@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 import { bytesToSize } from 'lib/stats'
+import { validateFileContent } from 'lib/validate-file-content'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 const plainTextExtensions = ['.txt', '.tsv', '.text', '.csv']
 const mtxExtensions = ['.mtx', '.mm', '.txt', '.text']
@@ -26,27 +28,45 @@ export default function FileUploadControl({
   allowedFileTypes=['*'],
   validationMessages={}
 }) {
+  const [contentValidation, setContentValidation] = useState({ validating: false, result: null })
   const inputId = `fileInput-${file._id}`
 
   /** handle user interaction with the file input */
-  function handleFileSelection(e) {
+  async function handleFileSelection(e) {
     const selectedFile = e.target.files[0]
     let newName = selectedFile.name
     // for cluster files, don't change an existing specified name
     if (file.file_type == 'Cluster' && file.name && file.name != file.upload_file_name) {
       newName = file.name
     }
-    updateFile(file._id, {
-      uploadSelection: selectedFile,
-      name: newName
-    })
+
+    setContentValidation({ validating: true, result: null })
+    const validationResult = await validateFileContent(file, file.file_type)
+    setContentValidation({ validating: false, result: validationResult })
+    if (validationResult.errors.length === 0) {
+      updateFile(file._id, {
+        uploadSelection: selectedFile,
+        name: newName
+      })
+    }
+  }
+  let buttonText = file.upload_file_name ? 'Change file' : 'Choose file'
+  if (contentValidation.validating) {
+    buttonText = <LoadingSpinner/>
+  }
+  let allErrors = []
+  if (validationMessages['fileName']) {
+    allErrors.push(validationMessages['fileName'])
+  }
+  if (contentValidation?.result?.errors) {
+    allErrors = allErrors.concat(contentValidation?.result?.errors)
   }
 
   return <div className="form-group">
     <label>File{ file.status !== 'new' && <span>: {file.upload_file_name}</span> }</label>
     <br/>
     <button className="fileinput-button btn btn-secondary" id={`fileButton-${file._id}`}>
-      { file.upload_file_name ? 'Change file' : 'Choose file' }
+      { buttonText }
       <input className="file-upload-input" data-testid="file-input"
         type="file"
         id={inputId}
@@ -58,8 +78,8 @@ export default function FileUploadControl({
         &nbsp; {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})
       </span>
     }
-    { validationMessages['fileName'] && <div className="validation-error" data-testid="file-name-validation">
-      { validationMessages['fileName'] }
-    </div>}
+    { allErrors.length > 0 && <div className="validation-error" data-testid="file-name-validation">
+      { allErrors.map((error, index) => <div key={index} className="error-message">{error}</div>) }
+    </div> }
   </div>
 }

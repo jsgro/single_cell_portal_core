@@ -166,7 +166,7 @@
             $(`#${containerId}`).remove() // Remove any prior notice
             $(ordsFormSelector).append(`<div id="${containerId}"></div>`)
             // Run client-side metadata file validation
-            const results = await window.SCP.validateFile(file, fileType)
+            const results = await window.SCP.validateFileContent(file, fileType)
             validationErrors = results.errors
             summary = results.summary
           <% end %>

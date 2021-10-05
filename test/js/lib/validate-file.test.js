@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 import * as Io from 'lib/validation/io'
-import { validateFile } from 'lib/validation/validate-file'
+import { validateFileContent } from 'lib/validation/validate-file'
 import ValidationAlert from 'components/validation/ValidationAlert'
 import * as MetricsApi from 'lib/metrics-api'
 
@@ -38,7 +38,7 @@ describe('Client-side file validation', () => {
 
     const expectedSummary = 'Your metadata file had 1 error'
 
-    const { errors, summary } = await validateFile(file, fileType)
+    const { errors, summary } = await validateFileContent(file, fileType)
 
     // Test library
     expect(errors).toHaveLength(1)
@@ -73,7 +73,7 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_annotations.py#L56
     mockReadLinesAndType('dup_headers_v2.0.0.tsv')
-    const { errors, summary } = await validateFile({}, 'metadata')
+    const { errors, summary } = await validateFileContent({}, 'metadata')
     expect(errors).toHaveLength(1)
     expect(summary).toBe('Your metadata file had 1 error')
   })
@@ -81,13 +81,13 @@ describe('Client-side file validation', () => {
   it('reports no error with good cluster CSV file', async () => {
     // Confirms no false positive due to comma-separated values
     mockReadLinesAndType('cluster_comma_delimited.csv')
-    const { errors } = await validateFile({}, 'cluster')
+    const { errors } = await validateFileContent({}, 'cluster')
     expect(errors).toHaveLength(0)
   })
 
   it('catches mismatched header counts', async () => {
     mockReadLinesAndType('header_count_mismatch.tsv')
-    const { errors, summary } = await validateFile({}, 'metadata')
+    const { errors, summary } = await validateFileContent({}, 'metadata')
     expect(errors).toHaveLength(1)
     expect(summary).toBe('Your metadata file had 1 error')
   })
@@ -96,7 +96,7 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_annotations.py#L112
     mockReadLinesAndType('error_headers_v2.0.0.tsv')
-    const { errors, summary } = await validateFile({}, 'metadata')
+    const { errors, summary } = await validateFileContent({}, 'metadata')
     expect(errors).toHaveLength(3)
     expect(summary).toBe('Your metadata file had 3 errors')
   })
@@ -107,7 +107,7 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cluster.py#L9
     mockReadLinesAndType('cluster_bad_no_coordinates.txt')
-    const { errors } = await validateFile({}, 'cluster')
+    const { errors } = await validateFileContent({}, 'cluster')
     expect(errors).toHaveLength(1)
   })
 
@@ -117,7 +117,7 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cluster.py#L21
     mockReadLinesAndType('cluster_example.txt')
-    const { errors } = await validateFile({}, 'cluster')
+    const { errors } = await validateFileContent({}, 'cluster')
     expect(errors).toHaveLength(0)
   })
 
@@ -127,7 +127,7 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L17
     mockReadLinesAndType('metadata_bad_has_coordinates.txt')
-    const { errors } = await validateFile({}, 'metadata')
+    const { errors } = await validateFileContent({}, 'metadata')
     expect(errors).toHaveLength(1)
   })
 
@@ -137,7 +137,7 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L31
     mockReadLinesAndType('metadata_good_v2-0-0.txt')
-    const { errors } = await validateFile({}, 'metadata')
+    const { errors } = await validateFileContent({}, 'metadata')
     expect(errors).toHaveLength(0)
   })
 

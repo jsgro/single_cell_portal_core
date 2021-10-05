@@ -11,6 +11,8 @@
 import { log } from 'lib/metrics-api'
 import { readLinesAndType } from './io'
 
+const VALIDATED_TYPES = ['Cluster', 'Metadata']
+
 /** Remove white spaces and quotes from a string value */
 function clean(value) {
   return value.trim().replaceAll(/"/g, '')
@@ -288,8 +290,11 @@ function getLogProps(fileObj, fileType, errorObj) {
 }
 
 /** Validate a local file, return list of any detected errors */
-export async function validateFile(file, fileType) {
+export async function validateFileContent(file, fileType) {
   let issues = []
+  if (VALIDATED_TYPES.includes(fileType)) {
+    return { errors: [], summary: '' }
+  }
 
   const { lines, mimeType } = await readLinesAndType(file, 2)
 
