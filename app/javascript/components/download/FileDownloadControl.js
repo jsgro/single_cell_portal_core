@@ -18,23 +18,18 @@ export default function FileDownloadControl({ file, bucketName }) {
     return URL.createObjectURL(fileBlob)
   }
 
-  if (!file.upload_file_name) {
+  if (!file.upload_file_name || file.human_data) {
     return null
   } else {
-    if (!file.upload_file_name && file.human_data) {
-      return null
-    // TODO (SCP-3719): Once the Sequence Data tab is added update this section for handling external human data files
-    } else {
-      return <p style={{ display: 'inline' }} >
-        {!file.generation ? <span style={{ display: '5px' }} className="label label-warning no-download-available" data-toggle="tooltip"
-          title='You can download this file once it has been fully uploaded. Check back soon.'>
-          {<span className="fas fa-ban"></span> } Awaiting remote file
-        </span> :
-          <a onClick={() => handleDownloadClick()} className="btn action" style={{ marginLeft: '5px' }} >
-            {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}
-          </a>
-        }
-      </p>
-    }
+    return <p style={{ display: 'inline' }} >
+      {!file.generation ? <span style={{ marginLeft: '5px' }} className="label label-warning no-download-available" data-toggle="tooltip"
+        title='You can download this file once it has been fully uploaded. Check back soon.'>
+        {<span className="fas fa-ban"></span> } Awaiting remote file
+      </span> :
+        <a onClick={() => handleDownloadClick()} className="btn action" style={{ marginLeft: '5px' }} >
+          {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}
+        </a>
+      }
+    </p>
   }
 }
