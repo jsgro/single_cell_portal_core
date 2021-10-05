@@ -32,8 +32,7 @@ function MetadataForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const userState = useContext(UserContext)
   const featureFlagState = userState.featureFlagsWithDefaults
@@ -91,7 +90,6 @@ function MetadataForm({
             <div className="row">
               <div className="col-md-12 flexbox">
                 <FileUploadControl
-                  handleSaveResponse={handleSaveResponse}
                   file={file}
                   updateFile={updateFile}
                   allowedFileTypes={FileTypeExtensions.plainText}

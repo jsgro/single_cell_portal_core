@@ -28,8 +28,7 @@ function SequenceForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const sequenceFiles = formState.files.filter(sequenceFileFilter)
 
@@ -79,7 +78,6 @@ function SequenceForm({
         deleteFile={deleteFile}
         sequenceFileTypes={sequenceFileTypes}
         fileMenuOptions={serverState.menu_options}
-        handleSaveResponse={handleSaveResponse}
         associatedBaiFile={associatedBaiFile}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SEQUENCE_FILE}/>

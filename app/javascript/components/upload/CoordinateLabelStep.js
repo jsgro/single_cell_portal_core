@@ -23,8 +23,7 @@ function CoordinateLabelForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const coordinateFiles = formState.files.filter(coordinateLabelFileFilter)
   const associatedClusterFileOptions = formState.files.filter(f => f.file_type === 'Cluster')
@@ -90,7 +89,6 @@ function CoordinateLabelForm({
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
-        handleSaveResponse={handleSaveResponse}
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}/>
     })}

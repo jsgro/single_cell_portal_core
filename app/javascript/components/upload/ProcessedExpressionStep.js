@@ -32,8 +32,7 @@ function ProcessedUploadForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const processedParentFiles = formState.files.filter(processedFilter)
   const fileMenuOptions = serverState.menu_options
@@ -105,7 +104,6 @@ function ProcessedUploadForm({
           saveFile={saveFile}
           deleteFile={deleteFile}
           addNewFile={addNewFile}
-          handleSaveResponse={handleSaveResponse}
           fileMenuOptions={fileMenuOptions}/>
       })}
       <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>

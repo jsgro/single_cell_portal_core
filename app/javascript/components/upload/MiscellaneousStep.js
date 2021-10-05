@@ -24,8 +24,7 @@ function MiscellaneousForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const miscFiles = formState.files.filter(miscFileFilter)
 
@@ -54,8 +53,7 @@ function MiscellaneousForm({
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
-        miscFileTypes={miscFileTypes}
-        handleSaveResponse={handleSaveResponse}/>
+        miscFileTypes={miscFileTypes}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_OTHER_FILE}/>
   </div>

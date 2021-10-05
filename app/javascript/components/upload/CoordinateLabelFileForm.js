@@ -12,7 +12,6 @@ export default function CoordinateLabelForm({
   updateFile,
   saveFile,
   deleteFile,
-  handleSaveResponse,
   associatedClusterFileOptions,
   updateCorrespondingClusters
 }) {
@@ -31,7 +30,6 @@ export default function CoordinateLabelForm({
         <div className="row">
           <div className="col-md-12">
             <FileUploadControl
-              handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}
               allowedFileTypes={FileTypeExtensions.plainText}

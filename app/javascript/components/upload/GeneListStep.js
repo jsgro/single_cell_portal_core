@@ -23,8 +23,7 @@ function GeneListForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const geneListFiles = formState.files.filter(geneListFileFilter)
 
@@ -64,8 +63,7 @@ function GeneListForm({
         allFiles={formState.files}
         updateFile={updateFile}
         saveFile={saveFile}
-        deleteFile={deleteFile}
-        handleSaveResponse={handleSaveResponse}/>
+        deleteFile={deleteFile}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_GENE_LIST_FILE}/>
   </div>

@@ -11,7 +11,6 @@ export default function GeneListFileForm({
   updateFile,
   saveFile,
   deleteFile,
-  handleSaveResponse,
   miscFileTypes
 }) {
   const validationMessages = validateFile({ file, allFiles, allowedFileTypes: FileTypeExtensions.plainText })
@@ -24,7 +23,6 @@ export default function GeneListFileForm({
         <div className="row">
           <div className="col-md-12">
             <FileUploadControl
-              handleSaveResponse={handleSaveResponse}
               file={file}
               allowedFileTypes={FileTypeExtensions.plainText}
               validationMessages={validationMessages}

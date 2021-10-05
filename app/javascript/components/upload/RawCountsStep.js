@@ -32,8 +32,7 @@ function RawCountsUploadForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const rawParentFiles = formState.files.filter(rawCountsFileFilter)
   const fileMenuOptions = serverState.menu_options
@@ -71,7 +70,6 @@ function RawCountsUploadForm({
         saveFile={saveFile}
         deleteFile={deleteFile}
         addNewFile={addNewFile}
-        handleSaveResponse={handleSaveResponse}
         fileMenuOptions={fileMenuOptions}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/>

@@ -23,7 +23,6 @@ export default function ExpressionFileForm({
   saveFile,
   deleteFile,
   addNewFile,
-  handleSaveResponse,
   fileMenuOptions
 }) {
   const associatedChildren = findBundleChildren(file, allFiles)
@@ -43,7 +42,6 @@ export default function ExpressionFileForm({
         acceptCharset="UTF-8">
 
         <FileUploadControl
-          handleSaveResponse={handleSaveResponse}
           file={file}
           updateFile={updateFile}
           validationMessages={validationMessages}
@@ -68,7 +66,7 @@ export default function ExpressionFileForm({
         </div>
 
         <div className="form-group">
-          <label className="labeled-select">Species *
+          <label className="labeled-select" data-testid="expression-select-taxon_id">Species *
             <Select options={speciesOptions}
               data-analytics-name="expression-species-select"
               value={selectedSpecies}
@@ -109,7 +107,7 @@ export default function ExpressionFileForm({
         <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
         { isMtxFile &&
           <MTXBundledFilesForm {...{
-            parentFile: file, allFiles, updateFile, saveFile, deleteFile, handleSaveResponse,
+            parentFile: file, allFiles, updateFile, saveFile, deleteFile,
             addNewFile, associatedChildren
           }}/>
         }
@@ -126,7 +124,7 @@ function ExpressionFileInfoSelect({ label, propertyName, rawOptions, file, updat
   const selectOptions = rawOptions.map(opt => ({ label: opt, value: opt }))
   const selectedOption = selectOptions.find(opt => opt.value === file.expression_file_info[propertyName])
   return <div className="form-group">
-    <label className="labeled-select">{label}
+    <label className="labeled-select" data-testid={`expression-select-${_kebabCase(propertyName)}`}>{label}
       <Select options={selectOptions}
         data-analytics-name={`expression-select-${_kebabCase(propertyName)}`}
         value={selectedOption}

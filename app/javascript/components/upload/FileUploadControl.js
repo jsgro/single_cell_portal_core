@@ -23,7 +23,6 @@ export const FileTypeExtensions = {
 /** renders a file upload control for the given file object */
 export default function FileUploadControl({
   file, updateFile,
-  handleSaveResponse,
   allowedFileTypes=['*'],
   validationMessages={}
 }) {
@@ -48,16 +47,18 @@ export default function FileUploadControl({
     <br/>
     <button className="fileinput-button btn btn-secondary" id={`fileButton-${file._id}`}>
       { file.upload_file_name ? 'Change file' : 'Choose file' }
-      <input className="file-upload-input"
+      <input className="file-upload-input" data-testid="file-input"
         type="file"
         id={inputId}
         onChange={handleFileSelection}
         accept={allowedFileTypes.join(',')}/>
     </button>
     { file.uploadSelection &&
-      <span> {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})</span>
+      <span data-testid="file-selection-name">
+        &nbsp; {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})
+      </span>
     }
-    { validationMessages['fileName'] && <div className="validation-error">
+    { validationMessages['fileName'] && <div className="validation-error" data-testid="file-name-validation">
       { validationMessages['fileName'] }
     </div>}
   </div>

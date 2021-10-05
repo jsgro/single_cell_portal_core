@@ -15,7 +15,6 @@ export default function ClusteringFileForm({
   updateFile,
   saveFile,
   deleteFile,
-  handleSaveResponse,
   associatedClusterFileOptions,
   updateCorrespondingClusters,
   bucketName
@@ -33,7 +32,6 @@ export default function ClusteringFileForm({
         acceptCharset="UTF-8">
         <div className="flexbox">
           <FileUploadControl
-            handleSaveResponse={handleSaveResponse}
             file={file}
             updateFile={updateFile}
             allowedFileTypes={FileTypeExtensions.plainText}

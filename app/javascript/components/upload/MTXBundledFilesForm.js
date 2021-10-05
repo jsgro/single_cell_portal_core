@@ -32,7 +32,6 @@ export default function MTXBundledFilesForm({
   saveFile,
   deleteFile,
   addNewFile,
-  handleSaveResponse,
   associatedChildren
 }) {
   const barcodesFile = associatedChildren.find(f => f.file_type === '10X Barcodes File')
@@ -67,7 +66,6 @@ export default function MTXBundledFilesForm({
         <div className="sub-form">
           <h5>10x Genes File</h5>
           <FileUploadControl
-            handleSaveResponse={handleSaveResponse}
             file={genesFile}
             updateFile={updateFile}
             validationMessages={genesValidationMessages}
@@ -88,7 +86,6 @@ export default function MTXBundledFilesForm({
         <div className="sub-form">
           <h5>10x Barcodes File</h5>
           <FileUploadControl
-            handleSaveResponse={handleSaveResponse}
             file={barcodesFile}
             updateFile={updateFile}
             validationMessages={genesValidationMessages}

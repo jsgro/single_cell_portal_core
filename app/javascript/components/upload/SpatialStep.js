@@ -25,8 +25,7 @@ export function SpatialUploadForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const spatialFiles = formState.files.filter(spatialFileFilter)
   const associatedClusterFileOptions = formState.files.filter(clusterFileFilter)
@@ -110,7 +109,6 @@ export function SpatialUploadForm({
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
-        handleSaveResponse={handleSaveResponse}
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}
         bucketName={formState.study.bucket_id}/>

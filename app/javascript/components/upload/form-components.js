@@ -39,7 +39,7 @@ export function SavingOverlay({ file, updateFile }) {
   return <div className="file-upload-overlay ">
     { (file.isSaving || file.isDeleting) &&
       <div className="file-upload-overlay">
-        { file.isSaving ? 'Saving' : 'Deleting' } <LoadingSpinner/>
+        { file.isSaving ? 'Saving' : 'Deleting' } <LoadingSpinner data-testid="file-save-spinner"/>
         <br/>
         { file.saveProgress &&
           <progress value={file.saveProgress} max="100">{file.saveProgress}%</progress>
@@ -76,9 +76,11 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
     type="button"
     className="btn btn-primary margin-right"
     onClick={() => saveFile(file)}
-    disabled={saveDisabled}>
+    disabled={saveDisabled}
+    data-testid="file-save">
     Save { file.uploadSelection && <span>&amp; Upload</span> }
   </button>
+
   if (saveDisabled) {
     // if saving is disabled, wrap the disabled button in a popover that will show the errors
     const validationPopup = <Popover id={`save-invalid-${file._id}`}>
@@ -91,7 +93,7 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
 
   return <div className="flexbox button-panel">
     { saveButton }
-    <button type="button" className="btn btn-secondary" onClick={handleDeletePress}>
+    <button type="button" className="btn btn-secondary" onClick={handleDeletePress} data-testid="file-delete">
       <i className="fas fa-trash"></i> Delete
     </button>
     <Modal

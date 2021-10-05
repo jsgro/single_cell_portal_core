@@ -12,7 +12,6 @@ export default function MiscellaneousFileForm({
   updateFile,
   saveFile,
   deleteFile,
-  handleSaveResponse,
   miscFileTypes
 }) {
   const validationMessages = validateFile({ file, allFiles, allowedFileTypes: FileTypeExtensions.misc })
@@ -25,7 +24,6 @@ export default function MiscellaneousFileForm({
         <div className="row">
           <div className="col-md-12">
             <FileUploadControl
-              handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}
               allowedFileTypes={FileTypeExtensions.misc}

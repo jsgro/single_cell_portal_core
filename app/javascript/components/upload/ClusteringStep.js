@@ -24,8 +24,7 @@ export function ClusteringUploadForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const clusterFiles = formState.files.filter(clusterFileFilter)
 
@@ -101,7 +100,6 @@ export function ClusteringUploadForm({
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
-        handleSaveResponse={handleSaveResponse}
         bucketName={formState.study.bucket_id}
       />
     })}

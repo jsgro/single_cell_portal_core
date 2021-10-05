@@ -14,7 +14,6 @@ export default function ImageFileForm({
   updateFile,
   saveFile,
   deleteFile,
-  handleSaveResponse,
   associatedClusterFileOptions,
   updateCorrespondingClusters,
   bucketName
@@ -35,7 +34,6 @@ export default function ImageFileForm({
         <div className="row">
           <div className="col-md-6 flexbox-align-center">
             <FileUploadControl
-              handleSaveResponse={handleSaveResponse}
               file={file}
               updateFile={updateFile}
               allowedFileTypes={FileTypeExtensions.image}

@@ -20,7 +20,6 @@ export default function SequenceFileForm({
   saveFile,
   deleteFile,
   addNewFile,
-  handleSaveResponse,
   sequenceFileTypes,
   fileMenuOptions,
   associatedBaiFile
@@ -72,7 +71,6 @@ export default function SequenceFileForm({
           <div className="row">
             <div className="col-md-12">
               <FileUploadControl
-                handleSaveResponse={handleSaveResponse}
                 file={file}
                 updateFile={updateFile}
                 allowedFileTypes={FileTypeExtensions.sequence}
@@ -130,7 +128,6 @@ export default function SequenceFileForm({
             updateFile={updateFile}
             saveFile={saveFile}
             deleteFile={deleteFile}
-            handleSaveResponse={handleSaveResponse}
             addNewFile={addNewFile}/>
         }
 
@@ -149,8 +146,7 @@ function BamIndexFileForm({
   updateFile,
   saveFile,
   deleteFile,
-  addNewFile,
-  handleSaveResponse
+  addNewFile
 }) {
   const validationMessages = validateFile({ file, allFiles, allowedFileTypes: FileTypeExtensions.bai })
 
@@ -181,7 +177,6 @@ function BamIndexFileForm({
       <div className="sub-form">
         <h5>BAM Index File</h5>
         <FileUploadControl
-          handleSaveResponse={handleSaveResponse}
           file={file}
           updateFile={updateFile}
           allowedFileTypes={FileTypeExtensions.bai}
