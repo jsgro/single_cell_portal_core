@@ -25,9 +25,8 @@ export default function FileDownloadControl({ file, bucketName }) {
       return null
     // TODO (SCP-3719): Once the Sequence Data tab is added update this section for handling external human data files
     } else {
-      return <p>
-        <br></br>
-        {!file.generation ? <span style={{ marginLeft: '5px' }} className="label label-warning no-download-available" data-toggle="tooltip"
+      return <p style={{ display: 'inline' }} >
+        {!file.generation ? <span style={{ display: '5px' }} className="label label-warning no-download-available" data-toggle="tooltip"
           title='You can download this file once it has been fully uploaded. Check back soon.'>
           {<span className="fas fa-ban"></span> } Awaiting remote file
         </span> :

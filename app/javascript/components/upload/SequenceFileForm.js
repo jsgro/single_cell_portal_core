@@ -2,7 +2,6 @@ import React, { useEffect } from 'react'
 
 import Select from 'lib/InstrumentedSelect'
 import FileUploadControl from './FileUploadControl'
-import FileDownloadControl from 'components/download/FileDownloadControl'
 
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
@@ -56,15 +55,12 @@ export default function SequenceFileForm({
         </div>
         { !file.human_data && <>
           <div className="row">
-            <div className="col-md-12 flexbox-align-center">
+            <div className="col-md-12">
               <FileUploadControl
                 handleSaveResponse={handleSaveResponse}
                 file={file}
-                updateFile={updateFile}/>
-              <FileDownloadControl
-                file={file}
-                bucketName={bucketName}
-              />
+                updateFile={updateFile}
+                bucketName={bucketName}/>
             </div>
           </div>
           <div className="form-group">
@@ -174,16 +170,11 @@ function BamIndexFileForm({
     <div className="col-md-12 ">
       <div className="sub-form">
         <h5>BAM Index File</h5>
-        <div className='flexbox-align-center'>
-          <FileUploadControl
-            handleSaveResponse={handleSaveResponse}
-            file={file}
-            updateFile={updateFile}/>
-          <FileDownloadControl
-            file={file}
-            bucketName={bucketName}
-          />
-        </div>
+        <FileUploadControl
+          handleSaveResponse={handleSaveResponse}
+          file={file}
+          updateFile={updateFile}
+          bucketName={bucketName}/>
         <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
         <SaveDeleteButtons
           file={file}

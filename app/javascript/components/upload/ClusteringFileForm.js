@@ -2,7 +2,6 @@ import React from 'react'
 
 import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
-import FileDownloadControl from 'components/download/FileDownloadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
 
@@ -24,17 +23,12 @@ export default function ClusteringFileForm({
         className="form-terra"
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
-        <div className="flexbox-align-center">
-          <FileUploadControl
-            handleSaveResponse={handleSaveResponse}
-            file={file}
-            updateFile={updateFile}
-            allowedFileTypes={FileTypeExtensions.plainText}/>
-          <FileDownloadControl
-            file={file}
-            bucketName={bucketName}
-          />
-        </div>
+        <FileUploadControl
+          handleSaveResponse={handleSaveResponse}
+          file={file}
+          updateFile={updateFile}
+          allowedFileTypes={FileTypeExtensions.plainText}
+          bucketName={bucketName}/>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         { file.is_spatial &&
           <div className="form-group">

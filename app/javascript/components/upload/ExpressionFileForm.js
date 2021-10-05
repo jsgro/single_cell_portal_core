@@ -4,7 +4,6 @@ import _kebabCase from 'lodash/kebabCase'
 import Select from 'lib/InstrumentedSelect'
 import MTXBundledFilesForm from './MTXBundledFilesForm'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
-import FileDownloadControl from 'components/download/FileDownloadControl'
 
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 
@@ -31,17 +30,12 @@ export default function ExpressionFileForm({
         className="form-terra"
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
-        <div className='flexbox-align-center'>
-          <FileUploadControl
-            handleSaveResponse={handleSaveResponse}
-            file={file}
-            updateFile={updateFile}
-            allowedFileTypes={isMtxFile ? FileTypeExtensions.mtx : FileTypeExtensions.plainText}/>
-          <FileDownloadControl
-            file={file}
-            bucketName={bucketName}
-          />
-        </div>
+        <FileUploadControl
+          handleSaveResponse={handleSaveResponse}
+          file={file}
+          updateFile={updateFile}
+          allowedFileTypes={isMtxFile ? FileTypeExtensions.mtx : FileTypeExtensions.plainText}
+          bucketName={bucketName}/>
         <div className="form-group">
           <label>Matrix file type:</label><br/>
           <label className="sublabel">
@@ -102,7 +96,7 @@ export default function ExpressionFileForm({
 
         <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
         { isMtxFile &&
-          <MTXBundledFilesForm {...{ parentFile: file, updateFile, saveFile, deleteFile, handleSaveResponse, addNewFile, associatedChildren }}/>
+          <MTXBundledFilesForm {...{ parentFile: file, updateFile, saveFile, deleteFile, handleSaveResponse, addNewFile, associatedChildren, bucketName }}/>
         }
 
       </form>

@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { bytesToSize } from 'lib/stats'
+import FileDownloadControl from 'components/download/FileDownloadControl'
 
 const plainTextExtensions = ['.txt', '.tsv', '.text', '.csv']
 const mtxExtensions = ['.mtx', '.mm', '.txt', '.text']
@@ -13,7 +14,7 @@ export const FileTypeExtensions = {
 }
 
 /** renders a file upload control for the given file object */
-export default function FileUploadControl({ file, updateFile, handleSaveResponse, allowedFileTypes=['*'] }) {
+export default function FileUploadControl({ file, updateFile, handleSaveResponse, allowedFileTypes=['*'], bucketName }) {
   const inputId = `fileInput-${file._id}`
 
   /** handle user interaction with the file input */
@@ -27,6 +28,10 @@ export default function FileUploadControl({ file, updateFile, handleSaveResponse
 
   return <div className="form-group">
     <label>File{ file.status !== 'new' && <span>: {file.upload_file_name}</span> }</label>
+    <FileDownloadControl
+      file={file}
+      bucketName={bucketName}
+    />
     <br/>
     <button className="fileinput-button btn btn-secondary" id={`fileButton-${file._id}`}>
       { file.upload_file_name ? 'Change file' : 'Choose file' }
