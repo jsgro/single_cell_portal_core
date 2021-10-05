@@ -83,10 +83,10 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
 
   if (saveDisabled) {
     // if saving is disabled, wrap the disabled button in a popover that will show the errors
-    const validationPopup = <Popover id={`save-invalid-${file._id}`}>
+    const validationPopup = <Popover id={`save-invalid-${file._id}`} className="tooltip-wide">
       { Object.keys(validationMessages).map(key => <div key={key}>{validationMessages[key]}</div>) }
     </Popover>
-    saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={validationPopup}>
+    saveButton = <OverlayTrigger trigger={['click']} rootClose placement="top" overlay={validationPopup}>
       <div>{ saveButton }</div>
     </OverlayTrigger>
   }
