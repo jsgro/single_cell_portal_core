@@ -111,7 +111,8 @@ export function SpatialUploadForm({
         deleteFile={deleteFile}
         handleSaveResponse={handleSaveResponse}
         associatedClusterFileOptions={associatedClusterFileOptions}
-        updateCorrespondingClusters={updateCorrespondingClusters}/>
+        updateCorrespondingClusters={updateCorrespondingClusters}
+        bucketName={formState.study.bucket_id}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SPATIAL_FILE}/>
   </div>

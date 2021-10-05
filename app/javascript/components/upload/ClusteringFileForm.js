@@ -2,7 +2,9 @@ import React from 'react'
 
 import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
+import FileDownloadControl from 'components/download/FileDownloadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
+
 
 /** renders a form for editing/uploading a single cluster file */
 export default function ClusteringFileForm({
@@ -12,10 +14,9 @@ export default function ClusteringFileForm({
   deleteFile,
   handleSaveResponse,
   associatedClusterFileOptions,
-  updateCorrespondingClusters
+  updateCorrespondingClusters,
+  bucketName
 }) {
-
-
   const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
@@ -23,11 +24,17 @@ export default function ClusteringFileForm({
         className="form-terra"
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
-        <FileUploadControl
-          handleSaveResponse={handleSaveResponse}
-          file={file}
-          updateFile={updateFile}
-          allowedFileTypes={FileTypeExtensions.plainText}/>
+        <div className="flexbox-align-center">
+          <FileUploadControl
+            handleSaveResponse={handleSaveResponse}
+            file={file}
+            updateFile={updateFile}
+            allowedFileTypes={FileTypeExtensions.plainText}/>
+          <FileDownloadControl
+            file={file}
+            bucketName={bucketName}
+          />
+        </div>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         { file.is_spatial &&
           <div className="form-group">
