@@ -26,18 +26,6 @@ export const SCATTER_COLOR_OPTIONS = [
 export const defaultScatterColor = 'Reds'
 window.Plotly = Plotly
 
-/** Handle user interaction with a filter */
-function updateFilters(props, filterId, value) {
-  const newFilters = props.filters.slice()
-  if (value && !newFilters.includes(filterId)) {
-    newFilters.push(filterId)
-  }
-  if (!value) {
-    _remove(newFilters, id => {return id === filterId})
-  }
-  props.setFilters(newFilters)
-}
-
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
@@ -62,6 +50,18 @@ function RawScatterPlot({
   const [filters, setFilters] = useState([])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
+
+  /** Handle user interaction with a filter */
+  function updateFilters(filterId, value) {
+    const newFilters = filters.slice()
+    if (value && !newFilters.includes(filterId)) {
+      newFilters.push(filterId)
+    }
+    if (!value) {
+      _remove(newFilters, id => {return id === filterId})
+    }
+    setFilters(newFilters)
+  }
 
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
@@ -209,7 +209,6 @@ function RawScatterPlot({
           countsByLabel={countsByLabel}
           correlations={labelCorrelations}
           filters={filters}
-          setFilters={setFilters}
           updateFilters={updateFilters}
         />
         }

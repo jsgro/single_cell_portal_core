@@ -64,7 +64,7 @@ export function getStyles(data, pointSize) {
 /** Component for row in legend */
 function LegendEntry({
   label, numPoints, iconColor, correlations,
-  filters, setFilters, updateFilters
+  filters, updateFilters
 }) {
   let entry = `${label} (${numPoints} points)`
   if (correlations) {
@@ -74,9 +74,6 @@ function LegendEntry({
     entry = `${label} (${numPoints} points, ρ = ${correlation})`
   }
 
-  const id = _kebabCase(label)
-  const domId = `legend-entry-${id}`
-
   const isSelected = filters.includes(label)
 
   const iconStyle = { backgroundColor: iconColor }
@@ -85,13 +82,12 @@ function LegendEntry({
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
     const state = !isSelected
-    updateFilters({ filters, setFilters }, label, state)
+    updateFilters(label, state)
   }
 
   return (
     <div
       className={`scatter-legend-row ${selectedClass}`}
-      key={domId} id={domId}
       onClick={() => toggleSelection()}
     >
       <div className="scatter-legend-icon" style={iconStyle}></div>
@@ -101,10 +97,14 @@ function LegendEntry({
 }
 
 
+// function DisplayAll() {
+
+// }
+
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
-  filters, setFilters, updateFilters
+  filters, updateFilters
 }) {
   const labels = Object.keys(countsByLabel)
 
@@ -121,9 +121,8 @@ export default function ScatterPlotLegend({
           iconColor={iconColor}
           correlations={correlations}
           filters={filters}
-          setFilters={setFilters}
           updateFilters={updateFilters}
-          key={`legend-entry-container-${index}`}
+          key={`legend-entry-${index}`}
         />
       )
     })
