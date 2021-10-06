@@ -292,24 +292,26 @@ module Api
           end
         end
 
-        # perform TDR search, if enabled, and there are facets/terms provided by user
-        if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') && (@facets.present? || @term_list.present?)
-          @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
+        # perform Azul search, if enabled, and there are facets/terms provided by user
+        if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') && @facets.present?
+          @azul_results = self.class.get_azul_results(selected_facets: @facets)
 
-          if @facets.present?
-            simple_tdr_results = self.class.simplify_tdr_facet_search_results(@tdr_results)
-            matched_tdr_studies = self.class.match_studies_by_facet(simple_tdr_results, @facets)
-            if @studies_by_facet.present?
-              @studies_by_facet.merge!(matched_tdr_studies)
-            else
-              @studies_by_facet = matched_tdr_studies
-            end
-          end
-          # just log for now
-          logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
-          @tdr_results.each do |_, tdr_result|
-            @studies << tdr_result
-          end
+          # @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
+          #
+          # if @facets.present?
+          #   simple_tdr_results = self.class.simplify_tdr_facet_search_results(@tdr_results)
+          #   matched_tdr_studies = self.class.match_studies_by_facet(simple_tdr_results, @facets)
+          #   if @studies_by_facet.present?
+          #     @studies_by_facet.merge!(matched_tdr_studies)
+          #   else
+          #     @studies_by_facet = matched_tdr_studies
+          #   end
+          # end
+          # # just log for now
+          # logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
+          # @tdr_results.each do |_, tdr_result|
+          #   @studies << tdr_result
+          # end
         end
 
         @matching_accessions = @studies.map {|study| study.is_a?(Study) ? study.accession : study[:accession]}
@@ -690,6 +692,53 @@ module Api
         else
           matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] || filter[:name] == search_result[result_key]}
         end
+      end
+
+      # execute a search against Azul (HCA Data service)
+      # TODO: implement workaround for lack of keyword-based search in Azul
+      def self.get_azul_results(selected_facets:)
+        client = ApplicationController.hca_azul_client
+        results = {}
+        query_json = client.format_query_from_facets(selected_facets)
+        logger.info "Executing Azul query with: #{query_json}"
+        project_results = client.projects(query: query_json)
+        project_results.each do |project|
+          safe_project = project.with_indifferent_access
+          short_name = safe_project[:projectShortName]
+          project_id = safe_project[:projectId]
+          result = {
+            hca_result: true,
+            accession: short_name,
+            name: safe_project[:projectTitle],
+            description: safe_project[:projectDescription],
+            hca_project_id: project_id,
+            facet_matches: [],
+            term_matches: [],
+            file_information: [
+              {
+                url: project_id,
+                file_type: 'Project Manifest',
+                upload_file_size: 1.megabyte, # placeholder filesize as we don't know until manifest is downloaded
+                name: "#{short_name}.tsv"
+              }
+            ]
+          }.with_indifferent_access
+          if safe_project[:matrices].any?
+            result = self.merge_files_by_facet(result, safe_project[:matrices], selected_facets)
+          end
+          if safe_project[:contributorMatrices].any?
+            result = self.merge_files_by_facet(result, safe_project[:contributorMatrices], selected_facets)
+          end
+          results[short_name] = result
+        end
+        results
+      end
+
+      # iterate through the matrices/contributorMatrices hash from Azul results to pull out matches based off of
+      # a faceted search request
+      # will also update any facet matches based off of those results
+      def self.merge_files_by_facet(matrices, facets)
+
       end
 
       # execute a search in TDR and get back normalized results
