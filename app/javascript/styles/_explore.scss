@@ -210,11 +210,16 @@
   top: 5px;
 }
 
-.filtered {
+.scatter-legend-row {
+  opacity: 0.3;
+}
+
+.scatter-legend-row.shown {
+  opacity: 1;
+}
+
+.unfiltered {
   .scatter-legend-row {
-    opacity: 0.3;
-  }
-  .scatter-legend-row.selected {
     opacity: 1;
   }
 }

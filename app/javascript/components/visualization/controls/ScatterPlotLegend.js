@@ -65,7 +65,7 @@ export function getStyles(data, pointSize) {
 function LegendEntry({
   label, numPoints, iconColor, correlations,
   filterId, numLabels,
-  filters, updateFilters
+  filters, updateFilters, allHidden
 }) {
   let entry = `${label} (${numPoints} points)`
   if (correlations) {
@@ -75,14 +75,22 @@ function LegendEntry({
     entry = `${label} (${numPoints} points, ρ = ${correlation})`
   }
 
-  const isSelected = filters.includes(filterId)
+  const isShown = filters.includes(filterId)
 
   const iconStyle = { backgroundColor: iconColor }
-  const selectedClass = (isSelected ? 'selected' : '')
+  let selectedClass
+  // !allHidden && !isShown: no
+  // allHidden && !isShown: no
+  // allHidden && isShown: no
+  if (!allHidden && isShown) {
+    selectedClass = 'shown'
+  } else {
+    selectedClass = ''
+  }
 
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
-    const state = !isSelected
+    const state = !isShown
     updateFilters(filterId, state, numLabels)
   }
 
@@ -97,76 +105,60 @@ function LegendEntry({
   )
 }
 
-// /** Whether "Display all" should be checked */
-// function doCheckDisplayAll(checkDisplayAll, filters, labels) {
-//   const numFilters = filters.length
-//   const numLabels = labels.length
-//   const anyFilters = numFilters > 0
-//   const allFilters = numFilters === numLabels
-//   console.log(
-//     'anyFilters, isDisplayAllTrigger, allFilters',
-//     anyFilters, isDisplayAllTrigger, allFilters
-//   )
-//   console.log('!anyFilters && !(isDisplayAllTrigger && !allFilters)')
-//   console.log(!anyFilters && !(isDisplayAllTrigger && !allFilters))
-//   return (
-//     !anyFilters &&
-//     !(isDisplayAllTrigger && !allFilters)
-//   )
-// }
-
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
-  filters, updateFilters, checkDisplayAll
+  filters, updateFilters, showHideButtons, allHidden
 }) {
   const labels = Object.keys(countsByLabel)
-  const filterIds = []
+  const filterIds = labels.map(label => _kebabCase(label))
   const numLabels = labels.length
 
   const legendEntries = labels
     .sort(labelSort) // sort keys so we assign colors in the right order
-    .map((label, index) => {
+    .map((label, i) => {
       const numPoints = countsByLabel[label]
-      const iconColor = getColorBrewerColor(index)
-
-      const filterId = _kebabCase(label)
-      filterIds.push(filterId)
+      const iconColor = getColorBrewerColor(i)
 
       return (
         <LegendEntry
-          key={filterId}
+          key={filterIds[i]}
           label={label}
           numPoints={numPoints}
           iconColor={iconColor}
           correlations={correlations}
           filters={filters}
           updateFilters={updateFilters}
-          filterId={filterId}
+          filterId={filterIds[i]}
           numLabels={numLabels}
+          allHidden={allHidden}
         />
       )
     })
 
-  // When no filters are checked
-  const hasFilters = (filters.length > 0)
+  // When some (but not all) filters are checked
+  // const someFilters = (filters.length > 0 && filters.length < labels.length)
 
   // console.log(
   //   'hasFilters, isDisplayAllTrigger, filters.length, labels.length',
   //   hasFilters, isDisplayAllTrigger, filters.length, labels.length
   // )
 
-  const filteredClass = (hasFilters) ? 'filtered' : ''
+  const filteredClass = (filters.length === 0) ? 'unfiltered' : ''
   return (
     <div className={`scatter-legend ${filteredClass}`}>
       <div>
-        <label>
-          <input
-            checked={checkDisplayAll}
-            type="checkbox"
-            onChange={e => updateFilters(labels, e.target.checked)}
-          />Display all
-        </label>
+        <button
+          data-analytics-name='show-all-button'
+          className={`btn btn-primary ${showHideButtons[0]}`}
+          disabled={!showHideButtons[0]}
+          onClick={() => {updateFilters(filterIds, false)}}>Show all</button>
+        <button
+          data-analytics-name='hide-all-button'
+          style={{ 'float': 'right' }}
+          className={`btn btn-primary ${showHideButtons[1]}`}
+          disabled={!showHideButtons[1]}
+          onClick={() => {updateFilters(filterIds, true)}}>Hide all</button>
       </div>
       <p className="scatter-legend-name">{name}</p>
       {legendEntries}
