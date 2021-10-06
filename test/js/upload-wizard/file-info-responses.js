@@ -50,7 +50,7 @@ export const METADATA_AND_EXPRESSION_FILE_STUDY = {
     'z_axis_max': null,
     'z_axis_min': null,
     'upload': {
-      'url': '/Users/dbush/code/scp/single_cell_portal_core/data/51e9c0d33e9b698b118bbb884fab092a1b2d22a9f4133966010560c60835361a/60a2b9fbcc7ba082358b544a/original/metadata.txt'
+      'url': 'fake/app/original/metadata.txt'
     }
   }, {
     '_id': {
@@ -109,7 +109,7 @@ export const METADATA_AND_EXPRESSION_FILE_STUDY = {
     'z_axis_max': 0,
     'z_axis_min': 0,
     'upload': {
-      'url': '/Users/dbush/code/scp/single_cell_portal_core/data/51e9c0d33e9b698b118bbb884fab092a1b2d22a9f4133966010560c60835361a/60a2b9fccc7ba082358b544f/original/raw2_chicken_40_cells_4_genes.processed_dense.txt'
+      'url': 'fake/app/data/51e9c0d33e9b698b118bbb884fab092a1b2d22a9f4133966010560c60835361a/60a2b9fccc7ba082358b544f/original/raw2_chicken_40_cells_4_genes.processed_dense.txt'
     }
   }],
   menu_options: {
@@ -288,6 +288,6 @@ export const RAW_COUNTS_FILE = {
   'z_axis_max': 0,
   'z_axis_min': 0,
   'upload': {
-    'url': '/Users/dbush/code/scp/single_cell_portal_core/data/51e9c0d33e9b698b118bbb884fab092a1b2d22a9f4133966010560c60835361a/60a2b9fccc7ba082358b544f/original/raw2_chicken_40_cells_4_genes.processed_dense.txt'
+    'url': 'fake/app/data/51e9c0d33e9b698b118bbb884fab092a1b2d22a9f4133966010560c60835361a/60a2b9fccc7ba082358b544f/original/raw2_chicken_40_cells_4_genes.processed_dense.txt'
   }
 }
