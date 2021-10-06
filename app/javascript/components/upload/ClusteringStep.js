@@ -24,8 +24,7 @@ export function ClusteringUploadForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const clusterFiles = formState.files.filter(clusterFileFilter)
 
@@ -38,7 +37,7 @@ export function ClusteringUploadForm({
   return <div>
     <div className="row">
       <div className="col-md-12">
-         <h4>Clustering files</h4>
+        <h4>Clustering files</h4>
       </div>
     </div>
     <div className="row">
@@ -63,7 +62,8 @@ export function ClusteringUploadForm({
             <div className="col-md-9 col-lg-offset-2 col-md-offset-1">
               <ul>
                 <li>3 columns</li>
-                <li>A header row containing the value <strong>“NAME”, “X”, “Y”,</strong> optionally <strong>“Z”</strong>, and columns containing cell-level annotations
+                <li>A header row containing the value <strong>“NAME”, “X”, “Y”,</strong>
+                optionally <strong>“Z”</strong>, and columns containing cell-level annotations
                 </li>
                 <li>A second row with:</li>
                 <ul >
@@ -71,7 +71,8 @@ export function ClusteringUploadForm({
                   <li>A value for each metadata column declaring its datatype
                   </li>
                   <ul>
-                    <li>The two accepted values are <strong>“group”</strong> (set membership) or <strong>“numeric”</strong> (continuous scores).*</li>
+                    <li>The two accepted values are <strong>“group”</strong> (set membership)
+                    or <strong>“numeric”</strong> (continuous scores).*</li>
                     <li>The values for the “X”, “Y”, and “Z” columns must be set to “numeric”.</li>
                   </ul>
                 </ul>
@@ -79,13 +80,14 @@ export function ClusteringUploadForm({
             </div>
           </div>
           <div className="row">
-            <p className="col-sm-12 text-center">Once your cluster file has been successfully ingested, additional representative
-              subsamples of the full resolution data will be stored as well.
-              <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling" target="_blank" rel="noreferrer"> Learn More <i className='fas fa-question-circle'></i></a>
+            <p className="col-sm-12 text-center">Once your cluster file has been successfully
+             ingested, additional representative subsamples of the full resolution data will be stored as well.
+            <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling" target="_blank" rel="noreferrer"> Learn More <i className='fas fa-question-circle'></i></a>
             </p>
           </div>
           <div className="row">
-            <p className="col-sm-12">* Group values are treated as literal strings, and numerics as floating-point numbers.</p>
+            <p className="col-sm-12">* Group values are treated as literal strings, and numerics
+              as floating-point numbers.</p>
           </div>
         </div>
       </div>
@@ -94,10 +96,10 @@ export function ClusteringUploadForm({
       return <ClusteringFileForm
         key={file._id}
         file={file}
+        allFiles={formState.files}
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
-        handleSaveResponse={handleSaveResponse}
         bucketName={formState.study.bucket_id}
       />
     })}

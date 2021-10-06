@@ -28,8 +28,7 @@ function SequenceForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const sequenceFiles = formState.files.filter(sequenceFileFilter)
 
@@ -62,7 +61,7 @@ function SequenceForm({
           <p>
             <b>Primary Human Data</b><br/>
             Primary sequence data derived from humans should be stored in other biological databases and can be linked here
-            by selecting 'Yes' for 'Primary Human Data' and then providing a link in the text field.
+            by selecting &apos;Yes&apos; for &apos;Primary Human Data&apos; and then providing a link in the text field.
           </p>
         </div>
       </div>
@@ -72,13 +71,13 @@ function SequenceForm({
       return <SequenceFileForm
         key={file._id}
         file={file}
+        allFiles={formState.files}
         updateFile={updateFile}
         saveFile={saveFile}
         addNewFile={addNewFile}
         deleteFile={deleteFile}
         sequenceFileTypes={sequenceFileTypes}
         fileMenuOptions={serverState.menu_options}
-        handleSaveResponse={handleSaveResponse}
         associatedBaiFile={associatedBaiFile}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SEQUENCE_FILE}/>

@@ -73,7 +73,7 @@ export default function UploadWizard({ studyAccession, name }) {
   }
 
   /** handle response from server after an upload by updating the serverState with the updated file response */
-  function handleSaveResponse(response, uploadingMoreChunks) {
+  function handleSaveResponse(response, oldFileId, uploadingMoreChunks) {
     const updatedFile = formatFileFromServer(response)
     // first update the serverState
     setServerState(prevServerState => {
@@ -89,8 +89,7 @@ export default function UploadWizard({ studyAccession, name }) {
     // then update the form state
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
-      const fileIndex = newFormState.files.findIndex(f => f.name === updatedFile.name)
-      const oldFileId = formState.files[fileIndex]._id
+      const fileIndex = newFormState.files.findIndex(f => f._id === oldFileId)
       const formFile = _cloneDeep(updatedFile)
       if (uploadingMoreChunks) {
         formFile.isSaving = true
@@ -156,7 +155,7 @@ export default function UploadWizard({ studyAccession, name }) {
           onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
         })
       }
-      handleSaveResponse(response, isChunked)
+      handleSaveResponse(response, studyFileId, isChunked)
       studyFileId = response._id
       if (isChunked) {
         while (chunkEnd < fileSize) {
@@ -168,9 +167,8 @@ export default function UploadWizard({ studyAccession, name }) {
             onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
           })
         }
-        handleSaveResponse(response, false)
+        handleSaveResponse(response, studyFileId, false)
       }
-
     } catch (error) {
       updateFile(studyFileId, {
         isError: true,
@@ -243,7 +241,7 @@ export default function UploadWizard({ studyAccession, name }) {
           </div>
         </div>
         <div className="col-md-9">
-          { !formState && <LoadingSpinner/> }
+          { !formState && <LoadingSpinner data-testid="upload-wizard-spinner"/> }
           { !!formState && <currentStep.component
             formState={formState}
             serverState={serverState}
@@ -251,7 +249,6 @@ export default function UploadWizard({ studyAccession, name }) {
             updateFile={updateFile}
             saveFile={saveFile}
             addNewFile={addNewFile}
-            handleSaveResponse={handleSaveResponse}
           /> }
         </div>
       </div>

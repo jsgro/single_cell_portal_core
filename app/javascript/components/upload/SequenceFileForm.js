@@ -1,17 +1,25 @@
 import React, { useEffect } from 'react'
 
 import Select from 'lib/InstrumentedSelect'
-import FileUploadControl from './FileUploadControl'
+import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
+import { validateFile } from './upload-utils'
+
+const REQUIRED_FIELDS = [{ label: 'species', propertyName: 'taxon_id' }]
+const BAM_REQUIRED_FIELDS = REQUIRED_FIELDS.concat([{ label: 'Genome assembly', propertyName: 'genome_assembly_id' }])
+const HUMAN_REQUIRED_FIELDS = REQUIRED_FIELDS.concat([
+  { label: 'External link', propertyName: 'external_link_url' },
+  { label: 'External link name', propertyName: 'name' }
+])
 
 /** renders a form for editing/uploading a sequence file and any assoicated bundle files */
 export default function SequenceFileForm({
   file,
   updateFile,
+  allFiles,
   saveFile,
   deleteFile,
   addNewFile,
-  handleSaveResponse,
   sequenceFileTypes,
   fileMenuOptions,
   associatedBaiFile
@@ -27,6 +35,14 @@ export default function SequenceFileForm({
   }
   const selectedAssembly = assemblyOptions.find(opt => opt.value === file.genome_assembly_id)
 
+  let requiredFields = REQUIRED_FIELDS
+  if (file.human_data) {
+    requiredFields = HUMAN_REQUIRED_FIELDS
+  } else if (file.file_type === 'BAM') {
+    requiredFields = BAM_REQUIRED_FIELDS
+  }
+  const validationMessages = validateFile({ file, allFiles, requiredFields, allowedFileTypes: FileTypeExtensions.sequence })
+
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
       <form id={`misc-file-form-${file._id}`}
@@ -40,14 +56,14 @@ export default function SequenceFileForm({
               name={`sequenceHuman-${file._id}`}
               value="false"
               checked={!file.human_data}
-              onChange={e => updateFile(file._id, { human_data: false })} />
+              onChange={e => updateFile(file._id, { human_data: false, human_fastq_url: null })} />
               &nbsp;No
           </label>
           <label className="sublabel">
             <input type="radio"
               name={`sequenceHuman-${file._id}`}
               value="true" checked={file.human_data}
-              onChange={e => updateFile(file._id, { human_data: true, file_type: 'Fastq' })}/>
+              onChange={e => updateFile(file._id, { human_data: true, file_type: 'Fastq', uploadSelection: null })}/>
               &nbsp;Yes
           </label>
         </div>
@@ -55,13 +71,14 @@ export default function SequenceFileForm({
           <div className="row">
             <div className="col-md-12">
               <FileUploadControl
-                handleSaveResponse={handleSaveResponse}
                 file={file}
-                updateFile={updateFile}/>
+                updateFile={updateFile}
+                allowedFileTypes={FileTypeExtensions.sequence}
+                validationMessages={validationMessages}/>
             </div>
           </div>
           <div className="form-group">
-            <label className="labeled-select">File type:
+            <label className="labeled-select">File type
               <Select options={sequenceFileTypes.map(ft => ({ label: ft, value: ft }))}
                 data-analytics-name="sequence-file-type"
                 value={{ label: file.file_type, value: file.file_type }}
@@ -72,18 +89,17 @@ export default function SequenceFileForm({
         { file.human_data &&
           <div className="row">
             <div className="col-md-12">
-              <TextFormField label="Link to primary human fastq file"
+              <TextFormField label="Link to primary human fastq file *"
                 fieldName="human_fastq_url"
                 file={file}
                 updateFile={updateFile}/>
-              <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
+              <TextFormField label="Name *" fieldName="name" file={file} updateFile={updateFile}/>
             </div>
           </div>
         }
 
-
         <div className="form-group">
-          <label className="labeled-select">Species
+          <label className="labeled-select">Species *
             <Select options={speciesOptions}
               data-analytics-name="sequence-species-select"
               value={selectedSpecies}
@@ -93,7 +109,7 @@ export default function SequenceFileForm({
         </div>
         { file.file_type === 'BAM' &&
           <div className="form-group">
-            <label className="labeled-select">Genome Assembly
+            <label className="labeled-select">Genome Assembly *
               <Select options={assemblyOptions}
                 data-analytics-name="sequence-assembly-select"
                 value={selectedAssembly}
@@ -104,14 +120,14 @@ export default function SequenceFileForm({
         }
         <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
 
-        <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
+        <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
         { (file.file_type === 'BAM' || associatedBaiFile) &&
           <BamIndexFileForm parentFile={file}
             file={associatedBaiFile}
+            allFiles={allFiles}
             updateFile={updateFile}
             saveFile={saveFile}
             deleteFile={deleteFile}
-            handleSaveResponse={handleSaveResponse}
             addNewFile={addNewFile}/>
         }
 
@@ -125,19 +141,14 @@ export default function SequenceFileForm({
 /** renders a control for uploading a BAM Index file */
 function BamIndexFileForm({
   file,
+  allFiles,
   parentFile,
   updateFile,
   saveFile,
   deleteFile,
-  addNewFile,
-  handleSaveResponse
+  addNewFile
 }) {
-  let validationMessage = ''
-  // don't allow saving until parent file is saved
-  const parentSaved = parentFile._id && !parentFile._id.includes('newFile')
-  if (!parentSaved) {
-    validationMessage = 'BAM file must be saved first'
-  }
+  const validationMessages = validateFile({ file, allFiles, allowedFileTypes: FileTypeExtensions.bai })
 
   // add an empty file to be filled in if none are there
   useEffect(() => {
@@ -166,17 +177,17 @@ function BamIndexFileForm({
       <div className="sub-form">
         <h5>BAM Index File</h5>
         <FileUploadControl
-          handleSaveResponse={handleSaveResponse}
           file={file}
-          updateFile={updateFile}/>
+          updateFile={updateFile}
+          allowedFileTypes={FileTypeExtensions.bai}
+          validationMessages={validationMessages}/>
         <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
         <SaveDeleteButtons
           file={file}
           updateFile={updateFile}
           saveFile={saveFile}
           deleteFile={deleteFile}
-          saveEnabled={parentSaved}
-          validationMessage={validationMessage}/>
+          validationMessages={validationMessages}/>
       </div>
       <SavingOverlay file={file} updateFile={updateFile}/>
     </div>

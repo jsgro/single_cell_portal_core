@@ -1,4 +1,5 @@
 import _uniqueId from 'lodash/uniqueId'
+import _get from 'lodash/get'
 
 /** properties used to track file state on the form, but that should not be sent to the server
  *  this also includes properties that are only modifiable on the server (and so should also
@@ -94,6 +95,78 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
     })
   }
   return data
+}
+
+/** Does basic validation of the file, including file existence, name, file type, and required fields
+ * returns a hash of message keys to validation messages
+ * allowedFileTypes is an array of string extensions, e.g. ['.txt', '.csv']
+ * requiredFields is array objects with label and propertyName:  e.g. [{label: 'species', propertyName: 'taxon_id'}]
+ * it validates the propertyName is specified (propertyName can include '.' for nested properties), and
+ * uses the label in the validation message returned if the property is not specified. */
+export function validateFile({ file, allFiles, allowedFileTypes=[], requiredFields=[] }) {
+  if (!file) {
+    // edge case where the form is rendered but hook to add an empty file has not yet finished
+    return { file: 'File not yet initialized' }
+  }
+
+  const validationMessages = {}
+  if (file.status === 'new') {
+    if (!file.uploadSelection) {
+      validationMessages.uploadSelection = 'You must select a file to upload'
+    }
+  }
+
+  if (file.uploadSelection) {
+    if (!allowedFileTypes.some(ext => file.uploadSelection.name.endsWith(ext))) {
+      validationMessages.fileName = `Allowed extensions are ${allowedFileTypes.join(' ')}`
+    }
+  }
+
+  validateNameUniqueness(file, allFiles, validationMessages)
+  validateBundleParent(file, allFiles, validationMessages)
+  validateRequiredFields(file, requiredFields, validationMessages)
+
+  return validationMessages
+}
+
+/** checks required fields are present */
+function validateRequiredFields(file, requiredFields, validationMessages) {
+  requiredFields.forEach(field => {
+    if (!_get(file, field.propertyName)) {
+      validationMessages[field.propertyName] = `You must specify ${field.label}`
+    }
+  })
+}
+
+/** checks that a bundle parent is already saved */
+function validateBundleParent(file, allFiles, validationMessages) {
+  const parentId = file.options?.matrix_id || file.options?.bam_id || file.options?.cluster_file_id
+  if (parentId) {
+    // don't allow saving until parent file is saved and a real id is returned from the server
+    const parentSaved = parent.status != 'new' && !parentId.includes('newFile')
+    if (!parentSaved) {
+      validationMessages['parentSaved'] = 'Parent file must be saved first'
+    }
+  }
+}
+
+/** checks that the files name is unique, and that the filename selected to be uploaded
+ *  is unique across all files, both saved and unsaved */
+function validateNameUniqueness(file, allFiles, validationMessages) {
+  const allOtherFiles = allFiles.filter(f => f._id != file._id)
+  const allOtherNames = allOtherFiles.map(f => f.name)
+  const allOtherUploadFileNames = allOtherFiles.map(f => f.upload_file_name)
+  const allOtherSelectedFileNames = allOtherFiles.map(f => f.uploadSelection?.name)
+  if (file.uploadSelection) {
+    if (allOtherNames.includes(file.uploadSelection.name) ||
+      allOtherUploadFileNames.includes(file.uploadSelection.name) ||
+      allOtherSelectedFileNames.includes(file.uploadSelection.name)) {
+      validationMessages.fileName = `A file named ${file.uploadSelection.name} already exists in your study`
+    }
+  }
+  if (allOtherNames.includes(file.name)) {
+    validationMessages.fileName = `A file named ${file.name} already exists in your study`
+  }
 }
 
 /** Because we are sending as FormData, rather than JSON, we need to split
