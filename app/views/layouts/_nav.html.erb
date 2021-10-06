@@ -35,6 +35,9 @@
                           rel: 'noopener noreferrer' %></li>
           <li><%= link_to "<span class='fas fa-fw fa-code'></span> REST API Documentation".html_safe, api_v1_swagger_ui_path,
                           target: '_blank', rel: 'noopener noreferrer' %></li>
+          <% if FeatureAnnouncement.published.any? %>
+            <li><%= link_to "<span class='fas fa-fw fa-bullhorn'></span> New Features".html_safe, latest_feature_announcements_path %></li>
+          <% end %>
         </ul>
       </li>
       <li class="left-border-0-5">

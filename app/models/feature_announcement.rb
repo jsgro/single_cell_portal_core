@@ -28,6 +28,10 @@ class FeatureAnnouncement
     date_obj&.strftime('%b %d %Y')
   end
 
+  def self.published
+    where(published: true)
+  end
+
   def self.latest
     where(published: true, archived: false)
   end
