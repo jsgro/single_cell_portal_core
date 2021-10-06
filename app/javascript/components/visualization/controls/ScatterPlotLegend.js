@@ -64,6 +64,7 @@ export function getStyles(data, pointSize) {
 /** Component for row in legend */
 function LegendEntry({
   label, numPoints, iconColor, correlations,
+  filterId, numLabels,
   filters, updateFilters
 }) {
   let entry = `${label} (${numPoints} points)`
@@ -74,7 +75,7 @@ function LegendEntry({
     entry = `${label} (${numPoints} points, ρ = ${correlation})`
   }
 
-  const isSelected = filters.includes(label)
+  const isSelected = filters.includes(filterId)
 
   const iconStyle = { backgroundColor: iconColor }
   const selectedClass = (isSelected ? 'selected' : '')
@@ -82,7 +83,7 @@ function LegendEntry({
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
     const state = !isSelected
-    updateFilters(label, state)
+    updateFilters(filterId, state, numLabels)
   }
 
   return (
@@ -96,17 +97,32 @@ function LegendEntry({
   )
 }
 
-
-// function DisplayAll() {
-
+// /** Whether "Display all" should be checked */
+// function doCheckDisplayAll(checkDisplayAll, filters, labels) {
+//   const numFilters = filters.length
+//   const numLabels = labels.length
+//   const anyFilters = numFilters > 0
+//   const allFilters = numFilters === numLabels
+//   console.log(
+//     'anyFilters, isDisplayAllTrigger, allFilters',
+//     anyFilters, isDisplayAllTrigger, allFilters
+//   )
+//   console.log('!anyFilters && !(isDisplayAllTrigger && !allFilters)')
+//   console.log(!anyFilters && !(isDisplayAllTrigger && !allFilters))
+//   return (
+//     !anyFilters &&
+//     !(isDisplayAllTrigger && !allFilters)
+//   )
 // }
 
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
-  filters, updateFilters
+  filters, updateFilters, checkDisplayAll
 }) {
   const labels = Object.keys(countsByLabel)
+  const filterIds = []
+  const numLabels = labels.length
 
   const legendEntries = labels
     .sort(labelSort) // sort keys so we assign colors in the right order
@@ -114,22 +130,44 @@ export default function ScatterPlotLegend({
       const numPoints = countsByLabel[label]
       const iconColor = getColorBrewerColor(index)
 
+      const filterId = _kebabCase(label)
+      filterIds.push(filterId)
+
       return (
         <LegendEntry
+          key={filterId}
           label={label}
           numPoints={numPoints}
           iconColor={iconColor}
           correlations={correlations}
           filters={filters}
           updateFilters={updateFilters}
-          key={`legend-entry-${index}`}
+          filterId={filterId}
+          numLabels={numLabels}
         />
       )
     })
 
-  const filteredClass = (filters.length > 0) ? 'filtered' : ''
+  // When no filters are checked
+  const hasFilters = (filters.length > 0)
+
+  // console.log(
+  //   'hasFilters, isDisplayAllTrigger, filters.length, labels.length',
+  //   hasFilters, isDisplayAllTrigger, filters.length, labels.length
+  // )
+
+  const filteredClass = (hasFilters) ? 'filtered' : ''
   return (
     <div className={`scatter-legend ${filteredClass}`}>
+      <div>
+        <label>
+          <input
+            checked={checkDisplayAll}
+            type="checkbox"
+            onChange={e => updateFilters(labels, e.target.checked)}
+          />Display all
+        </label>
+      </div>
       <p className="scatter-legend-name">{name}</p>
       {legendEntries}
     </div>

@@ -48,17 +48,30 @@ function RawScatterPlot({
   const [scatterData, setScatterData] = useState(null)
   const [countsByLabel, setCountsByLabel] = useState(null)
   const [filters, setFilters] = useState([])
+  const [checkDisplayAll, setCheckDisplayAll] = useState(true)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
-  /** Handle user interaction with a filter */
-  function updateFilters(filterId, value) {
-    const newFilters = filters.slice()
-    if (value && !newFilters.includes(filterId)) {
-      newFilters.push(filterId)
-    }
-    if (!value) {
-      _remove(newFilters, id => {return id === filterId})
+  /** Handle user interaction with one or more filters */
+  function updateFilters(filterIds, value, numLabels) {
+    let newFilters
+    if (Array.isArray(filterIds)) {
+      // Handle multi-filter interaction
+      newFilters = !value ? [] : filterIds
+
+      setCheckDisplayAll(!checkDisplayAll)
+    } else {
+      // Handle single-filter interaction
+      const filterId = filterIds
+      newFilters = filters.slice()
+      if (value && !newFilters.includes(filterId)) {
+        newFilters.push(filterId)
+      }
+      if (!value) {
+        _remove(newFilters, id => {return id === filterId})
+      }
+      const numFilters = newFilters.length
+      setCheckDisplayAll(numFilters === 0 || numFilters === numLabels)
     }
     setFilters(newFilters)
   }
@@ -210,6 +223,7 @@ function RawScatterPlot({
           correlations={labelCorrelations}
           filters={filters}
           updateFilters={updateFilters}
+          checkDisplayAll={checkDisplayAll}
         />
         }
       </div>
