@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
 import { bytesToSize } from 'lib/stats'
-import { validateFileContent } from 'lib/validate-file-content'
+import { validateFileContent } from 'lib/validation/validate-file-content'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 const plainTextExtensions = ['.txt', '.tsv', '.text', '.csv']
@@ -28,7 +28,7 @@ export default function FileUploadControl({
   allowedFileTypes=['*'],
   validationMessages={}
 }) {
-  const [contentValidation, setContentValidation] = useState({ validating: false, result: null })
+  const [contentValidation, setContentValidation] = useState({ validating: false, result: null, filename: null })
   const inputId = `fileInput-${file._id}`
 
   /** handle user interaction with the file input */
@@ -40,9 +40,9 @@ export default function FileUploadControl({
       newName = file.name
     }
 
-    setContentValidation({ validating: true, result: null })
-    const validationResult = await validateFileContent(file, file.file_type)
-    setContentValidation({ validating: false, result: validationResult })
+    setContentValidation({ validating: true, result: null, filename: selectedFile.name })
+    const validationResult = await validateFileContent(selectedFile, file.file_type)
+    setContentValidation({ validating: false, result: validationResult, filename: selectedFile.name })
     if (validationResult.errors.length === 0) {
       updateFile(file._id, {
         uploadSelection: selectedFile,
@@ -50,22 +50,22 @@ export default function FileUploadControl({
       })
     }
   }
-  let buttonText = file.upload_file_name ? 'Change file' : 'Choose file'
+  let buttonText = file.upload_file_name ? 'Replace' : 'Choose file'
   if (contentValidation.validating) {
-    buttonText = <LoadingSpinner/>
-  }
-  let allErrors = []
-  if (validationMessages['fileName']) {
-    allErrors.push(validationMessages['fileName'])
-  }
-  if (contentValidation?.result?.errors) {
-    allErrors = allErrors.concat(contentValidation?.result?.errors)
+    buttonText = <LoadingSpinner data-testid="file-validation-spinner"/>
   }
 
+  const contentErrors = contentValidation.result ? contentValidation.result.errors : []
+
   return <div className="form-group">
-    <label>File{ file.status !== 'new' && <span>: {file.upload_file_name}</span> }</label>
-    <br/>
-    <button className="fileinput-button btn btn-secondary" id={`fileButton-${file._id}`}>
+    <label>
+      { !file.uploadSelection && <span>{file.upload_file_name}</span> }
+      { file.uploadSelection && <span data-testid="file-selection-name">
+        {file.uploadSelection.name}  ({bytesToSize(file.uploadSelection.size)})
+      </span> }
+    </label>
+    &nbsp;
+    <button className="fileinput-button terra-secondary-btn" id={`fileButton-${file._id}`}>
       { buttonText }
       <input className="file-upload-input" data-testid="file-input"
         type="file"
@@ -73,13 +73,15 @@ export default function FileUploadControl({
         onChange={handleFileSelection}
         accept={allowedFileTypes.join(',')}/>
     </button>
-    { file.uploadSelection &&
-      <span data-testid="file-selection-name">
-        &nbsp; {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})
-      </span>
+    { validationMessages['fileName'] &&
+      <div className="validation-error" data-testid="file-name-validation">{validationMessages['fileName']}</div>
     }
-    { allErrors.length > 0 && <div className="validation-error" data-testid="file-name-validation">
-      { allErrors.map((error, index) => <div key={index} className="error-message">{error}</div>) }
+
+    { contentErrors.length > 0 && <div className="validation-error" data-testid="file-content-validation">
+      Could not use { contentValidation.filename}:
+      <ul className="validation-error" >
+        { contentErrors.map((error, index) => <li key={index} className="error-message">{error[2]}</li>) }
+      </ul>
     </div> }
   </div>
 }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
 import FileUploadControl from 'components/upload/FileUploadControl'
@@ -36,7 +36,11 @@ describe('file upload control defaults the name of the file', () => {
     expect(screen.getByRole('button')).toHaveTextContent('Choose file')
     expect(screen.queryByTestId('file-name-validation')).toBeNull()
 
-    const fileObj = fireFileSelectionEvent(screen.getByTestId('file-input'), { fileName: 'cluster.txt' })
+    const fileObj = fireFileSelectionEvent(screen.getByTestId('file-input'), {
+      fileName: 'cluster.txt',
+      content: 'NAME,X,Y\nTYPE,numeric,numeric\nCell1,1,0\n'
+    })
+    await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
     expect(updateFileSpy).toHaveBeenLastCalledWith('123', { uploadSelection: fileObj, name: 'cluster.txt' })
   })
 })

@@ -171,7 +171,6 @@ describe('it checks presence of required fields', () => {
       requiredFields: [{ label: 'species', propertyName: 'taxon_id' }]
     })
     expect(msgs.taxon_id).toEqual('You must specify species')
-    expect(msgs.name).toEqual('You must specify name')
   })
 
   it('messages both if multiple required fields are not present', async () => {

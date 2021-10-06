@@ -41,7 +41,11 @@ describe('it allows creation of study files', () => {
     expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
 
     const rawCountsFileName = 'example_raw_counts.txt'
-    fireFileSelectionEvent(screen.getByTestId('file-input'), { fileName: rawCountsFileName })
+    fireFileSelectionEvent(screen.getByTestId('file-input'), {
+      fileName: rawCountsFileName,
+      content: 'GENE,cell1,cell2\ngene1,1,2'
+    })
+    await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
     expect(screen.getByTestId('file-selection-name')).toHaveTextContent(rawCountsFileName)
     expect(saveButton()).toBeDisabled()
 
@@ -63,9 +67,9 @@ describe('it allows creation of study files', () => {
     await waitForElementToBeRemoved(() => screen.getByTestId('file-save-spinner'))
 
     expect(createFileSpy).toHaveBeenLastCalledWith(expect.objectContaining({
-      chunkEnd: 10,
+      chunkEnd: 26,
       chunkStart: 0,
-      fileSize: 10,
+      fileSize: 26,
       isChunked: false,
       studyAccession: 'SCP1'
     }))

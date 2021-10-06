@@ -292,7 +292,7 @@ function getLogProps(fileObj, fileType, errorObj) {
 /** Validate a local file, return list of any detected errors */
 export async function validateFileContent(file, fileType) {
   let issues = []
-  if (VALIDATED_TYPES.includes(fileType)) {
+  if (!VALIDATED_TYPES.includes(fileType)) {
     return { errors: [], summary: '' }
   }
 
@@ -301,7 +301,7 @@ export async function validateFileContent(file, fileType) {
   const delimiter = sniffDelimiter(lines, mimeType)
   const table = lines.map(line => line.split(delimiter))
 
-  if (['cluster', 'metadata'].includes(fileType)) {
+  if (['Cluster', 'Metadata'].includes(fileType)) {
     issues = await validateCapFormat(table, fileType)
   }
 
