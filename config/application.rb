@@ -29,16 +29,12 @@ module SingleCellPortal
     config.middleware.use Rack::Brotli
 
     # Docker image for file parsing via scp-ingest-pipeline
-    config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.11.0'
+    config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.12.0'
 
     config.autoload_paths << Rails.root.join('lib')
 
     # Google OAuth2 Scopes
     # basic scopes are user profile, email, and openid, and do not require user consent to request during auth handshake
     BASIC_GOOGLE_SCOPES = %w(email profile userinfo.email userinfo.profile openid)
-
-    # extended scopes add cloud-billing.readonly which requires user consent
-    # these are only requested when users attempt to visit the "My Billing Projects" page
-    EXTENDED_GOOGLE_SCOPES = BASIC_GOOGLE_SCOPES.dup + %w(cloud-billing.readonly)
   end
 end

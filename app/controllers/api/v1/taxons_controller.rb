@@ -1,8 +1,6 @@
 module Api
   module V1
     class TaxonsController < ApiBaseController
-      include Swagger::Blocks
-
       swagger_path '/taxons' do
         operation :get do
           key :tags, [

@@ -4,8 +4,8 @@
 </h1>
 <p class="lead">Accession: <span id="study-accession"><%= @study.accession %></span></p>
 </p>
-<% if @study.check_embargo? %>
-  <p class="lead text-danger">Embargoed until: <%= @study.embargo.to_s(:long) %></p>
+<% if @study.embargo_active? %>
+  <p class="lead text-danger">Data Release Date: <%= @study.embargo.to_s(:long) %></p>
 <% end %>
 
 <%= @study.description.html_safe %>
@@ -33,23 +33,38 @@
                 <tr>
                   <td>Study URL</td>
                   <td><%= view_study_url(accession: @study.accession, study_name: @study.url_safe_name) %></td>
-                  <td><%= scp_link_to "<span class='fas fa-eye'></span> View Study".html_safe, view_study_path(accession: @study.accession, study_name: @study.url_safe_name), class: 'btn btn-primary', id: 'study-link' %></td>
+                  <td>
+                    <%= scp_link_to "<span class='fas fa-eye'></span> View Study".html_safe,
+                                    view_study_path(accession: @study.accession, study_name: @study.url_safe_name),
+                                    class: 'btn btn-primary', id: 'study-link' %>
+                  </td>
                 </tr>
                 <tr>
                   <td>Accession URL (permanent, for external use)</td>
                   <td><%= site_url %>/study/<%= @study.accession %></td>
-                  <td><%= scp_link_to "<span class='fas fa-eye'></span> View Study".html_safe, view_study_path(accession: @study.accession, study_name: @study.url_safe_name), class: 'btn btn-primary', id: 'study-accession-link' %></td>
+                  <td>
+                    <%= scp_link_to "<span class='fas fa-eye'></span> View Study".html_safe,
+                                    view_study_path(accession: @study.accession, study_name: @study.url_safe_name),
+                                    class: 'btn btn-primary', id: 'study-accession-link' %>
+                  </td>
                 </tr>
                 <tr>
                   <td>Terra Project & Workspace</td>
                   <td><%= @study.firecloud_project %>/<%= @study.firecloud_workspace %></td>
-                  <td><%= link_to_if !@study.firecloud_workspace.nil?, "<span class='fas fa-cloud'></span> View Terra Workspace".html_safe, @study.workspace_url, class: 'btn btn-info', id: 'firecloud-link', target: :_blank %>
+                  <td>
+                    <%= link_to_if !@study.firecloud_workspace.nil?,
+                                   "<span class='fas fa-cloud'></span> View Terra Workspace".html_safe,
+                                   @study.workspace_url, class: 'btn btn-info', id: 'firecloud-link', target: :_blank,
+                                   rel: 'noopener noreferrer' %>
                   </td>
                 </tr>
                 <tr>
                   <td>Google Storage Bucket</td>
                   <td><%= @study.bucket_id %></td>
-                  <td><%= link_to_if !@study.bucket_id.nil?, "<span class='fas fa-database'></span> View Google Bucket".html_safe, @study.google_bucket_url, class: 'btn btn-success', id: 'gcs-link', target: :_blank %>
+                  <td>
+                    <%= link_to_if !@study.bucket_id.nil?, "<span class='fas fa-database'></span> View Google Bucket".html_safe,
+                                   @study.google_bucket_url, class: 'btn btn-success', id: 'gcs-link', target: :_blank,
+                                   rel: 'noopener noreferrer' %>
                   </td>
                 </tr>
               </tbody>
@@ -199,7 +214,7 @@
           <% @analysis_metadata.each do |analysis| %>
             <tr>
               <td><%= analysis.name %></td>
-              <td><%= link_to analysis.submission_id, @study.submission_url(analysis.submission_id), target: :_blank %></td>
+              <td><%= link_to analysis.submission_id, @study.submission_url(analysis.submission_id), target: :_blank, rel: 'noopener noreferrer' %></td>
               <td><%= analysis.created_at.strftime("%F %R") %></td>
               <td class="actions">
                 <%= link_to("<i class='fas fa-fw fa-code'></i> View Run Info".html_safe, '#/', class: 'btn btn-xs btn-info view-submission-metadata', title: 'View HCA-formatted analysis metadata', data: {toggle: 'tooltip', id: analysis.submission_id, url: get_submission_metadata_path(accession: @study.accession, study_name: @study.url_safe_name, submission_id: analysis.submission_id)}) %>
@@ -406,7 +421,7 @@
         <% @study.external_resources.each do |resource| %>
           <tr id="external-resource-<%= resource.id %>" class="external-resource-row">
             <td><%= link_to resource.title, resource.url, class: "btn btn-#{ resource.publication_url ? 'primary' : 'default'}",
-                            target: :_blank %></td>
+                            target: :_blank, rel: 'noopener noreferrer' %></td>
             <td><%= resource.description %></td>
             <td><%= get_boolean_label(resource.publication_url) %></td>
             <td><%= resource.updated_at.to_s(:long) %></td>

@@ -38,7 +38,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    OmniAuth.config.mock_auth[:google] = nil
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
   end
 
   test 'enforces view permissions' do
@@ -88,6 +88,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
       "isSubsampled"=>false,
       "isAnnotatedScatter"=>false,
       "isCorrelatedScatter"=>false,
+      "isSpatial"=>false,
       "numPoints"=>3,
       "axes"=>{"titles"=>{"x"=>"X", "y"=>"Y", "z"=>"Z", "magnitude" => "Expression"}, "aspects"=>nil},
       "hasCoordinateLabels"=>false,

@@ -5,19 +5,15 @@ module Api
     class ReportsController < ApiBaseController
       include ActionController::RequestForgeryProtection
 
-      before_action :authenticate_api_user!
+      before_action :authenticate_admin_api_user!
 
       def show
-        if !current_api_user.admin?
-          head 403 and return
-        end
-
         report_name = params[:report_name].to_sym
         response.headers['Content-Disposition'] = "attachment; filename=#{report_name}_data.tsv"
         begin
           render plain: ReportsService.get_report_data(report_name)
         rescue ArgumentError => e
-          render json: {error: e.message}, status: 422
+          render json: { error: e.message }, status: :bad_request
         end
       end
     end

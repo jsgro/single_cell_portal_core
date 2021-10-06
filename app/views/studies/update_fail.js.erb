@@ -1,1 +1,1 @@
-$('<%= @selector %>').replaceWith("<%= escape_javascript(render partial: @partial, locals: {study_file: @study_file}) %>");
+$('<%= @selector %>').replaceWith("<%= escape_javascript(render partial: @partial, locals: {study_file: @study_file, allow_only: params[:allow_only] || 'all' }) %>");

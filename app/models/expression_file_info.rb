@@ -5,8 +5,8 @@ class ExpressionFileInfo
 
   field :library_preparation_protocol, type: String
   field :units, type: String
-  field :biosample_input_type, type: String
-  field :modality, type: String
+  field :biosample_input_type, type: String, default: 'Whole cell'
+  field :modality, type: String, default: 'Transcriptomic: unbiased'
   field :is_raw_counts, type: Boolean, default: false
   field :raw_counts_associations, type: Array, default: []
 
@@ -88,10 +88,10 @@ class ExpressionFileInfo
     end
   end
 
-  # enforce selecting units on raw counts matrices
+  # enforce selecting units on raw count matrices
   def enforce_units_on_raw_counts
     if self.is_raw_counts && self.units.blank?
-      errors.add(:units, ' must have a value for raw counts matrices')
+      errors.add(:units, ' must have a value for raw count matrices')
     end
   end
 
@@ -113,7 +113,7 @@ class ExpressionFileInfo
     # if any user account returned false for :raw_counts_required_backed, then allow saving of expression matrix
     # otherwise, add validation error for :raw_counts_associations
     unless raw_counts_required.include?(false)
-      errors.add(:raw_counts_associations, 'must include at least one raw counts matrix filename before saving')
+      errors.add(:base, 'You must specify at least one associated raw count file before saving')
     end
   end
 end

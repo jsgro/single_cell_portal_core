@@ -90,8 +90,10 @@ class UserTest < ActiveSupport::TestCase
 
     # user does not actually have a Terra profile which will throw an error
     # RuntimeError should be handled and not raised here
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'Pet Service Account Token Test', user: @user, test_array: @@studies_to_clean)
     assert_nothing_raised do
-      token = @user.token_for_storage_object('single-cell-portal')
+      token = @user.token_for_storage_object(study)
       assert_nil token
     end
   end

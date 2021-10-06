@@ -504,6 +504,11 @@ h6,
   font-size: 14px;
 }
 
+/* Slightly override container settings, e.g. for cluster validation errors */
+.alert.alert-danger ul {
+  color: $danger-color;
+}
+
 .message-text {
 	text-align: center;
 	padding: 3em;
@@ -782,4 +787,8 @@ figcaption.ck-editor__editable {
 
 .no-wrap {
   whitespace: no-wrap;
+}
+
+.min-width-100 {
+  min-width: 100%;
 }

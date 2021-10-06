@@ -1,11 +1,11 @@
 import React from 'react'
 import _find from 'lodash/find'
-import Select from 'react-select'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { clusterSelectStyle } from 'lib/cluster-utils'
+import Select from 'lib/InstrumentedSelect'
 
 
 const consensusOptions = [
@@ -24,15 +24,16 @@ export default function ConsensusSelector({
 }) {
   return (
     <div className="form-group">
-      <label>
+      <label className="labeled-select">
         <OverlayTrigger trigger="click" rootClose placement="top" overlay={consensusPopover}>
           <span>View as <FontAwesomeIcon className="action" icon={faInfoCircle}/></span>
         </OverlayTrigger>
+        <Select options={consensusOptions}
+          data-analytics-name="consensus-select"
+          value={_find(consensusOptions, { value: consensus })}
+          onChange={newConsensus => updateConsensus(newConsensus.value)}
+          styles={clusterSelectStyle}/>
       </label>
-      <Select options={consensusOptions}
-        value={_find(consensusOptions, { value: consensus })}
-        onChange={newConsensus => updateConsensus(newConsensus.value)}
-        styles={clusterSelectStyle}/>
     </div>
   )
 }

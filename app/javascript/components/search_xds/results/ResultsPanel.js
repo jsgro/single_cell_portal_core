@@ -1,12 +1,13 @@
 import React, { useContext } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDna, faExclamationCircle, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { faExclamationCircle, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StudyResults from './StudyResults'
 import Study from './Study'
 import SearchQueryDisplay from './SearchQueryDisplay'
 import { UserContext } from 'providers/UserProvider'
 import { getNumFacetsAndFilters } from 'providers/StudySearchProvider'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 
 /**
@@ -39,7 +40,7 @@ const ResultsPanel = ({ studySearchState, studyComponent, noResultsDisplay }) =>
     panelContent = (
       <div className="loading-panel">
         Loading &nbsp;
-        <FontAwesomeIcon icon={faDna} className="gene-load-spinner" />
+        <LoadingSpinner/>
       </div>
     )
   } else if (results.studies && results.studies.length > 0) {
@@ -95,7 +96,7 @@ const FacetResultsFooter = ({ studySearchState }) => {
           </a>.<br/>
           Study authors looking to make their studies more accessible can read our
           {/* eslint-disable-next-line max-len */}
-          <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview"
+          <a href="https://singlecell.zendesk.com/hc/en-us/articles/4406379107355-Metadata-powered-Advanced-Search"
             target="_blank" rel="noreferrer"> metadata guide
           </a>.
         </div>

@@ -12,8 +12,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
   setup do
     @user = User.find_by(email: 'testing.user.2@gmail.com')
-    OmniAuth.config.mock_auth[:google] = OmniAuth::AuthHash.new({
-                                                                           :provider => 'google',
+    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
+                                                                           :provider => 'google_oauth2',
                                                                            :uid => '123545',
                                                                            :email => 'testing.user@gmail.com'
                                                                        })
@@ -26,7 +26,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
   # reset known commonly used objects to initial states to prevent failures breaking other tests
   teardown do
-    OmniAuth.config.mock_auth[:google] = nil
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
     reset_user_tokens
     api_study = Study.find_by(name: /API/)
     api_study.update!(description: '', public: true)

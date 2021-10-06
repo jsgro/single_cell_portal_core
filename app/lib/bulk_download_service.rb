@@ -57,22 +57,29 @@ class BulkDownloadService
       hca_client = ApplicationController.hca_azul_client
       default_catalog = hca_client.default_catalog
       curl_configs << "-H \"Authorization: Bearer #{DataRepoClient.new.access_token['access_token']}\""
-      tdr_file_configs = tdr_files.map do |shortname, file_infos|
-        file_infos.map do |file_info|
-          if file_info['file_type'] == 'Project Manifest'
-            # generate manifest link using HCA project UUID from :url property
-            manifest = hca_client.project_manifest_link(file_info['url'])
-            file_config = "--location\n" # add location directive to allow following 302 redirect to manifest location
-            file_config += "url=\"#{manifest['Location']}\"\n"
-          else
-            file_config = "url=\"#{file_info['url']}\"\n"
+      tdr_file_configs = []
+      tdr_files.map do |shortname, file_infos|
+        # pull out project manifest and process separately
+        manifests, files = file_infos.partition { |f| f['file_type'] == 'Project Manifest' }
+        manifest_info = manifests.first
+        manifest = hca_client.get_project_manifest_link(default_catalog, manifest_info['url'])
+        # add location directive to allow following 302 redirect to manifest location
+        manifest_config = "--location\nurl=\"#{manifest['Location']}\"\noutput=\"#{shortname}/#{manifest_info['name']}\""
+        tdr_file_configs << manifest_config
+        # now process remainder of analysis/sequence files for download in parallel to speed up process
+        Parallel.map(files, in_threads: 100) do |file_info|
+          begin
+            drs_info = ApplicationController.data_repo_client.get_drs_file_info(file_info[:drs_id])
+            access = drs_info['access_methods'].detect { |a| a['type'] == 'https' }
+            file_config = "url=\"#{access.dig('access_url', 'url')}\"\n"
             file_config += "output=\"#{shortname}/#{file_info['name']}\""
+            tdr_file_configs << file_config
+          rescue => e
+            ErrorTracker.report_exception(e, user, { file_info: file_info, drs_info: drs_info })
           end
-          file_config += "output=\"#{shortname}/#{file_info['name']}\""
-          file_config
         end
       end
-      curl_configs.concat(tdr_file_configs.flatten)
+      curl_configs.concat(tdr_file_configs)
     end
     file_map = create_file_type_map(study_files)
     MetricsService.log('file-download:curl-config', {

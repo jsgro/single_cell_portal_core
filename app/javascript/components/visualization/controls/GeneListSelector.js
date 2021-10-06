@@ -1,6 +1,6 @@
 import React from 'react'
-import Select from 'react-select'
 
+import Select from 'lib/InstrumentedSelect'
 import { clusterSelectStyle } from 'lib/cluster-utils'
 
 // value to render in select menu if user has not selected a gene list
@@ -30,16 +30,18 @@ export default function GeneListSelector({
   const geneListOptions = getGeneListOptions(studyGeneLists)
   return (
     <div className="form-group">
-      <label>Gene Lists</label>
-      <Select
-        value={{
-          label: geneList === '' ? noneSelected : geneList,
-          value: geneList
-        }}
-        options={geneListOptions}
-        styles={clusterSelectStyle}
-        onChange={newGeneList => updateGeneList(newGeneList.value)}
-      />
+      <label className="labeled-select">Gene Lists
+        <Select
+          data-analytics-name="gene-list-select"
+          value={{
+            label: geneList === '' ? noneSelected : geneList,
+            value: geneList
+          }}
+          options={geneListOptions}
+          styles={clusterSelectStyle}
+          onChange={newGeneList => updateGeneList(newGeneList.value)}
+        />
+      </label>
     </div>
   )
 }

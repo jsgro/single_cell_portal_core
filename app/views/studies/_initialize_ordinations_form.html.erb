@@ -112,7 +112,6 @@
 		</table>
 	</div>
 	<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-    console.log("#ordinations_form_<%= study_file._id %>")
     var ordsFormSelector = "#ordinations_form_<%= study_file._id %>"
     $(ordsFormSelector).find('.upload-clusters').click(function() {
         if ($("#ordinations_form_<%= study_file._id %>").find('#study_file_name').val() == '') {
@@ -140,13 +139,11 @@
       window.SCP.renderClusterAssociationSelect(clusterAssnTarget, opts, current_values, isNew, pairedHiddenField)
     }
 
-    <% if User.feature_flag_for_instance(current_user, 'react_explore')  %>
-      updateClusterAssnSelect()
+    updateClusterAssnSelect()
 
-      $('form').on('change', '.is_spatial_true , .is_spatial_false', function() {
-        updateClusterAssnSelect()
-      })
-    <% end %>
+    $('form').on('change', '.is_spatial_true , .is_spatial_false', function() {
+      updateClusterAssnSelect()
+    })
 
     $(function() {
 
@@ -155,12 +152,34 @@
 				maxChunkSize: 10000000,
 				type: 'PATCH',
 				acceptFileTypes: ALLOWED_FILE_TYPES['plainText'],
-				add: function (e, data) {
-					  fileUploading = true;
-					  var that = this;
-					  var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
+				add: async function (e, data) {
+          fileUploading = true;
+          var that = this;
+
+          const file = data.files[0]
+          const fileType = 'cluster'
+          const containerId = `${ordsFormSelector.slice(1)}-container`
+
+          let validationErrors = []
+          let summary = ''
+          <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
+            $(`#${containerId}`).remove() // Remove any prior notice
+            $(ordsFormSelector).append(`<div id="${containerId}"></div>`)
+            // Run client-side metadata file validation
+            const results = await window.SCP.validateFile(file, fileType)
+            validationErrors = results.errors
+            summary = results.summary
+          <% end %>
+
+
+          if (validationErrors.length === 0) {
+            var fileName = data.files[0].name.replace(FILENAME_SANITIZER, '_');
             $(`${ordsFormSelector} .filename-to-upload`).val(fileName);
-            canUpload = validateCandidateUpload(ordsFormSelector, fileName, $('.initialize_ordinations_form .filename-to-upload'));
+            canUpload = validateCandidateUpload(
+              ordsFormSelector, fileName,
+              $('.initialize_ordinations_form .filename-to-upload')
+            );
+
             if ( canUpload ) {
                 $.getJSON("<%= resume_upload_study_path %>", {file: fileName}, function (result) {
                     var file = result.file;
@@ -175,6 +194,12 @@
             } else {
                 $(`${ordsFormSelector} .filename-to-upload`).val('');
             }
+          } else {
+            const target = document.querySelector(`#${containerId}`)
+            window.SCP.renderValidationAlert(
+              target, summary, validationErrors, fileType,
+            )
+          }
 				},
 				chunkdone: function(e, data) {
 					var perc = parseInt(data.loaded / data.total * 100, 10);

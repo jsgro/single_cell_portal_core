@@ -3,14 +3,14 @@ module Api
     class CurrentUserController < ApiBaseController
       # collection of API methods related to the current user object.
       # for security reasons, the methods in this controller should be extremely tightly controlled
-      include Concerns::Authenticator
-      include Concerns::StudyAware
 
       before_action :authenticate_api_user!
 
-      ALLOWABLE_UPDATE_FIELDS = ['feature_flags']
+      ALLOWABLE_UPDATE_FIELDS = ['feature_flags'].freeze
       # to ensure users can't arbitrarily change their own flags, restrict the list
-      ALLOWABLE_UPDATE_FEATURE_FLAGS = ['faceted_search']
+      # as part of SCP-3621, faceted search is removed from the allow list, but this controller is being left in
+      # place as future feature flags may support opt in/out
+      ALLOWABLE_UPDATE_FEATURE_FLAGS = [].freeze
 
 
       # updates the current user object -- only allowed fields are able to be changed
@@ -23,8 +23,6 @@ module Api
           error_msg = "Only permitted fields (#{ALLOWABLE_UPDATE_FIELDS.join(', ')}) may be updated"
           render(json: {error: error_msg}, status: 422) and return
         end
-
-
 
         begin
           new_flags = updated_user.try(:[], :feature_flags)

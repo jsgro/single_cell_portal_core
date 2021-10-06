@@ -164,12 +164,9 @@ class DirectoryListing
   end
 
   # helper for setting DOM attributes that are URL-encoded
+  # include file type as well to disambiguate directories with the same name/path
   def url_safe_name
-    if self.name == '/'
-      'root-dir'
-    else
-      self.name
-    end
+    name == '/' ? "root-dir--#{file_type}" : "#{name}--#{file_type}"
   end
 
   # guess at a possible sample name based on filename

@@ -1,11 +1,14 @@
+// populate window.SCP.currentStudyFiles with information about all known StudyFiles
+window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
+
 // find form, select parent and replace contents with updated values
-$("<%= params[:selector] %>").replaceWith("<%= escape_javascript( render params[:partial], {study_file: @study_file}) %>");
+$("<%= params[:selector] %>").replaceWith("<%= escape_javascript(render partial: params[:partial], locals: {study_file: @study_file, allow_only: @allow_only }) %>");
 
 // get instance of new form as ID has changed
 var wizForm = $('.<%= params[:partial] %>').slice(-1)[0];
 
 // if expression matrix was uploaded & an expression label was provided, then disable all fields for labels
-if ('<%= params[:partial] %>' == 'initialize_expression_form' && <%= !@study_file.y_axis_label.blank? %>) {
+if ('<%= params[:partial] %>'.match(/expression_form/) && <%= !@study_file.y_axis_label.blank? %>) {
     var toolTitle = 'This is displayed as the axis label for box & scatter plots showing expression values.  ' +
         'This label is global to all expression values. Please use the study default options form to update this value.'
     $('.expression-label').val('<%= @study_file.y_axis_label %>')
@@ -17,7 +20,7 @@ if ('<%= params[:partial] %>' == 'initialize_expression_form' && <%= !@study_fil
 $(wizForm).find('[data-toggle="tooltip"]').tooltip({container: 'body'});
 
 // go to next step in wizard
-if ('<%= params[:partial] %>' == 'initialize_metadata_form' && getWizardStatus() <= 2) {
+if ('<%= params[:partial] %>' == 'initialize_metadata_form' && getWizardStatus() <= 3) {
 	$('#next-btn').click();
 }
 
@@ -37,3 +40,6 @@ $('#study-files-notice-target').html("<%= escape_javascript(render partial: 'upl
 setTimeout(function() {
   $('#upload-success-modal').modal('show');
 }, 500);
+
+// show/hide overlay preventing processed uploads, if needed
+setExpressionOverlay(<%= @block_processed_upload %>);
