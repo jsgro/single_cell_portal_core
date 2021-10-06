@@ -5,7 +5,7 @@ import _cloneDeep from 'lodash/cloneDeep'
 import selectEvent from 'react-select-event'
 
 import UploadWizard from 'components/upload/UploadWizard'
-import { fireFileSelectionEvent } from './file-upload-control.test.js'
+import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 import * as ScpApi from 'lib/scp-api'
 import { EMPTY_STUDY, RAW_COUNTS_FILE } from './file-info-responses'
 

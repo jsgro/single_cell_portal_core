@@ -22,7 +22,7 @@ export default function ClusteringFileForm({
   const spatialClusterAssocs = file.spatial_cluster_associations
     .map(id => associatedClusterFileOptions.find(opt => opt.value === id))
   const validationMessages = validateFile({
-    file, allFiles, allowedFileTypes: FileTypeExtensions.plainText, requiredFields: REQUIRED_FIELDS
+    file, allFiles, allowedFileExts: FileTypeExtensions.plainText, requiredFields: REQUIRED_FIELDS
   })
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
@@ -33,8 +33,9 @@ export default function ClusteringFileForm({
         <div className="flexbox">
           <FileUploadControl
             file={file}
+            allFiles={allFiles}
             updateFile={updateFile}
-            allowedFileTypes={FileTypeExtensions.plainText}
+            allowedFileExts={FileTypeExtensions.plainText}
             validationMessages={validationMessages}/>
           <FileDownloadControl
             file={file}

@@ -41,7 +41,7 @@ export default function SequenceFileForm({
   } else if (file.file_type === 'BAM') {
     requiredFields = BAM_REQUIRED_FIELDS
   }
-  const validationMessages = validateFile({ file, allFiles, requiredFields, allowedFileTypes: FileTypeExtensions.sequence })
+  const validationMessages = validateFile({ file, allFiles, requiredFields, allowedFileExts: FileTypeExtensions.sequence })
 
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
@@ -72,8 +72,9 @@ export default function SequenceFileForm({
             <div className="col-md-12">
               <FileUploadControl
                 file={file}
+                allFiles={allFiles}
                 updateFile={updateFile}
-                allowedFileTypes={FileTypeExtensions.sequence}
+                allowedFileExts={FileTypeExtensions.sequence}
                 validationMessages={validationMessages}/>
             </div>
           </div>
@@ -148,7 +149,7 @@ function BamIndexFileForm({
   deleteFile,
   addNewFile
 }) {
-  const validationMessages = validateFile({ file, allFiles, allowedFileTypes: FileTypeExtensions.bai })
+  const validationMessages = validateFile({ file, allFiles, allowedFileExts: FileTypeExtensions.bai })
 
   // add an empty file to be filled in if none are there
   useEffect(() => {
@@ -178,8 +179,9 @@ function BamIndexFileForm({
         <h5>BAM Index File</h5>
         <FileUploadControl
           file={file}
+          allFiles={allFiles}
           updateFile={updateFile}
-          allowedFileTypes={FileTypeExtensions.bai}
+          allowedFileExts={FileTypeExtensions.bai}
           validationMessages={validationMessages}/>
         <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
         <SaveDeleteButtons

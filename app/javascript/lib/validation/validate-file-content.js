@@ -202,7 +202,7 @@ async function validateCapFormat(table, fileType) {
   )
 
   // Check format rules specific to either metadata or cluster file
-  if (fileType === 'metadata') {
+  if (fileType === 'Metadata') {
     issues = issues.concat(validateNoMetadataCoordinates(headers))
   } else {
     issues = issues.concat(validateClusterCoordinates(headers))
@@ -295,7 +295,6 @@ export async function validateFileContent(file, fileType) {
   if (!VALIDATED_TYPES.includes(fileType)) {
     return { errors: [], summary: '' }
   }
-
   const { lines, mimeType } = await readLinesAndType(file, 2)
 
   const delimiter = sniffDelimiter(lines, mimeType)

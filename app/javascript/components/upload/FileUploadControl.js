@@ -22,13 +22,43 @@ export const FileTypeExtensions = {
   bai: baiExtensions
 }
 
+/** checks name uniqueness, file extension, and then file content.
+ * The first two checks short-circuit the latter, since those will often just mean the user
+ * has selected the wrong file, and showing a string of validation errors would be confusing
+ * @param selectedFile {File} the File object from the input
+ * @param file {StudyFile} the JS object corresponding to the StudyFile
+ * @param allFiles {StudyFile[]} the array of all files for the study, used for name uniqueness checks
+ * @param allowedFileExts { String[] } array of allowable extensions, ['*'] for all
+ */
+async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExts=['*']) {
+  const allOtherFiles = allFiles.filter(f => f._id != file._id)
+  const allOtherNames = allOtherFiles.map(f => f.name)
+  const allOtherUploadFileNames = allOtherFiles.map(f => f.upload_file_name)
+  const allOtherSelectedFileNames = allOtherFiles.map(f => f.uploadSelection?.name)
+
+  if (allOtherNames.includes(selectedFile.name) ||
+    allOtherUploadFileNames.includes(selectedFile.name) ||
+    allOtherSelectedFileNames.includes(selectedFile.name)) {
+    return [`A file named ${selectedFile.name} already exists in your study`]
+  }
+
+  if (!allowedFileExts.includes('*') && !allowedFileExts.some(aft => selectedFile.name.endsWith(aft))) {
+    const errorMsg = `Allowed extensions are ${allowedFileExts.join(' ')}`
+    return [errorMsg]
+  }
+
+  const validationResult = await validateFileContent(selectedFile, file.file_type)
+  const errorMsgs = validationResult.errors.map(error => error[2])
+  return errorMsgs
+}
+
 /** renders a file upload control for the given file object */
 export default function FileUploadControl({
-  file, updateFile,
-  allowedFileTypes=['*'],
+  file, allFiles, updateFile,
+  allowedFileExts=['*'],
   validationMessages={}
 }) {
-  const [contentValidation, setContentValidation] = useState({ validating: false, result: null, filename: null })
+  const [fileValidation, setFileValidation] = useState({ validating: false, errorMsgs: [], filename: null })
   const inputId = `fileInput-${file._id}`
 
   /** handle user interaction with the file input */
@@ -39,11 +69,10 @@ export default function FileUploadControl({
     if (file.file_type == 'Cluster' && file.name && file.name != file.upload_file_name) {
       newName = file.name
     }
-
-    setContentValidation({ validating: true, result: null, filename: selectedFile.name })
-    const validationResult = await validateFileContent(selectedFile, file.file_type)
-    setContentValidation({ validating: false, result: validationResult, filename: selectedFile.name })
-    if (validationResult.errors.length === 0) {
+    setFileValidation({ validating: true, errorMsgs: [], filename: selectedFile.name })
+    const errorMsgs = await validateSelectedFile(selectedFile, file, allFiles, allowedFileExts)
+    setFileValidation({ validating: false, errorMsgs, filename: selectedFile.name })
+    if (errorMsgs.length === 0) {
       updateFile(file._id, {
         uploadSelection: selectedFile,
         name: newName
@@ -51,11 +80,9 @@ export default function FileUploadControl({
     }
   }
   let buttonText = file.upload_file_name ? 'Replace' : 'Choose file'
-  if (contentValidation.validating) {
+  if (fileValidation.validating) {
     buttonText = <LoadingSpinner data-testid="file-validation-spinner"/>
   }
-
-  const contentErrors = contentValidation.result ? contentValidation.result.errors : []
 
   return <div className="form-group">
     <label>
@@ -71,16 +98,13 @@ export default function FileUploadControl({
         type="file"
         id={inputId}
         onChange={handleFileSelection}
-        accept={allowedFileTypes.join(',')}/>
+        accept={allowedFileExts.join(',')}/>
     </button>
-    { validationMessages['fileName'] &&
-      <div className="validation-error" data-testid="file-name-validation">{validationMessages['fileName']}</div>
-    }
 
-    { contentErrors.length > 0 && <div className="validation-error" data-testid="file-content-validation">
-      Could not use { contentValidation.filename}:
+    { fileValidation.errorMsgs.length > 0 && <div className="validation-error" data-testid="file-content-validation">
+      Could not use { fileValidation.filename}:
       <ul className="validation-error" >
-        { contentErrors.map((error, index) => <li key={index} className="error-message">{error[2]}</li>) }
+        { fileValidation.errorMsgs.map((error, index) => <li key={index} className="error-message">{error}</li>) }
       </ul>
     </div> }
   </div>

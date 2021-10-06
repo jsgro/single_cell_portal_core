@@ -99,11 +99,11 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
 
 /** Does basic validation of the file, including file existence, name, file type, and required fields
  * returns a hash of message keys to validation messages
- * allowedFileTypes is an array of string extensions, e.g. ['.txt', '.csv']
+ * allowedFileExts is an array of string extensions, e.g. ['.txt', '.csv']
  * requiredFields is array objects with label and propertyName:  e.g. [{label: 'species', propertyName: 'taxon_id'}]
  * it validates the propertyName is specified (propertyName can include '.' for nested properties), and
  * uses the label in the validation message returned if the property is not specified. */
-export function validateFile({ file, allFiles, allowedFileTypes=[], requiredFields=[] }) {
+export function validateFile({ file, allFiles, allowedFileExts=[], requiredFields=[] }) {
   if (!file) {
     // edge case where the form is rendered but hook to add an empty file has not yet finished
     return { file: 'File not yet initialized' }
@@ -117,8 +117,8 @@ export function validateFile({ file, allFiles, allowedFileTypes=[], requiredFiel
   }
 
   if (file.uploadSelection) {
-    if (!allowedFileTypes.some(ext => file.uploadSelection.name.endsWith(ext))) {
-      validationMessages.fileName = `Allowed extensions are ${allowedFileTypes.join(' ')}`
+    if (!allowedFileExts.some(ext => file.uploadSelection.name.endsWith(ext))) {
+      validationMessages.fileName = `Allowed extensions are ${allowedFileExts.join(' ')}`
     }
   }
 
@@ -150,21 +150,14 @@ function validateBundleParent(file, allFiles, validationMessages) {
   }
 }
 
-/** checks that the files name is unique, and that the filename selected to be uploaded
- *  is unique across all files, both saved and unsaved */
+/** checks that the file name is unique.
+ * Just intended to catch clusters with duplicate names
+ * Checking the selected upload file name's uniqueness is done in FileUploadControl */
 function validateNameUniqueness(file, allFiles, validationMessages) {
   const allOtherFiles = allFiles.filter(f => f._id != file._id)
   const allOtherNames = allOtherFiles.map(f => f.name)
-  const allOtherUploadFileNames = allOtherFiles.map(f => f.upload_file_name)
-  const allOtherSelectedFileNames = allOtherFiles.map(f => f.uploadSelection?.name)
-  if (file.uploadSelection) {
-    if (allOtherNames.includes(file.uploadSelection.name) ||
-      allOtherUploadFileNames.includes(file.uploadSelection.name) ||
-      allOtherSelectedFileNames.includes(file.uploadSelection.name)) {
-      validationMessages.fileName = `A file named ${file.uploadSelection.name} already exists in your study`
-    }
-  }
-  if (allOtherNames.includes(file.name)) {
+  // require 'isDirty' so we only show the error on the file being updated
+  if (allOtherNames.includes(file.name) && file.isDirty) {
     validationMessages.fileName = `A file named ${file.name} already exists in your study`
   }
 }

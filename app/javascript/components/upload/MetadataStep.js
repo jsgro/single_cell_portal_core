@@ -42,7 +42,7 @@ function MetadataForm({
   const validationMessages = validateFile({
     file,
     allFiles: formState.files,
-    allowedFileTypes: FileTypeExtensions.plainText,
+    allowedFileExts: FileTypeExtensions.plainText,
     requiredFields: []
   })
 
@@ -91,8 +91,9 @@ function MetadataForm({
               <div className="col-md-12 flexbox-align-center">
                 <FileUploadControl
                   file={file}
+                  allFiles={allFiles}
                   updateFile={updateFile}
-                  allowedFileTypes={FileTypeExtensions.plainText}
+                  allowedFileExts={FileTypeExtensions.plainText}
                   validationMessages={validationMessages}/>
                 <FileDownloadControl
                   file={file}
