@@ -7,11 +7,13 @@
   </div>
 </div>
 <hr />
-<h1>
-  Archives
-</h1>
-<div class="row">
-  <div class="col-md-12">
-    <%= render partial: 'feature_announcement_list', locals: { feature_announcements: @archived } %>
+<% if @archived.any? %>
+  <h1>
+    Archives
+  </h1>
+  <div class="row">
+    <div class="col-md-12">
+      <%= render partial: 'feature_announcement_list', locals: { feature_announcements: @archived } %>
+    </div>
   </div>
-</div>
+<% end %>
