@@ -1,7 +1,6 @@
 <h1>
   Feature Announcements
-  <%= link_to "View Archived", archived_feature_announcements_path, class: 'pull-right btn btn-default' %>
-  <%= link_to "View Latest", latest_feature_announcements_path, class: 'pull-right btn btn-success right-margin-10' %>
+  <%= link_to "View Live", latest_feature_announcements_path, class: 'pull-right btn btn-success' %>
 </h1>
 <div class="row">
   <div class="col-md-12">
@@ -22,18 +21,27 @@
           <tbody>
           <% @feature_announcements.each do |feature_announcement| %>
             <tr>
-              <td><%= feature_announcement.display_date %></td>
+              <td><%= feature_announcement.created_at.strftime("%D") %></td>
               <td><%= link_to feature_announcement.title, view_feature_announcement_path(feature_announcement.slug) %></td>
               <td><%= strip_tags(feature_announcement.content).truncate_words(25, omission: '...') %></td>
               <td><%= link_to feature_announcement.doc_link, feature_announcement.doc_link,
                               target: :_blank, rel: 'noopener noreferrer' %></td>
-              <td><%= get_boolean_label feature_announcement.published %></td>
+              <td>
+                <%= get_boolean_label feature_announcement.published %><br />
+                <span class="label label-default">
+                  <%= feature_announcement.display_date(:published) %>
+                </span>
+              </td>
               <td>
                 <% if feature_announcement.archived %>
-                  <span class="label label-default">archived</span>
+                  <span class="label label-default">archived</span><br />
+                  <span class="label label-default">
+                    <%= feature_announcement.display_date(:archived) %>
+                  </span>
                 <% else %>
                   <span class="label label-success">latest</span>
                 <% end %>
+
               </td>
               <td>
                 <%= link_to "<i class='fas fa-edit'></i> Edit".html_safe, edit_feature_announcement_path(feature_announcement),

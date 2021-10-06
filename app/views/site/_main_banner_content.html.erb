@@ -1,7 +1,7 @@
 <div class="mask" id="main-banner">
-  <% if FeatureAnnouncement.published_features? %>
-    <%= scp_link_to "<span class='badge'>#{FeatureAnnouncement.published.count}</span> " \
-                    "#{pluralize_without_count(FeatureAnnouncement.published.count, "New Feature")}".html_safe,
+  <% if FeatureAnnouncement.latest_features? %>
+    <%= scp_link_to "<span class='badge'>#{FeatureAnnouncement.latest.count}</span> " \
+                    "#{pluralize_without_count(FeatureAnnouncement.latest.count, "New Feature")}".html_safe,
                     latest_feature_announcements_path, class: 'btn btn-warning', id: 'latest-features-btn',
                     data: { toggle: 'tooltip', placement: 'left' }, title: 'Learn about new Single Cell Portal features!' %>
   <% end %>

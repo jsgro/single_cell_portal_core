@@ -112,15 +112,7 @@ class FeatureAnnouncementsControllerTest < ActionDispatch::IntegrationTest
   test 'should get latest features page' do
     get latest_feature_announcements_path
     assert_response :success
-    assert_select 'ul#features-list', 1
-    assert_select 'li.feature-announcement-entry'
-  end
-
-  test 'should get archived features page' do
-    FeatureAnnouncement.update_all(archived: true)
-    get archived_feature_announcements_path
-    assert_response :success
-    assert_select 'ul#features-list', 1
+    assert_select 'ul#features-list', 2
     assert_select 'li.feature-announcement-entry'
   end
 
