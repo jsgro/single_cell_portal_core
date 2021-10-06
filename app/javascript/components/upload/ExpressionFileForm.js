@@ -43,7 +43,7 @@ export default function ExpressionFileForm({
 
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
-      <form id={`expForm-${file._id}`}
+      <form id={`exp-form-${file._id}`}
         className="form-terra"
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
@@ -57,7 +57,7 @@ export default function ExpressionFileForm({
           <label>Matrix file type:</label><br/>
           <label className="sublabel">
             <input type="radio"
-              name={`expMatrixType-${file._id}`}
+              name={`exp-matrix-type-${file._id}`}
               value="false"
               checked={!isMtxFile}
               onChange={e => updateFile(file._id, { file_type: 'Expression Matrix' })} />
@@ -65,7 +65,7 @@ export default function ExpressionFileForm({
           </label>
           <label className="sublabel">
             <input type="radio"
-              name={`expMatrixType-${file._id}`}
+              name={`exp-matrix-type-${file._id}`}
               value="true" checked={isMtxFile}
               onChange={e => updateFile(file._id, { file_type: 'MM Coordinate Matrix' })}/>
               &nbsp;MM Coordinate Matrix

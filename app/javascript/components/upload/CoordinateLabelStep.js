@@ -70,7 +70,7 @@ function CoordinateLabelForm({
             ...
           </pre>
           <p>
-            <strong>These are not cluster files</strong> - they are annotations to overlay on top of a cluster.<br/>
+            <strong>These are not cluster files</strong> - they are annotations to overlay on top of a scatter plot.<br/>
             The file must be a plain text (.txt) file with at least 3 columns and a header
             row containing the values <strong>X</strong>, <strong>Y</strong>, and <strong>LABELS</strong>.
             The file may have an optional column of <strong>Z</strong> (for 3d clusters).
