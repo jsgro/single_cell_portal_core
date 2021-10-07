@@ -2,7 +2,12 @@
 
 <div class="row">
   <div class="col-xs-12">
-    <h2>Study Files <span class="badge"><%= @study_files.count %></span>  <%= link_to "<i class='fas fa-question-circle'></i> Bulk Download".html_safe, '#/', class: "btn btn-default pull-right #{!@allow_downloads ? 'disabled' : nil}", id: 'download-help' %></h2>
+    <h2>Study Files 
+      <span class="badge"><%= @study_files.count %></span> 
+      <%= link_to "<i class='fas fa-question-circle'></i> Bulk Download".html_safe, '#/', class: "btn btn-default pull-right #{!@allow_downloads ? 'disabled' : nil}", id: 'download-help' %>
+        <%= link_to "Analyze on Terra".html_safe, '#/', class: "btn btn-default pull-right left-margin-icon {!@allow_downloads ? 'disable d' : nil}", id: 'analyze-on-terra'%> 
+    </h2>
+
     <% if @allow_downloads %>
     <div class="modal fade" id="download-help-modal" role="dialog" aria-labelledby="download-help-modal" aria-hidden="true">
       <div class="modal-dialog modal-lg">
@@ -79,11 +84,33 @@
         </div>
       </div>
     </div>
+    <div class="modal fade" id="analyze-on-terra-modal" role="dialog" aria-labelledby="required-modal-label" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="text-center">Analyze on Terra?</h3>
+			</div>
+			<div class="modal-body">
+				<p class="lead">Interested in performing analysis with these files? We’re exploring the best ways to send SCP data to 
+          <%= link_to "Terra", "https://terra.bio/", :target => "_blank", id:"analyze-terra-link-to-terra"%>, an open platform for cloud-based genomic analysis.</p>
+        <p class="lead"><%= link_to "Tell us more", "https://singlecell.zendesk.com/hc/en-us/requests/new", :target => "_blank", id:"analyze-terra-form" %>
+          about what you need for analyzing your data!</p>
+      </div>
+			<div class="modal-footer">
+				<button class="btn btn-success" data-dismiss="modal" id="accept-skip-required">OK</button>
+			</div>
+		</div>
+	</div>
+</div>
+
     <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
         $('#download-help').click(function() {
             $('#download-help-modal').modal('show');
         });
 
+        $('#analyze-on-terra').click(function() {
+          $('#analyze-on-terra-modal').modal('show');
+      });
         // Enables copying to clipboard upon clicking a "clipboard" icon,
         // like on GitHub.  https://clipboardjs.com.
         var clipboard = new Clipboard('.btn-copy');
