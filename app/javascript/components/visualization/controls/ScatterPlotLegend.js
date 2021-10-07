@@ -105,6 +105,18 @@ function LegendEntry({
   )
 }
 
+/** Component for stateful link */
+function StatefulLink({ text, classes, disabled, onClick, analyticsName, style }) {
+  return (
+    <span
+      data-analytics-name={analyticsName}
+      className={classes}
+      disabled={disabled}
+      style={style}
+      onClick={onClick}>{text}</span>
+  )
+}
+
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
@@ -147,20 +159,34 @@ export default function ScatterPlotLegend({
   const filteredClass = (filters.length === 0) ? 'unfiltered' : ''
   return (
     <div className={`scatter-legend ${filteredClass}`}>
-      <div>
-        <button
-          data-analytics-name='show-all-button'
+      <div className="scatter-legend-head">
+        <div>
+          {/* <button
+          data-analytics-name='show-all'
           className={`btn btn-primary ${showHideButtons[0]}`}
           disabled={!showHideButtons[0]}
           onClick={() => {updateFilters(filterIds, false)}}>Show all</button>
         <button
-          data-analytics-name='hide-all-button'
+          data-analytics-name='hide-all'
           style={{ 'float': 'right' }}
           className={`btn btn-primary ${showHideButtons[1]}`}
           disabled={!showHideButtons[1]}
-          onClick={() => {updateFilters(filterIds, true)}}>Hide all</button>
+          onClick={() => {updateFilters(filterIds, true)}}>Hide all</button> */}
+          <StatefulLink
+            analyticsName='show-all'
+            classes={`stateful-link ${showHideButtons[0]}`}
+            disabled={!showHideButtons[0]}
+            onClick={() => {updateFilters(filterIds, false)}}
+            text="Show all" />
+          <StatefulLink
+            analyticsName='hide-all'
+            classes={`stateful-link pull-right ${showHideButtons[1]}`}
+            disabled={!showHideButtons[1]}
+            onClick={() => {updateFilters(filterIds, true)}}
+            text="Hide all" />
+        </div>
+        <div className="scatter-legend-name">{name}</div>
       </div>
-      <p className="scatter-legend-name">{name}</p>
       {legendEntries}
     </div>
   )

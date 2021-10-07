@@ -115,9 +115,9 @@ function RawScatterPlot({
       if (numFilters > 0 && numFilters < numLabels) {
         setShowHideButtons(['active', 'active'])
       } else if (numFilters === 0) {
-        setShowHideButtons(['active', 'disabled'])
-      } else if (numFilters === numLabels) {
         setShowHideButtons(['disabled', 'active'])
+      } else if (numFilters === numLabels) {
+        setShowHideButtons(['active', 'disabled'])
       }
     }
 

@@ -174,9 +174,21 @@
   background-color: #E5EEF7;
 }
 
+.scatter-legend-head {
+  margin: 5px 5px 10px 5px;
+}
+
 .scatter-legend-name {
-  margin: 5px 0 10px 5px;
   font-weight: bold;
+}
+
+.stateful-link {
+  color: #4d72aa;
+  cursor: pointer;
+}
+
+.stateful-link.disabled {
+  color: rgb(197, 210, 227);
 }
 
 .scatter-legend-row {
