@@ -84,6 +84,14 @@ export default function FileUploadControl({
     buttonText = <LoadingSpinner data-testid="file-validation-spinner"/>
   }
 
+  const inputAcceptExts = allowedFileExts
+  if (navigator.platform.indexOf('Mac') > -1) {
+    // A longstanding OS X file picker limitation is that compound extensions (e.g. .txt.gz)
+    // will not resolve at all, so we need to add the general .gz to permit gzipped files
+    // see, e.g. https://bugs.chromium.org/p/chromium/issues/detail?id=521781
+    inputAcceptExts.push('.gz')
+  }
+
   return <div className="form-group">
     <label>
       { !file.uploadSelection && <span>{file.upload_file_name}</span> }
@@ -98,7 +106,7 @@ export default function FileUploadControl({
         type="file"
         id={inputId}
         onChange={handleFileSelection}
-        accept={allowedFileExts.join(',')}/>
+        accept={inputAcceptExts.join(',')}/>
     </button>
 
     { fileValidation.errorMsgs.length > 0 && <div className="validation-error" data-testid="file-content-validation">
