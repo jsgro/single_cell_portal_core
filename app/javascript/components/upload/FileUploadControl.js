@@ -31,14 +31,15 @@ export const FileTypeExtensions = {
  * @param allowedFileExts { String[] } array of allowable extensions, ['*'] for all
  */
 async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExts=['*']) {
-  const allOtherFiles = allFiles.filter(f => f._id != file._id)
-  const allOtherNames = allOtherFiles.map(f => f.name)
-  const allOtherUploadFileNames = allOtherFiles.map(f => f.upload_file_name)
-  const allOtherSelectedFileNames = allOtherFiles.map(f => f.uploadSelection?.name)
+  const otherFiles = allFiles.filter(f => f._id != file._id)
+  const otherNames = otherFiles.map(f => f.name)
+  const otherUploadFileNames = otherFiles.map(f => f.upload_file_name)
+  const otherSelectedFileNames = otherFiles.map(f => f.uploadSelection?.name)
 
-  if (allOtherNames.includes(selectedFile.name) ||
-    allOtherUploadFileNames.includes(selectedFile.name) ||
-    allOtherSelectedFileNames.includes(selectedFile.name)) {
+  if (otherNames.includes(selectedFile.name) ||
+    otherUploadFileNames.includes(selectedFile.name) ||
+    otherSelectedFileNames.includes(selectedFile.name)) {
+  }
     return [`A file named ${selectedFile.name} already exists in your study`]
   }
 
@@ -59,7 +60,7 @@ export default function FileUploadControl({
   validationMessages={}
 }) {
   const [fileValidation, setFileValidation] = useState({ validating: false, errorMsgs: [], filename: null })
-  const inputId = `fileInput-${file._id}`
+  const inputId = `file-input-${file._id}`
 
   /** handle user interaction with the file input */
   async function handleFileSelection(e) {
@@ -85,7 +86,7 @@ export default function FileUploadControl({
   }
 
   const inputAcceptExts = allowedFileExts
-  if (navigator.platform.indexOf('Mac') > -1) {
+  if (navigator.platform.includes('Mac')) {
     // A longstanding OS X file picker limitation is that compound extensions (e.g. .txt.gz)
     // will not resolve at all, so we need to add the general .gz to permit gzipped files
     // see, e.g. https://bugs.chromium.org/p/chromium/issues/detail?id=521781
@@ -110,7 +111,7 @@ export default function FileUploadControl({
     </button>
 
     { fileValidation.errorMsgs.length > 0 && <div className="validation-error" data-testid="file-content-validation">
-      Could not use { fileValidation.filename}:
+      Could not use {fileValidation.filename}:
       <ul className="validation-error" >
         { fileValidation.errorMsgs.map((error, index) => <li key={index} className="error-message">{error}</li>) }
       </ul>
