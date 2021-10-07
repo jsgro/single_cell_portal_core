@@ -18,18 +18,16 @@ export default function FileDownloadControl({ file, bucketName }) {
     return URL.createObjectURL(fileBlob)
   }
 
-  if (!file.upload_file_name || file.human_data) {
-    return null
+    if (!file.upload_file_name || file.human_data) {
+    return !file.generation && file.name ? <span className="label label-warning no-download-available margin-left" data-toggle="tooltip"
+      title='You can download this file once it has been fully uploaded. Check back soon.'>
+      {<span className="fas fa-ban"></span> } Awaiting remote file
+    </span> : null
   } else {
     return <span>
-      {!file.generation ? <span style={{ marginLeft: '5px' }} className="label label-warning no-download-available" data-toggle="tooltip"
-        title='You can download this file once it has been fully uploaded. Check back soon.'>
-        {<span className="fas fa-ban"></span> } Awaiting remote file
-      </span> :
-        <a onClick={() => handleDownloadClick()} className="btn action" style={{ marginLeft: '5px' }} >
+        <a onClick={() => handleDownloadClick()} className="btn action" >
           {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}
         </a>
-      }
     </span>
   }
 }

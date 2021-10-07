@@ -45,7 +45,7 @@ export default function FileUploadControl({
   }
 
   return <div className="form-group">
-    <label>File{ file.status !== 'new' && <span>: {file.upload_file_name}</span> }</label>
+    <label className= "bottom-margin" >File{ file.status !== 'new' && <span>: {file.upload_file_name}</span> }</label>
     <FileDownloadControl
       file={file}
       bucketName={bucketName}
