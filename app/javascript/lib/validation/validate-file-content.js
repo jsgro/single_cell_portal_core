@@ -293,7 +293,7 @@ function getLogProps(fileObj, fileType, errorObj) {
 export async function validateFileContent(file, fileType) {
   let issues = []
   // for now, exclude gzipped files from validation
-  if (!VALIDATED_TYPES.includes(fileType)) {
+  if (!VALIDATED_TYPES.includes(fileType) || file.name.endsWith('.gz')) {
     return { errors: [], summary: '' }
   }
   const { lines, mimeType } = await readLinesAndType(file, 2)
