@@ -1,18 +1,23 @@
 import React, { useEffect } from 'react'
 
 import ExpressionFileForm from './ExpressionFileForm'
-import { findBundleChildren } from './upload-utils'
 import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_RAW_COUNTS_FILE = {
   is_spatial: false,
-  expression_file_info: { is_raw_counts: true, biosample_input_type: 'Whole cell', modality: 'Transcriptomic: unbiased' },
+  expression_file_info: {
+    is_raw_counts: true,
+    biosample_input_type: 'Whole cell',
+    modality: 'Transcriptomic: unbiased',
+    raw_counts_associations: []
+  },
   file_type: 'Expression Matrix'
 }
 
 export const fileTypes = ['Expression Matrix', 'MM Coordinate Matrix']
 
-export const rawCountsFileFilter = file => fileTypes.includes(file.file_type) && file.expression_file_info?.is_raw_counts
+export const rawCountsFileFilter = file => fileTypes.includes(file.file_type) &&
+  file.expression_file_info?.is_raw_counts
 
 export default {
   title: 'Raw Count Files',
@@ -28,8 +33,7 @@ function RawCountsUploadForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const rawParentFiles = formState.files.filter(rawCountsFileFilter)
   const fileMenuOptions = serverState.menu_options
@@ -59,17 +63,15 @@ function RawCountsUploadForm({
       </div>
     </div>
     { rawParentFiles.map(file => {
-      const associatedChildren = findBundleChildren(file, formState.files)
       return <ExpressionFileForm
         key={file._id}
         file={file}
+        allFiles={formState.files}
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
         addNewFile={addNewFile}
-        handleSaveResponse={handleSaveResponse}
         fileMenuOptions={fileMenuOptions}
-        associatedChildren={associatedChildren}
         bucketName={formState.study.bucket_id}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/>
@@ -88,7 +90,7 @@ export const expressionFileStructureHelp = <>
       <pre>%%MatrixMarket matrix coordinate real general<br/>%<br/>17123 31231 124124<br/>1 1241 1.0<br/>1 1552 2.0<br/>...</pre>
       An “MM Coordinate Matrix” *, as seen in <a href="https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices" target="_blank" rel="noreferrer noopener">10x Genomics</a>
       &nbsp;is a Matrix Market file (.mtx, .mm, or .txt)** that contains a sparse matrix in coordinate form.<br/>
-      You'll be prompted for the&nbsp;
+      You&apos;ll be prompted for the&nbsp;
       <a href="https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices" target="_blank" rel="noreferrer noopener">genes</a> and&nbsp;
       <a href="https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices" target="_blank" rel="noreferrer noopener">barcodes</a>
       &nbsp;files after selecting this type.

@@ -24,8 +24,7 @@ export function ImageForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const imageFiles = formState.files.filter(imageFileFilter)
   const associatedClusterFileOptions = formState.files.filter(clusterFileFilter)
@@ -64,10 +63,10 @@ export function ImageForm({
       return <ImageFileForm
         key={file._id}
         file={file}
+        allFiles={formState.files}
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
-        handleSaveResponse={handleSaveResponse}
         bucketName={formState.study.bucket_id}
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}/>

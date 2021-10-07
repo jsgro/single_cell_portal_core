@@ -25,8 +25,7 @@ export function SpatialUploadForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const spatialFiles = formState.files.filter(spatialFileFilter)
   const associatedClusterFileOptions = formState.files.filter(clusterFileFilter)
@@ -93,7 +92,7 @@ export function SpatialUploadForm({
 
             <p className="col-sm-12 text-center">Once your spatial file has been successfully ingested, additional representative
               subsamples of the full resolution data will be stored as well.
-              <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling" target="_blank" rel="noreferrer"> Learn More <i className='fas fa-question-circle'></i></a>
+            <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610032-Cluster-File-Subsampling" target="_blank" rel="noreferrer"> Learn More <i className='fas fa-question-circle'></i></a>
             </p>
           </div>
           <div className="row">
@@ -106,10 +105,10 @@ export function SpatialUploadForm({
       return <ClusteringFileForm
         key={file._id}
         file={file}
+        allFiles={formState.files}
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
-        handleSaveResponse={handleSaveResponse}
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}
         bucketName={formState.study.bucket_id}/>

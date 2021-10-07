@@ -3,32 +3,40 @@ import React from 'react'
 import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
+import { validateFile } from './upload-utils'
 
+const REQUIRED_FIELDS = [{ label: 'Name', propertyName: 'name' }]
 
 /** renders a form for editing/uploading a single cluster file */
 export default function ClusteringFileForm({
   file,
+  allFiles,
   updateFile,
   saveFile,
   deleteFile,
-  handleSaveResponse,
   associatedClusterFileOptions,
   updateCorrespondingClusters,
   bucketName
 }) {
-  const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
+  const spatialClusterAssocs = file.spatial_cluster_associations
+    .map(id => associatedClusterFileOptions.find(opt => opt.value === id))
+  const validationMessages = validateFile({
+    file, allFiles, allowedFileTypes: FileTypeExtensions.plainText, requiredFields: REQUIRED_FIELDS
+  })
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
       <form id={`clusterForm-${file._id}`}
         className="form-terra"
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
-        <FileUploadControl
-          handleSaveResponse={handleSaveResponse}
-          file={file}
-          updateFile={updateFile}
-          allowedFileTypes={FileTypeExtensions.plainText}
-          bucketName={bucketName}/>
+        <div className="flexbox">
+          <FileUploadControl
+            file={file}
+            updateFile={updateFile}
+            allowedFileTypes={FileTypeExtensions.plainText}
+            validationMessages={validationMessages}
+            bucketName={bucketName}/>
+        </div>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         { file.is_spatial &&
           <div className="form-group">
@@ -42,7 +50,8 @@ export default function ClusteringFileForm({
             </label>
           </div>
         }
-        <TextFormField label="Description / Figure Legend (this will be displayed below cluster)" fieldName="description" file={file} updateFile={updateFile}/>
+        <TextFormField label="Description / Figure Legend (this will be displayed below cluster)"
+          fieldName="description" file={file} updateFile={updateFile}/>
 
         <div className="row">
           <div className="col-md-4">
@@ -72,7 +81,7 @@ export default function ClusteringFileForm({
             <TextFormField label="Z Domain Max" fieldName="z_axis_max" file={file} updateFile={updateFile}/>
           </div>
         </div>
-        <SaveDeleteButtons file={file} updateFile={updateFile} saveFile={saveFile} deleteFile={deleteFile}/>
+        <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
       </form>
       <SavingOverlay file={file} updateFile={updateFile}/>
     </div>

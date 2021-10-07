@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import $ from 'jquery'
 
 import { updateCurrentUser } from 'lib/scp-api'
 

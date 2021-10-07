@@ -3,7 +3,6 @@ import React, { useEffect, useContext } from 'react'
 import ExpressionFileForm from './ExpressionFileForm'
 import { rawCountsFileFilter, expressionFileStructureHelp } from './RawCountsStep'
 import { UserContext } from 'providers/UserProvider'
-import { findBundleChildren } from './upload-utils'
 import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_PROCESSED_FILE = {
@@ -11,7 +10,8 @@ const DEFAULT_NEW_PROCESSED_FILE = {
   expression_file_info: {
     is_raw_counts: false,
     biosample_input_type: 'Whole cell',
-    modality: 'Transcriptomic: unbiased'
+    modality: 'Transcriptomic: unbiased',
+    raw_counts_associations: []
   },
   file_type: 'Expression Matrix'
 }
@@ -33,13 +33,12 @@ function ProcessedUploadForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile,
-  handleSaveResponse
+  deleteFile
 }) {
   const processedParentFiles = formState.files.filter(processedFilter)
   const fileMenuOptions = serverState.menu_options
   const rawCountsFiles = formState.files.filter(rawCountsFileFilter)
-  const rawCountsOptions = rawCountsFiles.map(rf => ({label: rf.name, value: rf._id}))
+  const rawCountsOptions = rawCountsFiles.map(rf => ({ label: rf.name, value: rf._id }))
 
   const userState = useContext(UserContext)
   const featureFlagState = userState.featureFlagsWithDefaults
@@ -100,19 +99,16 @@ function ProcessedUploadForm({
         </div>
       </div>
       { processedParentFiles.map(file => {
-        const associatedChildren = findBundleChildren(file, formState.files)
-
         return <ExpressionFileForm
           key={file._id}
           file={file}
+          allFiles={formState.files}
           updateFile={updateFile}
           saveFile={saveFile}
           deleteFile={deleteFile}
           addNewFile={addNewFile}
           rawCountsOptions={rawCountsOptions}
-          handleSaveResponse={handleSaveResponse}
           fileMenuOptions={fileMenuOptions}
-          associatedChildren={associatedChildren}
           bucketName={formState.study.bucket_id}/>
       })}
       <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
