@@ -91,7 +91,7 @@ function MetadataForm({
               <div className="col-md-12 flexbox-align-center">
                 <FileUploadControl
                   file={file}
-                  allFiles={allFiles}
+                  allFiles={formState.files}
                   updateFile={updateFile}
                   allowedFileExts={FileTypeExtensions.plainText}
                   validationMessages={validationMessages}/>
