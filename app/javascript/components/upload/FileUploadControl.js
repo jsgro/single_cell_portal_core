@@ -39,7 +39,6 @@ async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExt
   if (otherNames.includes(selectedFile.name) ||
     otherUploadFileNames.includes(selectedFile.name) ||
     otherSelectedFileNames.includes(selectedFile.name)) {
-  }
     return [`A file named ${selectedFile.name} already exists in your study`]
   }
 

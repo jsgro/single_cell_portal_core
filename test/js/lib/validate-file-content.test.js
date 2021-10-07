@@ -22,7 +22,7 @@ describe('Client-side file validation', () => {
     const fakeLog = jest.spyOn(MetricsApi, 'log')
     fakeLog.mockImplementation(() => {})
 
-    const expectedSummary = 'Your Metadata file had 1 error'
+    const expectedSummary = 'Your file had 1 error'
 
     const { errors, summary } = await validateFileContent(file, fileType)
 
@@ -43,7 +43,7 @@ describe('Client-side file validation', () => {
         'fileSize': 566,
         'fileMimeType': 'text/plain',
         'status': 'failure',
-        'summary': 'Your Metadata file had 1 error',
+        'summary': 'Your file had 1 error',
         'numErrors': 1,
         'errors': [
           'Second row, first column must be "TYPE" (case insensitive). Your value was "notTYPE".'
@@ -61,7 +61,7 @@ describe('Client-side file validation', () => {
     mockReadLinesAndType({ fileName: 'dup_headers_v2.0.0.tsv' })
     const { errors, summary } = await validateFileContent({}, 'Metadata')
     expect(errors).toHaveLength(1)
-    expect(summary).toBe('Your Metadata file had 1 error')
+    expect(summary).toBe('Your file had 1 error')
   })
 
   it('reports no error with good cluster CSV file', async () => {
@@ -75,7 +75,7 @@ describe('Client-side file validation', () => {
     mockReadLinesAndType({ fileName: 'header_count_mismatch.tsv' })
     const { errors, summary } = await validateFileContent({}, 'Metadata')
     expect(errors).toHaveLength(1)
-    expect(summary).toBe('Your Metadata file had 1 error')
+    expect(summary).toBe('Your file had 1 error')
   })
 
   it('catches multiple header errors', async () => {
@@ -84,7 +84,7 @@ describe('Client-side file validation', () => {
     mockReadLinesAndType({ fileName: 'error_headers_v2.0.0.tsv' })
     const { errors, summary } = await validateFileContent({}, 'Metadata')
     expect(errors).toHaveLength(3)
-    expect(summary).toBe('Your Metadata file had 3 errors')
+    expect(summary).toBe('Your file had 3 errors')
   })
 
   it('fails when no coordinates in cluster file', async () => {
@@ -128,7 +128,7 @@ describe('Client-side file validation', () => {
   })
 
   it('renders validation alert', async () => {
-    const summary = 'Your Metadata file had 1 error'
+    const summary = 'Your file had 1 error'
 
     // This error structure matches that in Ingest Pipeline.
     // Such consistency across codebases eases QA and debugging.

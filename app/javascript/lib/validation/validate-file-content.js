@@ -292,6 +292,7 @@ function getLogProps(fileObj, fileType, errorObj) {
 /** Validate a local file, return list of any detected errors */
 export async function validateFileContent(file, fileType) {
   let issues = []
+  // for now, exclude gzipped files from validation
   if (!VALIDATED_TYPES.includes(fileType)) {
     return { errors: [], summary: '' }
   }
@@ -313,7 +314,7 @@ export async function validateFileContent(file, fileType) {
   if (errors.length > 0) {
     const numErrors = errors.length
     const errorsTerm = (numErrors === 1) ? 'error' : 'errors'
-    summary = `Your ${fileType} file had ${numErrors} ${errorsTerm}`
+    summary = `Your file had ${numErrors} ${errorsTerm}`
   }
 
   const fileObj = { file, lines, delimiter }
