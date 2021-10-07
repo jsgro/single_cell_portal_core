@@ -21,7 +21,7 @@ export default function FileDownloadControl({ file, bucketName }) {
   if (!file.upload_file_name || file.human_data) {
     return null
   } else {
-    return <p style={{ display: 'inline' }} >
+    return <span>
       {!file.generation ? <span style={{ marginLeft: '5px' }} className="label label-warning no-download-available" data-toggle="tooltip"
         title='You can download this file once it has been fully uploaded. Check back soon.'>
         {<span className="fas fa-ban"></span> } Awaiting remote file
@@ -30,6 +30,6 @@ export default function FileDownloadControl({ file, bucketName }) {
           {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}
         </a>
       }
-    </p>
+    </span>
   }
 }
