@@ -9,6 +9,15 @@ export default function StepTitle({ step, index, currentStep, setCurrentStep, se
     stepFiles = formState.files.filter(step.fileFilter)
   }
   const className = step.name === currentStep.name ? 'active' : ''
+  // show at most three files per step, two if we also need room for the "and more"
+
+  let displayedFiles = stepFiles
+  let remainderText = null
+  if (stepFiles.length > 3) {
+    displayedFiles = stepFiles.slice(0, 2)
+    remainderText = <span className="detail"> &nbsp; + {stepFiles.length - 2} more</span>
+  }
+
   return <li className={className}>
     <div onClick={() => setCurrentStep(step)}>
       <span className="badge">{index + 1}</span>
@@ -18,7 +27,7 @@ export default function StepTitle({ step, index, currentStep, setCurrentStep, se
         {step.title}
       </a>
       <ul className="file-list">
-        { stepFiles.map(file => {
+        { displayedFiles.map(file => {
           const bundleChildren = findBundleChildren(file, formState.files)
           // show different style depending on whether file is locally modified
           return <li key={file._id}>
@@ -35,6 +44,7 @@ export default function StepTitle({ step, index, currentStep, setCurrentStep, se
           </li>
         })
         }
+        { remainderText && <li>{remainderText}</li> }
       </ul>
     </div>
   </li>
