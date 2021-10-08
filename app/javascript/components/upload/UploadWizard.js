@@ -95,6 +95,7 @@ export default function UploadWizard({ studyAccession, name }) {
       const formFile = _cloneDeep(updatedFile)
       if (uploadingMoreChunks) {
         formFile.isSaving = true
+        formFile.saveProgress = newFormState.files[fileIndex].saveProgress
       }
       if (oldFileId != updatedFile._id) { // we saved the file and got back a fresh id
         formFile.oldId = oldFileId
@@ -109,10 +110,7 @@ export default function UploadWizard({ studyAccession, name }) {
         message: updatedFile.name,
         insert: 'top',
         container: 'top-right',
-        width: 425,
-        dismiss: {
-          duration: 3000
-        }
+        width: 425
       })
     }
   }
@@ -192,7 +190,7 @@ export default function UploadWizard({ studyAccession, name }) {
       }
     } catch (error) {
       store.addNotification({
-        title: 'Save error',
+        title: 'Save failed',
         message: <div>{file.name}<br/>{error.error}</div>,
         type: 'danger',
         insert: 'top',
