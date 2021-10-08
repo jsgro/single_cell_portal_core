@@ -285,7 +285,6 @@ module Api
       # and kick off a parse job if requested
       def perform_update(study_file)
         safe_file_params = study_file_params
-
         is_chunked = false
         content_range = RequestUtils.parse_content_range_header(request.headers)
         if content_range.present?

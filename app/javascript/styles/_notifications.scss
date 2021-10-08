@@ -1,0 +1,27 @@
+.notification__item {
+  border: 1px solid #bbb;
+
+  &.notification__item--success {
+    background-color: #fff;
+    border-left: 8px solid #28a745;
+    .notification__title {
+      color: #28a745;
+    }
+    .notification__message {
+      color: #28a745;
+    }
+  }
+
+  &.notification__item--danger {
+    background-color: #fff;
+    border-left: 8px solid #bd1120;
+    .notification__title {
+      color: #bd1120;
+    }
+    .notification__message {
+      color: #bd1120;
+    }
+  }
+}
+
+
