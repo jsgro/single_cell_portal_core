@@ -174,21 +174,9 @@
   background-color: #E5EEF7;
 }
 
-.scatter-legend-head {
-  margin: 5px 5px 10px 5px;
-}
-
 .scatter-legend-name {
+  margin: 5px 0 10px 5px;
   font-weight: bold;
-}
-
-.stateful-link {
-  color: #4d72aa;
-  cursor: pointer;
-}
-
-.stateful-link.disabled {
-  color: rgb(197, 210, 227);
 }
 
 .scatter-legend-row {
@@ -222,17 +210,21 @@
   top: 5px;
 }
 
-.scatter-legend-row {
-  opacity: 0.3;
-}
-
-.scatter-legend-row.shown {
-  opacity: 1;
-}
-
-.unfiltered {
+.filtered {
   .scatter-legend-row {
+    opacity: 0.3;
+  }
+  .scatter-legend-row.selected {
     opacity: 1;
   }
+}
+
+.checkmark {
+  color: #FFF;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  position: relative;
+  top: 3px;
+  left: 8px;
+  font-weight: 600;
 }
 /** End of styles for custom Plotly scatter plot legend */

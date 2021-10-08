@@ -48,88 +48,39 @@ function RawScatterPlot({
   const [scatterData, setScatterData] = useState(null)
   const [countsByLabel, setCountsByLabel] = useState(null)
   const [filters, setFilters] = useState([])
-  const [showHideButtons, setShowHideButtons] = useState(['disabled', 'active'])
-  const [allHidden, setAllHidden] = useState(false)
+  const [checkDisplayAll, setCheckDisplayAll] = useState('unchecked')
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
-
-  // 3 filterable labels available:
-  // labels = [A, B, C]
-  //
-  // describe('When no filters are selected, all labels are shown, and clicking a label hides unfiltered', () => {
-  //   if (filters.length === 0) {
-  //     click('A')
-  //     assert($('#legend-entry-a').hasClass('hidden') === false)
-  //     assert(filters.length === 1 && filters[0] === 'a')
-  //   }
-  //  })
-  //
-  // describe('When some but not all filters are selected, clicking a label still hides unfiltered', () => {
-  // if (filters.length > 0 && filters.length < labels.length) {
-  //   click('B')
-  //   assert($('#legend-entry-b').hasClass('hidden') === false)
-  //   assert(filters.length === 2 && filters.includes('a') && filters.includes('b'))
-  // }
-  // })
-  //
-  // describe('When all filters are selected, no labels are shown, and clicking a label removes that filter and shows it', () => {
-  // if (filters.length === labels.length) {
-  //   assert(filters.length === 3)
-  //   assert($('#legend-entry-a').hasClass('hidden'))
-  //   click('A')
-  //   assert(filters.length === 2)
-  //   assert($('#legend-entry-a').hasClass('hidden') === false)
-  // }
-  // })
-
   /** Handle user interaction with one or more filters */
-  function updateFilters(filterIds, hide, numLabels) {
+  function updateFilters(filterIds, value, numLabels) {
     let newFilters
-    const isShowOrHideAll = Array.isArray(filterIds)
-    if (isShowOrHideAll) {
+    if (Array.isArray(filterIds)) {
       // Handle multi-filter interaction
-      if (!hide) {
-        newFilters = []
-        setShowHideButtons(['disabled', 'active'])
-      } else {
-        newFilters = filterIds
-        setShowHideButtons(['active', 'disabled'])
-      }
+      newFilters = !value ? [] : filterIds
+      const check = value ? 'checked' : ''
+      setCheckDisplayAll(check)
     } else {
       // Handle single-filter interaction
       const filterId = filterIds
-      if (allHidden) {
-        newFilters = [filterId]
-      } else {
-        newFilters = filters.slice()
-
-        if (hide && !newFilters.includes(filterId)) {
-          newFilters.push(filterId)
-        }
-        if (!hide) {
-          _remove(newFilters, id => {return id === filterId})
-        }
+      newFilters = filters.slice()
+      if (value && !newFilters.includes(filterId)) {
+        newFilters.push(filterId)
+      }
+      if (!value) {
+        _remove(newFilters, id => {return id === filterId})
       }
       const numFilters = newFilters.length
-      if (numFilters > 0 && numFilters < numLabels) {
-        setShowHideButtons(['active', 'active'])
-      } else if (numFilters === 0) {
-        setShowHideButtons(['disabled', 'active'])
+      let check = 'indeterminate'
+      if (numFilters === 0) {
+        check = ''
       } else if (numFilters === numLabels) {
-        setShowHideButtons(['active', 'disabled'])
+        check = 'checked'
       }
+      setCheckDisplayAll(check)
     }
-
     setFilters(newFilters)
-
-    const newAllHidden = (isShowOrHideAll && hide)
-    setAllHidden(newAllHidden)
-
-    console.log('newFilters', newFilters)
   }
-
-  window.debugFilters = filters
 
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
@@ -151,8 +102,7 @@ function RawScatterPlot({
       showPointBorders: scatter.showClusterPointBorders,
       is3D: scatter.is3D,
       labelCorrelations,
-      filters,
-      allHidden
+      filters
     }
     const [traces, labelCounts] = getPlotlyTraces(traceArgs)
     const plotlyTraces = [traces]
@@ -279,8 +229,7 @@ function RawScatterPlot({
           correlations={labelCorrelations}
           filters={filters}
           updateFilters={updateFilters}
-          showHideButtons={showHideButtons}
-          allHidden={allHidden}
+          checkDisplayAll={checkDisplayAll}
         />
         }
       </div>
@@ -319,8 +268,7 @@ function getPlotlyTraces({
   pointSize,
   showPointBorders,
   is3D,
-  filters,
-  allHidden
+  filters
 }) {
   const trace = {
     type: is3D ? 'scatter3d' : 'scattergl',
@@ -351,8 +299,7 @@ function getPlotlyTraces({
       }
     ]
 
-    console.log('in getPlotlyTraces. filters:', filters)
-    if (filters.length > 0 && !allHidden) {
+    if (filters.length > 0) {
       trace.transforms.push({
         type: 'filter',
         target: data.annotations,
@@ -361,19 +308,6 @@ function getPlotlyTraces({
         // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/constants/filter_ops.js
         // Plotly docs are rather sparse here.
         operation: '{}',
-        value: filters
-      })
-    }
-
-    if (filters.length > 0 && allHidden) {
-      trace.transforms.push({
-        type: 'filter',
-        target: data.annotations,
-        // For available operations, see:
-        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/transforms/filter.js
-        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/constants/filter_ops.js
-        // Plotly docs are rather sparse here.
-        operation: '}{',
         value: filters
       })
     }

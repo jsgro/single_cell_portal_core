@@ -11,7 +11,6 @@ function labelSort(a, b) {
   return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
 }
 
-
 /**
  * Return a hash of value=>count for the passed-in array
  * This is surprisingly quick even for large arrays, but we'd rather we
@@ -65,7 +64,7 @@ export function getStyles(data, pointSize) {
 function LegendEntry({
   label, numPoints, iconColor, correlations,
   filterId, numLabels,
-  filters, updateFilters, allHidden
+  filters, updateFilters
 }) {
   let entry = `${label} (${numPoints} points)`
   if (correlations) {
@@ -75,22 +74,15 @@ function LegendEntry({
     entry = `${label} (${numPoints} points, ρ = ${correlation})`
   }
 
-  const isShown = filters.includes(filterId)
+  const isSelected = filters.includes(filterId)
 
   const iconStyle = { backgroundColor: iconColor }
-  let selectedClass
-  // !allHidden && !isShown: no
-  // allHidden && !isShown: no
-  // allHidden && isShown: no
-  if (!allHidden && isShown) {
-    selectedClass = 'shown'
-  } else {
-    selectedClass = ''
-  }
+  const checkmark = (filters.length === 0 || isSelected ? '✓' : '')
+  const selectedClass = (isSelected ? 'selected' : '')
 
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
-    const state = !isShown
+    const state = !isSelected
     updateFilters(filterId, state, numLabels)
   }
 
@@ -99,94 +91,89 @@ function LegendEntry({
       className={`scatter-legend-row ${selectedClass}`}
       onClick={() => toggleSelection()}
     >
-      <div className="scatter-legend-icon" style={iconStyle}></div>
+      <div className="scatter-legend-icon" style={iconStyle}>
+        <span className="checkmark">{checkmark}</span>
+      </div>
       <div className="scatter-legend-entry">{entry}</div>
     </div>
   )
 }
 
-/** Component for stateful link */
-function StatefulLink({ text, classes, disabled, onClick, analyticsName, style }) {
-  return (
-    <span
-      data-analytics-name={analyticsName}
-      className={classes}
-      disabled={disabled}
-      style={style}
-      onClick={onClick}>{text}</span>
-  )
-}
+// /** Whether "Display all" should be checked */
+// function doCheckDisplayAll(checkDisplayAll, filters, labels) {
+//   const numFilters = filters.length
+//   const numLabels = labels.length
+//   const anyFilters = numFilters > 0
+//   const allFilters = numFilters === numLabels
+//   console.log(
+//     'anyFilters, isDisplayAllTrigger, allFilters',
+//     anyFilters, isDisplayAllTrigger, allFilters
+//   )
+//   console.log('!anyFilters && !(isDisplayAllTrigger && !allFilters)')
+//   console.log(!anyFilters && !(isDisplayAllTrigger && !allFilters))
+//   return (
+//     !anyFilters &&
+//     !(isDisplayAllTrigger && !allFilters)
+//   )
+// }
 
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
-  filters, updateFilters, showHideButtons, allHidden
+  filters, updateFilters, checkDisplayAll
 }) {
   const labels = Object.keys(countsByLabel)
-  const filterIds = labels.map(label => _kebabCase(label))
+  const filterIds = []
   const numLabels = labels.length
 
   const legendEntries = labels
     .sort(labelSort) // sort keys so we assign colors in the right order
-    .map((label, i) => {
+    .map((label, index) => {
       const numPoints = countsByLabel[label]
-      const iconColor = getColorBrewerColor(i)
+      const iconColor = getColorBrewerColor(index)
+
+      const filterId = _kebabCase(label)
+      filterIds.push(filterId)
 
       return (
         <LegendEntry
-          key={filterIds[i]}
+          key={filterId}
           label={label}
           numPoints={numPoints}
           iconColor={iconColor}
           correlations={correlations}
           filters={filters}
           updateFilters={updateFilters}
-          filterId={filterIds[i]}
+          filterId={filterId}
           numLabels={numLabels}
-          allHidden={allHidden}
         />
       )
     })
 
-  // When some (but not all) filters are checked
-  // const someFilters = (filters.length > 0 && filters.length < labels.length)
+  // When no filters are checked
+  const hasFilters = (filters.length > 0)
 
   // console.log(
   //   'hasFilters, isDisplayAllTrigger, filters.length, labels.length',
   //   hasFilters, isDisplayAllTrigger, filters.length, labels.length
   // )
 
-  const filteredClass = (filters.length === 0) ? 'unfiltered' : ''
+  const indeterminate = (checkDisplayAll === 'indeterminate')
+
+  const filteredClass = (hasFilters) ? 'filtered' : ''
   return (
     <div className={`scatter-legend ${filteredClass}`}>
-      <div className="scatter-legend-head">
-        <div>
-          {/* <button
-          data-analytics-name='show-all'
-          className={`btn btn-primary ${showHideButtons[0]}`}
-          disabled={!showHideButtons[0]}
-          onClick={() => {updateFilters(filterIds, false)}}>Show all</button>
-        <button
-          data-analytics-name='hide-all'
-          style={{ 'float': 'right' }}
-          className={`btn btn-primary ${showHideButtons[1]}`}
-          disabled={!showHideButtons[1]}
-          onClick={() => {updateFilters(filterIds, true)}}>Hide all</button> */}
-          <StatefulLink
-            analyticsName='show-all'
-            classes={`stateful-link ${showHideButtons[0]}`}
-            disabled={!showHideButtons[0]}
-            onClick={() => {updateFilters(filterIds, false)}}
-            text="Show all" />
-          <StatefulLink
-            analyticsName='hide-all'
-            classes={`stateful-link pull-right ${showHideButtons[1]}`}
-            disabled={!showHideButtons[1]}
-            onClick={() => {updateFilters(filterIds, true)}}
-            text="Hide all" />
-        </div>
-        <div className="scatter-legend-name">{name}</div>
+      <div>
+        <label>
+          <input
+            checked={checkDisplayAll}
+            type="checkbox"
+            onChange={e => updateFilters(labels, e.target.checked)}
+            ref={el => el && (el.indeterminate = indeterminate)}
+          />All
+        </label>
       </div>
+      <p className="scatter-legend-name">{name}</p>
       {legendEntries}
     </div>
   )
