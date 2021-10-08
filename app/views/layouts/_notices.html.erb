@@ -1,6 +1,6 @@
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
     if (<%= [alert, notice].compact.any? %>) {
-        showMessageModal("<%= notice.present? ? notice.html_safe : nil %>", "<%= alert.present? ? alert.html_safe.gsub('"', '\'') : nil %>")
+        showMessageModal("<%= notice.present? ? notice.html_safe : nil %>", "<%= alert.present? ? alert.html_safe : nil %>")
     } else {
         $('#notice-content').empty();
         $('#alert-content').empty();
