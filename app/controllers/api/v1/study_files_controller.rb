@@ -192,9 +192,9 @@ module Api
         begin
           result = perform_update(@study_file)
           render :show
-        rescue ArgumentError => e
-          MetricsService.log('file-save:invalid', format_log_props(e.message), current_api_user)
-          render json: {errors: e.message}, status: :unprocessable_entity
+        rescue Mongoid::Errors::Validations => e
+          MetricsService.log('file-save:invalid', format_log_props(e.summary), current_api_user)
+          render json: {error: e.summary}, status: :unprocessable_entity
         end
       end
 
@@ -261,8 +261,8 @@ module Api
           result = perform_update(@study_file)
           render :show
         rescue Mongoid::Errors::Validations => e
-          MetricsService.log('file-save:invalid', format_log_props(e.message), current_api_user)
-          render json: {errors: e.message}, status: :unprocessable_entity
+          MetricsService.log('file-save:invalid', format_log_props(e.summary), current_api_user)
+          render json: {error: e.summary}, status: :unprocessable_entity
         end
       end
 

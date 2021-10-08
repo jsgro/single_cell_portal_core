@@ -44,6 +44,26 @@ const STEPS = [
   MiscellaneousStep
 ]
 
+const SUCCESS_NOTIFICATION_TEMPLATE = {
+  type: 'success',
+  insert: 'top',
+  container: 'top-right',
+  width: 425,
+  dismiss: {
+    duration: 3000,
+    showIcon: false
+  }
+}
+
+const FAILURE_NOTIFICATION_TEMPLATE = {
+  ...SUCCESS_NOTIFICATION_TEMPLATE,
+  type: 'danger',
+  dismiss: {
+    duration: 0,
+    showIcon: true
+  }
+}
+
 /** shows the upload wizard */
 export default function UploadWizard({ studyAccession, name }) {
   const [currentStep, setCurrentStep] = useState(STEPS[0])
@@ -94,10 +114,11 @@ export default function UploadWizard({ studyAccession, name }) {
       const fileIndex = newFormState.files.findIndex(f => f._id === oldFileId)
       const formFile = _cloneDeep(updatedFile)
       if (uploadingMoreChunks) {
+        // copy over the previous files saving states
         formFile.isSaving = true
         formFile.saveProgress = newFormState.files[fileIndex].saveProgress
       }
-      if (oldFileId != updatedFile._id) { // we saved the file and got back a fresh id
+      if (oldFileId != updatedFile._id) { // we saved a new file and got back a fresh id
         formFile.oldId = oldFileId
       }
       newFormState.files[fileIndex] = formFile
@@ -105,12 +126,9 @@ export default function UploadWizard({ studyAccession, name }) {
     })
     if (!uploadingMoreChunks) {
       store.addNotification({
+        ...SUCCESS_NOTIFICATION_TEMPLATE,
         title: `Save success`,
-        type: 'success',
-        message: updatedFile.name,
-        insert: 'top',
-        container: 'top-right',
-        width: 425
+        message: updatedFile.name
       })
     }
   }
@@ -190,16 +208,9 @@ export default function UploadWizard({ studyAccession, name }) {
       }
     } catch (error) {
       store.addNotification({
+        ...FAILURE_NOTIFICATION_TEMPLATE,
         title: 'Save failed',
-        message: <div>{file.name}<br/>{error.error}</div>,
-        type: 'danger',
-        insert: 'top',
-        container: 'top-right',
-        width: 425,
-        dismiss: {
-          duration: 0,
-          showIcon: true
-        }
+        message: <div>{file.name}<br/>{error}</div>,
       })
       updateFile(studyFileId, {
         isSaving: false
@@ -230,11 +241,19 @@ export default function UploadWizard({ studyAccession, name }) {
           return newServerState
         })
         deleteFileFromForm(file._id)
+        store.addNotification({
+          ...SUCCESS_NOTIFICATION_TEMPLATE,
+          title: 'Delete succeeded',
+          message: file.name
+        })
       } catch (error) {
+        store.addNotification({
+          ...FAILURE_NOTIFICATION_TEMPLATE,
+          title: 'Delete failed',
+          message: <div>{file.name}<br/>{error}</div>
+        })
         updateFile(file._id, {
-          isError: true,
-          isDeleting: false,
-          errorMessage: error.message
+          isDeleting: false
         })
       }
     }

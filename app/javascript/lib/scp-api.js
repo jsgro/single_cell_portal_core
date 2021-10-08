@@ -795,7 +795,7 @@ async function scpApiXmlHttp({ apiUrl, init, formData, onProgress }) {
         }
         resolve(response)
       } else {
-        reject(JSON.parse(request.response))
+        reject(JSON.parse(request.response).error)
       }
     }
     request.onerror = () => {
