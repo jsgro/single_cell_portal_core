@@ -1,6 +1,8 @@
 import React from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons'
 
-import { findBundleChildren } from './upload-utils'
+import { findBundleChildren, PARSEABLE_TYPES } from './upload-utils'
 
 /** renders the wizard step header for a given step */
 export default function StepTitle({ step, index, currentStep, setCurrentStep, serverState, formState }) {
@@ -18,13 +20,16 @@ export default function StepTitle({ step, index, currentStep, setCurrentStep, se
     remainderText = <span className="detail"> &nbsp; + {stepFiles.length - 2} more</span>
   }
 
+  const stepHasValidFiles = stepFiles.some(f => f.status === 'uploaded' &&
+    (f.parse_status === 'parsed' || !PARSEABLE_TYPES.includes(f.file_type)))
+
   return <li className={className}>
     <div onClick={() => setCurrentStep(step)}>
       <span className="badge">{index + 1}</span>
     </div>
     <div>
       <a className="action link" onClick={() => setCurrentStep(step)}>
-        {step.title}
+        {step.title} { stepHasValidFiles && <FontAwesomeIcon icon={faCheckCircle}/> }
       </a>
       <ul className="file-list">
         { displayedFiles.map(file => {
