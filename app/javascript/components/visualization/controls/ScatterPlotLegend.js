@@ -158,8 +158,6 @@ export default function ScatterPlotLegend({
   //   hasFilters, isDisplayAllTrigger, filters.length, labels.length
   // )
 
-  const indeterminate = (checkDisplayAll === 'indeterminate')
-
   const filteredClass = (hasFilters) ? 'filtered' : ''
   return (
     <div className={`scatter-legend ${filteredClass}`}>
@@ -169,7 +167,6 @@ export default function ScatterPlotLegend({
             checked={checkDisplayAll}
             type="checkbox"
             onChange={e => updateFilters(labels, e.target.checked)}
-            ref={el => el && (el.indeterminate = indeterminate)}
           />All
         </label>
       </div>

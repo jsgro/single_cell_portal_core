@@ -48,7 +48,7 @@ function RawScatterPlot({
   const [scatterData, setScatterData] = useState(null)
   const [countsByLabel, setCountsByLabel] = useState(null)
   const [filters, setFilters] = useState([])
-  const [checkDisplayAll, setCheckDisplayAll] = useState('unchecked')
+  const [checkDisplayAll, setCheckDisplayAll] = useState(false)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
@@ -58,8 +58,8 @@ function RawScatterPlot({
     if (Array.isArray(filterIds)) {
       // Handle multi-filter interaction
       newFilters = !value ? [] : filterIds
-      const check = value ? 'checked' : ''
-      setCheckDisplayAll(check)
+
+      setCheckDisplayAll(value)
     } else {
       // Handle single-filter interaction
       const filterId = filterIds
@@ -71,13 +71,7 @@ function RawScatterPlot({
         _remove(newFilters, id => {return id === filterId})
       }
       const numFilters = newFilters.length
-      let check = 'indeterminate'
-      if (numFilters === 0) {
-        check = ''
-      } else if (numFilters === numLabels) {
-        check = 'checked'
-      }
-      setCheckDisplayAll(check)
+      setCheckDisplayAll(numFilters === numLabels)
     }
     setFilters(newFilters)
   }
