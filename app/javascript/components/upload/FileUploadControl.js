@@ -96,7 +96,7 @@ export default function FileUploadControl({
   }
 
   return <div className="form-group">
-    <label className= "bottom-margin">
+    <label>
       { !file.uploadSelection && <span>{file.upload_file_name}</span> }
       { file.uploadSelection && <span data-testid="file-selection-name">
         {file.uploadSelection.name}  ({bytesToSize(file.uploadSelection.size)})
