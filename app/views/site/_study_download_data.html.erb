@@ -5,7 +5,7 @@
     <h2>Study Files 
       <span class="badge"><%= @study_files.count %></span> 
       <%= link_to "<i class='fas fa-question-circle'></i> Bulk Download".html_safe, '#/', class: "btn btn-default pull-right #{!@allow_downloads ? 'disabled' : nil}", id: 'download-help' %>
-        <%= link_to "Analyze on Terra".html_safe, '#/', class: "btn btn-default pull-right left-margin-icon {!@allow_downloads ? 'disable d' : nil}", id: 'analyze-on-terra'%> 
+      <%= link_to "Analyze on Terra".html_safe, '#/', class: "btn btn-default pull-right left-margin-icon {!@allow_downloads ? 'disable d' : nil}", id: 'analyze-on-terra' data-analytics-name="analyze-on-terra"%> 
     </h2>
 
     <% if @allow_downloads %>
