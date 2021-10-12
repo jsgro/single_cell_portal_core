@@ -287,6 +287,7 @@ module Api
       # if the save is successful and includes a complete upload, will send it to firecloud
       # and kick off a parse job if requested
       def perform_update(study_file)
+        raise 'really? again?'
         safe_file_params = study_file_params
         is_chunked = false
         content_range = RequestUtils.parse_content_range_header(request.headers)

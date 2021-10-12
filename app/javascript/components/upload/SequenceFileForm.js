@@ -169,7 +169,7 @@ function BamIndexFileForm({
 
   // if parent id changes, update the child bam_id pointer
   useEffect(() => {
-    if (file) {
+    if (file && file.options.bam_id !== parentFile._id) {
       updateFile(file._id, { options: { bam_id: parentFile._id } })
     }
   }, [parentFile._id])

@@ -12,12 +12,14 @@ import _isMatch from 'lodash/isEqual'
 import ReactNotification, { store } from 'react-notifications-component'
 import { Router, useLocation, navigate } from '@reach/router'
 import * as queryString from 'query-string'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
 import MessageModal from 'lib/MessageModal'
 import UserProvider from 'providers/UserProvider'
-import ErrorBoundary, { withErrorBoundary } from 'lib/ErrorBoundary'
+import ErrorBoundary from 'lib/ErrorBoundary'
 
 import WizardNavPanel from './WizardNavPanel'
 import ClusteringStep from './ClusteringStep'
@@ -143,8 +145,12 @@ function RawUploadWizard({ studyAccession, name }) {
     if (!uploadingMoreChunks) {
       store.addNotification({
         ...SUCCESS_NOTIFICATION_TEMPLATE,
-        title: `Save success`,
-        message: updatedFile.name
+        title: '',
+        message: <><FontAwesomeIcon icon={faCheckCircle}/> {updatedFile.name} saved successfully</>,
+        dismiss: {
+          showIcon: true,
+          duration: 0
+        }
       })
     }
   }
@@ -225,8 +231,10 @@ function RawUploadWizard({ studyAccession, name }) {
     } catch (error) {
       store.addNotification({
         ...FAILURE_NOTIFICATION_TEMPLATE,
-        title: 'Save failed',
-        message: <div>{file.name}<br/>{error}</div>,
+        title: '',
+        message: <><FontAwesomeIcon icon={faExclamationTriangle}/> {file.name} failed to save<br/>
+          {error}
+        </>,
       })
       updateFile(studyFileId, {
         isSaving: false
@@ -284,7 +292,6 @@ function RawUploadWizard({ studyAccession, name }) {
     })
   }, [studyAccession])
 
-  const StepComponent = withErrorBoundary(currentStep.component)
   const nextStep = STEPS[currentStepIndex + 1]
   const prevStep = STEPS[currentStepIndex - 1]
   return <UserProvider>
@@ -296,20 +303,24 @@ function RawUploadWizard({ studyAccession, name }) {
             setCurrentStep, studyAccession, steps: STEPS, studyName: name }} />
         </div>
         <div className="col-md-9">
-          { !formState && <LoadingSpinner data-testid="upload-wizard-spinner"/> }
-          { !!formState && <StepComponent
-            setCurrentStep={setCurrentStep}
-            formState={formState}
-            serverState={serverState}
-            deleteFile={deleteFile}
-            updateFile={updateFile}
-            saveFile={saveFile}
-            addNewFile={addNewFile}
-          /> }
-          <div className="text-center">
-            { nextStep && <button className="btn btn-secondary terra-secondary-btn margin-right" onClick={() => setCurrentStep(prevStep)}>Previous</button> }
-            { nextStep && <button className="btn btn-secondary terra-secondary-btn" onClick={() => setCurrentStep(nextStep)}>Next</button> }
-          </div>
+          { !formState && <div className="padded text-center">
+            <LoadingSpinner data-testid="upload-wizard-spinner"/>
+          </div> }
+          { !!formState && <div>
+            <currentStep.component
+              setCurrentStep={setCurrentStep}
+              formState={formState}
+              serverState={serverState}
+              deleteFile={deleteFile}
+              updateFile={updateFile}
+              saveFile={saveFile}
+              addNewFile={addNewFile}
+            />
+            <div className="text-center">
+              { nextStep && <button className="btn btn-secondary terra-secondary-btn margin-right" onClick={() => setCurrentStep(prevStep)}>Previous</button> }
+              { nextStep && <button className="btn btn-secondary terra-secondary-btn" onClick={() => setCurrentStep(nextStep)}>Next</button> }
+            </div>
+          </div> }
         </div>
       </div>
       <MessageModal/>

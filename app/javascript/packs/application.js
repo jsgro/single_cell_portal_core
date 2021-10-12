@@ -8,7 +8,7 @@
  * To reference this file, add <%= javascript_pack_tag 'application' %> to
  * the appropriate layout file, like app/views/layouts/application.html.erb
  */
-
+import 'react-notifications-component/dist/theme.css'
 import 'styles/application.scss'
 
 import React from 'react'
@@ -21,7 +21,6 @@ import 'jquery-ui/ui/widgets/sortable'
 import 'jquery-ui/ui/widgets/dialog'
 import 'jquery-ui/ui/effects/effect-highlight'
 import morpheus from 'morpheus-app'
-import 'react-notifications-component/dist/theme.css'
 
 import checkMissingAuthToken from 'lib/user-auth-tokens'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'

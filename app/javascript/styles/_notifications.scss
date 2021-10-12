@@ -1,25 +1,49 @@
 .notification__item {
   border: 1px solid #bbb;
+  border-radius: 5px;
+  .notification__message {
+    display: flex;
+    align-items: center;
+    svg {
+      font-size: 2em;
+      margin: 0.25em;
+      margin-right: 0.6em;
+    }
 
+  }
+  .notification__content .notification__close {
+    background: none;
+    &:after {
+      color: $action-color;
+      font-size: 1.75em;
+    }
+  }
   &.notification__item--success {
-    background-color: #fff;
-    border-left: 8px solid #28a745;
+    background-color: #f1f6ed;
+    border-left: 1px solid #bbb;
     .notification__title {
-      color: #28a745;
+      color: #333;
     }
     .notification__message {
-      color: #28a745;
+      color: #333;
     }
+    svg {
+      color: #75b041;
+    }
+
   }
 
   &.notification__item--danger {
-    background-color: #fff;
-    border-left: 8px solid #bd1120;
+    background-color: #fef4e9;
+    border-left: 1px solid #bbb;
     .notification__title {
-      color: #bd1120;
+      color: #333;
     }
     .notification__message {
-      color: #bd1120;
+      color: #333;
+    }
+    svg {
+      color: #f79916;
     }
   }
 }

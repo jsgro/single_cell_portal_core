@@ -84,8 +84,8 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
 
   return <div className="flexbox button-panel">
     { saveButton }
-    <button type="button" className="btn btn-secondary" onClick={handleDeletePress} data-testid="file-delete">
-      <i className="fas fa-trash"></i> Delete
+    <button type="button" className="btn terra-secondary-btn" onClick={handleDeletePress} data-testid="file-delete">
+      Delete
     </button>
     <Modal
       show={showConfirmDeleteModal}
@@ -100,7 +100,7 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
           deleteFile(file)
           setShowConfirmDeleteModal(false)
         }}>Delete</button>
-        <button className="btn btn-md btn-secondary" onClick={() => {
+        <button className="btn btn-md terra-secondary-btn" onClick={() => {
           setShowConfirmDeleteModal(false)
         }}>Cancel</button>
       </Modal.Footer>

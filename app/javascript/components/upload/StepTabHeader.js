@@ -35,12 +35,12 @@ export default function StepTitle({ step, index, currentStep, setCurrentStep, se
         { displayedFiles.map(file => {
           const bundleChildren = findBundleChildren(file, formState.files)
           // show different style depending on whether file is locally modified
-          return <li key={file._id}>
+          return <li key={file._id} onClick={() => setCurrentStep(step)}>
             <span className={file.isDirty ? 'dirty' : ''} title={file.name}>{file.name}</span>
             { !!bundleChildren.length &&
               <ul>
                 { bundleChildren.map(childFile => {
-                  return <li key={childFile._id}>
+                  return <li key={childFile._id} onClick={() => setCurrentStep(step)}>
                     <span className={childFile.isDirty ? 'dirty' : ''} title={childFile.name}>{childFile.name}</span>
                   </li>
                 })}
