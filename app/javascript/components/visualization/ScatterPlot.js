@@ -121,8 +121,10 @@ function RawScatterPlot({
   }
 
   /** Process scatter plot data fetched from server */
-  function handleResponse(clusterResponse) {
-    const [scatter, perfTimes] = clusterResponse
+  function processScatterPlot(clusterResponse=null) {
+    const [scatter, perfTimes] =
+      (clusterResponse ? clusterResponse : [scatterData, null])
+
     const layout = getPlotlyLayout(dimensions, scatter)
 
     const traceArgs = {
@@ -149,11 +151,12 @@ function RawScatterPlot({
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
 
-    perfTimes.plot = performance.now() - startTime
-
-    logScatterPlot({
-      scatter, genes, width: dimensions.width, height: dimensions.height
-    }, perfTimes)
+    if (perfTimes) {
+      perfTimes.plot = performance.now() - startTime
+      logScatterPlot({
+        scatter, genes, width: dimensions.width, height: dimensions.height
+      }, perfTimes)
+    }
 
     if (isCorrelatedScatter) {
       const rhoStartTime = performance.now()
@@ -166,7 +169,9 @@ function RawScatterPlot({
         if (flags.correlation_refinements) {
           setLabelCorrelations(correlations.byLabel)
         }
-        log('plot:correlations', { perfTime: rhoTime })
+        if (perfTimes) {
+          log('plot:correlations', { perfTime: rhoTime })
+        }
       })
     }
 
@@ -189,13 +194,21 @@ function RawScatterPlot({
       genes,
       isAnnotatedScatter,
       isCorrelatedScatter
-    }).then(handleResponse).catch(error => {
+    }).then(processScatterPlot).catch(error => {
       Plotly.purge(graphElementId)
       setErrorContent(error.message)
       setShowError(true)
       setIsLoading(false)
     })
-  }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter, filters])
+  }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
+
+  // Handles custom scatter legend updates
+  useUpdateEffect(() => {
+    // Don't try to update the color if the graph hasn't loaded yet
+    if (scatterData && !isLoading) {
+      processScatterPlot()
+    }
+  }, [filters])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
@@ -260,7 +273,7 @@ function RawScatterPlot({
         id={graphElementId}
         data-testid={graphElementId}
       >
-        { scatterData &&
+        { scatterData && countsByLabel &&
         <ScatterPlotLegend
           name={scatterData.annotParams.name}
           countsByLabel={countsByLabel}

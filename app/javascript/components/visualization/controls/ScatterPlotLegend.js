@@ -78,15 +78,7 @@ function LegendEntry({
   const isShown = filters.includes(filterId)
 
   const iconStyle = { backgroundColor: iconColor }
-  let selectedClass
-  // !allHidden && !isShown: no
-  // allHidden && !isShown: no
-  // allHidden && isShown: no
-  if (isShown) {
-    selectedClass = ''
-  } else {
-    selectedClass = 'shown'
-  }
+  const shownClass = (isShown ? '' : 'shown')
 
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
@@ -96,7 +88,7 @@ function LegendEntry({
 
   return (
     <div
-      className={`scatter-legend-row ${selectedClass}`}
+      className={`scatter-legend-row ${shownClass}`}
       onClick={() => toggleSelection()}
     >
       <div className="scatter-legend-icon" style={iconStyle}></div>
@@ -146,14 +138,6 @@ export default function ScatterPlotLegend({
         />
       )
     })
-
-  // When some (but not all) filters are checked
-  // const someFilters = (filters.length > 0 && filters.length < labels.length)
-
-  // console.log(
-  //   'hasFilters, isDisplayAllTrigger, filters.length, labels.length',
-  //   hasFilters, isDisplayAllTrigger, filters.length, labels.length
-  // )
 
   const filteredClass = (filters.length === 0) ? 'unfiltered' : ''
   return (
