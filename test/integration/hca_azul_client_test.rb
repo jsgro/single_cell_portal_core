@@ -8,7 +8,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     @hca_azul_client = ApplicationController.hca_azul_client
     @project_id = 'c1a9a93d-d9de-4e65-9619-a9cec1052eaa'
     @project_short_name = 'PulmonaryFibrosisGSE135893'
-    @default_catalog = @hca_azul_client.default_catalog || 'dcp7'
+    @default_catalog = @hca_azul_client.default_catalog || 'dcp9'
     @facets = [
       { id: 'disease', filters: [{ id: 'MONDO_0005109', name: 'HIV infectious disease' }] },
       { id: 'species', filters: [{ id: 'NCBITaxon_9606', name: 'Homo sapiens' }] }
@@ -136,5 +136,18 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     regex = @hca_azul_client.format_term_regex(terms)
     expected_regex = /foo|bar|bing\ baz\ boo/i
     assert_equal expected_regex, regex
+  end
+
+  test 'should check if Azul is up' do
+    skip_if_api_down
+    assert @hca_azul_client.api_available?
+  end
+
+  test 'should get Azul service status info' do
+    skip_if_api_down
+    status = @hca_azul_client.status
+    assert status['up']
+    expected_keys = %w[api_endpoints elasticsearch up]
+    assert_equal expected_keys, status.keys.sort
   end
 end
