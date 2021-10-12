@@ -78,7 +78,7 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
     const savingText = file.saveProgress ? <span>Uploading {file.saveProgress}% </span> : 'Saving'
     saveButton = <button type="button"
       className="btn btn-primary margin-right">
-      {savingText} <LoadingSpinner/>
+      {savingText} <LoadingSpinner data-testid="file-save-spinner"/>
     </button>
   }
 

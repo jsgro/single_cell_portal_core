@@ -10,7 +10,6 @@ import ReactDOM from 'react-dom'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
 import ReactNotification, { store } from 'react-notifications-component'
-import 'react-notifications-component/dist/theme.css'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
