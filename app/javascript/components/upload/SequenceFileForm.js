@@ -91,7 +91,7 @@ export default function SequenceFileForm({
         { file.human_data &&
           <div className="row">
             <div className="col-md-12">
-              <TextFormField label="Link to primary human fastq file *"
+              <TextFormField label="Link to primary human FASTQ file *"
                 fieldName="human_fastq_url"
                 file={file}
                 updateFile={updateFile}/>
