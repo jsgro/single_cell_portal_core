@@ -27,7 +27,6 @@ function countValues(array) {
   }, {})
 }
 
-
 /**
  * Get value for `style` prop in Plotly scatter plot `trace.transforms`.
  * Also calculate point counts for each label, `countsByLabel`.
@@ -158,19 +157,22 @@ export default function ScatterPlotLegend({
   //   hasFilters, isDisplayAllTrigger, filters.length, labels.length
   // )
 
+  const htmlName = `all-checkbox-${_kebabCase(name)}`
+
   const filteredClass = (hasFilters) ? 'filtered' : ''
   return (
     <div className={`scatter-legend ${filteredClass}`}>
       <div>
-        <label>
-          <input
-            checked={checkDisplayAll}
-            type="checkbox"
-            onChange={e => updateFilters(labels, e.target.checked)}
-          />All
-        </label>
+        <p className="scatter-legend-name">{name}</p>
+        <input
+          checked={checkDisplayAll}
+          data-analytics-name="all-checkbox"
+          id={htmlName}
+          type="checkbox"
+          onChange={e => updateFilters(labels, e.target.checked)}
+        />
+        <label htmlFor={htmlName}>All</label>
       </div>
-      <p className="scatter-legend-name">{name}</p>
       {legendEntries}
     </div>
   )
