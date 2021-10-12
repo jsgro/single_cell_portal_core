@@ -65,7 +65,7 @@ export function getStyles(data, pointSize) {
 function LegendEntry({
   label, numPoints, iconColor, correlations,
   filterId, numLabels,
-  filters, updateFilters, allHidden
+  filters, updateFilters
 }) {
   let entry = `${label} (${numPoints} points)`
   if (correlations) {
@@ -120,7 +120,7 @@ function StatefulLink({ text, classes, disabled, onClick, analyticsName, style }
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
-  filters, updateFilters, showHideButtons, allHidden
+  filters, updateFilters, showHideButtons
 }) {
   const labels = Object.keys(countsByLabel)
   const filterIds = labels.map(label => _kebabCase(label))
@@ -143,7 +143,6 @@ export default function ScatterPlotLegend({
           updateFilters={updateFilters}
           filterId={filterIds[i]}
           numLabels={numLabels}
-          allHidden={allHidden}
         />
       )
     })
@@ -172,6 +171,7 @@ export default function ScatterPlotLegend({
           className={`btn btn-primary ${showHideButtons[1]}`}
           disabled={!showHideButtons[1]}
           onClick={() => {updateFilters(filterIds, true)}}>Hide all</button> */}
+          <p className="scatter-legend-name">{name}</p>
           <StatefulLink
             analyticsName='show-all'
             classes={`stateful-link ${showHideButtons[0]}`}
@@ -185,7 +185,6 @@ export default function ScatterPlotLegend({
             onClick={() => {updateFilters(filterIds, true)}}
             text="Hide all" />
         </div>
-        <div className="scatter-legend-name">{name}</div>
       </div>
       {legendEntries}
     </div>

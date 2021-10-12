@@ -49,7 +49,6 @@ function RawScatterPlot({
   const [countsByLabel, setCountsByLabel] = useState(null)
   const [filters, setFilters] = useState([])
   const [showHideButtons, setShowHideButtons] = useState(['disabled', 'active'])
-  const [allHidden, setAllHidden] = useState(false)
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
@@ -99,18 +98,15 @@ function RawScatterPlot({
     } else {
       // Handle single-filter interaction
       const filterId = filterIds
-      if (allHidden) {
-        newFilters = [filterId]
-      } else {
-        newFilters = filters.slice()
+      newFilters = filters.slice()
 
-        if (value && !newFilters.includes(filterId)) {
-          newFilters.push(filterId)
-        }
-        if (!value) {
-          _remove(newFilters, id => {return id === filterId})
-        }
+      if (value && !newFilters.includes(filterId)) {
+        newFilters.push(filterId)
       }
+      if (!value) {
+        _remove(newFilters, id => {return id === filterId})
+      }
+
       const numFilters = newFilters.length
       if (numFilters > 0 && numFilters < numLabels) {
         setShowHideButtons(['active', 'active'])
@@ -122,14 +118,7 @@ function RawScatterPlot({
     }
 
     setFilters(newFilters)
-
-    const newAllHidden = (isShowOrHideAll && hide)
-    setAllHidden(newAllHidden)
-
-    console.log('newFilters', newFilters)
   }
-
-  window.debugFilters = filters
 
   /** Process scatter plot data fetched from server */
   function handleResponse(clusterResponse) {
@@ -151,8 +140,7 @@ function RawScatterPlot({
       showPointBorders: scatter.showClusterPointBorders,
       is3D: scatter.is3D,
       labelCorrelations,
-      filters,
-      allHidden
+      filters
     }
     const [traces, labelCounts] = getPlotlyTraces(traceArgs)
     const plotlyTraces = [traces]
@@ -280,7 +268,6 @@ function RawScatterPlot({
           filters={filters}
           updateFilters={updateFilters}
           showHideButtons={showHideButtons}
-          allHidden={allHidden}
         />
         }
       </div>
@@ -319,8 +306,7 @@ function getPlotlyTraces({
   pointSize,
   showPointBorders,
   is3D,
-  filters,
-  allHidden
+  filters
 }) {
   const trace = {
     type: is3D ? 'scatter3d' : 'scattergl',
@@ -352,20 +338,7 @@ function getPlotlyTraces({
     ]
 
     console.log('in getPlotlyTraces. filters:', filters)
-    if (filters.length > 0 && !allHidden) {
-      trace.transforms.push({
-        type: 'filter',
-        target: data.annotations,
-        // For available operations, see:
-        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/transforms/filter.js
-        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/constants/filter_ops.js
-        // Plotly docs are rather sparse here.
-        operation: '}{',
-        value: filters
-      })
-    }
-
-    if (filters.length > 0 && allHidden) {
+    if (filters.length > 0) {
       trace.transforms.push({
         type: 'filter',
         target: data.annotations,
