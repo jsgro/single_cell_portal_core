@@ -15,6 +15,7 @@ import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './uploa
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
 import MessageModal from 'lib/MessageModal'
 import UserProvider from 'providers/UserProvider'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
 
 import WizardNavPanel from './WizardNavPanel'
 import ClusteringStep from './ClusteringStep'
@@ -64,7 +65,7 @@ const FAILURE_NOTIFICATION_TEMPLATE = {
 }
 
 /** shows the upload wizard */
-export default function UploadWizard({ studyAccession, name }) {
+function RawUploadWizard({ studyAccession, name }) {
   const [currentStep, setCurrentStep] = useState(STEPS[0])
   const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
@@ -267,6 +268,8 @@ export default function UploadWizard({ studyAccession, name }) {
     })
   }, [studyAccession])
 
+  const StepComponent = withErrorBoundary(currentStep.component)
+
   return <UserProvider>
     <ReactNotification />
     <div className="upload-wizard-react">
@@ -277,7 +280,7 @@ export default function UploadWizard({ studyAccession, name }) {
         </div>
         <div className="col-md-9">
           { !formState && <LoadingSpinner data-testid="upload-wizard-spinner"/> }
-          { !!formState && <currentStep.component
+          { !!formState && <StepComponent
             formState={formState}
             serverState={serverState}
             deleteFile={deleteFile}
@@ -291,6 +294,9 @@ export default function UploadWizard({ studyAccession, name }) {
     </div>
   </UserProvider>
 }
+
+const UploadWizard = withErrorBoundary(RawUploadWizard)
+export default UploadWizard
 
 /** convenience method for drawing/updating the component from non-react portions of SCP */
 export function renderUploadWizard(target, studyAccession, name) {

@@ -1,9 +1,11 @@
 import React from 'react'
 
 import StepTabHeader from './StepTabHeader'
+import { withErrorBoundary } from 'lib/ErrorBoundary'
+
 
 /** renders a list of the steps and summary study information */
-export default function WizardNavPanel({
+function RawWizardNavPanel({
   formState, serverState, currentStep, setCurrentStep, studyAccession, steps, studyName
 }) {
   return <div className="position-fixed">
@@ -22,3 +24,6 @@ export default function WizardNavPanel({
     </ul>
   </div>
 }
+
+const WizardNavPanel = withErrorBoundary(RawWizardNavPanel)
+export default WizardNavPanel
