@@ -14,7 +14,7 @@ export default function MiscellaneousFileForm({
   deleteFile,
   miscFileTypes
 }) {
-  const validationMessages = validateFile({ file, allFiles, allowedFileTypes: FileTypeExtensions.misc })
+  const validationMessages = validateFile({ file, allFiles, allowedFileExts: FileTypeExtensions.misc })
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
       <form id={`misc-file-form-${file._id}`}
@@ -25,8 +25,9 @@ export default function MiscellaneousFileForm({
           <div className="col-md-12">
             <FileUploadControl
               file={file}
+              allFiles={allFiles}
               updateFile={updateFile}
-              allowedFileTypes={FileTypeExtensions.misc}
+              allowedFileExts={FileTypeExtensions.misc}
               validationMessages={validationMessages}/>
           </div>
         </div>

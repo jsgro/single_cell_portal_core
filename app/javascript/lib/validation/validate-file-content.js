@@ -11,6 +11,8 @@
 import { log } from 'lib/metrics-api'
 import { readLinesAndType } from './io'
 
+const VALIDATED_TYPES = ['Cluster', 'Metadata']
+
 /** Remove white spaces and quotes from a string value */
 function clean(value) {
   return value.trim().replaceAll(/"/g, '')
@@ -200,7 +202,7 @@ async function validateCapFormat(table, fileType) {
   )
 
   // Check format rules specific to either metadata or cluster file
-  if (fileType === 'metadata') {
+  if (fileType === 'Metadata') {
     issues = issues.concat(validateNoMetadataCoordinates(headers))
   } else {
     issues = issues.concat(validateClusterCoordinates(headers))
@@ -288,15 +290,18 @@ function getLogProps(fileObj, fileType, errorObj) {
 }
 
 /** Validate a local file, return list of any detected errors */
-export async function validateFile(file, fileType) {
+export async function validateFileContent(file, fileType) {
   let issues = []
-
+  // for now, exclude gzipped files from validation
+  if (!VALIDATED_TYPES.includes(fileType) || file.name.endsWith('.gz')) {
+    return { errors: [], summary: '' }
+  }
   const { lines, mimeType } = await readLinesAndType(file, 2)
 
   const delimiter = sniffDelimiter(lines, mimeType)
   const table = lines.map(line => line.split(delimiter))
 
-  if (['cluster', 'metadata'].includes(fileType)) {
+  if (['Cluster', 'Metadata'].includes(fileType)) {
     issues = await validateCapFormat(table, fileType)
   }
 
@@ -309,7 +314,7 @@ export async function validateFile(file, fileType) {
   if (errors.length > 0) {
     const numErrors = errors.length
     const errorsTerm = (numErrors === 1) ? 'error' : 'errors'
-    summary = `Your ${fileType} file had ${numErrors} ${errorsTerm}`
+    summary = `Your file had ${numErrors} ${errorsTerm}`
   }
 
   const fileObj = { file, lines, delimiter }

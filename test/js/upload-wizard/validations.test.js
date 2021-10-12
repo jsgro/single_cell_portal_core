@@ -14,7 +14,7 @@ describe('upload file validation name checks', () => {
       name: 'bar.txt',
       _id: '11'
     }, file]
-    const msgs = validateFile({ file, allFiles, allowedFileTypes: ['.txt'] })
+    const msgs = validateFile({ file, allFiles, allowedFileExts: ['.txt'] })
     expect(msgs.fileName).toEqual(undefined)
   })
 
@@ -22,6 +22,7 @@ describe('upload file validation name checks', () => {
     const file = {
       status: 'new',
       name: 'bar.txt',
+      isDirty: true,
       uploadSelection: { name: 'whatever.txt' },
       _id: '10'
     }
@@ -30,59 +31,11 @@ describe('upload file validation name checks', () => {
       name: 'bar.txt',
       _id: '11'
     }, file]
-    const msgs = validateFile({ file, allFiles, allowedFileTypes: ['.txt'] })
+    const msgs = validateFile({ file, allFiles, allowedFileExts: ['.txt'] })
     expect(msgs.fileName).toEqual('A file named bar.txt already exists in your study')
   })
 
-  it('disallows files with duplicate file names', async () => {
-    const file = {
-      status: 'new',
-      name: 'unique',
-      uploadSelection: { name: 'bar.txt' },
-      _id: '10'
-    }
-    const allFiles = [{
-      status: 'uploaded',
-      name: 'bar.txt',
-      _id: '11'
-    }, file]
-    const msgs = validateFile({ file, allFiles, allowedFileTypes: ['.txt'] })
-    expect(msgs.fileName).toEqual('A file named bar.txt already exists in your study')
-  })
 
-  it('disallows files with the same selected file as another file', async () => {
-    const file = {
-      status: 'new',
-      name: 'unique',
-      uploadSelection: { name: 'bar.txt' },
-      _id: '10'
-    }
-    const allFiles = [{
-      status: 'uploaded',
-      name: 'special',
-      uploadSelection: { name: 'bar.txt' },
-      _id: '11'
-    }, file]
-    const msgs = validateFile({ file, allFiles, allowedFileTypes: ['.txt'] })
-    expect(msgs.fileName).toEqual('A file named bar.txt already exists in your study')
-  })
-
-  it('disallows files with duplicate uploaded file names', async () => {
-    const file = {
-      status: 'new',
-      name: 'unique',
-      uploadSelection: { name: 'bar.txt' },
-      _id: '10'
-    }
-    const allFiles = [{
-      status: 'uploaded',
-      name: 'special',
-      upload_file_name: 'bar.txt',
-      _id: '11'
-    }, file]
-    const msgs = validateFile({ file, allFiles, allowedFileTypes: ['.txt'] })
-    expect(msgs.fileName).toEqual('A file named bar.txt already exists in your study')
-  })
 })
 
 describe('upload file validation new file checks', () => {
@@ -98,7 +51,7 @@ describe('upload file validation new file checks', () => {
       upload_file_name: 'bar.txt',
       _id: '11'
     }, file]
-    const msgs = validateFile({ file, allFiles, allowedFileTypes: ['.txt'] })
+    const msgs = validateFile({ file, allFiles, allowedFileExts: ['.txt'] })
     expect(msgs.uploadSelection).toEqual('You must select a file to upload')
   })
 
@@ -110,7 +63,7 @@ describe('upload file validation new file checks', () => {
       _id: '10'
     }
     const allFiles = [{ file }]
-    const msgs = validateFile({ file, allFiles, allowedFileTypes: ['.txt'] })
+    const msgs = validateFile({ file, allFiles, allowedFileExts: ['.txt'] })
     expect(msgs.fileName).toEqual('Allowed extensions are .txt')
   })
 
@@ -122,7 +75,7 @@ describe('upload file validation new file checks', () => {
       _id: '10'
     }
     const allFiles = [{ file }]
-    const msgs = validateFile({ file, allFiles, allowedFileTypes: ['.txt', '.txt.gz'] })
+    const msgs = validateFile({ file, allFiles, allowedFileExts: ['.txt', '.txt.gz'] })
     expect(msgs.fileName).toEqual('Allowed extensions are .txt .txt.gz')
   })
 
@@ -140,7 +93,7 @@ describe('upload file validation new file checks', () => {
       name: 'Cluster A',
       _id: 'newFile-1'
     }, file]
-    const msgs = validateFile({ file, allFiles, allowedFileTypes: ['.txt'] })
+    const msgs = validateFile({ file, allFiles, allowedFileExts: ['.txt'] })
     expect(msgs.parentSaved).toEqual('Parent file must be saved first')
   })
 })
@@ -154,7 +107,7 @@ describe('it checks presence of required fields', () => {
     }
     const allFiles = [{ file }]
     const msgs = validateFile({
-      file, allFiles, allowedFileTypes: ['.txt', '.txt.gz'],
+      file, allFiles, allowedFileExts: ['.txt', '.txt.gz'],
       requiredFields: [{ label: 'species', propertyName: 'taxon_id' }]
     })
     expect(msgs.taxon_id).toEqual(undefined)
@@ -167,7 +120,7 @@ describe('it checks presence of required fields', () => {
     }
     const allFiles = [{ file }]
     const msgs = validateFile({
-      file, allFiles, allowedFileTypes: ['.txt', '.txt.gz'],
+      file, allFiles, allowedFileExts: ['.txt', '.txt.gz'],
       requiredFields: [{ label: 'species', propertyName: 'taxon_id' }]
     })
     expect(msgs.taxon_id).toEqual('You must specify species')
@@ -182,7 +135,7 @@ describe('it checks presence of required fields', () => {
     }
     const allFiles = [{ file }]
     const msgs = validateFile({
-      file, allFiles, allowedFileTypes: ['.txt', '.txt.gz'],
+      file, allFiles, allowedFileExts: ['.txt', '.txt.gz'],
       requiredFields: [{ label: 'species', propertyName: 'taxon_id' },
         { label: 'genome assembly', propertyName: 'genome_assembly_id' }]
     })
@@ -201,7 +154,7 @@ describe('it checks presence of required fields', () => {
     }
     const allFiles = [{ file }]
     const msgs = validateFile({
-      file, allFiles, allowedFileTypes: ['.txt', '.txt.gz'],
+      file, allFiles, allowedFileExts: ['.txt', '.txt.gz'],
       requiredFields: [{ label: 'units', propertyName: 'expression_file_info.units' },
         { label: 'biosample input type', propertyName: 'expression_file_info.biosample_input_type' }]
     })

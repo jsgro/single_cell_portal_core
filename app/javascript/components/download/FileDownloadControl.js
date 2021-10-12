@@ -18,15 +18,15 @@ export default function FileDownloadControl({ file, bucketName }) {
     return URL.createObjectURL(fileBlob)
   }
 
-  if (!file.upload_file_name) {
+  // don't show the control if there's no remote file, or if the user has already selected a replacement
+  if (!file.upload_file_name || file.uploadSelection) {
     return null
   } else {
     if (!file.upload_file_name && file.human_data) {
       return null
     // TODO (SCP-3719): Once the Sequence Data tab is added update this section for handling external human data files
     } else {
-      return <p>
-        <br></br>
+      return <div className="form-group">
         {!file.generation ? <span className="label label-warning no-download-available" data-toggle="tooltip"
           title='You can download this file once it has been fully uploaded. Check back soon.'>
           {<span className="fas fa-ban"></span> } Awaiting remote file
@@ -35,7 +35,7 @@ export default function FileDownloadControl({ file, bucketName }) {
             {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}
           </a>
         }
-      </p>
+      </div>
     }
   }
 }

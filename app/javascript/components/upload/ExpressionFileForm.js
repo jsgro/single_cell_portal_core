@@ -32,9 +32,9 @@ export default function ExpressionFileForm({
   const isMtxFile = file.file_type === 'MM Coordinate Matrix'
   const isRawCountsFile = file.expression_file_info.is_raw_counts
 
-  const allowedFileTypes = isMtxFile ? FileTypeExtensions.mtx : FileTypeExtensions.plainText
+  const allowedFileExts = isMtxFile ? FileTypeExtensions.mtx : FileTypeExtensions.plainText
   const requiredFields = isRawCountsFile ? RAW_COUNTS_REQUIRED_FIELDS : REQUIRED_FIELDS
-  const validationMessages = validateFile({ file, allFiles, allowedFileTypes, requiredFields })
+  const validationMessages = validateFile({ file, allFiles, allowedFileExts, requiredFields })
 
   const associatedRawCounts = file.expression_file_info.raw_counts_associations.map(id => ({
     label: rawCountsOptions.find(rf => rf.value == id)?.label,
@@ -50,9 +50,10 @@ export default function ExpressionFileForm({
 
         <FileUploadControl
           file={file}
+          allFiles={allFiles}
           updateFile={updateFile}
           validationMessages={validationMessages}
-          allowedFileTypes={allowedFileTypes}/>
+          allowedFileExts={allowedFileExts}/>
         <div className="form-group">
           <label>Matrix file type:</label><br/>
           <label className="sublabel">

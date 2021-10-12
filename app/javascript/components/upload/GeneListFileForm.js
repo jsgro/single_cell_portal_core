@@ -13,7 +13,7 @@ export default function GeneListFileForm({
   deleteFile,
   miscFileTypes
 }) {
-  const validationMessages = validateFile({ file, allFiles, allowedFileTypes: FileTypeExtensions.plainText })
+  const validationMessages = validateFile({ file, allFiles, allowedFileExts: FileTypeExtensions.plainText })
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
       <form id={`gene-list-form-${file._id}`}
@@ -24,7 +24,8 @@ export default function GeneListFileForm({
           <div className="col-md-12">
             <FileUploadControl
               file={file}
-              allowedFileTypes={FileTypeExtensions.plainText}
+              allFiles={allFiles}
+              allowedFileExts={FileTypeExtensions.plainText}
               validationMessages={validationMessages}
               updateFile={updateFile}/>
           </div>
