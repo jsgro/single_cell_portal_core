@@ -11,7 +11,8 @@ export default function GeneListFileForm({
   updateFile,
   saveFile,
   deleteFile,
-  miscFileTypes
+  miscFileTypes,
+  bucketName
 }) {
   const validationMessages = validateFile({ file, allFiles, allowedFileExts: FileTypeExtensions.plainText })
   return <div className="row top-margin" key={file._id}>
@@ -27,7 +28,8 @@ export default function GeneListFileForm({
               allFiles={allFiles}
               allowedFileExts={FileTypeExtensions.plainText}
               validationMessages={validationMessages}
-              updateFile={updateFile}/>
+              updateFile={updateFile}
+              bucketName={bucketName}/>
           </div>
         </div>
 

@@ -2,7 +2,9 @@ import React, { useState } from 'react'
 
 import { bytesToSize } from 'lib/stats'
 import { validateFileContent } from 'lib/validation/validate-file-content'
+import FileDownloadControl from 'components/download/FileDownloadControl'
 import LoadingSpinner from 'lib/LoadingSpinner'
+
 
 const plainTextExtensions = ['.txt', '.tsv', '.text', '.csv']
 const mtxExtensions = ['.mtx', '.mm', '.txt', '.text']
@@ -56,7 +58,8 @@ async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExt
 export default function FileUploadControl({
   file, allFiles, updateFile,
   allowedFileExts=['*'],
-  validationMessages={}
+  validationMessages={},
+  bucketName
 }) {
   const [fileValidation, setFileValidation] = useState({ validating: false, errorMsgs: [], filename: null })
   const inputId = `file-input-${file._id}`
@@ -99,6 +102,10 @@ export default function FileUploadControl({
         {file.uploadSelection.name}  ({bytesToSize(file.uploadSelection.size)})
       </span> }
     </label>
+    <FileDownloadControl
+      file={file}
+      bucketName={bucketName}
+    />
     &nbsp;
     <button className="fileinput-button terra-secondary-btn" id={`fileButton-${file._id}`}>
       { buttonText }

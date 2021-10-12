@@ -4,6 +4,7 @@ import _kebabCase from 'lodash/kebabCase'
 import Select from 'lib/InstrumentedSelect'
 import MTXBundledFilesForm from './MTXBundledFilesForm'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
+
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 import { findBundleChildren, validateFile } from './upload-utils'
 
@@ -24,7 +25,8 @@ export default function ExpressionFileForm({
   deleteFile,
   addNewFile,
   fileMenuOptions,
-  rawCountsOptions
+  rawCountsOptions,
+  bucketName
 }) {
   const associatedChildren = findBundleChildren(file, allFiles)
   const speciesOptions = fileMenuOptions.species.map(spec => ({ label: spec.common_name, value: spec.id }))
@@ -47,13 +49,13 @@ export default function ExpressionFileForm({
         className="form-terra"
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
-
         <FileUploadControl
           file={file}
           allFiles={allFiles}
           updateFile={updateFile}
           validationMessages={validationMessages}
-          allowedFileExts={allowedFileExts}/>
+          allowedFileExts={allowedFileExts}
+          bucketName={bucketName}/>
         <div className="form-group">
           <label>Matrix file type:</label><br/>
           <label className="sublabel">
@@ -136,7 +138,7 @@ export default function ExpressionFileForm({
         { isMtxFile &&
           <MTXBundledFilesForm {...{
             parentFile: file, allFiles, updateFile, saveFile, deleteFile,
-            addNewFile, associatedChildren
+            addNewFile, associatedChildren, bucketName
           }}/>
         }
 

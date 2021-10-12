@@ -22,7 +22,8 @@ export default function SequenceFileForm({
   addNewFile,
   sequenceFileTypes,
   fileMenuOptions,
-  associatedBaiFile
+  associatedBaiFile,
+  bucketName
 }) {
   const speciesOptions = fileMenuOptions.species.map(spec => ({ label: spec.common_name, value: spec.id }))
   const selectedSpecies = speciesOptions.find(opt => opt.value === file.taxon_id)
@@ -75,7 +76,8 @@ export default function SequenceFileForm({
                 allFiles={allFiles}
                 updateFile={updateFile}
                 allowedFileExts={FileTypeExtensions.sequence}
-                validationMessages={validationMessages}/>
+                validationMessages={validationMessages}
+                bucketName={bucketName}/>
             </div>
           </div>
           <div className="form-group">
@@ -90,7 +92,7 @@ export default function SequenceFileForm({
         { file.human_data &&
           <div className="row">
             <div className="col-md-12">
-              <TextFormField label="Link to primary human fastq file *"
+              <TextFormField label="Link to primary human FASTQ file *"
                 fieldName="human_fastq_url"
                 file={file}
                 updateFile={updateFile}/>
@@ -129,7 +131,8 @@ export default function SequenceFileForm({
             updateFile={updateFile}
             saveFile={saveFile}
             deleteFile={deleteFile}
-            addNewFile={addNewFile}/>
+            addNewFile={addNewFile}
+            bucketName={bucketName}/>
         }
 
       </form>
@@ -147,7 +150,8 @@ function BamIndexFileForm({
   updateFile,
   saveFile,
   deleteFile,
-  addNewFile
+  addNewFile,
+  bucketName
 }) {
   const validationMessages = validateFile({ file, allFiles, allowedFileExts: FileTypeExtensions.bai })
 
@@ -182,7 +186,8 @@ function BamIndexFileForm({
           allFiles={allFiles}
           updateFile={updateFile}
           allowedFileExts={FileTypeExtensions.bai}
-          validationMessages={validationMessages}/>
+          validationMessages={validationMessages}
+          bucketName={bucketName}/>
         <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
         <SaveDeleteButtons
           file={file}

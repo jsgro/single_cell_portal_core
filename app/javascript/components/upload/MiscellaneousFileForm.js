@@ -12,7 +12,8 @@ export default function MiscellaneousFileForm({
   updateFile,
   saveFile,
   deleteFile,
-  miscFileTypes
+  miscFileTypes,
+  bucketName
 }) {
   const validationMessages = validateFile({ file, allFiles, allowedFileExts: FileTypeExtensions.misc })
   return <div className="row top-margin" key={file._id}>
@@ -28,7 +29,8 @@ export default function MiscellaneousFileForm({
               allFiles={allFiles}
               updateFile={updateFile}
               allowedFileExts={FileTypeExtensions.misc}
-              validationMessages={validationMessages}/>
+              validationMessages={validationMessages}
+              bucketName={bucketName}/>
           </div>
         </div>
         <div className="form-group">

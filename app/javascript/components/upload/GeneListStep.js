@@ -63,7 +63,8 @@ function GeneListForm({
         allFiles={formState.files}
         updateFile={updateFile}
         saveFile={saveFile}
-        deleteFile={deleteFile}/>
+        deleteFile={deleteFile}
+        bucketName={formState.study.bucket_id}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_GENE_LIST_FILE}/>
   </div>

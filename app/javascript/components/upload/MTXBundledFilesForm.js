@@ -32,7 +32,8 @@ export default function MTXBundledFilesForm({
   saveFile,
   deleteFile,
   addNewFile,
-  associatedChildren
+  associatedChildren,
+  bucketName
 }) {
   const barcodesFile = associatedChildren.find(f => f.file_type === '10X Barcodes File')
   const genesFile = associatedChildren.find(f => f.file_type === '10X Genes File')
@@ -70,7 +71,8 @@ export default function MTXBundledFilesForm({
             allFiles={allFiles}
             updateFile={updateFile}
             validationMessages={genesValidationMessages}
-            allowedFileExts={FileTypeExtensions.plainText}/>
+            allowedFileExts={FileTypeExtensions.plainText}
+            bucketName={bucketName}/>
           <TextFormField label="Description" fieldName="description" file={genesFile} updateFile={updateFile}/>
           <SaveDeleteButtons
             file={genesFile}
@@ -91,7 +93,8 @@ export default function MTXBundledFilesForm({
             allFiles={allFiles}
             updateFile={updateFile}
             validationMessages={genesValidationMessages}
-            allowedFileExts={FileTypeExtensions.plainText}/>
+            allowedFileExts={FileTypeExtensions.plainText}
+            bucketName={bucketName}/>
           <TextFormField label="Description" fieldName="description" file={barcodesFile} updateFile={updateFile}/>
           <SaveDeleteButtons
             file={barcodesFile}

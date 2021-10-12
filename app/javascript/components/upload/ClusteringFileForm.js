@@ -2,7 +2,6 @@ import React from 'react'
 
 import Select from 'lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
-import FileDownloadControl from 'components/download/FileDownloadControl'
 import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
 import { validateFile } from './upload-utils'
 
@@ -36,11 +35,8 @@ export default function ClusteringFileForm({
             allFiles={allFiles}
             updateFile={updateFile}
             allowedFileExts={FileTypeExtensions.plainText}
-            validationMessages={validationMessages}/>
-          <FileDownloadControl
-            file={file}
-            bucketName={bucketName}
-          />
+            validationMessages={validationMessages}
+            bucketName={bucketName}/>
         </div>
         <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         { file.is_spatial &&

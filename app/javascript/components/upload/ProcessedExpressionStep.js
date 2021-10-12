@@ -108,7 +108,8 @@ function ProcessedUploadForm({
           deleteFile={deleteFile}
           addNewFile={addNewFile}
           rawCountsOptions={rawCountsOptions}
-          fileMenuOptions={fileMenuOptions}/>
+          fileMenuOptions={fileMenuOptions}
+          bucketName={formState.study.bucket_id}/>
       })}
       <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
     </> }

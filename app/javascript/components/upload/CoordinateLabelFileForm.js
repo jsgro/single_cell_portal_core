@@ -13,7 +13,8 @@ export default function CoordinateLabelForm({
   saveFile,
   deleteFile,
   associatedClusterFileOptions,
-  updateCorrespondingClusters
+  updateCorrespondingClusters,
+  bucketName
 }) {
   const associatedCluster = associatedClusterFileOptions.find(opt => opt.value === file.options.cluster_file_id)
   const validationMessages = validateFile({
@@ -34,7 +35,8 @@ export default function CoordinateLabelForm({
               allFiles={allFiles}
               updateFile={updateFile}
               allowedFileExts={FileTypeExtensions.plainText}
-              validationMessages={validationMessages}/>
+              validationMessages={validationMessages}
+              bucketName={bucketName}/>
           </div>
         </div>
         <div className="form-group">

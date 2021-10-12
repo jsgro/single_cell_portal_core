@@ -45,10 +45,10 @@ function SequenceForm({
     <div className="row">
       <div className="col-md-12">
         <div className="form-terra">
-          Primary sequence information, such as BAM, BAM Index, and Fastq files<br/>
+          Primary sequence information, such as BAM, BAM Index, and FASTQ files<br/>
           <p>
             <b>Non-human Data</b><br/>
-            If you have a few, small (under 2GB) non-human sequence files, they can be uploaded here.
+            If you have a few, small (under 2 GB) non-human sequence files, they can be uploaded here.
             For uploading many or larger files, please refer to the instructions in
             our <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006011-Uploading-Large-Files-Using-Gsutil-Tool" target="_blank" rel="noopener noreferrer">documentation</a>.
           </p>
@@ -78,7 +78,8 @@ function SequenceForm({
         deleteFile={deleteFile}
         sequenceFileTypes={sequenceFileTypes}
         fileMenuOptions={serverState.menu_options}
-        associatedBaiFile={associatedBaiFile}/>
+        associatedBaiFile={associatedBaiFile}
+        bucketName={formState.study.bucket_id}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SEQUENCE_FILE}/>
   </div>
