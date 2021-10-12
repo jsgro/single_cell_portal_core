@@ -10,12 +10,13 @@ import { logScatterPlot } from 'lib/scp-api-metrics'
 import { log } from 'lib/metrics-api'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
-import ScatterPlotLegend, { getStyles } from './controls/ScatterPlotLegend'
+import ScatterPlotLegend, { getStyles, getLegendWidth } from './controls/ScatterPlotLegend'
 import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
 
+window.Plotly = Plotly
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
@@ -24,7 +25,6 @@ export const SCATTER_COLOR_OPTIONS = [
 ]
 
 export const defaultScatterColor = 'Reds'
-window.Plotly = Plotly
 
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
@@ -284,6 +284,7 @@ function getPlotlyTraces({
   if (annotType === 'group' && !isGeneExpressionForColor) {
     // use plotly's groupby transformation to make the traces
     const [legendStyles, labelCounts] = getStyles(data, pointSize)
+
     countsByLabel = labelCounts
     trace.transforms = [
       {
@@ -301,7 +302,7 @@ function getPlotlyTraces({
         // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/transforms/filter.js
         // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/constants/filter_ops.js
         // Plotly docs are rather sparse here.
-        operation: '{}',
+        operation: '{}', // = "set contains these filters"
         value: filters
       })
     }
@@ -376,7 +377,8 @@ function getPlotlyLayout({ width, height }={}, {
   const layout = {
     hovermode: 'closest',
     // font: labelFont,
-    dragmode: getDragMode(isCellSelecting)
+    dragmode: getDragMode(isCellSelecting),
+    showlegend: false
   }
   if (is3D) {
     layout.scene = get3DScatterProps({
@@ -401,6 +403,7 @@ function getPlotlyLayout({ width, height }={}, {
     //   y: 0.94
     // }
   }
+
   layout.showlegend = false
   layout.width = width
   layout.height = height

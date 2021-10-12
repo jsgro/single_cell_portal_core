@@ -27,6 +27,60 @@ function countValues(array) {
   }, {})
 }
 
+
+/** Get font family and size */
+function getFont(fontCfg) {
+  const family = fontCfg.family ? fontCfg.family : 'sans-serif'
+  const size = fontCfg.size ? fontCfg.size : '14px'
+  const weight = fontCfg.weight ? fontCfg.weight : '400'
+
+  const font = `${weight} ${size} ${family}`
+
+  return font
+}
+
+/**
+ * Get width and height of given text in pixels.
+ *
+ * Background: https://erikonarheim.com/posts/canvas-text-metrics/
+ */
+function getTextSize(text, fontCfg) {
+  const font = getFont(fontCfg)
+
+  // Reuse canvas object for better performance
+  const canvas =
+    getTextSize.canvas ||
+    (getTextSize.canvas = document.createElement('canvas'))
+  const context = canvas.getContext('2d')
+  context.font = font
+  const metrics = context.measureText(text)
+
+  // metrics.width is less precise than technique below
+  const right = metrics.actualBoundingBoxRight
+  const left = metrics.actualBoundingBoxLeft
+  const width = Math.abs(left) + Math.abs(right)
+
+  const height =
+    Math.abs(metrics.actualBoundingBoxAscent) +
+    Math.abs(metrics.actualBoundingBoxDescent)
+
+  return { width, height }
+}
+
+/** Get legend width, which depends on maximum legend entry width */
+export function getLegendWidth(countsByLabel, correlations) {
+  const labels = Object.keys(countsByLabel)
+  let maxWidth = 0
+  labels.forEach(label => {
+    const entryText = getEntryText(label, countsByLabel, correlations)
+    const width = getTextSize(entryText).width
+    if (width > maxWidth) {
+      maxWidth = width
+    }
+  })
+  return maxWidth + 20
+}
+
 /**
  * Get value for `style` prop in Plotly scatter plot `trace.transforms`.
  * Also calculate point counts for each label, `countsByLabel`.
@@ -59,12 +113,9 @@ export function getStyles(data, pointSize) {
   return [legendStyles, countsByLabel]
 }
 
-/** Component for row in legend */
-function LegendEntry({
-  label, numPoints, iconColor, correlations,
-  filterId, numLabels,
-  filters, updateFilters
-}) {
+/** Get text for a legend entry */
+function getEntryText(label, countsByLabel, correlations) {
+  const numPoints = countsByLabel[label]
   let entry = `${label} (${numPoints} points)`
   if (correlations) {
     const correlation = Math.round(correlations[label] * 100) / 100
@@ -72,7 +123,15 @@ function LegendEntry({
     // ρ = rho = Spearman's rank correlation coefficient
     entry = `${label} (${numPoints} points, ρ = ${correlation})`
   }
+  return entry
+}
 
+/** Component for row in legend */
+function LegendEntry({
+  entryText, iconColor,
+  filterId, numLabels,
+  filters, updateFilters
+}) {
   const isSelected = filters.includes(filterId)
 
   const iconStyle = { backgroundColor: iconColor }
@@ -93,7 +152,7 @@ function LegendEntry({
       <div className="scatter-legend-icon" style={iconStyle}>
         <span className="checkmark">{checkmark}</span>
       </div>
-      <div className="scatter-legend-entry">{entry}</div>
+      <div className="scatter-legend-entry">{entryText}</div>
     </div>
   )
 }
@@ -128,7 +187,8 @@ export default function ScatterPlotLegend({
   const legendEntries = labels
     .sort(labelSort) // sort keys so we assign colors in the right order
     .map((label, index) => {
-      const numPoints = countsByLabel[label]
+      const entryText = getEntryText(label, countsByLabel, correlations)
+
       const iconColor = getColorBrewerColor(index)
 
       const filterId = _kebabCase(label)
@@ -137,10 +197,8 @@ export default function ScatterPlotLegend({
       return (
         <LegendEntry
           key={filterId}
-          label={label}
-          numPoints={numPoints}
+          entryText={entryText}
           iconColor={iconColor}
-          correlations={correlations}
           filters={filters}
           updateFilters={updateFilters}
           filterId={filterId}
