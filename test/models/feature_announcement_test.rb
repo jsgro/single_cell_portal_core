@@ -24,11 +24,24 @@ class FeatureAnnouncementTest< ActiveSupport::TestCase
     FeatureAnnouncement.update_all(published: true, archived: false)
   end
 
-  test 'should set slug on save' do
-    assert_equal "#{@today}-amazing-new-feature", @feature_announcement.slug
-    @feature_announcement.update(title: 'Announcing a New Feature!!')
-    @feature_announcement.reload
-    assert_equal "#{@today}-announcing-a-new-feature", @feature_announcement.slug
+  test 'should set slug on save until published' do
+    feature = FeatureAnnouncement.create(
+      title: 'Unpublished Feature',
+      content: '<p>This is the content.</p>',
+      doc_link: 'https://singlecell.zendesk.com/hc/en-us',
+      published: false,
+      archived: false
+    )
+    assert_equal "#{@today}-unpublished-feature", feature.slug
+    feature.update(title: 'Announcing a New Feature!!')
+    feature.reload
+    assert_equal "#{@today}-announcing-a-new-feature", feature.slug
+    feature.update(published: true)
+    feature.reload
+    assert_equal "#{@today}-announcing-a-new-feature", feature.slug
+    feature.update(title: 'This title has changed')
+    feature.reload
+    assert_equal "#{@today}-announcing-a-new-feature", feature.slug
   end
 
   test 'should determine if there are latest features' do

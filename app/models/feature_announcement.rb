@@ -1,3 +1,6 @@
+##
+# Controls the display/CRUD of new feature announcement HTML blobs, similar to a blog
+##
 class FeatureAnnouncement
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -25,7 +28,7 @@ class FeatureAnnouncement
     else
       date_obj = created_at
     end
-    date_obj&.strftime('%b %d %Y')
+    date_obj&.strftime('%B %-d, %Y')
   end
 
   def self.published
@@ -49,10 +52,6 @@ class FeatureAnnouncement
     archived.any?
   end
 
-  def self.per_page
-    5
-  end
-
   # record the latest date of whenever an announcement is either published or archived
   # for new records, record initial state if true, otherwise only save if changed
   def record_latest_event
@@ -71,7 +70,9 @@ class FeatureAnnouncement
   private
 
   def set_slug
-    today = created_at.nil? ? Time.zone.today : created_at
-    self.slug = "#{today.strftime('%F')}-#{title.downcase.gsub(/[^a-zA-Z0-9]+/, '-').chomp('-')}"
+    if new_record? || title_changed? && !published
+      today = created_at.nil? ? Time.zone.today : created_at
+      self.slug = "#{today.strftime('%F')}-#{title.downcase.gsub(/[^a-zA-Z0-9]+/, '-').chomp('-')}"
+    end
   end
 end
