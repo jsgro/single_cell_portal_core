@@ -59,6 +59,7 @@ export function ImageForm({
         </div>
       </div>
     </div>
+    { imageFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_IMAGE_FILE}/> }
     { imageFiles.map(file => {
       return <ImageFileForm
         key={file._id}

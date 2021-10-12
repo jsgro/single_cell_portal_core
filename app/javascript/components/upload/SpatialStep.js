@@ -101,6 +101,7 @@ export function SpatialUploadForm({
         </div>
       </div>
     </div>
+    { spatialFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SPATIAL_FILE}/> }
     { spatialFiles.map(file => {
       return <ClusteringFileForm
         key={file._id}

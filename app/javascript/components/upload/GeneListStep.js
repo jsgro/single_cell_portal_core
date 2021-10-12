@@ -56,6 +56,7 @@ function GeneListForm({
         </div>
       </div>
     </div>
+    { geneListFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_GENE_LIST_FILE}/> }
     { geneListFiles.map(file => {
       return <GeneListFileForm
         key={file._id}

@@ -298,6 +298,7 @@ function RawUploadWizard({ studyAccession, name }) {
         <div className="col-md-9">
           { !formState && <LoadingSpinner data-testid="upload-wizard-spinner"/> }
           { !!formState && <StepComponent
+            setCurrentStep={setCurrentStep}
             formState={formState}
             serverState={serverState}
             deleteFile={deleteFile}
@@ -306,8 +307,8 @@ function RawUploadWizard({ studyAccession, name }) {
             addNewFile={addNewFile}
           /> }
           <div className="text-center">
-            { nextStep && <button className="btn btn-secondary action margin-right" onClick={() => setCurrentStep(prevStep)}>Previous</button> }
-            { nextStep && <button className="btn btn-secondary action" onClick={() => setCurrentStep(nextStep)}>Next</button> }
+            { nextStep && <button className="btn btn-secondary terra-secondary-btn margin-right" onClick={() => setCurrentStep(prevStep)}>Previous</button> }
+            { nextStep && <button className="btn btn-secondary terra-secondary-btn" onClick={() => setCurrentStep(nextStep)}>Next</button> }
           </div>
         </div>
       </div>

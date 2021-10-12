@@ -92,7 +92,7 @@ export function ClusteringUploadForm({
         </div>
       </div>
     </div>
-    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_CLUSTER_FILE}/>
+    { clusterFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_CLUSTER_FILE}/> }
     { clusterFiles.map(file => {
       return <ClusteringFileForm
         key={file._id}
