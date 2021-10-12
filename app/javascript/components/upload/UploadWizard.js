@@ -68,13 +68,13 @@ const FAILURE_NOTIFICATION_TEMPLATE = {
 
 /** shows the upload wizard */
 function RawUploadWizard({ studyAccession, name }) {
-
   const routerLocation = useLocation()
   const queryParams = queryString.parse(routerLocation.search)
-  let currentStep = STEPS.find(step => step.name === queryParams.step)
-  if (!currentStep) {
-    currentStep = STEPS[0]
+  let currentStepIndex = STEPS.findIndex(step => step.name === queryParams.step)
+  if (currentStepIndex < 0) {
+    currentStepIndex = 0
   }
+  const currentStep = STEPS[currentStepIndex]
 
   const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
@@ -94,6 +94,7 @@ function RawUploadWizard({ studyAccession, name }) {
   /** move the wizard to the given step */
   function setCurrentStep(newStep) {
     navigate(`?step=${newStep.name}`)
+    window.scrollTo(0, 0)
   }
 
   /** adds an empty file, merging in the given fileProps. Does not communicate anything to the server */
@@ -106,6 +107,7 @@ function RawUploadWizard({ studyAccession, name }) {
       newState.files.push(newFile)
       return newState
     })
+    window.setTimeout(() => scroll({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
   }
 
   /** handle response from server after an upload by updating the serverState with the updated file response */
@@ -283,7 +285,8 @@ function RawUploadWizard({ studyAccession, name }) {
   }, [studyAccession])
 
   const StepComponent = withErrorBoundary(currentStep.component)
-
+  const nextStep = STEPS[currentStepIndex + 1]
+  const prevStep = STEPS[currentStepIndex - 1]
   return <UserProvider>
     <ReactNotification />
     <div className="upload-wizard-react">
@@ -302,6 +305,10 @@ function RawUploadWizard({ studyAccession, name }) {
             saveFile={saveFile}
             addNewFile={addNewFile}
           /> }
+          <div className="text-center">
+            { nextStep && <button className="btn btn-secondary action margin-right" onClick={() => setCurrentStep(prevStep)}>Previous</button> }
+            { nextStep && <button className="btn btn-secondary action" onClick={() => setCurrentStep(nextStep)}>Next</button> }
+          </div>
         </div>
       </div>
       <MessageModal/>
