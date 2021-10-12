@@ -159,12 +159,7 @@
 	display: none;
 }
 
-/**
-  Start of styles for custom Plotly scatter plot legend
-
-  Visual design specification:
-  https://www.sketch.com/s/a225bef6-e4f3-40c9-936e-dd391c943383
-*/
+/** Start of styles for custom Plotly scatter plot legend */
 .plot-container.plotly {
   float: left;
 }
@@ -179,9 +174,21 @@
   background-color: #E5EEF7;
 }
 
+.scatter-legend-head {
+  margin: 5px 5px 10px 5px;
+}
+
 .scatter-legend-name {
-  margin: 5px 0 10px 5px;
   font-weight: bold;
+}
+
+.stateful-link {
+  color: #4d72aa;
+  cursor: pointer;
+}
+
+.stateful-link.disabled {
+  color: rgb(197, 210, 227);
 }
 
 .scatter-legend-row {
@@ -196,7 +203,10 @@
 /** Like hover state for React Select */
 .scatter-legend-row:hover {
   border-color: #AAB;
-  // box-shadow: 0px 0px 4px 1px black; // Used in spec, but unwieldy
+}
+
+.scatter-legend-row:hover {
+  border-color: #AAB;
 }
 
 .scatter-legend-icon {
@@ -212,33 +222,17 @@
   top: 5px;
 }
 
-.filtered {
+.scatter-legend-row {
+  opacity: 0.3;
+}
+
+.scatter-legend-row.shown {
+  opacity: 1;
+}
+
+.unfiltered {
   .scatter-legend-row {
-    opacity: 0.3;
-  }
-  .scatter-legend-row.selected {
     opacity: 1;
-  }
-}
-
-.checkmark {
-  color: #FFF;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  position: relative;
-  top: 3px;
-  left: 8px;
-  font-weight: 600;
-}
-
-.scatter-legend {
-  label {
-    position: relative;
-    top: -1px;
-    margin-left: 3px;
-  }
-
-  input {
-    margin-left: 3px;
   }
 }
 /** End of styles for custom Plotly scatter plot legend */

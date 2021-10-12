@@ -11,6 +11,7 @@ function labelSort(a, b) {
   return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
 }
 
+
 /**
  * Return a hash of value=>count for the passed-in array
  * This is surprisingly quick even for large arrays, but we'd rather we
@@ -27,59 +28,6 @@ function countValues(array) {
   }, {})
 }
 
-
-/** Get font family and size */
-function getFont(fontCfg) {
-  const family = fontCfg.family ? fontCfg.family : 'sans-serif'
-  const size = fontCfg.size ? fontCfg.size : '14px'
-  const weight = fontCfg.weight ? fontCfg.weight : '400'
-
-  const font = `${weight} ${size} ${family}`
-
-  return font
-}
-
-/**
- * Get width and height of given text in pixels.
- *
- * Background: https://erikonarheim.com/posts/canvas-text-metrics/
- */
-function getTextSize(text, fontCfg) {
-  const font = getFont(fontCfg)
-
-  // Reuse canvas object for better performance
-  const canvas =
-    getTextSize.canvas ||
-    (getTextSize.canvas = document.createElement('canvas'))
-  const context = canvas.getContext('2d')
-  context.font = font
-  const metrics = context.measureText(text)
-
-  // metrics.width is less precise than technique below
-  const right = metrics.actualBoundingBoxRight
-  const left = metrics.actualBoundingBoxLeft
-  const width = Math.abs(left) + Math.abs(right)
-
-  const height =
-    Math.abs(metrics.actualBoundingBoxAscent) +
-    Math.abs(metrics.actualBoundingBoxDescent)
-
-  return { width, height }
-}
-
-/** Get legend width, which depends on maximum legend entry width */
-export function getLegendWidth(countsByLabel, correlations) {
-  const labels = Object.keys(countsByLabel)
-  let maxWidth = 0
-  labels.forEach(label => {
-    const entryText = getEntryText(label, countsByLabel, correlations)
-    const width = getTextSize(entryText).width
-    if (width > maxWidth) {
-      maxWidth = width
-    }
-  })
-  return maxWidth + 20
-}
 
 /**
  * Get value for `style` prop in Plotly scatter plot `trace.transforms`.
@@ -113,9 +61,12 @@ export function getStyles(data, pointSize) {
   return [legendStyles, countsByLabel]
 }
 
-/** Get text for a legend entry */
-function getEntryText(label, countsByLabel, correlations) {
-  const numPoints = countsByLabel[label]
+/** Component for row in legend */
+function LegendEntry({
+  label, numPoints, iconColor, correlations,
+  filterId, numLabels,
+  filters, updateFilters, allHidden
+}) {
   let entry = `${label} (${numPoints} points)`
   if (correlations) {
     const correlation = Math.round(correlations[label] * 100) / 100
@@ -123,24 +74,23 @@ function getEntryText(label, countsByLabel, correlations) {
     // ρ = rho = Spearman's rank correlation coefficient
     entry = `${label} (${numPoints} points, ρ = ${correlation})`
   }
-  return entry
-}
 
-/** Component for row in legend */
-function LegendEntry({
-  entryText, iconColor,
-  filterId, numLabels,
-  filters, updateFilters
-}) {
-  const isSelected = filters.includes(filterId)
+  const isShown = filters.includes(filterId)
 
   const iconStyle = { backgroundColor: iconColor }
-  const checkmark = (filters.length === 0 || isSelected ? '✓' : '')
-  const selectedClass = (isSelected ? 'selected' : '')
+  let selectedClass
+  // !allHidden && !isShown: no
+  // allHidden && !isShown: no
+  // allHidden && isShown: no
+  if (isShown) {
+    selectedClass = ''
+  } else {
+    selectedClass = 'shown'
+  }
 
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
-    const state = !isSelected
+    const state = !isShown
     updateFilters(filterId, state, numLabels)
   }
 
@@ -149,87 +99,93 @@ function LegendEntry({
       className={`scatter-legend-row ${selectedClass}`}
       onClick={() => toggleSelection()}
     >
-      <div className="scatter-legend-icon" style={iconStyle}>
-        <span className="checkmark">{checkmark}</span>
-      </div>
-      <div className="scatter-legend-entry">{entryText}</div>
+      <div className="scatter-legend-icon" style={iconStyle}></div>
+      <div className="scatter-legend-entry">{entry}</div>
     </div>
   )
 }
 
-// /** Whether "Display all" should be checked */
-// function doCheckDisplayAll(checkDisplayAll, filters, labels) {
-//   const numFilters = filters.length
-//   const numLabels = labels.length
-//   const anyFilters = numFilters > 0
-//   const allFilters = numFilters === numLabels
-//   console.log(
-//     'anyFilters, isDisplayAllTrigger, allFilters',
-//     anyFilters, isDisplayAllTrigger, allFilters
-//   )
-//   console.log('!anyFilters && !(isDisplayAllTrigger && !allFilters)')
-//   console.log(!anyFilters && !(isDisplayAllTrigger && !allFilters))
-//   return (
-//     !anyFilters &&
-//     !(isDisplayAllTrigger && !allFilters)
-//   )
-// }
+/** Component for stateful link */
+function StatefulLink({ text, classes, disabled, onClick, analyticsName, style }) {
+  return (
+    <span
+      data-analytics-name={analyticsName}
+      className={classes}
+      disabled={disabled}
+      style={style}
+      onClick={onClick}>{text}</span>
+  )
+}
 
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
-  filters, updateFilters, checkDisplayAll
+  filters, updateFilters, showHideButtons, allHidden
 }) {
   const labels = Object.keys(countsByLabel)
-  const filterIds = []
+  const filterIds = labels.map(label => _kebabCase(label))
   const numLabels = labels.length
 
   const legendEntries = labels
     .sort(labelSort) // sort keys so we assign colors in the right order
-    .map((label, index) => {
-      const entryText = getEntryText(label, countsByLabel, correlations)
-
-      const iconColor = getColorBrewerColor(index)
-
-      const filterId = _kebabCase(label)
-      filterIds.push(filterId)
+    .map((label, i) => {
+      const numPoints = countsByLabel[label]
+      const iconColor = getColorBrewerColor(i)
 
       return (
         <LegendEntry
-          key={filterId}
-          entryText={entryText}
+          key={filterIds[i]}
+          label={label}
+          numPoints={numPoints}
           iconColor={iconColor}
+          correlations={correlations}
           filters={filters}
           updateFilters={updateFilters}
-          filterId={filterId}
+          filterId={filterIds[i]}
           numLabels={numLabels}
+          allHidden={allHidden}
         />
       )
     })
 
-  // When no filters are checked
-  const hasFilters = (filters.length > 0)
+  // When some (but not all) filters are checked
+  // const someFilters = (filters.length > 0 && filters.length < labels.length)
 
   // console.log(
   //   'hasFilters, isDisplayAllTrigger, filters.length, labels.length',
   //   hasFilters, isDisplayAllTrigger, filters.length, labels.length
   // )
 
-  const htmlName = `all-checkbox-${_kebabCase(name)}`
-
-  const filteredClass = (hasFilters) ? 'filtered' : ''
+  const filteredClass = (filters.length === 0) ? 'unfiltered' : ''
   return (
     <div className={`scatter-legend ${filteredClass}`}>
-      <div>
-        <p className="scatter-legend-name">{name}</p>
-        <input
-          checked={checkDisplayAll}
-          data-analytics-name="all-checkbox"
-          id={htmlName}
-          type="checkbox"
-          onChange={e => updateFilters(labels, e.target.checked)}
-        />
-        <label htmlFor={htmlName}>All</label>
+      <div className="scatter-legend-head">
+        <div>
+          {/* <button
+          data-analytics-name='show-all'
+          className={`btn btn-primary ${showHideButtons[0]}`}
+          disabled={!showHideButtons[0]}
+          onClick={() => {updateFilters(filterIds, false)}}>Show all</button>
+        <button
+          data-analytics-name='hide-all'
+          style={{ 'float': 'right' }}
+          className={`btn btn-primary ${showHideButtons[1]}`}
+          disabled={!showHideButtons[1]}
+          onClick={() => {updateFilters(filterIds, true)}}>Hide all</button> */}
+          <StatefulLink
+            analyticsName='show-all'
+            classes={`stateful-link ${showHideButtons[0]}`}
+            disabled={!showHideButtons[0]}
+            onClick={() => {updateFilters(filterIds, false)}}
+            text="Show all" />
+          <StatefulLink
+            analyticsName='hide-all'
+            classes={`stateful-link pull-right ${showHideButtons[1]}`}
+            disabled={!showHideButtons[1]}
+            onClick={() => {updateFilters(filterIds, true)}}
+            text="Hide all" />
+        </div>
+        <div className="scatter-legend-name">{name}</div>
       </div>
       {legendEntries}
     </div>
