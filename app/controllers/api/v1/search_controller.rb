@@ -293,7 +293,8 @@ module Api
         end
 
         # perform Azul search, if enabled, and there are facets/terms provided by user
-        if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') && @facets.present?
+        if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') &&
+           @facets.present? && ApplicationController.hca_azul_client.api_available?
           @azul_results = self.class.get_azul_results(selected_facets: @facets)
 
           # @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
@@ -314,7 +315,7 @@ module Api
           # end
         end
 
-        @matching_accessions = @studies.map {|study| study.is_a?(Study) ? study.accession : study[:accession]}
+        @matching_accessions = @studies.map { |study| study.is_a?(Study) ? study.accession : study[:accession] }
         logger.info "Final list of matching studies: #{@matching_accessions}"
         @results = @studies.paginate(page: params[:page], per_page: Study.per_page)
         render json: search_results_obj, status: 200
