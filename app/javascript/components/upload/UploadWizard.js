@@ -16,7 +16,7 @@ import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, 
 import MessageModal from 'lib/MessageModal'
 import UserProvider from 'providers/UserProvider'
 
-import StepTabHeader from './StepTabHeader'
+import WizardNavPanel from './WizardNavPanel'
 import ClusteringStep from './ClusteringStep'
 import SpatialStep from './SpatialStep'
 import ImageStep from './ImageStep'
@@ -272,21 +272,8 @@ export default function UploadWizard({ studyAccession, name }) {
     <div className="upload-wizard-react">
       <div className="row">
         <div className="col-md-3">
-          <div className="position-fixed">
-            <div className="padded">
-              <h5><a href={`/single_cell/study/${studyAccession}`}>{studyAccession}</a>: {name}</h5>
-            </div>
-            <ul className="upload-wizard-steps">
-              { STEPS.map((step, index) =>
-                <StepTabHeader key={index}
-                  step={step}
-                  index={index}
-                  formState={formState}
-                  serverState={serverState}
-                  currentStep={currentStep}
-                  setCurrentStep={setCurrentStep}/>) }
-            </ul>
-          </div>
+          <WizardNavPanel {...{ formState, serverState, currentStep,
+            setCurrentStep, studyAccession, steps: STEPS, studyName: name }} />
         </div>
         <div className="col-md-9">
           { !formState && <LoadingSpinner data-testid="upload-wizard-spinner"/> }

@@ -8,7 +8,7 @@ import { findBundleChildren, PARSEABLE_TYPES } from './upload-utils'
 export default function StepTitle({ step, index, currentStep, setCurrentStep, serverState, formState }) {
   let stepFiles = []
   if (formState && formState.files) {
-    stepFiles = formState.files.filter(step.fileFilter)
+    stepFiles = formState.files.filter(step.fileFilter).filter(f => f.name)
   }
   const className = step.name === currentStep.name ? 'active' : ''
   // show at most three files per step, two if we also need room for the "and more"
