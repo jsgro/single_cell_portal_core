@@ -18,7 +18,7 @@ export default function ImageFileForm({
   bucketName
 }) {
   const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
-  const validationMessages = validateFile({ file, allFiles, allowedFileTypes: FileTypeExtensions.image })
+  const validationMessages = validateFile({ file, allFiles, allowedFileExts: FileTypeExtensions.image })
   let imagePreviewUrl = '#'
   if (file.uploadSelection) {
     imagePreviewUrl = URL.createObjectURL(file.uploadSelection)
@@ -34,8 +34,9 @@ export default function ImageFileForm({
           <div className="col-md-6">
             <FileUploadControl
               file={file}
+              allFiles={allFiles}
               updateFile={updateFile}
-              allowedFileTypes={FileTypeExtensions.image}
+              allowedFileExts={FileTypeExtensions.image}
               validationMessages={validationMessages}
               bucketName={bucketName}/>
           </div>

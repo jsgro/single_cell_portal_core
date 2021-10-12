@@ -32,6 +32,13 @@
   max-width: 400px;
 }
 
+.terra-secondary-btn {
+  color: $action-color;
+  border: 1px solid $action-color;
+  background: #fff;
+  border-radius: 5px;
+}
+
 .full-height-modal {
   .modal-dialog {
     height: 100vh !important;

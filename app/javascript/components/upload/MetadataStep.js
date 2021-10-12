@@ -41,7 +41,7 @@ function MetadataForm({
   const validationMessages = validateFile({
     file,
     allFiles: formState.files,
-    allowedFileTypes: FileTypeExtensions.plainText,
+    allowedFileExts: FileTypeExtensions.plainText,
     requiredFields: []
   })
 
@@ -86,11 +86,12 @@ function MetadataForm({
             acceptCharset="UTF-8"
             onSubmit={() => {return false}}>
             <div className="row">
-              <div className="col-md-12 flexbox">
+              <div className="col-md-12 flexbox-align-center">
                 <FileUploadControl
                   file={file}
+                  allFiles={formState.files}
                   updateFile={updateFile}
-                  allowedFileTypes={FileTypeExtensions.plainText}
+                  allowedFileExts={FileTypeExtensions.plainText}
                   validationMessages={validationMessages}
                   bucketName={formState.study.bucket_id}/>
               </div>

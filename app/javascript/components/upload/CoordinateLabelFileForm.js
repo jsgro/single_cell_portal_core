@@ -20,7 +20,7 @@ export default function CoordinateLabelForm({
   const validationMessages = validateFile({
     file, allFiles,
     requiredFields: [{ label: 'Associated file', propertyName: 'options.cluster_file_id' }],
-    allowedFileTypes: FileTypeExtensions.plainText
+    allowedFileExts: FileTypeExtensions.plainText
   })
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
@@ -32,8 +32,9 @@ export default function CoordinateLabelForm({
           <div className="col-md-12">
             <FileUploadControl
               file={file}
+              allFiles={allFiles}
               updateFile={updateFile}
-              allowedFileTypes={FileTypeExtensions.plainText}
+              allowedFileExts={FileTypeExtensions.plainText}
               validationMessages={validationMessages}
               bucketName={bucketName}/>
           </div>
