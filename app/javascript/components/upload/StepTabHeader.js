@@ -5,7 +5,7 @@ import { faCheckCircle } from '@fortawesome/free-solid-svg-icons'
 import { findBundleChildren, PARSEABLE_TYPES } from './upload-utils'
 
 /** renders the wizard step header for a given step */
-export default function StepTitle({ step, index, currentStep, setCurrentStep, serverState, formState }) {
+export default function StepTitle({ step, index, showIndex=true, currentStep, setCurrentStep, serverState, formState }) {
   let stepFiles = []
   if (formState && formState.files) {
     stepFiles = formState.files.filter(step.fileFilter).filter(f => f.name)
@@ -24,8 +24,8 @@ export default function StepTitle({ step, index, currentStep, setCurrentStep, se
     (f.parse_status === 'parsed' || !PARSEABLE_TYPES.includes(f.file_type)))
 
   return <li className={className}>
-    <div onClick={() => setCurrentStep(step)}>
-      <span className="badge">{index + 1}</span>
+    <div onClick={() => setCurrentStep(step)} className="step-number">
+      { showIndex && <span className="badge">{index + 1}</span> }
     </div>
     <div>
       <a className="action link" onClick={() => setCurrentStep(step)}>

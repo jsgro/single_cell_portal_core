@@ -104,6 +104,9 @@
   #metadata-convention-example img {
     border: 2px solid #888;
   }
+  label {
+    font-weight: normal
+  }
 }
 
 .sub-form {
@@ -128,7 +131,7 @@
 }
 
 .margin-right {
-  margin-right: 2em;
+  margin-right: 0.5em;
 }
 
 .margin-left {

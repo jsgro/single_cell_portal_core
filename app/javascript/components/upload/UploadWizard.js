@@ -48,25 +48,9 @@ const STEPS = [
   MiscellaneousStep
 ]
 
-const SUCCESS_NOTIFICATION_TEMPLATE = {
-  type: 'success',
-  insert: 'top',
-  container: 'top-right',
-  width: 425,
-  dismiss: {
-    duration: 3000,
-    showIcon: false
-  }
-}
+const MAIN_STEPS = STEPS.slice(0, 4)
+const SUPPLEMENTAL_STEPS = STEPS.slice(4, 11)
 
-const FAILURE_NOTIFICATION_TEMPLATE = {
-  ...SUCCESS_NOTIFICATION_TEMPLATE,
-  type: 'danger',
-  dismiss: {
-    duration: 0,
-    showIcon: true
-  }
-}
 
 /** shows the upload wizard */
 function RawUploadWizard({ studyAccession, name }) {
@@ -143,15 +127,7 @@ function RawUploadWizard({ studyAccession, name }) {
       return newFormState
     })
     if (!uploadingMoreChunks) {
-      store.addNotification({
-        ...SUCCESS_NOTIFICATION_TEMPLATE,
-        title: '',
-        message: <><FontAwesomeIcon icon={faCheckCircle}/> {updatedFile.name} saved successfully</>,
-        dismiss: {
-          showIcon: true,
-          duration: 0
-        }
-      })
+      store.addNotification(successNotification(`${updatedFile.name} saved successfully`))
     }
   }
 
@@ -229,13 +205,7 @@ function RawUploadWizard({ studyAccession, name }) {
         handleSaveResponse(response, studyFileId, false)
       }
     } catch (error) {
-      store.addNotification({
-        ...FAILURE_NOTIFICATION_TEMPLATE,
-        title: '',
-        message: <><FontAwesomeIcon icon={faExclamationTriangle}/> {file.name} failed to save<br/>
-          {error}
-        </>,
-      })
+      store.addNotification(failureNotification(<span>{file.name} failed to save<br/>{error}</span>))
       updateFile(studyFileId, {
         isSaving: false
       })
@@ -265,17 +235,9 @@ function RawUploadWizard({ studyAccession, name }) {
           return newServerState
         })
         deleteFileFromForm(file._id)
-        store.addNotification({
-          ...SUCCESS_NOTIFICATION_TEMPLATE,
-          title: 'Delete succeeded',
-          message: file.name
-        })
+        store.addNotification(successNotification(`${file.name} deleted successfully`))
       } catch (error) {
-        store.addNotification({
-          ...FAILURE_NOTIFICATION_TEMPLATE,
-          title: 'Delete failed',
-          message: <div>{file.name}<br/>{error}</div>
-        })
+        store.addNotification(failureNotification(<span>{file.name} failed to delete<br/>{error}</span>))
         updateFile(file._id, {
           isDeleting: false
         })
@@ -300,7 +262,8 @@ function RawUploadWizard({ studyAccession, name }) {
       <div className="row">
         <div className="col-md-3">
           <WizardNavPanel {...{ formState, serverState, currentStep,
-            setCurrentStep, studyAccession, steps: STEPS, studyName: name }} />
+            setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
+            supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name }} />
         </div>
         <div className="col-md-9">
           { !formState && <div className="padded text-center">
@@ -346,4 +309,34 @@ export function renderUploadWizard(target, studyAccession, name) {
       name={name}/>,
     target
   )
+}
+
+
+/** returns a notification config object suitable for passing to store.addNotification */
+function successNotification(message) {
+  return {
+    type: 'success',
+    insert: 'top',
+    container: 'top-right',
+    title: '',
+    message: <><FontAwesomeIcon icon={faCheckCircle}/>{message}</>,
+    width: 425,
+    dismiss: {
+      duration: 3000,
+      showIcon: false
+    }
+  }
+}
+
+/** returns a notification config object suitable for passing to store.addNotification */
+function failureNotification(message) {
+  return {
+    ...successNotification(message),
+    type: 'danger',
+    message: <><FontAwesomeIcon icon={faExclamationTriangle}/>{message}</>,
+    dismiss: {
+      duration: 0,
+      showIcon: true
+    }
+  }
 }
