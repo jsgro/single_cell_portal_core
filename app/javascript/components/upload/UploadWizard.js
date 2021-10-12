@@ -10,12 +10,14 @@ import ReactDOM from 'react-dom'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
 import ReactNotification, { store } from 'react-notifications-component'
+import { Router, useLocation, navigate } from '@reach/router'
+import * as queryString from 'query-string'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
 import MessageModal from 'lib/MessageModal'
 import UserProvider from 'providers/UserProvider'
-import { withErrorBoundary } from 'lib/ErrorBoundary'
+import ErrorBoundary, { withErrorBoundary } from 'lib/ErrorBoundary'
 
 import WizardNavPanel from './WizardNavPanel'
 import ClusteringStep from './ClusteringStep'
@@ -66,7 +68,14 @@ const FAILURE_NOTIFICATION_TEMPLATE = {
 
 /** shows the upload wizard */
 function RawUploadWizard({ studyAccession, name }) {
-  const [currentStep, setCurrentStep] = useState(STEPS[0])
+
+  const routerLocation = useLocation()
+  const queryParams = queryString.parse(routerLocation.search)
+  let currentStep = STEPS.find(step => step.name === queryParams.step)
+  if (!currentStep) {
+    currentStep = STEPS[0]
+  }
+
   const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
 
@@ -80,6 +89,11 @@ function RawUploadWizard({ studyAccession, name }) {
         file.isDirty = true
       }
     })
+  }
+
+  /** move the wizard to the given step */
+  function setCurrentStep(newStep) {
+    navigate(`?step=${newStep.name}`)
   }
 
   /** adds an empty file, merging in the given fileProps. Does not communicate anything to the server */
@@ -295,8 +309,15 @@ function RawUploadWizard({ studyAccession, name }) {
   </UserProvider>
 }
 
-const UploadWizard = withErrorBoundary(RawUploadWizard)
-export default UploadWizard
+/** Wraps the upload wirzard logic in a router and error handler */
+export default function UploadWizard({ studyAccession, name }) {
+  return <ErrorBoundary>
+    <Router>
+      <RawUploadWizard studyAccession={studyAccession} name={name} default/>
+    </Router>
+  </ErrorBoundary>
+}
+
 
 /** convenience method for drawing/updating the component from non-react portions of SCP */
 export function renderUploadWizard(target, studyAccession, name) {
