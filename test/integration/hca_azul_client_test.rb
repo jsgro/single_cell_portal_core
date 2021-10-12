@@ -15,6 +15,13 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     ]
   end
 
+  # skip a test if Azul is not up ; prevents unnecessary build failures due to releases/maintenance
+  def skip_if_api_down
+    unless @hca_azul_client.api_available?
+      puts '-- skipping due to Azul API being unavailable --' ; skip
+    end
+  end
+
   test 'should instantiate client' do
     client = HcaAzulClient.new
     assert_equal HcaAzulClient::BASE_URL, client.api_root
@@ -23,6 +30,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   end
 
   test 'should get catalogs' do
+    skip_if_api_down
     catalogs = @hca_azul_client.catalogs
     default_catalog = catalogs['default_catalog']
     public_catalogs = catalogs['catalogs'].reject { |_, catalog| catalog['internal'] }.keys
@@ -31,6 +39,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   end
 
   test 'should get projects' do
+    skip_if_api_down
     projects = @hca_azul_client.projects(size: 10)
     assert projects.size == 10
     project = projects.first
@@ -40,12 +49,14 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   end
 
   test 'should query projects using facets' do
+    skip_if_api_down
     query = @hca_azul_client.format_query_from_facets(@facets)
     projects = @hca_azul_client.projects(query: query, size: 1)
     assert_equal 1, projects.size
   end
 
   test 'should query projects using terms' do
+    skip_if_api_down
     terms = %w[cell human]
     projects = @hca_azul_client.projects(size: 10, terms: terms)
     assert projects.any?
@@ -58,6 +69,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   end
 
   test 'should get one project' do
+    skip_if_api_down
     project = @hca_azul_client.project(@project_id)
     assert_equal @project_id, project['entryId']
     project_detail = project['projects'].first
@@ -65,6 +77,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   end
 
   test 'should get files' do
+    skip_if_api_down
     files = ApplicationController.hca_azul_client.files(size: 1)
     assert_equal 1, files.size
     file = files.first
@@ -73,6 +86,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   end
 
   test 'should search files using facets' do
+    skip_if_api_down
     query = @hca_azul_client.format_query_from_facets(@facets)
     files = ApplicationController.hca_azul_client.files(query: query, size: 10)
     assert_equal 10, files.size
@@ -82,6 +96,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   end
 
   test 'should get HCA metadata tsv link' do
+    skip_if_api_down
     manifest_info = @hca_azul_client.project_manifest_link(@project_id)
     assert manifest_info.present?
     assert_equal 302, manifest_info['Status']

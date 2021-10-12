@@ -15,6 +15,14 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   # maximum number of results to return
   MAX_RESULTS = 250
 
+  # Default headers for API requests
+  DEFAULT_HEADERS = {
+    'Accept' => 'application/json',
+    'Content-Type' => 'application/json',
+    'x-app-id' => 'single-cell-portal',
+    'x-domain-id' => "#{ENV['HOSTNAME']}"
+  }.freeze
+
   ##
   # Constructors & token management methods
   ##
@@ -53,15 +61,7 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
     Rails.logger.info "HCA Azul API request (#{http_method.to_s.upcase}) #{path}"
     # process request
     begin
-      headers = {
-        'Accept' => 'application/json',
-        'Content-Type' => 'application/json',
-        'x-app-id' => 'single-cell-portal',
-        'x-domain-id' => "#{ENV['HOSTNAME']}"
-      }
-      response = RestClient::Request.execute(method: http_method, url: path, payload: payload, headers: headers)
-      # handle response using helper
-      handle_response(response)
+      execute_http_request(http_method, path, payload)
     rescue RestClient::Exception => e
       current_retry = retry_count + 1
       context = " encountered when requesting '#{path}', attempt ##{current_retry}"
@@ -85,6 +85,26 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
     end
   end
 
+  # sub-handler for making external HTTP request
+  # does not have error handling, this is done by process_api_request
+  # allows for some methods to implement their own error handling (like health checks)
+  #
+  # * *params*
+  #   - +http_method+ (String, Symbol) => HTTP method, e.g. :get, :post
+  #   - +path+ (String) => Relative URL path for API request being made
+  #   - +payload+ (Hash) => Hash representation of request body
+  #
+  # * *returns*
+  #   - (Hash) => Parsed response body, if present
+  #
+  # * *raises*
+  #   - (RestClient::Exception) => if HTTP request fails for any reason
+  def execute_http_request(http_method, path, payload=nil)
+    response = RestClient::Request.execute(method: http_method, url: path, payload: payload, headers: DEFAULT_HEADERS)
+    # handle response using helper
+    handle_response(response)
+  end
+
   # take a Hash/JSON object and format as a query string parameter
   #
   # * *params*
@@ -99,6 +119,38 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   end
 
   # API endpoint bindings
+
+  # basic health check - does not give detailed status information, only checks for { 'up' => true }
+  # bypasses process_api_request to avoid error handling/retries
+  #
+  # * *returns*
+  #   - (Boolean) => T/F if Azul is responding to requests
+  def api_available?
+    path = "#{api_root}/health/basic"
+    begin
+      status = execute_http_request(:get, path)
+      status && status['up']
+    rescue RestClient::ExceptionWithResponse => e
+      Rails.logger.error "Azul service unavailable: #{e.message}"
+      ErrorTracker.report_exception(e, nil, { method: :get, url: path, code: e.http_code })
+      false
+    end
+  end
+
+  # check Azul service status via "fast" health check
+  #
+  # * *returns*
+  #   - (Hash) => Hash of Azul services/endpoint status
+  def status
+    path = "#{api_root}/health/fast"
+    begin
+      execute_http_request(:get, path)
+    rescue RestClient::ExceptionWithResponse => e
+      Rails.logger.error "Azul service unavailable: #{e.message}"
+      ErrorTracker.report_exception(e, nil, { method: :get, url: path, code: e.http_code })
+      JSON.parse(e.http_body) if e.http_body.present? # response body should have more information than error message
+    end
+  end
 
   # get a list of all available catalogs
   #
