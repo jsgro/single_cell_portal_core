@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 
-import ScatterPlot, { getIsCustomLegend } from 'components/visualization/ScatterPlot'
+import ScatterPlot from 'components/visualization/ScatterPlot'
 
 // we allow 8 plotly contexts -- each plotly graph consumes 3 webgl contexts,
 // and chrome by defualt allows up to 32 simultaneous webgl contexts
@@ -8,14 +8,12 @@ import ScatterPlot, { getIsCustomLegend } from 'components/visualization/Scatter
 // distribution graph
 const PLOTLY_CONTEXT_NAMES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 const MAX_PLOTS = PLOTLY_CONTEXT_NAMES.length
-
-
 /**
   * renders the scatter tab.
   */
 export default function ScatterTab({
   exploreInfo, exploreParams, updateExploreParams, studyAccession, isGene, isMultiGene,
-  plotPointsSelected, isCellSelecting, isCorrelatedScatter, getPlotDimensions, dataCache
+  plotPointsSelected, isCellSelecting, showViewOptionsControls, dataCache
 }) {
   // maintain the map of plotly contexts to the params that generated the corresponding visualization
   const plotlyContextMap = useRef({})
@@ -35,10 +33,6 @@ export default function ScatterTab({
     plotlyContextMap.current = newContextMap
   }, [])
 
-  console.log('exploreParams', exploreParams)
-  const annotType = exploreParams.annotation.type
-  const isCustomLegend = getIsCustomLegend(annotType, isGene, isCorrelatedScatter)
-
   return <div className="row">
     {
       scatterParams.map((params, index) => {
@@ -57,12 +51,11 @@ export default function ScatterTab({
               }}
               {...params}
               dataCache={dataCache}
-              dimensions={getPlotDimensions({
+              dimensionProps={{
                 isMultiRow,
                 isTwoColumn: isTwoColRow,
-                hasTitle: true,
-                horizontalPad: (isCustomLegend ? 330 : 80)
-              })}
+                showViewOptionsControls
+              }}
             />
           </div>,
           rowDivider

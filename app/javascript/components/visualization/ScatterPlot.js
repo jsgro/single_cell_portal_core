@@ -15,6 +15,7 @@ import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
+import { getPlotDimensions } from 'components/explore/ExploreDisplayTabs'
 
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
@@ -32,14 +33,15 @@ window.Plotly = Plotly
   * @param annotation {obj} an object with name, type, and scope attributes
   * @param subsample {string} a string for the subsample to be retrieved.
   * @param consensus {string} for multi-gene expression plots
-  * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
-  *   this is useful for rendering to hidden divs
+  * @param dimensionsProps {obj} object with props to determine height and
+  *   width, to instruct Plotly how large to render itself. this is useful for
+  *   rendering to hidden divs
   * @param isCellSelecting whether plotly's lasso selection tool is enabled
   * @plotPointsSelected {function} callback for when a user selects points on the plot, which corresponds
   *   to the plotly "points_selected" event
   */
 function RawScatterPlot({
-  studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
+  studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensionProps,
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
 }) {
   const [isLoading, setIsLoading] = useState(false)
@@ -47,6 +49,7 @@ function RawScatterPlot({
   const [labelCorrelations, setLabelCorrelations] = useState(null)
   const [scatterData, setScatterData] = useState(null)
   const [countsByLabel, setCountsByLabel] = useState(null)
+  const [dimensions, setDimensions] = useState(null)
   const [filters, setFilters] = useState([])
   const [showHideButtons, setShowHideButtons] = useState(['disabled', 'active'])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
@@ -125,6 +128,7 @@ function RawScatterPlot({
     const [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
+    const dimensions = getScatterPlotDimensions(scatter, dimensionProps)
     const layout = getPlotlyLayout(dimensions, scatter)
 
     const traceArgs = {
@@ -134,7 +138,7 @@ function RawScatterPlot({
       annotType: scatter.annotParams.type,
       genes: scatter.genes,
       isAnnotatedScatter: scatter.isAnnotatedScatter,
-      isCorrelatedScatter: scatter.isCorrelatedScatter,
+      isCorrelatedScatter,
       scatterColor,
       dataScatterColor: scatter.scatterColor,
       pointAlpha: scatter.pointAlpha,
@@ -147,6 +151,8 @@ function RawScatterPlot({
     const [traces, labelCounts] = getPlotlyTraces(traceArgs)
     const plotlyTraces = [traces]
     setCountsByLabel(labelCounts)
+
+    console.log('dimensions', dimensions)
 
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
@@ -176,6 +182,7 @@ function RawScatterPlot({
     }
 
     setScatterData(scatter)
+    setDimensions(dimensions)
     setShowError(false)
     setIsLoading(false)
   }
@@ -231,16 +238,18 @@ function RawScatterPlot({
     }
   }, [isCellSelecting])
 
+  console.log('dimensionProps', dimensionProps)
+  console.log('dimensionProps.showViewOptionsControls', dimensionProps.showViewOptionsControls)
+
   // Adjusts width and height of plots upon toggle of "View Options"
   useUpdateEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (scatterData && !isLoading) {
-      const { width, height } = dimensions
+      const { width, height } = getScatterPlotDimensions(scatterData, dimensionProps)
       const layoutUpdate = { width, height }
       Plotly.relayout(graphElementId, layoutUpdate)
     }
-  }, [dimensions.width, dimensions.height])
-
+  }, [dimensionProps.showViewOptionsControls, dimensionProps.showRelatedGenesIdeogram])
 
   useEffect(() => {
     const jqScatterGraph = $(`#${graphElementId}`)
@@ -304,10 +313,20 @@ function RawScatterPlot({
 const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
-/** Determine whether to show custom Plotly legend */
-export function getIsCustomLegend(annotType, isGene, isCorrelatedScatter) {
-  const isGeneExpressionForColor = isGene && !isCorrelatedScatter
-  return (annotType === 'group' && !isGeneExpressionForColor)
+/** Get width and height for scatter plot dimensions */
+function getScatterPlotDimensions(scatter, dimensionProps) {
+  const annotType = scatter.annotParams.type
+  const genes = scatter.genes
+  const isCorrelatedScatter = scatter.isCorrelatedScatter
+  const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
+
+  const isCustomLegend = annotType === 'group' && isGeneExpressionForColor
+
+  dimensionProps = Object.assign(dimensionProps, {
+    horizontalPad: (isCustomLegend ? 330 : 80),
+    hasTitle: true
+  })
+  return getPlotDimensions(dimensionProps)
 }
 
 /** get the array of plotly traces for plotting */
@@ -343,9 +362,13 @@ function getPlotlyTraces({
   let countsByLabel = null
 
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
+
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
-  if (getIsCustomLegend(annotType, genes.length > 0, isCorrelatedScatter)) {
-    // use plotly's groupby transformation to make the traces
+
+  const isCustomLegend = annotType === 'group' && isGeneExpressionForColor
+
+  if (isCustomLegend) {
+    // Use Plotly's groupby transformation to make the traces
     const [legendStyles, labelCounts] = getStyles(data, pointSize)
     countsByLabel = labelCounts
     trace.transforms = [
@@ -356,7 +379,6 @@ function getPlotlyTraces({
       }
     ]
 
-    console.log('in getPlotlyTraces. filters:', filters)
     if (filters.length > 0) {
       trace.transforms.push({
         type: 'filter',
@@ -458,13 +480,7 @@ function getPlotlyLayout({ width, height }={}, {
     })
     Object.assign(layout, props2d)
   }
-  if (annotParams && annotParams.name) {
-    // layout.legend = {
-    //   itemsizing: 'constant',
-    //   title: { text: annotParams.name },
-    //   y: 0.94
-    // }
-  }
+
   layout.showlegend = false
   layout.width = width
   layout.height = height

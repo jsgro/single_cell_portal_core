@@ -175,53 +175,6 @@ export default function ExploreDisplayTabs({
     updateExploreParams({ ideogramFileId: annotationFile, tab: 'infercnv-genome' })
   }
 
-
-  /** Get width and height available for plot components, since they may be first rendered hidden */
-  function getPlotDimensions({
-    isTwoColumn=false,
-    isMultiRow=false,
-    verticalPad=250,
-    horizontalPad=80,
-    hasTitle=false
-  }) {
-    // Get width, and account for expanding "View Options" after page load
-    let baseWidth = $(window).width()
-    if (showViewOptionsControls) {
-      baseWidth = Math.round(baseWidth * 10 / 12)
-    }
-    // baseWidth -= 250
-    let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
-
-    // Get height
-    // Height of screen viewport, minus fixed-height elements above gallery
-    let galleryHeight = $(window).height() - verticalPad
-    if (showRelatedGenesIdeogram) {
-      galleryHeight -= ideogramHeight
-    }
-    if (hasTitle) {
-      galleryHeight -= 20
-    }
-    let height = galleryHeight
-    if (isMultiRow) {
-      // Fill as much gallery height as possible, but show tip of next row
-      // as an affordance that the gallery is vertically scrollable.
-      const secondRowTipHeight = 70
-      height = height - secondRowTipHeight
-    }
-    // ensure aspect ratio isn't too distorted
-    if (height > width * 1.3) {
-      height = Math.round(width * 1.3)
-    }
-
-    // Ensure plots aren't too small.
-    // This was needed as of 2020-12-14 to avoid a Plotly error in single-gene
-    // view: "Something went wrong with axes scaling"
-    height = Math.max(height, 200)
-    width = Math.max(width, 200)
-
-    return { width, height }
-  }
-
   /** on window resize call setRenderForcer, which is just trivial state to ensure a re-render
    * ensuring that the plots get passed fresh dimensions */
   useResizeEffect(() => {
@@ -290,12 +243,12 @@ export default function ExploreDisplayTabs({
                   studyAccession={studyAccession}
                   {...exploreParams}
                   isAnnotatedScatter={true}
-                  dimensions={getPlotDimensions({
+                  dimensionProps={{
                     numColumns: 1,
                     numRows: exploreParams?.spatialGroups.length ? 2 : 1,
-                    hasTitle: true,
-                    showRelatedGenesIdeogram
-                  })}
+                    showRelatedGenesIdeogram,
+                    showViewOptionsControls
+                  }}
                   isCellSelecting={isCellSelecting}
                   plotPointsSelected={plotPointsSelected}
                 />
@@ -307,12 +260,11 @@ export default function ExploreDisplayTabs({
                   studyAccession={studyAccession}
                   {...exploreParams}
                   isCorrelatedScatter={true}
-                  dimensions={getPlotDimensions({
+                  dimensionProps={{
                     numColumns: 1,
                     numRows: 1,
-                    hasTitle: true,
                     showRelatedGenesIdeogram: false
-                  })}
+                  }}
                   isCellSelecting={isCellSelecting}
                   plotPointsSelected={plotPointsSelected}
                 />
@@ -332,7 +284,7 @@ export default function ExploreDisplayTabs({
                     isCellSelecting,
                     isCorrelatedScatter,
                     plotPointsSelected,
-                    getPlotDimensions,
+                    showViewOptionsControls,
                     dataCache
                   }}/>
               </div>
@@ -342,7 +294,7 @@ export default function ExploreDisplayTabs({
                 <StudyViolinPlot
                   studyAccession={studyAccession}
                   updateDistributionPlot={distributionPlot => updateExploreParams({ distributionPlot }, false)}
-                  dimensions={getPlotDimensions({})}
+                  dimensions={getPlotDimensions({ showViewOptionsControls })}
                   {...exploreParams}/>
               </div>
             }
@@ -355,7 +307,7 @@ export default function ExploreDisplayTabs({
                      exploreParamsWithDefaults?.annotation,
                      exploreParamsWithDefaults?.annotationList?.annotations
                   )}
-                  dimensions={getPlotDimensions({})}
+                  dimensions={getPlotDimensions({ showViewOptionsControls })}
                 />
               </div>
             }
@@ -364,7 +316,8 @@ export default function ExploreDisplayTabs({
                 <Heatmap
                   studyAccession={studyAccession}
                   {... exploreParamsWithDefaults}
-                  dimensions={getPlotDimensions({})}/>
+                  dimensions={getPlotDimensions({ showViewOptionsControls })}
+                />
               </div>
             }
             { enabledTabs.includes('genome') &&
@@ -536,4 +489,53 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
     enabledTabs = ['loading']
   }
   return { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs }
+}
+
+
+/** Get width and height available for plot components, since they may be first rendered hidden */
+export function getPlotDimensions({
+  isTwoColumn=false,
+  isMultiRow=false,
+  verticalPad=250,
+  horizontalPad=80,
+  hasTitle=false,
+  showRelatedGenesIdeogram=false,
+  showViewOptionsControls=true
+}) {
+  // Get width, and account for expanding "View Options" after page load
+  let baseWidth = $(window).width()
+  if (showViewOptionsControls) {
+    baseWidth = Math.round(baseWidth * 10 / 12)
+  }
+  // baseWidth -= 250
+  let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
+
+  // Get height
+  // Height of screen viewport, minus fixed-height elements above gallery
+  let galleryHeight = $(window).height() - verticalPad
+  if (showRelatedGenesIdeogram) {
+    galleryHeight -= ideogramHeight
+  }
+  if (hasTitle) {
+    galleryHeight -= 20
+  }
+  let height = galleryHeight
+  if (isMultiRow) {
+    // Fill as much gallery height as possible, but show tip of next row
+    // as an affordance that the gallery is vertically scrollable.
+    const secondRowTipHeight = 70
+    height = height - secondRowTipHeight
+  }
+  // ensure aspect ratio isn't too distorted
+  if (height > width * 1.3) {
+    height = Math.round(width * 1.3)
+  }
+
+  // Ensure plots aren't too small.
+  // This was needed as of 2020-12-14 to avoid a Plotly error in single-gene
+  // view: "Something went wrong with axes scaling"
+  height = Math.max(height, 200)
+  width = Math.max(width, 200)
+
+  return { width, height }
 }
