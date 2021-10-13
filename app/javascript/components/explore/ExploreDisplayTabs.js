@@ -108,6 +108,8 @@ export default function ExploreDisplayTabs({
   }
   const showClusterControls = !(['genome', 'infercnv-genome'].includes(shownTab))
 
+  const isCorrelatedScatter = enabledTabs.includes('correlatedScatter')
+
   const annotationList = exploreInfo ? exploreInfo.annotationList : null
 
   let hasSpatialGroups = false
@@ -187,7 +189,7 @@ export default function ExploreDisplayTabs({
     if (showViewOptionsControls) {
       baseWidth = Math.round(baseWidth * 10 / 12)
     }
-    baseWidth -= 250
+    // baseWidth -= 250
     let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
 
     // Get height
@@ -328,6 +330,7 @@ export default function ExploreDisplayTabs({
                     isGene,
                     isMultiGene,
                     isCellSelecting,
+                    isCorrelatedScatter,
                     plotPointsSelected,
                     getPlotDimensions,
                     dataCache

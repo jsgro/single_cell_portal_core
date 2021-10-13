@@ -304,6 +304,12 @@ function RawScatterPlot({
 const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
+/** Determine whether to show custom Plotly legend */
+export function getIsCustomLegend(annotType, isGene, isCorrelatedScatter) {
+  const isGeneExpressionForColor = isGene && !isCorrelatedScatter
+  return (annotType === 'group' && !isGeneExpressionForColor)
+}
+
 /** get the array of plotly traces for plotting */
 function getPlotlyTraces({
   axes,
@@ -338,7 +344,7 @@ function getPlotlyTraces({
 
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
-  if (annotType === 'group' && !isGeneExpressionForColor) {
+  if (getIsCustomLegend(annotType, genes.length > 0, isCorrelatedScatter)) {
     // use plotly's groupby transformation to make the traces
     const [legendStyles, labelCounts] = getStyles(data, pointSize)
     countsByLabel = labelCounts
