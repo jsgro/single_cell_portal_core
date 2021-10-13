@@ -5,7 +5,7 @@
     <h2>Study Files 
       <span class="badge"><%= @study_files.count %></span> 
       <%= link_to "<i class='fas fa-question-circle'></i> Bulk Download".html_safe, '#/', class: "btn btn-default pull-right #{!@allow_downloads ? 'disabled' : nil}", id: 'download-help' %>
-      <%= link_to "Analyze on Terra".html_safe, '#/', class: "btn btn-default pull-right left-margin-icon {!@allow_downloads ? 'disable d' : nil}", id: 'analyze-on-terra' data-analytics-name="analyze-on-terra"%> 
+      <%= link_to "Analyze in Cloud".html_safe, '#/', class: "btn btn-default pull-right left-margin-icon {!@allow_downloads ? 'disable d' : nil}", id: 'analyze-in-cloud'%> 
     </h2>
 
     <% if @allow_downloads %>
@@ -84,20 +84,23 @@
         </div>
       </div>
     </div>
-    <div class="modal fade" id="analyze-on-terra-modal" role="dialog" aria-labelledby="required-modal-label" aria-hidden="true">
+    <div class="modal fade" id="analyze-in-cloud-modal" role="dialog" aria-labelledby="required-modal-label" aria-hidden="true">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h3 class="text-center">Analyze on Terra?</h3>
+        <button class="close" data-dismiss="modal">×</button>
+				<h3 class="text-center">Cloud Analysis</h3>
 			</div>
 			<div class="modal-body">
-				<p class="lead">Interested in performing analysis with these files? We’re exploring the best ways to send SCP data to 
+				<p class="lead">Interested in performing analysis with these files using cloud-based resources?         
+          <br/> 
+          We’re exploring the best ways to send SCP data to 
           <%= link_to "Terra", "https://terra.bio/", :target => "_blank", id:"analyze-terra-link-to-terra"%>, an open platform for cloud-based genomic analysis.</p>
-        <p class="lead"><%= link_to "Tell us more", "https://singlecell.zendesk.com/hc/en-us/requests/new", :target => "_blank", id:"analyze-terra-form" %>
-          about what you need for analyzing your data!</p>
       </div>
 			<div class="modal-footer">
-				<button class="btn btn-success" data-dismiss="modal" id="accept-skip-required">OK</button>
+      <p class="lead"> Want to tell us more about how you want to analyze this data?</p>
+				<%= link_to "YES", "https://singlecell.zendesk.com/hc/en-us/requests/new", :target => "_blank", id:"analyze-terra-form", class:"btn btn-success" %>
+        <button class="btn btn-danger" href="https://singlecell.zendesk.com/hc/en-us/requests/new" data-dismiss="modal" id="accept-skip-required">NO</button>
 			</div>
 		</div>
 	</div>
@@ -108,8 +111,8 @@
             $('#download-help-modal').modal('show');
         });
 
-        $('#analyze-on-terra').click(function() {
-          $('#analyze-on-terra-modal').modal('show');
+        $('#analyze-in-cloud').click(function() {
+          $('#analyze-in-cloud-modal').modal('show');
       });
         // Enables copying to clipboard upon clicking a "clipboard" icon,
         // like on GitHub.  https://clipboardjs.com.
