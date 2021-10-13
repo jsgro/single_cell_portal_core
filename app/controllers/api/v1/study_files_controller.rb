@@ -191,9 +191,10 @@ module Api
         @study_file = StudyFile.new(study: @study)
         begin
           result = perform_update(@study_file)
+          MetricsService.log('file-create', format_log_props('success', nil), current_api_user)
           render :show
         rescue Mongoid::Errors::Validations => e
-          MetricsService.log('file-save:invalid', format_log_props(e.summary), current_api_user)
+          MetricsService.log('file-create', format_log_props('failure', e.summary), current_api_user)
           render json: {error: e.summary}, status: :unprocessable_entity
         end
       end
@@ -259,14 +260,15 @@ module Api
       def update
         begin
           result = perform_update(@study_file)
+          MetricsService.log('file-update', format_log_props('success', nil), current_api_user)
           render :show
         rescue Mongoid::Errors::Validations => e
-          MetricsService.log('file-save:invalid', format_log_props(e.summary), current_api_user)
+          MetricsService.log('file-update', format_log_props('fail', e.summary), current_api_user)
           render json: {error: e.summary}, status: :unprocessable_entity
         end
       end
 
-      def format_log_props(error_message)
+      def format_log_props(status, error_message)
         log_props = study_file_params.to_unsafe_hash
         # do not send the actual file to the log
         log_props.delete(:upload)
@@ -275,7 +277,8 @@ module Api
         {
           studyAccession: @study.accession,
           error: error_message,
-          params: log_props
+          params: log_props,
+          status: status
         }
       end
 
