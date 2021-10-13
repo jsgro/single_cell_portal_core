@@ -13,7 +13,7 @@ import ReactNotification, { store } from 'react-notifications-component'
 import { Router, useLocation, navigate } from '@reach/router'
 import * as queryString from 'query-string'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
+import { faCheckCircle, faExclamationTriangle, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
@@ -261,9 +261,10 @@ function RawUploadWizard({ studyAccession, name }) {
     <div className="upload-wizard-react">
       <div className="row">
         <div className="col-md-3">
-          <WizardNavPanel {...{ formState, serverState, currentStep,
-            setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
-            supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name }} />
+          <WizardNavPanel {...{
+            formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
+            supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
+          }} />
         </div>
         <div className="col-md-9">
           { !formState && <div className="padded text-center">
@@ -279,9 +280,17 @@ function RawUploadWizard({ studyAccession, name }) {
               saveFile={saveFile}
               addNewFile={addNewFile}
             />
-            <div className="text-right">
-              { nextStep && <button className="btn btn-secondary terra-secondary-btn margin-right" onClick={() => setCurrentStep(prevStep)}>Previous</button> }
-              { nextStep && <button className="btn btn-secondary terra-secondary-btn" onClick={() => setCurrentStep(nextStep)}>Next</button> }
+            <div className="text-center">
+              { nextStep && <button
+                className="btn terra-tertiary-btn margin-right"
+                onClick={() => setCurrentStep(prevStep)}>
+                <FontAwesomeIcon icon={faChevronLeft}/> Previous
+              </button> }
+              { nextStep && <button
+                className="btn terra-tertiary-btn"
+                onClick={() => setCurrentStep(nextStep)}>
+                Next <FontAwesomeIcon icon={faChevronRight}/>
+              </button> }
             </div>
           </div> }
         </div>

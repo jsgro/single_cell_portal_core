@@ -93,7 +93,8 @@ function CoordinateLabelForm({
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}
         bucketName={formState.study.bucket_id}
-        />
+        initiallyExpanded={coordinateFiles.length === 1}
+      />
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_LABEL_FILE}/>
   </div>

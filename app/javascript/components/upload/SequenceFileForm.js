@@ -11,6 +11,7 @@ const HUMAN_REQUIRED_FIELDS = REQUIRED_FIELDS.concat([
   { label: 'External link', propertyName: 'external_link_url' },
   { label: 'External link name', propertyName: 'name' }
 ])
+const allowedFileExts = FileTypeExtensions.sequence
 
 /** renders a form for editing/uploading a sequence file and any assoicated bundle files */
 export default function SequenceFileForm({
@@ -42,7 +43,7 @@ export default function SequenceFileForm({
   } else if (file.file_type === 'BAM') {
     requiredFields = BAM_REQUIRED_FIELDS
   }
-  const validationMessages = validateFile({ file, allFiles, requiredFields, allowedFileExts: FileTypeExtensions.sequence })
+  const validationMessages = validateFile({ file, allFiles, requiredFields, allowedFileExts })
 
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">

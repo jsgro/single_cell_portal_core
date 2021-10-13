@@ -23,7 +23,7 @@ function RawWizardNavPanel({
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}/>) }
     </ul>
-    <span>Supplemental files</span>
+    <span>Other files</span>
     <ul className="upload-wizard-steps">
       { supplementalSteps.map((step, index) =>
         <StepTabHeader key={index}

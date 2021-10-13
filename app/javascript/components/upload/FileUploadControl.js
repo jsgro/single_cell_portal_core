@@ -83,6 +83,10 @@ export default function FileUploadControl({
     }
   }
   let buttonText = file.upload_file_name ? 'Replace' : 'Choose file'
+  let buttonClass = 'fileinput-button btn terra-tertiary-btn'
+  if (!file.upload_file_name && !file.uploadSelection) {
+    buttonClass = 'fileinput-button btn btn-primary'
+  }
   if (fileValidation.validating) {
     buttonText = <LoadingSpinner data-testid="file-validation-spinner"/>
   }
@@ -99,7 +103,7 @@ export default function FileUploadControl({
     <label>
       { !file.uploadSelection && <h5>{file.upload_file_name}</h5> }
       { file.uploadSelection && <h5 data-testid="file-selection-name">
-        {file.uploadSelection.name}  ({bytesToSize(file.uploadSelection.size)})
+        {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})
       </h5> }
     </label>
     <FileDownloadControl
@@ -107,7 +111,7 @@ export default function FileUploadControl({
       bucketName={bucketName}
     />
     &nbsp;
-    <button className="fileinput-button terra-secondary-btn" id={`fileButton-${file._id}`}>
+    <button className={buttonClass} id={`fileButton-${file._id}`}>
       { buttonText }
       <input className="file-upload-input" data-testid="file-input"
         type="file"

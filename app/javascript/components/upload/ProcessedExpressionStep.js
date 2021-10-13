@@ -72,7 +72,7 @@ function ProcessedUploadForm({
           <br/>
           <div className="row">
             <div className="col-md-3 col-md-offset-2">
-              <a className="action" onClick={ () => setCurrentStep({ name: 'rawCounts' }) }>
+              <a className="action" onClick={() => setCurrentStep({ name: 'rawCounts' })}>
                 <span className="fas fa-chevron-circle-left"></span> Upload Raw Count File
               </a>
             </div>
@@ -112,7 +112,8 @@ function ProcessedUploadForm({
             addNewFile={addNewFile}
             rawCountsOptions={rawCountsOptions}
             fileMenuOptions={fileMenuOptions}
-            bucketName={formState.study.bucket_id}/>
+            bucketName={formState.study.bucket_id}
+            initiallyExpanded={processedParentFiles.length === 1}/>
         })}
         <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
         { !isEnabled && <div className="file-upload-overlay"></div> }

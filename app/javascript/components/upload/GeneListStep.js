@@ -11,7 +11,7 @@ const DEFAULT_NEW_GENE_LIST_FILE = {
 const geneListFileFilter = file => file.file_type === 'Gene List'
 
 export default {
-  title: 'Mean Expression Lists',
+  title: 'Precomputed Expression Stats',
   name: 'geneLists',
   component: GeneListForm,
   fileFilter: geneListFileFilter
@@ -35,13 +35,13 @@ function GeneListForm({
 
   return <div>
     <div className="row">
-      <h4 className="col-sm-12">Mean Expression Lists</h4>
+      <h4 className="col-sm-12">Precomputed Expression Stats</h4>
     </div>
     <div className="row">
       <div className="col-md-12">
         <div className="form-terra">
           <p>
-            A list of genes and their mean expression values across any clusters.
+            A list of genes and any computed expression values (mean, median, etc.) across any clusters.
           </p>
           <pre>
             GENE NAMES&#9;Cluster1&#9;Cluster2<br/>Grm2&#9;6.39&#9;1.96<br/>C1ql3&#9;6.66&#9;2.05
@@ -65,7 +65,8 @@ function GeneListForm({
         updateFile={updateFile}
         saveFile={saveFile}
         deleteFile={deleteFile}
-        bucketName={formState.study.bucket_id}/>
+        bucketName={formState.study.bucket_id}
+        initiallyExpanded={geneListFiles.length === 1}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_GENE_LIST_FILE}/>
   </div>

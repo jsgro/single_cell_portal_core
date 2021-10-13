@@ -54,7 +54,8 @@ function MiscellaneousForm({
         saveFile={saveFile}
         deleteFile={deleteFile}
         miscFileTypes={miscFileTypes}
-        bucketName={formState.study.bucket_id}/>
+        bucketName={formState.study.bucket_id}
+        initiallyExpanded={miscFiles.length === 1}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_OTHER_FILE}/>
   </div>
