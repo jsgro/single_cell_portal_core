@@ -263,7 +263,7 @@ module Api
           MetricsService.log('file-update', format_log_props('success', nil), current_api_user)
           render :show
         rescue Mongoid::Errors::Validations => e
-          MetricsService.log('file-update', format_log_props('fail', e.summary), current_api_user)
+          MetricsService.log('file-update', format_log_props('failure', e.summary), current_api_user)
           render json: {error: e.summary}, status: :unprocessable_entity
         end
       end
