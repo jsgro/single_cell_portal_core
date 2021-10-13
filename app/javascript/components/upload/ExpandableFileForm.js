@@ -66,7 +66,7 @@ export function SavingOverlay({ file, updateFile }) {
   if (!showOverlay) {
     return <></>
   }
-  return <div className="file-upload-overlay"></div>
+  return <div className="file-upload-overlay" data-testid="file-upload-overlay"></div>
 }
 
 /** renders save and delete buttons for a given file */

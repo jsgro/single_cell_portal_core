@@ -256,56 +256,56 @@ function RawUploadWizard({ studyAccession, name }) {
 
   const nextStep = STEPS[currentStepIndex + 1]
   const prevStep = STEPS[currentStepIndex - 1]
-  return <UserProvider>
-    <ReactNotification />
-    <div className="upload-wizard-react">
-      <div className="row">
-        <div className="col-md-3">
-          <WizardNavPanel {...{
-            formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
-            supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
-          }} />
-        </div>
-        <div className="col-md-9">
-          { !formState && <div className="padded text-center">
-            <LoadingSpinner data-testid="upload-wizard-spinner"/>
-          </div> }
-          { !!formState && <div>
-            <currentStep.component
-              setCurrentStep={setCurrentStep}
-              formState={formState}
-              serverState={serverState}
-              deleteFile={deleteFile}
-              updateFile={updateFile}
-              saveFile={saveFile}
-              addNewFile={addNewFile}
-            />
-            <div className="text-center">
-              { nextStep && <button
-                className="btn terra-tertiary-btn margin-right"
-                onClick={() => setCurrentStep(prevStep)}>
-                <FontAwesomeIcon icon={faChevronLeft}/> Previous
-              </button> }
-              { nextStep && <button
-                className="btn terra-tertiary-btn"
-                onClick={() => setCurrentStep(nextStep)}>
-                Next <FontAwesomeIcon icon={faChevronRight}/>
-              </button> }
-            </div>
-          </div> }
-        </div>
+  return <div className="upload-wizard-react">
+    <div className="row">
+      <div className="col-md-3">
+        <WizardNavPanel {...{
+          formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
+          supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
+        }} />
       </div>
-      <MessageModal/>
+      <div className="col-md-9">
+        { !formState && <div className="padded text-center">
+          <LoadingSpinner data-testid="upload-wizard-spinner"/>
+        </div> }
+        { !!formState && <div>
+          <currentStep.component
+            setCurrentStep={setCurrentStep}
+            formState={formState}
+            serverState={serverState}
+            deleteFile={deleteFile}
+            updateFile={updateFile}
+            saveFile={saveFile}
+            addNewFile={addNewFile}
+          />
+          <div className="text-center">
+            { nextStep && <button
+              className="btn terra-tertiary-btn margin-right"
+              onClick={() => setCurrentStep(prevStep)}>
+              <FontAwesomeIcon icon={faChevronLeft}/> Previous
+            </button> }
+            { nextStep && <button
+              className="btn terra-tertiary-btn"
+              onClick={() => setCurrentStep(nextStep)}>
+              Next <FontAwesomeIcon icon={faChevronRight}/>
+            </button> }
+          </div>
+        </div> }
+      </div>
     </div>
-  </UserProvider>
+    <MessageModal/>
+  </div>
 }
 
 /** Wraps the upload wirzard logic in a router and error handler */
 export default function UploadWizard({ studyAccession, name }) {
   return <ErrorBoundary>
-    <Router>
-      <RawUploadWizard studyAccession={studyAccession} name={name} default/>
-    </Router>
+    <UserProvider>
+      <ReactNotification />
+      <Router>
+        <RawUploadWizard studyAccession={studyAccession} name={name} default/>
+      </Router>
+    </UserProvider>
   </ErrorBoundary>
 }
 
