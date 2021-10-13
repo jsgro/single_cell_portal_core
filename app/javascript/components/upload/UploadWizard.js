@@ -279,7 +279,7 @@ function RawUploadWizard({ studyAccession, name }) {
               saveFile={saveFile}
               addNewFile={addNewFile}
             />
-            <div className="text-center">
+            <div className="text-right">
               { nextStep && <button className="btn btn-secondary terra-secondary-btn margin-right" onClick={() => setCurrentStep(prevStep)}>Previous</button> }
               { nextStep && <button className="btn btn-secondary terra-secondary-btn" onClick={() => setCurrentStep(nextStep)}>Next</button> }
             </div>

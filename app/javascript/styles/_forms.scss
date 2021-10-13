@@ -39,6 +39,15 @@
   border-radius: 3px;
 }
 
+
+.btn-icon {
+  background: none;
+  border: none;
+  svg {
+    color: $action-color;
+  }
+}
+
 .full-height-modal {
   .modal-dialog {
     height: 100vh !important;

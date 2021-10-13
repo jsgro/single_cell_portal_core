@@ -95,12 +95,12 @@ export default function FileUploadControl({
     inputAcceptExts.push('.gz')
   }
 
-  return <div className="form-group">
+  return <div>
     <label>
-      { !file.uploadSelection && <span>{file.upload_file_name}</span> }
-      { file.uploadSelection && <span data-testid="file-selection-name">
+      { !file.uploadSelection && <h5>{file.upload_file_name}</h5> }
+      { file.uploadSelection && <h5 data-testid="file-selection-name">
         {file.uploadSelection.name}  ({bytesToSize(file.uploadSelection.size)})
-      </span> }
+      </h5> }
     </label>
     <FileDownloadControl
       file={file}

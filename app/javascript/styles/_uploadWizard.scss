@@ -51,6 +51,11 @@
 }
 
 .upload-form-header {
+  .expander {
+    padding: 0em 0.75em;
+    color: $action-color;
+    cursor: pointer;
+  }
   > div:last-of-type {
     margin-left: auto;
   }

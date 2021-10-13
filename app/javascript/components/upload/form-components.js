@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
 import Modal from 'react-bootstrap/lib/Modal'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
 
+import FileUploadControl from './FileUploadControl'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 /** renders a 'Add File' button that occupies a full row */
@@ -59,7 +62,7 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
   let saveButton = <button
     style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
     type="button"
-    className="btn btn-primary margin-right"
+    className={file.isDirty ? 'btn btn-primary margin-right' : 'btn terra-secondary-btn margin-right'}
     onClick={() => saveFile(file)}
     disabled={saveDisabled}
     data-testid="file-save">
@@ -106,4 +109,46 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
       </Modal.Footer>
     </Modal>
   </div>
+}
+
+/** renders its children inside an expandable form with a header for file selection */
+export function ExpandableFileForm({
+  file, allFiles, updateFile, allowedFileExts, validationMessages, bucketName, children, saveFile, deleteFile
+  }) {
+  const [expanded, setExpanded] = useState(file.status === 'new')
+
+  /** handle a click on the header bar (not the expand button itself) */
+  function handleDivClick(e) {
+    // if this didn't come from a link/button, toggle the header expansion
+    if (!e.target.closest('button') && !e.target.closest('a')) {
+      handleExpansionClick()
+    }
+    // otherwise do nothing
+  }
+
+  /** handle a click on the toggle button itself */
+  function handleExpansionClick() {
+    setExpanded(!expanded)
+  }
+
+  return <>
+    <div className="flexbox-align-center upload-form-header" onClick={handleDivClick}>
+      <div onClick={handleExpansionClick} className="expander">
+        <button type="button" className="btn-icon">
+          <FontAwesomeIcon icon={expanded ? faChevronUp : faChevronDown}/>
+        </button>
+      </div>
+      <div className="flexbox">
+        <FileUploadControl
+          file={file}
+          allFiles={allFiles}
+          updateFile={updateFile}
+          allowedFileExts={allowedFileExts}
+          validationMessages={validationMessages}
+          bucketName={bucketName}/>
+      </div>
+      <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
+    </div>
+    { expanded && children }
+  </>
 }

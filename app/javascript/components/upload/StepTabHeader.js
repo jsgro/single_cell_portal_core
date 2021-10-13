@@ -2,7 +2,7 @@ import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons'
 
-import { findBundleChildren, PARSEABLE_TYPES } from './upload-utils'
+import { PARSEABLE_TYPES } from './upload-utils'
 
 /** renders the wizard step header for a given step */
 export default function StepTitle({ step, index, showIndex=true, currentStep, setCurrentStep, serverState, formState }) {
@@ -33,19 +33,9 @@ export default function StepTitle({ step, index, showIndex=true, currentStep, se
       </a>
       <ul className="file-list">
         { displayedFiles.map(file => {
-          const bundleChildren = findBundleChildren(file, formState.files)
           // show different style depending on whether file is locally modified
           return <li key={file._id} onClick={() => setCurrentStep(step)}>
             <span className={file.isDirty ? 'dirty' : ''} title={file.name}>{file.name}</span>
-            { !!bundleChildren.length &&
-              <ul>
-                { bundleChildren.map(childFile => {
-                  return <li key={childFile._id} onClick={() => setCurrentStep(step)}>
-                    <span className={childFile.isDirty ? 'dirty' : ''} title={childFile.name}>{childFile.name}</span>
-                  </li>
-                })}
-              </ul>
-            }
           </li>
         })
         }

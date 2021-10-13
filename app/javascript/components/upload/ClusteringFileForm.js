@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React from 'react'
+
 
 import Select from 'lib/InstrumentedSelect'
-import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
-import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
+import { FileTypeExtensions } from './FileUploadControl'
+import { TextFormField, SavingOverlay, ExpandableFileForm } from './form-components'
 import { validateFile } from './upload-utils'
 
 const REQUIRED_FIELDS = [{ label: 'Name', propertyName: 'name' }]
@@ -18,32 +19,21 @@ export default function ClusteringFileForm({
   updateCorrespondingClusters,
   bucketName
 }) {
-  const [expanded, setExpanded] = useState(false)
+  const allowedFileExts = FileTypeExtensions.plainText
   const spatialClusterAssocs = file.spatial_cluster_associations
     .map(id => associatedClusterFileOptions.find(opt => opt.value === id))
   const validationMessages = validateFile({
-    file, allFiles, allowedFileExts: FileTypeExtensions.plainText, requiredFields: REQUIRED_FIELDS
+    file, allFiles, allowedFileExts, requiredFields: REQUIRED_FIELDS
   })
+
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
       <form id={`clusterForm-${file._id}`}
         className="form-terra"
         onSubmit={e => e.preventDefault()}
         acceptCharset="UTF-8">
-        <div className="flexbox-align-center upload-form-header">
-          <div onClick={() => setExpanded(!expanded)}><span className="fas fa-chevron-down"></span></div>
-          <div className="flexbox">
-            <FileUploadControl
-              file={file}
-              allFiles={allFiles}
-              updateFile={updateFile}
-              allowedFileExts={FileTypeExtensions.plainText}
-              validationMessages={validationMessages}
-              bucketName={bucketName}/>
-          </div>
-          <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
-        </div>
-        { expanded && <div>
+        <ExpandableFileForm {...{ file, allFiles, updateFile, saveFile,
+          allowedFileExts, deleteFile, validationMessages, bucketName }}>
           <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
           { file.is_spatial &&
             <div className="form-group">
@@ -88,7 +78,7 @@ export default function ClusteringFileForm({
               <TextFormField label="Z Domain Max" fieldName="z_axis_max" file={file} updateFile={updateFile}/>
             </div>
           </div>
-        </div> }
+        </ExpandableFileForm>
       </form>
       <SavingOverlay file={file} updateFile={updateFile}/>
     </div>
