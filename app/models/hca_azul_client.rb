@@ -23,6 +23,12 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
     'x-domain-id' => "#{ENV['HOSTNAME']}"
   }.freeze
 
+  # map of bulk download file types to extensions (for grouping in bulk download modal)
+  FILE_EXT_BY_DOWNLOAD_TYPE = {
+    'sequence_file' => %w[bam bam.gz bai bai.gz fastq fastq.gz],
+    'analysis_file' => %w[loom csv txt]
+  }.freeze
+
   ##
   # Constructors & token management methods
   ##

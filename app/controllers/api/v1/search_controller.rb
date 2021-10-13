@@ -724,11 +724,19 @@ module Api
               }
             ]
           }.with_indifferent_access
-          if safe_project[:matrices].any?
-            result = self.merge_files_by_facet(result, safe_project[:matrices], selected_facets)
+          # iterate over matrix results to see if we have facet matches
+          [safe_project[:matrices], safe_project[:contributorMatrices]].each do |matrix_results|
+            matches = get_facet_match_from_matrices(matrix_results, selected_facets)
+            matches.each do |match|
+              result[:facet_matches] << match unless result[:facet_matches].include?(match)
+            end
           end
-          if safe_project[:contributorMatrices].any?
-            result = self.merge_files_by_facet(result, safe_project[:contributorMatrices], selected_facets)
+          # now run file query to get matching files for this project
+          file_query = query_json.merge({ 'projectId' => { 'is' => [project_id] } })
+          files = client.files(query: file_query)
+          files.each do |file_entry|
+            file_info = extract_azul_file_info(file_entry)
+            result[:file_information] << file_info
           end
           results[short_name] = result
         end
@@ -737,9 +745,31 @@ module Api
 
       # iterate through the matrices/contributorMatrices hash from Azul results to pull out matches based off of
       # a faceted search request
-      # will also update any facet matches based off of those results
-      def self.merge_files_by_facet(matrices, facets)
+      def self.get_facet_match_from_matrices(matrices, facets)
+        results_info = {}
+        matrix_map = get_matrix_map(matrices)
+        facets.each do |facet|
+          facet_name = facet[:id]
+          azul_results = matrix_map[facet_name]
+          matches = facet[:filters].select { |filter| azul_results.include? filter[:name] }
+          results_info[facet_name] = matches  if matches.any?
+        end
+        results_info
+      end
 
+      # iterate through the nested hash of Azul matrix results to build a Hash of facets to filters (converted names)
+      def self.get_matrix_map(matrix_hash, map = {})
+        if matrix_hash.is_a?(Hash)
+          matrix_hash.each_pair do |key, hash|
+            # only store result if this value is a column from the Azul schema
+            if FacetNameConverter.schema_has_column?(:azul, :alexandria, key)
+              converted_name = FacetNameConverter.convert_schema_column(:azul, :alexandria, key)
+              map.merge!({ converted_name.to_s => hash.keys })
+            end
+            get_matrix_map(hash, map)
+          end
+        end
+        map
       end
 
       # execute a search in TDR and get back normalized results
@@ -899,6 +929,31 @@ module Api
             'drs_id' => safe_entry[:drs_id]
           }.with_indifferent_access
         end
+      end
+
+      # extract Azul file information for bulk download from file entry object
+      def self.extract_azul_file_info(file)
+        file_info = {
+          'name' => file['name'],
+          'upload_file_size' => file['size'],
+          'file_format' => file['format'],
+          'url' => file['url']
+        }
+        content = file[:contentDescription].first
+        case content
+        when /Matrix/
+          file_info['file_type'] = 'analysis_file'
+        when /Sequence/
+          file_info['file_type'] = 'sequence_file'
+        else
+          # fallback to guess file_type by extension
+          HcaAzulClient::FILE_EXT_BY_DOWNLOAD_TYPE.each_pair do |file_type, extensions|
+            if extensions.include? file['format']
+              file_info['file_type'] = file_type
+            end
+          end
+        end
+        file_info.with_indifferent_access
       end
     end
   end

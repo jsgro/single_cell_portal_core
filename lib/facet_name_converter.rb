@@ -61,8 +61,8 @@ class FacetNameConverter
   # e.g. FacetNameConverter.convert_schema_column(:alexandria, :tim, 'species') => 'TerraCore:hasOrganismType'
   #
   # * *params*
-  #   - +source_schema+ (String, Symbol) => Name of schema to convert from (:alexandria, :hca or :tim)
-  #   - +target_schema+ (String, Symbol) => Name of schema to convert to (:alexandria, :hca or :tim)
+  #   - +source_schema+ (String, Symbol) => Name of schema to convert from SCHEMA_NAMES
+  #   - +target_schema+ (String, Symbol) => Name of schema to convert to SCHEMA_NAMES
   #   - +column_name+ (String, Symbol) => column name to convert from source_schema
   #
   # * *returns*
@@ -70,18 +70,59 @@ class FacetNameConverter
   #
   # * *raises*
   #   - (ArgumentError) => if source/target schema do not exist
-  def self.convert_schema_column(source_schema = :alexandria, target_schema, column_name)
+  def self.convert_schema_column(source_schema, target_schema, column_name)
+    validate_map_name(source_schema, target_schema)
+    mappings = get_map(source_schema, target_schema)
+    mappings&.send(:[], column_name) || column_name
+  end
+
+  # check if a column exists in a metadata schema
+  #
+  # * *params*
+  #   - +source_schema+ (String, Symbol) => Name of schema to convert from SCHEMA_NAMES
+  #   - +target_schema+ (String, Symbol) => Name of schema to convert to SCHEMA_NAMES
+  #   - +column_name+ (String, Symbol) => column name to convert from source_schema
+  #
+  # * *returns*
+  #   - (Boolean) => T/F if column exists
+  #
+  # * *raises*
+  #   - (ArgumentError) => if source/target schema do not exist
+  def self.schema_has_column?(source_schema, target_schema, column_name)
+    validate_map_name(source_schema, target_schema)
+    mappings = get_map(source_schema, target_schema)
+    !!(mappings&.key? column_name)
+  end
+
+  # return a constant of the requested map
+  #
+  # * *params*
+  #   - +source_schema+ (String, Symbol) => Name of schema to convert from SCHEMA_NAMES
+  #   - +target_schema+ (String, Symbol) => Name of schema to convert to SCHEMA_NAMES
+  #
+  # * *returns*
+  #   - (Hash, Nil::NilClass) => Hash of mappings, or nil if not present
+  #
+  # * *raises*
+  #   - (ArgumentError) => if source/target schema do not exist
+  def self.get_map(source_schema, target_schema)
+    validate_map_name(source_schema, target_schema)
+    map_name = "FacetNameConverter::#{source_schema.upcase}_TO_#{target_schema.upcase}"
+    map_name.constantize if Object.const_defined? map_name
+  end
+
+  # validate that requested schemas exist
+  #
+  # * *params*
+  #   - +source_schema+ (String, Symbol) => Name of schema to convert from SCHEMA_NAMES
+  #   - +target_schema+ (String, Symbol) => Name of schema to convert to SCHEMA_NAMES
+  #
+  # * *raises*
+  #   - (ArgumentError) => if source/target schema do not exist
+  def self.validate_map_name(source_schema, target_schema)
     invalid_schemas = [source_schema.to_sym, target_schema.to_sym] - SCHEMA_NAMES
     raise ArgumentError, "invalid schema conversion: #{invalid_schemas.join(', ')}" if invalid_schemas.any?
-
-    map_name = "FacetNameConverter::#{source_schema.upcase}_TO_#{target_schema.upcase}"
-    if Object.const_defined? map_name
-      # perform lookup, but fall back to provided column name if no match is found
-      mappings = map_name.constantize
-      mappings[column_name] || column_name
-    else
-      # conversion not possible, so fall back on column_name
-      column_name
-    end
   end
+
+  private_class_method :validate_map_name
 end
