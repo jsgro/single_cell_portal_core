@@ -296,6 +296,10 @@ module Api
         if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') &&
            @facets.present? && ApplicationController.hca_azul_client.api_available?
           @azul_results = self.class.get_azul_results(selected_facets: @facets)
+          logger.info "Found #{@azul_results.keys.size} results in Azul"
+          @azul_results.each do |_, azul_result|
+            @studies << azul_result
+          end
 
           # @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
           #
@@ -701,12 +705,14 @@ module Api
         client = ApplicationController.hca_azul_client
         results = {}
         query_json = client.format_query_from_facets(selected_facets)
-        logger.info "Executing Azul query with: #{query_json}"
+        logger.info "Executing Azul project query with: #{query_json}"
         project_results = client.projects(query: query_json)
+        project_ids = []
         project_results.each do |project|
           safe_project = project.with_indifferent_access
-          short_name = safe_project[:projectShortName]
+          short_name = safe_project[:projectShortname]
           project_id = safe_project[:projectId]
+          project_ids << project_id
           result = {
             hca_result: true,
             accession: short_name,
@@ -731,14 +737,16 @@ module Api
               result[:facet_matches] << match unless result[:facet_matches].include?(match)
             end
           end
-          # now run file query to get matching files for this project
-          file_query = query_json.merge({ 'projectId' => { 'is' => [project_id] } })
-          files = client.files(query: file_query)
-          files.each do |file_entry|
-            file_info = extract_azul_file_info(file_entry)
-            result[:file_information] << file_info
-          end
           results[short_name] = result
+        end
+        # now run file query to get matching files for all matching projects
+        file_query = { 'projectId' => { 'is' => project_ids } }
+        logger.info "Executing Azul file query for projects: #{project_ids}"
+        files = client.files(query: file_query)
+        files.each do |file_entry|
+          file_info = extract_azul_file_info(file_entry)
+          accession = file_info[:accession]
+          results[accession][:file_information] << file_info
         end
         results
       end
@@ -751,8 +759,10 @@ module Api
         facets.each do |facet|
           facet_name = facet[:id]
           azul_results = matrix_map[facet_name]
-          matches = facet[:filters].select { |filter| azul_results.include? filter[:name] }
-          results_info[facet_name] = matches  if matches.any?
+          if azul_results
+            matches = facet[:filters].select { |filter| azul_results.include? filter[:name] }
+            results_info[facet_name] = matches if matches.any?
+          end
         end
         results_info
       end
@@ -937,9 +947,11 @@ module Api
           'name' => file['name'],
           'upload_file_size' => file['size'],
           'file_format' => file['format'],
-          'url' => file['url']
+          'url' => file['url'],
+          'accession' => file['projectShortname'],
+          'project_id' => file['projectId']
         }
-        content = file[:contentDescription].first
+        content = file['contentDescription']
         case content
         when /Matrix/
           file_info['file_type'] = 'analysis_file'

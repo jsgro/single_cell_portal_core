@@ -256,7 +256,21 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
     path = "#{api_root}/index/files?catalog=#{catalog}"
     query_string = format_hash_as_query_string(query)
     path += "&filters=#{query_string}&size=#{size}"
-    process_api_request(:get, path)['hits'].map { |rows| rows['files'] }.flatten
+    # make API request, but fold in project information to each result so that this is preserved for later use
+    raw_results = process_api_request(:get, path)['hits']
+    results = []
+    raw_results.each do |result|
+      files = result['files']
+      project = result['projects'].first
+      project_info = {
+        'projectShortname' => project['projectShortname'].first,
+        'projectId' => project['projectId'].first
+      }
+      files.each do |file|
+        results << file.merge(project_info)
+      end
+    end
+    results
   end
 
   # take a list of facets and construct a query object to pass as query string parameters when searching

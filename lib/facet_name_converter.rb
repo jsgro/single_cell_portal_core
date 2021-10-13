@@ -47,7 +47,7 @@ class FacetNameConverter
     'preservation_method' => 'preservationMethod',
     'sex' => 'biologicalSex',
     'species' => 'genusSpecies',
-    'study_accession' => 'projectId',
+    'study_accession' => 'projectShortname',
     'study_description' => 'projectDescription',
     'study_name' => 'projectTitle'
   }.with_indifferent_access.freeze
