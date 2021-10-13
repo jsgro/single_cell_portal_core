@@ -21,6 +21,7 @@ import 'jquery-ui/ui/widgets/sortable'
 import 'jquery-ui/ui/widgets/dialog'
 import 'jquery-ui/ui/effects/effect-highlight'
 import morpheus from 'morpheus-app'
+import 'react-notifications-component/dist/theme.css'
 
 import checkMissingAuthToken from 'lib/user-auth-tokens'
 // Below import resolves to '/app/javascript/components/HomePageContent.js'

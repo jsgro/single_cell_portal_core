@@ -75,9 +75,6 @@ export default function ExpressionFileForm({
           </label>
         </div>
 
-        <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
-        <TextFormField label="Expression Axis Label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
-
         { !isRawCountsFile &&
           <div className="form-group">
             <label className="labeled-select">Associated Raw Counts Files

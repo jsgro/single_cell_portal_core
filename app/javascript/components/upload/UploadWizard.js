@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
+import ReactNotification, { store } from 'react-notifications-component'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
@@ -41,6 +42,26 @@ const STEPS = [
   GeneListStep,
   MiscellaneousStep
 ]
+
+const SUCCESS_NOTIFICATION_TEMPLATE = {
+  type: 'success',
+  insert: 'top',
+  container: 'top-right',
+  width: 425,
+  dismiss: {
+    duration: 3000,
+    showIcon: false
+  }
+}
+
+const FAILURE_NOTIFICATION_TEMPLATE = {
+  ...SUCCESS_NOTIFICATION_TEMPLATE,
+  type: 'danger',
+  dismiss: {
+    duration: 0,
+    showIcon: true
+  }
+}
 
 /** shows the upload wizard */
 export default function UploadWizard({ studyAccession, name }) {
@@ -92,14 +113,23 @@ export default function UploadWizard({ studyAccession, name }) {
       const fileIndex = newFormState.files.findIndex(f => f._id === oldFileId)
       const formFile = _cloneDeep(updatedFile)
       if (uploadingMoreChunks) {
+        // copy over the previous files saving states
         formFile.isSaving = true
+        formFile.saveProgress = newFormState.files[fileIndex].saveProgress
       }
-      if (oldFileId != updatedFile._id) { // we saved the file and got back a fresh id
+      if (oldFileId != updatedFile._id) { // we saved a new file and got back a fresh id
         formFile.oldId = oldFileId
       }
       newFormState.files[fileIndex] = formFile
       return newFormState
     })
+    if (!uploadingMoreChunks) {
+      store.addNotification({
+        ...SUCCESS_NOTIFICATION_TEMPLATE,
+        title: `Save success`,
+        message: updatedFile.name
+      })
+    }
   }
 
   /** Updates file fields by merging in the 'updates', does not perform any validation, and
@@ -128,7 +158,13 @@ export default function UploadWizard({ studyAccession, name }) {
     if (!fileSize) {
       return // this is just a field update with no upload, so no need to show progress
     }
-    const overallCompletePercent = (chunkStart + progressEvent.loaded) / fileSize * 100
+    // the progress event sometimes reports more than the actual size sent
+    // maybe because of some minimum buffer size?
+    const amountSent = Math.min(CHUNK_SIZE, progressEvent.loaded)
+    let overallCompletePercent = (chunkStart + amountSent) / fileSize * 100
+    // max at 98, since the progress event comes based on what's sent.
+    // we always still will need to wait for the server to respond after we get to 100
+    overallCompletePercent = Math.round(Math.min(overallCompletePercent, 98))
     updateFile(fileId, { saveProgress: overallCompletePercent })
   }
 
@@ -170,10 +206,13 @@ export default function UploadWizard({ studyAccession, name }) {
         handleSaveResponse(response, studyFileId, false)
       }
     } catch (error) {
+      store.addNotification({
+        ...FAILURE_NOTIFICATION_TEMPLATE,
+        title: 'Save failed',
+        message: <div>{file.name}<br/>{error}</div>,
+      })
       updateFile(studyFileId, {
-        isError: true,
-        isSaving: false,
-        errorMessage: error.message
+        isSaving: false
       })
     }
   }
@@ -201,11 +240,19 @@ export default function UploadWizard({ studyAccession, name }) {
           return newServerState
         })
         deleteFileFromForm(file._id)
+        store.addNotification({
+          ...SUCCESS_NOTIFICATION_TEMPLATE,
+          title: 'Delete succeeded',
+          message: file.name
+        })
       } catch (error) {
+        store.addNotification({
+          ...FAILURE_NOTIFICATION_TEMPLATE,
+          title: 'Delete failed',
+          message: <div>{file.name}<br/>{error}</div>
+        })
         updateFile(file._id, {
-          isError: true,
-          isDeleting: false,
-          errorMessage: error.message
+          isDeleting: false
         })
       }
     }
@@ -221,6 +268,7 @@ export default function UploadWizard({ studyAccession, name }) {
   }, [studyAccession])
 
   return <UserProvider>
+    <ReactNotification />
     <div className="upload-wizard-react">
       <div className="row">
         <div className="col-md-3">

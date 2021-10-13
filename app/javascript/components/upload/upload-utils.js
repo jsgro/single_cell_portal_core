@@ -55,13 +55,8 @@ export function formatFileFromServer(file) {
   if (file.genome_assembly_id) {
     file.genome_assembly_id = file.genome_assembly_id.$oid
   }
-  if (!file.expression_file_info) {
-    file.expression_file_info = {}
-  } else {
+  if (file.expression_file_info) {
     delete file.expression_file_info._id
-  }
-  if (!file.expression_file_info.raw_counts_associations) {
-    file.expression_file_info.raw_counts_associations = []
   }
   return file
 }
