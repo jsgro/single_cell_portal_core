@@ -75,18 +75,18 @@ describe('Client-side file validation', () => {
     mockReadLinesAndType({ content: '\x1F\x2E3lkjf3' })
     const { errors } = await validateFileContent({ name: 'c.txt' }, 'Cluster')
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('file:encoding:missing-gz-suffix')
+    expect(errors[0][1]).toEqual('encoding:missing-gz-suffix')
   })
 
   it('catches text file with .gz suffix', async () => {
     mockReadLinesAndType({ content: 'CELL\tX\tY' })
     const { errors } = await validateFileContent({ name: 'c.txt.gz' }, 'Cluster')
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('file:encoding:invalid-gzip-lead-char')
+    expect(errors[0][1]).toEqual('encoding:invalid-gzip-magic-number')
   })
 
   it('passes valid gzip file', async () => {
-    // Confirms no false positive due to comma-separated values
+    // Confirms no false positive due to gzip-related content
     mockReadLinesAndType({ content: '\x1F\x2E3lkjf3' })
     const { errors } = await validateFileContent({ name: 'c.txt.gz' }, 'Cluster')
     expect(errors).toHaveLength(0)
