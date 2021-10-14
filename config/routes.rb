@@ -122,6 +122,10 @@ Rails.application.routes.draw do
     resources :admin_configurations, path: 'admin'
     resources :preset_searches
 
+    get 'features/latest', to: 'feature_announcements#latest', as: :latest_feature_announcements
+    get 'features/:slug', to: 'feature_announcements#view_announcement', as: :view_feature_announcement
+    resources :feature_announcements
+
     resources :taxons, path: 'species'
     get 'species/:id/download_genome_annotation', to: 'taxons#download_genome_annotation', as: :download_genome_annotation
     post 'species/upload/from_file', to: 'taxons#upload_species_list', as: :upload_species_list
