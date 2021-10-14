@@ -6,7 +6,7 @@ class AzulSearchService
     client = ApplicationController.hca_azul_client
     results = {}
     query_json = client.format_query_from_facets(selected_facets)
-    logger.info "Executing Azul project query with: #{query_json}"
+    Rails.logger.info "Executing Azul project query with: #{query_json}"
     project_results = client.projects(query: query_json)
     project_ids = []
     project_results.each do |project|
@@ -40,7 +40,7 @@ class AzulSearchService
     end
     # now run file query to get matching files for all matching projects
     file_query = { 'projectId' => { 'is' => project_ids } }
-    logger.info "Executing Azul file query for projects: #{project_ids}"
+    Rails.logger.info "Executing Azul file query for projects: #{project_ids}"
     files = client.files(query: file_query)
     files.each do |file_entry|
       file_info = extract_azul_file_info(file_entry)

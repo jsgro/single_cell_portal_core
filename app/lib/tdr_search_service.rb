@@ -16,9 +16,9 @@ class TdrSearchService
       end
       # now we merge the two queries together to perform a single search request
       query_json = client.merge_query_json(facet_query: facet_json, term_query: term_json)
-      logger.info "Executing TDR query with: #{query_json}"
+      Rails.logger.info "Executing TDR query with: #{query_json}"
       snapshot_ids = AdminConfiguration.get_tdr_snapshot_ids
-      logger.info "Scoping TDR query to snapshots: #{snapshot_ids.join(', ')}" if snapshot_ids.present?
+      Rails.logger.info "Scoping TDR query to snapshots: #{snapshot_ids.join(', ')}" if snapshot_ids.present?
       # first request is to only retrieve project IDs, then the second is for actual row-level results
       projects = client.query_snapshot_indexes(query_json, snapshot_ids: snapshot_ids)['result']
       project_ids = projects.map { |row| row['project_id'] }.uniq.compact
@@ -32,7 +32,7 @@ class TdrSearchService
                                          added_file_ids: added_file_ids)
       end
     rescue RestClient::Exception => e
-      Rails.logger.error "Error querying TDR: #{e.class.name} -- #{e.message}"
+      Rails.Rails.logger.error "Error querying TDR: #{e.class.name} -- #{e.message}"
       ErrorTracker.report_exception(e, nil, selected_facets, { terms: terms })
     end
     results
