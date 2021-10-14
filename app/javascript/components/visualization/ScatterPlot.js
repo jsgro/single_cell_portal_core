@@ -128,8 +128,8 @@ function RawScatterPlot({
     const [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
-    const dimensions = getScatterPlotDimensions(scatter, dimensionProps)
-    const layout = getPlotlyLayout(dimensions, scatter)
+    const dimensionsData = getScatterPlotDimensions(scatter, dimensionProps)
+    const layout = getPlotlyLayout(dimensionsData, scatter)
 
     const traceArgs = {
       axes: scatter.axes,
@@ -146,13 +146,12 @@ function RawScatterPlot({
       showPointBorders: scatter.showClusterPointBorders,
       is3D: scatter.is3D,
       labelCorrelations,
-      filters
+      filters,
+      scatter
     }
     const [traces, labelCounts] = getPlotlyTraces(traceArgs)
     const plotlyTraces = [traces]
     setCountsByLabel(labelCounts)
-
-    console.log('dimensions', dimensions)
 
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
@@ -160,7 +159,7 @@ function RawScatterPlot({
     if (perfTimes) {
       perfTimes.plot = performance.now() - startTime
       logScatterPlot({
-        scatter, genes, width: dimensions.width, height: dimensions.height
+        scatter, genes, width: dimensionsData.width, height: dimensionsData.height
       }, perfTimes)
     }
 
@@ -182,7 +181,7 @@ function RawScatterPlot({
     }
 
     setScatterData(scatter)
-    setDimensions(dimensions)
+    setDimensions(dimensionsData)
     setShowError(false)
     setIsLoading(false)
   }
@@ -237,9 +236,6 @@ function RawScatterPlot({
       }
     }
   }, [isCellSelecting])
-
-  console.log('dimensionProps', dimensionProps)
-  console.log('dimensionProps.showViewOptionsControls', dimensionProps.showViewOptionsControls)
 
   // Adjusts width and height of plots upon toggle of "View Options"
   useUpdateEffect(() => {
@@ -313,19 +309,25 @@ function RawScatterPlot({
 const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
-/** Get width and height for scatter plot dimensions */
-function getScatterPlotDimensions(scatter, dimensionProps) {
+/** Return whether scatter plot should use custom legend */
+function getIsCustomLegend(scatter) {
   const annotType = scatter.annotParams.type
   const genes = scatter.genes
   const isCorrelatedScatter = scatter.isCorrelatedScatter
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
 
-  const isCustomLegend = annotType === 'group' && isGeneExpressionForColor
+  return annotType === 'group' && !isGeneExpressionForColor
+}
 
-  dimensionProps = Object.assign(dimensionProps, {
+/** Get width and height for scatter plot dimensions */
+function getScatterPlotDimensions(scatter, dimensionProps) {
+  const isCustomLegend = getIsCustomLegend(scatter)
+
+  dimensionProps = Object.assign({
     horizontalPad: (isCustomLegend ? 330 : 80),
     hasTitle: true
-  })
+  }, dimensionProps)
+
   return getPlotDimensions(dimensionProps)
 }
 
@@ -342,9 +344,9 @@ function getPlotlyTraces({
   dataScatterColor,
   pointAlpha,
   pointSize,
-  showPointBorders,
   is3D,
-  filters
+  filters,
+  scatter
 }) {
   const trace = {
     type: is3D ? 'scatter3d' : 'scattergl',
@@ -365,7 +367,7 @@ function getPlotlyTraces({
 
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
 
-  const isCustomLegend = annotType === 'group' && isGeneExpressionForColor
+  const isCustomLegend = getIsCustomLegend(scatter)
 
   if (isCustomLegend) {
     // Use Plotly's groupby transformation to make the traces
