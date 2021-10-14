@@ -74,7 +74,7 @@ function RawCountsUploadForm({
         addNewFile={addNewFile}
         fileMenuOptions={fileMenuOptions}
         bucketName={formState.study.bucket_id}
-        initiallyExpanded={rawParentFiles.length === 1}/>
+        isInitiallyExpanded={rawParentFiles.length === 1}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/>
   </div>

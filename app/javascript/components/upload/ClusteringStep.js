@@ -102,7 +102,7 @@ export function ClusteringUploadForm({
         saveFile={saveFile}
         deleteFile={deleteFile}
         bucketName={formState.study.bucket_id}
-        initiallyExpanded={clusterFiles.length === 1}
+        isInitiallyExpanded={clusterFiles.length === 1}
       />
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_CLUSTER_FILE}/>

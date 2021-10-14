@@ -28,7 +28,7 @@ export default function ExpressionFileForm({
   fileMenuOptions,
   rawCountsOptions,
   bucketName,
-  initiallyExpanded
+  isInitiallyExpanded
 }) {
   const associatedChildren = findBundleChildren(file, allFiles)
   const speciesOptions = fileMenuOptions.species.map(spec => ({ label: spec.common_name, value: spec.id }))
@@ -47,7 +47,7 @@ export default function ExpressionFileForm({
 
   return <ExpandableFileForm {...{
     file, allFiles, updateFile, saveFile,
-    allowedFileExts, deleteFile, validationMessages, bucketName, initiallyExpanded
+    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded
   }}>
     <div className="form-group">
       <label>Matrix file type:</label><br/>

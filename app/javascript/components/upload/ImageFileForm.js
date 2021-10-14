@@ -19,7 +19,7 @@ export default function ImageFileForm({
   associatedClusterFileOptions,
   updateCorrespondingClusters,
   bucketName,
-  initiallyExpanded
+  isInitiallyExpanded
 }) {
   const spatialClusterAssocs = file.spatial_cluster_associations.map(id => associatedClusterFileOptions.find(opt => opt.value === id))
   const validationMessages = validateFile({ file, allFiles, allowedFileExts })
@@ -30,7 +30,7 @@ export default function ImageFileForm({
 
   return <ExpandableFileForm {...{
     file, allFiles, updateFile, saveFile,
-    allowedFileExts, deleteFile, validationMessages, bucketName, initiallyExpanded
+    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded
   }}>
     <div className="col-md-6">
       { file.uploadSelection && <img className="preview-image" src={imagePreviewUrl} alt={file.uploadSelection.name} /> }

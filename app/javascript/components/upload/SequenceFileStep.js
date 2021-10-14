@@ -81,7 +81,7 @@ function SequenceForm({
         fileMenuOptions={serverState.menu_options}
         associatedBaiFile={associatedBaiFile}
         bucketName={formState.study.bucket_id}
-        initiallyExpanded={sequenceFiles.length === 1}/>
+        isInitiallyExpanded={sequenceFiles.length === 1}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SEQUENCE_FILE}/>
   </div>

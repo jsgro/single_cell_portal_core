@@ -71,7 +71,7 @@ export function ImageForm({
         bucketName={formState.study.bucket_id}
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}
-        initiallyExpanded={imageFiles.length === 1}/>
+        isInitiallyExpanded={imageFiles.length === 1}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_IMAGE_FILE}/>
   </div>

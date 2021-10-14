@@ -17,10 +17,10 @@ export default function ClusteringFileForm({
   updateFile,
   saveFile,
   deleteFile,
-  associatedClusterFileOptions,
+  associatedClusterFileOptions=[],
   updateCorrespondingClusters,
   bucketName,
-  initiallyExpanded
+  isInitiallyExpanded
 }) {
   const spatialClusterAssocs = file.spatial_cluster_associations
     .map(id => associatedClusterFileOptions.find(opt => opt.value === id))
@@ -30,7 +30,7 @@ export default function ClusteringFileForm({
 
   return <ExpandableFileForm {...{
     file, allFiles, updateFile, saveFile,
-    allowedFileExts, deleteFile, validationMessages, bucketName, initiallyExpanded
+    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded
   }}>
     <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
     { file.is_spatial &&

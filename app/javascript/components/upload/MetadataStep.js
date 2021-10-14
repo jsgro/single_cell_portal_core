@@ -83,7 +83,7 @@ function MetadataForm({
     { file &&
       <ExpandableFileForm {...{
         file, allFiles: formState.files, updateFile, saveFile,
-        allowedFileExts, deleteFile, validationMessages, bucketName, initiallyExpanded: true,
+        allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded: true,
         isExpandable: false
       }}>
         <div className="form-group">

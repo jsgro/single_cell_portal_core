@@ -18,7 +18,7 @@ export default function CoordinateLabelForm({
   associatedClusterFileOptions,
   updateCorrespondingClusters,
   bucketName,
-  initiallyExpanded
+  isInitiallyExpanded
 }) {
   const associatedCluster = associatedClusterFileOptions.find(opt => opt.value === file.options.cluster_file_id)
   const validationMessages = validateFile({
@@ -28,7 +28,7 @@ export default function CoordinateLabelForm({
   })
   return <ExpandableFileForm {...{
     file, allFiles, updateFile, saveFile,
-    allowedFileExts, deleteFile, validationMessages, bucketName, initiallyExpanded
+    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded
   }}>
     <div className="form-group">
       <label className="labeled-select">Corresponding clusters / spatial data *

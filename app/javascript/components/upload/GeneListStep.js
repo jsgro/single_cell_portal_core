@@ -66,7 +66,7 @@ function GeneListForm({
         saveFile={saveFile}
         deleteFile={deleteFile}
         bucketName={formState.study.bucket_id}
-        initiallyExpanded={geneListFiles.length === 1}/>
+        isInitiallyExpanded={geneListFiles.length === 1}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_GENE_LIST_FILE}/>
   </div>

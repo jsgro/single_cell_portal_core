@@ -116,7 +116,7 @@ export function SpatialUploadForm({
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}
         bucketName={formState.study.bucket_id}
-        initiallyExpanded={spatialFiles.length === 1}/>
+        isInitiallyExpanded={spatialFiles.length === 1}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SPATIAL_FILE}/>
   </div>

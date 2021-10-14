@@ -10,9 +10,9 @@ import FileUploadControl from './FileUploadControl'
 /** renders its children inside an expandable form with a header for file selection */
 export default function ExpandableFileForm({
   file, allFiles, updateFile, allowedFileExts, validationMessages, bucketName,
-  saveFile, deleteFile, initiallyExpanded, children
+  saveFile, deleteFile, isInitiallyExpanded, children
 }) {
-  const [expanded, setExpanded] = useState(initiallyExpanded || file.status === 'new')
+  const [expanded, setExpanded] = useState(isInitiallyExpanded || file.status === 'new')
 
   /** handle a click on the header bar (not the expand button itself) */
   function handleDivClick(e) {

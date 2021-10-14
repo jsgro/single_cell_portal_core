@@ -79,6 +79,7 @@ function ProcessedUploadForm({
             <div className="col-md-3 col-md-offset-1">
               <a href="https://singlecell.zendesk.com/hc/en-us/requests/new?ticket_form_id=1260811597230"
                 className="action"
+                target="_blank"
                 rel="noopener noreferrer">Request Exemption <span className="fas fa-external-link-alt"></span>
               </a>
             </div>
@@ -113,7 +114,7 @@ function ProcessedUploadForm({
             rawCountsOptions={rawCountsOptions}
             fileMenuOptions={fileMenuOptions}
             bucketName={formState.study.bucket_id}
-            initiallyExpanded={processedParentFiles.length === 1}/>
+            isInitiallyExpanded={processedParentFiles.length === 1}/>
         })}
         <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
         { !isEnabled && <div className="file-upload-overlay"></div> }
