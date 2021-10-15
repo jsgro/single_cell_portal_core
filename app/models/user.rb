@@ -8,7 +8,10 @@ class User
 
   include Mongoid::Document
   include Mongoid::Timestamps
+
+  # feature flag integration
   include FeatureFlaggable
+  has_many :feature_flag_options, as: :feature_flaggable
 
   ###
   #
@@ -25,7 +28,6 @@ class User
       where(user_id: user.id, queued_for_deletion: false).select {|ua| ua.valid_annotation?}
     end
   end
-
 
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable and :omniauthable,
@@ -64,7 +66,7 @@ class User
   # Used for time-based one-time access token (TOTAT)
   field :totat, type: String
 
-# Time (t) and time interval (ti) for the TOTAT
+  # Time (t) and time interval (ti) for the TOTAT
   field :totat_info, type: Hash
 
   ## Confirmable

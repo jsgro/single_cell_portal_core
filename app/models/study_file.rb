@@ -1335,7 +1335,7 @@ class StudyFile
   # will check for exemption from any users associated with given study
   def ensure_metadata_convention
     convention_required = study.associated_users(permission: 'Edit').map { |user|
-      User.feature_flag_for_instance(user, 'convention_required')
+      user.feature_flag_for('convention_required')
     }.uniq
     # if any user account returned false for :convention_required, then allow ingest (means user received exemption)
     # otherwise, add validation error for :use_metadata_convention

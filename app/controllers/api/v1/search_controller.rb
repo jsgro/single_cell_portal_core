@@ -293,7 +293,7 @@ module Api
         end
 
         # perform TDR search, if enabled, and there are facets/terms provided by user
-        if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') && (@facets.present? || @term_list.present?)
+        if current_api_user.feature_flag_for('cross_dataset_search_backend') && (@facets.present? || @term_list.present?)
           @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
 
           if @facets.present?

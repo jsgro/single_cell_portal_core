@@ -108,7 +108,7 @@ class ExpressionFileInfo
 
     # next check for exemption
     raw_counts_required = study_file.study.associated_users(permission: 'Edit').map do |user|
-      User.feature_flag_for_instance(user, 'raw_counts_required_backend')
+      user.feature_flag_for('raw_counts_required_backend')
     end.uniq
     # if any user account returned false for :raw_counts_required_backed, then allow saving of expression matrix
     # otherwise, add validation error for :raw_counts_associations

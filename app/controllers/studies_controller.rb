@@ -1137,7 +1137,7 @@ class StudiesController < ApplicationController
     # divide all expression files into raw/processed bins
     @raw_matrix_files, @processed_matrix_files = @all_expression.partition(&:is_raw_counts_file?)
     @block_processed_upload = @raw_matrix_files.empty? &&
-                              User.feature_flag_for_instance(current_user, 'raw_counts_required_frontend')
+                              current_user.feature_flag_for('raw_counts_required_frontend')
     @metadata_file = @study.metadata_file
     @cluster_ordinations = @study.study_files.by_type('Cluster')
     @coordinate_labels = @study.study_files.by_type('Coordinate Labels')
@@ -1178,7 +1178,7 @@ class StudiesController < ApplicationController
     # if feature flag is enabled, ensure there are raw count matrix files
     if @study.study_files.where(file_type: /Matrix/, queued_for_deletion: false,
                                 'expression_file_info.is_raw_counts' => true).empty? &&
-      User.feature_flag_for_instance(current_user, 'raw_counts_required_frontend')
+      current_user.feature_flag_for('raw_counts_required_frontend')
       @block_processed_upload = true
     else
       @block_processed_upload = false
