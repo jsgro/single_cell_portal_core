@@ -106,8 +106,11 @@ class FeatureFlagTest < ActiveSupport::TestCase
     FeatureFlag.create(name: flag_name.to_s, default_value: false)
     @user.set_flag_option(flag_name, true)
     assert @user.feature_flag_for(flag_name)
-    @user.remove_flag_option(flag_name)
+    # remove_flag_option will return true when flag is configured
+    assert @user.remove_flag_option(flag_name)
     assert_not @user.feature_flag_for(flag_name)
+    # this will now return false, as no operation happened
+    assert_not @user.remove_flag_option(flag_name)
   end
 
   test 'should get requested feature flags as hash' do
