@@ -1,5 +1,13 @@
 # library with search methods specific to Human Cell Atlas Azul service
 class AzulSearchService
+  # map of bulk download file types to extensions (for grouping in bulk download modal)
+  # tar archives are lumped in with analysis_file entries as they could be either
+  # TODO: add supplemental_file column to bulk download for .tar archives
+  FILE_EXT_BY_DOWNLOAD_TYPE = {
+    'sequence_file' => %w[bam bai fastq fastq].map { |e| [e, e + '.gz'] }.flatten,
+    'analysis_file' => %w[loom csv tsv txt mtx Rdata tar].map { |e| [e, e + '.gz'] }.flatten
+  }.freeze
+
   # execute a search against Azul API
   # TODO: implement workaround for lack of keyword-based search in Azul
   def self.get_azul_results(selected_facets:)
@@ -20,7 +28,7 @@ class AzulSearchService
         name: safe_project[:projectTitle],
         description: safe_project[:projectDescription],
         hca_project_id: project_id,
-        facet_matches: [],
+        facet_matches: {},
         term_matches: [],
         file_information: [
           {
@@ -33,6 +41,7 @@ class AzulSearchService
       }.with_indifferent_access
       # get facet matches from matrices JSON blob
       matches = get_facet_match_from_matrices(safe_project[:matrices], selected_facets)
+      results[:facet_matches] = matches
       matches.each do |match|
         result[:facet_matches] << match unless result[:facet_matches].include?(match)
       end
@@ -63,6 +72,8 @@ class AzulSearchService
         results_info[facet_name] = matches if matches.any?
       end
     end
+    # compute weight based off of number of filter hits
+    results_info[:facet_search_weight] = results_info.values.map(&:count).flatten.reduce(0, :+)
     results_info
   end
 
@@ -99,7 +110,7 @@ class AzulSearchService
       file_info['file_type'] = 'sequence_file'
     else
       # fallback to guess file_type by extension
-      HcaAzulClient::FILE_EXT_BY_DOWNLOAD_TYPE.each_pair do |file_type, extensions|
+      FILE_EXT_BY_DOWNLOAD_TYPE.each_pair do |file_type, extensions|
         if extensions.include? file['format']
           file_info['file_type'] = file_type
         end

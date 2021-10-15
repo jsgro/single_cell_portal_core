@@ -41,7 +41,7 @@ class FacetNameConverter
     'biosample_id' => 'sampleId',
     'cell_type' => 'selectedCellType',
     'disease' => 'sampleDisease',
-    'library_construction_protocol' => 'libraryConstructionApproach',
+    'library_preparation_protocol' => 'libraryConstructionApproach',
     'organ' => 'organ',
     'organism_age' => 'organismAge',
     'preservation_method' => 'preservationMethod',
