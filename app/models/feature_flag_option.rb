@@ -38,8 +38,6 @@ class FeatureFlagOption
   # callback to self-delete any options that have a blank "value", meaning that an admin has set this option back
   # to the "default" for the parent feature flag
   def remove_default_value_options
-    if value.blank?
-      destroy
-    end
+    destroy if value.blank?
   end
 end
