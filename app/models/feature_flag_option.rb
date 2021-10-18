@@ -26,7 +26,7 @@ class FeatureFlagOption
 
   def to_h
     {
-      name.to_s => value
+      name => value
     }.with_indifferent_access
   end
 

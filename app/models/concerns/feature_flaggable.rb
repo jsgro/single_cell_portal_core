@@ -48,11 +48,7 @@ module FeatureFlaggable
   # * *returns*
   #   - (Hash) => Hash of requested feature flags (if present)
   def feature_flags_for(*flag_names)
-    flags = {}
-    flag_names.each do |flag_name|
-      flags.merge!(feature_flag_as_hash(flag_name))
-    end
-    flags.with_indifferent_access
+    flag_names.map { |flag_name| feature_flag_as_hash(flag_name) }.reduce({}, :merge).with_indifferent_access
   end
 
   # return only configured feature_flag_options for this instance
@@ -154,7 +150,7 @@ module FeatureFlaggable
   #   - +instance+ (Mongoid::Model) => model instance that is FeatureFlaggable
   #
   # * *returns*
-  #   - (Array<FeatureFlagOption) => array of FeatureFlagOptions for all FeatureFlags (building new where necessary)
+  #   - (Array<FeatureFlagOption>) => array of FeatureFlagOptions for all FeatureFlags (building new where necessary)
   def self.build_feature_flag_options(instance)
     options = []
     FeatureFlag.all.order(name: :asc).each do |feature_flag|
