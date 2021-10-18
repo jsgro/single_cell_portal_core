@@ -30,7 +30,7 @@ module FeatureFlaggable
   #   - +flag_name+ (String) => name of feature flag
   #
   # * *returns*
-  #   - (Hash, Nilclass) => Hash of flag if set, nil if no configured option or flag does not exist
+  #   - (Hash, Nilclass) => Hash of flag, merging in default value, or nil if flag does not exist
   def feature_flag_as_hash(flag_name)
     if FeatureFlag.where(name: flag_name).exists?
       {
