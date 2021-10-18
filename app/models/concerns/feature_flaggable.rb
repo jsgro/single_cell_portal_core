@@ -2,7 +2,6 @@
 # FeatureFlaggable: a module to add functionality for supporting "feature_flags" for a given model, used to turn on/off
 # special features in a sandboxed fashion
 ##
-
 module FeatureFlaggable
   extend ActiveSupport::Concern
 
