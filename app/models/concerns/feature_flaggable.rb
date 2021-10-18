@@ -1,6 +1,6 @@
 ##
-# FeatureFlaggable: a module to add functionality for supporting "feature_flags" for a given model
-#                   used to turn on/off special features in a sandboxed fashion
+# FeatureFlaggable: a module to add functionality for supporting "feature_flags" for a given model, used to turn on/off
+# special features in a sandboxed fashion
 ##
 
 module FeatureFlaggable
@@ -170,6 +170,12 @@ module FeatureFlaggable
 
   # merges feature flags of the passed-in instances from left to right,
   # using the default flag has if none of the instances is present or supplies a value
+  #
+  # * *params*
+  #   - +instances+ (Array<Mongoid::Model>) => array of FeatureFlaggable model instances, or nil
+  #
+  # * *returns*
+  #   - (Hash) => Hash of feature flag values, merged in order passed
   def self.feature_flags_for_instances(*instances)
     flag_hash = FeatureFlag.default_flag_hash
     instances.each do |instance|
