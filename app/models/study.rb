@@ -13,6 +13,9 @@ class Study
   include Swagger::Blocks
   include Mongoid::History::Trackable
 
+  # feature flag integration
+  include FeatureFlaggable
+
   ###
   #
   # FIRECLOUD METHODS

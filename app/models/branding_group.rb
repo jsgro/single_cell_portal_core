@@ -1,9 +1,7 @@
 class BrandingGroup
   include Mongoid::Document
   include Mongoid::Timestamps
-  # feature flag integration
   include FeatureFlaggable
-  has_many :feature_flag_options, as: :feature_flaggable
 
   field :name, type: String
   field :name_as_id, type: String
