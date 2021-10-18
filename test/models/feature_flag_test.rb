@@ -97,8 +97,9 @@ class FeatureFlagTest < ActiveSupport::TestCase
     assert_equal flag_as_hash, @user.feature_flag_as_hash(flag_name)
     @user.set_flag_option(flag_name, true)
     assert @user.feature_flag_for(flag_name)
-    flag_as_hash = { flag_name => true }.with_indifferent_access
-    assert_equal flag_as_hash, @user.feature_flag_as_hash(flag_name)
+    flag_option = @user.get_flag_option(flag_name)
+    assert flag_option.present?
+    assert_equal flag_option.to_h, @user.feature_flag_as_hash(flag_name)
   end
 
   test 'should remove FeatureFlagOption instances' do
