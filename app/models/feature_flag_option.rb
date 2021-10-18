@@ -13,8 +13,6 @@ class FeatureFlagOption
     scope: %i[feature_flaggable_id feature_flaggable_type], message: 'already has an option set for this instance'
   }
 
-  after_save :remove_default_value_options
-
   # get the default_value, name, and description from parent feature_flag
   delegate :default_value, to: :feature_flag
   delegate :name, to: :feature_flag
@@ -30,14 +28,17 @@ class FeatureFlagOption
     }.with_indifferent_access
   end
 
+  # attributes hash, removing created/updated timestamps, and converting all values to strings
+  # this is the representation found in form parameters hash objects
+  def form_attributes
+    sanitized_attributes = {}.with_indifferent_access
+    attributes.reject { |attr| attr =~ /_at|version/ }.each do |key, value|
+      sanitized_key = key == '_id' ? 'id' : key
+      sanitized_attributes[sanitized_key] = value.to_s
+    end
+    sanitized_attributes
+  end
+
   # history tracking, will also record when option was removed (e.g. manually deleted, or feature flag retired)
   track_history on: %i[value], modifier_field: nil, track_destroy: true
-
-  private
-
-  # callback to self-delete any options that have a blank "value", meaning that an admin has set this option back
-  # to the "default" for the parent feature flag
-  def remove_default_value_options
-    destroy if value.blank?
-  end
 end

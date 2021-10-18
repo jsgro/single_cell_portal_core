@@ -51,4 +51,17 @@ class FeatureFlagOptionTest < ActiveSupport::TestCase
     flag_as_hash = { @feature_flag.name => true }.with_indifferent_access
     assert_equal flag_as_hash, option.to_h
   end
+
+  test 'should return sanitized form params' do
+    @user.set_flag_option(@feature_flag.name, true)
+    option = @user.get_flag_option(@feature_flag.name)
+    expected_attributes = {
+      id: option.id.to_s,
+      value: option.value.to_s,
+      feature_flaggable_type: 'User',
+      feature_flaggable_id: @user.id.to_s,
+      feature_flag_id: @feature_flag.id.to_s
+    }.with_indifferent_access
+    assert_equal expected_attributes, option.form_attributes
+  end
 end

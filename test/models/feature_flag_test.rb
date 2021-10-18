@@ -148,4 +148,25 @@ class FeatureFlagTest < ActiveSupport::TestCase
     @user.reload
     assert_empty @user.configured_feature_flags
   end
+
+  test 'should merge in _destroy param on defaults' do
+    flag_name = :params_test
+    FeatureFlag.create(name: flag_name.to_s, default_value: false)
+    @user.set_flag_option(flag_name, true)
+    option = @user.get_flag_option(flag_name)
+    params = {
+      foo: 'bar', bing: 'baz', user: {
+        FeatureFlaggable::NESTED_FORM_KEY => {
+          '0' => option.form_attributes
+        }
+      }
+    }.with_indifferent_access
+    # should not update as value is explicitly set
+    updated_params = FeatureFlaggable.merge_default_destroy_param(params, @user)
+    assert_equal params, updated_params
+    # mimic "default" selection of empty value
+    params[:user][FeatureFlaggable::NESTED_FORM_KEY]['0'][:value] = ''
+    updated_params = FeatureFlaggable.merge_default_destroy_param(params, @user)
+    assert_equal '1', updated_params[:user][FeatureFlaggable::NESTED_FORM_KEY]['0'][:_destroy]
+  end
 end

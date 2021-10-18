@@ -304,8 +304,9 @@ class AdminConfigurationsController < ApplicationController
   # update a user account
   def update_user
     @user = User.find(params[:id])
+    updated_user_params = FeatureFlaggable.merge_default_destroy_param(user_params, @user)
     respond_to do |format|
-      if @user.update(user_params)
+      if @user.update(updated_user_params)
         format.html { redirect_to admin_configurations_path, notice: "User: '#{@user.email}' was successfully updated." }
       else
         format.html { render :edit_user }
@@ -388,7 +389,7 @@ class AdminConfigurationsController < ApplicationController
 
   def user_params
     params.require(:user).permit(:id, :admin, :reporter, feature_flag_options_attributes:
-      %i[id feature_flag_id feature_flaggable_type feature_flaggable_id value])
+      %i[id feature_flag_id feature_flaggable_type feature_flaggable_id value _destroy])
   end
 
   # parameters for service account profile

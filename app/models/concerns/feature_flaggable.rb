@@ -5,10 +5,15 @@
 module FeatureFlaggable
   extend ActiveSupport::Concern
 
+  # form key for managing default values
+  NESTED_FORM_KEY = :feature_flag_options_attributes
+
   # associations via FeatureFlagOptions model
   included do
     has_many :feature_flag_options, as: :feature_flaggable, dependent: :delete_all
-    accepts_nested_attributes_for :feature_flag_options, allow_destroy: true
+    accepts_nested_attributes_for :feature_flag_options,
+                                  allow_destroy: true,
+                                  reject_if: proc { |attr| attr['value'] == '' } # don't use blank? as false == blank?
   end
 
   # get specific feature_flag_option value for this instance
@@ -102,7 +107,7 @@ module FeatureFlaggable
   #   - +flag_value+ (Boolean) => value to set for flag
   #
   # * *returns*
-  #   - (FeatureFlagOption)
+  #   - (TrueClass) => if save succeeds
   #
   # * *raises*
   #   - (NameError) => if requested feature_flag does not exist
@@ -113,7 +118,7 @@ module FeatureFlaggable
 
     option = get_flag_option(flag_name) || feature_flag_options.build(feature_flag: parent_flag)
     option.update!(value: flag_value)
-    option
+    true
   end
 
   # remove a given feature_flag_option from this instance
@@ -161,6 +166,28 @@ module FeatureFlaggable
       end
     end
     options
+  end
+
+  # merge in _destroy parameter when handling form submissions to automatically remove any FeatureFlagOption
+  # instances when the "default" for a feature flag is selected (denoted by empty string for value)
+  #
+  # * *params*
+  #   - +params+ (ActionDispatch::Http::Parameters, Hash) => Parameters hash from form submission, or Hash of params
+  #   - +instance+ (Mongoid::Model) => FeatureFlaggable instance (for finding form entry)
+  #
+  # * *returns*
+  #   - (Hash) => Hash representation of params, with _destroy: 1 included for "default" options
+  def self.merge_default_destroy_param(params, instance)
+    # convert ActionDispatch::Http::Parameters to unsafe hash, if supplied
+    converted_params = params.respond_to?(:to_unsafe_hash) ? params.to_unsafe_hash : params
+    safe_params = converted_params.with_indifferent_access
+    form_entity = instance.class.name.underscore
+    safe_params.dig(form_entity, NESTED_FORM_KEY).each do |id, option_attributes|
+      if option_attributes[:value] == ''
+        safe_params[form_entity][NESTED_FORM_KEY][id][:_destroy] = '1'
+      end
+    end
+    safe_params
   end
 
   # merges feature flags of the passed-in instances from left to right,
