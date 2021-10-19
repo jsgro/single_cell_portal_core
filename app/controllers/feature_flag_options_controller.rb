@@ -16,7 +16,16 @@ class FeatureFlagOptionsController < ApplicationController
 
   FEATURE_FLAG_OPTS_PARAMS = %i[id feature_flag_id feature_flaggable_type feature_flaggable_id value _destroy].freeze
 
-  def index; end
+  def index
+    @feature_flag_info = {}.with_indifferent_access
+    FeatureFlag.all.order(name: :asc).each do |feature_flag|
+      options = feature_flag.feature_flag_options
+      types = SEARCH_ATTR_BY_MODEL.keys.map(&:classify)
+      info = types.map { |name| { name => options.where(feature_flaggable_type: name).count } }.reduce({}, :merge)
+      info.merge!({ default_value: feature_flag.default_value, description: feature_flag.description })
+      @feature_flag_info[feature_flag.name] = info
+    end
+  end
 
   # search for a FeatureFlaggable entity
   def find

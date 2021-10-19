@@ -1,21 +1,21 @@
 <h1>Manage Feature Flag Options</h1>
-<p class="lead">What object to do you want to update feature flag options for?</p>
+<p class="lead">Use the form below to load an object and set feature flag values.</p>
 
 <%= form_tag(find_feature_flag_entity_path, html: { class: 'form' }) do %>
   <div class="form-group row">
     <div class="col-md-3">
-      <%= label_tag :class_name, 'Class' %><br />
+      <%= label_tag :class_name, 'Object Class (e.g. user)' %><br />
       <%= select_tag :class_name, options_for_select(FeatureFlagOptionsController::SEARCH_ATTR_BY_MODEL.keys),
-                     { include_blank: 'Please select a class', class: 'form-control' } %>
+                     { include_blank: 'Choose one...', class: 'form-control' } %>
     </div>
     <div class="col-md-3">
-      <%= label_tag :attribute, 'Find by' %><br />
+      <%= label_tag :attribute, 'Lookup object by?' %><br />
       <%= select_tag :attribute, options_for_select([]),
-                     { include_blank: 'Select a class first', class: 'form-control' } %>
+                     { include_blank: 'Select a class first...', class: 'form-control' } %>
     </div>
     <div class="col-md-3">
       <%= label_tag :value %><br />
-      <%= text_field_tag :value, nil, placeholder: 'Please enter the search value...', class: 'form-control' %>
+      <%= text_field_tag :value, nil, placeholder: 'Please enter a search value...', class: 'form-control' %>
     </div>
     <div class="col-md-3">
       <label>&nbsp;</label><br />
@@ -23,6 +23,38 @@
     </div>
   </div>
 <% end %>
+
+<h2>Current Feature Flag Usage</h2>
+<div class="row">
+  <div class="col-md-12">
+    <div class="table-responsive">
+      <table class="table table-condensed table-striped">
+        <thead>
+          <tr>
+            <th>Flag</th>
+            <th>Description</th>
+            <th>Enabled?</th>
+            <th>Users</th>
+            <th>Studies</th>
+            <th>Branding Groups</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @feature_flag_info.each do |flag_name, data| %>
+            <tr>
+              <td><%= flag_name %></td>
+              <td><%= data[:description] %></td>
+              <td><%= get_boolean_label data[:default_value] %></td>
+              <td><%= data[:User] %></td>
+              <td><%= data[:Study] %></td>
+              <td><%= data[:BrandingGroup] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   const modelSearchOpts = <%= FeatureFlagOptionsController::SEARCH_ATTR_BY_MODEL.to_json.html_safe %>

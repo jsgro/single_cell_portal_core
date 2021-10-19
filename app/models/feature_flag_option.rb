@@ -13,6 +13,9 @@ class FeatureFlagOption
     scope: %i[feature_flaggable_id feature_flaggable_type], message: 'already has an option set for this instance'
   }
 
+  # index declarations
+  index({ feature_flaggable_type: 1, feature_flaggable_id: 1, feature_flag_id: 1 }, unique: true)
+
   # get the default_value, name, and description from parent feature_flag
   delegate :default_value, to: :feature_flag
   delegate :name, to: :feature_flag
