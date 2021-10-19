@@ -135,7 +135,7 @@ class StudyFileTest < ActiveSupport::TestCase
     matrix.expression_file_info.raw_counts_associations = []
     refute matrix.valid?
     study_user = @study.user
-    study_user.feature_flags.merge!({ 'raw_counts_required_backend' => false })
+    study_user.set_flag_option('raw_counts_required_backend', false)
     study_user.save!
     matrix.reload # gotcha for picking up new state of exemption
     assert matrix.valid?

@@ -1,7 +1,7 @@
 <h1>Feature Flags for <%= get_instance_label(@instance) %></h1>
 
 <%= nested_form_for(@instance,
-                    url: feature_flag_option_path(class_name: @instance.class.name, id: @instance.id.to_s),
+                    url: feature_flag_option_path(class_name: params[:class_name], id: params[:id]),
                     class: 'form') do |f| %>
   <div class="form-group row">
     <div class="col-md-12">

@@ -185,7 +185,6 @@ module FeatureFlaggable
         safe_params[NESTED_FORM_KEY][id][:_destroy] = '1'
       end
     end
-    Rails.logger.info "updated params: #{safe_params}"
     safe_params
   end
 
