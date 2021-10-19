@@ -1,7 +1,30 @@
-##
-# FeatureFlaggable: a module to add functionality for supporting "feature_flags" for a given model, used to turn on/off
-# special features in a sandboxed fashion
-##
+# Add functionality for supporting "feature_flags" for a given model, used to turn on/off special features in a
+# sandboxed fashion
+#
+# To make any model "FeatureFlaggable", add <code>include FeatureFlaggable</code> to the top of the class declaration
+# after the Mongoid includes:
+#
+#  class MyNewClass
+#    include Mongoid::Document
+#    include Mongoid::Timestamps
+#    include FeatureFlaggable
+#
+#    field :some_attribute_name, type: String
+#    field :some_other_attribute, type: String
+#    ...
+#
+# To allow updating feature flag values for a model via the GUI at /single_cell/feature_flags, add an entry to
+# <code>FeatureFlagOptionsController:SEARCH_ATTR_BY_MODEL</code> for this class containing an array of attributes used
+# to find instances of this class, using the 'underscore' version of the class name.  <b>Note: these attributes must
+# be <code>type: String</code></b>.
+#
+# For example:
+#
+#  app/controllers/feature_flag_options_controller.rb#L11
+#
+#  SEARCH_ATTR_BY_MODEL = {
+#    'my_new_class' => %w[some_attribute_name some_other_attribute],
+#  ...
 module FeatureFlaggable
   extend ActiveSupport::Concern
 
