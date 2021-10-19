@@ -122,6 +122,12 @@ Rails.application.routes.draw do
     resources :admin_configurations, path: 'admin'
     resources :preset_searches
 
+    # feature flag option CMS
+    get 'feature_flags', to: 'feature_flag_options#index', as: :feature_flag_options
+    post 'feature_flags/find', to: 'feature_flag_options#find', as: :find_feature_flag_entity
+    get 'feature_flags/:class_name/:id', to: 'feature_flag_options#edit', as: :edit_feature_flag_option
+    patch 'feature_flags/:class_name/:id', to: 'feature_flag_options#update', as: :feature_flag_option
+
     get 'features/latest', to: 'feature_announcements#latest', as: :latest_feature_announcements
     get 'features/:slug', to: 'feature_announcements#view_announcement', as: :view_feature_announcement
     resources :feature_announcements

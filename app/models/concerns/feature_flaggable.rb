@@ -12,8 +12,7 @@ module FeatureFlaggable
   included do
     has_many :feature_flag_options, as: :feature_flaggable, dependent: :delete_all
     accepts_nested_attributes_for :feature_flag_options,
-                                  allow_destroy: true,
-                                  reject_if: proc { |attr| attr['value'] == '' } # don't use blank? as false == blank?
+                                  allow_destroy: true
   end
 
   # get specific feature_flag_option value for this instance
@@ -172,21 +171,21 @@ module FeatureFlaggable
   # instances when the "default" for a feature flag is selected (denoted by empty string for value)
   #
   # * *params*
-  #   - +params+ (ActionDispatch::Http::Parameters, Hash) => Parameters hash from form submission, or Hash of params
+  #   - +params+ (ActionDispatch::Parameters, Hash) => Parameters hash from form submission, or Hash of params
   #   - +instance+ (Mongoid::Model) => FeatureFlaggable instance (for finding form entry)
   #
   # * *returns*
   #   - (Hash) => Hash representation of params, with _destroy: 1 included for "default" options
-  def self.merge_default_destroy_param(params, instance)
+  def self.merge_default_destroy_param(params)
     # convert ActionDispatch::Http::Parameters to unsafe hash, if supplied
     converted_params = params.respond_to?(:to_unsafe_hash) ? params.to_unsafe_hash : params
     safe_params = converted_params.with_indifferent_access
-    form_entity = instance.class.name.underscore
-    safe_params.dig(form_entity, NESTED_FORM_KEY).each do |id, option_attributes|
+    safe_params[NESTED_FORM_KEY].each do |id, option_attributes|
       if option_attributes[:value] == ''
-        safe_params[form_entity][NESTED_FORM_KEY][id][:_destroy] = '1'
+        safe_params[NESTED_FORM_KEY][id][:_destroy] = '1'
       end
     end
+    Rails.logger.info "updated params: #{safe_params}"
     safe_params
   end
 

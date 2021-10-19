@@ -1,0 +1,39 @@
+<h1>Manage Feature Flag Options</h1>
+<p class="lead">What object to do you want to update feature flag options for?</p>
+
+<%= form_tag(find_feature_flag_entity_path, html: { class: 'form' }) do %>
+  <div class="form-group row">
+    <div class="col-md-3">
+      <%= label_tag :class_name, 'Class' %><br />
+      <%= select_tag :class_name, options_for_select(FeatureFlagOptionsController::SEARCH_ATTR_BY_MODEL.keys),
+                     { include_blank: 'Please select a class', class: 'form-control' } %>
+    </div>
+    <div class="col-md-3">
+      <%= label_tag :attribute, 'Find by' %><br />
+      <%= select_tag :attribute, options_for_select([]),
+                     { include_blank: 'Select a class first', class: 'form-control' } %>
+    </div>
+    <div class="col-md-3">
+      <%= label_tag :value %><br />
+      <%= text_field_tag :value, nil, placeholder: 'Please enter the search value...', class: 'form-control' %>
+    </div>
+    <div class="col-md-3">
+      <label>&nbsp;</label><br />
+      <%= submit_tag 'Find', class: 'btn btn-success' %>
+    </div>
+  </div>
+<% end %>
+
+<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+  const modelSearchOpts = <%= FeatureFlagOptionsController::SEARCH_ATTR_BY_MODEL.to_json.html_safe %>
+  const classSelect = $('#class_name')
+  const attributeSelect = $('#attribute')
+  classSelect.on('change', (event) => {
+    let className = $(event.target).val()
+    if (className !== '') {
+      let attributeOpts = modelSearchOpts[className]
+      attributeSelect.empty()
+      attributeSelect.append(attributeOpts.map(opt => `<option value='${opt}'>${opt}</option>`))
+    }
+  })
+</script>
