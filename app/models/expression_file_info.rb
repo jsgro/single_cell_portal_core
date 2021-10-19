@@ -112,7 +112,7 @@ class ExpressionFileInfo
     end.uniq
     # if any user account returned false for :raw_counts_required_backed, then allow saving of expression matrix
     # otherwise, add validation error for :raw_counts_associations
-    unless raw_counts_required.include?(false)
+    unless raw_counts_required.include?(false) || !study_file.study.feature_flag_for('raw_counts_required_backend')
       errors.add(:base, 'You must specify at least one associated raw count file before saving')
     end
   end
