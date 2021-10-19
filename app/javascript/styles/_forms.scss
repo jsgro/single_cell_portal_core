@@ -85,3 +85,51 @@
     border: 1px solid #eee;
   }
 }
+
+.form-terra {
+  background: #fff;
+  padding: 1em;
+  border-radius: 5px;
+  #metadata-convention-example img {
+    border: 2px solid #888;
+  }
+}
+
+.sub-form {
+  padding: 1em;
+  margin-top: 1em;
+  border-left: 2px solid lighten($action-color, 30%);
+  background: lighten($action-color, 50%);
+  border-radius: 5px;
+  h5 { margin-bottom: 1em;}
+}
+
+.padded {
+  padding: 1em;
+}
+
+.top-margin {
+  margin-top: 1em;
+}
+
+.bottom-margin {
+  margin-bottom: 0.5em;
+}
+
+.margin-right {
+  margin-right: 2em;
+}
+
+.margin-left {
+  margin-left: 1em;
+}
+
+.sublabel {
+  margin-left: 1em;
+  font-weight: normal;
+}
+
+.margin-right-hah {
+  margin-right: 2em;
+  display: inline-block;
+}

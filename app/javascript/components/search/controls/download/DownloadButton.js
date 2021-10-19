@@ -1,11 +1,11 @@
 import React, { useState, useContext } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDownload } from '@fortawesome/free-solid-svg-icons'
-import Tooltip from 'react-bootstrap/lib/Tooltip'
-import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger'
 
 import DownloadSelectionModal from './DownloadSelectionModal'
 import { UserContext } from 'providers/UserProvider'
+import { Popover, OverlayTrigger } from 'react-bootstrap'
+
 
 /**
  * Component for "Download" button which shows a Bulk Download modal on click.
@@ -38,6 +38,7 @@ export default function DownloadButton({ searchResults={} }) {
     }
   }
 
+
   /** Note that we are reading the TDR file information from the search results object, which
    * means we are reliant on the TDR results being on the current page.  Once we begin paging/sorting
    * TDR results, this approach will have to be revisited */
@@ -52,22 +53,36 @@ export default function DownloadButton({ searchResults={} }) {
       studyFiles: result.file_information
     }))
 
+
+  const saveDisabled = !active
+  let saveButton = <button
+      style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
+      type="button"
+      className="btn btn-primary"
+      disabled={saveDisabled}
+      data-testid="file-save"
+      // id='download-button'
+      onClick={() => {setShowModal(!showModal)}}>
+      <span>
+        <FontAwesomeIcon className="icon-left" icon={faDownload}/>
+Download
+      </span>
+    </button>
+ 
+  // if (saveDisabled) {
+  // if saving is disabled, wrap the disabled button in a popover that will show the errors
+  const validationPopup = <Popover id={`save-invalid`} className="tooltip-wide">
+    {hint}
+  </Popover>
+  saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={validationPopup}>
+    <div className="margin-right-hah">{ saveButton }</div>
+  </OverlayTrigger>
+  // }
+
   return (
     <>
-      <OverlayTrigger
-        placement='top'
-        overlay={<Tooltip id='download-tooltip'>{hint}</Tooltip>}>
-        <button
-          id='download-button'
-          className={`btn btn-primary ${active ? 'active' : 'disabled'}`}
-          disabled={!active}
-          onClick={() => {setShowModal(!showModal)}}>
-          <span>
-            <FontAwesomeIcon className="icon-left" icon={faDownload}/>
-          Download
-          </span>
-        </button>
-      </OverlayTrigger>
+      { saveButton }
+
       { showModal &&
         <DownloadSelectionModal
           show={showModal}
@@ -76,4 +91,7 @@ export default function DownloadButton({ searchResults={} }) {
           studyAccessions={matchingAccessions}/> }
     </>
   )
+
+
+
 }
