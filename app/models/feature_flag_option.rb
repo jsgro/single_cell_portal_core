@@ -1,3 +1,4 @@
+# stores feature flag override values for any FeatureFlaggable classes, including pointers to parent models
 class FeatureFlagOption
   include Mongoid::Document
   include Mongoid::Timestamps
