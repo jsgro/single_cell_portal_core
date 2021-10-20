@@ -48,41 +48,10 @@ function RawScatterPlot({
   const [labelCorrelations, setLabelCorrelations] = useState(null)
   const [scatterData, setScatterData] = useState(null)
   const [countsByLabel, setCountsByLabel] = useState(null)
-  const [dimensions, setDimensions] = useState(null)
   const [filters, setFilters] = useState([])
   const [showHideButtons, setShowHideButtons] = useState(['disabled', 'active'])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
-
-
-  // 3 filterable labels available:
-  // labels = [A, B, C]
-  //
-  // describe('When no filters are selected, all labels are shown, and clicking a label hides unfiltered', () => {
-  //   if (filters.length === 0) {
-  //     click('A')
-  //     assert($('#legend-entry-a').hasClass('hidden') === false)
-  //     assert(filters.length === 1 && filters[0] === 'a')
-  //   }
-  //  })
-  //
-  // describe('When some but not all filters are selected, clicking a label still hides unfiltered', () => {
-  // if (filters.length > 0 && filters.length < labels.length) {
-  //   click('B')
-  //   assert($('#legend-entry-b').hasClass('hidden') === false)
-  //   assert(filters.length === 2 && filters.includes('a') && filters.includes('b'))
-  // }
-  // })
-  //
-  // describe('When all filters are selected, no labels are shown, and clicking a label removes that filter and shows it', () => {
-  // if (filters.length === labels.length) {
-  //   assert(filters.length === 3)
-  //   assert($('#legend-entry-a').hasClass('hidden'))
-  //   click('A')
-  //   assert(filters.length === 2)
-  //   assert($('#legend-entry-a').hasClass('hidden') === false)
-  // }
-  // })
 
   /** Handle user interaction with one or more filters */
   function updateFilters(filterIds, value, numLabels) {
@@ -180,7 +149,6 @@ function RawScatterPlot({
     }
 
     setScatterData(scatter)
-    setDimensions(dimensionsData)
     setShowError(false)
     setIsLoading(false)
   }
