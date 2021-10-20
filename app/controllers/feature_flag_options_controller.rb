@@ -7,12 +7,17 @@ class FeatureFlagOptionsController < ApplicationController
 
   before_action :set_feature_flaggable_instance, only: %i[edit update]
 
-  # attributes to retrieve enabled models by
-  SEARCH_ATTR_BY_MODEL = {
-    'study' => %w[accession name],
-    'branding_group' => %w[name],
-    'user' => %w[email]
-  }.freeze
+  # get all FeatureFlaggable models & string fields to use for searching
+  # returned as a hash, with keys as the 'underscore'
+  SEARCH_FIELDS_BY_MODEL = lambda {
+    Rails.application.eager_load! if Rails.env.development? # turned off by default in development
+
+    Mongoid.models.select { |model| model.include?(FeatureFlaggable) }.map do |ff_model|
+      {
+        ff_model.name.underscore => ff_model.fields.values.select { |field| field.type == String }.map(&:name)
+      }
+    end.reduce({}, :merge)
+  }.call.freeze
 
   FEATURE_FLAG_OPTS_PARAMS = %i[id feature_flag_id feature_flaggable_type feature_flaggable_id value _destroy].freeze
 
@@ -20,7 +25,7 @@ class FeatureFlagOptionsController < ApplicationController
     @feature_flag_info = {}.with_indifferent_access
     FeatureFlag.all.order(name: :asc).each do |feature_flag|
       options = feature_flag.feature_flag_options
-      types = SEARCH_ATTR_BY_MODEL.keys.map(&:classify)
+      types = SEARCH_FIELDS_BY_MODEL.keys.map(&:classify)
       info = types.map { |name| { name => options.where(feature_flaggable_type: name).count } }.reduce({}, :merge)
       info.merge!({ default_value: feature_flag.default_value, description: feature_flag.description })
       @feature_flag_info[feature_flag.name] = info
@@ -29,7 +34,7 @@ class FeatureFlagOptionsController < ApplicationController
 
   # search for a FeatureFlaggable entity
   def find
-    unless SEARCH_ATTR_BY_MODEL.keys.include?(params[:class_name])
+    unless SEARCH_FIELDS_BY_MODEL.keys.include?(params[:class_name])
       redirect_to feature_flag_options_path, alert: "#{params[:class_name].classify} is not FeatureFlaggable" and return
     end
 
@@ -71,7 +76,7 @@ class FeatureFlagOptionsController < ApplicationController
 
   def feature_flag_options_params
     # detect which object class this is
-    class_name = params.keys.detect { |key| SEARCH_ATTR_BY_MODEL.keys.include? key }
+    class_name = params.keys.detect { |key| SEARCH_FIELDS_BY_MODEL.keys.include? key }
     params.require(class_name).permit(feature_flag_options_attributes: FEATURE_FLAG_OPTS_PARAMS)
   end
 

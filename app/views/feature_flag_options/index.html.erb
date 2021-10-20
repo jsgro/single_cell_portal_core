@@ -5,7 +5,7 @@
   <div class="form-group row">
     <div class="col-md-3">
       <%= label_tag :class_name, 'Object Class (e.g. user)' %><br />
-      <%= select_tag :class_name, options_for_select(FeatureFlagOptionsController::SEARCH_ATTR_BY_MODEL.keys),
+      <%= select_tag :class_name, options_for_select(FeatureFlagOptionsController::SEARCH_FIELDS_BY_MODEL.keys),
                      { include_blank: 'Choose one...', class: 'form-control' } %>
     </div>
     <div class="col-md-3">
@@ -57,7 +57,7 @@
 </div>
 
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-  const modelSearchOpts = <%= FeatureFlagOptionsController::SEARCH_ATTR_BY_MODEL.to_json.html_safe %>
+  const modelSearchOpts = <%= FeatureFlagOptionsController::SEARCH_FIELDS_BY_MODEL.to_json.html_safe %>
   const classSelect = $('#class_name')
   const attributeSelect = $('#attribute')
   classSelect.on('change', (event) => {

@@ -51,7 +51,7 @@ class FeatureFlagOptionsControllerTest < ActionDispatch::IntegrationTest
   test 'should find feature flaggable instances' do
     @featureable.each do |instance|
       class_name = instance.class.name.underscore
-      find_by = FeatureFlagOptionsController::SEARCH_ATTR_BY_MODEL[class_name].sample
+      find_by = FeatureFlagOptionsController::SEARCH_FIELDS_BY_MODEL[class_name].sample
       find_params = {
         class_name: class_name,
         attribute: find_by,
