@@ -11,8 +11,6 @@
 import { log } from 'lib/metrics-api'
 import { readLinesAndType } from './io'
 
-const VALIDATED_TYPES = ['Cluster', 'Metadata']
-
 /** Remove white spaces and quotes from a string value */
 function clean(value) {
   return value.trim().replaceAll(/"/g, '')
@@ -251,7 +249,7 @@ function validateClusterCoordinates(headers) {
 
 /** Get properties about this validation run to log to Mixpanel */
 function getLogProps(fileObj, fileType, errorObj) {
-  const { file, lines, delimiter } = fileObj
+  const { file, table, delimiter } = fileObj
   const { errors, summary } = errorObj
 
   // Avoid needless gotchas in downstream analysis
@@ -262,8 +260,8 @@ function getLogProps(fileObj, fileType, errorObj) {
     friendlyDelimiter = 'space'
   }
 
-  const numRows = lines.length
-  const numColumns = lines[0].split(delimiter).length
+  const numRows = table.length
+  const numColumns = table[0].length
 
   const defaultProps = {
     fileType,
@@ -289,22 +287,48 @@ function getLogProps(fileObj, fileType, errorObj) {
   }
 }
 
+/** confirm that the presence/absence of a .gz suffix matches the lead byte of the file */
+export function validateGzipEncoding({ fileName, lines, mimeType }) {
+  const GZIP_MAGIC_NUMBER = '\x1F'
+  if (fileName.endsWith('.gz') && lines[0][0] !== GZIP_LEAD_CHAR) {
+    return [['error', 'encoding:invalid-gzip-magic-number',
+      'File has a ".gz" suffix but does not seem to be gzipped']]
+  } else if (!fileName.endsWith('.gz') && lines[0][0] === GZIP_MAGIC_NUMBER) {
+    return [['error', 'encoding:missing-gz-extension',
+      'File seems to be gzipped but does not have a ".gz" extension']]
+  }
+  return []
+}
+
 /** Validate a local file, return list of any detected errors */
 export async function validateFileContent(file, fileType) {
   let issues = []
-  // for now, exclude gzipped files from validation
-  if (!VALIDATED_TYPES.includes(fileType) || file.name.endsWith('.gz')) {
-    return { errors: [], summary: '' }
-  }
+  let table = [[]]
+  let delimiter = null
+
   const { lines, mimeType } = await readLinesAndType(file, 2)
+  issues = validateGzipEncoding({ fileName: file.name, lines, mimeType })
 
-  const delimiter = sniffDelimiter(lines, mimeType)
-  const table = lines.map(line => line.split(delimiter))
+  if (issues.length === 0 && !file.name.endsWith('.gz')) {
+    // if there are no encoding issues, and this isn't a gzipped file, validate content
+    delimiter = sniffDelimiter(lines, mimeType)
+    table = lines.map(line => line.split(delimiter))
 
-  if (['Cluster', 'Metadata'].includes(fileType)) {
-    issues = await validateCapFormat(table, fileType)
+    if (['Cluster', 'Metadata'].includes(fileType)) {
+      issues = await validateCapFormat(table, fileType)
+    }
   }
 
+  const errorObj = formatIssues(issues)
+  const fileObj = { file, table, delimiter }
+  const logProps = getLogProps(fileObj, fileType, errorObj)
+  log('file-validation', logProps)
+
+  return errorObj
+}
+
+/** take an array of [type, key, msg] issues, and format it */
+function formatIssues(issues) {
   // Ingest Pipeline reports "issues", which includes "errors" and "warnings".
   // Keep issue type distinction in this module to ease porting, but for now
   // only report errors.
@@ -316,12 +340,6 @@ export async function validateFileContent(file, fileType) {
     const errorsTerm = (numErrors === 1) ? 'error' : 'errors'
     summary = `Your file had ${numErrors} ${errorsTerm}`
   }
-
-  const fileObj = { file, lines, delimiter }
-  const errorObj = { errors, summary }
-  const logProps = getLogProps(fileObj, fileType, errorObj)
-  log('file-validation', logProps)
-
   return { errors, summary }
 }
 
