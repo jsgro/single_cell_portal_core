@@ -66,6 +66,7 @@ function SequenceForm({
         </div>
       </div>
     </div>
+    { sequenceFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SEQUENCE_FILE}/> }
     { sequenceFiles.map(file => {
       const associatedBaiFile = findBundleChildren(file, formState.files)[0]
       return <SequenceFileForm
@@ -79,7 +80,8 @@ function SequenceForm({
         sequenceFileTypes={sequenceFileTypes}
         fileMenuOptions={serverState.menu_options}
         associatedBaiFile={associatedBaiFile}
-        bucketName={formState.study.bucket_id}/>
+        bucketName={formState.study.bucket_id}
+        isInitiallyExpanded={sequenceFiles.length === 1}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SEQUENCE_FILE}/>
   </div>

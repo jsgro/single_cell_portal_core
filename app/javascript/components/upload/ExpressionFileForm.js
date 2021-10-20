@@ -3,9 +3,10 @@ import _kebabCase from 'lodash/kebabCase'
 
 import Select from 'lib/InstrumentedSelect'
 import MTXBundledFilesForm from './MTXBundledFilesForm'
-import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
+import { FileTypeExtensions } from './FileUploadControl'
+import ExpandableFileForm from './ExpandableFileForm'
 
-import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
+import { TextFormField } from './form-components'
 import { findBundleChildren, validateFile } from './upload-utils'
 
 const REQUIRED_FIELDS = [{ label: 'species', propertyName: 'taxon_id' },
@@ -26,7 +27,8 @@ export default function ExpressionFileForm({
   addNewFile,
   fileMenuOptions,
   rawCountsOptions,
-  bucketName
+  bucketName,
+  isInitiallyExpanded
 }) {
   const associatedChildren = findBundleChildren(file, allFiles)
   const speciesOptions = fileMenuOptions.species.map(spec => ({ label: spec.common_name, value: spec.id }))
@@ -43,107 +45,92 @@ export default function ExpressionFileForm({
     value: id
   }))
 
-  return <div className="row top-margin" key={file._id}>
-    <div className="col-md-12">
-      <form id={`exp-form-${file._id}`}
-        className="form-terra"
-        onSubmit={e => e.preventDefault()}
-        acceptCharset="UTF-8">
-        <FileUploadControl
-          file={file}
-          allFiles={allFiles}
-          updateFile={updateFile}
-          validationMessages={validationMessages}
-          allowedFileExts={allowedFileExts}
-          bucketName={bucketName}/>
-        <div className="form-group">
-          <label>Matrix file type:</label><br/>
-          <label className="sublabel">
-            <input type="radio"
-              name={`exp-matrix-type-${file._id}`}
-              value="false"
-              checked={!isMtxFile}
-              onChange={e => updateFile(file._id, { file_type: 'Expression Matrix' })} />
-              &nbsp;Expression Matrix
-          </label>
-          <label className="sublabel">
-            <input type="radio"
-              name={`exp-matrix-type-${file._id}`}
-              value="true" checked={isMtxFile}
-              onChange={e => updateFile(file._id, { file_type: 'MM Coordinate Matrix' })}/>
-              &nbsp;MM Coordinate Matrix
-          </label>
-        </div>
-
-        { !isRawCountsFile &&
-          <div className="form-group">
-            <label className="labeled-select">Associated Raw Counts Files
-              <Select options={rawCountsOptions}
-                data-analytics-name="expression-raw-counts-select"
-                value={associatedRawCounts}
-                placeholder="Select one..."
-                isMulti={true}
-                onChange={val => updateFile(file._id, {
-                  expression_file_info: {
-                    raw_counts_associations: val ? val.map(opt => opt.value) : []
-                  }
-                })}/>
-            </label>
-          </div>
-        }
-
-        <div className="form-group">
-          <label className="labeled-select" data-testid="expression-select-taxon_id">Species *
-            <Select options={speciesOptions}
-              data-analytics-name="expression-species-select"
-              value={selectedSpecies}
-              placeholder="Select one..."
-              onChange={val => updateFile(file._id, { taxon_id: val.value })}/>
-          </label>
-        </div>
-
-        { isRawCountsFile &&
-          <ExpressionFileInfoSelect label="Units *"
-            propertyName="units"
-            rawOptions={fileMenuOptions.units}
-            file={file}
-            updateFile={updateFile}/>
-        }
-
-        <ExpressionFileInfoSelect label="Biosample Input Type *"
-          propertyName="biosample_input_type"
-          rawOptions={fileMenuOptions.biosample_input_type}
-          file={file}
-          updateFile={updateFile}/>
-
-        <ExpressionFileInfoSelect label="Library Preparation Protocol *"
-          propertyName="library_preparation_protocol"
-          rawOptions={fileMenuOptions.library_preparation_protocol}
-          file={file}
-          updateFile={updateFile}/>
-
-        <ExpressionFileInfoSelect label="Modality *"
-          propertyName="modality"
-          rawOptions={fileMenuOptions.modality}
-          file={file}
-          updateFile={updateFile}/>
-
-        <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
-        <TextFormField label="Expression Axis Label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
-
-        <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
-        { isMtxFile &&
-          <MTXBundledFilesForm {...{
-            parentFile: file, allFiles, updateFile, saveFile, deleteFile,
-            addNewFile, associatedChildren, bucketName
-          }}/>
-        }
-
-      </form>
-      <SavingOverlay file={file} updateFile={updateFile}/>
+  return <ExpandableFileForm {...{
+    file, allFiles, updateFile, saveFile,
+    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded
+  }}>
+    <div className="form-group">
+      <label>Matrix file type:</label><br/>
+      <label className="sublabel">
+        <input type="radio"
+          name={`exp-matrix-type-${file._id}`}
+          value="false"
+          checked={!isMtxFile}
+          onChange={e => updateFile(file._id, { file_type: 'Expression Matrix' })} />
+          &nbsp;Expression Matrix
+      </label>
+      <label className="sublabel">
+        <input type="radio"
+          name={`exp-matrix-type-${file._id}`}
+          value="true" checked={isMtxFile}
+          onChange={e => updateFile(file._id, { file_type: 'MM Coordinate Matrix' })}/>
+          &nbsp;MM Coordinate Matrix
+      </label>
     </div>
 
-  </div>
+    { !isRawCountsFile &&
+      <div className="form-group">
+        <label className="labeled-select">Associated Raw Counts Files
+          <Select options={rawCountsOptions}
+            data-analytics-name="expression-raw-counts-select"
+            value={associatedRawCounts}
+            placeholder="Select one..."
+            isMulti={true}
+            onChange={val => updateFile(file._id, {
+              expression_file_info: {
+                raw_counts_associations: val ? val.map(opt => opt.value) : []
+              }
+            })}/>
+        </label>
+      </div>
+    }
+
+    <div className="form-group">
+      <label className="labeled-select" data-testid="expression-select-taxon_id">Species *
+        <Select options={speciesOptions}
+          data-analytics-name="expression-species-select"
+          value={selectedSpecies}
+          placeholder="Select one..."
+          onChange={val => updateFile(file._id, { taxon_id: val.value })}/>
+      </label>
+    </div>
+
+    { isRawCountsFile &&
+      <ExpressionFileInfoSelect label="Units *"
+        propertyName="units"
+        rawOptions={fileMenuOptions.units}
+        file={file}
+        updateFile={updateFile}/>
+    }
+
+    <ExpressionFileInfoSelect label="Biosample Input Type *"
+      propertyName="biosample_input_type"
+      rawOptions={fileMenuOptions.biosample_input_type}
+      file={file}
+      updateFile={updateFile}/>
+
+    <ExpressionFileInfoSelect label="Library Preparation Protocol *"
+      propertyName="library_preparation_protocol"
+      rawOptions={fileMenuOptions.library_preparation_protocol}
+      file={file}
+      updateFile={updateFile}/>
+
+    <ExpressionFileInfoSelect label="Modality *"
+      propertyName="modality"
+      rawOptions={fileMenuOptions.modality}
+      file={file}
+      updateFile={updateFile}/>
+
+    <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
+    <TextFormField label="Expression Axis Label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
+
+    { isMtxFile &&
+      <MTXBundledFilesForm {...{
+        parentFile: file, allFiles, updateFile, saveFile, deleteFile,
+        addNewFile, associatedChildren, bucketName
+      }}/>
+    }
+  </ExpandableFileForm>
 }
 
 /** render a dropdown for an expression file info property */

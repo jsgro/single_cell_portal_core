@@ -33,7 +33,8 @@ function ProcessedUploadForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile
+  deleteFile,
+  setCurrentStep
 }) {
   const processedParentFiles = formState.files.filter(processedFilter)
   const fileMenuOptions = serverState.menu_options
@@ -62,8 +63,7 @@ function ProcessedUploadForm({
 
     { !isEnabled &&
       <div className="row">
-        <div className="col-md-12">
-          <br/>
+        <div className="col-md-12 padded">
           Uploading a raw count matrix is now required in order to access to processed matrix uploads.
           <br/>
           <br/>
@@ -72,11 +72,14 @@ function ProcessedUploadForm({
           <br/>
           <div className="row">
             <div className="col-md-3 col-md-offset-2">
-              <a href="" className="action"><span className="fas fa-chevron-circle-left"></span> Upload Raw Count File</a>
+              <a className="action" onClick={() => setCurrentStep({ name: 'rawCounts' })}>
+                <span className="fas fa-chevron-circle-left"></span> Upload Raw Count File
+              </a>
             </div>
             <div className="col-md-3 col-md-offset-1">
               <a href="https://singlecell.zendesk.com/hc/en-us/requests/new?ticket_form_id=1260811597230"
                 className="action"
+                target="_blank"
                 rel="noopener noreferrer">Request Exemption <span className="fas fa-external-link-alt"></span>
               </a>
             </div>
@@ -84,35 +87,38 @@ function ProcessedUploadForm({
         </div>
       </div>
     }
-
-    { isEnabled && <>
-      <div className="row">
-        <div className="col-md-12">
-          <div className="form-terra">
-            <div className="row">
-              <div className="col-md-12">
-                <p>Processed matrix data is used to support gene expression visualizations. Gene expression scores can be uploaded in either of two file types:</p>
+    <div className="row">
+      <div className="col-md-12">
+        <div className="row">
+          <div className="col-md-12">
+            <div className="form-terra">
+              <div className="row">
+                <div className="col-md-12">
+                  <p>Processed matrix data is used to support gene expression visualizations. Gene expression scores can be uploaded in either of two file types:</p>
+                </div>
               </div>
+              { expressionFileStructureHelp }
             </div>
-            { expressionFileStructureHelp }
           </div>
         </div>
+        { processedParentFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/> }
+        { processedParentFiles.map(file => {
+          return <ExpressionFileForm
+            key={file._id}
+            file={file}
+            allFiles={formState.files}
+            updateFile={updateFile}
+            saveFile={saveFile}
+            deleteFile={deleteFile}
+            addNewFile={addNewFile}
+            rawCountsOptions={rawCountsOptions}
+            fileMenuOptions={fileMenuOptions}
+            bucketName={formState.study.bucket_id}
+            isInitiallyExpanded={processedParentFiles.length === 1}/>
+        })}
+        <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
+        { !isEnabled && <div className="file-upload-overlay"></div> }
       </div>
-      { processedParentFiles.map(file => {
-        return <ExpressionFileForm
-          key={file._id}
-          file={file}
-          allFiles={formState.files}
-          updateFile={updateFile}
-          saveFile={saveFile}
-          deleteFile={deleteFile}
-          addNewFile={addNewFile}
-          rawCountsOptions={rawCountsOptions}
-          fileMenuOptions={fileMenuOptions}
-          bucketName={formState.study.bucket_id}/>
-      })}
-      <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
-    </> }
-
+    </div>
   </div>
 }

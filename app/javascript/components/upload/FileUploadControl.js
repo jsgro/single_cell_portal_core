@@ -83,31 +83,35 @@ export default function FileUploadControl({
     }
   }
   let buttonText = file.upload_file_name ? 'Replace' : 'Choose file'
+  let buttonClass = 'fileinput-button btn terra-tertiary-btn'
+  if (!file.upload_file_name && !file.uploadSelection) {
+    buttonClass = 'fileinput-button btn btn-primary'
+  }
   if (fileValidation.validating) {
     buttonText = <LoadingSpinner data-testid="file-validation-spinner"/>
   }
 
-  const inputAcceptExts = allowedFileExts
+  let inputAcceptExts = allowedFileExts
   if (navigator.platform.includes('Mac')) {
     // A longstanding OS X file picker limitation is that compound extensions (e.g. .txt.gz)
     // will not resolve at all, so we need to add the general .gz to permit gzipped files
     // see, e.g. https://bugs.chromium.org/p/chromium/issues/detail?id=521781
-    inputAcceptExts.push('.gz')
+    inputAcceptExts = [...allowedFileExts, '.gz']
   }
 
-  return <div className="form-group">
+  return <div>
     <label>
-      { !file.uploadSelection && <span>{file.upload_file_name}</span> }
-      { file.uploadSelection && <span data-testid="file-selection-name">
-        {file.uploadSelection.name}  ({bytesToSize(file.uploadSelection.size)})
-      </span> }
+      { !file.uploadSelection && <h5>{file.upload_file_name}</h5> }
+      { file.uploadSelection && <h5 data-testid="file-selection-name">
+        {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})
+      </h5> }
     </label>
     <FileDownloadControl
       file={file}
       bucketName={bucketName}
     />
     &nbsp;
-    <button className="fileinput-button terra-secondary-btn" id={`fileButton-${file._id}`}>
+    <button className={buttonClass} id={`fileButton-${file._id}`}>
       { buttonText }
       <input className="file-upload-input" data-testid="file-input"
         type="file"

@@ -10,13 +10,18 @@ import ReactDOM from 'react-dom'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isEqual'
 import ReactNotification, { store } from 'react-notifications-component'
+import { Router, useLocation, navigate } from '@reach/router'
+import * as queryString from 'query-string'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCheckCircle, faExclamationTriangle, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
 import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
 import MessageModal from 'lib/MessageModal'
 import UserProvider from 'providers/UserProvider'
+import ErrorBoundary from 'lib/ErrorBoundary'
 
-import StepTabHeader from './StepTabHeader'
+import WizardNavPanel from './WizardNavPanel'
 import ClusteringStep from './ClusteringStep'
 import SpatialStep from './SpatialStep'
 import ImageStep from './ImageStep'
@@ -43,29 +48,20 @@ const STEPS = [
   MiscellaneousStep
 ]
 
-const SUCCESS_NOTIFICATION_TEMPLATE = {
-  type: 'success',
-  insert: 'top',
-  container: 'top-right',
-  width: 425,
-  dismiss: {
-    duration: 3000,
-    showIcon: false
-  }
-}
+const MAIN_STEPS = STEPS.slice(0, 4)
+const SUPPLEMENTAL_STEPS = STEPS.slice(4, 11)
 
-const FAILURE_NOTIFICATION_TEMPLATE = {
-  ...SUCCESS_NOTIFICATION_TEMPLATE,
-  type: 'danger',
-  dismiss: {
-    duration: 0,
-    showIcon: true
-  }
-}
 
 /** shows the upload wizard */
-export default function UploadWizard({ studyAccession, name }) {
-  const [currentStep, setCurrentStep] = useState(STEPS[0])
+function RawUploadWizard({ studyAccession, name }) {
+  const routerLocation = useLocation()
+  const queryParams = queryString.parse(routerLocation.search)
+  let currentStepIndex = STEPS.findIndex(step => step.name === queryParams.step)
+  if (currentStepIndex < 0) {
+    currentStepIndex = 0
+  }
+  const currentStep = STEPS[currentStepIndex]
+
   const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
 
@@ -81,6 +77,12 @@ export default function UploadWizard({ studyAccession, name }) {
     })
   }
 
+  /** move the wizard to the given step */
+  function setCurrentStep(newStep) {
+    navigate(`?step=${newStep.name}`)
+    window.scrollTo(0, 0)
+  }
+
   /** adds an empty file, merging in the given fileProps. Does not communicate anything to the server */
   function addNewFile(fileProps) {
     const newFile = newStudyFileObj(serverState.study._id.$oid)
@@ -91,6 +93,7 @@ export default function UploadWizard({ studyAccession, name }) {
       newState.files.push(newFile)
       return newState
     })
+    window.setTimeout(() => scroll({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
   }
 
   /** handle response from server after an upload by updating the serverState with the updated file response */
@@ -124,11 +127,7 @@ export default function UploadWizard({ studyAccession, name }) {
       return newFormState
     })
     if (!uploadingMoreChunks) {
-      store.addNotification({
-        ...SUCCESS_NOTIFICATION_TEMPLATE,
-        title: `Save success`,
-        message: updatedFile.name
-      })
+      store.addNotification(successNotification(`${updatedFile.name} saved successfully`))
     }
   }
 
@@ -206,11 +205,7 @@ export default function UploadWizard({ studyAccession, name }) {
         handleSaveResponse(response, studyFileId, false)
       }
     } catch (error) {
-      store.addNotification({
-        ...FAILURE_NOTIFICATION_TEMPLATE,
-        title: 'Save failed',
-        message: <div>{file.name}<br/>{error}</div>,
-      })
+      store.addNotification(failureNotification(<span>{file.name} failed to save<br/>{error}</span>))
       updateFile(studyFileId, {
         isSaving: false
       })
@@ -240,17 +235,9 @@ export default function UploadWizard({ studyAccession, name }) {
           return newServerState
         })
         deleteFileFromForm(file._id)
-        store.addNotification({
-          ...SUCCESS_NOTIFICATION_TEMPLATE,
-          title: 'Delete succeeded',
-          message: file.name
-        })
+        store.addNotification(successNotification(`${file.name} deleted successfully`))
       } catch (error) {
-        store.addNotification({
-          ...FAILURE_NOTIFICATION_TEMPLATE,
-          title: 'Delete failed',
-          message: <div>{file.name}<br/>{error}</div>
-        })
+        store.addNotification(failureNotification(<span>{file.name} failed to delete<br/>{error}</span>))
         updateFile(file._id, {
           isDeleting: false
         })
@@ -267,43 +254,61 @@ export default function UploadWizard({ studyAccession, name }) {
     })
   }, [studyAccession])
 
-  return <UserProvider>
-    <ReactNotification />
-    <div className="upload-wizard-react">
-      <div className="row">
-        <div className="col-md-3">
-          <div className="position-fixed">
-            <div className="padded">
-              <h5><a href={`/single_cell/study/${studyAccession}`}>{studyAccession}</a>: {name}</h5>
-            </div>
-            <ul className="upload-wizard-steps">
-              { STEPS.map((step, index) =>
-                <StepTabHeader key={index}
-                  step={step}
-                  index={index}
-                  formState={formState}
-                  serverState={serverState}
-                  currentStep={currentStep}
-                  setCurrentStep={setCurrentStep}/>) }
-            </ul>
-          </div>
-        </div>
-        <div className="col-md-9">
-          { !formState && <LoadingSpinner data-testid="upload-wizard-spinner"/> }
-          { !!formState && <currentStep.component
+  const nextStep = STEPS[currentStepIndex + 1]
+  const prevStep = STEPS[currentStepIndex - 1]
+  return <div className="upload-wizard-react">
+    <div className="row">
+      <div className="col-md-3">
+        <WizardNavPanel {...{
+          formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
+          supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
+        }} />
+      </div>
+      <div className="col-md-9">
+        { !formState && <div className="padded text-center">
+          <LoadingSpinner data-testid="upload-wizard-spinner"/>
+        </div> }
+        { !!formState && <div>
+          <currentStep.component
+            setCurrentStep={setCurrentStep}
             formState={formState}
             serverState={serverState}
             deleteFile={deleteFile}
             updateFile={updateFile}
             saveFile={saveFile}
             addNewFile={addNewFile}
-          /> }
-        </div>
+          />
+          <div className="text-center">
+            { nextStep && <button
+              className="btn terra-tertiary-btn margin-right"
+              onClick={() => setCurrentStep(prevStep)}>
+              <FontAwesomeIcon icon={faChevronLeft}/> Previous
+            </button> }
+            { nextStep && <button
+              className="btn terra-tertiary-btn"
+              onClick={() => setCurrentStep(nextStep)}>
+              Next <FontAwesomeIcon icon={faChevronRight}/>
+            </button> }
+          </div>
+        </div> }
       </div>
-      <MessageModal/>
     </div>
-  </UserProvider>
+    <MessageModal/>
+  </div>
 }
+
+/** Wraps the upload wirzard logic in a router and error handler */
+export default function UploadWizard({ studyAccession, name }) {
+  return <ErrorBoundary>
+    <UserProvider>
+      <ReactNotification />
+      <Router>
+        <RawUploadWizard studyAccession={studyAccession} name={name} default/>
+      </Router>
+    </UserProvider>
+  </ErrorBoundary>
+}
+
 
 /** convenience method for drawing/updating the component from non-react portions of SCP */
 export function renderUploadWizard(target, studyAccession, name) {
@@ -313,4 +318,34 @@ export function renderUploadWizard(target, studyAccession, name) {
       name={name}/>,
     target
   )
+}
+
+
+/** returns a notification config object suitable for passing to store.addNotification */
+function successNotification(message) {
+  return {
+    type: 'success',
+    insert: 'top',
+    container: 'top-right',
+    title: '',
+    message: <><FontAwesomeIcon icon={faCheckCircle}/>{message}</>,
+    width: 425,
+    dismiss: {
+      duration: 3000,
+      showIcon: false
+    }
+  }
+}
+
+/** returns a notification config object suitable for passing to store.addNotification */
+function failureNotification(message) {
+  return {
+    ...successNotification(message),
+    type: 'danger',
+    message: <><FontAwesomeIcon icon={faExclamationTriangle}/>{message}</>,
+    dismiss: {
+      duration: 0,
+      showIcon: true
+    }
+  }
 }

@@ -6,8 +6,9 @@ import { Popover, OverlayTrigger } from 'react-bootstrap'
 
 
 import { UserContext } from 'providers/UserProvider'
-import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
-import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
+import ExpandableFileForm from './ExpandableFileForm'
+import { FileTypeExtensions } from './FileUploadControl'
+import { TextFormField } from './form-components'
 import { validateFile } from './upload-utils'
 
 const DEFAULT_NEW_METADATA_FILE = {
@@ -16,7 +17,7 @@ const DEFAULT_NEW_METADATA_FILE = {
 }
 
 const metadataFileFilter = file => file.file_type === 'Metadata'
-
+const allowedFileExts = FileTypeExtensions.plainText
 export default {
   title: 'Metadata',
   name: 'metadata',
@@ -31,7 +32,8 @@ function MetadataForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile
+  deleteFile,
+  bucketName
 }) {
   const userState = useContext(UserContext)
   const featureFlagState = userState.featureFlagsWithDefaults
@@ -79,63 +81,46 @@ function MetadataForm({
       </div>
     </div>
     { file &&
-      <div className="row top-margin" key={file._id}>
-        <div className="col-md-12 ">
-          <form id={`metadataForm-${file._id}`}
-            className="form-terra"
-            acceptCharset="UTF-8"
-            onSubmit={() => {return false}}>
-            <div className="row">
-              <div className="col-md-12 flexbox-align-center">
-                <FileUploadControl
-                  file={file}
-                  allFiles={formState.files}
-                  updateFile={updateFile}
-                  allowedFileExts={FileTypeExtensions.plainText}
-                  validationMessages={validationMessages}
-                  bucketName={formState.study.bucket_id}/>
-              </div>
-            </div>
-            <div className="form-group">
-              <label>Do you use SCP conventional names for required metadata column headers? </label>
-              <OverlayTrigger trigger="click" rootClose placement="top" overlay={whyConventionPopover}>
-                <span> <FontAwesomeIcon data-analytics-name="metadata-convention-popover"
-                  className="action log-click help-icon" icon={faInfoCircle}/></span>
-              </OverlayTrigger><br/>
-              <label className="sublabel">
-                <input type="radio"
-                  name={`metadataFormYes-${file._id}`}
-                  value="true"
-                  disabled={conventionRequired}
-                  checked={file.use_metadata_convention}
-                  onChange={e => updateFile(file._id, { use_metadata_convention: true })} /> Yes
-              </label>
-              <label className="sublabel">
-                <input type="radio"
-                  name={`metadataFormNo-${file._id}`}
-                  value="false"
-                  disabled={conventionRequired}
-                  checked={!file.use_metadata_convention}
-                  onChange={e => updateFile(file._id, { use_metadata_convention: false })} /> No
-              </label> &nbsp; &nbsp;
-              <OverlayTrigger trigger="click"
-                rootClose
-                placement="top"
-                overlay={<ConventionIssuePopover studyAccession={serverState.study.accession} email={userState.email}/>}>
-                <span className="action log-click"> Using conventional names is an issue for my study</span>
-              </OverlayTrigger><br/>
-              Learn <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention"
-                target="_blank"
-                rel="noopener noreferrer">how to convert your file.</a><br/>
-              If the file fails metadata convention validation, you will be emailed messages to help correct it.
-            </div>
-            <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
-
-            <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
-          </form>
-          <SavingOverlay file={file} updateFile={updateFile}/>
+      <ExpandableFileForm {...{
+        file, allFiles: formState.files, updateFile, saveFile,
+        allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded: true,
+        isExpandable: false
+      }}>
+        <div className="form-group">
+          <label>Do you use SCP conventional names for required metadata column headers? </label>
+          <OverlayTrigger trigger="click" rootClose placement="top" overlay={whyConventionPopover}>
+            <span> <FontAwesomeIcon data-analytics-name="metadata-convention-popover"
+              className="action log-click help-icon" icon={faInfoCircle}/></span>
+          </OverlayTrigger><br/>
+          <label className="sublabel">
+            <input type="radio"
+              name={`metadataFormYes-${file._id}`}
+              value="true"
+              disabled={conventionRequired}
+              checked={file.use_metadata_convention}
+              onChange={e => updateFile(file._id, { use_metadata_convention: true })} /> Yes
+          </label>
+          <label className="sublabel">
+            <input type="radio"
+              name={`metadataFormNo-${file._id}`}
+              value="false"
+              disabled={conventionRequired}
+              checked={!file.use_metadata_convention}
+              onChange={e => updateFile(file._id, { use_metadata_convention: false })} /> No
+          </label> &nbsp; &nbsp;
+          <OverlayTrigger trigger="click"
+            rootClose
+            placement="top"
+            overlay={<ConventionIssuePopover studyAccession={serverState.study.accession} email={userState.email}/>}>
+            <span className="action log-click"> Using conventional names is an issue for my study</span>
+          </OverlayTrigger><br/>
+          Learn <a href="https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention"
+            target="_blank"
+            rel="noopener noreferrer">how to convert your file.</a><br/>
+          If the file fails metadata convention validation, you will be emailed messages to help correct it.
         </div>
-      </div>
+        <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
+      </ExpandableFileForm>
     }
   </div>
 }

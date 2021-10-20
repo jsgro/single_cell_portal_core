@@ -1,34 +1,62 @@
 import React, { useState } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
 
 import LoadingSpinner from 'lib/LoadingSpinner'
+import FileUploadControl from './FileUploadControl'
 
-/** renders a 'Add File' button that occupies a full row */
-export function AddFileButton({ newFileTemplate, addNewFile }) {
+/** renders its children inside an expandable form with a header for file selection */
+export default function ExpandableFileForm({
+  file, allFiles, updateFile, allowedFileExts, validationMessages, bucketName,
+  saveFile, deleteFile, isInitiallyExpanded, children
+}) {
+  const [expanded, setExpanded] = useState(isInitiallyExpanded || file.status === 'new')
+
+  /** handle a click on the header bar (not the expand button itself) */
+  function handleDivClick(e) {
+    // if this didn't come from a link/button, toggle the header expansion
+    if (!e.target.closest('button') && !e.target.closest('a')) {
+      handleExpansionClick()
+    }
+    // otherwise do nothing
+  }
+
+  /** handle a click on the toggle button itself */
+  function handleExpansionClick() {
+    setExpanded(!expanded)
+  }
+  let headerClass = 'flexbox-align-center upload-form-header'
+  headerClass = expanded ? `${headerClass} expanded` : headerClass
+
   return <div className="row top-margin">
     <div className="col-md-12">
-      <button className="btn btn-secondary terra-secondary-btn" onClick={() => addNewFile(newFileTemplate)}>
-        <span className="fas fa-plus"></span> Add File
-      </button>
+      <form id={`file-form-${file._id}`}
+        className="form-terra"
+        onSubmit={e => e.preventDefault()}
+        acceptCharset="UTF-8">
+        <div className={headerClass} onClick={handleDivClick}>
+          <div onClick={handleExpansionClick} className="expander">
+            <button type="button" className="btn-icon">
+              <FontAwesomeIcon icon={expanded ? faChevronUp : faChevronDown}/>
+            </button>
+          </div>
+          <div className="flexbox">
+            <FileUploadControl
+              file={file}
+              allFiles={allFiles}
+              updateFile={updateFile}
+              allowedFileExts={allowedFileExts}
+              validationMessages={validationMessages}
+              bucketName={bucketName}/>
+          </div>
+          <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
+        </div>
+        { expanded && children }
+        <SavingOverlay file={file} updateFile={updateFile}/>
+      </form>
     </div>
-  </div>
-}
-
-/** renders a basic label->value text field in a bootstrap form control */
-export function TextFormField({ label, fieldName, file, updateFile }) {
-  const fieldId = `${fieldName}-input-${file._id}`
-  return <div className="form-group">
-    <label htmlFor={fieldId}>{label}</label><br/>
-    <input className="form-control"
-      type="text"
-      id={fieldId}
-      value={file[fieldName] ? file[fieldName] : ''}
-      onChange={event => {
-        const update = {}
-        update[fieldName] = event.target.value
-        updateFile(file._id, update)
-      }}/>
   </div>
 }
 
@@ -38,7 +66,7 @@ export function SavingOverlay({ file, updateFile }) {
   if (!showOverlay) {
     return <></>
   }
-  return <div className="file-upload-overlay"></div>
+  return <div className="file-upload-overlay" data-testid="file-upload-overlay"></div>
 }
 
 /** renders save and delete buttons for a given file */
@@ -107,5 +135,3 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
     </Modal>
   </div>
 }
-
-

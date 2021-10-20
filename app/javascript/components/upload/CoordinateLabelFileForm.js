@@ -1,9 +1,12 @@
 import React from 'react'
 
 import Select from 'lib/InstrumentedSelect'
-import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
-import { TextFormField, SavingOverlay, SaveDeleteButtons } from './form-components'
+import { FileTypeExtensions } from './FileUploadControl'
+import { TextFormField } from './form-components'
+import ExpandableFileForm from './ExpandableFileForm'
 import { validateFile } from './upload-utils'
+
+const allowedFileExts = FileTypeExtensions.plainText
 
 /** renders a form for editing/uploading an coordinate label file */
 export default function CoordinateLabelForm({
@@ -14,47 +17,30 @@ export default function CoordinateLabelForm({
   deleteFile,
   associatedClusterFileOptions,
   updateCorrespondingClusters,
-  bucketName
+  bucketName,
+  isInitiallyExpanded
 }) {
   const associatedCluster = associatedClusterFileOptions.find(opt => opt.value === file.options.cluster_file_id)
   const validationMessages = validateFile({
     file, allFiles,
     requiredFields: [{ label: 'Associated file', propertyName: 'options.cluster_file_id' }],
-    allowedFileExts: FileTypeExtensions.plainText
+    allowedFileExts
   })
-  return <div className="row top-margin" key={file._id}>
-    <div className="col-md-12">
-      <form id={`labelForm-${file._id}`}
-        className="form-terra"
-        onSubmit={e => e.preventDefault()}
-        acceptCharset="UTF-8">
-        <div className="row">
-          <div className="col-md-12">
-            <FileUploadControl
-              file={file}
-              allFiles={allFiles}
-              updateFile={updateFile}
-              allowedFileExts={FileTypeExtensions.plainText}
-              validationMessages={validationMessages}
-              bucketName={bucketName}/>
-          </div>
-        </div>
-        <div className="form-group">
-          <label className="labeled-select">Corresponding clusters / spatial data *
-            <Select options={associatedClusterFileOptions}
-              data-analytics-name="coordinate-labels-corresponding-cluster"
-              id={`coordCluster-${file._id}`}
-              value={associatedCluster}
-              placeholder="Select one..."
-              onChange={val => updateCorrespondingClusters(file, val)}/>
-          </label>
-        </div>
-        <TextFormField label="Description / Legend (this will be displayed below image)"
-          fieldName="description" file={file} updateFile={updateFile}/>
-        <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
-      </form>
-
-      <SavingOverlay file={file} updateFile={updateFile}/>
+  return <ExpandableFileForm {...{
+    file, allFiles, updateFile, saveFile,
+    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded
+  }}>
+    <div className="form-group">
+      <label className="labeled-select">Corresponding clusters / spatial data *
+        <Select options={associatedClusterFileOptions}
+          data-analytics-name="coordinate-labels-corresponding-cluster"
+          id={`coordCluster-${file._id}`}
+          value={associatedCluster}
+          placeholder="Select one..."
+          onChange={val => updateCorrespondingClusters(file, val)}/>
+      </label>
     </div>
-  </div>
+    <TextFormField label="Description / Legend (this will be displayed below image)"
+      fieldName="description" file={file} updateFile={updateFile}/>
+  </ExpandableFileForm>
 }

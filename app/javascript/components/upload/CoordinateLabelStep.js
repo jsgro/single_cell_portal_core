@@ -81,6 +81,7 @@ function CoordinateLabelForm({
         </div>
       </div>
     </div>
+    { coordinateFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_LABEL_FILE}/> }
     { coordinateFiles.map(file => {
       return <CoordinateLabelFileForm
         key={file._id}
@@ -92,7 +93,8 @@ function CoordinateLabelForm({
         associatedClusterFileOptions={associatedClusterFileOptions}
         updateCorrespondingClusters={updateCorrespondingClusters}
         bucketName={formState.study.bucket_id}
-        />
+        isInitiallyExpanded={coordinateFiles.length === 1}
+      />
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_LABEL_FILE}/>
   </div>

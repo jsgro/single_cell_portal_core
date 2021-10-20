@@ -62,6 +62,7 @@ function RawCountsUploadForm({
         </div>
       </div>
     </div>
+    { rawParentFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/> }
     { rawParentFiles.map(file => {
       return <ExpressionFileForm
         key={file._id}
@@ -72,7 +73,8 @@ function RawCountsUploadForm({
         deleteFile={deleteFile}
         addNewFile={addNewFile}
         fileMenuOptions={fileMenuOptions}
-        bucketName={formState.study.bucket_id}/>
+        bucketName={formState.study.bucket_id}
+        isInitiallyExpanded={rawParentFiles.length === 1}/>
     })}
     <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/>
   </div>

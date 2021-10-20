@@ -57,29 +57,33 @@ export default function MTXBundledFilesForm({
     return <div>After you&apos;ve selected an mtx file, you&apos;ll be prompted for genes and barcodes files</div>
   }
   const barcodesValidationMessages = validateFile({
-    barcodesFile, allFiles, allowedFileExts: FileTypeExtensions.plainText
+    file: barcodesFile, allFiles, allowedFileExts: FileTypeExtensions.plainText
   })
-  const genesValidationMessages = validateFile({ genesFile, allFiles, allowedFileExts: FileTypeExtensions.plainText })
+  const genesValidationMessages = validateFile({
+    file: genesFile, allFiles, allowedFileExts: FileTypeExtensions.plainText
+  })
 
   return <div>
     <div className="row">
       <div className="col-md-12 ">
         <div className="sub-form">
           <h5>10x Genes File</h5>
-          <FileUploadControl
-            file={genesFile}
-            allFiles={allFiles}
-            updateFile={updateFile}
-            validationMessages={genesValidationMessages}
-            allowedFileExts={FileTypeExtensions.plainText}
-            bucketName={bucketName}/>
+          <div className="upload-form-header flexbox-align-center expanded">
+            <FileUploadControl
+              file={genesFile}
+              allFiles={allFiles}
+              updateFile={updateFile}
+              validationMessages={genesValidationMessages}
+              allowedFileExts={FileTypeExtensions.plainText}
+              bucketName={bucketName}/>
+            <SaveDeleteButtons
+              file={genesFile}
+              updateFile={updateFile}
+              saveFile={saveFile}
+              deleteFile={deleteFile}
+              validationMessages={genesValidationMessages} />
+          </div>
           <TextFormField label="Description" fieldName="description" file={genesFile} updateFile={updateFile}/>
-          <SaveDeleteButtons
-            file={genesFile}
-            updateFile={updateFile}
-            saveFile={saveFile}
-            deleteFile={deleteFile}
-            validationMessages={genesValidationMessages} />
         </div>
         <SavingOverlay file={genesFile} updateFile={updateFile}/>
       </div>
@@ -88,20 +92,22 @@ export default function MTXBundledFilesForm({
       <div className="col-md-12">
         <div className="sub-form">
           <h5>10x Barcodes File</h5>
-          <FileUploadControl
-            file={barcodesFile}
-            allFiles={allFiles}
-            updateFile={updateFile}
-            validationMessages={genesValidationMessages}
-            allowedFileExts={FileTypeExtensions.plainText}
-            bucketName={bucketName}/>
+          <div className="upload-form-header flexbox-align-center expanded">
+            <FileUploadControl
+              file={barcodesFile}
+              allFiles={allFiles}
+              updateFile={updateFile}
+              validationMessages={barcodesValidationMessages}
+              allowedFileExts={FileTypeExtensions.plainText}
+              bucketName={bucketName}/>
+            <SaveDeleteButtons
+              file={barcodesFile}
+              updateFile={updateFile}
+              saveFile={saveFile}
+              deleteFile={deleteFile}
+              validationMessages={barcodesValidationMessages}/>
+          </div>
           <TextFormField label="Description" fieldName="description" file={barcodesFile} updateFile={updateFile}/>
-          <SaveDeleteButtons
-            file={barcodesFile}
-            updateFile={updateFile}
-            saveFile={saveFile}
-            deleteFile={deleteFile}
-            validationMessages={barcodesValidationMessages}/>
         </div>
       </div>
       <SavingOverlay file={barcodesFile} updateFile={updateFile}/>
