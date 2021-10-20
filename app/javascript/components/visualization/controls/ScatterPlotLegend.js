@@ -11,7 +11,6 @@ function labelSort(a, b) {
   return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
 }
 
-
 /**
  * Return a hash of value=>count for the passed-in array
  * This is surprisingly quick even for large arrays, but we'd rather we
@@ -27,7 +26,6 @@ function countValues(array) {
     return acc
   }, {})
 }
-
 
 /**
  * Get value for `style` prop in Plotly scatter plot `trace.transforms`.
@@ -144,26 +142,15 @@ export default function ScatterPlotLegend({
     <div className={`scatter-legend ${filteredClass}`}>
       <div className="scatter-legend-head">
         <div>
-          {/* <button
-          data-analytics-name='show-all'
-          className={`btn btn-primary ${showHideButtons[0]}`}
-          disabled={!showHideButtons[0]}
-          onClick={() => {updateFilters(filterIds, false)}}>Show all</button>
-        <button
-          data-analytics-name='hide-all'
-          style={{ 'float': 'right' }}
-          className={`btn btn-primary ${showHideButtons[1]}`}
-          disabled={!showHideButtons[1]}
-          onClick={() => {updateFilters(filterIds, true)}}>Hide all</button> */}
           <p className="scatter-legend-name">{name}</p>
           <StatefulLink
-            analyticsName='show-all'
+            analyticsName='legend-show-all'
             classes={`stateful-link ${showHideButtons[0]}`}
             disabled={!showHideButtons[0]}
             onClick={() => {updateFilters(filterIds, false)}}
             text="Show all" />
           <StatefulLink
-            analyticsName='hide-all'
+            analyticsName='legend-hide-all'
             classes={`stateful-link pull-right ${showHideButtons[1]}`}
             disabled={!showHideButtons[1]}
             onClick={() => {updateFilters(filterIds, true)}}
