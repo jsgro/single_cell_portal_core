@@ -1,9 +1,6 @@
 module Api
   module V1
     class DirectoryListingsController < ApiBaseController
-      include Swagger::Blocks
-      include Concerns::Authenticator
-
       before_action :authenticate_api_user!
       before_action :set_study
       before_action :check_study_permission
@@ -100,7 +97,7 @@ module Api
           end
         end
       end
-      
+
       # GET /single_cell/api/v1/studies/:study_id/directory_listings/:id
       def show
       end

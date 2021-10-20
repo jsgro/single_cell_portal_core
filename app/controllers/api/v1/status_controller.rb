@@ -1,8 +1,6 @@
 module Api
   module V1
     class StatusController < ApiBaseController
-      include Swagger::Blocks
-
       respond_to :json
 
       swagger_path '/status' do

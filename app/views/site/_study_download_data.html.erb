@@ -2,7 +2,12 @@
 
 <div class="row">
   <div class="col-xs-12">
-    <h2>Study Files <span class="badge"><%= @study_files.count %></span>  <%= link_to "<i class='fas fa-question-circle'></i> Bulk Download".html_safe, '#/', class: "btn btn-default pull-right #{!@allow_downloads ? 'disabled' : nil}", id: 'download-help' %></h2>
+    <h2>Study Files 
+      <span class="badge"><%= @study_files.count %></span> 
+      <%= link_to "<i class='fas fa-question-circle'></i> Bulk Download".html_safe, '#/', class: "btn btn-default pull-right #{!@allow_downloads ? 'disabled' : nil}", id: 'download-help' %>
+      <%= link_to "Analyze in Cloud".html_safe, '#/', class: "btn btn-default pull-right left-margin-icon {!@allow_downloads ? 'disable d' : nil}", id: 'analyze-in-cloud'%> 
+    </h2>
+
     <% if @allow_downloads %>
     <div class="modal fade" id="download-help-modal" role="dialog" aria-labelledby="download-help-modal" aria-hidden="true">
       <div class="modal-dialog modal-lg">
@@ -34,20 +39,29 @@
               Then <%= link_to "click here".html_safe, "#{generate_manifest_study_url(@study)}" %> for the file_supplemental_info.tsv containing file supplementary information (units, protocols, etc...)
             <% elsif @study.public? && !@user_embargoed || current_user.admin? %>
               <p class="lead">To download all files using <code>curl</code>, click the button below to get the download command:</p>
-              <p class="lead command-container" id="command-container-all">
-                <%= link_to "<i class='fas fa-download'></i> Get download command for all study data".html_safe,
+              <p class="lead command-container text-center" id="command-container-all">
+                <%= link_to "<i class='fas fa-download'></i> Download all study data".html_safe,
                             '#/', class: 'btn btn-default get-download-command', id: 'get-download-command__all' %></p>
+
+              <% if @directories.any? %>
+                <p class="lead command-container text-center" id="command-container-nodirs">
+                  <%= link_to "<i class='fas fa-download'></i> Download main study files only".html_safe,
+                              '#/', class: 'btn btn-default get-download-command', id: 'get-download-command__nodirs' %></p>
+              <% end %>
+
               <% if @directories.any? %>
                 <p class="lead">To download all data files in a specific folder, use the following commands:</p>
                 <table class="table table-condensed table-striped">
                   <thead>
                     <tr>
                       <th>Folder</th>
+                      <th>File Type</th>
                       <th>Download command</th>
                     </tr>
                     <% @directories.each do |directory| %>
                       <tr>
                         <td><%= directory.name %></td>
+                        <td><%= directory.file_type %></td>
                         <td class="command-container" id="command-container-<%= directory.url_safe_name %>">
                           <%= link_to "<i class='fas fa-download'></i> Get download command".html_safe, '#/',
                                       class: 'btn btn-default get-download-command', id: "get-download-command__#{directory.url_safe_name}",
@@ -58,6 +72,7 @@
                   </thead>
                 </table>
               <% end %>
+
             <% else %>
               <%# The user is trying to download a public study that is currently embargoed. %>
               <p class="lead">No downloads are available to you for this study yet</p>
@@ -69,11 +84,36 @@
         </div>
       </div>
     </div>
+    <div class="modal fade" id="analyze-in-cloud-modal" role="dialog" aria-labelledby="required-modal-label" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+        <button class="close" data-dismiss="modal">×</button>
+				<h3 class="text-center">Cloud Analysis</h3>
+			</div>
+			<div class="modal-body">
+				<p class="lead">Interested in performing analysis with these files using cloud-based resources?         
+          <br/> 
+          We’re exploring the best ways to send SCP data to 
+          <%= link_to "Terra", "https://terra.bio/", :target => "_blank", id:"analyze-terra-link-to-terra"%>, an open platform for cloud-based genomic analysis.</p>
+      </div>
+			<div class="modal-footer">
+      <p class="lead"> Want to tell us more about how you want to analyze this data?</p>
+				<%= link_to "YES", "https://singlecell.zendesk.com/hc/en-us/requests/new", :target => "_blank", id:"analyze-terra-form", class:"btn btn-success" %>
+        <button class="btn btn-danger" href="https://singlecell.zendesk.com/hc/en-us/requests/new" data-dismiss="modal" id="accept-skip-required">NO</button>
+			</div>
+		</div>
+	</div>
+</div>
+
     <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
         $('#download-help').click(function() {
             $('#download-help-modal').modal('show');
         });
 
+        $('#analyze-in-cloud').click(function() {
+          $('#analyze-in-cloud-modal').modal('show');
+      });
         // Enables copying to clipboard upon clicking a "clipboard" icon,
         // like on GitHub.  https://clipboardjs.com.
         var clipboard = new Clipboard('.btn-copy');
@@ -109,7 +149,8 @@
               var expiresMinutes = timeInterval / 60;
               const accession = "<%= @study.accession %>"
               const curlSecureFlag = "<%= Rails.env.development? ? '-k' : '' %>"
-              const downloadObjectName = downloadObject == 'root-dir' ? '%2F' : downloadObject
+              const matcher = /root-dir/
+              const downloadObjectName = downloadObject.match(matcher) ? downloadObject.replace(matcher, '%2F') : downloadObject
               // Gets a curl configuration ("cfg.txt") containing signed
               // URLs and output names for all files in the download object.
               var url = (

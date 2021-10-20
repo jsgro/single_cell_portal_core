@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
-import Modal from 'react-bootstrap/lib/Modal'
 import CreatableSelect from 'react-select/creatable'
 
 import { GeneSearchContext } from 'providers/GeneSearchProvider'
@@ -29,8 +28,6 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
   const [geneArray, setGeneArray] = useState(geneParamAsArray)
   const [inputText, setInputText] = useState('')
 
-  const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
-
   /** handles a user submitting a gene search */
   function handleSubmit(event) {
     event.preventDefault()
@@ -42,7 +39,10 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
         studySearchState
       )
     } else {
-      setShowEmptySearchModal(true)
+      geneSearchState.updateSearch(
+        { genes: '' },
+        studySearchState
+      )
     }
   }
 
@@ -80,8 +80,8 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
           inputValue={inputText}
           value={geneArray}
           className="gene-keyword-search-input"
-          isClearable
           isMulti
+          isClearable
           menuIsOpen={false}
           onChange={value => setGeneArray(value ? value : [])}
           onInputChange={inputValue => setInputText(inputValue)}
@@ -97,16 +97,6 @@ export default function GeneKeyword({ placeholder, helpTextContent }) {
           </Button>
         </div>
       </div>
-
-      <Modal
-        show={showEmptySearchModal}
-        onHide={() => {setShowEmptySearchModal(false)}}
-        animation={false}
-        bsSize='small'>
-        <Modal.Body className="text-center">
-          You must enter at least one gene to search
-        </Modal.Body>
-      </Modal>
     </form>
   )
 }

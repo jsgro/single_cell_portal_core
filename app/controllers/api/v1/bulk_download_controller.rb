@@ -1,9 +1,6 @@
 module Api
   module V1
     class BulkDownloadController < ApiBaseController
-      include Concerns::Authenticator
-      include Swagger::Blocks
-
       before_action :authenticate_api_user!
 
       DEFAULT_BULK_FILE_TYPES = ['Cluster', 'Metadata', 'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File']
@@ -294,7 +291,7 @@ module Api
           end
         else
           valid_accessions = self.class.find_matching_accessions(params[:accessions])
-          sanitized_file_types = self.class.find_matching_file_types(params[:file_types])
+          sanitized_file_types = self.class.find_matching_file_types(params[:file_types], accessions: valid_accessions)
         end
 
         # if they provided file_ids (either directly or via download_id), get the corresponding studies
@@ -314,7 +311,8 @@ module Api
         # if this is a single-study download, allow for DirectoryListing downloads
         if valid_accessions.size == 1 && params[:directory].present?
           study_accession = valid_accessions.first
-          directories = self.class.find_matching_directories(params[:directory], study_accession)
+          directory_name, file_type = params[:directory].split('--')
+          directories = self.class.find_matching_directories(directory_name, file_type, study_accession)
           directory_files = ::BulkDownloadService.get_requested_directory_files(directories)
         else
           directories = []
@@ -334,7 +332,9 @@ module Api
 
         # create maps to avoid Mongo timeouts when generating curl commands in parallel processes
         bucket_map = ::BulkDownloadService.generate_study_bucket_map(valid_accessions) if valid_accessions.any?
-        pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories) if files_requested.any?
+        if files_requested.any? || directories.any?
+          pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories)
+        end
 
         # generate curl config file
         logger.info "Beginning creation of curl configuration for user_id, auth token: #{current_api_user.id}"
@@ -379,26 +379,35 @@ module Api
       end
 
       # find valid bulk download types from query parameters
-      def self.find_matching_file_types(raw_file_types)
+      def self.find_matching_file_types(raw_file_types, accessions:)
         file_types = RequestUtils.split_query_param_on_delim(parameter: raw_file_types)
         if file_types.count > 0
           return StudyFile::BULK_DOWNLOAD_TYPES & file_types # find array intersection
         end
         # default is return all types
-        DEFAULT_BULK_FILE_TYPES
+        # if this is a single-study bulk download w/o file types, return all file types present in that study
+        if accessions.size == 1
+          study = Study.find_by(accession: accessions.first)
+          study.study_files.pluck(:file_type).uniq
+        else
+          DEFAULT_BULK_FILE_TYPES
+        end
       end
 
       # find matching directories in a given study
       # this only works for single-study bulk download, not from advanced/faceted search
-      # can be 'all', or a single directory
-      def self.find_matching_directories(directory_name, accession)
+      # can be 'all', or a single directory (with specified file_type as well)
+      def self.find_matching_directories(directory_name, file_type, accession)
         study = Study.find_by(accession: accession)
         sanitized_dirname = URI.decode(directory_name)
-        selector = DirectoryListing.where(study_id: study.id, sync_status: true)
-        if sanitized_dirname.downcase != 'all'
-          selector = selector.where(name: sanitized_dirname)
+        case sanitized_dirname.downcase
+        when 'nodirs'
+          []
+        when 'all'
+          study.directory_listings.all
+        else
+          DirectoryListing.where(name: sanitized_dirname, study_id: study.id, sync_status: true, file_type: file_type)
         end
-        selector
       end
 
       # find matching study files, either directly by id, or via a list of accessions and file types

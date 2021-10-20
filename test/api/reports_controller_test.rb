@@ -31,7 +31,7 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
   test 'invalid report name rejected' do
     sign_in_and_update @admin_user
     execute_http_request(:get, api_v1_report_path('blahblah'), user: @admin_user)
-    assert_equal 422, response.status
+    assert_equal 400, response.status
   end
 
   test 'can fetch study report' do

@@ -3,8 +3,4 @@ $('#study-description-content').html('<%= escape_javascript(render partial: 'stu
 ClassicEditor
     .create( document.querySelector( '#study_study_detail_attributes_full_description' ),
         fullCKEditorConfig
-    )
-    .catch( function(error) {
-            console.error( error );
-        }
     );

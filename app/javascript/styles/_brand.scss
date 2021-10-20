@@ -34,6 +34,9 @@
   float: left;
   margin-top: 66px;
   margin-left: 35px;
+  img {
+    max-height: 100px;
+  }
 }
 
 #scp-logo {
@@ -200,4 +203,50 @@
 .hide-processed-disclaimer {
   display: none;
   z-index: -1000;
+}
+
+#collections-tab {
+  float: right;
+  a {
+    font-size: 16px;
+  }
+}
+
+.collections-list {
+  background: #fff;
+  padding: 0em 1em;
+  margin-top: 0.5em;
+  border-radius: 5px;
+  li {
+    display: flex;
+    padding: 1em 0em 1em 0em;
+    border-bottom: 1px solid #ccc;
+    .collections-logo {
+      width: 180px;
+      img {
+        max-width: 180px;
+      }
+    }
+    .collections-name {
+      text-align: left;
+      padding-left: 2em;
+    }
+    .collections-actions {
+      margin-left: auto;
+    }
+    &:last-of-type {
+      border-bottom: none;
+    }
+  }
+}
+
+#latest-features-btn {
+  position: absolute;
+  top: 245px;
+  right: 15px;
+  z-index: 500;
+}
+
+.right-margin-10 {
+  margin-right: 10px;
 }

@@ -1,6 +1,6 @@
 import React from 'react'
-import Select from 'react-select'
 
+import Select from 'lib/InstrumentedSelect'
 import { clusterSelectStyle } from 'lib/cluster-utils'
 
 /** takes the server response and returns cluster options suitable for react-select */
@@ -18,15 +18,17 @@ export default function SpatialSelector({ spatialGroups, updateSpatialGroups, al
   const options = getSpatialOptions(allSpatialGroups)
   return (
     <div className="form-group">
-      <label>Spatial Groups</label>
-      <Select options={options}
-        value={spatialGroups.map(name => ({ label: name, value: name }))}
-        onChange={selectedOpts => updateSpatialGroups(
-          selectedOpts ? selectedOpts.map(opt => opt.value) : []
-        )}
-        isMulti={true}
-        isClearable={false}
-        styles={clusterSelectStyle}/>
+      <label className="labeled-select">Spatial Groups
+        <Select options={options}
+          data-analytics-name="spatial-cluster-select"
+          value={spatialGroups.map(name => ({ label: name, value: name }))}
+          onChange={selectedOpts => updateSpatialGroups(
+            selectedOpts ? selectedOpts.map(opt => opt.value) : []
+          )}
+          isMulti={true}
+          isClearable={false}
+          styles={clusterSelectStyle}/>
+      </label>
     </div>
   )
 }

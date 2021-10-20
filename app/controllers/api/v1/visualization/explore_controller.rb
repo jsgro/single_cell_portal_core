@@ -5,10 +5,6 @@ module Api
       # the goal of this controller is to be business-logic free, and only amalgamate calls
       # to other controller/service methods when needed to save server round-trips
       class ExploreController < ApiBaseController
-        include Concerns::Authenticator
-        include Concerns::StudyAware
-        include Swagger::Blocks
-
         before_action :set_current_api_user!
         before_action :set_study
         before_action :check_study_view_permission

@@ -5,7 +5,9 @@ module Api
       include Concerns::CspHeaderBypass
       include ActionController::MimeResponds
       include Concerns::IngestAware
+      include Concerns::StudyAware
       include Concerns::Authenticator
+      include Swagger::Blocks
       include ::RealIpLogger
 
       rescue_from ActionController::ParameterMissing do |exception|
