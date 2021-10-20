@@ -1339,7 +1339,7 @@ class StudyFile
     }.uniq
     # if any user account returned false for :convention_required, then allow ingest (means user received exemption)
     # otherwise, add validation error for :use_metadata_convention
-    unless convention_required.include?(false) || !study_file.study.feature_flag_for('convention_required')
+    unless convention_required.include?(false) || !study.feature_flag_for('convention_required')
       errors.add(:use_metadata_convention, 'must be "true" to ensure data complies with the SCP metadata convention')
     end
   end
