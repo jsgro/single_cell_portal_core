@@ -110,7 +110,7 @@ function StatefulLink({ text, classes, disabled, onClick, analyticsName, style }
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
-  filters, updateFilters, showHideButtons
+  filters, updateFilters, showHideLinks
 }) {
   const labels = Object.keys(countsByLabel)
   const filterIds = labels.map(label => _kebabCase(label))
@@ -145,14 +145,14 @@ export default function ScatterPlotLegend({
           <p className="scatter-legend-name">{name}</p>
           <StatefulLink
             analyticsName='legend-show-all'
-            classes={`stateful-link ${showHideButtons[0]}`}
-            disabled={!showHideButtons[0]}
+            classes={`stateful-link ${showHideLinks[0]}`}
+            disabled={!showHideLinks[0]}
             onClick={() => {updateFilters(filterIds, false)}}
             text="Show all" />
           <StatefulLink
             analyticsName='legend-hide-all'
-            classes={`stateful-link pull-right ${showHideButtons[1]}`}
-            disabled={!showHideButtons[1]}
+            classes={`stateful-link pull-right ${showHideLinks[1]}`}
+            disabled={!showHideLinks[1]}
             onClick={() => {updateFilters(filterIds, true)}}
             text="Hide all" />
         </div>

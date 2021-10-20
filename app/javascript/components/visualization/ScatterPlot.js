@@ -49,7 +49,7 @@ function RawScatterPlot({
   const [scatterData, setScatterData] = useState(null)
   const [countsByLabel, setCountsByLabel] = useState(null)
   const [filters, setFilters] = useState([])
-  const [showHideButtons, setShowHideButtons] = useState(['disabled', 'active'])
+  const [showHideLinks, setShowHideLinks] = useState(['disabled', 'active'])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
@@ -61,10 +61,10 @@ function RawScatterPlot({
       // Handle multi-filter interaction
       if (!value) {
         newFilters = []
-        setShowHideButtons(['disabled', 'active'])
+        setShowHideLinks(['disabled', 'active'])
       } else {
         newFilters = filterIds
-        setShowHideButtons(['active', 'disabled'])
+        setShowHideLinks(['active', 'disabled'])
       }
     } else {
       // Handle single-filter interaction
@@ -78,13 +78,14 @@ function RawScatterPlot({
         _remove(newFilters, id => {return id === filterId})
       }
 
+      // Update "Show all" and "Hide all" links to reflect current filters
       const numFilters = newFilters.length
       if (numFilters > 0 && numFilters < numLabels) {
-        setShowHideButtons(['active', 'active'])
+        setShowHideLinks(['active', 'active'])
       } else if (numFilters === 0) {
-        setShowHideButtons(['disabled', 'active'])
+        setShowHideLinks(['disabled', 'active'])
       } else if (numFilters === numLabels) {
-        setShowHideButtons(['active', 'disabled'])
+        setShowHideLinks(['active', 'disabled'])
       }
     }
 
@@ -177,7 +178,7 @@ function RawScatterPlot({
 
   // Handles custom scatter legend updates
   useUpdateEffect(() => {
-    // Don't try to update the color if the graph hasn't loaded yet
+    // Don't update if graph hasn't loaded
     if (scatterData && !isLoading) {
       processScatterPlot()
     }
@@ -214,6 +215,8 @@ function RawScatterPlot({
     }
   }, [dimensionProps.showViewOptionsControls, dimensionProps.showRelatedGenesIdeogram])
 
+  // TODO (SCP-3712): Update legend click (as backwards-compatibly as possible)
+  // as part of productionizing custom legend code.
   useEffect(() => {
     const jqScatterGraph = $(`#${graphElementId}`)
     jqScatterGraph.on('plotly_selected', plotPointsSelected)
@@ -252,7 +255,7 @@ function RawScatterPlot({
           correlations={labelCorrelations}
           filters={filters}
           updateFilters={updateFilters}
-          showHideButtons={showHideButtons}
+          showHideLinks={showHideLinks}
         />
         }
       </div>
