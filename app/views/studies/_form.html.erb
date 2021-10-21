@@ -76,14 +76,14 @@
 	<div class="form-group">
 		<h3>Sharing</h3>
 		<%= f.fields_for :study_shares %>
-		<%= f.link_to_add "<span class='fas fa-plus'></span> Share Study".html_safe, :study_shares, class: 'btn btn-primary',
+		<%= f.link_to_add "<span data-toggle='tooltip' title='Add email addresses to invite others to view your study' data-placement='right'><span class='fas fa-plus'></span> Share Study</span>".html_safe, :study_shares, class: 'btn btn-primary',
                       id: 'add-study-share' %>
 	</div>
   <div class="form-group">
     <h3>Publication/Resource Links</h3>
     <%= f.fields_for :external_resources %>
-    <%= f.link_to_add "<span class='fas fa-plus'></span> Add an External Resource".html_safe, :external_resources, class: 'btn btn-info',
-                      id: 'add-external-resource' %>
+    <%= f.link_to_add "<span data-toggle='tooltip' title='Add a link to a resource like a pre-print or publication that will appear in the study summary' data-placement='right'><span class='fas fa-plus'></span> Add an External Resource</span>".html_safe, :external_resources, class: 'btn btn-info',
+                      id: 'add-external-resource'  %>
   </div>
   <div class="form-group">
     <%= f.submit nil, class: 'btn btn-lg btn-success', id: 'save-study' %>
