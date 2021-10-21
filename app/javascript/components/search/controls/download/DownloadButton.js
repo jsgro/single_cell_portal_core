@@ -4,7 +4,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons'
 
 import DownloadSelectionModal from './DownloadSelectionModal'
 import { UserContext } from 'providers/UserProvider'
-import { Popover, OverlayTrigger } from 'react-bootstrap'
+import { wrapButtonWithTooltip } from 'lib/common'
 
 
 /**
@@ -34,7 +34,7 @@ export default function DownloadButton({ searchResults={} }) {
     if (userContext.accessToken === '') {
       hint = 'To download, please sign in'
     } else {
-      hint = 'To download, first do a search'
+      hint = 'To download, first do a valid search'
     }
   }
 
@@ -53,7 +53,7 @@ export default function DownloadButton({ searchResults={} }) {
     }))
 
   const saveDisabled = !active
-  let saveButton = <button
+  const saveButton = <button
     style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
     type="button"
     className="btn btn-primary"
@@ -66,14 +66,11 @@ Download
     </span>
   </button>
 
-  const validationPopup = <Popover id="hint-for-download-button" className="tooltip-wide"> { hint } </Popover>
-  saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={validationPopup}>
-    <div className="float-right">{ saveButton }</div>
-  </OverlayTrigger>
+  const b = wrapButtonWithTooltip(hint, saveButton, 'hint-for-download-button')
 
   return (
     <>
-      { saveButton }
+      { b }
       { showModal &&
         <DownloadSelectionModal
           show={showModal}
