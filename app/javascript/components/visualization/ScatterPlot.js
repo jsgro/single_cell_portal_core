@@ -429,7 +429,6 @@ function getPlotlyLayout({ width, height }={}, {
 }) {
   const layout = {
     hovermode: 'closest',
-    // font: labelFont,
     dragmode: getDragMode(isCellSelecting)
   }
   if (is3D) {
