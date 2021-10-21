@@ -507,7 +507,7 @@ export function getPlotDimensions({
   if (showViewOptionsControls) {
     baseWidth = Math.round(baseWidth * 10 / 12)
   }
-  // baseWidth -= 250
+
   let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
 
   // Get height
