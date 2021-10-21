@@ -20,6 +20,7 @@ const metadataFileFilter = file => file.file_type === 'Metadata'
 const allowedFileExts = FileTypeExtensions.plainText
 export default {
   title: 'Metadata',
+  header: 'Metadata',
   name: 'metadata',
   component: MetadataForm,
   fileFilter: metadataFileFilter
@@ -54,11 +55,6 @@ function MetadataForm({
   }, [file?._id])
 
   return <div>
-    <div className="row">
-      <div className="col-md-12">
-        <h4>Metadata</h4>
-      </div>
-    </div>
     <div className="row">
       <div className="col-md-12">
         <div className="form-terra">

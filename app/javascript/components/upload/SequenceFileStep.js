@@ -16,6 +16,7 @@ const sequenceFileFilter = file => sequenceFileTypes.includes(file.file_type)
 
 export default {
   title: 'Sequence Files',
+  header: 'Sequence Files',
   name: 'sequence',
   component: SequenceForm,
   fileFilter: sequenceFileFilter
@@ -39,9 +40,6 @@ function SequenceForm({
   }, [sequenceFiles.length])
 
   return <div>
-    <div className="row">
-      <h4 className="col-sm-12">Sequence Files</h4>
-    </div>
     <div className="row">
       <div className="col-md-12">
         <div className="form-terra">

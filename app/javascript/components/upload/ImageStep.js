@@ -14,6 +14,7 @@ const imageFileFilter = file => file.file_type === 'Image'
 export default {
   title: 'Reference Images',
   name: 'images',
+  header: 'Reference Images',
   component: ImageForm,
   fileFilter: imageFileFilter
 }
@@ -46,11 +47,6 @@ export function ImageForm({
   }, [imageFiles.length])
 
   return <div>
-    <div className="row">
-      <div className="col-md-12">
-        <h4>Reference Images</h4>
-      </div>
-    </div>
     <div className="row">
       <div className="col-md-12">
         <div className="form-terra">

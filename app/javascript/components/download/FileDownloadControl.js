@@ -26,9 +26,9 @@ export default function FileDownloadControl({ file, bucketName }) {
       return null
     } else {
       return <span className="form-group">
-        {!file.generation ? <span className="label label-warning no-download-available margin-left" data-toggle="tooltip"
+        {!file.generation ? <span className="detail no-download-available margin-left" data-toggle="tooltip"
           title='You can download this file once it has been fully uploaded. Check back soon.'>
-          {<span className="fas fa-ban"></span> } Awaiting remote file
+          Awaiting remote file
         </span> :
           <a onClick={() => handleDownloadClick()} className="btn terra-tertiary-btn">
             {<span className="fas fa-download"></span> } {bytesToSize(file.upload_file_size)}

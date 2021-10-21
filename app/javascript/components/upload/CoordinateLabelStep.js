@@ -13,6 +13,7 @@ const coordinateLabelFileFilter = file => file.file_type === 'Coordinate Labels'
 export default {
   title: 'Coordinate Labels',
   name: 'coordinateLabels',
+  header: 'Coordinate Labels',
   component: CoordinateLabelForm,
   fileFilter: coordinateLabelFileFilter
 }
@@ -45,17 +46,6 @@ function CoordinateLabelForm({
   }, [coordinateFiles.length])
 
   return <div>
-    <div className="row">
-      <h4 className="col-sm-12">Coordinate Labels</h4>
-    </div>
-    <div className="row">
-      <div className="col-md-12">
-        <p className="text-center">
-
-        </p>
-      </div>
-    </div>
-
     <div className="row">
       <div className="col-md-12">
         <div className="form-terra">
