@@ -113,7 +113,7 @@ export default function ScatterPlotLegend({
   filters, updateFilters, showHideLinks
 }) {
   const labels = Object.keys(countsByLabel)
-  const filterIds = labels.map(label => _kebabCase(label))
+  const filterIds = labels.map(label => label)
   const numLabels = labels.length
 
   const legendEntries = labels
