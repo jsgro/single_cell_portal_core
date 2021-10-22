@@ -179,8 +179,7 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
     path = "#{api_root}/index/projects?catalog=#{catalog}"
     path += "&filters=#{format_hash_as_query_string(query)}"
     path += "&size=#{size}"
-    results = process_api_request(:get, path)['hits'].map { |rows| rows['projects'] }.flatten
-    filter_results_by_terms(results, terms)
+    process_api_request(:get, path)
   end
 
   # get a list of all available catalogs
@@ -296,31 +295,6 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   #   - (Regexp) => regular expression used in matching (case-insensitive)
   def format_term_regex(terms = [])
     Regexp.new(terms.map { |t| Regexp.escape(t) }.join('|'), true)
-  end
-
-  # filter search results by term list
-  #
-  # * *params*
-  #   - +results+ (Array<Hash>) => search results from :projects or :files
-  #   - +terms+ (Array<String>) => Array of search terms, can include quoted strings
-  #   - +keys+ (Array<String>) => Names of fields to compare in results hash
-  #
-  # * *returns*
-  #   - (Array<Hash>) => Array of search results, filtered on term matches
-  def filter_results_by_terms(results, terms = [], keys: %w[projectTitle projectDescription])
-    return results if terms.empty?
-
-    term_regex = format_term_regex(terms)
-    matches = []
-    results.each do |result|
-      iterator = keys.any? ? keys : result.keys
-      iterator.each do |key|
-        next unless result[key].is_a?(String) # only compare string fields
-
-        matches << result if result[key] =~ term_regex && !matches.include?(result)
-      end
-    end
-    matches
   end
 
   private

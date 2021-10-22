@@ -22,6 +22,14 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     end
   end
 
+  # retrieve nested entries from Azul response JSON
+  # all responses have a constant structure of hits, pagination, and termFacets
+  # under 'hits' there are protocols, entryId, sources, projects, samples, specimens, cellLines, donorOrganisms,
+  # organoids, cellSuspensions, and fileTypeSummaries
+  def get_entries_from_response(response, key)
+    response.with_indifferent_access[:hits].map { |entry| entry[key] }.flatten
+  end
+
   test 'should instantiate client' do
     client = HcaAzulClient.new
     assert_equal HcaAzulClient::BASE_URL, client.api_root
@@ -40,7 +48,8 @@ class HcaAzulClientTest < ActiveSupport::TestCase
 
   test 'should get projects' do
     skip_if_api_down
-    projects = @hca_azul_client.projects(size: 10)
+    raw_projects = @hca_azul_client.projects(size: 10)
+    projects = get_entries_from_response(raw_projects, :projects)
     assert projects.size == 10
     project = projects.first
     %w[projectId projectTitle projectDescription projectShortname].each do |key|
@@ -51,21 +60,9 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   test 'should query projects using facets' do
     skip_if_api_down
     query = @hca_azul_client.format_query_from_facets(@facets)
-    projects = @hca_azul_client.projects(query: query, size: 1)
+    raw_projects = @hca_azul_client.projects(query: query, size: 1)
+    projects = get_entries_from_response(raw_projects, :projects)
     assert_equal 1, projects.size
-  end
-
-  test 'should query projects using terms' do
-    skip_if_api_down
-    terms = %w[cell human]
-    projects = @hca_azul_client.projects(size: 10, terms: terms)
-    assert projects.any?
-    # since we filter after getting results, we may not get all 10
-    assert projects.count <= 10
-    projects.each do |project|
-      matcher = /#{terms.join('|')}/i
-      assert project['projectTitle'] =~ matcher || project['projectDescription'] =~ matcher
-    end
   end
 
   test 'should get one project' do

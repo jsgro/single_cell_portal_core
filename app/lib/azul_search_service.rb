@@ -8,17 +8,22 @@ class AzulSearchService
     'analysis_file' => %w[loom csv tsv txt mtx Rdata tar].map { |e| [e, e + '.gz'] }.flatten
   }.freeze
 
+  # list of keys for an individual result entry used for matching facet filter values
+  # each Azul result entry under 'hits' will have these keys, whether project- or file-based
+  RESULT_FACET_FIELDS = %w[samples specimens cellLines donorOrganisms organoids cellSuspensions].freeze
+
   # execute a search against Azul API
   # TODO: implement workaround for lack of keyword-based search in Azul
-  def self.get_azul_results(selected_facets:)
+  def self.get_results(selected_facets:)
     client = ApplicationController.hca_azul_client
     results = {}
     query_json = client.format_query_from_facets(selected_facets)
     Rails.logger.info "Executing Azul project query with: #{query_json}"
     project_results = client.projects(query: query_json)
     project_ids = []
-    project_results.each do |project|
-      safe_project = project.with_indifferent_access
+    project_results['hits'].each do |entry|
+      safe_entry = entry.with_indifferent_access
+      safe_project = safe_entry[:projects].first # there will only ever be one project here
       short_name = safe_project[:projectShortname]
       project_id = safe_project[:projectId]
       project_ids << project_id
@@ -39,12 +44,8 @@ class AzulSearchService
           }
         ]
       }.with_indifferent_access
-      # get facet matches from matrices JSON blob
-      matches = get_facet_match_from_matrices(safe_project[:matrices], selected_facets)
-      results[:facet_matches] = matches
-      matches.each do |match|
-        result[:facet_matches] << match unless result[:facet_matches].include?(match)
-      end
+      # get facet matches from rest of entry
+      result[:facet_matches] = get_facet_matches(safe_entry, selected_facets)
       results[short_name] = result
     end
     # now run file query to get matching files for all matching projects
@@ -59,37 +60,26 @@ class AzulSearchService
     results
   end
 
-  # iterate through the matrices/contributorMatrices hash from Azul results to pull out matches based off of
-  # a faceted search request
-  def self.get_facet_match_from_matrices(matrices, facets)
+  # iterate through the result samples and donorOrganisms entries
+  def self.get_facet_matches(result, facets)
     results_info = {}
-    matrix_map = get_matrix_map(matrices)
     facets.each do |facet|
       facet_name = facet[:id]
-      azul_results = matrix_map[facet_name]
-      if azul_results
-        matches = facet[:filters].select { |filter| azul_results.include? filter[:name] }
-        results_info[facet_name] = matches if matches.any?
+      RESULT_FACET_FIELDS.each do |result_field|
+        azul_name = FacetNameConverter.convert_schema_column(:alexandria, :azul, facet_name)
+        field_entries = result[result_field].map { |entry| entry[azul_name] }.flatten.uniq
+        facet[:filters].each do |filter|
+          match = field_entries.select { |entry| filter[:name] == entry || filter[:id] == entry }
+          results_info[facet_name] ||= []
+          if match && !results_info[facet_name].include?(filter)
+            results_info[facet_name] << filter
+          end
+        end
       end
     end
     # compute weight based off of number of filter hits
     results_info[:facet_search_weight] = results_info.values.map(&:count).flatten.reduce(0, :+)
     results_info
-  end
-
-  # iterate through the nested hash of Azul matrix results to build a Hash of facets to filters (converted names)
-  def self.get_matrix_map(matrix_hash, map = {})
-    if matrix_hash.is_a?(Hash)
-      matrix_hash.each_pair do |key, hash|
-        # only store result if this value is a column from the Azul schema
-        if FacetNameConverter.schema_has_column?(:azul, :alexandria, key)
-          converted_name = FacetNameConverter.convert_schema_column(:azul, :alexandria, key)
-          map.merge!({ converted_name.to_s => hash.keys })
-        end
-        get_matrix_map(hash, map)
-      end
-    end
-    map
   end
 
   # extract Azul file information for bulk download from file entry object

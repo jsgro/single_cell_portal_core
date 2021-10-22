@@ -241,64 +241,18 @@ module Api
           sort_type = params[:order].to_sym
         end
 
-        # determine sort order for pagination; minus sign (-) means a descending search
+        # convert to array to allow appending external search results (Azul, TDR, etc.)
         @studies = @studies.to_a
-        case sort_type
-        when :keyword
-          @studies = @studies.sort_by {|study| -study.search_weight(@term_list)[:total] }
-        when :accession
-          @studies = @studies.sort_by do |study|
-            accession_index = possible_accessions.index(study.accession)
-            if accession_index.nil?
-              # study was not a true accession match, it matches the accession term in its description
-              # make this appear after the proper accession matches, in order of weight match
-              accession_index = 9999 - study.search_weight(@term_list)[:total]
-            end
-            accession_index
-          end
-        when :accession_list
-          @studies = @studies.sort_by {|study| @accession_list.index(study.accession) }
-        when :facet
-          @studies = @studies.sort_by {|study| -@studies_by_facet[study.accession][:facet_search_weight]}
-        when :recent
-          @studies = @studies.sort_by(&:created_at).reverse
-        when :popular
-          @studies = @studies.sort_by(&:view_count).reverse
-        else
-          # we have sort_type of :none, so preserve original ordering of :view_order
-          @studies = @studies.sort_by(&:view_order)
-        end
-
-        # save list of study accessions for bulk_download/bulk_download_size calls, in order of results
-        @matching_accessions = @studies.map(&:accession)
-        logger.info "Total matching accessions from all non-inferred searches: #{@matching_accessions}"
-
-        # if a user ran a faceted search, attempt to infer results by converting filter display values to keywords
-        # Do not run inferred search if we have a preset search with an accession list
-        if @facets.any? && @accession_list.nil?
-          # preserve existing search terms, if present
-          facets_to_keywords = @term_list.present? ? {keywords: @term_list.dup} : {}
-          facets_to_keywords.merge!(self.class.convert_filters_for_inferred_search(facets: @facets))
-          # only run inferred search if we have extra keywords to run; numeric facets do not generate inferred searches
-          if facets_to_keywords.any?
-            @inferred_terms = facets_to_keywords.values.flatten
-            logger.info "Running inferred search using #{facets_to_keywords}"
-            inferred_studies = self.class.generate_mongo_query_by_context(terms: facets_to_keywords, base_studies: @viewable,
-                                                                          accessions: @matching_accessions, query_context: :inferred)
-            @inferred_accessions = inferred_studies.pluck(:accession)
-            logger.info "Found #{@inferred_accessions.count} inferred matches: #{@inferred_accessions}"
-            @matching_accessions += @inferred_accessions
-            @studies += inferred_studies.sort_by {|study| -study.search_weight(@inferred_terms)[:total] }
-          end
-        end
 
         # perform Azul search, if enabled, and there are facets/terms provided by user
+        # run this before inferred search so that they are weighted and sorted correctly
         if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') &&
-           @facets.present? && ApplicationController.hca_azul_client.api_available?
-          @azul_results = ::AzulSearchService.get_azul_results(selected_facets: @facets)
+          @facets.present? && ApplicationController.hca_azul_client.api_available?
+          @azul_results = ::AzulSearchService.get_results(selected_facets: @facets)
           logger.info "Found #{@azul_results.keys.size} results in Azul"
-          @azul_results.each do |_, azul_result|
+          @azul_results.each do |accession, azul_result|
             @studies << azul_result
+            @studies_by_facet[accession] = azul_result[:facet_matches]
           end
 
           # @tdr_results = ::TdrSearchService.get_tdr_results(selected_facets: @facets, terms: @term_list)
@@ -319,7 +273,62 @@ module Api
           # end
         end
 
-        @matching_accessions = @studies.map { |study| study.is_a?(Study) ? study.accession : study[:accession] }
+        # determine sort order for pagination; minus sign (-) means a descending search
+        case sort_type
+        when :keyword
+          @studies = @studies.sort_by { |study| -study.search_weight(@term_list)[:total] }
+        when :accession
+          @studies = @studies.sort_by do |study|
+            accession_index = possible_accessions.index(study.accession)
+            if accession_index.nil?
+              # study was not a true accession match, it matches the accession term in its description
+              # make this appear after the proper accession matches, in order of weight match
+              accession_index = 9999 - study.search_weight(@term_list)[:total]
+            end
+            accession_index
+          end
+        when :accession_list
+          @studies = @studies.sort_by { |study| @accession_list.index(study.accession) }
+        when :facet
+          @studies = @studies.sort_by do |study|
+            accession = self.class.get_study_accession(study)
+            -@studies_by_facet[accession][:facet_search_weight]
+          end
+        when :recent
+          @studies = @studies.sort_by(&:created_at).reverse
+        when :popular
+          @studies = @studies.sort_by(&:view_count).reverse
+        else
+          # we have sort_type of :none, so preserve original ordering of :view_order
+          @studies = @studies.sort_by(&:view_order)
+        end
+
+        # save list of study accessions for bulk_download/bulk_download_size calls, in order of results
+        @matching_accessions = @studies.map { |study| self.class.get_study_accession(study) }
+        logger.info "Total matching accessions from all non-inferred searches: #{@matching_accessions}"
+
+        # if a user ran a faceted search, attempt to infer results by converting filter display values to keywords
+        # Do not run inferred search if we have a preset search with an accession list
+        if @facets.any? && @accession_list.nil?
+          # preserve existing search terms, if present
+          facets_to_keywords = @term_list.present? ? {keywords: @term_list.dup} : {}
+          facets_to_keywords.merge!(self.class.convert_filters_for_inferred_search(facets: @facets))
+          # only run inferred search if we have extra keywords to run; numeric facets do not generate inferred searches
+          if facets_to_keywords.any?
+            @inferred_terms = facets_to_keywords.values.flatten
+            logger.info "Running inferred search using #{facets_to_keywords}"
+            inferred_studies = self.class.generate_mongo_query_by_context(terms: facets_to_keywords,
+                                                                          base_studies: @viewable,
+                                                                          accessions: @matching_accessions,
+                                                                          query_context: :inferred)
+            @inferred_accessions = inferred_studies.pluck(:accession)
+            logger.info "Found #{@inferred_accessions.count} inferred matches: #{@inferred_accessions}"
+            @matching_accessions += @inferred_accessions
+            @studies += inferred_studies.sort_by { |study| -study.search_weight(@inferred_terms)[:total] }
+          end
+        end
+
+        @matching_accessions = @studies.map { |study| self.class.get_study_accession(study) }
         logger.info "Final list of matching studies: #{@matching_accessions}"
         @results = @studies.paginate(page: params[:page], per_page: Study.per_page)
         render json: search_results_obj, status: 200
@@ -455,6 +464,11 @@ module Api
         else
           view_context.sanitize(terms)
         end
+      end
+
+      # extract study accession, accounting for source (SCP vs. external)
+      def self.get_study_accession(search_result)
+        search_result.try(:accession) || search_result[:accession]
       end
 
       # extract any "quoted phrases" from query string and tokenize terms
