@@ -12,6 +12,7 @@ const geneListFileFilter = file => file.file_type === 'Gene List'
 
 export default {
   title: 'Precomputed Expression Stats',
+  header: 'Precomputed Expression Stats',
   name: 'geneLists',
   component: GeneListForm,
   fileFilter: geneListFileFilter
@@ -34,9 +35,6 @@ function GeneListForm({
   }, [geneListFiles.length])
 
   return <div>
-    <div className="row">
-      <h4 className="col-sm-12">Precomputed Expression Stats</h4>
-    </div>
     <div className="row">
       <div className="col-md-12">
         <div className="form-terra">

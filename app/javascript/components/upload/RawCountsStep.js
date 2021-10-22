@@ -20,7 +20,8 @@ export const rawCountsFileFilter = file => fileTypes.includes(file.file_type) &&
   file.expression_file_info?.is_raw_counts
 
 export default {
-  title: 'Raw Count Files',
+  title: 'Raw Count Matrices',
+  header: 'Raw Count Expression Files',
   name: 'rawCounts',
   component: RawCountsUploadForm,
   fileFilter: rawCountsFileFilter
@@ -45,11 +46,6 @@ function RawCountsUploadForm({
   }, [rawParentFiles.length])
 
   return <div>
-    <div className="row">
-      <div className="col-md-12">
-        <h4>Raw Count Expression Files</h4>
-      </div>
-    </div>
     <div className="row">
       <div className="col-md-12">
         <div className="form-terra">

@@ -1,12 +1,21 @@
 .upload-wizard-react {
-  h4 {
-    margin-top: 1em;
-  }
   .position-fixed {
-    width: 24%;
+    width: 25%;
     position: fixed;
-    max-height: 85vh;
+    height: calc(100% - 50px); // leave room for footer and navbar
     overflow-y: auto;
+    margin-left: -15px;
+    background: rgb(219, 225, 232);
+  }
+  .wizard-top-bar {
+    background: #ddd;
+    padding: 0.5em;
+    padding-left: 1em;
+    position: fixed;
+    z-index: 100;
+  }
+  .wizard-content {
+    margin-top: 34px;
   }
 }
 
@@ -18,25 +27,40 @@
     font-style: italic;
   }
   .badge {
-    background: #fff;
-    color: $action-color;
+    color: #333;
+    background: none;
     border-radius: 1em;
     padding: 0.5em 0.75em;
     cursor: pointer;
+    &.highlight {
+      background: #fff;
+    }
+    &.complete {
+      color: $success-color;
+    }
+    .fa-circle {
+      color: #555;
+      font-size: 0.7em;
+    }
   }
   .step-number {
     min-width: 25px;
     margin-right: 1em;
   }
   li.active {
-    background: lighten($action-color, 40%);
+    background: rgb(202, 212, 224);
+    border-right: 5px solid $success-color;
   }
   > li {
     width: 100%;
     padding: 0.5em;
-    border-radius: 5px;
+    padding-left: 15px;
     overflow-x: hidden;
     display: flex;
+    align-items: center;
+    &:not(.other-header) .action {
+      color: #333;
+    }
   }
   .file-list {
     padding-inline-start: 0px;
@@ -89,4 +113,8 @@
 
 .validation-error {
   color: $danger-color;
+}
+
+.prev-next-buttons {
+  margin-left: auto;
 }
