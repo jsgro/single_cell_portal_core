@@ -7,6 +7,7 @@ class DataArray
   ###
 
   include Mongoid::Document
+  extend Concatenatable
 
   DATA_ARRAY_TYPES = %w(coordinates annotations cells expression)
 
@@ -34,13 +35,4 @@ class DataArray
 
   # maximum number of entries for values array (to avoid MongoDB max document size problems)
   MAX_ENTRIES = 100000
-
-  # main query/concatenation method for all polymorphic associations on DataArray
-  # will retrieve DataArray documents from database w/o incurring MongoDB sort limit errors and concatenate the values
-  # together into a single contiguous array
-  def self.concatenate_arrays(query)
-    arrays = DataArray.where(query)
-    ids = arrays.pluck(:id, :array_index).sort_by(&:last).map(&:first)
-    ids.map { |id| DataArray.find(id).values }.reduce([], :+)
-  end
 end

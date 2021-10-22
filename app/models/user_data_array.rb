@@ -9,6 +9,8 @@ class UserDataArray
   ###
 
   include Mongoid::Document
+  extend Concatenatable
+
   field :name, type: String
   field :values, type: Array
   field :cluster_name, type: String
@@ -36,10 +38,4 @@ class UserDataArray
 
   # maximum number of entries for values array (to avoid MongoDB max document size problems)
   MAX_ENTRIES = 100000
-
-  def self.concatenate_arrays(query)
-    arrays = UserDataArray.where(query)
-    ids = arrays.pluck(:id, :array_index).sort_by(&:last).map(&:first)
-    ids.map { |id| DataArray.find(id).values }.reduce([], :+)
-  end
 end
