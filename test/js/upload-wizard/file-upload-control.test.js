@@ -6,7 +6,6 @@ import FileUploadControl from 'components/upload/FileUploadControl'
 import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 
 
-
 describe('file upload control defaults the name of the file', () => {
   it('updates the name of the selected file', async () => {
     const file = {
@@ -18,14 +17,12 @@ describe('file upload control defaults the name of the file', () => {
     const updateFileHolder = { updateFile: () => {} }
     const updateFileSpy = jest.spyOn(updateFileHolder, 'updateFile')
 
-    render((
-      <FileUploadControl
-        file={file}
-        allFiles={[file]}
-        updateFile={updateFileHolder.updateFile}
-        allowedFileExts={['.txt']}
-        validationMessages={{}}/>
-    ))
+    render(<FileUploadControl
+      file={file}
+      allFiles={[file]}
+      updateFile={updateFileHolder.updateFile}
+      allowedFileExts={['.txt']}
+      validationMessages={{}}/>)
 
     expect(screen.getByRole('button')).toHaveTextContent('Choose file')
     expect(screen.queryByTestId('file-name-validation')).toBeNull()
@@ -116,7 +113,7 @@ describe('file upload control validates the selected file', () => {
 
     const otherFile = {
       _id: '567',
-      uploadSelection: { name: 'cluster1.txt'}
+      uploadSelection: { name: 'cluster1.txt' }
     }
 
     const updateFileHolder = { updateFile: () => {} }
@@ -195,7 +192,7 @@ describe('file upload control validates the selected file', () => {
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
       fileName: 'cluster.txt',
       content: 'notNAME,X,Y\nfoo,numeric,numeric\nCell1,1,0\n'
-    }, true)
+    })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
     expect(updateFileSpy).toHaveBeenCalledTimes(0)
     expect(screen.getByTestId('file-content-validation')).toHaveTextContent('Could not use cluster.txt')

@@ -290,7 +290,7 @@ function getLogProps(fileObj, fileType, errorObj) {
 /** confirm that the presence/absence of a .gz suffix matches the lead byte of the file */
 export function validateGzipEncoding({ fileName, lines, mimeType }) {
   const GZIP_MAGIC_NUMBER = '\x1F'
-  if (fileName.endsWith('.gz') && lines[0][0] !== GZIP_LEAD_CHAR) {
+  if (fileName.endsWith('.gz') && lines[0][0] !== GZIP_MAGIC_NUMBER) {
     return [['error', 'encoding:invalid-gzip-magic-number',
       'File has a ".gz" suffix but does not seem to be gzipped']]
   } else if (!fileName.endsWith('.gz') && lines[0][0] === GZIP_MAGIC_NUMBER) {

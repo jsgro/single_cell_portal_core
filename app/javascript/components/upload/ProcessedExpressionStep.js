@@ -112,7 +112,7 @@ function ProcessedUploadForm({
             isInitiallyExpanded={processedParentFiles.length === 1}/>
         })}
         <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
-        { !isEnabled && <div className="file-upload-overlay"></div> }
+        { !isEnabled && <div className="file-upload-overlay" data-testid="processed-matrix-overlay"></div> }
       </div>
     </div>
   </div>
