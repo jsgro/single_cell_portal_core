@@ -290,7 +290,7 @@ const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
 /** Return whether scatter plot should use custom legend */
-function getIsCustomLegend(scatter) {
+function getIsDefaultGroupPlot(scatter) {
   const annotType = scatter.annotParams.type
   const genes = scatter.genes
   const isCorrelatedScatter = scatter.isCorrelatedScatter
@@ -301,10 +301,10 @@ function getIsCustomLegend(scatter) {
 
 /** Get width and height for scatter plot dimensions */
 function getScatterPlotDimensions(scatter, dimensionProps) {
-  const isCustomLegend = getIsCustomLegend(scatter)
+  const isDefaultGroupPlot = getIsDefaultGroupPlot(scatter)
 
   dimensionProps = Object.assign({
-    horizontalPad: (isCustomLegend ? 330 : 80),
+    horizontalPad: (isDefaultGroupPlot ? 330 : 80),
     hasTitle: true
   }, dimensionProps)
 
@@ -347,9 +347,9 @@ function getPlotlyTraces({
 
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
 
-  const isCustomLegend = getIsCustomLegend(scatter)
+  const isDefaultGroupPlot = getIsDefaultGroupPlot(scatter)
 
-  if (isCustomLegend) {
+  if (isDefaultGroupPlot) {
     // Use Plotly's groupby and filter transformation to make the traces
     // note these transforms are deprecated in the latest Plotly versions
     const [legendStyles, labelCounts] = getStyles(data, pointSize)
