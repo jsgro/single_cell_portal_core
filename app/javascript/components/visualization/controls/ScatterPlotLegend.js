@@ -17,7 +17,8 @@ function labelSort(a, b) {
 */
 function countValues(array) {
   return array.reduce((acc, curr) => {
-    if (!acc[curr]) {
+    acc[curr] ||= 0
+    acc[curr] += 1
       acc[curr] = 1
     } else {
       acc[curr] += 1
