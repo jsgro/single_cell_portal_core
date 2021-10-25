@@ -31,6 +31,10 @@ function getLabels(countsByLabel) {
   return Object.keys(countsByLabel).sort(labelSort)
 }
 
+function getActivity(isActive) {
+  return isActive ? 'active' : 'disabled'
+}
+
 /**
  * Get value for `style` prop in Plotly scatter plot `trace.transforms`.
  * Also calculate point counts for each label, `countsByLabel`.
@@ -125,6 +129,7 @@ export default function ScatterPlotLegend({
     })
 
   const filteredClass = (shownTraces.length === 0) ? 'unfiltered' : ''
+  const [showIsActive, hideIsActive] = showHideActive
   return (
     <div className={`scatter-legend ${filteredClass}`}>
       <div className="scatter-legend-head">
@@ -133,15 +138,15 @@ export default function ScatterPlotLegend({
           <a
             role="button"
             data-analytics-name='legend-show-all'
-            className={`stateful-link ${showHideActive[0]}`}
-            disabled={!showHideActive[0]}
+            className={`stateful-link ${getActivity(showIsActive)}`}
+            disabled={!showIsActive}
             onClick={() => {updateShownTraces(labels, false, null, true)}}
           >Show all</a>
           <a
             role="button"
             data-analytics-name='legend-hide-all'
-            className={`stateful-link pull-right ${showHideActive[1]}`}
-            disabled={!showHideActive[1]}
+            className={`stateful-link pull-right ${getActivity(hideIsActive)}`}
+            disabled={!hideIsActive}
             onClick={() => {updateShownTraces(labels, true, null, true)}}
           >Hide all</a>
         </div>

@@ -56,18 +56,38 @@ function RawScatterPlot({
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
-  /** Handle user interaction with one or more labels in legend */
+  /** Update status of "Show all" and "Hide all" links */
+  function updateShowHideActive(numShownTraces, numLabels, value, applyToAll) {
+    if (applyToAll) {
+      if (!value) {
+        setShowHideActive([false, true])
+      } else {
+        setShowHideActive([true, false])
+      }
+    } else {
+      // Update "Show all" and "Hide all" links to reflect current shownTraces
+      if (numShownTraces > 0 && numShownTraces < numLabels) {
+        setShowHideActive([true, true])
+      } else if (numShownTraces === 0) {
+        setShowHideActive([false, true])
+      } else if (numShownTraces === numLabels) {
+        setShowHideActive([true, false])
+      }
+    }
+  }
+
+  /**
+   * Handle user interaction with one or more labels in legend.
+   *
+   * Clicking a label in the legend shows or hides the corresponding set of
+   * labeled cells (i.e., the corresponding Plotly.js trace) in the scatter
+   * plot.
+   */
   function updateShownTraces(labels, value, numLabels, applyToAll=false) {
     let newShownTraces
     if (applyToAll) {
       // Handle multi-filter interaction
-      if (!value) {
-        newShownTraces = []
-        setShowHideActive([false, true])
-      } else {
-        newShownTraces = labels
-        setShowHideActive([true, false])
-      }
+      newShownTraces = (value ? labels : [])
     } else {
       // Handle single-filter interaction
       const label = labels
@@ -79,17 +99,9 @@ function RawScatterPlot({
       if (!value) {
         _remove(newShownTraces, thisLabel => {return thisLabel === label})
       }
-
-      // Update "Show all" and "Hide all" links to reflect current shownTraces
-      const numFilters = newShownTraces.length
-      if (numFilters > 0 && numFilters < numLabels) {
-        setShowHideActive([true, true])
-      } else if (numFilters === 0) {
-        setShowHideActive([false, true])
-      } else if (numFilters === numLabels) {
-        setShowHideActive([true, false])
-      }
     }
+
+    updateShowHideActive(newShownTraces.length, numLabels, value, applyToAll)
 
     setShownTraces(newShownTraces)
   }
