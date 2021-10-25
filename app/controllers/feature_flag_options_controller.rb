@@ -19,7 +19,7 @@ class FeatureFlagOptionsController < ApplicationController
     end.reduce({}, :merge)
   }.call.freeze
 
-  FEATURE_FLAG_OPTS_PARAMS = %i[id feature_flag_id feature_flaggable_type feature_flaggable_id value _destroy].freeze
+  FEATURE_FLAG_OPTS_PARAMS = %i[id name feature_flag_id feature_flaggable_type feature_flaggable_id value _destroy].freeze
 
   def index
     @feature_flag_info = {}.with_indifferent_access

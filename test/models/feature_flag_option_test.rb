@@ -57,10 +57,10 @@ class FeatureFlagOptionTest < ActiveSupport::TestCase
     option = @user.get_flag_option(@feature_flag.name)
     expected_attributes = {
       id: option.id.to_s,
+      name: option.name,
       value: option.value.to_s,
       feature_flaggable_type: 'User',
-      feature_flaggable_id: @user.id.to_s,
-      feature_flag_id: @feature_flag.id.to_s
+      feature_flaggable_id: @user.id.to_s
     }.with_indifferent_access
     assert_equal expected_attributes, option.form_attributes
   end

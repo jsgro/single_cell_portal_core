@@ -1334,12 +1334,11 @@ class StudyFile
   # ensure that metadata file adheres to convention acceptance criteria, if turned on
   # will check for exemption from any users associated with given study
   def ensure_metadata_convention
-    convention_required = study.associated_users(permission: 'Edit').map { |user|
-      user.feature_flag_for('convention_required')
-    }.uniq
-    # if any user account returned false for :convention_required, then allow ingest (means user received exemption)
-    # otherwise, add validation error for :use_metadata_convention
-    unless convention_required.include?(false) || !study.feature_flag_for('convention_required')
+    # check for exemption across all associated users & study object
+    user_accounts = study.associated_users(permission: 'Edit')
+    unless FeatureFlaggable.flag_override_for_instances(
+      'convention_required', false, *user_accounts, study
+    )
       errors.add(:use_metadata_convention, 'must be "true" to ensure data complies with the SCP metadata convention')
     end
   end

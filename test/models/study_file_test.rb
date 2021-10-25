@@ -47,8 +47,9 @@ class StudyFileTest < ActiveSupport::TestCase
   end
 
   teardown do
-    raw_counts_required = FeatureFlag.find_or_create_by(name: 'raw_counts_required_backend')
-    raw_counts_required.update(default_value: false)
+    feature_flags = FeatureFlag.where(:name.in => %w[raw_counts_required_backend convention_required])
+    feature_flags.update_all(default_value: false)
+    FeatureFlagOption.destroy_all
   end
 
   test 'should prevent deletion of study files during parsing or subsampling' do
@@ -57,16 +58,16 @@ class StudyFileTest < ActiveSupport::TestCase
            'Did not correctly return true for a parsed expression matrix'
 
     # cluster/metadata files should not be deletable yet as they are parsing
-    refute @metadata_file.can_delete_safely?,
+    assert_not @metadata_file.can_delete_safely?,
            'Metadata file is still parsing and should not be deletable'
-    refute @cluster_file.can_delete_safely?,
+    assert_not @cluster_file.can_delete_safely?,
            'Metadata file is still parsing and should not be deletable'
 
     # once parsing completes, because the cluster is subsampling, they should still not be deletable
     @study.study_files.where(:file_type.in => %w(Cluster Metadata)).update_all(parse_status: 'parsed')
-    refute @metadata_file.can_delete_safely?,
+    assert_not @metadata_file.can_delete_safely?,
            'Metadata file is still subsampling and should not be deletable'
-    refute @cluster_file.can_delete_safely?,
+    assert_not @cluster_file.can_delete_safely?,
            'Metadata file is still subsampling and should not be deletable'
 
     # once cluster is subsampled, both files should be deletable
@@ -127,18 +128,36 @@ class StudyFileTest < ActiveSupport::TestCase
     matrix = FactoryBot.create(:study_file, name: 'dense_2.txt', file_type: 'Expression Matrix', study: @study)
     matrix.build_expression_file_info(is_raw_counts: false, library_preparation_protocol: 'MARS-seq',
                                       modality: 'Transcriptomic: unbiased', biosample_input_type: 'Whole cell')
-    refute matrix.valid?
+    assert_not matrix.valid?
     matrix.expression_file_info.raw_counts_associations = [@expression_matrix.id.to_s]
     assert matrix.valid?
 
     # test exemption functionality
     matrix.expression_file_info.raw_counts_associations = []
-    refute matrix.valid?
+    assert_not matrix.valid?
     study_user = @study.user
     study_user.set_flag_option('raw_counts_required_backend', false)
-    study_user.save!
-    matrix.reload # gotcha for picking up new state of exemption
     assert matrix.valid?
+    # test study-based exemption
+    study_user.remove_flag_option('raw_counts_required_backend')
+    assert_not matrix.valid?
+    @study.set_flag_option('raw_counts_required_backend', false)
+    assert matrix.valid?
+  end
+
+  test 'should enforce metadata convention' do
+    convention_required = FeatureFlag.find_or_create_by(name: 'convention_required')
+    convention_required.update(default_value: true)
+    @metadata_file.use_metadata_convention = false
+    assert_not @metadata_file.valid?
+    study_user = @study.user
+    study_user.set_flag_option('convention_required', false)
+    assert @metadata_file.valid?
+    # test study-based exemption
+    study_user.remove_flag_option('convention_required')
+    assert_not @metadata_file.valid?
+    @study.set_flag_option('convention_required', false)
+    assert @metadata_file.valid?
   end
 
   test 'should find associated raw/processed matrix files' do

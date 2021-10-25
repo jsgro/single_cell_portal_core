@@ -13,7 +13,7 @@ class FeatureFlag
   field :description, type: String
 
   # pointer to all per-model feature_flag_options, will delete all if this flag is removed
-  has_many :feature_flag_options, dependent: :delete_all
+  has_many :feature_flag_options, dependent: :delete_all, primary_key: :name, foreign_key: :name
 
   validates_uniqueness_of :name
 

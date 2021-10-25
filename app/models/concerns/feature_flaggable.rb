@@ -87,13 +87,12 @@ module FeatureFlaggable
   # check if a given feature flag is configured for this instance
   #
   # * *params*
-  #   - +feature_flag+ (FeatureFlag) => FeatureFlag to check for configured option on instance
+  #   - +flag_name+ (String) => name of feature flag
   #
   # * *returns*
   #   - (Boolean) => T/F if FeatureFlagOption exists for this instance/feature flag
-  def flag_configured?(feature_flag)
-    FeatureFlagOption.where(feature_flag_id: feature_flag.id, feature_flaggable_type: self.class.name,
-                            feature_flaggable_id: self.id).exists?
+  def flag_configured?(flag_name)
+    FeatureFlagOption.where(name: flag_name, feature_flaggable_type: self.class.name, feature_flaggable_id: id).exists?
   end
 
   # getter for feature_flag_option instances
@@ -102,10 +101,9 @@ module FeatureFlaggable
   #   - +flag_name+ (String) => name of feature flag
   #
   # * *returns*
-  #   - (FeatureFlagOption)
+  #   - (FeatureFlagOption, NilClass)
   def get_flag_option(flag_name)
-    flag = FeatureFlag.find_by(name: flag_name.to_s)
-    feature_flag_options.find_by(feature_flag: flag) if flag
+    feature_flag_options.find_by(name: flag_name, feature_flaggable_type: self.class.name, feature_flaggable_id: id)
   end
 
   # set the feature flag option for a given flag
@@ -168,7 +166,7 @@ module FeatureFlaggable
   def self.build_feature_flag_options(instance)
     options = []
     FeatureFlag.all.order(name: :asc).each do |feature_flag|
-      if instance.flag_configured?(feature_flag)
+      if instance.flag_configured?(feature_flag.name)
         options << instance.get_flag_option(feature_flag.name)
       else
         options << instance.feature_flag_options.build(feature_flag: feature_flag)
@@ -212,6 +210,43 @@ module FeatureFlaggable
       flag_hash.merge!(instance.configured_feature_flags) if instance.present?
     end
     flag_hash.with_indifferent_access
+  end
+
+  # check if any of the instances provided override the default value of a requested feature flag
+  # this is useful for checking exemptions, where it may exist on one of many objects, and we want to know if any of
+  # them contradict the default value of the parent FeatureFlag
+  # not loading flag hashes makes this check much faster than using feature_flags_for_instances or
+  # feature_flags_with_defaults
+  #
+  # * *params*
+  #   - +flag_name+ (String) => name of feature flag
+  #   - +override_value+ (Boolean) => boolean value to see if any instances have set
+  #   - +instances+ (Array<Mongoid::Model>) => array of FeatureFlaggable model instances, or nil
+  #
+  # * *returns*
+  #   - (Boolean) => T/F if any instances override the default flag value (always true override matches default)
+  #
+  # * *raises*
+  #   - (NameError) => if requested feature_flag does not exist
+  def self.flag_override_for_instances(flag_name, override_value, *instances)
+    feature_flag = FeatureFlag.find_by(name: flag_name.to_s)
+    raise NameError, "#{flag_name} is not a valid feature flag name" if feature_flag.nil?
+
+    # if override and default are same, return true, since this is used in a validation context and false will
+    # invoke a validation error
+    return true if override_value == feature_flag.default_value
+
+    class_names = []
+    ids = []
+    instances.each do |instance|
+      next if instance.nil?
+
+      class_names << instance.class.name
+      ids << instance.id
+    end
+    FeatureFlagOption.where(value: override_value, name: flag_name,
+                            :feature_flaggable_type.in => class_names.uniq,
+                            :feature_flaggable_id.in => ids).exists?
   end
 
   # +DEPRECATED+

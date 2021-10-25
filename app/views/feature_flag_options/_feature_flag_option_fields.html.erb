@@ -2,8 +2,8 @@
   <%= f.hidden_field :feature_flaggable_type, value: f.object.feature_flaggable_type %>
   <%= f.hidden_field :feature_flaggable_id, value: f.object.feature_flaggable_id %>
   <div class="col-xs-3 text-right">
-    <%= f.label :feature_flag_id, f.object.name %>
-    <%= f.hidden_field :feature_flag_id, value: f.object.feature_flag_id %>
+    <%= f.label :name, f.object.name %>
+    <%= f.hidden_field :name, value: f.object.name %>
   </div>
   <div class="col-xs-2">
     <% opts = [["Default (#{f.object.default_value})", ''],["True", true],["False", false]] %>

@@ -4,22 +4,22 @@ class FeatureFlagOption
   include Mongoid::Timestamps
   include Mongoid::History::Trackable
   field :value, type: Mongoid::Boolean, default: false
+  field :name, type: String
 
   belongs_to :feature_flaggable, polymorphic: true
-  belongs_to :feature_flag
+  belongs_to :feature_flag, primary_key: :name, foreign_key: :name
 
-  validates :feature_flag, presence: true
+  validates :name, :value, presence: true
   # only allow one FeatureFlagOption per parent model instance & parent FeatureFlag
-  validates :feature_flag_id, uniqueness: {
-    scope: %i[feature_flaggable_id feature_flaggable_type], message: 'already has an option set for this instance'
+  validates :name, uniqueness: {
+    scope: %i[feature_flaggable_id feature_flaggable_type], message: '%{value} is already set for this object'
   }
 
   # index declarations
-  index({ feature_flaggable_type: 1, feature_flaggable_id: 1, feature_flag_id: 1 }, unique: true)
+  index({ feature_flaggable_type: 1, feature_flaggable_id: 1, name: 1 }, unique: true)
 
-  # get the default_value, name, and description from parent feature_flag
+  # get the default_value, and description from parent feature_flag
   delegate :default_value, to: :feature_flag
-  delegate :name, to: :feature_flag
   delegate :description, to: :feature_flag
 
   # get associated model instance that this FeatureFlagOption maps to (e.g. User instance)

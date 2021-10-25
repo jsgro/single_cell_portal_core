@@ -79,6 +79,18 @@ class FeatureFlagTest < ActiveSupport::TestCase
     assert_not FeatureFlaggable.feature_flags_for_instances(@user, @branding_group)[flag_name]
   end
 
+  test 'should find overrides for specific feature flags' do
+    flag_name = :override_flag
+    FeatureFlag.create(name: flag_name.to_s, default_value: false)
+    assert_not FeatureFlaggable.flag_override_for_instances(flag_name, true, @user)
+    assert_not FeatureFlaggable.flag_override_for_instances(flag_name, true, @user, @branding_group)
+    # assert that override same as default value always returns true
+    assert FeatureFlaggable.flag_override_for_instances(flag_name, false, @user)
+    @user.set_flag_option(flag_name, true)
+    assert FeatureFlaggable.flag_override_for_instances(flag_name, true, @user)
+    assert FeatureFlaggable.flag_override_for_instances(flag_name, true, @user, @branding_group)
+  end
+
   test 'should retire feature flag' do
     flag_name = :new_flag
     FeatureFlag.create(name: flag_name.to_s, default_value: false)
