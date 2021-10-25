@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import _uniqueId from 'lodash/uniqueId'
+import _remove from 'lodash/remove'
 import Plotly from 'plotly.js-dist'
 
 import { fetchCluster } from 'lib/scp-api'
 import { logScatterPlot } from 'lib/scp-api-metrics'
 import { log } from 'lib/metrics-api'
-import { labelFont, getColorBrewerColor } from 'lib/plot'
-import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
+import ScatterPlotLegend, { getStyles } from './controls/ScatterPlotLegend'
 import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
+import { getPlotDimensions } from 'lib/plot'
+
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
@@ -30,27 +32,85 @@ window.Plotly = Plotly
   * @param annotation {obj} an object with name, type, and scope attributes
   * @param subsample {string} a string for the subsample to be retrieved.
   * @param consensus {string} for multi-gene expression plots
-  * @param dimensions {obj} object with height and width, to instruct plotly how large to render itself
-  *   this is useful for rendering to hidden divs
+  * @param dimensionsProps {obj} object with props to determine height and
+  *   width, to instruct Plotly how large to render itself. this is useful for
+  *   rendering to hidden divs
   * @param isCellSelecting whether plotly's lasso selection tool is enabled
   * @plotPointsSelected {function} callback for when a user selects points on the plot, which corresponds
   *   to the plotly "points_selected" event
   */
 function RawScatterPlot({
-  studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensions,
+  studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensionProps,
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [bulkCorrelation, setBulkCorrelation] = useState(null)
   const [labelCorrelations, setLabelCorrelations] = useState(null)
   const [scatterData, setScatterData] = useState(null)
+  // hash of trace label names to the number of points in that trace
+  const [countsByLabel, setCountsByLabel] = useState(null)
+  const [shownTraces, setShownTraces] = useState([])
+
+  // Whether the "Show all" and "Hide all" links are active
+  const [showHideActive, setShowHideActive] = useState([false, true])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
+  /** Update status of "Show all" and "Hide all" links */
+  function updateShowHideActive(numShownTraces, numLabels, value, applyToAll) {
+    let active
+    if (applyToAll) {
+      active = (value ? [true, false] : [false, true])
+    } else {
+      // Update "Show all" and "Hide all" links to reflect current shownTraces
+      if (numShownTraces > 0 && numShownTraces < numLabels) {
+        active = [true, true]
+      } else if (numShownTraces === 0) {
+        active = [false, true]
+      } else if (numShownTraces === numLabels) {
+        active = [true, false]
+      }
+    }
+    setShowHideActive(active)
+  }
+
+  /**
+   * Handle user interaction with one or more labels in legend.
+   *
+   * Clicking a label in the legend shows or hides the corresponding set of
+   * labeled cells (i.e., the corresponding Plotly.js trace) in the scatter
+   * plot.
+   */
+  function updateShownTraces(labels, value, numLabels, applyToAll=false) {
+    let newShownTraces
+    if (applyToAll) {
+      // Handle multi-filter interaction
+      newShownTraces = (value ? labels : [])
+    } else {
+      // Handle single-filter interaction
+      const label = labels
+      newShownTraces = [...shownTraces]
+
+      if (value && !newShownTraces.includes(label)) {
+        newShownTraces.push(label)
+      }
+      if (!value) {
+        _remove(newShownTraces, thisLabel => {return thisLabel === label})
+      }
+    }
+
+    updateShowHideActive(newShownTraces.length, numLabels, value, applyToAll)
+
+    setShownTraces(newShownTraces)
+  }
+
   /** Process scatter plot data fetched from server */
-  function handleResponse(clusterResponse) {
-    const [scatter, perfTimes] = clusterResponse
-    const layout = getPlotlyLayout(dimensions, scatter)
+  function processScatterPlot(clusterResponse=null) {
+    const [scatter, perfTimes] =
+      (clusterResponse ? clusterResponse : [scatterData, null])
+
+    const dimensionsData = getScatterPlotDimensions(scatter, dimensionProps)
+    const layout = getPlotlyLayout(dimensionsData, scatter)
 
     const traceArgs = {
       axes: scatter.axes,
@@ -59,25 +119,30 @@ function RawScatterPlot({
       annotType: scatter.annotParams.type,
       genes: scatter.genes,
       isAnnotatedScatter: scatter.isAnnotatedScatter,
-      isCorrelatedScatter: scatter.isCorrelatedScatter,
+      isCorrelatedScatter,
       scatterColor,
       dataScatterColor: scatter.scatterColor,
       pointAlpha: scatter.pointAlpha,
       pointSize: scatter.pointSize,
       showPointBorders: scatter.showClusterPointBorders,
       is3D: scatter.is3D,
-      labelCorrelations
+      labelCorrelations,
+      shownTraces,
+      scatter
     }
-    let plotlyTraces = getPlotlyTraces(traceArgs)
+    const [traces, labelCounts] = getPlotlyTraces(traceArgs)
+    const plotlyTraces = [traces]
+    setCountsByLabel(labelCounts)
 
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
 
-    perfTimes.plot = performance.now() - startTime
-
-    logScatterPlot({
-      scatter, genes, width: dimensions.width, height: dimensions.height
-    }, perfTimes)
+    if (perfTimes) {
+      perfTimes.plot = performance.now() - startTime
+      logScatterPlot({
+        scatter, genes, width: dimensionsData.width, height: dimensionsData.height
+      }, perfTimes)
+    }
 
     if (isCorrelatedScatter) {
       const rhoStartTime = performance.now()
@@ -88,17 +153,19 @@ function RawScatterPlot({
         setBulkCorrelation(correlations.bulk)
         const flags = getFeatureFlagsWithDefaults()
         if (flags.correlation_refinements) {
-          traceArgs.labelCorrelations = correlations.byLabel
-          plotlyTraces = getPlotlyTraces(traceArgs)
-          Plotly.react(graphElementId, plotlyTraces, layout)
+          setLabelCorrelations(correlations.byLabel)
         }
-        log('plot:correlations', { perfTime: rhoTime })
+        if (perfTimes) {
+          log('plot:correlations', { perfTime: rhoTime })
+        }
       })
     }
 
-    setScatterData(scatter)
-    setShowError(false)
-    setIsLoading(false)
+    if (clusterResponse) {
+      setScatterData(scatter)
+      setShowError(false)
+      setIsLoading(false)
+    }
   }
 
   // Fetches plot data then draws it, upon load or change of any data parameter
@@ -115,13 +182,21 @@ function RawScatterPlot({
       genes,
       isAnnotatedScatter,
       isCorrelatedScatter
-    }).then(handleResponse).catch(error => {
+    }).then(processScatterPlot).catch(error => {
       Plotly.purge(graphElementId)
       setErrorContent(error.message)
       setShowError(true)
       setIsLoading(false)
     })
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
+
+  // Handles custom scatter legend updates
+  useUpdateEffect(() => {
+    // Don't update if graph hasn't loaded
+    if (scatterData && !isLoading) {
+      processScatterPlot()
+    }
+  }, [shownTraces])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
@@ -148,21 +223,23 @@ function RawScatterPlot({
   useUpdateEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (scatterData && !isLoading) {
-      const { width, height } = dimensions
+      const { width, height } = getScatterPlotDimensions(scatterData, dimensionProps)
       const layoutUpdate = { width, height }
       Plotly.relayout(graphElementId, layoutUpdate)
     }
-  }, [dimensions.width, dimensions.height])
+  }, [dimensionProps.showViewOptionsControls, dimensionProps.showRelatedGenesIdeogram])
 
-
+  // TODO (SCP-3712): Update legend click (as backwards-compatibly as possible)
+  // as part of productionizing custom legend code.
   useEffect(() => {
-    $(`#${graphElementId}`).on('plotly_selected', plotPointsSelected)
-    $(`#${graphElementId}`).on('plotly_legendclick', logLegendClick)
-    $(`#${graphElementId}`).on('plotly_legenddoubleclick', logLegendDoubleClick)
+    const jqScatterGraph = $(`#${graphElementId}`)
+    jqScatterGraph.on('plotly_selected', plotPointsSelected)
+    jqScatterGraph.on('plotly_legendclick', logLegendClick)
+    jqScatterGraph.on('plotly_legenddoubleclick', logLegendDoubleClick)
     return () => {
-      $(`#${graphElementId}`).off('plotly_selected')
-      $(`#${graphElementId}`).off('plotly_legendclick')
-      $(`#${graphElementId}`).off('plotly_legenddoubleclick')
+      jqScatterGraph.off('plotly_selected')
+      jqScatterGraph.off('plotly_legendclick')
+      jqScatterGraph.off('plotly_legenddoubleclick')
       Plotly.purge(graphElementId)
     }
   }, [])
@@ -185,13 +262,22 @@ function RawScatterPlot({
         id={graphElementId}
         data-testid={graphElementId}
       >
+        { scatterData && countsByLabel &&
+        <ScatterPlotLegend
+          name={scatterData.annotParams.name}
+          countsByLabel={countsByLabel}
+          correlations={labelCorrelations}
+          shownTraces={shownTraces}
+          updateShownTraces={updateShownTraces}
+          showHideActive={showHideActive}
+        />
+        }
       </div>
       <p className="help-block">
         { scatterData && scatterData.description &&
           <span>{scatterData.description}</span>
         }
       </p>
-
       {
         isLoading &&
         <LoadingSpinner data-testid={`${graphElementId}-loading-icon`}/>
@@ -203,34 +289,26 @@ function RawScatterPlot({
 const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
-/** Get entries for scatter plot legend, shown at right of graphic */
-function getLegendEntries(data, pointSize, labelCorrelations) {
-  const traceCounts = countOccurences(data.annotations)
-  const legendEntries = Object.keys(traceCounts)
-    .sort(traceNameSort) // sort keys so we assign colors in the right order
-    .map((label, index) => {
-      let entry = `${label} (${traceCounts[label]} points)`
-      if (labelCorrelations) {
-        const correlation = Math.round(labelCorrelations[label] * 100) / 100
+/** Return whether scatter plot should use custom legend */
+function getIsDefaultGroupPlot(scatter) {
+  const annotType = scatter.annotParams.type
+  const genes = scatter.genes
+  const isCorrelatedScatter = scatter.isCorrelatedScatter
+  const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
 
-        // ρ = rho = Spearman's rank correlation coefficient
-        entry = `${label} (${traceCounts[label]} points, ρ = ${correlation})`
-      }
+  return annotType === 'group' && !isGeneExpressionForColor
+}
 
-      return {
-        target: label,
-        value: {
-          name: entry,
-          legendrank: index,
-          marker: {
-            color: getColorBrewerColor(index),
-            size: pointSize
-          }
-        }
-      }
-    })
+/** Get width and height for scatter plot dimensions */
+function getScatterPlotDimensions(scatter, dimensionProps) {
+  const isDefaultGroupPlot = getIsDefaultGroupPlot(scatter)
 
-  return legendEntries
+  dimensionProps = Object.assign({
+    horizontalPad: (isDefaultGroupPlot ? 330 : 80),
+    hasTitle: true
+  }, dimensionProps)
+
+  return getPlotDimensions(dimensionProps)
 }
 
 /** get the array of plotly traces for plotting */
@@ -246,9 +324,9 @@ function getPlotlyTraces({
   dataScatterColor,
   pointAlpha,
   pointSize,
-  showPointBorders,
   is3D,
-  labelCorrelations
+  shownTraces,
+  scatter
 }) {
   const trace = {
     type: is3D ? 'scatter3d' : 'scattergl',
@@ -263,16 +341,39 @@ function getPlotlyTraces({
     trace.z = data.z
   }
 
+  let countsByLabel = null
+
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
+
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
-  if (annotType === 'group' && !isGeneExpressionForColor) {
-    // use plotly's groupby transformation to make the traces
-    const legendEntries = getLegendEntries(data, pointSize, labelCorrelations)
-    trace.transforms = [{
-      type: 'groupby',
-      groups: data.annotations,
-      styles: legendEntries
-    }]
+
+  const isDefaultGroupPlot = getIsDefaultGroupPlot(scatter)
+
+  if (isDefaultGroupPlot) {
+    // Use Plotly's groupby and filter transformation to make the traces
+    // note these transforms are deprecated in the latest Plotly versions
+    const [legendStyles, labelCounts] = getStyles(data, pointSize)
+    countsByLabel = labelCounts
+    trace.transforms = [
+      {
+        type: 'groupby',
+        groups: data.annotations,
+        styles: legendStyles
+      }
+    ]
+
+    if (shownTraces.length > 0) {
+      trace.transforms.push({
+        type: 'filter',
+        target: data.annotations,
+        // For available operations, see:
+        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/transforms/filter.js
+        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/constants/filter_ops.js
+        // Plotly docs are rather sparse here.
+        operation: '}{',
+        value: shownTraces
+      })
+    }
   } else {
     trace.marker = {
       line: { color: 'rgb(40,40,40)', width: 0 },
@@ -296,30 +397,8 @@ function getPlotlyTraces({
     }
   }
   addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
-  return [trace]
-}
 
-/**
- * Return a hash of value=>count for the passed-in array
- * This is surprisingly quick even for large arrays, but we'd rather we
- * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
-*/
-function countOccurences(array) {
-  return array.reduce((acc, curr) => {
-    if (!acc[curr]) {
-      acc[curr] = 1
-    } else {
-      acc[curr] += 1
-    }
-    return acc
-  }, {})
-}
-
-/** sort trace names lexically, but always putting 'unspecified' last */
-function traceNameSort(a, b) {
-  if (a === UNSPECIFIED_ANNOTATION_NAME) {return 1}
-  if (b === UNSPECIFIED_ANNOTATION_NAME) {return -1}
-  return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
+  return [trace, countsByLabel]
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */
@@ -341,14 +420,11 @@ function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, i
   trace.hovertemplate = groupHoverTemplate
 }
 
-/** sets the scatter color on the given races.  If no color is sspecified, it reads the color from the data */
+/** Gets color on the given traces.  If no color is specified, use color from data */
 function getScatterColorToApply(dataScatterColor, scatterColor) {
   // Set color scale
   if (!scatterColor) {
     scatterColor = dataScatterColor
-  }
-  if (!scatterColor) {
-    scatterColor = defaultScatterColor
   }
   return scatterColor
 }
@@ -362,13 +438,10 @@ function getPlotlyLayout({ width, height }={}, {
   isAnnotatedScatter,
   isCorrelatedScatter,
   is3D,
-  isCellSelecting=false,
-  genes,
-  annotParams
+  isCellSelecting=false
 }) {
   const layout = {
     hovermode: 'closest',
-    font: labelFont,
     dragmode: getDragMode(isCellSelecting)
   }
   if (is3D) {
@@ -387,13 +460,8 @@ function getPlotlyLayout({ width, height }={}, {
     })
     Object.assign(layout, props2d)
   }
-  if (annotParams && annotParams.name) {
-    layout.legend = {
-      itemsizing: 'constant',
-      title: { text: annotParams.name },
-      y: 0.94
-    }
-  }
+
+  layout.showlegend = false
   layout.width = width
   layout.height = height
   return layout
