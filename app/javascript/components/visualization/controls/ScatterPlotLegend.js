@@ -1,5 +1,4 @@
 import React from 'react'
-import _kebabCase from 'lodash/kebabCase'
 
 import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 import { getColorBrewerColor } from 'lib/plot'
@@ -27,6 +26,11 @@ function countValues(array) {
   }, {})
 }
 
+/** Sort labels colors are assigned in right order */
+function getLabels(countsByLabel) {
+  return Object.keys(countsByLabel).sort(labelSort)
+}
+
 /**
  * Get value for `style` prop in Plotly scatter plot `trace.transforms`.
  * Also calculate point counts for each label, `countsByLabel`.
@@ -39,10 +43,9 @@ function countValues(array) {
 export function getStyles(data, pointSize) {
   const countsByLabel = countValues(data.annotations)
 
-  const labels = Object.keys(countsByLabel)
+  const labels = getLabels(countsByLabel)
 
   const legendStyles = labels
-    .sort(labelSort) // sort keys so we assign colors in the right order
     .map((label, index) => {
       return {
         target: label,
@@ -112,12 +115,11 @@ export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
   filters, updateFilters, showHideLinks
 }) {
-  const labels = Object.keys(countsByLabel)
+  const labels = getLabels(countsByLabel)
   const filterIds = labels.map(label => label)
   const numLabels = labels.length
 
   const legendEntries = labels
-    .sort(labelSort) // sort keys so we assign colors in the right order
     .map((label, i) => {
       const numPoints = countsByLabel[label]
       const iconColor = getColorBrewerColor(i)
