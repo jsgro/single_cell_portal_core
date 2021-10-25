@@ -1,7 +1,7 @@
 <h2>
   <%= scp_link_to '<<', @feature_announcement.archived? ? archived_feature_announcements_path : latest_feature_announcements_path %>
   <%= @feature_announcement.title %>
-  <% unless @feature_announcement.doc_link.empty? %>
+  <% if @feature_announcement.doc_link.present? %>
     <%= link_to "More Info <i class='fas fa-external-link-alt'></i>".html_safe, @feature_announcement.doc_link,
       class: 'btn btn-default pull-right', target: :_blank, rel: 'noopener noreferrer' %>
   <% end %>
