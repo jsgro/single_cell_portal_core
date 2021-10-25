@@ -54,28 +54,28 @@ function RawScatterPlot({
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
   /** Handle user interaction with one or more filters */
-  function updateFilters(filterIds, value, numLabels) {
+  function updateFilters(filterLabels, value, numLabels) {
     let newFilters
-    const isShowOrHideAll = Array.isArray(filterIds)
+    const isShowOrHideAll = Array.isArray(filterLabels)
     if (isShowOrHideAll) {
       // Handle multi-filter interaction
       if (!value) {
         newFilters = []
         setShowHideLinks(['disabled', 'active'])
       } else {
-        newFilters = filterIds
+        newFilters = filterLabels
         setShowHideLinks(['active', 'disabled'])
       }
     } else {
       // Handle single-filter interaction
-      const filterId = filterIds
+      const filterLabel = filterLabels
       newFilters = filters.slice()
 
-      if (value && !newFilters.includes(filterId)) {
-        newFilters.push(filterId)
+      if (value && !newFilters.includes(filterLabel)) {
+        newFilters.push(filterLabel)
       }
       if (!value) {
-        _remove(newFilters, id => {return id === filterId})
+        _remove(newFilters, label => {return label === filterLabel})
       }
 
       // Update "Show all" and "Hide all" links to reflect current filters
