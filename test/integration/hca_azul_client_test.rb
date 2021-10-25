@@ -83,7 +83,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     project = @hca_azul_client.project(@project_id)
     assert_equal @project_id, project['entryId']
     project_detail = project['projects'].first
-    assert_equal @project_short_name, project_detail['projectShortname']
+    assert_equal @project_shortname, project_detail['projectShortname']
   end
 
   test 'should get files' do

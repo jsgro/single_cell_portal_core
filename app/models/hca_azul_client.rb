@@ -336,7 +336,7 @@ class HcaAzulClient < Struct.new(:api_root)
   def validate_manifest_format(format)
     unless MANIFEST_FORMATS.include?(format)
       error = ArgumentError.new("#{format} is not a valid format: #{MANIFEST_FORMATS.join(',')}")
-      api_method = caller_locations.first.label
+      api_method = caller_locations.first&.label
       ErrorTracker.report_exception(error, nil, { format: format, method: api_method })
       raise error
     end
