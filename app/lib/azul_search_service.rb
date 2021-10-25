@@ -60,7 +60,7 @@ class AzulSearchService
     results
   end
 
-  # iterate through the result samples and donorOrganisms entries
+  # iterate through the result entries for each project to determine what facets/filters were matched
   def self.get_facet_matches(result, facets)
     results_info = {}
     facets.each do |facet|
