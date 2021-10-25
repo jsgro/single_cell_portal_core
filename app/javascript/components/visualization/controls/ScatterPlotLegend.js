@@ -65,7 +65,7 @@ export function getStyles(data, pointSize) {
 /** Component for row in legend */
 function LegendEntry({
   label, numPoints, iconColor, correlations,
-  numLabels, filters, updateFilters
+  numLabels, shownTraces, updateShownTraces
 }) {
   let entry = `${label} (${numPoints} points)`
   if (correlations) {
@@ -75,7 +75,7 @@ function LegendEntry({
     entry = `${label} (${numPoints} points, ρ = ${correlation})`
   }
 
-  const isShown = filters.includes(label)
+  const isShown = shownTraces.includes(label)
 
   const iconStyle = { backgroundColor: iconColor }
   const shownClass = (isShown ? '' : 'shown')
@@ -83,7 +83,7 @@ function LegendEntry({
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
     const state = !isShown
-    updateFilters(label, state, numLabels)
+    updateShownTraces(label, state, numLabels)
   }
 
   return (
@@ -112,7 +112,7 @@ function StatefulLink({ text, classes, disabled, onClick, analyticsName, style }
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
-  filters, updateFilters, showHideLinks
+  shownTraces, updateShownTraces, showHideLinks
 }) {
   const labels = getLabels(countsByLabel)
   const numLabels = labels.length
@@ -129,14 +129,14 @@ export default function ScatterPlotLegend({
           numPoints={numPoints}
           iconColor={iconColor}
           correlations={correlations}
-          filters={filters}
-          updateFilters={updateFilters}
+          shownTraces={shownTraces}
+          updateShownTraces={updateShownTraces}
           numLabels={numLabels}
         />
       )
     })
 
-  const filteredClass = (filters.length === 0) ? 'unfiltered' : ''
+  const filteredClass = (shownTraces.length === 0) ? 'unfiltered' : ''
   return (
     <div className={`scatter-legend ${filteredClass}`}>
       <div className="scatter-legend-head">
@@ -146,13 +146,13 @@ export default function ScatterPlotLegend({
             analyticsName='legend-show-all'
             classes={`stateful-link ${showHideLinks[0]}`}
             disabled={!showHideLinks[0]}
-            onClick={() => {updateFilters(labels, false, null, true)}}
+            onClick={() => {updateShownTraces(labels, false, null, true)}}
             text="Show all" />
           <StatefulLink
             analyticsName='legend-hide-all'
             classes={`stateful-link pull-right ${showHideLinks[1]}`}
             disabled={!showHideLinks[1]}
-            onClick={() => {updateFilters(labels, true, null, true)}}
+            onClick={() => {updateShownTraces(labels, true, null, true)}}
             text="Hide all" />
         </div>
       </div>

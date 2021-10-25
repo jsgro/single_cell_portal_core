@@ -48,37 +48,37 @@ function RawScatterPlot({
   const [labelCorrelations, setLabelCorrelations] = useState(null)
   const [scatterData, setScatterData] = useState(null)
   const [countsByLabel, setCountsByLabel] = useState(null)
-  const [filters, setFilters] = useState([])
+  const [shownTraces, setShownTraces] = useState([])
   const [showHideLinks, setShowHideLinks] = useState(['disabled', 'active'])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
-  /** Handle user interaction with one or more filters */
-  function updateFilters(labels, value, numLabels, applyToAll=false) {
-    let newFilters
+  /** Handle user interaction with one or more labels in legend */
+  function updateShownTraces(labels, value, numLabels, applyToAll=false) {
+    let newShownTraces
     if (applyToAll) {
       // Handle multi-filter interaction
       if (!value) {
-        newFilters = []
+        newShownTraces = []
         setShowHideLinks(['disabled', 'active'])
       } else {
-        newFilters = labels
+        newShownTraces = labels
         setShowHideLinks(['active', 'disabled'])
       }
     } else {
       // Handle single-filter interaction
       const filterLabel = labels
-      newFilters = filters.slice()
+      newShownTraces = shownTraces.slice()
 
-      if (value && !newFilters.includes(filterLabel)) {
-        newFilters.push(filterLabel)
+      if (value && !newShownTraces.includes(filterLabel)) {
+        newShownTraces.push(filterLabel)
       }
       if (!value) {
-        _remove(newFilters, label => {return label === filterLabel})
+        _remove(newShownTraces, label => {return label === filterLabel})
       }
 
-      // Update "Show all" and "Hide all" links to reflect current filters
-      const numFilters = newFilters.length
+      // Update "Show all" and "Hide all" links to reflect current shownTraces
+      const numFilters = newShownTraces.length
       if (numFilters > 0 && numFilters < numLabels) {
         setShowHideLinks(['active', 'active'])
       } else if (numFilters === 0) {
@@ -88,7 +88,7 @@ function RawScatterPlot({
       }
     }
 
-    setFilters(newFilters)
+    setShownTraces(newShownTraces)
   }
 
   /** Process scatter plot data fetched from server */
@@ -114,7 +114,7 @@ function RawScatterPlot({
       showPointBorders: scatter.showClusterPointBorders,
       is3D: scatter.is3D,
       labelCorrelations,
-      filters,
+      shownTraces,
       scatter
     }
     const [traces, labelCounts] = getPlotlyTraces(traceArgs)
@@ -181,7 +181,7 @@ function RawScatterPlot({
     if (scatterData && !isLoading) {
       processScatterPlot()
     }
-  }, [filters])
+  }, [shownTraces])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
@@ -252,8 +252,8 @@ function RawScatterPlot({
           name={scatterData.annotParams.name}
           countsByLabel={countsByLabel}
           correlations={labelCorrelations}
-          filters={filters}
-          updateFilters={updateFilters}
+          shownTraces={shownTraces}
+          updateShownTraces={updateShownTraces}
           showHideLinks={showHideLinks}
         />
         }
@@ -310,7 +310,7 @@ function getPlotlyTraces({
   pointAlpha,
   pointSize,
   is3D,
-  filters,
+  shownTraces,
   scatter
 }) {
   const trace = {
@@ -346,7 +346,7 @@ function getPlotlyTraces({
       }
     ]
 
-    if (filters.length > 0) {
+    if (shownTraces.length > 0) {
       trace.transforms.push({
         type: 'filter',
         target: data.annotations,
@@ -355,7 +355,7 @@ function getPlotlyTraces({
         // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/constants/filter_ops.js
         // Plotly docs are rather sparse here.
         operation: '}{',
-        value: filters
+        value: shownTraces
       })
     }
   } else {
