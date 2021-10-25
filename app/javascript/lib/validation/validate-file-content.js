@@ -167,6 +167,9 @@ function sniffDelimiter(lines, mimeType) {
   if (typeof bestDelimiter === 'undefined') {
     if (mimeType === 'text/tab-separated-values') {
       bestDelimiter = '\t'
+    } else {
+      // fall back on comma -- which may give the most useful error message to the user
+      bestDelimiter = ','
     }
   }
 
@@ -300,8 +303,8 @@ export function validateGzipEncoding({ fileName, lines, mimeType }) {
   return []
 }
 
-/** Validate a local file, return list of any detected errors */
-export async function validateFileContent(file, fileType) {
+/** reads the file and returns the parsed rows, delimiter, and an array any issues */
+async function parseFile(file, fileType) {
   let issues = []
   let table = [[]]
   let delimiter = null
@@ -309,7 +312,14 @@ export async function validateFileContent(file, fileType) {
   const { lines, mimeType } = await readLinesAndType(file, 2)
   issues = validateGzipEncoding({ fileName: file.name, lines, mimeType })
 
-  if (issues.length === 0 && !file.name.endsWith('.gz')) {
+  if (issues.length) {
+    return { table, issues, delimiter }
+  }
+
+  if (!file.name.endsWith('.gz')) {
+    if (lines.length < 2) {
+      return { table, delimiter, issues: [['error', 'cap:format:no-newlines', 'File does not contain newlines to separate rows']] }
+    }
     // if there are no encoding issues, and this isn't a gzipped file, validate content
     delimiter = sniffDelimiter(lines, mimeType)
     table = lines.map(line => line.split(delimiter))
@@ -318,6 +328,12 @@ export async function validateFileContent(file, fileType) {
       issues = await validateCapFormat(table, fileType)
     }
   }
+  return { table, delimiter, issues }
+}
+
+/** Validate a local file, return list formatted of any detected errors */
+export async function validateFileContent(file, fileType) {
+  const { table, delimiter, issues } = await parseFile(file, fileType)
 
   const errorObj = formatIssues(issues)
   const fileObj = { file, table, delimiter }

@@ -30,11 +30,12 @@ export default function StepTabHeader({
   const stepHasValidFiles = stepFiles.some(f => f.status === 'uploaded' &&
     (f.parse_status === 'parsed' || !PARSEABLE_TYPES.includes(f.file_type)))
 
-  let badgeContent = <span className="badge highlight">{index + 1}</span>
+  const badgeTestId = `${step.name}-status-badge`
+  let badgeContent = <span className="badge highlight" data-testid={badgeTestId}>{index + 1}</span>
   if (stepHasValidFiles) {
-    badgeContent = <span className="badge complete"><FontAwesomeIcon icon={faCheck}/></span>
+    badgeContent = <span className="badge complete" data-testid={badgeTestId}><FontAwesomeIcon icon={faCheck}/></span>
   } else if (!showIndex) {
-    badgeContent = <span className="badge fa-xs"><FontAwesomeIcon icon={faCircle}/></span>
+    badgeContent = <span className="badge fa-xs" data-testid={badgeTestId}><FontAwesomeIcon icon={faCircle}/></span>
   }
 
   return <li className={className}>
