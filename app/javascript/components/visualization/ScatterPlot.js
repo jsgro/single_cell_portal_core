@@ -13,7 +13,7 @@ import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
-import { getPlotDimensions } from 'components/explore/ExploreDisplayTabs'
+import { getPlotDimensions } from 'lib/plot'
 
 import LoadingSpinner from 'lib/LoadingSpinner'
 
