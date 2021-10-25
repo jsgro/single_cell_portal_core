@@ -6,13 +6,14 @@ class HcaAzulClientTest < ActiveSupport::TestCase
 
   before(:all) do
     @hca_azul_client = ApplicationController.hca_azul_client
-    @project_id = 'c1a9a93d-d9de-4e65-9619-a9cec1052eaa'
-    @project_short_name = 'PulmonaryFibrosisGSE135893'
-    @default_catalog = @hca_azul_client.default_catalog || 'dcp9'
+    @project_shortname = 'HumanTissueTcellActivation'
+    @project_id = '4a95101c-9ffc-4f30-a809-f04518a23803'
     @facets = [
       { id: 'disease', filters: [{ id: 'MONDO_0005109', name: 'HIV infectious disease' }] },
       { id: 'species', filters: [{ id: 'NCBITaxon_9606', name: 'Homo sapiens' }] }
     ]
+    catalogs = @hca_azul_client.catalogs
+    @default_catalog = catalogs['default_catalog']
   end
 
   # skip a test if Azul is not up ; prevents unnecessary build failures due to releases/maintenance
@@ -33,8 +34,19 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   test 'should instantiate client' do
     client = HcaAzulClient.new
     assert_equal HcaAzulClient::BASE_URL, client.api_root
-    assert_equal @default_catalog, client.default_catalog
-    assert client.all_catalogs.any?
+  end
+
+  test 'should check if Azul is up' do
+    skip_if_api_down
+    assert @hca_azul_client.api_available?
+  end
+
+  test 'should get Azul service status info' do
+    skip_if_api_down
+    status = @hca_azul_client.status
+    assert status['up']
+    expected_keys = %w[api_endpoints elasticsearch up]
+    assert_equal expected_keys, status.keys.sort
   end
 
   test 'should get catalogs' do
@@ -42,8 +54,9 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     catalogs = @hca_azul_client.catalogs
     default_catalog = catalogs['default_catalog']
     public_catalogs = catalogs['catalogs'].reject { |_, catalog| catalog['internal'] }.keys
-    assert_equal @hca_azul_client.all_catalogs.sort, public_catalogs.sort
-    assert_equal @hca_azul_client.default_catalog, default_catalog
+    assert default_catalog.present?
+    assert_not_empty public_catalogs
+    assert_includes public_catalogs, default_catalog
   end
 
   test 'should get projects' do
@@ -135,16 +148,19 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     assert_equal expected_regex, regex
   end
 
-  test 'should check if Azul is up' do
-    skip_if_api_down
-    assert @hca_azul_client.api_available?
-  end
-
-  test 'should get Azul service status info' do
-    skip_if_api_down
-    status = @hca_azul_client.status
-    assert status['up']
-    expected_keys = %w[api_endpoints elasticsearch up]
-    assert_equal expected_keys, status.keys.sort
+  test 'should append HCA catalog name to queries' do
+    path = '/index/projects'
+    appended_path = @hca_azul_client.append_catalog(path, @default_catalog)
+    expected_path = "#{path}?catalog=#{@default_catalog}"
+    assert_equal expected_path, appended_path
+    path += '?size=1'
+    expected_path = "#{path}&catalog=#{@default_catalog}"
+    appended_path = @hca_azul_client.append_catalog(path, @default_catalog)
+    assert_equal expected_path, appended_path
+    # test error handling
+    bad_catalog = 'foo'
+    assert_raises ArgumentError do
+      @hca_azul_client.append_catalog(path, bad_catalog)
+    end
   end
 end

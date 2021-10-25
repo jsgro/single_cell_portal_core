@@ -1,6 +1,6 @@
 # Query Human Cell Atlas Azul service for metadata associated with both experimental and analysis data
 # No ServiceAccountManager or GoogleServiceClient includes as all requests are unauthenticated for public data
-class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
+class HcaAzulClient < Struct.new(:api_root)
   include ApiHelpers
 
   GOOGLE_SCOPES = %w[openid email profile].freeze
@@ -34,9 +34,6 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   def initialize
     super
     self.api_root = BASE_URL
-    catalog_list = catalogs
-    self.default_catalog = catalog_list['default_catalog']
-    self.all_catalogs = catalog_list['catalogs'].reject { |_, catalog| catalog['internal'] }.keys.sort
   end
 
   ##
@@ -99,26 +96,15 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   #
   # * *raises*
   #   - (RestClient::Exception) => if HTTP request fails for any reason
-  def execute_http_request(http_method, path, payload=nil)
+  def execute_http_request(http_method, path, payload = nil)
     response = RestClient::Request.execute(method: http_method, url: path, payload: payload, headers: DEFAULT_HEADERS)
     # handle response using helper
     handle_response(response)
   end
 
-  # take a Hash/JSON object and format as a query string parameter
-  #
-  # * *params*
-  #   - +query_params+ (Hash) => Hash of query parameters
-  #
-  # * *returns*
-  #   - (String) => URL-encoded string version of query parameters
-  def format_hash_as_query_string(query_params)
-    # replace Ruby => assignment operators with JSON standard colons (:)
-    sanitized_params = query_params.to_s.gsub(/=>/, ':')
-    CGI.escape(sanitized_params)
-  end
-
+  ##
   # API endpoint bindings
+  ##
 
   # basic health check - does not give detailed status information, only checks for { 'up' => true }
   # bypasses process_api_request to avoid error handling/retries
@@ -164,7 +150,7 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   # get a list of all available projects
   #
   # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from self.all_catalogs
+  #   - +catalog+ (String) => HCA catalog name (optional)
   #   - +query+ (Hash) => query object from :format_query_object
   #   - +terms+ (Array<String>) => Array of terms to use for filtering search results
   #   - +size+ (Integer) => number of results to return (default is 250)
@@ -174,18 +160,18 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   #
   # * *raises*
   #   - (ArgumentError) => if catalog is not in self.all_catalogs
-  def projects(catalog: default_catalog, query: {}, terms: [], size: MAX_RESULTS)
-    validate_catalog_name(catalog)
-    path = "#{api_root}/index/projects?catalog=#{catalog}"
-    path += "&filters=#{format_hash_as_query_string(query)}"
-    path += "&size=#{size}"
+  def projects(catalog: nil, query: {}, terms: [], size: MAX_RESULTS)
+    base_path = "#{api_root}/index/projects"
+    base_path += "?filters=#{format_hash_as_query_string(query)}"
+    base_path += "&size=#{size}"
+    path = append_catalog(base_path, catalog)
     process_api_request(:get, path)
   end
 
   # get a list of all available catalogs
   #
   # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from self.all_catalogs
+  #   - +catalog+ (String) => HCA catalog name (optional)
   #   - +project_id+ (String) => UUID of HCA project
   #
   # * *returns*
@@ -193,16 +179,16 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   #
   # * *raises*
   #   - (ArgumentError) => if catalog is not in self.all_catalogs
-  def project(project_id, catalog: default_catalog)
-    validate_catalog_name(catalog)
-    path = "#{api_root}/index/projects/#{project_id}?catalog=#{catalog}"
+  def project(project_id, catalog: nil)
+    base_path = "#{api_root}/index/projects/#{project_id}"
+    path = append_catalog(base_path, catalog)
     process_api_request(:get, path)
   end
 
   # get a metadata TSV file for a given HCA project UUID
   #
   # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from self.all_catalogs
+  #   - +catalog+ (String) => HCA catalog name (optional)
   #   - +project_id+ (UUID) => HCA project UUID
   #   - +format+ (string) => manifest file format, from MANIFEST_FORMATS
   #
@@ -211,14 +197,14 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   #
   # * *raises*
   #   - (ArgumentError) => if catalog is not in self.all_catalogs or format is not in MANIFEST_FORMATS
-  def project_manifest_link(project_id, catalog: default_catalog, format: 'compact')
-    validate_catalog_name(catalog)
+  def project_manifest_link(project_id, catalog: nil, format: 'compact')
     validate_manifest_format(format)
 
-    path = "#{api_root}/fetch/manifest/files?catalog=#{catalog}"
+    base_path = "#{api_root}/fetch/manifest/files"
     project_filter = { 'projectId' => { 'is' => [project_id] } }
     filter_query = format_hash_as_query_string(project_filter)
-    path += "&filters=#{filter_query}&format=#{format}"
+    base_path += "?filters=#{filter_query}&format=#{format}"
+    path = append_catalog(base_path, catalog)
     # since manifest files are generated on-demand, keep making requests until the Status code is 302 (Found)
     # Status 301 means that the manifest is still being generated; if no manifest is ready after 30s, return anyway
     time_slept = 0
@@ -227,7 +213,7 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
       break if time_slept >= MAX_MANIFEST_TIMEOUT
 
       interval = manifest_info['Retry-After']
-      Rails.logger.info "Manifest still generating for #{catalog}:#{project_id} (#{format}), retrying in #{interval}"
+      Rails.logger.info "Manifest still generating for #{project_id} (#{format}), retrying in #{interval}"
       sleep interval
       time_slept += interval
       manifest_info = process_api_request(:get, path)
@@ -238,17 +224,17 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
   # search for available files using facets/terms
   #
   # * *params*
-  #   - +catalog+ (String) => HCA catalog name, from self.all_catalogs
+  #   - +catalog+ (String) => HCA catalog name (optional)
   #   - +query+ (Hash) => query object from :format_query_object
   #   - +size+ (Integer) => number of results to return (default is 250)
   #
   # * *returns*
   #   - (Hash) => List of files matching query
-  def files(catalog: default_catalog, query: {}, size: MAX_RESULTS)
-    validate_catalog_name(catalog)
-    path = "#{api_root}/index/files?catalog=#{catalog}"
+  def files(catalog: nil, query: {}, size: MAX_RESULTS)
+    base_path = "#{api_root}/index/files"
     query_string = format_hash_as_query_string(query)
-    path += "&filters=#{query_string}&size=#{size}"
+    base_path += "?filters=#{query_string}&size=#{size}"
+    path = append_catalog(base_path, catalog)
     # make API request, but fold in project information to each result so that this is preserved for later use
     raw_results = process_api_request(:get, path)['hits']
     results = []
@@ -265,6 +251,10 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
     end
     results
   end
+
+  ##
+  # helper methods
+  ##
 
   # take a list of facets and construct a query object to pass as query string parameters when searching
   #
@@ -297,13 +287,46 @@ class HcaAzulClient < Struct.new(:api_root, :default_catalog, :all_catalogs)
     Regexp.new(terms.map { |t| Regexp.escape(t) }.join('|'), true)
   end
 
+  # take a Hash/JSON object and format as a query string parameter
+  #
+  # * *params*
+  #   - +query_params+ (Hash) => Hash of query parameters
+  #
+  # * *returns*
+  #   - (String) => URL-encoded string version of query parameters
+  def format_hash_as_query_string(query_params)
+    # replace Ruby => assignment operators with JSON standard colons (:)
+    sanitized_params = query_params.to_s.gsub(/=>/, ':')
+    CGI.escape(sanitized_params)
+  end
+
+  # append the HCA catalog name, if passed to a method
+  #
+  # * *params*
+  #   - +api_path+ (String) => URL path for API request
+  #   - +catalog+ (String) => name of HCA catalog
+  #
+  # * *returns*
+  #   - (String) => URL path with catalog name appended, if present
+  #
+  # * *raises*
+  #   - (ArgumentError) => if catalog is not in self.all_catalogs
+  def append_catalog(api_path, catalog)
+    return api_path unless catalog.present?
+
+    validate_catalog_name(catalog)
+    delimiter = api_path.include?('?') ? '&' : '?'
+    "#{api_path}#{delimiter}catalog=#{catalog}"
+  end
+
   private
 
   # validate that a catalog exists by checking the list of available public catalogs
   def validate_catalog_name(catalog)
-    unless all_catalogs.include?(catalog) || catalogs['catalogs'].keys.include?(catalog)
-      error = ArgumentError.new("#{catalog} is not a valid catalog: #{catalogs.join(',')}")
-      api_method = caller_locations.first.label
+    all_catalogs = catalogs['catalogs'].reject { |_, cat| cat['internal'] }.keys.sort
+    unless all_catalogs.include?(catalog)
+      error = ArgumentError.new("#{catalog} is not a valid catalog: #{all_catalogs.join(',')}")
+      api_method = caller_locations[1]&.label # caller will be 2nd in stack, as first will be append_catalog
       ErrorTracker.report_exception(error, nil, { catalog: catalog, method: api_method })
       raise error
     end
