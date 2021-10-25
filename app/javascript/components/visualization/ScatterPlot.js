@@ -58,22 +58,20 @@ function RawScatterPlot({
 
   /** Update status of "Show all" and "Hide all" links */
   function updateShowHideActive(numShownTraces, numLabels, value, applyToAll) {
+    let active
     if (applyToAll) {
-      if (!value) {
-        setShowHideActive([false, true])
-      } else {
-        setShowHideActive([true, false])
-      }
+      active = (value ? [true, false] : [false, true])
     } else {
       // Update "Show all" and "Hide all" links to reflect current shownTraces
       if (numShownTraces > 0 && numShownTraces < numLabels) {
-        setShowHideActive([true, true])
+        active = [true, true]
       } else if (numShownTraces === 0) {
-        setShowHideActive([false, true])
+        active = [false, true]
       } else if (numShownTraces === numLabels) {
-        setShowHideActive([true, false])
+        active = [true, false]
       }
     }
+    setShowHideActive(active)
   }
 
   /**

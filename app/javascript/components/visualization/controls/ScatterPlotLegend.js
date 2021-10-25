@@ -31,6 +31,7 @@ function getLabels(countsByLabel) {
   return Object.keys(countsByLabel).sort(labelSort)
 }
 
+/** Convert state Boolean to attribute string */
 function getActivity(isActive) {
   return isActive ? 'active' : 'disabled'
 }
