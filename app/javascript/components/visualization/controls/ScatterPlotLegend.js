@@ -97,18 +97,6 @@ function LegendEntry({
   )
 }
 
-/** Component for stateful link */
-function StatefulLink({ text, classes, disabled, onClick, analyticsName, style }) {
-  return (
-    <span
-      data-analytics-name={analyticsName}
-      className={classes}
-      disabled={disabled}
-      style={style}
-      onClick={onClick}>{text}</span>
-  )
-}
-
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
@@ -142,18 +130,20 @@ export default function ScatterPlotLegend({
       <div className="scatter-legend-head">
         <div>
           <p className="scatter-legend-name">{name}</p>
-          <StatefulLink
-            analyticsName='legend-show-all'
-            classes={`stateful-link ${showHideLinks[0]}`}
+          <a
+            role="button"
+            data-analytics-name='legend-show-all'
+            className={`stateful-link ${showHideLinks[0]}`}
             disabled={!showHideLinks[0]}
             onClick={() => {updateShownTraces(labels, false, null, true)}}
-            text="Show all" />
-          <StatefulLink
-            analyticsName='legend-hide-all'
-            classes={`stateful-link pull-right ${showHideLinks[1]}`}
+          >Show all</a>
+          <a
+            role="button"
+            data-analytics-name='legend-hide-all'
+            className={`stateful-link pull-right ${showHideLinks[1]}`}
             disabled={!showHideLinks[1]}
             onClick={() => {updateShownTraces(labels, true, null, true)}}
-            text="Hide all" />
+          >Hide all</a>
         </div>
       </div>
       {legendEntries}

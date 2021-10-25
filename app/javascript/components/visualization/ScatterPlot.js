@@ -67,14 +67,14 @@ function RawScatterPlot({
       }
     } else {
       // Handle single-filter interaction
-      const filterLabel = labels
+      const label = labels
       newShownTraces = shownTraces.slice()
 
-      if (value && !newShownTraces.includes(filterLabel)) {
-        newShownTraces.push(filterLabel)
+      if (value && !newShownTraces.includes(label)) {
+        newShownTraces.push(label)
       }
       if (!value) {
-        _remove(newShownTraces, label => {return label === filterLabel})
+        _remove(newShownTraces, thisLabel => {return thisLabel === label})
       }
 
       // Update "Show all" and "Hide all" links to reflect current shownTraces
