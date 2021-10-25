@@ -146,13 +146,13 @@ export default function ScatterPlotLegend({
             analyticsName='legend-show-all'
             classes={`stateful-link ${showHideLinks[0]}`}
             disabled={!showHideLinks[0]}
-            onClick={() => {updateFilters(labels, false)}}
+            onClick={() => {updateFilters(labels, false, null, true)}}
             text="Show all" />
           <StatefulLink
             analyticsName='legend-hide-all'
             classes={`stateful-link pull-right ${showHideLinks[1]}`}
             disabled={!showHideLinks[1]}
-            onClick={() => {updateFilters(labels, true)}}
+            onClick={() => {updateFilters(labels, true, null, true)}}
             text="Hide all" />
         </div>
       </div>

@@ -54,21 +54,20 @@ function RawScatterPlot({
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
   /** Handle user interaction with one or more filters */
-  function updateFilters(filterLabels, value, numLabels) {
+  function updateFilters(labels, value, numLabels, applyToAll=false) {
     let newFilters
-    const isShowOrHideAll = Array.isArray(filterLabels)
-    if (isShowOrHideAll) {
+    if (applyToAll) {
       // Handle multi-filter interaction
       if (!value) {
         newFilters = []
         setShowHideLinks(['disabled', 'active'])
       } else {
-        newFilters = filterLabels
+        newFilters = labels
         setShowHideLinks(['active', 'disabled'])
       }
     } else {
       // Handle single-filter interaction
-      const filterLabel = filterLabels
+      const filterLabel = labels
       newFilters = filters.slice()
 
       if (value && !newFilters.includes(filterLabel)) {
