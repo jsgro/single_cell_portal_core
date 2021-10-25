@@ -3,13 +3,8 @@ import { formatFileForApi } from 'components/upload/upload-utils'
 import { RAW_COUNTS_FILE, METADATA_FILE, EXPRESSION_FILE } from './file-info-responses'
 
 
-describe('it returns a new FormData Happy Path', () => {
+describe('a new FormData is created for valid file uploads', () => {
   const fileEnd = 10000
-  it('processing a non-file yields a blank FormData object', async () => {
-    const data = new FormData()
-    const result = formatFileForApi('', 0, fileEnd)
-    expect(result).toEqual(data)
-  })
   it('processes a raw counts file correctly', async () => {
     const file = RAW_COUNTS_FILE
     const result = formatFileForApi(file, 0, fileEnd)
@@ -30,5 +25,6 @@ describe('it returns a new FormData Happy Path', () => {
 
     expect(result.get('study_file[name]')).toEqual('raw2_chicken_40_cells_4_genes.processed_dense.txt')
     expect(result.get('study_file[file_type]')).toEqual('Expression Matrix')
+    expect(result.get('study_file[options][key1]')).toEqual('value1')
   })
 })

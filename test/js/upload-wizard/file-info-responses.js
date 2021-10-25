@@ -364,7 +364,7 @@ export const EXPRESSION_FILE = {
   'human_fastq_url': 'null',
   'is_spatial': false,
   'name': 'raw2_chicken_40_cells_4_genes.processed_dense.txt',
-  'options': {},
+  'options': {'key1': 'value1'},
   'parse_status': 'parsed',
   'queued_for_deletion': false,
   'remote_location': '',
