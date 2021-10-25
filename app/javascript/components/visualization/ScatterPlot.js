@@ -163,9 +163,11 @@ function RawScatterPlot({
       })
     }
 
-    setScatterData(scatter)
-    setShowError(false)
-    setIsLoading(false)
+    if (clusterResponse) {
+      setScatterData(scatter)
+      setShowError(false)
+      setIsLoading(false)
+    }
   }
 
   // Fetches plot data then draws it, upon load or change of any data parameter
@@ -438,9 +440,7 @@ function getPlotlyLayout({ width, height }={}, {
   isAnnotatedScatter,
   isCorrelatedScatter,
   is3D,
-  isCellSelecting=false,
-  genes,
-  annotParams
+  isCellSelecting=false
 }) {
   const layout = {
     hovermode: 'closest',
