@@ -50,7 +50,9 @@ function RawScatterPlot({
   // hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
   const [shownTraces, setShownTraces] = useState([])
-  const [showHideLinks, setShowHideLinks] = useState(['disabled', 'active'])
+
+  // Whether the "Show all" and "Hide all" links are active
+  const [showHideActive, setShowHideActive] = useState([false, true])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
@@ -61,10 +63,10 @@ function RawScatterPlot({
       // Handle multi-filter interaction
       if (!value) {
         newShownTraces = []
-        setShowHideLinks(['disabled', 'active'])
+        setShowHideActive([false, true])
       } else {
         newShownTraces = labels
-        setShowHideLinks(['active', 'disabled'])
+        setShowHideActive([true, false])
       }
     } else {
       // Handle single-filter interaction
@@ -81,11 +83,11 @@ function RawScatterPlot({
       // Update "Show all" and "Hide all" links to reflect current shownTraces
       const numFilters = newShownTraces.length
       if (numFilters > 0 && numFilters < numLabels) {
-        setShowHideLinks(['active', 'active'])
+        setShowHideActive([true, true])
       } else if (numFilters === 0) {
-        setShowHideLinks(['disabled', 'active'])
+        setShowHideActive([false, true])
       } else if (numFilters === numLabels) {
-        setShowHideLinks(['active', 'disabled'])
+        setShowHideActive([true, false])
       }
     }
 
@@ -255,7 +257,7 @@ function RawScatterPlot({
           correlations={labelCorrelations}
           shownTraces={shownTraces}
           updateShownTraces={updateShownTraces}
-          showHideLinks={showHideLinks}
+          showHideActive={showHideActive}
         />
         }
       </div>

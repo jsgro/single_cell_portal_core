@@ -100,7 +100,7 @@ function LegendEntry({
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, countsByLabel, correlations,
-  shownTraces, updateShownTraces, showHideLinks
+  shownTraces, updateShownTraces, showHideActive
 }) {
   const labels = getLabels(countsByLabel)
   const numLabels = labels.length
@@ -133,15 +133,15 @@ export default function ScatterPlotLegend({
           <a
             role="button"
             data-analytics-name='legend-show-all'
-            className={`stateful-link ${showHideLinks[0]}`}
-            disabled={!showHideLinks[0]}
+            className={`stateful-link ${showHideActive[0]}`}
+            disabled={!showHideActive[0]}
             onClick={() => {updateShownTraces(labels, false, null, true)}}
           >Show all</a>
           <a
             role="button"
             data-analytics-name='legend-hide-all'
-            className={`stateful-link pull-right ${showHideLinks[1]}`}
-            disabled={!showHideLinks[1]}
+            className={`stateful-link pull-right ${showHideActive[1]}`}
+            disabled={!showHideActive[1]}
             onClick={() => {updateShownTraces(labels, true, null, true)}}
           >Hide all</a>
         </div>
