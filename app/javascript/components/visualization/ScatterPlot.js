@@ -47,6 +47,7 @@ function RawScatterPlot({
   const [bulkCorrelation, setBulkCorrelation] = useState(null)
   const [labelCorrelations, setLabelCorrelations] = useState(null)
   const [scatterData, setScatterData] = useState(null)
+  // hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
   const [shownTraces, setShownTraces] = useState([])
   const [showHideLinks, setShowHideLinks] = useState(['disabled', 'active'])
@@ -68,7 +69,7 @@ function RawScatterPlot({
     } else {
       // Handle single-filter interaction
       const label = labels
-      newShownTraces = shownTraces.slice()
+      newShownTraces = [...shownTraces]
 
       if (value && !newShownTraces.includes(label)) {
         newShownTraces.push(label)
@@ -335,7 +336,8 @@ function getPlotlyTraces({
   const isCustomLegend = getIsCustomLegend(scatter)
 
   if (isCustomLegend) {
-    // Use Plotly's groupby transformation to make the traces
+    // Use Plotly's groupby and filter transformation to make the traces
+    // note these transforms are deprecated in the latest Plotly versions
     const [legendStyles, labelCounts] = getStyles(data, pointSize)
     countsByLabel = labelCounts
     trace.transforms = [

@@ -42,6 +42,8 @@ const tabList = [
   { key: 'infercnv-genome', label: 'Genome (inferCNV)' }
 ]
 
+const ideogramHeight = 140
+
 /**
  * Renders the gene search box and the tab selection
  * Responsible for determining which tabs are available for a given view of the study
@@ -245,7 +247,7 @@ export default function ExploreDisplayTabs({
                   dimensionProps={{
                     numColumns: 1,
                     numRows: exploreParams?.spatialGroups.length ? 2 : 1,
-                    showRelatedGenesIdeogram,
+                    ideogramHeight: (showRelatedGenesIdeogram ? ideogramHeight : 0),
                     showViewOptionsControls
                   }}
                   isCellSelecting={isCellSelecting}
@@ -261,8 +263,7 @@ export default function ExploreDisplayTabs({
                   isCorrelatedScatter={true}
                   dimensionProps={{
                     numColumns: 1,
-                    numRows: 1,
-                    showRelatedGenesIdeogram: false
+                    numRows: 1
                   }}
                   isCellSelecting={isCellSelecting}
                   plotPointsSelected={plotPointsSelected}

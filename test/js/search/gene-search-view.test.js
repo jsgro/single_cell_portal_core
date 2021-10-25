@@ -38,7 +38,7 @@ describe('Gene search page landing', () => {
     expect(wrapperText.indexOf('This study contains agpat2 in expression data')).toBeGreaterThan(0)
   })
 
-  it('clear gene queries', async () => {
+  it('clears gene queries', async () => {
     const searchState = emptySearch
     searchState.isLoaded = true
     searchState.results = { studies: [{ name: 'foo', description: 'bar', gene_matches: ['agpat2'] }] }

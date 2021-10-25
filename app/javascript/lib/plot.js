@@ -92,7 +92,7 @@ export function getPlotDimensions({
   verticalPad=250,
   horizontalPad=80,
   hasTitle=false,
-  showRelatedGenesIdeogram=false,
+  ideogramHeight=0,
   showViewOptionsControls=true
 }) {
   // Get width, and account for expanding "View Options" after page load
@@ -103,14 +103,12 @@ export function getPlotDimensions({
 
   let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
 
-  const ideogramHeight = 140
-
   // Get height
   // Height of screen viewport, minus fixed-height elements above gallery
   let galleryHeight = $(window).height() - verticalPad
-  if (showRelatedGenesIdeogram) {
-    galleryHeight -= ideogramHeight
-  }
+
+  galleryHeight -= ideogramHeight
+
   if (hasTitle) {
     galleryHeight -= 20
   }
