@@ -226,6 +226,7 @@ export const EXPRESSION_FILE = {
     'url': 'fake/app/data/51e9c0d33e9b698b118bbb884fab092a1b2d22a9f4133966010560c60835361a/60a2b9fccc7ba082358b544f/original/raw2_chicken_40_cells_4_genes.processed_dense.txt'
   }
 }
+
 export const BASIC_MENU_OPTIONS = {
   'fonts': ['Helvetica Neue', 'Arial'],
   'species': [{

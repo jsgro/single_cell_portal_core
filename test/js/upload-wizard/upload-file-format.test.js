@@ -19,7 +19,7 @@ describe('a new FormData is created for valid file uploads', () => {
     expect(result.get('study_file[name]')).toEqual('metadata.txt')
     expect(result.get('study_file[file_type]')).toEqual('Metadata')
   })
-  it('processes a expression file correctly', async () => {
+  it('processes an expression file correctly', async () => {
     const file = EXPRESSION_FILE
     const result = formatFileForApi(file, 0, fileEnd)
 
