@@ -1,4 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
 
 import StepTabHeader from './StepTabHeader'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
@@ -9,10 +11,9 @@ function RawWizardNavPanel({
   formState, serverState, currentStep, setCurrentStep, studyAccession, steps, studyName,
   mainSteps, supplementalSteps
 }) {
+  const [othersExpanded, setOthersExpanded] = useState(true)
+  const expansionIcon = othersExpanded ? faChevronUp : faChevronDown
   return <div className="position-fixed">
-    <div className="padded">
-      <h5><a href={`/single_cell/study/${studyAccession}`}>{studyAccession}</a>: {studyName}</h5>
-    </div>
     <ul className="upload-wizard-steps">
       { mainSteps.map((step, index) =>
         <StepTabHeader key={index}
@@ -23,9 +24,18 @@ function RawWizardNavPanel({
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}/>) }
     </ul>
-    <span>Other files</span>
     <ul className="upload-wizard-steps">
-      { supplementalSteps.map((step, index) =>
+      <li className="other-header" onClick={() => setOthersExpanded(!othersExpanded)}>
+        <div className="step-number">
+          <span className="badge highlight">+</span>
+        </div>
+        <div>
+          <a className="action link" role="link">
+            Other files <FontAwesomeIcon icon={expansionIcon}/>
+          </a>
+        </div>
+      </li>
+      { othersExpanded && supplementalSteps.map((step, index) =>
         <StepTabHeader key={index}
           step={step}
           index={index}

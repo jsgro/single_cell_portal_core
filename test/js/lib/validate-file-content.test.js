@@ -71,11 +71,11 @@ describe('Client-side file validation', () => {
     expect(errors).toHaveLength(0)
   })
 
-  it('catches gzipped file with txt suffix', async () => {
+  it('catches gzipped file with txt extension', async () => {
     mockReadLinesAndType({ content: '\x1F\x2E3lkjf3' })
     const { errors } = await validateFileContent({ name: 'c.txt' }, 'Cluster')
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('encoding:missing-gz-suffix')
+    expect(errors[0][1]).toEqual('encoding:missing-gz-extension')
   })
 
   it('catches text file with .gz suffix', async () => {

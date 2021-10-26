@@ -13,6 +13,7 @@ export const clusterFileFilter = file => file.file_type === 'Cluster' && !file.i
 export default {
   title: 'Clustering',
   name: 'clustering',
+  header: 'Clustering',
   component: ClusteringUploadForm,
   fileFilter: clusterFileFilter
 }
@@ -35,11 +36,6 @@ export function ClusteringUploadForm({
   }, [clusterFiles.length])
 
   return <div>
-    <div className="row">
-      <div className="col-md-12">
-        <h4>Clustering files</h4>
-      </div>
-    </div>
     <div className="row">
       <div className="col-md-12">
         <div className="form-terra">

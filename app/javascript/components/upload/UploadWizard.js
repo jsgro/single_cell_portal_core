@@ -53,7 +53,7 @@ const SUPPLEMENTAL_STEPS = STEPS.slice(4, 11)
 
 
 /** shows the upload wizard */
-function RawUploadWizard({ studyAccession, name }) {
+export function RawUploadWizard({ studyAccession, name }) {
   const routerLocation = useLocation()
   const queryParams = queryString.parse(routerLocation.search)
   let currentStepIndex = STEPS.findIndex(step => step.name === queryParams.step)
@@ -83,8 +83,10 @@ function RawUploadWizard({ studyAccession, name }) {
     window.scrollTo(0, 0)
   }
 
-  /** adds an empty file, merging in the given fileProps. Does not communicate anything to the server */
-  function addNewFile(fileProps) {
+  /** adds an empty file, merging in the given fileProps. Does not communicate anything to the server
+   * By default, will scroll the window to show the new file
+   * */
+  function addNewFile(fileProps, scrollToBottom=false) {
     const newFile = newStudyFileObj(serverState.study._id.$oid)
     Object.assign(newFile, fileProps)
 
@@ -93,7 +95,9 @@ function RawUploadWizard({ studyAccession, name }) {
       newState.files.push(newFile)
       return newState
     })
-    window.setTimeout(() => scroll({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
+    if (scrollToBottom) {
+      window.setTimeout(() => scroll({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
+    }
   }
 
   /** handle response from server after an upload by updating the serverState with the updated file response */
@@ -258,6 +262,12 @@ function RawUploadWizard({ studyAccession, name }) {
   const prevStep = STEPS[currentStepIndex - 1]
   return <div className="upload-wizard-react">
     <div className="row">
+      <div className="col-md-12 wizard-top-bar">
+        <span>{serverState?.study?.name}</span> / &nbsp;
+        <a href={`/single_cell/study/${studyAccession}`}>View study</a>
+      </div>
+    </div>
+    <div className="row wizard-content">
       <div className="col-md-3">
         <WizardNavPanel {...{
           formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
@@ -265,6 +275,21 @@ function RawUploadWizard({ studyAccession, name }) {
         }} />
       </div>
       <div className="col-md-9">
+        <div className="flexbox-align-center top-margin">
+          <h4>{currentStep.header}</h4>
+          <div className="prev-next-buttons">
+            { prevStep && <button
+              className="btn terra-tertiary-btn margin-right"
+              onClick={() => setCurrentStep(prevStep)}>
+              <FontAwesomeIcon icon={faChevronLeft}/> Previous
+            </button> }
+            { nextStep && <button
+              className="btn terra-tertiary-btn"
+              onClick={() => setCurrentStep(nextStep)}>
+              Next <FontAwesomeIcon icon={faChevronRight}/>
+            </button> }
+          </div>
+        </div>
         { !formState && <div className="padded text-center">
           <LoadingSpinner data-testid="upload-wizard-spinner"/>
         </div> }
@@ -278,18 +303,6 @@ function RawUploadWizard({ studyAccession, name }) {
             saveFile={saveFile}
             addNewFile={addNewFile}
           />
-          <div className="text-center">
-            { nextStep && <button
-              className="btn terra-tertiary-btn margin-right"
-              onClick={() => setCurrentStep(prevStep)}>
-              <FontAwesomeIcon icon={faChevronLeft}/> Previous
-            </button> }
-            { nextStep && <button
-              className="btn terra-tertiary-btn"
-              onClick={() => setCurrentStep(nextStep)}>
-              Next <FontAwesomeIcon icon={faChevronRight}/>
-            </button> }
-          </div>
         </div> }
       </div>
     </div>

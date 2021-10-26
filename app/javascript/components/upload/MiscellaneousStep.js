@@ -13,6 +13,7 @@ const miscFileFilter = file => miscFileTypes.includes(file.file_type)
 
 export default {
   title: 'Miscellaneous / Other',
+  header: 'Documentation &amp; Other Files',
   name: 'misc',
   component: MiscellaneousForm,
   fileFilter: miscFileFilter
@@ -35,9 +36,6 @@ function MiscellaneousForm({
   }, [miscFiles.length])
 
   return <div>
-    <div className="row">
-      <h4 className="col-sm-12">Documentation &amp; Other Files</h4>
-    </div>
     <div className="row">
       <div className="col-md-12">
         <p className="text-center">
