@@ -283,7 +283,6 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     gcs_mock.expect :execute_gcloud_method, mock_signed_url,
                     [:generate_signed_url, 0, @basic_study.bucket_id, 'metadata.txt', { expires: 1.day.to_i }]
     azul_mock = Minitest::Mock.new
-    azul_mock.expect :default_catalog, ApplicationController.hca_azul_client.default_catalog
     azul_mock.expect :get_project_manifest_link, mock_azul_response, [String, hca_project_id]
     tdr_mock = Minitest::Mock.new
     tdr_mock.expect :get_drs_file_info, mock_drs_response, ["drs://#{service_name}/#{drs_id}"]
