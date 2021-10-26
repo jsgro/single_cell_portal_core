@@ -112,7 +112,7 @@ class HcaAzulClient < Struct.new(:api_root)
   # * *returns*
   #   - (Boolean) => T/F if Azul is responding to requests
   def api_available?
-    path = "#{api_root}/health/basic"
+    path = "#{api_root}/health/cached"
     begin
       status = execute_http_request(:get, path)
       status && status['up']
@@ -127,7 +127,7 @@ class HcaAzulClient < Struct.new(:api_root)
   #
   # * *returns*
   #   - (Hash) => Hash of Azul services/endpoint status
-  def status
+  def service_information
     path = "#{api_root}/health/fast"
     begin
       execute_http_request(:get, path)

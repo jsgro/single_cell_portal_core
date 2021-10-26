@@ -1,10 +1,9 @@
-# library with search methods specific to Human Cell Atlas Azul service
+# search methods specific to Human Cell Atlas Azul service
 class AzulSearchService
   # map of bulk download file types to extensions (for grouping in bulk download modal)
   # tar archives are lumped in with analysis_file entries as they could be either
-  # TODO: add supplemental_file column to bulk download for .tar archives
   FILE_EXT_BY_DOWNLOAD_TYPE = {
-    'sequence_file' => %w[bam bai fastq fastq].map { |e| [e, e + '.gz'] }.flatten,
+    'sequence_file' => %w[bam bai fastq].map { |e| [e, e + '.gz'] }.flatten,
     'analysis_file' => %w[loom csv tsv txt mtx Rdata tar].map { |e| [e, e + '.gz'] }.flatten
   }.freeze
 
@@ -12,8 +11,20 @@ class AzulSearchService
   # each Azul result entry under 'hits' will have these keys, whether project- or file-based
   RESULT_FACET_FIELDS = %w[samples specimens cellLines donorOrganisms organoids cellSuspensions].freeze
 
+  def self.append_results_to_studies(existing_studies, selected_facets:, terms:, facet_map: {})
+    return [existing_studies, facet_map] unless ApplicationController.hca_azul_client.api_available?
+
+    azul_results = ::AzulSearchService.get_results(selected_facets: selected_facets)
+    Rails.logger.info "Found #{azul_results.keys.size} results in Azul"
+    azul_results.each do |accession, azul_result|
+      existing_studies << azul_result
+      facet_map[accession] = azul_result[:facet_matches]
+    end
+    [existing_studies, facet_map]
+  end
+
   # execute a search against Azul API
-  # TODO: implement workaround for lack of keyword-based search in Azul
+  # TODO: add support for keyword search (SCP-3806)
   def self.get_results(selected_facets:)
     client = ApplicationController.hca_azul_client
     results = {}
@@ -22,16 +33,16 @@ class AzulSearchService
     project_results = client.projects(query: query_json)
     project_ids = []
     project_results['hits'].each do |entry|
-      safe_entry = entry.with_indifferent_access
-      safe_project = safe_entry[:projects].first # there will only ever be one project here
-      short_name = safe_project[:projectShortname]
-      project_id = safe_project[:projectId]
+      entry_hash = entry.with_indifferent_access
+      project_hash = entry_hash[:projects].first # there will only ever be one project here
+      short_name = project_hash[:projectShortname]
+      project_id = project_hash[:projectId]
       project_ids << project_id
       result = {
         hca_result: true,
         accession: short_name,
-        name: safe_project[:projectTitle],
-        description: safe_project[:projectDescription],
+        name: project_hash[:projectTitle],
+        description: project_hash[:projectDescription],
         hca_project_id: project_id,
         facet_matches: {},
         term_matches: [],
@@ -45,7 +56,7 @@ class AzulSearchService
         ]
       }.with_indifferent_access
       # get facet matches from rest of entry
-      result[:facet_matches] = get_facet_matches(safe_entry, selected_facets)
+      result[:facet_matches] = get_facet_matches(entry_hash, selected_facets)
       results[short_name] = result
     end
     # now run file query to get matching files for all matching projects

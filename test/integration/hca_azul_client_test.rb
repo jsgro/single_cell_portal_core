@@ -43,7 +43,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
 
   test 'should get Azul service status info' do
     skip_if_api_down
-    status = @hca_azul_client.status
+    status = @hca_azul_client.service_information
     assert status['up']
     expected_keys = %w[api_endpoints elasticsearch up]
     assert_equal expected_keys, status.keys.sort

@@ -1,10 +1,27 @@
-# library with search methods specific to Terra Data Repo
+# search methods specific to Terra Data Repo
 class TdrSearchService
+  # top-level method to execute search, get term/facet matches, and append results to list of studies
+  def self.append_results_to_studies(existing_studies, selected_facets:, terms:, facet_map: {})
+    return [existing_studies, studies_by_facet] unless ApplicationController.data_repo_client.api_available?
+
+    tdr_results = get_results(selected_facets: selected_facets, terms: terms)
+    if selected_facets.present?
+      simple_tdr_results = simplify_tdr_facet_search_results(tdr_results)
+      matched_tdr_studies = match_studies_by_facet(simple_tdr_results, selected_facets)
+      facet_map.merge!(matched_tdr_studies)
+    end
+    Rails.logger.info "Found #{tdr_results.keys.size} results in Terra Data Repo"
+    tdr_results.each do |_, tdr_result|
+      existing_studies << tdr_result
+    end
+    [existing_studies, facet_map]
+  end
+
   # execute a search in TDR and get back normalized results
   # will actually issue 2 search requests, first to extract unique project_ids that match the query,
   # and a second to retrieve all result rows for those projects
   # this is to address issues in sparsity of Elasticsearch index with regards to some data (like species, disease, etc)
-  def self.get_tdr_results(selected_facets:, terms:)
+  def self.get_results(selected_facets:, terms:)
     client = ApplicationController.data_repo_client
     results = {}
     begin
@@ -101,13 +118,13 @@ class TdrSearchService
     tdr_name = FacetNameConverter.convert_schema_column(:alexandria, :tim, facet[:id])
     if facet[:filters].is_a? Hash
       # this is a numeric facet, so convert to range for match
-      # TODO: determine correct unit/datatype and convert
+      # TODO: determine correct unit/datatype and convert (SCP-3829)
       filter_value = "#{facet.dig(:filters, :min).to_i}-#{facet.dig(:filters, :max).to_i}"
       matches = result_row.each_pair.select { |col, val| col == tdr_name && val == filter_value }
     else
       matches = []
       facet[:filters].each do |filter|
-        matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || val == filter[:id] ) }
+        matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || val == filter[:id]) }
                              .flatten
       end
     end

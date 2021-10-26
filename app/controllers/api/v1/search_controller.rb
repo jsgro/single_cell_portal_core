@@ -247,30 +247,21 @@ module Api
         # perform Azul search, if enabled, and there are facets/terms provided by user
         # run this before inferred search so that they are weighted and sorted correctly
         if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') &&
-          @facets.present? && ApplicationController.hca_azul_client.api_available?
-          @azul_results = ::AzulSearchService.get_results(selected_facets: @facets)
-          logger.info "Found #{@azul_results.keys.size} results in Azul"
-          @azul_results.each do |accession, azul_result|
-            @studies << azul_result
-            @studies_by_facet[accession] = azul_result[:facet_matches]
+          @facets.present?
+          begin
+            @studies, @studies_by_facet = ::AzulSearchService.append_results_to_studies(@studies,
+                                                                                        selected_facets: @facets,
+                                                                                        terms: @term_list,
+                                                                                        facet_map: @studies_by_facet)
+            # @studies, @studies_by_facet = ::TdrSearchService.append_results_to_studies(@studies,
+            #                                                                             selected_facets: @facets,
+            #                                                                             terms: @term_list,
+            #                                                                             facet_map: @studies_by_facet)
+          rescue RestClient::Exception => e
+            logger.error "Error in retrieving results from Azul - #{e.class}: #{e.message}"
+            ErrorTracker.report_exception(e, current_api_user,
+                                          { facets: @facets }, { terms: @term_list})
           end
-
-          # @tdr_results = ::TdrSearchService.get_tdr_results(selected_facets: @facets, terms: @term_list)
-          #
-          # if @facets.present?
-          #   simple_tdr_results = ::TdrSearchService.simplify_tdr_facet_search_results(@tdr_results)
-          #   matched_tdr_studies = ::TdrSearchService.match_studies_by_facet(simple_tdr_results, @facets)
-          #   if @studies_by_facet.present?
-          #     @studies_by_facet.merge!(matched_tdr_studies)
-          #   else
-          #     @studies_by_facet = matched_tdr_studies
-          #   end
-          # end
-          # # just log for now
-          # logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
-          # @tdr_results.each do |_, tdr_result|
-          #   @studies << tdr_result
-          # end
         end
 
         # determine sort order for pagination; minus sign (-) means a descending search
