@@ -225,16 +225,12 @@ module FeatureFlaggable
   #
   # * *returns*
   #   - (Boolean) => T/F if any instances override the default flag value (always true override matches default)
-  #
-  # * *raises*
-  #   - (NameError) => if requested feature_flag does not exist
   def self.flag_override_for_instances(flag_name, override_value, *instances)
     feature_flag = FeatureFlag.find_by(name: flag_name.to_s)
-    raise NameError, "#{flag_name} is not a valid feature flag name" if feature_flag.nil?
-
-    # if override and default are same, return true, since this is used in a validation context and false will
+    # if feature flag doesn't exist, return true as it may have been retired (or this is a CI and it wasn't seeded)
+    # also, if override and default are same, return true, since this is used in a validation context and false will
     # invoke a validation error
-    return true if override_value == feature_flag.default_value
+    return true if feature_flag.nil? || override_value == feature_flag.default_value
 
     class_names = []
     ids = []
