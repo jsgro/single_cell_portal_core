@@ -53,7 +53,7 @@ const SUPPLEMENTAL_STEPS = STEPS.slice(4, 11)
 
 
 /** shows the upload wizard */
-function RawUploadWizard({ studyAccession, name }) {
+export function RawUploadWizard({ studyAccession, name }) {
   const routerLocation = useLocation()
   const queryParams = queryString.parse(routerLocation.search)
   let currentStepIndex = STEPS.findIndex(step => step.name === queryParams.step)

@@ -29,7 +29,7 @@ export function fireFileSelectionEvent(node, {
   fileName,
   content='text stuff',
   contentType='text/plain'
-}, mockIO=false) {
+}, mockIO=true) {
   const selectedFile = new File([content], fileName, { type: contentType })
   if (mockIO) {
     mockReadLinesAndType({ content })
