@@ -40,13 +40,10 @@ class Gene
 
   # concatenate data arrays of a given name/type in order
   def concatenate_data_arrays(array_name, array_type)
-    data_arrays = DataArray.where(name: array_name, array_type: array_type, linear_data_type: 'Gene',
-                                  linear_data_id: self.id).order(:array_index => 'asc')
-    all_values = []
-    data_arrays.each do |array|
-      all_values += array.values
-    end
-    all_values
+    query = {
+      name: array_name, array_type: array_type, linear_data_type: 'Gene', linear_data_id: self.id
+    }
+    DataArray.concatenate_arrays(query)
   end
 
   def autocomplete_label
