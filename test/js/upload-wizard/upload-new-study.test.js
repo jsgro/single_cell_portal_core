@@ -21,8 +21,8 @@ function getSelectByLabelText(screen, text) {
   return screen.getByText(text).querySelector('div')
 }
 
-describe('it allows creation of study files', () => {
-  it('renders the raw counts from and allows updates and save', async () => {
+describe('creation of study files', () => {
+  it('renders the raw counts form and allows updates and save', async () => {
     const studyInfoSpy = jest.spyOn(ScpApi, 'fetchStudyFileInfo')
     // pass in a clone of the response since it may get modified by the cache operations
     studyInfoSpy.mockImplementation(params => {
@@ -41,11 +41,11 @@ describe('it allows creation of study files', () => {
     </UserContext.Provider>)
     const saveButton = () => screen.getByTestId('file-save')
     await waitForElementToBeRemoved(() => screen.getByTestId('upload-wizard-spinner'))
+    expect(screen.getByText('View study')).toHaveProperty('href', 'http://localhost/single_cell/study/SCP1')
 
     await testRawCountsUpload({ createFileSpy, saveButton })
     await testProcessedUpload({ createFileSpy, saveButton })
     await testMetadataUpload({ createFileSpy, saveButton })
-    expect(true).toBeTruthy()
   })
 })
 
