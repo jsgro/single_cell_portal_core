@@ -7,17 +7,13 @@ class FeatureFlagOptionsController < ApplicationController
 
   before_action :set_feature_flaggable_instance, only: %i[edit update]
 
-  # get all FeatureFlaggable models & string fields to use for searching
-  # returned as a hash, with keys as the 'underscore'
-  SEARCH_FIELDS_BY_MODEL = lambda {
-    Rails.application.eager_load! if Rails.env.development? # turned off by default in development
-
-    Mongoid.models.select { |model| model.include?(FeatureFlaggable) }.map do |ff_model|
-      {
-        ff_model.name.underscore => ff_model.fields.values.select { |field| field.type == String }.map(&:name)
-      }
-    end.reduce({}, :merge)
-  }.call.freeze
+  # map of FeatureFlaggable models to string attribute names that can be used to find an instance
+  # if you make a new model FeatureFlaggable, add an entry for that model here so that feature flags can be configured
+  SEARCH_FIELDS_BY_MODEL = {
+    user: %w[email],
+    study: %w[accession name],
+    branding_group: %w[name name_as_id]
+  }.with_indifferent_access.freeze
 
   FEATURE_FLAG_OPTS_PARAMS = %i[id name feature_flag_id feature_flaggable_type feature_flaggable_id value _destroy].freeze
 
