@@ -25,10 +25,14 @@
               <td id="<%= study.url_safe_name %>-study-file-count"><%= study.total_file_count %></td>
 							<td>
                 <% if study.can_edit?(current_user) %>
-                  <%= scp_link_to "<span class='fas fa-info-circle'></span> Show Details".html_safe, study_path(study), class: "btn btn-xs btn-info #{study.url_safe_name}-show" %>
-                  <%= scp_link_to "<span class='fas fa-upload'></span> Upload/Edit Data".html_safe, initialize_study_path(study), class: "btn btn-xs btn-success #{study.url_safe_name}-upload" %>
-                  <%= scp_link_to "<span class='fas fa-sync-alt'></span> Sync Workspace".html_safe, sync_study_path(study), class: "btn btn-xs btn-warning #{study.url_safe_name}-sync sync-button" %>
-                  <%= scp_link_to "<span class='fas fa-edit'></span> Edit Study".html_safe, edit_study_path(study), class: "btn btn-xs btn-primary #{study.url_safe_name}-edit" %>
+                  <%= scp_link_to "<span class='fas fa-info-circle'></span> Show Details".html_safe, study_path(study), 
+                    class: "btn btn-xs btn-info #{study.url_safe_name}-show", title: 'View/Edit your Study description' , data: {toggle: 'tooltip', placement: 'top'} %>
+                  <%= scp_link_to "<span class='fas fa-upload'></span> Upload/Edit Data".html_safe, initialize_study_path(study), 
+                  class: "btn btn-xs btn-success #{study.url_safe_name}-upload", title: 'Add new files to your study' , data: {toggle: 'tooltip', placement: 'top'}  %>
+                  <%= scp_link_to "<span class='fas fa-sync-alt'></span> Sync Workspace".html_safe, sync_study_path(study), 
+                  class: "btn btn-xs btn-warning #{study.url_safe_name}-sync sync-button", title: 'Sync files from your workspace to your Study' , data: {toggle: 'tooltip', placement: 'top'} %>
+                  <%= scp_link_to "<span class='fas fa-edit'></span> Edit Study".html_safe, edit_study_path(study), 
+                  class: "btn btn-xs btn-primary #{study.url_safe_name}-edit", title: 'View/Update the settings for your Study' , data: {toggle: 'tooltip', placement: 'top'} %>
                   <% if study.can_delete?(current_user) %>
                     <%= scp_link_to "<span class='fas fa-trash'></span> Delete Study & Workspace".html_safe, study_path(study),
                                     class: "btn btn-xs btn-danger delete-btn #{study.url_safe_name}-delete",
