@@ -982,7 +982,7 @@ class Study
   end
 
   def can_visualize?
-    self.can_visualize_clusters? || self.can_visualize_genome_data?
+    self.can_visualize_clusters? || self.can_visualize_genome_data? || self.has_gene_lists?
   end
 
   def has_raw_counts_matrices?

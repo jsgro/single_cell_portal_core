@@ -106,9 +106,11 @@ export default function ExploreDisplayTabs({
     currentTaxon = exploreInfo.taxonNames[0]
     searchedGene = exploreParams.genes[0]
   }
-  const showClusterControls = !(['genome', 'infercnv-genome'].includes(shownTab))
 
   const annotationList = exploreInfo ? exploreInfo.annotationList : null
+  // hide the cluster controls if we're on a genome/image tab, or if there aren't clusters to choose
+  const showClusterControls = !['genome', 'infercnv-genome', 'images'].includes(shownTab) &&
+                                annotationList?.clusters?.length
 
   let hasSpatialGroups = false
   if (exploreInfo) {
