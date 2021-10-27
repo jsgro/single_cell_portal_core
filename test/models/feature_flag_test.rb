@@ -98,7 +98,7 @@ class FeatureFlagTest < ActiveSupport::TestCase
     assert_not FeatureFlaggable.merged_value_for(flag_name, @branding_group)
     @branding_group.set_flag_option(flag_name, true)
     assert FeatureFlaggable.merged_value_for(flag_name, @branding_group)
-    assert FeatureFlaggable.merged_value_for(flag_name, @branding_group, )
+    assert FeatureFlaggable.merged_value_for(flag_name, @branding_group, @user)
     @user.set_flag_option(flag_name, false)
     assert_not FeatureFlaggable.merged_value_for(flag_name, @branding_group, @user)
   end
