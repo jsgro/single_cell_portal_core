@@ -212,6 +212,28 @@ module FeatureFlaggable
     flag_hash.with_indifferent_access
   end
 
+  # merges feature flags of the passed-in instances from left to right,
+  # using the default flag has if none of the instances is present or supplies a value
+  #
+  # * *params*
+  #   - +flag_name+ (String) => name of the feature flag to check
+  #   - +instances+ (Array<Mongoid::Model>) => array of FeatureFlaggable model instances, or nil
+  #
+  # * *returns*
+  #   - (Hash) => Hash of feature flag values, merged in order passed
+  def self.merged_value_for(flag_name, *instances)
+    value = FeatureFlag.find_by(name: flag_name).default_value
+    instances.each do |instance|
+      if instance.present?
+        instance_option = FeatureFlagOption.find_by(name: flag_name, feature_flaggable: instance)
+        if instance_option.present?
+          value = instance_option.value
+        end
+      end
+    end
+    value
+  end
+
   # check if any of the instances provided override the default value of a requested feature flag
   # this is useful for checking exemptions, where it may exist on one of many objects, and we want to know if any of
   # them contradict the default value of the parent FeatureFlag
