@@ -320,6 +320,7 @@ module Api
         end
 
         @matching_accessions = @studies.map { |study| self.class.get_study_accession(study) }
+
         logger.info "Final list of matching studies: #{@matching_accessions}"
         @results = @studies.paginate(page: params[:page], per_page: Study.per_page)
         render json: search_results_obj, status: 200

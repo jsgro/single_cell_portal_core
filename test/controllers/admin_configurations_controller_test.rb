@@ -17,17 +17,17 @@ class AdminConfigurationsControllerTest < ActionDispatch::IntegrationTest
   # as part of SCP-3621, this test is being commented out, but the scaffold left in place in case future feature flags
   # support opt in/out, in which case this test will be valid again
   test 'should process feature flag data correctly' do
-    @test_user.update!(feature_flags: {})
-
-    AdminConfigurationsController.process_feature_flag_form_data(@test_user,
-                                                                 { feature_flag_convention_required: '1' })
-    assert_equal({ 'convention_required' => true }, @test_user.reload.feature_flags)
-
-    AdminConfigurationsController.process_feature_flag_form_data(@test_user,
-                                                                 { feature_flag_convention_required: '0' })
-    assert_equal({ 'convention_required' => false }, @test_user.reload.feature_flags)
-
-    AdminConfigurationsController.process_feature_flag_form_data(@test_user, { convention_required: '-' })
-    assert_equal({}, @test_user.reload.feature_flags)
+    # @test_user.update!(feature_flags: {})
+    #
+    # AdminConfigurationsController.process_feature_flag_form_data(@test_user,
+    #                                                              { feature_flag_convention_required: '1' })
+    # assert_equal({ 'convention_required' => true }, @test_user.reload.feature_flags)
+    #
+    # AdminConfigurationsController.process_feature_flag_form_data(@test_user,
+    #                                                              { feature_flag_convention_required: '0' })
+    # assert_equal({ 'convention_required' => false }, @test_user.reload.feature_flags)
+    #
+    # AdminConfigurationsController.process_feature_flag_form_data(@test_user, { convention_required: '-' })
+    # assert_equal({}, @test_user.reload.feature_flags)
   end
 end
