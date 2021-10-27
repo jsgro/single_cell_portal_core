@@ -246,7 +246,7 @@ module Api
 
         # perform Azul search, if enabled, and there are facets/terms provided by user
         # run this before inferred search so that they are weighted and sorted correctly
-        if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') &&
+        if api_user_signed_in? && current_api_user.feature_flag_for('cross_dataset_search_backend') &&
           @facets.present?
           begin
             @studies, @studies_by_facet = ::AzulSearchService.append_results_to_studies(@studies,
@@ -260,7 +260,7 @@ module Api
           rescue RestClient::Exception => e
             logger.error "Error in retrieving results from Azul - #{e.class}: #{e.message}"
             ErrorTracker.report_exception(e, current_api_user,
-                                          { facets: @facets }, { terms: @term_list})
+                                          { facets: @facets }, { terms: @term_list })
           end
         end
 

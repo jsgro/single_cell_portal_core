@@ -12,8 +12,6 @@ class AzulSearchService
   RESULT_FACET_FIELDS = %w[samples specimens cellLines donorOrganisms organoids cellSuspensions].freeze
 
   def self.append_results_to_studies(existing_studies, selected_facets:, terms:, facet_map: {})
-    return [existing_studies, facet_map] unless ApplicationController.hca_azul_client.api_available?
-
     azul_results = ::AzulSearchService.get_results(selected_facets: selected_facets)
     Rails.logger.info "Found #{azul_results.keys.size} results in Azul"
     azul_results.each do |accession, azul_result|
