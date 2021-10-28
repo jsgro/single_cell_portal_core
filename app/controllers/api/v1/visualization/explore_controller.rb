@@ -71,6 +71,7 @@ module Api
             cluster = nil
           end
           spatial_group_options = ClusterVizService.load_spatial_options(@study)
+          image_options = ClusterVizService.load_image_options(@study)
           bam_bundle_list = @study.study_file_bundles.where(bundle_type: 'BAM').pluck(:original_file_list)
 
           explore_props = {
@@ -83,8 +84,10 @@ module Api
             annotationList: AnnotationVizService.get_study_annotation_options(@study, current_api_user),
             clusterGroupNames: ClusterVizService.load_cluster_group_options(@study),
             spatialGroups: spatial_group_options,
+            imageFiles: image_options,
             clusterPointAlpha: @study.default_cluster_point_alpha,
-            colorProfile: @study.default_color_profile
+            colorProfile: @study.default_color_profile,
+            bucketId: @study.bucket_id
           }
 
           render json: explore_props

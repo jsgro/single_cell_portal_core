@@ -8,7 +8,7 @@
  * To reference this file, add <%= javascript_pack_tag 'application' %> to
  * the appropriate layout file, like app/views/layouts/application.html.erb
  */
-
+import 'react-notifications-component/dist/theme.css'
 import 'styles/application.scss'
 
 import React from 'react'
@@ -30,9 +30,10 @@ import {
 } from 'lib/metrics-api'
 import * as ScpApi from 'lib/scp-api'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
-import { validateFile } from 'lib/validation/validate-file'
+import { validateFileContent } from 'lib/validation/validate-file-content'
 import { renderValidationAlert } from 'components/validation/ValidationAlert'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
+import { renderUploadWizard } from 'components/upload/UploadWizard'
 import { renderRawAssociationSelect } from 'components/upload/RawAssociationSelect'
 import { renderExploreView } from 'components/explore/ExploreView'
 
@@ -75,4 +76,5 @@ window.SCP.renderRawAssociationSelect = renderRawAssociationSelect
 window.SCP.renderExploreView = renderExploreView
 window.SCP.getFeatureFlagsWithDefaults = getFeatureFlagsWithDefaults
 window.SCP.renderValidationAlert = renderValidationAlert
-window.SCP.validateFile = validateFile
+window.SCP.validateFileContent = validateFileContent
+window.SCP.renderUploadWizard = renderUploadWizard

@@ -1,0 +1,15 @@
+<div class="row <%= f.object.new_record? ? '' : 'highlight' %> feature-flag-options-field">
+  <%= f.hidden_field :feature_flaggable_type, value: f.object.feature_flaggable_type %>
+  <%= f.hidden_field :feature_flaggable_id, value: f.object.feature_flaggable_id %>
+  <div class="col-xs-3 text-right">
+    <%= f.label :name, f.object.name %>
+    <%= f.hidden_field :name, value: f.object.name %>
+  </div>
+  <div class="col-xs-2">
+    <% opts = [["Default (#{f.object.default_value})", ''],["True", true],["False", false]] %>
+    <%= f.select :value, options_for_select(opts, f.object.new_record? ? '' : f.object.value), {}, class: 'form-control' %>
+  </div>
+  <div class="col-xs-6">
+    <%= f.object.description %>
+  </div>
+</div>

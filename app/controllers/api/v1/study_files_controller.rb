@@ -5,7 +5,7 @@ module Api
 
       before_action :authenticate_api_user!
       before_action :set_study
-      before_action :check_study_permission
+      before_action :check_study_edit_permission
       before_action :set_study_file, except: [:index, :create, :bundle]
 
       respond_to :json
@@ -188,24 +188,14 @@ module Api
 
       # POST /single_cell/api/v1/studies/:study_id/study_files
       def create
-        # since there is no species/assembly attribute for study_files, we need to prune that from study_file_params
-        create_params = study_file_params.to_unsafe_hash
-        # manually check first if species/assembly was supplied by name
-        species_name = create_params[:species]
-        create_params.delete(:species)
-        assembly_name = create_params[:assembly]
-        create_params.delete(:assembly)
-        @study_file = @study.study_files.build(create_params)
-        set_taxon_and_assembly_by_name({species: species_name, assembly: assembly_name})
-        if @study_file.save
-          # send data to FireCloud if upload was performed
-          if study_file_params[:upload].present?
-            @study.delay.send_to_firecloud(@study_file)
-          end
-          @study_file.update(status: 'uploaded') # set status to uploaded on full create
+        @study_file = StudyFile.new(study: @study)
+        begin
+          result = perform_update(@study_file)
+          MetricsService.log('file-create', format_log_props('success', nil), current_api_user)
           render :show
-        else
-          render json: {errors: @study_file.errors}, status: :unprocessable_entity
+        rescue Mongoid::Errors::Validations => e
+          MetricsService.log('file-create', format_log_props('failure', e.summary), current_api_user)
+          render json: {error: e.summary}, status: :unprocessable_entity
         end
       end
 
@@ -268,54 +258,146 @@ module Api
 
       # PATCH /single_cell/api/v1/studies/:study_id/study_files/:id
       def update
-        # since there is no species/assembly attribute for study_files, we need to prune that from study_file_params
-        update_params = study_file_params.to_unsafe_hash
-        # manually check first if species/assembly was supplied by name
-        species_name = update_params[:species]
-        update_params.delete(:species)
-        assembly_name = update_params[:assembly]
-        update_params.delete(:assembly)
-        set_taxon_and_assembly_by_name({species: species_name, assembly: assembly_name})
-
-        # check if the name of the file has changed as we won't be able to tell after we saved
-        name_changed = @study_file.name != update_params[:name]
-
-        if @study_file.update(update_params)
-          # invalidate caches first
-          @study_file.delay.invalidate_cache_by_file_type
-
-          # send data to FireCloud if upload was performed
-          if study_file_params[:upload].present?
-            @study.delay.send_to_firecloud(@study_file)
-            @study_file.update(status: 'uploaded') # set status to uploaded on full create
-          end
-
-          if ['Cluster', 'Coordinate Labels', 'Gene List'].include?(@study_file.file_type) && @study_file.valid?
-            @study_file.invalidate_cache_by_file_type
-          end
-          # if a gene list or cluster got updated, we need to update the associated records
-          if study_file_params[:file_type] == 'Gene List' && name_changed
-            @precomputed_entry = PrecomputedScore.find_by(study_file_id: study_file_params[:_id])
-            logger.info "Updating gene list #{@precomputed_entry.name} to match #{study_file_params[:name]}"
-            @precomputed_entry.update(name: @study_file.name)
-          elsif study_file_params[:file_type] == 'Cluster' && name_changed
-            @cluster = ClusterGroup.find_by(study_file_id: study_file_params[:_id])
-            logger.info "Updating cluster #{@cluster.name} to match #{study_file_params[:name]}"
-            # before updating, check if the defaults also need to change
-            if @study.default_cluster == @cluster
-              @study.default_options[:cluster] = @study_file.name
-              @study.save
-            end
-            @cluster.update(name: @study_file.name)
-          elsif ['Expression Matrix', 'MM Coordinate Matrix'].include?(study_file_params[:file_type]) && !study_file_params[:y_axis_label].blank?
-            # if user is supplying an expression axis label, update default options hash
-            @study.update(default_options: @study.default_options.merge(expression_label: study_file_params[:y_axis_label]))
-          end
+        begin
+          result = perform_update(@study_file)
+          MetricsService.log('file-update', format_log_props('success', nil), current_api_user)
           render :show
-        else
-          render json: {errors: @study_file.errors}, status: :unprocessable_entity
+        rescue Mongoid::Errors::Validations => e
+          MetricsService.log('file-update', format_log_props('failure', e.summary), current_api_user)
+          render json: {error: e.summary}, status: :unprocessable_entity
         end
       end
+
+      def format_log_props(status, error_message)
+        log_props = study_file_params.to_unsafe_hash
+        # do not send the actual file to the log
+        log_props.delete(:upload)
+        # don't log file paths that may contain sensitive data
+        log_props.delete(:remote_location)
+        {
+          studyAccession: @study.accession,
+          error: error_message,
+          params: log_props,
+          status: status
+        }
+      end
+
+      # update the given study file with the request params and save it
+      # raises ArgumentError if the save fails due to model validations
+      # if the save is successful and includes a complete upload, will send it to firecloud
+      # and kick off a parse job if requested
+      def perform_update(study_file)
+        safe_file_params = study_file_params
+        is_chunked = false
+        content_range = RequestUtils.parse_content_range_header(request.headers)
+        if content_range.present?
+          is_chunked = true
+          if content_range[:first_byte] != 0
+            raise ArgumentError, 'Beginning of file expected'
+          end
+          if content_range[:last_byte] == content_range[:total_size] - 1
+            is_chunked = false # the chunk sent happens to be the entire file
+          end
+        end
+
+        # manually check first if species/assembly was supplied by name
+        species_name = safe_file_params[:species]
+        safe_file_params.delete(:species)
+        assembly_name = safe_file_params[:assembly]
+        safe_file_params.delete(:assembly)
+        set_taxon_and_assembly_by_name({species: species_name, assembly: assembly_name})
+        # clear the id so that it doesn't get overwritten (which would be a problem for new files)
+        safe_file_params.delete(:_id)
+
+        parse_on_upload = safe_file_params[:parse_on_upload]
+        safe_file_params.delete(:parse_on_upload)
+
+        # check if the name of the file has changed as we won't be able to tell after we saved
+        name_changed = study_file.persisted? && study_file.name != safe_file_params[:name]
+
+        study_file.update!(safe_file_params)
+
+        # invalidate caches first
+        study_file.delay.invalidate_cache_by_file_type
+
+        # if a gene list or cluster got updated, we need to update the associated records
+        if safe_file_params[:file_type] == 'Gene List' && name_changed
+          precomputed_entry = PrecomputedScore.find_by(study_file_id: safe_file_params[:_id])
+          if precomputed_entry.present?
+            logger.info "Updating gene list #{@precomputed_entry.name} to match #{safe_file_params[:name]}"
+            precomputed_entry.update(name: study_file.name)
+          end
+        elsif safe_file_params[:file_type] == 'Cluster' && name_changed
+          cluster = ClusterGroup.find_by(study_file_id: safe_file_params[:_id])
+          if cluster.present?
+            logger.info "Updating cluster #{@cluster.name} to match #{safe_file_params[:name]}"
+            # before updating, check if the defaults also need to change
+            if @study.default_cluster == @cluster
+              @study.default_options[:cluster] = study_file.name
+              @study.save
+            end
+            @cluster.update(name: study_file.name)
+          end
+        end
+
+        if ['Expression Matrix', 'MM Coordinate Matrix'].include?(safe_file_params[:file_type]) && !safe_file_params[:y_axis_label].blank?
+          # if user is supplying an expression axis label, update default options hash
+          options = @study.default_options.dup
+          options.merge!(expression_label: safe_file_params[:y_axis_label])
+          @study.update(default_options: options)
+        end
+
+        if safe_file_params[:upload].present? && !is_chunked
+          complete_upload_process(study_file, parse_on_upload)
+        end
+      end
+
+
+      # handles adding an additional chunk to a file upload.  Note that create/update must be
+      # called first with the first chunk of the file, in order to initialize the process
+      # if this is the last chunk, it will handle sending to firecloud and launching a
+      # parse job if requested
+      def chunk
+        safe_file_params = study_file_params
+        upload = safe_file_params[:upload]
+        content_range = RequestUtils.parse_content_range_header(request.headers)
+        if content_range.present?
+          if content_range[:first_byte] == 0
+            render json: {errors: 'create/update should be used for uploading the first chunk'}, status: :bad_request and return
+          end
+          if content_range[:first_byte] != @study_file.upload_file_size
+            render json: {errors: "Incorrect chunk sent: expected bytes starting with #{@study_file.upload_file_size}, received #{content_range[:first_byte]}" }, status: :bad_request and return
+          end
+        else
+          render json: {errors: 'Missing Content-Range header'}, status: :bad_request and return
+        end
+
+        File.open(@study_file.upload.path, "ab") do |f|
+          f.write upload.read
+        end
+
+        # Update the upload_file_size attribute
+        @study_file.upload_file_size = @study_file.upload_file_size.nil? ? upload.size : @study_file.upload_file_size + upload.size
+        @study_file.save!
+
+        if @study_file.upload_file_size >= content_range[:total_size]
+          # this was the last chunk
+          complete_upload_process(@study_file, safe_file_params[:parse_on_upload])
+        end
+        render :show
+      end
+
+      def complete_upload_process(study_file, parse_on_upload)
+        study_file.update!(status: 'uploaded', parse_status: 'unparsed') # set status to uploaded on full create
+        if parse_on_upload
+          if study_file.parseable?
+            FileParseService.run_parse_job(@study_file, @study, current_api_user)
+          else
+            @study.delay.send_to_firecloud(study_file) # send data to FireCloud if upload was performed
+          end
+        end
+      end
+
 
       swagger_path '/studies/{study_id}/study_files/{id}' do
         operation :delete do
@@ -551,17 +633,9 @@ module Api
         end
       end
 
-      def set_study
-        @study = Study.find_by(id: params[:study_id])
-        if @study.nil? || @study.queued_for_deletion?
-          head 404 and return
-        elsif @study.detached?
-          head 410 and return
-        end
-      end
-
       def set_study_file
-        @study_file = StudyFile.find_by(id: params[:id])
+        # get the study file and confirm that it is part of the given study
+        @study_file = StudyFile.find_by(id: params[:id], study_id: @study)
         if @study_file.nil? || @study_file.queued_for_deletion?
           head 404 and return
         end
@@ -573,16 +647,17 @@ module Api
 
       # study file params list
       def study_file_params
-        params.require(:study_file).permit(:_id, :study_id, :taxon_id, :genome_assembly_id, :study_file_bundle_id, :name,
+        params.require(:study_file).permit(:_id, :taxon_id, :genome_assembly_id, :study_file_bundle_id, :name,
                                            :upload, :upload_file_name, :upload_content_type, :upload_file_size, :remote_location,
-                                           :description, :file_type, :status, :human_fastq_url, :human_data, :use_metadata_convention,
+                                           :description, :is_spatial, :file_type, :status, :human_fastq_url, :human_data, :use_metadata_convention,
                                            :cluster_type, :generation, :x_axis_label, :y_axis_label, :z_axis_label, :x_axis_min,
                                            :x_axis_max, :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :species, :assembly,
+                                           :parse_on_upload, spatial_cluster_associations: [],
                                            options: [:cluster_group_id, :font_family, :font_size, :font_color, :matrix_id,
                                                      :submission_id, :bam_id, :analysis_name, :visualization_name, :cluster_name,
-                                                     :annotation_name],
+                                                     :annotation_name, :cluster_file_id],
                                            expression_file_info_attributes: [:id, :_destroy, :library_preparation_protocol, :units,
-                                                                             :biosample_input_type, :modality, :is_raw_counts])
+                                                                             :biosample_input_type, :modality, :is_raw_counts, raw_counts_associations: []])
       end
     end
   end

@@ -191,6 +191,144 @@ export function stringifyQuery(paramObj, sort) {
 }
 
 /**
+ * Returns initial content for the upload file wizard
+ *
+ * @param {String} studyAccession Study accession
+*/
+export async function fetchStudyFileInfo(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/file_info`
+  const [exploreInit] = await scpApi(apiUrl, defaultInit(), mock, false)
+  return exploreInit
+}
+
+/**
+ * Creates a new study file
+ *
+ * @param {String} studyAccession study accession
+ * @param {FormData} studyFileData html FormData object with the file data
+*/
+export async function createStudyFile({
+  studyAccession,
+  studyFileData,
+  isChunked=false,
+  chunkStart,
+  chunkEnd,
+  fileSize,
+  onProgress,
+  mock=false
+}) {
+  const apiUrl = `/studies/${studyAccession}/study_files`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'POST',
+    body: studyFileData
+  })
+
+  setFileFormHeaders(init.headers, isChunked, chunkStart, chunkEnd, fileSize)
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress })
+}
+
+/** Adds a content range header if needed */
+function setFileFormHeaders(headers, isChunked, chunkStart, chunkEnd, fileSize) {
+  // we want the browser to auto-set the content type with the right form boundaries
+  // see https://stackoverflow.com/questions/36067767/how-do-i-upload-a-file-with-the-js-fetch-api
+  delete headers['Content-Type']
+  if (isChunked) {
+    headers['Content-Range'] = `bytes ${chunkStart}-${chunkEnd-1}/${fileSize}`
+  }
+}
+
+
+/**
+ * Updates a study file
+ *
+ * @param {String} studyAccession study accession
+ * @param {String} studyFileId Study file id
+ * @param {FormData} studyFileData html FormData object with the file data
+*/
+export async function updateStudyFile({
+  studyAccession,
+  studyFileId,
+  studyFileData,
+  isChunked=false,
+  chunkStart,
+  chunkEnd,
+  fileSize,
+  onProgress,
+  mock=false
+}) {
+  const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'PATCH'
+  })
+  setFileFormHeaders(init.headers, isChunked, chunkStart, chunkEnd, fileSize)
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress })
+}
+
+/**
+ * Updates a study file
+ *
+ * @param {String} studyAccession study accession
+ * @param {String} studyFileId Study file id
+ * @param {FormData} studyFileData html FormData object with the file data
+*/
+export async function sendStudyFileChunk({
+  studyAccession,
+  studyFileId,
+  studyFileData,
+  chunkStart,
+  chunkEnd,
+  fileSize,
+  onProgress,
+  mock=false
+}) {
+  const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}/chunk`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'PATCH',
+    body: studyFileData
+  })
+  setFileFormHeaders(init.headers, true, chunkStart, chunkEnd, fileSize)
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress })
+}
+
+/**
+ * Deletes the given file
+ *
+ * @param {String} studyAccession Study accession
+ * @param {fileId} the guid of the file to delete
+*/
+export async function deleteStudyFile(studyAccession, fileId, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/study_files/${fileId}`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'DELETE'
+  })
+  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
+  return exploreInit
+}
+
+
+/**
+ * Fetches a given resource from a GCP bucket -- this handles adding the
+ * appropriate SCP readonly bearer token, and using the Google API URL that allows CORS
+ *
+ * @param {String} bucketName bucket name
+ * @param {String} fileName file name
+*/
+export async function fetchBucketFile(bucketName, fileName, mock=false) {
+  const init = {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${window.SCP.readOnlyToken}`
+    }
+  }
+  const url = `https://storage.googleapis.com/download/storage/v1/b/${bucketName}/o/${fileName}?alt=media`
+
+  const response = await fetch(url, init).catch(error => error)
+
+  return response
+}
+
+
+/**
  * Returns initial content for the "Explore" tab in Study Overview
  *
  * @param {String} studyAccession Study accession
@@ -593,7 +731,7 @@ export default async function scpApi(
   }
 
   if (response.ok) {
-    if (toJson) {
+    if (toJson && response.status !== 204) {
       const jsonPerfTimeStart = performance.now()
       const json = await response.json()
       perfTimes.parse = performance.now() - jsonPerfTimeStart
@@ -627,7 +765,44 @@ export default async function scpApi(
   }
   if (toJson) {
     const json = await response.json()
-    throw new Error(json.error)
+    throw new Error(json.error || json.errors)
   }
   throw new Error(response)
+}
+
+/**
+  * similar functionality to scpApi, but uses XMLHttpRequest to enable support for progress events.
+  * fetch does not yet support them.
+  * See https://stackoverflow.com/questions/35711724/upload-progress-indicators-for-fetch
+  */
+async function scpApiXmlHttp({ apiUrl, init, formData, onProgress }) {
+  const url = getFullUrl(apiUrl, false)
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest()
+
+    request.open(init.method, url)
+    Object.keys(init.headers).forEach(key => {
+      request.setRequestHeader(key, init.headers[key])
+    })
+    if (onProgress) {
+      request.upload.addEventListener('progress', onProgress)
+    }
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        let response = {}
+        if (request.status != 204) {
+          response = JSON.parse(request.response)
+        }
+        resolve(response)
+      } else if (request.status === 401 || request.status === 403) {
+        reject('Authorization failed. You may need to sign in again')
+      } else {
+        reject(JSON.parse(request.response).error)
+      }
+    }
+    request.onerror = () => {
+      reject(request.statusText)
+    }
+    request.send(formData)
+  })
 }
