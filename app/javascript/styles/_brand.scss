@@ -45,18 +45,6 @@
   display: inline-block;
 }
 
-#beta-main {
-  position: relative;
-  top: -23px;
-  margin-left: 10px;
-}
-
-#beta-nav {
-  color: #ffffff;
-  font-weight: 600;
-  margin-left: -10px;
-}
-
 #main-banner-name {
   font-size: 24px;
   line-height: 22px;
@@ -238,4 +226,15 @@
       border-bottom: none;
     }
   }
+}
+
+#latest-features-btn {
+  position: absolute;
+  top: 245px;
+  right: 15px;
+  z-index: 500;
+}
+
+.right-margin-10 {
+  margin-right: 10px;
 }

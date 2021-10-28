@@ -162,7 +162,7 @@
 
           let validationErrors = []
           let summary = ''
-          <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
+          <% if current_user.feature_flag_for('clientside_validation') %>
             $(`#${containerId}`).remove() // Remove any prior notice
             $(ordsFormSelector).append(`<div id="${containerId}"></div>`)
             // Run client-side metadata file validation

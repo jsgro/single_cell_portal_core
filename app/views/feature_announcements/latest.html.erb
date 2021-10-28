@@ -1,0 +1,19 @@
+<h1>
+  <%= link_to "Home", site_path %> / Latest Features
+</h1>
+<div class="row">
+  <div class="col-md-12">
+    <%= render partial: 'feature_announcement_list', locals: { feature_announcements: @latest } %>
+  </div>
+</div>
+<hr />
+<% if @archived.any? %>
+  <h1>
+    Archives
+  </h1>
+  <div class="row">
+    <div class="col-md-12">
+      <%= render partial: 'feature_announcement_list', locals: { feature_announcements: @archived } %>
+    </div>
+  </div>
+<% end %>

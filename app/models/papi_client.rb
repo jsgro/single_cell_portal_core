@@ -232,7 +232,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - +preemptible+ (Boolean) => Indication of whether VM can be preempted (defaults to false)
   # * *return*
   #   - (Google::Apis::GenomicsV2alpha1::VirtualMachine)
-  def create_virtual_machine_object(machine_type: 'n1-highmem-4', boot_disk_size_gb: 100, preemptible: false)
+  def create_virtual_machine_object(machine_type: 'n1-highmem-4', boot_disk_size_gb: 300, preemptible: false)
     virtual_machine = Google::Apis::GenomicsV2alpha1::VirtualMachine.new(
         machine_type: machine_type,
         preemptible: preemptible,

@@ -26,7 +26,6 @@ class User
     end
   end
 
-
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable and :omniauthable,
   devise :database_authenticatable, :registerable,
@@ -64,7 +63,7 @@ class User
   # Used for time-based one-time access token (TOTAT)
   field :totat, type: String
 
-# Time (t) and time interval (ti) for the TOTAT
+  # Time (t) and time interval (ti) for the TOTAT
   field :totat_info, type: Hash
 
   ## Confirmable

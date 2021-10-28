@@ -1,0 +1,21 @@
+<ul class="collections-list">
+  <% feature_announcements.each do |feature_announcement| %>
+    <li id="<%= feature_announcement.slug %>" class="feature-announcement-entry">
+      <div class="row">
+        <div class="col-md-12">
+          <h3>
+            <%= scp_link_to feature_announcement.title, view_feature_announcement_path(feature_announcement.slug) %>
+            <span class="pull-right text-muted">
+                  <small><i><%= feature_announcement.display_date %></i></small>
+                </span>
+          </h3>
+        </div>
+        <div class="col-md-12">
+          <div class="ck-content">
+            <%= feature_announcement.content.truncate_words(150).html_safe %>
+          </div>
+        </div>
+      </div>
+    </li>
+  <% end %>
+</ul>
