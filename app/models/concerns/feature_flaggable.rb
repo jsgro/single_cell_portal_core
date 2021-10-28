@@ -222,7 +222,7 @@ module FeatureFlaggable
   # * *returns*
   #   - (Hash) => Hash of feature flag values, merged in order passed
   def self.merged_value_for(flag_name, *instances)
-    value = FeatureFlag.find_by(name: flag_name).default_value
+    value = FeatureFlag.find_by(name: flag_name)&.default_value
     instances.each do |instance|
       if instance.present?
         instance_option = FeatureFlagOption.find_by(name: flag_name, feature_flaggable: instance)
