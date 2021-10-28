@@ -227,7 +227,8 @@ function RawScatterPlot({
       const layoutUpdate = { width, height }
       Plotly.relayout(graphElementId, layoutUpdate)
     }
-  }, [dimensionProps.showViewOptionsControls, dimensionProps.showRelatedGenesIdeogram])
+  // }, [dimensionProps.showViewOptionsControls, dimensionProps.showRelatedGenesIdeogram])
+  }, [dimensionProps])
 
   // TODO (SCP-3712): Update legend click (as backwards-compatibly as possible)
   // as part of productionizing custom legend code.
