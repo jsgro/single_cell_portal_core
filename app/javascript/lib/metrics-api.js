@@ -222,7 +222,7 @@ export function getLabelTextForElement(element, excludeElementText) {
       }
       child = child.nextSibling
     }
-    labelText = texts.join('')
+    labelText = texts.join('').trim()
   }
 
   return labelText
@@ -233,14 +233,14 @@ export function getLabelTextForElement(element, excludeElementText) {
  */
 function logClickInput(target) {
   let props
+  const label = getLabelTextForElement(target)
   if (target.type === 'radio') {
     const id = target.id
     const inputName = target.name
     const value = target.value
-    props = { id, 'input-name': inputName, value }
-  } else {
-    const label = getLabelTextForElement(target)
 
+    props = { id, 'input-name': inputName, value, label }
+  } else {
     props = { label }
     if (target.dataset.analyticsName) {
       props.text = target.dataset.analyticsName

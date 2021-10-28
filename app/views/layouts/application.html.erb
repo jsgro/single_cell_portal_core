@@ -230,6 +230,10 @@
 <script async type="text/javascript" nonce="<%= content_security_policy_script_nonce %>" id="mini-profiler" src="/mini-profiler-resources/includes.js?v=10da952c710f6abd9f1bd50fe50ed714" data-css-url="/mini-profiler-resources/includes.css?v=10da952c710f6abd9f1bd50fe50ed714" data-version="10da952c710f6abd9f1bd50fe50ed714" data-path="/mini-profiler-resources/" data-ids="" data-horizontal-position="left" data-vertical-position="top" data-trivial="false" data-children="false" data-max-traces="10" data-controls="false" data-authorized="true" data-toggle-shortcut="Alt+P" data-start-hidden="false" data-collapse-results="true" data-hidden-custom-fields="" data-html-container="body"></script>
 <% end %>
 
-<input type="hidden" id="feature-flags" value='<%= FeatureFlaggable.feature_flags_for_instances(@selected_branding_group, current_user).to_json %>'/>
+<input type="hidden" id="user-provider-info" value='<%=
+  {
+    email: current_user&.email,
+    featureFlagsWithDefaults: FeatureFlaggable.feature_flags_for_instances(@selected_branding_group, current_user)
+  }.to_json %>'/>
 </body>
 </html>
