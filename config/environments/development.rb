@@ -63,8 +63,6 @@ Rails.application.configure do
   # config.file_watcher = ActiveSupport::EventedFileUpdateChecker
   config.reload_classes_only_on_change = false
 
-  #
-
   # Uncomment if you wish to allow Action Cable access from any origin.
   # config.action_cable.disable_request_forgery_protection = true
   if ENV['NOT_DOCKERIZED']
