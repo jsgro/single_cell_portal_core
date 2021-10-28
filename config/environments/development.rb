@@ -63,6 +63,8 @@ Rails.application.configure do
   # config.file_watcher = ActiveSupport::EventedFileUpdateChecker
   config.reload_classes_only_on_change = false
 
+  #
+
   # Uncomment if you wish to allow Action Cable access from any origin.
   # config.action_cable.disable_request_forgery_protection = true
   if ENV['NOT_DOCKERIZED']
@@ -134,4 +136,7 @@ Rails.application.configure do
 
   # Terra Data Repo API base url
   config.tdr_api_base_url = 'https://jade.datarepo-dev.broadinstitute.org'
+
+  # Enable profiling and flamegraphs via rack-mini-profiler
+  config.profile_performance = false
 end
