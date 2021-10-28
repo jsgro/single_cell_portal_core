@@ -91,6 +91,18 @@ class FeatureFlagTest < ActiveSupport::TestCase
     assert FeatureFlaggable.flag_override_for_instances(flag_name, true, @user, @branding_group)
   end
 
+  test 'should merge values across instances for feature flag' do
+    flag_name = :merged_value_for_flag
+    FeatureFlag.create(name: flag_name.to_s, default_value: false)
+    assert_not FeatureFlaggable.merged_value_for(flag_name, nil)
+    assert_not FeatureFlaggable.merged_value_for(flag_name, @branding_group)
+    @branding_group.set_flag_option(flag_name, true)
+    assert FeatureFlaggable.merged_value_for(flag_name, @branding_group)
+    assert FeatureFlaggable.merged_value_for(flag_name, @branding_group, @user)
+    @user.set_flag_option(flag_name, false)
+    assert_not FeatureFlaggable.merged_value_for(flag_name, @branding_group, @user)
+  end
+
   test 'should retire feature flag' do
     flag_name = :new_flag
     FeatureFlag.create(name: flag_name.to_s, default_value: false)
