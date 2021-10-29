@@ -62,7 +62,7 @@ module Api
           end
         else
           study_obj = {
-            study_source: 'TDR',
+            study_source: study[:hca_result] ? 'HCA' : 'TDR',
             accession: study[:accession],
             name: study[:name],
             description: study[:description],
