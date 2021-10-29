@@ -55,14 +55,13 @@ class BulkDownloadService
 
     if tdr_files.present?
       hca_client = ApplicationController.hca_azul_client
-      default_catalog = hca_client.default_catalog
       curl_configs << "-H \"Authorization: Bearer #{DataRepoClient.new.access_token['access_token']}\""
       tdr_file_configs = []
       tdr_files.map do |shortname, file_infos|
         # pull out project manifest and process separately
         manifests, files = file_infos.partition { |f| f['file_type'] == 'Project Manifest' }
         manifest_info = manifests.first
-        manifest = hca_client.get_project_manifest_link(default_catalog, manifest_info['url'])
+        manifest = hca_client.project_manifest_link(manifest_info['url'])
         # add location directive to allow following 302 redirect to manifest location
         manifest_config = "--location\nurl=\"#{manifest['Location']}\"\noutput=\"#{shortname}/#{manifest_info['name']}\""
         tdr_file_configs << manifest_config
