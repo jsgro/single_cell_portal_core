@@ -32,7 +32,7 @@ export function getScatterWidthHeight(scatter, dimensionProps) {
 
   const factor = dimensionProps.isTwoColumn ? 2 : 1
   dimensionProps = Object.assign({
-    horizontalPad: (isRefGroup ? 330 : 80),
+    horizontalPad: (isRefGroup ? 330*factor : 80),
     // horizontalPad: 250 * factor,
     hasTitle: true
   }, dimensionProps)
