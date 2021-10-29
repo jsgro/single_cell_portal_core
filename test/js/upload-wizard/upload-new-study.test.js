@@ -51,6 +51,8 @@ describe('creation of study files', () => {
 
 /** Uploads a raw count file and checks the field requirements */
 async function testRawCountsUpload({ createFileSpy, saveButton }) {
+  const formDataRaw = new FormData()
+
   createFileSpy.mockImplementation(() => _cloneDeep(RAW_COUNTS_FILE))
   expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw Count Expression Files')
 
@@ -90,7 +92,8 @@ async function testRawCountsUpload({ createFileSpy, saveButton }) {
     chunkStart: 0,
     fileSize: 26,
     isChunked: false,
-    studyAccession: 'SCP1'
+    studyAccession: 'SCP1',
+    studyFileData: formDataRaw
   }))
   expect(screen.getByTestId('rawCounts-status-badge')).toHaveClass('complete')
   expect(screen.getByTestId('processed-status-badge')).not.toHaveTextContent('1')
@@ -99,6 +102,8 @@ async function testRawCountsUpload({ createFileSpy, saveButton }) {
 
 /** Uploads a processed expression file and checks the field requirements */
 async function testProcessedUpload({ createFileSpy, saveButton }) {
+  const formDataProcessed = new FormData()
+
   createFileSpy.mockImplementation(() => _cloneDeep(PROCESSED_MATRIX_FILE))
 
   fireEvent.click(screen.getByText('Processed Matrices'))
@@ -137,7 +142,8 @@ async function testProcessedUpload({ createFileSpy, saveButton }) {
     chunkStart: 0,
     fileSize: 32,
     isChunked: false,
-    studyAccession: 'SCP1'
+    studyAccession: 'SCP1',
+    studyFileData: formDataProcessed
   }))
   expect(screen.getByTestId('processed-status-badge')).not.toHaveTextContent('2')
   expect(screen.getByTestId('processed-status-badge')).toHaveClass('complete')
@@ -145,6 +151,8 @@ async function testProcessedUpload({ createFileSpy, saveButton }) {
 
 /** Uploads a metadata file and checks the field requirements */
 async function testMetadataUpload({ createFileSpy, saveButton }) {
+  const formDataMetadata = new FormData()
+
   createFileSpy.mockImplementation(() => _cloneDeep(METADATA_FILE))
 
   fireEvent.click(screen.getByText('Metadata'))
@@ -183,7 +191,8 @@ async function testMetadataUpload({ createFileSpy, saveButton }) {
     chunkStart: 0,
     fileSize: 627,
     isChunked: false,
-    studyAccession: 'SCP1'
+    studyAccession: 'SCP1',
+    studyFileData: formDataMetadata
   }))
   expect(screen.getByTestId('metadata-status-badge')).not.toHaveTextContent('3')
   expect(screen.getByTestId('metadata-status-badge')).toHaveClass('complete')
