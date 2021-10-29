@@ -166,67 +166,6 @@ export const METADATA_FILE = {
   }
 }
 
-export const EXPRESSION_FILE = {
-  '_id': {
-    '$oid': '60a2b9fccc7ba082358b544f'
-  },
-  'created_at': '2021-05-17T14:46:20.326-04:00',
-  'data_dir': '51e9c0d33e9b698b118bbb884fab092a1b2d22a9f4133966010560c60835361a',
-  'description': '',
-  'expression_file_info': {
-    '_id': {
-      '$oid': '6155ef87cc7ba01c87884e77'
-    },
-    'biosample_input_type': 'Single nuclei',
-    'is_raw_counts': false,
-    'library_preparation_protocol': '10x 5\' v3',
-    'modality': 'Transcriptomic: targeted',
-    'raw_counts_associations': [],
-    'units': null
-  },
-  'file_type': 'Expression Matrix',
-  'generation': '1621277209804774',
-  'genome_annotation_id': null,
-  'genome_assembly_id': 'undefined',
-  'human_data': false,
-  'human_fastq_url': 'null',
-  'is_spatial': false,
-  'name': 'raw2_chicken_40_cells_4_genes.processed_dense.txt',
-  'options': {'key1': 'value1'},
-  'parse_status': 'parsed',
-  'queued_for_deletion': false,
-  'remote_location': '',
-  'spatial_cluster_associations': [
-    ''
-  ],
-  'status': 'uploaded',
-  'study_file_bundle_id': 'null',
-  'study_id': {
-    '$oid': '60a2b9f4cc7ba082358b5448'
-  },
-  'taxon_id': {
-    '$oid': '604009b9cc7ba03e1b277a40'
-  },
-  'updated_at': '2021-09-30T15:11:12.403-04:00',
-  'upload_content_type': 'text/plain',
-  'upload_file_name': 'raw2_chicken_40_cells_4_genes.processed_dense.txt',
-  'upload_file_size': 2551,
-  'use_metadata_convention': false,
-  'version': 8,
-  'x_axis_label': '',
-  'x_axis_max': 0,
-  'x_axis_min': 0,
-  'y_axis_label': '',
-  'y_axis_max': 0,
-  'y_axis_min': 0,
-  'z_axis_label': '',
-  'z_axis_max': 0,
-  'z_axis_min': 0,
-  'upload': {
-    'url': 'fake/app/data/51e9c0d33e9b698b118bbb884fab092a1b2d22a9f4133966010560c60835361a/60a2b9fccc7ba082358b544f/original/raw2_chicken_40_cells_4_genes.processed_dense.txt'
-  }
-}
-
 export const BASIC_MENU_OPTIONS = {
   'fonts': ['Helvetica Neue', 'Arial'],
   'species': [{
