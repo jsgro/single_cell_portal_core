@@ -136,7 +136,7 @@ class AzulSearchService
         min, max = unit_entries.map { |term| term.dig('term', 'value').to_f }.flatten.minmax
         { converted_name => { min: min, max: max, unit: 'years', is_numeric: true } }
       else
-        { converted_name => { filters: all_terms.map { |t| { name: t['term'] } }, is_numeric: false } }
+        { converted_name => { filters: all_terms.map { |t| t['term'] }, is_numeric: false } }
       end
     end.reduce({}, :merge).with_indifferent_access
   end

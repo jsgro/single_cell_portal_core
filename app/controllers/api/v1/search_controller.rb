@@ -32,7 +32,9 @@ module Api
           parameter do
             key :name, :facets
             key :in, :query
-            key :description, 'User-supplied list facets and filters, formatted as: "facet_id:filter_value+facet_id_2:filter_value_2,filter_value_3"'
+            key :description, 'User-supplied list facets and filters.  Delimit facets from filters with ":", filter ' \
+                              'values with ";" and facet entries with "|"'
+            key :example, 'facet_id:filter_value|facet_id_2:filter_value_2;filter_value_3'
             key :required, false
             key :type, :string
           end
@@ -429,10 +431,10 @@ module Api
       def set_search_facets_and_filters
         @facets = []
         if params[:facets].present?
-          facet_queries = RequestUtils.split_query_param_on_delim(parameter: params[:facets], delimiter: '+')
+          facet_queries = RequestUtils.split_query_param_on_delim(parameter: params[:facets], delimiter: '|')
           facet_queries.each do |query|
             facet_id, raw_filters = RequestUtils.split_query_param_on_delim(parameter: query, delimiter: ':')
-            filter_values = RequestUtils.split_query_param_on_delim(parameter: raw_filters)
+            filter_values = RequestUtils.split_query_param_on_delim(parameter: raw_filters, delimiter: ';')
             facet = SearchFacet.find_by(identifier: facet_id)
             if facet.present?
               matching_filters = self.class.find_matching_filters(facet: facet, filter_values: filter_values)
@@ -644,6 +646,7 @@ module Api
 
       # find matching filters within a given facet based on query parameters
       def self.find_matching_filters(facet:, filter_values:)
+        puts "facet: #{facet}, filter_values: #{filter_values}"
         matching_filters = []
         if facet.is_numeric?
           # if we have more than two values, we likely have a unit parameter and need to convert values
@@ -662,7 +665,8 @@ module Api
             matching_filters = {min: min_value, max: max_value, unit: requested_unit}
           end
         else
-          facet.filters.each do |filter|
+          filters_list = facet.merged_filters.any? ? facet.merged_filters : facet.filters
+          filters_list.each do |filter|
             if filter_values.include?(filter[:id])
               matching_filters << filter
             end
