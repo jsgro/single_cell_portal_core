@@ -25,6 +25,14 @@ class StudyFile
   STUDY_FILE_TYPES = ['Cluster', 'Coordinate Labels' ,'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File',
                       '10X Barcodes File', 'Gene List', 'Metadata', 'Fastq', 'BAM', 'BAM Index', 'Documentation',
                       'Other', 'Analysis Output', 'Ideogram Annotations', 'Image']
+  CUSTOM_FILE_TYPE_NAMES = {
+    'MM Coordinate Matrix' => 'Sparse matrix (.mtx)',
+    'Expression Matrix' => 'Dense matrix',
+    '10X Genes File' => '10X Features File'
+  }
+  STUDY_FILE_TYPE_NAME_HASH = STUDY_FILE_TYPES.reduce({}) { |r, t| r[t] = t; r }.merge(CUSTOM_FILE_TYPE_NAMES)
+
+
   PARSEABLE_TYPES = ['Cluster', 'Coordinate Labels', 'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File',
                      '10X Barcodes File', 'Gene List', 'Metadata', 'Analysis Output']
   DISALLOWED_SYNC_TYPES = ['Fastq']

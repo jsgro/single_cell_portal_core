@@ -188,7 +188,7 @@ export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
   } else {
     // don't set null properties -- those are ones that haven't changed
     // and having them be sent as 'null' or '' can throw off validations
-    if (obj[propertyName] != null) {
+    if (obj[propertyName] != null && typeof obj[propertyName] != 'undefined') {
       formData.append(propString, obj[propertyName])
     }
   }
