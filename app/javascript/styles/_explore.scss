@@ -166,10 +166,12 @@
 
 .scatter-graph {
   margin-left: 40px;
+  display: flex;
 }
 
 .scatter-legend {
   float: right;
+  overflow: scroll;
   width: 260px;
   margin-top: 10px;
   margin-right: 10px;

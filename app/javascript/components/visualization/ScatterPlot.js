@@ -26,6 +26,24 @@ export const SCATTER_COLOR_OPTIONS = [
 export const defaultScatterColor = 'Reds'
 window.Plotly = Plotly
 
+/** Get width and height for scatter plot dimensions */
+export function getScatterWidthHeight(scatter, dimensionProps) {
+  const isRefGroup = getIsRefGroup(scatter)
+
+  const factor = dimensionProps.isTwoColumn ? 2 : 1
+  dimensionProps = Object.assign({
+    horizontalPad: (isRefGroup ? 330 : 80),
+    // horizontalPad: 250 * factor,
+    hasTitle: true
+  }, dimensionProps)
+
+  console.log('dimensionProps', dimensionProps)
+  const dim = getPlotDimensions(dimensionProps)
+  console.log('dim', dim)
+  return dim
+}
+
+
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
@@ -106,11 +124,13 @@ function RawScatterPlot({
 
   /** Process scatter plot data fetched from server */
   function processScatterPlot(clusterResponse=null) {
-    const [scatter, perfTimes] =
+    let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
-    const dimensionsData = getScatterPlotDimensions(scatter, dimensionProps)
-    const layout = getPlotlyLayout(dimensionsData, scatter)
+    const widthHeight = getScatterWidthHeight(scatter, dimensionProps)
+    scatter = Object.assign(scatter, widthHeight)
+
+    const layout = getPlotlyLayout(scatter)
 
     const traceArgs = {
       axes: scatter.axes,
@@ -139,9 +159,7 @@ function RawScatterPlot({
 
     if (perfTimes) {
       perfTimes.plot = performance.now() - startTime
-      logScatterPlot({
-        scatter, genes, width: dimensionsData.width, height: dimensionsData.height
-      }, perfTimes)
+      logScatterPlot({ scatter, genes }, perfTimes)
     }
 
     if (isCorrelatedScatter) {
@@ -223,7 +241,7 @@ function RawScatterPlot({
   useUpdateEffect(() => {
     // Don't update if the graph hasn't loaded yet
     if (scatterData && !isLoading) {
-      const { width, height } = getScatterPlotDimensions(scatterData, dimensionProps)
+      const { width, height } = getScatterWidthHeight(scatterData, dimensionProps)
       const layoutUpdate = { width, height }
       Plotly.relayout(graphElementId, layoutUpdate)
     }
@@ -266,6 +284,7 @@ function RawScatterPlot({
         { scatterData && countsByLabel &&
         <ScatterPlotLegend
           name={scatterData.annotParams.name}
+          height={scatterData.height}
           countsByLabel={countsByLabel}
           correlations={labelCorrelations}
           shownTraces={shownTraces}
@@ -290,31 +309,20 @@ function RawScatterPlot({
 const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
-/** Return whether scatter plot should use custom legend */
-function getIsDefaultGroupPlot(scatter) {
+/**
+ * Whether scatter plot should use custom legend
+ *
+ * Such legends are used for reference group plots, which are:
+ *   A) commonly shown in the default view, and
+ *   B) also shown at right in single-gene view
+ */
+function getIsRefGroup(scatter) {
   const annotType = scatter.annotParams.type
   const genes = scatter.genes
   const isCorrelatedScatter = scatter.isCorrelatedScatter
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
 
   return annotType === 'group' && !isGeneExpressionForColor
-}
-
-/** Get width and height for scatter plot dimensions */
-function getScatterPlotDimensions(scatter, dimensionProps) {
-  const isDefaultGroupPlot = getIsDefaultGroupPlot(scatter)
-
-  const factor = dimensionProps.isTwoColumn ? 2 : 1
-  dimensionProps = Object.assign({
-    horizontalPad: (isDefaultGroupPlot ? 330 : 80),
-    // horizontalPad: 250 * factor,
-    hasTitle: true
-  }, dimensionProps)
-
-  console.log('dimensionProps', dimensionProps)
-  const dim = getPlotDimensions(dimensionProps)
-  console.log('dim', dim)
-  return dim
 }
 
 /** get the array of plotly traces for plotting */
@@ -353,9 +361,9 @@ function getPlotlyTraces({
 
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
 
-  const isDefaultGroupPlot = getIsDefaultGroupPlot(scatter)
+  const isRefGroup = getIsRefGroup(scatter)
 
-  if (isDefaultGroupPlot) {
+  if (isRefGroup) {
     // Use Plotly's groupby and filter transformation to make the traces
     // note these transforms are deprecated in the latest Plotly versions
     const [legendStyles, labelCounts] = getStyles(data, pointSize)
@@ -436,7 +444,9 @@ function getScatterColorToApply(dataScatterColor, scatterColor) {
 }
 
 /** Gets Plotly layout object for scatter plot */
-function getPlotlyLayout({ width, height }={}, {
+function getPlotlyLayout({
+  width,
+  height,
   axes,
   userSpecifiedRanges,
   hasCoordinateLabels,
