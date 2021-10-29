@@ -141,7 +141,6 @@ export function getScatterParams(exploreInfo, exploreParams, isGene, isMultiGene
   return { scatterParams: scatterParams.slice(0, MAX_PLOTS), isTwoColumn, isMultiRow, firstRowSingleCol, isSpatial }
 }
 
-
 /** returns a map of key => plotlycontext.  If a scatterParams corresponds to an
   * already-rendered plot, it will be mapped to that existing context.  Otherwise,
   * it will be assigned an unused context.

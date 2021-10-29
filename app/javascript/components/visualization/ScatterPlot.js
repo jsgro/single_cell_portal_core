@@ -304,12 +304,17 @@ function getIsDefaultGroupPlot(scatter) {
 function getScatterPlotDimensions(scatter, dimensionProps) {
   const isDefaultGroupPlot = getIsDefaultGroupPlot(scatter)
 
+  const factor = dimensionProps.isTwoColumn ? 2 : 1
   dimensionProps = Object.assign({
     horizontalPad: (isDefaultGroupPlot ? 330 : 80),
+    // horizontalPad: 250 * factor,
     hasTitle: true
   }, dimensionProps)
 
-  return getPlotDimensions(dimensionProps)
+  console.log('dimensionProps', dimensionProps)
+  const dim = getPlotDimensions(dimensionProps)
+  console.log('dim', dim)
+  return dim
 }
 
 /** get the array of plotly traces for plotting */
@@ -567,7 +572,6 @@ export function get3DScatterProps({
 function getDragMode(isCellSelecting) {
   return isCellSelecting ? 'lasso' : 'lasso, select'
 }
-
 
 let currentClickCall = null
 
