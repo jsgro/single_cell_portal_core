@@ -79,4 +79,7 @@ Rails.application.configure do
 
   # Terra Data Repo API base url
   config.tdr_api_base_url = 'https://jade.datarepo-dev.broadinstitute.org'
+
+  # Enable profiling and flamegraphs via rack-mini-profiler
+  config.profile_performance = false
 end
