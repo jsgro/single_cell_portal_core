@@ -13,18 +13,11 @@ const FORMAT_FOR_API_TEST_FILE = {
     '_id': {
       '$oid': '6155ef87cc7ba01c87884e77'
     },
-    'biosample_input_type': 'Single nuclei',
-    'is_raw_counts': false,
-    'library_preparation_protocol': '10x 5\' v3',
-    'modality': 'Transcriptomic: targeted',
     'raw_counts_associations': ['fakeFileId'],
-    'units': null
   },
   'file_type': 'Expression Matrix',
   'name': 'raw2_chicken_40_cells_4_genes.processed_dense.txt',
   'options': { 'key1': 'value1' },
-  'status': 'uploaded',
-  'study_file_bundle_id': 'null',
   'study_id': {
     '$oid': '60a2b9f4cc7ba082358b5448'
   },
