@@ -54,7 +54,7 @@ export default function MTXBundledFilesForm({
   }, [parentFile._id])
 
   if (!barcodesFile || !genesFile) {
-    return <div>After you&apos;ve selected an mtx file, you&apos;ll be prompted for genes and barcodes files</div>
+    return <div>After you&apos;ve selected an mtx file, you&apos;ll be prompted for features and barcodes files</div>
   }
   const barcodesValidationMessages = validateFile({
     file: barcodesFile, allFiles, allowedFileExts: FileTypeExtensions.plainText
@@ -67,7 +67,7 @@ export default function MTXBundledFilesForm({
     <div className="row">
       <div className="col-md-12 ">
         <div className="sub-form">
-          <h5>10x Genes File</h5>
+          <h5>10x Features File</h5>
           <div className="upload-form-header flexbox-align-center expanded">
             <FileUploadControl
               file={genesFile}
