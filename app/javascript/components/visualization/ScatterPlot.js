@@ -253,19 +253,20 @@ function getPlotlyTraces({
   const trace = {
     type: is3D ? 'scatter3d' : 'scattergl',
     mode: 'markers',
-    x: data.x,
-    y: data.y,
-    annotations: data.annotations,
-    cells: data.cells,
     opacity: pointAlpha ? pointAlpha : 1
-  }
-  if (is3D) {
-    trace.z = data.z
   }
 
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
+
   if (annotType === 'group' && !isGeneExpressionForColor) {
+    trace.x = data.x
+    trace.y = data.y
+    if (is3D) {
+      trace.z = data.z
+    }
+    trace.annotations = data.annotations,
+    trace.cells = data.cells
     // use plotly's groupby transformation to make the traces
     const legendEntries = getLegendEntries(data, pointSize, labelCorrelations)
     trace.transforms = [{
@@ -274,11 +275,36 @@ function getPlotlyTraces({
       styles: legendEntries
     }]
   } else {
+    // for non-clustereed plots, we pass in a single trace with all the points
+    let colors
+    if (isGeneExpressionForColor) {
+      // sort the points by order of expression
+      const expressionsWithIndices = data.expression.map((val, i) => [val, i])
+      expressionsWithIndices.sort((a, b) => a[0] - b[0])
+      // now that we know the indices, reorder the other data arrays
+      trace.x = expressionsWithIndices.map(ei => data.x[ei[1]])
+      trace.y = expressionsWithIndices.map(ei => data.y[ei[1]])
+      if (is3D) {
+        trace.z = expressionsWithIndices.map(ei => data.z[ei[1]])
+      }
+      trace.annotations = expressionsWithIndices.map(ei => data.annotations[ei[1]])
+      trace.cells = expressionsWithIndices.map(ei => data.cells[ei[1]])
+      colors = expressionsWithIndices.map(ei => ei[0])
+    } else {
+      trace.x = data.x
+      trace.y = data.y
+      if (is3D) {
+        trace.z = data.z
+      }
+      trace.annotations = data.annotations,
+      trace.cells = data.cells
+      colors = data.annotations
+    }
+
     trace.marker = {
       line: { color: 'rgb(40,40,40)', width: 0 },
       size: pointSize
     }
-    const colors = isGeneExpressionForColor ? data.expression : data.annotations
     const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
     if (!isAnnotatedScatter) {
       Object.assign(trace.marker, {
