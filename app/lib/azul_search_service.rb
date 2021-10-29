@@ -117,4 +117,27 @@ class AzulSearchService
     end
     file_info.with_indifferent_access
   end
+
+
+  # retrieve all possible facet/filter values present in Azul
+  # this is done by executing an empty search and requestin only 1 project, then retrieving the
+  # "termFacets" information from the response
+  def self.get_all_facet_filters
+    client = ApplicationController.hca_azul_client
+    raw_facets = client.projects(query: {}, size: 1)['termFacets']
+    mappable_facets = raw_facets.select { |facet, _| FacetNameConverter.schema_has_column?(:azul, :alexandria, facet) }
+    mappable_facets.map do |facet_name, terms_hash|
+      converted_name = FacetNameConverter.convert_schema_column(:azul, :alexandria, facet_name)
+      all_terms = terms_hash['terms'].select { |t| t['term'].present? }
+      if converted_name == 'organism_age'
+        # special handling for age facet, get min/max info, but only for "years", as we normalize to that
+        unit = 'year'
+        unit_entries = all_terms.select { |term| term.dig('term', 'unit') == unit }
+        min, max = unit_entries.map { |term| term.dig('term', 'value').to_f }.flatten.minmax
+        { converted_name => { min: min, max: max, unit: 'years', is_numeric: true } }
+      else
+        { converted_name => { filters: all_terms.map { |t| { name: t['term'] } }, is_numeric: false } }
+      end
+    end.reduce({}, :merge).with_indifferent_access
+  end
 end
