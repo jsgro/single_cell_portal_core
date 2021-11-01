@@ -9,6 +9,8 @@ const colorBrewerList = [
   '#bc80bd', '#ccebc5', '#ffed6f'
 ]
 
+export const ideogramHeight = 140
+
 /**
  * Used in both categorical scatter plots and violin plots, to ensure
  * they use consistent friendly colors for annotations, etc.
@@ -92,7 +94,7 @@ export function getPlotDimensions({
   verticalPad=250,
   horizontalPad=80,
   hasTitle=false,
-  ideogramHeight=0,
+  showRelatedGenesIdeogram,
   showViewOptionsControls=true
 }) {
   // Get width, and account for expanding "View Options" after page load
@@ -107,7 +109,9 @@ export function getPlotDimensions({
   // Height of screen viewport, minus fixed-height elements above gallery
   let galleryHeight = $(window).height() - verticalPad
 
-  galleryHeight -= ideogramHeight
+  if (showRelatedGenesIdeogram) {
+    galleryHeight -= ideogramHeight
+  }
 
   if (hasTitle) {
     galleryHeight -= 20

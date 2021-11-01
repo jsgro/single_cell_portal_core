@@ -42,8 +42,6 @@ const tabList = [
   { key: 'infercnv-genome', label: 'Genome (inferCNV)' }
 ]
 
-const ideogramHeight = 140
-
 /**
  * Renders the gene search box and the tab selection
  * Responsible for determining which tabs are available for a given view of the study
@@ -225,7 +223,6 @@ export default function ExploreDisplayTabs({
                 gene={searchedGene}
                 taxon={currentTaxon}
                 target={`.${plotContainerClass}`}
-                height={ideogramHeight}
                 genesInScope={exploreInfo.uniqueGenes}
                 searchGenes={searchGenes}
                 speciesList={exploreInfo.taxonNames}
@@ -247,7 +244,7 @@ export default function ExploreDisplayTabs({
                   dimensionProps={{
                     numColumns: 1,
                     numRows: exploreParams?.spatialGroups.length ? 2 : 1,
-                    ideogramHeight: (showRelatedGenesIdeogram ? ideogramHeight : 0),
+                    showRelatedGenesIdeogram,
                     showViewOptionsControls
                   }}
                   isCellSelecting={isCellSelecting}
@@ -284,6 +281,7 @@ export default function ExploreDisplayTabs({
                     isCellSelecting,
                     isCorrelatedScatter,
                     plotPointsSelected,
+                    showRelatedGenesIdeogram,
                     showViewOptionsControls,
                     dataCache
                   }}/>
@@ -294,7 +292,9 @@ export default function ExploreDisplayTabs({
                 <StudyViolinPlot
                   studyAccession={studyAccession}
                   updateDistributionPlot={distributionPlot => updateExploreParams({ distributionPlot }, false)}
-                  dimensions={getPlotDimensions({ showViewOptionsControls })}
+                  dimensions={getPlotDimensions({
+                    showRelatedGenesIdeogram, showViewOptionsControls
+                  })}
                   {...exploreParams}/>
               </div>
             }
