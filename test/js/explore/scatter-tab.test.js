@@ -17,7 +17,7 @@ const FETCH_CLUSTER_RESPONSE = {
     cells: ['A', 'B'],
     expression: [1, 2],
     x: [11, 14],
-    y: [0, 1],
+    y: [0, 1]
   },
   pointSize: 3,
   userSpecifiedRanges: null,
@@ -67,7 +67,7 @@ const MOCK_EXPLORE_RESPONSE = {
     subsample_thresholds: {}
   },
   bamBundleList: [],
-  cluster: {numPoints: 40, isSubsampled: false},
+  cluster: { numPoints: 40, isSubsampled: false },
   clusterGroupNames: ['clusterA'],
   clusterPointAlpha: 1,
   colorProfile: null,

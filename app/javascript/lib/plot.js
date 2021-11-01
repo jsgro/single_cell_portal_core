@@ -88,7 +88,6 @@ export function arrayMax(arr) {
   return max
 }
 
-
 /** Get width and height available for plot components, since they may be first rendered hidden */
 export function getPlotDimensions({
   isTwoColumn=false,

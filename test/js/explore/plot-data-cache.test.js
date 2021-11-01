@@ -5,43 +5,43 @@ import { createCache } from 'components/explore/plot-data-cache'
 
 // models a real response from api/v1/visualization/clusters
 const FETCH_CLUSTER_RESPONSE = {
-    data: {
-        annotations: ['foo', 'bar'],
-        cells: ['A', 'B'],
-        x: [11, 14],
-        y: [0, 1],
+  data: {
+    annotations: ['foo', 'bar'],
+    cells: ['A', 'B'],
+    x: [11, 14],
+    y: [0, 1]
+  },
+  pointSize: 3,
+  userSpecifiedRanges: null,
+  showClusterPointBorders: false,
+  description: null,
+  is3D: false,
+  isSubsampled: false,
+  isAnnotatedScatter: false,
+  numPoints: 130,
+  axes: {
+    titles: {
+      x: 'X',
+      y: 'Y',
+      z: 'Z',
+      magnitude: 'Expression'
     },
-    pointSize: 3,
-    userSpecifiedRanges: null,
-    showClusterPointBorders: false,
-    description: null,
-    is3D: false,
-    isSubsampled: false,
-    isAnnotatedScatter: false,
-    numPoints: 130,
-    axes: {
-        titles: {
-            x: 'X',
-            y: 'Y',
-            z: 'Z',
-            magnitude: 'Expression'
-        },
-        aspects: null
-    },
-    hasCoordinateLabels: false,
-    coordinateLabels: [],
-    pointAlpha: 1,
-    cluster: 'cluster.tsv',
-    genes: [],
-    annotParams: {
-        name: 'buzzwords',
-        type: 'group',
-        scope: 'study',
-        values: ['foo', 'bar'],
-        identifier: 'biosample_id--group--study'
-    },
-    subsample: 'all',
-    consensus: null
+    aspects: null
+  },
+  hasCoordinateLabels: false,
+  coordinateLabels: [],
+  pointAlpha: 1,
+  cluster: 'cluster.tsv',
+  genes: [],
+  annotParams: {
+    name: 'buzzwords',
+    type: 'group',
+    scope: 'study',
+    values: ['foo', 'bar'],
+    identifier: 'biosample_id--group--study'
+  },
+  subsample: 'all',
+  consensus: null
 }
 
 const CACHE_PERF_PARAMS = {
@@ -53,19 +53,19 @@ const CACHE_PERF_PARAMS = {
 
 const ANNOTATION_ONLY_RESPONSE = _cloneDeep(FETCH_CLUSTER_RESPONSE)
 ANNOTATION_ONLY_RESPONSE.annotParams = {
-    name: 'species',
-    type: 'group',
-    scope: 'study',
-    values: ['dog', 'cat'],
-    identifier: 'species--group--study'
-  }
+  name: 'species',
+  type: 'group',
+  scope: 'study',
+  values: ['dog', 'cat'],
+  identifier: 'species--group--study'
+}
 ANNOTATION_ONLY_RESPONSE.data = {
   'annotations': ['cat', 'dog']
 }
 
 const EXPRESSION_ONLY_RESPONSE = _cloneDeep(ANNOTATION_ONLY_RESPONSE)
 EXPRESSION_ONLY_RESPONSE.data = {
-  'expression': [0.25, 2.3],
+  'expression': [0.25, 2.3]
 }
 EXPRESSION_ONLY_RESPONSE.genes = ['Apoe']
 
@@ -74,8 +74,8 @@ CLUSTER_AND_EXPRESSION_RESPONSE.data.expression = [0.25, 2.3]
 CLUSTER_AND_EXPRESSION_RESPONSE.genes = ['Apoe']
 
 afterEach(() => {
-  jest.clearAllMocks();
-});
+  jest.clearAllMocks()
+})
 
 describe('Plot data cache', () => {
   it('caches a single cluster call for use when annotation and gene are changed', async () => {
@@ -117,7 +117,7 @@ describe('Plot data cache', () => {
         }
       })
       const expectedNewAnnotParams = {
-        annotation: {name: 'species', scope: 'study'},
+        annotation: { name: 'species', scope: 'study' },
         cluster: '_default',
         consensus: undefined,
         fields: ['annotation'],
@@ -139,7 +139,7 @@ describe('Plot data cache', () => {
       expect(response[0].annotParams.name).toEqual('species')
 
 
-      //third, check that the cache works if a gene is then searched
+      // third, check that the cache works if a gene is then searched
       apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(EXPRESSION_ONLY_RESPONSE), 230]))
       const newGeneFetch = cache.fetchCluster({
         studyAccession: 'SCP1',
@@ -151,7 +151,7 @@ describe('Plot data cache', () => {
         genes: ['Apoe']
       })
       const expectedNewGeneParams = {
-        annotation: {name: 'species', scope: 'study'},
+        annotation: { name: 'species', scope: 'study' },
         cluster: '_default',
         consensus: undefined,
         fields: ['expression'],
@@ -198,7 +198,7 @@ describe('Plot data cache', () => {
       }
     })
 
-     // it should still only fetch the annotation data, even though the cluster data has not yet arrived
+    // it should still only fetch the annotation data, even though the cluster data has not yet arrived
     const expectedNewAnnotParams = {
       annotation: { name: 'species', scope: 'study' },
       cluster: '_default',
@@ -236,10 +236,10 @@ describe('cache handles simultaneous gene/cluster plots', () => {
 
     // do a request for the full gene plot
     const expressionFetchResult = cache.fetchCluster({
-      studyAccession: 'SCP1',
-      cluster: '_default',
+      'studyAccession': 'SCP1',
+      'cluster': '_default',
       'genes': ['Apoe'],
-      annotation: {}
+      'annotation': {}
     })
     const expectedApiParams = {
       annotation: {},
@@ -259,7 +259,7 @@ describe('cache handles simultaneous gene/cluster plots', () => {
       cluster: '_default',
       annotation: {}
     })
-    //make sure no new request is sent to the server
+    // make sure no new request is sent to the server
     expect(apiFetch).toHaveBeenCalledTimes(1)
 
     return expressionFetchResult.then(expressionResponse => {
@@ -267,7 +267,7 @@ describe('cache handles simultaneous gene/cluster plots', () => {
 
       return clusterFetchResult
     }).then(clusterResponse => {
-      const expectedResponse = {...FETCH_CLUSTER_RESPONSE, allDataFromCache: true}
+      const expectedResponse = { ...FETCH_CLUSTER_RESPONSE, allDataFromCache: true }
       expect(clusterResponse[0].data).toEqual(FETCH_CLUSTER_RESPONSE.data)
       expect(clusterResponse[0].annotParams).toEqual(FETCH_CLUSTER_RESPONSE.annotParams)
 
@@ -303,14 +303,14 @@ describe('cache handles simultaneous gene/cluster plots', () => {
       expect(apiFetch).toHaveBeenLastCalledWith(expectedApiParams)
 
       const clusterFetchResult2 = cache.fetchCluster({
-        studyAccession: 'SCP1',
-        cluster: 'cluster.tsv',
+        'studyAccession': 'SCP1',
+        'cluster': 'cluster.tsv',
         'consensus': null,
-        annotation: {
+        'annotation': {
           name: 'species',
           scope: 'study'
         },
-        subsample: 'all',
+        'subsample': 'all'
       })
       // changing annotation should only result in a single call, even with two plots displayed,
       // so the total number of calls should be 2
