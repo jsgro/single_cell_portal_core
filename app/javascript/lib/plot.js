@@ -11,6 +11,8 @@ const colorBrewerList = [
 
 export const ideogramHeight = 140
 
+export const scatterLabelLegendWidth = 260
+
 /**
  * Used in both categorical scatter plots and violin plots, to ensure
  * they use consistent friendly colors for annotations, etc.
@@ -93,8 +95,9 @@ export function getPlotDimensions({
   isMultiRow=false,
   verticalPad=250,
   horizontalPad=80,
+  hasLabelLegend=false,
   hasTitle=false,
-  showRelatedGenesIdeogram,
+  showRelatedGenesIdeogram=false,
   showViewOptionsControls=true
 }) {
   // Get width, and account for expanding "View Options" after page load
@@ -102,7 +105,10 @@ export function getPlotDimensions({
   if (showViewOptionsControls) {
     baseWidth = Math.round(baseWidth * 10 / 12)
   }
-
+  if (hasLabelLegend) {
+    const factor = isTwoColumn ? 2 : 1
+    horizontalPad += scatterLabelLegendWidth * factor
+  }
   let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
 
   // Get height

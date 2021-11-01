@@ -14,7 +14,6 @@ import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
 import { getPlotDimensions } from 'lib/plot'
-
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
@@ -30,10 +29,8 @@ window.Plotly = Plotly
 export function getScatterWidthHeight(scatter, dimensionProps) {
   const isRefGroup = getIsRefGroup(scatter)
 
-  const factor = dimensionProps.isTwoColumn ? 2 : 1
   dimensionProps = Object.assign({
-    horizontalPad: (isRefGroup ? 180 * factor : 80),
-    // horizontalPad: 250 * factor,
+    hasLabelLegend: isRefGroup,
     hasTitle: true
   }, dimensionProps)
 
