@@ -278,7 +278,7 @@ export function getPlotlyTraces({
       styles: legendEntries
     }]
   } else {
-    // for non-clustereed plots, we pass in a single trace with all the points
+    // for non-clustered plots, we pass in a single trace with all the points
     let colors
     if (isGeneExpressionForColor) {
       // sort the points by order of expression
