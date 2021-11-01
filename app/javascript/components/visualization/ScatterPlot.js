@@ -234,7 +234,7 @@ function getLegendEntries(data, pointSize, labelCorrelations) {
 }
 
 /** get the array of plotly traces for plotting */
-function getPlotlyTraces({
+export function getPlotlyTraces({
   axes,
   data,
   annotType,
@@ -260,6 +260,9 @@ function getPlotlyTraces({
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
 
   if (annotType === 'group' && !isGeneExpressionForColor) {
+    // default cluster scatter plot
+    // this currently shares some code with the 'else' block below, but the code
+    // below will need to be refactored when we cease using plotly transforms.
     trace.x = data.x
     trace.y = data.y
     if (is3D) {
