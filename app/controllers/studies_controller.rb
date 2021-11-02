@@ -1221,15 +1221,15 @@ class StudiesController < ApplicationController
 
   # check on FireCloud API status and respond accordingly
   def check_firecloud_status
-    unless ApplicationController.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE)
-      alert = "Study workspaces are temporarily unavailable, so we cannot complete your request.  Please try again later.  #{SCP_SUPPORT_EMAIL}"
-      respond_to do |format|
-        format.js {render js: "$('.modal').modal('hide'); alert('#{alert}')" and return}
-        format.html {redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]),
-                                 alert: alert and return}
-        format.json {head 503}
-      end
-    end
+    # unless ApplicationController.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE)
+    #   alert = "Study workspaces are temporarily unavailable, so we cannot complete your request.  Please try again later.  #{SCP_SUPPORT_EMAIL}"
+    #   respond_to do |format|
+    #     format.js {render js: "$('.modal').modal('hide'); alert('#{alert}')" and return}
+    #     format.html {redirect_to merge_default_redirect_params(studies_path, scpbr: params[:scpbr]),
+    #                              alert: alert and return}
+    #     format.json {head 503}
+    #   end
+    # end
   end
 
   # check if a study is 'detached' and handle accordingly

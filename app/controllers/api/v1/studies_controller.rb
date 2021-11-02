@@ -3,6 +3,11 @@ module Api
     class StudiesController < ApiBaseController
       include Concerns::FireCloudStatus
 
+      def firecloud_independent_methods
+        # add file_info is essentially a more extensive 'show' method
+        [:index, :show, :file_info]
+      end
+
       before_action :authenticate_api_user!
       before_action :set_study, except: [:index, :create]
       before_action :check_study_permission, except: [:index, :create, :generate_manifest]
@@ -190,6 +195,7 @@ module Api
 
       # PATCH /single_cell/api/v1/studies/:id
       def update
+        byebug
         if @study.update(study_params)
           if @study.previous_changes.keys.include?('name')
             # if user renames a study, invalidate all visualization caches and repopulate default cache

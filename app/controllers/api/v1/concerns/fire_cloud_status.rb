@@ -5,7 +5,7 @@ module Api
         extend ActiveSupport::Concern
 
         included do
-          before_action :check_firecloud_status!, unless: proc {action_name == :index || action_name == :show}
+          before_action :check_firecloud_status!, unless: proc {firecloud_independent_methods.include?(action_name.to_sym)}
         end
 
         # check on FireCloud API status and respond accordingly
@@ -14,6 +14,11 @@ module Api
             alert = 'Study workspaces are temporarily unavailable, so we cannot complete your request.  Please try again later.'
             render json: {error: alert}, status: 503
           end
+        end
+
+        # methods to exclude from the required status check
+        def firecloud_independent_methods
+          [:index, :show]
         end
       end
     end

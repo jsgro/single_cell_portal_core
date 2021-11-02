@@ -166,6 +166,48 @@ export const METADATA_FILE = {
   }
 }
 
+export const CLUSTER_FILE = {
+  created_at: '2021-11-02T13:51:11.522-04:00',
+  data_dir: '621131cf45939570efc4210174e6ac87e73472f6ed6b6bef2f65c292ab5a1a0a',
+  description: '',
+  file_type: 'Cluster',
+  generation: '1635875474894538',
+  genome_annotation_id: null,
+  genome_assembly_id: null,
+  human_data: false,
+  human_fastq_url: null,
+  is_spatial: false,
+  name: 'cluster.txt',
+  options: {},
+  parse_status: 'parsed',
+  queued_for_deletion: false,
+  remote_location: '',
+  spatial_cluster_associations: [''],
+  status: 'uploaded',
+  study_file_bundle_id: null,
+  study_id: { $oid: '60a2b9f4cc7ba082358b5448' },
+  taxon_id: null,
+  updated_at: '2021-11-02T13:53:25.520-04:00',
+  upload: {
+    url: 'fake/app/original/cluster1.txt'
+  },
+  upload_content_type: 'text/plain',
+  upload_file_name: 'cluster1.txt',
+  upload_file_size: 348,
+  use_metadata_convention: false,
+  version: 1,
+  x_axis_label: '',
+  x_axis_max: null,
+  x_axis_min: null,
+  y_axis_label: '',
+  y_axis_max: null,
+  y_axis_min: null,
+  z_axis_label: '',
+  z_axis_max: null,
+  z_axis_min: null,
+  _id: { '$oid': '61817a7bcc7ba07a266dcc56' }
+}
+
 export const BASIC_MENU_OPTIONS = {
   'fonts': ['Helvetica Neue', 'Arial'],
   'species': [{

@@ -111,7 +111,7 @@ export default function FileUploadControl({
       bucketName={bucketName}
     />
     &nbsp;
-    <button className={buttonClass} id={`fileButton-${file._id}`}>
+    <button className={buttonClass} id={`fileButton-${file._id}`} data-testid="file-input-btn">
       { buttonText }
       <input className="file-upload-input" data-testid="file-input"
         type="file"

@@ -317,14 +317,14 @@ async function parseFile(file, fileType) {
   }
 
   if (!file.name.endsWith('.gz')) {
-    if (lines.length < 2) {
-      return { table, delimiter, issues: [['error', 'cap:format:no-newlines', 'File does not contain newlines to separate rows']] }
-    }
-    // if there are no encoding issues, and this isn't a gzipped file, validate content
-    delimiter = sniffDelimiter(lines, mimeType)
-    table = lines.map(line => line.split(delimiter))
-
     if (['Cluster', 'Metadata'].includes(fileType)) {
+      if (lines.length < 2) {
+        return { table, delimiter, issues: [['error', 'cap:format:no-newlines', 'File does not contain newlines to separate rows']] }
+      }
+      // if there are no encoding issues, and this isn't a gzipped file, validate content
+      delimiter = sniffDelimiter(lines, mimeType)
+      table = lines.map(line => line.split(delimiter))
+
       issues = await validateCapFormat(table, fileType)
     }
   }
