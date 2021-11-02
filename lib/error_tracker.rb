@@ -23,7 +23,7 @@ module ErrorTracker
         context[object.class.name.underscore] = object.attributes.to_h
       end
     end
-    context
+    context.with_indifferent_access
   end
 
   def self.extract_user_identifier(user)
