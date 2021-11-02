@@ -8,7 +8,7 @@ import Select from 'lib/InstrumentedSelect'
 
 
 /** takes the server response and returns subsample options suitable for react-select */
-function getSubsampleOptions(annotationList, clusterName) {
+function getSubsampleOptions(annotationList, clusterName, isPerfTest=true) {
   let subsampleOptions = []
   if (clusterName && annotationList.subsample_thresholds) {
     let clusterSubsamples = annotationList.subsample_thresholds[clusterName]
@@ -21,6 +21,9 @@ function getSubsampleOptions(annotationList, clusterName) {
     }))
   }
   subsampleOptions.push({ label: 'All Cells', value: 'all' })
+  if (isPerfTest) {
+    subsampleOptions = [100, 1000, 10000, 100000, 500000, 1000000, 2000000].map(n => ({ label: `${n}`, value: `${n}` }))
+  }
   return subsampleOptions
 }
 

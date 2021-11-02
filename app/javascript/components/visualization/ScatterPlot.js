@@ -281,18 +281,74 @@ export function getPlotlyTraces({
     // for non-clustered plots, we pass in a single trace with all the points
     let colors
     if (isGeneExpressionForColor) {
+      const t = performance.now()
+      trace.x = new Array(data.expression.length)
+      trace.y = new Array(data.expression.length)
+      if (is3D) {
+        trace.z = new Array(data.expression.length)
+      }
+      trace.annotations = new Array(data.expression.length)
+      trace.cells = new Array(data.expression.length)
+      colors = new Array(data.expression.length)
+      let numPoints = 0
+      for (let i = 0; i < data.expression.length; i++) {
+        if (data.expression[i] === 0) {
+          trace.x[numPoints] = data.x[i]
+          trace.y[numPoints] = data.y[i]
+          if (is3D) {
+            trace.z[numPoints] = data.z[i]
+          }
+          trace.cells[numPoints] = data.cells[i]
+          trace.annotations[numPoints] = data.annotations[i]
+          colors[numPoints] = 0
+          numPoints++
+        }
+      }
+      for (let i = 0; i < data.expression.length; i++) {
+        if (data.expression[i] != 0) {
+          trace.x[numPoints] = data.x[i]
+          trace.y[numPoints] = data.y[i]
+          if (is3D) {
+            trace.z[numPoints] = data.z[i]
+          }
+          trace.cells[numPoints] = data.cells[i]
+          trace.annotations[numPoints] = data.annotations[i]
+          colors[numPoints] = data.expression[i]
+          numPoints++
+        }
+      }
+
       // sort the points by order of expression
-      const expressionsWithIndices = data.expression.map((val, i) => [val, i])
+      /* const expressionsWithIndices = data.expression.map((val, i) => [val, i])
       expressionsWithIndices.sort((a, b) => a[0] - b[0])
+      trace.x = new Array(data.expression.length)
+      trace.y = new Array(data.expression.length)
+      if (is3D) {
+        trace.z = new Array(data.expression.length)
+      }
+      trace.annotations = new Array(data.expression.length)
+      trace.cells = new Array(data.expression.length)
+      colors = new Array(data.expression.length)
+      for (let i = 0; i < expressionsWithIndices.length; i++) {
+        trace.x[i] = data.x[expressionsWithIndices[i][1]]
+        trace.y[i] = data.y[expressionsWithIndices[i][1]]
+        if (is3D) {
+          trace.z[i] = data.z[expressionsWithIndices[i][1]]
+        }
+        trace.cells[i] = data.cells[expressionsWithIndices[i][1]]
+        trace.annotations[i] = data.annotations[expressionsWithIndices[i][1]]
+        colors[i] = expressionsWithIndices[i][0]
+      } */
       // now that we know the indices, reorder the other data arrays
-      trace.x = expressionsWithIndices.map(ei => data.x[ei[1]])
+      /* trace.x = expressionsWithIndices.map(ei => data.x[ei[1]])
       trace.y = expressionsWithIndices.map(ei => data.y[ei[1]])
       if (is3D) {
         trace.z = expressionsWithIndices.map(ei => data.z[ei[1]])
       }
       trace.annotations = expressionsWithIndices.map(ei => data.annotations[ei[1]])
       trace.cells = expressionsWithIndices.map(ei => data.cells[ei[1]])
-      colors = expressionsWithIndices.map(ei => ei[0])
+      colors = expressionsWithIndices.map(ei => ei[0]) */
+      console.log(`Mapping took ${performance.now() - t} milliseconds`)
     } else {
       trace.x = data.x
       trace.y = data.y
@@ -301,7 +357,7 @@ export function getPlotlyTraces({
       }
       trace.annotations = data.annotations,
       trace.cells = data.cells
-      colors = data.annotations
+      colors = isGeneExpressionForColor ? data.expression : data.annotations
     }
 
     trace.marker = {

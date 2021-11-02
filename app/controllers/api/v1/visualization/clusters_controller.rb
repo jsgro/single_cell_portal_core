@@ -184,7 +184,9 @@ module Api
           plot_data = nil
           genes = RequestUtils.get_genes_from_param(study, url_params[:gene])
 
-          if url_params[:gene].blank? || !include_expression
+          if true
+            plot_data = generate_fixed_size_plot_data(url_params[:subsample].to_i, genes.count)
+          elsif url_params[:gene].blank? || !include_expression
             # For "Clusters" tab in default view of Explore tab
             plot_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, include_coords: include_coordinates, include_cells: include_cells)
           else
@@ -270,6 +272,29 @@ module Api
             subsample = param.to_i
           end
           subsample
+        end
+
+        # returns a random sample of data, useful for performance testing
+        # the only parameters are the number of cells in the response, and the number of genes
+        # this method either randomly generates the data
+        def self.generate_fixed_size_plot_data(num_cells, num_genes)
+          use_postgres = true
+
+          num_annots = 10
+          genes = num_genes.times.map{ |n| "gene#{n}" }
+          fake_annotations = num_annots.times.map { |n| "ant#{n}" }
+          annot_size = num_cells / num_annots
+
+          data = {
+            x: num_cells.times.map { |n| (rand * 140).round(3) },
+            y: num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3) },
+            cells: num_cells.times.map {|n| "gatc_gatc_c#{n}" },
+            annotations: num_cells.times.map {|n| "annot_#{(n * num_annots / num_cells).floor}" }
+          }
+          if num_genes > 0
+            data[:expression] = num_cells.times.map { |n| (rand * 7.0).round(3) }
+          end
+          return data
         end
       end
     end
