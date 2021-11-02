@@ -305,7 +305,7 @@ class AdminConfigurationsController < ApplicationController
   def update_user
     @user = User.find(params[:id])
     respond_to do |format|
-      if @user.update(updated_user_params)
+      if @user.update(user_params)
         format.html { redirect_to admin_configurations_path, notice: "User: '#{@user.email}' was successfully updated." }
       else
         format.html { render :edit_user }
