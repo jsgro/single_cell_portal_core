@@ -96,6 +96,6 @@ describe('Apply applies all changes made in the search panel', () => {
     keywordInput().simulate('change', {target: { value: 'test345'}});
     keywordInput().simulate('submit')
 
-    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&terms=test345&facets=species%3AspeciesId2%2Bdisease%3Adisease4')
+    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&terms=test345&facets=species%3AspeciesId2%7Cdisease%3Adisease4')
   })
 })
