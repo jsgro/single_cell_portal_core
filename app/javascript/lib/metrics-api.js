@@ -366,7 +366,7 @@ export function log(name, props = {}) {
 
   const tab = getTabProperty()
   if (tab) {
-    props['tab'] = tab
+    props['referringTab'] = tab
   }
 
   props['timeSincePageLoad'] = Math.round(performance.now())
