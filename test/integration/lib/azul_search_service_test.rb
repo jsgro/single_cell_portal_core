@@ -66,4 +66,16 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     assert hca_facet_entry.present?
     assert_equal 2, hca_facet_entry[:facet_search_weight]
   end
+
+  test 'should retrieve all facets/filters' do
+    facets = AzulSearchService.get_all_facet_filters
+    expected_keys = %w[organ disease organism_age preservation_method species study_name organ_region
+                       library_preparation_protocol sex study_description cell_type].sort
+    assert_equal expected_keys, facets.keys.sort
+    diseases = facets.dig('disease', 'filters')
+    assert_includes diseases, "normal"
+    assert_includes diseases, "multiple sclerosis"
+    assert_not facets.dig('disease', 'is_numeric')
+    assert facets.dig('organism_age', 'is_numeric')
+  end
 end
