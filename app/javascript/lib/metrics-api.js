@@ -163,6 +163,7 @@ export function logClickLink(target) {
   if (parentTabList.length > 0) {
     // Grab name of tab list and add to props
     props.tabListName = parentTabList[0].attributes['data-analytics-name'].value
+    props.tabDisplayText = target.innerText.trim()
     log('click:tab', props)
   } else {
     log('click:link', props)
@@ -331,6 +332,22 @@ function getAnalyticsPageName() {
 }
 
 /**
+ * gets the tab name for analytics
+ */
+function getTabProperty() {
+  const url = window.location.toString()
+  if (url.includes('step=')) {
+    // if in an upload wizard tab
+    return url.replace(/^(.*?)?step=/, '').trim().replace(/\s/g, '-')
+  } else if (url.includes('#study')) {
+    // if in a study tab
+    return url.replace(/^(.*?)#/, '').trim().replace(/\s/g, '-')
+  } else {
+    return ''
+  }
+}
+
+/**
  * Log metrics to Mixpanel via Bard web service
  *
  * Bard docs:
@@ -339,13 +356,18 @@ function getAnalyticsPageName() {
  * @param {String} name
  * @param {Object} props
  */
-export function log(name, props={}) {
+export function log(name, props = {}) {
   props = Object.assign(props, {
     appId: 'single-cell-portal',
     appPath: getAnalyticsPageName(),
     appFullPath: getAppFullPath(),
     env
   }, getDefaultProperties())
+
+  const tab = getTabProperty()
+  if (tab) {
+    props['tab'] = tab
+  }
 
   props['timeSincePageLoad'] = Math.round(performance.now())
 
@@ -418,7 +440,7 @@ export function log(name, props={}) {
   firing the log event
 */
 export function startPendingEvent(
-  name, props={}, completionTriggerPrefix, fromPageLoad
+  name, props = {}, completionTriggerPrefix, fromPageLoad
 ) {
   const startTime = fromPageLoad ? 0 : performance.now()
   const pendingEvent = {
