@@ -646,7 +646,6 @@ module Api
 
       # find matching filters within a given facet based on query parameters
       def self.find_matching_filters(facet:, filter_values:)
-        puts "facet: #{facet}, filter_values: #{filter_values}"
         matching_filters = []
         if facet.is_numeric?
           # if we have more than two values, we likely have a unit parameter and need to convert values
