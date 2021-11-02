@@ -211,7 +211,7 @@ function RawScatterPlot({
     if (scatterData && !isLoading) {
       processScatterPlot()
     }
-  }, [shownTraces])
+  }, [shownTraces, dimensionProps])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
@@ -233,17 +233,6 @@ function RawScatterPlot({
       }
     }
   }, [isCellSelecting])
-
-  // Adjusts width and height of plots upon toggle of "View Options"
-  useUpdateEffect(() => {
-    // Don't update if the graph hasn't loaded yet
-    if (scatterData && !isLoading) {
-      const { width, height } = getScatterWidthHeight(scatterData, dimensionProps)
-      const layoutUpdate = { width, height }
-      Plotly.relayout(graphElementId, layoutUpdate)
-    }
-  // }, [dimensionProps.showViewOptionsControls, dimensionProps.showRelatedGenesIdeogram])
-  }, [dimensionProps])
 
   // TODO (SCP-3712): Update legend click (as backwards-compatibly as possible)
   // as part of productionizing custom legend code.
