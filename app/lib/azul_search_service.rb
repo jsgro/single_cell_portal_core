@@ -120,7 +120,7 @@ class AzulSearchService
 
 
   # retrieve all possible facet/filter values present in Azul
-  # this is done by executing an empty search and requestin only 1 project, then retrieving the
+  # this is done by executing an empty search and requesting only 1 project, then retrieving the
   # "termFacets" information from the response
   def self.get_all_facet_filters
     client = ApplicationController.hca_azul_client
