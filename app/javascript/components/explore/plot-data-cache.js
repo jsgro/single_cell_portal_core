@@ -57,8 +57,7 @@ const Fields = {
       if (cachedCellsAndCoords.then) {
         promises.push(cachedCellsAndCoords)
       } else if (!cachedCellsAndCoords.x) {
-        fields.push('coordinates')
-        fields.push('cells')
+        fields.push('coordinates', 'cells')
       }
     },
     merge: (entry, scatter) => {
@@ -288,12 +287,21 @@ export function createCache() {
     const fields = []
     const promises = [] // API call promises
     // we don't cache anything for annotated/correlated scatter since the coordinates are different per annotation/gene
+
     if (!isAnnotatedScatter && !isCorrelatedScatter) {
-      const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
-      Fields.cellsAndCoords.addFieldsOrPromise(cacheEntry, fields, promises)
-      Fields.annotation.addFieldsOrPromise(cacheEntry, fields, promises, annotation.name, annotation.scope)
-      if (genes.length) {
-        Fields.expression.addFieldsOrPromise(cacheEntry, fields, promises, genes, consensus)
+      if (subsample != 'all') {
+        // we also don't cache for subsampled views, since the cells and ordering may be different across annotations
+        fields.push('coordinates', 'cells', 'annotation')
+        if (genes.length) {
+          fields.push('expression')
+        }
+      } else {
+        const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
+        Fields.cellsAndCoords.addFieldsOrPromise(cacheEntry, fields, promises)
+        Fields.annotation.addFieldsOrPromise(cacheEntry, fields, promises, annotation.name, annotation.scope)
+        if (genes.length) {
+          Fields.expression.addFieldsOrPromise(cacheEntry, fields, promises, genes, consensus)
+        }
       }
     } else {
       fields.push('coordinates')
