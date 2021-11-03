@@ -8,11 +8,11 @@
     <h4>User Info</h4>
     <div class="row">
       <div class="col-md-6">
-        <%= f.label :firstName, 'First Name' %><br />
+        <%= f.label :firstName, 'First name' %><br />
         <%= f.text_field :firstName, value: @profile_info['firstName'], class: 'form-control' %>
       </div>
       <div class="col-md-6">
-        <%= f.label :lastName, 'Last Name' %><br />
+        <%= f.label :lastName, 'Last name' %><br />
         <%= f.text_field :lastName, value: @profile_info['lastName'], class: 'form-control' %>
       </div>
     </div>
@@ -22,7 +22,7 @@
         <%= f.text_field :title, value: @profile_info['title'], class: 'form-control' %>
       </div>
       <div class="col-md-6">
-        <%= f.label :contactEmail, 'Contact Email for Notifications' %><br />
+        <%= f.label :contactEmail, 'Contact email for notifications' %><br />
         <%= f.text_field :contactEmail, value: @profile_info['contactEmail'], class: 'form-control' %>
       </div>
     </div>
@@ -32,7 +32,7 @@
         <%= f.text_field :institute, value: @profile_info['institute'], class: 'form-control' %>
       </div>
       <div class="col-md-6">
-        <%= f.label :institutionalProgram, 'Institutional Program' %><br />
+        <%= f.label :institutionalProgram, 'Institutional program' %><br />
         <%= f.text_field :institutionalProgram, value: @profile_info['institutionalProgram'], class: 'form-control' %>
       </div>
     </div>
@@ -41,11 +41,11 @@
     <h4>Program Info</h4>
     <div class="row">
       <div class="col-md-6">
-        <%= f.label :nonProfitStatus, 'Non-Profit Status' %><br />
+        <%= f.label :nonProfitStatus, 'Non-Profit status' %><br />
         <%= f.select :nonProfitStatus, options_for_select([['Non-Profit', 'true'], ['For-Profit', 'false']], @profile_info['nonProfitStatus']), {}, class: 'form-control' %>
       </div>
       <div class="col-md-6">
-        <%= f.label :pi, 'Principal Investigator' %><br />
+        <%= f.label :pi, 'Principal investigator' %><br />
         <%= f.text_field :pi, value: @profile_info['pi'], class: 'form-control' %>
       </div>
     </div>
