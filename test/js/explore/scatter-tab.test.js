@@ -10,8 +10,11 @@ import { createCache } from 'components/explore//plot-data-cache'
 import ScatterTab, { getNewContextMap } from 'components/explore/ScatterTab'
 import * as ScpApiMetrics from 'lib/scp-api-metrics'
 
+import { MANY_LABELS_MOCKS } from '../../test_data/mock_responses/scatter-plot.test-data'
+
+
 // models a real response from api/v1/visualization/clusters
-const FETCH_CLUSTER_RESPONSE = {
+const MOCK_CLUSTER_RESPONSE = {
   data: {
     annotations: ['foo', 'bar'],
     cells: ['A', 'B'],
@@ -142,7 +145,7 @@ describe('getNewContextMap correctly assigns contexts', () => {
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
     // pass in a clone of the response since it may get modified by the cache operations
     apiFetch.mockImplementation(params => {
-      const response = _cloneDeep(FETCH_CLUSTER_RESPONSE)
+      const response = _cloneDeep(MOCK_CLUSTER_RESPONSE)
       response.cluster = params.cluster
       response.genes = params.genes
       return Promise.resolve([response, CACHE_PERF_PARAMS])
@@ -177,6 +180,69 @@ describe('getNewContextMap correctly assigns contexts', () => {
       'clusterA',
       'farsa expression spatialClusterA',
       'spatialClusterA'
+    ]
+    plotTitles.forEach((titleEl, index) => {
+      expect(titleEl).toHaveTextContent(expectedTitles[index])
+    })
+  })
+
+  it('generates scatter plot and interactive legend', async () => {
+    const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
+    // pass in a clone of the response since it may get modified by the cache operations
+    apiFetch.mockImplementation(params => {
+      const response = _cloneDeep(MANY_LABELS_MOCKS.CLUSTER_RESPONSE)
+      response.cluster = params.cluster
+      response.genes = params.genes
+      return Promise.resolve([response, CACHE_PERF_PARAMS])
+    })
+    const fakePlot = jest.spyOn(Plotly, 'react')
+    fakePlot.mockImplementation(() => {})
+    const fakeLogScatter = jest.spyOn(ScpApiMetrics, 'logScatterPlot')
+    fakeLogScatter.mockImplementation(() => {})
+
+    render((
+      <ScatterTab studyAccession='SCP101'
+        exploreParams={{
+          'userSpecified': {
+            'annotation': true,
+            'cluster': true,
+            'spatialGroups': true,
+            'subsample': true
+          },
+          'cluster': 'cluster_many_long_odd_labels.tsv',
+          'annotation': {
+            'name': 'Category',
+            'type': 'group',
+            'scope': 'cluster'
+          },
+          'subsample': 'all',
+          'consensus': null,
+          'spatialGroups': [],
+          'genes': [],
+          'geneList': '',
+          'heatmapRowCentering': '',
+          'scatterColor': '',
+          'distributionPlot': '',
+          'distributionPoints': '',
+          'tab': '',
+          'heatmapFit': '',
+          'bamFileName': '',
+          'ideogramFileId': ''
+        }}
+        updateExploreParams={() => {}}
+        exploreInfo={MANY_LABELS_MOCKS.EXPLORE_RESPONSE}
+        isGene={false}
+        isMultiGene={false}
+        getPlotDimensions={() => [100, 100]}
+        dataCache={createCache()}/>
+    ))
+
+    await screen.findByTestId('study-scatter-1')
+    const plotTitles = screen.getAllByRole('heading')
+
+    expect(plotTitles).toHaveLength(1)
+    const expectedTitles = [
+      'cluster_many_long_odd_labels.tsv'
     ]
     plotTitles.forEach((titleEl, index) => {
       expect(titleEl).toHaveTextContent(expectedTitles[index])
