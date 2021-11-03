@@ -289,7 +289,7 @@ export function createCache() {
     // we don't cache anything for annotated/correlated scatter since the coordinates are different per annotation/gene
 
     if (!isAnnotatedScatter && !isCorrelatedScatter) {
-      if (subsample != 'all') {
+      if (subsample !== 'all') {
         // we also don't cache for subsampled views, since the cells and ordering may be different across annotations
         fields.push('coordinates', 'cells', 'annotation')
         if (genes.length) {
