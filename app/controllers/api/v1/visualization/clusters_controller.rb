@@ -184,9 +184,7 @@ module Api
           plot_data = nil
           genes = RequestUtils.get_genes_from_param(study, url_params[:gene])
 
-          if true
-            plot_data = generate_fixed_size_plot_data(url_params[:subsample].to_i, genes.count)
-          elsif url_params[:gene].blank? || !include_expression
+          if url_params[:gene].blank? || !include_expression
             # For "Clusters" tab in default view of Explore tab
             plot_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, include_coords: include_coordinates, include_cells: include_cells)
           else
@@ -226,6 +224,9 @@ module Api
                 consensus: consensus, include_coords: include_coordinates, include_annotation: include_annotation, include_cells: include_cells)
             end
           end
+          # comment out the 'if' block above and
+          # uncomment the line below for frontend performance testing at large sample sizes
+          # plot_data = generate_fixed_size_plot_data(subsample, genes.count > 0)
 
           if cluster.is_3d? && cluster.has_range?
             aspect = ClusterVizService.compute_aspect_ratios(cluster.domain_ranges)
@@ -274,12 +275,10 @@ module Api
           subsample
         end
 
-        # returns a random sample of data, useful for performance testing
-        # the only parameters are the number of cells in the response, and the number of genes
+        # returns a random sample of data, useful for frontend performance testing
+        # the only parameters are the number of cells in the response, and whether to include expression data
         # this method either randomly generates the data
-        def self.generate_fixed_size_plot_data(num_cells, num_genes)
-          use_postgres = true
-
+        def self.generate_fixed_size_plot_data(num_cells, inlcude_expression)
           num_annots = 10
           genes = num_genes.times.map{ |n| "gene#{n}" }
           fake_annotations = num_annots.times.map { |n| "ant#{n}" }
@@ -291,7 +290,7 @@ module Api
             cells: num_cells.times.map {|n| "gatc_gatc_c#{n}" },
             annotations: num_cells.times.map {|n| "annot_#{(n * num_annots / num_cells).floor}" }
           }
-          if num_genes > 0
+          if inlcude_expression
             data[:expression] = num_cells.times.map { |n| (rand * 7.0).round(3) }
           end
           return data
