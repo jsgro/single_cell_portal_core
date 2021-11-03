@@ -29,7 +29,7 @@
   </div>
   <h3>Documentation Links</h3>
   <%= f.fields_for :external_resources %>
-  <p><%= f.link_to_add "<span class='fas fa-plus'></span> Add a Link".html_safe, :external_resources, class: 'btn btn-sm btn-info',
+  <p><%= f.link_to_add "<span class='fas fa-plus'></span> Add a link".html_safe, :external_resources, class: 'btn btn-sm btn-info',
                     id: 'add-external-resource' %></p>
   <p><%= f.submit 'Update', class: 'btn btn-lg btn-success', id: 'update-doc-links' %></p>
 <% end %>

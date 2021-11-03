@@ -34,8 +34,8 @@ const testFacets = [{
   allUnits: ['years', 'months', 'weeks', 'days', 'hours']
 }]
 
-describe('Basic "More Facets" capability for faceted search', () => {
-  it('the More Facets Button should correctly render when facets are selected', async () => {
+describe('Basic "More facets" capability for faceted search', () => {
+  it('the More facets Button should correctly render when facets are selected', async () => {
     const routerNav = jest.spyOn(Reach, 'navigate')
 
     const moreButton = () => {
@@ -63,7 +63,7 @@ describe('Basic "More Facets" capability for faceted search', () => {
 })
 
 describe('Filter slider works within more facets', () => {
-  it('the More Facets Button should correctly render when facets are selected', async () => {
+  it('the More facets Button should correctly render when facets are selected', async () => {
     const routerNav = jest.spyOn(Reach, 'navigate')
 
     const ageFacet = () => {

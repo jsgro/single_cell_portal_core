@@ -4,8 +4,8 @@
   <div class="col-xs-12">
     <h2>Study Files 
       <span class="badge"><%= @study_files.count %></span> 
-      <%= link_to "<i class='fas fa-question-circle'></i> Bulk Download".html_safe, '#/', class: "btn btn-default pull-right #{!@allow_downloads ? 'disabled' : nil}", id: 'download-help' %>
-      <%= link_to "Analyze in Cloud".html_safe, '#/', class: "btn btn-default pull-right left-margin-icon {!@allow_downloads ? 'disable d' : nil}", id: 'analyze-in-cloud'%> 
+      <%= link_to "<i class='fas fa-question-circle'></i> Bulk download".html_safe, '#/', class: "btn btn-default pull-right #{!@allow_downloads ? 'disabled' : nil}", id: 'download-help' %>
+      <%= link_to "Analyze in cloud".html_safe, '#/', class: "btn btn-default pull-right left-margin-icon {!@allow_downloads ? 'disable d' : nil}", id: 'analyze-in-cloud'%> 
     </h2>
 
     <% if @allow_downloads %>

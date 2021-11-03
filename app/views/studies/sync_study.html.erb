@@ -7,7 +7,7 @@
   </div>
   <div class="col-sm-2">
     <p class="top-pad pull-right">
-      <%= scp_link_to "<span class='fas fa-eye'></span> View Study".html_safe,
+      <%= scp_link_to "<span class='fas fa-eye'></span> View study".html_safe,
                       view_study_path(accession: @study.accession, study_name: @study.url_safe_name),
                       class: 'btn btn-primary', title: 'View Live', data: {toggle: 'tooltip', placement: 'left'} %>
     </p>
