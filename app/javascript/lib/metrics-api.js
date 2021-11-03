@@ -335,15 +335,10 @@ function getAnalyticsPageName() {
  * gets the tab name for analytics
  */
 function getTabProperty() {
-  const url = window.location.toString()
-  if (url.includes('step=')) {
-    // if in an upload wizard tab
-    return url.replace(/^(.*?)?step=/, '').trim().replace(/\s/g, '-')
-  } else if (url.includes('#study')) {
-    // if in a study tab
-    return url.replace(/^(.*?)#/, '').trim().replace(/\s/g, '-')
+  if (window.location.href.match(/\?step=/)) {
+    return window.location.href.split('?step=')[1]
   } else {
-    return ''
+    return window.location.hash.replace(/#/, '')
   }
 }
 
@@ -366,7 +361,7 @@ export function log(name, props = {}) {
 
   const tab = getTabProperty()
   if (tab) {
-    props['referringTab'] = tab
+    props['tab'] = tab
   }
 
   props['timeSincePageLoad'] = Math.round(performance.now())
