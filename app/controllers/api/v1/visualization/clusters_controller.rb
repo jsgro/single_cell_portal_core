@@ -224,9 +224,6 @@ module Api
                 consensus: consensus, include_coords: include_coordinates, include_annotation: include_annotation, include_cells: include_cells)
             end
           end
-          # comment out the 'if' block above and
-          # uncomment the line below for frontend performance testing at large sample sizes
-          # plot_data = generate_fixed_size_plot_data(subsample, genes.count > 0)
 
           if cluster.is_3d? && cluster.has_range?
             aspect = ClusterVizService.compute_aspect_ratios(cluster.domain_ranges)
@@ -273,27 +270,6 @@ module Api
             subsample = param.to_i
           end
           subsample
-        end
-
-        # returns a random sample of data, useful for frontend performance testing
-        # the only parameters are the number of cells in the response, and whether to include expression data
-        # this method either randomly generates the data
-        def self.generate_fixed_size_plot_data(num_cells, inlcude_expression)
-          num_annots = 10
-          genes = num_genes.times.map{ |n| "gene#{n}" }
-          fake_annotations = num_annots.times.map { |n| "ant#{n}" }
-          annot_size = num_cells / num_annots
-
-          data = {
-            x: num_cells.times.map { |n| (rand * 140).round(3) },
-            y: num_cells.times.map { |n| (rand * 14 + (n.to_f * 140.to_f / num_cells.to_f)).round(3) },
-            cells: num_cells.times.map {|n| "gatc_gatc_c#{n}" },
-            annotations: num_cells.times.map {|n| "annot_#{(n * num_annots / num_cells).floor}" }
-          }
-          if inlcude_expression
-            data[:expression] = num_cells.times.map { |n| (rand * 7.0).round(3) }
-          end
-          return data
         end
       end
     end

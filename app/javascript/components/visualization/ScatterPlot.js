@@ -282,7 +282,10 @@ export function getPlotlyTraces({
     let colors
     if (isGeneExpressionForColor) {
       // sort the points by order of expression
-      const expressionsWithIndices = data.expression.map((val, i) => [val, i])
+      const expressionsWithIndices = new Array(data.expression.length)
+      for (let i = 0; i < data.expression.length; i++) {
+        expressionsWithIndices[i] = [data.expression[i], i]
+      }
       expressionsWithIndices.sort((a, b) => a[0] - b[0])
       // initialize the other arrays (see )
       trace.x = new Array(data.expression.length)
@@ -295,13 +298,14 @@ export function getPlotlyTraces({
       colors = new Array(data.expression.length)
       for (let i = 0; i < expressionsWithIndices.length; i++) {
         // now that we know the indices, reorder the other data arrays
-        trace.x[i] = data.x[expressionsWithIndices[i][1]]
-        trace.y[i] = data.y[expressionsWithIndices[i][1]]
+        const sortedIndex = expressionsWithIndices[i][1]
+        trace.x[i] = data.x[sortedIndex]
+        trace.y[i] = data.y[sortedIndex]
         if (is3D) {
-          trace.z[i] = data.z[expressionsWithIndices[i][1]]
+          trace.z[i] = data.z[sortedIndex]
         }
-        trace.cells[i] = data.cells[expressionsWithIndices[i][1]]
-        trace.annotations[i] = data.annotations[expressionsWithIndices[i][1]]
+        trace.cells[i] = data.cells[sortedIndex]
+        trace.annotations[i] = data.annotations[sortedIndex]
         colors[i] = expressionsWithIndices[i][0]
       }
     } else {

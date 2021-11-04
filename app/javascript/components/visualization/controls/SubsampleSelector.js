@@ -11,7 +11,7 @@ import Select from 'lib/InstrumentedSelect'
  * Setting isPerfTest to true will render a large array of options, regardless of the study content, so
  * meant to be used in conjunction with ClustersController::generate_fixed_size_plot_data
  */
-function getSubsampleOptions(annotationList, clusterName, isPerfTest=false) {
+function getSubsampleOptions(annotationList, clusterName) {
   let subsampleOptions = []
   if (clusterName && annotationList.subsample_thresholds) {
     let clusterSubsamples = annotationList.subsample_thresholds[clusterName]
@@ -24,9 +24,6 @@ function getSubsampleOptions(annotationList, clusterName, isPerfTest=false) {
     }))
   }
   subsampleOptions.push({ label: 'All Cells', value: 'all' })
-  if (isPerfTest) {
-    subsampleOptions = [100, 1000, 10000, 100000, 500000, 1000000, 2000000].map(n => ({ label: `${n}`, value: `${n}` }))
-  }
   return subsampleOptions
 }
 
