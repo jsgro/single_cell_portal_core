@@ -61,8 +61,6 @@
   </div>
 </div>
 
-<input type="hidden" id="feature-flags" value='<%= current_user.feature_flags_with_defaults.to_json %>'/>
-
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
     $(document).ready(function() {
       var main = $('.home-page-fix');

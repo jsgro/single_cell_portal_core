@@ -29,12 +29,10 @@
   </div>
   <div class="form-group row">
     <div class="col-md-12">
-      <label>Feature flags</label>
-    </div>
-    <div class="col-md-12">
-      <%= f.fields_for :feature_flag_options, FeatureFlaggable.build_feature_flag_options(@user) do |ff_form| %>
-        <%= render partial: 'feature_flag_options/feature_flag_option_fields', locals: { f: ff_form } %>
-      <% end %>
+      <%= link_to "<i class='fas fa-edit'></i> Feature Flags".html_safe,
+                  edit_feature_flag_option_path(class_name: 'user', id: @user.id), class: 'btn btn-primary',
+                  data: { toggle: 'tooltip', placement: 'right' }, title: "Edit feature flags for #{@user.email}"
+      %>
     </div>
   </div>
   <div class="form-group row">
@@ -49,3 +47,4 @@
     <%= link_to "<span class='fas fa-chevron-left'></span> Back".html_safe, admin_configurations_path, class: 'btn btn-warning' %>
   </div>
 </div>
+

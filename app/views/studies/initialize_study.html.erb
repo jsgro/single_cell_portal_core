@@ -1,4 +1,4 @@
-<% if !FeatureFlaggable.merged_value_for('react_upload_wizard', current_user)  %>
+<% if FeatureFlaggable.merged_value_for('react_upload_wizard', current_user)  %>
   <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
     // populate window.SCP.currentStudyFiles with information about all known StudyFiles
     window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
@@ -60,8 +60,8 @@
             </div>
             </br>
             <div class="row">
-              <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.csv or .tsv) and
-                <%= link_to 'barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.tsv or .csv) files separately.</p>
+              <p class="col-sm-12">* You will need to upload the <%= link_to '10x features', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.csv or .tsv) and
+                <%= link_to '10x barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.tsv or .csv) files separately.</p>
               <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank, rel: 'noopener noreferrer' %>  files of this type (e.g. .txt.gz) are accepted as well</p>
             </div>
           </div>
@@ -127,8 +127,8 @@
             </div>
             </br>
             <div class="row">
-              <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.csv or .tsv) and
-                <%= link_to 'barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.tsv or .csv) files separately.</p>
+              <p class="col-sm-12">* You will need to upload the <%= link_to '10x features', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.csv or .tsv) and
+                <%= link_to '10x barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.tsv or .csv) files separately.</p>
               <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank, rel: 'noopener noreferrer' %>  files of this type (e.g. .txt.gz) are accepted as well</p>
             </div>
           </div>

@@ -57,14 +57,14 @@ export default function ExpressionFileForm({
           value="false"
           checked={!isMtxFile}
           onChange={e => updateFile(file._id, { file_type: 'Expression Matrix' })} />
-          &nbsp;Expression Matrix
+          &nbsp;Dense matrix
       </label>
       <label className="sublabel">
         <input type="radio"
           name={`exp-matrix-type-${file._id}`}
           value="true" checked={isMtxFile}
           onChange={e => updateFile(file._id, { file_type: 'MM Coordinate Matrix' })}/>
-          &nbsp;MM Coordinate Matrix
+          &nbsp;Sparse matrix (.mtx)
       </label>
     </div>
 
