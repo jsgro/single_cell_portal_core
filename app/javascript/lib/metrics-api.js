@@ -335,10 +335,10 @@ function getAnalyticsPageName() {
  * gets the tab name for analytics
  */
 function getTabProperty() {
-  if (window.location.href.match(/\?tab=/)) {
+  if (window.location.href?.match(/\?tab=/)) {
     return window.location.href.split('?tab=')[1]
   } else {
-    return window.location.hash.replace(/#/, '')
+    return window.location.hash?.replace(/#/, '')
   }
 }
 
