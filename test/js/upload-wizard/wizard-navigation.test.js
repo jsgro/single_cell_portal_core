@@ -60,7 +60,7 @@ describe('it allows navigating between steps', () => {
 
   it('sets initial tab based on url params', async () => {
     render(
-      <MockRouter initialSearch={'?step=clustering'}>
+      <MockRouter initialSearch={'?tab=clustering'}>
         <RawUploadWizard studyAccession="SCP1" name="Chicken study"/>
       </MockRouter>
     )
