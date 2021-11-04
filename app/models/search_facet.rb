@@ -12,7 +12,7 @@ class SearchFacet
   field :identifier, type: String
   field :filters, type: Array, default: []
   field :public_filters, type: Array, default: [] # filters for public studies only
-  field :merged_filters, type: Array, default: [] # filters for XDSS, includes all SCP & external facet filters
+  field :filters_with_external, type: Array, default: [] # filters for XDSS, includes all SCP & external facet filters
   field :is_ontology_based, type: Boolean, default: false
   field :ontology_urls, type: Array, default: []
   field :data_type, type: String
@@ -291,7 +291,7 @@ class SearchFacet
   # this is to prevent large list of filters resulting in empty search responses
   def filters_for_user(user)
     if user
-      user.feature_flag_for(:cross_dataset_search_backend) ? merged_filters : filters
+      user.feature_flag_for(:cross_dataset_search_backend) ? filters_with_external : filters
     else
       public_filters
     end
@@ -391,7 +391,7 @@ class SearchFacet
       values.sort_by! { |f| f[:name] }
       merged_values.sort_by! { |f| f[:name] }
       public_values = get_unique_filter_values(public_only: true)
-      update(filters: values, public_filters: public_values, merged_filters: merged_values)
+      update(filters: values, public_filters: public_values, filters_with_external: merged_values)
     end
   end
 

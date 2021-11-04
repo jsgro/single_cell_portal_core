@@ -88,7 +88,7 @@ describe('Filter slider works within more facets', () => {
     })
     expect(ageFacet().find('button.facet-apply-button').hasClass('active')).toEqual(true)
     ageFacet().find('button.facet-apply-button').simulate('click')
-    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=organism_age%3A50%3B180%3Byears')
+    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=organism_age%3A50%7C180%7Cyears')
   })
 })
 

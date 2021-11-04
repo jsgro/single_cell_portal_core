@@ -159,11 +159,11 @@ class SearchFacetTest < ActiveSupport::TestCase
       disease_facet.update_filter_values!(azul_diseases)
       mock.verify
       disease_facet.reload
-      assert disease_facet.merged_filters.any?
+      assert disease_facet.filters_with_external.any?
       expected_diseases = %w[normal COVID-19 influenza]
       expected_diseases.each do |disease_name|
         filter_value = { id: disease_name, name: disease_name }.with_indifferent_access
-        assert_includes disease_facet.merged_filters, filter_value
+        assert_includes disease_facet.filters_with_external, filter_value
       end
     end
   end
@@ -186,7 +186,7 @@ class SearchFacetTest < ActiveSupport::TestCase
       public_filters: [
         { id: 'UBERON_0000955', name: 'brain' }
       ],
-      merged_filters: [
+      filters_with_external: [
         { id: 'UBERON_0000178', name: 'blood' },
         { id: 'UBERON_0000955', name: 'brain' },
         { id: 'heart', name: 'heart' }
@@ -199,6 +199,6 @@ class SearchFacetTest < ActiveSupport::TestCase
     FeatureFlag.find_or_create_by!(name: flag_name, default_value: false)
     user.set_flag_option(flag_name, true)
     user.reload
-    assert_equal organ_facet.merged_filters, organ_facet.filters_for_user(user)
+    assert_equal organ_facet.filters_with_external, organ_facet.filters_for_user(user)
   end
 end

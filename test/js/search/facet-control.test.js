@@ -7,7 +7,6 @@ const fetch = require('node-fetch');
 
 import FacetControl from 'components/search/controls/FacetControl';
 import { PropsStudySearchProvider } from 'providers/StudySearchProvider';
-import * as ScpAPI from 'lib/scp-api'
 
 const speciesFacet = {
     name: "Species",
@@ -63,7 +62,7 @@ describe('Facet control handles selections appropriately', () => {
 
     // apply sends a routing request to the right url
     speciesControl().find('button.facet-apply-button').simulate('click')
-    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=species%3AspeciesId3%3BspeciesId6')
+    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=species%3AspeciesId3%7CspeciesId6')
   })
 })
 

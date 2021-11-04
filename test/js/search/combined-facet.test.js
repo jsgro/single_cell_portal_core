@@ -94,7 +94,7 @@ describe('facets work within the multi-facet container', () => {
 
     // apply sends a routing request to the right url
     applyButton().simulate('click')
-    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=organ%3AorganId3%3BorganId6')
+    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=organ%3AorganId3%7CorganId6')
   })
 
   it('handles multiple checkbox selections across two facets', async () => {
@@ -147,7 +147,8 @@ describe('facets work within the multi-facet container', () => {
     organRegionControl().find('input#organRegionId2').simulate('change', {target: {checked: true}})
     organRegionControl().find('input#organRegionId4').simulate('change', {target: {checked: true}})
     applyButton().simulate('click')
-    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=organ%3AorganId6%7Corgan_region%3AorganRegionId2%3BorganRegionId4')
+    const queryString = '?type=study&page=1&facets=organ%3AorganId6%3Borgan_region%3AorganRegionId2%7CorganRegionId4'
+    expect(routerNav).toHaveBeenLastCalledWith(queryString)
   })
 
   it('handles where one facet of the combination is not populated in the environment', async () => {

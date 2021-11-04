@@ -57,7 +57,7 @@ describe('Filter slider works with facet with no units', () => {
     })
     expect(bmiFacet().find('button.facet-apply-button').hasClass('active')).toEqual(true)
     bmiFacet().find('button.facet-apply-button').simulate('click')
-    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=bmi%3A30%3B50%3B')
+    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=bmi%3A30%7C50%7C')
   });
 });
 
@@ -84,7 +84,7 @@ describe('Filter slider behavior', () => {
     })
     expect(ageFacet().find('button.facet-apply-button').hasClass('active')).toEqual(true)
     ageFacet().find('button.facet-apply-button').simulate('click')
-    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=age%3A30%3B150%3Byears')
+    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=age%3A30%7C150%7Cyears')
   });
 });
 
