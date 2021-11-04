@@ -117,6 +117,9 @@ Rails.application.configure do
   # Terra Data Repo API base url
   config.tdr_api_base_url = 'https://jade.datarepo-dev.broadinstitute.org'
 
+  # Enable profiling and flamegraphs via rack-mini-profiler
+  config.profile_performance = false
+
   # DNS rebinding/host header injection protection
   # CIDR ip ranges from https://cloud.google.com/load-balancing/docs/health-checks#firewall_rules
   config.hosts = [
