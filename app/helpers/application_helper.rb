@@ -53,53 +53,53 @@ module ApplicationHelper
     breadcrumbs = []
     if controller_name == 'site'
       if @study
-        breadcrumbs << {title: "Study Overview", link: view_study_path(accession: @study.accession, study_name: @study.url_safe_name)}
+        breadcrumbs << {title: "Study overview", link: view_study_path(accession: @study.accession, study_name: @study.url_safe_name)}
       end
       case action_name
         when 'view_gene_expression'
-          breadcrumbs << {title: "Gene Expression <span class='badge'>#{params[:gene]}</span>", link: 'javascript:;'}
+          breadcrumbs << {title: "Gene expression <span class='badge'>#{params[:gene]}</span>", link: 'javascript:;'}
         when 'view_gene_set_expression'
-          breadcrumbs << {title: "Gene Set Expression <span class='badge'>Multiple</span>", link: 'javascript:;'}
+          breadcrumbs << {title: "Gene set expression <span class='badge'>Multiple</span>", link: 'javascript:;'}
         when 'view_gene_expression_heatmap'
-          breadcrumbs << {title: "Gene Expression <span class='badge'>Multiple</span>", link: 'javascript:;'}
+          breadcrumbs << {title: "Gene expression <span class='badge'>Multiple</span>", link: 'javascript:;'}
         when 'view_precomputed_gene_expression_heatmap'
-          breadcrumbs << {title: "Gene Expression <span class='badge'>#{params[:precomputed]}</span>", link: 'javascript:;'}
+          breadcrumbs << {title: "Gene expression <span class='badge'>#{params[:precomputed]}</span>", link: 'javascript:;'}
         when 'view_all_gene_expression_heatmap'
-          breadcrumbs << {title: "Gene Expression <span class='badge'>All</span>", link: 'javascript:;'}
+          breadcrumbs << {title: "Gene expression <span class='badge'>All</span>", link: 'javascript:;'}
       end
     elsif controller_name == 'studies'
-      breadcrumbs << {title: "My Studies", link: studies_path}
+      breadcrumbs << {title: "My studies", link: studies_path}
       case action_name
         when 'new'
-          breadcrumbs << {title: "New Study", link: 'javascript:;'}
+          breadcrumbs << {title: "New study", link: 'javascript:;'}
         when 'edit'
           breadcrumbs << {title: "Editing '#{truncate(@study.name, length: 20)}'", link: 'javascript:;'}
         when 'show'
           breadcrumbs << {title: "Showing '#{truncate(@study.name, length: 20)}'", link: 'javascript:;'}
         when 'initialize_study'
-          breadcrumbs << {title: "Upload/Edit Study Data", link: 'javascript:;'}
+          breadcrumbs << {title: "Upload/Edit study data", link: 'javascript:;'}
         when 'sync_study'
-          breadcrumbs << {title: "Synchronize Workspace", link: 'javascript:;'}
+          breadcrumbs << {title: "Synchronize workspace", link: 'javascript:;'}
       end
     elsif controller_name == 'admin_configurations'
-      breadcrumbs << {title: 'Admin Control Panel', link: admin_configurations_path}
+      breadcrumbs << {title: 'Admin control panel', link: admin_configurations_path}
       case action_name
         when 'new'
-          breadcrumbs << {title: "New Config Option", link: 'javascript:;'}
+          breadcrumbs << {title: "New nonfig option", link: 'javascript:;'}
         when 'edit'
           breadcrumbs << {title: "Editing '#{@admin_configuration.config_type}'", link: 'javascript:;'}
       end
     elsif controller_name == 'billing_projects'
-      breadcrumbs << {title: "My Billing Projects", link: billing_projects_path}
+      breadcrumbs << {title: "My billing projects", link: billing_projects_path}
       case action_name
         when 'new_user'
-          breadcrumbs << {title: "Add Billing Project User", link: 'javascript:;'}
+          breadcrumbs << {title: "Add billing project user", link: 'javascript:;'}
         when 'workspaces'
           breadcrumbs << {title: "Workspaces <span class='badge'>#{params[:project_name]}</span>", link: 'javascript:;'}
         when 'storage_estimate'
-          breadcrumbs << {title: "Storage Costs <span class='badge'>#{params[:project_name]}</span>", link: 'javascript:;'}
+          breadcrumbs << {title: "Storage costs <span class='badge'>#{params[:project_name]}</span>", link: 'javascript:;'}
         when 'edit_workspace_computes'
-          breadcrumbs << {title: "Editing Compute Permissions <span class='badge'>#{truncate(params[:study_name], length: 10)}</span>", link: 'javascript:;'}
+          breadcrumbs << {title: "Editing compute permissions <span class='badge'>#{truncate(params[:study_name], length: 10)}</span>", link: 'javascript:;'}
       end
     end
     breadcrumbs

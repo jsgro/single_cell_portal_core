@@ -18,7 +18,7 @@
   <div class="collapse navbar-collapse" id="scp-navbar-dropdown-collapse">
     <%= render partial: '/layouts/breadcrumbs' %>
     <ul class="nav navbar-nav pull-right">
-      <li class='dropdown'><%= scp_link_to "<span class='fas fa-question-circle'></span> Help & Resources <span class='caret'></span>".html_safe,
+      <li class='dropdown'><%= scp_link_to "<span class='fas fa-question-circle'></span> Help & resources <span class='caret'></span>".html_safe,
                                            "#", class: "dropdown-toggle", "data-toggle" => "dropdown" %>
         <ul class="dropdown-menu dropdown-menu-right">
           <% if @selected_branding_group.present? && @selected_branding_group.external_link_url %>
@@ -28,19 +28,19 @@
           <% end %>
           <li><%= link_to "<span class='fas fa-fw fa-info-circle'></span> Documentation".html_safe,
                           'https://singlecell.zendesk.com/hc/en-us', target: '_blank', rel: 'noopener noreferrer' %></li>
-          <li><%= link_to "<span class='fas fa-fw fa-envelope'></span> Contact Us".html_safe, '#', id: 'open-contact-modal' %></li>
-          <li><%= link_to "<span class='fab fa-fw fa-github'></span> Portal Source Code".html_safe,
+          <li><%= link_to "<span class='fas fa-fw fa-envelope'></span> Contact us".html_safe, '#', id: 'open-contact-modal' %></li>
+          <li><%= link_to "<span class='fab fa-fw fa-github'></span> Portal source code".html_safe,
                           'https://github.com/broadinstitute/single_cell_portal_core', target: '_blank',
                           rel: 'noopener noreferrer' %></li>
-          <li><%= link_to "<span class='fas fa-fw fa-code'></span> REST API Documentation".html_safe, api_v1_swagger_ui_path,
+          <li><%= link_to "<span class='fas fa-fw fa-code'></span> REST API documentation".html_safe, api_v1_swagger_ui_path,
                           target: '_blank', rel: 'noopener noreferrer' %></li>
           <% if FeatureAnnouncement.published.any? %>
-            <li><%= link_to "<span class='fas fa-fw fa-bullhorn'></span> New Features".html_safe, latest_feature_announcements_path %></li>
+            <li><%= link_to "<span class='fas fa-fw fa-bullhorn'></span> New features".html_safe, latest_feature_announcements_path %></li>
           <% end %>
         </ul>
       </li>
       <li class="left-border-0-5">
-        <%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Create a Study".html_safe, new_study_path,
+        <%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Create a study".html_safe, new_study_path,
                         class: 'check-upload', 'data-analytics-name' => 'prominent-create-study-button' %>
       </li>
       <% if user_signed_in? %>
@@ -49,19 +49,19 @@
                                              id: 'profile-nav' %>
           <ul class="dropdown-menu dropdown-menu-right dropdown-scroll">
             <% if current_user.admin? %>
-              <li><%= link_to "<span class='fas fa-lock fa-fw'></span> Admin Config".html_safe, admin_configurations_path,
+              <li><%= link_to "<span class='fas fa-lock fa-fw'></span> Admin config".html_safe, admin_configurations_path,
                               class: 'check-upload', id: 'admin-nav' %></li>
               <li><%= link_to "<span class='fas fa-flask fa-fw'></span> Analyses".html_safe, analysis_configurations_path,
                               class: 'check-upload', id: 'analysis-nav' %></li>
-              <li><%= link_to "<span class='fas fa-search fa-fw'></span> Preset Searches".html_safe, preset_searches_path,
+              <li><%= link_to "<span class='fas fa-search fa-fw'></span> Preset searches".html_safe, preset_searches_path,
                               class: 'check-upload', id: 'preset-nav' %></li>
               <li><%= link_to "<span class='fas fa-dna fa-fw'></span> Species".html_safe, taxons_path, class: 'check-upload',
                               id: 'species-nav' %></li>
-              <li><%= scp_link_to "<span class='fas fa-copyright fa-fw'></span> Branding Groups".html_safe, branding_groups_path,
+              <li><%= scp_link_to "<span class='fas fa-copyright fa-fw'></span> Branding groups".html_safe, branding_groups_path,
                                   class: 'check-upload', id: 'branding-groups-nav' %>
-              <li><%= scp_link_to "<span class='fas fa-bullhorn fa-fw'></span> Feature Announcements".html_safe,
+              <li><%= scp_link_to "<span class='fas fa-bullhorn fa-fw'></span> Feature announcements".html_safe,
                                   feature_announcements_path, class: 'check-upload', id: 'feature-announcements-nav' %>
-              <li><%= scp_link_to "<span class='fas fa-flag fa-fw'></span> Feature Flags".html_safe,
+              <li><%= scp_link_to "<span class='fas fa-flag fa-fw'></span> Feature flags".html_safe,
                                   feature_flag_options_path, class: 'check-upload', id: 'feature-flags-nav' %>
             <% end %>
             <% if current_user.acts_like_reporter? %>
@@ -69,19 +69,19 @@
                               class: 'check-upload', id: 'reports-nav' %></li>
               <li role="separator" class="divider"></li>
             <% end %>
-            <li><%= scp_link_to "<span class='fas fa-user fa-fw'></span> My Profile".html_safe, view_profile_path(current_user.id),
+            <li><%= scp_link_to "<span class='fas fa-user fa-fw'></span> My profile".html_safe, view_profile_path(current_user.id),
                                 class: 'check-upload', id: 'my-profile' %></li>
-            <li><%= scp_link_to "<span class='fas fa-tags fa-fw'></span> My Annotations".html_safe, user_annotations_path,
+            <li><%= scp_link_to "<span class='fas fa-tags fa-fw'></span> My annotations".html_safe, user_annotations_path,
                                 class: 'check-upload', id: 'my-annotations' %></li>
-            <li><%= scp_link_to "<span class='fas fa-book fa-fw'></span> My Studies".html_safe, studies_path, class: 'check-upload',
+            <li><%= scp_link_to "<span class='fas fa-book fa-fw'></span> My studies".html_safe, studies_path, class: 'check-upload',
                                 id: 'my-studies' %>
-            <li><%= scp_link_to "<span class='fas fa-dollar-sign fa-fw'></span> My Billing Projects".html_safe, billing_projects_path,
+            <li><%= scp_link_to "<span class='fas fa-dollar-sign fa-fw'></span> My billing projects".html_safe, billing_projects_path,
                                 class: 'check-upload', id: 'my-firecloud-projects' %>
-            <li><%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Create a Study".html_safe, new_study_path,
+            <li><%= scp_link_to "<span class='fas fa-plus fa-fw'></span> Create a study".html_safe, new_study_path,
                                 class: 'check-upload' %></li>
             <% if current_user.available_branding_groups.any? %>
               <li role="separator" class="divider"></li>
-              <li class="dropdown-header">My Collections</li>
+              <li class="dropdown-header">My collections</li>
               <% current_user.available_branding_groups.each do |branding_group| %>
                 <li id="<%= branding_group.name_as_id %>-nav"><%= link_to "<i class='fas fa-copyright fa-fw'></i> #{branding_group.name}".html_safe,
                                                                           site_path(scpbr: branding_group.name_as_id) %></li>
@@ -93,13 +93,13 @@
                               site_path %></li>
             <% end %>
             <li role="separator" class="divider"></li>
-            <li><%= scp_link_to "<span class='fas fa-sign-out-alt fa-fw'></span> Sign Out".html_safe, destroy_user_session_path,
+            <li><%= scp_link_to "<span class='fas fa-sign-out-alt fa-fw'></span> Sign out".html_safe, destroy_user_session_path,
                                 method: :delete, class: 'check-upload', id: 'logout-nav' %></li>
           </ul>
         </li>
       <% else %>
 
-        <li><%= scp_link_to "<span class='fas fa-sign-in-alt fa-fw'></span> Sign In".html_safe, user_google_oauth2_omniauth_authorize_path, method: :post, class: 'left-border-0-5', id: 'login-nav' %></li>
+        <li><%= scp_link_to "<span class='fas fa-sign-in-alt fa-fw'></span> Sign in".html_safe, user_google_oauth2_omniauth_authorize_path, method: :post, class: 'left-border-0-5', id: 'login-nav' %></li>
       <% end %>
     </ul>
   </div>
