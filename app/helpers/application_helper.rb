@@ -85,7 +85,7 @@ module ApplicationHelper
       breadcrumbs << {title: 'Admin control panel', link: admin_configurations_path}
       case action_name
         when 'new'
-          breadcrumbs << {title: "New nonfig option", link: 'javascript:;'}
+          breadcrumbs << {title: "New config option", link: 'javascript:;'}
         when 'edit'
           breadcrumbs << {title: "Editing '#{@admin_configuration.config_type}'", link: 'javascript:;'}
       end
