@@ -14,7 +14,7 @@ function RawWizardNavPanel({
   const [othersExpanded, setOthersExpanded] = useState(true)
   const expansionIcon = othersExpanded ? faChevronUp : faChevronDown
   return <div className="position-fixed">
-    <ul className="upload-wizard-steps">
+    <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-primary-steps">
       { mainSteps.map((step, index) =>
         <StepTabHeader key={index}
           step={step}
@@ -24,7 +24,7 @@ function RawWizardNavPanel({
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}/>) }
     </ul>
-    <ul className="upload-wizard-steps">
+    <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-secondary-steps">
       <li className="other-header" onClick={() => setOthersExpanded(!othersExpanded)}>
         <div className="step-number">
           <span className="badge highlight">+</span>

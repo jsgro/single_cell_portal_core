@@ -56,7 +56,7 @@ const SUPPLEMENTAL_STEPS = STEPS.slice(4, 11)
 export function RawUploadWizard({ studyAccession, name }) {
   const routerLocation = useLocation()
   const queryParams = queryString.parse(routerLocation.search)
-  let currentStepIndex = STEPS.findIndex(step => step.name === queryParams.step)
+  let currentStepIndex = STEPS.findIndex(step => step.name === queryParams.tab)
   if (currentStepIndex < 0) {
     currentStepIndex = 0
   }
@@ -77,9 +77,9 @@ export function RawUploadWizard({ studyAccession, name }) {
     })
   }
 
-  /** move the wizard to the given step */
+  /** move the wizard to the given step tab */
   function setCurrentStep(newStep) {
-    navigate(`?step=${newStep.name}`)
+    navigate(`?tab=${newStep.name}`)
     window.scrollTo(0, 0)
   }
 
