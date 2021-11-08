@@ -22,6 +22,11 @@ let globalMock = false
 
 const defaultBasePath = '/single_cell/api/v1'
 
+// value used to separate facet entries in query string params
+export const FACET_DELIMITER = ';'
+// value used to separate filter values for a facet in query string params
+export const FILTER_DELIMITER = '|'
+
 /** Get default `init` object for SCP API fetches */
 export function defaultInit() {
   const headers = {
@@ -664,9 +669,9 @@ function buildFacetQueryString(facets) {
   }
   const rawURL = _compact(Object.keys(facets).map(facetId => {
     if (facets[facetId].length) {
-      return `${facetId}:${facets[facetId].join(',')}`
+      return `${facetId}:${facets[facetId].join(FILTER_DELIMITER)}`
     }
-  })).join('+')
+  })).join(FACET_DELIMITER)
   // encodeURIComponent needed for the + , : characters
   return `&facets=${encodeURIComponent(rawURL)}`
 }
@@ -675,9 +680,9 @@ function buildFacetQueryString(facets) {
 export function buildFacetsFromQueryString(facetsParamString) {
   const facets = {}
   if (facetsParamString) {
-    facetsParamString.split('+').forEach(facetString => {
+    facetsParamString.split(';').forEach(facetString => {
       const facetArray = facetString.split(':')
-      facets[facetArray[0]] = facetArray[1].split(',')
+      facets[facetArray[0]] = facetArray[1].split(FILTER_DELIMITER)
     })
   }
   return facets

@@ -95,7 +95,7 @@ describe('Apply applies all changes made in the search panel', () => {
     diseaseControl().find('input#disease4').simulate('change', {target: {checked: true}})
     keywordInput().simulate('change', {target: { value: 'test345'}});
     keywordInput().simulate('submit')
-
-    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&terms=test345&facets=species%3AspeciesId2%2Bdisease%3Adisease4')
+    const query = '?type=study&page=1&terms=test345&facets=species%3AspeciesId2%3Bdisease%3Adisease4'
+    expect(routerNav).toHaveBeenLastCalledWith(query)
   })
 })
