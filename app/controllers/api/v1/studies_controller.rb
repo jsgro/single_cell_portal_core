@@ -195,7 +195,6 @@ module Api
 
       # PATCH /single_cell/api/v1/studies/:id
       def update
-        byebug
         if @study.update(study_params)
           if @study.previous_changes.keys.include?('name')
             # if user renames a study, invalidate all visualization caches and repopulate default cache
