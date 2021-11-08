@@ -1,7 +1,7 @@
 import React from 'react'
 import _cloneDeep from 'lodash/cloneDeep'
 import jquery from 'jquery'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 import Plotly from 'plotly.js-dist'
 
@@ -251,5 +251,15 @@ describe('getNewContextMap correctly assigns contexts', () => {
 
     const legendRows = container.querySelectorAll('.scatter-legend-row')
     expect(legendRows).toHaveLength(29)
+
+    // Show all should be disabled when all traces are already shown
+    const showAllButton = await screen.findByText('Show all')
+    expect(showAllButton).toHaveAttribute('disabled')
+
+    // Click a legend label to hide the corresponding trace
+    fireEvent.click(screen.getByText('An_underscored_label (19 points)'))
+
+    // Wait for show all to not be disabled
+    await waitFor(() => expect(screen.getByText('Show all')).not.toHaveAttribute('disabled'))
   })
 })
