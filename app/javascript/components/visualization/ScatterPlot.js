@@ -234,7 +234,7 @@ function getLegendEntries(data, pointSize, labelCorrelations) {
 }
 
 /** get the array of plotly traces for plotting */
-function getPlotlyTraces({
+export function getPlotlyTraces({
   axes,
   data,
   annotType,
@@ -253,19 +253,23 @@ function getPlotlyTraces({
   const trace = {
     type: is3D ? 'scatter3d' : 'scattergl',
     mode: 'markers',
-    x: data.x,
-    y: data.y,
-    annotations: data.annotations,
-    cells: data.cells,
     opacity: pointAlpha ? pointAlpha : 1
-  }
-  if (is3D) {
-    trace.z = data.z
   }
 
   const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
+
   if (annotType === 'group' && !isGeneExpressionForColor) {
+    // default cluster scatter plot
+    // this currently shares some code with the 'else' block below, but the code
+    // below will need to be refactored when we cease using plotly transforms.
+    trace.x = data.x
+    trace.y = data.y
+    if (is3D) {
+      trace.z = data.z
+    }
+    trace.annotations = data.annotations,
+    trace.cells = data.cells
     // use plotly's groupby transformation to make the traces
     const legendEntries = getLegendEntries(data, pointSize, labelCorrelations)
     trace.transforms = [{
@@ -274,11 +278,51 @@ function getPlotlyTraces({
       styles: legendEntries
     }]
   } else {
+    // for non-clustered plots, we pass in a single trace with all the points
+    let colors
+    if (isGeneExpressionForColor) {
+      // sort the points by order of expression
+      const expressionsWithIndices = new Array(data.expression.length)
+      for (let i = 0; i < data.expression.length; i++) {
+        expressionsWithIndices[i] = [data.expression[i], i]
+      }
+      expressionsWithIndices.sort((a, b) => a[0] - b[0])
+      // initialize the other arrays (see )
+      trace.x = new Array(data.expression.length)
+      trace.y = new Array(data.expression.length)
+      if (is3D) {
+        trace.z = new Array(data.expression.length)
+      }
+      trace.annotations = new Array(data.expression.length)
+      trace.cells = new Array(data.expression.length)
+      colors = new Array(data.expression.length)
+      for (let i = 0; i < expressionsWithIndices.length; i++) {
+        // now that we know the indices, reorder the other data arrays
+        const sortedIndex = expressionsWithIndices[i][1]
+        trace.x[i] = data.x[sortedIndex]
+        trace.y[i] = data.y[sortedIndex]
+        if (is3D) {
+          trace.z[i] = data.z[sortedIndex]
+        }
+        trace.cells[i] = data.cells[sortedIndex]
+        trace.annotations[i] = data.annotations[sortedIndex]
+        colors[i] = expressionsWithIndices[i][0]
+      }
+    } else {
+      trace.x = data.x
+      trace.y = data.y
+      if (is3D) {
+        trace.z = data.z
+      }
+      trace.annotations = data.annotations,
+      trace.cells = data.cells
+      colors = isGeneExpressionForColor ? data.expression : data.annotations
+    }
+
     trace.marker = {
       line: { color: 'rgb(40,40,40)', width: 0 },
       size: pointSize
     }
-    const colors = isGeneExpressionForColor ? data.expression : data.annotations
     const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
     if (!isAnnotatedScatter) {
       Object.assign(trace.marker, {
