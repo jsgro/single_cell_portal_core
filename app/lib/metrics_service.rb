@@ -23,11 +23,12 @@ class MetricsService
       # puts "Posting to Mixpanel.  Params: #{params}"
       RestClient::Request.execute(params)
     rescue RestClient::Exception => e
-      Rails.logger.error "#{Time.zone.now}: Bard error in call to #{params[:url]}: #{e.message}"
+      # log error, unless this is CI, in which case we don't care
+      Rails.logger.error "#{Time.zone.now}: Bard error in call to #{params[:url]}: #{e.message}" unless ENV['CI']
       # Rails.logger.error e.to_yaml
       if e.http_code != 503
         # TODO (SCP-2632): Refine handling of Bard "503 Service Unavailable" errors
-        ErrorTracker.report_exception(e, user, params)
+        ErrorTracker.report_exception(e, user, params) unless ENV['CI']
       end
     end
   end

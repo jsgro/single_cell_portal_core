@@ -39,7 +39,7 @@
       <i class='fas fa-question-circle' data-toggle="tooltip"
          title="You cannot change the file type of synced files.  Please delete and re-sync the file to change this.">
       </i><br />
-      <%= f.select :file_type, options_for_select(@file_types, study_file.file_type), {}, class: 'form-control file-type' %>
+      <%= f.select :file_type, options_for_select(StudyFile::STUDY_FILE_TYPE_NAME_HASH.invert, study_file.file_type), {}, class: 'form-control file-type' %>
     </div>
     <div class="col-sm-2">
       <%= f.label :upload, 'Download' %><br />

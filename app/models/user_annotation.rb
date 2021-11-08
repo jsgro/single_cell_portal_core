@@ -129,18 +129,16 @@ class UserAnnotation
   end
 
   # combine split data arrays when they were longer than 100k values each.
-  def concatenate_data_arrays(array_name, array_type, subsample_threshold=nil, subsample_annotation=nil)
+  def concatenate_data_arrays(array_name, array_type, subsample_threshold = nil, subsample_annotation = nil)
     if subsample_threshold.blank?
       subsample_threshold = nil
       subsample_annotation = nil
     end
-    # get all of the data arrays and combine them
-      user_data_arrays = self.user_data_arrays.by_name_and_type(array_name, array_type, subsample_threshold, subsample_annotation)
-      all_values = []
-      user_data_arrays.each do |array|
-        all_values += array.values
-      end
-      return all_values
+    query = {
+      name: array_name, array_type: array_type, subsample_threshold: subsample_threshold,
+      subsample_annotation: subsample_annotation, user_annotation_id: self.id
+    }
+    UserDataArray.concatenate_arrays(query)
   end
 
   # create a data array-- user data arrays attributes is from params follows form:

@@ -1,6 +1,8 @@
 language: ruby
 dist: bionic
 arch: amd64
+env:
+  - RAILS_LOG_TO_STDOUT=true
 rvm:
   - 2.6.6
 install:

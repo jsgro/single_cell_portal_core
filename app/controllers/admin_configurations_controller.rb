@@ -306,28 +306,12 @@ class AdminConfigurationsController < ApplicationController
     @user = User.find(params[:id])
     respond_to do |format|
       if @user.update(user_params)
-        self.class.process_feature_flag_form_data(@user, params)
         format.html { redirect_to admin_configurations_path, notice: "User: '#{@user.email}' was successfully updated." }
       else
         format.html { render :edit_user }
         format.json { render json: @user.errors, status: :unprocessable_entity }
       end
     end
-  end
-
-  # Update the user with the form data on their feature flags
-  # because of the true/false/default structure, we have to have custom logic to handle the values
-  def self.process_feature_flag_form_data(user, params)
-    updated_flag_data = {}
-    FeatureFlag.all.each do |default_flag|
-      # for each possible feature flag, check if the vaule was set on the form via a field name feature_flag_<<flag name>>
-      flag_form_val = params[('feature_flag_' + default_flag.name).to_sym]
-      # if it was set, and not set to '-' (default), include it in the updated values
-      if flag_form_val && flag_form_val != '-'
-        updated_flag_data[default_flag.name] = flag_form_val == '1' ? true : false
-      end
-    end
-    user.update!(feature_flags: updated_flag_data)
   end
 
   ###

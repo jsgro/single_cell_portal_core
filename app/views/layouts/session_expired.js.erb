@@ -1,1 +1,1 @@
-showMessageModal("<%= @notice.present? ? @notice.html_safe : nil %>", "<%= @alert.present? ? @alert.html_safe : nil %>");
+showMessageModal("<%= @notice.present? ? @notice.html_safe : nil %>", "<%= @alert.present? ? @alert.html_safe.gsub('"', '\'') : nil %>");

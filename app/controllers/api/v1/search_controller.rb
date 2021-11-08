@@ -6,6 +6,11 @@ module Api
       # regex to match on 'sequence_file' and 'analysis_file' entries from TDR
       TDR_FILE_OUTPUT_TYPE_MATCH = /_file/.freeze
 
+      # value used to separate facet entries in query string params
+      FACET_DELIMITER = ';'.freeze
+      # value used to separate filter values for a facet in query string params
+      FILTER_DELIMITER = '|'.freeze
+
       before_action :set_current_api_user!
       before_action :authenticate_api_user!, only: [:create_auth_code]
       before_action :set_search_facet, only: :facet_filters
@@ -32,7 +37,9 @@ module Api
           parameter do
             key :name, :facets
             key :in, :query
-            key :description, 'User-supplied list facets and filters, formatted as: "facet_id:filter_value+facet_id_2:filter_value_2,filter_value_3"'
+            key :description, 'User-supplied list facets and filters.  Delimit facets from filters with ":", filter ' \
+                              "values with '#{FILTER_DELIMITER}' and facet entries with '#{FACET_DELIMITER}'"
+            key :example, "facet_id:filter_value#{FACET_DELIMITER}facet_id_2:filter_value_2#{FILTER_DELIMITER}filter_value_3"
             key :required, false
             key :type, :string
           end
@@ -241,11 +248,33 @@ module Api
           sort_type = params[:order].to_sym
         end
 
-        # determine sort order for pagination; minus sign (-) means a descending search
+        # convert to array to allow appending external search results (Azul, TDR, etc.)
         @studies = @studies.to_a
+
+        # perform Azul search, if enabled, and there are facets/terms provided by user
+        # run this before inferred search so that they are weighted and sorted correctly
+        if api_user_signed_in? && current_api_user.feature_flag_for('cross_dataset_search_backend') &&
+          @facets.present?
+          begin
+            @studies, @studies_by_facet = ::AzulSearchService.append_results_to_studies(@studies,
+                                                                                        selected_facets: @facets,
+                                                                                        terms: @term_list,
+                                                                                        facet_map: @studies_by_facet)
+            # @studies, @studies_by_facet = ::TdrSearchService.append_results_to_studies(@studies,
+            #                                                                             selected_facets: @facets,
+            #                                                                             terms: @term_list,
+            #                                                                             facet_map: @studies_by_facet)
+          rescue RestClient::Exception => e
+            logger.error "Error in retrieving results from Azul - #{e.class}: #{e.message}"
+            ErrorTracker.report_exception(e, current_api_user,
+                                          { facets: @facets }, { terms: @term_list })
+          end
+        end
+
+        # determine sort order for pagination; minus sign (-) means a descending search
         case sort_type
         when :keyword
-          @studies = @studies.sort_by {|study| -study.search_weight(@term_list)[:total] }
+          @studies = @studies.sort_by { |study| -study.search_weight(@term_list)[:total] }
         when :accession
           @studies = @studies.sort_by do |study|
             accession_index = possible_accessions.index(study.accession)
@@ -257,9 +286,12 @@ module Api
             accession_index
           end
         when :accession_list
-          @studies = @studies.sort_by {|study| @accession_list.index(study.accession) }
+          @studies = @studies.sort_by { |study| @accession_list.index(study.accession) }
         when :facet
-          @studies = @studies.sort_by {|study| -@studies_by_facet[study.accession][:facet_search_weight]}
+          @studies = @studies.sort_by do |study|
+            accession = self.class.get_study_accession(study)
+            -@studies_by_facet[accession][:facet_search_weight]
+          end
         when :recent
           @studies = @studies.sort_by(&:created_at).reverse
         when :popular
@@ -270,7 +302,7 @@ module Api
         end
 
         # save list of study accessions for bulk_download/bulk_download_size calls, in order of results
-        @matching_accessions = @studies.map(&:accession)
+        @matching_accessions = @studies.map { |study| self.class.get_study_accession(study) }
         logger.info "Total matching accessions from all non-inferred searches: #{@matching_accessions}"
 
         # if a user ran a faceted search, attempt to infer results by converting filter display values to keywords
@@ -283,36 +315,19 @@ module Api
           if facets_to_keywords.any?
             @inferred_terms = facets_to_keywords.values.flatten
             logger.info "Running inferred search using #{facets_to_keywords}"
-            inferred_studies = self.class.generate_mongo_query_by_context(terms: facets_to_keywords, base_studies: @viewable,
-                                                                          accessions: @matching_accessions, query_context: :inferred)
+            inferred_studies = self.class.generate_mongo_query_by_context(terms: facets_to_keywords,
+                                                                          base_studies: @viewable,
+                                                                          accessions: @matching_accessions,
+                                                                          query_context: :inferred)
             @inferred_accessions = inferred_studies.pluck(:accession)
             logger.info "Found #{@inferred_accessions.count} inferred matches: #{@inferred_accessions}"
             @matching_accessions += @inferred_accessions
-            @studies += inferred_studies.sort_by {|study| -study.search_weight(@inferred_terms)[:total] }
+            @studies += inferred_studies.sort_by { |study| -study.search_weight(@inferred_terms)[:total] }
           end
         end
 
-        # perform TDR search, if enabled, and there are facets/terms provided by user
-        if User.feature_flag_for_instance(current_api_user, 'cross_dataset_search_backend') && (@facets.present? || @term_list.present?)
-          @tdr_results = self.class.get_tdr_results(selected_facets: @facets, terms: @term_list)
+        @matching_accessions = @studies.map { |study| self.class.get_study_accession(study) }
 
-          if @facets.present?
-            simple_tdr_results = self.class.simplify_tdr_facet_search_results(@tdr_results)
-            matched_tdr_studies = self.class.match_studies_by_facet(simple_tdr_results, @facets)
-            if @studies_by_facet.present?
-              @studies_by_facet.merge!(matched_tdr_studies)
-            else
-              @studies_by_facet = matched_tdr_studies
-            end
-          end
-          # just log for now
-          logger.info "Found #{@tdr_results.keys.size} results in Terra Data Repo"
-          @tdr_results.each do |_, tdr_result|
-            @studies << tdr_result
-          end
-        end
-
-        @matching_accessions = @studies.map {|study| study.is_a?(Study) ? study.accession : study[:accession]}
         logger.info "Final list of matching studies: #{@matching_accessions}"
         @results = @studies.paginate(page: params[:page], per_page: Study.per_page)
         render json: search_results_obj, status: 200
@@ -421,10 +436,10 @@ module Api
       def set_search_facets_and_filters
         @facets = []
         if params[:facets].present?
-          facet_queries = RequestUtils.split_query_param_on_delim(parameter: params[:facets], delimiter: '+')
+          facet_queries = RequestUtils.split_query_param_on_delim(parameter: params[:facets], delimiter: FACET_DELIMITER)
           facet_queries.each do |query|
             facet_id, raw_filters = RequestUtils.split_query_param_on_delim(parameter: query, delimiter: ':')
-            filter_values = RequestUtils.split_query_param_on_delim(parameter: raw_filters)
+            filter_values = RequestUtils.split_query_param_on_delim(parameter: raw_filters, delimiter: FILTER_DELIMITER)
             facet = SearchFacet.find_by(identifier: facet_id)
             if facet.present?
               matching_filters = self.class.find_matching_filters(facet: facet, filter_values: filter_values)
@@ -448,6 +463,11 @@ module Api
         else
           view_context.sanitize(terms)
         end
+      end
+
+      # extract study accession, accounting for source (SCP vs. external)
+      def self.get_study_accession(search_result)
+        search_result.try(:accession) || search_result[:accession]
       end
 
       # extract any "quoted phrases" from query string and tokenize terms
@@ -629,26 +649,6 @@ module Api
         matches
       end
 
-      # Simplify TDR results to be mappable for the UI badges for faceted search
-      def self.simplify_tdr_facet_search_results(query_results)
-        tdr_results = []
-        query_results.each_pair do |accession, result|
-          facet_matches = result[:facet_matches]
-          if facet_matches.present?
-            simple_result = { study_accession: accession }
-            facet_matches.each do |mapping|
-              mapping.each do |key, val|
-                facet_name = FacetNameConverter.convert_schema_column(:tim, :alexandria, key)
-                simple_result[facet_name] = val
-              end
-            end
-          end
-          tdr_results << simple_result
-        end
-        tdr_results
-      end
-
-
       # find matching filters within a given facet based on query parameters
       def self.find_matching_filters(facet:, filter_values:)
         matching_filters = []
@@ -669,7 +669,8 @@ module Api
             matching_filters = {min: min_value, max: max_value, unit: requested_unit}
           end
         else
-          facet.filters.each do |filter|
+          filters_list = facet.filters_with_external.any? ? facet.filters_with_external : facet.filters
+          filters_list.each do |filter|
             if filter_values.include?(filter[:id])
               matching_filters << filter
             end
@@ -689,165 +690,6 @@ module Api
           match
         else
           matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] || filter[:name] == search_result[result_key]}
-        end
-      end
-
-      # execute a search in TDR and get back normalized results
-      # will actually issue 2 search requests, first to extract unique project_ids that match the query,
-      # and a second to retrieve all result rows for those projects
-      # this is to address issues in sparsity of Elasticsearch index with regards to some data (like species, disease, etc)
-      def self.get_tdr_results(selected_facets:, terms:)
-        client = ApplicationController.data_repo_client
-        results = {}
-        begin
-          if selected_facets.present?
-            facet_json = client.generate_query_from_facets(selected_facets)
-          end
-          if terms.present?
-            term_json = client.generate_query_from_keywords(terms)
-          end
-          # now we merge the two queries together to perform a single search request
-          query_json = client.merge_query_json(facet_query: facet_json, term_query: term_json)
-          logger.info "Executing TDR query with: #{query_json}"
-          snapshot_ids = AdminConfiguration.get_tdr_snapshot_ids
-          logger.info "Scoping TDR query to snapshots: #{snapshot_ids.join(', ')}" if snapshot_ids.present?
-          # first request is to only retrieve project IDs, then the second is for actual row-level results
-          projects = client.query_snapshot_indexes(query_json, snapshot_ids: snapshot_ids)['result']
-          project_ids = projects.map { |row| row['project_id'] }.uniq.compact
-          project_query = client.generate_query_for_projects(project_ids)
-          raw_tdr_results = client.query_snapshot_indexes(project_query, snapshot_ids: snapshot_ids)
-          added_file_ids = {}
-          raw_tdr_results['result'].each do |result_row|
-            results = process_tdr_result_row(result_row, results,
-                                             selected_facets: selected_facets,
-                                             terms: terms,
-                                             added_file_ids: added_file_ids)
-          end
-        rescue RestClient::Exception => e
-          Rails.logger.error "Error querying TDR: #{e.class.name} -- #{e.message}"
-          ErrorTracker.report_exception(e, nil, selected_facets, { terms: terms })
-        end
-        results
-      end
-
-      # process an individual result row from TDR
-      # added_file_ids is a hash to ensure the same file is not added multiple times -- this method will
-      # handle adding to and checking it.
-      def self.process_tdr_result_row(row, results, selected_facets:, terms:, added_file_ids:)
-        # get column name mappings for assembling results
-        short_name_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :accession)
-        name_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_name)
-        description_field = FacetNameConverter.convert_schema_column(:alexandria, :tim, :study_description)
-        short_name = row[short_name_field]
-        results[short_name] ||= {
-          tdr_result: true, # identify this entry as coming from Data Repo
-          accession: short_name,
-          name: row[name_field],
-          description: row[description_field],
-          hca_project_id: row['project_id'],
-          facet_matches: [],
-          term_matches: [],
-          file_information: [
-            {
-              url: row['project_id'],
-              file_type: 'Project Manifest',
-              upload_file_size: 1.megabyte, # placeholder filesize as we don't know until manifest is downloaded
-              name: "#{short_name}.tsv"
-            }
-          ]
-        }.with_indifferent_access
-        result = results[short_name]
-        # determine facet filter matches
-        if selected_facets.present?
-          selected_facets.each do |facet|
-            matches = get_facet_match_for_tdr_result(facet, row)
-            matches.each do |col_name, matched_val|
-              entry = { col_name => matched_val }
-              result[:facet_matches] << entry unless result[:facet_matches].include?(entry)
-            end
-          end
-        end
-        if terms.present?
-          terms.each do |term|
-            matches = get_term_match_for_tdr_result(term, row)
-            matches.each do |col_name, _|
-              entry = { col_name => term }
-              result[:term_matches] << entry unless result[:term_matches].include?(entry)
-            end
-          end
-        end
-        # gather file information for sequence_file and analysis_file entries
-        if row['output_type'] =~ TDR_FILE_OUTPUT_TYPE_MATCH
-          file_info = extract_file_information(row)
-          drs_id = file_info[:drs_id]
-          unless added_file_ids[drs_id]
-            result[:file_information] << file_info
-            added_file_ids[drs_id] = true
-          end
-        end
-        results
-      end
-
-      # determine facet matches for an individual result row from TDR
-      def self.get_facet_match_for_tdr_result(facet, result_row)
-        tdr_name = FacetNameConverter.convert_schema_column(:alexandria, :tim, facet[:id])
-        if facet[:filters].is_a? Hash
-          # this is a numeric facet, so convert to range for match
-          # TODO: determine correct unit/datatype and convert
-          filter_value = "#{facet.dig(:filters, :min).to_i}-#{facet.dig(:filters, :max).to_i}"
-          matches = result_row.each_pair.select { |col, val| col == tdr_name && val == filter_value }
-        else
-          matches = []
-          facet[:filters].each do |filter|
-            matches << result_row.each_pair.select { |col, val| col == tdr_name && (val == filter[:name] || val == filter[:id] ) }
-                                 .flatten
-          end
-        end
-        matches.reject! { |key, value| key.blank? || value.blank? }
-        matches
-      end
-
-      # determine term/keyword match for an individual result row from TDR
-      def self.get_term_match_for_tdr_result(term, result_row)
-        name_field = FacetNameConverter.convert_schema_column(:tim, :alexandria, :study_name)
-        description_field = FacetNameConverter.convert_schema_column(:tim, :alexandria, :study_description)
-        matches = []
-        [name_field, description_field].each do |tdr_name|
-          result_row.each_pair do |col, val|
-            if col == tdr_name && val.include?(term)
-              matches << [tdr_name, term]
-            end
-          end
-        end
-        matches
-      end
-
-      # extract file information from row-level TDR results for sequence_file and analysis_file entries
-      def self.extract_file_information(result_row)
-        safe_entry = result_row.with_indifferent_access
-        output_type = safe_entry[:output_type]
-        case output_type
-        when 'sequence_file'
-          filename = safe_entry[:sequence_file_name]
-          format_parts = filename.split('.')
-          # make a guess at the file format, controlling for gzipped files
-          # this is a fallback if file_type hasn't been set in the row
-          file_format = format_parts.last == 'gz' ? format_parts.slice(-2) : format_parts.last
-          {
-            'name' => filename,
-            'upload_file_size' => safe_entry[:sequence_file_size].to_i,
-            'file_type' => output_type,
-            'file_format' => safe_entry[:file_type] || file_format,
-            'drs_id' => safe_entry[:output_id]
-          }.with_indifferent_access
-        when 'analysis_file'
-          {
-            'name' => safe_entry[:analysis_file_name],
-            'upload_file_size' => safe_entry[:analysis_file_size].to_i,
-            'file_type' => output_type,
-            'file_format' => safe_entry[:analysis_format],
-            'drs_id' => safe_entry[:drs_id]
-          }.with_indifferent_access
         end
       end
     end

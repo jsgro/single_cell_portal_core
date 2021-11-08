@@ -4,7 +4,7 @@
   <%= f.hidden_field :_id, value: study_file._id %>
   <%= hidden_field_tag :selector, '#metadata_form' %>
   <%= hidden_field_tag :partial, 'initialize_metadata_form' %>
-  <% convention_required = User.feature_flag_for_instance(current_user, 'convention_required') %>
+  <% convention_required = current_user.feature_flag_for('convention_required') %>
 	<div class="form-group row">
 		<div class="col-sm-4">
 			<%= f.label :name %><br />
@@ -156,16 +156,16 @@
 					fileUploading = true;
 					var that = this;
           const file = data.files[0]
-          const fileType = 'metadata'
+          const fileType = 'Metadata'
           const containerId = `${fileType}-metadata-container`
 
           let validationErrors = []
           let summary = ''
-          <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
+          <% if current_user.feature_flag_for('clientside_validation') %>
             $(`#${containerId}`).remove() // Remove any prior notice
             $('#metadata_form').append(`<div id="${containerId}"></div>`)
             // Run client-side metadata file validation
-            const results = await window.SCP.validateFile(file, fileType)
+            const results = await window.SCP.validateFileContent(file, fileType)
             validationErrors = results.errors
             summary = results.summary
           <% end %>

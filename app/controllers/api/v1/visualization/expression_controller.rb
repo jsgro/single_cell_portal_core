@@ -93,7 +93,7 @@ module Api
         end
 
         def show
-          if (!@study.has_expression_data? || !@study.can_visualize_clusters?)
+          if ((!@study.has_expression_data? || !@study.can_visualize_clusters?) && !params[:gene_list])
             render(json: {error: "Study #{@study.accession} does not support expression rendering"}, status: 400) and return
           end
           data_type = params[:data_type]

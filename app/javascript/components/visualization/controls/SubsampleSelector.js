@@ -7,7 +7,10 @@ import { clusterSelectStyle } from 'lib/cluster-utils'
 import Select from 'lib/InstrumentedSelect'
 
 
-/** takes the server response and returns subsample options suitable for react-select */
+/** takes the server response and returns subsample options suitable for react-select
+ * Setting isPerfTest to true will render a large array of options, regardless of the study content, so
+ * meant to be used in conjunction with ClustersController::generate_fixed_size_plot_data
+ */
 function getSubsampleOptions(annotationList, clusterName) {
   let subsampleOptions = []
   if (clusterName && annotationList.subsample_thresholds) {
