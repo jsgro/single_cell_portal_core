@@ -104,8 +104,8 @@ function LegendEntry({
 
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
-  name, height, countsByLabel, correlations,
-  shownTraces, updateShownTraces, showHideActive
+  name, height, countsByLabel, correlations, shownTraces,
+  updateShownTraces, showHideActive
 }) {
   const labels = getLabels(countsByLabel)
   const numLabels = labels.length
@@ -130,11 +130,12 @@ export default function ScatterPlotLegend({
     })
 
   const style = { width: scatterLabelLegendWidth, height }
-  console.log('style', style)
   const filteredClass = (shownTraces.length === 0) ? 'unfiltered' : ''
   const [showIsActive, hideIsActive] = showHideActive
   return (
-    <div className={`scatter-legend ${filteredClass}`} style={style}>
+    <div
+      className={`scatter-legend ${filteredClass}`}
+      style={style}>
       <div className="scatter-legend-head">
         <div>
           <p className="scatter-legend-name">{name}</p>

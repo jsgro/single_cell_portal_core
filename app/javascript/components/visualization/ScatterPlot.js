@@ -34,10 +34,7 @@ export function getScatterWidthHeight(scatter, dimensionProps) {
     hasTitle: true
   }, dimensionProps)
 
-  console.log('dimensionProps', dimensionProps)
-  const dim = getPlotDimensions(dimensionProps)
-  console.log('dim', dim)
-  return dim
+  return getPlotDimensions(dimensionProps)
 }
 
 
