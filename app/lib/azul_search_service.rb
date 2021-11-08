@@ -11,8 +11,9 @@ class AzulSearchService
   # each Azul result entry under 'hits' will have these keys, whether project- or file-based
   RESULT_FACET_FIELDS = %w[samples specimens cellLines donorOrganisms organoids cellSuspensions].freeze
 
-  def self.append_results_to_studies(existing_studies, selected_facets:, terms:, facet_map: {})
-    azul_results = ::AzulSearchService.get_results(selected_facets: selected_facets)
+  def self.append_results_to_studies(existing_studies, selected_facets:, terms:, facet_map: nil)
+    facet_map ||= {}
+    azul_results = ::AzulSearchService.get_results(selected_facets: selected_facets, terms: terms)
     Rails.logger.info "Found #{azul_results.keys.size} results in Azul"
     azul_results.each do |accession, azul_result|
       existing_studies << azul_result
@@ -22,11 +23,17 @@ class AzulSearchService
   end
 
   # execute a search against Azul API
-  # TODO: add support for keyword search (SCP-3806)
-  def self.get_results(selected_facets:)
+  def self.get_results(selected_facets:, terms:)
     client = ApplicationController.hca_azul_client
     results = {}
-    query_json = client.format_query_from_facets(selected_facets)
+    facet_query = client.format_query_from_facets(selected_facets) if selected_facets
+    terms_to_facets = client.convert_keyword_to_facet_query(terms)
+    term_query = client.format_query_from_facets(terms_to_facets) if terms_to_facets
+    query_json = client.merge_query_objects(facet_query, term_query)
+    # abort search if no facets/terms result in query to execute
+    return {} if query_json.empty?
+
+    merged_facets = merge_facet_lists(selected_facets, terms_to_facets)
     Rails.logger.info "Executing Azul project query with: #{query_json}"
     project_results = client.projects(query: query_json)
     project_ids = []
@@ -54,7 +61,7 @@ class AzulSearchService
         ]
       }.with_indifferent_access
       # get facet matches from rest of entry
-      result[:facet_matches] = get_facet_matches(entry_hash, selected_facets)
+      result[:facet_matches] = get_facet_matches(entry_hash, merged_facets)
       results[short_name] = result
     end
     # now run file query to get matching files for all matching projects
@@ -145,5 +152,11 @@ class AzulSearchService
       ErrorTracker.report_exception(e, nil, {})
       {} # failover case to prevent NoMethodError downstream
     end
+  end
+
+  # merge together two lists of facets (from keyword- and faceted-search requests)
+  # takes into account nil objects
+  def self.merge_facet_lists(*facets)
+    facets.compact.reduce([], :+)
   end
 end

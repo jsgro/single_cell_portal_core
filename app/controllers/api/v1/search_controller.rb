@@ -254,7 +254,7 @@ module Api
         # perform Azul search, if enabled, and there are facets/terms provided by user
         # run this before inferred search so that they are weighted and sorted correctly
         if api_user_signed_in? && current_api_user.feature_flag_for('cross_dataset_search_backend') &&
-          @facets.present?
+          (@facets.present? || @term_list.present?)
           begin
             @studies, @studies_by_facet = ::AzulSearchService.append_results_to_studies(@studies,
                                                                                         selected_facets: @facets,

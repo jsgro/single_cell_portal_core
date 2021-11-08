@@ -286,6 +286,17 @@ class SearchFacet
     where(visible: true)
   end
 
+  # find a match for a facet based off of a term, e.g. 'Mus musculus' => SearchFacet.find_by(identifer: 'species')
+  def self.find_facet_from_term(term)
+    all.each do |facet|
+      filter_list = facet.filters_with_external.any? ? :filters_with_external : :filters
+      if facet.filters_match?(term, filter_list: filter_list)
+        return facet
+      end
+    end
+    nil # no match is found
+  end
+
   # helper for rendering correct list of filters for a given user
   # takes :cross_dataset_search_backend feature flag into account
   # this is to prevent large list of filters resulting in empty search responses
@@ -333,9 +344,24 @@ class SearchFacet
   end
 
   # determine if a given filter value already exists (case-insensitive search)
-  # does not check :public_filters as this is a subset of :filters
-  def filters_include?(filter_value)
-    filters.map { |filter| [filter[:id], filter[:name]] }.flatten.map(&:downcase).include? filter_value.downcase
+  # can specify which filter list to search, will default to :filters
+  def filters_include?(filter_value, filter_list: :filters)
+    flatten_filters(filter_list).map(&:downcase).include? filter_value.downcase
+  end
+
+  # determine if any filters are a partial match for a given value
+  def filters_match?(filter_value, filter_list: :filters)
+    flatten_filters(filter_list).detect { |filter| filter.match?(/#{filter_value}/i) }.present?
+  end
+
+  # find all possible matches for a partial filter value
+  def find_filter_matches(filter_value, filter_list: :filters)
+    flatten_filters(filter_list).select { |filter| filter.match(/#{filter_value}/i) }.map(&:to_s)
+  end
+
+  # flatten all filter ids/values into a single array
+  def flatten_filters(filter_list = :filters)
+    send(filter_list).map { |filter| [filter[:id], filter[:name]] }.flatten
   end
 
   # retrieve unique values from BigQuery and format an array of hashes with :name and :id values to populate :filters
