@@ -1,7 +1,7 @@
 import React from 'react'
 import _cloneDeep from 'lodash/cloneDeep'
 import jquery from 'jquery'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 import Plotly from 'plotly.js-dist'
 
@@ -186,7 +186,7 @@ describe('getNewContextMap correctly assigns contexts', () => {
     })
   })
 
-  it('generates scatter plot and interactive legend', async () => {
+  it('shows default group scatter plot and legend', async () => {
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
     // pass in a clone of the response since it may get modified by the cache operations
     apiFetch.mockImplementation(params => {
@@ -200,7 +200,8 @@ describe('getNewContextMap correctly assigns contexts', () => {
     const fakeLogScatter = jest.spyOn(ScpApiMetrics, 'logScatterPlot')
     fakeLogScatter.mockImplementation(() => {})
 
-    render((
+
+    const { container } = render((
       <ScatterTab studyAccession='SCP101'
         exploreParams={{
           'userSpecified': {
@@ -237,15 +238,18 @@ describe('getNewContextMap correctly assigns contexts', () => {
         dataCache={createCache()}/>
     ))
 
-    await screen.findByTestId('study-scatter-1')
-    const plotTitles = screen.getAllByRole('heading')
+    // findByTestId would be more kosher, but the numerical leaf ("1") is
+    // assigned randomly in `ScatterPlot`.  This ID has been observed with the
+    // value "study-scatter-25", but relying on that seems brittle.
+    //
+    // Consider changing `ScatterPlot` to use a deterministic `data-testid`.
+    // await screen.findByTestId('study-scatter-1-legend')
 
-    expect(plotTitles).toHaveLength(1)
-    const expectedTitles = [
-      'cluster_many_long_odd_labels.tsv'
-    ]
-    plotTitles.forEach((titleEl, index) => {
-      expect(titleEl).toHaveTextContent(expectedTitles[index])
+    await waitFor(() => {
+      container.querySelectorAll('#study-scatter-1-legend').length > 0
     })
+
+    const legendRows = container.querySelectorAll('.scatter-legend-row')
+    expect(legendRows).toHaveLength(29)
   })
 })
