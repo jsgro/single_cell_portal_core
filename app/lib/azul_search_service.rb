@@ -159,4 +159,22 @@ class AzulSearchService
   def self.merge_facet_lists(*facets)
     facets.compact.reduce([], :+)
   end
+
+  # compute a term matching weight for a result from Azul
+  # this mirrors Study#search_weight
+  def self.compute_term_search_weight(result, terms)
+    weights = {
+      total: 0,
+      terms: {}
+    }
+    terms.each do |term|
+      text_blob = "#{result['name']} #{result['description']}"
+      score = text_blob.scan(/#{::Regexp.escape(term)}/i).size
+      if score > 0
+        weights[:total] += score
+        weights[:terms][term] = score
+      end
+    end
+    weights
+  end
 end

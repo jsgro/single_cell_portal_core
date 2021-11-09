@@ -274,7 +274,13 @@ module Api
         # determine sort order for pagination; minus sign (-) means a descending search
         case sort_type
         when :keyword
-          @studies = @studies.sort_by { |study| -study.search_weight(@term_list)[:total] }
+          @studies = @studies.sort_by do |study|
+            if study.is_a? Study
+              -study.search_weight(@term_list)[:total]
+            else
+              -(::AzulSearchService.compute_term_search_weight(study, @term_list)[:total])
+            end
+          end
         when :accession
           @studies = @studies.sort_by do |study|
             accession_index = possible_accessions.index(study.accession)
