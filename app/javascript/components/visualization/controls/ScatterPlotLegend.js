@@ -69,7 +69,7 @@ function LegendEntry({
   label, numPoints, iconColor, correlations,
   numLabels, shownTraces, updateShownTraces
 }) {
-  let entry = `${label} (${numPoints} points)`
+  let entry = label
   if (correlations) {
     const correlation = Math.round(correlations[label] * 100) / 100
 
@@ -94,7 +94,10 @@ function LegendEntry({
       onClick={() => toggleSelection()}
     >
       <div className="scatter-legend-icon" style={iconStyle}></div>
-      <div className="scatter-legend-entry">{entry}</div>
+      <div className="scatter-legend-entry">
+        <span className="legend-label" title={entry}>{entry}</span>
+        <span className="num-points" title={`${numPoints} points in this group`}>{numPoints}</span>
+      </div>
     </div>
   )
 }

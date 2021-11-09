@@ -8,12 +8,15 @@
   display: flex;
 }
 
+.col-md-6 .scatter-graph {
+  margin-left: 10px;
+}
+
 .scatter-legend {
   float: right;
   overflow: auto;
   margin-top: 10px;
-  margin-right: 10px;
-  // background-color: #E5EEF7;
+  margin-left: 5px;
 }
 
 .scatter-legend-head {
@@ -63,6 +66,21 @@
 .scatter-legend-entry {
   position: relative;
   top: 5px;
+  overflow: scroll;
+  white-space: pre;
+
+  .legend-label {
+    display: inline-block;
+    width: 160px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .num-points {
+    float: right;
+    margin-right: 5px;
+  }
 }
 
 .scatter-legend-row {
