@@ -1,4 +1,4 @@
-<h1>Send an Email to all Users <span class="badge"><%= User.count %> users</span> </h1>
+<h1>Send an email to all users <span class="badge"><%= User.count %> users</span> </h1>
 <div class="bs-callout bs-callout-default">
   <h4>Instructions</h4>
   <p>Use this form to send an email to all registered user accounts in the portal.  All messages delivered will have
@@ -24,8 +24,8 @@
   </div>
   <div class="form-group row">
     <div class="col-md-12">
-      <%= link_to "<i class='fas fa-fw fa-envelope'></i> Deliver Email".html_safe, '#/', class: 'btn btn-lg btn-success', id: 'deliver-users-email' %>
-      <%= link_to "<i class='fas fa-fw fa-eye'></i> Preview Email".html_safe, '#/', class: 'btn btn-lg btn-primary', id: 'deliver-preview-email', data: {toggle: 'tooltip'}, title: "Send a preview of this email to #{current_user.email}" %>
+      <%= link_to "<i class='fas fa-fw fa-envelope'></i> Deliver email".html_safe, '#/', class: 'btn btn-lg btn-success', id: 'deliver-users-email' %>
+      <%= link_to "<i class='fas fa-fw fa-eye'></i> Preview email".html_safe, '#/', class: 'btn btn-lg btn-primary', id: 'deliver-preview-email', data: {toggle: 'tooltip'}, title: "Send a preview of this email to #{current_user.email}" %>
     </div>
   </div>
 <% end %>

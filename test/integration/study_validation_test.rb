@@ -394,14 +394,14 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     sign_in @sharing_user
     patch study_path(study), params: {study: { public: true }}
     follow_redirect!
-    assert_equal studies_path, path, "Did not redirect to My Studies page"
+    assert_equal studies_path, path, "Did not redirect to My studies page"
     study.reload
     refute study.public
 
     sign_out @sharing_user
     get site_path
     patch study_path(study), params: {study: { public: true }}
-    assert_response 302 # redirect to "My Studies" page when :check_edit_permissions fires
+    assert_response 302 # redirect to "My studies" page when :check_edit_permissions fires
     follow_redirect!
     assert_response 302 # redirect to sign in page when :authenticate_user! fires
     follow_redirect!

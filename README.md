@@ -618,7 +618,7 @@ only the portal service account will have access to workspaces.
 
 Disabling compute access will set all user access permissions to READER, thus disabling computes.
 
-Disabling local access does not alter Terra permissions, but prevents users from accessing the 'My Studies' page and
+Disabling local access does not alter Terra permissions, but prevents users from accessing the 'My studies' page and
 uploading data through the portal.  Downloads are still enabled, and normal front-end actions are unaffected.
 
 Re-enabling Terra access will restore all permissions back to their original state.

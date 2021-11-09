@@ -7,7 +7,7 @@ import { StudySearchContext } from 'providers/StudySearchProvider'
 import useCloseableModal from 'hooks/closeableModal'
 
 /**
- * Component for "More Facets" button.  Clicking shows facets accordion box.
+ * Component for "More facets" button.  Clicking shows facets accordion box.
  *
  * UI spec: https://projects.invisionapp.com/d/main#/console/19272801/402387756/preview
  */
@@ -31,7 +31,7 @@ export default function MoreFacetsButton(props) {
       <a
         onClick={handleButtonClick}>
         <FontAwesomeIcon className="icon-left" icon={faSlidersH}/>
-          More Facets { facetCountString }
+          More facets { facetCountString }
       </a>
       {show && <FacetsAccordion facets={props.facets} setShow={setShow} />}
     </span>
