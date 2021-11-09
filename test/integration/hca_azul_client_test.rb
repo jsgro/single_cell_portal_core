@@ -141,13 +141,6 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     assert_equal expected_query, query
   end
 
-  test 'should format regular expression for term matching' do
-    terms = ['foo', 'bar', 'bing baz boo']
-    regex = @hca_azul_client.format_term_regex(terms)
-    expected_regex = /foo|bar|bing\ baz\ boo/i
-    assert_equal expected_regex, regex
-  end
-
   test 'should append HCA catalog name to queries' do
     path = '/index/projects'
     appended_path = @hca_azul_client.append_catalog(path, @default_catalog)

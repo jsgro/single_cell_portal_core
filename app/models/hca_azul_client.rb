@@ -319,17 +319,6 @@ class HcaAzulClient < Struct.new(:api_root)
     end
     merged_query
   end
-  # create a regular expression to use in matching terms against project titles/descriptions or file attributes
-  # returned regular expression is case-insensitive
-  #
-  # * *params*
-  #   - +terms+ (Array<String>) => Array of search terms, can include quoted strings
-  #
-  # * *returns*
-  #   - (Regexp) => regular expression used in matching (case-insensitive)
-  def format_term_regex(terms = [])
-    Regexp.new(terms.map { |t| Regexp.escape(t) }.join('|'), true)
-  end
 
   # take a Hash/JSON object and format as a query string parameter
   #
