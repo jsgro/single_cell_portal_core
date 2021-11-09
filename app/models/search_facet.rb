@@ -361,7 +361,7 @@ class SearchFacet
 
   # flatten all filter ids/values into a single array
   def flatten_filters(filter_list = :filters)
-    send(filter_list).map { |filter| [filter[:id], filter[:name]] }.flatten
+    send(filter_list).map { |filter| [filter[:id], filter[:name]] }.flatten.uniq
   end
 
   # retrieve unique values from BigQuery and format an array of hashes with :name and :id values to populate :filters
