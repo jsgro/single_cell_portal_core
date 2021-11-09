@@ -328,14 +328,17 @@ export function getPlotlyTraces({
   const trace = {
     type: is3D ? 'scatter3d' : 'scattergl',
     mode: 'markers',
+    x: data.x,
+    y: data.y,
+    annotations: data.annotations,
+    cells: data.cells,
     opacity: pointAlpha ? pointAlpha : 1
+  }
+  if (is3D) {
+    trace.z = data.z
   }
 
   let countsByLabel = null
-
-  const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
-
-  const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
 
   const isRefGroup = getIsRefGroup(scatter)
 
@@ -365,6 +368,7 @@ export function getPlotlyTraces({
       })
     }
   } else {
+    const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
     // for non-clustered plots, we pass in a single trace with all the points
     let colors
     if (isGeneExpressionForColor) {
@@ -396,13 +400,6 @@ export function getPlotlyTraces({
         colors[i] = expressionsWithIndices[i][0]
       }
     } else {
-      trace.x = data.x
-      trace.y = data.y
-      if (is3D) {
-        trace.z = data.z
-      }
-      trace.annotations = data.annotations,
-      trace.cells = data.cells
       colors = isGeneExpressionForColor ? data.expression : data.annotations
     }
 
@@ -410,8 +407,11 @@ export function getPlotlyTraces({
       line: { color: 'rgb(40,40,40)', width: 0 },
       size: pointSize
     }
-    const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
+
     if (!isAnnotatedScatter) {
+      const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
+      const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
+
       Object.assign(trace.marker, {
         showscale: true,
         colorscale: appliedScatterColor,
