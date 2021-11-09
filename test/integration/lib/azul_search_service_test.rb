@@ -29,7 +29,7 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
   end
 
   test 'should search Azul using facets' do
-    results = AzulSearchService.get_results(selected_facets: @facets)
+    results = AzulSearchService.get_results(selected_facets: @facets, terms: nil)
     assert_includes results.keys, @hca_project_shortname
     project = results[@hca_project_shortname]
     # will always be project manifest file
