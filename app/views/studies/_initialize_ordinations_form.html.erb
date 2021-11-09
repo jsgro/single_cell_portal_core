@@ -157,16 +157,16 @@
           var that = this;
 
           const file = data.files[0]
-          const fileType = 'cluster'
+          const fileType = 'Cluster'
           const containerId = `${ordsFormSelector.slice(1)}-container`
 
           let validationErrors = []
           let summary = ''
-          <% if User.feature_flag_for_instance(current_user, 'clientside_validation') %>
+          <% if current_user.feature_flag_for('clientside_validation') %>
             $(`#${containerId}`).remove() // Remove any prior notice
             $(ordsFormSelector).append(`<div id="${containerId}"></div>`)
             // Run client-side metadata file validation
-            const results = await window.SCP.validateFile(file, fileType)
+            const results = await window.SCP.validateFileContent(file, fileType)
             validationErrors = results.errors
             summary = results.summary
           <% end %>

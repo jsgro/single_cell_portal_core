@@ -12,6 +12,9 @@ class FeatureFlag
   field :default_value, type: Boolean, default: false
   field :description, type: String
 
+  # pointer to all per-model feature_flag_options, will delete all if this flag is removed
+  has_many :feature_flag_options, dependent: :delete_all, primary_key: :name, foreign_key: :name
+
   validates_uniqueness_of :name
 
   # return a hash of name => default for all flags
@@ -28,16 +31,9 @@ class FeatureFlag
     feature_flag = FeatureFlag.find_by(name: name)
     raise NameError, "FeatureFlag: '#{name}' does not exist" if feature_flag.blank?
 
-    # call Rails.application.eager_load! to ensure all classes are loaded in development
-    Rails.application.eager_load! if Rails.env.development?
-
-    # use FeatureFlaggable#remove_flag_from_model to remove all per-model instances of the flag
-    # use Mongoid.models to iterate over all SCP-defined models to see if they include the FeatureFlaggable module
-    Mongoid.models.each do |model|
-      next unless model.include? FeatureFlaggable
-
-      FeatureFlaggable.remove_flag_from_model(model, name)
-    end
+    # remove all configure options on model instances, then destroy parent flag
+    # this has better performance than allowing the destroy callback to remove feature_flag_option instances
+    feature_flag.feature_flag_options.delete_all
     feature_flag.destroy
   end
 end

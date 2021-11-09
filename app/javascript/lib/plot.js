@@ -9,6 +9,10 @@ const colorBrewerList = [
   '#bc80bd', '#ccebc5', '#ffed6f'
 ]
 
+export const ideogramHeight = 140
+
+export const scatterLabelLegendWidth = 260
+
 /**
  * Used in both categorical scatter plots and violin plots, to ensure
  * they use consistent friendly colors for annotations, etc.
@@ -84,15 +88,15 @@ export function arrayMax(arr) {
   return max
 }
 
-
 /** Get width and height available for plot components, since they may be first rendered hidden */
 export function getPlotDimensions({
   isTwoColumn=false,
   isMultiRow=false,
   verticalPad=250,
   horizontalPad=80,
+  hasLabelLegend=false,
   hasTitle=false,
-  ideogramHeight=0,
+  showRelatedGenesIdeogram=false,
   showViewOptionsControls=true
 }) {
   // Get width, and account for expanding "View Options" after page load
@@ -100,14 +104,19 @@ export function getPlotDimensions({
   if (showViewOptionsControls) {
     baseWidth = Math.round(baseWidth * 10 / 12)
   }
-
+  if (hasLabelLegend) {
+    const factor = isTwoColumn ? 2 : 1
+    horizontalPad += scatterLabelLegendWidth * factor
+  }
   let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
 
   // Get height
   // Height of screen viewport, minus fixed-height elements above gallery
   let galleryHeight = $(window).height() - verticalPad
 
-  galleryHeight -= ideogramHeight
+  if (showRelatedGenesIdeogram) {
+    galleryHeight -= ideogramHeight
+  }
 
   if (hasTitle) {
     galleryHeight -= 20

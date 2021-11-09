@@ -14,7 +14,6 @@ import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
 import { getPlotDimensions } from 'lib/plot'
-
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
@@ -25,6 +24,19 @@ export const SCATTER_COLOR_OPTIONS = [
 
 export const defaultScatterColor = 'Reds'
 window.Plotly = Plotly
+
+/** Get width and height for scatter plot dimensions */
+export function getScatterWidthHeight(scatter, dimensionProps) {
+  const isRefGroup = getIsRefGroup(scatter)
+
+  dimensionProps = Object.assign({
+    hasLabelLegend: isRefGroup,
+    hasTitle: true
+  }, dimensionProps)
+
+  return getPlotDimensions(dimensionProps)
+}
+
 
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
@@ -106,11 +118,13 @@ function RawScatterPlot({
 
   /** Process scatter plot data fetched from server */
   function processScatterPlot(clusterResponse=null) {
-    const [scatter, perfTimes] =
+    let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
-    const dimensionsData = getScatterPlotDimensions(scatter, dimensionProps)
-    const layout = getPlotlyLayout(dimensionsData, scatter)
+    const widthHeight = getScatterWidthHeight(scatter, dimensionProps)
+    scatter = Object.assign(scatter, widthHeight)
+
+    const layout = getPlotlyLayout(scatter)
 
     const traceArgs = {
       axes: scatter.axes,
@@ -139,9 +153,7 @@ function RawScatterPlot({
 
     if (perfTimes) {
       perfTimes.plot = performance.now() - startTime
-      logScatterPlot({
-        scatter, genes, width: dimensionsData.width, height: dimensionsData.height
-      }, perfTimes)
+      logScatterPlot({ scatter, genes }, perfTimes)
     }
 
     if (isCorrelatedScatter) {
@@ -196,7 +208,7 @@ function RawScatterPlot({
     if (scatterData && !isLoading) {
       processScatterPlot()
     }
-  }, [shownTraces])
+  }, [shownTraces, dimensionProps])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
@@ -218,16 +230,6 @@ function RawScatterPlot({
       }
     }
   }, [isCellSelecting])
-
-  // Adjusts width and height of plots upon toggle of "View Options"
-  useUpdateEffect(() => {
-    // Don't update if the graph hasn't loaded yet
-    if (scatterData && !isLoading) {
-      const { width, height } = getScatterPlotDimensions(scatterData, dimensionProps)
-      const layoutUpdate = { width, height }
-      Plotly.relayout(graphElementId, layoutUpdate)
-    }
-  }, [dimensionProps.showViewOptionsControls, dimensionProps.showRelatedGenesIdeogram])
 
   // TODO (SCP-3712): Update legend click (as backwards-compatibly as possible)
   // as part of productionizing custom legend code.
@@ -265,6 +267,7 @@ function RawScatterPlot({
         { scatterData && countsByLabel &&
         <ScatterPlotLegend
           name={scatterData.annotParams.name}
+          height={scatterData.height}
           countsByLabel={countsByLabel}
           correlations={labelCorrelations}
           shownTraces={shownTraces}
@@ -289,8 +292,14 @@ function RawScatterPlot({
 const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
-/** Return whether scatter plot should use custom legend */
-function getIsDefaultGroupPlot(scatter) {
+/**
+ * Whether scatter plot should use custom legend
+ *
+ * Such legends are used for reference group plots, which are:
+ *   A) commonly shown in the default view, and
+ *   B) also shown at right in single-gene view
+ */
+function getIsRefGroup(scatter) {
   const annotType = scatter.annotParams.type
   const genes = scatter.genes
   const isCorrelatedScatter = scatter.isCorrelatedScatter
@@ -299,20 +308,8 @@ function getIsDefaultGroupPlot(scatter) {
   return annotType === 'group' && !isGeneExpressionForColor
 }
 
-/** Get width and height for scatter plot dimensions */
-function getScatterPlotDimensions(scatter, dimensionProps) {
-  const isDefaultGroupPlot = getIsDefaultGroupPlot(scatter)
-
-  dimensionProps = Object.assign({
-    horizontalPad: (isDefaultGroupPlot ? 330 : 80),
-    hasTitle: true
-  }, dimensionProps)
-
-  return getPlotDimensions(dimensionProps)
-}
-
 /** get the array of plotly traces for plotting */
-function getPlotlyTraces({
+export function getPlotlyTraces({
   axes,
   data,
   annotType,
@@ -343,13 +340,9 @@ function getPlotlyTraces({
 
   let countsByLabel = null
 
-  const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
+  const isRefGroup = getIsRefGroup(scatter)
 
-  const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
-
-  const isDefaultGroupPlot = getIsDefaultGroupPlot(scatter)
-
-  if (isDefaultGroupPlot) {
+  if (isRefGroup) {
     // Use Plotly's groupby and filter transformation to make the traces
     // note these transforms are deprecated in the latest Plotly versions
     const [legendStyles, labelCounts] = getStyles(data, pointSize)
@@ -375,13 +368,50 @@ function getPlotlyTraces({
       })
     }
   } else {
+    const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
+    // for non-clustered plots, we pass in a single trace with all the points
+    let colors
+    if (isGeneExpressionForColor) {
+      // sort the points by order of expression
+      const expressionsWithIndices = new Array(data.expression.length)
+      for (let i = 0; i < data.expression.length; i++) {
+        expressionsWithIndices[i] = [data.expression[i], i]
+      }
+      expressionsWithIndices.sort((a, b) => a[0] - b[0])
+      // initialize the other arrays (see )
+      trace.x = new Array(data.expression.length)
+      trace.y = new Array(data.expression.length)
+      if (is3D) {
+        trace.z = new Array(data.expression.length)
+      }
+      trace.annotations = new Array(data.expression.length)
+      trace.cells = new Array(data.expression.length)
+      colors = new Array(data.expression.length)
+      for (let i = 0; i < expressionsWithIndices.length; i++) {
+        // now that we know the indices, reorder the other data arrays
+        const sortedIndex = expressionsWithIndices[i][1]
+        trace.x[i] = data.x[sortedIndex]
+        trace.y[i] = data.y[sortedIndex]
+        if (is3D) {
+          trace.z[i] = data.z[sortedIndex]
+        }
+        trace.cells[i] = data.cells[sortedIndex]
+        trace.annotations[i] = data.annotations[sortedIndex]
+        colors[i] = expressionsWithIndices[i][0]
+      }
+    } else {
+      colors = isGeneExpressionForColor ? data.expression : data.annotations
+    }
+
     trace.marker = {
       line: { color: 'rgb(40,40,40)', width: 0 },
       size: pointSize
     }
-    const colors = isGeneExpressionForColor ? data.expression : data.annotations
-    const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
+
     if (!isAnnotatedScatter) {
+      const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
+      const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
+
       Object.assign(trace.marker, {
         showscale: true,
         colorscale: appliedScatterColor,
@@ -430,7 +460,9 @@ function getScatterColorToApply(dataScatterColor, scatterColor) {
 }
 
 /** Gets Plotly layout object for scatter plot */
-function getPlotlyLayout({ width, height }={}, {
+function getPlotlyLayout({
+  width,
+  height,
   axes,
   userSpecifiedRanges,
   hasCoordinateLabels,
@@ -566,7 +598,6 @@ export function get3DScatterProps({
 function getDragMode(isCellSelecting) {
   return isCellSelecting ? 'lasso' : 'lasso, select'
 }
-
 
 let currentClickCall = null
 

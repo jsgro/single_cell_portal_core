@@ -12,7 +12,6 @@
                         class: "navbar-brand check-upload", style: 'margin-top: 6px;' %>
       <% else %>
         <%= link_to image_tag('SCP-white.png'), site_path, class: "navbar-brand check-upload" %>
-        <small id="beta-nav"><sup>BETA</sup></small>
       <% end %>
     </div>
   </div>
@@ -62,6 +61,8 @@
                                   class: 'check-upload', id: 'branding-groups-nav' %>
               <li><%= scp_link_to "<span class='fas fa-bullhorn fa-fw'></span> Feature Announcements".html_safe,
                                   feature_announcements_path, class: 'check-upload', id: 'feature-announcements-nav' %>
+              <li><%= scp_link_to "<span class='fas fa-flag fa-fw'></span> Feature Flags".html_safe,
+                                  feature_flag_options_path, class: 'check-upload', id: 'feature-flags-nav' %>
             <% end %>
             <% if current_user.acts_like_reporter? %>
               <li><%= link_to "<span class='fas fa-chart-area fa-fw'></span> Reports".html_safe, reports_path,

@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-
+import _kebabCase from 'lodash/kebabCase'
 import { supportEmailLink } from 'lib/error-utils'
 
 const supportMessage = <div>
@@ -13,7 +13,7 @@ export default function ValidationAlert({ summary, errors, fileType }) {
   return (
     <div
       className="alert alert-danger"
-      data-testid={`${fileType}-validation-alert`}
+      data-testid={`${_kebabCase(fileType)}-validation-alert`}
     >
       <p>{summary}:</p>
       <ul>{errors.map((columns, i) => {

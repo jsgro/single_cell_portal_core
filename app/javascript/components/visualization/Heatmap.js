@@ -39,7 +39,7 @@ function RawHeatmap({
 }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
   const morpheusHeatmap = useRef(null)
-  const expressionValuesURL = getExpressionHeatmapURL({
+  let expressionValuesURL = getExpressionHeatmapURL({
     studyAccession,
     genes,
     cluster,
@@ -47,7 +47,9 @@ function RawHeatmap({
     geneList
   })
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
-
+  // we can't render until we know what the cluster is, since morpheus requires the annotation name
+  // so don't try until we've received this, unless we're showing a Gene List
+  const canRender = cluster || geneList
   let annotationCellValuesURL
   // determine where we get our column headers from
   if (!geneList) {
@@ -61,11 +63,14 @@ function RawHeatmap({
     })
   } else {
     annotationCellValuesURL = getGeneListColsURL({ studyAccession, geneList })
+    // For baffling reasons, morpheus will not render a geneList heatmap correctly unless
+    // there is another parameter on the query string. Despite the fact that I've confirmed the
+    // server responses are identical with/without the extra param.
+    expressionValuesURL = `${expressionValuesURL}&z=1`
   }
 
   useEffect(() => {
-    // we can't render until we know what the cluster is, since morpheus requires the annotation name
-    if (cluster) {
+    if (canRender) {
       performance.mark(`perfTimeStart-${graphId}`)
 
       log('heatmap:initialize')
@@ -110,9 +115,9 @@ function RawHeatmap({
   return (
     <div className="plot">
       { ErrorComponent }
-      { cluster &&
+      { canRender &&
         <div id={graphId} className="heatmap-graph" style={{ minWidth: '80vw' }}></div> }
-      { !cluster && <LoadingSpinner/> }
+      { !canRender && <LoadingSpinner/> }
     </div>
   )
 }

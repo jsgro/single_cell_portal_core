@@ -32,25 +32,6 @@ gem 'bootsnap', '>= 1.4.4', require: false
 gem 'minitest-rails'
 gem 'minitest-reporters'
 
-group :development, :test do
-  # Access an IRB console on exception pages or by using <%= console %> in views
-  gem 'debase'
-  gem 'test-unit'
-  gem 'brakeman', :require => false
-  gem 'factory_bot_rails'
-  gem 'listen'
-  gem 'byebug'
-  gem 'minitest-hooks'
-  gem 'puma'
-  gem 'rubocop', require: false
-  gem 'rubocop-rails', require: false
-end
-
-group :test do
-  gem 'simplecov', require: false
-  gem 'simplecov-lcov', require: false
-end
-
 gem 'devise'
 gem 'omniauth-google-oauth2'
 gem 'omniauth-rails_csrf_protection'
@@ -96,3 +77,28 @@ gem 'ruby-prof-flamegraph'
 gem 'carrierwave', '~> 2.0'
 gem 'carrierwave-mongoid', :require => 'carrierwave/mongoid'
 gem 'uuid'
+
+group :development, :test do
+  # Access an IRB console on exception pages or by using <%= console %> in views
+  gem 'debase'
+  gem 'test-unit'
+  gem 'brakeman', :require => false
+  gem 'factory_bot_rails'
+  gem 'listen'
+  gem 'byebug'
+  gem 'minitest-hooks'
+  gem 'puma'
+  gem 'rubocop', require: false
+  gem 'rubocop-rails', require: false
+
+  # Profiling
+  gem 'rack-mini-profiler'
+  gem 'flamegraph'
+  gem 'stackprof' # ruby 2.1+ only
+  gem 'memory_profiler'
+end
+
+group :test do
+  gem 'simplecov', require: false
+  gem 'simplecov-lcov', require: false
+end

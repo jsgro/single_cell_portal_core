@@ -75,11 +75,7 @@ class StudiesController < ApplicationController
       if @study.save
         path = @study.use_existing_workspace ? sync_study_path(@study) : initialize_study_path(@study)
         format.html { redirect_to merge_default_redirect_params(path, scpbr: params[:scpbr]),
-                                  notice: "Your study '#{@study.name}' was successfully created.",
-                                  # note that this has to be all on one line as it gets rendered directly to a string in a js file
-                                  # this is also surrounded by <strong> tags by default when it is rendered, which is why it appears to have mismatched tags
-                                  # We should consider creating helper classes/methods for this type of more detailed alert message if/when it becomes more common
-                                  alert: "NOTE:</strong><span style='color:#333'> As of December 2020, study metadata must use a standard format and ontologies, and must include: species, disease, organ, library_preparation_protocol, sex, cell name, biosample_id, and donor_id. This enables our new advanced search functionality. <br/><br/><button class='btn btn-primary clear-alert-modal'>Ok</button> <a style='margin-left:3em' href='https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention' target='_blank'>View Example</a><strong>" }
+                                  notice: "Your study '#{@study.name}' was successfully created." }
         format.json { render :show, status: :ok, location: @study }
       else
         @study.build_study_detail
@@ -1137,7 +1133,8 @@ class StudiesController < ApplicationController
     # divide all expression files into raw/processed bins
     @raw_matrix_files, @processed_matrix_files = @all_expression.partition(&:is_raw_counts_file?)
     @block_processed_upload = @raw_matrix_files.empty? &&
-                              User.feature_flag_for_instance(current_user, 'raw_counts_required_frontend')
+                              !FeatureFlaggable.flag_override_for_instances('raw_counts_required_frontend', false,
+                                                                            current_user, @study)
     @metadata_file = @study.metadata_file
     @cluster_ordinations = @study.study_files.by_type('Cluster')
     @coordinate_labels = @study.study_files.by_type('Coordinate Labels')
@@ -1178,7 +1175,7 @@ class StudiesController < ApplicationController
     # if feature flag is enabled, ensure there are raw count matrix files
     if @study.study_files.where(file_type: /Matrix/, queued_for_deletion: false,
                                 'expression_file_info.is_raw_counts' => true).empty? &&
-      User.feature_flag_for_instance(current_user, 'raw_counts_required_frontend')
+      !FeatureFlaggable.flag_override_for_instances('raw_counts_required_frontend', false, current_user, @study)
       @block_processed_upload = true
     else
       @block_processed_upload = false

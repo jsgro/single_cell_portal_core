@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
-import { getColorBrewerColor } from 'lib/plot'
+import { getColorBrewerColor, scatterLabelLegendWidth } from 'lib/plot'
 
 /** Sort annotation labels naturally, but always put "unspecified" last */
 function labelSort(a, b) {
@@ -101,8 +101,8 @@ function LegendEntry({
 
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
-  name, countsByLabel, correlations,
-  shownTraces, updateShownTraces, showHideActive
+  name, height, countsByLabel, correlations, shownTraces,
+  updateShownTraces, showHideActive
 }) {
   const labels = getLabels(countsByLabel)
   const numLabels = labels.length
@@ -126,10 +126,13 @@ export default function ScatterPlotLegend({
       )
     })
 
+  const style = { width: scatterLabelLegendWidth, height }
   const filteredClass = (shownTraces.length === 0) ? 'unfiltered' : ''
   const [showIsActive, hideIsActive] = showHideActive
   return (
-    <div className={`scatter-legend ${filteredClass}`}>
+    <div
+      className={`scatter-legend ${filteredClass}`}
+      style={style}>
       <div className="scatter-legend-head">
         <div>
           <p className="scatter-legend-name">{name}</p>

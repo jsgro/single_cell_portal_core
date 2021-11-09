@@ -42,3 +42,25 @@ export async function computeCorrelations(scatter) {
 
   return correlations
 }
+
+/**
+ * Format number in bytes, with human-friendly units
+ *
+ * Derived from https://gist.github.com/lanqy/5193417#gistcomment-2663632
+ */
+export function bytesToSize(bytes) {
+  const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB']
+  if (bytes === 0) {
+    return 'n/a'
+  }
+  if (!bytes) {
+    return undefined
+  }
+
+  // eweitz: Most implementations use log(1024), but such units are
+  // binary and have values like MiB (mebibyte)
+  const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1000)), 10)
+
+  if (i === 0) {return `${bytes} ${sizes[i]}`}
+  return `${(bytes / (1000 ** i)).toFixed(1)} ${sizes[i]}`
+}

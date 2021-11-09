@@ -102,7 +102,7 @@
       function handleRawCountsUpdate() {
         <% current_values = study_file.associated_matrix_files(:raw)&.map { |sf| { label: sf.name, value: sf.id.to_s } } %>
         const currentValues = <%= current_values.to_json.html_safe %>
-        const isRequired = <%= User.feature_flag_for_instance(current_user, 'raw_counts_required_backend') %>
+        const isRequired = <%= current_user.feature_flag_for('raw_counts_required_backend') %>
         updateRawCountsAssnSelect(expFormId_<%= allow_only %>, currentValues, isRequired)
       }
 
