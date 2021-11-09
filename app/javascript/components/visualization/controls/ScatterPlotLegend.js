@@ -1,4 +1,5 @@
 import React from 'react'
+import { log } from 'lib/metrics-api'
 
 import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 import { getColorBrewerColor, scatterLabelLegendWidth } from 'lib/plot'
@@ -70,6 +71,8 @@ function LegendEntry({
   numLabels, shownTraces, updateShownTraces
 }) {
   let entry = label
+
+  const hasCorrelations = correlations !== null
   if (correlations) {
     const correlation = Math.round(correlations[label] * 100) / 100
 
@@ -84,14 +87,20 @@ function LegendEntry({
 
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
-    const state = !isShown
-    updateShownTraces(label, state, numLabels)
+    const wasShown = !isShown
+    updateShownTraces(label, wasShown, numLabels)
+
+    const legendEntry = {
+      label, numPoints, numLabels, wasShown, shownTraces, iconColor,
+      hasCorrelations
+    }
+    log('click:scatterlegend:single', legendEntry)
   }
 
   return (
     <div
       className={`scatter-legend-row ${shownClass}`}
-      onClick={() => toggleSelection()}
+      onClick={event => toggleSelection(event)}
     >
       <div className="scatter-legend-icon" style={iconStyle}></div>
       <div className="scatter-legend-entry">
@@ -100,6 +109,20 @@ function LegendEntry({
       </div>
     </div>
   )
+}
+
+/** Handle click on "Show all" or "Hide all" button */
+function showHideAll(showOrHide, labels, updateShownTraces) {
+  if (showOrHide === 'show') {
+    updateShownTraces(labels, false, null, true)
+  } else {
+    updateShownTraces(labels, true, null, true)
+  }
+
+  const numLabels = labels.length
+  log(`click:scatterlegend:${showOrHide}-all-labels`, {
+    labels, numLabels
+  })
 }
 
 /** Component for custom legend for scatter plots */
@@ -144,14 +167,14 @@ export default function ScatterPlotLegend({
             data-analytics-name='legend-show-all'
             className={`stateful-link ${getActivity(showIsActive)}`}
             disabled={!showIsActive}
-            onClick={() => {updateShownTraces(labels, false, null, true)}}
+            onClick={() => {showHideAll('show', labels, updateShownTraces)}}
           >Show all</a>
           <a
             role="button"
             data-analytics-name='legend-hide-all'
             className={`stateful-link pull-right ${getActivity(hideIsActive)}`}
             disabled={!hideIsActive}
-            onClick={() => {updateShownTraces(labels, true, null, true)}}
+            onClick={() => {showHideAll('hide', labels, updateShownTraces)}}
           >Hide all</a>
         </div>
       </div>
