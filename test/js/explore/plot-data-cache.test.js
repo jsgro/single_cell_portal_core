@@ -85,10 +85,11 @@ describe('Plot data cache', () => {
     apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(FETCH_CLUSTER_RESPONSE), 230]))
 
     // first, check that the repsonse is fetched and returned normally if not in cache
-    const result = cache.fetchCluster({
+    const response = await cache.fetchCluster({
       studyAccession: 'SCP1',
       cluster: '_default',
-      annotation: {}
+      annotation: {},
+      subsample: ''
     })
     const expectedApiParams = {
       annotation: {},
@@ -99,81 +100,78 @@ describe('Plot data cache', () => {
       isAnnotatedScatter: null,
       isCorrelatedScatter: null,
       studyAccession: 'SCP1',
-      subsample: undefined
+      subsample: ''
     }
-
     expect(apiFetch).toHaveBeenLastCalledWith(expectedApiParams)
-    return result.then(response => {
-      expect(response).toEqual([FETCH_CLUSTER_RESPONSE, 230])
+    expect(response).toEqual([FETCH_CLUSTER_RESPONSE, 230])
 
-      // second, check that it only fetches the needed fields when changing annotation
-      apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(ANNOTATION_ONLY_RESPONSE), 230]))
-      const newAnnotFetch = cache.fetchCluster({
-        studyAccession: 'SCP1',
-        cluster: '_default',
-        annotation: {
-          name: 'species',
-          scope: 'study'
-        }
-      })
-      const expectedNewAnnotParams = {
-        annotation: { name: 'species', scope: 'study' },
-        cluster: '_default',
-        consensus: undefined,
-        fields: ['annotation'],
-        genes: [],
-        isAnnotatedScatter: null,
-        isCorrelatedScatter: null,
-        studyAccession: 'SCP1',
-        subsample: undefined
-      }
-      expect(apiFetch).toHaveBeenLastCalledWith(expectedNewAnnotParams)
-      return newAnnotFetch
-    }).then(response => {
-      // confirm the fields got merged
-      const scatterData = response[0].data
-      expect(scatterData.x).toEqual(FETCH_CLUSTER_RESPONSE.data.x)
-      expect(scatterData.y).toEqual(FETCH_CLUSTER_RESPONSE.data.y)
-      expect(scatterData.cells).toEqual(FETCH_CLUSTER_RESPONSE.data.cells)
-      expect(scatterData.annotations).toEqual(ANNOTATION_ONLY_RESPONSE.data.annotations)
-      expect(response[0].annotParams.name).toEqual('species')
-
-
-      // third, check that the cache works if a gene is then searched
-      apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(EXPRESSION_ONLY_RESPONSE), 230]))
-      const newGeneFetch = cache.fetchCluster({
-        studyAccession: 'SCP1',
-        cluster: '_default',
-        annotation: {
-          name: 'species',
-          scope: 'study'
-        },
-        genes: ['Apoe']
-      })
-      const expectedNewGeneParams = {
-        annotation: { name: 'species', scope: 'study' },
-        cluster: '_default',
-        consensus: undefined,
-        fields: ['expression'],
-        genes: ['Apoe'],
-        isAnnotatedScatter: null,
-        isCorrelatedScatter: null,
-        studyAccession: 'SCP1',
-        subsample: undefined
-      }
-      expect(apiFetch).toHaveBeenLastCalledWith(expectedNewGeneParams)
-      return newGeneFetch
-    }).then(response => {
-      // confirm the fields got merged
-      const scatterData = response[0].data
-      expect(scatterData.x).toEqual(FETCH_CLUSTER_RESPONSE.data.x)
-      expect(scatterData.y).toEqual(FETCH_CLUSTER_RESPONSE.data.y)
-      expect(scatterData.cells).toEqual(FETCH_CLUSTER_RESPONSE.data.cells)
-      expect(scatterData.annotations).toEqual(ANNOTATION_ONLY_RESPONSE.data.annotations)
-      expect(scatterData.expression).toEqual(EXPRESSION_ONLY_RESPONSE.data.expression)
-      expect(response[0].annotParams.name).toEqual('species')
-      return response
+    // second, check that it only fetches the needed fields when changing annotation
+    apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(ANNOTATION_ONLY_RESPONSE), 230]))
+    const annotResponse = await cache.fetchCluster({
+      studyAccession: 'SCP1',
+      cluster: 'cluster.tsv',
+      annotation: {
+        name: 'species',
+        scope: 'study'
+      },
+      subsample: 'all'
     })
+    const expectedNewAnnotParams = {
+      annotation: { name: 'species', scope: 'study' },
+      cluster: 'cluster.tsv',
+      consensus: undefined,
+      fields: ['annotation'],
+      genes: [],
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
+      studyAccession: 'SCP1',
+      subsample: 'all'
+    }
+    expect(apiFetch).toHaveBeenLastCalledWith(expectedNewAnnotParams)
+
+
+    // confirm the fields got merged
+    const scatterData = annotResponse[0].data
+    expect(scatterData.x).toEqual(FETCH_CLUSTER_RESPONSE.data.x)
+    expect(scatterData.y).toEqual(FETCH_CLUSTER_RESPONSE.data.y)
+    expect(scatterData.cells).toEqual(FETCH_CLUSTER_RESPONSE.data.cells)
+    expect(scatterData.annotations).toEqual(ANNOTATION_ONLY_RESPONSE.data.annotations)
+    expect(annotResponse[0].annotParams.name).toEqual('species')
+
+
+    // third, check that the cache works if a gene is then searched
+    apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(EXPRESSION_ONLY_RESPONSE), 230]))
+    const geneResponse = await cache.fetchCluster({
+      studyAccession: 'SCP1',
+      cluster: 'cluster.tsv',
+      annotation: {
+        name: 'species',
+        scope: 'study'
+      },
+      genes: ['Apoe'],
+      subsample: 'all'
+    })
+    const expectedNewGeneParams = {
+      annotation: { name: 'species', scope: 'study' },
+      cluster: 'cluster.tsv',
+      consensus: undefined,
+      fields: ['expression'],
+      genes: ['Apoe'],
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
+      studyAccession: 'SCP1',
+      subsample: 'all'
+    }
+    expect(apiFetch).toHaveBeenLastCalledWith(expectedNewGeneParams)
+
+    // confirm the fields got merged
+    const geneScatterData = geneResponse[0].data
+    expect(geneScatterData.x).toEqual(FETCH_CLUSTER_RESPONSE.data.x)
+    expect(geneScatterData.y).toEqual(FETCH_CLUSTER_RESPONSE.data.y)
+    expect(geneScatterData.cells).toEqual(FETCH_CLUSTER_RESPONSE.data.cells)
+    expect(geneScatterData.annotations).toEqual(ANNOTATION_ONLY_RESPONSE.data.annotations)
+    expect(geneScatterData.expression).toEqual(EXPRESSION_ONLY_RESPONSE.data.expression)
+    expect(geneResponse[0].annotParams.name).toEqual('species')
   })
 
   // same test as above, but  for a case where the user changes the annotation before the original cluster call returns
@@ -182,20 +180,23 @@ describe('Plot data cache', () => {
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
     // pass in a clone of the response since it may get modified by the cache operations
     apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(FETCH_CLUSTER_RESPONSE), 230]))
-    const result = cache.fetchCluster({
+    // don't use await here, since we need to execute another fetch before this one completes
+    cache.fetchCluster({
       studyAccession: 'SCP1',
       cluster: '_default',
-      annotation: {}
+      annotation: {},
+      subsample: 'all'
     })
 
     apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(ANNOTATION_ONLY_RESPONSE), 230]))
-    const newAnnotFetch = cache.fetchCluster({
+    const newAnnotResponse = await cache.fetchCluster({
       studyAccession: 'SCP1',
       cluster: '_default',
       annotation: {
         name: 'species',
         scope: 'study'
-      }
+      },
+      subsample: 'all'
     })
 
     // it should still only fetch the annotation data, even though the cluster data has not yet arrived
@@ -208,21 +209,19 @@ describe('Plot data cache', () => {
       isAnnotatedScatter: null,
       isCorrelatedScatter: null,
       studyAccession: 'SCP1',
-      subsample: undefined
+      subsample: 'all'
     }
 
     expect(apiFetch).toHaveBeenLastCalledWith(expectedNewAnnotParams)
 
-    return newAnnotFetch.then(response => {
-      // check the merge was successful
-      const scatterData = response[0].data
-      expect(scatterData.x).toEqual(FETCH_CLUSTER_RESPONSE.data.x)
-      expect(scatterData.y).toEqual(FETCH_CLUSTER_RESPONSE.data.y)
-      expect(scatterData.cells).toEqual(FETCH_CLUSTER_RESPONSE.data.cells)
-      expect(scatterData.annotations).toEqual(ANNOTATION_ONLY_RESPONSE.data.annotations)
-      expect(response[0].annotParams.name).toEqual('species')
-      return response
-    })
+
+    // check the merge was successful
+    const scatterData = newAnnotResponse[0].data
+    expect(scatterData.x).toEqual(FETCH_CLUSTER_RESPONSE.data.x)
+    expect(scatterData.y).toEqual(FETCH_CLUSTER_RESPONSE.data.y)
+    expect(scatterData.cells).toEqual(FETCH_CLUSTER_RESPONSE.data.cells)
+    expect(scatterData.annotations).toEqual(ANNOTATION_ONLY_RESPONSE.data.annotations)
+    expect(newAnnotResponse[0].annotParams.name).toEqual('species')
   })
 })
 
@@ -234,12 +233,13 @@ describe('cache handles simultaneous gene/cluster plots', () => {
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
     apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(CLUSTER_AND_EXPRESSION_RESPONSE), 230]))
 
-    // do a request for the full gene plot
+    // do a request for the full gene plot, don't await since we want to send the cluster request before this finishes
     const expressionFetchResult = cache.fetchCluster({
-      'studyAccession': 'SCP1',
-      'cluster': '_default',
-      'genes': ['Apoe'],
-      'annotation': {}
+      studyAccession: 'SCP1',
+      cluster: '_default',
+      genes: ['Apoe'],
+      annotation: {},
+      subsample: 'all'
     })
     const expectedApiParams = {
       annotation: {},
@@ -250,86 +250,135 @@ describe('cache handles simultaneous gene/cluster plots', () => {
       isAnnotatedScatter: null,
       isCorrelatedScatter: null,
       studyAccession: 'SCP1',
-      subsample: undefined
+      subsample: 'all'
     }
     expect(apiFetch).toHaveBeenLastCalledWith(expectedApiParams)
     // do a request for the cluster plot
     const clusterFetchResult = cache.fetchCluster({
       studyAccession: 'SCP1',
       cluster: '_default',
-      annotation: {}
+      annotation: {},
+      subsample: 'all'
     })
     // make sure no new request is sent to the server
     expect(apiFetch).toHaveBeenCalledTimes(1)
 
-    return expressionFetchResult.then(expressionResponse => {
-      expect(expressionResponse).toEqual([CLUSTER_AND_EXPRESSION_RESPONSE, 230])
+    const expressionResponse = await expressionFetchResult
+    expect(expressionResponse).toEqual([CLUSTER_AND_EXPRESSION_RESPONSE, 230])
+    const clusterResponse = await clusterFetchResult
 
-      return clusterFetchResult
-    }).then(clusterResponse => {
-      const expectedResponse = { ...FETCH_CLUSTER_RESPONSE, allDataFromCache: true }
-      expect(clusterResponse[0].data).toEqual(FETCH_CLUSTER_RESPONSE.data)
-      expect(clusterResponse[0].annotParams).toEqual(FETCH_CLUSTER_RESPONSE.annotParams)
+    expect(clusterResponse[0].data).toEqual(FETCH_CLUSTER_RESPONSE.data)
+    expect(clusterResponse[0].annotParams).toEqual(FETCH_CLUSTER_RESPONSE.annotParams)
 
-      // now simulate a user changing annotation
-      const mockApiResponse = _cloneDeep(ANNOTATION_ONLY_RESPONSE)
-      mockApiResponse.genes = ['Apoe']
-      apiFetch.mockImplementation(() => Promise.resolve([mockApiResponse, 230]))
-      const expressionFetchResult2 = cache.fetchCluster({
-        studyAccession: 'SCP1',
-        cluster: 'cluster.tsv',
-        genes: ['Apoe'],
-        subsample: 'all',
-        consensus: null,
-        annotation: {
-          name: 'species',
-          scope: 'study'
-        }
-      })
-      const expectedApiParams = {
-        annotation: {
-          name: 'species',
-          scope: 'study'
-        },
-        cluster: 'cluster.tsv',
-        consensus: null,
-        fields: ['annotation'],
-        genes: ['Apoe'],
-        isAnnotatedScatter: null,
-        isCorrelatedScatter: null,
-        studyAccession: 'SCP1',
-        subsample: 'all'
+    // now simulate a user changing annotation
+    const mockApiResponse = _cloneDeep(ANNOTATION_ONLY_RESPONSE)
+    mockApiResponse.genes = ['Apoe']
+    apiFetch.mockImplementation(() => Promise.resolve([mockApiResponse, 230]))
+    const expressionFetchResult2 = cache.fetchCluster({
+      studyAccession: 'SCP1',
+      cluster: 'cluster.tsv',
+      genes: ['Apoe'],
+      subsample: 'all',
+      consensus: null,
+      annotation: {
+        name: 'species',
+        scope: 'study'
       }
-      expect(apiFetch).toHaveBeenLastCalledWith(expectedApiParams)
-
-      const clusterFetchResult2 = cache.fetchCluster({
-        'studyAccession': 'SCP1',
-        'cluster': 'cluster.tsv',
-        'consensus': null,
-        'annotation': {
-          name: 'species',
-          scope: 'study'
-        },
-        'subsample': 'all'
-      })
-      // changing annotation should only result in a single call, even with two plots displayed,
-      // so the total number of calls should be 2
-      expect(apiFetch).toHaveBeenCalledTimes(2)
-
-      return expressionFetchResult2.then(response => {
-        const expectedAnnotResponse = _cloneDeep(CLUSTER_AND_EXPRESSION_RESPONSE)
-        expectedAnnotResponse.annotParams = ANNOTATION_ONLY_RESPONSE.annotParams
-        expectedAnnotResponse.data.annotations = ANNOTATION_ONLY_RESPONSE.data.annotations
-        expect(response).toEqual([expectedAnnotResponse, 230])
-        return clusterFetchResult2
-      }).then(response => {
-        const scatterData = response[0].data
-        expect(scatterData.x).toEqual(FETCH_CLUSTER_RESPONSE.data.x)
-        expect(scatterData.y).toEqual(FETCH_CLUSTER_RESPONSE.data.y)
-        expect(scatterData.cells).toEqual(FETCH_CLUSTER_RESPONSE.data.cells)
-        expect(scatterData.annotations).toEqual(ANNOTATION_ONLY_RESPONSE.data.annotations)
-      })
     })
+    const expectedApiParams2 = {
+      annotation: {
+        name: 'species',
+        scope: 'study'
+      },
+      cluster: 'cluster.tsv',
+      consensus: null,
+      fields: ['annotation'],
+      genes: ['Apoe'],
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
+      studyAccession: 'SCP1',
+      subsample: 'all'
+    }
+    expect(apiFetch).toHaveBeenLastCalledWith(expectedApiParams2)
+
+    const clusterFetchResult2 = cache.fetchCluster({
+      'studyAccession': 'SCP1',
+      'cluster': 'cluster.tsv',
+      'consensus': null,
+      'annotation': {
+        name: 'species',
+        scope: 'study'
+      },
+      'subsample': 'all'
+    })
+    // changing annotation should only result in a single call, even with two plots displayed,
+    // so the total number of calls should now be 2
+    expect(apiFetch).toHaveBeenCalledTimes(2)
+
+    const expResponse2 = await expressionFetchResult2
+    const expectedAnnotResponse = _cloneDeep(CLUSTER_AND_EXPRESSION_RESPONSE)
+    expectedAnnotResponse.annotParams = ANNOTATION_ONLY_RESPONSE.annotParams
+    expectedAnnotResponse.data.annotations = ANNOTATION_ONLY_RESPONSE.data.annotations
+    expect(expResponse2).toEqual([expectedAnnotResponse, 230])
+
+    const clusterResponse2 = await clusterFetchResult2
+    const scatterData = clusterResponse2[0].data
+    expect(scatterData.x).toEqual(FETCH_CLUSTER_RESPONSE.data.x)
+    expect(scatterData.y).toEqual(FETCH_CLUSTER_RESPONSE.data.y)
+    expect(scatterData.cells).toEqual(FETCH_CLUSTER_RESPONSE.data.cells)
+    expect(scatterData.annotations).toEqual(ANNOTATION_ONLY_RESPONSE.data.annotations)
+  })
+
+  it('does not attempt to cache subsampled data', async () => {
+    const cache = createCache()
+    const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
+    // pass in a clone of the response since it may get modified by the cache operations
+    apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(FETCH_CLUSTER_RESPONSE), 230]))
+
+    // first, check that the repsonse is fetched and returned normally on first load
+    const response = await cache.fetchCluster({
+      studyAccession: 'SCP1',
+      cluster: '_default',
+      subsample: '1000',
+      annotation: {}
+    })
+    const expectedApiParams = {
+      annotation: {},
+      cluster: '_default',
+      consensus: undefined,
+      fields: ['coordinates', 'cells', 'annotation'],
+      genes: [],
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
+      studyAccession: 'SCP1',
+      subsample: '1000'
+    }
+
+    expect(apiFetch).toHaveBeenLastCalledWith(expectedApiParams)
+    expect(response).toEqual([FETCH_CLUSTER_RESPONSE, 230])
+
+    // second, check that it refetches everything
+    cache.fetchCluster({
+      studyAccession: 'SCP1',
+      cluster: '_default',
+      annotation: {
+        name: 'species',
+        scope: 'study'
+      },
+      subsample: '1000'
+    })
+    const expectedNewAnnotParams = {
+      annotation: { name: 'species', scope: 'study' },
+      cluster: '_default',
+      consensus: undefined,
+      fields: ['coordinates', 'cells', 'annotation'],
+      genes: [],
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
+      studyAccession: 'SCP1',
+      subsample: '1000'
+    }
+    expect(apiFetch).toHaveBeenLastCalledWith(expectedNewAnnotParams)
   })
 })
 

@@ -65,21 +65,18 @@ class ClusterGroup
   # can also load subsample arrays by supplying optional subsample_threshold
   def concatenate_data_arrays(array_name, array_type, subsample_threshold=nil, subsample_annotation=nil)
     if subsample_threshold.nil?
-      data_arrays = DataArray.where(name: array_name, array_type: array_type, linear_data_type: 'ClusterGroup',
-                                    linear_data_id: self.id, subsample_threshold: nil, subsample_annotation: nil)
-                        .order(:array_index => 'asc')
-      all_values = []
-      data_arrays.each do |array|
-        all_values += array.values
-      end
-      all_values
+      query = {
+        name: array_name, array_type: array_type, linear_data_type: 'ClusterGroup', linear_data_id: self.id,
+        subsample_threshold: nil, subsample_annotation: nil
+      }
+      DataArray.concatenate_arrays(query)
     else
       data_array = DataArray.find_by(name: array_name, array_type: array_type, linear_data_type: 'ClusterGroup',
                                      linear_data_id: self.id, subsample_threshold: subsample_threshold,
                                      subsample_annotation: subsample_annotation)
       if data_array.nil?
         # rather than returning [], default to the full resolution array
-        self.concatenate_data_arrays(array_name, array_type)
+        concatenate_data_arrays(array_name, array_type)
       else
         data_array.values
       end

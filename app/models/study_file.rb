@@ -24,7 +24,15 @@ class StudyFile
   # constants, used for statuses and file types
   STUDY_FILE_TYPES = ['Cluster', 'Coordinate Labels' ,'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File',
                       '10X Barcodes File', 'Gene List', 'Metadata', 'Fastq', 'BAM', 'BAM Index', 'Documentation',
-                      'Other', 'Analysis Output', 'Ideogram Annotations']
+                      'Other', 'Analysis Output', 'Ideogram Annotations', 'Image'].freeze
+  CUSTOM_FILE_TYPE_NAMES = {
+    'MM Coordinate Matrix' => 'Sparse matrix (.mtx)',
+    'Expression Matrix' => 'Dense matrix',
+    '10X Genes File' => '10X Features File'
+  }.freeze
+  STUDY_FILE_TYPE_NAME_HASH = STUDY_FILE_TYPES.reduce({}) { |r, t| r[t] = t; r }.merge(CUSTOM_FILE_TYPE_NAMES).freeze
+
+
   PARSEABLE_TYPES = ['Cluster', 'Coordinate Labels', 'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File',
                      '10X Barcodes File', 'Gene List', 'Metadata', 'Analysis Output']
   DISALLOWED_SYNC_TYPES = ['Fastq']
@@ -1334,12 +1342,11 @@ class StudyFile
   # ensure that metadata file adheres to convention acceptance criteria, if turned on
   # will check for exemption from any users associated with given study
   def ensure_metadata_convention
-    convention_required = study.associated_users(permission: 'Edit').map { |user|
-      User.feature_flag_for_instance(user, 'convention_required')
-    }.uniq
-    # if any user account returned false for :convention_required, then allow ingest (means user received exemption)
-    # otherwise, add validation error for :use_metadata_convention
-    unless convention_required.include?(false)
+    # check for exemption across all associated users & study object
+    user_accounts = study.associated_users(permission: 'Edit')
+    unless FeatureFlaggable.flag_override_for_instances(
+      'convention_required', false, *user_accounts, study
+    )
       errors.add(:use_metadata_convention, 'must be "true" to ensure data complies with the SCP metadata convention')
     end
   end

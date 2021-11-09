@@ -10,6 +10,10 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   HOMO_SAPIENS_FILTER = { id: 'NCBITaxon_9606', name: 'Homo sapiens' }
   NO_DISEASE_FILTER = { id: 'MONDO_0000001', name: 'disease or disorder' }
 
+  # shorthand accessors
+  FACET_DELIM = Api::V1::SearchController::FACET_DELIMITER
+  FILTER_DELIM = Api::V1::SearchController::FILTER_DELIMITER
+
   setup do
     @user = User.find_by(email: 'testing.user.2@gmail.com')
     OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
@@ -123,7 +127,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     other_matches = Study.viewable(@user).any_of({description: /#{HOMO_SAPIENS_FILTER[:name]}/},
                                  {description: /#{NO_DISEASE_FILTER[:name]}/}).pluck(:accession)
     # find all human studies from metadata
-    facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}+disease:#{NO_DISEASE_FILTER[:id]}"
+    facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}#{FACET_DELIM}disease:#{NO_DISEASE_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
     expected_accessions = (@convention_accessions + other_matches).uniq
@@ -152,7 +156,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     # loop through 3 different units (days, months, years) to run a numeric-based facet query with conversion
     # days should return nothing, but months and years should match the testing study
     %w(days months years).each do |unit|
-      facet_query = "#{facet.identifier}:#{facet.min + 1},#{facet.max - 1},#{unit}"
+      facet_query = "#{facet.identifier}:#{facet.min + 1}#{FILTER_DELIM}#{facet.max - 1}#{FILTER_DELIM}#{unit}"
       execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
       assert_response :success
       expected_accessions = unit == 'days' ? [] : @convention_accessions
@@ -316,7 +320,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     # update other_study to match one filter from facets; should not be inferred since it doesn't meet both criteria
     other_study = Study.find_by(name: "API Test Study #{@random_seed}")
     original_description = other_study.description.to_s.dup
-    facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}+disease:#{NO_DISEASE_FILTER[:id]}"
+    facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}#{FACET_DELIM}disease:#{NO_DISEASE_FILTER[:id]}"
     other_study.update(description: HOMO_SAPIENS_FILTER[:name])
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success

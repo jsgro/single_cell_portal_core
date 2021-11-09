@@ -10,6 +10,8 @@ module Api
 
       respond_to :json
 
+      SUPPORTED_LABEL_FONTS = ['Helvetica Neue', 'Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Trebuchet MS', 'Impact']
+
       swagger_path '/studies' do
         operation :get do
           key :tags, [
@@ -75,6 +77,31 @@ module Api
 
       # GET /single_cell/api/v1/studies/:id
       def show
+      end
+
+      # return JSON of the study, all study file objects, and any options values needed for the upload wizard
+      def file_info
+        response_obj = {
+          study: @study.attributes,
+          files: @study.study_files,
+          menu_options: {
+            fonts: SUPPORTED_LABEL_FONTS,
+            species: ActiveRecordUtils.pluck_to_hash(Taxon.sorted, [:id, :common_name])
+              .map { |k| k[:id] = k[:id].to_s; k }, # return the hash but with ids converted to strings
+            units: ExpressionFileInfo::UNITS_VALUES,
+            library_preparation_protocol: ExpressionFileInfo::LIBRARY_PREPARATION_VALUES,
+            modality: ExpressionFileInfo::MODALITY_VALUES,
+            biosample_input_type: ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES,
+            sequence_file_types: ['Fastq', 'BAM'],
+            genome_assemblies: ActiveRecordUtils.pluck_to_hash(GenomeAssembly, [:id, :name, :taxon_id])
+              .map do |k| # return the hash but with ids converted to strings
+                k[:id] = k[:id].to_s
+                k[:taxon_id] = k[:taxon_id].to_s;
+                k
+              end
+          }
+        }
+        render json: response_obj
       end
 
       swagger_path '/studies' do

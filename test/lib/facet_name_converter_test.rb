@@ -12,6 +12,7 @@ class FacetNameConverterTest < ActiveSupport::TestCase
       tim: %w[dct:title dct:description TerraCore:hasDisease TerraCore:hasOrganismType]
     }
     @nonexistent_field = :foobar
+    @external_schemas = FacetNameConverter::SCHEMA_NAMES.dup.reject { |name| name == :alexandria }
   end
 
   # iterate through all fields and test conversion
@@ -35,6 +36,21 @@ class FacetNameConverterTest < ActiveSupport::TestCase
   test 'should throw error on invalid conversion' do
     assert_raise ArgumentError do
       FacetNameConverter.convert_schema_column(:alexandria, :foo, 'species')
+    end
+  end
+
+  test 'should get mappings hash' do
+    @external_schemas.each do |schema|
+      assert_not_nil FacetNameConverter.get_map(:alexandria, schema)
+      assert_not_nil FacetNameConverter.get_map(schema, :alexandria)
+    end
+  end
+
+  test 'should find column in schema' do
+    @scp_field_names.each do |column|
+      @external_schemas.each do |schema|
+        assert FacetNameConverter.schema_has_column?(:alexandria, schema, column)
+      end
     end
   end
 end

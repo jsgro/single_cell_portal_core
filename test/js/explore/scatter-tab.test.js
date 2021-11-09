@@ -78,7 +78,8 @@ const MOCK_EXPLORE_RESPONSE = {
   inferCNVIdeogramFiles: null,
   spatialGroups: [],
   taxonNames: ['Gallus gallus'],
-  uniqueGenes: ['Foo', 'Bar']
+  uniqueGenes: ['Foo', 'Bar'],
+  imageFiles: []
 }
 
 beforeAll(() => {

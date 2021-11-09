@@ -1,8 +1,10 @@
 <h2>
-  <%= scp_link_to '<<', @feature_announcement.archived? ? archived_feature_announcements_path : latest_feature_announcements_path %>
+  <%= scp_link_to '<<', latest_feature_announcements_path %>
   <%= @feature_announcement.title %>
-  <%= link_to "More Info <i class='fas fa-external-link-alt'></i>".html_safe, @feature_announcement.doc_link,
-              class: 'btn btn-default pull-right', target: :_blank, rel: 'noopener noreferrer' %>
+  <% if @feature_announcement.doc_link.present? %>
+    <%= link_to "More Info <i class='fas fa-external-link-alt'></i>".html_safe, @feature_announcement.doc_link,
+      class: 'btn btn-default pull-right', target: :_blank, rel: 'noopener noreferrer' %>
+  <% end %>
 </h2>
 <h4 class="help-block"><%= @feature_announcement.display_date %></h4>
 <div class="ck-content" id="feature-announcement-content">

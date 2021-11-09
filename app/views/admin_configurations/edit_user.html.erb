@@ -1,6 +1,6 @@
 <h1>Editing <em><%= @user.email %></em> roles</h1>
 
-<%= form_for(@user, url: update_user_path(@user.id), html: {class: 'form'}) do |f| %>
+<%= nested_form_for(@user, url: update_user_path(@user.id), html: {class: 'form'}) do |f| %>
   <% if @user.errors.any? %>
     <div class="bs-callout bs-callout-danger">
       <h4><%= pluralize(@user.errors.count, "error") %> prohibited this user from being saved:</h4>
@@ -29,29 +29,10 @@
   </div>
   <div class="form-group row">
     <div class="col-md-12">
-      <label>Feature flags</label>
-    </div>
-    <div class="form-group row">
-      <div class="col-md-12">
-        <% @user.feature_flags_with_defaults.sort_by { |key, _| key }.each do |key, _| %>
-          <% @default_flag =  FeatureFlag.find_by(name: key) %>
-          <div class="row <%= @user.feature_flags.key?(key) ? 'highlight' : '' %>">
-            <div class="col-md-3 text-right">
-              <label><%= key %>:</label>
-            </div>
-            <div class="col-md-2">
-              <select name="feature_flag_<%= key %>" class="form-control">
-                <option value="0" <%= @user.feature_flags[key] == false ? 'selected' : '' %>>False</option>
-                <option value="1" <%= @user.feature_flags[key] == true ? 'selected' : '' %>>True</option>
-                <option value="-" <%= @user.feature_flags.key?(key) ? '' : 'selected' %>>Default (<%= @default_flag.default_value %>)</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <%= @default_flag.description %>
-            </div>
-          </div>
-        <% end %>
-      </div>
+      <%= link_to "<i class='fas fa-edit'></i> Feature Flags".html_safe,
+                  edit_feature_flag_option_path(class_name: 'user', id: @user.id), class: 'btn btn-primary',
+                  data: { toggle: 'tooltip', placement: 'right' }, title: "Edit feature flags for #{@user.email}"
+      %>
     </div>
   </div>
   <div class="form-group row">
@@ -66,3 +47,4 @@
     <%= link_to "<span class='fas fa-chevron-left'></span> Back".html_safe, admin_configurations_path, class: 'btn btn-warning' %>
   </div>
 </div>
+

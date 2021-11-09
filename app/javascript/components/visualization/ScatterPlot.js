@@ -309,7 +309,7 @@ function getIsRefGroup(scatter) {
 }
 
 /** get the array of plotly traces for plotting */
-function getPlotlyTraces({
+export function getPlotlyTraces({
   axes,
   data,
   annotType,
@@ -340,10 +340,6 @@ function getPlotlyTraces({
 
   let countsByLabel = null
 
-  const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
-
-  const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
-
   const isRefGroup = getIsRefGroup(scatter)
 
   if (isRefGroup) {
@@ -372,13 +368,50 @@ function getPlotlyTraces({
       })
     }
   } else {
+    const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
+    // for non-clustered plots, we pass in a single trace with all the points
+    let colors
+    if (isGeneExpressionForColor) {
+      // sort the points by order of expression
+      const expressionsWithIndices = new Array(data.expression.length)
+      for (let i = 0; i < data.expression.length; i++) {
+        expressionsWithIndices[i] = [data.expression[i], i]
+      }
+      expressionsWithIndices.sort((a, b) => a[0] - b[0])
+      // initialize the other arrays (see )
+      trace.x = new Array(data.expression.length)
+      trace.y = new Array(data.expression.length)
+      if (is3D) {
+        trace.z = new Array(data.expression.length)
+      }
+      trace.annotations = new Array(data.expression.length)
+      trace.cells = new Array(data.expression.length)
+      colors = new Array(data.expression.length)
+      for (let i = 0; i < expressionsWithIndices.length; i++) {
+        // now that we know the indices, reorder the other data arrays
+        const sortedIndex = expressionsWithIndices[i][1]
+        trace.x[i] = data.x[sortedIndex]
+        trace.y[i] = data.y[sortedIndex]
+        if (is3D) {
+          trace.z[i] = data.z[sortedIndex]
+        }
+        trace.cells[i] = data.cells[sortedIndex]
+        trace.annotations[i] = data.annotations[sortedIndex]
+        colors[i] = expressionsWithIndices[i][0]
+      }
+    } else {
+      colors = isGeneExpressionForColor ? data.expression : data.annotations
+    }
+
     trace.marker = {
       line: { color: 'rgb(40,40,40)', width: 0 },
       size: pointSize
     }
-    const colors = isGeneExpressionForColor ? data.expression : data.annotations
-    const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
+
     if (!isAnnotatedScatter) {
+      const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
+      const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
+
       Object.assign(trace.marker, {
         showscale: true,
         colorscale: appliedScatterColor,

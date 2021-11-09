@@ -1,0 +1,51 @@
+.notification__item {
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  .notification__message {
+    display: flex;
+    align-items: center;
+    svg {
+      font-size: 2em;
+      margin: 0.25em;
+      margin-right: 0.6em;
+    }
+
+  }
+  .notification__content .notification__close {
+    background: none;
+    &:after {
+      color: $action-color;
+      font-size: 1.75em;
+    }
+  }
+  &.notification__item--success {
+    background-color: #f1f6ed;
+    border-left: 1px solid #bbb;
+    .notification__title {
+      color: #333;
+    }
+    .notification__message {
+      color: #333;
+    }
+    svg {
+      color: $success-color;
+    }
+
+  }
+
+  &.notification__item--danger {
+    background-color: #fef4e9;
+    border-left: 1px solid #bbb;
+    .notification__title {
+      color: #333;
+    }
+    .notification__message {
+      color: #333;
+    }
+    svg {
+      color: #f79916;
+    }
+  }
+}
+
+
