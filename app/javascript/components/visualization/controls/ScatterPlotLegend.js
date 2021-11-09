@@ -96,7 +96,7 @@ function LegendEntry({
       <div className="scatter-legend-icon" style={iconStyle}></div>
       <div className="scatter-legend-entry">
         <span className="legend-label" title={entry}>{entry}</span>
-        <span className="num-points" title={`${numPoints} points have this label`}>{numPoints}</span>
+        <span className="num-points" title={`${numPoints} points in this group`}>{numPoints}</span>
       </div>
     </div>
   )
