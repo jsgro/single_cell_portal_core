@@ -11,7 +11,7 @@ const moreFacetIds = [
 ]
 
 /**
- * Container for horizontal list of facet buttons, and "More Facets" button
+ * Container for horizontal list of facet buttons, and "More facets" button
  */
 export default function FacetsPanel() {
   const searchFacetContext = useContext(SearchFacetContext)

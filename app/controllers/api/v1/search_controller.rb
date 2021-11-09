@@ -6,6 +6,11 @@ module Api
       # regex to match on 'sequence_file' and 'analysis_file' entries from TDR
       TDR_FILE_OUTPUT_TYPE_MATCH = /_file/.freeze
 
+      # value used to separate facet entries in query string params
+      FACET_DELIMITER = ';'.freeze
+      # value used to separate filter values for a facet in query string params
+      FILTER_DELIMITER = '|'.freeze
+
       before_action :set_current_api_user!
       before_action :authenticate_api_user!, only: [:create_auth_code]
       before_action :set_search_facet, only: :facet_filters
@@ -32,7 +37,9 @@ module Api
           parameter do
             key :name, :facets
             key :in, :query
-            key :description, 'User-supplied list facets and filters, formatted as: "facet_id:filter_value+facet_id_2:filter_value_2,filter_value_3"'
+            key :description, 'User-supplied list facets and filters.  Delimit facets from filters with ":", filter ' \
+                              "values with '#{FILTER_DELIMITER}' and facet entries with '#{FACET_DELIMITER}'"
+            key :example, "facet_id:filter_value#{FACET_DELIMITER}facet_id_2:filter_value_2#{FILTER_DELIMITER}filter_value_3"
             key :required, false
             key :type, :string
           end
@@ -429,10 +436,10 @@ module Api
       def set_search_facets_and_filters
         @facets = []
         if params[:facets].present?
-          facet_queries = RequestUtils.split_query_param_on_delim(parameter: params[:facets], delimiter: '+')
+          facet_queries = RequestUtils.split_query_param_on_delim(parameter: params[:facets], delimiter: FACET_DELIMITER)
           facet_queries.each do |query|
             facet_id, raw_filters = RequestUtils.split_query_param_on_delim(parameter: query, delimiter: ':')
-            filter_values = RequestUtils.split_query_param_on_delim(parameter: raw_filters)
+            filter_values = RequestUtils.split_query_param_on_delim(parameter: raw_filters, delimiter: FILTER_DELIMITER)
             facet = SearchFacet.find_by(identifier: facet_id)
             if facet.present?
               matching_filters = self.class.find_matching_filters(facet: facet, filter_values: filter_values)
@@ -662,7 +669,8 @@ module Api
             matching_filters = {min: min_value, max: max_value, unit: requested_unit}
           end
         else
-          facet.filters.each do |filter|
+          filters_list = facet.filters_with_external.any? ? facet.filters_with_external : facet.filters
+          filters_list.each do |filter|
             if filter_values.include?(filter[:id])
               matching_filters << filter
             end

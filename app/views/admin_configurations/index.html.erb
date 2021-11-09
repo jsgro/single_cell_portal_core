@@ -1,4 +1,4 @@
-<h1>Admin Control Panel</h1>
+<h1>Admin control panel</h1>
 <div class="container-fluid" id="tab-root">
   <ul class="nav nav-tabs" role="tablist" id="study-tabs">
     <li role="presentation" class="admin-nav active" id="admin-config-nav"><a href="#admin-config" data-toggle="tab">Configuration Options<i class="fas fa-fw fa-cog"></i></a></li>
@@ -39,10 +39,10 @@
                 <% end %>
                 </tbody>
               </table>
-              <p><%= link_to "<span class='fas fa-plus'></span> New Config Option".html_safe, new_admin_configuration_path, class: 'btn btn-success', id: 'create-new-configuration' %>&nbsp;</p>
+              <p><%= link_to "<span class='fas fa-plus'></span> New config option".html_safe, new_admin_configuration_path, class: 'btn btn-success', id: 'create-new-configuration' %>&nbsp;</p>
             </div>
           </div>
-          <h3>Other Tasks</h3>
+          <h3>Other tasks</h3>
           <div class="well well-lg">
             <div class="form-group row">
               <div class="col-md-5">
@@ -55,10 +55,10 @@
                 </div>
               </div>
               <div class="col-md-2">
-                <%= link_to 'Execute Task', '#/', id: 'perform-admin-task', class: 'btn btn-default' %>
+                <%= link_to 'Execute task', '#/', id: 'perform-admin-task', class: 'btn btn-default' %>
               </div>
               <div class="col-md-5 text-right">
-                <%= link_to 'Email All Users', compose_users_email_path, id: 'email-all-users', class: 'btn btn-primary' %>
+                <%= link_to 'Email all users', compose_users_email_path, id: 'email-all-users', class: 'btn btn-primary' %>
                 <%= link_to "<span class='fas fa-exclamation-circle'></span> MANAGE TERRA ACCESS".html_safe, '#', class: 'btn btn-danger panic', id: 'show-panic-modal' %>
               </div>
             </div>
@@ -94,7 +94,7 @@
                       <%= link_to "Disable Compute Access".html_safe, '#/', class: "btn btn-lg btn-block btn-warning #{@current_firecloud_status == 'readonly' ? 'disabled' : 'firecloud-status'}", id: 'disable-compute-access', data: {dismiss: @current_firecloud_status == 'readonly' ? nil : 'modal', status: 'readonly'} %>
                     </div>
                     <div class="col-md-4">
-                      <%= link_to "Enable All Access".html_safe, '#/', class: "btn btn-lg btn-block btn-success #{@current_firecloud_status == 'on' ? 'disabled' : 'firecloud-status'}", id: 'enable-firecloud-access', data: {dismiss: @current_firecloud_status == 'on' ? nil : 'modal', status: 'on'} %>
+                      <%= link_to "Enable all access".html_safe, '#/', class: "btn btn-lg btn-block btn-success #{@current_firecloud_status == 'on' ? 'disabled' : 'firecloud-status'}", id: 'enable-firecloud-access', data: {dismiss: @current_firecloud_status == 'on' ? nil : 'modal', status: 'on'} %>
                     </div>
                   </div>
                 <% end %>
@@ -111,7 +111,7 @@
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h4 class="text-center">Working... Please Wait</h4>
+              <h4 class="text-center">Working... please wait</h4>
             </div>
             <div class="modal-body">
               <div class="spinner-target" id="working-modal-spinner"></div>
@@ -129,7 +129,7 @@
               pagingType: "full_numbers",
               order: [[0, 'asc']],
               language: {
-                  search: "Filter Results By: "
+                  search: "Filter results by: "
               }
           });
 
@@ -226,7 +226,7 @@
               pagingType: "full_numbers",
               order: [[0, 'asc']],
               language: {
-                  search: "Filter Results By: "
+                  search: "Filter results by: "
               }
           });
       </script>

@@ -34,8 +34,8 @@ const testFacets = [{
   allUnits: ['years', 'months', 'weeks', 'days', 'hours']
 }]
 
-describe('Basic "More Facets" capability for faceted search', () => {
-  it('the More Facets Button should correctly render when facets are selected', async () => {
+describe('Basic "More facets" capability for faceted search', () => {
+  it('the More facets Button should correctly render when facets are selected', async () => {
     const routerNav = jest.spyOn(Reach, 'navigate')
 
     const moreButton = () => {
@@ -63,7 +63,7 @@ describe('Basic "More Facets" capability for faceted search', () => {
 })
 
 describe('Filter slider works within more facets', () => {
-  it('the More Facets Button should correctly render when facets are selected', async () => {
+  it('the More facets Button should correctly render when facets are selected', async () => {
     const routerNav = jest.spyOn(Reach, 'navigate')
 
     const ageFacet = () => {
@@ -88,7 +88,7 @@ describe('Filter slider works within more facets', () => {
     })
     expect(ageFacet().find('button.facet-apply-button').hasClass('active')).toEqual(true)
     ageFacet().find('button.facet-apply-button').simulate('click')
-    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=organism_age%3A50%2C180%2Cyears')
+    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=organism_age%3A50%7C180%7Cyears')
   })
 })
 

@@ -9,7 +9,7 @@ export function AddFileButton({ newFileTemplate, addNewFile }) {
   return <div className="row top-margin">
     <div className="col-md-12">
       <button className="btn btn-secondary terra-secondary-btn" onClick={() => addNewFile(newFileTemplate, true)}>
-        <span className="fas fa-plus"></span> Add File
+        <span className="fas fa-plus"></span> Add file
       </button>
     </div>
   </div>
