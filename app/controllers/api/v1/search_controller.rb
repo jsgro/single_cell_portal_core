@@ -278,7 +278,7 @@ module Api
             if study.is_a? Study
               -study.search_weight(@term_list)[:total]
             else
-              -(::AzulSearchService.compute_term_search_weight(study, @term_list)[:total])
+              -study[:term_matches][:total]
             end
           end
         when :accession

@@ -50,7 +50,7 @@ class AzulSearchService
         description: project_hash[:projectDescription],
         hca_project_id: project_id,
         facet_matches: {},
-        term_matches: [],
+        term_matches: {},
         file_information: [
           {
             url: project_id,
@@ -62,7 +62,17 @@ class AzulSearchService
       }.with_indifferent_access
       # get facet matches from rest of entry
       result[:facet_matches] = get_facet_matches(entry_hash, merged_facets)
-      results[short_name] = result
+      if terms
+        result[:term_matches] = get_search_term_weights(result, terms)
+        if result.dig(:term_matches, :total) > 0
+          results[short_name] = result
+        else
+          # we didn't get any hits on project name/description, so exclude from results and remove project ID from list
+          project_ids.pop
+        end
+      else
+        results[short_name] = result
+      end
     end
     # now run file query to get matching files for all matching projects
     file_query = { 'projectId' => { 'is' => project_ids } }
@@ -160,9 +170,9 @@ class AzulSearchService
     facets.compact.reduce([], :+)
   end
 
-  # compute a term matching weight for a result from Azul
+  # compute a term matching weights for a result from Azul
   # this mirrors Study#search_weight
-  def self.compute_term_search_weight(result, terms)
+  def self.get_search_term_weights(result, terms)
     weights = {
       total: 0,
       terms: {}
