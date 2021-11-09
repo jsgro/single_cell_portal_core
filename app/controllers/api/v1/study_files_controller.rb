@@ -300,6 +300,12 @@ module Api
           end
         end
 
+        # Somewhere in Rails automagic, the upload filename is set as the study file name
+        # We want to have it be the upload_file_name sent by the frontend
+        if safe_file_params[:upload] && safe_file_params[:upload_file_name]
+          safe_file_params[:upload].original_filename = safe_file_params[:upload_file_name]
+        end
+
         # manually check first if species/assembly was supplied by name
         species_name = safe_file_params[:species]
         safe_file_params.delete(:species)
@@ -314,7 +320,7 @@ module Api
 
         # check if the name of the file has changed as we won't be able to tell after we saved
         name_changed = study_file.persisted? && study_file.name != safe_file_params[:name]
-
+        byebug
         study_file.update!(safe_file_params)
 
         # invalidate caches first
