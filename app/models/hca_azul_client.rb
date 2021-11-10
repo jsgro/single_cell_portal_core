@@ -288,11 +288,13 @@ class HcaAzulClient < Struct.new(:api_root)
     matching_facets = []
     term_list.each do |term|
       facet = SearchFacet.find_facet_from_term(term)
-      if facet.present?
-        # mock a faceted search match, appending in all possible filter matches
-        filters = facet.find_filter_matches(term, filter_list: :filters_with_external).map { |t| [{ id: t, name: t }] }.flatten
-        matching_facets << { id: facet.identifier, filters: filters }
-      end
+      next if facet.nil?
+
+      # mock a faceted search match, appending in all possible filter matches
+      filters = facet.find_filter_matches(term, filter_list: :filters_with_external).map do |t|
+        [{ id: t, name: t }.with_indifferent_access]
+      end.flatten
+      matching_facets << { id: facet.identifier, filters: filters }.with_indifferent_access
     end
     matching_facets
   end
@@ -312,7 +314,9 @@ class HcaAzulClient < Struct.new(:api_root)
           merged_query[facet_name] = opts
         else
           opts.each_pair do |operator, values|
-            merged_query[facet_name][operator] += values
+            values.each do |value|
+              merged_query[facet_name][operator] << value unless merged_query[facet_name][operator].include?(value)
+            end
           end
         end
       end
