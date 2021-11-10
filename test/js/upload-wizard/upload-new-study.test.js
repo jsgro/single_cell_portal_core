@@ -58,7 +58,7 @@ async function testRawCountsUpload({ createFileSpy, saveButton }) {
   const formData = new FormData()
 
   createFileSpy.mockImplementation(() => _cloneDeep(RAW_COUNTS_FILE))
-  expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw Count Expression Files')
+  expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw count expression files')
 
   expect(saveButton()).toBeDisabled()
   fireEvent.mouseOver(saveButton())
@@ -84,7 +84,7 @@ async function testRawCountsUpload({ createFileSpy, saveButton }) {
   fireEvent.mouseOver(saveButton())
   expect(screen.getByRole('tooltip')).not.toHaveTextContent('You must specify species')
 
-  await selectEvent.select(getSelectByLabelText(screen, 'Library Preparation Protocol *'), 'Drop-seq')
+  await selectEvent.select(getSelectByLabelText(screen, 'Library preparation protocol *'), 'Drop-seq')
   await selectEvent.select(getSelectByLabelText(screen, 'Units *'), 'raw counts')
   expect(saveButton()).not.toBeDisabled()
 
@@ -110,8 +110,8 @@ async function testProcessedUpload({ createFileSpy, saveButton }) {
 
   createFileSpy.mockImplementation(() => _cloneDeep(PROCESSED_MATRIX_FILE))
 
-  fireEvent.click(screen.getByText('Processed Matrices'))
-  expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Processed Expression Files')
+  fireEvent.click(screen.getByText('Processed matrices'))
+  expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Processed expression files')
   expect(screen.getByTestId('processed-status-badge')).toHaveTextContent('2')
   expect(saveButton()).toBeDisabled()
   fireEvent.mouseOver(saveButton())
@@ -135,7 +135,7 @@ async function testProcessedUpload({ createFileSpy, saveButton }) {
   fireEvent.mouseOver(saveButton())
   expect(screen.getByRole('tooltip')).not.toHaveTextContent('You must specify species')
 
-  await selectEvent.select(getSelectByLabelText(screen, 'Library Preparation Protocol *'), 'Drop-seq')
+  await selectEvent.select(getSelectByLabelText(screen, 'Library preparation protocol *'), 'Drop-seq')
   expect(saveButton()).not.toBeDisabled()
 
   fireEvent.click(saveButton())

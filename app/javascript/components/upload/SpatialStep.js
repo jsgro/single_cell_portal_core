@@ -12,9 +12,9 @@ const DEFAULT_NEW_SPATIAL_FILE = {
 export const spatialFileFilter = file => file.file_type === 'Cluster' && file.is_spatial
 
 export default {
-  title: 'Spatial Files (optional)',
+  title: 'Spatial files (optional)',
   name: 'spatial',
-  header: 'Spatial Files',
+  header: 'Spatial files',
   component: SpatialUploadForm,
   fileFilter: spatialFileFilter
 }

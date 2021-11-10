@@ -11,9 +11,9 @@ const DEFAULT_NEW_LABEL_FILE = {
 const coordinateLabelFileFilter = file => file.file_type === 'Coordinate Labels'
 
 export default {
-  title: 'Coordinate Labels',
+  title: 'Coordinate labels',
   name: 'coordinateLabels',
-  header: 'Coordinate Labels',
+  header: 'Coordinate labels',
   component: CoordinateLabelForm,
   fileFilter: coordinateLabelFileFilter
 }
