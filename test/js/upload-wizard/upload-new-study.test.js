@@ -50,6 +50,7 @@ describe('creation of study files', () => {
     await testProcessedUpload({ createFileSpy, saveButton })
     await testMetadataUpload({ createFileSpy, saveButton })
     await testClusterUpload({ createFileSpy, saveButton })
+    await testSpatialUpload({ createFileSpy, saveButton })
   })
 })
 
@@ -248,5 +249,61 @@ async function testClusterUpload({ createFileSpy, saveButton }) {
   }))
   expect(screen.getByTestId('clustering-status-badge')).not.toHaveTextContent('3')
   expect(screen.getByTestId('clustering-status-badge')).toHaveClass('complete')
+}
+
+/** Uploads a metadata file and checks the field requirements */
+async function testSpatialUpload({ createFileSpy, saveButton }) {
+  const formData = new FormData()
+  const goodFileName = 'spatial-good.txt'
+  const spatialResponse = {
+    ..._cloneDeep(CLUSTER_FILE),
+    _id: {
+      '$oid': '60a2b9fccc7ba082358b3333'
+    },
+    is_spatial: true,
+    name: goodFileName,
+    upload_file_name: goodFileName
+  }
+  createFileSpy.mockImplementation(() => spatialResponse)
+
+  fireEvent.click(screen.getByText('Spatial Files (optional)'))
+  expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Spatial Files')
+  expect(screen.getByTestId('spatial-status-badge')).not.toHaveClass('complete')
+  expect(saveButton()).toBeDisabled()
+  fireEvent.mouseOver(saveButton())
+  expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
+
+  const badFileName = 'spatial-bad.txt'
+  fireFileSelectionEvent(screen.getByTestId('file-input'), {
+    fileName: badFileName,
+    content: 'garbage'
+  })
+  await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
+  expect(screen.queryByTestId('file-selection-name')).toBeFalsy()
+  expect(screen.getByTestId('file-content-validation')).toHaveTextContent(`Could not use ${badFileName}`)
+  fireEvent.mouseOver(saveButton())
+  expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
+
+  fireFileSelectionEvent(screen.getByTestId('file-input'), {
+    fileName: goodFileName,
+    content: 'NAME,X,Y\nTYPE,numeric,numeric\nCell1,1,0\n'
+  })
+  await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
+  expect(screen.getByTestId('file-selection-name')).toHaveTextContent(goodFileName)
+  expect(saveButton()).not.toBeDisabled()
+
+  fireEvent.click(saveButton())
+  await waitForElementToBeRemoved(() => screen.getByTestId('file-save-spinner'))
+
+  expect(createFileSpy).toHaveBeenLastCalledWith(expect.objectContaining({
+    chunkEnd: 40,
+    chunkStart: 0,
+    fileSize: 40,
+    isChunked: false,
+    studyAccession: 'SCP1',
+    studyFileData: formData
+  }))
+
+  expect(screen.getByTestId('spatial-status-badge')).toHaveClass('complete')
 }
 
