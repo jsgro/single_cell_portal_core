@@ -24,13 +24,13 @@ describe('it allows navigating between steps', () => {
     </MockRouter>)
     await waitForElementToBeRemoved(() => screen.getByTestId('upload-wizard-spinner'))
 
-    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw Count Expression Files')
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw count expression files')
 
-    fireEvent.click(screen.getByText('Processed Matrices'))
-    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Processed Expression Files')
+    fireEvent.click(screen.getByText('Processed matrices'))
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Processed expression files')
 
-    fireEvent.click(screen.getByText('Coordinate Labels'))
-    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Coordinate Labels')
+    fireEvent.click(screen.getByText('Coordinate labels'))
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Coordinate labels')
   })
 
   it('prevents access to processed matrices when appropriate', async () => {
@@ -51,10 +51,10 @@ describe('it allows navigating between steps', () => {
 
     await waitForElementToBeRemoved(() => screen.getByTestId('upload-wizard-spinner'))
 
-    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw Count Expression Files')
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw count expression files')
     expect(screen.queryByTestId('file-upload-overlay')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByText('Processed Matrices'))
-    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Processed Expression Files')
+    fireEvent.click(screen.getByText('Processed matrices'))
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Processed expression files')
     expect(screen.queryByTestId('processed-matrix-overlay')).toBeInTheDocument()
   })
 

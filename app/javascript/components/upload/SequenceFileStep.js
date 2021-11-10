@@ -15,8 +15,8 @@ const sequenceFileTypes = ['BAM', 'Fastq']
 const sequenceFileFilter = file => sequenceFileTypes.includes(file.file_type)
 
 export default {
-  title: 'Sequence Files',
-  header: 'Sequence Files',
+  title: 'Sequence files',
+  header: 'Sequence files',
   name: 'sequence',
   component: SequenceForm,
   fileFilter: sequenceFileFilter

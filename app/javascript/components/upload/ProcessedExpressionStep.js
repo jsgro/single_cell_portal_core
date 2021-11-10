@@ -20,8 +20,8 @@ export const fileTypes = ['Expression Matrix', 'MM Coordinate Matrix']
 const processedFilter = file => fileTypes.includes(file.file_type) && !file.expression_file_info?.is_raw_counts
 
 export default {
-  title: 'Processed Matrices',
-  header: 'Processed Expression Files',
+  title: 'Processed matrices',
+  header: 'Processed expression files',
   name: 'processed',
   component: ProcessedUploadForm,
   fileFilter: processedFilter

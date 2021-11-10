@@ -45,35 +45,35 @@ export default function ClusteringFileForm({
         </label>
       </div>
     }
-    <TextFormField label="Description / Figure Legend (this will be displayed below cluster)"
+    <TextFormField label="Description / Figure legend (this will be displayed below cluster)"
       fieldName="description" file={file} updateFile={updateFile}/>
 
     <div className="row">
       <div className="col-md-4">
-        <TextFormField label="X Axis Label" fieldName="x_axis_label" file={file} updateFile={updateFile}/>
+        <TextFormField label="X axis label" fieldName="x_axis_label" file={file} updateFile={updateFile}/>
       </div>
       <div className="col-md-4">
-        <TextFormField label="Y Axis Label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
+        <TextFormField label="Y axis label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
       </div>
     </div>
     <div className="row">
       <div className="col-md-2">
-        <TextFormField label="X Domain Min" fieldName="x_axis_min" file={file} updateFile={updateFile}/>
+        <TextFormField label="X domain min" fieldName="x_axis_min" file={file} updateFile={updateFile}/>
       </div>
       <div className="col-md-2">
-        <TextFormField label="X Domain Max" fieldName="x_axis_max" file={file} updateFile={updateFile}/>
+        <TextFormField label="X domain max" fieldName="x_axis_max" file={file} updateFile={updateFile}/>
       </div>
       <div className="col-md-2">
-        <TextFormField label="Y Domain Min" fieldName="y_axis_min" file={file} updateFile={updateFile}/>
+        <TextFormField label="Y domain min" fieldName="y_axis_min" file={file} updateFile={updateFile}/>
       </div>
       <div className="col-md-2">
         <TextFormField label="Y Domain Max" fieldName="y_axis_max" file={file} updateFile={updateFile}/>
       </div>
       <div className="col-md-2">
-        <TextFormField label="Z Domain Min" fieldName="z_axis_min" file={file} updateFile={updateFile}/>
+        <TextFormField label="Z domain min" fieldName="z_axis_min" file={file} updateFile={updateFile}/>
       </div>
       <div className="col-md-2">
-        <TextFormField label="Z Domain Max" fieldName="z_axis_max" file={file} updateFile={updateFile}/>
+        <TextFormField label="Z domain max" fieldName="z_axis_max" file={file} updateFile={updateFile}/>
       </div>
     </div>
   </ExpandableFileForm>
