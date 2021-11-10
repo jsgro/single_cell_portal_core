@@ -325,7 +325,7 @@ class User
     if self.admin?
       BrandingGroup.all.order_by(:name.asc)
     else
-      BrandingGroup.where(user_id: self.id).order_by(:name.asc)
+      branding_groups.order_by(:name.asc)
     end
   end
 
@@ -333,7 +333,7 @@ class User
     if self.admin?
       BrandingGroup.all.order_by(:name.asc)
     else
-      BrandingGroup.where(user_id: self.id).or(public: true).order_by(:name.asc)
+      BrandingGroup.where(:user_ids.in => [self.id]).or(public: true).order_by(:name.asc)
     end
   end
 
