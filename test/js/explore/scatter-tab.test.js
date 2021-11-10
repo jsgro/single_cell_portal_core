@@ -9,6 +9,7 @@ import * as ScpApi from 'lib/scp-api'
 import { createCache } from 'components/explore//plot-data-cache'
 import ScatterTab, { getNewContextMap } from 'components/explore/ScatterTab'
 import * as ScpApiMetrics from 'lib/scp-api-metrics'
+import * as MetricsApi from 'lib/metrics-api'
 
 import { MANY_LABELS_MOCKS } from '../../test_data/mock_responses/scatter-plot.test-data'
 
@@ -187,7 +188,7 @@ describe('getNewContextMap correctly assigns contexts', () => {
     })
   })
 
-  it('shows default group scatter plot and legend', async () => {
+  it('shows custom legend with default group scatter plot', async () => {
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
     // pass in a clone of the response since it may get modified by the cache operations
     apiFetch.mockImplementation(params => {
@@ -201,6 +202,8 @@ describe('getNewContextMap correctly assigns contexts', () => {
     const fakeLogScatter = jest.spyOn(ScpApiMetrics, 'logScatterPlot')
     fakeLogScatter.mockImplementation(() => {})
 
+    const fakeLog = jest.spyOn(MetricsApi, 'log')
+    fakeLog.mockImplementation(() => {})
 
     const { container } = render((
       <ScatterTab studyAccession='SCP101'
@@ -258,9 +261,22 @@ describe('getNewContextMap correctly assigns contexts', () => {
     expect(showAllButton).toHaveAttribute('disabled')
 
     // Click a legend label to hide the corresponding trace
-    fireEvent.click(screen.getByText('An_underscored_label (19 points)'))
+    fireEvent.click(screen.getByText('An_underscored_label'))
 
     // Wait for show all to not be disabled
     await waitFor(() => expect(screen.getByText('Show all')).not.toHaveAttribute('disabled'))
+
+    // Test analytics
+    expect(fakeLog).toHaveBeenCalledWith(
+      'click:scatterlegend:single',
+      {
+        label: 'An_underscored_label',
+        numPoints: 19,
+        numLabels: 29,
+        wasShown: true,
+        iconColor: '#377eb8',
+        hasCorrelations: false
+      }
+    )
   })
 })

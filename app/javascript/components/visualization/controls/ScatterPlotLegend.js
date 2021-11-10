@@ -91,7 +91,7 @@ function LegendEntry({
     updateShownTraces(label, wasShown, numLabels)
 
     const legendEntry = {
-      label, numPoints, numLabels, wasShown, shownTraces, iconColor,
+      label, numPoints, numLabels, wasShown, iconColor,
       hasCorrelations
     }
     log('click:scatterlegend:single', legendEntry)

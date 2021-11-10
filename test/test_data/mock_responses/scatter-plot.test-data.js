@@ -6,7 +6,7 @@
  */
 
 export const MANY_LABELS_MOCKS = {
-  'EXPLORE_RESPONSE': {
+  EXPLORE_RESPONSE: {
     cluster: {
       numPoints: 130,
       isSubsampled: false
@@ -218,10 +218,12 @@ export const MANY_LABELS_MOCKS = {
       'cluster_many_long_odd_labels.tsv', 'cluster.tsv'
     ],
     spatialGroups: [],
-    clusterPointAlpha: 1.0,
-    colorProfile: null
+    imageFiles: [],
+    clusterPointAlpha: 1,
+    colorProfile: null,
+    bucketId: 'fc-968ec9be-fdba-49a1-ba2e-af49281c4a1d'
   },
-  'CLUSTER_RESPONSE': {
+  CLUSTER_RESPONSE: {
     data: {
       annotations: [
         'A.Rather.Long.Label.With.Several.Periods',
