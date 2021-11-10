@@ -32,15 +32,6 @@ export function TextFormField({ label, fieldName, file, updateFile }) {
   </div>
 }
 
-/** renders an overlay if the file is saving, and also displays server error messages */
-export function SavingOverlay({ file, updateFile }) {
-  const showOverlay = file.isSaving || file.isDeleting
-  if (!showOverlay) {
-    return <></>
-  }
-  return <div className="file-upload-overlay"></div>
-}
-
 /** renders save and delete buttons for a given file */
 export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, validationMessages={} }) {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)

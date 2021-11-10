@@ -27,7 +27,8 @@ const PROPERTIES_NOT_TO_SEND = [
   'version',
   'status',
   'upload',
-  'parse_status'
+  'parse_status',
+  'requestCanceller'
 ]
 
 /** gets an object representing a new, empty study file.  Does not communicate to server */
