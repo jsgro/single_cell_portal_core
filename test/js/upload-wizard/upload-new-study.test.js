@@ -11,7 +11,7 @@ import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 import * as ScpApi from 'lib/scp-api'
 import {
   EMPTY_STUDY, RAW_COUNTS_FILE, PROCESSED_MATRIX_FILE, METADATA_FILE,
-  CLUSTER_FILE
+  CLUSTER_FILE, COORDINATE_LABEL_FILE, FASTQ_FILE
 } from './file-info-responses'
 import { UserContext } from 'providers/UserProvider'
 
@@ -51,6 +51,8 @@ describe('creation of study files', () => {
     await testMetadataUpload({ createFileSpy, saveButton })
     await testClusterUpload({ createFileSpy, saveButton })
     await testSpatialUpload({ createFileSpy, saveButton })
+    await testCoordinateLabelUpload({ createFileSpy, saveButton })
+    await testSequenceFileUpload({ createFileSpy, saveButton })
   })
 })
 
@@ -203,7 +205,7 @@ async function testMetadataUpload({ createFileSpy, saveButton }) {
   expect(screen.getByTestId('metadata-status-badge')).toHaveClass('complete')
 }
 
-/** Uploads a metadata file and checks the field requirements */
+/** Uploads a cluster file and checks the field requirements */
 async function testClusterUpload({ createFileSpy, saveButton }) {
   const formData = new FormData()
 
@@ -251,7 +253,7 @@ async function testClusterUpload({ createFileSpy, saveButton }) {
   expect(screen.getByTestId('clustering-status-badge')).toHaveClass('complete')
 }
 
-/** Uploads a metadata file and checks the field requirements */
+/** Uploads a spatial file and checks the field requirements */
 async function testSpatialUpload({ createFileSpy, saveButton }) {
   const formData = new FormData()
   const goodFileName = 'spatial-good.txt'
@@ -307,3 +309,106 @@ async function testSpatialUpload({ createFileSpy, saveButton }) {
   expect(screen.getByTestId('spatial-status-badge')).toHaveClass('complete')
 }
 
+/** Uploads a coordinate label file and checks the field requirements */
+async function testCoordinateLabelUpload({ createFileSpy, saveButton }) {
+  const formData = new FormData()
+
+  createFileSpy.mockImplementation(() => _cloneDeep(COORDINATE_LABEL_FILE))
+
+  fireEvent.click(screen.getByText('Coordinate Labels'))
+  expect(screen.getByTestId('coordinateLabels-status-badge')).not.toHaveClass('complete')
+  expect(saveButton()).toBeDisabled()
+  fireEvent.mouseOver(saveButton())
+  expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
+
+  const badFileName = 'labels-bad.txt.gz'
+  fireFileSelectionEvent(screen.getByTestId('file-input'), {
+    fileName: badFileName,
+    content: 'garbage'
+  })
+  await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
+  expect(screen.queryByTestId('file-selection-name')).toBeFalsy()
+  expect(screen.getByTestId('file-content-validation')).toHaveTextContent(`Could not use ${badFileName}`)
+  fireEvent.mouseOver(saveButton())
+  expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
+
+  const goodFileName = 'labels-good.txt'
+  fireFileSelectionEvent(screen.getByTestId('file-input'), {
+    fileName: goodFileName,
+    content: 'X,Y,LABELS\n10,10,stuff\n50,70,things\n'
+  })
+  await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
+  expect(screen.getByTestId('file-selection-name')).toHaveTextContent(goodFileName)
+  expect(saveButton()).toBeDisabled()
+  fireEvent.mouseOver(saveButton())
+  expect(screen.getByRole('tooltip')).toHaveTextContent('You must specify Corresponding cluster')
+
+  await selectEvent.select(getSelectByLabelText(screen, 'Corresponding cluster / spatial data *'), 'cluster.txt')
+
+  expect(saveButton()).not.toBeDisabled()
+  fireEvent.click(saveButton())
+  await waitForElementToBeRemoved(() => screen.getByTestId('file-save-spinner'))
+
+  expect(createFileSpy).toHaveBeenLastCalledWith(expect.objectContaining({
+    chunkEnd: 36,
+    chunkStart: 0,
+    fileSize: 36,
+    isChunked: false,
+    studyAccession: 'SCP1',
+    studyFileData: formData
+  }))
+  expect(screen.getByTestId('coordinateLabels-status-badge')).toHaveClass('complete')
+}
+
+/** Uploads a coordinate label file and checks the field requirements */
+async function testSequenceFileUpload({ createFileSpy, saveButton }) {
+  const formData = new FormData()
+
+  createFileSpy.mockImplementation(() => _cloneDeep(FASTQ_FILE))
+
+  fireEvent.click(screen.getByText('Sequence Files'))
+  expect(screen.getByTestId('sequence-status-badge')).not.toHaveClass('complete')
+  expect(saveButton()).toBeDisabled()
+  fireEvent.mouseOver(saveButton())
+  expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
+
+  const badFileName = 'sequence-bad.foo'
+  fireFileSelectionEvent(screen.getByTestId('file-input'), {
+    fileName: badFileName,
+    content: 'garbage'
+  })
+  await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
+  expect(screen.queryByTestId('file-selection-name')).toBeFalsy()
+  expect(screen.getByTestId('file-content-validation')).toHaveTextContent(`Could not use ${badFileName}`)
+  fireEvent.mouseOver(saveButton())
+  expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
+
+  const goodFileName = 'sequence-good.fastq'
+  fireFileSelectionEvent(screen.getByTestId('file-input'), {
+    fileName: goodFileName,
+    content: 'binary stuff'
+  })
+  await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
+  expect(screen.getByTestId('file-selection-name')).toHaveTextContent(goodFileName)
+  expect(saveButton()).toBeDisabled()
+  fireEvent.mouseOver(saveButton())
+  expect(screen.getByRole('tooltip')).toHaveTextContent('You must specify species')
+
+  await selectEvent.select(getSelectByLabelText(screen, 'Species *'), 'chicken')
+
+  expect(saveButton()).not.toBeDisabled()
+  fireEvent.click(saveButton())
+  await waitForElementToBeRemoved(() => screen.getByTestId('file-save-spinner'))
+
+  expect(createFileSpy).toHaveBeenLastCalledWith(expect.objectContaining({
+    chunkEnd: 12,
+    chunkStart: 0,
+    fileSize: 12,
+    isChunked: false,
+    studyAccession: 'SCP1',
+    studyFileData: formData
+  }))
+  expect(screen.getByTestId('sequence-status-badge')).toHaveClass('complete')
+}
+
+COORDINATE_LABEL_FILE
