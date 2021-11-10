@@ -2,7 +2,6 @@ class BrandingGroupsController < ApplicationController
   before_action :set_branding_group, only: [:show, :edit, :update, :destroy]
   before_action except: [:list_navigate] do
     authenticate_user!
-    authenticate_admin
   end
 
   # GET /branding_groups
@@ -99,8 +98,9 @@ class BrandingGroupsController < ApplicationController
 
   # Never trust parameters from the scary internet, only allow the permit list through.
   def branding_group_params
-    params.require(:branding_group).permit(:name, :tag_line, :public, :background_color, :font_family, :font_color, :user_id,
+    params.require(:branding_group).permit(:name, :tag_line, :public, :background_color, :font_family, :font_color,
                                            :splash_image, :banner_image, :footer_image, :external_link_url, :external_link_description,
-                                           :reset_splash_image, :reset_footer_image, :reset_banner_image)
+                                           :reset_splash_image, :reset_footer_image, :reset_banner_image,
+                                           user_ids: [], study_ids: [])
   end
 end
