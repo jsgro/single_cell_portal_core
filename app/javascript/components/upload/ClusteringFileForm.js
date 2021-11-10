@@ -67,7 +67,7 @@ export default function ClusteringFileForm({
         <TextFormField label="Y domain min" fieldName="y_axis_min" file={file} updateFile={updateFile}/>
       </div>
       <div className="col-md-2">
-        <TextFormField label="Y Domain Max" fieldName="y_axis_max" file={file} updateFile={updateFile}/>
+        <TextFormField label="Y domain max" fieldName="y_axis_max" file={file} updateFile={updateFile}/>
       </div>
       <div className="col-md-2">
         <TextFormField label="Z domain min" fieldName="z_axis_min" file={file} updateFile={updateFile}/>
