@@ -27,7 +27,7 @@ class AzulSearchService
     client = ApplicationController.hca_azul_client
     results = {}
     facet_query = client.format_query_from_facets(selected_facets) if selected_facets
-    terms_to_facets = client.convert_keyword_to_facet_query(terms)
+    terms_to_facets = client.convert_keyword_to_facet_query(terms) if terms
     term_query = client.format_query_from_facets(terms_to_facets) if terms_to_facets
     query_json = client.merge_query_objects(facet_query, term_query)
     # abort search if no facets/terms result in query to execute
@@ -166,8 +166,18 @@ class AzulSearchService
 
   # merge together two lists of facets (from keyword- and faceted-search requests)
   # takes into account nil objects
-  def self.merge_facet_lists(*facets)
-    facets.compact.reduce([], :+)
+  def self.merge_facet_lists(*facet_lists)
+    all_facets = {}
+    facet_lists.compact.each do |facet_list|
+      facet_list.each do |facet|
+        facet_identifier = facet[:id]
+        all_facets[facet_identifier] ||= facet
+        facet[:filters].each do |f|
+          all_facets[facet_identifier][:filters] << f unless all_facets.dig(facet_identifier, :filters).include? f
+        end
+      end
+    end
+    all_facets.map { |id, facet| { id: id, filters: facet[:filters] } }
   end
 
   # compute a term matching weights for a result from Azul
@@ -185,6 +195,6 @@ class AzulSearchService
         weights[:terms][term] = score
       end
     end
-    weights
+    weights.with_indifferent_access
   end
 end
