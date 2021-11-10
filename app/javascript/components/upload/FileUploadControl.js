@@ -15,6 +15,9 @@ const miscExtensions = ['.txt', '.text', '.tsv', '.csv', '.jpg', '.jpeg', '.png'
 const sequenceExtensions = ['.fq', '.fastq', '.fq.tar.gz', '.fastq.tar.gz', '.fq.gz', '.fastq.gz', '.bam']
 const baiExtensions = ['.bai']
 
+// File types which let the user set a custom name for the file in the UX
+const FILE_TYPES_ALLOWING_SET_NAME = ['Cluster', 'Gene List']
+
 export const FileTypeExtensions = {
   plainText: plainTextExtensions.concat(plainTextExtensions.map(ext => `${ext}.gz`)),
   mtx: mtxExtensions.concat(mtxExtensions.map(ext => `${ext}.gz`)),
@@ -69,7 +72,8 @@ export default function FileUploadControl({
     const selectedFile = e.target.files[0]
     let newName = selectedFile.name
     // for cluster files, don't change an existing specified name
-    if (file.file_type == 'Cluster' && file.name && file.name != file.upload_file_name) {
+
+    if (FILE_TYPES_ALLOWING_SET_NAME.includes(file.file_type) && file.name && file.name != file.upload_file_name) {
       newName = file.name
     }
     setFileValidation({ validating: true, errorMsgs: [], filename: selectedFile.name })
@@ -78,6 +82,7 @@ export default function FileUploadControl({
     if (errorMsgs.length === 0) {
       updateFile(file._id, {
         uploadSelection: selectedFile,
+        upload_file_name: newName,
         name: newName
       })
     }

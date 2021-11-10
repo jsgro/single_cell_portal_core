@@ -23,6 +23,7 @@ export default function GeneListFileForm({
     file, allFiles, updateFile, saveFile,
     allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded
   }}>
+    <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
     <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
   </ExpandableFileForm>
 }
