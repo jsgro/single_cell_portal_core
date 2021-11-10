@@ -100,7 +100,7 @@ function LegendEntry({
   return (
     <div
       className={`scatter-legend-row ${shownClass}`}
-      onClick={event => toggleSelection(event)}
+      onClick={() => toggleSelection()}
     >
       <div className="scatter-legend-icon" style={iconStyle}></div>
       <div className="scatter-legend-entry">
