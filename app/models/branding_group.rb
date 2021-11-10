@@ -17,8 +17,8 @@ class BrandingGroup
   # list of facets to show for this branding group (will restrict to only provided identifiers, if present)
   field :facet_list, type: Array, default: []
 
-  has_many :studies
-  belongs_to :user
+  has_and_belongs_to_many :studies
+  has_and_belongs_to_many :users
 
   field :splash_image_file_size, type: Integer
   field :splash_image_content_type, type: String
