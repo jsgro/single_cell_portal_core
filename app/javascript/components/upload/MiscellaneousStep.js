@@ -13,7 +13,7 @@ const miscFileFilter = file => miscFileTypes.includes(file.file_type)
 
 export default {
   title: 'Miscellaneous / Other',
-  header: 'Documentation & Other Files',
+  header: 'Documentation & other files',
   name: 'misc',
   component: MiscellaneousForm,
   fileFilter: miscFileFilter

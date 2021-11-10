@@ -281,7 +281,7 @@ export function RawUploadWizard({ studyAccession, name }) {
     await deleteStudyFile(studyAccession, fileId)
     setServerState(prevServerState => {
       const newServerState = _cloneDeep(prevServerState)
-      newServerState.files = newServerState.files.filter(f => f._id != fileId)
+      newServerState.files = newServerState.files.filter(f => f._id !== fileId)
       return newServerState
     })
   }
