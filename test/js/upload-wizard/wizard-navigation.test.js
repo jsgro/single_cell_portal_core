@@ -11,6 +11,11 @@ import { EMPTY_STUDY } from './file-info-responses'
 
 
 describe('it allows navigating between steps', () => {
+  afterEach(() => {
+    // Restores all mocks back to their original value
+    jest.restoreAllMocks()
+  })
+
   it('navigates between steps on clicking step names', async () => {
     const studyInfoSpy = jest.spyOn(ScpApi, 'fetchStudyFileInfo')
     // pass in a clone of the response since it may get modified by the cache operations
@@ -59,6 +64,7 @@ describe('it allows navigating between steps', () => {
   })
 
   it('sets initial tab based on url params', async () => {
+    jest.spyOn(ScpApi, 'fetchStudyFileInfo').mockImplementation(() => {return new Promise(() => {})})
     render(
       <MockRouter initialSearch={'?tab=clustering'}>
         <RawUploadWizard studyAccession="SCP1" name="Chicken study"/>

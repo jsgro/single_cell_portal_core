@@ -7,6 +7,11 @@ import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 
 
 describe('file upload control defaults the name of the file', () => {
+  afterEach(() => {
+    // Restores all mocks back to their original value
+    jest.restoreAllMocks()
+  })
+
   it('updates the name of the selected file', async () => {
     const file = {
       _id: '123',

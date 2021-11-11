@@ -25,7 +25,19 @@ function getSelectByLabelText(screen, text) {
 }
 
 describe('creation of study files', () => {
-  it('renders the raw counts form and allows updates and save', async () => {
+  beforeAll(() => {
+    jest.restoreAllMocks()
+    // This test is long, so allow extra time
+    jest.setTimeout(30000)
+  })
+
+  afterEach(() => {
+    // Restores all mocks back to their original value
+    jest.restoreAllMocks()
+    jest.setTimeout(5000)
+  })
+
+  it('allows upload of all common file types in sequence', async () => {
     const studyInfoSpy = jest.spyOn(ScpApi, 'fetchStudyFileInfo')
     // pass in a clone of the response since it may get modified by the cache operations
     studyInfoSpy.mockImplementation(params => {
@@ -249,7 +261,7 @@ async function testClusterUpload({ createFileSpy, saveButton }) {
     studyAccession: 'SCP1',
     studyFileData: formData
   }))
-  expect(screen.getByTestId('clustering-status-badge')).not.toHaveTextContent('3')
+  expect(screen.getByTestId('clustering-status-badge')).not.toHaveTextContent('4')
   expect(screen.getByTestId('clustering-status-badge')).toHaveClass('complete')
 }
 

@@ -11,6 +11,11 @@ import * as ScpApi from 'lib/scp-api'
 import { EMPTY_STUDY } from './file-info-responses'
 
 describe('cancels a study file upload', () => {
+  afterEach(() => {
+    // Restores all mocks back to their original value
+    jest.restoreAllMocks()
+  })
+
   it('shows the cancel button for in-progress uploads', async () => {
     const studyInfoSpy = jest.spyOn(ScpApi, 'fetchStudyFileInfo')
     // pass in a clone of the response since it may get modified by the cache operations
