@@ -1,28 +1,16 @@
-import React from 'react'
-import { render, screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react'
+import { screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 import _cloneDeep from 'lodash/cloneDeep'
 import selectEvent from 'react-select-event'
-import ReactNotification from 'react-notifications-component'
 
-import { RawUploadWizard } from 'components/upload/UploadWizard'
-import MockRouter from '../lib/MockRouter'
 import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 import * as ScpApi from 'lib/scp-api'
 import {
-  EMPTY_STUDY, RAW_COUNTS_FILE, PROCESSED_MATRIX_FILE, METADATA_FILE,
+  RAW_COUNTS_FILE, PROCESSED_MATRIX_FILE, METADATA_FILE,
   CLUSTER_FILE, COORDINATE_LABEL_FILE, FASTQ_FILE
 } from './file-info-responses'
-import { UserContext } from 'providers/UserProvider'
+import { renderWizardWithStudy, getSelectByLabelText, saveButton } from './upload-wizard-test-utils'
 
-/** gets a pointer to the react-select node based on label text
- * This is non-trivial since our labels contain the select,
- * and so a naive getByLabelText will not work.
- * Instead we get the label using getByText and assume
- * the first div inside is the react-select element */
-function getSelectByLabelText(screen, text) {
-  return screen.getByText(text).querySelector('div')
-}
 
 describe('creation of study files', () => {
   beforeAll(() => {
@@ -38,38 +26,23 @@ describe('creation of study files', () => {
   })
 
   it('allows upload of all common file types in sequence', async () => {
-    const studyInfoSpy = jest.spyOn(ScpApi, 'fetchStudyFileInfo')
-    // pass in a clone of the response since it may get modified by the cache operations
-    studyInfoSpy.mockImplementation(params => {
-      const response = _cloneDeep(EMPTY_STUDY)
-      return Promise.resolve(response)
-    })
-
     const createFileSpy = jest.spyOn(ScpApi, 'createStudyFile')
 
-    const featureFlags = { raw_counts_required_frontend: true }
-    render(<UserContext.Provider value={{ featureFlagsWithDefaults: featureFlags }}>
-      <ReactNotification/>
-      <MockRouter>
-        <RawUploadWizard studyAccession="SCP1" name="Chicken study"/>
-      </MockRouter>
-    </UserContext.Provider>)
-    const saveButton = () => screen.getByTestId('file-save')
-    await waitForElementToBeRemoved(() => screen.getByTestId('upload-wizard-spinner'))
+    await renderWizardWithStudy({ featureFlags: { raw_counts_required_frontend: true } })
     expect(screen.getByText('View study')).toHaveProperty('href', 'http://localhost/single_cell/study/SCP1')
 
-    await testRawCountsUpload({ createFileSpy, saveButton })
-    await testProcessedUpload({ createFileSpy, saveButton })
-    await testMetadataUpload({ createFileSpy, saveButton })
-    await testClusterUpload({ createFileSpy, saveButton })
-    await testSpatialUpload({ createFileSpy, saveButton })
-    await testCoordinateLabelUpload({ createFileSpy, saveButton })
-    await testSequenceFileUpload({ createFileSpy, saveButton })
+    await testRawCountsUpload({ createFileSpy })
+    await testProcessedUpload({ createFileSpy })
+    await testMetadataUpload({ createFileSpy })
+    await testClusterUpload({ createFileSpy })
+    await testSpatialUpload({ createFileSpy })
+    await testCoordinateLabelUpload({ createFileSpy })
+    await testSequenceFileUpload({ createFileSpy })
   })
 })
 
 /** Uploads a raw count file and checks the field requirements */
-async function testRawCountsUpload({ createFileSpy, saveButton }) {
+async function testRawCountsUpload({ createFileSpy }) {
   const formData = new FormData()
 
   createFileSpy.mockImplementation(() => _cloneDeep(RAW_COUNTS_FILE))
@@ -120,7 +93,7 @@ async function testRawCountsUpload({ createFileSpy, saveButton }) {
 
 
 /** Uploads a processed expression file and checks the field requirements */
-async function testProcessedUpload({ createFileSpy, saveButton }) {
+async function testProcessedUpload({ createFileSpy }) {
   const formData = new FormData()
 
   createFileSpy.mockImplementation(() => _cloneDeep(PROCESSED_MATRIX_FILE))
@@ -169,7 +142,7 @@ async function testProcessedUpload({ createFileSpy, saveButton }) {
 }
 
 /** Uploads a metadata file and checks the field requirements */
-async function testMetadataUpload({ createFileSpy, saveButton }) {
+async function testMetadataUpload({ createFileSpy }) {
   const formData = new FormData()
 
   createFileSpy.mockImplementation(() => _cloneDeep(METADATA_FILE))
@@ -218,7 +191,7 @@ async function testMetadataUpload({ createFileSpy, saveButton }) {
 }
 
 /** Uploads a cluster file and checks the field requirements */
-async function testClusterUpload({ createFileSpy, saveButton }) {
+async function testClusterUpload({ createFileSpy }) {
   const formData = new FormData()
 
   createFileSpy.mockImplementation(() => _cloneDeep(CLUSTER_FILE))
@@ -266,7 +239,7 @@ async function testClusterUpload({ createFileSpy, saveButton }) {
 }
 
 /** Uploads a spatial file and checks the field requirements */
-async function testSpatialUpload({ createFileSpy, saveButton }) {
+async function testSpatialUpload({ createFileSpy }) {
   const formData = new FormData()
   const goodFileName = 'spatial-good.txt'
   const spatialResponse = {
@@ -322,7 +295,7 @@ async function testSpatialUpload({ createFileSpy, saveButton }) {
 }
 
 /** Uploads a coordinate label file and checks the field requirements */
-async function testCoordinateLabelUpload({ createFileSpy, saveButton }) {
+async function testCoordinateLabelUpload({ createFileSpy }) {
   const formData = new FormData()
 
   createFileSpy.mockImplementation(() => _cloneDeep(COORDINATE_LABEL_FILE))
@@ -372,8 +345,8 @@ async function testCoordinateLabelUpload({ createFileSpy, saveButton }) {
   expect(screen.getByTestId('coordinateLabels-status-badge')).toHaveClass('complete')
 }
 
-/** Uploads a coordinate label file and checks the field requirements */
-async function testSequenceFileUpload({ createFileSpy, saveButton }) {
+/** Uploads a fastq file and checks the field requirements */
+async function testSequenceFileUpload({ createFileSpy }) {
   const formData = new FormData()
 
   createFileSpy.mockImplementation(() => _cloneDeep(FASTQ_FILE))
