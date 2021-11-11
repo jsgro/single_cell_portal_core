@@ -32,7 +32,11 @@ describe('file upload control defaults the name of the file', () => {
       content: 'NAME,X,Y\nTYPE,numeric,numeric\nCell1,1,0\n'
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
-    expect(updateFileSpy).toHaveBeenLastCalledWith('123', { uploadSelection: fileObj, name: 'cluster.txt' })
+    expect(updateFileSpy).toHaveBeenLastCalledWith('123', {
+      uploadSelection: fileObj,
+      name: 'cluster.txt',
+      upload_file_name: 'cluster.txt'
+    })
   })
 })
 
