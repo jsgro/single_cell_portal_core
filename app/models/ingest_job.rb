@@ -628,6 +628,7 @@ class IngestJob
         schema_url = 'https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention'
         message << "This metadata file was validated against the latest <a href='#{schema_url}'>Metadata Convention</a>"
         message << "Convention version: <strong>#{project_name}/#{current_schema_version}</strong>"
+        message << "Group-type metadata columns with more than 200 unique values are not stored (ie. unavailable for visualization)."
       end
       cell_metadata = CellMetadatum.where(study_id: self.study.id, study_file_id: self.study_file.id)
       message << "Entries created:"
