@@ -100,6 +100,7 @@ function LegendEntry({
   return (
     <div
       className={`scatter-legend-row ${shownClass}`}
+      role="button"
       onClick={() => toggleSelection()}
     >
       <div className="scatter-legend-icon" style={iconStyle}></div>
@@ -118,11 +119,6 @@ function showHideAll(showOrHide, labels, updateShownTraces) {
   } else {
     updateShownTraces(labels, true, null, true)
   }
-
-  const numLabels = labels.length
-  log(`click:scatterlegend:${showOrHide}-all-labels`, {
-    labels, numLabels
-  })
 }
 
 /** Component for custom legend for scatter plots */
