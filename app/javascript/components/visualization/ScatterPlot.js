@@ -385,7 +385,7 @@ function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, i
   trace.hovertemplate = groupHoverTemplate
 }
 
-/** sets the scatter color on the given races.  If no color is sspecified, it reads the color from the data */
+/** sets the scatter color on the given races.  If no color is specified, it reads the color from the data */
 function getScatterColorToApply(dataScatterColor, scatterColor) {
   // Set color scale
   if (!scatterColor) {
