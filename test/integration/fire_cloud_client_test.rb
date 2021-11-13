@@ -140,7 +140,7 @@ class FireCloudClientTest < ActiveSupport::TestCase
     assert delete_message.has_key?('message'), 'Did not receive a delete confirmation'
     # commented out for now while Rawls message is fixed 
     # expected_confirmation = "Your Google bucket #{workspace['bucketName']} will be deleted within 24h."
-    assert delete_message['message'].include?('202'), "Did not receive correct confirmation, expected '#{expected_confirmation}' but found '#{delete_message['message']}'"
+    assert delete_message['message'].include?('202'), "Did not receive correct confirmation, expected '#{'202'}' but found '#{delete_message['message']}'"
 
     puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
