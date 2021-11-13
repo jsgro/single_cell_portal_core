@@ -15,8 +15,8 @@ import { renderWizardWithStudy, getSelectByLabelText, saveButton } from './uploa
 describe('creation of study files', () => {
   beforeAll(() => {
     jest.restoreAllMocks()
-    // This test is long, so allow extra time
-    jest.setTimeout(30000)
+    // This test is long--running all steps in series, so allow extra time
+    jest.setTimeout(10000)
   })
 
   afterEach(() => {
