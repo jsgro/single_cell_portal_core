@@ -12,9 +12,9 @@ const DEFAULT_NEW_IMAGE_FILE = {
 const imageFileFilter = file => file.file_type === 'Image'
 
 export default {
-  title: 'Reference Images',
+  title: 'Reference images',
   name: 'images',
-  header: 'Reference Images',
+  header: 'Reference images',
   component: ImageForm,
   fileFilter: imageFileFilter
 }

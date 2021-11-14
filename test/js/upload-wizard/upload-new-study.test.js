@@ -91,7 +91,7 @@ async function testRawCountsUpload({ createFileSpy }) {
   fireEvent.mouseOver(saveButton())
   expect(screen.getByRole('tooltip')).not.toHaveTextContent('You must specify species')
 
-  await selectEvent.select(getSelectByLabelText(screen, 'Library Preparation Protocol *'), 'Drop-seq')
+  await selectEvent.select(getSelectByLabelText(screen, 'Library preparation protocol *'), 'Drop-seq')
   await selectEvent.select(getSelectByLabelText(screen, 'Units *'), 'raw counts')
   expect(saveButton()).not.toBeDisabled()
 
@@ -126,8 +126,8 @@ async function testProcessedUpload({ createFileSpy }) {
     }
   }))
 
-  fireEvent.click(screen.getByText('Processed Matrices'))
-  expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Processed Expression Files')
+  fireEvent.click(screen.getByText('Processed matrices'))
+  expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Processed expression files')
   expect(screen.getByTestId('processed-status-badge')).toHaveTextContent('2')
   expect(saveButton()).toBeDisabled()
   fireEvent.mouseOver(saveButton())
@@ -150,7 +150,7 @@ async function testProcessedUpload({ createFileSpy }) {
   fireEvent.mouseOver(saveButton())
   expect(screen.getByRole('tooltip')).not.toHaveTextContent('You must specify species')
 
-  await selectEvent.select(getSelectByLabelText(screen, 'Library Preparation Protocol *'), 'Drop-seq')
+  await selectEvent.select(getSelectByLabelText(screen, 'Library preparation protocol *'), 'Drop-seq')
   expect(saveButton()).not.toBeDisabled()
 
   await selectEvent.select(getSelectByLabelText(screen, 'Associated Raw Counts Files'), rawCountsFileName)
@@ -282,8 +282,9 @@ async function testSpatialUpload({ createFileSpy }) {
   }
   createFileSpy.mockImplementation(() => spatialResponse)
 
-  fireEvent.click(screen.getByText('Spatial Files (optional)'))
-  expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Spatial Files')
+  fireEvent.click(screen.getByText('Spatial transcriptomics'))
+  expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Spatial transcriptomics')
+
   expect(screen.getByTestId('spatial-status-badge')).not.toHaveClass('complete')
   expect(saveButton()).toBeDisabled()
   fireEvent.mouseOver(saveButton())
@@ -329,7 +330,7 @@ async function testCoordinateLabelUpload({ createFileSpy }) {
 
   createFileSpy.mockImplementation(() => _cloneDeep(COORDINATE_LABEL_FILE))
 
-  fireEvent.click(screen.getByText('Coordinate Labels'))
+  fireEvent.click(screen.getByText('Coordinate labels'))
   expect(screen.getByTestId('coordinateLabels-status-badge')).not.toHaveClass('complete')
   expect(saveButton()).toBeDisabled()
   fireEvent.mouseOver(saveButton())
@@ -380,7 +381,8 @@ async function testSequenceFileUpload({ createFileSpy }) {
 
   createFileSpy.mockImplementation(() => _cloneDeep(FASTQ_FILE))
 
-  fireEvent.click(screen.getByText('Sequence Files'))
+  fireEvent.click(screen.getByText('Sequence files'))
+
   expect(screen.getByTestId('sequence-status-badge')).not.toHaveClass('complete')
   expect(saveButton()).toBeDisabled()
   fireEvent.mouseOver(saveButton())
