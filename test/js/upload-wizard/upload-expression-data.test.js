@@ -21,7 +21,7 @@ describe('it allows uploading of expression matrices', () => {
     const formData = new FormData()
 
     createFileSpy.mockImplementation(() => _cloneDeep(RAW_COUNTS_MTX_FILE))
-    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw Count Expression Files')
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw count expression files')
     fireEvent.click(screen.getByLabelText('Sparse matrix (.mtx)'))
 
     // get the features and barcodes file forms
@@ -55,7 +55,7 @@ describe('it allows uploading of expression matrices', () => {
     expect(screen.getByRole('tooltip')).toHaveTextContent('You must specify Library preparation protocol')
 
     await selectEvent.select(getSelectByLabelText(screen, 'Species *'), 'chicken')
-    await selectEvent.select(getSelectByLabelText(screen, 'Library Preparation Protocol *'), 'Drop-seq')
+    await selectEvent.select(getSelectByLabelText(screen, 'Library preparation protocol *'), 'Drop-seq')
     await selectEvent.select(getSelectByLabelText(screen, 'Units *'), 'raw counts')
     expect(mainSaveButton()).not.toBeDisabled()
 

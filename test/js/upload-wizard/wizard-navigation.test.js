@@ -5,6 +5,7 @@ import '@testing-library/jest-dom/extend-expect'
 import MockRouter from '../lib/MockRouter'
 import { RawUploadWizard } from 'components/upload/UploadWizard'
 import { renderWizardWithStudy } from './upload-wizard-test-utils'
+import * as ScpApi from 'lib/scp-api'
 
 
 describe('it allows navigating between steps', () => {

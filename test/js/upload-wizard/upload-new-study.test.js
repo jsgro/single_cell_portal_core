@@ -51,9 +51,9 @@ describe('creation of study files', () => {
     expect(screen.getByTestId('images-status-badge')).not.toHaveClass('complete')
 
     // now check that we can go back to a previously saved file and it shows correctly
-    fireEvent.click(screen.getByText('Processed Matrices'))
+    fireEvent.click(screen.getByText('Processed matrices'))
     expect(screen.getByTestId('file-uploaded-name')).toHaveTextContent(processedFileName)
-    expect(getSelectByLabelText(screen, 'Associated Raw Counts Files')).toHaveTextContent(rawCountsFileName)
+    expect(getSelectByLabelText(screen, 'Associated raw counts files')).toHaveTextContent(rawCountsFileName)
   })
 })
 
@@ -66,7 +66,7 @@ async function testRawCountsUpload({ createFileSpy }) {
     name: rawCountsFileName,
     upload_file_name: rawCountsFileName
   }))
-  expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw Count Expression Files')
+  expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw count expression files')
 
   expect(saveButton()).toBeDisabled()
   fireEvent.mouseOver(saveButton())
@@ -153,7 +153,7 @@ async function testProcessedUpload({ createFileSpy }) {
   await selectEvent.select(getSelectByLabelText(screen, 'Library preparation protocol *'), 'Drop-seq')
   expect(saveButton()).not.toBeDisabled()
 
-  await selectEvent.select(getSelectByLabelText(screen, 'Associated Raw Counts Files'), rawCountsFileName)
+  await selectEvent.select(getSelectByLabelText(screen, 'Associated raw counts files'), rawCountsFileName)
 
   fireEvent.click(saveButton())
   await waitForElementToBeRemoved(() => screen.getByTestId('file-save-spinner'))
