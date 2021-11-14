@@ -11,6 +11,8 @@ import {
 } from './file-info-responses'
 import { renderWizardWithStudy, getSelectByLabelText, saveButton } from './upload-wizard-test-utils'
 
+const processedFileName = 'example_processed_dense.txt'
+const rawCountsFileName = 'example_raw_counts.txt'
 
 describe('creation of study files', () => {
   beforeAll(() => {
@@ -38,6 +40,20 @@ describe('creation of study files', () => {
     await testSpatialUpload({ createFileSpy })
     await testCoordinateLabelUpload({ createFileSpy })
     await testSequenceFileUpload({ createFileSpy })
+
+    expect(screen.getByTestId('rawCounts-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('processed-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('metadata-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('clustering-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('spatial-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('coordinateLabels-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('sequence-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('images-status-badge')).not.toHaveClass('complete')
+
+    // now check that we can go back to a previously saved file and it shows correctly
+    fireEvent.click(screen.getByText('Processed Matrices'))
+    expect(screen.getByTestId('file-uploaded-name')).toHaveTextContent(processedFileName)
+    expect(getSelectByLabelText(screen, 'Associated Raw Counts Files')).toHaveTextContent(rawCountsFileName)
   })
 })
 
@@ -45,14 +61,17 @@ describe('creation of study files', () => {
 async function testRawCountsUpload({ createFileSpy }) {
   const formData = new FormData()
 
-  createFileSpy.mockImplementation(() => _cloneDeep(RAW_COUNTS_FILE))
+  createFileSpy.mockImplementation(() => ({
+    ...RAW_COUNTS_FILE,
+    name: rawCountsFileName,
+    upload_file_name: rawCountsFileName
+  }))
   expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw Count Expression Files')
 
   expect(saveButton()).toBeDisabled()
   fireEvent.mouseOver(saveButton())
   expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
 
-  const rawCountsFileName = 'example_raw_counts.txt'
   fireFileSelectionEvent(screen.getByTestId('file-input'), {
     fileName: rawCountsFileName,
     content: 'GENE,cell1,cell2\ngene1,1,2'
@@ -96,7 +115,16 @@ async function testRawCountsUpload({ createFileSpy }) {
 async function testProcessedUpload({ createFileSpy }) {
   const formData = new FormData()
 
-  createFileSpy.mockImplementation(() => _cloneDeep(PROCESSED_MATRIX_FILE))
+  // mock the create file response with a file that has the right name and associated raw counts files
+  createFileSpy.mockImplementation(() => ({
+    ...PROCESSED_MATRIX_FILE,
+    name: processedFileName,
+    upload_file_name: processedFileName,
+    expression_file_info: {
+      ...PROCESSED_MATRIX_FILE.expression_file_info,
+      raw_counts_associations: [RAW_COUNTS_FILE._id.$oid]
+    }
+  }))
 
   fireEvent.click(screen.getByText('Processed Matrices'))
   expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Processed Expression Files')
@@ -106,7 +134,6 @@ async function testProcessedUpload({ createFileSpy }) {
   expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
   expect(screen.getByRole('tooltip')).not.toHaveTextContent('You must specify units')
 
-  const processedFileName = 'example_processed_dense.txt'
   fireFileSelectionEvent(screen.getByTestId('file-input'), {
     fileName: processedFileName,
     content: 'GENE,cell1,cell2\ngene1.1,1.3,2.1'
@@ -125,6 +152,8 @@ async function testProcessedUpload({ createFileSpy }) {
 
   await selectEvent.select(getSelectByLabelText(screen, 'Library Preparation Protocol *'), 'Drop-seq')
   expect(saveButton()).not.toBeDisabled()
+
+  await selectEvent.select(getSelectByLabelText(screen, 'Associated Raw Counts Files'), rawCountsFileName)
 
   fireEvent.click(saveButton())
   await waitForElementToBeRemoved(() => screen.getByTestId('file-save-spinner'))
