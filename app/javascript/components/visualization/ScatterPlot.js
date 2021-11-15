@@ -328,6 +328,7 @@ export function getPlotlyTraces({
       Object.assign(trace.marker, {
         showscale: true,
         colorscale: appliedScatterColor,
+        reversescale: true,
         color: colors,
         colorbar: { title, titleside: 'right' }
       })
