@@ -245,7 +245,7 @@ export const COORDINATE_LABEL_FILE = {
   z_axis_label: '',
   z_axis_max: null,
   z_axis_min: null,
-  _id: { $oid: '618bd61acc7ba038ac7cb08e' }
+  _id: { $oid: '618bd61acc7ba038ac7c8888' }
 }
 
 export const FASTQ_FILE = {
@@ -288,6 +288,146 @@ export const FASTQ_FILE = {
   _id: { $oid: '618aae97cc7ba038ac7cb036' }
 }
 
+export const RAW_COUNTS_MTX_FILE = {
+  '_id': {
+    '$oid': '60a2b9fccc7ba08235844444'
+  },
+  'created_at': '2021-05-17T14:46:20.326-04:00',
+  'data_dir': '51e9c0d33e9b698b118bbb884fab092a1b2d22a9f4133966010560c60835361a',
+  'description': '',
+  'expression_file_info': {
+    '_id': {
+      '$oid': '6155ef87cc7ba01c87000000'
+    },
+    'biosample_input_type': 'Single nuclei',
+    'is_raw_counts': true,
+    'library_preparation_protocol': '10x 5\' v3',
+    'modality': 'Transcriptomic: targeted',
+    'raw_counts_associations': [],
+    'units': 'Whole cell'
+  },
+  'file_type': 'MM Coordinate Matrix',
+  'generation': '1621277209804774',
+  'genome_annotation_id': null,
+  'genome_assembly_id': 'undefined',
+  'human_data': false,
+  'human_fastq_url': 'null',
+  'is_spatial': false,
+  'name': 'raw_counts.mtx',
+  'options': {},
+  'parse_status': 'parsed',
+  'queued_for_deletion': false,
+  'remote_location': '',
+  'spatial_cluster_associations': [
+    ''
+  ],
+  'status': 'uploaded',
+  'study_file_bundle_id': 'null',
+  'study_id': {
+    '$oid': '60a2b9f4cc7ba082358b5448'
+  },
+  'taxon_id': {
+    '$oid': '604009b9cc7ba03e1b277a40'
+  },
+  'updated_at': '2021-09-30T15:11:12.403-04:00',
+  'upload_content_type': 'text/plain',
+  'upload_file_name': 'raw_counts.mtx',
+  'upload_file_size': 2551,
+  'use_metadata_convention': false,
+  'version': 8,
+  'x_axis_label': '',
+  'x_axis_max': 0,
+  'x_axis_min': 0,
+  'y_axis_label': '',
+  'y_axis_max': 0,
+  'y_axis_min': 0,
+  'z_axis_label': '',
+  'z_axis_max': 0,
+  'z_axis_min': 0,
+  'upload': {
+    'url': 'fake/app/data/51e9c0d33e9b698b118bbb884fab092a1b2d22a9f4133966010560c60835361a/60a2b9fccc7ba082358b544f/original/raw2_chicken_40_cells_4_genes.processed_dense.txt'
+  }
+}
+
+export const BARCODES_FILE = {
+  created_at: '2021-11-10T09:24:26.505-05:00',
+  data_dir: 'b15d47cea457291533045ec99d4d5260f757c2c47a4faad43d05dbc1e5a78b9b',
+  description: '',
+  file_type: '10X Barcodes File',
+  generation: '1636554297628566',
+  genome_annotation_id: null,
+  genome_assembly_id: null,
+  human_data: false,
+  human_fastq_url: null,
+  is_spatial: false,
+  name: 'barcodes.txt',
+  options: { matrix_id: '60a2b9fccc7ba08235844444' },
+  parse_status: 'parsed',
+  queued_for_deletion: false,
+  remote_location: '',
+  spatial_cluster_associations: [''],
+  status: 'uploaded',
+  study_file_bundle_id: { $oid: '618bd61acc7ba038ac7cb091' },
+  study_id: { $oid: '618aacbfcc7ba038ac7cb00f' },
+  taxon_id: null,
+  updated_at: '2021-11-10T09:24:57.640-05:00',
+  upload: { 'url': 'fake/app/original/coordinate_labels.txt' },
+  upload_content_type: 'text/tab-separated-values',
+  upload_file_name: 'barcodes.txt',
+  upload_file_size: 85,
+  use_metadata_convention: false,
+  version: 2,
+  x_axis_label: '',
+  x_axis_max: null,
+  x_axis_min: null,
+  y_axis_label: '',
+  y_axis_max: null,
+  y_axis_min: null,
+  z_axis_label: '',
+  z_axis_max: null,
+  z_axis_min: null,
+  _id: { $oid: '618bd61acc7ba038ac7cb08e' }
+}
+
+export const FEATURES_FILE = {
+  created_at: '2021-11-10T09:24:26.505-05:00',
+  data_dir: 'b15d47cea457291533045ec99d4d5260f757c2c47a4faad43d05dbc1e5a78b9b',
+  description: '',
+  file_type: '10X Genes File',
+  generation: '1636554297628566',
+  genome_annotation_id: null,
+  genome_assembly_id: null,
+  human_data: false,
+  human_fastq_url: null,
+  is_spatial: false,
+  name: 'features.txt',
+  options: { matrix_id: '60a2b9fccc7ba08235844444' },
+  parse_status: 'parsed',
+  queued_for_deletion: false,
+  remote_location: '',
+  spatial_cluster_associations: [''],
+  status: 'uploaded',
+  study_file_bundle_id: { $oid: '618bd61acc7ba038ac7cb091' },
+  study_id: { $oid: '618aacbfcc7ba038ac7cb00f' },
+  taxon_id: null,
+  updated_at: '2021-11-10T09:24:57.640-05:00',
+  upload: { 'url': 'fake/app/original/coordinate_labels.txt' },
+  upload_content_type: 'text/tab-separated-values',
+  upload_file_name: 'features.txt',
+  upload_file_size: 85,
+  use_metadata_convention: false,
+  version: 2,
+  x_axis_label: '',
+  x_axis_max: null,
+  x_axis_min: null,
+  y_axis_label: '',
+  y_axis_max: null,
+  y_axis_min: null,
+  z_axis_label: '',
+  z_axis_max: null,
+  z_axis_min: null,
+  _id: { $oid: '618bd61acc7ba038ac22334' }
+}
 
 export const BASIC_MENU_OPTIONS = {
   'fonts': ['Helvetica Neue', 'Arial'],

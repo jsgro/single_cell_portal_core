@@ -106,7 +106,7 @@ export default function FileUploadControl({
 
   return <div>
     <label>
-      { !file.uploadSelection && <h5>{file.upload_file_name}</h5> }
+      { !file.uploadSelection && <h5 data-testid="file-uploaded-name">{file.upload_file_name}</h5> }
       { file.uploadSelection && <h5 data-testid="file-selection-name">
         {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})
       </h5> }

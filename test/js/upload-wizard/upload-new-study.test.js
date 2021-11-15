@@ -1,34 +1,24 @@
-import React from 'react'
-import { render, screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react'
+import { screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 import _cloneDeep from 'lodash/cloneDeep'
 import selectEvent from 'react-select-event'
-import ReactNotification from 'react-notifications-component'
 
-import { RawUploadWizard } from 'components/upload/UploadWizard'
-import MockRouter from '../lib/MockRouter'
 import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 import * as ScpApi from 'lib/scp-api'
 import {
-  EMPTY_STUDY, RAW_COUNTS_FILE, PROCESSED_MATRIX_FILE, METADATA_FILE,
+  RAW_COUNTS_FILE, PROCESSED_MATRIX_FILE, METADATA_FILE,
   CLUSTER_FILE, COORDINATE_LABEL_FILE, FASTQ_FILE
 } from './file-info-responses'
-import { UserContext } from 'providers/UserProvider'
+import { renderWizardWithStudy, getSelectByLabelText, saveButton } from './upload-wizard-test-utils'
 
-/** gets a pointer to the react-select node based on label text
- * This is non-trivial since our labels contain the select,
- * and so a naive getByLabelText will not work.
- * Instead we get the label using getByText and assume
- * the first div inside is the react-select element */
-function getSelectByLabelText(screen, text) {
-  return screen.getByText(text).querySelector('div')
-}
+const processedFileName = 'example_processed_dense.txt'
+const rawCountsFileName = 'example_raw_counts.txt'
 
 describe('creation of study files', () => {
   beforeAll(() => {
     jest.restoreAllMocks()
-    // This test is long, so allow extra time
-    jest.setTimeout(30000)
+    // This test is long--running all steps in series as if it was a user uploading a new study from scratch--so allow extra time
+    jest.setTimeout(10000)
   })
 
   afterEach(() => {
@@ -38,48 +28,50 @@ describe('creation of study files', () => {
   })
 
   it('allows upload of all common file types in sequence', async () => {
-    const studyInfoSpy = jest.spyOn(ScpApi, 'fetchStudyFileInfo')
-    // pass in a clone of the response since it may get modified by the cache operations
-    studyInfoSpy.mockImplementation(params => {
-      const response = _cloneDeep(EMPTY_STUDY)
-      return Promise.resolve(response)
-    })
-
     const createFileSpy = jest.spyOn(ScpApi, 'createStudyFile')
 
-    const featureFlags = { raw_counts_required_frontend: true }
-    render(<UserContext.Provider value={{ featureFlagsWithDefaults: featureFlags }}>
-      <ReactNotification/>
-      <MockRouter>
-        <RawUploadWizard studyAccession="SCP1" name="Chicken study"/>
-      </MockRouter>
-    </UserContext.Provider>)
-    const saveButton = () => screen.getByTestId('file-save')
-    await waitForElementToBeRemoved(() => screen.getByTestId('upload-wizard-spinner'))
+    await renderWizardWithStudy({ featureFlags: { raw_counts_required_frontend: true } })
     expect(screen.getByText('View study')).toHaveProperty('href', 'http://localhost/single_cell/study/SCP1')
 
-    await testRawCountsUpload({ createFileSpy, saveButton })
-    await testProcessedUpload({ createFileSpy, saveButton })
-    await testMetadataUpload({ createFileSpy, saveButton })
-    await testClusterUpload({ createFileSpy, saveButton })
-    await testSpatialUpload({ createFileSpy, saveButton })
-    await testCoordinateLabelUpload({ createFileSpy, saveButton })
-    await testSequenceFileUpload({ createFileSpy, saveButton })
+    await testRawCountsUpload({ createFileSpy })
+    await testProcessedUpload({ createFileSpy })
+    await testMetadataUpload({ createFileSpy })
+    await testClusterUpload({ createFileSpy })
+    await testSpatialUpload({ createFileSpy })
+    await testCoordinateLabelUpload({ createFileSpy })
+    await testSequenceFileUpload({ createFileSpy })
+
+    expect(screen.getByTestId('rawCounts-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('processed-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('metadata-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('clustering-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('spatial-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('coordinateLabels-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('sequence-status-badge')).toHaveClass('complete')
+    expect(screen.getByTestId('images-status-badge')).not.toHaveClass('complete')
+
+    // now check that we can go back to a previously saved file and it shows correctly
+    fireEvent.click(screen.getByText('Processed matrices'))
+    expect(screen.getByTestId('file-uploaded-name')).toHaveTextContent(processedFileName)
+    expect(getSelectByLabelText(screen, 'Associated raw counts files')).toHaveTextContent(rawCountsFileName)
   })
 })
 
 /** Uploads a raw count file and checks the field requirements */
-async function testRawCountsUpload({ createFileSpy, saveButton }) {
+async function testRawCountsUpload({ createFileSpy }) {
   const formData = new FormData()
 
-  createFileSpy.mockImplementation(() => _cloneDeep(RAW_COUNTS_FILE))
+  createFileSpy.mockImplementation(() => ({
+    ...RAW_COUNTS_FILE,
+    name: rawCountsFileName,
+    upload_file_name: rawCountsFileName
+  }))
   expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw count expression files')
 
   expect(saveButton()).toBeDisabled()
   fireEvent.mouseOver(saveButton())
   expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
 
-  const rawCountsFileName = 'example_raw_counts.txt'
   fireFileSelectionEvent(screen.getByTestId('file-input'), {
     fileName: rawCountsFileName,
     content: 'GENE,cell1,cell2\ngene1,1,2'
@@ -120,10 +112,19 @@ async function testRawCountsUpload({ createFileSpy, saveButton }) {
 
 
 /** Uploads a processed expression file and checks the field requirements */
-async function testProcessedUpload({ createFileSpy, saveButton }) {
+async function testProcessedUpload({ createFileSpy }) {
   const formData = new FormData()
 
-  createFileSpy.mockImplementation(() => _cloneDeep(PROCESSED_MATRIX_FILE))
+  // mock the create file response with a file that has the right name and associated raw counts files
+  createFileSpy.mockImplementation(() => ({
+    ...PROCESSED_MATRIX_FILE,
+    name: processedFileName,
+    upload_file_name: processedFileName,
+    expression_file_info: {
+      ...PROCESSED_MATRIX_FILE.expression_file_info,
+      raw_counts_associations: [RAW_COUNTS_FILE._id.$oid]
+    }
+  }))
 
   fireEvent.click(screen.getByText('Processed matrices'))
   expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Processed expression files')
@@ -133,7 +134,6 @@ async function testProcessedUpload({ createFileSpy, saveButton }) {
   expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
   expect(screen.getByRole('tooltip')).not.toHaveTextContent('You must specify units')
 
-  const processedFileName = 'example_processed_dense.txt'
   fireFileSelectionEvent(screen.getByTestId('file-input'), {
     fileName: processedFileName,
     content: 'GENE,cell1,cell2\ngene1.1,1.3,2.1'
@@ -153,6 +153,8 @@ async function testProcessedUpload({ createFileSpy, saveButton }) {
   await selectEvent.select(getSelectByLabelText(screen, 'Library preparation protocol *'), 'Drop-seq')
   expect(saveButton()).not.toBeDisabled()
 
+  await selectEvent.select(getSelectByLabelText(screen, 'Associated raw counts files'), rawCountsFileName)
+
   fireEvent.click(saveButton())
   await waitForElementToBeRemoved(() => screen.getByTestId('file-save-spinner'))
 
@@ -169,7 +171,7 @@ async function testProcessedUpload({ createFileSpy, saveButton }) {
 }
 
 /** Uploads a metadata file and checks the field requirements */
-async function testMetadataUpload({ createFileSpy, saveButton }) {
+async function testMetadataUpload({ createFileSpy }) {
   const formData = new FormData()
 
   createFileSpy.mockImplementation(() => _cloneDeep(METADATA_FILE))
@@ -218,7 +220,7 @@ async function testMetadataUpload({ createFileSpy, saveButton }) {
 }
 
 /** Uploads a cluster file and checks the field requirements */
-async function testClusterUpload({ createFileSpy, saveButton }) {
+async function testClusterUpload({ createFileSpy }) {
   const formData = new FormData()
 
   createFileSpy.mockImplementation(() => _cloneDeep(CLUSTER_FILE))
@@ -266,7 +268,7 @@ async function testClusterUpload({ createFileSpy, saveButton }) {
 }
 
 /** Uploads a spatial file and checks the field requirements */
-async function testSpatialUpload({ createFileSpy, saveButton }) {
+async function testSpatialUpload({ createFileSpy }) {
   const formData = new FormData()
   const goodFileName = 'spatial-good.txt'
   const spatialResponse = {
@@ -282,6 +284,7 @@ async function testSpatialUpload({ createFileSpy, saveButton }) {
 
   fireEvent.click(screen.getByText('Spatial transcriptomics'))
   expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Spatial transcriptomics')
+
   expect(screen.getByTestId('spatial-status-badge')).not.toHaveClass('complete')
   expect(saveButton()).toBeDisabled()
   fireEvent.mouseOver(saveButton())
@@ -322,7 +325,7 @@ async function testSpatialUpload({ createFileSpy, saveButton }) {
 }
 
 /** Uploads a coordinate label file and checks the field requirements */
-async function testCoordinateLabelUpload({ createFileSpy, saveButton }) {
+async function testCoordinateLabelUpload({ createFileSpy }) {
   const formData = new FormData()
 
   createFileSpy.mockImplementation(() => _cloneDeep(COORDINATE_LABEL_FILE))
@@ -372,13 +375,14 @@ async function testCoordinateLabelUpload({ createFileSpy, saveButton }) {
   expect(screen.getByTestId('coordinateLabels-status-badge')).toHaveClass('complete')
 }
 
-/** Uploads a coordinate label file and checks the field requirements */
-async function testSequenceFileUpload({ createFileSpy, saveButton }) {
+/** Uploads a fastq file and checks the field requirements */
+async function testSequenceFileUpload({ createFileSpy }) {
   const formData = new FormData()
 
   createFileSpy.mockImplementation(() => _cloneDeep(FASTQ_FILE))
 
   fireEvent.click(screen.getByText('Sequence files'))
+
   expect(screen.getByTestId('sequence-status-badge')).not.toHaveClass('complete')
   expect(saveButton()).toBeDisabled()
   fireEvent.mouseOver(saveButton())
