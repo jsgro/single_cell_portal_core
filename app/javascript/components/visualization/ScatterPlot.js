@@ -236,12 +236,8 @@ function RawScatterPlot({
   useEffect(() => {
     const jqScatterGraph = $(`#${graphElementId}`)
     jqScatterGraph.on('plotly_selected', plotPointsSelected)
-    jqScatterGraph.on('plotly_legendclick', logLegendClick)
-    jqScatterGraph.on('plotly_legenddoubleclick', logLegendDoubleClick)
     return () => {
       jqScatterGraph.off('plotly_selected')
-      jqScatterGraph.off('plotly_legendclick')
-      jqScatterGraph.off('plotly_legenddoubleclick')
       Plotly.purge(graphElementId)
     }
   }, [])
@@ -597,22 +593,4 @@ export function get3DScatterProps({
 /** get the appropriate plotly dragmode option string */
 function getDragMode(isCellSelecting) {
   return isCellSelecting ? 'lasso' : 'lasso, select'
-}
-
-let currentClickCall = null
-
-/** we don't want to fire two single click events for a double click, so
- * we wait until we've confirmed a click isn't a double click before logging it.
- * Unfortunately (despite the docs indicating otherwise), there doesn't seem to be
- * a way of getting the text of the clicked annotation
- */
-function logLegendClick(event) {
-  clearTimeout(currentClickCall)
-  currentClickCall = setTimeout(() => log('click:scatterlegend:single'), 300)
-}
-
-/** log a double-click on a plotly graph legend */
-function logLegendDoubleClick(event) {
-  clearTimeout(currentClickCall)
-  log('click:scatterlegend:double')
 }
