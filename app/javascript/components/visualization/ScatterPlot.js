@@ -203,7 +203,7 @@ function RawScatterPlot({
     })
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
-  // Handles custom scatter legend updates
+  // Handles custom scatter legend updates and window resizing
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
     if (scatterData && !isLoading) {
