@@ -57,7 +57,7 @@ function GeneListForm({
     { geneListFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_GENE_LIST_FILE}/> }
     { geneListFiles.map(file => {
       return <GeneListFileForm
-        key={file._id}
+        key={file.oldId ? file.oldId : file._id}
         file={file}
         allFiles={formState.files}
         updateFile={updateFile}

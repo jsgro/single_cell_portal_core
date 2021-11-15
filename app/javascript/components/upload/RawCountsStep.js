@@ -61,7 +61,7 @@ function RawCountsUploadForm({
     { rawParentFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/> }
     { rawParentFiles.map(file => {
       return <ExpressionFileForm
-        key={file._id}
+        key={file.oldId ? file.oldId : file._id}
         file={file}
         allFiles={formState.files}
         updateFile={updateFile}
