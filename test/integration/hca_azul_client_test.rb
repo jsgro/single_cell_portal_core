@@ -151,7 +151,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     expected_filters = ['cervical cancer', 'colorectal cancer', 'lower gum cancer', 'lung cancer', 'mandibular cancer',
                        'tongue cancer'].map { |f| { id: f, name: f }.with_indifferent_access }
     expected_facets = [{ id: 'disease', filters: expected_filters }.with_indifferent_access]
-    query = @hca_azul_client.convert_keyword_to_facet_query(terms)
+    query = @hca_azul_client.format_facet_query_from_keyword(terms)
     assert_equal expected_facets, query
   end
 
@@ -166,7 +166,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
       }
     }.with_indifferent_access
     facet_query = @hca_azul_client.format_query_from_facets(@facets)
-    term_facets = @hca_azul_client.convert_keyword_to_facet_query(%w[cancer])
+    term_facets = @hca_azul_client.format_facet_query_from_keyword(%w[cancer])
     term_query = @hca_azul_client.format_query_from_facets(term_facets)
     merged_query = @hca_azul_client.merge_query_objects(facet_query, term_query)
     assert_equal expected_query, merged_query

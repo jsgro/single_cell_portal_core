@@ -12,6 +12,7 @@ class AzulSearchService
   RESULT_FACET_FIELDS = %w[samples specimens cellLines donorOrganisms organoids cellSuspensions].freeze
 
   def self.append_results_to_studies(existing_studies, selected_facets:, terms:, facet_map: nil)
+    # set facet_map to {}, even if facet_map is explicitly passed in as nil
     facet_map ||= {}
     azul_results = ::AzulSearchService.get_results(selected_facets: selected_facets, terms: terms)
     Rails.logger.info "Found #{azul_results.keys.size} results in Azul"
@@ -27,7 +28,7 @@ class AzulSearchService
     client = ApplicationController.hca_azul_client
     results = {}
     facet_query = client.format_query_from_facets(selected_facets) if selected_facets
-    terms_to_facets = client.convert_keyword_to_facet_query(terms) if terms
+    terms_to_facets = client.format_facet_query_from_keyword(terms) if terms
     term_query = client.format_query_from_facets(terms_to_facets) if terms_to_facets
     query_json = client.merge_query_objects(facet_query, term_query)
     # abort search if no facets/terms result in query to execute

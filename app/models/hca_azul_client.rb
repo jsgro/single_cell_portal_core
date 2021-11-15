@@ -284,7 +284,7 @@ class HcaAzulClient < Struct.new(:api_root)
   #
   # * *returns*
   #   - (Array<Hash>) => Array of facet objects to be fed to :format_query_from_facets
-  def convert_keyword_to_facet_query(term_list = [])
+  def format_facet_query_from_keyword(term_list = [])
     matching_facets = []
     term_list.each do |term|
       facet = SearchFacet.find_facet_from_term(term)
