@@ -1,0 +1,97 @@
+
+.plot-container.plotly {
+  float: left;
+}
+
+.scatter-graph {
+  margin-left: 40px;
+  display: flex;
+}
+
+.col-md-6 .scatter-graph {
+  margin-left: 10px;
+}
+
+.scatter-legend {
+  float: right;
+  overflow: auto;
+  margin-top: 10px;
+  margin-left: 5px;
+}
+
+.scatter-legend-head {
+  margin: 5px 10px 10px 10px;
+}
+
+.scatter-legend-name {
+  font-weight: bold;
+}
+
+.stateful-link {
+  color: #4d72aa;
+  cursor: pointer;
+}
+
+.stateful-link.disabled {
+  color: rgb(197, 210, 227);
+  cursor: default;
+}
+
+.scatter-legend-row {
+  height: 30px;
+  cursor: pointer;
+  background-color: #FFF;
+  border: 1px solid #DDD;
+  border-radius: 3px;
+  margin-top: 3px;
+}
+
+/** Like hover state for React Select */
+.scatter-legend-row:hover {
+  border-color: #AAB;
+}
+
+.scatter-legend-row:hover {
+  border-color: #AAB;
+}
+
+.scatter-legend-icon {
+  width: 29px;
+  height: 29px;
+  margin: 0 10px 0 -1px;
+  float: left;
+  border-radius: 2px 0 0 2px
+}
+
+.scatter-legend-entry {
+  position: relative;
+  top: 5px;
+  white-space: pre;
+
+  .legend-label {
+    display: inline-block;
+    width: 160px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .num-points {
+    float: right;
+    margin-right: 5px;
+  }
+}
+
+.scatter-legend-row {
+  opacity: 0.3;
+}
+
+.scatter-legend-row.shown {
+  opacity: 1;
+}
+
+.unfiltered {
+  .scatter-legend-row {
+    opacity: 1;
+  }
+}

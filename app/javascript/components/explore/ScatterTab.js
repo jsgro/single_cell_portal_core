@@ -16,7 +16,7 @@ const MAX_PLOTS = PLOTLY_CONTEXT_NAMES.length
   */
 export default function ScatterTab({
   exploreInfo, exploreParams, updateExploreParams, studyAccession, isGene, isMultiGene,
-  plotPointsSelected, isCellSelecting, getPlotDimensions, dataCache
+  plotPointsSelected, isCellSelecting, showRelatedGenesIdeogram, showViewOptionsControls, dataCache
 }) {
   // maintain the map of plotly contexts to the params that generated the corresponding visualization
   const plotlyContextMap = useRef({})
@@ -63,11 +63,11 @@ export default function ScatterTab({
               }}
               {...params}
               dataCache={dataCache}
-              dimensions={getPlotDimensions({
+              dimensionProps={{
                 isMultiRow,
                 isTwoColumn: isTwoColRow,
-                hasTitle: true
-              })}
+                showRelatedGenesIdeogram, showViewOptionsControls
+              }}
             />
             { associatedImages.map(imageFile => <ImageDisplay
               key={imageFile.name}
@@ -180,7 +180,6 @@ export function getScatterParams(exploreInfo, exploreParams, isGene, isMultiGene
   }
   return { scatterParams: scatterParams.slice(0, MAX_PLOTS), isTwoColumn, isMultiRow, firstRowSingleCol, isSpatial }
 }
-
 
 /** returns a map of key => plotlycontext.  If a scatterParams corresponds to an
   * already-rendered plot, it will be mapped to that existing context.  Otherwise,

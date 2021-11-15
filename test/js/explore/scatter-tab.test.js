@@ -1,7 +1,7 @@
 import React from 'react'
 import _cloneDeep from 'lodash/cloneDeep'
 import jquery from 'jquery'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 import Plotly from 'plotly.js-dist'
 
@@ -9,15 +9,19 @@ import * as ScpApi from 'lib/scp-api'
 import { createCache } from 'components/explore//plot-data-cache'
 import ScatterTab, { getNewContextMap } from 'components/explore/ScatterTab'
 import * as ScpApiMetrics from 'lib/scp-api-metrics'
+import * as MetricsApi from 'lib/metrics-api'
+
+import { MANY_LABELS_MOCKS } from '../../test_data/mock_responses/scatter-plot.test-data'
+
 
 // models a real response from api/v1/visualization/clusters
-const FETCH_CLUSTER_RESPONSE = {
+const MOCK_CLUSTER_RESPONSE = {
   data: {
     annotations: ['foo', 'bar'],
     cells: ['A', 'B'],
     expression: [1, 2],
     x: [11, 14],
-    y: [0, 1],
+    y: [0, 1]
   },
   pointSize: 3,
   userSpecifiedRanges: null,
@@ -67,7 +71,7 @@ const MOCK_EXPLORE_RESPONSE = {
     subsample_thresholds: {}
   },
   bamBundleList: [],
-  cluster: {numPoints: 40, isSubsampled: false},
+  cluster: { numPoints: 40, isSubsampled: false },
   clusterGroupNames: ['clusterA'],
   clusterPointAlpha: 1,
   colorProfile: null,
@@ -143,7 +147,7 @@ describe('getNewContextMap correctly assigns contexts', () => {
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
     // pass in a clone of the response since it may get modified by the cache operations
     apiFetch.mockImplementation(params => {
-      const response = _cloneDeep(FETCH_CLUSTER_RESPONSE)
+      const response = _cloneDeep(MOCK_CLUSTER_RESPONSE)
       response.cluster = params.cluster
       response.genes = params.genes
       return Promise.resolve([response, CACHE_PERF_PARAMS])
@@ -182,5 +186,97 @@ describe('getNewContextMap correctly assigns contexts', () => {
     plotTitles.forEach((titleEl, index) => {
       expect(titleEl).toHaveTextContent(expectedTitles[index])
     })
+  })
+
+  it('shows custom legend with default group scatter plot', async () => {
+    const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
+    // pass in a clone of the response since it may get modified by the cache operations
+    apiFetch.mockImplementation(params => {
+      const response = _cloneDeep(MANY_LABELS_MOCKS.CLUSTER_RESPONSE)
+      response.cluster = params.cluster
+      response.genes = params.genes
+      return Promise.resolve([response, CACHE_PERF_PARAMS])
+    })
+    const fakePlot = jest.spyOn(Plotly, 'react')
+    fakePlot.mockImplementation(() => {})
+    const fakeLogScatter = jest.spyOn(ScpApiMetrics, 'logScatterPlot')
+    fakeLogScatter.mockImplementation(() => {})
+
+    const fakeLog = jest.spyOn(MetricsApi, 'log')
+    fakeLog.mockImplementation(() => {})
+
+    const { container } = render((
+      <ScatterTab studyAccession='SCP101'
+        exploreParams={{
+          'userSpecified': {
+            'annotation': true,
+            'cluster': true,
+            'spatialGroups': true,
+            'subsample': true
+          },
+          'cluster': 'cluster_many_long_odd_labels.tsv',
+          'annotation': {
+            'name': 'Category',
+            'type': 'group',
+            'scope': 'cluster'
+          },
+          'subsample': 'all',
+          'consensus': null,
+          'spatialGroups': [],
+          'genes': [],
+          'geneList': '',
+          'heatmapRowCentering': '',
+          'scatterColor': '',
+          'distributionPlot': '',
+          'distributionPoints': '',
+          'tab': '',
+          'heatmapFit': '',
+          'bamFileName': '',
+          'ideogramFileId': ''
+        }}
+        updateExploreParams={() => {}}
+        exploreInfo={MANY_LABELS_MOCKS.EXPLORE_RESPONSE}
+        isGene={false}
+        isMultiGene={false}
+        getPlotDimensions={() => [100, 100]}
+        dataCache={createCache()}/>
+    ))
+
+    // findByTestId would be more kosher, but the numerical leaf ("1") is
+    // assigned randomly in `ScatterPlot`.  This ID has been observed with the
+    // value "study-scatter-25", but relying on that seems brittle.
+    //
+    // Consider changing `ScatterPlot` to use a deterministic `data-testid`.
+    // await screen.findByTestId('study-scatter-1-legend')
+
+    await waitFor(() => {
+      container.querySelectorAll('#study-scatter-1-legend').length > 0
+    })
+
+    const legendRows = container.querySelectorAll('.scatter-legend-row')
+    expect(legendRows).toHaveLength(29)
+
+    // Show all should be disabled when all traces are already shown
+    const showAllButton = await screen.findByText('Show all')
+    expect(showAllButton).toHaveAttribute('disabled')
+
+    // Click a legend label to hide the corresponding trace
+    fireEvent.click(screen.getByText('An_underscored_label'))
+
+    // Wait for show all to not be disabled
+    await waitFor(() => expect(screen.getByText('Show all')).not.toHaveAttribute('disabled'))
+
+    // Test analytics
+    expect(fakeLog).toHaveBeenCalledWith(
+      'click:scatterlegend:single',
+      {
+        label: 'An_underscored_label',
+        numPoints: 19,
+        numLabels: 29,
+        wasShown: true,
+        iconColor: '#377eb8',
+        hasCorrelations: false
+      }
+    )
   })
 })
