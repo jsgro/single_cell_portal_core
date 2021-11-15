@@ -13,6 +13,14 @@ const BASIC_PLOT_DATA = {
       z: 'Z'
     }
   },
+  scatter: {
+    annotParams: {
+      name: 'Category',
+      type: 'group',
+      scope: 'cluster'
+    },
+    genes: ['foo']
+  },
   isAnnotatedScatter: false,
   isCorrelatedScatter: false,
   scatterColor: '',
@@ -38,7 +46,7 @@ describe('getPlotlyTraces handles expression graphs', () => {
     plotData.genes = ['foo']
 
     const traces = getPlotlyTraces(plotData)
-    expect(traces).toHaveLength(1)
+    expect(traces).toHaveLength(2)
     const trace = traces[0]
     expect(trace.type).toEqual('scattergl')
     expect(trace.x).toEqual([2, 5, 7, 1, 3, 8, 4, 6])
