@@ -122,8 +122,8 @@ function RawScatterPlot({
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
-    const widthHeight = getScatterDimensions(scatter, dimensionProps)
-    scatter = Object.assign(scatter, widthHeight)
+    const widthAndHeight = getScatterDimensions(scatter, dimensionProps)
+    scatter = Object.assign(scatter, widthAndHeight)
 
     const layout = getPlotlyLayout(scatter)
 
