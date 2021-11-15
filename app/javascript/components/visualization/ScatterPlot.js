@@ -61,6 +61,7 @@ function RawScatterPlot({
   const [scatterData, setScatterData] = useState(null)
   // hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
+  // array of trace names (strings) to show in the graph
   const [shownTraces, setShownTraces] = useState([])
 
   // Whether the "Show all" and "Hide all" links are active
