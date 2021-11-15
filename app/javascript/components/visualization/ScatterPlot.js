@@ -37,7 +37,6 @@ export function getScatterDimensions(scatter, dimensionProps) {
   return getPlotDimensions(dimensionProps)
 }
 
-
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
@@ -63,29 +62,8 @@ function RawScatterPlot({
   const [countsByLabel, setCountsByLabel] = useState(null)
   // array of trace names (strings) to show in the graph
   const [shownTraces, setShownTraces] = useState([])
-
-  // Whether the "Show all" and "Hide all" links are active
-  const [showHideActive, setShowHideActive] = useState([false, true])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
-
-  /** Update status of "Show all" and "Hide all" links */
-  function updateShowHideActive(numShownTraces, numLabels, value, applyToAll) {
-    let active
-    if (applyToAll) {
-      active = (value ? [true, false] : [false, true])
-    } else {
-      // Update "Show all" and "Hide all" links to reflect current shownTraces
-      if (numShownTraces > 0 && numShownTraces < numLabels) {
-        active = [true, true]
-      } else if (numShownTraces === 0) {
-        active = [false, true]
-      } else if (numShownTraces === numLabels) {
-        active = [true, false]
-      }
-    }
-    setShowHideActive(active)
-  }
 
   /**
    * Handle user interaction with one or more labels in legend.
@@ -111,8 +89,6 @@ function RawScatterPlot({
         _remove(newShownTraces, thisLabel => {return thisLabel === label})
       }
     }
-
-    updateShowHideActive(newShownTraces.length, numLabels, value, applyToAll)
 
     setShownTraces(newShownTraces)
   }
@@ -269,7 +245,6 @@ function RawScatterPlot({
           correlations={labelCorrelations}
           shownTraces={shownTraces}
           updateShownTraces={updateShownTraces}
-          showHideActive={showHideActive}
         />
         }
       </div>
