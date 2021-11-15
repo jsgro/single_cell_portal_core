@@ -26,7 +26,7 @@ export const defaultScatterColor = 'Reds'
 window.Plotly = Plotly
 
 /** Get width and height for scatter plot dimensions */
-export function getScatterWidthHeight(scatter, dimensionProps) {
+export function getScatterDimensions(scatter, dimensionProps) {
   const isRefGroup = getIsRefGroup(scatter)
 
   dimensionProps = Object.assign({
@@ -122,7 +122,7 @@ function RawScatterPlot({
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
-    const widthHeight = getScatterWidthHeight(scatter, dimensionProps)
+    const widthHeight = getScatterDimensions(scatter, dimensionProps)
     scatter = Object.assign(scatter, widthHeight)
 
     const layout = getPlotlyLayout(scatter)
