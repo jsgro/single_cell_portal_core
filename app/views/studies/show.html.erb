@@ -1,11 +1,11 @@
 <h1>
   <%= @study.name %> <%= get_initialized_icon(@study.initialized) %> <%= @study.visibility %> <span class="badge" id="cell-count"><%= @study.cell_count %> cells</span> <span class="badge" id="gene-count"><%= @study.gene_count %> genes</span>
-  <%= link_to "Toggle All Panels <i class='fas fa-toggle-on'></i>".html_safe, '#/', class: 'btn btn-default btn-sm pull-right', id: 'toggle-panels' %>
+  <%= link_to "Toggle all panels <i class='fas fa-toggle-on'></i>".html_safe, '#/', class: 'btn btn-default btn-sm pull-right', id: 'toggle-panels' %>
 </h1>
 <p class="lead">Accession: <span id="study-accession"><%= @study.accession %></span></p>
 </p>
 <% if @study.embargo_active? %>
-  <p class="lead text-danger">Data Release Date: <%= @study.embargo.to_s(:long) %></p>
+  <p class="lead text-danger">Data release date: <%= @study.embargo.to_s(:long) %></p>
 <% end %>
 
 <%= @study.description.html_safe %>
@@ -34,7 +34,7 @@
                   <td>Study URL</td>
                   <td><%= view_study_url(accession: @study.accession, study_name: @study.url_safe_name) %></td>
                   <td>
-                    <%= scp_link_to "<span class='fas fa-eye'></span> View Study".html_safe,
+                    <%= scp_link_to "<span class='fas fa-eye'></span> View study".html_safe,
                                     view_study_path(accession: @study.accession, study_name: @study.url_safe_name),
                                     class: 'btn btn-primary', id: 'study-link' %>
                   </td>
@@ -43,7 +43,7 @@
                   <td>Accession URL (permanent, for external use)</td>
                   <td><%= site_url %>/study/<%= @study.accession %></td>
                   <td>
-                    <%= scp_link_to "<span class='fas fa-eye'></span> View Study".html_safe,
+                    <%= scp_link_to "<span class='fas fa-eye'></span> View study".html_safe,
                                     view_study_path(accession: @study.accession, study_name: @study.url_safe_name),
                                     class: 'btn btn-primary', id: 'study-accession-link' %>
                   </td>
@@ -53,7 +53,7 @@
                   <td><%= @study.firecloud_project %>/<%= @study.firecloud_workspace %></td>
                   <td>
                     <%= link_to_if !@study.firecloud_workspace.nil?,
-                                   "<span class='fas fa-cloud'></span> View Terra Workspace".html_safe,
+                                   "<span class='fas fa-cloud'></span> View terra workspace".html_safe,
                                    @study.workspace_url, class: 'btn btn-info', id: 'firecloud-link', target: :_blank,
                                    rel: 'noopener noreferrer' %>
                   </td>
@@ -62,7 +62,7 @@
                   <td>Google Storage Bucket</td>
                   <td><%= @study.bucket_id %></td>
                   <td>
-                    <%= link_to_if !@study.bucket_id.nil?, "<span class='fas fa-database'></span> View Google Bucket".html_safe,
+                    <%= link_to_if !@study.bucket_id.nil?, "<span class='fas fa-database'></span> View google bucket".html_safe,
                                    @study.google_bucket_url, class: 'btn btn-success', id: 'gcs-link', target: :_blank,
                                    rel: 'noopener noreferrer' %>
                   </td>
@@ -111,7 +111,7 @@
           </div>
         </div>
         <div class="col-md-6">
-          <h4>Gene Lists <span class="badge" id="precomputed-count"><%= @study.precomputed_scores.count %></span></h4>
+          <h4>Gene lists <span class="badge" id="precomputed-count"><%= @study.precomputed_scores.count %></span></h4>
           <div class="table-responsive">
             <table class="table table-condensed" id="precomputed">
               <thead>
@@ -433,8 +433,8 @@
   </div>
 </div>
 <div id="notice-target"></div>
-<p><%= scp_link_to "<span class='fas fa-edit'></span> Edit Study".html_safe, edit_study_path(@study), class: 'btn btn-primary' %>
-  <%= scp_link_to "<span class='fas fa-upload'></span> Upload/Edit Data".html_safe, upload_study_path(@study), class: 'btn btn-success' %>
+<p><%= scp_link_to "<span class='fas fa-edit'></span> Edit study".html_safe, edit_study_path(@study), class: 'btn btn-primary' %>
+  <%= scp_link_to "<span class='fas fa-upload'></span> Upload/Edit data".html_safe, upload_study_path(@study), class: 'btn btn-success' %>
   <%= scp_link_to "<span class='fas fa-chevron-left'></span> Back".html_safe, studies_path, class: 'btn btn-warning' %></p>
 
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">

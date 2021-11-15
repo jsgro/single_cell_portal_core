@@ -1,5 +1,5 @@
-<h1 class="bottom-pad">My Terra Billing Projects
-  <%= scp_link_to "Create a Billing Project <i class='fas fa-external-link-alt'></i>".html_safe, 'https://app.terra.bio/#billing',
+<h1 class="bottom-pad">My Terra billing projects
+  <%= scp_link_to "Create a billing project <i class='fas fa-external-link-alt'></i>".html_safe, 'https://app.terra.bio/#billing',
                   class: 'btn btn-default pull-right', target: :_blank, rel: 'noopener noreferrer',
                   data: { toggle: 'tooltip', placement: 'left' },
                   title: 'Please visit the Terra Billing Console to create a new billing project' %>
@@ -39,10 +39,10 @@
           <td class="actions">
             <% unless project_attributes[:status] == 'Error' %>
               <% if project_attributes[:role] == 'Owner' %>
-                <%= scp_link_to "<i class='fas fa-fw fa-plus'></i> Add User".html_safe, new_billing_project_user_path(project_name), class: 'btn btn-xs btn-success add-billing-project-user' %>
+                <%= scp_link_to "<i class='fas fa-fw fa-plus'></i> Add user".html_safe, new_billing_project_user_path(project_name), class: 'btn btn-xs btn-success add-billing-project-user' %>
               <% end %>
               <%= scp_link_to "<i class='fas fa-fw fa-briefcase'></i> Workspaces".html_safe, billing_project_workspaces_path(project_name), class: 'btn btn-xs btn-primary view-workspaces' %>
-              <%= scp_link_to "<i class='fas fa-fw fa-dollar-sign'></i> Storage Costs".html_safe, billing_project_storage_estimate_path(project_name), class: 'btn btn-xs btn-info storage-estimate' %>
+              <%= scp_link_to "<i class='fas fa-fw fa-dollar-sign'></i> Storage costs".html_safe, billing_project_storage_estimate_path(project_name), class: 'btn btn-xs btn-info storage-estimate' %>
             <% end %>
           </td>
         </tr>
@@ -57,7 +57,7 @@
         pagingType: "full_numbers",
         order: [[0, 'asc']],
         language: {
-            search: "Filter Results By: "
+            search: "Filter results by: "
         }
     });
 

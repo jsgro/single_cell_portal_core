@@ -1,4 +1,4 @@
-<% if FeatureFlaggable.merged_value_for('react_upload_wizard', current_user)  %>
+<% if !FeatureFlaggable.merged_value_for('react_upload_wizard', current_user)  %>
   <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
     // populate window.SCP.currentStudyFiles with information about all known StudyFiles
     window.SCP.currentStudyFiles = <%= @study.study_files.persisted.map(&:attributes).to_json.html_safe %>
@@ -6,11 +6,11 @@
 
   <div class="row">
     <div class="col-sm-10">
-      <h1>Upload/Edit Study Data for '<%= @study.name %>' <%= render partial: 'initialize_study_label' %></h1>
+      <h1>Upload/Edit study data for '<%= @study.name %>' <%= render partial: 'initialize_study_label' %></h1>
     </div>
     <div class="col-sm-2">
       <p class="top-pad pull-right">
-        <%= scp_link_to "<span class='fas fa-eye'></span> View Study".html_safe,
+        <%= scp_link_to "<span class='fas fa-eye'></span> View study".html_safe,
                         view_study_path(accession: @study.accession, study_name: @study.url_safe_name),
                         class: 'btn btn-primary', title: 'View Live', data: {toggle: 'tooltip', placement: 'left'} %>
       </p>
@@ -189,7 +189,7 @@
         <div id="ordinations-target">
           <div class="well well-sm upload-wizard">
             <div class="row">
-              <h2 class="col-sm-12">Step 4. Upload Cluster / Spatial Files <small class="initialize-label" id="initialize_ordinations_form_completed"></small></h2>
+              <h2 class="col-sm-12">Step 4. Upload cluster / spatial files <small class="initialize-label" id="initialize_ordinations_form_completed"></small></h2>
               <p class="text-center"><%= link_to 'Cluster File', 'https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt', target: :_blank %></p>
             </div>
             <div class="row">

@@ -220,7 +220,8 @@ export async function createStudyFile({
   chunkEnd,
   fileSize,
   onProgress,
-  mock=false
+  mock=false,
+  requestCanceller
 }) {
   const apiUrl = `/studies/${studyAccession}/study_files`
   const init = Object.assign({}, defaultInit(), {
@@ -229,7 +230,7 @@ export async function createStudyFile({
   })
 
   setFileFormHeaders(init.headers, isChunked, chunkStart, chunkEnd, fileSize)
-  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress })
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress, requestCanceller })
 }
 
 /** Adds a content range header if needed */
@@ -259,6 +260,7 @@ export async function updateStudyFile({
   chunkEnd,
   fileSize,
   onProgress,
+  requestCanceller,
   mock=false
 }) {
   const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}`
@@ -266,7 +268,7 @@ export async function updateStudyFile({
     method: 'PATCH'
   })
   setFileFormHeaders(init.headers, isChunked, chunkStart, chunkEnd, fileSize)
-  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress })
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress, requestCanceller })
 }
 
 /**
@@ -284,6 +286,7 @@ export async function sendStudyFileChunk({
   chunkEnd,
   fileSize,
   onProgress,
+  requestCanceller,
   mock=false
 }) {
   const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}/chunk`
@@ -292,7 +295,7 @@ export async function sendStudyFileChunk({
     body: studyFileData
   })
   setFileFormHeaders(init.headers, true, chunkStart, chunkEnd, fileSize)
-  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress })
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress, requestCanceller })
 }
 
 /**
@@ -780,7 +783,7 @@ export default async function scpApi(
   * fetch does not yet support them.
   * See https://stackoverflow.com/questions/35711724/upload-progress-indicators-for-fetch
   */
-async function scpApiXmlHttp({ apiUrl, init, formData, onProgress }) {
+async function scpApiXmlHttp({ apiUrl, init, formData, onProgress, requestCanceller }) {
   const url = getFullUrl(apiUrl, false)
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest()
@@ -791,6 +794,9 @@ async function scpApiXmlHttp({ apiUrl, init, formData, onProgress }) {
     })
     if (onProgress) {
       request.upload.addEventListener('progress', onProgress)
+    }
+    if (requestCanceller) {
+      requestCanceller.request = request
     }
     request.onload = () => {
       if (request.status >= 200 && request.status < 300) {
@@ -810,4 +816,26 @@ async function scpApiXmlHttp({ apiUrl, init, formData, onProgress }) {
     }
     request.send(formData)
   })
+}
+
+/** class to enable cancelling of XMLHttpRequests that are otherwise abstracted away behind promises */
+export class RequestCanceller {
+  request = null
+
+  fileId = null
+
+  wasCancelled = false
+
+  /** makes a new RequestCanceller, that holds the fileId of the file corresponding to the request */
+  constructor(fileId) {
+    this.fileId = fileId
+  }
+
+  /** if there is a request, abort it */
+  cancel() {
+    if (this.request) {
+      this.request.abort()
+      this.wasCancelled = true
+    }
+  }
 }

@@ -107,14 +107,14 @@
       <div class="form-group row">
         <div class="col-sm-12">
           <%= f.fields_for :analysis_output_associations %>
-          <%= f.link_to_add "<span class='fas fa-plus'></span> Add an Output Control".html_safe, :analysis_output_associations, class: 'btn btn-primary',
+          <%= f.link_to_add "<span class='fas fa-plus'></span> Add an output control".html_safe, :analysis_output_associations, class: 'btn btn-primary',
                             id: 'add-analysis-output-association' %>
         </div>
       </div>
     <% end %>
     <div class="form-group row">
       <div class="col-sm-3">
-        <%= f.submit 'Update Parameter', class: 'btn btn-lg btn-success save-analysis-parameter' %>
+        <%= f.submit 'Update parameter', class: 'btn btn-lg btn-success save-analysis-parameter' %>
       </div>
     </div>
   <% end %>

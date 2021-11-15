@@ -2,7 +2,7 @@
   <%= scp_link_to '<<', latest_feature_announcements_path %>
   <%= @feature_announcement.title %>
   <% if @feature_announcement.doc_link.present? %>
-    <%= link_to "More Info <i class='fas fa-external-link-alt'></i>".html_safe, @feature_announcement.doc_link,
+    <%= link_to "More info <i class='fas fa-external-link-alt'></i>".html_safe, @feature_announcement.doc_link,
       class: 'btn btn-default pull-right', target: :_blank, rel: 'noopener noreferrer' %>
   <% end %>
 </h2>

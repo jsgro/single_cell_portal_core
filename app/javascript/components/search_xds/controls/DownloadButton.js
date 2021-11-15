@@ -258,7 +258,7 @@ export default function DownloadButton(props) {
         animation={false}
         bsSize='large'>
         <Modal.Header closeButton>
-          <h2 className='text-center'>Bulk Download</h2>
+          <h2 className='text-center'>Bulk download</h2>
         </Modal.Header>
         <Modal.Body>
           <p className='lead'>

@@ -16,7 +16,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheckCircle, faExclamationTriangle, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
-import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk } from 'lib/scp-api'
+import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk, RequestCanceller } from 'lib/scp-api'
 import MessageModal from 'lib/MessageModal'
 import UserProvider from 'providers/UserProvider'
 import ErrorBoundary from 'lib/ErrorBoundary'
@@ -101,7 +101,12 @@ export function RawUploadWizard({ studyAccession, name }) {
   }
 
   /** handle response from server after an upload by updating the serverState with the updated file response */
-  function handleSaveResponse(response, oldFileId, uploadingMoreChunks) {
+  function handleSaveResponse(response, oldFileId, uploadingMoreChunks, requestCanceller) {
+    if (requestCanceller.wasCancelled) {
+      store.addNotification(failureNotification(`${updatedFile.name} save cancelled`))
+      updateFile(oldFileId, { isSaving: false, requestCanceller: null })
+      return
+    }
     const updatedFile = formatFileFromServer(response)
     // first update the serverState
     setServerState(prevServerState => {
@@ -121,8 +126,10 @@ export function RawUploadWizard({ studyAccession, name }) {
       const formFile = _cloneDeep(updatedFile)
       if (uploadingMoreChunks) {
         // copy over the previous files saving states
+        const oldFormFile = newFormState.files[fileIndex]
         formFile.isSaving = true
-        formFile.saveProgress = newFormState.files[fileIndex].saveProgress
+        formFile.saveProgress = oldFormFile.saveProgress
+        formFile.cancelUpload = oldFormFile.cancelUpload
       }
       if (oldFileId != updatedFile._id) { // we saved a new file and got back a fresh id
         formFile.oldId = oldFileId
@@ -171,10 +178,24 @@ export function RawUploadWizard({ studyAccession, name }) {
     updateFile(fileId, { saveProgress: overallCompletePercent })
   }
 
+  /** cancels the pending upload and deletes the file */
+  async function cancelUpload(requestCanceller) {
+    requestCanceller.cancel()
+    const fileId = requestCanceller.fileId
+
+    deleteFileFromForm(fileId)
+    // wait a brief amount of time to minimize the timing edge case where the user hits 'cancel' while the request
+    // completed.  In that case the file will have been saved, but we won't have the new id yet.  We need to wait until
+    // the id comes back so we can address the delete request properly
+    // We also don't await the delete since if it errors, it is likely because the file never got created or
+    // got deleted for other reasons (e.g. invalid form data) in the meantime
+    setTimeout(() => deleteFileFromServer(requestCanceller.fileId), 500)
+  }
+
   /** save the given file and perform an upload if a selected file is present */
   async function saveFile(file) {
     let studyFileId = file._id
-    updateFile(studyFileId, { isSaving: true })
+
     const fileSize = file.uploadSelection?.size
     const isChunked = fileSize > CHUNK_SIZE
     let chunkStart = 0
@@ -183,36 +204,66 @@ export function RawUploadWizard({ studyAccession, name }) {
     const studyFileData = formatFileForApi(file, chunkStart, chunkEnd)
     try {
       let response
+      const requestCanceller = new RequestCanceller(studyFileId)
+      if (fileSize) {
+        updateFile(studyFileId, { isSaving: true, cancelUpload: () => cancelUpload(requestCanceller) })
+      } else {
+        // if there isn't an associated file upload, don't allow the user to cancel the request
+        updateFile(studyFileId, { isSaving: true })
+      }
+
       if (file.status === 'new') {
         response = await createStudyFile({
-          studyAccession, studyFileData, isChunked, chunkStart, chunkEnd, fileSize,
+          studyAccession, studyFileData, isChunked, chunkStart, chunkEnd, fileSize, requestCanceller,
           onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
         })
       } else {
         response = await updateStudyFile({
-          studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize,
+          studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize, requestCanceller,
           onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
         })
       }
-      handleSaveResponse(response, studyFileId, isChunked)
+      handleSaveResponse(response, studyFileId, isChunked, requestCanceller)
+      // copy over the new id from the server
       studyFileId = response._id
-      if (isChunked) {
-        while (chunkEnd < fileSize) {
+      requestCanceller.fileId = studyFileId
+      if (isChunked && !requestCanceller.wasCancelled) {
+        while (chunkEnd < fileSize && !requestCanceller.wasCancelled) {
           chunkStart += CHUNK_SIZE
           chunkEnd = Math.min(chunkEnd + CHUNK_SIZE, fileSize)
           const chunkApiData = formatFileForApi(file, chunkStart, chunkEnd)
           response = await sendStudyFileChunk({
-            studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize,
+            studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize, requestCanceller,
             onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
           })
         }
-        handleSaveResponse(response, studyFileId, false)
+        handleSaveResponse(response, studyFileId, false, requestCanceller)
       }
     } catch (error) {
       store.addNotification(failureNotification(<span>{file.name} failed to save<br/>{error}</span>))
       updateFile(studyFileId, {
         isSaving: false
       })
+    }
+  }
+
+  /** delete the file from the form, and also the server if it exists there */
+  async function deleteFile(file) {
+    const fileId = file._id
+    if (file.status === 'new') {
+      deleteFileFromForm(fileId)
+    } else {
+      updateFile(fileId, { isDeleting: true })
+      try {
+        await deleteFileFromServer(fileId)
+        deleteFileFromForm(fileId)
+        store.addNotification(successNotification(`${file.name} deleted successfully`))
+      } catch (error) {
+        store.addNotification(failureNotification(<span>{file.name} failed to delete<br/>{error.message}</span>))
+        updateFile(fileId, {
+          isDeleting: false
+        })
+      }
     }
   }
 
@@ -225,28 +276,14 @@ export function RawUploadWizard({ studyAccession, name }) {
     })
   }
 
-  /** delete the file from the form, and also the server if it exists there */
-  async function deleteFile(file) {
-    if (file.status === 'new') {
-      deleteFileFromForm(file._id)
-    } else {
-      updateFile(file._id, { isDeleting: true })
-      try {
-        await deleteStudyFile(studyAccession, file._id)
-        setServerState(prevServerState => {
-          const newServerState = _cloneDeep(prevServerState)
-          newServerState.files = newServerState.files.filter(f => f._id != file._id)
-          return newServerState
-        })
-        deleteFileFromForm(file._id)
-        store.addNotification(successNotification(`${file.name} deleted successfully`))
-      } catch (error) {
-        store.addNotification(failureNotification(<span>{file.name} failed to delete<br/>{error}</span>))
-        updateFile(file._id, {
-          isDeleting: false
-        })
-      }
-    }
+  /** deletes the file from the server */
+  async function deleteFileFromServer(fileId) {
+    await deleteStudyFile(studyAccession, fileId)
+    setServerState(prevServerState => {
+      const newServerState = _cloneDeep(prevServerState)
+      newServerState.files = newServerState.files.filter(f => f._id !== fileId)
+      return newServerState
+    })
   }
 
   // on initial load, load all the details of the study and study files

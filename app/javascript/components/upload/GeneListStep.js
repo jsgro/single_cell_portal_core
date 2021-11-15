@@ -11,8 +11,8 @@ const DEFAULT_NEW_GENE_LIST_FILE = {
 const geneListFileFilter = file => file.file_type === 'Gene List'
 
 export default {
-  title: 'Precomputed Expression Stats',
-  header: 'Precomputed Expression Stats',
+  title: 'Precomputed expression stats',
+  header: 'Precomputed expression stats',
   name: 'geneLists',
   component: GeneListForm,
   fileFilter: geneListFileFilter

@@ -27,7 +27,8 @@ const PROPERTIES_NOT_TO_SEND = [
   'version',
   'status',
   'upload',
-  'parse_status'
+  'parse_status',
+  'requestCanceller'
 ]
 
 /** gets an object representing a new, empty study file.  Does not communicate to server */
@@ -155,7 +156,7 @@ function validateNameUniqueness(file, allFiles, validationMessages) {
   const allOtherFiles = allFiles.filter(f => f._id != file._id)
   const allOtherNames = allOtherFiles.map(f => f.name)
   // require 'isDirty' so we only show the error on the file being updated
-  if (allOtherNames.includes(file.name) && file.isDirty) {
+  if (file.name && allOtherNames.includes(file.name) && file.isDirty) {
     validationMessages.fileName = `A file named ${file.name} already exists in your study`
   }
 }

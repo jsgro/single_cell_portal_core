@@ -236,8 +236,6 @@ function enableDefaultActions() {
         toggleGlyph($(this).prev().find('span.toggle-glyph'));
     });
 
-    $('.datepicker').datepicker({dateFormat: 'yy-mm-dd'});
-
     $('body').tooltip({selector: '[data-toggle="tooltip"]', container: 'body', trigger: 'hover'});
 
     enableHoverPopovers();

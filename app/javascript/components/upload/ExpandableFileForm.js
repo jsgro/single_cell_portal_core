@@ -16,8 +16,8 @@ export default function ExpandableFileForm({
 
   /** handle a click on the header bar (not the expand button itself) */
   function handleDivClick(e) {
-    // if this didn't come from a link/button, toggle the header expansion
-    if (!e.target.closest('button') && !e.target.closest('a')) {
+    // if the panel is closed, and this didn't come from a link/button, toggle the header expansion
+    if (!expanded && !e.target.closest('button') && !e.target.closest('a')) {
       handleExpansionClick()
     }
     // otherwise do nothing
@@ -62,11 +62,41 @@ export default function ExpandableFileForm({
 
 /** renders an overlay if the file is saving, and also displays server error messages */
 export function SavingOverlay({ file, updateFile }) {
+  const [showCancelModal, setShowCancelModal] = useState(false)
   const showOverlay = file.isSaving || file.isDeleting
   if (!showOverlay) {
     return <></>
   }
-  return <div className="file-upload-overlay" data-testid="file-upload-overlay"></div>
+  let cancelButtonContent = <></>
+  if (file.cancelUpload) {
+    cancelButtonContent = <>
+      <button className="btn btn-md terra-secondary-btn upload-cancel-btn"
+        data-testid="upload-cancel-btn"
+        onClick={() => setShowCancelModal(true)}>
+        Cancel
+      </button>
+      <Modal
+        show={showCancelModal}
+        onHide={() => setShowCancelModal(false)}
+        animation={false}>
+        <Modal.Body className="">
+          Cancel upload and delete file from the portal?
+        </Modal.Body>
+        <Modal.Footer>
+          <button className="btn btn-md btn-primary" data-testid="upload-cancel-yes-btn" onClick={() => {
+            file.cancelUpload()
+            setShowCancelModal(false)
+          }}>Yes</button>
+          <button className="btn btn-md terra-secondary-btn" onClick={() => {
+            setShowCancelModal(false)
+          }}>No</button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  }
+  return <div className="file-upload-overlay" data-testid="file-upload-overlay">
+    { cancelButtonContent }
+  </div>
 }
 
 /** renders save and delete buttons for a given file */
@@ -110,10 +140,15 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
     </button>
   }
 
+  let deleteButtonContent = 'Delete'
+  if (file.isDeleting) {
+    deleteButtonContent = <span>Deleting <LoadingSpinner data-testid="file-save-spinner"/></span>
+  }
+
   return <div className="flexbox button-panel">
     { saveButton }
     <button type="button" className="btn terra-secondary-btn" onClick={handleDeletePress} data-testid="file-delete">
-      Delete
+      { deleteButtonContent }
     </button>
     <Modal
       show={showConfirmDeleteModal}

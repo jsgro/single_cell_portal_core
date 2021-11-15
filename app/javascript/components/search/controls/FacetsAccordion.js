@@ -4,7 +4,7 @@ import PanelGroup from 'react-bootstrap/lib/PanelGroup'
 import FacetControl from './FacetControl'
 
 /**
- * Expandable sections for facets in "More Facets" popup
+ * Expandable sections for facets in "More facets" popup
  */
 export default function FacetsAccordion(props) {
   return (

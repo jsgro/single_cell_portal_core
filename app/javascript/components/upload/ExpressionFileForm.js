@@ -70,7 +70,7 @@ export default function ExpressionFileForm({
 
     { !isRawCountsFile &&
       <div className="form-group">
-        <label className="labeled-select">Associated Raw Counts Files
+        <label className="labeled-select">Associated raw counts files
           <Select options={rawCountsOptions}
             data-analytics-name="expression-raw-counts-select"
             value={associatedRawCounts}
@@ -103,13 +103,13 @@ export default function ExpressionFileForm({
         updateFile={updateFile}/>
     }
 
-    <ExpressionFileInfoSelect label="Biosample Input Type *"
+    <ExpressionFileInfoSelect label="Biosample input type *"
       propertyName="biosample_input_type"
       rawOptions={fileMenuOptions.biosample_input_type}
       file={file}
       updateFile={updateFile}/>
 
-    <ExpressionFileInfoSelect label="Library Preparation Protocol *"
+    <ExpressionFileInfoSelect label="Library preparation protocol *"
       propertyName="library_preparation_protocol"
       rawOptions={fileMenuOptions.library_preparation_protocol}
       file={file}
@@ -122,7 +122,7 @@ export default function ExpressionFileForm({
       updateFile={updateFile}/>
 
     <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
-    <TextFormField label="Expression Axis Label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
+    <TextFormField label="Expression axis label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
 
     { isMtxFile &&
       <MTXBundledFilesForm {...{
