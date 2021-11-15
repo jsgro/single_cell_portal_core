@@ -38,7 +38,7 @@ class Study
 
   # pagination
   def self.per_page
-    5
+    10
   end
 
   # associations and scopes
