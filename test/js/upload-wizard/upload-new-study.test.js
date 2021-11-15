@@ -17,7 +17,7 @@ const rawCountsFileName = 'example_raw_counts.txt'
 describe('creation of study files', () => {
   beforeAll(() => {
     jest.restoreAllMocks()
-    // This test is long--running all steps in series, so allow extra time
+    // This test is long--running all steps in series as if it was a user uploading a new study from scratch--so allow extra time
     jest.setTimeout(10000)
   })
 
