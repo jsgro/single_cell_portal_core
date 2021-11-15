@@ -254,7 +254,7 @@ module Api
         # perform Azul search, if enabled, and there are facets/terms provided by user
         # run this before inferred search so that they are weighted and sorted correctly
         if api_user_signed_in? && current_api_user.feature_flag_for('cross_dataset_search_backend') &&
-          @facets.present?
+          (@facets.present? || @term_list.present?)
           begin
             @studies, @studies_by_facet = ::AzulSearchService.append_results_to_studies(@studies,
                                                                                         selected_facets: @facets,
@@ -274,7 +274,13 @@ module Api
         # determine sort order for pagination; minus sign (-) means a descending search
         case sort_type
         when :keyword
-          @studies = @studies.sort_by { |study| -study.search_weight(@term_list)[:total] }
+          @studies = @studies.sort_by do |study|
+            if study.is_a? Study
+              -study.search_weight(@term_list)[:total]
+            else
+              -study[:term_matches][:total]
+            end
+          end
         when :accession
           @studies = @studies.sort_by do |study|
             accession_index = possible_accessions.index(study.accession)

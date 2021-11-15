@@ -14,6 +14,11 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     ]
     catalogs = @hca_azul_client.catalogs
     @default_catalog = catalogs['default_catalog']
+    SearchFacet.update_all_facet_filters
+  end
+
+  after(:all) do
+    SearchFacet.all.map(&:update_filter_values!)
   end
 
   # skip a test if Azul is not up ; prevents unnecessary build failures due to releases/maintenance
@@ -141,11 +146,33 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     assert_equal expected_query, query
   end
 
-  test 'should format regular expression for term matching' do
-    terms = ['foo', 'bar', 'bing baz boo']
-    regex = @hca_azul_client.format_term_regex(terms)
-    expected_regex = /foo|bar|bing\ baz\ boo/i
-    assert_equal expected_regex, regex
+  test 'should convert keyword search into facets' do
+    terms = %w[cancer]
+    expected_filters = ['cervical cancer', 'colorectal cancer', 'lower gum cancer', 'lung cancer', 'mandibular cancer',
+                       'tongue cancer'].map { |f| { id: f, name: f }.with_indifferent_access }
+    expected_facets = [{ id: 'disease', filters: expected_filters }.with_indifferent_access]
+    query = @hca_azul_client.format_facet_query_from_keyword(terms)
+    assert_equal expected_facets, query
+  end
+
+  test 'should merge query objects' do
+    expected_query = {
+      sampleDisease: {
+        is: ['HIV infectious disease', 'cervical cancer', 'colorectal cancer', 'lower gum cancer', 'lung cancer',
+             'mandibular cancer', 'tongue cancer']
+      },
+      genusSpecies: {
+        is: ["Homo sapiens"]
+      }
+    }.with_indifferent_access
+    facet_query = @hca_azul_client.format_query_from_facets(@facets)
+    term_facets = @hca_azul_client.format_facet_query_from_keyword(%w[cancer])
+    term_query = @hca_azul_client.format_query_from_facets(term_facets)
+    merged_query = @hca_azul_client.merge_query_objects(facet_query, term_query)
+    assert_equal expected_query, merged_query
+    # test nil handling
+    merged_with_nil = @hca_azul_client.merge_query_objects(facet_query, nil, term_query)
+    assert_equal expected_query, merged_with_nil
   end
 
   test 'should append HCA catalog name to queries' do
