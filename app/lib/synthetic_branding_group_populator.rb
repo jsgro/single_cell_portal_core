@@ -35,7 +35,7 @@ class SyntheticBrandingGroupPopulator
   #
   # @param branding_group_config (Hash)   => Configuration JSON for branding group
   # @param user (User)                    => User account to own branding group
-  def self.populate(branding_group_config, user: [User.first])
+  def self.populate(branding_group_config, user: User.first)
     puts("Populating synthetic branding group for #{branding_group_config.dig('branding_group', 'name')}")
     branding_group = self.create_branding_group(branding_group_config, user)
     # assign new branding group to all studies matching criteria
@@ -55,7 +55,7 @@ class SyntheticBrandingGroupPopulator
     end
 
     branding_group = BrandingGroup.new(branding_group_config.dig('branding_group'))
-    branding_group.users ||= [user]
+    branding_group.user_ids = [user.id]
     image_info = branding_group_config.dig('images')
     # dynamically assign image files
     image_info.each do |attribute_name, filename|
