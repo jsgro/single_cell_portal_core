@@ -259,7 +259,9 @@ export function getSelectedFileStats(downloadInfo, selectedBoxes, isLoading) {
   */
 export function getFileStats(study, fileTypes) {
   const files = study.studyFiles.filter(file => fileTypes.includes(file.file_type))
-  const fileCount = files.length
+  const fileCount = study.study_source === 'SCP' ? files.length : files.reduce((sum, studyFile) => {
+    return sum + studyFile.count
+  }, 0)
   const fileSize = files.reduce((sum, studyFile) => {
     return sum + (studyFile.upload_file_size ? studyFile.upload_file_size : 0)
   }, 0)

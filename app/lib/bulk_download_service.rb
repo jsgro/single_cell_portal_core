@@ -54,6 +54,7 @@ class BulkDownloadService
     tdr_file_configs = []
 
     if tdr_files.present?
+
       hca_client = ApplicationController.hca_azul_client
       curl_configs << "-H \"Authorization: Bearer #{DataRepoClient.new.access_token['access_token']}\""
       tdr_file_configs = []

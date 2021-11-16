@@ -42,11 +42,11 @@ export default function DownloadButton({ searchResults={} }) {
    * means we are reliant on the TDR results being on the current page.  Once we begin paging/sorting
    * TDR results, this approach will have to be revisited */
   const tdrFileInfo = searchResults.studies
-    ?.filter(result => result.study_source === 'TDR')
+    ?.filter(result => result.study_source === 'HCA')
     ?.map(result => ({
       accession: result.accession,
       name: result.name,
-      study_source: 'TDR',
+      study_source: 'HCA',
       description: result.description,
       hca_project_id: result.hca_project_id,
       studyFiles: result.file_information

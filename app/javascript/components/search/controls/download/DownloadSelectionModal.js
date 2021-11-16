@@ -10,7 +10,7 @@ import { bytesToSize } from 'lib/stats'
 
 import { fetchDownloadInfo, fetchDrsInfo } from 'lib/scp-api'
 
-const TDR_COLUMNS = ['project_manifest', 'analysis', 'sequence']
+const AZUL_COLUMNS = ['project_manifest', 'analysis', 'sequence']
 const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
 
 /**
@@ -18,32 +18,24 @@ const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
   * studies and file types for download.  This queries the bulk_download/summary API method
   * to retrieve the list of study details and available files
   */
-export default function DownloadSelectionModal({ studyAccessions, tdrFileInfo, show, setShow }) {
+export default function DownloadSelectionModal({ studyAccessions, azulFileInfo, show, setShow }) {
   const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingTDR, setIsLoadingTDR] = useState(true)
+  const [isLoadingAzul, setIsLoadingAzul] = useState(true)
   const [downloadInfo, setDownloadInfo] = useState([])
   const [selectedBoxes, setSelectedBoxes] = useState()
-  const [downloadInfoTDR, setDownloadInfoTDR] = useState([])
-  const [selectedBoxesTDR, setSelectedBoxesTDR] = useState()
+  const [downloadInfoAzul, setDownloadInfoAzul] = useState([])
+  const [selectedBoxesAzul, setSelectedBoxesAzul] = useState()
   const [stepNum, setStepNum] = useState(1)
 
   const scpAccessions = studyAccessions.filter(accession => accession.startsWith('SCP'))
-  const tdrAccessions = studyAccessions.filter(accession => !accession.startsWith('SCP'))
-  const showTDRSelectionPane = tdrAccessions.length > 0
+  const azulAccessions = studyAccessions.filter(accession => !accession.startsWith('SCP'))
+  const showAzulSelectionPane = azulAccessions.length > 0
   const { fileCount, fileSize } = getSelectedFileStats(downloadInfo, selectedBoxes, isLoading)
   const { fileCount: fileCountTDR, fileSize: fileSizeTDR } =
-    getSelectedFileStats(downloadInfoTDR, selectedBoxesTDR, isLoadingTDR)
+    getSelectedFileStats(downloadInfoAzul, selectedBoxesAzul, isLoadingAzul)
   const prettyBytes = bytesToSize(fileSize + fileSizeTDR)
   const selectedFileIds = getSelectedFileHandles(downloadInfo, selectedBoxes)
-  const selectedTdrFiles = getSelectedFileHandles(downloadInfoTDR, selectedBoxesTDR, true)
-
-  /** For TDR studies, we will know from the tdrFileInfo object how many files of each type there are
-   * But we need to query the drsInfo so that we can get the file sizes and download urls */
-  function initializeTDRTable() {
-    setSelectedBoxesTDR(newSelectedBoxesState(tdrFileInfo, TDR_COLUMNS))
-    setDownloadInfoTDR(tdrFileInfo)
-    setIsLoadingTDR(false)
-  }
+  const selectedTdrFiles = getSelectedFileHandles(downloadInfoAzul, selectedBoxesAzul, true)
 
   /**
     render bulk download table for SCP & TDR/HCA studies
@@ -52,15 +44,17 @@ export default function DownloadSelectionModal({ studyAccessions, tdrFileInfo, s
     setSelectedBoxes(newSelectedBoxesState(result, SCP_COLUMNS))
     setDownloadInfo(result)
     setIsLoading(false)
-    if (showTDRSelectionPane) {
-      initializeTDRTable()
+    if (showAzulSelectionPane) {
+      setSelectedBoxesAzul(newSelectedBoxesState(azulFileInfo, AZUL_COLUMNS))
+      setDownloadInfoAzul(azulFileInfo)
+      setIsLoadingAzul(false)
     }
   }
 
   useEffect(() => {
     if (show) {
       setIsLoading(true)
-      setIsLoadingTDR(true)
+      setIsLoadingAzul(true)
       fetchDownloadInfo(scpAccessions).then(result => {
         renderFileTables(result)
       })
@@ -116,15 +110,15 @@ export default function DownloadSelectionModal({ studyAccessions, tdrFileInfo, s
               selectedBoxes={selectedBoxes}
               setSelectedBoxes={setSelectedBoxes}
               columnTypes={SCP_COLUMNS}/>
-            { showTDRSelectionPane &&
+            { showAzulSelectionPane &&
               <div>
                 <h4>Human Cell Atlas studies</h4>
                 <DownloadSelectionTable
-                  isLoading={isLoadingTDR}
-                  downloadInfo={downloadInfoTDR}
-                  selectedBoxes={selectedBoxesTDR}
-                  setSelectedBoxes={setSelectedBoxesTDR}
-                  columnTypes={TDR_COLUMNS}/>
+                  isLoading={isLoadingAzul}
+                  downloadInfo={downloadInfoAzul}
+                  selectedBoxes={selectedBoxesAzul}
+                  setSelectedBoxes={setSelectedBoxesAzul}
+                  columnTypes={AZUL_COLUMNS}/>
               </div>
             }
           </div>
