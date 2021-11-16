@@ -127,7 +127,7 @@ function RawScatterPlot({
   useUpdateEffect(() => {
     // Don't try to update the color if the graph hasn't loaded yet
     if (scatterData && !isLoading) {
-      const dataUpdate = { 'marker.colorscale': scatterColor }
+      const dataUpdate = { 'marker.colorscale': scatterColor, 'marker.reversescale': shouldReverseScale(scatterColor) }
       Plotly.update(graphElementId, dataUpdate)
     }
   }, [scatterColor])
@@ -233,6 +233,12 @@ function getLegendEntries(data, pointSize, labelCorrelations) {
   return legendEntries
 }
 
+
+  // Reverse the continous colorscale as appropriate for high contrast color to correspond to high expression
+  function shouldReverseScale(scatterColor) {
+    return scatterColor === 'Reds' ? false : true
+  }
+
 /** get the array of plotly traces for plotting */
 export function getPlotlyTraces({
   axes,
@@ -328,7 +334,7 @@ export function getPlotlyTraces({
       Object.assign(trace.marker, {
         showscale: true,
         colorscale: appliedScatterColor,
-        reversescale: true,
+        reversescale: shouldReverseScale(appliedScatterColor),
         color: colors,
         colorbar: { title, titleside: 'right' }
       })
