@@ -34,6 +34,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     reset_user_tokens
     api_study = Study.find_by(name: /API/)
     api_study.update!(description: '', public: true)
+    BrandingGroup.destroy_all
   end
 
   test 'should get all search facets' do
@@ -68,7 +69,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   test 'should get search facets for branding group' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    branding_group = BrandingGroup.first
+    branding_group = FactoryBot.create(:branding_group, user_list: [@user])
     facet_list = SearchFacet.pluck(:identifier).take(2).sort
     branding_group.update!(facet_list: facet_list)
     execute_http_request(:get, api_v1_search_facets_path(scpbr: branding_group.name_as_id))
