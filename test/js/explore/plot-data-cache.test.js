@@ -380,5 +380,121 @@ describe('cache handles simultaneous gene/cluster plots', () => {
     }
     expect(apiFetch).toHaveBeenLastCalledWith(expectedNewAnnotParams)
   })
+
+  it('handles caching after a cluster change', async () => {
+    const cache = createCache()
+    const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
+    // pass in a clone of the response since it may get modified by the cache operations
+    apiFetch.mockImplementation(() => Promise.resolve([_cloneDeep(FETCH_CLUSTER_RESPONSE), 230]))
+
+    // check that the repsonse is fetched and returned normally if not in cache
+    await cache.fetchCluster({
+      studyAccession: 'SCP1',
+      cluster: '_default',
+      annotation: {},
+      subsample: ''
+    })
+
+    // check that it refetches everything after a cluster change
+    apiFetch.mockImplementation(() => Promise.resolve([{
+      ..._cloneDeep(FETCH_CLUSTER_RESPONSE),
+      cluster: 'cluster2.tsv'
+    }, 230]))
+    await cache.fetchCluster({
+      studyAccession: 'SCP1',
+      cluster: 'cluster2.tsv',
+      annotation: {
+        name: 'biosample_id',
+        scope: 'study'
+      },
+      subsample: 'all'
+    })
+    const expectedNewClusterParams = {
+      annotation: { name: 'biosample_id', scope: 'study' },
+      cluster: 'cluster2.tsv',
+      consensus: undefined,
+      fields: ['coordinates', 'cells', 'annotation'],
+      genes: [],
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
+      studyAccession: 'SCP1',
+      subsample: 'all'
+    }
+    expect(apiFetch).toHaveBeenLastCalledWith(expectedNewClusterParams)
+
+    // second, check that it only fetches the needed fields when changing annotation
+    apiFetch.mockImplementation(() => Promise.resolve([{
+      ..._cloneDeep(ANNOTATION_ONLY_RESPONSE),
+      cluster: 'cluster2.tsv'
+    }, 230]))
+    const annotResponse = await cache.fetchCluster({
+      studyAccession: 'SCP1',
+      cluster: 'cluster2.tsv',
+      annotation: {
+        name: 'species',
+        scope: 'study'
+      },
+      subsample: 'all'
+    })
+    const expectedNewAnnotParams = {
+      annotation: { name: 'species', scope: 'study' },
+      cluster: 'cluster2.tsv',
+      consensus: undefined,
+      fields: ['annotation'],
+      genes: [],
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
+      studyAccession: 'SCP1',
+      subsample: 'all'
+    }
+    expect(apiFetch).toHaveBeenLastCalledWith(expectedNewAnnotParams)
+
+
+    // confirm the fields got merged
+    const scatterData = annotResponse[0].data
+    expect(scatterData.x).toEqual(FETCH_CLUSTER_RESPONSE.data.x)
+    expect(scatterData.y).toEqual(FETCH_CLUSTER_RESPONSE.data.y)
+    expect(scatterData.cells).toEqual(FETCH_CLUSTER_RESPONSE.data.cells)
+    expect(scatterData.annotations).toEqual(ANNOTATION_ONLY_RESPONSE.data.annotations)
+    expect(annotResponse[0].annotParams.name).toEqual('species')
+
+
+    // check that the cache works if a gene is then searched
+    apiFetch.mockImplementation(() => Promise.resolve([{
+      ..._cloneDeep(EXPRESSION_ONLY_RESPONSE),
+      cluster: 'cluster2.tsv'
+    }, 230]))
+    const geneResponse = await cache.fetchCluster({
+      studyAccession: 'SCP1',
+      cluster: 'cluster2.tsv',
+      annotation: {
+        name: 'species',
+        scope: 'study'
+      },
+      genes: ['Apoe'],
+      subsample: 'all'
+    })
+    const expectedNewGeneParams = {
+      annotation: { name: 'species', scope: 'study' },
+      cluster: 'cluster2.tsv',
+      consensus: undefined,
+      fields: ['expression'],
+      genes: ['Apoe'],
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
+      studyAccession: 'SCP1',
+      subsample: 'all'
+    }
+    expect(apiFetch).toHaveBeenLastCalledWith(expectedNewGeneParams)
+
+    // confirm the fields got merged
+    const geneScatterData = geneResponse[0].data
+    expect(geneScatterData.x).toEqual(FETCH_CLUSTER_RESPONSE.data.x)
+    expect(geneScatterData.y).toEqual(FETCH_CLUSTER_RESPONSE.data.y)
+    expect(geneScatterData.cells).toEqual(FETCH_CLUSTER_RESPONSE.data.cells)
+    expect(geneScatterData.annotations).toEqual(ANNOTATION_ONLY_RESPONSE.data.annotations)
+    expect(geneScatterData.expression).toEqual(EXPRESSION_ONLY_RESPONSE.data.expression)
+    expect(geneResponse[0].annotParams.name).toEqual('species')
+  })
 })
 
