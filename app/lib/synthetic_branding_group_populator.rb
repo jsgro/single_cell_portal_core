@@ -42,7 +42,11 @@ class SyntheticBrandingGroupPopulator
     synthetic_studies_ids = SyntheticStudyPopulator.collect_synthetic_studies.pluck(:id)
     study_regex = /#{branding_group_config.dig('study_title_regex')}/i
     study_list = Study.where(name: study_regex, :id.in => synthetic_studies_ids)
-    study_list.update_all(branding_group_ids: [branding_group.id]) if study_list.any?
+    study_list.each do |study|
+      study.branding_group_ids << branding_group.id
+      study.save!
+    end
+    branding_group.update(study_ids: study_list.pluck(:id)) if study_list.any?
   end
 
   private
