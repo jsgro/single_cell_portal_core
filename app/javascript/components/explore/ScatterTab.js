@@ -47,7 +47,11 @@ export default function ScatterTab({
   return <div className="row">
     {
       scatterParams.map((params, index) => {
-        const associatedImages = imagesForClusters[params.cluster] ? imagesForClusters[params.cluster] : []
+        let associatedImages = []
+        if (imagesForClusters[params.cluster] && params.genes.length === 0) {
+          // only show the reference image under the cluster plot, not the expression plot
+          associatedImages = imagesForClusters[params.cluster]
+        }
         const isTwoColRow = isTwoColumn && !(index === 0 && firstRowSingleCol)
         const key = getKeyFromScatterParams(params)
         let rowDivider = <span key={`d${index}`}></span>
