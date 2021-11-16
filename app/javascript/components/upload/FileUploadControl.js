@@ -73,7 +73,7 @@ export default function FileUploadControl({
     let newName = selectedFile.name
 
     // for cluster files, don't change an existing specified name
-    if (FILE_TYPES_ALLOWING_SET_NAME.includes(file.file_type) && file.name && file.name != file.upload_file_name) {
+    if (FILE_TYPES_ALLOWING_SET_NAME.includes(file.file_type) && file.name && file.name !== file.upload_file_name) {
       newName = file.name
     }
     setFileValidation({ validating: true, errorMsgs: [], filename: selectedFile.name })
