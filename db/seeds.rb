@@ -218,7 +218,7 @@ SearchFacet.create!(name: 'Organism Age', identifier: 'organism_age', big_query_
                     is_ontology_based: false, data_type: 'number', is_array_based: false,
                     convention_name: 'Alexandria Metadata Convention', convention_version: '2.2.0', unit: 'years')
 
-BrandingGroup.create!(name: 'Test Brand', user_id: api_user.id, font_family: 'Helvetica Neue, sans-serif',
+BrandingGroup.create!(name: 'Test Brand', user_ids: [api_user.id], font_family: 'Helvetica Neue, sans-serif',
                       background_color: '#FFFFFF')
 
 # Preset search seeds
