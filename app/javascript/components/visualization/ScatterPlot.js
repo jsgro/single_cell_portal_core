@@ -365,7 +365,7 @@ export function getPlotlyTraces({
       })
     }
   } else {
-    const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
+    const isGeneExpressionForColor = genes.length && !isCorrelatedScatter && !isAnnotatedScatter
     // for non-clustered plots, we pass in a single trace with all the points
     let colors
     if (isGeneExpressionForColor) {
