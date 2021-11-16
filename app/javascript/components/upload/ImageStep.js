@@ -58,7 +58,7 @@ export function ImageForm({
     { imageFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_IMAGE_FILE}/> }
     { imageFiles.map(file => {
       return <ImageFileForm
-        key={file._id}
+        key={file.oldId ? file.oldId : file._id}
         file={file}
         allFiles={formState.files}
         updateFile={updateFile}
