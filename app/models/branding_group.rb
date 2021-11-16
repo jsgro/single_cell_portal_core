@@ -41,7 +41,7 @@ class BrandingGroup
                            if: proc {|bg| bg.send(image_attachment).present?}
   end
 
-  validates_presence_of :name, :name_as_id, :user_id, :background_color, :font_family
+  validates_presence_of :name, :name_as_id, :background_color, :font_family
   validates_uniqueness_of :name
   validates_format_of :name, :name_as_id,
             with: ValidationTools::ALPHANUMERIC_SPACE_DASH, message: ValidationTools::ALPHANUMERIC_SPACE_DASH_ERROR
@@ -58,6 +58,23 @@ class BrandingGroup
   # helper to return list of associated search facets
   def facets
     self.facet_list.any? ? SearchFacet.where(:identifier.in => self.facet_list) : SearchFacet.visible
+  end
+
+  # list of curator emails
+  def curator_list
+    users.map(&:email)
+  end
+
+  # determine if user can edit branding group (all portal admins & collection curators)
+  def can_edit?(user)
+    return false if user.nil?
+
+    !!(user.admin? || users.include?(user))
+  end
+
+  # determine if a user can destroy a branding group (only portal admins)
+  def can_destroy?(user)
+    user.nil? ? false : user.admin
   end
 
   private

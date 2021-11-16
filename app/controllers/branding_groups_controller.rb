@@ -4,6 +4,9 @@ class BrandingGroupsController < ApplicationController
     authenticate_user!
   end
 
+  before_action :authenticate_curator, only: [:show, :edit, :update]
+  before_action :authenticate_admin, only: [:index, :create, :destroy]
+
   # GET /branding_groups
   # GET /branding_groups.json
   def index
@@ -12,11 +15,7 @@ class BrandingGroupsController < ApplicationController
 
   # show a list for display and linking, editable only if the user has appropriate permissions
   def list_navigate
-    @editable_branding_groups = []
     @branding_groups = BrandingGroup.visible_groups_to_user(current_user)
-    if current_user.present?
-      @editable_branding_groups = current_user.available_branding_groups.to_a
-    end
   end
 
   # GET /branding_groups/1
@@ -64,6 +63,15 @@ class BrandingGroupsController < ApplicationController
         end
         # delete the param since it is not a real model param
         clean_params.delete("reset_#{image_name}")
+
+        # handle updates to the list of curators
+        curators = params[:curator_emails].split(',').map(&:strip)
+        user_ids = curators.map { |email| User.find_by(email: email)&.id }.compact
+        # ensure current user cannot remove accidentially remove themselves from the list
+        if @branding_group.users.include?(current_user)
+          user_ids << current_user.id unless user_ids.include?(current_user.id)
+        end
+        clean_params[:user_ids] = user_ids
       end
 
       if @branding_group.update(clean_params)
@@ -102,5 +110,11 @@ class BrandingGroupsController < ApplicationController
                                            :splash_image, :banner_image, :footer_image, :external_link_url, :external_link_description,
                                            :reset_splash_image, :reset_footer_image, :reset_banner_image,
                                            user_ids: [], study_ids: [])
+  end
+
+  def authenticate_curator
+    unless @branding_group.can_edit?(current_user)
+      redirect_to collection_list_navigate_path, alert: 'You do not have permission to perform that action' and return
+    end
   end
 end
