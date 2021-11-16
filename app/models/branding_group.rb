@@ -86,7 +86,8 @@ class BrandingGroup
   # remove branding association on delete
   def remove_branding_association
     self.studies.each do |study|
-      study.update(branding_group_id: nil)
+      existing_collections = study.branding_group_ids.reject { |col_id| col_id == self.id }
+      study.update(branding_group_ids: existing_collections)
     end
   end
 
