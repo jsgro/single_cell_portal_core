@@ -53,6 +53,8 @@
         <div class="form-group row">
           <div class="col-sm-12">
             <p>Custom Colors</p>
+              <%= opts.label :group_colors, 'Default Annotation' %><br />
+              <%= opts.select :group_colors, grouped_options_for_select(@default_cluster_annotations, @study.default_annotation), {},class: 'form-control' %>
           </div>
         </div>
         <div class="form-group row">
