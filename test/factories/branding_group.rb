@@ -9,5 +9,6 @@ FactoryBot.define do
     font_family { 'Helvetica Neue, sans-serif' }
     background_color { '#FFFFFF' }
     public { true }
+    facet_list { [] }
   end
 end

@@ -218,9 +218,6 @@ SearchFacet.create!(name: 'Organism Age', identifier: 'organism_age', big_query_
                     is_ontology_based: false, data_type: 'number', is_array_based: false,
                     convention_name: 'Alexandria Metadata Convention', convention_version: '2.2.0', unit: 'years')
 
-BrandingGroup.create!(name: 'Test Brand', user_ids: [api_user.id], font_family: 'Helvetica Neue, sans-serif',
-                      background_color: '#FFFFFF')
-
 # Preset search seeds
 PresetSearch.create!(name: 'Test Search', search_terms: ["Testing Study"],
                      facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'], accession_list: %w(SCP1))

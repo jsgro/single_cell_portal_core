@@ -1,14 +1,16 @@
-require "test_helper"
+require 'test_helper'
 
 class BrandingGroupTest < ActiveSupport::TestCase
 
+  include Minitest::Hooks
+  include ::SelfCleaningSuite
+  include ::TestInstrumentor
+
   def setup
-    @branding_group = BrandingGroup.first
+    @branding_group = FactoryBot.create(:branding_group, user_list: [@user])
   end
 
   test 'should return list of approved facets for branding groups' do
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # test that default returns all visible facets
     visible_facets = SearchFacet.visible.pluck(:identifier).sort
     branding_group_facets = @branding_group.facets.pluck(:identifier).sort
@@ -24,7 +26,5 @@ class BrandingGroupTest < ActiveSupport::TestCase
 
     # clean up
     @branding_group.update(facet_list: [])
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 end
