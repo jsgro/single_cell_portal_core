@@ -1,2 +1,2 @@
 $("#study_default_options_annotation").html("<%= escape_javascript(select_tag :annotation, grouped_options_for_select(@default_cluster_annotations, set_annotation_value(@study, {})), class: 'form-control' )%>");
-$("#study_default_options_annotation").html("<%= escape_javascript(select_tag :annotation, grouped_options_for_select(@default_cluster_annotations, set_annotation_value(@study, {})), class: 'form-control' )%>");
+$("#study_default_options_group_colors").html("<%= escape_javascript(select_tag :group_colors, options_for_select(@annotation_groups, set_annotation_value(@study, {})), class: 'form-control' )%>");
