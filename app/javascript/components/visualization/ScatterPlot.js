@@ -234,10 +234,10 @@ function getLegendEntries(data, pointSize, labelCorrelations) {
 }
 
 
-  // Reverse the continous colorscale as appropriate for high contrast color to correspond to high expression
-  function shouldReverseScale(scatterColor) {
-    return scatterColor === 'Reds' ? false : true
-  }
+/** Reverse the continuous colorscale so high contrast color corresponds to high expression */
+function shouldReverseScale(scatterColor) {
+  return scatterColor !== 'Reds'
+}
 
 /** get the array of plotly traces for plotting */
 export function getPlotlyTraces({
