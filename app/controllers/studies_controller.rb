@@ -1,3 +1,4 @@
+class StudiesController < ApplicationController
   ###
   #
   # This is the main study creation controller.  Handles CRUDing studies, uploading & parsing files, and syncing to workspaces
