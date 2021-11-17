@@ -5,7 +5,7 @@ import { fetchAuthCode, stringifyQuery } from 'lib/scp-api'
 
 /** component for rendering a copyable bulk download command for an array of file ids.
     Queries the server to retrieve the appropriate auth code. */
-export default function DownloadCommand({ fileIds=[], tdrFiles }) {
+export default function DownloadCommand({ fileIds=[], azulFiles }) {
   const [isLoading, setIsLoading] = useState(true)
   const [authInfo, setAuthInfo] = useState({ authCode: null, timeInterval: 3000 })
   const [refreshNum, setRefreshNum] = useState(0)
@@ -20,7 +20,7 @@ export default function DownloadCommand({ fileIds=[], tdrFiles }) {
 
   useEffect(() => {
     setIsLoading(true)
-    fetchAuthCode(fileIds, tdrFiles).then(result => {
+    fetchAuthCode(fileIds, azulFiles).then(result => {
       setAuthInfo(result)
       setIsLoading(false)
     })

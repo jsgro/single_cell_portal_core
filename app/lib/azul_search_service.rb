@@ -52,8 +52,9 @@ class AzulSearchService
         term_matches: {},
         file_information: [
           {
-            url: project_id,
+            project_id: project_id,
             file_type: 'Project Manifest',
+            count: 1,
             upload_file_size: 1.megabyte, # placeholder filesize as we don't know until manifest is downloaded
             name: "#{short_name}.tsv"
           }

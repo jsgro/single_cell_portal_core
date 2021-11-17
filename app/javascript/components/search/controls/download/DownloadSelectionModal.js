@@ -31,14 +31,14 @@ export default function DownloadSelectionModal({ studyAccessions, azulFileInfo, 
   const azulAccessions = studyAccessions.filter(accession => !accession.startsWith('SCP'))
   const showAzulSelectionPane = azulAccessions.length > 0
   const { fileCount, fileSize } = getSelectedFileStats(downloadInfo, selectedBoxes, isLoading)
-  const { fileCount: fileCountTDR, fileSize: fileSizeTDR } =
+  const { fileCount: fileCountAzul, fileSize: fileSizeAzul } =
     getSelectedFileStats(downloadInfoAzul, selectedBoxesAzul, isLoadingAzul)
-  const prettyBytes = bytesToSize(fileSize + fileSizeTDR)
+  const prettyBytes = bytesToSize(fileSize + fileSizeAzul)
   const selectedFileIds = getSelectedFileHandles(downloadInfo, selectedBoxes)
-  const selectedTdrFiles = getSelectedFileHandles(downloadInfoAzul, selectedBoxesAzul, true)
+  const selectedAzulFiles = getSelectedFileHandles(downloadInfoAzul, selectedBoxesAzul, true)
 
   /**
-    render bulk download table for SCP & TDR/HCA studies
+    render bulk download table for SCP & HCA studies
    */
   function renderFileTables(result=[]) {
     setSelectedBoxes(newSelectedBoxesState(result, SCP_COLUMNS))
@@ -67,7 +67,7 @@ export default function DownloadSelectionModal({ studyAccessions, azulFileInfo, 
     data-analytics-name="download-modal-next">
     NEXT
   </button>
-  if (fileCount + fileCountTDR === 0) {
+  if (fileCount + fileCountAzul === 0) {
     downloadButton = <button className="btn btn-primary" disabled="disabled">
       No files selected
     </button>
@@ -126,7 +126,7 @@ export default function DownloadSelectionModal({ studyAccessions, azulFileInfo, 
         { stepNum === 2 && <DownloadCommand
           closeParent={() => setShow(false)}
           fileIds={selectedFileIds}
-          tdrFiles={selectedTdrFiles}/> }
+          azulFiles={selectedAzulFiles}/> }
         { !isLoading &&
           <div className="download-size-message">
             <label htmlFor="download-size-amount">Total size</label>

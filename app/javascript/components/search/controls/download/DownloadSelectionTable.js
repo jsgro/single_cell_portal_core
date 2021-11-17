@@ -259,9 +259,9 @@ export function getSelectedFileStats(downloadInfo, selectedBoxes, isLoading) {
   */
 export function getFileStats(study, fileTypes) {
   const files = study.studyFiles.filter(file => fileTypes.includes(file.file_type))
-  const fileCount = study.study_source === 'SCP' ? files.length : files.reduce((sum, studyFile) => {
+  const fileCount = study.study_source === 'HCA' ? files.reduce((sum, studyFile) => {
     return sum + studyFile.count
-  }, 0)
+  }, 0) : files.length
   const fileSize = files.reduce((sum, studyFile) => {
     return sum + (studyFile.upload_file_size ? studyFile.upload_file_size : 0)
   }, 0)
@@ -285,7 +285,13 @@ export function getSelectedFileHandles(downloadInfo, selectedBoxes, hashByStudy=
       if (selectedBoxes.studies[index][colType]) {
         const filesOfType = study.studyFiles.filter(file => COLUMNS[colType].types.includes(file.file_type))
         {/* eslint-disable-next-line max-len */}
-        const selectedHandles = filesOfType.map(file => hashByStudy ? { drs_id: file.drs_id, url: file.url, name: file.name, file_type: file.file_type } : file.id)
+        const selectedHandles = filesOfType.map(file => {
+          if (hashByStudy) {
+            return { project_id: file.project_id, name: file.name, file_format: file.file_format, file_type: file.file_type }
+          } else {
+            return file.id
+          }
+        })
         if (hashByStudy) {
           fileHandles[study.accession].push(...selectedHandles)
         } else {
