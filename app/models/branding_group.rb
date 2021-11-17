@@ -53,7 +53,7 @@ class BrandingGroup
                       message: ValidationTools::ALPHANUMERIC_EXTENDED_ERROR
 
   before_validation :set_name_as_id
-  before_destroy :remove_branding_association, :remove_cached_images
+  before_destroy :remove_cached_images
 
   # helper to return list of associated search facets
   def facets
@@ -67,28 +67,18 @@ class BrandingGroup
 
   # determine if user can edit branding group (all portal admins & collection curators)
   def can_edit?(user)
-    return false if user.nil?
-
-    !!(user.admin? || users.include?(user))
+    !!(user && (user.admin? || users.include?(user)))
   end
 
   # determine if a user can destroy a branding group (only portal admins)
   def can_destroy?(user)
-    user.nil? ? false : user.admin
+    !!user&.admin
   end
 
   private
 
   def set_name_as_id
     self.name_as_id = self.name.downcase.gsub(/[^a-zA-Z0-9]+/, '-').chomp('-')
-  end
-
-  # remove branding association on delete
-  def remove_branding_association
-    self.studies.each do |study|
-      existing_collections = study.branding_group_ids.reject { |col_id| col_id == self.id }
-      study.update(branding_group_ids: existing_collections)
-    end
   end
 
   # delete all cached images from UserAssetService::STORAGE_BUCKET_NAME when deleting a branding group

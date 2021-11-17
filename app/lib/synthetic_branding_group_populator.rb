@@ -43,10 +43,9 @@ class SyntheticBrandingGroupPopulator
     study_regex = /#{branding_group_config.dig('study_title_regex')}/i
     study_list = Study.where(name: study_regex, :id.in => synthetic_studies_ids)
     study_list.each do |study|
-      study.branding_group_ids << branding_group.id
-      study.save!
+      study.branding_groups << branding_group
+      study.save
     end
-    branding_group.update(study_ids: study_list.pluck(:id)) if study_list.any?
   end
 
   private
@@ -59,7 +58,7 @@ class SyntheticBrandingGroupPopulator
     end
 
     branding_group = BrandingGroup.new(branding_group_config.dig('branding_group'))
-    branding_group.user_ids = [user.id]
+    branding_group.users = [user]
     image_info = branding_group_config.dig('images')
     # dynamically assign image files
     image_info.each do |attribute_name, filename|

@@ -6,7 +6,9 @@ class BrandingGroupTest < ActiveSupport::TestCase
   include ::SelfCleaningSuite
   include ::TestInstrumentor
 
-  def setup
+  before(:all) do
+    @user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    @admin = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
     @branding_group = FactoryBot.create(:branding_group, user_list: [@user])
   end
 
@@ -30,5 +32,17 @@ class BrandingGroupTest < ActiveSupport::TestCase
 
     # clean up
     @branding_group.update(facet_list: [])
+  end
+
+  test 'should check edit permissions' do
+    assert @branding_group.can_edit?(@user)
+    assert @branding_group.can_edit?(@admin)
+    other_user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    assert_not @branding_group.can_edit?(other_user)
+  end
+
+  test 'should check destroy permissions' do
+    assert @branding_group.can_destroy?(@admin)
+    assert_not @branding_group.can_destroy?(@user)
   end
 end

@@ -4,35 +4,24 @@
 class SetNewCollectionAssociations < Mongoid::Migration
   def self.up
     # create maps showing existing associations
-    study_map = Study.all.map do |s|
-      if s.attributes[:branding_group_id].present? && s.attributes[:branding_group_id].is_a?(BSON::ObjectId)
-        { s.id.to_s => s.attributes[:branding_group_id] }
+    study_list = ActiveRecordUtils.pluck_to_hash(Study, [:id, :branding_group_id])
+    study_map = study_list.map do |entry|
+      if entry[:branding_group_id].present? && entry[:branding_group_id].is_a?(BSON::ObjectId)
+        { entry[:id].to_s => entry[:branding_group_id] }
       end
     end.compact.reduce({}, :merge)
     collection_map = BrandingGroup.all.map do |col|
       {
         col.id.to_s => {
-          users: [col.attributes[:user_id]],
-          studies: study_map.select {|_, c_id| c_id == col.id }.keys.map { |id| BSON::ObjectId.from_string(id)}
+          users: [User.find(col.attributes[:user_id])],
+          studies: study_map.select {|_, c_id| c_id == col.id }.keys.map { |id| Study.find(id) }
         }
       }
     end.compact.reduce({}, :merge)
-    user_map = {}
-    collection_map.each do |c_id, vals|
-      user_id = vals[:users].first.to_s
-      user_map[user_id] ||= []
-      user_map[user_id] << BSON::ObjectId.from_string(c_id)
-    end
     # perform new assignments for studies & collections
     BrandingGroup.all.each do |collection|
       associations = collection_map[collection.id.to_s]
-      collection.update(study_ids: associations[:studies], user_ids: associations[:users])
-      Study.where(:id.in => associations[:studies]).update_all(branding_group_ids: [collection.id])
-    end
-    # assign collections to users
-    user_map.each do |user_id, col_ids|
-      user = User.find(user_id)
-      user.update(branding_group_ids: col_ids)
+      collection.update(studies: associations[:studies], users: associations[:users])
     end
   end
 

@@ -36,7 +36,8 @@ class BrandingGroupsController < ApplicationController
   # POST /branding_groups.json
   def create
     clean_params = branding_group_params.to_h
-    clean_params[:user_ids] = self.class.merge_curator_params(params[:curator_emails], nil, current_user)
+    clean_params[:users] = self.class.merge_curator_params(params[:curator_emails], nil, current_user)
+    clean_params.delete(:user_ids)
     @branding_group = BrandingGroup.new(clean_params)
 
     respond_to do |format|
@@ -66,16 +67,11 @@ class BrandingGroupsController < ApplicationController
         # delete the param since it is not a real model param
         clean_params.delete("reset_#{image_name}")
 
-        # handle updates to the list of curators
-        curators = params[:curator_emails].split(',').map(&:strip)
-        user_ids = curators.map { |email| User.find_by(email: email)&.id }.compact
-        # ensure current user cannot remove accidentially remove themselves from the list
-        if @branding_group.users.include?(current_user)
-          user_ids << current_user.id unless user_ids.include?(current_user.id)
-        end
-        clean_params[:user_ids] = self.class.merge_curator_params(
+        # merge in curator params
+        clean_params[:users] = self.class.merge_curator_params(
           params[:curator_emails], @branding_group, current_user
         )
+        clean_params.delete(:user_ids)
       end
 
       if @branding_group.update(clean_params)
@@ -101,14 +97,14 @@ class BrandingGroupsController < ApplicationController
     end
   end
 
-  # helper to merge in the list of curator IDs into the :user_ids parameter
+  # helper to merge in the list of curators into the :users parameter
   # will prevent curator from removing themselves from the collection
   def self.merge_curator_params(curator_list, collection, user)
     curators = curator_list.split(',').map(&:strip)
-    user_ids = curators.map { |email| User.find_by(email: email)&.id }.compact
+    users = curators.map { |email| User.find_by(email: email) }.compact
     # ensure current user cannot remove accidentally remove themselves from the list
-    user_ids << user.id if collection.present? && collection.users.include?(user) && !user_ids.include?(user.id)
-    user_ids
+    users << user if collection.present? && collection.users.include?(user) && !users.include?(user)
+    users
   end
 
   private
