@@ -54,18 +54,6 @@
           <div class="col-sm-12">
             <p>Custom Colors</p>
           </div>
-          <div class="col-sm-4">
-            <%= opts.label :cluster, 'Cluster' %><br />
-            <%= opts.select :cluster, options_for_select(@study.cluster_groups.map(&:name), @default_cluster.name), {}, class: 'form-control' %>
-          </div>
-          <div class="col-sm-4">
-            <%= opts.label :annotation, 'Annotation' %><br />
-            <%= opts.select :annotation, grouped_options_for_select(@default_cluster_annotations, @study.default_annotation), {},class: 'form-control' %>
-          </div>
-          <div class="col-sm-4">
-            <%= opts.label :color_profile, "Default Color Profile <i class='fas fa-info-circle' title='The default color profile only applies to the selected annotation (if the type is numeric)' data-toggle='tooltip'></i>".html_safe %><br />
-            <%= opts.select :color_profile, options_for_select(SiteController::COLORSCALE_THEMES, @study.default_color_profile), {include_blank: 'N/A'} , class: 'form-control', disabled: @study.default_annotation_type == 'group' %>
-          </div>
         </div>
         <div class="form-group row">
           <div class="col-sm-4">
