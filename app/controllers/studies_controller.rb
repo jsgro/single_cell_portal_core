@@ -1069,6 +1069,8 @@ class StudiesController < ApplicationController
     @default_cluster_annotations = {
         'Study Wide' => @study.cell_metadata.map {|metadata| ["#{metadata.name}", "#{metadata.name}--#{metadata.annotation_type}--study"] }.uniq
     }
+    @annotation_whatevers = AnnotationVizService.get_study_annotation_options(@study, current_user)[:annotations]
+
     unless @default_cluster.nil?
       @default_cluster_annotations['Cluster-based'] = @default_cluster.cell_annotations.map {|annot| ["#{annot[:name]}", "#{annot[:name]}--#{annot[:type]}--cluster"]}
     end
