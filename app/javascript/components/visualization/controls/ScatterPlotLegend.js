@@ -121,6 +121,7 @@ function showHideAll(showOrHide, labels, updateShownTraces) {
   }
 }
 
+/** TODO: add customColorPicker to legend */
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, shownTraces,
