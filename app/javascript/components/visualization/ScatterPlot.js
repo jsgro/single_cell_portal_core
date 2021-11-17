@@ -209,7 +209,9 @@ function RawScatterPlot({
     if (scatterData && !isLoading) {
       processScatterPlot()
     }
-  }, [shownTraces, dimensionProps])
+    // look for updates of individual properties, so that we don't rerender if the containing array
+    // happens to be a different instance
+  }, [shownTraces.join(','), dimensionProps.height, dimensionProps.width])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
