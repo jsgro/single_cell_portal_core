@@ -31,7 +31,6 @@ class FeatureFlagOptionsControllerTest < ActionDispatch::IntegrationTest
   teardown do
     OmniAuth.config.mock_auth[:google_oauth2] = nil
     FeatureFlagOption.destroy_all
-    BrandingGroup.destroy_all
     @user.reload
     @study.reload
     @branding_group.reload

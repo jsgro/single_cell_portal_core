@@ -10,6 +10,10 @@ class BrandingGroupTest < ActiveSupport::TestCase
     @branding_group = FactoryBot.create(:branding_group, user_list: [@user])
   end
 
+  after(:all) do
+    BrandingGroup.destroy_all
+  end
+
   test 'should return list of approved facets for branding groups' do
     # test that default returns all visible facets
     visible_facets = SearchFacet.visible.pluck(:identifier).sort
