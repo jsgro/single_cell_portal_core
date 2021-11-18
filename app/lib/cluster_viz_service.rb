@@ -78,7 +78,7 @@ class ClusterVizService
     image_file_info.map do |file|
       associated_cluster_names = file[:spatial_cluster_associations].map{ |id| associated_clusters[id] }
       { name: file[:name],
-        associated_clusters: associated_cluster_names,
+        associated_clusters: associated_cluster_names.compact,
         bucket_file_name: file[:upload_file_name],
         description: file[:description] }
     end

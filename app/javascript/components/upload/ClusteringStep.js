@@ -91,7 +91,7 @@ export function ClusteringUploadForm({
     { clusterFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_CLUSTER_FILE}/> }
     { clusterFiles.map(file => {
       return <ClusteringFileForm
-        key={file._id}
+        key={file.oldId ? file.oldId : file._id}
         file={file}
         allFiles={formState.files}
         updateFile={updateFile}

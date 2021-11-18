@@ -23,7 +23,7 @@ export default function CoordinateLabelForm({
   const associatedCluster = associatedClusterFileOptions.find(opt => opt.value === file.options.cluster_file_id)
   const validationMessages = validateFile({
     file, allFiles,
-    requiredFields: [{ label: 'Associated file', propertyName: 'options.cluster_file_id' }],
+    requiredFields: [{ label: 'Corresponding cluster', propertyName: 'options.cluster_file_id' }],
     allowedFileExts
   })
   return <ExpandableFileForm {...{
@@ -31,7 +31,7 @@ export default function CoordinateLabelForm({
     allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded
   }}>
     <div className="form-group">
-      <label className="labeled-select">Corresponding clusters / spatial data *
+      <label className="labeled-select">Corresponding cluster / spatial data *
         <Select options={associatedClusterFileOptions}
           data-analytics-name="coordinate-labels-corresponding-cluster"
           id={`coordCluster-${file._id}`}
@@ -40,7 +40,7 @@ export default function CoordinateLabelForm({
           onChange={val => updateCorrespondingClusters(file, val)}/>
       </label>
     </div>
-    <TextFormField label="Description / Legend (this will be displayed below image)"
+    <TextFormField label="Description / legend (this will be displayed below image)"
       fieldName="description" file={file} updateFile={updateFile}/>
   </ExpandableFileForm>
 }

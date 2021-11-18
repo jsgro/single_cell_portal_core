@@ -160,7 +160,7 @@ class HcaAzulClient < Struct.new(:api_root)
   #
   # * *raises*
   #   - (ArgumentError) => if catalog is not in self.all_catalogs
-  def projects(catalog: nil, query: {}, terms: [], size: MAX_RESULTS)
+  def projects(catalog: nil, query: {}, size: MAX_RESULTS)
     base_path = "#{api_root}/index/projects"
     base_path += "?filters=#{format_hash_as_query_string(query)}"
     base_path += "&size=#{size}"
@@ -275,16 +275,53 @@ class HcaAzulClient < Struct.new(:api_root)
     query
   end
 
-  # create a regular expression to use in matching terms against project titles/descriptions or file attributes
-  # returned regular expression is case-insensitive
+  # create a query from a list of terms
+  # since Azul does not support keyword searching, we must find a match for a corresponding facet and treat this as
+  # the search request
   #
   # * *params*
-  #   - +terms+ (Array<String>) => Array of search terms, can include quoted strings
+  #   - +term_list+ (Array<String>) => Array of terms to query
   #
   # * *returns*
-  #   - (Regexp) => regular expression used in matching (case-insensitive)
-  def format_term_regex(terms = [])
-    Regexp.new(terms.map { |t| Regexp.escape(t) }.join('|'), true)
+  #   - (Array<Hash>) => Array of facet objects to be fed to :format_query_from_facets
+  def format_facet_query_from_keyword(term_list = [])
+    matching_facets = []
+    term_list.each do |term|
+      facet = SearchFacet.find_facet_from_term(term)
+      next if facet.nil?
+
+      # mock a faceted search match, appending in all possible filter matches
+      filters = facet.find_filter_matches(term, filter_list: :filters_with_external).map do |t|
+        [{ id: t, name: t }.with_indifferent_access]
+      end.flatten
+      matching_facets << { id: facet.identifier, filters: filters }.with_indifferent_access
+    end
+    matching_facets
+  end
+
+  # merge multiple queries together, e.g. :format_query_from_facets & :format_query_from_terms
+  #
+  # * *params*
+  #   - +query_objects+ (Array<Hash>) => array of query objects to merge together
+  #
+  # * *returns*
+  #   - (Hash) => Hash of query object to be fed to :format_hash_as_query_string
+  def merge_query_objects(*query_objects)
+    merged_query = {}.with_indifferent_access
+    query_objects.compact.each do |query|
+      query.each_pair do |facet_name, opts|
+        if merged_query[facet_name].nil?
+          merged_query[facet_name] = opts
+        else
+          opts.each_pair do |operator, values|
+            values.each do |value|
+              merged_query[facet_name][operator] << value unless merged_query[facet_name][operator].include?(value)
+            end
+          end
+        end
+      end
+    end
+    merged_query
   end
 
   # take a Hash/JSON object and format as a query string parameter

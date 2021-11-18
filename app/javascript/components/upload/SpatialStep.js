@@ -12,9 +12,9 @@ const DEFAULT_NEW_SPATIAL_FILE = {
 export const spatialFileFilter = file => file.file_type === 'Cluster' && file.is_spatial
 
 export default {
-  title: 'Spatial files (optional)',
+  title: 'Spatial transcriptomics',
   name: 'spatial',
-  header: 'Spatial files',
+  header: 'Spatial transcriptomics',
   component: SpatialUploadForm,
   fileFilter: spatialFileFilter
 }
@@ -105,7 +105,7 @@ export function SpatialUploadForm({
     { spatialFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SPATIAL_FILE}/> }
     { spatialFiles.map(file => {
       return <ClusteringFileForm
-        key={file._id}
+        key={file.oldId ? file.oldId : file._id}
         file={file}
         allFiles={formState.files}
         updateFile={updateFile}

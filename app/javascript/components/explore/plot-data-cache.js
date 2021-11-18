@@ -215,7 +215,7 @@ export function createCache() {
     return Promise.all(promises).then(resultArray => {
       let mergedResult = null
       resultArray.forEach(result => {
-        mergedResult = cache._mergeClusterResponse(studyAccession, result, cluster, subsample)
+        mergedResult = cache._mergeClusterResponse(studyAccession, result, cluster, annotation, subsample)
       })
       return mergedResult
     }).catch(error => {
@@ -232,7 +232,7 @@ export function createCache() {
 
 
   /** adds the data for a given study/clusterName, overwriting any previous entry */
-  cache._mergeClusterResponse = (accession, clusterResponse, requestedCluster, requestedSubsample) => {
+  cache._mergeClusterResponse = (accession, clusterResponse, requestedCluster, requestedAnnotation, requestedSubsample) => {
     const scatter = clusterResponse[0]
     const cacheEntry = cache._findOrCreateEntry(accession, scatter.cluster, scatter.subsample)
 
@@ -250,7 +250,11 @@ export function createCache() {
     }
     Fields.clusterProps.merge(cacheEntry, scatter)
     Fields.cellsAndCoords.merge(cacheEntry, scatter)
-    Fields.annotation.merge(cacheEntry, scatter)
+    // only merge in annotation values if the annotation matches (or the default was requested, so
+    // we can then assume the response matches)
+    if (!requestedAnnotation.name || scatter.annotParams.name === requestedAnnotation.name) {
+      Fields.annotation.merge(cacheEntry, scatter)
+    }
     if (scatter.genes.length) {
       Fields.expression.merge(cacheEntry, scatter)
     }

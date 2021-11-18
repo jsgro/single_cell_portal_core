@@ -201,4 +201,53 @@ class SearchFacetTest < ActiveSupport::TestCase
     user.reload
     assert_equal organ_facet.filters_with_external, organ_facet.filters_for_user(user)
   end
+
+  test 'should flatten filter list' do
+    @search_facet.filters = @filter_results
+    expected_filters = @filter_results.map { |f| [f[:id], f[:name]] }.flatten
+    assert_equal expected_filters, @search_facet.flatten_filters
+  end
+
+  test 'should find all filter matches' do
+    mock = Minitest::Mock.new
+    filters = [
+      { id: 'MONDO_0005109', name: 'HIV infectious disease' },
+      { id: 'MONDO_0018076', name: 'tuberculosis' }
+    ]
+    mock.expect :query, filters, [String]
+    azul_diseases = AzulSearchService.get_all_facet_filters['disease']
+    disease_keyword = 'cancer'
+    cancers = azul_diseases[:filters].select { |d| d.match?(disease_keyword) }
+    SearchFacet.stub :big_query_dataset, mock do
+      disease_facet = SearchFacet.find_by(identifier: 'disease')
+      disease_facet.update_filter_values!(azul_diseases)
+      mock.verify
+      disease_facet.reload
+      assert_empty disease_facet.find_filter_matches(disease_keyword)
+      assert_equal cancers, disease_facet.find_filter_matches(disease_keyword, filter_list: :filters_with_external)
+    end
+  end
+
+  test 'should determine if a filter matches' do
+    organ_facet = SearchFacet.new(
+      identifier: 'organ',
+      name: 'organ',
+      filters: [
+        { id: 'UBERON_0000178', name: 'blood' },
+        { id: 'UBERON_0000955', name: 'brain' }
+      ],
+      public_filters: [
+        { id: 'UBERON_0000955', name: 'brain' }
+      ],
+      filters_with_external: [
+        { id: 'UBERON_0000178', name: 'blood' },
+        { id: 'UBERON_0000955', name: 'brain' },
+        { id: 'heart', name: 'heart' }
+      ]
+    )
+    assert organ_facet.filters_match?('blood')
+    assert_not organ_facet.filters_match?('heart')
+    assert_not organ_facet.filters_match?('foo')
+    assert organ_facet.filters_match?('heart', filter_list: :filters_with_external)
+  end
 end
