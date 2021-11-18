@@ -25,19 +25,6 @@ export const SCATTER_COLOR_OPTIONS = [
 export const defaultScatterColor = 'Reds'
 window.Plotly = Plotly
 
-/** Get width and height for scatter plot dimensions */
-export function getScatterDimensions(scatter, dimensionProps) {
-  const isRefGroup = getIsRefGroup(scatter)
-
-  dimensionProps = Object.assign({
-    hasLabelLegend: isRefGroup,
-    hasTitle: true
-  }, dimensionProps)
-
-  return getPlotDimensions(dimensionProps)
-}
-
-
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
@@ -203,6 +190,7 @@ function RawScatterPlot({
     })
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
+  const widthAndHeight = getScatterDimensions(scatterData, dimensionProps, genes)
   // Handles custom scatter legend updates and window resizing
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
@@ -211,7 +199,7 @@ function RawScatterPlot({
     }
     // look for updates of individual properties, so that we don't rerender if the containing array
     // happens to be a different instance
-  }, [shownTraces.join(','), dimensionProps.height, dimensionProps.width])
+  }, [shownTraces.join(','), widthAndHeight.height, widthAndHeight.width])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
@@ -305,6 +293,20 @@ function getIsRefGroup(scatter) {
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
 
   return annotType === 'group' && !isGeneExpressionForColor
+}
+
+/** Get width and height for scatter plot dimensions */
+function getScatterDimensions(scatter, dimensionProps, genes) {
+  // if we don't have a server response yet so we don't know the annotation type,
+  // guess based on the number of genes
+  const isRefGroup = scatter ? getIsRefGroup(scatter) : (genes.length === 0)
+
+  dimensionProps = Object.assign({
+    hasLabelLegend: isRefGroup,
+    hasTitle: true
+  }, dimensionProps)
+
+  return getPlotDimensions(dimensionProps)
 }
 
 
