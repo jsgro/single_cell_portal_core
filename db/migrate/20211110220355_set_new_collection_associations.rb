@@ -1,6 +1,6 @@
 # since we have changed the basic association types, we can no longer use the dynamic methods of :branding_group_id or
 # :user_id to reference back to the parent models.  Since the data exists in the documents, we can call :attributes to
-# load existing data and create maps with which to set new associations
+# load existing data directly from MongoDB and create maps with which to set new associations
 class SetNewCollectionAssociations < Mongoid::Migration
   def self.up
     # create maps showing existing associations
@@ -18,7 +18,8 @@ class SetNewCollectionAssociations < Mongoid::Migration
         }
       }
     end.compact.reduce({}, :merge)
-    # perform new assignments for studies & collections
+    # perform new assignments for collections
+    # this will also update all associated studies/users via :has_and_belongs_to_many association on each
     BrandingGroup.all.each do |collection|
       associations = collection_map[collection.id.to_s]
       collection.update(studies: associations[:studies], users: associations[:users])
