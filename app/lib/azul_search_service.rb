@@ -83,6 +83,8 @@ class AzulSearchService
       facet_name = facet[:id]
       RESULT_FACET_FIELDS.each do |result_field|
         azul_name = FacetNameConverter.convert_schema_column(:alexandria, :azul, facet_name)
+        # gotcha where sampleDisease is called disease in Azul response objects
+        azul_name = 'disease' if azul_name == 'sampleDisease'
         field_entries = result[result_field].map { |entry| entry[azul_name] }.flatten.uniq
         facet[:filters].each do |filter|
           match = field_entries.select { |entry| filter[:name] == entry || filter[:id] == entry }
