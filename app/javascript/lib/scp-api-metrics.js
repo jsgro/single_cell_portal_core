@@ -141,7 +141,7 @@ export function logViolinPlot(
 
 /** Logs scatter plot metrics */
 export function logScatterPlot(
-  { scatter, genes, width, height },
+  { scatter, genes },
   perfTimes
 ) {
   const props = {
@@ -152,8 +152,8 @@ export function logScatterPlot(
     'numPointsPlotted': scatter.data.cells.length,
     'isSubsampled': scatter.isSubsampled,
     'subsample': scatter.subsample,
-    'layout:width': width, // Pixel width of graph
-    'layout:height': height, // Pixel height of graph
+    'layout:width': scatter.width, // Pixel width of graph
+    'layout:height': scatter.height, // Pixel height of graph
     'numAnnotSelections': scatter.annotParams.values.length,
     'annotName': scatter.annotParams.name,
     'annotType': scatter.annotParams.type,

@@ -40,7 +40,7 @@ module StudiesHelper
   def get_annotation_bounds(values:, annotation_type:)
     case annotation_type.to_sym
     when :group
-      values.size
+      values.any? ? values.size : '> 200'
     when :numeric
       RequestUtils.get_minmax(values).join(', ')
     end
@@ -55,7 +55,7 @@ module StudiesHelper
         Naturally.sort(values).join(', ')
       else
         label = "<big><span class='label label-warning' data-toggle='tooltip' " + \
-        "title='Group-based annotations with over 100 groups are not visualized for performance reasons'>" + \
+        "title='Group-based annotations with over 200 groups are not visualized for performance reasons'>" + \
         "<i class='fas fa-exclamation-triangle'></i> List too long, will not visualize</span></big>"
         label.html_safe
       end

@@ -1,4 +1,4 @@
-<h1>My Annotations</h1>
+<h1>My annotations</h1>
 <div class="row">
   <div class="col-md-12">
     <div class="table-responsive">
@@ -7,11 +7,11 @@
           <thead>
             <tr>
               <th>Name</th>
-              <th>Annotation Labels</th>
+              <th>Annotation labels</th>
               <th>Study</th>
-              <th>Source Cluster</th>
-              <th>Source Resolution</th>
-              <th>Created By</th>
+              <th>Source cluster</th>
+              <th>Source resolution</th>
+              <th>Created by</th>
               <th class="actions">Actions</th>
             </tr>
           </thead>
@@ -25,13 +25,13 @@
                 <td><%= user_annotation.source_resolution_label %></td>
                 <td><%= user_annotation.user.email %></td>
                 <td>
-                  <%= scp_link_to "<span class='fas fa-chart-bar'></span> Plot Annotation".html_safe, view_study_path(accession: user_annotation.study.accession, study_name: user_annotation.study.url_safe_name, cluster: user_annotation.cluster_group.name, annotation: user_annotation.formatted_annotation_identifier) + '#study-visualize', class: "btn btn-xs btn-info #{user_annotation.name_as_id}-show"  %>
+                  <%= scp_link_to "<span class='fas fa-chart-bar'></span> Plot annotation".html_safe, view_study_path(accession: user_annotation.study.accession, study_name: user_annotation.study.url_safe_name, cluster: user_annotation.cluster_group.name, annotation: user_annotation.formatted_annotation_identifier) + '#study-visualize', class: "btn btn-xs btn-info #{user_annotation.name_as_id}-show"  %>
                   <% if user_annotation.can_edit?(current_user) %>
                     <%= scp_link_to "<span class='fas fa-edit'></span> Edit".html_safe, edit_user_annotation_path(user_annotation), class: "btn btn-xs btn-primary #{user_annotation.name_as_id}-edit" %>
                   <% end %>
                   <%= link_to "<span class='fas fa-download'></span> Download".html_safe, download_user_annotation_path(user_annotation), class: "btn btn-xs btn-success #{user_annotation.name_as_id}-download" %>
                   <% if user_annotation.can_edit_study?(current_user) %>
-                      <%= scp_link_to "<span class='fas fa-book'></span> Publish to Study".html_safe, publish_to_study_path(user_annotation), class: "btn btn-xs btn-warning publish-btn #{user_annotation.name_as_id}-publish", data: {toggle: 'tooltip', placement: 'top'}, title: 'Publish annotation to study (will this annotation remove from your list)' %>
+                      <%= scp_link_to "<span class='fas fa-book'></span> Publish to study".html_safe, publish_to_study_path(user_annotation), class: "btn btn-xs btn-warning publish-btn #{user_annotation.name_as_id}-publish", data: {toggle: 'tooltip', placement: 'top'}, title: 'Publish annotation to study (will this annotation remove from your list)' %>
                   <% end %>
                   <% if user_annotation.can_delete?(current_user) %>
                       <%= scp_link_to "<span class='fas fa-trash'></span> Delete".html_safe, user_annotation_path(user_annotation), class: "btn btn-xs btn-danger delete-btn #{user_annotation.name_as_id}-delete", method: :delete %>
@@ -52,7 +52,7 @@
         pagingType: "full_numbers",
         order: [[2, 'desc'], [0, 'desc']],
         language: {
-            search: "Filter Results By: "
+            search: "Filter results by: "
         }
     });
     // ask user to confirm delete, then show modal

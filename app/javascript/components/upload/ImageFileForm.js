@@ -32,11 +32,13 @@ export default function ImageFileForm({
     file, allFiles, updateFile, saveFile,
     allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded
   }}>
-    <div className="col-md-6">
-      { file.uploadSelection && <img className="preview-image" src={imagePreviewUrl} alt={file.uploadSelection.name} /> }
-      { file.status == 'uploaded' && <BucketImage fileName={file.upload_file_name} bucketName={bucketName}/> }
+    <div className="row">
+      <div className="col-md-6">
+        { file.uploadSelection && <img className="preview-image" src={imagePreviewUrl} alt={file.uploadSelection.name} /> }
+        { file.generation && <BucketImage fileName={file.upload_file_name} bucketName={bucketName}/> }
+      </div>
     </div>
-    <br/>
+
     <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
     <div className="form-group">
       <label className="labeled-select">Corresponding clusters / spatial data:

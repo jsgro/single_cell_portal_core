@@ -13,7 +13,7 @@ const miscFileFilter = file => miscFileTypes.includes(file.file_type)
 
 export default {
   title: 'Miscellaneous / Other',
-  header: 'Documentation &amp; Other Files',
+  header: 'Documentation & other files',
   name: 'misc',
   component: MiscellaneousForm,
   fileFilter: miscFileFilter
@@ -45,7 +45,7 @@ function MiscellaneousForm({
     </div>
     { miscFiles.map(file => {
       return <MiscellaneousFileForm
-        key={file._id}
+        key={file.oldId ? file.oldId : file._id}
         file={file}
         allFiles={formState.files}
         updateFile={updateFile}

@@ -57,20 +57,20 @@ export default function ExpressionFileForm({
           value="false"
           checked={!isMtxFile}
           onChange={e => updateFile(file._id, { file_type: 'Expression Matrix' })} />
-          &nbsp;Expression Matrix
+          &nbsp;Dense matrix
       </label>
       <label className="sublabel">
         <input type="radio"
           name={`exp-matrix-type-${file._id}`}
           value="true" checked={isMtxFile}
           onChange={e => updateFile(file._id, { file_type: 'MM Coordinate Matrix' })}/>
-          &nbsp;MM Coordinate Matrix
+          &nbsp;Sparse matrix (.mtx)
       </label>
     </div>
 
     { !isRawCountsFile &&
       <div className="form-group">
-        <label className="labeled-select">Associated Raw Counts Files
+        <label className="labeled-select">Associated raw counts files
           <Select options={rawCountsOptions}
             data-analytics-name="expression-raw-counts-select"
             value={associatedRawCounts}
@@ -103,13 +103,13 @@ export default function ExpressionFileForm({
         updateFile={updateFile}/>
     }
 
-    <ExpressionFileInfoSelect label="Biosample Input Type *"
+    <ExpressionFileInfoSelect label="Biosample input type *"
       propertyName="biosample_input_type"
       rawOptions={fileMenuOptions.biosample_input_type}
       file={file}
       updateFile={updateFile}/>
 
-    <ExpressionFileInfoSelect label="Library Preparation Protocol *"
+    <ExpressionFileInfoSelect label="Library preparation protocol *"
       propertyName="library_preparation_protocol"
       rawOptions={fileMenuOptions.library_preparation_protocol}
       file={file}
@@ -122,7 +122,7 @@ export default function ExpressionFileForm({
       updateFile={updateFile}/>
 
     <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
-    <TextFormField label="Expression Axis Label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
+    <TextFormField label="Expression axis label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
 
     { isMtxFile &&
       <MTXBundledFilesForm {...{
@@ -136,7 +136,12 @@ export default function ExpressionFileForm({
 /** render a dropdown for an expression file info property */
 function ExpressionFileInfoSelect({ label, propertyName, rawOptions, file, updateFile }) {
   const selectOptions = rawOptions.map(opt => ({ label: opt, value: opt }))
-  const selectedOption = selectOptions.find(opt => opt.value === file.expression_file_info[propertyName])
+  let selectedOption = selectOptions.find(opt => opt.value === file.expression_file_info[propertyName])
+  // if the value is undefined, sometimes react-select will not rerender
+  // this can happen if the server returns different data than was submitted by the user
+  if (!selectedOption) {
+    selectedOption = null
+  }
   return <div className="form-group">
     <label className="labeled-select" data-testid={`expression-select-${_kebabCase(propertyName)}`}>{label}
       <Select options={selectOptions}

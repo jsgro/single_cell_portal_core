@@ -20,8 +20,8 @@ export const fileTypes = ['Expression Matrix', 'MM Coordinate Matrix']
 const processedFilter = file => fileTypes.includes(file.file_type) && !file.expression_file_info?.is_raw_counts
 
 export default {
-  title: 'Processed Matrices',
-  header: 'Processed Expression Files',
+  title: 'Processed matrices',
+  header: 'Processed expression files',
   name: 'processed',
   component: ProcessedUploadForm,
   fileFilter: processedFilter
@@ -99,7 +99,7 @@ function ProcessedUploadForm({
         { processedParentFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/> }
         { processedParentFiles.map(file => {
           return <ExpressionFileForm
-            key={file._id}
+            key={file.oldId ? file.oldId : file._id}
             file={file}
             allFiles={formState.files}
             updateFile={updateFile}

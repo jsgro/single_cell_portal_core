@@ -75,6 +75,13 @@ Rails.application.configure do
   # set MongoDB logging level
   Mongoid.logger.level = Logger::INFO
 
+  if ENV["RAILS_LOG_TO_STDOUT"].present? && ENV['CI']
+    logger           = ActiveSupport::Logger.new(STDOUT)
+    logger.formatter = config.log_formatter
+    config.log_level = :error
+    config.logger    = ActiveSupport::TaggedLogging.new(logger)
+  end
+
   config.bard_host_url = 'https://terra-bard-dev.appspot.com'
 
   # Terra Data Repo API base url

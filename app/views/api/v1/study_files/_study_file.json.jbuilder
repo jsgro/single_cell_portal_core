@@ -3,3 +3,5 @@ study_file.attributes.each do |name, value|
     json.set! name, value
   end
 end
+
+json.set! 'expression_file_info', study_file.expression_file_info

@@ -9,7 +9,7 @@ export function AddFileButton({ newFileTemplate, addNewFile }) {
   return <div className="row top-margin">
     <div className="col-md-12">
       <button className="btn btn-secondary terra-secondary-btn" onClick={() => addNewFile(newFileTemplate, true)}>
-        <span className="fas fa-plus"></span> Add File
+        <span className="fas fa-plus"></span> Add file
       </button>
     </div>
   </div>
@@ -30,15 +30,6 @@ export function TextFormField({ label, fieldName, file, updateFile }) {
         updateFile(file._id, update)
       }}/>
   </div>
-}
-
-/** renders an overlay if the file is saving, and also displays server error messages */
-export function SavingOverlay({ file, updateFile }) {
-  const showOverlay = file.isSaving || file.isDeleting
-  if (!showOverlay) {
-    return <></>
-  }
-  return <div className="file-upload-overlay"></div>
 }
 
 /** renders save and delete buttons for a given file */

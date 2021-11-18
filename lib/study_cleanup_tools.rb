@@ -59,6 +59,12 @@ module StudyCleanupTools
     raise_exception_unless_true('confirm_delete_request?') { confirm_delete_request? } if !!(allow_dev_env && Rails.env.development?)
     workspaces = ApplicationController.firecloud_client.workspaces(project_name)
     workspace_count = 0
+
+    # these were corrupted during a partial Terra outage, and for now, cleaning them out is more difficult
+    # than just leaving them be.  Otherwise the deletion attempt hangs for several minutes
+    corrupted_workspace_names = ['upload-wizard-test-pb6y0',
+    'download-agreement-686b0d44c83659cd70616a3f0874fde5',
+    'testing-study-6ec03b371c7cf59262df98424ff516e1']
     workspaces.each do |workspace|
       ws_attr = workspace.dig('workspace')
       ws_name = ws_attr['name']
@@ -68,6 +74,8 @@ module StudyCleanupTools
       if existing_study.present?
         puts "skipping #{ws_project}/#{ws_name} as it belongs to #{existing_study.accession}"
         next
+      elsif corrupted_workspace_names.include?(ws_name)
+        puts "skipping #{ws_project}/#{ws_name} as it is corrupted"
       else
         begin
           if service_account_created_workspace?(workspace)

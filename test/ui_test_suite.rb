@@ -1192,7 +1192,7 @@ class UiTestSuite < Test::Unit::TestCase
     # now confirm reviewer share
     logout_from_portal
     login_as_other($share_email, $share_email_password)
-    # make sure study shows up in list of 'My Studies'
+    # make sure study shows up in list of 'My studies'
     path = @base_url + "/studies"
     @driver.get path
     wait_for_render(:id, 'studies')

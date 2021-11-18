@@ -1,4 +1,4 @@
-<h1>Nightly Server Report for <%= @today %></h1>
+<h1>Nightly server report for <%= @today %></h1>
 <% if @missing_files.any? %>
   <h3>Storage Integrity</h3>
   <table>
@@ -23,7 +23,7 @@
   </table>
 <% end %>
 <div class="stats">
-  <h3>Portal Stats</h3>
+  <h3>Portal stats</h3>
   <table>
     <thead>
     <th class="first">Measurement</th>
@@ -122,7 +122,7 @@
 </div>
 
 <div class="stats">
-  <h3>Disk Usage</h3>
+  <h3>Disk usage</h3>
   <table>
     <thead>
     <th class="first">Measurement</th>
@@ -151,6 +151,6 @@
 <div class="clear"></div>
 
 <% if @missing_files.empty? %>
-  <h3>Storage Integrity</h3>
+  <h3>Storage integrity</h3>
   <span class="detail">All files accounted for</span>
 <% end %>

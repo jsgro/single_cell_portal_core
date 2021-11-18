@@ -13,7 +13,7 @@ export default function MockRouter({ children, initialSearch }) {
   const locationSpy = useRef(jest.spyOn(ReachRouter, 'useLocation'))
   const navigateSpy = useRef(jest.spyOn(ReachRouter, 'navigate'))
 
-  /** simulates a navigation event.  assumes newLocation is just a search string, e.g. '?step=foo' */
+  /** simulates a navigation event.  assumes newLocation is just a search string, e.g. '?tab=foo' */
   function navigate(newLocation) {
     // update the location, which will update the mock useLocation hook on rerender
     setLocation(newLocation)

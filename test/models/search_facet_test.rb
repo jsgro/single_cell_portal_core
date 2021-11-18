@@ -3,7 +3,12 @@ require 'test_helper'
 class SearchFacetTest < ActiveSupport::TestCase
 
   include Minitest::Hooks
+  include SelfCleaningSuite
   include TestInstrumentor
+
+  after(:all) do
+    FeatureFlag.find_by(name: 'cross_dataset_search_backend')&.destroy
+  end
 
   def setup
     @search_facet = SearchFacet.find_by(identifier: 'species')
@@ -139,5 +144,110 @@ class SearchFacetTest < ActiveSupport::TestCase
       assert_equal expected_time, converted_time,
                    "Did not convert #{time_val} correctly from #{unit} to #{convert_unit}; expected #{expected_time} but found #{converted_time}"
     end
+  end
+
+  test 'should merge external facet filters when updating' do
+    mock = Minitest::Mock.new
+    filters = [
+      { id: 'MONDO_0005109', name: 'HIV infectious disease' },
+      { id: 'MONDO_0018076', name: 'tuberculosis' }
+    ]
+    mock.expect :query, filters, [String]
+    azul_diseases = AzulSearchService.get_all_facet_filters['disease']
+    SearchFacet.stub :big_query_dataset, mock do
+      disease_facet = SearchFacet.find_by(identifier: 'disease')
+      disease_facet.update_filter_values!(azul_diseases)
+      mock.verify
+      disease_facet.reload
+      assert disease_facet.filters_with_external.any?
+      expected_diseases = %w[normal COVID-19 influenza]
+      expected_diseases.each do |disease_name|
+        filter_value = { id: disease_name, name: disease_name }.with_indifferent_access
+        assert_includes disease_facet.filters_with_external, filter_value
+      end
+    end
+  end
+
+  test 'should find matching filter value' do
+    assert @search_facet.filters_include? 'Homo sapiens'
+    assert_not @search_facet.filters_include? 'foobar'
+  end
+
+  test 'should return correct facet list for user' do
+    user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    # don't save facet to prevent calling :update_filter_values!
+    organ_facet = SearchFacet.new(
+      identifier: 'organ',
+      name: 'organ',
+      filters: [
+        { id: 'UBERON_0000178', name: 'blood' },
+        { id: 'UBERON_0000955', name: 'brain' }
+      ],
+      public_filters: [
+        { id: 'UBERON_0000955', name: 'brain' }
+      ],
+      filters_with_external: [
+        { id: 'UBERON_0000178', name: 'blood' },
+        { id: 'UBERON_0000955', name: 'brain' },
+        { id: 'heart', name: 'heart' }
+      ]
+    )
+    assert_equal organ_facet.public_filters, organ_facet.filters_for_user(nil)
+    assert_equal organ_facet.filters, organ_facet.filters_for_user(user)
+    # test XDSS integration
+    flag_name = 'cross_dataset_search_backend'
+    FeatureFlag.find_or_create_by!(name: flag_name, default_value: false)
+    user.set_flag_option(flag_name, true)
+    user.reload
+    assert_equal organ_facet.filters_with_external, organ_facet.filters_for_user(user)
+  end
+
+  test 'should flatten filter list' do
+    @search_facet.filters = @filter_results
+    expected_filters = @filter_results.map { |f| [f[:id], f[:name]] }.flatten
+    assert_equal expected_filters, @search_facet.flatten_filters
+  end
+
+  test 'should find all filter matches' do
+    mock = Minitest::Mock.new
+    filters = [
+      { id: 'MONDO_0005109', name: 'HIV infectious disease' },
+      { id: 'MONDO_0018076', name: 'tuberculosis' }
+    ]
+    mock.expect :query, filters, [String]
+    azul_diseases = AzulSearchService.get_all_facet_filters['disease']
+    disease_keyword = 'cancer'
+    cancers = azul_diseases[:filters].select { |d| d.match?(disease_keyword) }
+    SearchFacet.stub :big_query_dataset, mock do
+      disease_facet = SearchFacet.find_by(identifier: 'disease')
+      disease_facet.update_filter_values!(azul_diseases)
+      mock.verify
+      disease_facet.reload
+      assert_empty disease_facet.find_filter_matches(disease_keyword)
+      assert_equal cancers, disease_facet.find_filter_matches(disease_keyword, filter_list: :filters_with_external)
+    end
+  end
+
+  test 'should determine if a filter matches' do
+    organ_facet = SearchFacet.new(
+      identifier: 'organ',
+      name: 'organ',
+      filters: [
+        { id: 'UBERON_0000178', name: 'blood' },
+        { id: 'UBERON_0000955', name: 'brain' }
+      ],
+      public_filters: [
+        { id: 'UBERON_0000955', name: 'brain' }
+      ],
+      filters_with_external: [
+        { id: 'UBERON_0000178', name: 'blood' },
+        { id: 'UBERON_0000955', name: 'brain' },
+        { id: 'heart', name: 'heart' }
+      ]
+    )
+    assert organ_facet.filters_match?('blood')
+    assert_not organ_facet.filters_match?('heart')
+    assert_not organ_facet.filters_match?('foo')
+    assert organ_facet.filters_match?('heart', filter_list: :filters_with_external)
   end
 end

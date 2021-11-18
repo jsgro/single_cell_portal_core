@@ -11,9 +11,9 @@ const DEFAULT_NEW_LABEL_FILE = {
 const coordinateLabelFileFilter = file => file.file_type === 'Coordinate Labels'
 
 export default {
-  title: 'Coordinate Labels',
+  title: 'Coordinate labels',
   name: 'coordinateLabels',
-  header: 'Coordinate Labels',
+  header: 'Coordinate labels',
   component: CoordinateLabelForm,
   fileFilter: coordinateLabelFileFilter
 }
@@ -74,7 +74,7 @@ function CoordinateLabelForm({
     { coordinateFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_LABEL_FILE}/> }
     { coordinateFiles.map(file => {
       return <CoordinateLabelFileForm
-        key={file._id}
+        key={file.oldId ? file.oldId : file._id}
         file={file}
         allFiles={formState.files}
         updateFile={updateFile}

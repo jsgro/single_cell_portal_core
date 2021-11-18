@@ -15,6 +15,9 @@ const miscExtensions = ['.txt', '.text', '.tsv', '.csv', '.jpg', '.jpeg', '.png'
 const sequenceExtensions = ['.fq', '.fastq', '.fq.tar.gz', '.fastq.tar.gz', '.fq.gz', '.fastq.gz', '.bam']
 const baiExtensions = ['.bai']
 
+// File types which let the user set a custom name for the file in the UX
+const FILE_TYPES_ALLOWING_SET_NAME = ['Cluster', 'Gene List', 'Image']
+
 export const FileTypeExtensions = {
   plainText: plainTextExtensions.concat(plainTextExtensions.map(ext => `${ext}.gz`)),
   mtx: mtxExtensions.concat(mtxExtensions.map(ext => `${ext}.gz`)),
@@ -68,8 +71,9 @@ export default function FileUploadControl({
   async function handleFileSelection(e) {
     const selectedFile = e.target.files[0]
     let newName = selectedFile.name
+
     // for cluster files, don't change an existing specified name
-    if (file.file_type == 'Cluster' && file.name && file.name != file.upload_file_name) {
+    if (FILE_TYPES_ALLOWING_SET_NAME.includes(file.file_type) && file.name && file.name !== file.upload_file_name) {
       newName = file.name
     }
     setFileValidation({ validating: true, errorMsgs: [], filename: selectedFile.name })
@@ -78,6 +82,7 @@ export default function FileUploadControl({
     if (errorMsgs.length === 0) {
       updateFile(file._id, {
         uploadSelection: selectedFile,
+        upload_file_name: newName,
         name: newName
       })
     }
@@ -101,7 +106,7 @@ export default function FileUploadControl({
 
   return <div>
     <label>
-      { !file.uploadSelection && <h5>{file.upload_file_name}</h5> }
+      { !file.uploadSelection && <h5 data-testid="file-uploaded-name">{file.upload_file_name}</h5> }
       { file.uploadSelection && <h5 data-testid="file-selection-name">
         {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})
       </h5> }
@@ -111,7 +116,7 @@ export default function FileUploadControl({
       bucketName={bucketName}
     />
     &nbsp;
-    <button className={buttonClass} id={`fileButton-${file._id}`}>
+    <button className={buttonClass} id={`fileButton-${file._id}`} data-testid="file-input-btn">
       { buttonText }
       <input className="file-upload-input" data-testid="file-input"
         type="file"

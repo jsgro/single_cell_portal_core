@@ -4,6 +4,8 @@ import _get from 'lodash/get'
 export const PARSEABLE_TYPES = ['Cluster', 'Coordinate Labels', 'Expression Matrix', 'MM Coordinate Matrix',
   '10X Genes File', '10X Barcodes File', 'Gene List', 'Metadata', 'Analysis Output']
 
+const EXPRESSION_INFO_TYPES = ['Expression Matrix', 'MM Coordinate Matrix']
+
 /** properties used to track file state on the form, but that should not be sent to the server
  *  this also includes properties that are only modifiable on the server (and so should also
  * be ignored server side, but for best hygiene are also just not sent ) */
@@ -27,7 +29,8 @@ const PROPERTIES_NOT_TO_SEND = [
   'version',
   'status',
   'upload',
-  'parse_status'
+  'parse_status',
+  'requestCanceller'
 ]
 
 /** gets an object representing a new, empty study file.  Does not communicate to server */
@@ -60,6 +63,13 @@ export function formatFileFromServer(file) {
   }
   if (file.expression_file_info) {
     delete file.expression_file_info._id
+  }
+  if (EXPRESSION_INFO_TYPES.includes(file.file_type) && !file.expression_file_info) {
+    // some legacy studies will not have supplemental expression file info
+    file.expression_file_info = {
+      is_raw_counts: false,
+      raw_counts_associations: []
+    }
   }
   return file
 }
@@ -155,7 +165,7 @@ function validateNameUniqueness(file, allFiles, validationMessages) {
   const allOtherFiles = allFiles.filter(f => f._id != file._id)
   const allOtherNames = allOtherFiles.map(f => f.name)
   // require 'isDirty' so we only show the error on the file being updated
-  if (allOtherNames.includes(file.name) && file.isDirty) {
+  if (file.name && allOtherNames.includes(file.name) && file.isDirty) {
     validationMessages.fileName = `A file named ${file.name} already exists in your study`
   }
 }
@@ -188,7 +198,7 @@ export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
   } else {
     // don't set null properties -- those are ones that haven't changed
     // and having them be sent as 'null' or '' can throw off validations
-    if (obj[propertyName] != null) {
+    if (obj[propertyName] != null && typeof obj[propertyName] != 'undefined') {
       formData.append(propString, obj[propertyName])
     }
   }

@@ -13,7 +13,6 @@ const scaledPopover = (
   </Popover>
 )
 
-
 /** renders an svg legend for a dotplot with color and size indicators */
 export default function DotPlotLegend() {
   // Sarah N. asked for a note about non-zero in the legend, but it's unclear

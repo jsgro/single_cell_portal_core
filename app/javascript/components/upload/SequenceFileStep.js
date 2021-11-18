@@ -15,8 +15,8 @@ const sequenceFileTypes = ['BAM', 'Fastq']
 const sequenceFileFilter = file => sequenceFileTypes.includes(file.file_type)
 
 export default {
-  title: 'Sequence Files',
-  header: 'Sequence Files',
+  title: 'Sequence files',
+  header: 'Sequence files',
   name: 'sequence',
   component: SequenceForm,
   fileFilter: sequenceFileFilter
@@ -68,7 +68,7 @@ function SequenceForm({
     { sequenceFiles.map(file => {
       const associatedBaiFile = findBundleChildren(file, formState.files)[0]
       return <SequenceFileForm
-        key={file._id}
+        key={file.oldId ? file.oldId : file._id}
         file={file}
         allFiles={formState.files}
         updateFile={updateFile}

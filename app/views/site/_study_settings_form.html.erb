@@ -19,8 +19,8 @@
   </div>
   <div class="form-group row">
     <div class="col-md-4">
-      <%= f.label :embargo, 'Data Release Date' %>&nbsp;<span class='fas fa-question-circle' data-toggle='tooltip' title='Setting a Data Release Date will prevent downloads for everyone except study owners & shared users, and will expire at 12AM on the date specified (leave blank to allow downloads)' data-placement='right'></span><br />
-      <%= f.text_field :embargo, class: 'form-control datepicker' %>
+      <%= f.label :embargo, 'Data release date' %>&nbsp;<span class='fas fa-question-circle' data-toggle='tooltip' title='Setting a data release date will prevent downloads for everyone except study owners & shared users, and will expire at 12AM on the date specified (leave blank to allow downloads)' data-placement='right'></span><br />
+      <%= f.date_field :embargo, class: 'form-control' %>
     </div>
     <div class="col-md-4">
       <%= f.label :public %><br />
@@ -66,7 +66,7 @@
         </div>
         <div class="form-group row">
           <div class="col-sm-12">
-            <%= opts.label :expression_label, 'Expression Axis Label' %>&nbsp;<span class="fas fa-question-circle" data-toggle="tooltip" data-placement="right" title='This is displayed as the axis label for box & scatter plots showing expression values.  This label is global to all expression values.'></span> <br />
+            <%= opts.label :expression_label, 'Expression axis label' %>&nbsp;<span class="fas fa-question-circle" data-toggle="tooltip" data-placement="right" title='This is displayed as the axis label for box & scatter plots showing expression values.  This label is global to all expression values.'></span> <br />
             <%= opts.text_field :expression_label, value: @study.default_options[:expression_label], placeholder: @study.default_expression_label, class: 'form-control' %>
           </div>
         </div>
@@ -148,17 +148,17 @@
         </div>
       <% end %>
     <% end %>
-    <%= f.link_to_add "<span class='fas fa-plus'></span> Share Study".html_safe, :study_shares, class: 'btn btn-primary', id: 'add-study-share' %>
+    <%= f.link_to_add "<span class='fas fa-plus'></span> Share study".html_safe, :study_shares, class: 'btn btn-primary', id: 'add-study-share' %>
   </div>
   <div class="form-group row">
     <div class="col-xs-12 text-center">
-      <%= link_to 'Update Study Settings', '#', class: 'btn btn-lg btn-success', id: 'update-study-settings' %>
+      <%= link_to 'Update study settings', '#', class: 'btn btn-lg btn-success', id: 'update-study-settings' %>
     </div>
   </div>
   <div class="form-group row">
     <div class="col-xs-12 text-center">
-      <%= scp_link_to "<span class='fas fa-upload'></span> Upload/Edit Data".html_safe, initialize_study_path(@study), class: "btn btn-sm btn-primary #{@study.url_safe_name}-upload" %>
-      <%= scp_link_to "<span class='fas fa-sync-alt'></span> Sync Workspace".html_safe, sync_study_path(@study), class: "btn btn-sm btn-warning #{@study.url_safe_name}-sync sync-button" %>
+      <%= scp_link_to "<span class='fas fa-upload'></span> Upload/Edit data".html_safe, initialize_study_path(@study), class: "btn btn-sm btn-primary #{@study.url_safe_name}-upload" %>
+      <%= scp_link_to "<span class='fas fa-sync-alt'></span> Sync workspace".html_safe, sync_study_path(@study), class: "btn btn-sm btn-warning #{@study.url_safe_name}-sync sync-button" %>
     </div>
   </div>
 <% end %>

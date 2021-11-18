@@ -296,9 +296,9 @@ export function validateGzipEncoding({ fileName, lines, mimeType }) {
   if (fileName.endsWith('.gz') && lines[0][0] !== GZIP_MAGIC_NUMBER) {
     return [['error', 'encoding:invalid-gzip-magic-number',
       'File has a ".gz" suffix but does not seem to be gzipped']]
-  } else if (!fileName.endsWith('.gz') && lines[0][0] === GZIP_MAGIC_NUMBER) {
+  } else if (!fileName.endsWith('.gz') && !fileName.endsWith('.bam') && lines[0][0] === GZIP_MAGIC_NUMBER) {
     return [['error', 'encoding:missing-gz-extension',
-      'File seems to be gzipped but does not have a ".gz" extension']]
+      'File seems to be gzipped but does not have a ".gz" or ".bam" extension']]
   }
   return []
 }
@@ -317,14 +317,14 @@ async function parseFile(file, fileType) {
   }
 
   if (!file.name.endsWith('.gz')) {
-    if (lines.length < 2) {
-      return { table, delimiter, issues: [['error', 'cap:format:no-newlines', 'File does not contain newlines to separate rows']] }
-    }
-    // if there are no encoding issues, and this isn't a gzipped file, validate content
-    delimiter = sniffDelimiter(lines, mimeType)
-    table = lines.map(line => line.split(delimiter))
-
     if (['Cluster', 'Metadata'].includes(fileType)) {
+      if (lines.length < 2) {
+        return { table, delimiter, issues: [['error', 'cap:format:no-newlines', 'File does not contain newlines to separate rows']] }
+      }
+      // if there are no encoding issues, and this isn't a gzipped file, validate content
+      delimiter = sniffDelimiter(lines, mimeType)
+      table = lines.map(line => line.split(delimiter))
+
       issues = await validateCapFormat(table, fileType)
     }
   }

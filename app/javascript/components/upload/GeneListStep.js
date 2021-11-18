@@ -11,8 +11,8 @@ const DEFAULT_NEW_GENE_LIST_FILE = {
 const geneListFileFilter = file => file.file_type === 'Gene List'
 
 export default {
-  title: 'Precomputed Expression Stats',
-  header: 'Precomputed Expression Stats',
+  title: 'Precomputed expression stats',
+  header: 'Precomputed expression stats',
   name: 'geneLists',
   component: GeneListForm,
   fileFilter: geneListFileFilter
@@ -57,7 +57,7 @@ function GeneListForm({
     { geneListFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_GENE_LIST_FILE}/> }
     { geneListFiles.map(file => {
       return <GeneListFileForm
-        key={file._id}
+        key={file.oldId ? file.oldId : file._id}
         file={file}
         allFiles={formState.files}
         updateFile={updateFile}

@@ -9,6 +9,10 @@ const colorBrewerList = [
   '#bc80bd', '#ccebc5', '#ffed6f'
 ]
 
+export const ideogramHeight = 140
+
+export const scatterLabelLegendWidth = 260
+
 /**
  * Used in both categorical scatter plots and violin plots, to ensure
  * they use consistent friendly colors for annotations, etc.
@@ -84,3 +88,56 @@ export function arrayMax(arr) {
   return max
 }
 
+/** Get width and height available for plot components, since they may be first rendered hidden */
+export function getPlotDimensions({
+  isTwoColumn=false,
+  isMultiRow=false,
+  verticalPad=250,
+  horizontalPad=80,
+  hasLabelLegend=false,
+  hasTitle=false,
+  showRelatedGenesIdeogram=false,
+  showViewOptionsControls=true
+}) {
+  // Get width, and account for expanding "View Options" after page load
+  let baseWidth = $(window).width()
+  if (showViewOptionsControls) {
+    baseWidth = Math.round(baseWidth * 10 / 12)
+  }
+  if (hasLabelLegend) {
+    const factor = isTwoColumn ? 2 : 1
+    horizontalPad += scatterLabelLegendWidth * factor
+  }
+  let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
+
+  // Get height
+  // Height of screen viewport, minus fixed-height elements above gallery
+  let galleryHeight = $(window).height() - verticalPad
+
+  if (showRelatedGenesIdeogram) {
+    galleryHeight -= ideogramHeight
+  }
+
+  if (hasTitle) {
+    galleryHeight -= 20
+  }
+  let height = galleryHeight
+  if (isMultiRow) {
+    // Fill as much gallery height as possible, but show tip of next row
+    // as an affordance that the gallery is vertically scrollable.
+    const secondRowTipHeight = 70
+    height = height - secondRowTipHeight
+  }
+  // ensure aspect ratio isn't too distorted
+  if (height > width * 1.3) {
+    height = Math.round(width * 1.3)
+  }
+
+  // Ensure plots aren't too small.
+  // This was needed as of 2020-12-14 to avoid a Plotly error in single-gene
+  // view: "Something went wrong with axes scaling"
+  height = Math.max(height, 200)
+  width = Math.max(width, 200)
+
+  return { width, height }
+}

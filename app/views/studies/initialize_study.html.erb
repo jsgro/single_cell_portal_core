@@ -6,11 +6,11 @@
 
   <div class="row">
     <div class="col-sm-10">
-      <h1>Upload/Edit Study Data for '<%= @study.name %>' <%= render partial: 'initialize_study_label' %></h1>
+      <h1>Upload/Edit study data for '<%= @study.name %>' <%= render partial: 'initialize_study_label' %></h1>
     </div>
     <div class="col-sm-2">
       <p class="top-pad pull-right">
-        <%= scp_link_to "<span class='fas fa-eye'></span> View Study".html_safe,
+        <%= scp_link_to "<span class='fas fa-eye'></span> View study".html_safe,
                         view_study_path(accession: @study.accession, study_name: @study.url_safe_name),
                         class: 'btn btn-primary', title: 'View Live', data: {toggle: 'tooltip', placement: 'left'} %>
       </p>
@@ -60,8 +60,8 @@
             </div>
             </br>
             <div class="row">
-              <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.csv or .tsv) and
-                <%= link_to 'barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.tsv or .csv) files separately.</p>
+              <p class="col-sm-12">* You will need to upload the <%= link_to '10x features', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.csv or .tsv) and
+                <%= link_to '10x barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank %> (.tsv or .csv) files separately.</p>
               <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank, rel: 'noopener noreferrer' %>  files of this type (e.g. .txt.gz) are accepted as well</p>
             </div>
           </div>
@@ -127,8 +127,8 @@
             </div>
             </br>
             <div class="row">
-              <p class="col-sm-12">* You will need to upload the <%= link_to 'genes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.csv or .tsv) and
-                <%= link_to 'barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.tsv or .csv) files separately.</p>
+              <p class="col-sm-12">* You will need to upload the <%= link_to '10x features', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.csv or .tsv) and
+                <%= link_to '10x barcodes', 'https://kb.10xgenomics.com/hc/en-us/articles/115000794686-How-is-the-MEX-format-used-for-the-gene-barcode-matrices', target: :_blank, rel: 'noopener noreferrer' %> (.tsv or .csv) files separately.</p>
               <p class="col-sm-12">** <%= link_to 'Gzipped', 'https://www.gnu.org/software/gzip/manual/gzip.html', target: :_blank, rel: 'noopener noreferrer' %>  files of this type (e.g. .txt.gz) are accepted as well</p>
             </div>
           </div>
@@ -189,7 +189,7 @@
         <div id="ordinations-target">
           <div class="well well-sm upload-wizard">
             <div class="row">
-              <h2 class="col-sm-12">Step 4. Upload Cluster / Spatial Files <small class="initialize-label" id="initialize_ordinations_form_completed"></small></h2>
+              <h2 class="col-sm-12">Step 4. Upload cluster / spatial files <small class="initialize-label" id="initialize_ordinations_form_completed"></small></h2>
               <p class="text-center"><%= link_to 'Cluster File', 'https://github.com/broadinstitute/single_cell_portal/blob/master/demo_data/cluster_example.txt', target: :_blank %></p>
             </div>
             <div class="row">

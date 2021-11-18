@@ -12,9 +12,10 @@
  */
 
 import React, { useEffect } from 'react'
-
-import { logStudyGeneSearch, log } from 'lib/metrics-api'
 import Ideogram from 'ideogram'
+
+import { ideogramHeight } from 'lib/plot'
+import { logStudyGeneSearch, log } from 'lib/metrics-api'
 
 /** Handle clicks on Ideogram annotations */
 function onClickAnnot(annot) {
@@ -135,7 +136,7 @@ function onPlotRelatedGenes() {
  * This is only done in the context of single-gene search in Study Overview
  */
 export default function RelatedGenesIdeogram({
-  gene, taxon, target, height, genesInScope, searchGenes, speciesList
+  gene, taxon, target, genesInScope, searchGenes, speciesList
 }) {
   const verticalPad = 40 // Total top and bottom padding
 
@@ -144,7 +145,7 @@ export default function RelatedGenesIdeogram({
       container: '#related-genes-ideogram-container',
       organism: taxon,
       chrWidth: 9,
-      chrHeight: height - verticalPad,
+      chrHeight: ideogramHeight - verticalPad,
       chrLabelSize: 12,
       annotationHeight: 7,
       onClickAnnot,
