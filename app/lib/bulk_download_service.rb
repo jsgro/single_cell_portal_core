@@ -14,7 +14,7 @@ class BulkDownloadService
   #   - +study_bucket_map+ => Map of study IDs to bucket names
   #   - +output_pathname_map+ => Map of study file IDs to output pathnames
   #   - +azul_files+ => Hash of Azul file summary objects
-  #   - +source+ => Origin of bulk download request (either search or study-based download)
+  #   - +context+ => Context of bulk download request ("study" for single-study, or "global" for search across all studies)
   #
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
@@ -24,7 +24,7 @@ class BulkDownloadService
                                        study_bucket_map:,
                                        output_pathname_map:,
                                        azul_files: nil,
-                                       source: 'study')
+                                       context: 'study')
     curl_configs = ['--create-dirs', '--compressed']
     # create an array of all objects to be downloaded, including directory files
     download_objects = study_files.to_a + directory_files
@@ -106,7 +106,7 @@ class BulkDownloadService
       numAzulFiles: azul_file_configs.count,
       numAzulAnalysisFiles: azul_analysis_files,
       numAzulSequenceFiles: azul_sequence_files,
-      source: source
+      context: context
     }, user)
     curl_configs.join("\n\n")
   end

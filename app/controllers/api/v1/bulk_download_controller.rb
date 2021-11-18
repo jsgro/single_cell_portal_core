@@ -246,10 +246,10 @@ module Api
             key :required, false
           end
           parameter do
-            key :name, :source
+            key :name, :context
             key :type, :string
             key :in, :query
-            key :description, 'Source of download request, either "study" or "search"'
+            key :description, 'Context of the download, its scope: either "study" or "global"'
             key :required, false
           end
           response 200 do
@@ -284,7 +284,7 @@ module Api
         azul_files = {}
 
         # determine if this a single-study bulk download (from download tab) or from home page search
-        search_source = params[:source] || 'search'
+        search_context = params[:context] || 'global'
 
         # branch based on whether they provided a download_id, file_ids, or accessions
         if params[:download_id]
@@ -355,7 +355,7 @@ module Api
                                                                            study_bucket_map: bucket_map,
                                                                            output_pathname_map: pathname_map,
                                                                            azul_files: azul_files,
-                                                                           source: search_source)
+                                                                           context: search_context)
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
         logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size + directory_files.size} total files"
