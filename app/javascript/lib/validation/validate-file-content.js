@@ -9,7 +9,7 @@
 */
 
 import { log } from 'lib/metrics-api'
-import { readLinesAndType } from './io'
+import { readLinesAndType, catchDuplicateCellNames } from './io'
 
 /** Remove white spaces and quotes from a string value */
 function clean(value) {
@@ -144,6 +144,23 @@ function validateEqualCount(headers, annotTypes) {
   return issues
 }
 
+
+/**
+ * Verify cell names are unique for a cluster or metadata file
+ */
+async function validateUniqueCellNames(file) {
+  const issues = []
+
+  try {
+    await catchDuplicateCellNames(file)
+  } catch (error) {
+    const msg = `Cell names must be unique, please fix the following duplicated cell name(s): ${error.message}`
+    issues.push(['error', 'format:cap:count', msg])
+  }
+  return issues
+}
+
+
 /**
  * Guess whether column delimiter is comma or tab
  *
@@ -186,7 +203,7 @@ function sniffDelimiter(lines, mimeType) {
  * Cap lines are like meta-information lines in other file formats
  * (e.g. VCF), but do not begin with pound signs (#).
  */
-async function validateCapFormat(table, fileType) {
+async function validateCapFormat(table, fileType, file) {
   let issues = []
 
   // Trim spaces and quotes
@@ -199,7 +216,8 @@ async function validateCapFormat(table, fileType) {
     validateNameKeyword(headers),
     validateTypeKeyword(annotTypes),
     validateGroupOrNumeric(annotTypes),
-    validateEqualCount(headers, annotTypes)
+    validateEqualCount(headers, annotTypes),
+    await validateUniqueCellNames(file)
   )
 
   // Check format rules specific to either metadata or cluster file
@@ -325,7 +343,7 @@ async function parseFile(file, fileType) {
       delimiter = sniffDelimiter(lines, mimeType)
       table = lines.map(line => line.split(delimiter))
 
-      issues = await validateCapFormat(table, fileType)
+      issues = await validateCapFormat(table, fileType, file)
     }
   }
   return { table, delimiter, issues }
