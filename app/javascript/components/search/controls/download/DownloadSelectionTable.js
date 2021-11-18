@@ -287,7 +287,10 @@ export function getSelectedFileHandles(downloadInfo, selectedBoxes, hashByStudy=
         {/* eslint-disable-next-line max-len */}
         const selectedHandles = filesOfType.map(file => {
           if (hashByStudy) {
-            return { project_id: file.project_id, name: file.name, file_format: file.file_format, file_type: file.file_type }
+            return {
+              project_id: file.project_id, name: file.name, file_format: file.file_format,
+              file_type: file.file_type, count: file.count
+            }
           } else {
             return file.id
           }

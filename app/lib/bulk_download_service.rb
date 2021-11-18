@@ -14,6 +14,7 @@ class BulkDownloadService
   #   - +study_bucket_map+ => Map of study IDs to bucket names
   #   - +output_pathname_map+ => Map of study file IDs to output pathnames
   #   - +azul_files+ => Hash of Azul file summary objects
+  #   - +source+ => Origin of bulk download request (either search or study-based download)
   #
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
@@ -22,7 +23,8 @@ class BulkDownloadService
                                        user:,
                                        study_bucket_map:,
                                        output_pathname_map:,
-                                       azul_files: nil)
+                                       azul_files: nil,
+                                       source: 'study')
     curl_configs = ['--create-dirs', '--compressed']
     # create an array of all objects to be downloaded, including directory files
     download_objects = study_files.to_a + directory_files
@@ -52,6 +54,8 @@ class BulkDownloadService
     end
     azul_studies = azul_files ? azul_files.keys : []
     azul_file_configs = []
+    azul_sequence_files = 0
+    azul_analysis_files = 0
 
     if azul_files.present?
       hca_client = ApplicationController.hca_azul_client
@@ -74,6 +78,12 @@ class BulkDownloadService
         files.each do |file_info|
           file_query['fileFormat'] ||= { 'is' => [] }
           file_query['fileFormat']['is'] << file_info['file_format']
+          case file_info['file_type']
+          when 'analysis_file'
+            azul_analysis_files += file_info['count']
+          when 'sequence_file'
+            azul_sequence_files += file_info['count']
+          end
         end
         requested_files = hca_client.files(query: file_query)
         requested_files.each do |file_entry|
@@ -93,7 +103,10 @@ class BulkDownloadService
       studyAccessions: studies.map(&:accession),
       numAzulStudies: azul_studies.count,
       azulAccessions: azul_studies,
-      numAzulFiles: azul_file_configs.count
+      numAzulFiles: azul_file_configs.count,
+      numAzulAnalysisFiles: azul_analysis_files,
+      numAzulSequenceFiles: azul_sequence_files,
+      source: source
     }, user)
     curl_configs.join("\n\n")
   end

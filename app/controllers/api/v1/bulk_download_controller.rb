@@ -245,6 +245,13 @@ module Api
             key :description, 'Name of directory folder to download (for single-study bulk download only), can be "all"'
             key :required, false
           end
+          parameter do
+            key :name, :source
+            key :type, :string
+            key :in, :query
+            key :description, 'Source of download request, either "study" or "search"'
+            key :required, false
+          end
           response 200 do
             key :description, 'Curl configuration file with signed URLs for requested data'
             key :type, :string
@@ -275,6 +282,9 @@ module Api
         valid_accessions = []
         file_ids = []
         azul_files = {}
+
+        # determine if this a single-study bulk download (from download tab) or from home page search
+        search_source = params[:source] || 'search'
 
         # branch based on whether they provided a download_id, file_ids, or accessions
         if params[:download_id]
@@ -344,7 +354,8 @@ module Api
                                                                            user: current_api_user,
                                                                            study_bucket_map: bucket_map,
                                                                            output_pathname_map: pathname_map,
-                                                                           azul_files: azul_files)
+                                                                           azul_files: azul_files,
+                                                                           source: search_source)
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
         logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size + directory_files.size} total files"
