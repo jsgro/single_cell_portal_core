@@ -313,7 +313,8 @@ function getScatterDimensions(scatter, dimensionProps, genes) {
 /** Reverse the continuous colorscale so high contrast color corresponds to high expression */
 function shouldReverseScale(scatterColor) {
   // don't reverse the Reds scale, and check whether it is the default
-  return (scatterColor && scatterColor !== 'Reds') || (!scatterColor && defaultScatterColor !== 'Reds')
+  const shownColor = scatterColor ? scatterColor : defaultScatterColor
+  return shownColor !== 'Reds'
 }
 
 /** get the array of plotly traces for plotting */
