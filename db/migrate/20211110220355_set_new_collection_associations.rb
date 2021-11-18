@@ -13,8 +13,8 @@ class SetNewCollectionAssociations < Mongoid::Migration
     collection_map = BrandingGroup.all.map do |col|
       {
         col.id.to_s => {
-          users: [User.find(col.attributes[:user_id])],
-          studies: study_map.select {|_, c_id| c_id == col.id }.keys.map { |id| Study.find(id) }
+          users: User.where(id: col.attributes[:user_id]),
+          studies: Study.where(:id.in => study_map.select {|_, c_id| c_id == col.id }.keys)
         }
       }
     end.compact.reduce({}, :merge)
