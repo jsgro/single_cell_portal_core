@@ -67,7 +67,7 @@
           </span><br />
           <%= f.select :branding_group_ids, options_from_collection_for_select(
             current_user.available_branding_groups, 'id', 'name', @study.branding_group_ids
-          ), { include_blank: '-- No Selected Collection --' }, class: 'form-control', multiple: true %>
+          ), { include_blank: '-- No selected collection --' }, class: 'form-control', multiple: true %>
         </div>
       </div>
     </div>
@@ -91,7 +91,7 @@
                       id: 'add-external-resource'  %>
   </div>
   <div class="form-group">
-    <%= f.submit 'Save Study', class: 'btn btn-lg btn-success', id: 'save-study' %>
+    <%= f.submit 'Save study', class: 'btn btn-lg btn-success', id: 'save-study' %>
   </div>
 <% end %>
 

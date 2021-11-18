@@ -102,8 +102,10 @@ class BrandingGroupsController < ApplicationController
   def self.merge_curator_params(curator_list, collection, user)
     curators = curator_list.split(',').map(&:strip)
     users = curators.map { |email| User.find_by(email: email) }.compact
-    # ensure current user cannot remove accidentally remove themselves from the list
-    users << user if collection.present? && collection.users.include?(user) && !users.include?(user)
+    return users if collection.nil?
+
+    # ensure current user cannot accidentally remove themselves from the list if this is an update
+    users << user if collection.users.include?(user) && !users.include?(user)
     users
   end
 

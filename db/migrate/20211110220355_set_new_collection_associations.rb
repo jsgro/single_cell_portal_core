@@ -6,7 +6,7 @@ class SetNewCollectionAssociations < Mongoid::Migration
     # create maps showing existing associations
     study_list = ActiveRecordUtils.pluck_to_hash(Study, [:id, :branding_group_id])
     study_map = study_list.map do |entry|
-      if entry[:branding_group_id].present? && entry[:branding_group_id].is_a?(BSON::ObjectId)
+      if entry[:branding_group_id]&.is_a?(BSON::ObjectId)
         { entry[:id].to_s => entry[:branding_group_id] }
       end
     end.compact.reduce({}, :merge)
