@@ -86,7 +86,9 @@ const Fields = {
     },
     addFieldsOrPromise: (entry, fields, promises, annotationName, annotationScope) => {
       const cachedAnnotation = Fields.annotation.getFromEntry(entry, annotationName, annotationScope)
-      if (!cachedAnnotation) {
+      if (!cachedAnnotation || annotationScope === 'user') {
+        // because the requested name (the guid) for user annotations won't match the returned name
+        // (the annotation's actual name), we don't cache user annotation values
         fields.push('annotation')
       } else if (cachedAnnotation.then && !promises.includes(cachedAnnotation)) {
         promises.push(cachedAnnotation)
