@@ -284,7 +284,7 @@ module Api
         azul_files = {}
 
         # determine if this a single-study bulk download (from download tab) or from home page search
-        search_context = params[:context] || 'global'
+        search_context = params[:context] || 'unknown'
 
         # branch based on whether they provided a download_id, file_ids, or accessions
         if params[:download_id]

@@ -84,7 +84,8 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
 function getDownloadCommand(authCode, downloadId) {
   const queryParams = {
     auth_code: authCode,
-    download_id: downloadId
+    download_id: downloadId,
+    context: 'global' // this is a search-based bulk download request
   }
   const queryString = stringifyQuery(queryParams)
 

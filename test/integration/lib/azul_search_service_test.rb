@@ -27,6 +27,11 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
                                name_prefix: 'Azul Search Test',
                                user: @user,
                                test_array: @@studies_to_clean)
+    SearchFacet.update_all_facet_filters
+  end
+
+  after(:all) do
+    SearchFacet.all.map(&:update_filter_values!)
   end
 
   test 'should search Azul using facets' do
