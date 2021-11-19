@@ -275,9 +275,11 @@ class HcaAzulClient < Struct.new(:api_root)
         unit = safe_facet.dig(:filters, :unit)
         min_seconds = scp_facet.calculate_time_in_seconds(base_value: min, unit_label: unit).to_i
         max_seconds = scp_facet.calculate_time_in_seconds(base_value: max, unit_label: unit).to_i
+        # since organismAge only works with discrete value, we must convert this to a range query using 'within'
         # within query must have nested array, where min/max values are represented as arrays within query
         # multiple min/max ranges are processed with AND logic
-        facet_query = { hca_term => { within: [[min_seconds, max_seconds]] } }
+        converted_term = hca_term == 'organismAge' ? 'organismAgeRange' : hca_term
+        facet_query = { converted_term => { within: [[min_seconds, max_seconds]] } }
       else
         filter_values = safe_facet[:filters].map { |filter| filter[:name] }
         facet_query = { hca_term => { is: filter_values } }
@@ -306,7 +308,7 @@ class HcaAzulClient < Struct.new(:api_root)
       filters = facet.find_filter_matches(term, filter_list: :filters_with_external).map do |t|
         [{ id: t, name: t }.with_indifferent_access]
       end.flatten
-      matching_facets << { id: facet.identifier, filters: filters }.with_indifferent_access
+      matching_facets << { id: facet.identifier, filters: filters, db_facet: facet }.with_indifferent_access
     end
     matching_facets
   end

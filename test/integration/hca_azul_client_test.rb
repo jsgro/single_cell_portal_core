@@ -9,8 +9,16 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     @project_shortname = 'HumanTissueTcellActivation'
     @project_id = '4a95101c-9ffc-4f30-a809-f04518a23803'
     @facets = [
-      { id: 'disease', filters: [{ id: 'MONDO_0005109', name: 'HIV infectious disease' }] },
-      { id: 'species', filters: [{ id: 'NCBITaxon_9606', name: 'Homo sapiens' }] }
+      {
+        id: 'disease',
+        filters: [{ id: 'MONDO_0005109', name: 'HIV infectious disease' }],
+        db_facet: SearchFacet.new(identifier: 'disease', data_type: 'string') # does not need to be persisted
+      },
+      {
+        id: 'species',
+        filters: [{ id: 'NCBITaxon_9606', name: 'Homo sapiens' }],
+        db_facet: SearchFacet.new(identifier: 'species', data_type: 'string')
+      }
     ]
     catalogs = @hca_azul_client.catalogs
     @default_catalog = catalogs['default_catalog']
@@ -146,12 +154,32 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     assert_equal expected_query, query
   end
 
+  test 'should format numeric facet query' do
+    age_facet = [
+      {
+        id: 'organism_age',
+        filters: { min: 1, max: 10, unit: 'years' },
+        db_facet: SearchFacet.new(identifier: 'organism_age', data_type: 'number')
+      }.with_indifferent_access
+    ]
+    query = @hca_azul_client.format_query_from_facets(age_facet)
+    year_in_seconds = SearchFacet::TIME_MULTIPLIERS['years']
+    ten_years = year_in_seconds * 10
+    expected_query = {
+      organismAgeRange: {
+        within: [[year_in_seconds, ten_years]]
+      }
+    }.with_indifferent_access
+    assert_equal expected_query, query
+  end
+
   test 'should convert keyword search into facets' do
     terms = %w[cancer]
     expected_filters = ['cervical cancer', 'colorectal cancer', 'lower gum cancer', 'lung cancer', 'mandibular cancer',
                        'tongue cancer'].map { |f| { id: f, name: f }.with_indifferent_access }
     expected_facets = [{ id: 'disease', filters: expected_filters }.with_indifferent_access]
     query = @hca_azul_client.format_facet_query_from_keyword(terms)
+    query.each { |facet| facet.delete(:db_facet) }
     assert_equal expected_facets, query
   end
 

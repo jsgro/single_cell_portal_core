@@ -11,11 +11,13 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     @facets = [
       {
         id: 'species',
-        filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }]
+        filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }],
+        db_facet: SearchFacet.new(identifier: 'species', data_type: 'string')
       },
       {
         id: 'organ',
-        filters: [{ id: 'UBERON_0000178', name: 'blood' }]
+        filters: [{ id: 'UBERON_0000178', name: 'blood' }],
+        db_facet: SearchFacet.new(identifier: 'organ', data_type: 'string')
       }
     ]
     @terms = %w[pulmonary]
@@ -27,6 +29,7 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
                                name_prefix: 'Azul Search Test',
                                user: @user,
                                test_array: @@studies_to_clean)
+    SearchFacet.update_all_facet_filters
   end
 
   test 'should search Azul using facets' do
@@ -38,6 +41,23 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     assert manifest.present?
   end
 
+  test 'should search Azul using numeric facets' do
+    age_facet = SearchFacet.new(identifier: 'organism_age', data_type: 'number', is_array_based: false, unit: 'years')
+    facets = [
+      {
+        id: 'organism_age', filters: { min: 1, max: 5, unit: 'years' }, db_facet: age_facet
+      }.with_indifferent_access
+    ]
+    results = AzulSearchService.get_results(selected_facets: facets, terms: nil)
+    assert results.keys.any?
+    entry = results.values.sample
+    expected_match = {
+      organism_age: [{ min: 1, max: 5, unit: 'years' }],
+      facet_search_weight: 1
+    }.with_indifferent_access
+    assert_equal expected_match, entry[:facet_matches]
+  end
+
   test 'should search Azul using terms' do
     results = AzulSearchService.get_results(selected_facets: [], terms: @terms)
     project_short_name = 'PulmonaryFibrosisGSE135893'
@@ -46,8 +66,14 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     assert_equal expected_term_match, results.dig(project_short_name, :term_matches)
   end
 
-  test 'should search Azul using terms and keywords' do
-    facets = [{ id: 'organ', filters: [{ id: 'lung', name: 'lung' }] }]
+  test 'should search Azul using facets and terms' do
+    facets = [
+      {
+        id: 'organ',
+        filters: [{ id: 'lung', name: 'lung' }],
+        db_facet: SearchFacet.new(identifier: 'organ', data_type: 'string')
+      }
+    ]
     results = AzulSearchService.get_results(selected_facets: facets, terms: @terms)
     project_short_name = 'PulmonaryFibrosisGSE135893'
     assert_includes results.keys, project_short_name
