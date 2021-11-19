@@ -78,7 +78,6 @@ class AzulSearchService
 
   # iterate through the result entries for each project to determine what facets/filters were matched
   def self.get_facet_matches(result, facets)
-    Rails.logger.info "facet matching: #{facets}"
     results_info = {}
     facets.each do |facet|
       facet_name = facet[:id]
