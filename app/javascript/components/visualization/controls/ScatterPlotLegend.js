@@ -2,7 +2,9 @@ import React from 'react'
 import { log } from 'lib/metrics-api'
 
 import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
-import { getColorBrewerColor, scatterLabelLegendWidth } from 'lib/plot'
+import { getColorBrewerColor, scatterLabelLegendWidth } from './../../../lib/plot'
+
+const customColors = {}
 
 /** Sort annotation labels naturally, but always put "unspecified" last */
 function labelSort(a, b) {
@@ -50,12 +52,14 @@ export function getStyles(data, pointSize) {
 
   const legendStyles = labels
     .map((label, index) => {
+      // TODO: Ensure plot is re-rendered when new color is entered via prompt
+      const color = customColors[label] || getColorBrewerColor(index)
       return {
         target: label,
         value: {
           legendrank: index,
           marker: {
-            color: getColorBrewerColor(index),
+            color,
             size: pointSize
           }
         }
@@ -102,6 +106,7 @@ function LegendEntry({
       className={`scatter-legend-row ${shownClass}`}
       role="button"
       onClick={() => toggleSelection()}
+      onContextMenu={handlePickColorsClick}
     >
       <div className="scatter-legend-icon" style={iconStyle}></div>
       <div className="scatter-legend-entry">
@@ -119,6 +124,16 @@ function showHideAll(showOrHide, labels, updateShownTraces) {
   } else {
     updateShownTraces(labels, true, null, true)
   }
+}
+
+/** Handle pick colors click */
+function handlePickColorsClick(event) {
+  // event.persist()
+  // console.log(event)
+  event.preventDefault()
+  const newColor = prompt('Enter a color')
+  customColors['AB_D05_02'] = newColor
+  alert(`newColor: ${ newColor}`)
 }
 
 /** Component for custom legend for scatter plots */
@@ -175,6 +190,7 @@ export default function ScatterPlotLegend({
         </div>
       </div>
       {legendEntries}
+      <button onContextMenu={handlePickColorsClick}>Pick colors</button>
     </div>
   )
 }
