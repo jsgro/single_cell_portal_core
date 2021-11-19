@@ -234,7 +234,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     hca_project_id = SecureRandom.uuid
     payload = {
       file_ids: [@basic_study_metadata_file.id.to_s],
-      hca_files: {
+      azul_files: {
         FakeHCAStudy1: [
           {
             project_id: hca_project_id,
@@ -243,11 +243,11 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
             file_type: 'Project Manifest'
           }, {
             source: 'hca',
-            count: 5,
-            upload_file_size: 1024,
+            count: 1,
+            upload_file_size: 10.megabytes,
             file_format: 'loom',
             file_type: 'analysis_file',
-            accession: 'HumanTissueTcellActivation',
+            accession: 'FakeHCAStudy1',
             project_id: hca_project_id
           }
         ]
@@ -260,19 +260,31 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
 
     # mock response values
     mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{@basic_study.bucket_id}/metadata.txt"
-    mock_azul_response = {
+    mock_manifest_response = {
       Status: 302,
       Location: "https://service.azul.data.humancellatlas.org/manifest/files?catalog=dcp8&format=compact&filters=" \
                 "%7B%22projectId%22%3A+%7B%22is%22%3A+%5B%22#{hca_project_id}%22%5D%7D%7D&objectKey=manifests%2F" \
                 "#{SecureRandom.uuid}.tsv"
     }.with_indifferent_access
 
+    mock_files_response = [
+      {
+        format: 'loom',
+        name: 'SomeAnalysis.loom',
+        size: 10.megabytes,
+        url: "https://service.azul.data.humancellatlas.org/repository/files/#{SecureRandom.uuid}",
+        projectShortname: 'FakeHCAStudy1',
+        projectId: hca_project_id
+      }.with_indifferent_access
+    ]
+
     # mock all calls to external services, including Google Cloud Storage, HCA Azul, and Terra Data Repo
     gcs_mock = Minitest::Mock.new
     gcs_mock.expect :execute_gcloud_method, mock_signed_url,
                     [:generate_signed_url, 0, @basic_study.bucket_id, 'metadata.txt', { expires: 1.day.to_i }]
     azul_mock = Minitest::Mock.new
-    azul_mock.expect :project_manifest_link, mock_azul_response, [hca_project_id]
+    azul_mock.expect :project_manifest_link, mock_manifest_response, [hca_project_id]
+    azul_mock.expect :files, mock_files_response, [Hash]
 
     # stub all service clients to interpolate mocks
     FireCloudClient.stub :new, gcs_mock do
@@ -283,12 +295,12 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
         config_file = json
 
         gcs_mock.verify
-        # azul_mock.verify
+        azul_mock.verify
 
-        expected_manifest_config = "url=\"#{mock_azul_response[:Location]}\"\noutput=\"FakeHCAStudy1/hca_file1.tsv\""
+        expected_manifest_config = "url=\"#{mock_manifest_response[:Location]}\"\noutput=\"FakeHCAStudy1/hca_file1.tsv\""
         assert config_file.include?("#{@basic_study.accession}/metadata/metadata.txt"), 'did not include SCP metadata file'
-        puts config_file
         assert config_file.include?(expected_manifest_config), 'did not include correct HCA manifest file or output path'
+        assert config_file.include?("output=\"FakeHCAStudy1/SomeAnalysis.loom\"")
       end
     end
   end
