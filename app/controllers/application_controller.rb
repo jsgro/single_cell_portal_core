@@ -127,6 +127,9 @@ class ApplicationController < ActionController::Base
         @default_cluster_annotations['Cannot Display'] << @default_cluster&.formatted_cell_annotation(cell_annotation)
       end
     end
+    # TODO: refactor to use AnnotationVizService.get_study_annotation_options for all of these variables
+    @annotation_groups = AnnotationVizService.get_study_annotation_options(@study, current_user)
+                                             .dig(:default_annotation, :values)
     # initialize reviewer access object
     @reviewer_access = @study.reviewer_access.present? ? @study.reviewer_access : @study.build_reviewer_access
   end
