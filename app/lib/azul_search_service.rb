@@ -78,6 +78,7 @@ class AzulSearchService
 
   # iterate through the result entries for each project to determine what facets/filters were matched
   def self.get_facet_matches(result, facets)
+    Rails.logger.info "facet matching: #{facets}"
     results_info = {}
     facets.each do |facet|
       facet_name = facet[:id]
@@ -86,11 +87,15 @@ class AzulSearchService
         # gotcha where sampleDisease is called disease in Azul response objects
         azul_name = 'disease' if azul_name == 'sampleDisease'
         field_entries = result[result_field].map { |entry| entry[azul_name] }.flatten.uniq
-        facet[:filters].each do |filter|
-          match = field_entries.select { |entry| filter[:name] == entry || filter[:id] == entry }
-          results_info[facet_name] ||= []
-          if match.any? && !results_info[facet_name].include?(filter)
-            results_info[facet_name] << filter
+        if facet[:filters].is_a? Hash
+          results_info[facet_name] = [facet[:filters]]
+        else
+          facet[:filters].each do |filter|
+            match = field_entries.select { |entry| filter[:name] == entry || filter[:id] == entry }
+            results_info[facet_name] ||= []
+            if match.any? && !results_info[facet_name].include?(filter)
+              results_info[facet_name] << filter
+            end
           end
         end
       end
@@ -136,6 +141,8 @@ class AzulSearchService
       facet_list.each do |facet|
         facet_identifier = facet[:id]
         all_facets[facet_identifier] ||= facet
+        next if facet[:filters].is_a? Hash # this is a numeric facet, and we only have one right now
+
         facet[:filters].each do |f|
           all_facets[facet_identifier][:filters] << f unless all_facets.dig(facet_identifier, :filters).include? f
         end

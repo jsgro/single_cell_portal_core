@@ -268,8 +268,20 @@ class HcaAzulClient < Struct.new(:api_root)
     facets.each do |facet|
       safe_facet = facet.with_indifferent_access
       hca_term = FacetNameConverter.convert_schema_column(:alexandria, :azul, safe_facet[:id])
-      filter_values = safe_facet[:filters].map { |filter| filter[:name] }
-      facet_query = { hca_term => { is: filter_values } }
+      scp_facet = facet[:db_facet]
+      if scp_facet.is_numeric?
+        min = safe_facet.dig(:filters, :min)
+        max = safe_facet.dig(:filters, :max)
+        unit = safe_facet.dig(:filters, :unit)
+        min_seconds = scp_facet.calculate_time_in_seconds(base_value: min, unit_label: unit).to_i
+        max_seconds = scp_facet.calculate_time_in_seconds(base_value: max, unit_label: unit).to_i
+        # within query must have nested array, where min/max values are represented as arrays within query
+        # multiple min/max ranges are processed with AND logic
+        facet_query = { hca_term => { within: [[min_seconds, max_seconds]] } }
+      else
+        filter_values = safe_facet[:filters].map { |filter| filter[:name] }
+        facet_query = { hca_term => { is: filter_values } }
+      end
       query.merge! facet_query
     end
     query

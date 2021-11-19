@@ -46,7 +46,7 @@ class FacetNameConverter
     'library_preparation_protocol' => 'libraryConstructionApproach',
     'organ' => 'organ',
     'organ_region' => 'organPart',
-    'organism_age' => 'organismAge',
+    'organism_age' => 'organismAgeRange',
     'preservation_method' => 'preservationMethod',
     'sex' => 'biologicalSex',
     'species' => 'genusSpecies',
