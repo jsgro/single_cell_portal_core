@@ -2,6 +2,12 @@
 <div id="branding-group-demo" style="font-family: <%= @branding_group.font_family %> !important; color: <%= @branding_group.font_color %> !important; background-color: <%= @branding_group.background_color %> !important;">
   <h1><span id="branding_group_name"><%= @branding_group.name %></span> <%= link_to "<i class='fas fa-eye'></i> View Live".html_safe, site_path(scpbr: @branding_group.name_as_id), class: 'btn btn-default' %></h1>
   <p class="lead" id="branding_group_tag_line"><%= @branding_group.tag_line %></p>
+  <p class="lead">
+    Curators:
+    <% @branding_group.users.map(&:email).each do |email| %>
+      <span class="label label-primary"><%= email %></span>
+    <% end %>
+  </p>
   <div class="row">
     <div class="col-md-3">
       <p>Font Family: <span id="branding_group_font_family"><%= @branding_group.font_family %></span></p>
@@ -45,5 +51,7 @@
 
 <p>
   <%= scp_link_to "<span class='fas fa-edit'></span> Edit".html_safe, edit_branding_group_path(@branding_group), class: 'btn btn-primary' %>
-  <%= scp_link_to "<span class='fas fa-chevron-left'></span> Back".html_safe, branding_groups_path, class: 'btn btn-warning' %>
+  <%= scp_link_to "<span class='fas fa-chevron-left'></span> Back".html_safe,
+                  current_user.admin ? branding_groups_path : collection_list_navigate_path,
+                  class: 'btn btn-warning' %>
 </p>

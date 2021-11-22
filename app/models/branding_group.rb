@@ -17,8 +17,8 @@ class BrandingGroup
   # list of facets to show for this branding group (will restrict to only provided identifiers, if present)
   field :facet_list, type: Array, default: []
 
-  has_many :studies
-  belongs_to :user
+  has_and_belongs_to_many :studies
+  has_and_belongs_to_many :users
 
   field :splash_image_file_size, type: Integer
   field :splash_image_content_type, type: String
@@ -41,7 +41,8 @@ class BrandingGroup
                            if: proc {|bg| bg.send(image_attachment).present?}
   end
 
-  validates_presence_of :name, :name_as_id, :user_id, :background_color, :font_family
+  validates_presence_of :name, :name_as_id, :background_color, :font_family
+  validate :assign_curators
   validates_uniqueness_of :name
   validates_format_of :name, :name_as_id,
             with: ValidationTools::ALPHANUMERIC_SPACE_DASH, message: ValidationTools::ALPHANUMERIC_SPACE_DASH_ERROR
@@ -51,26 +52,33 @@ class BrandingGroup
                       allow_blank: true
   validates_format_of :font_color, :font_family, :background_color, with: ValidationTools::ALPHANUMERIC_EXTENDED,
                       message: ValidationTools::ALPHANUMERIC_EXTENDED_ERROR
-
   before_validation :set_name_as_id
-  before_destroy :remove_branding_association, :remove_cached_images
+  before_destroy :remove_cached_images
 
   # helper to return list of associated search facets
   def facets
     self.facet_list.any? ? SearchFacet.where(:identifier.in => self.facet_list) : SearchFacet.visible
   end
 
+  # list of curator emails
+  def curator_list
+    users.map(&:email)
+  end
+
+  # determine if user can edit branding group (all portal admins & collection curators)
+  def can_edit?(user)
+    !!(user && (user.admin? || users.include?(user)))
+  end
+
+  # determine if a user can destroy a branding group (only portal admins)
+  def can_destroy?(user)
+    !!user&.admin
+  end
+
   private
 
   def set_name_as_id
     self.name_as_id = self.name.downcase.gsub(/[^a-zA-Z0-9]+/, '-').chomp('-')
-  end
-
-  # remove branding association on delete
-  def remove_branding_association
-    self.studies.each do |study|
-      study.update(branding_group_id: nil)
-    end
   end
 
   # delete all cached images from UserAssetService::STORAGE_BUCKET_NAME when deleting a branding group
@@ -86,4 +94,8 @@ class BrandingGroup
     end
   end
 
+  # ensure that a curator is assigned on collection creation (otherwise only admins can use it)
+  def assign_curators
+    errors.add(:user_ids, '- you must assign at least one curator') if user_ids.empty?
+  end
 end

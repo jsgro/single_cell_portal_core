@@ -7,6 +7,7 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
   include TestInstrumentor
 
   before(:all) do
+    SearchFacet.update_all_facet_filters
     @azul_client = ApplicationController.hca_azul_client
     @facets = [
       {
