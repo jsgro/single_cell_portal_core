@@ -1,0 +1,396 @@
+{
+  "hits": [
+    {
+      "projects": [
+        {
+          "projectId": "c1810dbc-16d2-45c3-b45e-3e675f88d87b",
+          "projectTitle": "A cell atlas of human thymic development defines T cell repertoire formation",
+          "projectShortname": "HumanThymicDevelopment",
+          "projectDescription": "We performed single-cell RNA-sequencing to create a cell census of the human thymus during development, early childhood and adult life. We sampled 15 embryonic and fetal thymi spanning thymic developmental stages between 7 post-conception weeks (PCW) to 17 PCW, and 9 postnatal thymi from paediatric and adult samples. We compared the cellular composition and T cell differentiation within human and mouse thymus using newly generated and repository mouse datasets. Finally, we investigated the bias in the recombination and selection of human versus mouse TCR repertoires."
+        }
+      ],
+      "samples": [
+        {
+          "sampleEntityType": [
+            "specimens"
+          ],
+          "effectiveOrgan": [
+            "colon",
+            "thymus"
+          ],
+          "submissionDate": "2020-09-14T16:53:22.780000Z",
+          "updateDate": "2020-12-01T17:18:08.743000Z",
+          "id": [
+            "BRC2172_THY",
+            "BRC2194_THY",
+            "BRC2195_THY",
+            "CBTM-337C_THY",
+            "CBTM-464C_THY",
+            "CBTM-470BR_THY",
+            "F21_THY",
+            "F22_THY",
+            "F23_THY",
+            "F29_THY",
+            "F30_THY",
+            "F38_THY",
+            "F41_THY",
+            "F45_THY",
+            "F64_THY",
+            "F67_THY",
+            "F74_COL",
+            "F83_THY",
+            "T03_THY",
+            "T06_THY",
+            "T07_THY",
+            "mouse_1_THY",
+            "mouse_2_THY",
+            "mouse_3_THY"
+          ],
+          "organ": [
+            "colon",
+            "thymus"
+          ],
+          "organPart": [
+            null
+          ],
+          "disease": [
+            "normal"
+          ],
+          "preservationMethod": [
+            null
+          ],
+          "source": [
+            "specimen_from_organism"
+          ]
+        }
+      ],
+      "specimens": [
+        {
+          "submissionDate": "2020-09-14T16:53:22.780000Z",
+          "updateDate": "2020-12-01T17:18:08.743000Z",
+          "id": [
+            "BRC2172_THY",
+            "BRC2194_THY",
+            "BRC2195_THY",
+            "CBTM-337C_THY",
+            "CBTM-464C_THY",
+            "CBTM-470BR_THY",
+            "F21_THY",
+            "F22_THY",
+            "F23_THY",
+            "F29_THY",
+            "F30_THY",
+            "F38_THY",
+            "F41_THY",
+            "F45_THY",
+            "F64_THY",
+            "F67_THY",
+            "F74_COL",
+            "F83_THY",
+            "T03_THY",
+            "T06_THY",
+            "T07_THY",
+            "mouse_1_THY",
+            "mouse_2_THY",
+            "mouse_3_THY"
+          ],
+          "organ": [
+            "colon",
+            "thymus"
+          ],
+          "organPart": [
+            null
+          ],
+          "disease": [
+            "normal"
+          ],
+          "preservationMethod": [
+            null
+          ],
+          "source": [
+            "specimen_from_organism"
+          ]
+        }
+      ],
+      "cellLines": [],
+      "donorOrganisms": [
+        {
+          "submissionDate": "2020-09-14T16:53:22.462000Z",
+          "updateDate": "2021-03-12T11:55:57.371000Z",
+          "id": [
+            "BRC2172",
+            "BRC2194",
+            "BRC2195",
+            "CBTM-337C",
+            "CBTM-464C",
+            "CBTM-470BR",
+            "F21",
+            "F22",
+            "F23",
+            "F29",
+            "F30",
+            "F38",
+            "F41",
+            "F45",
+            "F64",
+            "F67",
+            "F74",
+            "F83",
+            "T03",
+            "T06",
+            "T07",
+            "mouse_1",
+            "mouse_2",
+            "mouse_3"
+          ],
+          "donorCount": 24,
+          "developmentStage": [
+            "10-month-old human stage",
+            "10th week post-fertilization human stage",
+            "11th week post-fertilization human stage",
+            "12th week post-fertilization human stage",
+            "13th week post-fertilization human stage",
+            "14th week post-fertilization human stage",
+            "16th week post-fertilization human stage",
+            "17th week post-fertilization human stage",
+            "2-year-old human stage",
+            "3-month-old human stage",
+            "9th week post-fertilization human stage",
+            "adult",
+            "human adult stage",
+            "juvenile stage",
+            "mature stage",
+            "organogenesis stage"
+          ],
+          "genusSpecies": [
+            "Homo sapiens",
+            "Mus musculus"
+          ],
+          "organismAge": [
+            {
+              "value": "10",
+              "unit": "month"
+            },
+            {
+              "value": "15-20",
+              "unit": "year"
+            },
+            {
+              "value": "20-25",
+              "unit": "year"
+            },
+            {
+              "value": "24",
+              "unit": "week"
+            },
+            {
+              "value": "3",
+              "unit": "month"
+            },
+            {
+              "value": "30",
+              "unit": "month"
+            },
+            {
+              "value": "35-40",
+              "unit": "year"
+            },
+            {
+              "value": "4",
+              "unit": "week"
+            },
+            {
+              "value": "8",
+              "unit": "week"
+            },
+            null
+          ],
+          "organismAgeRange": [
+            {
+              "gte": 2419200,
+              "lte": 2419200
+            },
+            {
+              "gte": 4838400,
+              "lte": 4838400
+            },
+            {
+              "gte": 7884000,
+              "lte": 7884000
+            },
+            {
+              "gte": 14515200,
+              "lte": 14515200
+            },
+            {
+              "gte": 26280000,
+              "lte": 26280000
+            },
+            {
+              "gte": 78840000,
+              "lte": 78840000
+            },
+            {
+              "gte": 473040000,
+              "lte": 630720000
+            },
+            {
+              "gte": 630720000,
+              "lte": 788400000
+            },
+            {
+              "gte": 1103760000,
+              "lte": 1261440000
+            }
+          ],
+          "biologicalSex": [
+            "female",
+            "male"
+          ],
+          "disease": [
+            "normal"
+          ]
+        }
+      ],
+      "organoids": [],
+      "cellSuspensions": [
+        {
+          "submissionDate": "2020-09-14T16:53:23.093000Z",
+          "updateDate": "2020-12-01T17:23:08.754000Z",
+          "organ": [
+            "thymus"
+          ],
+          "organPart": [
+            null
+          ],
+          "selectedCellType": [
+            "T cell",
+            "epithelial cell of thymus",
+            "hematopoietic cell",
+            "somatic cell",
+            null
+          ],
+          "totalCells": 456000
+        },
+        {
+          "submissionDate": "2020-09-14T16:53:23.627000Z",
+          "updateDate": "2020-09-14T16:53:52.137000Z",
+          "organ": [
+            "colon"
+          ],
+          "organPart": [
+            null
+          ],
+          "selectedCellType": [
+            null
+          ],
+          "totalCells": 16000
+        }
+      ],
+      "fileTypeSummaries": [
+        {
+          "format": "fastq.gz",
+          "fileType": "fastq.gz",
+          "fileSource": [
+            null
+          ],
+          "source": [
+            null
+          ],
+          "count": 206,
+          "totalSize": 2908647142469,
+          "matrixCellCount": null,
+          "isIntermediate": null,
+          "contentDescription": [
+            "DNA sequence"
+          ]
+        },
+        {
+          "format": "loom",
+          "fileType": "loom",
+          "fileSource": [
+            "DCP/2 Analysis"
+          ],
+          "source": [
+            "DCP/2 Analysis"
+          ],
+          "count": 28,
+          "totalSize": 44947813666,
+          "matrixCellCount": null,
+          "isIntermediate": true,
+          "contentDescription": [
+            "Count Matrix"
+          ]
+        },
+        {
+          "format": "bam",
+          "fileType": "bam",
+          "fileSource": [
+            "DCP/2 Analysis"
+          ],
+          "source": [
+            "DCP/2 Analysis"
+          ],
+          "count": 28,
+          "totalSize": 879961277870,
+          "matrixCellCount": null,
+          "isIntermediate": null,
+          "contentDescription": [
+            null
+          ]
+        },
+        {
+          "format": "loom",
+          "fileType": "loom",
+          "fileSource": [
+            "DCP/2 Analysis"
+          ],
+          "source": [
+            "DCP/2 Analysis"
+          ],
+          "count": 2,
+          "totalSize": 3975803227,
+          "matrixCellCount": null,
+          "isIntermediate": false,
+          "contentDescription": [
+            "Count Matrix"
+          ]
+        },
+        {
+          "format": "h5ad",
+          "fileType": "h5ad",
+          "fileSource": [
+            "Zenodo"
+          ],
+          "source": [
+            "Zenodo"
+          ],
+          "count": 1,
+          "totalSize": 1571941873,
+          "matrixCellCount": null,
+          "isIntermediate": false,
+          "contentDescription": [
+            "Matrix"
+          ]
+        },
+        {
+          "format": "zip",
+          "fileType": "zip",
+          "fileSource": [
+            "Zenodo"
+          ],
+          "source": [
+            "Zenodo"
+          ],
+          "count": 2,
+          "totalSize": 2964839100,
+          "matrixCellCount": null,
+          "isIntermediate": false,
+          "contentDescription": [
+            "Matrix"
+          ]
+        }
+      ]
+    }
+  ]
+}

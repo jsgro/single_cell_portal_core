@@ -12,12 +12,12 @@ class HcaAzulClientTest < ActiveSupport::TestCase
       {
         id: 'disease',
         filters: [{ id: 'MONDO_0005109', name: 'HIV infectious disease' }],
-        db_facet: SearchFacet.new(identifier: 'disease', data_type: 'string') # does not need to be persisted
+        db_facet: SearchFacet.find_or_create_by(identifier: 'disease', data_type: 'string')
       },
       {
         id: 'species',
         filters: [{ id: 'NCBITaxon_9606', name: 'Homo sapiens' }],
-        db_facet: SearchFacet.new(identifier: 'species', data_type: 'string')
+        db_facet: SearchFacet.find_or_create_by(identifier: 'species', data_type: 'string')
       }
     ]
     catalogs = @hca_azul_client.catalogs

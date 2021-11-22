@@ -11,13 +11,7 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     @facets = [
       {
         id: 'species',
-        filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }],
-        db_facet: SearchFacet.new(identifier: 'species', data_type: 'string')
-      },
-      {
-        id: 'organ',
-        filters: [{ id: 'UBERON_0000178', name: 'blood' }],
-        db_facet: SearchFacet.new(identifier: 'organ', data_type: 'string')
+        filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }]
       }
     ]
     @terms = %w[pulmonary]
@@ -29,76 +23,129 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
                                name_prefix: 'Azul Search Test',
                                user: @user,
                                test_array: @@studies_to_clean)
-    SearchFacet.update_all_facet_filters
+    @mock_facet_query = {
+      genusSpecies: {
+        is: ['Homo sapiens']
+      }
+    }.with_indifferent_access
+    @mock_term_query = {
+      sampleDisease: {
+        is: ['chronic obstructive pulmonary disease', 'idiopathic pulmonary fibrosis', 'pulmonary fibrosis']
+      }
+    }.with_indifferent_access
+    @terms_to_facets = [
+      {
+        id: 'disease',
+        filters: [
+          { id: 'chronic obstructive pulmonary disease', name: 'chronic obstructive pulmonary disease' },
+          { id: 'idiopathic pulmonary fibrosis', name: 'idiopathic pulmonary fibrosis' },
+          { id: 'pulmonary fibrosis', name: 'pulmonary fibrosis' }
+        ]
+      }.with_indifferent_access
+    ]
+    tcell_json = File.open(Rails.root.join('test/test_data/azul/human_tcell.json')).read
+    thymus_json = File.open(Rails.root.join('test/test_data/azul/human_thymus.json')).read
+    fibrosis_json = File.open(Rails.root.join('test/test_data/azul/pulmonary_fibrosis.json')).read
+    @human_tcell_response = JSON.parse(tcell_json).with_indifferent_access
+    @human_thymus_response = JSON.parse(thymus_json).with_indifferent_access
+    @fibrosis_response = JSON.parse(fibrosis_json).with_indifferent_access
   end
 
   test 'should search Azul using facets' do
-    results = AzulSearchService.get_results(selected_facets: @facets, terms: nil)
-    assert_includes results.keys, @hca_project_shortname
-    project = results[@hca_project_shortname]
-    # will always be project manifest file
-    manifest = project[:file_information].detect { |f| f[:file_type] == 'Project Manifest' }
-    assert manifest.present?
+    mock = MiniTest::Mock.new
+    mock.expect :format_query_from_facets, @mock_facet_query, [@facets]
+    mock.expect :merge_query_objects, @mock_facet_query, [@mock_facet_query, nil]
+    mock.expect :projects, @human_tcell_response, [{ query: @mock_facet_query }]
+    ApplicationController.stub :hca_azul_client, mock do
+      results = AzulSearchService.get_results(selected_facets: @facets, terms: nil)
+      mock.verify
+      assert_includes results.keys, @hca_project_shortname
+      project = results[@hca_project_shortname]
+      # will always be project manifest file
+      manifest = project[:file_information].detect { |f| f[:file_type] == 'Project Manifest' }
+      assert manifest.present?
+    end
   end
 
   test 'should search Azul using numeric facets' do
-    age_facet = SearchFacet.new(identifier: 'organism_age', data_type: 'number', is_array_based: false, unit: 'years')
     facets = [
       {
-        id: 'organism_age', filters: { min: 1, max: 5, unit: 'years' }, db_facet: age_facet
+        id: 'organism_age', filters: { min: 1, max: 5, unit: 'years' }
       }.with_indifferent_access
     ]
-    results = AzulSearchService.get_results(selected_facets: facets, terms: nil)
-    assert results.keys.any?
-    entry = results.values.sample
-    expected_match = {
-      organism_age: [{ min: 1, max: 5, unit: 'years' }],
-      facet_search_weight: 1
-    }.with_indifferent_access
-    assert_equal expected_match, entry[:facet_matches]
+    mock_age_query = { organismAgeRange: { within: [[31557600, 157788000]] } }
+    mock = MiniTest::Mock.new
+    mock.expect :format_query_from_facets, mock_age_query, [facets]
+    mock.expect :merge_query_objects, mock_age_query, [mock_age_query, nil]
+    mock.expect :projects, @human_thymus_response, [{ query: mock_age_query }]
+    ApplicationController.stub :hca_azul_client, mock do
+      results = AzulSearchService.get_results(selected_facets: facets, terms: nil)
+      mock.verify
+      assert results.keys.any?
+      entry = results.values.sample
+      expected_match = {
+        organism_age: [{ min: 1, max: 5, unit: 'years' }],
+        facet_search_weight: 1
+      }.with_indifferent_access
+      assert_equal expected_match, entry[:facet_matches]
+    end
   end
 
   test 'should search Azul using terms' do
-    results = AzulSearchService.get_results(selected_facets: [], terms: @terms)
-    project_short_name = 'PulmonaryFibrosisGSE135893'
-    assert_includes results.keys, project_short_name
-    expected_term_match = { total: 5, terms: { pulmonary: 5 } }.with_indifferent_access
-    assert_equal expected_term_match, results.dig(project_short_name, :term_matches)
+    mock = MiniTest::Mock.new
+    mock.expect :format_query_from_facets, nil, [[]]
+    mock.expect :format_facet_query_from_keyword, @terms_to_facets, [@terms]
+    mock.expect :format_query_from_facets, @mock_term_query, [@terms_to_facets]
+    mock.expect :merge_query_objects, @mock_term_query, [nil, @mock_term_query]
+    mock.expect :projects, @fibrosis_response, [{ query: @mock_term_query }]
+    ApplicationController.stub :hca_azul_client, mock do
+      results = AzulSearchService.get_results(selected_facets: [], terms: @terms)
+      mock.verify
+      project_short_name = 'PulmonaryFibrosisGSE135893'
+      assert_includes results.keys, project_short_name
+      expected_term_match = { total: 5, terms: { pulmonary: 5 } }.with_indifferent_access
+      assert_equal expected_term_match, results.dig(project_short_name, :term_matches)
+    end
   end
 
   test 'should search Azul using facets and terms' do
     facets = [
       {
         id: 'organ',
-        filters: [{ id: 'lung', name: 'lung' }],
-        db_facet: SearchFacet.new(identifier: 'organ', data_type: 'string')
+        filters: [{ id: 'lung', name: 'lung' }]
       }
     ]
-    results = AzulSearchService.get_results(selected_facets: facets, terms: @terms)
-    project_short_name = 'PulmonaryFibrosisGSE135893'
-    assert_includes results.keys, project_short_name
-    expected_term_match = { total: 5, terms: { pulmonary: 5 } }.with_indifferent_access
-    expected_facet_match = {
-      organ: [{ id: 'lung', name: 'lung' }],
-      disease: [
-        { id: 'idiopathic pulmonary fibrosis', name: 'idiopathic pulmonary fibrosis' },
-        { id: 'pulmonary fibrosis', name: 'pulmonary fibrosis' }
-      ],
-      facet_search_weight: 3
-    }.with_indifferent_access
-    assert_equal expected_term_match, results.dig(project_short_name, :term_matches)
-    assert_equal expected_facet_match, results.dig(project_short_name, :facet_matches)
+    organ_query = { organ: { is: %w[lung] } }
+    merged_query = @mock_term_query.merge(organ_query).with_indifferent_access
+    mock = MiniTest::Mock.new
+    mock.expect :format_query_from_facets, organ_query, [facets]
+    mock.expect :format_facet_query_from_keyword, @terms_to_facets, [@terms]
+    mock.expect :format_query_from_facets, @mock_term_query, [@terms_to_facets]
+    mock.expect :merge_query_objects, merged_query, [organ_query, @mock_term_query]
+    mock.expect :projects, @fibrosis_response, [{ query: merged_query }]
+    ApplicationController.stub :hca_azul_client, mock do
+      results = AzulSearchService.get_results(selected_facets: facets, terms: @terms)
+      mock.verify
+      project_short_name = 'PulmonaryFibrosisGSE135893'
+      assert_includes results.keys, project_short_name
+      expected_term_match = { total: 5, terms: { pulmonary: 5 } }.with_indifferent_access
+      expected_facet_match = {
+        organ: [{ id: 'lung', name: 'lung' }],
+        disease: [
+          { id: 'idiopathic pulmonary fibrosis', name: 'idiopathic pulmonary fibrosis' },
+          { id: 'pulmonary fibrosis', name: 'pulmonary fibrosis' }
+        ],
+        facet_search_weight: 3
+      }.with_indifferent_access
+      assert_equal expected_term_match, results.dig(project_short_name, :term_matches)
+      assert_equal expected_facet_match, results.dig(project_short_name, :facet_matches)
+    end
   end
 
   test 'should match results on facets' do
-    query = { projectId: { is: [@hca_project_id] } }.to_json
-    raw_results = @azul_client.projects(query: query, size: 1)
-    tcell_project = raw_results['hits'].first
-    matches = AzulSearchService.get_facet_matches(tcell_project, @facets)
-    %w[species organ].each do |facet_name|
-      assert_includes matches.keys, facet_name
-    end
-    assert_equal 2, matches[:facet_search_weight]
+    matches = AzulSearchService.get_facet_matches(@human_tcell_response['hits'].first, @facets)
+    assert_includes matches.keys, 'species'
+    assert_equal 1, matches[:facet_search_weight]
   end
 
   test 'should append results to studies/facet map' do
@@ -109,18 +156,27 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
       }
     }.with_indifferent_access
     initial_results = [@study]
-    terms = ['CD8+ T cells']
-    studies, facet_map = AzulSearchService.append_results_to_studies(initial_results,
-                                                                     selected_facets: @facets,
-                                                                     terms: terms, facet_map: facet_map)
-    assert studies.size > 1
-    hca_entry = studies.detect { |study| study.is_a?(Hash) ? study[:accession] == @hca_project_shortname : nil }
-    assert hca_entry.present?
-    hca_facet_entry = facet_map[@hca_project_shortname]
-    assert hca_facet_entry.present?
-    assert_equal 2, hca_facet_entry[:facet_search_weight]
-    assert_equal 1, hca_entry.dig(:term_matches, :total)
-    assert_equal terms, hca_entry.dig(:term_matches, :terms).keys
+    mock = MiniTest::Mock.new
+    mock.expect :format_query_from_facets, @mock_facet_query, [@facets]
+    mock.expect :format_facet_query_from_keyword, @terms_to_facets, [@terms]
+    mock.expect :format_query_from_facets, @mock_term_query, [@terms_to_facets]
+    merged_query = @mock_facet_query.merge(@mock_term_query).with_indifferent_access
+    mock.expect :merge_query_objects, merged_query, [@mock_facet_query, @mock_term_query]
+    mock.expect :projects, @fibrosis_response, [{ query: merged_query }]
+    fibrosis_shortname = 'PulmonaryFibrosisGSE135893'
+    ApplicationController.stub :hca_azul_client, mock do
+      studies, facet_map = AzulSearchService.append_results_to_studies(initial_results,
+                                                                       selected_facets: @facets,
+                                                                       terms: @terms, facet_map: facet_map)
+      assert studies.size > 1
+      hca_entry = studies.detect { |study| study.is_a?(Hash) ? study[:accession] == fibrosis_shortname : nil }
+      assert hca_entry.present?
+      hca_facet_entry = facet_map[fibrosis_shortname]
+      assert hca_facet_entry.present?
+      assert_equal 3, hca_facet_entry[:facet_search_weight]
+      assert_equal 5, hca_entry.dig(:term_matches, :total)
+      assert_equal @terms, hca_entry.dig(:term_matches, :terms).keys
+    end
   end
 
   test 'should retrieve all facets/filters' do
@@ -147,10 +203,6 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
       {
         id: 'species',
         filters: [{ id: 'NCBITaxon9609', name: 'Homo sapiens' }, gallus_filter]
-      },
-      {
-        id: 'organ',
-        filters: [{ id: 'UBERON_0000178', name: 'blood' }]
       }
     ]
     assert_equal expected_facets, AzulSearchService.merge_facet_lists(@facets, extra_facets)
