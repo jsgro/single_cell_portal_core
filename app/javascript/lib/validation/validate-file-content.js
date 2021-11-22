@@ -146,7 +146,7 @@ function validateEqualCount(headers, annotTypes) {
 
 
 /**
- * Verify cell names are unique for a cluster or metadata file
+ * Verify cell names are each unique for a cluster or metadata file
  */
 async function validateUniqueCellNames(file) {
   const issues = []
@@ -216,8 +216,7 @@ async function validateCapFormat(table, fileType, file) {
     validateNameKeyword(headers),
     validateTypeKeyword(annotTypes),
     validateGroupOrNumeric(annotTypes),
-    validateEqualCount(headers, annotTypes),
-    await validateUniqueCellNames(file)
+    validateEqualCount(headers, annotTypes)
   )
 
   // Check format rules specific to either metadata or cluster file
@@ -344,6 +343,7 @@ async function parseFile(file, fileType) {
       table = lines.map(line => line.split(delimiter))
 
       issues = await validateCapFormat(table, fileType, file)
+      issues = issues.concat(await validateUniqueCellNames(file))
     }
   }
   return { table, delimiter, issues }
