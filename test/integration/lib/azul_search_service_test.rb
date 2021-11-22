@@ -28,6 +28,11 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
                                name_prefix: 'Azul Search Test',
                                user: @user,
                                test_array: @@studies_to_clean)
+    SearchFacet.update_all_facet_filters
+  end
+
+  after(:all) do
+    SearchFacet.all.map(&:update_filter_values!)
   end
 
   test 'should search Azul using facets' do
@@ -55,8 +60,11 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     expected_term_match = { total: 5, terms: { pulmonary: 5 } }.with_indifferent_access
     expected_facet_match = {
       organ: [{ id: 'lung', name: 'lung' }],
-      disease: [],
-      facet_search_weight: 1
+      disease: [
+        { id: 'idiopathic pulmonary fibrosis', name: 'idiopathic pulmonary fibrosis' },
+        { id: 'pulmonary fibrosis', name: 'pulmonary fibrosis' }
+      ],
+      facet_search_weight: 3
     }.with_indifferent_access
     assert_equal expected_term_match, results.dig(project_short_name, :term_matches)
     assert_equal expected_facet_match, results.dig(project_short_name, :facet_matches)
@@ -101,8 +109,8 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
                        library_preparation_protocol sex study_description cell_type].sort
     assert_equal expected_keys, facets.keys.sort
     diseases = facets.dig('disease', 'filters')
-    assert_includes diseases, "normal"
-    assert_includes diseases, "multiple sclerosis"
+    assert_includes diseases, 'normal'
+    assert_includes diseases, 'multiple sclerosis'
     assert_not facets.dig('disease', 'is_numeric')
     assert facets.dig('organism_age', 'is_numeric')
   end
