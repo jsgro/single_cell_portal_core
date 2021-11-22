@@ -11,7 +11,11 @@
             <% end %>
           </div>
           <div class="collections-name">
-            <%= link_to branding_group.name, site_path(scpbr: branding_group.name_as_id) %><br/>
+            <%= link_to branding_group.name, site_path(scpbr: branding_group.name_as_id) %>
+            <% if user_signed_in? && current_user.branding_groups.any? %>
+              <%= get_published_label(branding_group) %>
+            <% end %>
+            <br/>
             <%= branding_group.tag_line %><br/>
             <%= branding_group.studies.count %> studies
             <% if branding_group.external_link_url.present? %>
@@ -21,10 +25,15 @@
             <% end %>
           </div>
           <div class="collections-actions">
-            <% if @editable_branding_groups.include?(branding_group) %>
+            <% if branding_group.can_edit?(current_user) %>
               <%= scp_link_to "<i class='fas fa-search'></i> Info".html_safe, branding_group_path(branding_group), class: "btn btn-xs btn-info #{branding_group.name_as_id}-show" %>
               <%= scp_link_to "<i class='fas fa-edit'></i> Edit".html_safe, edit_branding_group_path(branding_group), class: "btn btn-xs btn-primary #{branding_group.name_as_id}-edit" %>
-              <%= scp_link_to "<i class='fas fa-trash'></i> Destroy".html_safe, branding_group_path(branding_group), method: :delete, class: "btn btn-xs btn-danger delete-btn #{branding_group.name_as_id}-delete" %>
+              <% if branding_group.can_destroy?(current_user) %>
+                <%= scp_link_to "<i class='fas fa-trash'></i> Destroy".html_safe, branding_group_path(branding_group),
+                                method: :delete, class: "btn btn-xs btn-danger delete-btn #{branding_group.name_as_id}-delete",
+                                data: { confirm: 'Are you sure you want to delete this collection?' }
+                %>
+              <% end %>
             <% end %>
           </div>
         </li>

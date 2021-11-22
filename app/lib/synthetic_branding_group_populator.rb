@@ -42,7 +42,10 @@ class SyntheticBrandingGroupPopulator
     synthetic_studies_ids = SyntheticStudyPopulator.collect_synthetic_studies.pluck(:id)
     study_regex = /#{branding_group_config.dig('study_title_regex')}/i
     study_list = Study.where(name: study_regex, :id.in => synthetic_studies_ids)
-    study_list.update_all(branding_group_id: branding_group.id) if study_list.any?
+    study_list.each do |study|
+      study.branding_groups << branding_group
+      study.save
+    end
   end
 
   private
@@ -55,12 +58,14 @@ class SyntheticBrandingGroupPopulator
     end
 
     branding_group = BrandingGroup.new(branding_group_config.dig('branding_group'))
-    branding_group.user ||= user
+    branding_group.users = [user]
     image_info = branding_group_config.dig('images')
     # dynamically assign image files
     image_info.each do |attribute_name, filename|
       File.open(Rails.root.join('test', 'test_data', 'branding_groups', filename)) do |image_file|
-        branding_group.send("#{attribute_name}=", image_file)
+        # copy file to tmp directory to avoid CarrierWave deleting the original
+        file_copy = FileUtils.cp(image_file.path, Rails.root.join('tmp', File.basename(image_file)))
+        branding_group.send("#{attribute_name}=", file_copy)
       end
     end
     puts "Saving branding group #{branding_group.name}"

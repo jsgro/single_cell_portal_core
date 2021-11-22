@@ -17,7 +17,7 @@ class User
   ###
 
   has_many :studies
-  has_many :branding_groups
+  has_and_belongs_to_many :branding_groups
 
   # User annotations are owned by a user
   has_many :user_annotations do
@@ -325,7 +325,7 @@ class User
     if self.admin?
       BrandingGroup.all.order_by(:name.asc)
     else
-      BrandingGroup.where(user_id: self.id).order_by(:name.asc)
+      branding_groups.order_by(:name.asc)
     end
   end
 
@@ -333,7 +333,7 @@ class User
     if self.admin?
       BrandingGroup.all.order_by(:name.asc)
     else
-      BrandingGroup.where(user_id: self.id).or(public: true).order_by(:name.asc)
+      BrandingGroup.where(:user_ids.in => [self.id]).or(public: true).order_by(:name.asc)
     end
   end
 

@@ -17,7 +17,7 @@ class FeatureFlagOptionsControllerTest < ActionDispatch::IntegrationTest
                                name_prefix: 'Feature Flag Options Controller Test',
                                test_array: @@studies_to_clean)
     @branding_group = BrandingGroup.find_or_create_by!(
-      name: 'Feature Flag Test', user_id: @user.id, font_family: 'Helvetica Neue, sans-serif',
+      name: 'Feature Flag Test', user_ids: [@user.id], font_family: 'Helvetica Neue, sans-serif',
       background_color: '#FFFFFF'
     )
     @featureable = [@user, @study, @branding_group]
