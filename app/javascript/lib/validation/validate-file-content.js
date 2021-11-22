@@ -155,7 +155,7 @@ async function validateUniqueCellNames(file) {
     await catchDuplicateCellNames(file)
   } catch (error) {
     const msg = `Cell names must be unique, please fix the following duplicated cell name(s): ${error.message}`
-    issues.push(['error', 'format:cap:count', msg])
+    issues.push(['error', 'format:duplicate:cells-within-file', msg])
   }
   return issues
 }
