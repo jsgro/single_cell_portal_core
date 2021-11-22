@@ -6,8 +6,8 @@ class HcaAzulClientTest < ActiveSupport::TestCase
 
   before(:all) do
     @hca_azul_client = ApplicationController.hca_azul_client
-    @project_shortname = 'HumanTissueTcellActivation'
-    @project_id = '4a95101c-9ffc-4f30-a809-f04518a23803'
+    @project_shortname = 'ImmuneCellExhaustianHIV'
+    @project_id = '0fd8f918-62d6-4b8b-ac35-4c53dd601f71'
     @facets = [
       {
         id: 'disease',
@@ -22,17 +22,31 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     ]
     catalogs = @hca_azul_client.catalogs
     @default_catalog = catalogs['default_catalog']
-    SearchFacet.update_all_facet_filters
-  end
+    @query_json = {
+      sampleDisease: { is: ['HIV infectious disease'] },
+      genusSpecies: { is: ['Homo sapiens'] }
+    }.with_indifferent_access
 
-  after(:all) do
-    SearchFacet.all.map(&:update_filter_values!)
+    # check to see if Azul is up and responding as we expect it to
+    # the status information should indicate all services are up, and running a query for the ImmuneCellExhaustianHIV
+    # project should return exactly one match
+    # if either of these do not return correctly, or error, set a state to skip all tests w/o throwing an error
+    @azul_is_ok = false
+    begin
+      api_up = @hca_azul_client.api_available?
+      project = @hca_azul_client.projects(query: @query_json, size: 1)
+      if api_up && get_entries_from_response(project, :projects).present?
+        @azul_is_ok = true
+      end
+    rescue RestClient::Exception => e
+      puts "Error in determining if Azul is healthy: #{e.message}"
+    end
   end
 
   # skip a test if Azul is not up ; prevents unnecessary build failures due to releases/maintenance
   def skip_if_api_down
-    unless @hca_azul_client.api_available?
-      puts '-- skipping due to Azul API being unavailable --' ; skip
+    unless @azul_is_ok
+      puts '-- skipping due to Azul API being unavailable or inconsistent --' ; skip
     end
   end
 
@@ -74,9 +88,9 @@ class HcaAzulClientTest < ActiveSupport::TestCase
 
   test 'should get projects' do
     skip_if_api_down
-    raw_projects = @hca_azul_client.projects(size: 10)
+    raw_projects = @hca_azul_client.projects(size: 1)
     projects = get_entries_from_response(raw_projects, :projects)
-    assert projects.size == 10
+    assert projects.size == 1
     project = projects.first
     %w[projectId projectTitle projectDescription projectShortname].each do |key|
       assert project[key].present?
@@ -85,8 +99,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
 
   test 'should query projects using facets' do
     skip_if_api_down
-    query = @hca_azul_client.format_query_from_facets(@facets)
-    raw_projects = @hca_azul_client.projects(query: query, size: 1)
+    raw_projects = @hca_azul_client.projects(query: @query_json, size: 1)
     projects = get_entries_from_response(raw_projects, :projects)
     assert_equal 1, projects.size
   end
@@ -110,9 +123,8 @@ class HcaAzulClientTest < ActiveSupport::TestCase
 
   test 'should search files using facets' do
     skip_if_api_down
-    query = @hca_azul_client.format_query_from_facets(@facets)
-    files = ApplicationController.hca_azul_client.files(query: query, size: 10)
-    assert_equal 10, files.size
+    files = ApplicationController.hca_azul_client.files(query: @query_json, size: 1)
+    assert_equal 1, files.size
     file = files.first
     keys = %w[name format size url source].sort
     assert_equal keys, file.keys.sort & keys
@@ -175,12 +187,23 @@ class HcaAzulClientTest < ActiveSupport::TestCase
 
   test 'should convert keyword search into facets' do
     terms = %w[cancer]
-    expected_filters = ['cervical cancer', 'colorectal cancer', 'lower gum cancer', 'lung cancer', 'mandibular cancer',
-                       'tongue cancer'].map { |f| { id: f, name: f }.with_indifferent_access }
+    expected_matches = ['cervical cancer', 'colorectal cancer', 'lower gum cancer', 'lung cancer', 'mandibular cancer',
+                        'tongue cancer']
+    expected_filters = expected_matches.map { |f| { id: f, name: f }.with_indifferent_access }
     expected_facets = [{ id: 'disease', filters: expected_filters }.with_indifferent_access]
-    query = @hca_azul_client.format_facet_query_from_keyword(terms)
-    query.each { |facet| facet.delete(:db_facet) }
-    assert_equal expected_facets, query
+    mock = Minitest::Mock.new
+    mock.expect :nil?, false
+    mock.expect :find_filter_matches, expected_matches, ['cancer', { filter_list: :filters_with_external }]
+    mock.expect :identifier, 'disease'
+    # handle :with_indifferent_access calls
+    mock.expect :is_a?, true, [Class]
+    mock.expect :nested_under_indifferent_access, nil
+    SearchFacet.stub :find_facet_from_term, mock do
+      query = @hca_azul_client.format_facet_query_from_keyword(terms)
+      mock.verify
+      query.each { |facet| facet.delete(:db_facet) }
+      assert_equal expected_facets, query
+    end
   end
 
   test 'should merge query objects' do
@@ -194,13 +217,26 @@ class HcaAzulClientTest < ActiveSupport::TestCase
       }
     }.with_indifferent_access
     facet_query = @hca_azul_client.format_query_from_facets(@facets)
-    term_facets = @hca_azul_client.format_facet_query_from_keyword(%w[cancer])
-    term_query = @hca_azul_client.format_query_from_facets(term_facets)
-    merged_query = @hca_azul_client.merge_query_objects(facet_query, term_query)
-    assert_equal expected_query, merged_query
-    # test nil handling
-    merged_with_nil = @hca_azul_client.merge_query_objects(facet_query, nil, term_query)
-    assert_equal expected_query, merged_with_nil
+    expected_matches = ['cervical cancer', 'colorectal cancer', 'lower gum cancer', 'lung cancer', 'mandibular cancer',
+                        'tongue cancer']
+    mock = Minitest::Mock.new
+    mock.expect :nil?, false
+    mock.expect :find_filter_matches, expected_matches, ['cancer', { filter_list: :filters_with_external }]
+    mock.expect :identifier, 'disease'
+    # handle :with_indifferent_access calls
+    mock.expect :is_a?, true, [Class]
+    mock.expect :nested_under_indifferent_access, nil
+    SearchFacet.stub :find_facet_from_term, mock do
+      term_facets = @hca_azul_client.format_facet_query_from_keyword(%w[cancer])
+      # merge in search facet to handle :is_numeric? call
+      term_facets.first[:db_facet] = SearchFacet.find_or_create_by(identifier: 'disease', data_type: 'string')
+      term_query = @hca_azul_client.format_query_from_facets(term_facets)
+      merged_query = @hca_azul_client.merge_query_objects(facet_query, term_query)
+      assert_equal expected_query, merged_query
+      # test nil handling
+      merged_with_nil = @hca_azul_client.merge_query_objects(facet_query, nil, term_query)
+      assert_equal expected_query, merged_with_nil
+    end
   end
 
   test 'should append HCA catalog name to queries' do
