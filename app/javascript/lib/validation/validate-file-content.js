@@ -148,23 +148,23 @@ function validateEqualCount(headers, annotTypes) {
 /**
  * Verify cell names are each unique for a cluster or metadata file
  */
- function validateUniqueCellNamesWithinFile(table) {
+function validateUniqueCellNamesWithinFile(table) {
   const issues = []
-  
+
   const cellNames = new Set()
   const duplicates = new Set()
   for (let i = 0; i < table.length; i++) {
-    const cell = table[i][0]
+    const cell = table[i].toString().split(/[,\t]/gm)[0].trim()
     if (cellNames.has(cell)) {
       duplicates.add(cell)
     } else {
       cellNames.add(cell)
-    }  
+    }
   }
-  
   if (duplicates.size > 0) {
     const nameTxt = (duplicates.size > 1) ? 'names' : 'name'
-    const msg = `Cell names must be unique within a file.  Please fix the following duplicated cell ${nameTxt}: ${duplicates}`
+    const dupString = [...duplicates].join(', ')
+    const msg = `Cell names must be unique within a file. Please fix the following duplicated cell ${nameTxt}: ${dupString}`
     issues.push(['error', 'duplicate:cells-within-file', msg])
   }
   return issues
