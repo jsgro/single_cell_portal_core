@@ -679,6 +679,12 @@ class Study
         errors.add(:base, "Share Error - #{msg}")
       end
     end
+    # get errors for reviewer_access, if any
+    if study.reviewer_access.present? && !study.reviewer_access.valid?
+      study.reviewer_access.errors.full_messages.each do |msg|
+        errors.add(:base, msg)
+      end
+    end
   end
 
   # XSS protection
