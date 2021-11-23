@@ -343,7 +343,7 @@ async function parseFile(file, fileType) {
       table = lines.map(line => line.split(delimiter))
 
       issues = await validateCapFormat(table, fileType)
-      issues = issues.concat(await validateUniqueCellNames(file))
+      issues = issues.concat(await validateUniqueCellNames(table))
     }
   }
   return { table, delimiter, issues }
