@@ -57,14 +57,14 @@ module Api
         half_hour = 1800 # seconds
 
         totat = current_api_user.create_totat(half_hour, api_v1_bulk_download_generate_curl_config_path)
-        valid_params = params.permit({ file_ids: [], tdr_files: {} }).to_h
+        valid_params = params.permit({ file_ids: [], azul_files: {} }).to_h
 
         # for now, we don't do any permissions validation on the param values -- we'll do that during the actual download, since
         # quota/files/permissions may change between the creation of the download and the actual download.
         auth_download = DownloadRequest.create!(
           auth_code: totat[:totat],
           file_ids: valid_params[:file_ids],
-          tdr_files: valid_params[:tdr_files],
+          azul_files: valid_params[:azul_files],
           user_id: current_api_user.id
         )
         auth_code_response = {
@@ -245,6 +245,13 @@ module Api
             key :description, 'Name of directory folder to download (for single-study bulk download only), can be "all"'
             key :required, false
           end
+          parameter do
+            key :name, :context
+            key :type, :string
+            key :in, :query
+            key :description, 'Context of the download, its scope: either "study" or "global"'
+            key :required, false
+          end
           response 200 do
             key :description, 'Curl configuration file with signed URLs for requested data'
             key :type, :string
@@ -274,7 +281,10 @@ module Api
       def generate_curl_config
         valid_accessions = []
         file_ids = []
-        tdr_files = {}
+        azul_files = {}
+
+        # determine if this a single-study bulk download (from download tab) or from home page search
+        search_context = params[:context] || 'unknown'
 
         # branch based on whether they provided a download_id, file_ids, or accessions
         if params[:download_id]
@@ -282,7 +292,7 @@ module Api
           render json: { error: 'Invalid download_id provided' }, status: 400 and return if download_req.blank?
 
           file_ids = download_req.file_ids
-          tdr_files = download_req.tdr_files
+          azul_files = download_req.azul_files
         elsif params[:file_ids]
           begin
             file_ids = RequestUtils.validate_id_list(params[:file_ids])
@@ -344,7 +354,8 @@ module Api
                                                                            user: current_api_user,
                                                                            study_bucket_map: bucket_map,
                                                                            output_pathname_map: pathname_map,
-                                                                           tdr_files: tdr_files)
+                                                                           azul_files: azul_files,
+                                                                           context: search_context)
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
         logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size + directory_files.size} total files"

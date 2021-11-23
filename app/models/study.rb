@@ -43,7 +43,7 @@ class Study
 
   # associations and scopes
   belongs_to :user
-  belongs_to :branding_group, optional: true
+  has_and_belongs_to_many :branding_groups
   has_many :study_files, dependent: :delete_all do
     # all study files not queued for deletion
     def available

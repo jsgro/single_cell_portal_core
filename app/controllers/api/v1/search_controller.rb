@@ -173,7 +173,7 @@ module Api
 
         # filter results by branding group, if specified
         if @selected_branding_group.present?
-          @viewable = @viewable.where(branding_group_id: @selected_branding_group.id)
+          @viewable = @viewable.where(:branding_group_ids.in => [@selected_branding_group.id])
         end
         # variable for determining how we will sort search results for relevance
         sort_type = :none

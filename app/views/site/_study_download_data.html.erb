@@ -2,10 +2,10 @@
 
 <div class="row">
   <div class="col-xs-12">
-    <h2>Study Files 
-      <span class="badge"><%= @study_files.count %></span> 
+    <h2>Study Files
+      <span class="badge"><%= @study_files.count %></span>
       <%= link_to "<i class='fas fa-question-circle'></i> Bulk download".html_safe, '#/', class: "btn btn-default pull-right #{!@allow_downloads ? 'disabled' : nil}", id: 'download-help' %>
-      <%= link_to "Analyze in cloud".html_safe, '#/', class: "btn btn-default pull-right left-margin-icon {!@allow_downloads ? 'disable d' : nil}", id: 'analyze-in-cloud'%> 
+      <%= link_to "Analyze in cloud".html_safe, '#/', class: "btn btn-default pull-right left-margin-icon {!@allow_downloads ? 'disable d' : nil}", id: 'analyze-in-cloud'%>
     </h2>
 
     <% if @allow_downloads %>
@@ -92,9 +92,9 @@
 				<h3 class="text-center">Cloud Analysis</h3>
 			</div>
 			<div class="modal-body">
-				<p class="lead">Interested in performing analysis with these files using cloud-based resources?         
-          <br/> 
-          We’re exploring the best ways to send SCP data to 
+				<p class="lead">Interested in performing analysis with these files using cloud-based resources?
+          <br/>
+          We’re exploring the best ways to send SCP data to
           <%= link_to "Terra", "https://terra.bio/", :target => "_blank", id:"analyze-terra-link-to-terra"%>, an open platform for cloud-based genomic analysis.</p>
       </div>
 			<div class="modal-footer">
@@ -158,7 +158,8 @@
                 '/single_cell/api/v1/bulk_download/generate_curl_config?' +
                 `accessions=${accession}` +
                 `&auth_code=${authCode}` +
-                `&directory=${downloadObjectName}`
+                `&directory=${downloadObjectName}` +
+                `&context=study`
               );
 
               // if this is a single-directory download, append 'file_types=None' to exclude all other files from

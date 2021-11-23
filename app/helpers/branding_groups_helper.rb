@@ -26,4 +26,10 @@ module BrandingGroupsHelper
         ]
     ]
   end
+
+  def get_published_label(branding_group)
+    text =  branding_group.public ? 'published' : 'private'
+    class_name = branding_group.public ? 'success' : 'danger'
+    "<span class='label label-#{class_name}'>#{text}</span>".html_safe
+  end
 end

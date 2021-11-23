@@ -37,13 +37,11 @@ class AzulSearchService
     merged_facets = merge_facet_lists(selected_facets, terms_to_facets)
     Rails.logger.info "Executing Azul project query with: #{query_json}"
     project_results = client.projects(query: query_json)
-    project_ids = []
     project_results['hits'].each do |entry|
       entry_hash = entry.with_indifferent_access
       project_hash = entry_hash[:projects].first # there will only ever be one project here
       short_name = project_hash[:projectShortname]
       project_id = project_hash[:projectId]
-      project_ids << project_id
       result = {
         hca_result: true,
         accession: short_name,
@@ -54,35 +52,26 @@ class AzulSearchService
         term_matches: {},
         file_information: [
           {
-            url: project_id,
+            project_id: project_id,
             file_type: 'Project Manifest',
+            count: 1,
             upload_file_size: 1.megabyte, # placeholder filesize as we don't know until manifest is downloaded
             name: "#{short_name}.tsv"
           }
         ]
       }.with_indifferent_access
+      # extract file summary information from result
+      project_file_info = extract_file_information(entry_hash)
+      result[:file_information] += project_file_info if project_file_info.any?
       # get facet matches from rest of entry
       result[:facet_matches] = get_facet_matches(entry_hash, merged_facets)
       if terms
+        # only store result if we get a text match on project name/description
         result[:term_matches] = get_search_term_weights(result, terms)
-        if result.dig(:term_matches, :total) > 0
-          results[short_name] = result
-        else
-          # we didn't get any hits on project name/description, so exclude from results and remove project ID from list
-          project_ids.pop
-        end
+        results[short_name] = result if result.dig(:term_matches, :total) > 0
       else
         results[short_name] = result
       end
-    end
-    # now run file query to get matching files for all matching projects
-    file_query = { 'projectId' => { 'is' => project_ids } }
-    Rails.logger.info "Executing Azul file query for projects: #{project_ids}"
-    files = client.files(query: file_query)
-    files.each do |file_entry|
-      file_info = extract_azul_file_info(file_entry)
-      accession = file_info[:accession]
-      results[accession][:file_information] << file_info
     end
     results
   end
@@ -94,6 +83,8 @@ class AzulSearchService
       facet_name = facet[:id]
       RESULT_FACET_FIELDS.each do |result_field|
         azul_name = FacetNameConverter.convert_schema_column(:alexandria, :azul, facet_name)
+        # gotcha where sampleDisease is called disease in Azul response objects
+        azul_name = 'disease' if azul_name == 'sampleDisease'
         field_entries = result[result_field].map { |entry| entry[azul_name] }.flatten.uniq
         facet[:filters].each do |filter|
           match = field_entries.select { |entry| filter[:name] == entry || filter[:id] == entry }
@@ -108,34 +99,6 @@ class AzulSearchService
     results_info[:facet_search_weight] = results_info.values.map(&:count).flatten.reduce(0, :+)
     results_info
   end
-
-  # extract Azul file information for bulk download from file entry object
-  def self.extract_azul_file_info(file)
-    file_info = {
-      'name' => file['name'],
-      'upload_file_size' => file['size'],
-      'file_format' => file['format'],
-      'url' => file['url'],
-      'accession' => file['projectShortname'],
-      'project_id' => file['projectId']
-    }
-    content = file['contentDescription']
-    case content
-    when /Matrix/
-      file_info['file_type'] = 'analysis_file'
-    when /Sequence/
-      file_info['file_type'] = 'sequence_file'
-    else
-      # fallback to guess file_type by extension
-      FILE_EXT_BY_DOWNLOAD_TYPE.each_pair do |file_type, extensions|
-        if extensions.include? file['format']
-          file_info['file_type'] = file_type
-        end
-      end
-    end
-    file_info.with_indifferent_access
-  end
-
 
   # retrieve all possible facet/filter values present in Azul
   # this is done by executing an empty search and requesting only 1 project, then retrieving the
@@ -197,5 +160,39 @@ class AzulSearchService
       end
     end
     weights.with_indifferent_access
+  end
+
+  # extract preliminary file information from an Azul result object
+  def self.extract_file_information(result)
+    file_information = []
+    project_hash = result[:projects].first # there will only ever be one project here
+    short_name = project_hash[:projectShortname]
+    project_id = project_hash[:projectId]
+    result[:fileTypeSummaries].each do |file_summary|
+      file_info = {
+        source: 'hca',
+        count: file_summary['count'],
+        upload_file_size: file_summary['totalSize'],
+        file_format: file_summary['format'],
+        accession: short_name,
+        project_id: project_id
+      }
+      content = file_summary['contentDescription']
+      case content
+      when /Matrix/
+        file_info[:file_type] = 'analysis_file'
+      when /Sequence/
+        file_info[:file_type] = 'sequence_file'
+      else
+        # fallback to guess file_type by extension
+        FILE_EXT_BY_DOWNLOAD_TYPE.each_pair do |file_type, extensions|
+          if extensions.include? file_summary['format']
+            file_info[:file_type] = file_type
+          end
+        end
+      end
+      file_information << file_info.with_indifferent_access
+    end
+    file_information
   end
 end

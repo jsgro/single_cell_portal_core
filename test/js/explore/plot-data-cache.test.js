@@ -381,6 +381,56 @@ describe('cache handles simultaneous gene/cluster plots', () => {
     expect(apiFetch).toHaveBeenLastCalledWith(expectedNewAnnotParams)
   })
 
+  it('does not attempt to cache user annotations', async () => {
+    const cache = createCache()
+    const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
+    // pass in a clone of the response since it may get modified by the cache operations
+    apiFetch.mockImplementation(() => Promise.resolve([{
+      ..._cloneDeep(FETCH_CLUSTER_RESPONSE),
+      annotParams: {
+        name: 'userStuff',
+        type: 'group',
+        scope: 'user',
+        values: ['foo', 'bar'],
+        identifier: 'userStuff--group--user'
+      }
+    }, 230]))
+
+    await cache.fetchCluster({
+      studyAccession: 'SCP1',
+      cluster: 'cluster.tsv',
+      subsample: 'all',
+      annotation: {
+        name: 'userStuff',
+        scope: 'user'
+      }
+    })
+
+    // check that it refetches the annotation if an expression graph is then queried
+    cache.fetchCluster({
+      studyAccession: 'SCP1',
+      cluster: 'cluster.tsv',
+      subsample: 'all',
+      annotation: {
+        name: 'userStuff',
+        scope: 'user'
+      },
+      genes: ['agpat2']
+    })
+    const expectedNewAnnotParams = {
+      annotation: { name: 'userStuff', scope: 'user' },
+      cluster: 'cluster.tsv',
+      consensus: undefined,
+      fields: ['annotation', 'expression'],
+      genes: ['agpat2'],
+      isAnnotatedScatter: null,
+      isCorrelatedScatter: null,
+      studyAccession: 'SCP1',
+      subsample: 'all'
+    }
+    expect(apiFetch).toHaveBeenLastCalledWith(expectedNewAnnotParams)
+  })
+
   it('handles caching after a cluster change', async () => {
     const cache = createCache()
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')

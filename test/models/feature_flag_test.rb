@@ -8,7 +8,7 @@ class FeatureFlagTest < ActiveSupport::TestCase
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
     @branding_group = BrandingGroup.find_or_create_by!(
-      name: 'Feature Flag Test', user_id: @user.id, font_family: 'Helvetica Neue, sans-serif',
+      name: 'Feature Flag Test', user_ids: [@user.id], font_family: 'Helvetica Neue, sans-serif',
       background_color: '#FFFFFF')
     @feature_flag = FeatureFlag.find_or_create_by!(name: 'my_feature_flag')
     @feature_flag.update!(default_value: false)
