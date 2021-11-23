@@ -143,13 +143,17 @@ describe('getPlotlyTraces handles expression graphs', () => {
     plotData.genes = ['foo']
 
     let traces = getPlotlyTraces(plotData)
-    // check that it doesn't reverse the default (Reds)
+    // check that it doesn't reverse Reds when Reds is applied as the default
+    // Note that if the defaultScatterColor is ever changed to a non-Reds colorscale,
+    // this test will need to be updated
     expect(traces[0].marker.reversescale).toEqual(false)
 
+    // check that does not reverse Reds when that is the explicitly specified colorscale
     plotData.scatterColor = 'Reds'
     traces = getPlotlyTraces(plotData)
     expect(traces[0].marker.reversescale).toEqual(false)
 
+    // check that it does reverse a non-Reds color scale that is specified
     plotData.scatterColor = 'Greens'
     traces = getPlotlyTraces(plotData)
     expect(traces[0].marker.reversescale).toEqual(true)
