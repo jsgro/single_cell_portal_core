@@ -154,7 +154,7 @@ function validateUniqueCellNamesWithinFile(table) {
   const cellNames = new Set()
   const duplicates = new Set()
   for (let i = 0; i < table.length; i++) {
-    const cell = table[i].toString().split(/[,\t]/gm)[0].trim()
+    const cell = table[i][0]
     if (cellNames.has(cell)) {
       duplicates.add(cell)
     } else {
@@ -350,10 +350,10 @@ async function parseFile(file, fileType) {
       }
       // if there are no encoding issues, and this isn't a gzipped file, validate content
       delimiter = sniffDelimiter(headerLines, mimeType)
-      table = headerLines.map(line => line.split(delimiter))
-
-      issues = await validateCapFormat(table, fileType, file)
-      issues = issues.concat(validateUniqueCellNamesWithinFile(lines))
+      table = lines.map(line => line.split(delimiter))
+      const headerTable = table.slice(0, 2)
+      issues = await validateCapFormat(headerTable, fileType, file)
+      issues = issues.concat(validateUniqueCellNamesWithinFile(table))
     }
   }
   return { table, delimiter, issues }
