@@ -212,7 +212,7 @@ function sniffDelimiter(lines, mimeType) {
  * Cap lines are like meta-information lines in other file formats
  * (e.g. VCF), but do not begin with pound signs (#).
  */
-async function validateCapFormat(table, fileType, file) {
+async function validateCapFormat(table, fileType) {
   let issues = []
 
   // Trim spaces and quotes
