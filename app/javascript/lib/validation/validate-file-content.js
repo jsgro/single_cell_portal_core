@@ -13,7 +13,7 @@ import { readLinesAndType } from './io'
 
 /** Remove white spaces and quotes from a string value */
 function clean(value) {
-  return value.trim().replace(/"/g, '')
+  return value.trim().replaceAll(/"/g, '')
 }
 
 /**
