@@ -9,11 +9,11 @@
 */
 
 import { log } from 'lib/metrics-api'
-import { readLinesAndType, catchDuplicateCellNames } from './io'
+import { readLinesAndType } from './io'
 
 /** Remove white spaces and quotes from a string value */
 function clean(value) {
-  return value.trim().replaceAll(/"/g, '')
+  return value.trim().replace(/"/g, '')
 }
 
 /**
@@ -148,18 +148,27 @@ function validateEqualCount(headers, annotTypes) {
 /**
  * Verify cell names are each unique for a cluster or metadata file
  */
-async function validateUniqueCellNames(file) {
+ function validateUniqueCellNamesWithinFile(table) {
   const issues = []
-
-  try {
-    await catchDuplicateCellNames(file)
-  } catch (error) {
-    const msg = `Cell names must be unique, please fix the following duplicated cell name(s): ${error.message}`
-    issues.push(['error', 'format:duplicate:cells-within-file', msg])
+  
+  const cellNames = new Set()
+  const duplicates = new Set()
+  for (let i = 0; i < table.length; i++) {
+    const cell = table[i][0]
+    if (cellNames.has(cell)) {
+      duplicates.add(cell)
+    } else {
+      cellNames.add(cell)
+    }  
+  }
+  
+  if (duplicates.size > 0) {
+    const nameTxt = (duplicates.size > 1) ? 'names' : 'name'
+    const msg = `Cell names must be unique within a file.  Please fix the following duplicated cell ${nameTxt}: ${duplicates}`
+    issues.push(['error', 'duplicate:cells-within-file', msg])
   }
   return issues
 }
-
 
 /**
  * Guess whether column delimiter is comma or tab
@@ -326,7 +335,8 @@ async function parseFile(file, fileType) {
   let table = [[]]
   let delimiter = null
 
-  const { lines, mimeType } = await readLinesAndType(file, 2)
+  const { lines, mimeType } = await readLinesAndType(file)
+  const headerLines = lines.slice(0, 2)
   issues = validateGzipEncoding({ fileName: file.name, lines, mimeType })
 
   if (issues.length) {
@@ -339,11 +349,11 @@ async function parseFile(file, fileType) {
         return { table, delimiter, issues: [['error', 'cap:format:no-newlines', 'File does not contain newlines to separate rows']] }
       }
       // if there are no encoding issues, and this isn't a gzipped file, validate content
-      delimiter = sniffDelimiter(lines, mimeType)
-      table = lines.map(line => line.split(delimiter))
+      delimiter = sniffDelimiter(headerLines, mimeType)
+      table = headerLines.map(line => line.split(delimiter))
 
       issues = await validateCapFormat(table, fileType, file)
-      issues = issues.concat(await validateUniqueCellNames(file))
+      issues = issues.concat(validateUniqueCellNamesWithinFile(lines))
     }
   }
   return { table, delimiter, issues }

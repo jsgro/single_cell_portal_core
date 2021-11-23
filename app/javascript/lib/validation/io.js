@@ -36,34 +36,3 @@ export async function readLinesAndType(file, numLines) {
     reader.readAsArrayBuffer(blob)
   })
 }
-/**
- *
- * @param {File} file the cluster or metadata file a user is attempting to upload
- * @returns an error if there are duplicate cell names with a set of the duplicated names
- */
-export async function catchDuplicateCellNames(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-
-    reader.onload = function(ev) {
-      const fileContentArray = this.result.split(/\r\n|\n/)
-      const cellNames = new Set()
-      const duplicates = new Set()
-
-      for (let line = 0; line < fileContentArray.length-1; line++) {
-        const cell = fileContentArray[line].toString().split(/[,\t]/gm)[0].trim()
-        if (cellNames.has(cell)) {
-          duplicates.add(cell)
-        } else {
-          cellNames.add(cell)
-        }
-      }
-      if (duplicates.size >= 1) {
-        reject(new Error([...duplicates].join(', ')))
-      } else {resolve('success')}
-    }
-
-    reader.onerror = reject
-    reader.readAsText(file)
-  })
-}

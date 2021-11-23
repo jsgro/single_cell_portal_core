@@ -5,14 +5,12 @@ import { validateFileContent } from 'lib/validation/validate-file-content'
 import ValidationAlert from 'components/validation/ValidationAlert'
 import * as MetricsApi from 'lib/metrics-api'
 
-import { mockReadLinesAndType, mockCatchDuplicateCellNames } from './file-mock-utils'
+import { mockReadLinesAndType } from './file-mock-utils'
 
 
 describe('Client-side file validation', () => {
   it('catches and logs errors via library interface', async () => {
     mockReadLinesAndType({ fileName: 'metadata_bad_type_header.txt' })
-    mockCatchDuplicateCellNames({ fileName: 'metadata_bad_type_header.txt' })
-
     const file = {
       name: 'metadata_bad_type_header.txt',
       size: 566,
@@ -60,8 +58,6 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_annotations.py#L56
     mockReadLinesAndType({ fileName: 'dup_headers_v2.0.0.tsv' })
-    mockCatchDuplicateCellNames({ fileName: 'dup_headers_v2.0.0.tsv' })
-
     const { errors, summary } = await validateFileContent({ name: 'm.txt' }, 'Metadata')
     expect(errors).toHaveLength(1)
     expect(summary).toBe('Your file had 1 error')
@@ -69,8 +65,6 @@ describe('Client-side file validation', () => {
 
   it('catches duplicate cell names in cluster file', async () => {
     mockReadLinesAndType({ fileName: 'cluster_duplicate_cell_names.txt' })
-    mockCatchDuplicateCellNames({ fileName: 'cluster_duplicate_cell_names.txt' })
-    
     const { errors, summary } = await validateFileContent({ name: 'cluster_duplicate_cell_names.txt' }, 'Cluster')
     expect(errors).toHaveLength(1)
     expect(summary).toBe('Your file had 1 error')
@@ -79,16 +73,12 @@ describe('Client-side file validation', () => {
   it('reports no error with good cluster CSV file', async () => {
     // Confirms no false positive due to comma-separated values
     mockReadLinesAndType({ fileName: 'cluster_comma_delimited.csv' })
-    mockCatchDuplicateCellNames({ fileName: 'cluster_comma_delimited.csv' })
-
     const { errors } = await validateFileContent({ name: 'c.txt' }, 'Cluster')
     expect(errors).toHaveLength(0)
   })
 
   it('catches gzipped file with txt extension', async () => {
     mockReadLinesAndType({ content: '\x1F\x2E3lkjf3' })
-    mockCatchDuplicateCellNames({ content: '\x1F\x2E3lkjf3' })
-
     const { errors } = await validateFileContent({ name: 'c.txt' }, 'Cluster')
     expect(errors).toHaveLength(1)
     expect(errors[0][1]).toEqual('encoding:missing-gz-extension')
@@ -96,8 +86,6 @@ describe('Client-side file validation', () => {
 
   it('catches text file with .gz suffix', async () => {
     mockReadLinesAndType({ content: 'CELL\tX\tY' })
-    mockCatchDuplicateCellNames({ content: 'CELL\tX\tY' })
-
     const { errors } = await validateFileContent({ name: 'c.txt.gz' }, 'Cluster')
     expect(errors).toHaveLength(1)
     expect(errors[0][1]).toEqual('encoding:invalid-gzip-magic-number')
@@ -106,16 +94,12 @@ describe('Client-side file validation', () => {
   it('passes valid gzip file', async () => {
     // Confirms no false positive due to gzip-related content
     mockReadLinesAndType({ content: '\x1F\x2E3lkjf3' })
-    mockCatchDuplicateCellNames({ content: '\x1F\x2E3lkjf3' })
-
     const { errors } = await validateFileContent({ name: 'c.txt.gz' }, 'Cluster')
     expect(errors).toHaveLength(0)
   })
 
   it('catches mismatched header counts', async () => {
     mockReadLinesAndType({ fileName: 'header_count_mismatch.tsv' })
-    mockCatchDuplicateCellNames({ fileName: 'header_count_mismatch.tsv' })
-
     const { errors, summary } = await validateFileContent({ name: 'm.txt' }, 'Metadata')
     expect(errors).toHaveLength(1)
     expect(summary).toBe('Your file had 1 error')
@@ -125,8 +109,6 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_annotations.py#L112
     mockReadLinesAndType({ fileName: 'error_headers_v2.0.0.tsv' })
-    mockCatchDuplicateCellNames({ fileName: 'error_headers_v2.0.0.tsv' })
-
     const { errors, summary } = await validateFileContent({ name: 'm.txt' }, 'Metadata')
     expect(errors).toHaveLength(3)
     expect(summary).toBe('Your file had 3 errors')
@@ -138,8 +120,6 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cluster.py#L9
     mockReadLinesAndType({ fileName: 'cluster_bad_no_coordinates.txt' })
-    mockCatchDuplicateCellNames({ fileName: 'cluster_bad_no_coordinates.txt' })
-
     const { errors } = await validateFileContent({ name: 'c.txt' }, 'Cluster')
     expect(errors).toHaveLength(1)
   })
@@ -150,8 +130,6 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cluster.py#L21
     mockReadLinesAndType({ fileName: 'cluster_example.txt' })
-    mockCatchDuplicateCellNames({ fileName: 'cluster_example.txt' })
-
     const { errors } = await validateFileContent({ name: 'c.txt' }, 'Cluster')
     expect(errors).toHaveLength(0)
   })
@@ -162,8 +140,6 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L17
     mockReadLinesAndType({ fileName: 'metadata_bad_has_coordinates.txt' })
-    mockCatchDuplicateCellNames({ fileName: 'metadata_bad_has_coordinates.txt' })
-
     const { errors } = await validateFileContent({ name: 'm.txt' }, 'Metadata')
     expect(errors).toHaveLength(1)
   })
@@ -174,8 +150,6 @@ describe('Client-side file validation', () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L31
     mockReadLinesAndType({ fileName: 'metadata_good_v2-0-0.txt' })
-    mockCatchDuplicateCellNames({ fileName: 'metadata_good_v2-0-0.txt' })
-
     const { errors } = await validateFileContent({ name: 'm.txt' }, 'Metadata')
     expect(errors).toHaveLength(0)
   })
