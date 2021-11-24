@@ -51,6 +51,31 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
     assert_response :success
   end
 
+  test 'should update expiration date' do
+    access = @study.build_reviewer_access
+    access.save!
+    new_expiration = access.expires_at + 1.month
+    auth_as_user(@user)
+    sign_in @user
+    study_params = {
+      accession: @study.accession, study_name: @study.url_safe_name,
+      study: {
+        reviewer_access_attributes: {
+          expires_at: new_expiration.to_s,
+          id: access.id.to_s
+        }
+      },
+      reviewer_access_actions: {
+        enable: 'yes'
+      }
+    }
+
+    post :update_study_settings, params: study_params, xhr: true
+    assert_response :success
+    access.reload
+    assert_equal new_expiration, access.expires_at
+  end
+
   test 'should create new reviewer access session' do
     access = @study.build_reviewer_access
     access.save!
