@@ -86,7 +86,7 @@ class AzulSearchService
         # gotcha where sampleDisease is called disease in Azul response objects
         azul_name = 'disease' if azul_name == 'sampleDisease'
         field_entries = result[result_field].map { |entry| entry[azul_name] }.flatten.uniq
-        if facet[:filters].is_a? Hash
+        if facet[:filters].is_a? Hash # this is a numeric facet, and we only have one right now
           results_info[facet_name] = [facet[:filters]]
         else
           facet[:filters].each do |filter|
