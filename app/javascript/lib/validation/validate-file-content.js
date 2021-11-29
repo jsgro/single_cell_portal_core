@@ -352,7 +352,7 @@ async function parseFile(file, fileType) {
       delimiter = sniffDelimiter(headerLines, mimeType)
       table = lines.map(line => line.split(delimiter))
       const headerTable = table.slice(0, 2)
-      issues = await validateCapFormat(headerTable, fileType, file)
+      issues = await validateCapFormat(headerTable, fileType)
       issues = issues.concat(validateUniqueCellNamesWithinFile(table))
     }
   }
