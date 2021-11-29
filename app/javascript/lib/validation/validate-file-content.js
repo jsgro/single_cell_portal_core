@@ -350,7 +350,10 @@ async function parseFile(file, fileType) {
       }
       // if there are no encoding issues, and this isn't a gzipped file, validate content
       delimiter = sniffDelimiter(headerLines, mimeType)
-      table = lines.map(line => line.split(delimiter))
+      table = []
+      for (let i = 0; i < lines.length; i++) {
+        table.push(lines[i].split(delimiter))
+      }
       const headerTable = table.slice(0, 2)
       issues = await validateCapFormat(headerTable, fileType)
       issues = issues.concat(validateUniqueCellNamesWithinFile(table))
