@@ -1,0 +1,19 @@
+<h1>Feature flags for <%= get_instance_label(@instance) %></h1>
+
+<%= nested_form_for(@instance,
+                    url: feature_flag_option_path(class_name: params[:class_name], id: params[:id]),
+                    class: 'form') do |f| %>
+  <div class="form-group row">
+    <div class="col-md-12">
+      <%= f.fields_for :feature_flag_options, FeatureFlaggable.build_feature_flag_options(@instance) do |ff_form| %>
+        <%= render partial: 'feature_flag_options/feature_flag_option_fields', locals: { f: ff_form } %>
+      <% end %>
+    </div>
+    <div class="col-md-12">
+      <%= f.submit 'Save', class: 'btn btn-lg btn-success' %>
+    </div>
+  </div>
+<% end %>
+<p>
+  <%= link_to "<i class='fas fa-chevron-left'></i> Back".html_safe, feature_flag_options_path, class: 'btn btn-warning' %>
+</p>

@@ -27,7 +27,7 @@
       <%= f.select :taxon_id, options_from_collection_for_select(Taxon.sorted, :id, :display_name, study_file.taxon_id), {prompt: 'Select one...'}, {class: 'form-control'} %>
     </div>
     <div class="col-sm-8">
-      <%= f.label :y_axis_label, 'Expression Axis Label' %>&nbsp;<span class="fas fa-question-circle expression-label-tooltip" data-toggle="tooltip" data-placement="right" title="This is displayed as the axis label for box & scatter plots showing expression values.  This label is global to all expression values.<%= @study.has_expression_label? ? ' Please use the study default options form to update this value.' : '' %>"></span> <br />
+      <%= f.label :y_axis_label, 'Expression axis label' %>&nbsp;<span class="fas fa-question-circle expression-label-tooltip" data-toggle="tooltip" data-placement="right" title="This is displayed as the axis label for box & scatter plots showing expression values.  This label is global to all expression values.<%= @study.has_expression_label? ? ' Please use the study default options form to update this value.' : '' %>"></span> <br />
       <%= f.text_field :y_axis_label, value: @study.has_expression_label? ? @study.default_expression_label : study_file.y_axis_label, placeholder: @study.default_expression_label, class: 'form-control expression-label', disabled: @study.has_expression_label? %>
     </div>
   </div>
@@ -102,7 +102,7 @@
       function handleRawCountsUpdate() {
         <% current_values = study_file.associated_matrix_files(:raw)&.map { |sf| { label: sf.name, value: sf.id.to_s } } %>
         const currentValues = <%= current_values.to_json.html_safe %>
-        const isRequired = <%= User.feature_flag_for_instance(current_user, 'raw_counts_required_backend') %>
+        const isRequired = <%= current_user.feature_flag_for('raw_counts_required_backend') %>
         updateRawCountsAssnSelect(expFormId_<%= allow_only %>, currentValues, isRequired)
       }
 

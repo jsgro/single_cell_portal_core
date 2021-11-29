@@ -57,8 +57,7 @@ const Fields = {
       if (cachedCellsAndCoords.then) {
         promises.push(cachedCellsAndCoords)
       } else if (!cachedCellsAndCoords.x) {
-        fields.push('coordinates')
-        fields.push('cells')
+        fields.push('coordinates', 'cells')
       }
     },
     merge: (entry, scatter) => {
@@ -87,7 +86,9 @@ const Fields = {
     },
     addFieldsOrPromise: (entry, fields, promises, annotationName, annotationScope) => {
       const cachedAnnotation = Fields.annotation.getFromEntry(entry, annotationName, annotationScope)
-      if (!cachedAnnotation) {
+      if (!cachedAnnotation || annotationScope === 'user') {
+        // because the requested name (the guid) for user annotations won't match the returned name
+        // (the annotation's actual name), we don't cache user annotation values
         fields.push('annotation')
       } else if (cachedAnnotation.then && !promises.includes(cachedAnnotation)) {
         promises.push(cachedAnnotation)
@@ -216,7 +217,7 @@ export function createCache() {
     return Promise.all(promises).then(resultArray => {
       let mergedResult = null
       resultArray.forEach(result => {
-        mergedResult = cache._mergeClusterResponse(studyAccession, result, cluster, subsample)
+        mergedResult = cache._mergeClusterResponse(studyAccession, result, cluster, annotation, subsample)
       })
       return mergedResult
     }).catch(error => {
@@ -233,7 +234,7 @@ export function createCache() {
 
 
   /** adds the data for a given study/clusterName, overwriting any previous entry */
-  cache._mergeClusterResponse = (accession, clusterResponse, requestedCluster, requestedSubsample) => {
+  cache._mergeClusterResponse = (accession, clusterResponse, requestedCluster, requestedAnnotation, requestedSubsample) => {
     const scatter = clusterResponse[0]
     const cacheEntry = cache._findOrCreateEntry(accession, scatter.cluster, scatter.subsample)
 
@@ -251,7 +252,11 @@ export function createCache() {
     }
     Fields.clusterProps.merge(cacheEntry, scatter)
     Fields.cellsAndCoords.merge(cacheEntry, scatter)
-    Fields.annotation.merge(cacheEntry, scatter)
+    // only merge in annotation values if the annotation matches (or the default was requested, so
+    // we can then assume the response matches)
+    if (!requestedAnnotation.name || scatter.annotParams.name === requestedAnnotation.name) {
+      Fields.annotation.merge(cacheEntry, scatter)
+    }
     if (scatter.genes.length) {
       Fields.expression.merge(cacheEntry, scatter)
     }
@@ -288,12 +293,21 @@ export function createCache() {
     const fields = []
     const promises = [] // API call promises
     // we don't cache anything for annotated/correlated scatter since the coordinates are different per annotation/gene
+
     if (!isAnnotatedScatter && !isCorrelatedScatter) {
-      const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
-      Fields.cellsAndCoords.addFieldsOrPromise(cacheEntry, fields, promises)
-      Fields.annotation.addFieldsOrPromise(cacheEntry, fields, promises, annotation.name, annotation.scope)
-      if (genes.length) {
-        Fields.expression.addFieldsOrPromise(cacheEntry, fields, promises, genes, consensus)
+      if (subsample !== 'all') {
+        // we also don't cache for subsampled views, since the cells and ordering may be different across annotations
+        fields.push('coordinates', 'cells', 'annotation')
+        if (genes.length) {
+          fields.push('expression')
+        }
+      } else {
+        const cacheEntry = cache._findOrCreateEntry(studyAccession, cluster, subsample)
+        Fields.cellsAndCoords.addFieldsOrPromise(cacheEntry, fields, promises)
+        Fields.annotation.addFieldsOrPromise(cacheEntry, fields, promises, annotation.name, annotation.scope)
+        if (genes.length) {
+          Fields.expression.addFieldsOrPromise(cacheEntry, fields, promises, genes, consensus)
+        }
       }
     } else {
       fields.push('coordinates')

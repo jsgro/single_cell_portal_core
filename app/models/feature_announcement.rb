@@ -43,7 +43,7 @@ class FeatureAnnouncement
     where(published: true, archived: true)
   end
 
-  # helper to hide "New Features" button on the home page if there are no published announcements
+  # helper to hide "New feature" button on the home page if there are no published announcements
   def self.latest_features?
     latest.any?
   end

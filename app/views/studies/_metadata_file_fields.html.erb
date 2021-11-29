@@ -1,6 +1,6 @@
 <div class="form-group row">
   <div class="col-sm-4">
-    <% convention_required = User.feature_flag_for_instance(current_user, 'convention_required') %>
+    <% convention_required = current_user.feature_flag_for('convention_required') %>
     <% exemption_form = 'https://singlecell.zendesk.com/hc/en-us/requests/new?ticket_form_id=1260811597230' \
                               "&tf_1260822624790=#{@study.accession}&tf_anonymous_requester_email=#{current_user.email}" \
                               "&tf_1900002173444=metadata_convention_exemption&tf_subject=" \

@@ -101,7 +101,6 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     end
 
     refute config_file.include?('clusterA.txt'), "Should not include cluster file, as it was not a requested type"
-    refute  config_file.include?("-H \"Authorization: Bearer"), 'Should not include bearer token if no TDR files are requested'
 
     # ensure bad/missing auth_token return 401
     invalid_auth_code = auth_code.to_i + 1
@@ -214,10 +213,10 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
                                   public: false,
                                   user: @user,
                                   test_array: @@studies_to_clean)
-    new_study_cluster_file = FactoryBot.create(:cluster_file,
-                                               name: 'cluster.txt',
-                                               study: new_study,
-                                               upload_file_size: 100)
+    FactoryBot.create(:cluster_file,
+                      name: 'cluster.txt',
+                      study: new_study,
+                      upload_file_size: 100)
     execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
     assert_response :success
     auth_code = json['auth_code']
@@ -231,23 +230,25 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     refute json.include?(excluded_file.name), 'Bulk download config did not exclude external fastq link'
   end
 
-  test 'bulk download should support a download_id and TDR files' do
-    drs_id = "v1_#{SecureRandom.uuid}_#{SecureRandom.uuid}"
+  test 'bulk download should support a download_id and HCA files' do
     hca_project_id = SecureRandom.uuid
-    service_name = 'jade.datarepo-mock.broadinstitute.org'
-    bucket_name = 'data-repo-mock-bucket'
     payload = {
       file_ids: [@basic_study_metadata_file.id.to_s],
-      tdr_files: {
+      azul_files: {
         FakeHCAStudy1: [
           {
-            url: hca_project_id,
+            project_id: hca_project_id,
             name: 'hca_file1.tsv',
+            count: 1,
             file_type: 'Project Manifest'
           }, {
-            name: 'hca_file2.tsv',
+            source: 'hca',
+            count: 1,
+            upload_file_size: 10.megabytes,
+            file_format: 'loom',
             file_type: 'analysis_file',
-            drs_id: "drs://#{service_name}/#{drs_id}"
+            accession: 'FakeHCAStudy1',
+            project_id: hca_project_id
           }
         ]
       }
@@ -259,56 +260,47 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
 
     # mock response values
     mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{@basic_study.bucket_id}/metadata.txt"
-    mock_azul_response = {
+    mock_manifest_response = {
       Status: 302,
       Location: "https://service.azul.data.humancellatlas.org/manifest/files?catalog=dcp8&format=compact&filters=" \
                 "%7B%22projectId%22%3A+%7B%22is%22%3A+%5B%22#{hca_project_id}%22%5D%7D%7D&objectKey=manifests%2F" \
                 "#{SecureRandom.uuid}.tsv"
     }.with_indifferent_access
-    mock_drs_response = {
-      id: drs_id,
-      name: 'hca_file2.tsv',
-      access_methods: [
-        {
-          type: 'https',
-          access_url: {
-            url: "https://www.googleapis.com/storage/v1/b/#{bucket_name}/hca_file2.tsv"
-          }
-        }
-      ]
-    }.with_indifferent_access
+
+    mock_files_response = [
+      {
+        format: 'loom',
+        name: 'SomeAnalysis.loom',
+        size: 10.megabytes,
+        url: "https://service.azul.data.humancellatlas.org/repository/files/#{SecureRandom.uuid}",
+        projectShortname: 'FakeHCAStudy1',
+        projectId: hca_project_id
+      }.with_indifferent_access
+    ]
 
     # mock all calls to external services, including Google Cloud Storage, HCA Azul, and Terra Data Repo
     gcs_mock = Minitest::Mock.new
     gcs_mock.expect :execute_gcloud_method, mock_signed_url,
                     [:generate_signed_url, 0, @basic_study.bucket_id, 'metadata.txt', { expires: 1.day.to_i }]
     azul_mock = Minitest::Mock.new
-    azul_mock.expect :default_catalog, ApplicationController.hca_azul_client.default_catalog
-    azul_mock.expect :get_project_manifest_link, mock_azul_response, [String, hca_project_id]
-    tdr_mock = Minitest::Mock.new
-    tdr_mock.expect :get_drs_file_info, mock_drs_response, ["drs://#{service_name}/#{drs_id}"]
+    azul_mock.expect :project_manifest_link, mock_manifest_response, [hca_project_id]
+    azul_mock.expect :files, mock_files_response, [Hash]
 
     # stub all service clients to interpolate mocks
     FireCloudClient.stub :new, gcs_mock do
       ApplicationController.stub :hca_azul_client, azul_mock do
-        ApplicationController.stub :data_repo_client, tdr_mock do
-          execute_http_request(:get, api_v1_bulk_download_generate_curl_config_path(
-            auth_code: auth_code, download_id: download_id))
-          assert_response :success
-          config_file = json
+        execute_http_request(:get, api_v1_bulk_download_generate_curl_config_path(
+          auth_code: auth_code, download_id: download_id))
+        assert_response :success
+        config_file = json
 
-          gcs_mock.verify
-          azul_mock.verify
-          tdr_mock.verify
+        gcs_mock.verify
+        azul_mock.verify
 
-          expected_manifest_config = "url=\"#{mock_azul_response[:Location]}\"\noutput=\"FakeHCAStudy1/hca_file1.tsv\""
-          expected_drs_config = "url=\"#{mock_drs_response[:access_methods].first.dig('access_url', 'url')}\"\n" \
-                         "output=\"FakeHCAStudy1/hca_file2.tsv\""
-          assert config_file.include?("#{@basic_study.accession}/metadata/metadata.txt"), 'did not include SCP metadata file'
-          assert config_file.match(/-H "Authorization: Bearer ya29/), 'did not include bearer token header for TDR files'
-          assert config_file.include?(expected_manifest_config), 'did not include correct HCA manifest file or output path'
-          assert config_file.include?(expected_drs_config), 'did not include correct TDR file or output path'
-        end
+        expected_manifest_config = "url=\"#{mock_manifest_response[:Location]}\"\noutput=\"FakeHCAStudy1/hca_file1.tsv\""
+        assert config_file.include?("#{@basic_study.accession}/metadata/metadata.txt"), 'did not include SCP metadata file'
+        assert config_file.include?(expected_manifest_config), 'did not include correct HCA manifest file or output path'
+        assert config_file.include?("output=\"FakeHCAStudy1/SomeAnalysis.loom\"")
       end
     end
   end

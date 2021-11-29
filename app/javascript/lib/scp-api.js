@@ -22,6 +22,11 @@ let globalMock = false
 
 const defaultBasePath = '/single_cell/api/v1'
 
+// value used to separate facet entries in query string params
+export const FACET_DELIMITER = ';'
+// value used to separate filter values for a facet in query string params
+export const FILTER_DELIMITER = '|'
+
 /** Get default `init` object for SCP API fetches */
 export function defaultInit() {
   const headers = {
@@ -77,11 +82,11 @@ function defaultPostInit(mock=false) {
  * // returns {authCode: 123456, timeInterval: 1800}
  * fetchAuthCode(true)
  */
-export async function fetchAuthCode(fileIds, tdrFiles, mock=false) {
+export async function fetchAuthCode(fileIds, azulFiles, mock=false) {
   const init = defaultPostInit(mock)
   init.body = JSON.stringify({
     file_ids: fileIds,
-    tdr_files: tdrFiles
+    azul_files: azulFiles
   })
   const [authCode, perfTimes] = await scpApi('/bulk_download/auth_code', init, mock)
 
@@ -189,6 +194,147 @@ export function stringifyQuery(paramObj, sort) {
   const stringified = queryString.stringify(paramObj, options)
   return `?${stringified}`
 }
+
+/**
+ * Returns initial content for the upload file wizard
+ *
+ * @param {String} studyAccession Study accession
+*/
+export async function fetchStudyFileInfo(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/file_info`
+  const [exploreInit] = await scpApi(apiUrl, defaultInit(), mock, false)
+  return exploreInit
+}
+
+/**
+ * Creates a new study file
+ *
+ * @param {String} studyAccession study accession
+ * @param {FormData} studyFileData html FormData object with the file data
+*/
+export async function createStudyFile({
+  studyAccession,
+  studyFileData,
+  isChunked=false,
+  chunkStart,
+  chunkEnd,
+  fileSize,
+  onProgress,
+  mock=false,
+  requestCanceller
+}) {
+  const apiUrl = `/studies/${studyAccession}/study_files`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'POST',
+    body: studyFileData
+  })
+
+  setFileFormHeaders(init.headers, isChunked, chunkStart, chunkEnd, fileSize)
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress, requestCanceller })
+}
+
+/** Adds a content range header if needed */
+function setFileFormHeaders(headers, isChunked, chunkStart, chunkEnd, fileSize) {
+  // we want the browser to auto-set the content type with the right form boundaries
+  // see https://stackoverflow.com/questions/36067767/how-do-i-upload-a-file-with-the-js-fetch-api
+  delete headers['Content-Type']
+  if (isChunked) {
+    headers['Content-Range'] = `bytes ${chunkStart}-${chunkEnd-1}/${fileSize}`
+  }
+}
+
+
+/**
+ * Updates a study file
+ *
+ * @param {String} studyAccession study accession
+ * @param {String} studyFileId Study file id
+ * @param {FormData} studyFileData html FormData object with the file data
+*/
+export async function updateStudyFile({
+  studyAccession,
+  studyFileId,
+  studyFileData,
+  isChunked=false,
+  chunkStart,
+  chunkEnd,
+  fileSize,
+  onProgress,
+  requestCanceller,
+  mock=false
+}) {
+  const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'PATCH'
+  })
+  setFileFormHeaders(init.headers, isChunked, chunkStart, chunkEnd, fileSize)
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress, requestCanceller })
+}
+
+/**
+ * Updates a study file
+ *
+ * @param {String} studyAccession study accession
+ * @param {String} studyFileId Study file id
+ * @param {FormData} studyFileData html FormData object with the file data
+*/
+export async function sendStudyFileChunk({
+  studyAccession,
+  studyFileId,
+  studyFileData,
+  chunkStart,
+  chunkEnd,
+  fileSize,
+  onProgress,
+  requestCanceller,
+  mock=false
+}) {
+  const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}/chunk`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'PATCH',
+    body: studyFileData
+  })
+  setFileFormHeaders(init.headers, true, chunkStart, chunkEnd, fileSize)
+  return await scpApiXmlHttp({ apiUrl, init, formData: studyFileData, onProgress, requestCanceller })
+}
+
+/**
+ * Deletes the given file
+ *
+ * @param {String} studyAccession Study accession
+ * @param {fileId} the guid of the file to delete
+*/
+export async function deleteStudyFile(studyAccession, fileId, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/study_files/${fileId}`
+  const init = Object.assign({}, defaultInit(), {
+    method: 'DELETE'
+  })
+  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
+  return exploreInit
+}
+
+
+/**
+ * Fetches a given resource from a GCP bucket -- this handles adding the
+ * appropriate SCP readonly bearer token, and using the Google API URL that allows CORS
+ *
+ * @param {String} bucketName bucket name
+ * @param {String} fileName file name
+*/
+export async function fetchBucketFile(bucketName, fileName, mock=false) {
+  const init = {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${window.SCP.readOnlyToken}`
+    }
+  }
+  const url = `https://storage.googleapis.com/download/storage/v1/b/${bucketName}/o/${fileName}?alt=media`
+
+  const response = await fetch(url, init).catch(error => error)
+
+  return response
+}
+
 
 /**
  * Returns initial content for the "Explore" tab in Study Overview
@@ -526,9 +672,9 @@ function buildFacetQueryString(facets) {
   }
   const rawURL = _compact(Object.keys(facets).map(facetId => {
     if (facets[facetId].length) {
-      return `${facetId}:${facets[facetId].join(',')}`
+      return `${facetId}:${facets[facetId].join(FILTER_DELIMITER)}`
     }
-  })).join('+')
+  })).join(FACET_DELIMITER)
   // encodeURIComponent needed for the + , : characters
   return `&facets=${encodeURIComponent(rawURL)}`
 }
@@ -537,9 +683,9 @@ function buildFacetQueryString(facets) {
 export function buildFacetsFromQueryString(facetsParamString) {
   const facets = {}
   if (facetsParamString) {
-    facetsParamString.split('+').forEach(facetString => {
+    facetsParamString.split(';').forEach(facetString => {
       const facetArray = facetString.split(':')
-      facets[facetArray[0]] = facetArray[1].split(',')
+      facets[facetArray[0]] = facetArray[1].split(FILTER_DELIMITER)
     })
   }
   return facets
@@ -593,7 +739,7 @@ export default async function scpApi(
   }
 
   if (response.ok) {
-    if (toJson) {
+    if (toJson && response.status !== 204) {
       const jsonPerfTimeStart = performance.now()
       const json = await response.json()
       perfTimes.parse = performance.now() - jsonPerfTimeStart
@@ -627,7 +773,69 @@ export default async function scpApi(
   }
   if (toJson) {
     const json = await response.json()
-    throw new Error(json.error)
+    throw new Error(json.error || json.errors)
   }
   throw new Error(response)
+}
+
+/**
+  * similar functionality to scpApi, but uses XMLHttpRequest to enable support for progress events.
+  * fetch does not yet support them.
+  * See https://stackoverflow.com/questions/35711724/upload-progress-indicators-for-fetch
+  */
+async function scpApiXmlHttp({ apiUrl, init, formData, onProgress, requestCanceller }) {
+  const url = getFullUrl(apiUrl, false)
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest()
+
+    request.open(init.method, url)
+    Object.keys(init.headers).forEach(key => {
+      request.setRequestHeader(key, init.headers[key])
+    })
+    if (onProgress) {
+      request.upload.addEventListener('progress', onProgress)
+    }
+    if (requestCanceller) {
+      requestCanceller.request = request
+    }
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        let response = {}
+        if (request.status != 204) {
+          response = JSON.parse(request.response)
+        }
+        resolve(response)
+      } else if (request.status === 401 || request.status === 403) {
+        reject('Authorization failed. You may need to sign in again')
+      } else {
+        reject(JSON.parse(request.response).error)
+      }
+    }
+    request.onerror = () => {
+      reject(request.statusText)
+    }
+    request.send(formData)
+  })
+}
+
+/** class to enable cancelling of XMLHttpRequests that are otherwise abstracted away behind promises */
+export class RequestCanceller {
+  request = null
+
+  fileId = null
+
+  wasCancelled = false
+
+  /** makes a new RequestCanceller, that holds the fileId of the file corresponding to the request */
+  constructor(fileId) {
+    this.fileId = fileId
+  }
+
+  /** if there is a request, abort it */
+  cancel() {
+    if (this.request) {
+      this.request.abort()
+      this.wasCancelled = true
+    }
+  }
 }

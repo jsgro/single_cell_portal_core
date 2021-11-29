@@ -1,8 +1,7 @@
 # SINGLE CELL PORTAL README
 
 [![codecov](https://codecov.io/gh/broadinstitute/single_cell_portal_core/branch/development/graph/badge.svg?token=HMWE5BO2a4)](https://codecov.io/gh/broadinstitute/single_cell_portal_core)
-[![Build Status](https://travis-ci.com/broadinstitute/single_cell_portal_core.svg?branch=development)](https://travis-ci.com/broadinstitute/single_cell_portal_core)
-
+[![Build Status](https://app.travis-ci.com/broadinstitute/single_cell_portal_core.svg?branch=development)](https://app.travis-ci.com/broadinstitute/single_cell_portal_core)
 ## SETUP
 
 This application is built and deployed using [Docker](https://www.docker.com), specifically native
@@ -618,7 +617,7 @@ only the portal service account will have access to workspaces.
 
 Disabling compute access will set all user access permissions to READER, thus disabling computes.
 
-Disabling local access does not alter Terra permissions, but prevents users from accessing the 'My Studies' page and
+Disabling local access does not alter Terra permissions, but prevents users from accessing the 'My studies' page and
 uploading data through the portal.  Downloads are still enabled, and normal front-end actions are unaffected.
 
 Re-enabling Terra access will restore all permissions back to their original state.

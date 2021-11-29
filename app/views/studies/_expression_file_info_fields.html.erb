@@ -26,7 +26,7 @@
       %>
     </div>
     <div class="col-lg-2">
-      <%= f.label :biosample_input_type, label_with_asterisk('Biosample Input Type') %><br />
+      <%= f.label :biosample_input_type, label_with_asterisk('Biosample input type') %><br />
       <%= f.select :biosample_input_type, options_for_select(ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES, f.object.biosample_input_type),
                    {include_blank: 'Select one...'}, class: 'form-control' %>
 

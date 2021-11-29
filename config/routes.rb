@@ -31,6 +31,7 @@ Rails.application.routes.draw do
           resources :study_files, only: [:index, :show, :create, :update, :destroy] do
             member do
               post 'parse', to: 'study_files#parse'
+              patch 'chunk', to: 'study_files#chunk'
             end
           end
           resources :study_file_bundles, only: [:index, :show, :create, :destroy]
@@ -40,6 +41,7 @@ Rails.application.routes.draw do
           member do
             post 'sync', to: 'studies#sync_study'
             get 'manifest', to: 'studies#generate_manifest'
+            get 'file_info', to: 'studies#file_info'
           end
 
           resource :explore, controller: 'visualization/explore', only: [:show] do
@@ -122,6 +124,12 @@ Rails.application.routes.draw do
     resources :admin_configurations, path: 'admin'
     resources :preset_searches
 
+    # feature flag option CMS
+    get 'feature_flags', to: 'feature_flag_options#index', as: :feature_flag_options
+    post 'feature_flags/find', to: 'feature_flag_options#find', as: :find_feature_flag_entity
+    get 'feature_flags/:class_name/:id', to: 'feature_flag_options#edit', as: :edit_feature_flag_option
+    patch 'feature_flags/:class_name/:id', to: 'feature_flag_options#update', as: :feature_flag_option
+
     get 'features/latest', to: 'feature_announcements#latest', as: :latest_feature_announcements
     get 'features/:slug', to: 'feature_announcements#view_announcement', as: :view_feature_announcement
     resources :feature_announcements
@@ -133,7 +141,7 @@ Rails.application.routes.draw do
     # branding groups admin
     resources :branding_groups
     # show a list for display and linking
-    get :collections, to: 'branding_groups#list_navigate'
+    get :collections, to: 'branding_groups#list_navigate', as: :collection_list_navigate
 
     # analysis configurations
     get 'analysis_configurations/load_associated_model', to: 'analysis_configurations#load_associated_model',

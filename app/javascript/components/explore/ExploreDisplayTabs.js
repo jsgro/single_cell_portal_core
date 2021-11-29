@@ -16,11 +16,13 @@ import GeneListSelector from 'components/visualization/controls/GeneListSelector
 import InferCNVIdeogramSelector from 'components/visualization/controls/InferCNVIdeogramSelector'
 import { createCache } from './plot-data-cache'
 import ScatterTab from './ScatterTab'
+import { getPlotDimensions } from 'lib/plot'
 import ScatterPlot from 'components/visualization/ScatterPlot'
 import StudyViolinPlot from 'components/visualization/StudyViolinPlot'
 import DotPlot from 'components/visualization/DotPlot'
 import Heatmap from 'components/visualization/Heatmap'
 import GenomeView from './GenomeView'
+import ImageTab from './ImageTab'
 import { getAnnotationValues, getDefaultSpatialGroupsForCluster } from 'lib/cluster-utils'
 import RelatedGenesIdeogram from 'components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from 'components/visualization/InferCNVIdeogram'
@@ -38,10 +40,9 @@ const tabList = [
   { key: 'heatmap', label: 'Heatmap' },
   { key: 'spatial', label: 'Spatial' },
   { key: 'genome', label: 'Genome' },
-  { key: 'infercnv-genome', label: 'Genome (inferCNV)' }
+  { key: 'infercnv-genome', label: 'Genome (inferCNV)' },
+  { key: 'images', label: 'Images' }
 ]
-
-const ideogramHeight = 140
 
 /**
  * Renders the gene search box and the tab selection
@@ -106,9 +107,13 @@ export default function ExploreDisplayTabs({
     currentTaxon = exploreInfo.taxonNames[0]
     searchedGene = exploreParams.genes[0]
   }
-  const showClusterControls = !(['genome', 'infercnv-genome'].includes(shownTab))
+
+  const isCorrelatedScatter = enabledTabs.includes('correlatedScatter')
 
   const annotationList = exploreInfo ? exploreInfo.annotationList : null
+  // hide the cluster controls if we're on a genome/image tab, or if there aren't clusters to choose
+  const showClusterControls = !['genome', 'infercnv-genome', 'images'].includes(shownTab) &&
+                                annotationList?.clusters?.length
 
   let hasSpatialGroups = false
   if (exploreInfo) {
@@ -173,52 +178,6 @@ export default function ExploreDisplayTabs({
     updateExploreParams({ ideogramFileId: annotationFile, tab: 'infercnv-genome' })
   }
 
-
-  /** Get width and height available for plot components, since they may be first rendered hidden */
-  function getPlotDimensions({
-    isTwoColumn=false,
-    isMultiRow=false,
-    verticalPad=250,
-    horizontalPad=80,
-    hasTitle=false
-  }) {
-    // Get width, and account for expanding "View Options" after page load
-    let baseWidth = $(window).width()
-    if (showViewOptionsControls) {
-      baseWidth = Math.round(baseWidth * 10 / 12)
-    }
-    let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
-
-    // Get height
-    // Height of screen viewport, minus fixed-height elements above gallery
-    let galleryHeight = $(window).height() - verticalPad
-    if (showRelatedGenesIdeogram) {
-      galleryHeight -= ideogramHeight
-    }
-    if (hasTitle) {
-      galleryHeight -= 20
-    }
-    let height = galleryHeight
-    if (isMultiRow) {
-      // Fill as much gallery height as possible, but show tip of next row
-      // as an affordance that the gallery is vertically scrollable.
-      const secondRowTipHeight = 70
-      height = height - secondRowTipHeight
-    }
-    // ensure aspect ratio isn't too distorted
-    if (height > width * 1.3) {
-      height = Math.round(width * 1.3)
-    }
-
-    // Ensure plots aren't too small.
-    // This was needed as of 2020-12-14 to avoid a Plotly error in single-gene
-    // view: "Something went wrong with axes scaling"
-    height = Math.max(height, 200)
-    width = Math.max(width, 200)
-
-    return { width, height }
-  }
-
   /** on window resize call setRenderForcer, which is just trivial state to ensure a re-render
    * ensuring that the plots get passed fresh dimensions */
   useResizeEffect(() => {
@@ -268,7 +227,6 @@ export default function ExploreDisplayTabs({
                 gene={searchedGene}
                 taxon={currentTaxon}
                 target={`.${plotContainerClass}`}
-                height={ideogramHeight}
                 genesInScope={exploreInfo.uniqueGenes}
                 searchGenes={searchGenes}
                 speciesList={exploreInfo.taxonNames}
@@ -287,12 +245,12 @@ export default function ExploreDisplayTabs({
                   studyAccession={studyAccession}
                   {...exploreParams}
                   isAnnotatedScatter={true}
-                  dimensions={getPlotDimensions({
+                  dimensionProps={{
                     numColumns: 1,
                     numRows: exploreParams?.spatialGroups.length ? 2 : 1,
-                    hasTitle: true,
-                    showRelatedGenesIdeogram
-                  })}
+                    showRelatedGenesIdeogram,
+                    showViewOptionsControls
+                  }}
                   isCellSelecting={isCellSelecting}
                   plotPointsSelected={plotPointsSelected}
                 />
@@ -304,12 +262,10 @@ export default function ExploreDisplayTabs({
                   studyAccession={studyAccession}
                   {...exploreParams}
                   isCorrelatedScatter={true}
-                  dimensions={getPlotDimensions({
+                  dimensionProps={{
                     numColumns: 1,
-                    numRows: 1,
-                    hasTitle: true,
-                    showRelatedGenesIdeogram: false
-                  })}
+                    numRows: 1
+                  }}
                   isCellSelecting={isCellSelecting}
                   plotPointsSelected={plotPointsSelected}
                 />
@@ -327,8 +283,10 @@ export default function ExploreDisplayTabs({
                     isGene,
                     isMultiGene,
                     isCellSelecting,
+                    isCorrelatedScatter,
                     plotPointsSelected,
-                    getPlotDimensions,
+                    showRelatedGenesIdeogram,
+                    showViewOptionsControls,
                     dataCache
                   }}/>
               </div>
@@ -338,7 +296,9 @@ export default function ExploreDisplayTabs({
                 <StudyViolinPlot
                   studyAccession={studyAccession}
                   updateDistributionPlot={distributionPlot => updateExploreParams({ distributionPlot }, false)}
-                  dimensions={getPlotDimensions({})}
+                  dimensions={getPlotDimensions({
+                    showRelatedGenesIdeogram, showViewOptionsControls
+                  })}
                   {...exploreParams}/>
               </div>
             }
@@ -351,7 +311,7 @@ export default function ExploreDisplayTabs({
                      exploreParamsWithDefaults?.annotation,
                      exploreParamsWithDefaults?.annotationList?.annotations
                   )}
-                  dimensions={getPlotDimensions({})}
+                  dimensions={getPlotDimensions({ showViewOptionsControls })}
                 />
               </div>
             }
@@ -360,7 +320,8 @@ export default function ExploreDisplayTabs({
                 <Heatmap
                   studyAccession={studyAccession}
                   {... exploreParamsWithDefaults}
-                  dimensions={getPlotDimensions({})}/>
+                  dimensions={getPlotDimensions({ showViewOptionsControls })}
+                />
               </div>
             }
             { enabledTabs.includes('genome') &&
@@ -384,10 +345,24 @@ export default function ExploreDisplayTabs({
               />
             </div>
             }
+            { enabledTabs.includes('images') &&
+              <div className={shownTab === 'images' ? '' : 'hidden'}>
+                <ImageTab
+                  studyAccession={studyAccession}
+                  imageFiles={exploreInfo.imageFiles}
+                  bucketName={exploreInfo.bucketId}
+                  isCellSelecting={isCellSelecting}
+                  isVisible={shownTab === 'images'}
+                  getPlotDimensions={getPlotDimensions}
+                  exploreParams={exploreParams}
+                  plotPointsSelected={plotPointsSelected}
+                />
+              </div>
+            }
             { enabledTabs.includes('loading') &&
-            <div className={shownTab === 'loading' ? '' : 'hidden'}>
-              <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
-            </div>
+              <div className={shownTab === 'loading' ? '' : 'hidden'}>
+                <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
+              </div>
             }
           </div>
         </div>
@@ -493,6 +468,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   const hasSpatialGroups = exploreParams.spatialGroups?.length > 0
   const hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
   const hasIdeogramOutputs = !!exploreInfo?.inferCNVIdeogramFiles
+  const hasImages = exploreInfo?.imageFiles?.length > 0
 
   let enabledTabs = []
   if (isGeneList) {
@@ -526,6 +502,9 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   }
   if (hasIdeogramOutputs) {
     enabledTabs.push('infercnv-genome')
+  }
+  if (hasImages) {
+    enabledTabs.push('images')
   }
 
   if (!exploreInfo) {

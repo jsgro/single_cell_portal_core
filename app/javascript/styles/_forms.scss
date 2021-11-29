@@ -28,6 +28,35 @@
   }
 }
 
+.tooltip-wide.popover {
+  max-width: 400px;
+}
+
+.terra-secondary-btn {
+  color: $action-color;
+  border: 1px solid $action-color;
+  background: #fff;
+  border-radius: 3px;
+}
+
+.terra-tertiary-btn {
+  color: $action-color;
+  border: none;
+  background: none;
+  text-decoration: underline;
+  padding-left: 0.25em;
+  padding-right: 0.25em;
+}
+
+
+.btn-icon {
+  background: none;
+  border: none;
+  svg {
+    color: $action-color;
+  }
+}
+
 .full-height-modal {
   .modal-dialog {
     height: 100vh !important;
@@ -93,6 +122,9 @@
   #metadata-convention-example img {
     border: 2px solid #888;
   }
+  label {
+    font-weight: normal
+  }
 }
 
 .sub-form {
@@ -117,7 +149,7 @@
 }
 
 .margin-right {
-  margin-right: 2em;
+  margin-right: 0.5em;
 }
 
 .margin-left {
@@ -127,8 +159,4 @@
 .sublabel {
   margin-left: 1em;
   font-weight: normal;
-}
-
-.float-right {
-  float: right;
 }

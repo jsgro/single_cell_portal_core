@@ -12,6 +12,7 @@ class SearchFacet
   field :identifier, type: String
   field :filters, type: Array, default: []
   field :public_filters, type: Array, default: [] # filters for public studies only
+  field :filters_with_external, type: Array, default: [] # filters for XDSS, includes all SCP & external facet filters
   field :is_ontology_based, type: Boolean, default: false
   field :ontology_urls, type: Array, default: []
   field :data_type, type: String
@@ -267,9 +268,11 @@ class SearchFacet
 
   # update all search facet filters after BQ update
   def self.update_all_facet_filters
-    self.all.each do |facet|
+    azul_facets = AzulSearchService.get_all_facet_filters
+    all.each do |facet|
       Rails.logger.info "Updating #{facet.name} filter values"
-      updated = facet.update_filter_values!
+      updated = facet.update_filter_values!(azul_facets[facet.identifier])
+
       if updated
         Rails.logger.info "Update to #{facet.name} complete!"
       else
@@ -281,6 +284,28 @@ class SearchFacet
   # return all "visible" facets
   def self.visible
     where(visible: true)
+  end
+
+  # find a match for a facet based off of a term, e.g. 'Mus musculus' => SearchFacet.find_by(identifer: 'species')
+  def self.find_facet_from_term(term)
+    all.each do |facet|
+      filter_list = facet.filters_with_external.any? ? :filters_with_external : :filters
+      if facet.filters_match?(term, filter_list: filter_list)
+        return facet
+      end
+    end
+    nil # no match is found
+  end
+
+  # helper for rendering correct list of filters for a given user
+  # takes :cross_dataset_search_backend feature flag into account
+  # this is to prevent large list of filters resulting in empty search responses
+  def filters_for_user(user)
+    if user
+      user.feature_flag_for(:cross_dataset_search_backend) ? filters_with_external : filters
+    else
+      public_filters
+    end
   end
 
   # helper to know if column is numeric
@@ -318,6 +343,27 @@ class SearchFacet
     end
   end
 
+  # determine if a given filter value already exists (case-insensitive search)
+  # can specify which filter list to search, will default to :filters
+  def filters_include?(filter_value, filter_list: :filters)
+    flatten_filters(filter_list).map(&:downcase).include? filter_value.downcase
+  end
+
+  # determine if any filters are a partial match for a given value
+  def filters_match?(filter_value, filter_list: :filters)
+    flatten_filters(filter_list).detect { |filter| filter.match?(/#{filter_value}/i) }.present?
+  end
+
+  # find all possible matches for a partial filter value
+  def find_filter_matches(filter_value, filter_list: :filters)
+    flatten_filters(filter_list).select { |filter| filter.match(/#{filter_value}/i) }.map(&:to_s)
+  end
+
+  # flatten all filter ids/values into a single array
+  def flatten_filters(filter_list = :filters)
+    send(filter_list).map { |filter| [filter[:id], filter[:name]] }.flatten.uniq
+  end
+
   # retrieve unique values from BigQuery and format an array of hashes with :name and :id values to populate :filters
   # can specify 'public only' to return filters for public studies
   def get_unique_filter_values(public_only: false)
@@ -333,7 +379,7 @@ class SearchFacet
     begin
       Rails.logger.info "Executing query: #{query_string}"
       results = SearchFacet.big_query_dataset.query(query_string)
-      is_numeric? ? results.first : results
+      is_numeric? ? results.first : results.to_a
     rescue => e
       Rails.logger.error "Error retrieving unique values for #{CellMetadatum::BIGQUERY_TABLE}: #{e.class.name}:#{e.message}"
       ErrorTracker.report_exception(e, nil, { query_string: query_string, public_only: public_only })
@@ -343,19 +389,35 @@ class SearchFacet
 
   # update cached filters in place with new values, updating both public-only and regular list
   # will update public-only values for non-numeric facets only since numeric facets have hard-coded ranges in UI
-  def update_filter_values!
+  # can also merge in external facet values (e.g. from Azul, TDR)
+  def update_filter_values!(external_facet = nil)
+    external_facet ||= {} # to prevent errors later when checking external_facet attributes
     if is_numeric?
       values = get_unique_filter_values
+      # only process external numeric facet if unit is compatible
+      if external_facet[:is_numeric] && external_facet[:unit] == unit
+        Rails.logger.info "Merging #{external_facet} into '#{name}' facet filters"
+        values[:MIN] = external_facet[:min] if values[:MIN] > external_facet[:min]
+        values[:MAX] = external_facet[:max] if values[:MAX] < external_facet[:max]
+      end
       return false if values.empty? # found no results, meaning an error occurred
 
       update(min: values[:MIN], max: values[:MAX])
     else
       values = get_unique_filter_values(public_only: false)
+      merged_values = values.dup
+      if external_facet[:filters]
+        Rails.logger.info "Merging #{external_facet[:filters]} into '#{name}' facet filters"
+        external_facet[:filters].each do |filter|
+          merged_values << { id: filter, name: filter } unless filters_include?(filter)
+        end
+      end
       return false if values.empty? # found no results, meaning an error occurred
 
+      values.sort_by! { |f| f[:name] }
+      merged_values.sort_by! { |f| f[:name] }
       public_values = get_unique_filter_values(public_only: true)
-      update(filters: values.to_a)
-      update(public_filters: public_values.to_a)
+      update(filters: values, public_filters: public_values, filters_with_external: merged_values)
     end
   end
 

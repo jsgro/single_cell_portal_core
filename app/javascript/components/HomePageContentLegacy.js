@@ -34,11 +34,11 @@ const LinkableSearchTabs = function(props) {
       <nav className="nav search-links" data-analytics-name="search" role="tablist">
         <Link to={`${basePath}/app/studies${location.search}`}
           className={showGenesTab ? '' : 'active'}>
-          <span className="fas fa-book"></span> Search Studies
+          <span className="fas fa-book"></span> Search studies
         </Link>
         <Link to={`${basePath}/app/genes${location.search}`}
           className={showGenesTab ? 'active' : ''}>
-          <span className="fas fa-dna"></span> Search Genes
+          <span className="fas fa-dna"></span> Search genes
         </Link>
       </nav>
       <div className="tab-content top-pad">

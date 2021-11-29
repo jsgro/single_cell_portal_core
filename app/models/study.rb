@@ -13,6 +13,9 @@ class Study
   include Swagger::Blocks
   include Mongoid::History::Trackable
 
+  # feature flag integration
+  include FeatureFlaggable
+
   ###
   #
   # FIRECLOUD METHODS
@@ -35,12 +38,12 @@ class Study
 
   # pagination
   def self.per_page
-    5
+    10
   end
 
   # associations and scopes
   belongs_to :user
-  belongs_to :branding_group, optional: true
+  has_and_belongs_to_many :branding_groups
   has_many :study_files, dependent: :delete_all do
     # all study files not queued for deletion
     def available
@@ -979,7 +982,7 @@ class Study
   end
 
   def can_visualize?
-    self.can_visualize_clusters? || self.can_visualize_genome_data?
+    self.can_visualize_clusters? || self.can_visualize_genome_data? || self.has_gene_lists?
   end
 
   def has_raw_counts_matrices?
@@ -1263,6 +1266,7 @@ class Study
   #
   ###
 
+  # @deprecated use :all_cells_array
   # return an array of all single cell names in study
   def all_cells
     annot = self.study_metadata.first
@@ -1277,31 +1281,34 @@ class Study
   # cell lists from individual expression matrices
   def all_cells_array
     if self.metadata_file&.parsed? # nil-safed via &
-      query = {name: 'All Cells', array_type: 'cells', linear_data_type: 'Study', linear_data_id: self.id,
-               study_id: self.id, study_file_id: self.metadata_file.id, cluster_group_id: nil, subsample_annotation: nil,
-               subsample_threshold: nil}
-      DataArray.where(query).order(:array_index => 'asc').pluck(:values).reduce([], :+)
+      query = {
+        name: 'All Cells', array_type: 'cells', linear_data_type: 'Study', linear_data_id: self.id,
+        study_id: self.id, study_file_id: self.metadata_file.id, cluster_group_id: nil, subsample_annotation: nil,
+        subsample_threshold: nil
+      }
+      DataArray.concatenate_arrays(query)
     else
-      self.all_expression_matrix_cells
+      all_expression_matrix_cells
     end
   end
 
   # return an array of all cell names that have been used in expression matrices (does not get cells from cell metadata file)
   def all_expression_matrix_cells
     all_cells = []
-    self.expression_matrix_files.each do |file|
-      expression_cells = self.expression_matrix_cells(file)
-      all_cells += expression_cells
+    expression_matrix_files.each do |file|
+      all_cells += expression_matrix_cells(file)
     end
-    all_cells.uniq
+    all_cells.uniq # account for raw counts & processed matrix files repeating cell names
   end
 
   # return the cells found in a single expression matrix
   def expression_matrix_cells(study_file)
-    arrays = DataArray.where(name: "#{study_file.upload_file_name} Cells", array_type: 'cells', linear_data_type: 'Study',
-                             linear_data_id: self.id, study_file_id: study_file.id, cluster_group_id: nil, subsample_annotation: nil,
-                             subsample_threshold: nil).order(:array_index => 'asc')
-    arrays.pluck(:values).reduce([], :+)
+    query = {
+      name: "#{study_file.upload_file_name} Cells", array_type: 'cells', linear_data_type: 'Study',
+      linear_data_id: self.id, study_file_id: study_file.id, cluster_group_id: nil, subsample_annotation: nil,
+      subsample_threshold: nil
+    }
+    DataArray.concatenate_arrays(query)
   end
 
   # return a hash keyed by cell name of the requested study_metadata values
@@ -1537,6 +1544,7 @@ class Study
       first_two_bytes = File.open(file_location).read(2)
       gzip_signature = StudyFile::GZIP_MAGIC_NUMBER # per IETF
       file_is_gzipped = (first_two_bytes == gzip_signature)
+
       opts = {}
       if file_is_gzipped or file.upload_file_name.last(4) == '.bam' or file.upload_file_name.last(5) == '.cram'
         # log that file is already compressed

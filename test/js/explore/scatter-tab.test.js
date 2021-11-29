@@ -10,14 +10,15 @@ import { createCache } from 'components/explore//plot-data-cache'
 import ScatterTab, { getNewContextMap } from 'components/explore/ScatterTab'
 import * as ScpApiMetrics from 'lib/scp-api-metrics'
 
+
 // models a real response from api/v1/visualization/clusters
-const FETCH_CLUSTER_RESPONSE = {
+const MOCK_CLUSTER_RESPONSE = {
   data: {
     annotations: ['foo', 'bar'],
     cells: ['A', 'B'],
     expression: [1, 2],
     x: [11, 14],
-    y: [0, 1],
+    y: [0, 1]
   },
   pointSize: 3,
   userSpecifiedRanges: null,
@@ -67,7 +68,7 @@ const MOCK_EXPLORE_RESPONSE = {
     subsample_thresholds: {}
   },
   bamBundleList: [],
-  cluster: {numPoints: 40, isSubsampled: false},
+  cluster: { numPoints: 40, isSubsampled: false },
   clusterGroupNames: ['clusterA'],
   clusterPointAlpha: 1,
   colorProfile: null,
@@ -75,7 +76,8 @@ const MOCK_EXPLORE_RESPONSE = {
   inferCNVIdeogramFiles: null,
   spatialGroups: [],
   taxonNames: ['Gallus gallus'],
-  uniqueGenes: ['Foo', 'Bar']
+  uniqueGenes: ['Foo', 'Bar'],
+  imageFiles: []
 }
 
 beforeAll(() => {
@@ -142,7 +144,7 @@ describe('getNewContextMap correctly assigns contexts', () => {
     const apiFetch = jest.spyOn(ScpApi, 'fetchCluster')
     // pass in a clone of the response since it may get modified by the cache operations
     apiFetch.mockImplementation(params => {
-      const response = _cloneDeep(FETCH_CLUSTER_RESPONSE)
+      const response = _cloneDeep(MOCK_CLUSTER_RESPONSE)
       response.cluster = params.cluster
       response.genes = params.genes
       return Promise.resolve([response, CACHE_PERF_PARAMS])

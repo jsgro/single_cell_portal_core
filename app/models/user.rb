@@ -17,7 +17,7 @@ class User
   ###
 
   has_many :studies
-  has_many :branding_groups
+  has_and_belongs_to_many :branding_groups
 
   # User annotations are owned by a user
   has_many :user_annotations do
@@ -25,7 +25,6 @@ class User
       where(user_id: user.id, queued_for_deletion: false).select {|ua| ua.valid_annotation?}
     end
   end
-
 
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable and :omniauthable,
@@ -64,7 +63,7 @@ class User
   # Used for time-based one-time access token (TOTAT)
   field :totat, type: String
 
-# Time (t) and time interval (ti) for the TOTAT
+  # Time (t) and time interval (ti) for the TOTAT
   field :totat_info, type: Hash
 
   ## Confirmable
@@ -326,7 +325,7 @@ class User
     if self.admin?
       BrandingGroup.all.order_by(:name.asc)
     else
-      BrandingGroup.where(user_id: self.id).order_by(:name.asc)
+      branding_groups.order_by(:name.asc)
     end
   end
 
@@ -334,7 +333,7 @@ class User
     if self.admin?
       BrandingGroup.all.order_by(:name.asc)
     else
-      BrandingGroup.where(user_id: self.id).or(public: true).order_by(:name.asc)
+      BrandingGroup.where(:user_ids.in => [self.id]).or(public: true).order_by(:name.asc)
     end
   end
 

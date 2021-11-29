@@ -13,7 +13,8 @@ class BulkDownloadService
   #   - +user+ (User) => User requesting download
   #   - +study_bucket_map+ => Map of study IDs to bucket names
   #   - +output_pathname_map+ => Map of study file IDs to output pathnames
-  #   - +tdr_files+ => Hash of tdr accessions to arrays of file information including name & url for each file
+  #   - +azul_files+ => Hash of Azul file summary objects
+  #   - +context+ => Context of bulk download request ("study" for single-study, or "global" for search across all studies)
   #
   # * *return*
   #   - (String) => String representation of signed URLs and output filepaths to pass to curl
@@ -22,7 +23,8 @@ class BulkDownloadService
                                        user:,
                                        study_bucket_map:,
                                        output_pathname_map:,
-                                       tdr_files: nil)
+                                       azul_files: nil,
+                                       context: 'study')
     curl_configs = ['--create-dirs', '--compressed']
     # create an array of all objects to be downloaded, including directory files
     download_objects = study_files.to_a + directory_files
@@ -50,36 +52,46 @@ class BulkDownloadService
       manifest_config += "output=\"#{study.accession}/file_supplemental_info.tsv\""
       curl_configs << manifest_config
     end
-    tdr_studies = tdr_files ? tdr_files.keys : []
-    tdr_file_configs = []
+    azul_studies = azul_files ? azul_files.keys : []
+    azul_file_configs = []
+    azul_sequence_files = 0
+    azul_analysis_files = 0
 
-    if tdr_files.present?
+    if azul_files.present?
       hca_client = ApplicationController.hca_azul_client
-      default_catalog = hca_client.default_catalog
-      curl_configs << "-H \"Authorization: Bearer #{DataRepoClient.new.access_token['access_token']}\""
-      tdr_file_configs = []
-      tdr_files.map do |shortname, file_infos|
+      azul_file_configs = []
+      azul_files.map do |shortname, file_infos|
+        next if file_infos.empty?
+
         # pull out project manifest and process separately
         manifests, files = file_infos.partition { |f| f['file_type'] == 'Project Manifest' }
         manifest_info = manifests.first
-        manifest = hca_client.get_project_manifest_link(default_catalog, manifest_info['url'])
+        manifest = hca_client.project_manifest_link(manifest_info['project_id'])
         # add location directive to allow following 302 redirect to manifest location
         manifest_config = "--location\nurl=\"#{manifest['Location']}\"\noutput=\"#{shortname}/#{manifest_info['name']}\""
-        tdr_file_configs << manifest_config
-        # now process remainder of analysis/sequence files for download in parallel to speed up process
-        Parallel.map(files, in_threads: 100) do |file_info|
-          begin
-            drs_info = ApplicationController.data_repo_client.get_drs_file_info(file_info[:drs_id])
-            access = drs_info['access_methods'].detect { |a| a['type'] == 'https' }
-            file_config = "url=\"#{access.dig('access_url', 'url')}\"\n"
-            file_config += "output=\"#{shortname}/#{file_info['name']}\""
-            tdr_file_configs << file_config
-          rescue => e
-            ErrorTracker.report_exception(e, user, { file_info: file_info, drs_info: drs_info })
+        azul_file_configs << manifest_config
+        # now process remainder of analysis/sequence files for download
+        # each file_info hash will contain project IDs and file_types that can be used in a single query to Azul
+        # to get all matching files
+        project_id = files.first['project_id'] # project_id is same for all entries in this block
+        file_query = { 'projectId' => { 'is' => [project_id] } }
+        files.each do |file_info|
+          file_query['fileFormat'] ||= { 'is' => [] }
+          file_query['fileFormat']['is'] << file_info['file_format']
+          case file_info['file_type']
+          when 'analysis_file'
+            azul_analysis_files += file_info['count']
+          when 'sequence_file'
+            azul_sequence_files += file_info['count']
           end
         end
+        requested_files = hca_client.files(query: file_query)
+        requested_files.each do |file_entry|
+          file_config = "--location\nurl=\"#{file_entry['url']}\"\noutput=\"#{shortname}/#{file_entry['name']}\""
+          azul_file_configs << file_config
+        end
       end
-      curl_configs.concat(tdr_file_configs)
+      curl_configs.concat(azul_file_configs)
     end
     file_map = create_file_type_map(study_files)
     MetricsService.log('file-download:curl-config', {
@@ -89,9 +101,12 @@ class BulkDownloadService
       numClusterFiles: file_map['Cluster'],
       numStudies: studies.count,
       studyAccessions: studies.map(&:accession),
-      numTdrStudies: tdr_studies.count,
-      tdrAccessions: tdr_studies,
-      numTDRFiles: tdr_file_configs.count
+      numAzulStudies: azul_studies.count,
+      azulAccessions: azul_studies,
+      numAzulFiles: azul_file_configs.count,
+      numAzulAnalysisFiles: azul_analysis_files,
+      numAzulSequenceFiles: azul_sequence_files,
+      context: context
     }, user)
     curl_configs.join("\n\n")
   end
