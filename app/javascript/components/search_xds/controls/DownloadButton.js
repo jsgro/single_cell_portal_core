@@ -3,8 +3,6 @@ import React, { useState, useContext, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDownload } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
-import Tooltip from 'react-bootstrap/lib/Tooltip'
-import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger'
 
 import {
   useContextStudySearch, hasSearchParams
@@ -230,7 +228,7 @@ export default function DownloadButton(props) {
     if (userContext.accessToken === '') {
       hint = 'To download, please sign in'
     } else {
-      hint = 'To download, first do a search'
+      hint = 'To download, first do a valid search'
     }
   }
 
@@ -238,9 +236,7 @@ export default function DownloadButton(props) {
 
   return (
     <>
-      <OverlayTrigger
-        placement='top'
-        overlay={<Tooltip id='download-tooltip'>{hint}</Tooltip>}>
+      <span data-toggle="tooltip" title={hint} placement='top'> {
         <button
           id='download-button'
           className={`btn btn-primary ${active ? 'active' : 'disabled'}`}
@@ -250,7 +246,7 @@ export default function DownloadButton(props) {
           Download
           </span>
         </button>
-      </OverlayTrigger>
+      } </span>
       <Modal
         id='bulk-download-modal'
         show={show}

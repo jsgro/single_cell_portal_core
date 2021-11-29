@@ -75,7 +75,7 @@ export default function SearchPanel({
 
   const keywordPrompt = searchState.params.preset === 'covid19' ? 'Search COVID-19 studies' : undefined
   return (
-    <div id='search-panel'>
+    <div id='search-panel' style={{display: 'flex'}}>
       <KeywordSearch keywordPrompt={keywordPrompt}/>
       { searchButtons }
       { advancedOptsLink }

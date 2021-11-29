@@ -4,8 +4,6 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons'
 
 import DownloadSelectionModal from './DownloadSelectionModal'
 import { UserContext } from 'providers/UserProvider'
-import { wrapButtonWithTooltip } from 'lib/common'
-
 
 /**
  * Component for "Download" button which shows a Bulk Download modal on click.
@@ -54,8 +52,9 @@ export default function DownloadButton({ searchResults={} }) {
 
   const saveDisabled = !active
   const saveButton = <button
-    style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
+    style={{ 'pointerEvents': saveDisabled ? 'none' : 'auto' }}
     type="button"
+    id="download-button"
     className="btn btn-primary"
     disabled={saveDisabled}
     data-testid="file-save"
@@ -66,11 +65,9 @@ Download
     </span>
   </button>
 
-  const b = wrapButtonWithTooltip(hint, saveButton, 'hint-for-download-button')
-
   return (
     <>
-      { b }
+      <span style={{ 'margin-left': 'auto' }} data-toggle="tooltip" title={hint}> {saveButton} </span>
       { showModal &&
         <DownloadSelectionModal
           show={showModal}
