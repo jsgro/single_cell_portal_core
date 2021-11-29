@@ -142,7 +142,7 @@ describe('Download selection modal', () => {
 
     fireEvent.click(screen.getByText('NEXT'))
     await waitForElementToBeRemoved(() => screen.getByTestId('bulk-download-loading-icon'))
-    expect(screen.getByRole('textbox')).toHaveValue('curl "undefined/single_cell/api/v1/bulk_download/generate_curl_config?auth_code=TViAHJmA&download_id=aaaBBB" -o cfg.txt; curl -K cfg.txt && rm cfg.txt')
+    expect(screen.getByRole('textbox')).toHaveValue('curl "undefined/single_cell/api/v1/bulk_download/generate_curl_config?auth_code=TViAHJmA&context=global&download_id=aaaBBB" -o cfg.txt; curl -K cfg.txt && rm cfg.txt')
     expect(fetchAuthCode).toHaveBeenLastCalledWith([
       '60403d30cc7ba03f94477640',
       '60a2cf62cc7ba082358b545f',
