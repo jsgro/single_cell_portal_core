@@ -2,13 +2,13 @@
   <div class="form-group row">
     <div class="col-md-2">
       <% access_enabled = f.object.persisted? %>
-      <%= label_tag :_destroy, 'Access enabled?' %><br />
+      <%= label_tag :enable, 'Access enabled?' %><br />
       <div class="btn-group btn-toggle" data-toggle="buttons">
         <label class="btn btn-default <%= access_enabled ? 'active' : nil %>">
-          <%= radio_button_tag 'reviewer_access_actions[enable]', :yes, access_enabled, disabled: !access_enabled %> Yes
+          <%= radio_button_tag 'reviewer_access_actions[enable]', :yes, access_enabled %> Yes
         </label>
         <label class="btn btn-default <%= access_enabled ? nil : 'active' %>">
-          <%= radio_button_tag 'reviewer_access_actions[enable]', :no, !access_enabled, disabled: !access_enabled %> No
+          <%= radio_button_tag 'reviewer_access_actions[enable]', :no, !access_enabled %> No
         </label>
       </div>
     </div>

@@ -51,6 +51,31 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
     assert_response :success
   end
 
+  test 'should update expiration date' do
+    access = @study.build_reviewer_access
+    access.save!
+    new_expiration = access.expires_at + 1.month
+    auth_as_user(@user)
+    sign_in @user
+    study_params = {
+      accession: @study.accession, study_name: @study.url_safe_name,
+      study: {
+        reviewer_access_attributes: {
+          expires_at: new_expiration.to_s,
+          id: access.id.to_s
+        }
+      },
+      reviewer_access_actions: {
+        enable: 'yes'
+      }
+    }
+
+    post :update_study_settings, params: study_params, xhr: true
+    assert_response :success
+    access.reload
+    assert_equal new_expiration, access.expires_at
+  end
+
   test 'should create new reviewer access session' do
     access = @study.build_reviewer_access
     access.save!
@@ -60,6 +85,31 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
     assert cookies.signed[@cookie_name].present?
     access.reload
     assert access.reviewer_access_sessions.any?
+  end
+
+  test 'should validate reviewer access' do
+    access = @study.build_reviewer_access
+    access.save!
+    original_expires_at = access.expires_at.dup
+    auth_as_user(@user)
+    sign_in @user
+    # blank expires_at should be discarded and ignored
+    study_params = {
+      accession: @study.accession, study_name: @study.url_safe_name,
+      study: {
+        reviewer_access_attributes: {
+          expires_at: ''
+        }
+      },
+      reviewer_access_actions: {
+        enable: 'yes'
+      }
+    }
+
+    post :update_study_settings, params: study_params, xhr: true
+    assert_response :success
+    access.reload
+    assert_equal original_expires_at, access.expires_at
   end
 
   test 'should block authentication with invalid pin' do

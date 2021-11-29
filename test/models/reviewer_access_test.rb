@@ -34,6 +34,20 @@ class ReviewerAccessTest < ActiveSupport::TestCase
     assert_equal expected_cookie_name, @access.cookie_name
   end
 
+  test 'should validate reviewer access' do
+    assert @access.valid?
+    @access.expires_at = nil
+    @access.pin = nil
+    @access.access_code = nil
+    assert_not @access.valid?
+    expected_errors = %i[access_code expires_at pin]
+    expected_errors.each do |attribute|
+      error = @access.errors.find { |e| e.attribute == attribute }
+      assert error.present?
+      assert error.type == :blank
+    end
+  end
+
   test 'should authenticate via pin' do
     pin = @access.pin.dup
     assert @access.authenticate_pin?(pin)
