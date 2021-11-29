@@ -5,5 +5,5 @@ process.env.VIEW_ENV = process.env.NODE_ENV
 
 const environment = require('./environment')
 
-
+environment.splitChunks()
 module.exports = environment.toWebpackConfig()

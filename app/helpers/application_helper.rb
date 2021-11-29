@@ -375,4 +375,13 @@ module ApplicationHelper
   def label_with_asterisk(label_name)
     "#{label_name} <i class='text-danger'>*</i>".html_safe
   end
+
+  # helper for rendering split chunks tags with a nonce
+  # based off of nonced_javascript_pack_tag in secure_headers
+  # see https://github.com/github/secure_headers/blob/main/lib/secure_headers/view_helper.rb
+  def nonced_javascript_pack_with_chunks_tag(*args, &block)
+    opts = extract_options(args).merge(nonce: _content_security_policy_nonce(:script))
+
+    javascript_packs_with_chunks_tag(*args, **opts, &block)
+  end
 end
