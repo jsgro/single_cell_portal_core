@@ -213,24 +213,19 @@ class Study
   has_many :external_resources, as: :resource_links, dependent: :destroy
   accepts_nested_attributes_for :external_resources, allow_destroy: true
 
-  # Anonymous Reviewer Access
-  has_one :reviewer_access, dependent: :delete_all
-  accepts_nested_attributes_for :reviewer_access, allow_destroy: true
+
 
   # DownloadAgreement (extra user terms for downloading data)
   has_one :download_agreement, dependent: :delete_all
   accepts_nested_attributes_for :download_agreement, allow_destroy: true
 
   # Study Detail (full html description)
-  #
-  # NOTE: THIS ASSOCIATION MUST ALWAYS BE DECLARED LAST
-  #
-  # This is due to the after_save :set_study_description_text callback which will cause the parent study
-  # to update itself with the plain-text version of the description
-  # this will clobber any incoming changes to other associations, since the study is always saved first
-  # therefore, put any new associations above :study_detail
   has_one :study_detail, dependent: :delete_all
   accepts_nested_attributes_for :study_detail, allow_destroy: true
+
+  # Anonymous Reviewer Access
+  has_one :reviewer_access, dependent: :delete_all
+  accepts_nested_attributes_for :reviewer_access, allow_destroy: true
 
   # field definitions
   field :name, type: String
