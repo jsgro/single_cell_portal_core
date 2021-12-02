@@ -9,7 +9,7 @@
  * [1] https://stackoverflow.com/a/47976589
 */
 /** Get lines and file type from a selected local file */
-export async function readLinesAndType(file, numLines) {
+export async function readLinesAndType(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
 
@@ -18,7 +18,7 @@ export async function readLinesAndType(file, numLines) {
       const bufferSlice = ev.target.result.slice(start, nextSlice)
       const enc = new TextDecoder('utf-8')
       const rawString = enc.decode(bufferSlice)
-      const lines = rawString.split(/\r?\n/).slice(0, numLines)
+      const lines = rawString.split(/\r?\n/)
       const mimeType = file.type
       resolve({ lines, mimeType })
     }
