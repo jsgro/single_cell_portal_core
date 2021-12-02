@@ -64,7 +64,7 @@ describe('Client-side file validation', () => {
   })
 
   it('catches duplicate cell names in cluster file', async () => {
-    mockReadLinesAndType({ content: 'NAME\tX\tY\tCELL_0001\t1.43\t0.455\nCELL_0001\t4.72\t1.593' })
+    mockReadLinesAndType({ content: 'NAME,X,Y\nTYPE,numeric,numeric\nCELL_0001,34.472,32.211\nCELL_0001,15.975,10.043' })
     const { errors, summary } = await validateFileContent({ name: 'dup_cell_names.txt' }, 'Cluster')
     expect(errors).toHaveLength(1)
     expect(summary).toBe('Your file had 1 error')
