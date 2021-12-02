@@ -11,7 +11,7 @@
         <%= scp_link_to "<span class='fas fa-home'></span> #{@selected_branding_group.name}</sup>".html_safe, site_path,
                         class: "navbar-brand check-upload", style: 'margin-top: 6px;' %>
       <% else %>
-        <%= link_to image_tag('SCP-white.png'), site_path, class: "navbar-brand check-upload" %>
+        <%= link_to image_tag('SCP-white.png',  alt:"Single Cell Portal logo"), site_path, class: "navbar-brand check-upload" %>
       <% end %>
     </div>
   </div>

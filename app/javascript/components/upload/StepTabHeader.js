@@ -39,13 +39,13 @@ export default function StepTabHeader({
   }
 
   return <li className={className}>
-    <div onClick={() => setCurrentStep(step)} className="step-number">
-      {badgeContent}
-    </div>
-    <div>
-      <a className="action link" onClick={() => setCurrentStep(step)}>
-        {step.title}
-      </a>
+    <button style={{ background: 'unset', border: 'unset' }} onClick={() => setCurrentStep(step)} >
+      <span className="step-number">
+        {badgeContent}
+      </span>
+      <span className="action link">
+      {step.title}
+      </span>
       { SHOW_FILE_NAMES && <ul className="file-list">
         { displayedFiles.map(file => {
           // show different style depending on whether file is locally modified
@@ -56,6 +56,6 @@ export default function StepTabHeader({
         }
         { remainderText && <li>{remainderText}</li> }
       </ul> }
-    </div>
+    </button>
   </li>
 }
