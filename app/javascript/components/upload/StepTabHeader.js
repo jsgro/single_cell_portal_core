@@ -38,13 +38,13 @@ export default function StepTabHeader({
     badgeContent = <span className="badge fa-xs" data-testid={badgeTestId}><FontAwesomeIcon icon={faCircle}/></span>
   }
 
-  return <li className={className}>
-    <button style={{ background: 'unset', border: 'unset' }} onClick={() => setCurrentStep(step)} >
+  return <li className={className} role="tab">
+    <button className="unset-background-border-style" onClick={() => setCurrentStep(step)} >
       <span className="step-number">
         {badgeContent}
       </span>
       <span className="action link">
-      {step.title}
+        {step.title}
       </span>
       { SHOW_FILE_NAMES && <ul className="file-list">
         { displayedFiles.map(file => {
