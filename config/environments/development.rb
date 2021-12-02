@@ -137,4 +137,8 @@ Rails.application.configure do
 
   # Enable profiling and flamegraphs via rack-mini-profiler
   config.profile_performance = false
+
+  # show mongo logs in the console
+  Mongoid.logger = Logger.new($stdout)
+  Mongo::Logger.logger = Logger.new($stdout)
 end
