@@ -5,9 +5,15 @@ module Api
       # the goal of this controller is to be business-logic free, and only amalgamate calls
       # to other controller/service methods when needed to save server round-trips
       class ExploreController < ApiBaseController
+        include Concerns::ApiCaching
         before_action :set_current_api_user!
+
         before_action :set_study
         before_action :check_study_view_permission
+
+        before_action :check_api_cache!
+        after_action :write_api_cache!
+
 
         swagger_path '/studies/{study_id}/explore' do
           operation :get do

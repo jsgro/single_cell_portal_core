@@ -983,28 +983,13 @@ class StudyFile
   def cache_removal_key
     study_name = self.study.url_safe_name
     accession = self.study.accession
-    case self.file_type
-      when 'Cluster'
-        @cache_key = "#{accession}/#{study_name}.*render_cluster"
-      when 'Coordinate Labels'
-        @cache_key = "#{accession}/#{study_name}.*render_cluster"
-      when 'Expression Matrix'
-        @cache_key = "#{accession}/#{study_name}.*expression"
-      when 'MM Coordinate Matrix'
-        @cache_key = "#{accession}/#{study_name}.*expression"
-      when /10X.*File/
-        @cache_key = "#{accession}/#{study_name}.*expression"
-      when 'Gene List'
-        @cache_key = "#{accession}/#{study_name}.*precomputed_gene_expression"
-      when 'Metadata'
-        # when reparsing metadata, almost all caches now become invalid so we just clear all matching the study
-        @cache_key =  "#{accession}/#{study_name}"
-      when 'Ideogram Annotations'
-        @cache_key = "#{accession}/#{study_name}.*render_cluster"
-      else
-        @cache_key = nil
+    # because of the complex interactions of the expression, explore, cluster, and annotation controllers,
+    # we play it safe and invalidate the study's api cache on any file upload that isn't 'other'
+    file_types_not_impacting_cache = ['Documentation', 'Other']
+    cache_key = nil
+    if file_types_not_impacting_cache.exclude?(self.file_type)
+      cache_key = "#{accession}/#{study_name}"
     end
-    @cache_key
   end
 
   # cache key for API responses (Api::V1::ClustersController, etc.)
