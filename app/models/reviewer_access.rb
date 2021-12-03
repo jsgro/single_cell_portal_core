@@ -24,7 +24,7 @@ class ReviewerAccess
   end
 
   before_validation :generate_credentials, on: :create
-  validates :access_code, :pin, presence: true
+  validates :access_code, :pin, :expires_at, presence: true
   validates :study_id, uniqueness: true, presence: true
 
   # determine if user-supplied pin is valid

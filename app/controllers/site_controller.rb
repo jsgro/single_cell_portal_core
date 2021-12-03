@@ -883,11 +883,13 @@ class SiteController < ApplicationController
 
     if access_settings['reset'] == 'yes'
       logger.info "Rotating credentials for reviewer access in #{study.accession}"
-      study.reviewer_access&.rotate_credentials!
+      study.reviewer_access.rotate_credentials! if study.reviewer_access.present?
     elsif access_settings['enable'] == 'yes' && study.reviewer_access.nil?
+      logger.info "Initializing reviewer access in #{study.accession}"
       study.build_reviewer_access.save!
     elsif access_settings['enable'] == 'no'
-      study.reviewer_access&.destroy
+      logger.info "Disabling reviewer access in #{study.accession}"
+      study.reviewer_access.destroy if study.reviewer_access.present?
     end
   end
 end

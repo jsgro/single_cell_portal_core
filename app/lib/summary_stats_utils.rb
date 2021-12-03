@@ -29,12 +29,21 @@ class SummaryStatsUtils
   # get a count of all studies, public studies, and also which of those have compliant metadata
   def self.study_counts
     studies = Study.where(queued_for_deletion: false)
-    public = studies.where(public: true)
+    public = studies.where(public: true).pluck(:id)
     {
       all: studies.count,
       public: public.count,
-      compliant: public.select { |s| s.metadata_file&.use_metadata_convention }.count
+      compliant: StudyFile.where(file_type: 'Metadata', use_metadata_convention: true, :study_id.in => public).count
     }
+  end
+
+  # get a weekly count of users that have logged into the portal
+  def self.weekly_returning_users
+    today = Date.today
+    one_week_ago = today - 1.weeks
+    user_count = User.where(:last_sign_in_at.gte => one_week_ago, :last_sign_in_at.lt => today)
+                     .or(:current_sign_in_at.gte => one_week_ago, :current_sign_in_at.lt => today).count
+    {count: user_count, description: "Count of bleturning users from #{one_week_ago} to #{today}"}
   end
 
   # perform a sanity check to look for any missing files in remote storage
