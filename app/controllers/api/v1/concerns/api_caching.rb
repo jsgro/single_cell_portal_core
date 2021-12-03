@@ -11,9 +11,7 @@ module Api
           if check_caching_config && Rails.cache.exist?(cache_path)
             Rails.logger.info "Reading from API cache: #{cache_path}"
             json_response = Rails.cache.fetch(cache_path)
-            # we use a plain text render to save serialize/deserialize cost since the cache
-            # is already formatted
-            render plain: json_response, content_type: 'application/json'
+            render json: json_response
           end
         end
 
