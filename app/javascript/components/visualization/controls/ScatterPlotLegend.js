@@ -128,10 +128,6 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
 
   let enabled // [isShowAllEnabled, isHideAllEnabled]
 
-  console.log('numHiddenTraces', numHiddenTraces)
-  console.log('numLabels', numLabels)
-  console.log('countsByLabel', countsByLabel)
-
   if (countsByLabel === null) {
     enabled = [false, false]
   } else if (numHiddenTraces === numLabels) {

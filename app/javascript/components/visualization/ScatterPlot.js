@@ -78,9 +78,6 @@ function RawScatterPlot({
       }
     }
 
-
-    console.log('newShownTraces', newShownTraces)
-    console.log('labels', labels)
     setHiddenTraces(newShownTraces)
   }
 
