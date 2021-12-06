@@ -68,7 +68,7 @@ export function getStyles(data, pointSize) {
 /** Component for row in legend */
 function LegendEntry({
   label, numPoints, iconColor, correlations,
-  numLabels, shownTraces, updateShownTraces
+  numLabels, hiddenTraces, updateHiddenTraces
 }) {
   let entry = label
 
@@ -80,7 +80,7 @@ function LegendEntry({
     entry = `${label} (${numPoints} points, ρ = ${correlation})`
   }
 
-  const isShown = shownTraces.includes(label)
+  const isShown = hiddenTraces.includes(label)
 
   const iconStyle = { backgroundColor: iconColor }
   const shownClass = (isShown ? '' : 'shown')
@@ -88,7 +88,7 @@ function LegendEntry({
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
     const wasShown = !isShown
-    updateShownTraces(label, wasShown, numLabels)
+    updateHiddenTraces(label, wasShown)
 
     const legendEntry = {
       label, numPoints, numLabels, wasShown, iconColor,
@@ -113,32 +113,33 @@ function LegendEntry({
 }
 
 /** Handle click on "Show all" or "Hide all" button */
-function showHideAll(showOrHide, labels, updateShownTraces) {
+function showHideAll(showOrHide, labels, updateHiddenTraces) {
   if (showOrHide === 'show') {
-    updateShownTraces(labels, false, null, true)
+    updateHiddenTraces(labels, false, true)
   } else {
-    updateShownTraces(labels, true, null, true)
+    updateHiddenTraces(labels, true, true)
   }
 }
 
 /** Get status of "Show all" and "Hide all" links */
-function getShowHideEnabled(shownTraces, countsByLabel) {
-  const numShownTraces = shownTraces.length
+function getShowHideEnabled(hiddenTraces, countsByLabel) {
+  const numHiddenTraces = hiddenTraces.length
   const numLabels = Object.keys(countsByLabel).length
 
   let enabled // [isShowAllEnabled, isHideAllEnabled]
 
-  console.log('numShownTraces', numShownTraces)
+  console.log('numHiddenTraces', numHiddenTraces)
   console.log('numLabels', numLabels)
+  console.log('countsByLabel', countsByLabel)
 
   if (countsByLabel === null) {
     enabled = [false, false]
-  } else if (numShownTraces === numLabels) {
-    enabled = [false, true]
-  } else if (numShownTraces < numLabels && numShownTraces > 0) {
-    enabled = [true, true]
-  } else if (numShownTraces === 0) {
+  } else if (numHiddenTraces === numLabels) {
     enabled = [true, false]
+  } else if (numHiddenTraces < numLabels && numHiddenTraces > 0) {
+    enabled = [true, true]
+  } else if (numHiddenTraces === 0) {
+    enabled = [false, true]
   }
 
   return enabled
@@ -146,8 +147,8 @@ function getShowHideEnabled(shownTraces, countsByLabel) {
 
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
-  name, height, countsByLabel, correlations, shownTraces,
-  updateShownTraces
+  name, height, countsByLabel, correlations, hiddenTraces,
+  updateHiddenTraces
 }) {
   const labels = getLabels(countsByLabel)
   const numLabels = labels.length
@@ -164,17 +165,17 @@ export default function ScatterPlotLegend({
           numPoints={numPoints}
           iconColor={iconColor}
           correlations={correlations}
-          shownTraces={shownTraces}
-          updateShownTraces={updateShownTraces}
+          hiddenTraces={hiddenTraces}
+          updateHiddenTraces={updateHiddenTraces}
           numLabels={numLabels}
         />
       )
     })
 
   const style = { width: scatterLabelLegendWidth, height }
-  const filteredClass = (shownTraces.length === 0) ? 'unfiltered' : ''
+  const filteredClass = (hiddenTraces.length === 0) ? 'unfiltered' : ''
   const [showIsEnabled, hideIsEnabled] =
-    getShowHideEnabled(shownTraces, countsByLabel)
+    getShowHideEnabled(hiddenTraces, countsByLabel)
 
   return (
     <div
@@ -188,14 +189,14 @@ export default function ScatterPlotLegend({
             data-analytics-name='legend-show-all'
             className={`stateful-link ${getActivity(showIsEnabled)}`}
             disabled={!showIsEnabled}
-            onClick={() => {showHideAll('show', labels, updateShownTraces)}}
+            onClick={() => {showHideAll('show', labels, updateHiddenTraces)}}
           >Show all</a>
           <a
             role="button"
             data-analytics-name='legend-hide-all'
             className={`stateful-link pull-right ${getActivity(hideIsEnabled)}`}
             disabled={!hideIsEnabled}
-            onClick={() => {showHideAll('hide', labels, updateShownTraces)}}
+            onClick={() => {showHideAll('hide', labels, updateHiddenTraces)}}
           >Hide all</a>
         </div>
       </div>

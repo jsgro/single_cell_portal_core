@@ -61,7 +61,7 @@ function RawScatterPlot({
   // hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
   // array of trace names (strings) to show in the graph
-  const [shownTraces, setShownTraces] = useState([])
+  const [hiddenTraces, setHiddenTraces] = useState([])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
 
@@ -72,7 +72,7 @@ function RawScatterPlot({
    * labeled cells (i.e., the corresponding Plotly.js trace) in the scatter
    * plot.
    */
-  function updateShownTraces(labels, value, numLabels, applyToAll=false) {
+  function updateHiddenTraces(labels, value, applyToAll=false) {
     let newShownTraces
     if (applyToAll) {
       // Handle multi-filter interaction
@@ -80,7 +80,7 @@ function RawScatterPlot({
     } else {
       // Handle single-filter interaction
       const label = labels
-      newShownTraces = [...shownTraces]
+      newShownTraces = [...hiddenTraces]
 
       if (value && !newShownTraces.includes(label)) {
         newShownTraces.push(label)
@@ -90,7 +90,10 @@ function RawScatterPlot({
       }
     }
 
-    setShownTraces(newShownTraces)
+
+    console.log('newShownTraces', newShownTraces)
+    console.log('labels', labels)
+    setHiddenTraces(newShownTraces)
   }
 
   /** Process scatter plot data fetched from server */
@@ -118,7 +121,7 @@ function RawScatterPlot({
       showPointBorders: scatter.showClusterPointBorders,
       is3D: scatter.is3D,
       labelCorrelations,
-      shownTraces,
+      hiddenTraces,
       scatter
     }
     const [traces, labelCounts] = getPlotlyTraces(traceArgs)
@@ -185,7 +188,7 @@ function RawScatterPlot({
     if (scatterData && !isLoading) {
       processScatterPlot()
     }
-  }, [shownTraces, dimensionProps])
+  }, [hiddenTraces, dimensionProps])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
@@ -243,8 +246,8 @@ function RawScatterPlot({
           height={scatterData.height}
           countsByLabel={countsByLabel}
           correlations={labelCorrelations}
-          shownTraces={shownTraces}
-          updateShownTraces={updateShownTraces}
+          hiddenTraces={hiddenTraces}
+          updateHiddenTraces={updateHiddenTraces}
         />
         }
       </div>
@@ -294,7 +297,7 @@ export function getPlotlyTraces({
   pointAlpha,
   pointSize,
   is3D,
-  shownTraces,
+  hiddenTraces,
   scatter
 }) {
   const trace = {
@@ -327,7 +330,7 @@ export function getPlotlyTraces({
       }
     ]
 
-    if (shownTraces.length > 0) {
+    if (hiddenTraces.length > 0) {
       trace.transforms.push({
         type: 'filter',
         target: data.annotations,
@@ -336,7 +339,7 @@ export function getPlotlyTraces({
         // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/constants/filter_ops.js
         // Plotly docs are rather sparse here.
         operation: '}{',
-        value: shownTraces
+        value: hiddenTraces
       })
     }
   } else {
