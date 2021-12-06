@@ -4,6 +4,8 @@ import _get from 'lodash/get'
 export const PARSEABLE_TYPES = ['Cluster', 'Coordinate Labels', 'Expression Matrix', 'MM Coordinate Matrix',
   '10X Genes File', '10X Barcodes File', 'Gene List', 'Metadata', 'Analysis Output']
 
+const EXPRESSION_INFO_TYPES = ['Expression Matrix', 'MM Coordinate Matrix']
+
 /** properties used to track file state on the form, but that should not be sent to the server
  *  this also includes properties that are only modifiable on the server (and so should also
  * be ignored server side, but for best hygiene are also just not sent ) */
@@ -59,8 +61,18 @@ export function formatFileFromServer(file) {
   if (file.genome_assembly_id) {
     file.genome_assembly_id = file.genome_assembly_id.$oid
   }
+  if (file.study_file_bundle_id) {
+    file.study_file_bundle_id = file.study_file_bundle_id.$oid
+  }
   if (file.expression_file_info) {
     delete file.expression_file_info._id
+  }
+  if (EXPRESSION_INFO_TYPES.includes(file.file_type) && !file.expression_file_info) {
+    // some legacy studies will not have supplemental expression file info
+    file.expression_file_info = {
+      is_raw_counts: false,
+      raw_counts_associations: []
+    }
   }
   return file
 }
@@ -68,8 +80,17 @@ export function formatFileFromServer(file) {
 /** find the bundle children of 'file', if any, in the given 'files' list */
 export function findBundleChildren(file, files) {
   return files.filter(f => {
-    const parentFields = [f.options?.matrix_id, f.options?.bam_id, f.options?.cluster_file_id]
-    return parentFields.includes(file._id) || (file.oldId && parentFields.includes(file.oldId))
+    // check if the file is either explicity listed as a parent in the child's 'options' field,
+    // or if the child and the parent are in the same study_file_bundle
+    const parentFields = [
+      f.options?.matrix_id,
+      f.options?.bam_id,
+      f.options?.cluster_file_id,
+      f.study_file_bundle_id
+    ]
+    return parentFields.includes(file._id) ||
+      (file.oldId && parentFields.includes(file.oldId)) ||
+      file.study_file_bundle_id && parentFields.includes(file.study_file_bundle_id)
   })
 }
 

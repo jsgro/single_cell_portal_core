@@ -429,6 +429,34 @@ export const FEATURES_FILE = {
   _id: { $oid: '618bd61acc7ba038ac22334' }
 }
 
+export const IMAGE_FILE = {
+  created_at: '2021-11-15T18:31:41.598Z',
+  data_dir: '71e1a89e5c5d9300aabd0e757d1b569eb66644872b40bcbb720e2b39bc7e3822',
+  description: '',
+  file_type: 'Image',
+  human_data: false,
+  is_spatial: false,
+  name: 'chicken.jpeg',
+  options: {},
+  parse_status: 'unparsed',
+  queued_for_deletion: false,
+  remote_location: '',
+  spatial_cluster_associations: [''],
+  status: 'uploaded',
+  study_id: { $oid: '61797543cc7ba05f3e3be552' },
+  upload: { 'url': 'fake/app/original/chicken1.jpeg' },
+  updated_at: '2021-11-15T18:31:41.772Z',
+  upload_content_type: 'image/jpeg',
+  upload_file_name: 'chicken.jpeg',
+  upload_file_size: 6644,
+  use_metadata_convention: false,
+  version: 1,
+  x_axis_label: '',
+  y_axis_label: '',
+  z_axis_label: '',
+  _id: { $oid: '6192a78dcc7ba06aada9badb' }
+}
+
 export const BASIC_MENU_OPTIONS = {
   'fonts': ['Helvetica Neue', 'Arial'],
   'species': [{

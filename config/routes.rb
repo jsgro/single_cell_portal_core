@@ -141,7 +141,7 @@ Rails.application.routes.draw do
     # branding groups admin
     resources :branding_groups
     # show a list for display and linking
-    get :collections, to: 'branding_groups#list_navigate'
+    get :collections, to: 'branding_groups#list_navigate', as: :collection_list_navigate
 
     # analysis configurations
     get 'analysis_configurations/load_associated_model', to: 'analysis_configurations#load_associated_model',

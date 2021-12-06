@@ -597,7 +597,7 @@ module Api
       # study params list
       def study_params
         params.require(:study).permit(:name, :description, :public, :embargo, :use_existing_workspace, :firecloud_workspace,
-                                      :firecloud_project, :branding_group_id, :cell_count, :gene_count, :view_order,
+                                      :firecloud_project, :cell_count, :gene_count, :view_order,  branding_group_ids: [],
                                       study_shares_attributes: [:id, :_destroy, :email, :permission],
                                       study_detail_attributes: [:id, :full_description],
                                       :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails,

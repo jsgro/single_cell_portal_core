@@ -628,6 +628,7 @@ class IngestJob
         schema_url = 'https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention'
         message << "This metadata file was validated against the latest <a href='#{schema_url}'>Metadata Convention</a>"
         message << "Convention version: <strong>#{project_name}/#{current_schema_version}</strong>"
+        message << "Group-type metadata columns with more than 200 unique values are not made available for visualization."
       end
       cell_metadata = CellMetadatum.where(study_id: self.study.id, study_file_id: self.study_file.id)
       message << "Entries created:"
@@ -756,7 +757,7 @@ class IngestJob
     case annotation_source.class
     when CellMetadatum
       message = "#{annotation_source.name}: #{annotation_source.annotation_type}"
-      if annotation_source.values.size < max_values || annotation_source.annotation_type == 'numeric'
+      if annotation_source.values.size <= max_values || annotation_source.annotation_type == 'numeric'
         values = annotation_source.values.any? ? ' (' + annotation_source.values.join(', ') + ')' : ''
       else
         values = " (List too large for email -- #{annotation_source.values.size} values present, max is #{max_values})"
@@ -764,7 +765,7 @@ class IngestJob
       message + values
     when ClusterGroup
       message = "#{cell_annotation['name']}: #{cell_annotation['type']}"
-      if cell_annotation['values'].size < max_values || cell_annotation['type'] == 'numeric'
+      if cell_annotation['values'].size <= max_values || cell_annotation['type'] == 'numeric'
         values = cell_annotation['type'] == 'group' ? ' (' + cell_annotation['values'].join(',') + ')' : ''
       else
         values = " (List too large for email -- #{cell_annotation['values'].size} values present, max is #{max_values})"

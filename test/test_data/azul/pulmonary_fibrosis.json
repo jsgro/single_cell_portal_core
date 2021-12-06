@@ -1,0 +1,361 @@
+{
+  "hits": [
+    {
+      "projects": [
+        {
+          "projectId": "c1a9a93d-d9de-4e65-9619-a9cec1052eaa",
+          "projectTitle": "Single-cell RNA-sequencing reveals profibrotic roles of distinct epithelial and mesenchymal lineages in pulmonary fibrosis",
+          "projectShortname": "PulmonaryFibrosisGSE135893",
+          "projectDescription": "Pulmonary fibrosis (PF) is a form of chronic lung disease characterized by progressive destruction of normal alveolar gas-exchange surfaces and accumulation of extracellular matrix (ECM). In order to comprehensively define the cell types, mechanisms and mediators driving ECM deposition and fibrotic remodeling in lungs with pulmonary fibrosis, we performed single-cell RNA-sequencing (scRNA-seq) of single-cell suspensions generated from non-fibrotic control and PF lungs. Analysis of over 114,000 cells from 20 PF and 10 control lungs identified 31 distinct cell types. We identified multiple distinct lineages directly contribute to ECM expansion, including a novel HAS1hi fibroblast subtype and a previously undescribed KRT5-/KRT17+, collagen and ECM-producing epithelial cell population that was highly enriched in PF lungs. Together these data provide high-resolution insights into the basic mechanisms of pulmonary fibrosis, and indicate a direct profibrotic role of the lung epithelium in PF pathogenesis. Overall design: We performed single-cell RNA-sequencing (scRNA-seq) of single-cell suspensions generated from non-fibrotic control and pulmonary fibrosis (PF) lungs"
+        }
+      ],
+      "samples": [
+    {
+      "sampleEntityType": [
+        "specimens"
+      ],
+      "effectiveOrgan": [
+        "lung"
+      ],
+      "submissionDate": "2020-07-15T15:14:32.164000Z",
+      "updateDate": "2020-07-15T15:14:53.363000Z",
+      "id": [
+        "SAMN12587351",
+        "SAMN12587352",
+        "SAMN12587353",
+        "SAMN12587354",
+        "SAMN12587355",
+        "SAMN12587356",
+        "SAMN12587357",
+        "SAMN12587358",
+        "SAMN12587359",
+        "SAMN12587360",
+        "SAMN12587361",
+        "SAMN12587362",
+        "SAMN12587363",
+        "SAMN12587364",
+        "SAMN12587365",
+        "SAMN12587366",
+        "SAMN12587367",
+        "SAMN12587368",
+        "SAMN12587369",
+        "SAMN12587370",
+        "SAMN12587371",
+        "SAMN12587372",
+        "SAMN12587373",
+        "SAMN12587374",
+        "SAMN12587375",
+        "SAMN12587378",
+        "SAMN12587379",
+        "SAMN12587380",
+        "SAMN12587381",
+        "SAMN12587382",
+        "SAMN12587383",
+        "SAMN12587384",
+        "SAMN12587385",
+        "SAMN12587386"
+      ],
+      "organ": [
+        "lung"
+      ],
+      "organPart": [
+        null
+      ],
+      "disease": [
+        "hypersensitivity pneumonitis",
+        "idiopathic pulmonary fibrosis",
+        "interstitial lung disease",
+        "non-specific interstitial pneumonia",
+        "normal",
+        "pulmonary fibrosis",
+        "sarcoidosis"
+      ],
+      "preservationMethod": [
+        null
+      ],
+      "source": [
+        "specimen_from_organism"
+      ]
+    }
+  ],
+      "specimens": [
+    {
+      "submissionDate": "2020-07-15T15:14:32.164000Z",
+      "updateDate": "2020-07-15T15:14:53.363000Z",
+      "id": [
+        "SAMN12587351",
+        "SAMN12587352",
+        "SAMN12587353",
+        "SAMN12587354",
+        "SAMN12587355",
+        "SAMN12587356",
+        "SAMN12587357",
+        "SAMN12587358",
+        "SAMN12587359",
+        "SAMN12587360",
+        "SAMN12587361",
+        "SAMN12587362",
+        "SAMN12587363",
+        "SAMN12587364",
+        "SAMN12587365",
+        "SAMN12587366",
+        "SAMN12587367",
+        "SAMN12587368",
+        "SAMN12587369",
+        "SAMN12587370",
+        "SAMN12587371",
+        "SAMN12587372",
+        "SAMN12587373",
+        "SAMN12587374",
+        "SAMN12587375",
+        "SAMN12587378",
+        "SAMN12587379",
+        "SAMN12587380",
+        "SAMN12587381",
+        "SAMN12587382",
+        "SAMN12587383",
+        "SAMN12587384",
+        "SAMN12587385",
+        "SAMN12587386"
+      ],
+      "organ": [
+        "lung"
+      ],
+      "organPart": [
+        null
+      ],
+      "disease": [
+        "hypersensitivity pneumonitis",
+        "idiopathic pulmonary fibrosis",
+        "interstitial lung disease",
+        "non-specific interstitial pneumonia",
+        "normal",
+        "pulmonary fibrosis",
+        "sarcoidosis"
+      ],
+      "preservationMethod": [
+        null
+      ],
+      "source": [
+        "specimen_from_organism"
+      ]
+    }
+  ],
+      "cellLines": [],
+      "donorOrganisms": [
+    {
+      "submissionDate": "2020-07-15T15:14:31.852000Z",
+      "updateDate": "2020-07-15T15:14:51.774000Z",
+      "id": [
+        "donor_IPF_1",
+        "donor_IPF_10",
+        "donor_IPF_11",
+        "donor_IPF_12",
+        "donor_IPF_2",
+        "donor_IPF_3",
+        "donor_IPF_4",
+        "donor_IPF_5",
+        "donor_IPF_6",
+        "donor_IPF_7",
+        "donor_IPF_8",
+        "donor_IPF_9",
+        "donor_cHP_1",
+        "donor_cHP_2",
+        "donor_ild_1",
+        "donor_nsip_1",
+        "donor_nsip_2",
+        "donor_nsip_3",
+        "donor_sarcoidosis_1",
+        "donor_sarcoidosis_2",
+        "nonfibrotic_control_1",
+        "nonfibrotic_control_10",
+        "nonfibrotic_control_2",
+        "nonfibrotic_control_3",
+        "nonfibrotic_control_4",
+        "nonfibrotic_control_5",
+        "nonfibrotic_control_6",
+        "nonfibrotic_control_7",
+        "nonfibrotic_control_8",
+        "nonfibrotic_control_9"
+      ],
+      "donorCount": 30,
+      "developmentStage": [
+        "human adult stage"
+      ],
+      "genusSpecies": [
+        "Homo sapiens"
+      ],
+      "organismAge": [
+        {
+          "value": "17-59",
+          "unit": "year"
+        },
+        {
+          "value": "46-72",
+          "unit": "year"
+        }
+      ],
+      "organismAgeRange": [
+        {
+          "gte": 536112000,
+          "lte": 1860624000
+        },
+        {
+          "gte": 1450656000,
+          "lte": 2270592000
+        }
+      ],
+      "biologicalSex": [
+        "unknown"
+      ],
+      "disease": [
+        "hypersensitivity pneumonitis",
+        "idiopathic pulmonary fibrosis",
+        "interstitial lung disease",
+        "non-specific interstitial pneumonia",
+        "normal",
+        "sarcoidosis"
+      ]
+    }
+  ],
+      "organoids": [],
+      "cellSuspensions": [
+    {
+      "submissionDate": "2020-07-15T15:14:32.573000Z",
+      "updateDate": "2020-07-15T15:15:06.611000Z",
+      "organ": [
+        "lung"
+      ],
+      "organPart": [
+        null
+      ],
+      "selectedCellType": [
+        null
+      ],
+      "totalCells": 112500
+    }
+  ],
+      "fileTypeSummaries": [
+    {
+      "format": "fastq.gz",
+      "fileType": "fastq.gz",
+      "fileSource": [
+        null
+      ],
+      "source": [
+        null
+      ],
+      "count": 486,
+      "totalSize": 1130860667675,
+      "matrixCellCount": null,
+      "isIntermediate": null,
+      "contentDescription": [
+        "DNA sequence"
+      ]
+    },
+    {
+      "format": "tsv.gz",
+      "fileType": "tsv.gz",
+      "fileSource": [
+        "GEO"
+      ],
+      "source": [
+        "GEO"
+      ],
+      "count": 2,
+      "totalSize": 1066541,
+      "matrixCellCount": null,
+      "isIntermediate": false,
+      "contentDescription": [
+        "Matrix"
+      ]
+    },
+    {
+      "format": "csv.gz",
+      "fileType": "csv.gz",
+      "fileSource": [
+        "GEO"
+      ],
+      "source": [
+        "GEO"
+      ],
+      "count": 1,
+      "totalSize": 3351026,
+      "matrixCellCount": null,
+      "isIntermediate": false,
+      "contentDescription": [
+        "Matrix"
+      ]
+    },
+    {
+      "format": "mtx.gz",
+      "fileType": "mtx.gz",
+      "fileSource": [
+        "GEO"
+      ],
+      "source": [
+        "GEO"
+      ],
+      "count": 1,
+      "totalSize": 1076137992,
+      "matrixCellCount": null,
+      "isIntermediate": false,
+      "contentDescription": [
+        "Matrix"
+      ]
+    },
+    {
+      "format": "loom",
+      "fileType": "loom",
+      "fileSource": [
+        "DCP/2 Analysis"
+      ],
+      "source": [
+        "DCP/2 Analysis"
+      ],
+      "count": 1,
+      "totalSize": 887710199,
+      "matrixCellCount": null,
+      "isIntermediate": true,
+      "contentDescription": [
+        "Count Matrix"
+      ]
+    },
+    {
+      "format": "bam",
+      "fileType": "bam",
+      "fileSource": [
+        "DCP/2 Analysis"
+      ],
+      "source": [
+        "DCP/2 Analysis"
+      ],
+      "count": 1,
+      "totalSize": 30417529465,
+      "matrixCellCount": null,
+      "isIntermediate": null,
+      "contentDescription": [
+        null
+      ]
+    },
+    {
+      "format": "loom",
+      "fileType": "loom",
+      "fileSource": [
+        "DCP/2 Analysis"
+      ],
+      "source": [
+        "DCP/2 Analysis"
+      ],
+      "count": 1,
+      "totalSize": 57332504,
+      "matrixCellCount": null,
+      "isIntermediate": false,
+      "contentDescription": [
+        "Count Matrix"
+      ]
+    }
+  ]
+    }
+  ]
+}

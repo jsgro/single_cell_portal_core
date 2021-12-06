@@ -350,7 +350,7 @@ export default function ExploreDisplayTabs({
                 <ImageTab
                   studyAccession={studyAccession}
                   imageFiles={exploreInfo.imageFiles}
-                  bucketName={exploreInfo.bucket_id}
+                  bucketName={exploreInfo.bucketId}
                   isCellSelecting={isCellSelecting}
                   isVisible={shownTab === 'images'}
                   getPlotDimensions={getPlotDimensions}

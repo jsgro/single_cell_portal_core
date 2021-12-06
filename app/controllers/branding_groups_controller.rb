@@ -2,8 +2,10 @@ class BrandingGroupsController < ApplicationController
   before_action :set_branding_group, only: [:show, :edit, :update, :destroy]
   before_action except: [:list_navigate] do
     authenticate_user!
-    authenticate_admin
   end
+
+  before_action :authenticate_curator, only: [:show, :edit, :update]
+  before_action :authenticate_admin, only: [:index, :create, :destroy]
 
   # GET /branding_groups
   # GET /branding_groups.json
@@ -13,11 +15,7 @@ class BrandingGroupsController < ApplicationController
 
   # show a list for display and linking, editable only if the user has appropriate permissions
   def list_navigate
-    @editable_branding_groups = []
     @branding_groups = BrandingGroup.visible_groups_to_user(current_user)
-    if current_user.present?
-      @editable_branding_groups = current_user.available_branding_groups.to_a
-    end
   end
 
   # GET /branding_groups/1
@@ -37,7 +35,10 @@ class BrandingGroupsController < ApplicationController
   # POST /branding_groups
   # POST /branding_groups.json
   def create
-    @branding_group = BrandingGroup.new(branding_group_params)
+    clean_params = branding_group_params.to_h
+    clean_params[:users] = self.class.merge_curator_params(params[:curator_emails], nil, current_user)
+    clean_params.delete(:user_ids)
+    @branding_group = BrandingGroup.new(clean_params)
 
     respond_to do |format|
       if @branding_group.save
@@ -65,6 +66,12 @@ class BrandingGroupsController < ApplicationController
         end
         # delete the param since it is not a real model param
         clean_params.delete("reset_#{image_name}")
+
+        # merge in curator params
+        clean_params[:users] = self.class.merge_curator_params(
+          params[:curator_emails], @branding_group, current_user
+        )
+        clean_params.delete(:user_ids)
       end
 
       if @branding_group.update(clean_params)
@@ -90,6 +97,18 @@ class BrandingGroupsController < ApplicationController
     end
   end
 
+  # helper to merge in the list of curators into the :users parameter
+  # will prevent curator from removing themselves from the collection
+  def self.merge_curator_params(curator_list, collection, user)
+    curators = curator_list.split(',').map(&:strip)
+    users = curators.map { |email| User.find_by(email: email) }.compact
+    return users if collection.nil?
+
+    # ensure current user cannot accidentally remove themselves from the list if this is an update
+    users << user if collection.users.include?(user) && !users.include?(user)
+    users
+  end
+
   private
 
   # Use callbacks to share common setup or constraints between actions.
@@ -99,8 +118,15 @@ class BrandingGroupsController < ApplicationController
 
   # Never trust parameters from the scary internet, only allow the permit list through.
   def branding_group_params
-    params.require(:branding_group).permit(:name, :tag_line, :public, :background_color, :font_family, :font_color, :user_id,
+    params.require(:branding_group).permit(:name, :tag_line, :public, :background_color, :font_family, :font_color,
                                            :splash_image, :banner_image, :footer_image, :external_link_url, :external_link_description,
-                                           :reset_splash_image, :reset_footer_image, :reset_banner_image)
+                                           :reset_splash_image, :reset_footer_image, :reset_banner_image,
+                                           user_ids: [])
+  end
+
+  def authenticate_curator
+    unless @branding_group.can_edit?(current_user)
+      redirect_to collection_list_navigate_path, alert: 'You do not have permission to perform that action' and return
+    end
   end
 end
