@@ -50,7 +50,7 @@ export default function ClusterSelector({
 
   return (
     <div className="form-group">
-      <label className="labeled-select">Clustering2
+      <label className="labeled-select">Clustering
         <Select options={clusterOptions}
           value={{ label: cluster, value: cluster }}
           data-analytics-name="cluster-select"

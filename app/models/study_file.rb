@@ -975,7 +975,6 @@ class StudyFile
     unless cache_key.nil?
       # clear matching caches in background, including API responses
       CacheRemovalJob.new(cache_key).delay(queue: :cache).perform
-      CacheRemovalJob.new(self.api_cache_removal_key).delay(queue: :cache).perform
     end
   end
 
@@ -988,14 +987,8 @@ class StudyFile
     file_types_not_impacting_cache = ['Documentation', 'Other']
     cache_key = nil
     if file_types_not_impacting_cache.exclude?(self.file_type)
-      cache_key = "#{accession}/#{study_name}"
+      cache_key = "#{accession}"
     end
-  end
-
-  # cache key for API responses (Api::V1::ClustersController, etc.)
-  # for safety, all API caches are invalidated on delete
-  def api_cache_removal_key
-    "api_v1_studies_#{self.study.accession}"
   end
 
   ###
