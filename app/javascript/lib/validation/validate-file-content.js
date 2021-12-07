@@ -13,7 +13,7 @@ import { readLinesAndType } from './io'
 
 /** Remove white spaces and quotes from a string value */
 function clean(value) {
-  return value.trim().replaceAll(/"/g, '')
+  return value.trim().replace(/"/g, '')
 }
 
 /**
@@ -146,15 +146,15 @@ function validateEqualCount(headers, annotTypes) {
 
 
 /**
- * Verify cell names are each unique for a cluster or metadata file
+ * Verify cell names are each unique for a file
  */
-function validateUniqueCellNamesWithinFile(table) {
+function validateUniqueCellNamesWithinFile(table, fileType) {
   const issues = []
 
   const cellNames = new Set()
   const duplicates = new Set()
   for (let i = 0; i < table.length; i++) {
-    const cell = table[i][0]
+    const cell = fileType === 'Expression Matrix' ? table[i]: table[i][0]
     if (cellNames.has(cell)) {
       duplicates.add(cell)
     } else {
@@ -344,19 +344,28 @@ async function parseFile(file, fileType) {
   }
 
   if (!file.name.endsWith('.gz')) {
+    table = []
     if (['Cluster', 'Metadata'].includes(fileType)) {
       if (lines.length < 2) {
         return { table, delimiter, issues: [['error', 'cap:format:no-newlines', 'File does not contain newlines to separate rows']] }
       }
+    }
+    // If filetype is cluster, metadata or is a dense matrix ensure cell names are unique
+    if (['Cluster', 'Metadata', 'Expression Matrix'].includes(fileType)) {
       // if there are no encoding issues, and this isn't a gzipped file, validate content
       delimiter = sniffDelimiter(headerLines, mimeType)
-      table = []
       for (let i = 0; i < lines.length; i++) {
         table.push(lines[i].split(delimiter))
       }
-      const headerTable = table.slice(0, 2)
-      issues = await validateCapFormat(headerTable, fileType)
-      issues = issues.concat(validateUniqueCellNamesWithinFile(table))
+
+      if (fileType === 'Expression Matrix') {
+        const firstRowTable = table.slice(0, 1)
+        issues = issues.concat(validateUniqueCellNamesWithinFile(firstRowTable[0], fileType))
+      } else {
+        const headerTable = table.slice(0, 2)
+        issues = await validateCapFormat(headerTable, fileType)
+        issues = issues.concat(validateUniqueCellNamesWithinFile(table, fileType))
+      }
     }
   }
   return { table, delimiter, issues }
