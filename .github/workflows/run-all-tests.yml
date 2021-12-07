@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - jb-github-actions-ci
+
+concurrency: continuous-integration
+
 jobs:
   Run-All-Tests:
     runs-on: ubuntu-18.04
@@ -17,6 +20,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 2.6
+          bundler-cache: true
       - name: Print Ruby version
         run: echo $(ruby -v)
       - name: Install vault
