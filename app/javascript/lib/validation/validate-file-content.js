@@ -146,6 +146,20 @@ function validateEqualCount(headers, annotTypes) {
 
 
 /**
+ * Verify "GENE" is present as the first column in the first row for an Expression Matrix file
+ */
+function validateGeneHeader(firstRowTable) {
+  const issues = []
+
+  if (firstRowTable[0][0] !== 'GENE') {
+    const msg = 'A Dense matrix file requires a header row containing the value “GENE” in the first column'
+    issues.push(['error', 'format:missing-gene-column', msg])
+  }
+
+  return issues
+}
+
+/**
  * Verify cell names are each unique for a file
  */
 function validateUniqueCellNamesWithinFile(table, fileType) {
@@ -361,6 +375,7 @@ async function parseFile(file, fileType) {
       if (fileType === 'Expression Matrix') {
         const firstRowTable = table.slice(0, 1)
         issues = issues.concat(validateUniqueCellNamesWithinFile(firstRowTable[0], fileType))
+        issues = issues.concat(validateGeneHeader(firstRowTable))
       } else {
         const headerTable = table.slice(0, 2)
         issues = await validateCapFormat(headerTable, fileType)
