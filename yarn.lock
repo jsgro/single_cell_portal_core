@@ -8112,10 +8112,10 @@ identity-obj-proxy@3.0.0:
   dependencies:
     harmony-reflect "^1.4.6"
 
-ideogram@1.30.0:
-  version "1.30.0"
-  resolved "https://registry.yarnpkg.com/ideogram/-/ideogram-1.30.0.tgz#31d6bb816077fee657cd39f5f2566959348a1cbb"
-  integrity sha512-M/ci8CVZ2JM2gOvVsY7w+GDY+oo5RuYfnDi5fYl9CdcH6vmUQDWOHWWm+Tv+/XDvtbqZNZUxciIayUNmNlbjqw==
+ideogram@1.32.0:
+  version "1.32.0"
+  resolved "https://registry.yarnpkg.com/ideogram/-/ideogram-1.32.0.tgz#93729d2296ebb19f5e1493a0729994ca79b4c3e9"
+  integrity sha512-i6F4iIBuUx40jFXwxBUQegmKxHE2SDOP5bOwizH5qvE03fpFPKwHcMkifQwHOLQviF0FOPsPMwpNuBXme/I1Yg==
   dependencies:
     crossfilter2 "1.5.2"
     d3-array "^2.8.0"
