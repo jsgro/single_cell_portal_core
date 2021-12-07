@@ -6,6 +6,7 @@ on:
 jobs:
   Run-All-Tests:
     runs-on: ubuntu-18.04
+
     steps:
       - name: Check out repository code
       - uses: actions/checkout@v2
@@ -16,9 +17,3 @@ jobs:
         with:
           ruby-version: 2.6
       - run: echo $(ruby -v)
-      - run: sudo apt-get update && sudo apt-get -y install curl unzip jq
-      - run: sudo curl -O https://releases.hashicorp.com/vault/1.9.0/vault_1.9.0_linux_amd64.zip
-      - run: sudo unzip vault_1.9.0_linux_amd64.zip
-      - run: sudo mv vault /usr/local/bin
-      - run: echo $(which vault)
-      - run: echo "🍏 This job's status is ${{ job.status }}."
