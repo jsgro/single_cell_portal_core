@@ -9,11 +9,21 @@ jobs:
 
     steps:
       - name: Check out repository code
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
-      - uses: ruby/setup-ruby@v1
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: 2.6
-      - run: echo $(ruby -v)
+      - name: Print Ruby version
+        run: echo $(ruby -v)
+      - name: Install vault
+        run: |
+          sudo apt-get update && sudo apt-get -y install curl unzip jq
+          sudo curl -O https://releases.hashicorp.com/vault/1.9.0/vault_1.9.0_linux_amd64.zip
+          sudo unzip vault_1.9.0_linux_amd64.zip
+          sudo mv vault /usr/local/bin
+          echo $(which vault)
+      - run: echo "🍏 This job's status is ${{ job.status }}."
