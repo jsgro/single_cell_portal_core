@@ -68,7 +68,7 @@ export function getStyles(data, pointSize) {
 /** Component for row in legend */
 function LegendEntry({
   label, numPoints, iconColor, correlations,
-  numLabels, shownTraces, updateShownTraces
+  numLabels, hiddenTraces, updateHiddenTraces
 }) {
   let entry = label
 
@@ -80,7 +80,7 @@ function LegendEntry({
     entry = `${label} (${numPoints} points, ρ = ${correlation})`
   }
 
-  const isShown = shownTraces.includes(label)
+  const isShown = hiddenTraces.includes(label)
 
   const iconStyle = { backgroundColor: iconColor }
   const shownClass = (isShown ? '' : 'shown')
@@ -88,7 +88,7 @@ function LegendEntry({
   /** Toggle state of this legend filter, and accordingly upstream */
   function toggleSelection() {
     const wasShown = !isShown
-    updateShownTraces(label, wasShown, numLabels)
+    updateHiddenTraces(label, wasShown)
 
     const legendEntry = {
       label, numPoints, numLabels, wasShown, iconColor,
@@ -113,18 +113,42 @@ function LegendEntry({
 }
 
 /** Handle click on "Show all" or "Hide all" button */
-function showHideAll(showOrHide, labels, updateShownTraces) {
+function showHideAll(showOrHide, labels, updateHiddenTraces) {
   if (showOrHide === 'show') {
-    updateShownTraces(labels, false, null, true)
+    updateHiddenTraces(labels, false, true)
   } else {
-    updateShownTraces(labels, true, null, true)
+    updateHiddenTraces(labels, true, true)
   }
+}
+
+/** Get status of "Show all" and "Hide all" links */
+function getShowHideEnabled(hiddenTraces, countsByLabel) {
+  const numHiddenTraces = hiddenTraces.length
+  const numLabels = Object.keys(countsByLabel).length
+
+  let enabled // [isShowAllEnabled, isHideAllEnabled]
+
+  if (countsByLabel === null) {
+    // When nothing has loaded yet
+    enabled = [false, false]
+  } else if (numHiddenTraces === numLabels) {
+    // When all groups are hidden
+    enabled = [true, false]
+  } else if (numHiddenTraces < numLabels && numHiddenTraces > 0) {
+    // When some groups are hidden and some are shown
+    enabled = [true, true]
+  } else if (numHiddenTraces === 0) {
+    // When no groups are hidden
+    enabled = [false, true]
+  }
+
+  return enabled
 }
 
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
-  name, height, countsByLabel, correlations, shownTraces,
-  updateShownTraces, showHideActive
+  name, height, countsByLabel, correlations, hiddenTraces,
+  updateHiddenTraces
 }) {
   const labels = getLabels(countsByLabel)
   const numLabels = labels.length
@@ -141,16 +165,18 @@ export default function ScatterPlotLegend({
           numPoints={numPoints}
           iconColor={iconColor}
           correlations={correlations}
-          shownTraces={shownTraces}
-          updateShownTraces={updateShownTraces}
+          hiddenTraces={hiddenTraces}
+          updateHiddenTraces={updateHiddenTraces}
           numLabels={numLabels}
         />
       )
     })
 
   const style = { width: scatterLabelLegendWidth, height }
-  const filteredClass = (shownTraces.length === 0) ? 'unfiltered' : ''
-  const [showIsActive, hideIsActive] = showHideActive
+  const filteredClass = (hiddenTraces.length === 0) ? 'unfiltered' : ''
+  const [showIsEnabled, hideIsEnabled] =
+    getShowHideEnabled(hiddenTraces, countsByLabel)
+
   return (
     <div
       className={`scatter-legend ${filteredClass}`}
@@ -161,16 +187,16 @@ export default function ScatterPlotLegend({
           <a
             role="button"
             data-analytics-name='legend-show-all'
-            className={`stateful-link ${getActivity(showIsActive)}`}
-            disabled={!showIsActive}
-            onClick={() => {showHideAll('show', labels, updateShownTraces)}}
+            className={`stateful-link ${getActivity(showIsEnabled)}`}
+            disabled={!showIsEnabled}
+            onClick={() => {showHideAll('show', labels, updateHiddenTraces)}}
           >Show all</a>
           <a
             role="button"
             data-analytics-name='legend-hide-all'
-            className={`stateful-link pull-right ${getActivity(hideIsActive)}`}
-            disabled={!hideIsActive}
-            onClick={() => {showHideAll('hide', labels, updateShownTraces)}}
+            className={`stateful-link pull-right ${getActivity(hideIsEnabled)}`}
+            disabled={!hideIsEnabled}
+            onClick={() => {showHideAll('hide', labels, updateHiddenTraces)}}
           >Hide all</a>
         </div>
       </div>
