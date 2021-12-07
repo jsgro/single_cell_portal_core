@@ -129,12 +129,16 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
   let enabled // [isShowAllEnabled, isHideAllEnabled]
 
   if (countsByLabel === null) {
+    // When nothing has loaded yet
     enabled = [false, false]
   } else if (numHiddenTraces === numLabels) {
+    // When all groups are hidden
     enabled = [true, false]
   } else if (numHiddenTraces < numLabels && numHiddenTraces > 0) {
+    // When some groups are hidden and some are shown
     enabled = [true, true]
   } else if (numHiddenTraces === 0) {
+    // When no groups are hidden
     enabled = [false, true]
   }
 
