@@ -39,7 +39,7 @@ export default function StepTabHeader({
   }
 
   return <li className={className} role="tab">
-    <button className="unset-background-border-style" onClick={() => setCurrentStep(step)} >
+    <button className="unset-background-border" onClick={() => setCurrentStep(step)} >
       <span className="step-number">
         {badgeContent}
       </span>

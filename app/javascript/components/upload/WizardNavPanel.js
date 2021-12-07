@@ -26,7 +26,7 @@ function RawWizardNavPanel({
     </ul>
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-secondary-steps">
       <li className="other-header" role="tab" >
-        <button className="unset-background-border-style" onClick={() => setOthersExpanded(!othersExpanded)} >
+        <button className="unset-background-border" onClick={() => setOthersExpanded(!othersExpanded)} >
           <span className="step-number">
             <span className="badge highlight">+</span>
           </span>
