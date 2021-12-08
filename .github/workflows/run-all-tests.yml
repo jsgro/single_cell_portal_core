@@ -4,20 +4,13 @@ on:
     branches:
       - jb-github-actions-ci
 
-concurrency: continuous-integration
-
 jobs:
   Run-All-Tests:
-    runs-on: ubuntu-18.04
+    runs-on: self-hosted
 
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6.6
-          bundler-cache: true
       - name: Install vault
         run: |
           sudo apt-get update && sudo apt-get -y install curl unzip jq
@@ -34,5 +27,4 @@ jobs:
                                   -s secret/kdux/scp/staging/scp_service_account.json \
                                   -r secret/kdux/scp/staging/read_only_service_account.json \
                                   -e test \
-                                  -n single-cell-portal-test \
-                                  -c "bin/run_tests.sh"
+                                  -n single-cell-portal-test
