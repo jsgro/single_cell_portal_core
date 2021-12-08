@@ -124,6 +124,8 @@ module Api
       def summary
         # sanitize study accessions
         valid_accessions = self.class.find_matching_accessions(params[:accessions])
+        # extract HCA project names from accession list, if present
+        hca_accessions = self.class.extract_hca_accessions(params[:accessions])
 
         begin
           # only validate accessions, if present.  TDR/HCA-only downloads will not have SCP accessions present
@@ -387,6 +389,12 @@ module Api
         accessions = RequestUtils.split_query_param_on_delim(parameter: raw_accessions)
         sanitized_accessions = StudyAccession.sanitize_accessions(accessions)
         Study.where(:accession.in => sanitized_accessions).pluck(:accession)
+      end
+
+      # extract out HCA "accessions" (project shortnames) by filtering out SCP accessions
+      def self.extract_hca_accessions(raw_accessions)
+        accessions = RequestUtils.split_query_param_on_delim(parameter: raw_accessions)
+        accessions.reject { |accession| accession =~ StudyAccession::ACCESSION_FORMAT }
       end
 
       # find valid bulk download types from query parameters

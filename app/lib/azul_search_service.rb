@@ -201,4 +201,10 @@ class AzulSearchService
     end
     file_information
   end
+
+  # query Azul with project shortnames and return summary file information
+  # this method mirrors interface on BulkDownloadService#study_download_info for use in bulk download modal
+  def self.get_file_summary_info(accessions)
+
+  end
 end
