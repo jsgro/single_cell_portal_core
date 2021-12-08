@@ -13,21 +13,26 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 2.6.6
           bundler-cache: true
-      - name: Print Ruby version
-        run: echo $(ruby -v)
       - name: Install vault
         run: |
           sudo apt-get update && sudo apt-get -y install curl unzip jq
           sudo curl -O https://releases.hashicorp.com/vault/1.9.0/vault_1.9.0_linux_amd64.zip
           sudo unzip vault_1.9.0_linux_amd64.zip
           sudo mv vault /usr/local/bin
-          echo $(which vault)
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+      - name: Load secrets and run tests
+        env:
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json \
+                                  -s secret/kdux/scp/staging/scp_service_account.json \
+                                  -r secret/kdux/scp/staging/read_only_service_account.json \
+                                  -e test \
+                                  -n single-cell-portal-test \
+                                  -c "bin/run_tests.sh"
