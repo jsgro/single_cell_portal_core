@@ -13,8 +13,9 @@ module Api
         before_action :set_current_api_user!
         before_action :set_study
         before_action :check_study_view_permission
-        before_action :check_api_cache!
-        after_action :write_api_cache!
+        # don't cache the annotation list, since it is user dependent
+        before_action :check_api_cache!, except: :index
+        after_action :write_api_cache!, except: :index
 
         annotation_description_doc = 'Object with name (String), values (Array of unique values), type (String), scope (String), and cluster_name (string, if applicable)'
 
