@@ -12,13 +12,20 @@ import { log } from 'lib/metrics-api'
 import { readFileBytes } from './io'
 import ChunkedLineReader from './chunked-line-reader'
 import { PARSEABLE_TYPES } from 'components/upload/upload-utils'
-import { parse } from 'query-string'
+
+/**
+ * ParseException can be thrown when we encounter an error that prevents us from parsing the file further
+ */
+function ParseException(key, msg) {
+  this.message = msg
+  this.key = key
+}
 
 /**
  * Splits the line on a delimiter, and
  * removes leading and trailing white spaces and quotes from values
  */
-function parseLine(line, delimiter) {
+export function parseLine(line, delimiter) {
   return line.split(delimiter).map(entry => entry.trim().replaceAll(/^"|"$/g, ''))
 }
 
@@ -315,17 +322,21 @@ export async function getParsedHeaderLines(chunker, mimeType, numHeaderLines=2) 
   await chunker.iterateLines((line, lineNum, isLastLine) => {
     headerLines.push(line)
   }, 2)
+  if (headerLines.length < numHeaderLines || headerLines.some(hl => !hl)) {
+    throw new ParseException('format:cap:missing-header-lines', `Your file is missing newlines or is missing some of the required ${numHeaderLines} header lines`)
+  }
   const delimiter = sniffDelimiter(headerLines, mimeType)
   const parsedHeaders = headerLines.map(l => parseLine(l, delimiter))
   return { parsedHeaders, delimiter }
 }
 
 
-/** confirm that the presence/absence of a .gz suffix matches the lead byte of the file */
+/** confirm that the presence/absence of a .gz suffix matches the lead byte of the file
+ * Throws an exception if the gzip is conflicted, since we don't want to parse further in that case
+*/
 export async function validateGzipEncoding(file) {
   const GZIP_MAGIC_NUMBER = '\x1F'
   const fileName = file.name
-  const issues = []
   let isGzipped = null
 
   // read a single byte from the file to check the magic number
@@ -334,18 +345,18 @@ export async function validateGzipEncoding(file) {
     if (firstByte === GZIP_MAGIC_NUMBER) {
       isGzipped = true
     } else {
-      issues.push(['error', 'encoding:invalid-gzip-magic-number',
-        'File has a .gz or .bam suffix but does not seem to be gzipped'])
+      throw new ParseException('encoding:invalid-gzip-magic-number',
+        'File has a .gz or .bam suffix but does not seem to be gzipped')
     }
   } else {
     if (firstByte === GZIP_MAGIC_NUMBER) {
-      issues.push(['error', 'encoding:missing-gz-extension',
-        'File seems to be gzipped but does not have a ".gz" or ".bam" extension'])
+      throw new ParseException('encoding:missing-gz-extension',
+        'File seems to be gzipped but does not have a ".gz" or ".bam" extension')
     } else {
       isGzipped = false
     }
   }
-  return { isGzipped, issues }
+  return isGzipped
 }
 
 
@@ -361,27 +372,33 @@ async function parseFile(file, fileType) {
     delimiter: null,
     isGzipped: null
   }
-
-  const { issues, isGzipped } = await validateGzipEncoding(file)
-  fileInfo.isGzipped = isGzipped
-
-  // if the file is compressed or we can't figure out the compression, don't try to parse further
-  if (isGzipped || issues.length || !PARSEABLE_TYPES.includes(fileType)) {
-    return { fileInfo, issues }
-  }
-
   const parseResult = { fileInfo, issues: [] }
-  const parseFunctions = {
-    'Cluster': parseClusterFile,
-    'Metadata': parseMetadataFile
-  }
-  if (parseFunctions[fileType]) {
-    const chunker = new ChunkedLineReader(file)
-    const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType)
-    fileInfo.linesRead = chunker.linesRead
-    fileInfo.delimiter = delimiter
-    fileInfo.numColumns = numColumns
-    parseResult.issues = issues
+  try {
+    fileInfo.isGzipped = await validateGzipEncoding(file)
+
+    // if the file is compressed or we can't figure out the compression, don't try to parse further
+    if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
+      return { fileInfo, issues: [] }
+    }
+    const parseFunctions = {
+      'Cluster': parseClusterFile,
+      'Metadata': parseMetadataFile
+    }
+    if (parseFunctions[fileType]) {
+      const chunker = new ChunkedLineReader(file)
+      const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType)
+      fileInfo.linesRead = chunker.linesRead
+      fileInfo.delimiter = delimiter
+      fileInfo.numColumns = numColumns
+      parseResult.issues = issues
+    }
+  } catch (error) {
+    // get any unhandled or deliberate short-circuits
+    if (error instanceof ParseException) {
+      parseResult.issues.push(['error', error.key, error.message])
+    } else {
+      parseResult.issues.push(['error', 'parse:unhandled', error.message])
+    }
   }
   return parseResult
 }

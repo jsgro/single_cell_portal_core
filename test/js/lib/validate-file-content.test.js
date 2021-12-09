@@ -7,7 +7,6 @@ import * as MetricsApi from 'lib/metrics-api'
 
 import { createMockFile } from './file-mock-utils'
 
-
 describe('Client-side file validation', () => {
   it('catches and logs errors via library interface', async () => {
     const file = createMockFile({ fileName: 'metadata_bad_type_header.txt' })
@@ -58,6 +57,13 @@ describe('Client-side file validation', () => {
     const { errors, summary } = await validateFileContent(file, 'Metadata')
     expect(errors).toHaveLength(1)
     expect(summary).toBe('Your file had 1 error')
+  })
+
+  it('catches missing header lines', async () => {
+    const file = createMockFile({ content: 'NAME,X,Y', fileName: 'missing_headers.tsv' })
+    const { errors } = await validateFileContent(file, 'Cluster')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:cap:missing-header-lines')
   })
 
   it('catches duplicate cell names in cluster file', async () => {
