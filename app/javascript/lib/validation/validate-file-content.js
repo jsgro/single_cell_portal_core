@@ -153,7 +153,8 @@ function validateEqualCount(headers, annotTypes) {
 
 /**
  * Verify cell names are each unique for a cluster or metadata file
- * creates and uses 'cellNames' and 'duplicateCellNames' properties on dataObj
+ * creates and uses 'cellNames' and 'duplicateCellNames' properties on dataObj to track
+ * cell names between calls to this function
  */
 function validateUniqueCellNamesWithinFile(parsedLine, isLastLine, dataObj) {
   const issues = []
@@ -177,7 +178,7 @@ function validateUniqueCellNamesWithinFile(parsedLine, isLastLine, dataObj) {
 }
 
 /**
- * Guess whether column delimiter is comma or tab, and update the parseResult accordingly
+ * Guess whether column delimiter is comma or tab
  *
  * Consider using `papaparse` NPM package once it supports ES modules.
  * Upstream task: https://github.com/mholt/PapaParse/pull/875
@@ -271,7 +272,7 @@ function validateClusterCoordinates(parsedHeaders) {
   return issues
 }
 
-/** parse a metadata file already broken into lines, and return the parsed fiel and an array of errors */
+/** parse a metadata file, and return an array of issues, along with file parsing info */
 export async function parseMetadataFile(chunker, mimeType) {
   const { parsedHeaders, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
 
@@ -288,7 +289,7 @@ export async function parseMetadataFile(chunker, mimeType) {
   return { issues, delimiter, numColumns: parsedHeaders[0].length }
 }
 
-/** parse a cluster file already broken into lines, and return the parsed fiel and an array of errors */
+/** parse a cluster file, and return an array of issues, along with file parsing info */
 export async function parseClusterFile(chunker, mimeType) {
   const { parsedHeaders, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
 
@@ -348,9 +349,8 @@ export async function validateGzipEncoding(file) {
 }
 
 
-/** reads the file and returns the parsed rows, delimiter, and an array any issues */
+/** reads the file and returns a fileInfo object along with an array of issues */
 async function parseFile(file, fileType) {
-  let issues = []
   const fileInfo = {
     fileSize: file.size,
     fileName: file.name,
@@ -362,30 +362,33 @@ async function parseFile(file, fileType) {
     isGzipped: null
   }
 
-  const gzipResult = await validateGzipEncoding(file)
-
-  issues = issues.concat(gzipResult.issues)
-  fileInfo.isGzipped = gzipResult.isGzipped
+  const { issues, isGzipped } = await validateGzipEncoding(file)
+  fileInfo.isGzipped = isGzipped
 
   // if the file is compressed or we can't figure out the compression, don't try to parse further
-  if (fileInfo.isGzipped || issues.length || !PARSEABLE_TYPES.includes(fileType)) {
+  if (isGzipped || issues.length || !PARSEABLE_TYPES.includes(fileType)) {
     return { fileInfo, issues }
   }
 
-  const chunker = new ChunkedLineReader(file)
-  let parseResult = {}
-  if (fileType === 'Cluster') {
-    parseResult = await parseClusterFile(chunker, fileInfo.fileMimeType)
-  } else if (fileType === 'Metadata') {
-    parseResult = await parseMetadataFile(chunker, fileInfo.fileMimeType)
+  const parseResult = { fileInfo, issues: [] }
+  const parseFunctions = {
+    'Cluster': parseClusterFile,
+    'Metadata': parseMetadataFile
   }
-  fileInfo.linesRead = chunker.linesRead
-  fileInfo.delimiter = parseResult.delimiter
-  fileInfo.numColumns = parseResult.numColumns
-  return { fileInfo, issues: parseResult.issues }
+  if (parseFunctions[fileType]) {
+    const chunker = new ChunkedLineReader(file)
+    const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.mimeType)
+    fileInfo.linesRead = chunker.linesRead
+    fileInfo.delimiter = delimiter
+    fileInfo.numColumns = numColumns
+    parseResult.issues = issues
+  }
+  return parseResult
 }
 
-/** Validate a local file, return list formatted of any detected errors */
+/** Validate a local file, return { errors, summary } object, where errors is an array of errors, and summary
+ * is a message like "Your file had 2 errors"
+ */
 export async function validateFileContent(file, fileType) {
   const { fileInfo, issues } = await parseFile(file, fileType)
 
