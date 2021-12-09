@@ -13,6 +13,21 @@ import { readFileBytes } from './io'
 import ChunkedLineReader from './chunked-line-reader'
 import { PARSEABLE_TYPES } from 'components/upload/upload-utils'
 
+export const REQUIRED_CONVENTION_COLUMNS = [
+  'biosample_id',
+  'CellID',
+  'disease',
+  'disease__ontology_label',
+  'donor_id',
+  'library_preparation_protocol',
+  'library_preparation_protocol__ontology_label',
+  'organ',
+  'organ__ontology_label',
+  'sex',
+  'species',
+  'species__ontology_label'
+]
+
 /**
  * ParseException can be thrown when we encounter an error that prevents us from parsing the file further
  */
@@ -266,6 +281,23 @@ function validateNoMetadataCoordinates(headers) {
   return issues
 }
 
+/** Verifies metadata file has all required columns */
+function validateRequiredMetadataColumns(parsedHeaders) {
+  const issues = []
+  const firstLine = parsedHeaders[0]
+  const missingCols = []
+  REQUIRED_CONVENTION_COLUMNS.forEach(colName => {
+    if (!firstLine.includes(colName)) {
+      missingCols.push(colName)
+    }
+  })
+  if (missingCols.length) {
+    const msg = `File is missing required columns ${missingCols.join(', ')}`
+    issues.push(['error', 'format:cap:metadata-missing-column', msg])
+  }
+  return issues
+}
+
 /** Verifies cluster file has X and Y coordinate headers */
 function validateClusterCoordinates(headers) {
   const issues = []
@@ -285,11 +317,15 @@ function validateClusterCoordinates(headers) {
 }
 
 /** parse a metadata file, and return an array of issues, along with file parsing info */
-export async function parseMetadataFile(chunker, mimeType) {
+export async function parseMetadataFile(chunker, mimeType, fileOptions) {
   const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
 
   let issues = validateCapFormat(headers, delimiter)
   issues = issues.concat(validateNoMetadataCoordinates(headers))
+  if (fileOptions.use_metadata_convention) {
+    issues = issues.concat(validateRequiredMetadataColumns(headers))
+  }
+
   // add other header validations here
 
   const dataObj = {} // object to track multi-line validation concerns
@@ -367,7 +403,7 @@ export async function validateGzipEncoding(file) {
 
 
 /** reads the file and returns a fileInfo object along with an array of issues */
-async function parseFile(file, fileType) {
+async function parseFile(file, fileType, fileOptions={}) {
   const fileInfo = {
     fileSize: file.size,
     fileName: file.name,
@@ -392,7 +428,7 @@ async function parseFile(file, fileType) {
     }
     if (parseFunctions[fileType]) {
       const chunker = new ChunkedLineReader(file)
-      const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType)
+      const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
       fileInfo.linesRead = chunker.linesRead
       fileInfo.delimiter = delimiter
       fileInfo.numColumns = numColumns
@@ -412,10 +448,11 @@ async function parseFile(file, fileType) {
 /** Validate a local file, return { errors, summary } object, where errors is an array of errors, and summary
  * is a message like "Your file had 2 errors"
  */
-export async function validateFileContent(file, fileType) {
+export async function validateFileContent(file, fileType, fileOptions={}) {
   const startTime = performance.now()
-  const { fileInfo, issues } = await parseFile(file, fileType)
+  const { fileInfo, issues } = await parseFile(file, fileType, fileOptions)
   const perfTime = Math.round(performance.now() - startTime)
+
   const errorObj = formatIssues(issues)
   const logProps = getLogProps(fileInfo, errorObj, perfTime)
   log('file-validation', logProps)
