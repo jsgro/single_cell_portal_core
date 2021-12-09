@@ -212,16 +212,24 @@ class AzulSearchService
     results['hits'].each do |entry|
       entry_hash = entry.with_indifferent_access
       project_hash = entry_hash[:projects].first # there will only ever be one project here
+      accession = project_hash[:projectShortname]
       result = {
         study_source: 'HCA',
-        hca_result: true,
         name: project_hash[:projectTitle],
-        accession: project_hash[:projectShortname],
+        accession: accession,
         description: project_hash[:projectDescription],
-        study_files: []
+        studyFiles: [
+          {
+            project_id: project_hash[:projectId],
+            file_type: 'Project Manifest',
+            count: 1,
+            upload_file_size: 1.megabyte, # placeholder filesize as we don't know until manifest is downloaded
+            name: "#{accession}.tsv"
+          }
+        ]
       }
       project_file_info = extract_file_information(entry_hash)
-      result[:study_files] = project_file_info
+      result[:studyFiles] += project_file_info if project_file_info.any?
       file_summaries << result
     end
     file_summaries
