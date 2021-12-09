@@ -124,9 +124,10 @@ module Api
       def summary
         # sanitize study accessions
         valid_accessions = self.class.find_matching_accessions(params[:accessions])
+        logger.info "valid_accessions: #{valid_accessions}"
         # extract HCA project names from accession list, if present
         hca_accessions = self.class.extract_hca_accessions(params[:accessions])
-
+        logger.info "hca_accessions: #{hca_accessions}"
         begin
           # only validate accessions, if present.  TDR/HCA-only downloads will not have SCP accessions present
           self.class.check_accession_permissions(valid_accessions, current_api_user) if valid_accessions.any?
@@ -135,6 +136,8 @@ module Api
         end
 
         @study_file_info = ::BulkDownloadService.get_download_info(valid_accessions)
+        hca_file_info = ::AzulSearchService.get_file_summary_info(hca_accessions)
+        @study_file_info += hca_file_info if hca_file_info.any?
 
         render json: @study_file_info
       end

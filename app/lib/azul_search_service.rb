@@ -205,6 +205,25 @@ class AzulSearchService
   # query Azul with project shortnames and return summary file information
   # this method mirrors interface on BulkDownloadService#study_download_info for use in bulk download modal
   def self.get_file_summary_info(accessions)
-
+    client = ApplicationController.hca_azul_client
+    file_summaries = []
+    file_query = { 'project' => { 'is' => accessions } }
+    results = client.projects(query: file_query)
+    results['hits'].each do |entry|
+      entry_hash = entry.with_indifferent_access
+      project_hash = entry_hash[:projects].first # there will only ever be one project here
+      result = {
+        study_source: 'HCA',
+        hca_result: true,
+        name: project_hash[:projectTitle],
+        accession: project_hash[:projectShortname],
+        description: project_hash[:projectDescription],
+        study_files: []
+      }
+      project_file_info = extract_file_information(entry_hash)
+      result[:study_files] = project_file_info
+      file_summaries << result
+    end
+    file_summaries
   end
 end

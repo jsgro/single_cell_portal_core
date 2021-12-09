@@ -27,7 +27,6 @@ export default function DownloadSelectionModal({ studyAccessions, azulFileInfo, 
   const [selectedBoxesAzul, setSelectedBoxesAzul] = useState()
   const [stepNum, setStepNum] = useState(1)
 
-  const scpAccessions = studyAccessions.filter(accession => accession.startsWith('SCP'))
   const azulAccessions = studyAccessions.filter(accession => !accession.startsWith('SCP'))
   const showAzulSelectionPane = azulAccessions.length > 0
   const { fileCount, fileSize } = getSelectedFileStats(downloadInfo, selectedBoxes, isLoading)
@@ -55,7 +54,7 @@ export default function DownloadSelectionModal({ studyAccessions, azulFileInfo, 
     if (show) {
       setIsLoading(true)
       setIsLoadingAzul(true)
-      fetchDownloadInfo(scpAccessions).then(result => {
+      fetchDownloadInfo(studyAccessions).then(result => {
         renderFileTables(result)
       })
     }
