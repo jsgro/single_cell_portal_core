@@ -7,9 +7,11 @@ import { fireEvent } from '@testing-library/react'
  * it will attempt to read the file from the filesystem.
  * We have to mock readFileBytes since blob.arrayBuffer() is not supported in nodejs
 */
-export function createMockFile({ content, fileName, contentType='text/plain' }, mockIO=true) {
+export function createMockFile({
+  content, fileName, contentType='text/plain', filePath='test/test_data/validation/', mockIO=true
+}) {
   if (typeof content === 'undefined') {
-    content = fs.readFileSync(fileName, 'utf8')
+    content = fs.readFileSync(filePath + fileName, 'utf8')
   }
   if (mockIO) {
     const readFileSpy = jest.spyOn(Io, 'readFileBytes')

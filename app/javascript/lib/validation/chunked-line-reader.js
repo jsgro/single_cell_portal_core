@@ -2,12 +2,13 @@ import { DEFAULT_CHUNK_SIZE, readFileBytes } from './io'
 
 const newlineRegex = /\r?\n/
 
-/** reads lines from a file in a chunked way, so that the file does not have to be in memory all at once
+/**
+ * reads lines from a file in a chunked way, so that the file does not have to be in memory all at once
  * Basic usage:
  * const chunker = new ChunkedLineReader(file)
- * while (chunker.hasMoreLines) {
- *   const line = chunker.getNextLine()
+ * chunker.iterateLines((line, lineNum, isLastLine) => {
  *   // do stuff
+ * }) {
  * }
  */
 export default class ChunkedLineReader {
@@ -25,12 +26,15 @@ export default class ChunkedLineReader {
 
   /**
    * iterates over the remaining lines in the file, calling func(line, lineNum, isLastLine) for each line
-   * (lineNum is 0-indexed)
-   * this offers superior performance over repeatedly calling getNextLine(), as this will only require an await
-   * when a new chunk needs to be fetched.
+   * (lineNum is 0-indexed).
+   * maxBytesPerLine can be set to avoid reading the entire file into memory in the event the file is missing
+   * proper newlines
   */
-  async iterateLines(func) {
-    while (this.hasMoreChunks || this.chunkLines.length) {
+  async iterateLines(func, maxLines=Number.MAX_SAFE_INTEGER, maxBytesPerLine=1000*1000*1024) {
+    const prevLinesRead = this.linesRead
+    while ((this.hasMoreChunks || this.chunkLines.length) &&
+           !(this.linesRead === 0 && this.nextByteToRead > maxBytesPerLine) &&
+           this.linesRead < prevLinesRead + maxLines) {
       if (!this.chunkLines.length && this.hasMoreChunks) {
         await this.readNextChunk()
       }
@@ -41,20 +45,6 @@ export default class ChunkedLineReader {
         func(line, this.linesRead - 1, !this.hasMoreLines)
       }
     }
-  }
-
-  /**
-   * Keep reading chunks, up to maxBytesToRead, in order to get the next line.
-   * If there are no lines left or maxBytesToRead is exceeded without finding a newline, will return undefined
-   */
-  async getNextLine(maxBytesToRead=1000*1000*1024) {
-    while (!this.chunkLines.length && this.hasMoreChunks && this.nextByteToRead < maxBytesToRead) {
-      await this.readNextChunk()
-    }
-    this.linesRead++ // convenience tracker
-    const line = this.chunkLines.shift()
-    this.updateHasMoreLines()
-    return line
   }
 
   /**

@@ -13,7 +13,7 @@ export const DEFAULT_CHUNK_SIZE = 1000 * 1024 // 1 MiB
 
 /** Get lines and file type from a selected local file */
 export async function readFileBytes(file, startByte=0, chunkSize=DEFAULT_CHUNK_SIZE) {
-  const nextSlice = startByte + chunkSize + 1
+  const nextSlice = startByte + chunkSize
 
   const blob = file.slice(startByte, nextSlice)
 
