@@ -52,8 +52,12 @@ async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExt
     return [errorMsg]
   }
 
-  const validationResult = await validateFileContent(selectedFile, file.file_type)
+  const validationResult = await validateFileContent(selectedFile, file.file_type, {
+    use_metadata_convention: file.use_metadata_convention
+  })
   const errorMsgs = validationResult.errors.map(error => error[2])
+  console.log(`VALIDATING: ${ selectedFile.name}`)
+  console.log(errorMsgs)
   return errorMsgs
 }
 
