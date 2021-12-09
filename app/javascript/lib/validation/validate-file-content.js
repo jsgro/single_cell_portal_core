@@ -377,7 +377,7 @@ async function parseFile(file, fileType) {
   }
   if (parseFunctions[fileType]) {
     const chunker = new ChunkedLineReader(file)
-    const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.mimeType)
+    const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType)
     fileInfo.linesRead = chunker.linesRead
     fileInfo.delimiter = delimiter
     fileInfo.numColumns = numColumns
