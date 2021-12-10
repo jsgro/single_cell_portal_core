@@ -15,7 +15,6 @@ import { PARSEABLE_TYPES } from 'components/upload/upload-utils'
 
 export const REQUIRED_CONVENTION_COLUMNS = [
   'biosample_id',
-  'CellID',
   'disease',
   'disease__ontology_label',
   'donor_id',
@@ -298,6 +297,87 @@ function validateRequiredMetadataColumns(parsedHeaders) {
   return issues
 }
 
+/**
+ * Verify that, for id columns with a corresponding label column, no label is shared across two or more ids.
+ * The main circumstance this is aimed at checking is the 'Excel drag error', in which by drag-copying a row, the
+ * label is copied correctly, but the id string gets numerically incremented
+ */
+function validateMetadataLabelMatches(parsedHeaders, parsedLine, isLastLine, dataObj) {
+  const issues = []
+  const excludedColumns = ['NAME']
+  // if this is the first time through, identify the colums to check, and initialize data structures to track mismatches
+  if (!dataObj.dragCheckColumns) {
+    dataObj.dragCheckColumns = parsedHeaders[0].map((colName, index) => {
+      const labelColumnIndex = parsedHeaders[0].indexOf(`${colName }__ontology_label`)
+      if (excludedColumns.includes(colName) ||
+        colName.endsWith('ontology_label') ||
+        parsedHeaders[1][index] === 'numeric' ||
+        labelColumnIndex === -1) {
+        return null
+      }
+      // for each column, track a hash of label=>value,
+      // and also a set of mismatched values--where the same label is used for different ids
+      return { colName, index, labelColumnIndex, labelValueMap: {}, mismatchedVals: new Set() }
+    }).filter(c => c)
+  }
+  // for each column we need to check, see if there is a corresponding filled-in label,
+  //  and track whether other ids have been assigned to that label too
+  dataObj.dragCheckColumns.forEach(dcc => {
+    const colValue = parsedLine[dcc.index]
+    const label = parsedLine[dcc.labelColumnIndex]
+    if (label.length) {
+      if (dcc.labelValueMap[label] && dcc.labelValueMap[label] !== colValue) {
+        dcc.mismatchedVals.add(label)
+      } else {
+        dcc.labelValueMap[label] = colValue
+      }
+    }
+  })
+
+  // only report out errors if this is the last line of the file so that a single, consolidated message can be displayed per column
+  if (isLastLine) {
+    dataObj.dragCheckColumns.forEach(dcc => {
+      if (dcc.mismatchedVals.size > 0) {
+        const labelString = [...dcc.mismatchedVals].slice(0, 10).join(', ')
+        issues.push(['error', 'content:metadata:mismatched-id-label',
+          `${dcc.colName} has different id values mapped to the same label.
+          Label(s) with more than one corresponding id: ${labelString}`])
+      }
+    })
+  }
+  return issues
+}
+/** raises a warning if a group column has more than 200 unique values */
+function validateGroupColumnCounts(parsedHeaders, parsedLine, isLastLine, dataObj) {
+  const issues = []
+  const excludedColumns = ['NAME']
+  if (!dataObj.groupCheckColumns) {
+    dataObj.groupCheckColumns = parsedHeaders[0].map((colName, index) => {
+      if (excludedColumns.includes(colName) || colName.endsWith('ontology_label') || parsedHeaders[1][index] === 'numeric') {
+        return null
+      }
+      return { colName, index, uniqueVals: new Set() }
+    }).filter(c => c)
+  }
+
+  dataObj.groupCheckColumns.forEach(gcc => {
+    const colValue = parsedLine[gcc.index]
+    if (colValue) { // don't bother adding empty values
+      gcc.uniqueVals.add(colValue)
+    }
+  })
+
+  if (isLastLine) {
+    dataObj.groupCheckColumns.forEach(gcc => {
+      if (gcc.uniqueVals.size > 200) {
+        issues.push(['warn', 'content:group-col-over-200',
+          `${gcc.colName} has over 200 unique values and so will not be visible in plots -- is this intended?`])
+      }
+    })
+  }
+  return issues
+}
+
 /** Verifies cluster file has X and Y coordinate headers */
 function validateClusterCoordinates(headers) {
   const issues = []
@@ -332,6 +412,8 @@ export async function parseMetadataFile(chunker, mimeType, fileOptions) {
   await chunker.iterateLines((rawline, lineNum, isLastLine) => {
     const line = parseLine(rawline, delimiter)
     issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
+    issues = issues.concat(validateMetadataLabelMatches(headers, line, isLastLine, dataObj))
+    issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
     // add other line-by-line validations here
   })
   return { issues, delimiter, numColumns: headers[0].length }
@@ -349,6 +431,7 @@ export async function parseClusterFile(chunker, mimeType) {
   await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
     const line = parseLine(rawLine, delimiter)
     issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
+    issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
     // add other line-by-line validations here
   })
 
@@ -445,7 +528,7 @@ async function parseFile(file, fileType, fileOptions={}) {
   return parseResult
 }
 
-/** Validate a local file, return { errors, summary } object, where errors is an array of errors, and summary
+/** Validate a local file, return { errors, warnings, summary } object, where errors is an array of errors, and summary
  * is a message like "Your file had 2 errors"
  */
 export async function validateFileContent(file, fileType, fileOptions={}) {
@@ -462,24 +545,25 @@ export async function validateFileContent(file, fileType, fileOptions={}) {
 
 /** take an array of [type, key, msg] issues, and format it */
 function formatIssues(issues) {
-  // Ingest Pipeline reports "issues", which includes "errors" and "warnings".
-  // Keep issue type distinction in this module to ease porting, but for now
-  // only report errors.
   const errors = issues.filter(issue => issue[0] === 'error')
-
+  const warnings = issues.filter(issue => issue[0] === 'warn')
   let summary = ''
-  if (errors.length > 0) {
-    const numErrors = errors.length
-    const errorsTerm = (numErrors === 1) ? 'error' : 'errors'
-    summary = `Your file had ${numErrors} ${errorsTerm}`
+  if (errors.length > 0 || warnings.length) {
+    const errorsTerm = (errors.length === 1) ? 'error' : 'errors'
+    const warningsTerm = (warnings.length === 1) ? 'warning' : 'warnings'
+    summary = `Your file had ${errors.length} ${errorsTerm}`
+    if (warnings.length) {
+      summary = `${summary}, ${warnings.length} ${warningsTerm}`
+    }
   }
-  return { errors, summary }
+  return { errors, warnings, summary }
 }
 
 
 /** Get properties about this validation run to log to Mixpanel */
+
 function getLogProps(fileInfo, errorObj, perfTime) {
-  const { errors, summary } = errorObj
+  const { errors, warnings, summary } = errorObj
 
   // Avoid needless gotchas in downstream analysis
   let friendlyDelimiter = 'tab'
@@ -503,8 +587,11 @@ function getLogProps(fileInfo, errorObj, perfTime) {
       status: 'failure',
       summary,
       numErrors: errors.length,
+      numWarnings: warnings.length,
       errors: errors.map(columns => columns[2]),
-      errorTypes: errors.map(columns => columns[1])
+      warnings: warnings.map(columns => columns[2]),
+      errorTypes: errors.map(columns => columns[1]),
+      warningTypes: warnings.map(columns => columns[1])
     })
   }
 }
