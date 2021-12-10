@@ -4,7 +4,7 @@ class AzulSearchService
   # tar archives are lumped in with analysis_file entries as they could be either
   FILE_EXT_BY_DOWNLOAD_TYPE = {
     'sequence_file' => %w[bam bai fastq].map { |e| [e, e + '.gz'] }.flatten,
-    'analysis_file' => %w[loom csv tsv txt mtx Rdata tar].map { |e| [e, e + '.gz'] }.flatten
+    'analysis_file' => %w[loom csv tsv txt mtx Rdata tar h5ad pdf].map { |e| [e, e + '.gz'] }.flatten
   }.freeze
 
   # list of keys for an individual result entry used for matching facet filter values
@@ -227,7 +227,7 @@ class AzulSearchService
             name: "#{accession}.tsv"
           }
         ]
-      }
+      }.with_indifferent_access
       project_file_info = extract_file_information(entry_hash)
       result[:studyFiles] += project_file_info if project_file_info.any?
       file_summaries << result
