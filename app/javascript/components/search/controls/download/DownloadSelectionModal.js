@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Modal from 'react-bootstrap/lib/Modal'
-import _cloneDeep from 'lodash/cloneDeep'
-import { partition } from 'lodash'
+import _partition from 'lodash/partition'
 
 import DownloadCommand from './DownloadCommand'
 import DownloadSelectionTable, {
@@ -9,7 +8,7 @@ import DownloadSelectionTable, {
 } from './DownloadSelectionTable'
 import { bytesToSize } from 'lib/stats'
 
-import { fetchDownloadInfo, fetchDrsInfo } from 'lib/scp-api'
+import { fetchDownloadInfo } from 'lib/scp-api'
 
 const AZUL_COLUMNS = ['project_manifest', 'analysis', 'sequence']
 const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
@@ -41,9 +40,7 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
     render bulk download table for SCP & HCA studies
    */
   function renderFileTables(result=[]) {
-    const partitionedResults = partition(result, ['studySource', 'SCP'])
-    const scpFileInfo = partitionedResults[0]
-    const azulFileInfo = partitionedResults[1]
+    const [scpFileInfo, azulFileInfo] = _partition(result, ['studySource', 'SCP'])
 
     setSelectedBoxes(newSelectedBoxesState(scpFileInfo, SCP_COLUMNS))
     setDownloadInfo(scpFileInfo)

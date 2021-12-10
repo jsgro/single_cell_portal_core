@@ -170,11 +170,10 @@ class AzulSearchService
 
   # extract preliminary file information from an Azul result object
   def self.extract_file_information(result)
-    file_information = []
     project_hash = result[:projects].first # there will only ever be one project here
     short_name = project_hash[:projectShortname]
     project_id = project_hash[:projectId]
-    result[:fileTypeSummaries].each do |file_summary|
+    result[:fileTypeSummaries].map do |file_summary|
       file_info = {
         source: 'hca',
         count: file_summary['count'],
@@ -197,19 +196,17 @@ class AzulSearchService
           end
         end
       end
-      file_information << file_info.with_indifferent_access
+      file_info.with_indifferent_access
     end
-    file_information
   end
 
   # query Azul with project shortnames and return summary file information
   # this method mirrors interface on BulkDownloadService#study_download_info for use in bulk download modal
   def self.get_file_summary_info(accessions)
     client = ApplicationController.hca_azul_client
-    file_summaries = []
     file_query = { 'project' => { 'is' => accessions } }
     results = client.projects(query: file_query)
-    results['hits'].each do |entry|
+    results['hits'].map do |entry|
       entry_hash = entry.with_indifferent_access
       project_hash = entry_hash[:projects].first # there will only ever be one project here
       accession = project_hash[:projectShortname]
@@ -230,8 +227,7 @@ class AzulSearchService
       }.with_indifferent_access
       project_file_info = extract_file_information(entry_hash)
       result[:studyFiles] += project_file_info if project_file_info.any?
-      file_summaries << result
+      result
     end
-    file_summaries
   end
 end
