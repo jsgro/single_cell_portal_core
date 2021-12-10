@@ -90,7 +90,6 @@ class AzulSearchService
           results_info[facet_name] = [facet[:filters]]
         else
           facet[:filters].each do |filter|
-            puts "trying to match on #{filter}"
             match = field_entries.select { |entry| filter[:name] == entry || filter[:id] == entry }
             results_info[facet_name] ||= []
             if match.any? && !results_info[facet_name].include?(filter)
