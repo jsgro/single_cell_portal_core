@@ -67,7 +67,9 @@ export default function FileUploadControl({
   validationMessages={},
   bucketName
 }) {
-  const [fileValidation, setFileValidation] = useState({ validating: false, errorMsgs: [], filename: null })
+  const [fileValidation, setFileValidation] = useState({
+    validating: false, errorMsgs: [], warningMsgs: [], filename: null
+  })
   const inputId = `file-input-${file._id}`
 
   /** handle user interaction with the file input */
@@ -136,6 +138,7 @@ export default function FileUploadControl({
     </div> }
     { fileValidation.warningMsgs.length > 0 &&
       <div className="validation-warning" data-testid="file-content-validation">
+        Warnings:
         <ul className="validation-warning" >
           { fileValidation.warningMsgs.map((warn, index) => <li key={index} className="error-message">{warn}</li>) }
         </ul>
