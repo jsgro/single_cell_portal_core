@@ -198,7 +198,7 @@ async function testMetadataUpload({ createFileSpy }) {
   const goodFileName = 'metadata-good.txt'
   fireFileSelectionEvent(screen.getByTestId('file-input'), {
     fileName: goodFileName,
-    content: 'NAME,CellID,cell_type,cell_type__ontology_label,organism_age,disease,disease__ontology_label,species,species__ontology_label,geographical_region,geographical_region__ontology_label,library_preparation_protocol,library_preparation_protocol__ontology_label,organ,organ__ontology_label,sex,is_living,organism_age__unit,organism_age__unit_label,ethnicity__ontology_label,ethnicity,race,race__ontology_label,sample_type,donor_id,biosample_id,biosample_type,preservation_method\nTYPE,group,group,group,numeric,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group'
+    content: 'NAME,cell_type,cell_type__ontology_label,organism_age,disease,disease__ontology_label,species,species__ontology_label,geographical_region,geographical_region__ontology_label,library_preparation_protocol,library_preparation_protocol__ontology_label,organ,organ__ontology_label,sex,is_living,organism_age__unit,organism_age__unit_label,ethnicity__ontology_label,ethnicity,race,race__ontology_label,sample_type,donor_id,biosample_id,biosample_type,preservation_method\nTYPE,group,group,numeric,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group,group'
   })
   await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
   expect(screen.getByTestId('file-selection-name')).toHaveTextContent(goodFileName)
