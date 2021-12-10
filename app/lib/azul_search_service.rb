@@ -9,7 +9,7 @@ class AzulSearchService
 
   # list of keys for an individual result entry used for matching facet filter values
   # each Azul result entry under 'hits' will have these keys, whether project- or file-based
-  RESULT_FACET_FIELDS = %w[samples specimens cellLines donorOrganisms organoids cellSuspensions].freeze
+  RESULT_FACET_FIELDS = %w[protocols samples specimens cellLines donorOrganisms organoids cellSuspensions].freeze
 
   def self.append_results_to_studies(existing_studies, selected_facets:, terms:, facet_map: nil)
     # set facet_map to {}, even if facet_map is explicitly passed in as nil
@@ -90,6 +90,7 @@ class AzulSearchService
           results_info[facet_name] = [facet[:filters]]
         else
           facet[:filters].each do |filter|
+            puts "trying to match on #{filter}"
             match = field_entries.select { |entry| filter[:name] == entry || filter[:id] == entry }
             results_info[facet_name] ||= []
             if match.any? && !results_info[facet_name].include?(filter)
