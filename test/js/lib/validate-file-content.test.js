@@ -27,7 +27,7 @@ describe('Client-side file validation', () => {
     // Test analytics
     expect(fakeLog).toHaveBeenCalledWith(
       'file-validation',
-      {
+      expect.objectContaining({
         delimiter: 'tab',
         numColumns: 4,
         linesRead: 17,
@@ -45,8 +45,9 @@ describe('Client-side file validation', () => {
         ],
         errorTypes: [
           'format:cap:type'
-        ]
-      }
+        ],
+        perfTime: expect.any(Number)
+      })
     )
   })
 

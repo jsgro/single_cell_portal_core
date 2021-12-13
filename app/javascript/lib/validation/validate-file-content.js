@@ -26,7 +26,12 @@ function ParseException(key, msg) {
  * removes leading and trailing white spaces and quotes from values
  */
 export function parseLine(line, delimiter) {
-  return line.split(delimiter).map(entry => entry.trim().replaceAll(/^"|"$/g, ''))
+  const splitLine = line.split(delimiter)
+  const parsedLine = new Array(parseLine.length)
+  for (let i = 0; i < splitLine.length; i++) {
+    parsedLine[i] = splitLine[i].trim().replaceAll(/^"|"$/g, '')
+  }
+  return parsedLine
 }
 
 /**
@@ -163,13 +168,13 @@ function validateEqualCount(headers, annotTypes) {
  * creates and uses 'cellNames' and 'duplicateCellNames' properties on dataObj to track
  * cell names between calls to this function
  */
-function validateUniqueCellNamesWithinFile(parsedLine, isLastLine, dataObj) {
+function validateUniqueCellNamesWithinFile(line, isLastLine, dataObj) {
   const issues = []
 
   dataObj.cellNames = dataObj.cellNames ? dataObj.cellNames : new Set()
   dataObj.duplicateCellNames = dataObj.duplicateCellNames ? dataObj.duplicateCellNames : new Set()
 
-  const cell = parsedLine[0]
+  const cell = line[0]
   if (!dataObj.cellNames.has(cell)) {
     dataObj.cellNames.add(cell)
   } else {
@@ -227,7 +232,7 @@ function sniffDelimiter([line1, line2], mimeType) {
 function validateCapFormat([headers, annotTypes]) {
   let issues = []
   if (!headers || !annotTypes) {
-    return [['error', 'cap:format:no-header', 'File does not have at least 2 non-empty header rows']]
+    return [['error', 'format:cap:no-cap-rows', 'File does not have 2 non-empty header rows']]
   }
 
   // Check format rules that apply to both metadata and cluster files
@@ -242,10 +247,10 @@ function validateCapFormat([headers, annotTypes]) {
 }
 
 /** Verifies metadata file has no X, Y, or Z coordinate headers */
-function validateNoMetadataCoordinates(parsedHeaders) {
+function validateNoMetadataCoordinates(headers) {
   const issues = []
 
-  const invalidHeaders = parsedHeaders[0].filter(header => {
+  const invalidHeaders = headers[0].filter(header => {
     return ['x', 'y', 'z'].includes(header.toLowerCase())
   })
 
@@ -262,10 +267,10 @@ function validateNoMetadataCoordinates(parsedHeaders) {
 }
 
 /** Verifies cluster file has X and Y coordinate headers */
-function validateClusterCoordinates(parsedHeaders) {
+function validateClusterCoordinates(headers) {
   const issues = []
 
-  const xyHeaders = parsedHeaders[0].filter(header => {
+  const xyHeaders = headers[0].filter(header => {
     return ['x', 'y'].includes(header.toLowerCase())
   })
 
@@ -281,37 +286,37 @@ function validateClusterCoordinates(parsedHeaders) {
 
 /** parse a metadata file, and return an array of issues, along with file parsing info */
 export async function parseMetadataFile(chunker, mimeType) {
-  const { parsedHeaders, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
 
-  let issues = validateCapFormat(parsedHeaders, delimiter)
-  issues = issues.concat(validateNoMetadataCoordinates(parsedHeaders))
+  let issues = validateCapFormat(headers, delimiter)
+  issues = issues.concat(validateNoMetadataCoordinates(headers))
   // add other header validations here
 
   const dataObj = {} // object to track multi-line validation concerns
-  await chunker.iterateLines((line, lineNum, isLastLine) => {
-    const parsedLine = parseLine(line, delimiter)
-    issues = issues.concat(validateUniqueCellNamesWithinFile(parsedLine, isLastLine, dataObj))
+  await chunker.iterateLines((rawline, lineNum, isLastLine) => {
+    const line = parseLine(rawline, delimiter)
+    issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
     // add other line-by-line validations here
   })
-  return { issues, delimiter, numColumns: parsedHeaders[0].length }
+  return { issues, delimiter, numColumns: headers[0].length }
 }
 
 /** parse a cluster file, and return an array of issues, along with file parsing info */
 export async function parseClusterFile(chunker, mimeType) {
-  const { parsedHeaders, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
 
-  let issues = validateCapFormat(parsedHeaders, delimiter)
-  issues = issues.concat(validateClusterCoordinates(parsedHeaders))
+  let issues = validateCapFormat(headers, delimiter)
+  issues = issues.concat(validateClusterCoordinates(headers))
   // add other header validations here
 
   const dataObj = {} // object to track multi-line validation concerns
-  await chunker.iterateLines((line, lineNum, isLastLine) => {
-    const parsedLine = parseLine(line, delimiter)
-    issues = issues.concat(validateUniqueCellNamesWithinFile(parsedLine, isLastLine, dataObj))
+  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
+    const line = parseLine(rawLine, delimiter)
+    issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
     // add other line-by-line validations here
   })
 
-  return { issues, delimiter, numColumns: parsedHeaders[0].length }
+  return { issues, delimiter, numColumns: headers[0].length }
 }
 
 /** reads in the specified number of header lines, sniffs the delimiter, and returns the
@@ -323,11 +328,12 @@ export async function getParsedHeaderLines(chunker, mimeType, numHeaderLines=2) 
     headerLines.push(line)
   }, 2)
   if (headerLines.length < numHeaderLines || headerLines.some(hl => !hl)) {
-    throw new ParseException('format:cap:missing-header-lines', `Your file is missing newlines or is missing some of the required ${numHeaderLines} header lines`)
+    throw new ParseException('format:cap:missing-header-lines',
+      `Your file is missing newlines or is missing some of the required ${numHeaderLines} header lines`)
   }
   const delimiter = sniffDelimiter(headerLines, mimeType)
-  const parsedHeaders = headerLines.map(l => parseLine(l, delimiter))
-  return { parsedHeaders, delimiter }
+  const headers = headerLines.map(l => parseLine(l, delimiter))
+  return { headers, delimiter }
 }
 
 
@@ -407,10 +413,11 @@ async function parseFile(file, fileType) {
  * is a message like "Your file had 2 errors"
  */
 export async function validateFileContent(file, fileType) {
+  const startTime = performance.now()
   const { fileInfo, issues } = await parseFile(file, fileType)
-
+  const perfTime = Math.round(performance.now() - startTime)
   const errorObj = formatIssues(issues)
-  const logProps = getLogProps(fileInfo, errorObj)
+  const logProps = getLogProps(fileInfo, errorObj, perfTime)
   log('file-validation', logProps)
 
   return errorObj
@@ -434,7 +441,7 @@ function formatIssues(issues) {
 
 
 /** Get properties about this validation run to log to Mixpanel */
-function getLogProps(fileInfo, errorObj) {
+function getLogProps(fileInfo, errorObj, perfTime) {
   const { errors, summary } = errorObj
 
   // Avoid needless gotchas in downstream analysis
@@ -447,6 +454,7 @@ function getLogProps(fileInfo, errorObj) {
 
   const defaultProps = {
     ...fileInfo,
+    perfTime,
     delimiter: friendlyDelimiter,
     numTableCells: fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
   }
