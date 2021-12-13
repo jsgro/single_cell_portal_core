@@ -183,17 +183,17 @@ function validateColumnNumberAndValues(table) {
   }
 
   if (rowsWithIncorrectColumnNumbers.length > 0) {
-    const pluraledOrNo = rowsWithIncorrectColumnNumbers.length > 1 ? 'rows' : 'row'
+    const rowText = rowsWithIncorrectColumnNumbers.length > 1 ? 'rows' : 'row'
     const msg = `All rows must have the same number of columns - ` +
-    `please ensure the number of columns for ${pluraledOrNo}: ${rowsWithIncorrectColumnNumbers.join(', ')}, ` +
+    `please ensure the number of columns for ${rowText}: ${rowsWithIncorrectColumnNumbers.join(', ')}, ` +
     `matches the file-header-specificed number of ${correctNumberOfColumns} columns-per-row.`
     issues.push(['error', 'format:mismatch-column-number', msg])
   }
 
   if (rowsWithNonNumericValues.length > 0) {
-    const pluraledOrNo = rowsWithNonNumericValues.length > 1 ? 'rows' : 'row'
+    const rowText = rowsWithNonNumericValues.length > 1 ? 'rows' : 'row'
     const msg = `All values (other than the first column and header row) in a dense matrix file must be numeric. ` +
-    `Please ensure all values in ${pluraledOrNo}: ${rowsWithNonNumericValues.join(', ')}, are numbers.`
+    `Please ensure all values in ${rowText}: ${rowsWithNonNumericValues.join(', ')}, are numbers.`
     issues.push(['error', 'format:invalid-type:not-numeric', msg])
   }
 
