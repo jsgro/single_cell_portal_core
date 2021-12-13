@@ -13,7 +13,7 @@ import { readLinesAndType } from './io'
 
 /** Remove white spaces and quotes from a string value */
 function clean(value) {
-  return value.trim().replace(/"/g, '')
+  return value.trim().replaceAll(/"/g, '')
 }
 
 /**
@@ -144,13 +144,11 @@ function validateEqualCount(headers, annotTypes) {
   return issues
 }
 
-
 /**
  * Verify "GENE" is present as the first column in the first row for an Expression Matrix file
  */
-function validateGeneHeader(firstRowTable) {
+function validateGeneInHeader(firstRowTable) {
   const issues = []
-  console.log('firstrowTable:', firstRowTable)
 
   if (firstRowTable[0][0] !== 'GENE') {
     const msg = 'Dense matrices require the first value of the file to be "GENE". ' +
@@ -418,7 +416,7 @@ async function parseFile(file, fileType) {
       if (fileType === 'Expression Matrix') {
         const firstRowTable = table.slice(0, 1)
         issues = issues.concat(validateUniqueCellNamesWithinFile(firstRowTable[0], fileType))
-        issues = issues.concat(validateGeneHeader(firstRowTable))
+        issues = issues.concat(validateGeneInHeader(firstRowTable))
         issues = issues.concat(validateColumnNumberAndValues(table))
       } else if (['Cluster', 'Metadata'].includes(fileType)) {
         const headerTable = table.slice(0, 2)
