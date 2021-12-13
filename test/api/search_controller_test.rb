@@ -355,4 +355,11 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     api_test_study.update(public: true)
     @user.update(api_access_token: valid_token)
   end
+
+
+  test 'should escape quotes in facet filter values' do
+    sanitized_filter = Api::V1::SearchController.sanitize_filter_value("10X 3' v3")
+    expected_value = "10X 3\\' v3"
+    assert_equal expected_value, sanitized_filter
+  end
 end
