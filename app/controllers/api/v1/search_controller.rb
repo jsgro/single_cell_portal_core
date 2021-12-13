@@ -589,7 +589,7 @@ module Api
           filter_arr_name = "#{facet_id}_filters"
           filter_val_name = "#{facet_id}_value"
           filter_where_val = "#{facet_id}_val"
-          filter_values = facet_obj[:filters].map {|filter| filter[:id]}
+          filter_values = facet_obj[:filters].map { |filter| sanitize_filter_value(filter[:id]) }
           query_elements[:with] = "#{filter_arr_name} AS (SELECT#{filter_values} as #{filter_val_name})"
           query_elements[:from] = "#{filter_arr_name}, UNNEST(#{filter_arr_name}.#{filter_val_name}) AS #{filter_where_val}"
           query_elements[:where] = "(#{filter_where_val} IN UNNEST(#{column_name}))"
@@ -623,12 +623,12 @@ module Api
         else
           query_elements[:select] = "#{column_name}"
           # for non-array columns we can pass an array of quoted values and call IN directly
-          filter_values = facet_obj[:filters].map {|filter| filter[:id]}
+          filter_values = facet_obj[:filters].map { |filter| sanitize_filter_value(filter[:id]) }
           main_query = "#{column_name} IN ('#{filter_values.join('\',\'')}')"
           query_elements[:where] = main_query
           # to maximize XDSS queries, also check __ontology_label columns since Azul doesn't support IDs
           if search_facet.is_ontology_based? && search_facet.big_query_name_column.present?
-            label_values = facet_obj[:filters].map { |filter| filter[:name] }
+            label_values = facet_obj[:filters].map { |filter| sanitize_filter_value(filter[:name]) }
             extra_query = "#{search_facet.big_query_name_column} IN ('#{label_values.join('\',\'')}')"
             query_elements[:where] = "(#{main_query} OR #{extra_query})"
           end
@@ -719,6 +719,11 @@ module Api
         else
           matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] || filter[:name] == search_result[result_key]}
         end
+      end
+
+      # properly escape any single quotes in a filter value (double quotes are correctly handled already)
+      def self.sanitize_filter_value(filter)
+        filter.gsub(/'/) { "\\'" }
       end
     end
   end

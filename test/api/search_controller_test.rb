@@ -392,4 +392,10 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_equal array_where, array_query_elements[:where]
     assert_equal array_select, array_query_elements[:select]
   end
+
+  test 'should escape quotes in facet filter values' do
+    sanitized_filter = Api::V1::SearchController.sanitize_filter_value("10X 3' v3")
+    expected_value = "10X 3\\' v3"
+    assert_equal expected_value, sanitized_filter
+  end
 end
