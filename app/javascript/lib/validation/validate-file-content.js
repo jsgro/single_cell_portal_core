@@ -13,6 +13,7 @@ import { readFileBytes } from './io'
 import ChunkedLineReader from './chunked-line-reader'
 import { PARSEABLE_TYPES } from 'components/upload/upload-utils'
 
+// from lib/assets/metadata_schemas/alexandria_convention_schema.json (which in turn is from scp-ingest-pipeline/schemas)
 export const REQUIRED_CONVENTION_COLUMNS = [
   'biosample_id',
   'disease',
@@ -302,16 +303,16 @@ function validateRequiredMetadataColumns(parsedHeaders) {
  * The main circumstance this is aimed at checking is the 'Excel drag error', in which by drag-copying a row, the
  * label is copied correctly, but the id string gets numerically incremented
  */
-function validateMetadataLabelMatches(parsedHeaders, parsedLine, isLastLine, dataObj) {
+function validateMetadataLabelMatches(headers, line, isLastLine, dataObj) {
   const issues = []
   const excludedColumns = ['NAME']
   // if this is the first time through, identify the colums to check, and initialize data structures to track mismatches
   if (!dataObj.dragCheckColumns) {
-    dataObj.dragCheckColumns = parsedHeaders[0].map((colName, index) => {
-      const labelColumnIndex = parsedHeaders[0].indexOf(`${colName }__ontology_label`)
+    dataObj.dragCheckColumns = headers[0].map((colName, index) => {
+      const labelColumnIndex = headers[0].indexOf(`${colName }__ontology_label`)
       if (excludedColumns.includes(colName) ||
         colName.endsWith('ontology_label') ||
-        parsedHeaders[1][index] === 'numeric' ||
+        headers[1][index] === 'numeric' ||
         labelColumnIndex === -1) {
         return null
       }
@@ -323,8 +324,8 @@ function validateMetadataLabelMatches(parsedHeaders, parsedLine, isLastLine, dat
   // for each column we need to check, see if there is a corresponding filled-in label,
   //  and track whether other ids have been assigned to that label too
   dataObj.dragCheckColumns.forEach(dcc => {
-    const colValue = parsedLine[dcc.index]
-    const label = parsedLine[dcc.labelColumnIndex]
+    const colValue = line[dcc.index]
+    const label = line[dcc.labelColumnIndex]
     if (label.length) {
       if (dcc.labelValueMap[label] && dcc.labelValueMap[label] !== colValue) {
         dcc.mismatchedVals.add(label)
@@ -340,20 +341,20 @@ function validateMetadataLabelMatches(parsedHeaders, parsedLine, isLastLine, dat
       if (dcc.mismatchedVals.size > 0) {
         const labelString = [...dcc.mismatchedVals].slice(0, 10).join(', ')
         issues.push(['error', 'content:metadata:mismatched-id-label',
-          `${dcc.colName} has different id values mapped to the same label.
-          Label(s) with more than one corresponding id: ${labelString}`])
+          `${dcc.colName} has different ID values mapped to the same label.
+          Label(s) with more than one corresponding ID: ${labelString}`])
       }
     })
   }
   return issues
 }
 /** raises a warning if a group column has more than 200 unique values */
-function validateGroupColumnCounts(parsedHeaders, parsedLine, isLastLine, dataObj) {
+function validateGroupColumnCounts(headers, line, isLastLine, dataObj) {
   const issues = []
   const excludedColumns = ['NAME']
   if (!dataObj.groupCheckColumns) {
-    dataObj.groupCheckColumns = parsedHeaders[0].map((colName, index) => {
-      if (excludedColumns.includes(colName) || colName.endsWith('ontology_label') || parsedHeaders[1][index] === 'numeric') {
+    dataObj.groupCheckColumns = headers[0].map((colName, index) => {
+      if (excludedColumns.includes(colName) || colName.endsWith('ontology_label') || headers[1][index] === 'numeric') {
         return null
       }
       return { colName, index, uniqueVals: new Set() }
@@ -361,7 +362,7 @@ function validateGroupColumnCounts(parsedHeaders, parsedLine, isLastLine, dataOb
   }
 
   dataObj.groupCheckColumns.forEach(gcc => {
-    const colValue = parsedLine[gcc.index]
+    const colValue = line[gcc.index]
     if (colValue) { // don't bother adding empty values
       gcc.uniqueVals.add(colValue)
     }

@@ -140,7 +140,7 @@ export default function FileUploadControl({
     { fileValidation.warningMsgs?.length > 0 &&
       <div className="validation-warning" data-testid="file-content-validation">
         Warnings:
-        <ul className="validation-warning" >
+        <ul className="validation-warning">
           { fileValidation.warningMsgs.map((warn, index) => <li key={index} className="error-message">{warn}</li>) }
         </ul>
       </div>

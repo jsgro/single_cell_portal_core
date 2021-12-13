@@ -46,15 +46,10 @@ describe('Client-side file validation', () => {
         errorTypes: [
           'format:cap:type'
         ],
-<<<<<<< HEAD
-        perfTime: expect.any(Number)
-      })
-=======
-        numWarnings: 0,
+        perfTime: expect.any(Number), numWarnings: 0,
         warnings: [],
         warningTypes: []
-      }
->>>>>>> adding excel drag validation to frontend
+      })
     )
   })
 
