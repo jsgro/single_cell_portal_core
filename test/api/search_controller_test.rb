@@ -356,6 +356,42 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     @user.update(api_access_token: valid_token)
   end
 
+  test "should construct query elements for facets" do
+    non_array_facet = {
+      id: 'species',
+      filters: [
+        { id: 'NCBITaxon_9606', name: 'Homo sapiens' },
+        { id: 'Gallus gallus', name: 'Gallus gallus' }
+      ],
+      db_facet: SearchFacet.find_by(identifier: 'species')
+    }
+    expected_where = "(species IN ('NCBITaxon_9606','Gallus gallus') OR" \
+                     " species__ontology_label IN ('Homo sapiens','Gallus gallus'))"
+    query_elements = Api::V1::SearchController.get_query_elements_for_facet(non_array_facet)
+    assert_equal expected_where, query_elements[:where]
+    array_facet = {
+      id: 'disease',
+      filters: [
+        { id: 'MONDO_0005109', name: 'HIV infectious disease' },
+        { id: 'Alzheimer disease', name: 'Alzheimer disease' }
+      ],
+      db_facet: SearchFacet.find_by(identifier: 'disease')
+    }
+    # assemble expected query elements
+    # both disease and disease__ontology_label should have corresponding with/from/where clauses using UNNEST
+    array_with = 'disease_filters AS (SELECT["MONDO_0005109", "Alzheimer disease"] as disease_value), ' \
+                 'disease_label_filters AS (SELECT["HIV infectious disease", "Alzheimer disease"] ' \
+                 'as disease_label_value)'
+    array_from = 'disease_filters, UNNEST(disease_filters.disease_value) AS disease_val, disease_label_filters, ' \
+                 'UNNEST(disease_label_filters.disease_label_value) AS disease_label_val'
+    array_where = '((disease_val IN UNNEST(disease)) OR (disease_label_val IN UNNEST(disease__ontology_label)))'
+    array_select = 'disease_val, disease_label_val'
+    array_query_elements = Api::V1::SearchController.get_query_elements_for_facet(array_facet)
+    assert_equal array_with, array_query_elements[:with]
+    assert_equal array_from, array_query_elements[:from]
+    assert_equal array_where, array_query_elements[:where]
+    assert_equal array_select, array_query_elements[:select]
+  end
 
   test 'should escape quotes in facet filter values' do
     sanitized_filter = Api::V1::SearchController.sanitize_filter_value("10X 3' v3")
