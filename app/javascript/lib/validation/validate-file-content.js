@@ -150,10 +150,54 @@ function validateEqualCount(headers, annotTypes) {
  */
 function validateGeneHeader(firstRowTable) {
   const issues = []
+  console.log('firstrowTable:', firstRowTable)
 
   if (firstRowTable[0][0] !== 'GENE') {
-    const msg = 'A Dense matrix file requires a header row containing the value “GENE” in the first column'
+    const msg = 'Dense matrices require the first value of the file to be "GENE". ' +
+     `However, the first value for this file currently is "${firstRowTable[0][0]}".`
     issues.push(['error', 'format:missing-gene-column', msg])
+  }
+
+  return issues
+}
+
+/**
+ * Verify dense matrix column values and column numbers
+ */
+function validateColumnNumberAndValues(table) {
+  const issues = []
+  const rowsWithIncorrectColumnNumbers = []
+  const rowsWithNonNumericValues = []
+  // use the header row to determine the correct number of columns all rows should have
+  const correctNumberOfColumns = table[0].length
+
+  // skip first row
+  for (let i = 1; i < table.length - 1; i++) {
+    const entry = table[i]
+    // if the columns don't match in length error
+    if (correctNumberOfColumns !== entry.length) {
+      rowsWithIncorrectColumnNumbers.push(i)
+    }
+    // skip first column
+    entry.shift()
+    if (entry.some(isNaN)) {
+      rowsWithNonNumericValues.push(i)
+    }
+  }
+
+  if (rowsWithIncorrectColumnNumbers.length > 0) {
+    const pluraledOrNo = rowsWithIncorrectColumnNumbers.length > 1 ? 'rows' : 'row'
+    const msg = `All rows must have the same number of columns - ` +
+    `please ensure the number of columns for ${pluraledOrNo}: ${rowsWithIncorrectColumnNumbers.join(', ')}, ` +
+    `matches the file-header-specificed number of ${correctNumberOfColumns} columns-per-row.`
+    issues.push(['error', 'format:mismatch-column-number', msg])
+  }
+
+  if (rowsWithNonNumericValues.length > 0) {
+    const pluraledOrNo = rowsWithNonNumericValues.length > 1 ? 'rows' : 'row'
+    const msg = `All values (other than the first column and header row) in a dense matrix file must be numeric. ` +
+    `Please ensure all values in ${pluraledOrNo}: ${rowsWithNonNumericValues.join(', ')}, are numbers.`
+    issues.push(['error', 'format:invalid-type:not-numeric', msg])
   }
 
   return issues
@@ -358,16 +402,15 @@ async function parseFile(file, fileType) {
   }
 
   if (!file.name.endsWith('.gz')) {
-    table = []
     if (['Cluster', 'Metadata'].includes(fileType)) {
       if (lines.length < 2) {
         return { table, delimiter, issues: [['error', 'cap:format:no-newlines', 'File does not contain newlines to separate rows']] }
       }
     }
-    // If filetype is cluster, metadata or is a dense matrix ensure cell names are unique
     if (['Cluster', 'Metadata', 'Expression Matrix'].includes(fileType)) {
       // if there are no encoding issues, and this isn't a gzipped file, validate content
       delimiter = sniffDelimiter(headerLines, mimeType)
+      table = []
       for (let i = 0; i < lines.length; i++) {
         table.push(lines[i].split(delimiter))
       }
@@ -376,7 +419,8 @@ async function parseFile(file, fileType) {
         const firstRowTable = table.slice(0, 1)
         issues = issues.concat(validateUniqueCellNamesWithinFile(firstRowTable[0], fileType))
         issues = issues.concat(validateGeneHeader(firstRowTable))
-      } else {
+        issues = issues.concat(validateColumnNumberAndValues(table))
+      } else if (['Cluster', 'Metadata'].includes(fileType)) {
         const headerTable = table.slice(0, 2)
         issues = await validateCapFormat(headerTable, fileType)
         issues = issues.concat(validateUniqueCellNamesWithinFile(table, fileType))

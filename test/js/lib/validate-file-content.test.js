@@ -64,8 +64,29 @@ describe('Client-side file validation', () => {
   })
 
   it('catches duplicate cell names in cluster file', async () => {
-    mockReadLinesAndType({ content: 'NAME,X,Y\nTYPE,numeric,numeric\nCELL_0001,34.472,32.211\nCELL_0001,15.975,10.043' })
+    mockReadLinesAndType({ content: 'NAME,X,Y\nTYPE,numeric,numeric\nCELL_0001,34.4,32.211\nCELL_0001,15.9,10.04' })
     const { errors, summary } = await validateFileContent({ name: 'dup_cell_names.txt' }, 'Cluster')
+    expect(errors).toHaveLength(1)
+    expect(summary).toBe('Your file had 1 error')
+  })
+
+  it('catches duplicate cell names in dense matrix file', async () => {
+    mockReadLinesAndType({ content: 'GENE,CELL_0001,CELL_0001\nItm2a,0,0\nSergef,0,7.092' })
+    const { errors, summary } = await validateFileContent({ name: 'dup_cell_name.txt' }, 'Expression Matrix')
+    expect(errors).toHaveLength(1)
+    expect(summary).toBe('Your file had 1 error')
+  })
+
+  it('catches missing "GENE" entry in dense matrix file', async () => {
+    mockReadLinesAndType({ content: 'G,CELL_0001,CELL_0002\nItm2a,0,0\nSergef,0,7.092' })
+    const { errors, summary } = await validateFileContent({ name: 'missing_GENE.txt' }, 'Expression Matrix')
+    expect(errors).toHaveLength(1)
+    expect(summary).toBe('Your file had 1 error')
+  })
+
+  it('catches non-numeric entry in dense matrix file', async () => {
+    mockReadLinesAndType({ content: 'GENE,CELL_0001,CELL_0002\nItm2a,trtr,0\nSergef,0,7.092' })
+    const { errors, summary } = await validateFileContent({ name: 'non_numeric.txt' }, 'Expression Matrix')
     expect(errors).toHaveLength(1)
     expect(summary).toBe('Your file had 1 error')
   })
