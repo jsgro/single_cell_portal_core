@@ -172,7 +172,6 @@ function validateColumnNumberAndValues(table) {
   // skip first row
   for (let i = 1; i < table.length - 1; i++) {
     const entry = table[i]
-    // if the columns don't match in length error
     if (correctNumberOfColumns !== entry.length) {
       rowsWithIncorrectColumnNumbers.push(i)
     }
