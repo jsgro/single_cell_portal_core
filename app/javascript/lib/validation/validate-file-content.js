@@ -169,7 +169,7 @@ function validateColumnNumberAndValues(table) {
   // use the header row to determine the correct number of columns all rows should have
   const correctNumberOfColumns = table[0].length
 
-  // skip first row
+  // skip the first row
   for (let i = 1; i < table.length - 1; i++) {
     const entry = table[i]
     if (correctNumberOfColumns !== entry.length) {
