@@ -61,6 +61,9 @@ export function formatFileFromServer(file) {
   if (file.genome_assembly_id) {
     file.genome_assembly_id = file.genome_assembly_id.$oid
   }
+  if (file.study_file_bundle_id) {
+    file.study_file_bundle_id = file.study_file_bundle_id.$oid
+  }
   if (file.expression_file_info) {
     delete file.expression_file_info._id
   }
@@ -77,8 +80,17 @@ export function formatFileFromServer(file) {
 /** find the bundle children of 'file', if any, in the given 'files' list */
 export function findBundleChildren(file, files) {
   return files.filter(f => {
-    const parentFields = [f.options?.matrix_id, f.options?.bam_id, f.options?.cluster_file_id]
-    return parentFields.includes(file._id) || (file.oldId && parentFields.includes(file.oldId))
+    // check if the file is either explicity listed as a parent in the child's 'options' field,
+    // or if the child and the parent are in the same study_file_bundle
+    const parentFields = [
+      f.options?.matrix_id,
+      f.options?.bam_id,
+      f.options?.cluster_file_id,
+      f.study_file_bundle_id
+    ]
+    return parentFields.includes(file._id) ||
+      (file.oldId && parentFields.includes(file.oldId)) ||
+      file.study_file_bundle_id && parentFields.includes(file.study_file_bundle_id)
   })
 }
 

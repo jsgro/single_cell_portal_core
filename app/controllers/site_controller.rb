@@ -111,7 +111,7 @@ class SiteController < ApplicationController
       if @study.can_edit?(current_user)
         if @study.update(study_params)
           # invalidate caches as a precaution
-          CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
+          CacheRemovalJob.new(@study.accession).perform
           if @study.initialized?
             @cluster = @study.default_cluster
             @options = ClusterVizService.load_cluster_group_options(@study)
@@ -122,9 +122,6 @@ class SiteController < ApplicationController
           # double check on download availability: first, check if administrator has disabled downloads
           # then check if FireCloud is available and disable download links if either is true
           @allow_downloads = ApplicationController.firecloud_client.services_available?(FireCloudClient::BUCKETS_SERVICE)
-
-          # warm all default caches for this study
-          ClusterCacheService.delay(queue: :cache).cache_study_defaults(@study)
         end
         set_firecloud_permissions(@study.detached?)
         set_study_permissions(@study.detached?)
@@ -883,11 +880,13 @@ class SiteController < ApplicationController
 
     if access_settings['reset'] == 'yes'
       logger.info "Rotating credentials for reviewer access in #{study.accession}"
-      study.reviewer_access&.rotate_credentials!
+      study.reviewer_access.rotate_credentials! if study.reviewer_access.present?
     elsif access_settings['enable'] == 'yes' && study.reviewer_access.nil?
+      logger.info "Initializing reviewer access in #{study.accession}"
       study.build_reviewer_access.save!
     elsif access_settings['enable'] == 'no'
-      study.reviewer_access&.destroy
+      logger.info "Disabling reviewer access in #{study.accession}"
+      study.reviewer_access.destroy if study.reviewer_access.present?
     end
   end
 end

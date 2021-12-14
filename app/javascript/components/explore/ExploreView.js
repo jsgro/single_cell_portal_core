@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { Router } from '@reach/router'
-import _clone from 'lodash/clone'
+import _cloneDeep from 'lodash/clone'
 
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { getDefaultClusterParams } from 'lib/cluster-utils'
 import MessageModal from 'lib/MessageModal'
 
-import { fetchExplore } from 'lib/scp-api'
+import { fetchExplore, fetchAnnotationOptions } from 'lib/scp-api'
 import ErrorBoundary from 'lib/ErrorBoundary'
 import useExploreTabRouter from './ExploreTabRouter'
 
@@ -24,9 +24,23 @@ function RoutableExploreTab({ studyAccession }) {
   // '<<default cluster>>' as a change that requires a re-fetch from the server
   const exploreParamsWithDefaults = createExploreParamsWithDefaults(exploreParams, exploreInfo)
 
-  useEffect(() => {
-    fetchExplore(studyAccession).then(result => setExploreInfo(result))
-  }, [studyAccession])
+  /** load the basic study info, types of files, annotations, and clusters, etc... */
+  async function loadStudyData() {
+    const exploreResponse = await fetchExplore(studyAccession)
+    setExploreInfo(exploreResponse)
+    // after the explore info is received, fetch the user-specific annotations, but do it
+    // after a timeout to ensure the visualization data gets fetched first
+    window.setTimeout(async () => {
+      const userSpecificAnnotations = await fetchAnnotationOptions(studyAccession)
+      setExploreInfo(oldExploreInfo => {
+        const newInfo = _cloneDeep(oldExploreInfo)
+        newInfo.annotationList.annotations = userSpecificAnnotations
+        return newInfo
+      })
+    }, 500)
+  }
+
+  useEffect(() => {loadStudyData()}, [studyAccession])
 
   useEffect(() => {
     // if the user hasn't selected anything, and there are genelists to view, but no clusters
@@ -54,7 +68,7 @@ function RoutableExploreTab({ studyAccession }) {
 
 /** returns a clone of exploreParams with appropriate defaults from exploreInfo merged in */
 function createExploreParamsWithDefaults(exploreParams, exploreInfo) {
-  let controlExploreParams = _clone(exploreParams)
+  let controlExploreParams = _cloneDeep(exploreParams)
   if (exploreInfo && !exploreParams.cluster && exploreInfo.clusterGroupNames.length > 0) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
     controlExploreParams = Object.assign(controlExploreParams,

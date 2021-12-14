@@ -6,7 +6,7 @@ import selectEvent from 'react-select-event'
 import * as ScpApi from 'lib/scp-api'
 
 import {
-  RAW_COUNTS_MTX_FILE, BARCODES_FILE, FEATURES_FILE
+  RAW_COUNTS_MTX_FILE, BARCODES_FILE, FEATURES_FILE, EMPTY_STUDY, RAW_COUNTS_FILE
 } from './file-info-responses'
 
 import { fireFileSelectionEvent } from '../lib/file-mock-utils'
@@ -109,6 +109,43 @@ describe('it allows uploading of expression matrices', () => {
     fireEvent.click(subForms[0].querySelector('button[data-testid="file-save"]'))
     await waitForElementToBeRemoved(() => screen.getByTestId('file-save-spinner'))
 
+    // confirm all the filenames and headers are correct
+    const headerList = screen.getAllByRole('heading', { level: 5 }).map(h => h.textContent)
+    expect(headerList).toEqual([
+      'raw_counts.mtx',
+      '10x Features File',
+      'features.txt',
+      '10x Barcodes File',
+      'barcodes.txt'
+    ])
+  })
+
+  it('correctly displays a previously uploaded mtx file bundle', async () => {
+    // When files are uploaded via the new or legacy wizard, their bundle parent is indicated
+    // via the study file options hash.  However, for some sync studies, the parent will only
+    // be indicated via the bundle.  So check that we handle that case appropriately
+    const bundleId = '6191fb48771a5b0d8b5a0a98'
+    const studyInfo = {
+      ...EMPTY_STUDY,
+      files: [
+        {
+          ...RAW_COUNTS_MTX_FILE,
+          options: {},
+          study_file_bundle_id: { $oid: bundleId }
+        },
+        {
+          ...FEATURES_FILE,
+          options: {},
+          study_file_bundle_id: { $oid: bundleId }
+        },
+        {
+          ...BARCODES_FILE,
+          options: {},
+          study_file_bundle_id: { $oid: bundleId }
+        }
+      ]
+    }
+    await renderWizardWithStudy({ studyInfo })
     // confirm all the filenames and headers are correct
     const headerList = screen.getAllByRole('heading', { level: 5 }).map(h => h.textContent)
     expect(headerList).toEqual([

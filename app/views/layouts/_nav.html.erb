@@ -11,7 +11,7 @@
         <%= scp_link_to "<span class='fas fa-home'></span> #{@selected_branding_group.name}</sup>".html_safe, site_path,
                         class: "navbar-brand check-upload", style: 'margin-top: 6px;' %>
       <% else %>
-        <%= link_to image_tag('SCP-white.png'), site_path, class: "navbar-brand check-upload" %>
+        <%= link_to image_tag('SCP-white.png',  alt:"Single Cell Portal logo"), site_path, class: "navbar-brand check-upload" %>
       <% end %>
     </div>
   </div>
@@ -57,7 +57,7 @@
                               class: 'check-upload', id: 'preset-nav' %></li>
               <li><%= link_to "<span class='fas fa-dna fa-fw'></span> Species".html_safe, taxons_path, class: 'check-upload',
                               id: 'species-nav' %></li>
-              <li><%= scp_link_to "<span class='fas fa-copyright fa-fw'></span> Branding groups".html_safe, branding_groups_path,
+              <li><%= scp_link_to "<span class='fas fa-copyright fa-fw'></span> Collections".html_safe, branding_groups_path,
                                   class: 'check-upload', id: 'branding-groups-nav' %>
               <li><%= scp_link_to "<span class='fas fa-bullhorn fa-fw'></span> Feature announcements".html_safe,
                                   feature_announcements_path, class: 'check-upload', id: 'feature-announcements-nav' %>

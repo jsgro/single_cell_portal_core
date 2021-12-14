@@ -12,6 +12,18 @@
       "species_scientific_name": "Homo sapiens"
     },
     {
+      "type": "Expression Matrix",
+      "filename": "expression_matrix_raw.tsv",
+      "species_scientific_name": "Homo sapiens",
+      "expression_file_info": {
+        "is_raw_counts": true,
+        "library_preparation_protocol": "10x 3' v2",
+        "units": "UMI-corrected raw counts",
+        "biosample_input_type": "Whole cell",
+        "modality": "Transcriptomic: targeted"
+      }
+    },
+    {
       "type": "Cluster",
       "filename": "cluster.tsv"
     }

@@ -38,14 +38,14 @@ export default function StepTabHeader({
     badgeContent = <span className="badge fa-xs" data-testid={badgeTestId}><FontAwesomeIcon icon={faCircle}/></span>
   }
 
-  return <li className={className}>
-    <div onClick={() => setCurrentStep(step)} className="step-number">
-      {badgeContent}
-    </div>
-    <div>
-      <a className="action link" onClick={() => setCurrentStep(step)}>
+  return <li className={className} role="tab">
+    <button className="unset-background-border" onClick={() => setCurrentStep(step)} >
+      <span className="step-number">
+        {badgeContent}
+      </span>
+      <span className="action link">
         {step.title}
-      </a>
+      </span>
       { SHOW_FILE_NAMES && <ul className="file-list">
         { displayedFiles.map(file => {
           // show different style depending on whether file is locally modified
@@ -56,6 +56,6 @@ export default function StepTabHeader({
         }
         { remainderText && <li>{remainderText}</li> }
       </ul> }
-    </div>
+    </button>
   </li>
 }

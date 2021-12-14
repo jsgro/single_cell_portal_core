@@ -1,0 +1,360 @@
+{
+  "hits": [
+    {
+      "protocols": [
+        {
+          "submissionDate": "2021-06-17T23:44:59.385000Z",
+          "updateDate": "2021-09-10T22:51:36.434000Z",
+          "workflow": [
+            "analysis_protocol_1"
+          ]
+        },
+        {
+          "submissionDate": "2021-06-17T23:44:59.366000Z",
+          "updateDate": "2021-06-17T23:45:07.150000Z",
+          "libraryConstructionApproach": [
+            "10X 3' V2 sequencing"
+          ],
+          "nucleicAcidSource": [
+            "single cell"
+          ]
+        },
+        {
+          "submissionDate": "2021-06-17T23:44:59.375000Z",
+          "updateDate": "2021-06-17T23:45:07.264000Z",
+          "instrumentManufacturerModel": [
+            "Illumina NextSeq 500"
+          ],
+          "pairedEnd": [
+            false
+          ]
+        }
+      ],
+      "projects": [
+        {
+          "projectId": "4a95101c-9ffc-4f30-a809-f04518a23803",
+          "projectTitle": "A single-cell reference map of transcriptional states for human blood and tissue T cell activation",
+          "projectShortname": "HumanTissueTcellActivation",
+          "projectDescription": "Human T cells coordinate adaptive immunity in diverse anatomic compartments through production of cytokines and effector molecules, but it is unclear how tissue site influences T cell persistence and function. Here, we use single cell RNA-sequencing (scRNA-seq) to define the heterogeneity of human T cells isolated from lungs, lymph nodes, bone marrow and blood, and their functional responses following stimulation. Through analysis of >50,000 resting and activated T cells, we reveal tissue T cell signatures in mucosal and lymphoid sites, and lineage-specific activation states across all sites including distinct effector states for CD8+ T cells and an interferon-response state for CD4+ T cells. Comparing scRNA-seq profiles of tumor-associated T cells to our dataset reveals predominant activated CD8+ compared to CD4+ T cell states within multiple tumor types. Our results therefore establish a high dimensional reference map of human T cell activation in health for analyzing T cells in disease."
+        }
+      ],
+      "samples": [
+        {
+          "sampleEntityType": [
+            "specimens"
+          ],
+          "effectiveOrgan": [
+            "blood",
+            "hematopoietic system",
+            "lung",
+            "mediastinal lymph node"
+          ],
+          "submissionDate": "2019-09-13T17:52:10.963000Z",
+          "updateDate": "2019-09-13T17:52:15.237000Z",
+          "id": [
+            "PP001",
+            "PP002",
+            "PP003",
+            "PP004",
+            "PP005",
+            "PP006",
+            "PP009",
+            "PP010",
+            "PP011",
+            "PP012",
+            "PP013",
+            "PP014",
+            "PP017",
+            "PP018",
+            "PP019",
+            "PP020"
+          ],
+          "organ": [
+            "blood",
+            "hematopoietic system",
+            "lung",
+            "mediastinal lymph node"
+          ],
+          "organPart": [
+            "Left lateral basal bronchopulmonary segment",
+            "bone marrow",
+            "mediastinal lymph node",
+            "venous blood"
+          ],
+          "disease": [
+            null
+          ],
+          "preservationMethod": [
+            "fresh"
+          ],
+          "source": [
+            "specimen_from_organism"
+          ]
+        }
+      ],
+      "specimens": [
+        {
+          "submissionDate": "2019-09-13T17:52:10.963000Z",
+          "updateDate": "2019-09-13T17:52:15.237000Z",
+          "id": [
+            "PP001",
+            "PP002",
+            "PP003",
+            "PP004",
+            "PP005",
+            "PP006",
+            "PP009",
+            "PP010",
+            "PP011",
+            "PP012",
+            "PP013",
+            "PP014",
+            "PP017",
+            "PP018",
+            "PP019",
+            "PP020"
+          ],
+          "organ": [
+            "blood",
+            "hematopoietic system",
+            "lung",
+            "mediastinal lymph node"
+          ],
+          "organPart": [
+            "Left lateral basal bronchopulmonary segment",
+            "bone marrow",
+            "mediastinal lymph node",
+            "venous blood"
+          ],
+          "disease": [
+            null
+          ],
+          "preservationMethod": [
+            "fresh"
+          ],
+          "source": [
+            "specimen_from_organism"
+          ]
+        }
+      ],
+      "cellLines": [],
+      "donorOrganisms": [
+        {
+          "submissionDate": "2019-09-13T17:52:10.920000Z",
+          "updateDate": "2019-09-13T17:52:15.224000Z",
+          "id": [
+            "Blood_donor_A",
+            "Blood_donor_B",
+            "Tissue_donor_1",
+            "Tissue_donor_2"
+          ],
+          "donorCount": 4,
+          "developmentStage": [
+            "human adult stage"
+          ],
+          "genusSpecies": [
+            "Homo sapiens"
+          ],
+          "organismAge": [
+            {
+              "value": "50-55",
+              "unit": "year"
+            },
+            {
+              "value": "52",
+              "unit": "year"
+            },
+            {
+              "value": "65",
+              "unit": "year"
+            }
+          ],
+          "organismAgeRange": [
+            {
+              "gte": 1639872000,
+              "lte": 1639872000
+            },
+            {
+              "gte": 1576800000,
+              "lte": 1734480000
+            },
+            {
+              "gte": 2049840000,
+              "lte": 2049840000
+            }
+          ],
+          "biologicalSex": [
+            "male"
+          ],
+          "disease": [
+            "hypertension",
+            "normal"
+          ]
+        }
+      ],
+      "organoids": [],
+      "cellSuspensions": [
+        {
+          "submissionDate": "2019-09-13T17:52:11.145000Z",
+          "updateDate": "2019-09-13T17:52:15.235000Z",
+          "organ": [
+            "hematopoietic system"
+          ],
+          "organPart": [
+            "bone marrow"
+          ],
+          "selectedCellType": [
+            "T cell"
+          ],
+          "totalCells": null
+        },
+        {
+          "submissionDate": "2019-09-13T17:52:11.236000Z",
+          "updateDate": "2019-09-13T17:52:15.273000Z",
+          "organ": [
+            "blood"
+          ],
+          "organPart": [
+            "venous blood"
+          ],
+          "selectedCellType": [
+            "T cell"
+          ],
+          "totalCells": null
+        },
+        {
+          "submissionDate": "2019-09-13T17:52:11.128000Z",
+          "updateDate": "2019-09-13T17:52:15.267000Z",
+          "organ": [
+            "lung"
+          ],
+          "organPart": [
+            "Left lateral basal bronchopulmonary segment"
+          ],
+          "selectedCellType": [
+            "T cell"
+          ],
+          "totalCells": null
+        },
+        {
+          "submissionDate": "2019-09-13T17:52:11.163000Z",
+          "updateDate": "2019-09-13T17:52:15.267000Z",
+          "organ": [
+            "mediastinal lymph node"
+          ],
+          "organPart": [
+            "mediastinal lymph node"
+          ],
+          "selectedCellType": [
+            "T cell"
+          ],
+          "totalCells": null
+        }
+      ],
+      "fileTypeSummaries": [
+        {
+          "format": "csv",
+          "fileType": "csv",
+          "fileSource": [
+            "HCA Release"
+          ],
+          "source": [
+            "HCA Release"
+          ],
+          "count": 4,
+          "totalSize": 6959601,
+          "matrixCellCount": null,
+          "isIntermediate": false,
+          "contentDescription": [
+            "Matrix"
+          ]
+        },
+        {
+          "format": "tar",
+          "fileType": "tar",
+          "fileSource": [
+            "GEO"
+          ],
+          "source": [
+            "GEO"
+          ],
+          "count": 1,
+          "totalSize": 116766720,
+          "matrixCellCount": null,
+          "isIntermediate": false,
+          "contentDescription": [
+            "Matrix"
+          ]
+        },
+        {
+          "format": "fastq.gz",
+          "fileType": "fastq.gz",
+          "fileSource": [
+            null
+          ],
+          "source": [
+            null
+          ],
+          "count": 32,
+          "totalSize": 496164231119,
+          "matrixCellCount": null,
+          "isIntermediate": null,
+          "contentDescription": [
+            "DNA sequence (raw)"
+          ]
+        },
+        {
+          "format": "loom",
+          "fileType": "loom",
+          "fileSource": [
+            "DCP/2 Analysis"
+          ],
+          "source": [
+            "DCP/2 Analysis"
+          ],
+          "count": 16,
+          "totalSize": 19776384914,
+          "matrixCellCount": null,
+          "isIntermediate": true,
+          "contentDescription": [
+            "Count Matrix"
+          ]
+        },
+        {
+          "format": "bam",
+          "fileType": "bam",
+          "fileSource": [
+            "DCP/2 Analysis"
+          ],
+          "source": [
+            "DCP/2 Analysis"
+          ],
+          "count": 16,
+          "totalSize": 461550743662,
+          "matrixCellCount": null,
+          "isIntermediate": null,
+          "contentDescription": [
+            null
+          ]
+        },
+        {
+          "format": "loom",
+          "fileType": "loom",
+          "fileSource": [
+            "DCP/2 Analysis"
+          ],
+          "source": [
+            "DCP/2 Analysis"
+          ],
+          "count": 4,
+          "totalSize": 1346139240,
+          "matrixCellCount": null,
+          "isIntermediate": false,
+          "contentDescription": [
+            "Count Matrix"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -11,7 +11,6 @@ import { mockReadLinesAndType } from './file-mock-utils'
 describe('Client-side file validation', () => {
   it('catches and logs errors via library interface', async () => {
     mockReadLinesAndType({ fileName: 'metadata_bad_type_header.txt' })
-
     const file = {
       name: 'metadata_bad_type_header.txt',
       size: 566,
@@ -60,6 +59,13 @@ describe('Client-side file validation', () => {
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_annotations.py#L56
     mockReadLinesAndType({ fileName: 'dup_headers_v2.0.0.tsv' })
     const { errors, summary } = await validateFileContent({ name: 'm.txt' }, 'Metadata')
+    expect(errors).toHaveLength(1)
+    expect(summary).toBe('Your file had 1 error')
+  })
+
+  it('catches duplicate cell names in cluster file', async () => {
+    mockReadLinesAndType({ content: 'NAME,X,Y\nTYPE,numeric,numeric\nCELL_0001,34.472,32.211\nCELL_0001,15.975,10.043' })
+    const { errors, summary } = await validateFileContent({ name: 'dup_cell_names.txt' }, 'Cluster')
     expect(errors).toHaveLength(1)
     expect(summary).toBe('Your file had 1 error')
   })

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Modal from 'react-bootstrap/lib/Modal'
-import _cloneDeep from 'lodash/cloneDeep'
+import _partition from 'lodash/partition'
 
 import DownloadCommand from './DownloadCommand'
 import DownloadSelectionTable, {
@@ -8,7 +8,7 @@ import DownloadSelectionTable, {
 } from './DownloadSelectionTable'
 import { bytesToSize } from 'lib/stats'
 
-import { fetchDownloadInfo, fetchDrsInfo } from 'lib/scp-api'
+import { fetchDownloadInfo } from 'lib/scp-api'
 
 const AZUL_COLUMNS = ['project_manifest', 'analysis', 'sequence']
 const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
@@ -18,7 +18,7 @@ const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
   * studies and file types for download.  This queries the bulk_download/summary API method
   * to retrieve the list of study details and available files
   */
-export default function DownloadSelectionModal({ studyAccessions, azulFileInfo, show, setShow }) {
+export default function DownloadSelectionModal({ studyAccessions, show, setShow }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingAzul, setIsLoadingAzul] = useState(true)
   const [downloadInfo, setDownloadInfo] = useState([])
@@ -27,7 +27,6 @@ export default function DownloadSelectionModal({ studyAccessions, azulFileInfo, 
   const [selectedBoxesAzul, setSelectedBoxesAzul] = useState()
   const [stepNum, setStepNum] = useState(1)
 
-  const scpAccessions = studyAccessions.filter(accession => accession.startsWith('SCP'))
   const azulAccessions = studyAccessions.filter(accession => !accession.startsWith('SCP'))
   const showAzulSelectionPane = azulAccessions.length > 0
   const { fileCount, fileSize } = getSelectedFileStats(downloadInfo, selectedBoxes, isLoading)
@@ -41,8 +40,10 @@ export default function DownloadSelectionModal({ studyAccessions, azulFileInfo, 
     render bulk download table for SCP & HCA studies
    */
   function renderFileTables(result=[]) {
-    setSelectedBoxes(newSelectedBoxesState(result, SCP_COLUMNS))
-    setDownloadInfo(result)
+    const [scpFileInfo, azulFileInfo] = _partition(result, ['studySource', 'SCP'])
+
+    setSelectedBoxes(newSelectedBoxesState(scpFileInfo, SCP_COLUMNS))
+    setDownloadInfo(scpFileInfo)
     setIsLoading(false)
     if (showAzulSelectionPane) {
       setSelectedBoxesAzul(newSelectedBoxesState(azulFileInfo, AZUL_COLUMNS))
@@ -55,7 +56,7 @@ export default function DownloadSelectionModal({ studyAccessions, azulFileInfo, 
     if (show) {
       setIsLoading(true)
       setIsLoadingAzul(true)
-      fetchDownloadInfo(scpAccessions).then(result => {
+      fetchDownloadInfo(studyAccessions).then(result => {
         renderFileTables(result)
       })
     }

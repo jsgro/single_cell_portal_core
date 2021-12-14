@@ -81,6 +81,7 @@ class Study
       available.reject(&:new_record?)
     end
   end
+  accepts_nested_attributes_for :study_files, allow_destroy: true
 
   has_many :study_file_bundles, dependent: :destroy do
     def by_type(file_type)
@@ -152,6 +153,7 @@ class Study
       end
     end
   end
+  accepts_nested_attributes_for :study_shares, allow_destroy: true, reject_if: proc { |attributes| attributes['email'].blank? }
 
   has_many :cluster_groups do
     def by_name(name)
@@ -209,15 +211,21 @@ class Study
 
   # External Resource links
   has_many :external_resources, as: :resource_links, dependent: :destroy
+  accepts_nested_attributes_for :external_resources, allow_destroy: true
 
-  # Study Detail (full html description)
-  has_one :study_detail, dependent: :delete_all
+
 
   # DownloadAgreement (extra user terms for downloading data)
   has_one :download_agreement, dependent: :delete_all
+  accepts_nested_attributes_for :download_agreement, allow_destroy: true
+
+  # Study Detail (full html description)
+  has_one :study_detail, dependent: :delete_all
+  accepts_nested_attributes_for :study_detail, allow_destroy: true
 
   # Anonymous Reviewer Access
   has_one :reviewer_access, dependent: :delete_all
+  accepts_nested_attributes_for :reviewer_access, allow_destroy: true
 
   # field definitions
   field :name, type: String
@@ -239,13 +247,6 @@ class Study
   field :view_order, type: Float, default: 100.0
   field :use_existing_workspace, type: Boolean, default: false
   field :default_options, type: Hash, default: {} # extensible hash where we can put arbitrary values as 'defaults'
-
-  accepts_nested_attributes_for :study_files, allow_destroy: true
-  accepts_nested_attributes_for :study_shares, allow_destroy: true, reject_if: proc { |attributes| attributes['email'].blank? }
-  accepts_nested_attributes_for :external_resources, allow_destroy: true
-  accepts_nested_attributes_for :study_detail, allow_destroy: true
-  accepts_nested_attributes_for :download_agreement, allow_destroy: true
-  accepts_nested_attributes_for :reviewer_access, allow_destroy: true
 
   ##
   #
@@ -677,6 +678,12 @@ class Study
       next if study_share.valid?
       study_share.errors.full_messages.each do |msg|
         errors.add(:base, "Share Error - #{msg}")
+      end
+    end
+    # get errors for reviewer_access, if any
+    if study.reviewer_access.present? && !study.reviewer_access.valid?
+      study.reviewer_access.errors.full_messages.each do |msg|
+        errors.add(:base, msg)
       end
     end
   end

@@ -14,13 +14,12 @@ export function mockReadLinesAndType({ content, fileName }) {
   }
 
   const readLinesAndType = jest.spyOn(Io, 'readLinesAndType')
-  const lines = content.split(/\r?\n/).slice()
+  const lines = content.split(/\r?\n/)
   const mimeType = 'text/tab-separated-values'
   readLinesAndType.mockImplementation(() => Promise.resolve({ lines, mimeType }))
 
   return readLinesAndType
 }
-
 
 /** simulates a user selecting a file with the given information
  *  returns the js File object created.

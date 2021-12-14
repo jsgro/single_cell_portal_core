@@ -149,6 +149,21 @@ function getClassListAsArray(target) {
   return 'classList' in target? Array.from(target.classList) : []
 }
 
+/** Check if a click is actually a tab click and update the props and event name as appropriate */
+function getEventPropsWithTabsApplied(target, props, eventName) {
+  // Check if target is a tab that's not a part of a menu
+  const parentTabList = $(target).closest('[data-analytics-name][role="tablist"]')
+  if (parentTabList.length > 0) {
+    // Grab name of tab list and add to props
+    props.tabListName = parentTabList[0].attributes['data-analytics-name'].value
+    props.tabDisplayText = target.innerText.trim()
+    // Update event as a tab click
+    eventName = 'click:tab'
+  }
+  const updatedProps = props
+  return { eventName, updatedProps }
+}
+
 /**
  * Log click on link, i.e. anchor (<a ...) tag
  */
@@ -159,15 +174,8 @@ export function logClickLink(target) {
     id: target.id
   }
   // Check if target is a tab that's not a part of a menu
-  const parentTabList = $(target).closest('[data-analytics-name][role="tablist"]')
-  if (parentTabList.length > 0) {
-    // Grab name of tab list and add to props
-    props.tabListName = parentTabList[0].attributes['data-analytics-name'].value
-    props.tabDisplayText = target.innerText.trim()
-    log('click:tab', props)
-  } else {
-    log('click:link', props)
-  }
+  const { eventName, updatedProps } = getEventPropsWithTabsApplied(target, props, 'click:link')
+  log(eventName, updatedProps)
 }
 
 /**
@@ -175,7 +183,8 @@ export function logClickLink(target) {
  */
 function logClickButton(target) {
   const props = { text: getNameForClickTarget(target) }
-  log('click:button', props)
+  const { eventName, updatedProps } = getEventPropsWithTabsApplied(target, props, 'click:button')
+  log(eventName, updatedProps)
 
   // Google Analytics fallback: remove once Bard and Mixpanel are ready for SCP
   ga('send', 'event', 'click', 'button') // eslint-disable-line no-undef
