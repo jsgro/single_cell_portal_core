@@ -366,14 +366,15 @@ class StudiesController < ApplicationController
 
     respond_to do |format|
       if @study.update(study_params)
+
+        # if user updates a study, invalidate all caches
+        CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
+
         changes = @study.previous_changes.delete_if {|k,v| k == 'updated_at'}.keys.map {|k| k.humanize.capitalize}
         if @share_changes == true
           changes << 'Study shares'
         end
-        if @study.previous_changes.keys.include?('name')
-          # if user renames a study, invalidate all caches
-          CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
-        end
+
         if @study.study_shares.any?
           SingleCellMailer.share_update_notification(@study, changes, current_user).deliver_now
         end
