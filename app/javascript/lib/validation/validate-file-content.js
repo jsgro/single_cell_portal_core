@@ -447,6 +447,25 @@ function validateClusterCoordinates(parsedHeaders) {
   return issues
 }
 
+
+/** parse a dense matrix file */
+export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
+  const { parsedHeaders, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
+  let issues = issues.concat(validateUniqueCellNamesWithinFile(parsedHeaders))
+  issues = issues.concat(validateGeneInHeader(parsedHeaders))
+
+  const dataObj = {} // object to track multi-line validation concerns
+  await chunker.iterateLines((line, lineNum, isLastLine) => {
+    const parsedLine = parseLine(line, delimiter)
+   issues = issues.concat(validateColumnNumberAndValues(table))
+    issues = issues.concat(validateUniqueCellNamesWithinFile(parsedLine, isLastLine, dataObj))
+    issues = issues.concat(validateMetadataLabelMatches(parsedHeaders, parsedLine, isLastLine, dataObj))
+    issues = issues.concat(validateGroupColumnCounts(parsedHeaders, parsedLine, isLastLine, dataObj))
+    // add other line-by-line validations here
+  })
+  return { issues, delimiter, numColumns: parsedHeaders[0].length }
+}
+
 /** parse a metadata file, and return an array of issues, along with file parsing info */
 export async function parseMetadataFile(chunker, mimeType, fileOptions) {
   const { parsedHeaders, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
@@ -549,38 +568,14 @@ async function parseFile(file, fileType, fileOptions={}) {
   const parseResult = { fileInfo, issues: [] }
   try {
     fileInfo.isGzipped = await validateGzipEncoding(file)
-
-  // if (!file.name.endsWith('.gz')) {
-  //   if (['Cluster', 'Metadata'].includes(fileType)) {
-  //     if (lines.length < 2) {
-  //       return { table, delimiter, issues: [['error', 'cap:format:no-newlines', 'File does not contain newlines to separate rows']] }
-  //     }
-  //   }
-  //   if (['Cluster', 'Metadata', 'Expression Matrix'].includes(fileType)) {
-  //     // if there are no encoding issues, and this isn't a gzipped file, validate content
-  //     delimiter = sniffDelimiter(headerLines, mimeType)
-  //     table = []
-  //     for (let i = 0; i < lines.length; i++) {
-  //       table.push(lines[i].split(delimiter))
-  //     }
-
-  //     if (fileType === 'Expression Matrix') {
-  //       const firstRowTable = table.slice(0, 1)
-  //       issues = issues.concat(validateUniqueCellNamesWithinFile(firstRowTable[0], fileType))
-  //       issues = issues.concat(validateGeneInHeader(firstRowTable))
-  //       issues = issues.concat(validateColumnNumberAndValues(table))
-  //     } else if (['Cluster', 'Metadata'].includes(fileType)) {
-  //       const headerTable = table.slice(0, 2)
-  //       issues = await validateCapFormat(headerTable, fileType)
-  //       issues = issues.concat(validateUniqueCellNamesWithinFile(table, fileType))
-  //     }
     // if the file is compressed or we can't figure out the compression, don't try to parse further
     if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
       return { fileInfo, issues: [] }
     }
     const parseFunctions = {
       'Cluster': parseClusterFile,
-      'Metadata': parseMetadataFile
+      'Metadata': parseMetadataFile,
+      'Expression Matrix': parseDenseMatrixFile
     }
     if (parseFunctions[fileType]) {
       const chunker = new ChunkedLineReader(file)
