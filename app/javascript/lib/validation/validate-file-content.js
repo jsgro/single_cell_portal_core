@@ -9,11 +9,29 @@
 */
 
 import { log } from 'lib/metrics-api'
-import { readLinesAndType } from './io'
+import { readFileBytes } from './io'
+import ChunkedLineReader from './chunked-line-reader'
+import { PARSEABLE_TYPES } from 'components/upload/upload-utils'
 
-/** Remove white spaces and quotes from a string value */
-function clean(value) {
-  return value.trim().replaceAll(/"/g, '')
+/**
+ * ParseException can be thrown when we encounter an error that prevents us from parsing the file further
+ */
+function ParseException(key, msg) {
+  this.message = msg
+  this.key = key
+}
+
+/**
+ * Splits the line on a delimiter, and
+ * removes leading and trailing white spaces and quotes from values
+ */
+export function parseLine(line, delimiter) {
+  const splitLine = line.split(delimiter)
+  const parsedLine = new Array(parseLine.length)
+  for (let i = 0; i < splitLine.length; i++) {
+    parsedLine[i] = splitLine[i].trim().replaceAll(/^"|"$/g, '')
+  }
+  return parsedLine
 }
 
 /**
@@ -147,24 +165,25 @@ function validateEqualCount(headers, annotTypes) {
 
 /**
  * Verify cell names are each unique for a cluster or metadata file
+ * creates and uses 'cellNames' and 'duplicateCellNames' properties on dataObj to track
+ * cell names between calls to this function
  */
-function validateUniqueCellNamesWithinFile(table) {
+function validateUniqueCellNamesWithinFile(line, isLastLine, dataObj) {
   const issues = []
 
-  const cellNames = new Set()
-  const duplicates = new Set()
-  for (let i = 0; i < table.length; i++) {
-    const cell = table[i][0]
-    if (cellNames.has(cell)) {
-      duplicates.add(cell)
-    } else {
-      cellNames.add(cell)
-    }
+  dataObj.cellNames = dataObj.cellNames ? dataObj.cellNames : new Set()
+  dataObj.duplicateCellNames = dataObj.duplicateCellNames ? dataObj.duplicateCellNames : new Set()
+
+  const cell = line[0]
+  if (!dataObj.cellNames.has(cell)) {
+    dataObj.cellNames.add(cell)
+  } else {
+    dataObj.duplicateCellNames.add(cell)
   }
-  if (duplicates.size > 0) {
-    const nameTxt = (duplicates.size > 1) ? 'names' : 'name'
-    const dupString = [...duplicates].join(', ')
-    const msg = `Cell names must be unique within a file. Please fix the following duplicated cell ${nameTxt}: ${dupString}`
+  if (isLastLine && dataObj.duplicateCellNames.size > 0) {
+    const nameTxt = (dataObj.duplicateCellNames.size > 1) ? 'duplicates' : 'duplicate'
+    const dupString = [...dataObj.duplicateCellNames].slice(0, 10).join(', ')
+    const msg = `Cell names must be unique within a file. ${dataObj.duplicateCellNames.size} ${nameTxt} found, including: ${dupString}`
     issues.push(['error', 'duplicate:cells-within-file', msg])
   }
   return issues
@@ -176,8 +195,7 @@ function validateUniqueCellNamesWithinFile(table) {
  * Consider using `papaparse` NPM package once it supports ES modules.
  * Upstream task: https://github.com/mholt/PapaParse/pull/875
  */
-function sniffDelimiter(lines, mimeType) {
-  const [line1, line2] = lines.slice(0, 2)
+function sniffDelimiter([line1, line2], mimeType) {
   const delimiters = [',', '\t']
   let bestDelimiter
 
@@ -198,7 +216,6 @@ function sniffDelimiter(lines, mimeType) {
       bestDelimiter = ','
     }
   }
-
   return bestDelimiter
 }
 
@@ -212,12 +229,11 @@ function sniffDelimiter(lines, mimeType) {
  * Cap lines are like meta-information lines in other file formats
  * (e.g. VCF), but do not begin with pound signs (#).
  */
-async function validateCapFormat(table, fileType) {
+function validateCapFormat([headers, annotTypes]) {
   let issues = []
-
-  // Trim spaces and quotes
-  const headers = table[0].map(header => clean(header))
-  const annotTypes = table[1].map(type => clean(type))
+  if (!headers || !annotTypes) {
+    return [['error', 'format:cap:no-cap-rows', 'File does not have 2 non-empty header rows']]
+  }
 
   // Check format rules that apply to both metadata and cluster files
   issues = issues.concat(
@@ -227,14 +243,6 @@ async function validateCapFormat(table, fileType) {
     validateGroupOrNumeric(annotTypes),
     validateEqualCount(headers, annotTypes)
   )
-
-  // Check format rules specific to either metadata or cluster file
-  if (fileType === 'Metadata') {
-    issues = issues.concat(validateNoMetadataCoordinates(headers))
-  } else {
-    issues = issues.concat(validateClusterCoordinates(headers))
-  }
-
   return issues
 }
 
@@ -242,7 +250,7 @@ async function validateCapFormat(table, fileType) {
 function validateNoMetadataCoordinates(headers) {
   const issues = []
 
-  const invalidHeaders = headers.filter(header => {
+  const invalidHeaders = headers[0].filter(header => {
     return ['x', 'y', 'z'].includes(header.toLowerCase())
   })
 
@@ -262,7 +270,7 @@ function validateNoMetadataCoordinates(headers) {
 function validateClusterCoordinates(headers) {
   const issues = []
 
-  const xyHeaders = headers.filter(header => {
+  const xyHeaders = headers[0].filter(header => {
     return ['x', 'y'].includes(header.toLowerCase())
   })
 
@@ -276,99 +284,140 @@ function validateClusterCoordinates(headers) {
   return issues
 }
 
-/** Get properties about this validation run to log to Mixpanel */
-function getLogProps(fileObj, fileType, errorObj) {
-  const { file, table, delimiter } = fileObj
-  const { errors, summary } = errorObj
+/** parse a metadata file, and return an array of issues, along with file parsing info */
+export async function parseMetadataFile(chunker, mimeType) {
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
 
-  // Avoid needless gotchas in downstream analysis
-  let friendlyDelimiter = 'tab'
-  if (delimiter === ',') {
-    friendlyDelimiter = 'comma'
-  } else if (delimiter === ' ') {
-    friendlyDelimiter = 'space'
-  }
+  let issues = validateCapFormat(headers, delimiter)
+  issues = issues.concat(validateNoMetadataCoordinates(headers))
+  // add other header validations here
 
-  const numRows = table.length
-  const numColumns = table[0].length
-
-  const defaultProps = {
-    fileType,
-    numRows,
-    numColumns,
-    numTableCells: numRows * numColumns,
-    delimiter: friendlyDelimiter,
-    fileName: file.name,
-    fileSize: file.size,
-    fileMimeType: file.type
-  }
-
-  if (errors.length === 0) {
-    return Object.assign({ status: 'success' }, defaultProps)
-  } else {
-    return Object.assign(defaultProps, {
-      status: 'failure',
-      summary,
-      numErrors: errors.length,
-      errors: errors.map(columns => columns[2]),
-      errorTypes: errors.map(columns => columns[1])
-    })
-  }
+  const dataObj = {} // object to track multi-line validation concerns
+  await chunker.iterateLines((rawline, lineNum, isLastLine) => {
+    const line = parseLine(rawline, delimiter)
+    issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
+    // add other line-by-line validations here
+  })
+  return { issues, delimiter, numColumns: headers[0].length }
 }
 
-/** confirm that the presence/absence of a .gz suffix matches the lead byte of the file */
-export function validateGzipEncoding({ fileName, lines, mimeType }) {
+/** parse a cluster file, and return an array of issues, along with file parsing info */
+export async function parseClusterFile(chunker, mimeType) {
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
+
+  let issues = validateCapFormat(headers, delimiter)
+  issues = issues.concat(validateClusterCoordinates(headers))
+  // add other header validations here
+
+  const dataObj = {} // object to track multi-line validation concerns
+  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
+    const line = parseLine(rawLine, delimiter)
+    issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
+    // add other line-by-line validations here
+  })
+
+  return { issues, delimiter, numColumns: headers[0].length }
+}
+
+/** reads in the specified number of header lines, sniffs the delimiter, and returns the
+ * lines parsed by the sniffed delimiter
+ */
+export async function getParsedHeaderLines(chunker, mimeType, numHeaderLines=2) {
+  const headerLines = []
+  await chunker.iterateLines((line, lineNum, isLastLine) => {
+    headerLines.push(line)
+  }, 2)
+  if (headerLines.length < numHeaderLines || headerLines.some(hl => !hl)) {
+    throw new ParseException('format:cap:missing-header-lines',
+      `Your file is missing newlines or is missing some of the required ${numHeaderLines} header lines`)
+  }
+  const delimiter = sniffDelimiter(headerLines, mimeType)
+  const headers = headerLines.map(l => parseLine(l, delimiter))
+  return { headers, delimiter }
+}
+
+
+/** confirm that the presence/absence of a .gz suffix matches the lead byte of the file
+ * Throws an exception if the gzip is conflicted, since we don't want to parse further in that case
+*/
+export async function validateGzipEncoding(file) {
   const GZIP_MAGIC_NUMBER = '\x1F'
-  if (fileName.endsWith('.gz') && lines[0][0] !== GZIP_MAGIC_NUMBER) {
-    return [['error', 'encoding:invalid-gzip-magic-number',
-      'File has a ".gz" suffix but does not seem to be gzipped']]
-  } else if (!fileName.endsWith('.gz') && !fileName.endsWith('.bam') && lines[0][0] === GZIP_MAGIC_NUMBER) {
-    return [['error', 'encoding:missing-gz-extension',
-      'File seems to be gzipped but does not have a ".gz" or ".bam" extension']]
-  }
-  return []
-}
+  const fileName = file.name
+  let isGzipped = null
 
-/** reads the file and returns the parsed rows, delimiter, and an array any issues */
-async function parseFile(file, fileType) {
-  let issues = []
-  let table = [[]]
-  let delimiter = null
-
-  const { lines, mimeType } = await readLinesAndType(file)
-  const headerLines = lines.slice(0, 2)
-  issues = validateGzipEncoding({ fileName: file.name, lines, mimeType })
-
-  if (issues.length) {
-    return { table, issues, delimiter }
-  }
-
-  if (!file.name.endsWith('.gz')) {
-    if (['Cluster', 'Metadata'].includes(fileType)) {
-      if (lines.length < 2) {
-        return { table, delimiter, issues: [['error', 'cap:format:no-newlines', 'File does not contain newlines to separate rows']] }
-      }
-      // if there are no encoding issues, and this isn't a gzipped file, validate content
-      delimiter = sniffDelimiter(headerLines, mimeType)
-      table = []
-      for (let i = 0; i < lines.length; i++) {
-        table.push(lines[i].split(delimiter))
-      }
-      const headerTable = table.slice(0, 2)
-      issues = await validateCapFormat(headerTable, fileType)
-      issues = issues.concat(validateUniqueCellNamesWithinFile(table))
+  // read a single byte from the file to check the magic number
+  const firstByte = await readFileBytes(file, 0, 1)
+  if (fileName.endsWith('.gz') || fileName.endsWith('.bam')) {
+    if (firstByte === GZIP_MAGIC_NUMBER) {
+      isGzipped = true
+    } else {
+      throw new ParseException('encoding:invalid-gzip-magic-number',
+        'File has a .gz or .bam suffix but does not seem to be gzipped')
+    }
+  } else {
+    if (firstByte === GZIP_MAGIC_NUMBER) {
+      throw new ParseException('encoding:missing-gz-extension',
+        'File seems to be gzipped but does not have a ".gz" or ".bam" extension')
+    } else {
+      isGzipped = false
     }
   }
-  return { table, delimiter, issues }
+  return isGzipped
 }
 
-/** Validate a local file, return list formatted of any detected errors */
-export async function validateFileContent(file, fileType) {
-  const { table, delimiter, issues } = await parseFile(file, fileType)
 
+/** reads the file and returns a fileInfo object along with an array of issues */
+async function parseFile(file, fileType) {
+  const fileInfo = {
+    fileSize: file.size,
+    fileName: file.name,
+    linesRead: 0,
+    numColumns: null,
+    fileMimeType: file.type,
+    fileType,
+    delimiter: null,
+    isGzipped: null
+  }
+  const parseResult = { fileInfo, issues: [] }
+  try {
+    fileInfo.isGzipped = await validateGzipEncoding(file)
+
+    // if the file is compressed or we can't figure out the compression, don't try to parse further
+    if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
+      return { fileInfo, issues: [] }
+    }
+    const parseFunctions = {
+      'Cluster': parseClusterFile,
+      'Metadata': parseMetadataFile
+    }
+    if (parseFunctions[fileType]) {
+      const chunker = new ChunkedLineReader(file)
+      const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType)
+      fileInfo.linesRead = chunker.linesRead
+      fileInfo.delimiter = delimiter
+      fileInfo.numColumns = numColumns
+      parseResult.issues = issues
+    }
+  } catch (error) {
+    // get any unhandled or deliberate short-circuits
+    if (error instanceof ParseException) {
+      parseResult.issues.push(['error', error.key, error.message])
+    } else {
+      parseResult.issues.push(['error', 'parse:unhandled', error.message])
+    }
+  }
+  return parseResult
+}
+
+/** Validate a local file, return { errors, summary } object, where errors is an array of errors, and summary
+ * is a message like "Your file had 2 errors"
+ */
+export async function validateFileContent(file, fileType) {
+  const startTime = performance.now()
+  const { fileInfo, issues } = await parseFile(file, fileType)
+  const perfTime = Math.round(performance.now() - startTime)
   const errorObj = formatIssues(issues)
-  const fileObj = { file, table, delimiter }
-  const logProps = getLogProps(fileObj, fileType, errorObj)
+  const logProps = getLogProps(fileInfo, errorObj, perfTime)
   log('file-validation', logProps)
 
   return errorObj
@@ -388,5 +437,38 @@ function formatIssues(issues) {
     summary = `Your file had ${numErrors} ${errorsTerm}`
   }
   return { errors, summary }
+}
+
+
+/** Get properties about this validation run to log to Mixpanel */
+function getLogProps(fileInfo, errorObj, perfTime) {
+  const { errors, summary } = errorObj
+
+  // Avoid needless gotchas in downstream analysis
+  let friendlyDelimiter = 'tab'
+  if (fileInfo.delimiter === ',') {
+    friendlyDelimiter = 'comma'
+  } else if (fileInfo.delimiter === ' ') {
+    friendlyDelimiter = 'space'
+  }
+
+  const defaultProps = {
+    ...fileInfo,
+    perfTime,
+    delimiter: friendlyDelimiter,
+    numTableCells: fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
+  }
+
+  if (errors.length === 0) {
+    return Object.assign({ status: 'success' }, defaultProps)
+  } else {
+    return Object.assign(defaultProps, {
+      status: 'failure',
+      summary,
+      numErrors: errors.length,
+      errors: errors.map(columns => columns[2]),
+      errorTypes: errors.map(columns => columns[1])
+    })
+  }
 }
 

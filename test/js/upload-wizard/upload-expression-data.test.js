@@ -14,6 +14,10 @@ import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 import { renderWizardWithStudy, getSelectByLabelText } from './upload-wizard-test-utils'
 
 describe('it allows uploading of expression matrices', () => {
+  beforeAll(() => {
+    jest.restoreAllMocks()
+  })
+
   it('uploads a raw counts mtx file', async () => {
     const createFileSpy = jest.spyOn(ScpApi, 'createStudyFile')
     const { container } = await renderWizardWithStudy({})
