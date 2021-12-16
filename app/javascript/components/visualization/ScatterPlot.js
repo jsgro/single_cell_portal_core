@@ -92,20 +92,10 @@ function RawScatterPlot({
     const layout = getPlotlyLayout(scatter)
 
     const traceArgs = {
-      axes: scatter.axes,
-      data: scatter.data,
-      annotName: scatter.annotParams.name,
-      annotType: scatter.annotParams.type,
-      genes: scatter.genes,
-      isAnnotatedScatter: scatter.isAnnotatedScatter,
+      genes,
+      isAnnotatedScatter,
       isCorrelatedScatter,
       scatterColor,
-      dataScatterColor: scatter.scatterColor,
-      pointAlpha: scatter.pointAlpha,
-      pointSize: scatter.pointSize,
-      showPointBorders: scatter.showClusterPointBorders,
-      is3D: scatter.is3D,
-      labelCorrelations,
       hiddenTraces,
       scatter
     }
@@ -295,21 +285,18 @@ function shouldReverseScale(scatterColor) {
 
 /** get the array of plotly traces for plotting */
 export function getPlotlyTraces({
-  axes,
-  data,
-  annotType,
-  annotName,
   genes,
   isAnnotatedScatter,
   isCorrelatedScatter,
   scatterColor,
-  dataScatterColor,
-  pointAlpha,
-  pointSize,
-  is3D,
   hiddenTraces,
   scatter
 }) {
+  const { axes, data, pointAlpha, pointSize, is3D } = scatter
+  const dataScatterColor = scatter.scatterColor
+  const annotName = scatter.annotParams.name
+  const annotType = scatter.annotParams.type
+
   const trace = {
     type: is3D ? 'scatter3d' : 'scattergl',
     mode: 'markers',
@@ -363,6 +350,7 @@ export function getPlotlyTraces({
         expressionsWithIndices[i] = [data.expression[i], i]
       }
       expressionsWithIndices.sort((a, b) => a[0] - b[0])
+
       // initialize the other arrays (see )
       trace.x = new Array(data.expression.length)
       trace.y = new Array(data.expression.length)
@@ -371,9 +359,11 @@ export function getPlotlyTraces({
       }
       trace.annotations = new Array(data.expression.length)
       trace.cells = new Array(data.expression.length)
+
       colors = new Array(data.expression.length)
+
+      // now that we know the indices, reorder the other data arrays
       for (let i = 0; i < expressionsWithIndices.length; i++) {
-        // now that we know the indices, reorder the other data arrays
         const sortedIndex = expressionsWithIndices[i][1]
         trace.x[i] = data.x[sortedIndex]
         trace.y[i] = data.y[sortedIndex]
