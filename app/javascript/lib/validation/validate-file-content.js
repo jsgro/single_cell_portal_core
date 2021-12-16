@@ -306,7 +306,7 @@ function validateRequiredMetadataColumns(parsedHeaders) {
 function validateMetadataLabelMatches(headers, line, isLastLine, dataObj) {
   const issues = []
   const excludedColumns = ['NAME']
-  // if this is the first time through, identify the colums to check, and initialize data structures to track mismatches
+  // if this is the first time through, identify the columns to check, and initialize data structures to track mismatches
   if (!dataObj.dragCheckColumns) {
     dataObj.dragCheckColumns = headers[0].map((colName, index) => {
       const labelColumnIndex = headers[0].indexOf(`${colName }__ontology_label`)
@@ -323,7 +323,8 @@ function validateMetadataLabelMatches(headers, line, isLastLine, dataObj) {
   }
   // for each column we need to check, see if there is a corresponding filled-in label,
   //  and track whether other ids have been assigned to that label too
-  dataObj.dragCheckColumns.forEach(dcc => {
+  for (let i = 0; i < dataObj.dragCheckColumns.length; i++) {
+    const dcc = dataObj.dragCheckColumns[i]
     const colValue = line[dcc.index]
     const label = line[dcc.labelColumnIndex]
     if (label.length) {
@@ -333,16 +334,17 @@ function validateMetadataLabelMatches(headers, line, isLastLine, dataObj) {
         dcc.labelValueMap[label] = colValue
       }
     }
-  })
+  }
 
   // only report out errors if this is the last line of the file so that a single, consolidated message can be displayed per column
   if (isLastLine) {
     dataObj.dragCheckColumns.forEach(dcc => {
       if (dcc.mismatchedVals.size > 0) {
         const labelString = [...dcc.mismatchedVals].slice(0, 10).join(', ')
+        const moreLabelsString = dcc.mismatchedVals.size > 10 ? ` and ${dcc.mismatchedVals.size - 10} others`: ''
         issues.push(['error', 'content:metadata:mismatched-id-label',
           `${dcc.colName} has different ID values mapped to the same label.
-          Label(s) with more than one corresponding ID: ${labelString}`])
+          Label(s) with more than one corresponding ID: ${labelString}${moreLabelsString}`])
       }
     })
   }
@@ -360,13 +362,13 @@ function validateGroupColumnCounts(headers, line, isLastLine, dataObj) {
       return { colName, index, uniqueVals: new Set() }
     }).filter(c => c)
   }
-
-  dataObj.groupCheckColumns.forEach(gcc => {
+  for (let i = 0; i < dataObj.groupCheckColumns.length; i++) {
+    const gcc = dataObj.groupCheckColumns[i]
     const colValue = line[gcc.index]
     if (colValue) { // don't bother adding empty values
       gcc.uniqueVals.add(colValue)
     }
-  })
+  }
 
   if (isLastLine) {
     dataObj.groupCheckColumns.forEach(gcc => {
