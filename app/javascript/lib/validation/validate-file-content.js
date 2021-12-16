@@ -180,7 +180,7 @@ function validateGeneInHeader(firstRowTable) {
   if (firstRowTable[0][0] !== 'GENE') {
     const msg = 'Dense matrices require the first value of the file to be "GENE". ' +
      `However, the first value for this file currently is "${firstRowTable[0][0]}".`
-    issues.push(['error', 'format:missing-gene-column', msg])
+    issues.push(['error', 'format:cap:missing-gene-column', msg])
   }
 
   return issues
@@ -238,7 +238,7 @@ function validateUniqueCellNamesWithinFile(parsedLine, isLastLine, dataObj) {
   dataObj.duplicateCellNames = dataObj.duplicateCellNames ? dataObj.duplicateCellNames : new Set()
 
   const cell = parsedLine[0]
-  //    const cell = fileType === 'Expression Matrix' ? table[i]: table[i][0]
+  //    const cell = fileType === 'Expression Matrix' ? table[i] : table[i][0]
 
   if (!dataObj.cellNames.has(cell)) {
     dataObj.cellNames.add(cell)
@@ -287,7 +287,7 @@ function sniffDelimiter([line1, line2], mimeType) {
 /**
  * Verify cap format for a cluster or metadata file
  *
- * The "cap" of an SCP study file is its first two lines, i.e.:
+ * The "cap" of an SCP study file is its first "few" lines that contain structural data., i.e.:
  *  - Header (row 1), and
  *  - Annotation types (row 2)
  *
