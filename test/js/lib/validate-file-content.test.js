@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
-import { validateFileContent } from 'lib/validation/validate-file-content'
+import { validateFileContent, REQUIRED_CONVENTION_COLUMNS } from 'lib/validation/validate-file-content'
 import ValidationAlert from 'components/validation/ValidationAlert'
 import * as MetricsApi from 'lib/metrics-api'
 
@@ -46,7 +46,9 @@ describe('Client-side file validation', () => {
         errorTypes: [
           'format:cap:type'
         ],
-        perfTime: expect.any(Number)
+        perfTime: expect.any(Number), numWarnings: 0,
+        warnings: [],
+        warningTypes: []
       })
     )
   })
@@ -68,10 +70,54 @@ describe('Client-side file validation', () => {
   })
 
   it('catches duplicate cell names in cluster file', async () => {
-    const file = createMockFile({ fileName: 'foo.txt', content: 'NAME,X,Y\nTYPE,numeric,numeric\nCELL_0001,34.472,32.211\nCELL_0001,15.975,10.043' })
-    const { errors, summary } = await validateFileContent(file, 'Cluster')
+    const file = createMockFile({
+      fileName: 'foo.txt',
+      content: 'NAME,X,Y\nTYPE,numeric,numeric\nCELL_0001,34.472,32.211\nCELL_0001,15.975,10.043'
+    })
+    const { errors } = await validateFileContent(file, 'Cluster')
     expect(errors).toHaveLength(1)
-    expect(summary).toBe('Your file had 1 error')
+    expect(errors[0][1]).toEqual('duplicate:cells-within-file')
+    expect(errors[0][2]).toEqual('Cell names must be unique within a file. 1 duplicate found, including: CELL_0001')
+  })
+
+  it('catches missing headers in metadata file', async () => {
+    const file = createMockFile({
+      fileName: 'foo.txt',
+      content: 'NAME,biosample_id,CellID\nTYPE,numeric,numeric\nCELL_0001,id1,cell1'
+    })
+    const { errors } = await validateFileContent(file, 'Metadata', { use_metadata_convention: true })
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:cap:metadata-missing-column')
+    expect(errors[0][2]).toContain(REQUIRED_CONVENTION_COLUMNS.slice(2).join(', '))
+  })
+
+  it('allows missing headers in metadata file if convention not used ', async () => {
+    const file = createMockFile({
+      fileName: 'foo.txt',
+      content: 'NAME,biosample_id,CellID\nTYPE,numeric,numeric\nCELL_0001,34.472,32.211'
+    })
+    const { errors } = await validateFileContent(file, 'Metadata', { use_metadata_convention: false })
+    expect(errors).toHaveLength(0)
+  })
+
+  it('catches mismatched label/value pairs in metadata files', async () => {
+    const file = createMockFile({
+      fileName: 'foo.txt',
+      content: 'NAME,species,species__ontology_label\nTYPE,group,group\nc1,NCBITaxon_9606,Homo sapiens\nc2,NCBITaxon_9607,Homo sapiens'
+    })
+    const { errors } = await validateFileContent(file, 'Metadata', { use_metadata_convention: false })
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('content:metadata:mismatched-id-label')
+    expect(errors[0][2]).toContain('Homo sapiens')
+    expect(errors[0][2]).toContain('species')
+  })
+
+  it('catches group columns with >200 unique labels', async () => {
+    const file = createMockFile({ fileName: 'metadata_drag_error.tsv' })
+    const { warnings } = await validateFileContent(file, 'Metadata', { use_metadata_convention: true })
+    expect(warnings).toHaveLength(2)
+    expect(warnings[0][1]).toEqual('content:group-col-over-200')
+    expect(warnings[0][2]).toContain('cell_type has over 200 unique values and so will not be visible in plots -- is this intended?')
   })
 
   it('reports no error with good cluster CSV file', async () => {

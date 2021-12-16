@@ -16,6 +16,7 @@ import { renderWizardWithStudy, getSelectByLabelText } from './upload-wizard-tes
 describe('it allows uploading of expression matrices', () => {
   beforeAll(() => {
     jest.restoreAllMocks()
+    jest.setTimeout(10000)
   })
 
   it('uploads a raw counts mtx file', async () => {
