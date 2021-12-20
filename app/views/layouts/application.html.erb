@@ -180,7 +180,7 @@
   <% if @selected_branding_group.present? && @selected_branding_group.footer_image.file %>
     <%= image_tag @selected_branding_group.footer_image.url, class: 'pull-left' %>
   <% else %>
-    <%= link_to image_tag('broad-logo-white.png'), "https://www.broadinstitute.org", class: 'pull-left' %>
+    <%= link_to image_tag('broad-logo-white.png', alt:"Broad logo"), "https://www.broadinstitute.org", class: 'pull-left' %>
   <% end %>
     <div class="footer-text-block pull-left">
       &copy; <%= Date.today.year %> The Broad Institute of MIT and Harvard

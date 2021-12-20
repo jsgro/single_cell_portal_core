@@ -38,8 +38,8 @@ export default function ExpandableFileForm({
         acceptCharset="UTF-8">
         <div className={headerClass} onClick={handleDivClick}>
           <div onClick={handleExpansionClick} className="expander">
-            <button type="button" className="btn-icon">
-              <FontAwesomeIcon icon={expanded ? faChevronUp : faChevronDown}/>
+            <button type="button" className="btn-icon" aria-label="expander">
+              <FontAwesomeIcon icon={expanded ? faChevronUp : faChevronDown} />
             </button>
           </div>
           <div className="flexbox">
@@ -49,12 +49,12 @@ export default function ExpandableFileForm({
               updateFile={updateFile}
               allowedFileExts={allowedFileExts}
               validationMessages={validationMessages}
-              bucketName={bucketName}/>
+              bucketName={bucketName} />
           </div>
-          <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }}/>
+          <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }} />
         </div>
-        { expanded && children }
-        <SavingOverlay file={file} updateFile={updateFile}/>
+        {expanded && children}
+        <SavingOverlay file={file} updateFile={updateFile} />
       </form>
     </div>
   </div>
@@ -95,12 +95,12 @@ export function SavingOverlay({ file, updateFile }) {
     </>
   }
   return <div className="file-upload-overlay" data-testid="file-upload-overlay">
-    { cancelButtonContent }
+    {cancelButtonContent}
   </div>
 }
 
 /** renders save and delete buttons for a given file */
-export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, validationMessages={} }) {
+export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, validationMessages = {} }) {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
 
   /** delete file with/without confirmation dialog as appropriate */
@@ -121,41 +121,41 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
     onClick={() => saveFile(file)}
     disabled={saveDisabled}
     data-testid="file-save">
-    Save { file.uploadSelection && <span>&amp; Upload</span> }
+    Save {file.uploadSelection && <span>&amp; Upload</span>}
   </button>
 
   if (saveDisabled) {
     // if saving is disabled, wrap the disabled button in a popover that will show the errors
     const validationPopup = <Popover id={`save-invalid-${file._id}`} className="tooltip-wide">
-      { Object.keys(validationMessages).map(key => <div key={key}>{validationMessages[key]}</div>) }
+      {Object.keys(validationMessages).map(key => <div key={key}>{validationMessages[key]}</div>)}
     </Popover>
     saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={validationPopup}>
-      <div>{ saveButton }</div>
+      <div>{saveButton}</div>
     </OverlayTrigger>
   } else if (file.isSaving) {
     const savingText = file.saveProgress ? <span>Uploading {file.saveProgress}% </span> : 'Saving'
     saveButton = <button type="button"
       className="btn btn-primary margin-right">
-      {savingText} <LoadingSpinner data-testid="file-save-spinner"/>
+      {savingText} <LoadingSpinner data-testid="file-save-spinner" />
     </button>
   }
 
   let deleteButtonContent = 'Delete'
   if (file.isDeleting) {
-    deleteButtonContent = <span>Deleting <LoadingSpinner data-testid="file-save-spinner"/></span>
+    deleteButtonContent = <span>Deleting <LoadingSpinner data-testid="file-save-spinner" /></span>
   }
 
   return <div className="flexbox button-panel">
-    { saveButton }
+    {saveButton}
     <button type="button" className="btn terra-secondary-btn" onClick={handleDeletePress} data-testid="file-delete">
-      { deleteButtonContent }
+      {deleteButtonContent}
     </button>
     <Modal
       show={showConfirmDeleteModal}
       onHide={() => setShowConfirmDeleteModal(false)}
       animation={false}>
       <Modal.Body className="">
-        Are you sure you want to delete { file.name }?<br/>
+        Are you sure you want to delete {file.name}?<br />
         <span>The file will be removed from the workspace and all corresponding database records deleted.</span>
       </Modal.Body>
       <Modal.Footer>

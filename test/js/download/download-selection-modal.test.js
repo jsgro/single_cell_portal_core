@@ -11,6 +11,7 @@ const EXAMPLE_HUMAN_SYNTH_STUDY_DOWNLOAD_INFO = [
     'name': 'Human Male Islet cells and Cataracts',
     'accession': 'SCP12',
     'description': 'bleh',
+    'study_source': 'SCP',
     'study_files': [
       {
         'name': 'metadata.tsv',
@@ -24,11 +25,13 @@ const EXAMPLE_HUMAN_SYNTH_STUDY_DOWNLOAD_INFO = [
     'name': 'Human Blood Study with no metadata',
     'accession': 'SCP31',
     'description': 'bleh',
+    'study_source': 'SCP',
     'study_files': []
   },
   {
     'name': 'Human raw counts',
     'accession': 'SCP35',
+    'study_source': 'SCP',
     'description': 'bleh',
     'study_files': [
       {
@@ -80,6 +83,7 @@ const EXAMPLE_HUMAN_SYNTH_STUDY_DOWNLOAD_INFO = [
   {
     'name': 'Tuberculosis in female human lymph',
     'accession': 'SCP42',
+    'study_source': 'SCP',
     'description': 'bleh',
     'study_files': [
       {
