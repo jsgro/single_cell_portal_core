@@ -106,6 +106,9 @@ module Api
               end
           }
         }
+        # include some study computed properties for UI
+        response_obj[:study][:can_visualize_clusters] = @study.can_visualize_clusters?
+        response_obj[:study][:has_visualization_matrices] = @study.has_visualization_matrices?
         render json: response_obj
       end
 

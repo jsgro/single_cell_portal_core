@@ -74,6 +74,21 @@
   }
 }
 
+.viz-notifications {
+  list-style-type: none;
+  svg {
+    font-size: 0.7em;
+    margin-right: 0.25em;
+  }
+  .success {
+    color: $success-color;
+  }
+  .warning {
+    color: $warning-icon-color;
+  }
+
+}
+
 .upload-form-header {
   h5 {
     margin-right: 1em;
