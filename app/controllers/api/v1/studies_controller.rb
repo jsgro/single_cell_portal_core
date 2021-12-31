@@ -88,8 +88,13 @@ module Api
       def file_info
         response_obj = {
           study: @study.attributes,
-          files: @study.study_files,
-          menu_options: {
+          files: @study.study_files
+        }
+        # include some study computed properties for UI
+        response_obj[:study][:can_visualize_clusters] = @study.can_visualize_clusters?
+        response_obj[:study][:has_visualization_matrices] = @study.has_visualization_matrices?
+        if params[:include_options]
+          response_obj[:menu_options] = {
             fonts: SUPPORTED_LABEL_FONTS,
             species: ActiveRecordUtils.pluck_to_hash(Taxon.sorted, [:id, :common_name])
               .map { |k| k[:id] = k[:id].to_s; k }, # return the hash but with ids converted to strings
@@ -105,10 +110,7 @@ module Api
                 k
               end
           }
-        }
-        # include some study computed properties for UI
-        response_obj[:study][:can_visualize_clusters] = @study.can_visualize_clusters?
-        response_obj[:study][:has_visualization_matrices] = @study.has_visualization_matrices?
+        end
         render json: response_obj
       end
 

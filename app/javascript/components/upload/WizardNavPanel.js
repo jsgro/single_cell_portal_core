@@ -15,20 +15,20 @@ function RawWizardNavPanel({
   const [othersExpanded, setOthersExpanded] = useState(true)
   const expansionIcon = othersExpanded ? faChevronUp : faChevronDown
 
-  let clusterVizIndicator = <li className="success detail"><FontAwesomeIcon icon={faCheck}/> cluster viz. enabled</li>
+  let clusterVizIndicator = <li className="success detail"><FontAwesomeIcon icon={faCheck}/> cluster visuals</li>
   if (!serverState?.study.can_visualize_clusters) {
     clusterVizIndicator = <li className="warning detail">
       <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={clusterHelpContent}>
-        <span><FontAwesomeIcon icon={faTimes}/> cluster viz. not enabled</span>
+        <span><FontAwesomeIcon icon={faTimes}/> cluster visuals</span>
       </OverlayTrigger>
     </li>
   }
 
-  let expressionVizIndicator = <li className="success detail"><FontAwesomeIcon icon={faCheck}/> expression viz. enabled</li>
+  let expressionVizIndicator = <li className="success detail"><FontAwesomeIcon icon={faCheck}/> expression visuals</li>
   if (!serverState?.study.has_visualization_matrices) {
     expressionVizIndicator = <li className="warning detail">
       <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={expressionHelpContent}>
-        <span><FontAwesomeIcon icon={faTimes}/> expression viz. not enabled</span>
+        <span><FontAwesomeIcon icon={faTimes}/> expression visuals</span>
       </OverlayTrigger>
     </li>
   }

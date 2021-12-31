@@ -16,7 +16,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheckCircle, faExclamationTriangle, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
-import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk, RequestCanceller } from 'lib/scp-api'
+import {
+  createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo,
+  sendStudyFileChunk, RequestCanceller
+} from 'lib/scp-api'
 import MessageModal from 'lib/MessageModal'
 import UserProvider from 'providers/UserProvider'
 import ErrorBoundary from 'lib/ErrorBoundary'
@@ -34,6 +37,7 @@ import SequenceFileStep from './SequenceFileStep'
 import GeneListStep from './GeneListStep'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
+const POLLING_INTERVAL = 10 * 1000 // 10 seconds between state updates
 const CHUNK_SIZE = 10000000
 const STEPS = [
   RawCountsStep,
@@ -66,9 +70,10 @@ export function RawUploadWizard({ studyAccession, name }) {
   const [formState, setFormState] = useState(null)
 
   // go through the files and compute any relevant derived properties, notably 'isDirty'
-  if (serverState?.files && formState?.files) {
+  if (formState?.files) {
     formState.files.forEach(file => {
-      const serverFile = serverState.files.find(sFile => sFile._id === file._id)
+      const serverFile = serverState.files ? serverState.files.find(sFile => sFile._id === file._id) : null
+      file.serverFile = serverFile
       // use isMatch to confirm that specified properties are equal, but ignore properties (like isDirty)
       // that only exist on the form state objects
       if (!_isMatch(file, serverFile)) {
@@ -286,12 +291,26 @@ export function RawUploadWizard({ studyAccession, name }) {
     })
   }
 
+  /** poll the server periodically for updates to files */
+  function pollServerState() {
+    fetchStudyFileInfo(studyAccession, false).then(response => {
+      response.files.forEach(file => formatFileFromServer(file))
+      setServerState(oldState => {
+        // copy over the menu options since they aren't included in the polling response
+        response.menu_options = oldState.menu_options
+        return response
+      })
+    })
+    setTimeout(pollServerState, POLLING_INTERVAL)
+  }
+
   // on initial load, load all the details of the study and study files
   useEffect(() => {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
       setServerState(response)
       setFormState(_cloneDeep(response))
+      setTimeout(pollServerState, POLLING_INTERVAL)
     })
   }, [studyAccession])
 

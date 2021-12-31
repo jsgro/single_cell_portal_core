@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronUp, faCog } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
 
@@ -100,19 +100,16 @@ export function SavingOverlay({ file, updateFile }) {
 }
 
 /** renders save and delete buttons for a given file */
-export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, validationMessages = {} }) {
-  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
+export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessages = {} }) {
+  return <div className="flexbox button-panel">
+    <SaveButton file={file} saveFile={saveFile} validationMessages={validationMessages}/>
+    <DeleteButton file={file} deleteFile={deleteFile}/>
+  </div>
+}
 
-  /** delete file with/without confirmation dialog as appropriate */
-  function handleDeletePress() {
-    if (file.status === 'new') {
-      // it hasn't been uploaded yet, just delete it
-      deleteFile(file)
-    } else {
-      setShowConfirmDeleteModal(true)
-    }
-  }
 
+/** renders a save button for a given file */
+function SaveButton({ file, saveFile, validationMessages = {} }) {
   const saveDisabled = Object.keys(validationMessages).length > 0
   let saveButton = <button
     style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
@@ -139,17 +136,30 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
       {savingText} <LoadingSpinner data-testid="file-save-spinner" />
     </button>
   }
+  return saveButton
+}
+
+/** renders a delete button for a given file
+ * will show a parsing indicator if the file is parsing (and therefore not deletable) */
+function DeleteButton({ file, deleteFile }) {
+  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
+
+  /** delete file with/without confirmation dialog as appropriate */
+  function handleDeletePress() {
+    if (file.status === 'new') {
+      // it hasn't been uploaded yet, just delete it
+      deleteFile(file)
+    } else {
+      setShowConfirmDeleteModal(true)
+    }
+  }
 
   let deleteButtonContent = 'Delete'
   if (file.isDeleting) {
     deleteButtonContent = <span>Deleting <LoadingSpinner data-testid="file-save-spinner" /></span>
   }
-
-  return <div className="flexbox button-panel">
-    {saveButton}
-    <button type="button" className="btn terra-secondary-btn" onClick={handleDeletePress} data-testid="file-delete">
-      {deleteButtonContent}
-    </button>
+  let deleteButton = <button type="button" className="btn terra-secondary-btn" onClick={handleDeletePress} data-testid="file-delete">
+    {deleteButtonContent}
     <Modal
       show={showConfirmDeleteModal}
       onHide={() => setShowConfirmDeleteModal(false)}
@@ -168,5 +178,18 @@ export function SaveDeleteButtons({ file, updateFile, saveFile, deleteFile, vali
         }}>Cancel</button>
       </Modal.Footer>
     </Modal>
-  </div>
+  </button>
+  if (file.serverFile?.parse_status === 'parsing') {
+    deleteButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={parsingPopup}>
+      <span><FontAwesomeIcon icon={faCog} className="fa-spin fa-lg"/></span>
+    </OverlayTrigger>
+  }
+  return deleteButton
 }
+
+
+const parsingPopup = <Popover id="parsing-tooltip" className="tooltip-wide">
+  <span>This file is currently being parsed on the server.  You will receive an email
+    when the parse is complete.  You cannot delete files while they are being parsed.
+  </span>
+</Popover>
