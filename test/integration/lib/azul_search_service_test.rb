@@ -143,6 +143,21 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test 'should get summary file information from project shortnames' do
+    projects = %w[HumanTissueTcellActivation KidneySingleCellAtlas Covid19PBMC]
+    summary = AzulSearchService.get_file_summary_info(projects)
+    assert_equal projects.count, summary.count
+    found_projects = summary.map { |project| project[:accession] }
+    assert_equal projects, found_projects
+    manifests = summary.map { |project| project[:studyFiles].detect { |file| file[:file_type] == 'Project Manifest' } }
+    assert_equal 3, manifests.count
+    other_files = summary.map { |project| project[:studyFiles].reject { |file| file[:file_type] == 'Project Manifest' } }
+                         .flatten
+    other_files.each do |file_info|
+      assert_equal %w[source count upload_file_size file_format accession project_id file_type], file_info.keys
+    end
+  end
+
   test 'should match results on facets' do
     matches = AzulSearchService.get_facet_matches(@human_tcell_response['hits'].first, @facets)
     assert_includes matches.keys, 'species'

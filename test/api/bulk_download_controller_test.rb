@@ -304,4 +304,17 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
       end
     end
   end
+
+  test 'should extract accessions from parameters' do
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'Accession Test',
+                              public: true,
+                              user: @user,
+                              test_array: @@studies_to_clean)
+    accessions = [@basic_study.accession, 'FakeHCAProject', study.accession, 'AnotherFakeHCAProject']
+    scp_accessions = Api::V1::BulkDownloadController.find_matching_accessions(accessions)
+    hca_accessions = Api::V1::BulkDownloadController.extract_hca_accessions(accessions)
+    assert_equal [@basic_study.accession, study.accession], scp_accessions
+    assert_equal %w[FakeHCAProject AnotherFakeHCAProject], hca_accessions
+  end
 end

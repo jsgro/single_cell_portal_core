@@ -234,6 +234,7 @@ class BulkDownloadService
       name: study.name,
       accession: study.accession,
       description: study.description,
+      study_source: 'SCP',
       study_files: study.study_files.map { |study_file| BulkDownloadService.study_file_download_info(study_file) }
     }
   end

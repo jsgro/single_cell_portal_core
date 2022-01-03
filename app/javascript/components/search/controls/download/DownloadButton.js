@@ -38,20 +38,6 @@ export default function DownloadButton({ searchResults={} }) {
     }
   }
 
-  /** Note that we are reading the TDR file information from the search results object, which
-   * means we are reliant on the TDR results being on the current page.  Once we begin paging/sorting
-   * TDR results, this approach will have to be revisited */
-  const azulFileInfo = searchResults.studies
-    ?.filter(result => result.study_source === 'HCA')
-    ?.map(result => ({
-      accession: result.accession,
-      name: result.name,
-      study_source: 'HCA',
-      description: result.description,
-      hca_project_id: result.hca_project_id,
-      studyFiles: result.file_information
-    }))
-
   return (
     <>
       <OverlayTrigger
@@ -72,7 +58,6 @@ export default function DownloadButton({ searchResults={} }) {
         <DownloadSelectionModal
           show={showModal}
           setShow={setShowModal}
-          azulFileInfo={azulFileInfo}
           studyAccessions={matchingAccessions}/> }
     </>
   )

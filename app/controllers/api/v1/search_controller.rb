@@ -589,11 +589,24 @@ module Api
           filter_arr_name = "#{facet_id}_filters"
           filter_val_name = "#{facet_id}_value"
           filter_where_val = "#{facet_id}_val"
-          filter_values = facet_obj[:filters].map {|filter| filter[:id]}
+          filter_values = facet_obj[:filters].map { |filter| sanitize_filter_value(filter[:id]) }
           query_elements[:with] = "#{filter_arr_name} AS (SELECT#{filter_values} as #{filter_val_name})"
           query_elements[:from] = "#{filter_arr_name}, UNNEST(#{filter_arr_name}.#{filter_val_name}) AS #{filter_where_val}"
           query_elements[:where] = "(#{filter_where_val} IN UNNEST(#{column_name}))"
           query_elements[:select] = "#{filter_where_val}"
+          # to maximize XDSS queries, also check __ontology_label columns since Azul doesn't support IDs
+          if search_facet.is_ontology_based? && search_facet.big_query_name_column.present?
+            label_values = facet_obj[:filters].map { |filter| filter[:name] }
+            label_column = search_facet.big_query_name_column
+            label_filter_arr_name = "#{facet_id}_label_filters"
+            label_filter_val_name = "#{facet_id}_label_value"
+            label_filter_where_val = "#{facet_id}_label_val"
+            query_elements[:with] += ", #{label_filter_arr_name} AS (SELECT#{label_values} as #{label_filter_val_name})"
+            query_elements[:from] += ", #{label_filter_arr_name}, UNNEST(#{label_filter_arr_name}.#{label_filter_val_name}) AS #{label_filter_where_val}"
+            # reconstitute where clause to use OR to match on either ID or label
+            query_elements[:where] = "((#{filter_where_val} IN UNNEST(#{column_name})) OR (#{label_filter_where_val} IN UNNEST(#{label_column})))"
+            query_elements[:select] += ", #{label_filter_where_val}"
+          end
         elsif search_facet.is_numeric?
           # run a range query (e.g. WHERE organism_age BETWEEN 20 and 60)
           query_elements[:select] = "#{column_name}"
@@ -610,8 +623,15 @@ module Api
         else
           query_elements[:select] = "#{column_name}"
           # for non-array columns we can pass an array of quoted values and call IN directly
-          filter_values = facet_obj[:filters].map {|filter| filter[:id]}
-          query_elements[:where] = "#{column_name} IN ('#{filter_values.join('\',\'')}')"
+          filter_values = facet_obj[:filters].map { |filter| sanitize_filter_value(filter[:id]) }
+          main_query = "#{column_name} IN ('#{filter_values.join('\',\'')}')"
+          query_elements[:where] = main_query
+          # to maximize XDSS queries, also check __ontology_label columns since Azul doesn't support IDs
+          if search_facet.is_ontology_based? && search_facet.big_query_name_column.present?
+            label_values = facet_obj[:filters].map { |filter| sanitize_filter_value(filter[:name]) }
+            extra_query = "#{search_facet.big_query_name_column} IN ('#{label_values.join('\',\'')}')"
+            query_elements[:where] = "(#{main_query} OR #{extra_query})"
+          end
         end
         query_elements
       end
@@ -641,6 +661,8 @@ module Api
           matches[accession] ||= {facet_search_weight: 0}
           result.keys.keep_if { |key| key != :study_accession }.each do |key|
             facet_name = key.to_s.chomp('_val')
+            next if facet_name.ends_with?('_label') # ignore __ontology_label queries as we'll match on the main one
+
             matching_filter = match_results_by_filter(search_result: result, result_key: key, facets: search_facets)
             # there may not be a matching filter if the facet was OR'ed
             if matching_filter
@@ -677,7 +699,7 @@ module Api
         else
           filters_list = facet.filters_with_external.any? ? facet.filters_with_external : facet.filters
           filters_list.each do |filter|
-            if filter_values.include?(filter[:id])
+            if filter_values.include?(filter[:id]) || filter_values.include?(filter[:name])
               matching_filters << filter
             end
           end
@@ -697,6 +719,11 @@ module Api
         else
           matching_facet[:filters].detect { |filter| filter[:id] == search_result[result_key] || filter[:name] == search_result[result_key]}
         end
+      end
+
+      # properly escape any single quotes in a filter value (double quotes are correctly handled already)
+      def self.sanitize_filter_value(filter)
+        filter.gsub(/'/) { "\\'" }
       end
     end
   end

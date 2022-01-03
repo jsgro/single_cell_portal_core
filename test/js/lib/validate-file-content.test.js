@@ -27,7 +27,7 @@ describe('Client-side file validation', () => {
     // Test analytics
     expect(fakeLog).toHaveBeenCalledWith(
       'file-validation',
-      {
+      expect.objectContaining({
         delimiter: 'tab',
         numColumns: 4,
         linesRead: 17,
@@ -46,10 +46,10 @@ describe('Client-side file validation', () => {
         errorTypes: [
           'format:cap:type'
         ],
-        numWarnings: 0,
+        perfTime: expect.any(Number), numWarnings: 0,
         warnings: [],
         warningTypes: []
-      }
+      })
     )
   })
 
@@ -118,27 +118,6 @@ describe('Client-side file validation', () => {
     expect(warnings).toHaveLength(2)
     expect(warnings[0][1]).toEqual('content:group-col-over-200')
     expect(warnings[0][2]).toContain('cell_type has over 200 unique values and so will not be visible in plots -- is this intended?')
-  })
-
-  it('catches duplicate cell names in dense matrix file', async () => {
-    mockReadLinesAndType({ content: 'GENE,CELL_0001,CELL_0001\nItm2a,0,0\nSergef,0,7.092' })
-    const { errors, summary } = await validateFileContent({ name: 'dup_cell_name.txt' }, 'Expression Matrix')
-    expect(errors).toHaveLength(1)
-    expect(summary).toBe('Your file had 1 error')
-  })
-
-  it('catches missing "GENE" entry in dense matrix file', async () => {
-    mockReadLinesAndType({ content: 'G,CELL_0001,CELL_0002\nItm2a,0,0\nSergef,0,7.092' })
-    const { errors, summary } = await validateFileContent({ name: 'missing_GENE.txt' }, 'Expression Matrix')
-    expect(errors).toHaveLength(1)
-    expect(summary).toBe('Your file had 1 error')
-  })
-
-  it('catches non-numeric entry in dense matrix file', async () => {
-    mockReadLinesAndType({ content: 'GENE,CELL_0001,CELL_0002\nItm2a,trtr,0\nSergef,0,7.092' })
-    const { errors, summary } = await validateFileContent({ name: 'non_numeric.txt' }, 'Expression Matrix')
-    expect(errors).toHaveLength(1)
-    expect(summary).toBe('Your file had 1 error')
   })
 
   it('reports no error with good cluster CSV file', async () => {

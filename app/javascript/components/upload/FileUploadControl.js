@@ -44,19 +44,20 @@ async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExt
   if (otherNames.includes(selectedFile.name) ||
     otherUploadFileNames.includes(selectedFile.name) ||
     otherSelectedFileNames.includes(selectedFile.name)) {
-    return [`A file named ${selectedFile.name} already exists in your study`]
+    const errorMsg = `A file named ${selectedFile.name} already exists in your study`
+    return { errorMsgs: [errorMsg], warningMsgs: [] }
   }
 
   if (!allowedFileExts.includes('*') && !allowedFileExts.some(aft => selectedFile.name.endsWith(aft))) {
     const errorMsg = `Allowed extensions are ${allowedFileExts.join(' ')}`
-    return [errorMsg]
+    return { errorMsgs: [errorMsg], warningMsgs: [] }
   }
 
-  const validationResult = await validateFileContent(selectedFile, file.file_type, {
+  const { errors, warnings } = await validateFileContent(selectedFile, file.file_type, {
     use_metadata_convention: file.use_metadata_convention
   })
-  const errorMsgs = validationResult.errors.map(error => error[2])
-  const warningMsgs = validationResult.warnings.map(error => error[2])
+  const errorMsgs = errors.map(error => error[2])
+  const warningMsgs = warnings.map(error => error[2])
   return { errorMsgs, warningMsgs }
 }
 
@@ -130,16 +131,16 @@ export default function FileUploadControl({
         accept={inputAcceptExts.join(',')}/>
     </button>
 
-    { fileValidation.errorMsgs.length > 0 && <div className="validation-error" data-testid="file-content-validation">
+    { fileValidation.errorMsgs?.length > 0 && <div className="validation-error" data-testid="file-content-validation">
       Could not use {fileValidation.filename}:
       <ul className="validation-error" >
         { fileValidation.errorMsgs.map((error, index) => <li key={index} className="error-message">{error}</li>) }
       </ul>
     </div> }
-    { fileValidation.warningMsgs.length > 0 &&
+    { fileValidation.warningMsgs?.length > 0 &&
       <div className="validation-warning" data-testid="file-content-validation">
         Warnings:
-        <ul className="validation-warning" >
+        <ul className="validation-warning">
           { fileValidation.warningMsgs.map((warn, index) => <li key={index} className="error-message">{warn}</li>) }
         </ul>
       </div>

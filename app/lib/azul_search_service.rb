@@ -4,12 +4,12 @@ class AzulSearchService
   # tar archives are lumped in with analysis_file entries as they could be either
   FILE_EXT_BY_DOWNLOAD_TYPE = {
     'sequence_file' => %w[bam bai fastq].map { |e| [e, e + '.gz'] }.flatten,
-    'analysis_file' => %w[loom csv tsv txt mtx Rdata tar].map { |e| [e, e + '.gz'] }.flatten
+    'analysis_file' => %w[loom csv tsv txt mtx Rdata tar h5ad pdf].map { |e| [e, e + '.gz'] }.flatten
   }.freeze
 
   # list of keys for an individual result entry used for matching facet filter values
   # each Azul result entry under 'hits' will have these keys, whether project- or file-based
-  RESULT_FACET_FIELDS = %w[samples specimens cellLines donorOrganisms organoids cellSuspensions].freeze
+  RESULT_FACET_FIELDS = %w[protocols samples specimens cellLines donorOrganisms organoids cellSuspensions].freeze
 
   def self.append_results_to_studies(existing_studies, selected_facets:, terms:, facet_map: nil)
     # set facet_map to {}, even if facet_map is explicitly passed in as nil
@@ -170,11 +170,10 @@ class AzulSearchService
 
   # extract preliminary file information from an Azul result object
   def self.extract_file_information(result)
-    file_information = []
     project_hash = result[:projects].first # there will only ever be one project here
     short_name = project_hash[:projectShortname]
     project_id = project_hash[:projectId]
-    result[:fileTypeSummaries].each do |file_summary|
+    result[:fileTypeSummaries].map do |file_summary|
       file_info = {
         source: 'hca',
         count: file_summary['count'],
@@ -197,8 +196,38 @@ class AzulSearchService
           end
         end
       end
-      file_information << file_info.with_indifferent_access
+      file_info.with_indifferent_access
     end
-    file_information
+  end
+
+  # query Azul with project shortnames and return summary file information
+  # this method mirrors interface on BulkDownloadService#study_download_info for use in bulk download modal
+  def self.get_file_summary_info(accessions)
+    client = ApplicationController.hca_azul_client
+    file_query = { 'project' => { 'is' => accessions } }
+    results = client.projects(query: file_query)
+    results['hits'].map do |entry|
+      entry_hash = entry.with_indifferent_access
+      project_hash = entry_hash[:projects].first # there will only ever be one project here
+      accession = project_hash[:projectShortname]
+      result = {
+        study_source: 'HCA',
+        name: project_hash[:projectTitle],
+        accession: accession,
+        description: project_hash[:projectDescription],
+        studyFiles: [
+          {
+            project_id: project_hash[:projectId],
+            file_type: 'Project Manifest',
+            count: 1,
+            upload_file_size: 1.megabyte, # placeholder filesize as we don't know until manifest is downloaded
+            name: "#{accession}.tsv"
+          }
+        ]
+      }.with_indifferent_access
+      project_file_info = extract_file_information(entry_hash)
+      result[:studyFiles] += project_file_info if project_file_info.any?
+      result
+    end
   end
 end

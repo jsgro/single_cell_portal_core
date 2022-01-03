@@ -64,7 +64,7 @@ export default class ChunkedLineReader {
     const isLastChunk = startByte + this.chunkSize >= this.file.size
     const chunkString = await readFileBytes(this.file, startByte, this.chunkSize)
 
-    const lines = chunkString.split(/\r?\n/)
+    const lines = chunkString.split(newlineRegex)
 
     if (this.currentFragment) {
       if (lines[0][0] === '\n') {
