@@ -1,23 +1,30 @@
 require 'api_test_helper'
 require 'user_tokens_helper'
+require 'test_helper'
 
 class DirectoryListingsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include Requests::JsonHelpers
   include Requests::HttpHelpers
+  include Minitest::Hooks
+  include ::SelfCleaningSuite
+  include TestInstrumentor
+
+  before(:all) do
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:detached_study,
+                               name_prefix: 'Directory Listing Study',
+                               public: true,
+                               user: @user,
+                               test_array: @@studies_to_clean)
+    @directory_listing = DirectoryListing.create!(
+      name: 'csvs', file_type: 'csv', files: [{ 'name' => 'foo.csv', 'size' => 100, 'generation' => '12345' }],
+      sync_status: true, study: @study
+    )
+  end
 
   setup do
-    @user = User.first
-    @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-    @study = Study.find_by(name: "API Test Study #{@random_seed}")
-    @directory_listing = @study.directory_listings.first
-    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
-                                                                           :provider => 'google_oauth2',
-                                                                           :uid => '123545',
-                                                                           :email => 'testing.user@gmail.com'
-                                                                       })
-    sign_in @user
-    @user.update_last_access_at!
+    sign_in_and_update @user
   end
 
   teardown do
@@ -26,15 +33,12 @@ class DirectoryListingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'should get index' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
     execute_http_request(:get, api_v1_study_directory_listings_path(@study))
     assert_response :success
     assert json.size >= 1, 'Did not find any directory_listings'
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should get directory listing' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
     execute_http_request(:get, api_v1_study_directory_listing_path(study_id: @study.id, id: @directory_listing.id))
     assert_response :success
     # check all attributes against database
@@ -42,17 +46,16 @@ class DirectoryListingsControllerTest < ActionDispatch::IntegrationTest
       if attribute =~ /_id/
         assert json[attribute] == JSON.parse(value.to_json), "Attribute mismatch: #{attribute} is incorrect, expected #{JSON.parse(value.to_json)} but found #{json[attribute.to_s]}"
       elsif attribute =~ /_at/
-        assert DateTime.parse(json[attribute]) == value, "Attribute mismatch: #{attribute} is incorrect, expected #{value} but found #{DateTime.parse(json[attribute])}"
+        # ignore timestamps as fprmatting & drift on milliseconds can cause comparison errors
+        next
       else
         assert json[attribute] == value, "Attribute mismatch: #{attribute} is incorrect, expected #{value} but found #{json[attribute.to_s]}"
       end
     end
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   # create, update & delete tested together to use new object to avoid delete/update running before create
   test 'should create then update then delete directory listing' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
     # create directory listing
     files = []
     1.upto(5) do |i|
@@ -95,6 +98,5 @@ class DirectoryListingsControllerTest < ActionDispatch::IntegrationTest
     # delete directory listing
     execute_http_request(:delete, api_v1_study_directory_listing_path(study_id: @study.id, id: directory_listing_id))
     assert_response 204, "Did not successfully delete study file, expected response of 204 but found #{@response.response_code}"
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end
