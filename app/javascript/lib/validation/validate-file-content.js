@@ -173,11 +173,35 @@ function validateEqualCount(headers, annotTypes) {
 
 /**
  * Verify "GENE" is present as the first column in the first row for an Expression Matrix file
+ * # An "R formatted" file can:
+        # Not have GENE in the header or
+        # Have one less entry in the header than each successive row or
+        # Have "" as the last value in header.
+        if header[0].upper() != "GENE":
+            next_line_length = len(row)
+            if len(header) == next_line_length:
+                last_value = header[-1]
+                if last_value.isspace() or last_value == "":
+                    return True, header[:-1]
+            else:
+                if (next_line_length - 1) == len(header):
+                    return True, header
+            return False, header[1:]
+        else:
+            return False, header[1:]
  */
-function validateGeneInHeader(firstRowTable) {
+function validateGeneInHeader(firstRowTable, firstFewRowsTable) {
   const issues = []
 
-  if (firstRowTable[0][0] !== 'GENE') {
+  if (firstRowTable[0][0].toUpperCase() !== 'GENE') {
+    const headerLength = firstRowTable.length
+    for (let i = 0; i < firstFewRowsTable.length - 1; i++) {
+      const entry = firstFewRowsTable[i]
+      if (entry.length - headerLength !== 1) {
+        firstFewRowsTable.push(i)
+      }
+
+    }
     const msg = 'Dense matrices require the first value of the file to be "GENE". ' +
      `However, the first value for this file currently is "${firstRowTable[0][0]}".`
     issues.push(['error', 'format:cap:missing-gene-column', msg])
@@ -189,45 +213,46 @@ function validateGeneInHeader(firstRowTable) {
 /**
  * Verify dense matrix column values and column numbers
  */
-function validateColumnNumberAndValues(table) {
-  const issues = []
-  const rowsWithIncorrectColumnNumbers = []
-  const rowsWithNonNumericValues = []
-  // use the header row to determine the correct number of columns all rows should have
-  const correctNumberOfColumns = table[0].length
+// function validateColumnNumberAndValues(parsedLine, isLastLine, dataObj) {
+//   const issues = []
+//   const rowsWithIncorrectColumnNumbers = []
+//   const rowsWithNonNumericValues = []
+//   // use the header row to determine the correct number of columns all rows should have
+//   const correctNumberOfColumns = parsedLine.length
 
-  // skip the first row
-  for (let i = 1; i < table.length - 1; i++) {
-    const entry = table[i]
-    if (correctNumberOfColumns !== entry.length) {
-      rowsWithIncorrectColumnNumbers.push(i)
-    }
-    // skip first column
-    entry.shift()
-    if (entry.some(isNaN)) {
-      rowsWithNonNumericValues.push(i)
-    }
-  }
+//   // skip the first row
+//   for (let i = 1; i < parsedLine.length - 1; i++) {
+//     const entry = parsedLine[i]
+//     if (correctNumberOfColumns !== entry.length) {
+//       rowsWithIncorrectColumnNumbers.push(i)
+//     }
+//     // skip first column
+//     entry.shift()
+//     if (entry.some(isNaN)) {
+//       rowsWithNonNumericValues.push(i)
+//     }
+//   }
 
-  if (rowsWithIncorrectColumnNumbers.length > 0) {
-    const rowText = rowsWithIncorrectColumnNumbers.length > 1 ? 'rows' : 'row'
-    const msg = `All rows must have the same number of columns - ` +
-    `please ensure the number of columns for ${rowText}: ${rowsWithIncorrectColumnNumbers.join(', ')}, ` +
-    `matches the file-header-specificed number of ${correctNumberOfColumns} columns-per-row.`
-    issues.push(['error', 'format:mismatch-column-number', msg])
-  }
+//   if (rowsWithIncorrectColumnNumbers.length > 0) {
+//     const rowText = rowsWithIncorrectColumnNumbers.length > 1 ? 'rows' : 'row'
+//     const msg = `All rows must have the same number of columns - ` +
+//     `please ensure the number of columns for ${rowText}: ${rowsWithIncorrectColumnNumbers.join(', ')}, ` +
+//     `matches the file-header-specificed number of ${correctNumberOfColumns} columns-per-row.`
+//     issues.push(['error', 'format:mismatch-column-number', msg])
+//   }
 
-  if (rowsWithNonNumericValues.length > 0) {
-    const rowText = rowsWithNonNumericValues.length > 1 ? 'rows' : 'row'
-    const msg = `All values (other than the first column and header row) in a dense matrix file must be numeric. ` +
-    `Please ensure all values in ${rowText}: ${rowsWithNonNumericValues.join(', ')}, are numbers.`
-    issues.push(['error', 'format:invalid-type:not-numeric', msg])
-  }
+//   if (rowsWithNonNumericValues.length > 0) {
+//     const rowText = rowsWithNonNumericValues.length > 1 ? 'rows' : 'row'
+//     const msg = `All values (other than the first column and header row) in a dense matrix file must be numeric. ` +
+//     `Please ensure all values in ${rowText}: ${rowsWithNonNumericValues.join(', ')}, are numbers.`
+//     issues.push(['error', 'format:invalid-type:not-numeric', msg])
+//   }
 
-  return issues
-}
+//   return issues
+// }
 
- /* Verify cell names are each unique for a file
+/**
+ * Verify cell names are each unique for a file
  * creates and uses 'cellNames' and 'duplicateCellNames' properties on dataObj to track
  * cell names between calls to this function
  */
@@ -457,7 +482,7 @@ export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
   const dataObj = {} // object to track multi-line validation concerns
   await chunker.iterateLines((line, lineNum, isLastLine) => {
     const parsedLine = parseLine(line, delimiter)
-   issues = issues.concat(validateColumnNumberAndValues(table))
+  //  issues = issues.concat(validateColumnNumberAndValues(parsedLine, isLastLine, dataObj))
     issues = issues.concat(validateUniqueCellNamesWithinFile(parsedLine, isLastLine, dataObj))
     issues = issues.concat(validateMetadataLabelMatches(parsedHeaders, parsedLine, isLastLine, dataObj))
     issues = issues.concat(validateGroupColumnCounts(parsedHeaders, parsedLine, isLastLine, dataObj))
@@ -591,6 +616,25 @@ async function parseFile(file, fileType, fileOptions={}) {
       parseResult.issues.push(['error', error.key, error.message])
     } else {
       parseResult.issues.push(['error', 'parse:unhandled', error.message])
+    // if (['Cluster', 'Metadata', 'Expression Matrix'].includes(fileType)) {
+    //   // if there are no encoding issues, and this isn't a gzipped file, validate content
+    //   delimiter = sniffDelimiter(headerLines, mimeType)
+    //   table = []
+    //   for (let i = 0; i < lines.length; i++) {
+    //     table.push(lines[i].split(delimiter))
+    //   }
+
+    //   if (fileType === 'Expression Matrix') {
+    //     const firstRowTable = table.slice(0, 1)
+    //     const firstFewRowsTable = table.slice(0, 3)
+    //     issues = issues.concat(validateUniqueCellNamesWithinFile(firstRowTable[0], fileType))
+    //     issues = issues.concat(validateGeneInHeader(firstRowTable, firstFewRowsTable))
+    //     issues = issues.concat(validateColumnNumberAndValues(table))
+    //   } else if (['Cluster', 'Metadata'].includes(fileType)) {
+    //     const headerTable = table.slice(0, 2)
+    //     issues = await validateCapFormat(headerTable, fileType)
+    //     issues = issues.concat(validateUniqueCellNamesWithinFile(table, fileType))
+    //   }
     }
   }
   return parseResult
@@ -659,4 +703,3 @@ function getLogProps(fileInfo, errorObj) {
     })
   }
 }
-
