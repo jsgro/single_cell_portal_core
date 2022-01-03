@@ -17,6 +17,7 @@ FactoryBot.define do
       if evaluator.test_array
         evaluator.test_array.push(user)
       end
+      TosAcceptance.create(email: user.email)
     end
 
     factory :api_user do
