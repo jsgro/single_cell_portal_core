@@ -1,10 +1,12 @@
 require 'api_test_helper'
+require 'test_helper'
 
 class MetadataSchemasControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include Requests::JsonHelpers
   include Requests::HttpHelpers
   include Api::V1::Concerns::ConventionSchemas
+  include TestInstrumentor
 
   SCHEMAS_BASE_DIR = Api::V1::MetadataSchemasController::SCHEMAS_BASE_DIR
 
@@ -13,18 +15,12 @@ class MetadataSchemasControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'should load all available schemas' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     execute_http_request(:get, api_v1_metadata_schemas_path)
     assert_response 200, "Did not get any metadata schemas"
     assert_equal @schemas, json, "Did not find correct projects/schemas, exepected #{@schemas} but found #{json}"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should load requested schema' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     project = @schemas.keys.sample
     schema_version = @schemas[project].sample
     schema_format ='json'
@@ -41,7 +37,5 @@ class MetadataSchemasControllerTest < ActionDispatch::IntegrationTest
     assert_response 200, "Did not load requested convention metadata schema: #{project}/#{schema_version}/#{schema_filename}"
     assert_equal convention_schema, json,
                  "Convention schema does not match requested schema: #{convention_schema}\n\n#{json}"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end
