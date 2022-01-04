@@ -18,11 +18,8 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
                                public: true,
                                user: @user,
                                test_array: @@studies_to_clean)
-    File.open(Rails.root.join('test', 'test_data', 'cluster_example.txt')) do |upload|
-      api_cluster_file = StudyFile.create!(name: 'cluster_example.txt', upload: upload,
-                                           study: @study, file_type: 'Cluster')
-      @study.send_to_firecloud(api_cluster_file)
-    end
+    # add cluster file to FactoryBot study
+    TestStudyPopulator.add_files(@study, file_types: %w[cluster])
     @study_file = @study.study_files.first
   end
 
@@ -44,6 +41,7 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
   test 'should get study file' do
     execute_http_request(:get, api_v1_study_study_file_path(study_id: @study.id, id: @study_file.id))
     assert_response :success
+    @study_file.reload # gotcha in case 'should parse study file' test has already run
     # check all attributes against database
     @study_file.attributes.each do |attribute, value|
       if attribute =~ /_id/

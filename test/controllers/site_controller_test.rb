@@ -19,15 +19,8 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     detail.full_description = '<p>This is the description.</p>'
     detail.save!
 
-    # manually create study files to facilitate pushing to Terra
-    filenames = %w[cluster_example.txt metadata_example.txt]
-    filenames.each do |filename|
-      file_type = filename =~ /cluster/ ? 'Cluster' : 'Metadata'
-      File.open(Rails.root.join('test', 'test_data', filename)) do |upload|
-        study_file = StudyFile.create!(name: filename, upload: upload, study: @study, file_type: file_type)
-        @study.send_to_firecloud(study_file)
-      end
-    end
+    # add cluster file to FactoryBot study
+    TestStudyPopulator.add_files(@study, file_types: %w[cluster metadata])
   end
 
   def setup

@@ -19,13 +19,8 @@ class ApiSiteControllerTest < ActionDispatch::IntegrationTest
                                user: @user,
                                test_array: @@studies_to_clean)
 
-    # manually create study file to facilitate pushing to Terra
-    File.open(Rails.root.join('test', 'test_data', 'cluster_example.txt')) do |upload|
-      api_cluster_file = StudyFile.create!(name: 'cluster_example.txt', upload: upload,
-                                           study: @study, file_type: 'Cluster')
-      # push file to bucket for use in API download tests
-      @study.send_to_firecloud(api_cluster_file)
-    end
+    # add cluster file to FactoryBot study
+    TestStudyPopulator.add_files(@study, file_types: %w[cluster])
 
     StudyShare.create!(email: 'fake.email@gmail.com', permission: 'Reviewer', study: @study)
     StudyFile.create(study: @study, name: 'SRA Study for housing fastq data', description: 'SRA Study for housing fastq data',

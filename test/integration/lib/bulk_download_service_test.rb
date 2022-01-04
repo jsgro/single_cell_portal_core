@@ -4,12 +4,24 @@ require 'bulk_download_helper'
 
 class BulkDownloadServiceTest < ActiveSupport::TestCase
   include Minitest::Hooks
+  include SelfCleaningSuite
   include TestInstrumentor
 
-  def setup
-    @user = User.find_by(email: 'testing.user.2@gmail.com')
-    @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-    @study = Study.find_by(name: "Testing Study #{@random_seed}")
+  before(:all) do
+    @user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:study,
+                               name_prefix: 'BulkDownload Study',
+                               public: true,
+                               user: @user,
+                               test_array: @@studies_to_clean)
+    TestStudyPopulator.add_files(@study)
+    DirectoryListing.create!(name: 'fastq', file_type: 'fastq',
+                             files: [
+                               { name: '1_L1_001.fastq', size: 100, generation: '12345' },
+                               { name: '1_R1_001.fastq', size: 100, generation: '12345' },
+                               { name: '2_L1_001.fastq', size: 100, generation: '12345' },
+                               { name: '2_R1_001.fastq', size: 100, generation: '12345' },
+                             ], sync_status: true, study: @study)
   end
 
   test 'should update user download quota' do
