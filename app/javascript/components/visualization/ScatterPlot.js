@@ -49,30 +49,9 @@ function RawScatterPlot({
   // hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
   // array of trace names (strings) to show in the graph
-  const [shownTraces, setShownTraces] = useState([])
-
-  // Whether the "Show all" and "Hide all" links are active
-  const [showHideActive, setShowHideActive] = useState([false, true])
+  const [hiddenTraces, setHiddenTraces] = useState([])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
-
-  /** Update status of "Show all" and "Hide all" links */
-  function updateShowHideActive(numShownTraces, numLabels, value, applyToAll) {
-    let active
-    if (applyToAll) {
-      active = (value ? [true, false] : [false, true])
-    } else {
-      // Update "Show all" and "Hide all" links to reflect current shownTraces
-      if (numShownTraces > 0 && numShownTraces < numLabels) {
-        active = [true, true]
-      } else if (numShownTraces === 0) {
-        active = [false, true]
-      } else if (numShownTraces === numLabels) {
-        active = [true, false]
-      }
-    }
-    setShowHideActive(active)
-  }
 
   /**
    * Handle user interaction with one or more labels in legend.
@@ -81,7 +60,7 @@ function RawScatterPlot({
    * labeled cells (i.e., the corresponding Plotly.js trace) in the scatter
    * plot.
    */
-  function updateShownTraces(labels, value, numLabels, applyToAll=false) {
+  function updateHiddenTraces(labels, value, applyToAll=false) {
     let newShownTraces
     if (applyToAll) {
       // Handle multi-filter interaction
@@ -89,7 +68,7 @@ function RawScatterPlot({
     } else {
       // Handle single-filter interaction
       const label = labels
-      newShownTraces = [...shownTraces]
+      newShownTraces = [...hiddenTraces]
 
       if (value && !newShownTraces.includes(label)) {
         newShownTraces.push(label)
@@ -99,9 +78,7 @@ function RawScatterPlot({
       }
     }
 
-    updateShowHideActive(newShownTraces.length, numLabels, value, applyToAll)
-
-    setShownTraces(newShownTraces)
+    setHiddenTraces(newShownTraces)
   }
 
   /** Process scatter plot data fetched from server */
@@ -129,7 +106,7 @@ function RawScatterPlot({
       showPointBorders: scatter.showClusterPointBorders,
       is3D: scatter.is3D,
       labelCorrelations,
-      shownTraces,
+      hiddenTraces,
       scatter
     }
     const [traces, labelCounts] = getPlotlyTraces(traceArgs)
@@ -199,7 +176,7 @@ function RawScatterPlot({
     }
     // look for updates of individual properties, so that we don't rerender if the containing array
     // happens to be a different instance
-  }, [shownTraces.join(','), widthAndHeight.height, widthAndHeight.width])
+  }, [hiddenTraces.join(','), widthAndHeight.height, widthAndHeight.width])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
@@ -257,9 +234,8 @@ function RawScatterPlot({
           height={scatterData.height}
           countsByLabel={countsByLabel}
           correlations={labelCorrelations}
-          shownTraces={shownTraces}
-          updateShownTraces={updateShownTraces}
-          showHideActive={showHideActive}
+          hiddenTraces={hiddenTraces}
+          updateHiddenTraces={updateHiddenTraces}
         />
         }
       </div>
@@ -331,7 +307,7 @@ export function getPlotlyTraces({
   pointAlpha,
   pointSize,
   is3D,
-  shownTraces,
+  hiddenTraces,
   scatter
 }) {
   const trace = {
@@ -364,7 +340,7 @@ export function getPlotlyTraces({
       }
     ]
 
-    if (shownTraces.length > 0) {
+    if (hiddenTraces.length > 0) {
       trace.transforms.push({
         type: 'filter',
         target: data.annotations,
@@ -373,7 +349,7 @@ export function getPlotlyTraces({
         // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/constants/filter_ops.js
         // Plotly docs are rather sparse here.
         operation: '}{',
-        value: shownTraces
+        value: hiddenTraces
       })
     }
   } else {

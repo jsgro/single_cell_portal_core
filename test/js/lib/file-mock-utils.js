@@ -2,25 +2,25 @@ import * as Io from 'lib/validation/io'
 const fs = require('fs')
 import { fireEvent } from '@testing-library/react'
 
-const mockDir = 'test/test_data/validation/'
 
-/** Mock function that uses FileReader, which is not available in Node.
- * mocks in the provided content
- *  if fileName is provided, this attempts to read the file
- * from the `mockDir` specified above */
-export function mockReadLinesAndType({ content, fileName }) {
-  if (fileName) {
-    content = fs.readFileSync(mockDir + fileName, 'utf8')
+/** creates a File object with the given content and/or filename.  If no content is specified,
+ * it will attempt to read the file from the filesystem.
+ * We have to mock readFileBytes since blob.arrayBuffer() is not supported in nodejs
+*/
+export function createMockFile({
+  content, fileName, contentType='text/plain', filePath='test/test_data/validation/', mockIO=true
+}) {
+  if (typeof content === 'undefined') {
+    content = fs.readFileSync(filePath + fileName, 'utf8')
   }
-
-  const readLinesAndType = jest.spyOn(Io, 'readLinesAndType')
-  const lines = content.split(/\r?\n/).slice()
-  const mimeType = 'text/tab-separated-values'
-  readLinesAndType.mockImplementation(() => Promise.resolve({ lines, mimeType }))
-
-  return readLinesAndType
+  if (mockIO) {
+    const readFileSpy = jest.spyOn(Io, 'readFileBytes')
+    readFileSpy.mockImplementation((_file, startByte, chunkSize=Io.DEFAULT_CHUNK_SIZE) => {
+      return content.slice(startByte, startByte + chunkSize)
+    })
+  }
+  return new File([content], fileName, { type: contentType })
 }
-
 
 /** simulates a user selecting a file with the given information
  *  returns the js File object created.
@@ -30,10 +30,7 @@ export function fireFileSelectionEvent(node, {
   content='text stuff',
   contentType='text/plain'
 }, mockIO=true) {
-  const selectedFile = new File([content], fileName, { type: contentType })
-  if (mockIO) {
-    mockReadLinesAndType({ content })
-  }
-  fireEvent.change(node, { target: { files: [selectedFile] } })
-  return selectedFile
+  const file = createMockFile({ content, fileName, contentType }, mockIO)
+  fireEvent.change(node, { target: { files: [file] } })
+  return file
 }

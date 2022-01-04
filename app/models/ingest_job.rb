@@ -628,6 +628,8 @@ class IngestJob
         schema_url = 'https://singlecell.zendesk.com/hc/en-us/articles/360061006411-Metadata-Convention'
         message << "This metadata file was validated against the latest <a href='#{schema_url}'>Metadata Convention</a>"
         message << "Convention version: <strong>#{project_name}/#{current_schema_version}</strong>"
+        ingest_image_attributes = AdminConfiguration.get_ingest_docker_image_attributes
+        message << "Ingest Pipeline Docker image version: #{ingest_image_attributes[:tag]}"
         message << "Group-type metadata columns with more than 200 unique values are not made available for visualization."
       end
       cell_metadata = CellMetadatum.where(study_id: self.study.id, study_file_id: self.study_file.id)
@@ -731,6 +733,8 @@ class IngestJob
     message_body += "<p>Study File ID: <strong>#{self.study_file.id}</strong></p>"
     message_body += "<p>Ingest Run ID: <strong>#{self.pipeline_name}</strong></p>"
     message_body += "<p>Command Line: <strong>#{self.command_line}</strong></p>"
+    ingest_image_attributes = AdminConfiguration.get_ingest_docker_image_attributes
+    message_body << "<p>Ingest Pipeline Docker image version: <strong>#{ingest_image_attributes[:tag]}</strong></p>"
     message_body
   end
 

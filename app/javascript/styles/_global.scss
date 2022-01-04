@@ -795,3 +795,8 @@ figcaption.ck-editor__editable {
   display: flex;
   align-items: center;
 }
+
+.unset-background-border {
+  background: unset;
+  border: unset;
+}

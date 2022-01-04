@@ -5,9 +5,16 @@ module Api
       # the goal of this controller is to be business-logic free, and only amalgamate calls
       # to other controller/service methods when needed to save server round-trips
       class ExploreController < ApiBaseController
+        include Concerns::ApiCaching
         before_action :set_current_api_user!
+
         before_action :set_study
         before_action :check_study_view_permission
+
+        # don't cache cluster_options, as those are user-dependent.
+        before_action :check_api_cache!, except: :cluster_options
+        after_action :write_api_cache!, except: :cluster_options
+
 
         swagger_path '/studies/{study_id}/explore' do
           operation :get do
@@ -59,37 +66,9 @@ module Api
 =end
 
         def show
-          default_cluster = @study.default_cluster
-          ideogram_files = ExpressionVizService.get_infercnv_ideogram_files(@study)
-
-          if default_cluster.present?
-            cluster = {
-              numPoints: default_cluster.points,
-              isSubsampled: default_cluster.subsampled?
-            }
-          else
-            cluster = nil
-          end
-          spatial_group_options = ClusterVizService.load_spatial_options(@study)
-          image_options = ClusterVizService.load_image_options(@study)
-          bam_bundle_list = @study.study_file_bundles.where(bundle_type: 'BAM').pluck(:original_file_list)
-
-          explore_props = {
-            cluster: cluster,
-            taxonNames: @study.expressed_taxon_names,
-            inferCNVIdeogramFiles: ideogram_files,
-            bamBundleList: bam_bundle_list,
-            uniqueGenes: @study.unique_genes,
-            geneLists: @study.precomputed_scores.pluck(:name),
-            annotationList: AnnotationVizService.get_study_annotation_options(@study, current_api_user),
-            clusterGroupNames: ClusterVizService.load_cluster_group_options(@study),
-            spatialGroups: spatial_group_options,
-            imageFiles: image_options,
-            clusterPointAlpha: @study.default_cluster_point_alpha,
-            colorProfile: @study.default_color_profile,
-            bucketId: @study.bucket_id
-          }
-
+          # because this endpoint is cached for performance, we explicitly exclude user-specific information
+          # (e.g. user annotations) from it
+          explore_props = self.class.get_study_explore_info(@study, nil)
           render json: explore_props
         end
 
@@ -134,6 +113,39 @@ module Api
           render json: {
             bamAndBaiFiles: @study.get_bam_files,
             gtfFiles: @study.get_genome_annotations_by_assembly
+          }
+        end
+
+        def self.get_study_explore_info(study, user)
+          default_cluster = study.default_cluster
+          ideogram_files = ExpressionVizService.get_infercnv_ideogram_files(study)
+
+          if default_cluster.present?
+            cluster = {
+              numPoints: default_cluster.points,
+              isSubsampled: default_cluster.subsampled?
+            }
+          else
+            cluster = nil
+          end
+          spatial_group_options = ClusterVizService.load_spatial_options(study)
+          image_options = ClusterVizService.load_image_options(study)
+          bam_bundle_list = study.study_file_bundles.where(bundle_type: 'BAM').pluck(:original_file_list)
+
+          {
+            cluster: cluster,
+            taxonNames: study.expressed_taxon_names,
+            inferCNVIdeogramFiles: ideogram_files,
+            bamBundleList: bam_bundle_list,
+            uniqueGenes: study.unique_genes,
+            geneLists: study.precomputed_scores.pluck(:name),
+            annotationList: AnnotationVizService.get_study_annotation_options(study, user),
+            clusterGroupNames: ClusterVizService.load_cluster_group_options(study),
+            spatialGroups: spatial_group_options,
+            imageFiles: image_options,
+            clusterPointAlpha: study.default_cluster_point_alpha,
+            colorProfile: study.default_color_profile,
+            bucketId: study.bucket_id
           }
         end
       end

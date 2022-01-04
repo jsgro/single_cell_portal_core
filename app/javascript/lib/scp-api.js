@@ -362,7 +362,7 @@ export async function fetchBamFileInfo(studyAccession, mock=false) {
 }
 
 /**
- * Get all study-wide and cluster annotations for a study
+ * Get all cluster info and annotations for a study
  *
  * See definition: app/controllers/api/v1/visualization/explore_controller.rb
  *
@@ -371,6 +371,20 @@ export async function fetchBamFileInfo(studyAccession, mock=false) {
  */
 export async function fetchClusterOptions(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/explore/cluster_options`
+  const [values] = await scpApi(apiUrl, defaultInit(), mock, false)
+  return values
+}
+
+/**
+ * Get all annotations for a study
+ *
+ * See definition: app/controllers/api/v1/visualization/annotations_controller.rb
+ *
+ * @param {String} studyAccession Study accession
+ * @param {Boolean} mock
+ */
+export async function fetchAnnotationOptions(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/annotations`
   const [values] = await scpApi(apiUrl, defaultInit(), mock, false)
   return values
 }

@@ -25,15 +25,17 @@ function RawWizardNavPanel({
           setCurrentStep={setCurrentStep}/>) }
     </ul>
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-secondary-steps">
-      <li className="other-header" onClick={() => setOthersExpanded(!othersExpanded)}>
-        <div className="step-number">
-          <span className="badge highlight">+</span>
-        </div>
-        <div>
-          <a className="action link" role="link">
+      <li className="other-header" role="tab" >
+        <button className="unset-background-border" onClick={() => setOthersExpanded(!othersExpanded)} >
+          <span className="step-number">
+            <span className="badge highlight">+</span>
+          </span>
+          <span>
+            <a className="action link" role="link">
             Other files <FontAwesomeIcon icon={expansionIcon}/>
-          </a>
-        </div>
+            </a>
+          </span>
+        </button>
       </li>
       { othersExpanded && supplementalSteps.map((step, index) =>
         <StepTabHeader key={index}

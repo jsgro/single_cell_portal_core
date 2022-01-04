@@ -53,6 +53,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
         name: @study.name,
         accession: @study.accession,
         description: @study.description,
+        study_source: 'SCP',
         study_files: @study.study_files.map do |f|
           { name: f.name, id: f.id.to_s, file_type: f.file_type, upload_file_size: f.upload_file_size }
         end

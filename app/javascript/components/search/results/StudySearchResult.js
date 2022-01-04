@@ -165,7 +165,7 @@ function inferredBadge(study, termMatches) {
 function studyTypeBadge(study) {
   if (study.study_source === 'HCA') {
     // Display a badge indicating this result came from Azul
-    return <span className="badge badge-secondary study-type" data-toggle="tooltip" data-placement="right"
+    return <span className="badge badge-secondary study-type" data-toggle="tooltip"
       title={'Study from Human Cell Atlas'}> Human Cell Atlas </span>
   }
 }
@@ -176,14 +176,17 @@ export default function StudySearchResult({ study }) {
   const studyTitle = highlightText(study.name, termMatches).styledText
   const studyDescription = formatDescription(study.description, termMatches)
   const displayStudyTitle = { __html: studyTitle }
-
+  let studyLink = <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle} ></a>
+  if (study.study_source !== 'SCP') {
+    studyLink = <a href={`https://data.humancellatlas.org/explore/projects/${study.hca_project_id}`} target="_blank"
+                   dangerouslySetInnerHTML={displayStudyTitle} title="View in HCA Data Browser" data-toggle="tooltip"
+                   rel="noreferrer"></a>
+  }
   return (
     <>
       <div key={study.accession}>
         <label htmlFor={study.name} id="result-title" className="study-label">
-          {study.study_source === 'SCP' ? <a href={study.study_url} dangerouslySetInnerHTML={displayStudyTitle} ></a> :
-            <span dangerouslySetInnerHTML={displayStudyTitle} />
-          }
+          {studyLink}
           {inferredBadge(study, termMatches)}
         </label>
         <div>

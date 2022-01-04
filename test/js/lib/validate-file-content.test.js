@@ -1,22 +1,16 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
-import { validateFileContent } from 'lib/validation/validate-file-content'
+import { validateFileContent, REQUIRED_CONVENTION_COLUMNS } from 'lib/validation/validate-file-content'
 import ValidationAlert from 'components/validation/ValidationAlert'
 import * as MetricsApi from 'lib/metrics-api'
 
-import { mockReadLinesAndType } from './file-mock-utils'
-
+import { createMockFile } from './file-mock-utils'
 
 describe('Client-side file validation', () => {
   it('catches and logs errors via library interface', async () => {
-    mockReadLinesAndType({ fileName: 'metadata_bad_type_header.txt' })
+    const file = createMockFile({ fileName: 'metadata_bad_type_header.txt' })
 
-    const file = {
-      name: 'metadata_bad_type_header.txt',
-      size: 566,
-      type: 'text/plain'
-    }
     const fileType = 'Metadata'
 
     const fakeLog = jest.spyOn(MetricsApi, 'log')
@@ -33,68 +27,130 @@ describe('Client-side file validation', () => {
     // Test analytics
     expect(fakeLog).toHaveBeenCalledWith(
       'file-validation',
-      {
-        'delimiter': 'tab',
-        'numColumns': 4,
-        'numRows': 17,
-        'numTableCells': 68,
-        'fileType': 'Metadata',
-        'fileName': 'metadata_bad_type_header.txt',
-        'fileSize': 566,
-        'fileMimeType': 'text/plain',
-        'status': 'failure',
-        'summary': 'Your file had 1 error',
-        'numErrors': 1,
-        'errors': [
+      expect.objectContaining({
+        delimiter: 'tab',
+        numColumns: 4,
+        linesRead: 17,
+        numTableCells: 68,
+        fileType: 'Metadata',
+        fileName: 'metadata_bad_type_header.txt',
+        fileSize: 566,
+        fileMimeType: 'text/plain',
+        isGzipped: false,
+        status: 'failure',
+        summary: 'Your file had 1 error',
+        numErrors: 1,
+        errors: [
           'Second row, first column must be "TYPE" (case insensitive). Your value was "notTYPE".'
         ],
-        'errorTypes': [
+        errorTypes: [
           'format:cap:type'
-        ]
-      }
+        ],
+        perfTime: expect.any(Number), numWarnings: 0,
+        warnings: [],
+        warningTypes: []
+      })
     )
   })
 
   it('catches duplicate headers', async () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_annotations.py#L56
-    mockReadLinesAndType({ fileName: 'dup_headers_v2.0.0.tsv' })
-    const { errors, summary } = await validateFileContent({ name: 'm.txt' }, 'Metadata')
+    const file = createMockFile({ fileName: 'dup_headers_v2.0.0.tsv' })
+    const { errors, summary } = await validateFileContent(file, 'Metadata')
     expect(errors).toHaveLength(1)
     expect(summary).toBe('Your file had 1 error')
   })
 
+  it('catches missing header lines', async () => {
+    const file = createMockFile({ content: 'NAME,X,Y', fileName: 'missing_headers.tsv' })
+    const { errors } = await validateFileContent(file, 'Cluster')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:cap:missing-header-lines')
+  })
+
+  it('catches duplicate cell names in cluster file', async () => {
+    const file = createMockFile({
+      fileName: 'foo.txt',
+      content: 'NAME,X,Y\nTYPE,numeric,numeric\nCELL_0001,34.472,32.211\nCELL_0001,15.975,10.043'
+    })
+    const { errors } = await validateFileContent(file, 'Cluster')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('duplicate:cells-within-file')
+    expect(errors[0][2]).toEqual('Cell names must be unique within a file. 1 duplicate found, including: CELL_0001')
+  })
+
+  it('catches missing headers in metadata file', async () => {
+    const file = createMockFile({
+      fileName: 'foo.txt',
+      content: 'NAME,biosample_id,CellID\nTYPE,numeric,numeric\nCELL_0001,id1,cell1'
+    })
+    const { errors } = await validateFileContent(file, 'Metadata', { use_metadata_convention: true })
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:cap:metadata-missing-column')
+    expect(errors[0][2]).toContain(REQUIRED_CONVENTION_COLUMNS.slice(2).join(', '))
+  })
+
+  it('allows missing headers in metadata file if convention not used ', async () => {
+    const file = createMockFile({
+      fileName: 'foo.txt',
+      content: 'NAME,biosample_id,CellID\nTYPE,numeric,numeric\nCELL_0001,34.472,32.211'
+    })
+    const { errors } = await validateFileContent(file, 'Metadata', { use_metadata_convention: false })
+    expect(errors).toHaveLength(0)
+  })
+
+  it('catches mismatched label/value pairs in metadata files', async () => {
+    const file = createMockFile({
+      fileName: 'foo.txt',
+      content: 'NAME,species,species__ontology_label\nTYPE,group,group\nc1,NCBITaxon_9606,Homo sapiens\nc2,NCBITaxon_9607,Homo sapiens'
+    })
+    const { errors } = await validateFileContent(file, 'Metadata', { use_metadata_convention: false })
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('content:metadata:mismatched-id-label')
+    expect(errors[0][2]).toContain('Homo sapiens')
+    expect(errors[0][2]).toContain('species')
+  })
+
+  it('catches group columns with >200 unique labels', async () => {
+    const file = createMockFile({ fileName: 'metadata_drag_error.tsv' })
+    const { warnings } = await validateFileContent(file, 'Metadata', { use_metadata_convention: true })
+    expect(warnings).toHaveLength(2)
+    expect(warnings[0][1]).toEqual('content:group-col-over-200')
+    expect(warnings[0][2]).toContain('cell_type has over 200 unique values and so will not be visible in plots -- is this intended?')
+  })
+
   it('reports no error with good cluster CSV file', async () => {
     // Confirms no false positive due to comma-separated values
-    mockReadLinesAndType({ fileName: 'cluster_comma_delimited.csv' })
-    const { errors } = await validateFileContent({ name: 'c.txt' }, 'Cluster')
+    const file = createMockFile({ fileName: 'cluster_comma_delimited.csv' })
+    const { errors } = await validateFileContent(file, 'Cluster')
     expect(errors).toHaveLength(0)
   })
 
   it('catches gzipped file with txt extension', async () => {
-    mockReadLinesAndType({ content: '\x1F\x2E3lkjf3' })
-    const { errors } = await validateFileContent({ name: 'c.txt' }, 'Cluster')
+    const file = createMockFile({ fileName: 'foo.txt', content: '\x1F\x2E3lkjf3' })
+    const { errors } = await validateFileContent(file, 'Cluster')
     expect(errors).toHaveLength(1)
     expect(errors[0][1]).toEqual('encoding:missing-gz-extension')
   })
 
   it('catches text file with .gz suffix', async () => {
-    mockReadLinesAndType({ content: 'CELL\tX\tY' })
-    const { errors } = await validateFileContent({ name: 'c.txt.gz' }, 'Cluster')
+    const file = createMockFile({ fileName: 'foo.gz', content: 'CELL\tX\tY' })
+    const { errors } = await validateFileContent(file, 'Cluster')
     expect(errors).toHaveLength(1)
     expect(errors[0][1]).toEqual('encoding:invalid-gzip-magic-number')
   })
 
   it('passes valid gzip file', async () => {
     // Confirms no false positive due to gzip-related content
-    mockReadLinesAndType({ content: '\x1F\x2E3lkjf3' })
-    const { errors } = await validateFileContent({ name: 'c.txt.gz' }, 'Cluster')
+    const file = createMockFile({ fileName: 'foo.gz', content: '\x1F\x2E3lkjf3' })
+    const { errors } = await validateFileContent(file, 'Cluster')
     expect(errors).toHaveLength(0)
   })
 
   it('catches mismatched header counts', async () => {
-    mockReadLinesAndType({ fileName: 'header_count_mismatch.tsv' })
-    const { errors, summary } = await validateFileContent({ name: 'm.txt' }, 'Metadata')
+    const file = createMockFile({ fileName: 'header_count_mismatch.tsv', contentType: 'text/tab-separated-values' })
+    const { errors, summary } = await validateFileContent(file, 'Metadata')
     expect(errors).toHaveLength(1)
     expect(summary).toBe('Your file had 1 error')
   })
@@ -102,8 +158,8 @@ describe('Client-side file validation', () => {
   it('catches multiple header errors', async () => {
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_annotations.py#L112
-    mockReadLinesAndType({ fileName: 'error_headers_v2.0.0.tsv' })
-    const { errors, summary } = await validateFileContent({ name: 'm.txt' }, 'Metadata')
+    const file = createMockFile({ fileName: 'error_headers_v2.0.0.tsv' })
+    const { errors, summary } = await validateFileContent(file, 'Metadata')
     expect(errors).toHaveLength(3)
     expect(summary).toBe('Your file had 3 errors')
   })
@@ -113,8 +169,8 @@ describe('Client-side file validation', () => {
     //
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cluster.py#L9
-    mockReadLinesAndType({ fileName: 'cluster_bad_no_coordinates.txt' })
-    const { errors } = await validateFileContent({ name: 'c.txt' }, 'Cluster')
+    const file = createMockFile({ fileName: 'cluster_bad_no_coordinates.txt' })
+    const { errors } = await validateFileContent(file, 'Cluster')
     expect(errors).toHaveLength(1)
   })
 
@@ -123,8 +179,8 @@ describe('Client-side file validation', () => {
     //
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cluster.py#L21
-    mockReadLinesAndType({ fileName: 'cluster_example.txt' })
-    const { errors } = await validateFileContent({ name: 'c.txt' }, 'Cluster')
+    const file = createMockFile({ fileName: 'cluster_example.txt' })
+    const { errors } = await validateFileContent(file, 'Cluster')
     expect(errors).toHaveLength(0)
   })
 
@@ -133,8 +189,8 @@ describe('Client-side file validation', () => {
     //
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L17
-    mockReadLinesAndType({ fileName: 'metadata_bad_has_coordinates.txt' })
-    const { errors } = await validateFileContent({ name: 'm.txt' }, 'Metadata')
+    const file = createMockFile({ fileName: 'metadata_bad_has_coordinates.txt' })
+    const { errors } = await validateFileContent(file, 'Metadata')
     expect(errors).toHaveLength(1)
   })
 
@@ -143,8 +199,8 @@ describe('Client-side file validation', () => {
     //
     // eslint-disable-next-line max-len
     // Mirrors https://github.com/broadinstitute/scp-ingest-pipeline/blob/af1c124993f4a3e953debd5a594124f1ac52eee7/tests/test_cell_metadata.py#L31
-    mockReadLinesAndType({ fileName: 'metadata_good_v2-0-0.txt' })
-    const { errors } = await validateFileContent({ name: 'm.txt' }, 'Metadata')
+    const file = createMockFile({ fileName: 'metadata_good_v2-0-0.txt' })
+    const { errors } = await validateFileContent(file, 'Metadata')
     expect(errors).toHaveLength(0)
   })
 
