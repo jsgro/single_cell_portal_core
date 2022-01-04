@@ -27,13 +27,13 @@ export default function DownloadButton({ searchResults={} }) {
     (searchResults?.terms?.length > 0 || searchResults?.facets?.length > 0)
   )
 
-  const saveDisabled = !active
-  const saveButton = <button
-    style={{ 'pointerEvents': saveDisabled ? 'none' : 'auto' }}
+  const downloadDisabled = !active
+  const downloadButton = <button
+    style={{ 'pointerEvents': downloadDisabled ? 'none' : 'auto' }}
     type="button"
     id="download-button"
     className="btn btn-primary"
-    disabled={saveDisabled}
+    disabled={downloadDisabled}
     data-testid="file-save"
     onClick={() => {setShowModal(!showModal)}}>
     <span>
@@ -42,7 +42,7 @@ export default function DownloadButton({ searchResults={} }) {
   </button>
 
   let hint = 'Download files for your search results'
-  if (saveDisabled) {
+  if (downloadDisabled) {
     if (userContext.accessToken === '') {
       hint = 'To download, please sign in'
     } else {
@@ -52,7 +52,7 @@ export default function DownloadButton({ searchResults={} }) {
   return (
     <>
       <OverlayTrigger placement='top' overlay={<Tooltip id='download-tooltip'>{hint}</Tooltip>}>
-        <span style={{ 'marginLeft': 'auto' }} > {saveButton} </span>
+        <span style={{ 'marginLeft': 'auto' }} > {downloadButton} </span>
       </OverlayTrigger>
       { showModal &&
         <DownloadSelectionModal
