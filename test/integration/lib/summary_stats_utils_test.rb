@@ -1,15 +1,28 @@
-require "test_helper"
+require 'test_helper'
 
 class SummaryStatsUtilsTest < ActiveSupport::TestCase
-  include ::SelfCleaningSuite
-  include ::TestInstrumentor
+  include Minitest::Hooks
+  include SelfCleaningSuite
+  include TestInstrumentor
 
-  def setup
+  before(:all) do
     @now = DateTime.now
     @today = Time.zone.today
     @one_week_ago = @today - 1.week
     @one_month_ago = @today - 1.month
-    @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+    # create some users
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    FactoryBot.create(:user, test_array: @@users_to_clean)
+    FactoryBot.create(:api_user, test_array: @@users_to_clean)
+    # create testing study with file in the bucket
+    @study = FactoryBot.create(:study,
+                               name_prefix: 'SummaryStatsUtils Study',
+                               public: true,
+                               user: @user,
+                               test_array: @@studies_to_clean)
+    DirectoryListing.create!(name: 'csvs', file_type: 'csv', files: [{name: 'foo.csv', size: 100, generation: '12345'}],
+                             sync_status: true, study: @study)
+    TestStudyPopulator.add_files(@study, file_types: %w[cluster])
   end
 
   test 'should get user counts' do
@@ -28,8 +41,6 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
   end
 
   test 'should get analysis submission counts' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     # manually insert a submission to check
     AnalysisSubmission.create!(submitter: User.first.email, submission_id: SecureRandom.uuid, analysis_name: 'test-analysis',
                                submitted_on: @now, firecloud_project: FireCloudClient::PORTAL_NAMESPACE,
@@ -43,8 +54,6 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
 
     # clean up
     AnalysisSubmission.destroy_all
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should get study creation counts' do
@@ -58,16 +67,12 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
   end
 
   test 'should verify all remote files' do
-    # from db/seeds.rb, we should have at least one missing file from the DirectoryListing called "csvs"
-    # there is a file called 'foo.csv' that is never created or uploaded to the bucket
-    # this DirectoryListing belongs to the API Test Study from db/seeds.rb
-    api_study = Study.find_by(name: "API Test Study #{@random_seed}")
     files_missing = SummaryStatsUtils.storage_sanity_check
     missing_csv = files_missing.detect {|entry| entry[:filename] == 'foo.csv'}
-    reason = "File missing from bucket: #{api_study.bucket_id}"
+    reason = "File missing from bucket: #{@study.bucket_id}"
     assert missing_csv.present?, "Did not find expected missing file of 'foo.csv'"
-    assert missing_csv[:study] == api_study.name
-    assert missing_csv[:owner] == api_study.user.email
+    assert missing_csv[:study] == @study.name
+    assert missing_csv[:owner] == @study.user.email
     assert missing_csv[:reason] == reason
   end
 
