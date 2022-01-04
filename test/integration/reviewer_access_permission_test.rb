@@ -17,7 +17,6 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
                                test_array: @@studies_to_clean)
     detail = @study.build_study_detail
     detail.update(full_description: "<p>testing</p>")
-    TosAcceptance.create!(email: @user.email)
     @cookie_name = "reviewer_session_#{@study.accession}".to_sym
   end
 
