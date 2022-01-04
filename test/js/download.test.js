@@ -45,7 +45,7 @@ describe('Download components for faceted search', () => {
     wrapper.find('#download-button > span').simulate('mouseenter')
     const tooltipHint = wrapper.find('OverlayTrigger').prop('overlay').props['children']
 
-    expect(tooltipHint).toBe('To download, first do a search')
+    expect(tooltipHint).toBe('To download, first do a valid search')
   })
 
   it('is enabled and shows the modal for signed in users who perform a search', async () => {
