@@ -4,7 +4,7 @@ class AdminConfigurationTest < ActiveSupport::TestCase
   include Minitest::Hooks
   include TestInstrumentor
 
-  def setup
+  before(:all) do
     @client = FireCloudClient.new
   end
 
