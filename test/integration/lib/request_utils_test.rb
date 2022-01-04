@@ -1,6 +1,7 @@
-require "test_helper"
+require 'test_helper'
 
 class RequestUtilsTest < ActiveSupport::TestCase
+  include TestInstrumentor
 
   test 'should sanitize page inputs' do
     assert_equal(2, RequestUtils.sanitize_page_param(2))
