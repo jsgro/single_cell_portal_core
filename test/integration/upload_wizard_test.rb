@@ -14,7 +14,6 @@ class UploadWizardTest < ActionDispatch::IntegrationTest
                                public: false,
                                user: @user,
                                test_array: @@studies_to_clean)
-    TosAcceptance.create!(email: @user.email)
   end
 
   # ensures the upload wizard will render, regardless of the state of the study in terms of how many files have
@@ -72,6 +71,5 @@ class UploadWizardTest < ActionDispatch::IntegrationTest
     assert @study.expression_matrix_files.count == 2
     get initialize_study_path(@study.id)
     assert_response :success
-
   end
 end
