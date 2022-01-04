@@ -7,7 +7,6 @@ import KeywordSearch from './KeywordSearch'
 import FacetsPanel from './FacetsPanel'
 import DownloadButton from './download/DownloadButton'
 import { StudySearchContext } from 'providers/StudySearchProvider'
-import { UserContext } from 'providers/UserProvider'
 
 
 const publicStudies = window.SCP.studyStats.public
@@ -49,41 +48,12 @@ export default function SearchPanel({
   // could possibly also enable search for "Genes" and "Cells" tabs.
   const searchState = useContext(StudySearchContext)
   const [showSearchHelpModal, setShowSearchHelpModal] = useState(false)
-  const userContext = useContext(UserContext)
-
-  // const [hintmsg, setHintmsg] = useState('ijhg')
-  const matchingAccessions = searchState.results.matchingAccessions || []
-
-  const ac = (
-    userContext.accessToken !== '' &&
-    matchingAccessions.length > 0 &&
-    (searchState.results?.terms?.length > 0 || searchState.results?.facets?.length > 0)
-  )
-console.log('ac:', ac)
-
-const hintmsg = !ac ? 'To download, first do a valid search' : 'Download files for your search results'
-  //     setHintmsg ('To download, first do a valid search')
-  //   } else {
-  //     setHintmsg('Download files for your search results')
-  // }
-  
 
   let searchButtons = <></>
   let downloadButtons = <></>
 
-
-  /**
-   * Reports whether Download button should be active,
-   * i.e. user is signed in, has search results,
-   * and search has parameters (i.e. user would not download all studies)
-   * and download context (i.e. download size preview) has loaded
-   */
-
-
-
-
   searchButtons = <FacetsPanel/>
-  downloadButtons = <DownloadButton searchResults={searchState.results} active={ac} msg={hintmsg}/>
+  downloadButtons = <DownloadButton searchResults={searchState.results}/>
   const advancedOptsLink = <a className="action advanced-opts"
     onClick={() => setShowSearchHelpModal(true)}
     data-analytics-name="search-help">
