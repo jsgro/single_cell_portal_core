@@ -1,19 +1,33 @@
-import React, { useState, useContext } from 'react'
+import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDownload } from '@fortawesome/free-solid-svg-icons'
 
 import DownloadSelectionModal from './DownloadSelectionModal'
-import { UserContext } from 'providers/UserProvider'
-
+import { element } from 'prop-types'
+import Tooltip from 'react-bootstrap/lib/Tooltip'
+import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger'
 /**
  * Component for "Download" button which shows a Bulk Download modal on click.
  */
-export default function DownloadButton({ searchResults={} }) {
-  const userContext = useContext(UserContext)
+export default function DownloadButton({ searchResults={}, active, msg }) {
+
+  console.log('msg:', msg)
 
   const [showModal, setShowModal] = useState(false)
-
+  const [message, setMes] = useState(msg)
   const matchingAccessions = searchResults.matchingAccessions || []
+
+
+  // const [hintmsg, setHintmsg] = useState('ijhg')
+
+  // const isAc = () => {
+  //   if (!active) {
+  //     setHintmsg ('To download, first do a valid search')
+  //   } else {
+  //     setHintmsg('Download files for your search results')
+  // }
+  // }
+
 
   /**
    * Reports whether Download button should be active,
@@ -21,20 +35,13 @@ export default function DownloadButton({ searchResults={} }) {
    * and search has parameters (i.e. user would not download all studies)
    * and download context (i.e. download size preview) has loaded
    */
-  const active = (
-    userContext.accessToken !== '' &&
-    matchingAccessions.length > 0 &&
-    (searchResults?.terms?.length > 0 || searchResults?.facets?.length > 0)
-  )
+  // const active = (
+  //   userContext.accessToken !== '' &&
+  //   matchingAccessions.length > 0 &&
+  //   (searchResults?.terms?.length > 0 || searchResults?.facets?.length > 0)
+  // )
 
-  let hint = 'Download files for your search results'
-  if (!active) {
-    if (userContext.accessToken === '') {
-      hint = 'To download, please sign in'
-    } else {
-      hint = 'To download, first do a valid search'
-    }
-  }
+
 
   const saveDisabled = !active
   const saveButton = <button
@@ -51,9 +58,15 @@ Download
     </span>
   </button>
 
+  const t = <OverlayTrigger
+  placement='top'
+  overlay={<Tooltip id='download-tooltip'>{msg}</Tooltip>}>
+<span style={{ 'marginLeft': 'auto' }} > {saveButton} </span>
+</OverlayTrigger>
+
   return (
     <>
-      <span style={{ 'margin-left': 'auto' }} data-toggle="tooltip" title={hint}> {saveButton} </span>
+      {t}
       { showModal &&
         <DownloadSelectionModal
           show={showModal}
