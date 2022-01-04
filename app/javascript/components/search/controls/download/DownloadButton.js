@@ -1,19 +1,19 @@
 import React, { useState, useContext } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDownload } from '@fortawesome/free-solid-svg-icons'
-import { UserContext } from 'providers/UserProvider'
-
-
-import DownloadSelectionModal from './DownloadSelectionModal'
 import Tooltip from 'react-bootstrap/lib/Tooltip'
 import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger'
+
+import DownloadSelectionModal from './DownloadSelectionModal'
+import { UserContext } from 'providers/UserProvider'
+
 /**
  * Component for "Download" button which shows a Bulk Download modal on click.
  */
 export default function DownloadButton({ searchResults={} }) {
+  const userContext = useContext(UserContext)
   const [showModal, setShowModal] = useState(false)
   const matchingAccessions = searchResults.matchingAccessions || []
-  const userContext = useContext(UserContext)
 
   /**
    * Reports whether Download button should be active,
