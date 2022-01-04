@@ -1,15 +1,26 @@
-require "integration_test_helper"
+require 'integration_test_helper'
 require 'big_query_helper'
+require 'test_helper'
 
 class StudyCreationTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
+  include Minitest::Hooks
+  include SelfCleaningSuite
+  include TestInstrumentor
+
+  before(:all) do
+    @user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    @sharing_user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    @random_seed = SecureRandom.uuid
+  end
+
+  after(:all) do
+    Study.find_by(name: "Test Study #{@random_seed}")&.destroy_and_remove_workspace
+  end
 
   setup do
-    @test_user = User.find_by(email: 'testing.user@gmail.com')
-    @sharing_user = User.find_by(email: 'sharing.user@gmail.com')
-    auth_as_user(@test_user)
-    sign_in @test_user
-    @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+    auth_as_user @user
+    sign_in @user
   end
 
   teardown do
@@ -17,19 +28,17 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
   end
 
   test 'create default testing study' do
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
     study_params = {
-        study: {
-            name: "Test Study #{@random_seed}",
-            user_id: @test_user.id,
-            study_shares_attributes: {
-                "0" => {
-                    email: @sharing_user.email,
-                    permission: 'Edit'
-              }
-            }
+      study: {
+        name: "Test Study #{@random_seed}",
+        user_id: @user.id,
+        study_shares_attributes: {
+          "0" => {
+            email: @sharing_user.email,
+            permission: 'Edit'
+          }
         }
+      }
     }
     post studies_path, params: study_params
     follow_redirect!
@@ -55,10 +64,11 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     ## upload files
 
     # expression matrix #1
-    file_params = {study_file: {file_type: 'Expression Matrix', study_id: study.id.to_s}}
+    file_params = { study_file: { file_type: 'Expression Matrix', study_id: study.id.to_s } }
     perform_study_file_upload(example_files[:expression][:name], file_params, study.id)
     assert_response 200, "Expression matrix upload failed: #{@response.code}"
-    assert_equal 1, study.expression_matrix_files.size, "Expression matrix failed to associate, found #{study.expression_matrix_files.size} files"
+    assert_equal 1, study.expression_matrix_files.size,
+                 "Expression matrix failed to associate, found #{study.expression_matrix_files.size} files"
     example_files[:expression][:object] = study.expression_matrix_files.first
 
     # metadata file
@@ -66,13 +76,15 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     perform_study_file_upload(example_files[:metadata][:path], file_params, study.id)
     assert_response 200, "Metadata upload failed: #{@response.code}"
     example_files[:metadata][:object] = study.metadata_file
-    assert example_files[:metadata][:object].present?, "Metadata failed to associate, found no file: #{example_files[:metadata][:object].present?}"
+    assert example_files[:metadata][:object].present?,
+           "Metadata failed to associate, found no file: #{example_files[:metadata][:object].present?}"
 
     # first cluster
     file_params = {study_file: { name: 'Test Cluster 1', file_type: 'Cluster', study_id: study.id.to_s } }
     perform_study_file_upload(example_files[:cluster][:name], file_params, study.id)
     assert_response 200, "Cluster 1 upload failed: #{@response.code}"
-    assert_equal 1, study.cluster_ordinations_files.size, "Cluster 1 failed to associate, found #{study.cluster_ordinations_files.size} files"
+    assert_equal 1, study.cluster_ordinations_files.size,
+                 "Cluster 1 failed to associate, found #{study.cluster_ordinations_files.size} files"
     example_files[:cluster][:object] = study.cluster_ordinations_files.first
 
     ## request parse
@@ -129,20 +141,16 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     # check that the cluster_group set the point count
     cluster_group = study.cluster_groups.first
     assert_equal 30, cluster_group.points
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   # new studies in PORTAL_NAMESPACE should have workspace owners set to SA owner group, not SA directly
   test 'should assign service account owner group as workspace owner' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     study_name = "Workspace Owner #{@random_seed}"
     study_params = {
-        study: {
-            name: study_name,
-            user_id: @test_user.id
-        }
+      study: {
+        name: study_name,
+        user_id: @user.id
+      }
     }
     post studies_path, params: study_params
     follow_redirect!
@@ -157,7 +165,5 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     # clean up
     ApplicationController.firecloud_client.delete_workspace(study.firecloud_project, study.firecloud_workspace)
     study.destroy
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end
