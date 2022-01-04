@@ -1,7 +1,7 @@
-require "integration_test_helper"
+require 'test_helper'
 
 class SearchFacetPopulatorTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
+  include TestInstrumentor
 
   teardown do
     # repopulate organism_age facet
