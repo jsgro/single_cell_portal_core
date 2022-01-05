@@ -30,7 +30,7 @@ describe('Download button for faceted search', () => {
     expect(screen.getByRole('button')).toHaveTextContent('Download')
     expect(screen.getByRole('button')).toBeDisabled()
     fireEvent.mouseOver(screen.getByText('Download'))
-    expect(screen.getByRole('tooltip')).toHaveTextContent('To download, first do a valid search')
+    expect(screen.getByRole('tooltip')).toHaveTextContent('To download, first do a search that returns results')
   })
 
   it('is enabled and shows the modal for signed in users who perform a search', async () => {
