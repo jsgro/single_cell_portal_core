@@ -505,7 +505,7 @@ class StudiesController < ApplicationController
         file_type = study_file.file_type
         # ignore if this is the parent file
         unless file_type == study_file_bundle.bundle_type
-          study_file_bundle.add_files_to_study(study_file)
+          study_file_bundle.add_files(study_file)
         end
       end
       render json: { file: { name: study_file.upload_file_name,size: upload.size } } and return
@@ -887,14 +887,14 @@ class StudiesController < ApplicationController
         @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, @study_file)
         index_file = @study.study_files.find_by('options.bam_id' => @study_file.id.to_s)
         if index_file.present?
-          @study_file_bundle.add_files_to_study(index_file)
+          @study_file_bundle.add_files(index_file)
         end
       elsif @study_file.file_type == 'BAM Index'
         # add this index to the study_file_bundle, which should already be present
         bam_file = @study.study_files.find_by(id: @study_file.options[:bam_id])
         @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, bam_file)
         if @study_file_bundle.bundled_files.detect {|f| f.upload_file_name == @study_file.upload_file_name}.nil?
-          @study_file_bundle.add_files_to_study(@study_file)
+          @study_file_bundle.add_files(@study_file)
         end
         @target = "#study-file-#{@study_file.options[:bam_id]}"
       end
@@ -935,14 +935,14 @@ class StudiesController < ApplicationController
         @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, @study_file)
         index_file = @study.study_files.find_by('options.bam_id' => @study_file.id.to_s)
         if index_file.present?
-          @study_file_bundle.add_files_to_study(index_file)
+          @study_file_bundle.add_files(index_file)
         end
       elsif @study_file.file_type == 'BAM Index'
         # add this index to the study_file_bundle, which should already be present
         bam_file = @study.study_files.find_by(id: @study_file.options[:bam_id])
         @study_file_bundle = StudyFileBundle.initialize_from_parent(@study, bam_file)
         if @study_file_bundle.bundled_files.detect {|f| f.upload_file_name == @study_file.upload_file_name}.nil?
-          @study_file_bundle.add_files_to_study(@study_file)
+          @study_file_bundle.add_files(@study_file)
         end
       end
 
