@@ -11,7 +11,35 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
 
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
-    @admin_user =  FactoryBot.create(:api_user, admin: true, test_array: @@users_to_clean)
+    @admin_user = FactoryBot.create(:admin_user, admin: true, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:detached_study,
+                               name_prefix: 'ReportsController Study',
+                               public: true,
+                               user: @user,
+                               test_array: @@studies_to_clean)
+
+    FactoryBot.create(:cluster_file,
+                      name: 'clusterA.txt',
+                      study: @study,
+                      cell_input: {
+                        x: [1, 4, 6],
+                        y: [7, 5, 3],
+                        cells: %w[A B C]
+                      },
+                      annotation_input: [{ name: 'foo', type: 'group', values: %w[bar bar baz] }])
+
+    FactoryBot.create(:metadata_file,
+                      name: 'metadata.txt',
+                      study: @study,
+                      cell_input: %w[A B C],
+                      annotation_input: [
+                        { name: 'species', type: 'group', values: %w[dog cat dog] },
+                        { name: 'disease', type: 'group', values: %w[none none measles] }
+                      ])
+    FactoryBot.create(:study_file,
+                      name: 'dense.txt',
+                      file_type: 'Expression Matrix',
+                      study: @study)
   end
 
   teardown do
