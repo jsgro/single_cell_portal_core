@@ -1,28 +1,75 @@
 require 'test_helper'
 
 class SearchFacetTest < ActiveSupport::TestCase
-
   include Minitest::Hooks
   include SelfCleaningSuite
   include TestInstrumentor
 
-  after(:all) do
-    FeatureFlag.find_by(name: 'cross_dataset_search_backend')&.destroy
-  end
-
-  def setup
-    @search_facet = SearchFacet.find_by(identifier: 'species')
+  before(:all) do
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:study,
+                               name_prefix: 'SearchFacet Study',
+                               public: true,
+                               user: @user,
+                               test_array: @@studies_to_clean)
+    @search_facet = SearchFacet.create!(name: 'Species', identifier: 'species',
+                                        filters: [
+                                          { id: 'NCBITaxon_9606', name: 'Homo sapiens' }
+                                        ],
+                                        public_filters: [
+                                          { id: 'NCBITaxon_9606', name: 'Homo sapiens' }
+                                        ],
+                                        ontology_urls: [
+                                          {
+                                            name: 'NCBI organismal classification',
+                                            url: 'https://www.ebi.ac.uk/ols/api/ontologies/ncbitaxon',
+                                            browser_url: nil
+                                          }
+                                        ],
+                                        data_type: 'string', is_ontology_based: true, is_array_based: false,
+                                        big_query_id_column: 'species', big_query_name_column: 'species__ontology_label',
+                                        convention_name: 'Alexandria Metadata Convention', convention_version: '2.2.0')
+    SearchFacet.create!(name: 'Disease', identifier: 'disease',
+                        filters: [
+                          { id: 'MONDO_0000001', name: 'disease or disorder' }
+                        ],
+                        public_filters: [
+                          { id: 'MONDO_0000001', name: 'disease or disorder' }
+                        ],
+                        ontology_urls: [
+                          {
+                            name: 'Monarch Disease Ontology',
+                            url: 'https://www.ebi.ac.uk/ols/api/ontologies/mondo',
+                            browser_url: nil
+                          }, {
+                            name: 'Phenotype And Trait Ontology',
+                            url: 'https://www.ebi.ac.uk/ols/ontologies/pato',
+                            browser_url: nil
+                          }
+                        ],
+                        data_type: 'string', is_ontology_based: true, is_array_based: true, big_query_id_column: 'disease',
+                        big_query_name_column: 'disease__ontology_label', convention_name: 'Alexandria Metadata Convention',
+                        convention_version: '2.2.0')
+    SearchFacet.create!(name: 'Organism Age', identifier: 'organism_age', big_query_id_column: 'organism_age',
+                        big_query_name_column: 'organism_age', big_query_conversion_column: 'organism_age__seconds',
+                        is_ontology_based: false, data_type: 'number', is_array_based: false,
+                        convention_name: 'Alexandria Metadata Convention', convention_version: '2.2.0', unit: 'years')
 
     # filter_results to return from mock call to BigQuery
     @filter_results = [
-        { id: 'NCBITaxon_9606', name: 'Homo sapiens' },
-        { id: 'NCBITaxon_10090', name: 'Mus musculus' }
+      { id: 'NCBITaxon_9606', name: 'Homo sapiens' },
+      { id: 'NCBITaxon_10090', name: 'Mus musculus' }
     ]
 
     # mock schema for number_of_reads column in BigQuery
-    @column_schema = [{column_name: 'number_of_reads', data_type: 'FLOAT64', is_nullable: 'YES'}]
+    @column_schema = [{ column_name: 'number_of_reads', data_type: 'FLOAT64', is_nullable: 'YES' }]
     # mock minmax query for organism_age query
-    @minmax_results = [{MIN: rand(10) + 1, MAX: rand(100) + 10}]
+    @minmax_results = [{ MIN: rand(10) + 1, MAX: rand(100) + 10 }]
+  end
+
+  after(:all) do
+    FeatureFlag.destroy_all
+    SearchFacet.destroy_all
   end
 
   # should return expected filters list
@@ -90,13 +137,13 @@ class SearchFacetTest < ActiveSupport::TestCase
 
     SearchFacet.stub :big_query_dataset, mock do
       reads_facet = SearchFacet.create(
-          name: 'Number of Reads',
-          identifier: 'number_of_reads',
-          big_query_id_column: 'number_of_reads',
-          big_query_name_column: 'number_of_reads',
-          is_ontology_based: false,
-          convention_name: 'Alexandria Metadata Convention',
-          convention_version: '1.1.3'
+        name: 'Number of Reads',
+        identifier: 'number_of_reads',
+        big_query_id_column: 'number_of_reads',
+        big_query_name_column: 'number_of_reads',
+        is_ontology_based: false,
+        convention_name: 'Alexandria Metadata Convention',
+        convention_version: '1.1.3'
       )
       mock.verify
       assert_equal 'number', reads_facet.data_type,
@@ -131,9 +178,9 @@ class SearchFacetTest < ActiveSupport::TestCase
   test 'should convert time values between units' do
     age_facet = SearchFacet.find_by(identifier: 'organism_age')
     times = {
-        hours: 336,
-        days: 14,
-        weeks: 2
+      hours: 336,
+      days: 14,
+      weeks: 2
     }
     convert_between = times.keys.reverse # [weeks, days, hours]
     # convert hours to weeks, days to days (should return without conversion), and weeks to hours
