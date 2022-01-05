@@ -28,8 +28,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
                                public: true,
                                user: @user,
                                test_array: @@studies_to_clean)
-    metadata_file = FactoryBot.create(:metadata_file, name: 'metadata.txt', study: @study, use_metadata_convention: true)
-    seed_bq(@study, metadata_file)
+    FactoryBot.create(:metadata_file, name: 'metadata.txt', study: @study, use_metadata_convention: true)
+    seed_example_bq_data(@study)
     FactoryBot.create(:cluster_file, name: 'cluster_example.txt', study: @study)
     @other_study = FactoryBot.create(:detached_study,
                                      name_prefix: "API Test Study #{@random_seed}",
@@ -44,7 +44,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     @preset_search = PresetSearch.create!(name: 'Test Search', search_terms: ["Testing Study"],
                                           facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'],
                                           accession_list: [@study.accession])
-    TestDataPopulator.create_search_facets
+    TestDataPopulator.create_sample_search_facets
   end
 
   setup do

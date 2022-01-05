@@ -19,8 +19,8 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
                                name_prefix: 'BulkDownload Study',
                                public: true,
                                user: @user,
-                               test_array: @@studies_to_clean)
-    TestDataPopulator.add_files_to_study(@study)
+                               test_array: @@studies_to_clean,
+                               predefined_file_types: %w[cluster metadata expression])
   end
 
   setup do
@@ -253,7 +253,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     metadata_file.reload
     study.send_to_firecloud(metadata_file)
 
-    seed_bq(study, metadata_file)
+    seed_example_bq_data(study)
 
     # ensure data is in BQ
     initial_bq_row_count = get_bq_row_count(study)

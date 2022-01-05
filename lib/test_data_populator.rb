@@ -51,7 +51,7 @@ class TestDataPopulator
   end
 
   # clears out any existing search facets and re-creates defaults of species, disease, and organism_age
-  def self.create_search_facets
+  def self.create_sample_search_facets
     SearchFacet.destroy_all
     SearchFacet.create!(name: 'Species', identifier: 'species',
                         filters: [

@@ -19,10 +19,10 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
                                name_prefix: 'SummaryStatsUtils Study',
                                public: true,
                                user: @user,
-                               test_array: @@studies_to_clean)
+                               test_array: @@studies_to_clean,
+                               predefined_file_types: %w[cluster])
     DirectoryListing.create!(name: 'csvs', file_type: 'csv', files: [{name: 'foo.csv', size: 100, generation: '12345'}],
                              sync_status: true, study: @study)
-    TestDataPopulator.add_files_to_study(@study, file_types: %w[cluster])
   end
 
   test 'should get user counts' do

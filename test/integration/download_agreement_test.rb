@@ -15,13 +15,12 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
                                name_prefix: 'Download Agreement Study',
                                public: true,
                                user: @user,
-                               test_array: @@studies_to_clean)
+                               test_array: @@studies_to_clean,
+                               predefined_file_types: %w[expression])
     detail = @study.build_study_detail
     detail.full_description = '<p>This is the description.</p>'
     detail.save!
-
-    # add cluster file to FactoryBot study
-    TestDataPopulator.add_files_to_study(@study, file_types: %w[expression])
+    @study.reload
     @exp_matrix = @study.expression_matrix_files.first
     sign_in_and_update @user
   end

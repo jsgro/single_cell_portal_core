@@ -12,7 +12,7 @@ class SearchFacetTest < ActiveSupport::TestCase
                                public: true,
                                user: @user,
                                test_array: @@studies_to_clean)
-    TestDataPopulator.create_search_facets
+    TestDataPopulator.create_sample_search_facets
     @search_facet = SearchFacet.find_by(identifier: 'species')
     @search_facet.update_filter_values!
 

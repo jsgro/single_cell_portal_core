@@ -15,7 +15,7 @@ class PresetSearchTest < ActiveSupport::TestCase
     @preset_search = PresetSearch.create!(name: 'Test Search', search_terms: ["Testing Study"],
                                           facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'],
                                           accession_list: [@study.accession])
-    TestDataPopulator.create_search_facets
+    TestDataPopulator.create_sample_search_facets
     @species_facet = SearchFacet.find_by(identifier: 'species')
     @disease_facet = SearchFacet.find_by(identifier: 'disease')
     @species_facet.update_filter_values!

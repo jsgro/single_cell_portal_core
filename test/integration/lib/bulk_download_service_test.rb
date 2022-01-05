@@ -13,8 +13,8 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
                                name_prefix: 'BulkDownload Study',
                                public: true,
                                user: @user,
-                               test_array: @@studies_to_clean)
-    TestDataPopulator.add_files_to_study(@study)
+                               test_array: @@studies_to_clean,
+                               predefined_file_types: %w[cluster metadata expression])
     DirectoryListing.create!(name: 'fastq', file_type: 'fastq',
                              files: [
                                { name: '1_L1_001.fastq', size: 100, generation: '12345' },

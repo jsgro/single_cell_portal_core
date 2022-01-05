@@ -14,13 +14,11 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
                                name_prefix: 'Site Controller Study',
                                public: true,
                                user: @user,
-                               test_array: @@studies_to_clean)
+                               test_array: @@studies_to_clean,
+                               predefined_file_types: %w[cluster metadata])
     detail = @study.build_study_detail
     detail.full_description = '<p>This is the description.</p>'
     detail.save!
-
-    # add cluster file to FactoryBot study
-    TestDataPopulator.add_files_to_study(@study, file_types: %w[cluster metadata])
   end
 
   def setup

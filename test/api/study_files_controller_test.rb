@@ -17,9 +17,8 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
                                name_prefix: 'StudyFile Study',
                                public: true,
                                user: @user,
-                               test_array: @@studies_to_clean)
-    # add cluster file to FactoryBot study
-    TestDataPopulator.add_files_to_study(@study, file_types: %w[cluster])
+                               test_array: @@studies_to_clean,
+                               predefined_file_types: %w[cluster])
     @study_file = @study.study_files.first
   end
 

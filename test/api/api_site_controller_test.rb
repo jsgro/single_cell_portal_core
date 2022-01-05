@@ -17,10 +17,8 @@ class ApiSiteControllerTest < ActionDispatch::IntegrationTest
                                name_prefix: 'API Site Controller Study',
                                public: true,
                                user: @user,
-                               test_array: @@studies_to_clean)
-
-    # add cluster file to FactoryBot study
-    TestDataPopulator.add_files_to_study(@study, file_types: %w[cluster])
+                               test_array: @@studies_to_clean,
+                               predefined_file_types: %w[cluster])
 
     StudyShare.create!(email: 'fake.email@gmail.com', permission: 'Reviewer', study: @study)
     StudyFile.create(study: @study, name: 'SRA Study for housing fastq data', description: 'SRA Study for housing fastq data',
