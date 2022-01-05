@@ -1,10 +1,15 @@
-require "test_helper"
+require 'test_helper'
 
 class SyntheticBrandingGroupPopulatorTest < ActiveSupport::TestCase
+  include Minitest::Hooks
+  include SelfCleaningSuite
+  include TestInstrumentor
+
+  before(:all) do
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+  end
 
   test 'should populate synthetic branding groups' do
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     branding_group_count = BrandingGroup.count
 
     # populate all synthetic groups
@@ -31,7 +36,5 @@ class SyntheticBrandingGroupPopulatorTest < ActiveSupport::TestCase
     final_count = BrandingGroup.count
     assert_equal branding_group_count, final_count,
                  "Did not remove synthetic branding groups; expected #{branding_group_count} but found #{final_count}"
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 end
