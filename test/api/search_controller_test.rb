@@ -2,6 +2,7 @@ require 'api_test_helper'
 require 'user_tokens_helper'
 require 'bulk_download_helper'
 require 'test_helper'
+require 'big_query_helper'
 
 class SearchControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
@@ -9,38 +10,62 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   include Requests::HttpHelpers
   include Minitest::Hooks
   include ::TestInstrumentor
+  include ::SelfCleaningSuite
 
-  HOMO_SAPIENS_FILTER = { id: 'NCBITaxon_9606', name: 'Homo sapiens' }
-  NO_DISEASE_FILTER = { id: 'MONDO_0000001', name: 'disease or disorder' }
+  HOMO_SAPIENS_FILTER = { id: 'NCBITaxon_9606', name: 'Homo sapiens' }.freeze
+  NO_DISEASE_FILTER = { id: 'MONDO_0000001', name: 'disease or disorder' }.freeze
 
   # shorthand accessors
   FACET_DELIM = Api::V1::SearchController::FACET_DELIMITER
   FILTER_DELIM = Api::V1::SearchController::FILTER_DELIMITER
 
-  setup do
-    @user = User.find_by(email: 'testing.user.2@gmail.com')
-    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
-                                                                           :provider => 'google_oauth2',
-                                                                           :uid => '123545',
-                                                                           :email => 'testing.user@gmail.com'
-                                                                       })
-    sign_in @user
-    @user.update_last_access_at!
-    @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+  before(:all) do
+    @random_seed = SecureRandom.uuid
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    @other_user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:detached_study,
+                               name_prefix: "Search Testing Study #{@random_seed}",
+                               public: true,
+                               user: @user,
+                               test_array: @@studies_to_clean)
+    metadata_file = FactoryBot.create(:metadata_file, name: 'metadata.txt', study: @study, use_metadata_convention: true)
+    seed_bq(@study, metadata_file)
+    FactoryBot.create(:cluster_file, name: 'cluster_example.txt', study: @study)
+    @other_study = FactoryBot.create(:detached_study,
+                                     name_prefix: "API Test Study #{@random_seed}",
+                                     public: true,
+                                     user: @other_user,
+                                     test_array: @@studies_to_clean)
+    [@study, @other_study].each do |study|
+      detail = study.build_study_detail
+      detail.full_description = '<p>This is the description.</p>'
+      detail.save!
+    end
+    @preset_search = PresetSearch.create!(name: 'Test Search', search_terms: ["Testing Study"],
+                                          facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'],
+                                          accession_list: [@study.accession])
+    TestDataPopulator.create_search_facets
+  end
 
-    @convention_accessions = StudyFile.where(file_type: 'Metadata', use_metadata_convention: true).map {|f| f.study.accession}.flatten
+  setup do
+    sign_in_and_update @user
+    @convention_accessions = StudyFile.where(file_type: 'Metadata', use_metadata_convention: true)
+                                      .map { |f| f.study.accession }.flatten
   end
 
   # reset known commonly used objects to initial states to prevent failures breaking other tests
   teardown do
     OmniAuth.config.mock_auth[:google_oauth2] = nil
     reset_user_tokens
-    api_study = Study.find_by(name: /API/)
-    api_study.update!(description: '', public: true)
+    @other_study.study_detail.update!(full_description: '')
+    @other_study.update(public: true)
   end
 
   after(:all) do
     BrandingGroup.destroy_all
+    SearchFacet.destroy_all
+    PresetSearch.destroy_all
+    BigQueryClient.clear_bq_table
   end
 
   test 'should get all search facets' do
@@ -108,9 +133,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'should return search results using facets' do
-    study = Study.find_by(name: "Testing Study #{@random_seed}")
-    other_matches = Study.viewable(@user).any_of({description: /#{HOMO_SAPIENS_FILTER[:name]}/},
-                                 {description: /#{NO_DISEASE_FILTER[:name]}/}).pluck(:accession)
+    other_matches = Study.viewable(@user).any_of({ description: /#{HOMO_SAPIENS_FILTER[:name]}/ },
+                                                 { description: /#{NO_DISEASE_FILTER[:name]}/ }).pluck(:accession)
     # find all human studies from metadata
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}#{FACET_DELIM}disease:#{NO_DISEASE_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
@@ -123,7 +147,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_equal study_count, expected_accessions.size,
                  "Did not find correct number of studies, expected #{expected_accessions.size} but found #{study_count}"
     result_accession = json['studies'].first['accession']
-    assert_equal result_accession, study.accession, "Did not find correct study; expected #{study.accession} but found #{result_accession}"
+    assert_equal result_accession, @study.accession, "Did not find correct study; expected #{@study.accession} but found #{result_accession}"
     matched_facets = json['studies'].first['facet_matches'].keys.sort
     matched_facets.delete_if {|facet| facet == 'facet_search_weight'} # remove search weight as it is not relevant
 
@@ -159,10 +183,10 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_equal @random_seed, json['studies'].first['term_matches'].first
 
     # test exact phrase
-    search_phrase = "\"API Test Study\""
+    search_phrase = '"API Test Study"'
     execute_http_request(:get, api_v1_search_path(type: 'study', terms: search_phrase))
     assert_response :success
-    quoted_accessions = Study.where(name: "API Test Study #{@random_seed}").pluck(:accession)
+    quoted_accessions = [@other_study.accession]
     found_accessions = json['matching_accessions'] # no need to sort as there should only be one result
     assert_equal quoted_accessions, found_accessions,
                  "Did not return correct array of matching accessions, expected #{quoted_accessions} but found #{found_accessions}"
@@ -170,16 +194,16 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_equal search_phrase.gsub(/\"/, ''), json['studies'].first['term_matches'].first
 
     # test combination
-    search_phrase += " testing"
+    search_phrase += ' testing'
     execute_http_request(:get, api_v1_search_path(type: 'study', terms: search_phrase))
     assert_response :success
-    mixed_accessions = Study.any_of({name: "API Test Study #{@random_seed}"},
-                                       {name: /testing/i}).pluck(:accession).sort
+    mixed_accessions = Study.any_of({ name: /API Test Study #{@random_seed}/ },
+                                    { name: /testing/i }).pluck(:accession).sort
     found_mixed_accessions = json['matching_accessions'].sort
     assert_equal mixed_accessions, found_mixed_accessions,
-                 "Did not return correct array of matching accessions, expected #{found_mixed_accessions} but found #{mixed_accessions}"
-    assert_equal "testing", json['studies'].first['term_matches'].first
-    assert_equal "API Test Study", json['studies'].last['term_matches'].first
+                 "Did not return correct array of matching accessions, expected #{mixed_accessions} but found #{found_mixed_accessions}"
+    assert_equal 'testing', json['studies'].first['term_matches'].first
+    assert_equal 'API Test Study', json['studies'].last['term_matches'].first
 
     # test regex escaping
     execute_http_request(:get, api_v1_search_path(type: 'study', terms: 'foobar scp-105 [('))
@@ -198,9 +222,8 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
   test 'should filter search results by branding group' do
     # add study to branding group and search - should get 1 result
-    study = Study.find_by(name: "Testing Study #{@random_seed}")
     branding_group = FactoryBot.create(:branding_group, user_list: [@user])
-    study.update(branding_group_ids: [branding_group.id])
+    @study.update(branding_group_ids: [branding_group.id])
 
     query_parameters = {type: 'study', terms: @random_seed, scpbr: branding_group.name_as_id}
     execute_http_request(:get, api_v1_search_path(query_parameters))
@@ -212,16 +235,14 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
            "Did not append branding group identifier to end of study URL: #{found_study['study_url']}"
 
     # remove study from group and search again - should get 0 results
-    study.update(branding_group_ids: [])
+    @study.update(branding_group_ids: [])
     execute_http_request(:get, api_v1_search_path(query_parameters))
     assert_response :success
     assert_empty json['studies'], "Did not find correct number of studies, expected 0 but found #{json['studies'].size}"
   end
 
   test 'should run inferred search using facets' do
-    other_study = Study.find_by(name: "API Test Study #{@random_seed}")
-    original_description = other_study.description.to_s.dup
-    other_study.update(description: '')
+    @other_study.study_detail.update(full_description: '')
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
@@ -231,27 +252,22 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
     # now update non-convention study to include a filter display value in its description
     # this should be picked up by the "inferred" search
-    other_study.update(description: HOMO_SAPIENS_FILTER[:name])
+    @other_study.study_detail.update(full_description: HOMO_SAPIENS_FILTER[:name])
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    inferred_accessions = expected_accessions + [other_study.accession]
+    inferred_accessions = expected_accessions + [@other_study.accession]
     assert_equal inferred_accessions, json['matching_accessions'],
                  "Did not find expected accessions after inferred search, expected #{inferred_accessions} but found #{json['matching_accessions']}"
     inferred_study = json['studies'].last # inferred matches should be at the end
     assert inferred_study['inferred_match'],
            "Did not mark last search results as inferred_match: #{inferred_study['inferred_match']} != true"
-
-    # reset description so other tests aren't broken
-    other_study.update(description: original_description)
   end
 
   test 'should run inferred search using facets and phrase' do
-    other_study = Study.find_by(name: "API Test Study #{@random_seed}")
-    original_description = other_study.description.to_s.dup
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
-    other_study.update(description: HOMO_SAPIENS_FILTER[:name])
+    @other_study.study_detail.update(full_description: HOMO_SAPIENS_FILTER[:name])
     search_phrase = "Study #{@random_seed}"
-    expected_accessions = (@convention_accessions + [other_study.accession]).uniq
+    expected_accessions = (@convention_accessions + [@other_study.accession]).uniq
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query, terms: "\"#{search_phrase}\""))
     assert_response :success
     found_accessions = json['matching_accessions']
@@ -269,16 +285,12 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
       assert_includes study['term_matches'], search_phrase,
                       "Did not find #{search_phrase} in term_matches for #{study['accession']}: #{study['term_matches']}"
     end
-    # reset description so other tests aren't broken
-    other_study.update(description: original_description)
   end
 
   test 'should find intersection of facets on inferred search' do
     # update other_study to match one filter from facets; should not be inferred since it doesn't meet both criteria
-    other_study = Study.find_by(name: "API Test Study #{@random_seed}")
-    original_description = other_study.description.to_s.dup
     facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}#{FACET_DELIM}disease:#{NO_DISEASE_FILTER[:id]}"
-    other_study.update(description: HOMO_SAPIENS_FILTER[:name])
+    @other_study.study_detail.update(full_description: HOMO_SAPIENS_FILTER[:name])
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
     assert_equal @convention_accessions, json['matching_accessions'],
@@ -286,24 +298,23 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
     # update to match both filters; should be inferred
     double_facet_name = "#{HOMO_SAPIENS_FILTER[:name]} #{NO_DISEASE_FILTER[:name]}"
-    other_study.update(description: double_facet_name)
+    @other_study.study_detail.update(full_description: double_facet_name)
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
-    inferred_accessions = @convention_accessions + [other_study.accession]
+    inferred_accessions = @convention_accessions + [@other_study.accession]
     assert_equal inferred_accessions, json['matching_accessions'],
                  "Did not find expected accessions after inferred search, expected #{inferred_accessions} but found #{json['matching_accessions']}"
     inferred_study = json['studies'].last
-    assert inferred_study['inferred_match'], "Did not correctly mark #{other_study.accession} as inferred"
-    other_study.update(description: original_description)
+    assert inferred_study['inferred_match'], "Did not correctly mark #{@other_study.accession} as inferred"
   end
 
   test 'should run preset search' do
     # run accession list only search
-    @preset_search = PresetSearch.create!(name: 'Preset Search Test', accession_list: %w(SCP1))
+    @preset_search = PresetSearch.create!(name: 'Preset Search Test', accession_list: [@study.accession])
     permitted_study = Study.first
     execute_http_request(:get, api_v1_search_path(type: 'study', preset_search: @preset_search.identifier))
     assert_response :success
-    permitted_accessions = %w(SCP1)
+    permitted_accessions = [@study.accession]
     assert json['matching_accessions'] == permitted_accessions,
            "Did not return correct permitted studies for preset search; expected #{permitted_accessions} but found #{json['matching_accessions']}"
     found_preset = json['studies'].first
@@ -356,7 +367,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     @user.update(api_access_token: valid_token)
   end
 
-  test "should construct query elements for facets" do
+  test 'should construct query elements for facets' do
     non_array_facet = {
       id: 'species',
       filters: [
