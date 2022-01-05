@@ -7619,9 +7619,9 @@ identity-obj-proxy@3.0.0:
   dependencies:
     harmony-reflect "^1.4.6"
 
-"ideogram@git://github.com/eweitz/ideogram.git#9a3b629d7a6a30616050374a7a3833aa7e93f7f5":
+"ideogram@git://github.com/eweitz/ideogram.git#c17629c5b22c65c5f37b0836f8af7b5fdc61d777":
   version "1.32.0"
-  resolved "git://github.com/eweitz/ideogram.git#9a3b629d7a6a30616050374a7a3833aa7e93f7f5"
+  resolved "git://github.com/eweitz/ideogram.git#c17629c5b22c65c5f37b0836f8af7b5fdc61d777"
   dependencies:
     crossfilter2 "1.5.2"
     d3-array "^2.8.0"
