@@ -2,14 +2,10 @@ require 'test_helper'
 
 class SearchFacetPopulatorTest < ActionDispatch::IntegrationTest
   include TestInstrumentor
+  include Minitest::Hooks
 
-  teardown do
-    # repopulate organism_age facet
-    facet = SearchFacet.create!(name: 'Organism Age', identifier: 'organism_age', big_query_id_column: 'organism_age', big_query_name_column: 'organism_age',
-                        big_query_conversion_column: 'organism_age__seconds', is_ontology_based: false, data_type: 'number',
-                        is_array_based: false, convention_name: 'Alexandria Metadata Convention', convention_version: '2.2.0',
-                        unit: 'years')
-    facet.update_filter_values!
+  after(:all) do
+    SearchFacet.destroy_all
   end
 
   test 'populate facets from alexandria convention data' do
