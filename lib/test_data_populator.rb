@@ -37,11 +37,12 @@ class TestDataPopulator
     # select requested files/types, then create entries and push to workspace bucket
     EXAMPLE_FILES.select { |file_type, _| file_types.include? file_type }.values.each do |file_attributes|
       File.open(Rails.root.join(file_attributes[:path])) do |upload|
-        file_attributes.delete(:path)
-        file_attributes[:upload] = upload
-        file_attributes[:study_id] = study.id
-        print "Adding #{file_attributes[:name]} to #{study.accession}... "
-        study_file = StudyFile.create!(file_attributes)
+        attributes = file_attributes.deep_dup # make copy so downstream calls don't get nil/String TypeError
+        attributes.delete(:path)
+        attributes[:upload] = upload
+        attributes[:study_id] = study.id
+        print "Adding #{attributes[:name]} to #{study.accession}... "
+        study_file = StudyFile.create!(attributes)
         puts "done, pushing file to bucket #{study.bucket_id}"
         study.send_to_firecloud(study_file)
       end
