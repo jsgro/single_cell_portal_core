@@ -20,7 +20,7 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     detail.save!
 
     # add cluster file to FactoryBot study
-    TestStudyPopulator.add_files(@study, file_types: %w[cluster metadata])
+    TestDataPopulator.add_files_to_study(@study, file_types: %w[cluster metadata])
   end
 
   def setup

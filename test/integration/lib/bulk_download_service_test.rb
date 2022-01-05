@@ -14,7 +14,7 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
                                public: true,
                                user: @user,
                                test_array: @@studies_to_clean)
-    TestStudyPopulator.add_files(@study)
+    TestDataPopulator.add_files_to_study(@study)
     DirectoryListing.create!(name: 'fastq', file_type: 'fastq',
                              files: [
                                { name: '1_L1_001.fastq', size: 100, generation: '12345' },

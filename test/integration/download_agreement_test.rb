@@ -21,7 +21,7 @@ class DownloadAgreementTest < ActionDispatch::IntegrationTest
     detail.save!
 
     # add cluster file to FactoryBot study
-    TestStudyPopulator.add_files(@study, file_types: %w[expression])
+    TestDataPopulator.add_files_to_study(@study, file_types: %w[expression])
     @exp_matrix = @study.expression_matrix_files.first
     sign_in_and_update @user
   end

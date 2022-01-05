@@ -20,7 +20,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
                                public: true,
                                user: @user,
                                test_array: @@studies_to_clean)
-    TestStudyPopulator.add_files(@study)
+    TestDataPopulator.add_files_to_study(@study)
   end
 
   setup do
