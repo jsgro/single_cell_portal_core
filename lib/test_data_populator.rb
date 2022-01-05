@@ -36,7 +36,7 @@ class TestDataPopulator
     puts "Invoking TestDataPopulator on #{study.accession}"
     # select requested files/types, then create entries and push to workspace bucket
     EXAMPLE_FILES.select { |file_type, _| file_types.include? file_type }.values.each do |file_attributes|
-      File.open(File.join(file_attributes[:path])) do |upload|
+      File.open(Rails.root.join(file_attributes[:path])) do |upload|
         file_attributes.delete(:path)
         file_attributes[:upload] = upload
         file_attributes[:study_id] = study.id
