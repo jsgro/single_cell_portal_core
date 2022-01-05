@@ -1,9 +1,13 @@
 require 'test_helper'
 
 class UploadCleanupJobTest < ActiveSupport::TestCase
+  include Minitest::Hooks
+  include SelfCleaningSuite
+  include TestInstrumentor
 
-  def setup
-    @study = Study.first
+  before(:all) do
+    @user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:study, user: @user, name_prefix: 'UploadCleanupJob Test', test_array: @@studies_to_clean)
   end
 
   def teardown
@@ -11,8 +15,6 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
   end
 
   test 'should automatically remove failed uploads' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     # get starting counts, taking into account upstream tests that have deleted files
     beginning_file_count = StudyFile.where(queued_for_deletion: false).count
     existing_deletes = StudyFile.where(queued_for_deletion: true).pluck(:id)
@@ -38,13 +40,9 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
     end_file_count = StudyFile.count
     assert_equal beginning_file_count, end_file_count,
                  "Study file counts do not match after removing failed uploads; #{beginning_file_count} != #{end_file_count}"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should only run cleanup job 3 times on error' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     File.open(Rails.root.join('test', 'test_data', 'table_1.xlsx')) do |file|
       @study_file = StudyFile.create!(study_id: @study.id, file_type: 'Other', upload: file)
       @study.send_to_firecloud(@study_file)
@@ -81,7 +79,5 @@ class UploadCleanupJobTest < ActiveSupport::TestCase
     @study_file.update(remote_location: nil)
     ApplicationController.firecloud_client.delete_workspace_file(@study.bucket_id, @study_file.bucket_location)
     @study_file.destroy
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end
