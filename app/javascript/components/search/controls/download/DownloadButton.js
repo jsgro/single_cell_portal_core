@@ -45,7 +45,7 @@ export default function DownloadButton({ searchResults={} }) {
     if (userContext.accessToken === '') {
       hint = 'To download, please sign in'
     } else {
-      hint = 'To download, first do a valid search'
+      hint = 'To download, first do a search that returns results'
     }
   }
   return (
