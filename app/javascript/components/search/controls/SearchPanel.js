@@ -8,6 +8,7 @@ import FacetsPanel from './FacetsPanel'
 import DownloadButton from './download/DownloadButton'
 import { StudySearchContext } from 'providers/StudySearchProvider'
 
+
 const publicStudies = window.SCP.studyStats.public
 const compliantStudies = window.SCP.studyStats.compliant
 const percentage = (compliantStudies / publicStudies * 100).toFixed(0)
@@ -75,7 +76,7 @@ export default function SearchPanel({
 
   const keywordPrompt = searchState.params.preset === 'covid19' ? 'Search COVID-19 studies' : undefined
   return (
-    <div id='search-panel'>
+    <div id='search-panel' style={{ display: 'flex' }}>
       <KeywordSearch keywordPrompt={keywordPrompt}/>
       { searchButtons }
       { advancedOptsLink }
