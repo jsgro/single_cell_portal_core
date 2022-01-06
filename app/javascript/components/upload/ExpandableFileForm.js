@@ -101,9 +101,28 @@ export function SavingOverlay({ file, updateFile }) {
 
 /** renders save and delete buttons for a given file */
 export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessages = {} }) {
-  return <div className="flexbox button-panel">
+  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
+  return <div className="flexbox-align-center button-panel">
     <SaveButton file={file} saveFile={saveFile} validationMessages={validationMessages}/>
-    <DeleteButton file={file} deleteFile={deleteFile}/>
+    <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>
+    <Modal
+      show={showConfirmDeleteModal}
+      onHide={() => setShowConfirmDeleteModal(false)}
+      animation={false}>
+      <Modal.Body className="">
+        Are you sure you want to delete {file.name}?<br />
+        <span>The file will be removed from the workspace and all corresponding database records deleted.</span>
+      </Modal.Body>
+      <Modal.Footer>
+        <button className="btn btn-md btn-primary" onClick={() => {
+          deleteFile(file)
+          setShowConfirmDeleteModal(false)
+        }}>Delete</button>
+        <button className="btn btn-md terra-secondary-btn" onClick={() => {
+          setShowConfirmDeleteModal(false)
+        }}>Cancel</button>
+      </Modal.Footer>
+    </Modal>
   </div>
 }
 
@@ -141,9 +160,7 @@ function SaveButton({ file, saveFile, validationMessages = {} }) {
 
 /** renders a delete button for a given file
  * will show a parsing indicator if the file is parsing (and therefore not deletable) */
-function DeleteButton({ file, deleteFile }) {
-  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
-
+function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal }) {
   /** delete file with/without confirmation dialog as appropriate */
   function handleDeletePress() {
     if (file.status === 'new') {
@@ -160,28 +177,10 @@ function DeleteButton({ file, deleteFile }) {
   }
   let deleteButton = <button type="button" className="btn terra-secondary-btn" onClick={handleDeletePress} data-testid="file-delete">
     {deleteButtonContent}
-    <Modal
-      show={showConfirmDeleteModal}
-      onHide={() => setShowConfirmDeleteModal(false)}
-      animation={false}>
-      <Modal.Body className="">
-        Are you sure you want to delete {file.name}?<br />
-        <span>The file will be removed from the workspace and all corresponding database records deleted.</span>
-      </Modal.Body>
-      <Modal.Footer>
-        <button className="btn btn-md btn-primary" onClick={() => {
-          deleteFile(file)
-          setShowConfirmDeleteModal(false)
-        }}>Delete</button>
-        <button className="btn btn-md terra-secondary-btn" onClick={() => {
-          setShowConfirmDeleteModal(false)
-        }}>Cancel</button>
-      </Modal.Footer>
-    </Modal>
   </button>
-  if (file.serverFile?.parse_status === 'parsing') {
+  if (true || file.serverFile?.parse_status === 'parsing') {
     deleteButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={parsingPopup}>
-      <span><FontAwesomeIcon icon={faCog} className="fa-spin fa-lg"/></span>
+      <LoadingSpinner/>
     </OverlayTrigger>
   }
   return deleteButton
@@ -189,7 +188,9 @@ function DeleteButton({ file, deleteFile }) {
 
 
 const parsingPopup = <Popover id="parsing-tooltip" className="tooltip-wide">
-  <span>This file is currently being parsed on the server.  You will receive an email
-    when the parse is complete.  You cannot delete files while they are being parsed.
-  </span>
+  <div>This file is currently being parsed on the server.  <br/>
+    You will receive an email when the parse is complete (typically within 5-30 minutes, depending on file size). <br/>
+    You can continue to upload other files during this time.
+    You cannot delete files while they are being parsed.
+  </div>
 </Popover>

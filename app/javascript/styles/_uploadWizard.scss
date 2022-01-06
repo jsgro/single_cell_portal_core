@@ -75,18 +75,24 @@
 }
 
 .viz-notifications {
-  list-style-type: none;
+  margin-bottom: 10px;
   svg {
-    font-size: 0.7em;
-    margin-right: 0.25em;
-  }
-  .success {
-    color: $success-color;
-  }
-  .warning {
-    color: $warning-icon-color;
+    font-size: 0.8em;
   }
 
+  span.success, span.warning {
+    color: #fff;
+    padding: 0.1em 0.5em;
+    border-radius: 5px;
+    margin: 0.1em 0.25em 0.1em 15px;
+    display: inline-block;
+    &.success {
+      background: $success-color;
+    }
+    &.warning {
+      background: $warning-icon-color;
+    }
+  }
 }
 
 .upload-form-header {

@@ -1,10 +1,14 @@
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronUp, faTimes, faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronUp, faTimes, faCheck, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StepTabHeader from './StepTabHeader'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { OverlayTrigger, Popover } from 'react-bootstrap'
+import { clusterFileFilter } from './ClusteringStep'
+import { metadataFileFilter } from './MetadataStep'
+import { processedFileFilter } from './ProcessedExpressionStep'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 
 /** renders a list of the steps and summary study information */
@@ -14,24 +18,6 @@ function RawWizardNavPanel({
 }) {
   const [othersExpanded, setOthersExpanded] = useState(true)
   const expansionIcon = othersExpanded ? faChevronUp : faChevronDown
-
-  let clusterVizIndicator = <li className="success detail"><FontAwesomeIcon icon={faCheck}/> cluster visuals</li>
-  if (!serverState?.study.can_visualize_clusters) {
-    clusterVizIndicator = <li className="warning detail">
-      <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={clusterHelpContent}>
-        <span><FontAwesomeIcon icon={faTimes}/> cluster visuals</span>
-      </OverlayTrigger>
-    </li>
-  }
-
-  let expressionVizIndicator = <li className="success detail"><FontAwesomeIcon icon={faCheck}/> expression visuals</li>
-  if (!serverState?.study.has_visualization_matrices) {
-    expressionVizIndicator = <li className="warning detail">
-      <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={expressionHelpContent}>
-        <span><FontAwesomeIcon icon={faTimes}/> expression visuals</span>
-      </OverlayTrigger>
-    </li>
-  }
 
   return <div className="position-fixed">
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-primary-steps">
@@ -44,12 +30,7 @@ function RawWizardNavPanel({
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}/>) }
     </ul>
-    { serverState &&
-      <ul className="viz-notifications">
-        {clusterVizIndicator}
-        {expressionVizIndicator}
-      </ul>
-    }
+    <VisualizationStatuses serverState={serverState}/>
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-secondary-steps">
       <li className="other-header" role="tab" >
         <button className="unset-background-border" onClick={() => setOthersExpanded(!othersExpanded)} >
@@ -76,13 +57,75 @@ function RawWizardNavPanel({
   </div>
 }
 
-const expressionHelpContent = <Popover id="expression-viz-upload-info" className="tooltip-wide">
-  <div> A metadata file and a processed matrix are required for gene expression visualization </div>
-</Popover>
+/** shows current expression and clustering visualization status */
+function VisualizationStatuses({ serverState }) {
+  if (!serverState) {
+    return <></>
+  }
+  const metadataFiles = serverState.files.filter(metadataFileFilter)
+  const isMetadataParsing = metadataFiles.some(f => f.parse_status === 'parsing')
+  const isMetadataParsed = metadataFiles.some(f => f.parse_status === 'parsed')
 
-const clusterHelpContent = <Popover id="expression-viz-upload-info" className="tooltip-wide">
-  <div> A metadata file and a clustering file are required for cluster visualization </div>
-</Popover>
+  const clusteringFiles = serverState.files.filter(clusterFileFilter)
+  const isClusteringParsing = isMetadataParsing || clusteringFiles.some(f => f.parse_status === 'parsing')
+  const isClusteringParsed = isMetadataParsed && clusteringFiles.some(f => f.parse_status === 'parsed')
+
+  const processedExpFiles = serverState.files.filter(processedFileFilter)
+  const isExpressionParsing = isMetadataParsing || processedExpFiles.some(f => f.parse_status === 'parsing')
+  const isExpressionParsed = isMetadataParsed && processedExpFiles.some(f => f.parse_status === 'parsed')
+
+  let clusterStatusMsg = <span className="success">clustering visuals <FontAwesomeIcon icon={faCheck}/></span>
+  if (!isClusteringParsed) {
+    clusterStatusMsg = <span className="warning">no cluster visuals <FontAwesomeIcon icon={faQuestionCircle}/></span>
+  }
+  const clusterVizIndicator = <div>
+    <OverlayTrigger
+      trigger={['hover', 'focus']}
+      rootClose placement="top"
+      overlay={clusteringHelpContent(isClusteringParsing)}>
+      <span>
+        {clusterStatusMsg} { isClusteringParsing && <LoadingSpinner/> }
+      </span>
+    </OverlayTrigger>
+  </div>
+
+  let expressionStatusMsg = <span className="success">expression visuals <FontAwesomeIcon icon={faCheck}/></span>
+  if (!isExpressionParsed) {
+    expressionStatusMsg = <span className="warning">no expression visuals <FontAwesomeIcon icon={faQuestionCircle}/></span>
+  }
+  const expressionVizIndicator = <div>
+    <OverlayTrigger
+      trigger={['hover', 'focus']}
+      rootClose placement="top"
+      overlay={expressionHelpContent(isExpressionParsing)}>
+      <span>
+        {expressionStatusMsg} { isExpressionParsing && <LoadingSpinner/> }
+      </span>
+    </OverlayTrigger>
+  </div>
+  return <div className="viz-notifications">
+    {clusterVizIndicator}
+    {expressionVizIndicator}
+  </div>
+}
+
+/** gets the popup message based on whether there are files parsing */
+function expressionHelpContent(isExpressionParsing) {
+  return <Popover id="expression-viz-upload-info" className="tooltip-wide">
+    <div> A processed matrix file is required for gene expression visualization </div>
+    { isExpressionParsing && parsingMessage }
+  </Popover>
+}
+
+/** gets the popup message based on whether there are files parsing */
+function clusteringHelpContent(isClusteringParsing) {
+  return <Popover id="cluster-viz-upload-info" className="tooltip-wide">
+    <div> A metadata file and a clustering file are required for cluster visualization</div>
+    { isClusteringParsing && parsingMessage }
+  </Popover>
+}
+
+const parsingMessage = <div> Some files which will impact visualization are currently being processed </div>
 
 const WizardNavPanel = withErrorBoundary(RawWizardNavPanel)
 export default WizardNavPanel
