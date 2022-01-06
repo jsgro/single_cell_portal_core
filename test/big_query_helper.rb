@@ -30,6 +30,7 @@ def seed_example_bq_data(study)
     puts 'Write complete, closing/removing files'
     bq_seeds.close
     tmp_file.close
+    File.delete tmp_file.path
     puts "BigQuery seeding completed: #{job}"
   rescue => e
     puts "Error encountered when seeding BigQuery: #{e.class.name} - #{e.message}"

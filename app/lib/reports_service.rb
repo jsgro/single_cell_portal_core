@@ -25,7 +25,8 @@ class ReportsService
   # each entry in the array is a study
   def self.study_data
     keys = %i[id accession created_at cell_count user_id view_count public]
-    all_studies = Study.where(queued_for_deletion: false)
+    # get all valid studies, ignoring ones w/o user set which can happen sometimes in tests during cleanup
+    all_studies = Study.where(queued_for_deletion: false, :user_id.ne => nil)
     study_hash = {}
     all_studies.each do |study|
       study_id = study.id.to_s

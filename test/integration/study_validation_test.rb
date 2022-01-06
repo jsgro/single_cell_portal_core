@@ -16,7 +16,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     @sharing_user = FactoryBot.create(:user, test_array: @@users_to_clean)
     @random_seed = SecureRandom.uuid
     @study = FactoryBot.create(:study,
-                               name_prefix: 'BulkDownload Study',
+                               name_prefix: 'Main Validation Study',
                                public: true,
                                user: @user,
                                test_array: @@studies_to_clean,
@@ -32,8 +32,11 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     OmniAuth.config.mock_auth[:google_oauth2] = nil
     reset_user_tokens
     # remove all validation studies
-    Study.where(name: /Validation/).each { |study| study.destroy_and_remove_workspace }
     @study.update(public: true, detached: false)
+  end
+
+  after(:all) do
+    Study.where(name: /Validation/).each(&:destroy_and_remove_workspace)
   end
 
   # check that file header/format checks still function properly
