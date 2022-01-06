@@ -1,0 +1,32 @@
+name: SCP Continuous Integration
+on:
+  push:
+    branches:
+      - development
+      - master
+  pull_request:
+
+jobs:
+  Run-All-Tests:
+    runs-on: self-hosted
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Install vault
+        run: |
+          sudo apt-get update && sudo apt-get -y install curl unzip jq
+          sudo curl -O https://releases.hashicorp.com/vault/1.9.0/vault_1.9.0_linux_amd64.zip
+          sudo unzip vault_1.9.0_linux_amd64.zip
+          sudo mv vault /usr/local/bin
+      - name: Load secrets and run tests
+        env:
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json \
+                                  -s secret/kdux/scp/staging/scp_service_account.json \
+                                  -r secret/kdux/scp/staging/read_only_service_account.json \
+                                  -e test \
+                                  -n single-cell-portal-test

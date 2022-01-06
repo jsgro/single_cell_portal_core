@@ -184,20 +184,24 @@ export default function ScatterPlotLegend({
       <div className="scatter-legend-head">
         <div>
           <p className="scatter-legend-name">{name}</p>
-          <a
-            role="button"
-            data-analytics-name='legend-show-all'
-            className={`stateful-link ${getActivity(showIsEnabled)}`}
-            disabled={!showIsEnabled}
-            onClick={() => {showHideAll('show', labels, updateHiddenTraces)}}
-          >Show all</a>
-          <a
-            role="button"
-            data-analytics-name='legend-hide-all'
-            className={`stateful-link pull-right ${getActivity(hideIsEnabled)}`}
-            disabled={!hideIsEnabled}
-            onClick={() => {showHideAll('hide', labels, updateHiddenTraces)}}
-          >Hide all</a>
+          {labels.length > 1 &&
+          <>
+            <a
+              role="button"
+              data-analytics-name='legend-show-all'
+              className={`stateful-link ${getActivity(showIsEnabled)}`}
+              disabled={!showIsEnabled}
+              onClick={() => {showHideAll('show', labels, updateHiddenTraces)}}
+            >Show all</a>
+            <a
+              role="button"
+              data-analytics-name='legend-hide-all'
+              className={`stateful-link pull-right ${getActivity(hideIsEnabled)}`}
+              disabled={!hideIsEnabled}
+              onClick={() => {showHideAll('hide', labels, updateHiddenTraces)}}
+            >Hide all</a>
+          </>
+          }
         </div>
       </div>
       {legendEntries}
