@@ -35,10 +35,9 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
       detail.full_description = '<p>This is the description.</p>'
       detail.save!
     end
-    @preset_search = PresetSearch.create!(name: 'Test Search', search_terms: ["Testing Study"],
-                                          facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'],
-                                          accession_list: [@study.accession])
     TestDataPopulator.create_sample_search_facets
+    @preset_search = PresetSearch.create!(name: 'Test Search', search_terms: ["Testing Study #{@random_seed}"],
+                                          accession_list: [@study.accession])
   end
 
   setup do
@@ -304,33 +303,38 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
   test 'should run preset search' do
     # run accession list only search
-    @preset_search = PresetSearch.create!(name: 'Preset Search Test', accession_list: [@study.accession])
-    permitted_study = Study.first
     execute_http_request(:get, api_v1_search_path(type: 'study', preset_search: @preset_search.identifier))
     assert_response :success
     permitted_accessions = [@study.accession]
     assert json['matching_accessions'] == permitted_accessions,
            "Did not return correct permitted studies for preset search; expected #{permitted_accessions} but found #{json['matching_accessions']}"
     found_preset = json['studies'].first
-    assert found_preset['accession'] == permitted_study.accession
+    assert found_preset['accession'] == @study.accession
     assert found_preset['preset_match'], "Did not correctly mark permitted study as preset match; #{found_preset['preset_match']}"
 
     # update to use user-search terms as well, include all studies to widen search
     all_accessions = Study.pluck(:accession)
-    @preset_search.update(accession_list: all_accessions)
+    @preset_search.update(accession_list: all_accessions, search_terms: [])
     @preset_search.reload
-    search_terms = "\"API Test Study\""
+    search_terms = '"API Test Study"'
     execute_http_request(:get, api_v1_search_path(type: 'study', preset_search: @preset_search.identifier, terms: search_terms))
     assert_response :success
-    api_test_study = Study.find_by(name: /API Test Study/)
     assert_equal 1, json['studies'].count, "Found wrong number of studies; should be 1 but found #{json['studies'].count}"
-    expected_results = [api_test_study.accession]
+    expected_results = [@other_study.accession]
     assert_equal expected_results, json['matching_accessions'],
                  "Found wrong study with keywords & preset search; expected #{expected_results} but found #{json['matching_accessions']}"
     found_study = json['studies'].first
     assert found_study['preset_match']
     assert_equal ['API Test Study'], found_study['term_matches'], "Did not correctly match on #{search_terms}: #{found_study['term_matches']}"
-    @preset_search.destroy # clean up
+    # run search using facet filters, which should only get data from BigQuery
+    @preset_search.update(facet_filters: ['species:NCBITaxon_9606', 'disease:MONDO_0000001'], search_terms: [@random_seed])
+    @preset_search.reload
+    execute_http_request(:get, api_v1_search_path(type: 'study', preset_search: @preset_search.identifier, terms: ''))
+    assert_response :success
+    expected_results = [@study.accession]
+    assert_equal 1, json['studies'].count, "Found wrong number of studies; should be 1 but found #{json['studies'].count}"
+    assert_equal expected_results, json['matching_accessions'],
+                 "Found wrong study with keywords & preset search; expected #{expected_results} but found #{json['matching_accessions']}"
   end
 
   test 'should log out user after inactivity' do
@@ -340,7 +344,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     # mark study as false to show if a user is signed in or not
     api_test_study = Study.find_by(name: /API Test Study/)
     api_test_study.update(public: false)
-    search_terms = "\"API Test Study\""
+    search_terms = '"API Test Study"'
     execute_http_request(:get, api_v1_search_path(type: 'study', terms: search_terms))
     assert_response :success
     expected_results = [api_test_study.accession]
