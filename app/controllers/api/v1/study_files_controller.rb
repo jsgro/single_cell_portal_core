@@ -399,6 +399,8 @@ module Api
           if study_file.parseable?
             FileParseService.run_parse_job(@study_file, @study, current_api_user)
           else
+            # make sure we bundle non-parseable files if appropriate
+            FileParseService.create_bundle_from_file_options(study_file, @study)
             @study.delay.send_to_firecloud(study_file) # send data to FireCloud if upload was performed
           end
         end
