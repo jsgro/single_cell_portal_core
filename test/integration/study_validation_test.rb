@@ -20,7 +20,9 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   end
 
   setup do
-    sign_in_and_update @user
+    auth_as_user @user
+    sign_in @user
+    @user.update_last_access_at!
     @user.reload
   end
 
@@ -32,7 +34,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   end
 
   after(:all) do
-    Study.where(name: /Validation/).each(&:destroy_and_remove_workspace)
+    Study.where(name: /#{@random_seed}/).each(&:destroy_and_remove_workspace)
   end
 
   # check that file header/format checks still function properly
@@ -348,7 +350,9 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   end
 
   # ensure unauthorized users cannot edit other studies
-  test 'should enforce edit access restrictions on studies' do
+  test 'should enforce access restrictions on editing studies' do
+    auth_as_user(@user)
+    sign_in @user
     patch study_path(@study), params: { study: { public: false } }
     follow_redirect!
     assert_response :success
@@ -360,7 +364,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     sign_in @sharing_user
     patch study_path(@study), params: { study: { public: true } }
     follow_redirect!
-    assert_equal studies_path, path, "Did not redirect to My studies page"
+    assert_equal studies_path, path, 'Did not redirect to My studies page'
     @study.reload
     assert_not @study.public
 
