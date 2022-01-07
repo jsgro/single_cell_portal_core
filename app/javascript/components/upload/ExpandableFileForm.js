@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronUp, faCog } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
 
@@ -180,7 +180,7 @@ function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal }) {
   </button>
   if (true || file.serverFile?.parse_status === 'parsing') {
     deleteButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={parsingPopup}>
-      <LoadingSpinner/>
+      <span className="detail">parsing <LoadingSpinner/></span>
     </OverlayTrigger>
   }
   return deleteButton
@@ -190,7 +190,7 @@ function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal }) {
 const parsingPopup = <Popover id="parsing-tooltip" className="tooltip-wide">
   <div>This file is currently being parsed on the server.  <br/>
     You will receive an email when the parse is complete (typically within 5-30 minutes, depending on file size). <br/>
-    You can continue to upload other files during this time.
+    You can continue to upload other files during this time. <br/>
     You cannot delete files while they are being parsed.
   </div>
 </Popover>

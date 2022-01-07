@@ -90,9 +90,6 @@ module Api
           study: @study.attributes,
           files: @study.study_files
         }
-        # include some study computed properties for UI
-        response_obj[:study][:can_visualize_clusters] = @study.can_visualize_clusters?
-        response_obj[:study][:has_visualization_matrices] = @study.has_visualization_matrices?
         if params[:include_options]
           response_obj[:menu_options] = {
             fonts: SUPPORTED_LABEL_FONTS,
