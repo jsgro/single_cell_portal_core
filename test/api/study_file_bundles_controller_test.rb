@@ -3,12 +3,6 @@ require 'user_tokens_helper'
 require 'test_helper'
 
 class StudyFileBundlesControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Requests::JsonHelpers
-  include Requests::HttpHelpers
-  include Minitest::Hooks
-  include ::SelfCleaningSuite
-  include ::TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
@@ -50,7 +44,7 @@ class StudyFileBundlesControllerTest < ActionDispatch::IntegrationTest
       if attribute =~ /_id/
         assert json[attribute] == JSON.parse(value.to_json), "Attribute mismatch: #{attribute} is incorrect, expected #{JSON.parse(value.to_json)} but found #{json[attribute.to_s]}"
       elsif attribute =~ /_at/
-        # ignore timestamps as fprmatting & drift on milliseconds can cause comparison errors
+        # ignore timestamps as formatting & drift on milliseconds can cause comparison errors
         next
       else
         assert json[attribute] == value, "Attribute mismatch: #{attribute} is incorrect, expected #{value} but found #{json[attribute.to_s]}"

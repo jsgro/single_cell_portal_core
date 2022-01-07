@@ -3,8 +3,6 @@ require 'minitest/mock'
 require 'test_helper'
 
 class ProfilesControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include ::TestInstrumentor
 
   setup do
     @user = User.find_or_create_by(email: 'profile.test@gmail.com', password: 'password',

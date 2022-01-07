@@ -3,12 +3,6 @@ require 'user_tokens_helper'
 require 'test_helper'
 
 class ApiSiteControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Requests::JsonHelpers
-  include Requests::HttpHelpers
-  include Minitest::Hooks
-  include ::SelfCleaningSuite
-  include ::TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)

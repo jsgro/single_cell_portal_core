@@ -1,9 +1,6 @@
 require 'test_helper'
 
 class CellMetadatumTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include TestInstrumentor
-  include SelfCleaningSuite
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)

@@ -2,11 +2,7 @@ require 'api_test_helper'
 require 'test_helper'
 
 class MetadataSchemasControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Requests::JsonHelpers
-  include Requests::HttpHelpers
   include Api::V1::Concerns::ConventionSchemas
-  include TestInstrumentor
 
   SCHEMAS_BASE_DIR = Api::V1::MetadataSchemasController::SCHEMAS_BASE_DIR
 

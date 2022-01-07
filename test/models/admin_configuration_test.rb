@@ -1,8 +1,6 @@
 require 'test_helper'
 
 class AdminConfigurationTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include TestInstrumentor
 
   before(:all) do
     @client = FireCloudClient.new

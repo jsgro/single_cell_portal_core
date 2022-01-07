@@ -2,10 +2,6 @@ require 'integration_test_helper'
 require 'test_helper'
 
 class UploadWizardTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)

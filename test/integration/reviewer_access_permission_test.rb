@@ -4,10 +4,6 @@ require 'integration_test_helper'
 # controller-based test to validate ReviewerAccess & ReviewerAccessSession functionality
 # uses ActionController::TestCase since ActionDispatch::IntegrationTest doesn't support signed cookies
 class ReviewerAccessPermissionTest < ActionController::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
-  include Devise::Test::ControllerHelpers
   tests SiteController
 
   before(:all) do

@@ -3,9 +3,6 @@ require 'csv'
 require 'bulk_download_helper'
 
 class BulkDownloadServiceTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)

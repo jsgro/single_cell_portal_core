@@ -1,9 +1,6 @@
 require 'test_helper'
 
 class SummaryStatsUtilsTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
     @now = DateTime.now

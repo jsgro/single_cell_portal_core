@@ -2,10 +2,6 @@ require 'test_helper'
 
 class DeleteQueueJobTest < ActiveSupport::TestCase
 
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
-
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
     @basic_study = FactoryBot.create(:detached_study, name_prefix: 'DeleteQueue Test', test_array: @@studies_to_clean)

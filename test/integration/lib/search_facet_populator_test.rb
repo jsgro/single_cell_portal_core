@@ -1,8 +1,6 @@
 require 'test_helper'
 
 class SearchFacetPopulatorTest < ActionDispatch::IntegrationTest
-  include TestInstrumentor
-  include Minitest::Hooks
 
   after(:all) do
     SearchFacet.destroy_all

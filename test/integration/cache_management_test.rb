@@ -1,9 +1,6 @@
-require "test_helper"
+require 'test_helper'
 
 class CacheManagementTest < ActionDispatch::IntegrationTest
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)

@@ -2,9 +2,6 @@
 require 'test_helper'
 
 class AzulSearchServiceTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
     TestDataPopulator.create_sample_search_facets

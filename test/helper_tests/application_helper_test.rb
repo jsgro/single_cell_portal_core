@@ -1,9 +1,6 @@
 require 'test_helper'
 
 class ApplicationHelperTest < ActionView::TestCase
-  include Minitest::Hooks
-  include ::SelfCleaningSuite
-  include ::TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)

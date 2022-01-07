@@ -1,9 +1,6 @@
 require 'test_helper'
 
 class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   SYNTH_STUDY_INFO = {
     name: 'Male Mouse brain',

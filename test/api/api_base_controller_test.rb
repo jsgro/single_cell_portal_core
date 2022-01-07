@@ -2,9 +2,6 @@ require 'api_test_helper'
 require 'test_helper'
 
 class ApiBaseControllerTest < ActionDispatch::IntegrationTest
-  include Requests::JsonHelpers
-  include Requests::HttpHelpers
-  include ::TestInstrumentor
 
   setup do
     @configured_version = AdminConfiguration.get_ingest_docker_image_attributes[:tag]

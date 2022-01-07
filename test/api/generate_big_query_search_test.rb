@@ -2,8 +2,6 @@ require 'test_helper'
 
 # Testing the and/or and filter logic is correctly generated for querying BQ
 class GenerateBigQuerySearchTest < ActiveSupport::TestCase
-  include TestInstrumentor
-
   def setup
     @sample_disease_facet = ::SearchFacet.new(identifier: 'disease',
                                               name: 'disease',

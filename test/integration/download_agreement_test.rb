@@ -3,11 +3,6 @@ require 'api_test_helper'
 require 'test_helper'
 
 class DownloadAgreementTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Requests::HttpHelpers
-  include Minitest::Hooks
-  include TestInstrumentor
-  include SelfCleaningSuite
 
   before(:all) do
     @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)

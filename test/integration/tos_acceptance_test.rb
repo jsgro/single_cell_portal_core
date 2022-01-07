@@ -2,8 +2,6 @@ require 'integration_test_helper'
 require 'test_helper'
 
 class TosAcceptanceTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include TestInstrumentor
 
   setup do
     @test_user = User.create(email: 'needs.acceptance@gmail.com', password: 'password', uid: '54321',

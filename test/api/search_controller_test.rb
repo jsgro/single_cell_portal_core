@@ -5,12 +5,6 @@ require 'test_helper'
 require 'big_query_helper'
 
 class SearchControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Requests::JsonHelpers
-  include Requests::HttpHelpers
-  include Minitest::Hooks
-  include ::TestInstrumentor
-  include ::SelfCleaningSuite
 
   HOMO_SAPIENS_FILTER = { id: 'NCBITaxon_9606', name: 'Homo sapiens' }.freeze
   NO_DISEASE_FILTER = { id: 'MONDO_0000001', name: 'disease or disorder' }.freeze

@@ -4,13 +4,6 @@ require 'user_tokens_helper'
 require 'bulk_download_helper'
 
 class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Requests::JsonHelpers
-  include Requests::HttpHelpers
-  include Minitest::Hooks
-  include ::SelfCleaningSuite
-  include TestInstrumentor
-
 
   SYNTH_STUDY_FOLDER = 'mouse_brain' # use the mouse_Brain study as it has all file types including genomic
 

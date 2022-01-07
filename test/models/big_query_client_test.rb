@@ -1,7 +1,6 @@
 require 'test_helper'
 
 class BigQueryClientTest < ActiveSupport::TestCase
-  include TestInstrumentor
 
   test 'should instantiate client and assign attributes' do
     @bq = BigQueryClient.new

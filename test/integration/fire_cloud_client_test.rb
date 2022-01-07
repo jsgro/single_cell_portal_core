@@ -1,4 +1,4 @@
-require "test_helper"
+require 'test_helper'
 
 ##
 #
@@ -10,8 +10,6 @@ require "test_helper"
 ##
 
 class FireCloudClientTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include TestInstrumentor
 
   before(:all) do
     @fire_cloud_client = ApplicationController.firecloud_client
