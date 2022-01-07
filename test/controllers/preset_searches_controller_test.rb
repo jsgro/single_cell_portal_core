@@ -1,5 +1,6 @@
 require 'api_test_helper'
 require 'test_helper'
+require 'includes_helper'
 
 class PresetSearchesControllerTest < ActionDispatch::IntegrationTest
 

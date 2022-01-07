@@ -1,6 +1,7 @@
 require 'api_test_helper'
 require 'user_tokens_helper'
 require 'test_helper'
+require 'includes_helper'
 
 class StudyFilesControllerTest < ActionDispatch::IntegrationTest
 

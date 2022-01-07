@@ -1,6 +1,7 @@
 require 'integration_test_helper'
 require 'minitest/mock'
 require 'test_helper'
+require 'includes_helper'
 
 class ProfilesControllerTest < ActionDispatch::IntegrationTest
 

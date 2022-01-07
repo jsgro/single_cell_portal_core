@@ -1,4 +1,5 @@
 require 'test_helper'
+require 'includes_helper'
 
 class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
 

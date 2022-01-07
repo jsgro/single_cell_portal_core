@@ -1,5 +1,6 @@
 require 'test_helper'
 require 'integration_test_helper'
+require 'includes_helper'
 
 # controller-based test to validate ReviewerAccess & ReviewerAccessSession functionality
 # uses ActionController::TestCase since ActionDispatch::IntegrationTest doesn't support signed cookies

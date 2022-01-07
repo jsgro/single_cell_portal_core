@@ -1,5 +1,6 @@
 require 'test_helper'
 require 'integration_test_helper'
+require 'includes_helper'
 
 class BrandingGroupControllerTest < ActionDispatch::IntegrationTest
 

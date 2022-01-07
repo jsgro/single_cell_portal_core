@@ -3,6 +3,7 @@ require 'api_test_helper'
 require 'user_tokens_helper'
 require 'big_query_helper'
 require 'test_helper'
+require 'includes_helper'
 
 class StudyValidationTest < ActionDispatch::IntegrationTest
 

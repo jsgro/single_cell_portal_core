@@ -3,6 +3,7 @@ require 'user_tokens_helper'
 require 'bulk_download_helper'
 require 'test_helper'
 require 'big_query_helper'
+require 'includes_helper'
 
 class SearchControllerTest < ActionDispatch::IntegrationTest
 
