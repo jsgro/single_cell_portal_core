@@ -26,7 +26,7 @@ class ReportsService
   def self.study_data
     keys = %i[id accession created_at cell_count user_id view_count public]
     # get all valid studies, ignoring ones w/o user set which can happen sometimes in tests during cleanup
-    all_studies = Study.where(queued_for_deletion: false, :user_id.ne => nil)
+    all_studies = Study.where(queued_for_deletion: false)
     study_hash = {}
     all_studies.each do |study|
       study_id = study.id.to_s
@@ -34,10 +34,18 @@ class ReportsService
       study_hash[study_id] = Hash[keys.zip(keys.map { |k| study.send(k) })]
       study_hash[study_id][:share_count] = study.study_shares.count
       user = study.user
-      user_domain = user.email.split('@').last
-      study_hash[study_id][:owner_domain] = user_domain
-      study_hash[study_id][:owner_email] = user.email
-      study_hash[study_id][:admin_owned] = !!user.admin # account for nil by casting to boolean
+      # handle case where in tests sometimes user gets unset on a study - would not happen in live usage,
+      # but it is an order of operations issue in CI that as of yet we cannot determine the cause of
+      if study.user.present?
+        user_domain = user.email.split('@').last
+        study_hash[study_id][:owner_domain] = user_domain
+        study_hash[study_id][:owner_email] = user.email
+        study_hash[study_id][:admin_owned] = !!user.admin # account for nil by casting to boolean
+      else
+        study_hash[study_id][:owner_domain] = 'N/A'
+        study_hash[study_id][:owner_email] = 'N/A'
+        study_hash[study_id][:admin_owned] = 'N/A' # account for nil by casting to boolean
+      end
 
       metadata_files = StudyFile.where(file_type: 'Metadata', queued_for_deletion: false, study_id: study_id)
                                 .pluck(:use_metadata_convention, :created_at)
