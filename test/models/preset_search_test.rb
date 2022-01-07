@@ -21,12 +21,12 @@ class PresetSearchTest < ActiveSupport::TestCase
       {
         id: 'species',
         filters: [{ "id" => "NCBITaxon_9606", "name" => "Homo sapiens" }],
-        object_id: @species_facet.id
+        db_facet: @species_facet
       },
       {
         id: 'disease',
         filters: [{ "id" => "MONDO_0000001", "name" => "disease or disorder" } ],
-        object_id: @disease_facet.id
+        db_facet: @disease_facet
       }
     ]
   end
