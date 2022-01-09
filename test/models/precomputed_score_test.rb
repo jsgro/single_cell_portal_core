@@ -1,9 +1,6 @@
-require "test_helper"
+require 'test_helper'
 
 class PrecomputedScoreTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include TestInstrumentor
-  include SelfCleaningSuite
 
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)

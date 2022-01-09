@@ -1,13 +1,8 @@
 require 'test_helper'
 require 'api_test_helper'
+require 'includes_helper'
 
 class ExploreControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Requests::JsonHelpers
-  include Requests::HttpHelpers
-  include Minitest::Hooks
-  include TestInstrumentor
-  include SelfCleaningSuite
 
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)

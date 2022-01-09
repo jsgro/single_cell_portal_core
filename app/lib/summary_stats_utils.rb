@@ -59,7 +59,9 @@ class SummaryStatsUtils
         study.set_study_detached_state(e)
         ErrorTracker.report_exception(e, nil, {})
         Rails.logger.error  "Error in retrieving remotes for #{study.name}: #{e.message}"
-        missing_files << {filename: 'N/A', study: study.name, owner: study.user.email, reason: "Error retrieving remotes: #{e.message}"}
+        missing_files << {
+          filename: 'N/A', study: study.name, owner: study.user&.email, reason: "Error retrieving remotes: #{e.message}"
+        }
       end
     end
     missing_files

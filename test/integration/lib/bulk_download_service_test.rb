@@ -3,13 +3,22 @@ require 'csv'
 require 'bulk_download_helper'
 
 class BulkDownloadServiceTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include TestInstrumentor
 
-  def setup
-    @user = User.find_by(email: 'testing.user.2@gmail.com')
-    @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-    @study = Study.find_by(name: "Testing Study #{@random_seed}")
+  before(:all) do
+    @user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:study,
+                               name_prefix: 'BulkDownload Study',
+                               public: true,
+                               user: @user,
+                               test_array: @@studies_to_clean,
+                               predefined_file_types: %w[cluster metadata expression])
+    DirectoryListing.create!(name: 'fastq', file_type: 'fastq',
+                             files: [
+                               { name: '1_L1_001.fastq', size: 100, generation: '12345' },
+                               { name: '1_R1_001.fastq', size: 100, generation: '12345' },
+                               { name: '2_L1_001.fastq', size: 100, generation: '12345' },
+                               { name: '2_R1_001.fastq', size: 100, generation: '12345' },
+                             ], sync_status: true, study: @study)
   end
 
   test 'should update user download quota' do
@@ -93,7 +102,11 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     # mock call to GCS
     mock = Minitest::Mock.new
     mock.expect :execute_gcloud_method, signed_url, [:generate_signed_url, Integer, String, String, Hash]
-    mock.expect :execute_gcloud_method, dir_signed_url, [:generate_signed_url, Integer, String, String, Hash]
+    directory.files.each do |directory_file|
+      url = "https://storage.googleapis.com/#{@study.bucket_id}/#{directory_file[:name]}"
+      mock.expect :execute_gcloud_method, url, [:generate_signed_url, Integer, String, String, Hash]
+    end
+
     FireCloudClient.stub :new, mock do
       configuration = BulkDownloadService.generate_curl_configuration(study_files: [study_file], user: @user,
                                                                       directory_files: directory_file_list,

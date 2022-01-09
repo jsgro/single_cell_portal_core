@@ -1,11 +1,8 @@
 require 'test_helper'
 require 'integration_test_helper'
+require 'includes_helper'
 
 class FeatureAnnouncementsControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Minitest::Hooks
-  include ::SelfCleaningSuite
-  include ::TestInstrumentor
 
   before(:all) do
     @today = Date.today.in_time_zone.strftime('%F')

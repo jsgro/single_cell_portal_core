@@ -2,11 +2,9 @@
 require 'test_helper'
 
 class AzulSearchServiceTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
+    TestDataPopulator.create_sample_search_facets
     SearchFacet.update_all_facet_filters
     @azul_client = ApplicationController.hca_azul_client
     @facets = [
@@ -50,6 +48,10 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     @human_tcell_response = JSON.parse(tcell_json).with_indifferent_access
     @human_thymus_response = JSON.parse(thymus_json).with_indifferent_access
     @fibrosis_response = JSON.parse(fibrosis_json).with_indifferent_access
+  end
+
+  after(:all) do
+    SearchFacet.destroy_all
   end
 
   test 'should search Azul using facets' do

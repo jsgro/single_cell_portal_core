@@ -1,13 +1,10 @@
 require 'test_helper'
 require 'integration_test_helper'
+require 'includes_helper'
 
 # controller-based test to validate ReviewerAccess & ReviewerAccessSession functionality
 # uses ActionController::TestCase since ActionDispatch::IntegrationTest doesn't support signed cookies
 class ReviewerAccessPermissionTest < ActionController::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
-  include Devise::Test::ControllerHelpers
   tests SiteController
 
   before(:all) do
@@ -17,7 +14,6 @@ class ReviewerAccessPermissionTest < ActionController::TestCase
                                test_array: @@studies_to_clean)
     detail = @study.build_study_detail
     detail.update(full_description: "<p>testing</p>")
-    TosAcceptance.create!(email: @user.email)
     @cookie_name = "reviewer_session_#{@study.accession}".to_sym
   end
 

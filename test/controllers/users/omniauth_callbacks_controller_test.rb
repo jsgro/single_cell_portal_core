@@ -1,8 +1,6 @@
 require 'test_helper'
 
 class User::OmniauthCallbacksControllerTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include TestInstrumentor
 
   setup do
     @google_params = { scope: SingleCellPortal::Application::BASIC_GOOGLE_SCOPES.join(' ') }

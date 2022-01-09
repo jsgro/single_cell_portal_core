@@ -1,8 +1,6 @@
 require 'test_helper'
 
 class HcaAzulClientTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include TestInstrumentor
 
   before(:all) do
     @hca_azul_client = ApplicationController.hca_azul_client

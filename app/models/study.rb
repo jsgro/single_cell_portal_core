@@ -1605,6 +1605,8 @@ class Study
 
   # set the 'default_participant' entity in workspace data to allow users to upload sample information
   def set_default_participant
+    return if detached # skip if study is detached, which is common in test environment
+
     begin
       path = Rails.root.join('data', self.data_dir, 'default_participant.tsv')
       entity_file = File.new(path, 'w+')

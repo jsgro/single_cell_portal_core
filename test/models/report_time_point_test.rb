@@ -1,9 +1,6 @@
-require "test_helper"
+require 'test_helper'
 
 class ReportTimePointTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   def setup
     ReportTimePoint.destroy_all

@@ -49,20 +49,20 @@ class PresetSearch
 
   # extract search_facet identifiers from facet_filters query string
   def get_facet_identifiers
-    self.facet_filters.map {|facet_data| facet_data.split(':').first}.flatten
+    facet_filters.map { |facet_data| facet_data.split(':').first }.flatten
   end
 
   # extract all filter values
   def get_filter_values
-    self.facet_filters.map {|facet_data| facet_data.split(':').last.split(',')}.flatten
+    facet_filters.map { |facet_data| facet_data.split(':').last.split(',')}.flatten
   end
 
   def search_facets
-    SearchFacet.where(:identifier.in => self.get_facet_identifiers)
+    SearchFacet.where(:identifier.in => get_facet_identifiers)
   end
 
   def study_list
-    Study.where(:accession.in => self.accession_list)
+    Study.where(:accession.in => accession_list)
   end
 
   # helper for determining if this search does not contain keywords/facets
@@ -75,11 +75,11 @@ class PresetSearch
   # the above method runs as a :before_filter and cannot be overridden
   def matching_facets_and_filters
     facets_and_filters = []
-    self.search_facets.each do |search_facet|
-      facet = {id: search_facet.identifier, filters: [], object_id: search_facet.id}
-      filter_query = self.facet_filters.detect {|f| f.starts_with?(search_facet.identifier)}
-      filter_query.split(':').last.split(',').each do |filter|
-        matching_filter = search_facet.filters.detect {|f| f[:id] == filter}
+    search_facets.each do |search_facet|
+      facet = { id: search_facet.identifier, filters: [], db_facet: search_facet }
+      filter_query = facet_filters.detect { |f| f.starts_with?(search_facet.identifier) }
+      filter_query.split(':').last.split('|').each do |filter|
+        matching_filter = search_facet.filters.detect { |f| f[:id] == filter }
         facet[:filters] << matching_filter if matching_filter.present?
       end
       facets_and_filters << facet if facet[:filters].any?
