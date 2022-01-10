@@ -9,6 +9,7 @@ class IngestJobTest < ActiveSupport::TestCase
     @basic_study_exp_file = FactoryBot.create(:study_file,
                                               name: 'dense.txt',
                                               file_type: 'Expression Matrix',
+                                              user: @user,
                                               study: @basic_study)
 
     @pten_gene = FactoryBot.create(:gene_with_expression,

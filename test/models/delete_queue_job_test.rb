@@ -4,7 +4,10 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @basic_study = FactoryBot.create(:detached_study, name_prefix: 'DeleteQueue Test', test_array: @@studies_to_clean)
+    @basic_study = FactoryBot.create(:detached_study,
+                                     name_prefix: 'DeleteQueue Test',
+                                     user: @user,
+                                     test_array: @@studies_to_clean)
 
     @basic_study_exp_file = FactoryBot.create(:study_file,
                                               name: 'dense.txt',

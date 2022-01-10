@@ -181,7 +181,9 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
   end
 
   test 'should generate study manifest file' do
-    study = FactoryBot.create(:detached_study, name_prefix: "#{self.method_name}")
+    study = FactoryBot.create(:detached_study,
+                              user: @user,
+                              name_prefix: "#{self.method_name}")
     FactoryBot.create(:study_file,
                       study: study, file_type: 'Expression Matrix', name: 'test_exp_validate.tsv', taxon_id: Taxon.new.id,
                       expression_file_info: ExpressionFileInfo.new(

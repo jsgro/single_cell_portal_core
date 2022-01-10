@@ -5,7 +5,10 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @study = FactoryBot.create(:detached_study, name_prefix: 'Cache Test', test_array: @@studies_to_clean)
+    @study = FactoryBot.create(:detached_study,
+                               name_prefix: 'Cache Test',
+                               user: @user,
+                               test_array: @@studies_to_clean)
     @study_cluster_file = FactoryBot.create(:cluster_file,
                                             name: 'cluster 1', study: @study,
                                             cell_input: {
