@@ -112,7 +112,7 @@ function VisualizationStatuses({ serverState }) {
 /** gets the popup message based on whether there are files parsing */
 function expressionHelpContent(isExpressionParsing) {
   return <Popover id="expression-viz-upload-info" className="tooltip-wide">
-    <div> A processed matrix file is required for gene expression visualization </div>
+    <div> A processed matrix file and a metadata file are required for gene expression visualization </div>
     { isExpressionParsing && parsingMessage }
   </Popover>
 }

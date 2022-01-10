@@ -178,7 +178,7 @@ function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal }) {
   let deleteButton = <button type="button" className="btn terra-secondary-btn" onClick={handleDeletePress} data-testid="file-delete">
     {deleteButtonContent}
   </button>
-  if (true || file.serverFile?.parse_status === 'parsing') {
+  if (file.serverFile?.parse_status === 'parsing') {
     deleteButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={parsingPopup}>
       <span className="detail">parsing <LoadingSpinner/></span>
     </OverlayTrigger>
