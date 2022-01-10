@@ -197,12 +197,12 @@ function validateGeneInHeader(headers) {
  *
  * Validate all values are numbers outside first column cell name
  */
-function validateValuesAreNumeric(parsedLine, isLastLine, lineNum, dataObj) {
+function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
   const issues = []
   dataObj.rowsWithNonNumericValues = dataObj.rowsWithNonNumericValues ? dataObj.rowsWithNonNumericValues : new Set()
 
   // skip first column
-  const lineWithoutFirstColumn = parsedLine.slice(1)
+  const lineWithoutFirstColumn = line.slice(1)
 
   if (lineWithoutFirstColumn.some(isNaN)) {
     dataObj.rowsWithNonNumericValues.add(lineNum)
@@ -229,14 +229,14 @@ function validateValuesAreNumeric(parsedLine, isLastLine, lineNum, dataObj) {
 /**
  * Verify dense matrix column numbers match header column numbers
  */
-function validateColumnNumber(parsedLine, isLastLine, headers, lineNum, dataObj) {
+function validateColumnNumber(line, isLastLine, headers, lineNum, dataObj) {
   const issues = []
   dataObj.rowsWithIncorrectColumnNumbers = dataObj.rowsWithIncorrectColumnNumbers ? dataObj.rowsWithIncorrectColumnNumbers : new Set()
   // use the first header row to determine the correct number of columns all rows should have
   const correctNumberOfColumns = headers[0].length
 
 
-  if (correctNumberOfColumns !== parsedLine.length) {
+  if (correctNumberOfColumns !== line.length) {
     dataObj.rowsWithIncorrectColumnNumbers.add(lineNum)
   }
 
@@ -492,13 +492,13 @@ export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
   let issues = validateCapFormat(headers, 'Expression Matrix')
 
   const dataObj = {} // object to track multi-line validation concerns
-  await chunker.iterateLines((line, lineNum, isLastLine) => {
-    const parsedLine = parseLine(line, delimiter)
-    issues = issues.concat(validateValuesAreNumeric(parsedLine, isLastLine, lineNum, dataObj))
-    issues = issues.concat(validateColumnNumber(parsedLine, isLastLine, headers, lineNum, dataObj))
-    issues = issues.concat(validateUniqueCellNamesWithinFile(parsedLine, isLastLine, dataObj))
-    issues = issues.concat(validateMetadataLabelMatches(headers, parsedLine, isLastLine, dataObj))
-    issues = issues.concat(validateGroupColumnCounts(headers, parsedLine, isLastLine, dataObj))
+  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
+    const line = parseLine(rawLine, delimiter)
+    issues = issues.concat(validateValuesAreNumeric(line, isLastLine, lineNum, dataObj))
+    issues = issues.concat(validateColumnNumber(line, isLastLine, headers, lineNum, dataObj))
+    issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
+    issues = issues.concat(validateMetadataLabelMatches(headers, line, isLastLine, dataObj))
+    issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
     // add other line-by-line validations here
   })
   return { issues, delimiter, numColumns: headers[0].length }
