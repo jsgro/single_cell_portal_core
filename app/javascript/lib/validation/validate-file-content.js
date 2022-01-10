@@ -183,9 +183,9 @@ function validateEqualCount(headers, annotTypes) {
  */
 function validateGeneInHeader(headers) {
   const issues = []
-  if (headers[0][0].toUpperCase() !== 'GENE') {
+  if (headers[0].toUpperCase() !== 'GENE') {
     const msg = 'Dense matrices require the first value of the file to be "GENE". ' +
-     `However, the first value for this file currently is "${headers[0][0]}".`
+     `However, the first value for this file currently is "${headers[0]}".`
     issues.push(['error', 'format:cap:missing-gene-column', msg])
   }
 
@@ -489,7 +489,7 @@ function validateClusterCoordinates(headers) {
 /** parse a dense matrix file */
 export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
   const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
-  let issues = validateCapFormat(headers, delimiter, 'Expression Matrix')
+  let issues = validateCapFormat(headers, 'Expression Matrix')
 
   const dataObj = {} // object to track multi-line validation concerns
   await chunker.iterateLines((line, lineNum, isLastLine) => {
@@ -507,8 +507,7 @@ export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
 /** parse a metadata file, and return an array of issues, along with file parsing info */
 export async function parseMetadataFile(chunker, mimeType, fileOptions) {
   const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
-
-  let issues = validateCapFormat(headers, delimiter, 'Metadata')
+  let issues = validateCapFormat(headers, 'Metadata')
   issues = issues.concat(validateNoMetadataCoordinates(headers))
   if (fileOptions.use_metadata_convention) {
     issues = issues.concat(validateRequiredMetadataColumns(headers))
@@ -530,8 +529,7 @@ export async function parseMetadataFile(chunker, mimeType, fileOptions) {
 /** parse a cluster file, and return an array of issues, along with file parsing info */
 export async function parseClusterFile(chunker, mimeType) {
   const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
-
-  let issues = validateCapFormat(headers, delimiter, 'Cluster')
+  let issues = validateCapFormat(headers, 'Cluster')
   issues = issues.concat(validateClusterCoordinates(headers))
   // add other header validations here
 

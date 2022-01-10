@@ -208,9 +208,9 @@ async function testMetadataUpload({ createFileSpy }) {
   await waitForElementToBeRemoved(() => screen.getByTestId('file-save-spinner'))
 
   expect(createFileSpy).toHaveBeenLastCalledWith(expect.objectContaining({
-    chunkEnd: 640,
+    chunkEnd: 627,
     chunkStart: 0,
-    fileSize: 640,
+    fileSize: 627,
     isChunked: false,
     studyAccession: 'SCP1',
     studyFileData: formData
