@@ -2,10 +2,6 @@ require 'test_helper'
 
 class StudyFileTest < ActiveSupport::TestCase
 
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
-
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
     @study = FactoryBot.create(:detached_study, name_prefix: 'Study File Test', test_array: @@studies_to_clean)

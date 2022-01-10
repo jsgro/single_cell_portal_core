@@ -1,14 +1,17 @@
-require "test_helper"
+require 'test_helper'
 
 class StudyTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
-  def setup
-    @study = Study.first
-    @exp_matrix = @study.expression_matrix_files.first
-    # create genes & insert data; data is loaded here since test is self contained
+  before(:all) do
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    @user.update(registered_for_firecloud: true)
+    @study = FactoryBot.create(:study, user: @user, name_prefix: 'Study Test', test_array: @@studies_to_clean)
+    StudyShare.create!(email: 'my-user-group@firecloud.org', permission: 'Reviewer', study: @study,
+                       firecloud_project: @study.firecloud_project, firecloud_workspace: @study.firecloud_workspace)
+    @exp_matrix = FactoryBot.create(:study_file,
+                                    name: 'dense.txt',
+                                    file_type: 'Expression Matrix',
+                                    study: @study)
     @gene_names = %w(Gad1 Gad2 Egfr Fgfr3 Clybl)
     @genes = {}
     iterator = 1.upto(5)

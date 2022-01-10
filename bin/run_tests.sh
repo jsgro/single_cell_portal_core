@@ -113,13 +113,9 @@ if [[ "$TEST_FILEPATH" == "" ]]; then
   RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:precompile
 fi
 
-echo "Generating random seed, seeding test database..."
-RANDOM_SEED=$(openssl rand -hex 16)
-echo $RANDOM_SEED > "$BASE_DIR/.random_seed"
-bundle exec rake RAILS_ENV=test db:seed || { echo "FAILED to seed test database!" >&2; exit 1; }
+echo "Generating indexes..."
 bundle exec rake RAILS_ENV=test db:mongoid:create_indexes
-echo "Database initialized"
-echo "Launching tests using seed: $RANDOM_SEED"
+echo "Indexes initialized"
 
 echo "Running specified unit & integration tests..."
 # only run yarn ui-test if we haven't specified a single ruby test suite to run

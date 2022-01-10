@@ -1,9 +1,6 @@
 require 'test_helper'
 
 class ClusterVizServiceTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include TestInstrumentor
-  include SelfCleaningSuite
 
   before(:all) do
     @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)

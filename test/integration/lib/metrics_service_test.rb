@@ -1,23 +1,10 @@
-require "test_helper"
+require 'test_helper'
 
 class MetricsServiceTest < ActiveSupport::TestCase
 
-  setup do
-    @user = User.create(
-        email: 'bard.user@gmail.com',
-        password: 'password',
-        uid: '99999',
-        access_token: {
-            access_token: 'foo',
-            expires_at: DateTime.new(3000, 1, 1),
-            expires_in: 3600
-        },
-        registered_for_firecloud: true
-    )
-  end
-
-  teardown do
-    User.where(email: /bard\.user/).destroy_all
+  before(:all) do
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    @user.update(registered_for_firecloud: true)
   end
 
   test 'should log to Mixpanel via Bard' do
@@ -194,18 +181,9 @@ class MetricsServiceTest < ActiveSupport::TestCase
   test 'should remove auth headers for non-Terra users' do
     puts "#{File.basename(__FILE__)}: #{self.method_name}"
 
-    unregistered_user = User.create(
-      email: 'bard.user.2@gmail.com',
-      password: 'password',
-      uid: '98765',
-      access_token: {
-        access_token: 'bar',
-        expires_at: DateTime.new(3000, 1, 1),
-        expires_in: 3600
-      },
-      registered_for_firecloud: false,
-      metrics_uuid: SecureRandom.uuid
-    )
+    unregistered_user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    unregistered_user.update(registered_for_firecloud: false, metrics_uuid: SecureRandom.uuid)
+
     event = 'fake-event'
     input_props = {
       foo: 'bar',

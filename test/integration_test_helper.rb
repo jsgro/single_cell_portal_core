@@ -45,10 +45,11 @@ end
 
 # configure omniauth response for a given user
 def auth_as_user(user, provider=:google)
-  OmniAuth.config.mock_auth[provider] = OmniAuth::AuthHash.new({
-                                                                         :provider => provider.to_s,
-                                                                         :uid => user.uid,
-                                                                         :email => user.email
-                                                                     })
+  OmniAuth.config.mock_auth[provider] = OmniAuth::AuthHash.new(
+    {
+      provider: provider.to_s,
+      uid: user.uid,
+      email: user.email
+  })
   user.update(provider: provider.to_s)
 end

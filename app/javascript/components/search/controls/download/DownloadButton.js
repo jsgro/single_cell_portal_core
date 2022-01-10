@@ -12,9 +12,7 @@ import { UserContext } from 'providers/UserProvider'
  */
 export default function DownloadButton({ searchResults={} }) {
   const userContext = useContext(UserContext)
-
   const [showModal, setShowModal] = useState(false)
-
   const matchingAccessions = searchResults.matchingAccessions || []
 
   /**
@@ -29,30 +27,31 @@ export default function DownloadButton({ searchResults={} }) {
     (searchResults?.terms?.length > 0 || searchResults?.facets?.length > 0)
   )
 
+  const downloadDisabled = !active
+  const downloadButton = <button
+    style={{ 'pointerEvents': downloadDisabled ? 'none' : 'auto' }}
+    type="button"
+    id="download-button"
+    className="btn btn-primary"
+    disabled={downloadDisabled}
+    onClick={() => {setShowModal(!showModal)}}>
+    <span>
+      <FontAwesomeIcon className="icon-left" icon={faDownload}/> Download
+    </span>
+  </button>
+
   let hint = 'Download files for your search results'
-  if (!active) {
+  if (downloadDisabled) {
     if (userContext.accessToken === '') {
       hint = 'To download, please sign in'
     } else {
-      hint = 'To download, first do a search'
+      hint = 'To download, first do a search that returns results'
     }
   }
-
   return (
     <>
-      <OverlayTrigger
-        placement='top'
-        overlay={<Tooltip id='download-tooltip'>{hint}</Tooltip>}>
-        <button
-          id='download-button'
-          className={`btn btn-primary ${active ? 'active' : 'disabled'}`}
-          disabled={!active}
-          onClick={() => {setShowModal(!showModal)}}>
-          <span>
-            <FontAwesomeIcon className="icon-left" icon={faDownload}/>
-          Download
-          </span>
-        </button>
+      <OverlayTrigger placement='top' overlay={<Tooltip id='download-tooltip'>{hint}</Tooltip>}>
+        <span style={{ 'marginLeft': 'auto' }} > {downloadButton} </span>
       </OverlayTrigger>
       { showModal &&
         <DownloadSelectionModal

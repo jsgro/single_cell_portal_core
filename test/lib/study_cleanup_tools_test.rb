@@ -4,10 +4,6 @@ require 'test_helper'
 # does not directly test cleanup methods as these would destroy seed data needed for other tests
 class StudyCleanupToolsTest < ActiveSupport::TestCase
 
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
-
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
     @basic_study = FactoryBot.create(:study, name_prefix: 'Cleanup Security Checks', test_array: @@studies_to_clean)

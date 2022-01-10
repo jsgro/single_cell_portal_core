@@ -8,6 +8,7 @@ FactoryBot.define do
       test_array { nil }
       name_prefix { 'FactoryBot Study' }
       description_prefix { ' ' }
+      predefined_file_types { [] }
     end
     name { name_prefix + " #{SecureRandom.alphanumeric(5)}" }
     description do
@@ -20,6 +21,12 @@ FactoryBot.define do
     after(:create) do |study, evaluator|
       if evaluator.test_array
         evaluator.test_array.push(study)
+      end
+      # if predefined_file_types is specified, add the requested files and push to the workspace bucket
+      # NOTE: this does not parse the files - use associated StudyFile factory if you need to generate seed data
+      # See lib/test_data_populator.rb for more information
+      if evaluator.predefined_file_types.any?
+        TestDataPopulator.add_files_to_study(study, file_types: evaluator.predefined_file_types)
       end
     end
     # create a study but mark as detached, so a Terra workspace is not created

@@ -1,10 +1,6 @@
-require "test_helper"
+require 'test_helper'
 
 class FileParseServiceTest < ActiveSupport::TestCase
-
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
