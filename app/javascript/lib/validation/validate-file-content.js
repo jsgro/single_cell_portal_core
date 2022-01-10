@@ -199,23 +199,21 @@ function validateGeneInHeader(headers) {
  */
 function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
   const issues = []
-  dataObj.rowsWithNonNumericValues = dataObj.rowsWithNonNumericValues ? dataObj.rowsWithNonNumericValues : new Set()
-
+  dataObj.rowsWithNonNumericValues = dataObj.rowsWithNonNumericValues ? dataObj.rowsWithNonNumericValues : []
   // skip first column
   const lineWithoutFirstColumn = line.slice(1)
 
   if (lineWithoutFirstColumn.some(isNaN)) {
-    dataObj.rowsWithNonNumericValues.add(lineNum)
+    dataObj.rowsWithNonNumericValues.push(lineNum)
   }
 
-  const numBadRows = dataObj.rowsWithNonNumericValues.size
+  const numBadRows = dataObj.rowsWithNonNumericValues.length
   if (isLastLine && numBadRows > 0) {
     const rowText = numBadRows > 1 ? 'rows' : 'row'
-    const max = 10
-    let notedBadRows = [...dataObj.rowsWithNonNumericValues].slice(0, max).join(', ')
-
-    if (numBadRows - max > 0) {
-      notedBadRows += ` and ${numBadRows - max} more rows`
+    const maxLinesToReport = 10
+    let notedBadRows = dataObj.rowsWithNonNumericValues.slice(0, maxLinesToReport).join(', ')
+    if (numBadRows - maxLinesToReport > 0) {
+      notedBadRows += ` and ${numBadRows - maxLinesToReport} more rows`
     }
 
     const msg = `All values (other than the first column and header row) in a dense matrix file must be numeric. ` +
@@ -231,22 +229,21 @@ function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
  */
 function validateColumnNumber(line, isLastLine, headers, lineNum, dataObj) {
   const issues = []
-  dataObj.rowsWithIncorrectColumnNumbers = dataObj.rowsWithIncorrectColumnNumbers ? dataObj.rowsWithIncorrectColumnNumbers : new Set()
+  dataObj.rowsWithIncorrectColumnNumbers = dataObj.rowsWithIncorrectColumnNumbers ? dataObj.rowsWithIncorrectColumnNumbers : []
   // use the first header row to determine the correct number of columns all rows should have
   const correctNumberOfColumns = headers[0].length
 
-
   if (correctNumberOfColumns !== line.length) {
-    dataObj.rowsWithIncorrectColumnNumbers.add(lineNum)
+    dataObj.rowsWithIncorrectColumnNumbers.push(lineNum)
   }
 
-  const numBadRows = dataObj.rowsWithIncorrectColumnNumbers.size
+  const numBadRows = dataObj.rowsWithIncorrectColumnNumbers.length
   if (isLastLine && numBadRows > 0) {
     const rowText = numBadRows > 1 ? 'rows' : 'row'
-    const max = 10
-    let notedBadRows = [...dataObj.rowsWithIncorrectColumnNumbers].slice(0, max).join(', ')
-    if (numBadRows - max > 0) {
-      notedBadRows += ` and ${numBadRows - max} more rows`
+    const maxLinesToReport = 10
+    let notedBadRows = dataObj.rowsWithIncorrectColumnNumbers.slice(0, maxLinesToReport).join(', ')
+    if (numBadRows - maxLinesToReport > 0) {
+      notedBadRows += ` and ${numBadRows - maxLinesToReport} more rows`
     }
 
     const msg = `All rows must have the same number of columns - ` +
@@ -315,7 +312,7 @@ function sniffDelimiter([line1, line2], mimeType) {
 }
 
 /**
- * Verify cap format for a cluster, metadata, or expression matrix file
+ * Verify cap format for a cluster or metadata file
  *
  * The "cap" of an SCP study file is its first "few" lines that contain structural data., i.e.:
  *  - Header (row 1), and
@@ -324,26 +321,36 @@ function sniffDelimiter([line1, line2], mimeType) {
  * Cap lines are like meta-information lines in other file formats
  * (e.g. VCF), but do not begin with pound signs (#).
  */
-function validateCapFormat([headers, annotTypes], fileType) {
+function validateCapFormat([headers, annotTypes]) {
   let issues = []
   if (!headers || !annotTypes) {
     return [['error', 'format:cap:no-cap-rows', 'File does not have 2 non-empty header rows']]
   }
 
-  if (fileType === 'Expression Matrix') {
-    issues = issues.concat(validateGeneInHeader(headers))
-  }
-
   // Check format rules that apply to both metadata and cluster files
-  if (['Cluster', 'Metadata'].includes(fileType)) {
-    issues = issues.concat(
-      validateUnique(headers),
-      validateNameKeyword(headers),
-      validateTypeKeyword(annotTypes),
-      validateGroupOrNumeric(annotTypes),
-      validateEqualCount(headers, annotTypes)
-    )
+  issues = issues.concat(
+    validateUnique(headers),
+    validateNameKeyword(headers),
+    validateTypeKeyword(annotTypes),
+    validateGroupOrNumeric(annotTypes),
+    validateEqualCount(headers, annotTypes)
+  )
+
+  return issues
+}
+
+/**
+ * Verify cap format for an expression matrix file
+ *
+ * The "cap" for an expression matrix file is the first row
+ */
+function validateDenseHeader([headers]) {
+  let issues = []
+  if (!headers) {
+    return [['error', 'format:cap:no-cap-row', 'File does not have a non-empty header row']]
   }
+  issues = issues.concat(validateGeneInHeader(headers))
+
   return issues
 }
 
@@ -489,7 +496,7 @@ function validateClusterCoordinates(headers) {
 /** parse a dense matrix file */
 export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
   const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
-  let issues = validateCapFormat(headers, 'Expression Matrix')
+  let issues = validateDenseHeader(headers)
 
   const dataObj = {} // object to track multi-line validation concerns
   await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
@@ -507,7 +514,7 @@ export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
 /** parse a metadata file, and return an array of issues, along with file parsing info */
 export async function parseMetadataFile(chunker, mimeType, fileOptions) {
   const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
-  let issues = validateCapFormat(headers, 'Metadata')
+  let issues = validateCapFormat(headers)
   issues = issues.concat(validateNoMetadataCoordinates(headers))
   if (fileOptions.use_metadata_convention) {
     issues = issues.concat(validateRequiredMetadataColumns(headers))
@@ -529,7 +536,7 @@ export async function parseMetadataFile(chunker, mimeType, fileOptions) {
 /** parse a cluster file, and return an array of issues, along with file parsing info */
 export async function parseClusterFile(chunker, mimeType) {
   const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
-  let issues = validateCapFormat(headers, 'Cluster')
+  let issues = validateCapFormat(headers)
   issues = issues.concat(validateClusterCoordinates(headers))
   // add other header validations here
 
@@ -667,7 +674,6 @@ function formatIssues(issues) {
 
 
 /** Get properties about this validation run to log to Mixpanel */
-
 function getLogProps(fileInfo, errorObj, perfTime) {
   const { errors, warnings, summary } = errorObj
 
