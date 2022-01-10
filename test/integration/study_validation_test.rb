@@ -34,7 +34,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   end
 
   after(:all) do
-    Study.where(name: /#{@random_seed}/).each(&:destroy_and_remove_workspace)
+    Study.where(name: /#{@random_seed}/).map(&:destroy_and_remove_workspace)
   end
 
   # check that file header/format checks still function properly
