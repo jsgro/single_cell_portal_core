@@ -13,7 +13,12 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
                                user: @user,
                                public: true,
                                test_array: @@studies_to_clean)
+    @random_seed = SecureRandom.uuid
     sign_in_and_update @user
+  end
+
+  after(:all) do
+    Study.where(name: /#{@random_seed}/).map(&:destroy_and_remove_workspace)
   end
 
   teardown do
@@ -51,7 +56,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     # create study
     study_attributes = {
         study: {
-            name: "New Study #{SecureRandom.uuid}"
+            name: "New Study #{@random_seed}"
         }
     }
     execute_http_request(:post, api_v1_studies_path, request_payload: study_attributes)
@@ -100,7 +105,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
   # then call sync_study API method
   test 'should create and then sync study' do
     # create study by calling FireCloud API manually
-    study_name = "Sync Study #{SecureRandom.uuid}"
+    study_name = "Sync Study #{@random_seed}"
     workspace_name = study_name.downcase.gsub(/[^a-zA-Z0-9]+/, '-').chomp('-')
     study_attributes = {
         study: {
