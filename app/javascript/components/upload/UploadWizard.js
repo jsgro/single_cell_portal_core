@@ -8,7 +8,7 @@
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import _cloneDeep from 'lodash/cloneDeep'
-import _isMatch from 'lodash/isEqual'
+import _isMatch from 'lodash/isMatch'
 import ReactNotification, { store } from 'react-notifications-component'
 import { Router, useLocation, navigate } from '@reach/router'
 import * as queryString from 'query-string'
@@ -74,9 +74,10 @@ export function RawUploadWizard({ studyAccession, name }) {
     formState.files.forEach(file => {
       const serverFile = serverState.files ? serverState.files.find(sFile => sFile._id === file._id) : null
       file.serverFile = serverFile
+
       // use isMatch to confirm that specified properties are equal, but ignore properties (like isDirty)
       // that only exist on the form state objects
-      if (!_isMatch(file, serverFile)) {
+      if (!_isMatch(file, serverFile) || file.status === 'new') {
         file.isDirty = true
       }
     })
@@ -255,7 +256,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   /** delete the file from the form, and also the server if it exists there */
   async function deleteFile(file) {
     const fileId = file._id
-    if (file.status === 'new') {
+    if (file.status === 'new' || file?.serverFile?.parse_status === 'failed') {
       deleteFileFromForm(fileId)
     } else {
       updateFile(fileId, { isDeleting: true })

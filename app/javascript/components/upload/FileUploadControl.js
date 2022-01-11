@@ -110,6 +110,18 @@ export default function FileUploadControl({
     inputAcceptExts = [...allowedFileExts, '.gz']
   }
 
+  if (file.serverFile?.parse_status === 'failed') {
+    // if the parse has failed, this filemight be deleted at any minute.  Just show the name, and omit any controls
+    return <div>
+      <label>
+        { !file.uploadSelection && <h5 data-testid="file-uploaded-name">{file.upload_file_name}</h5> }
+        { file.uploadSelection && <h5 data-testid="file-selection-name">
+          {file.uploadSelection.name} ({bytesToSize(file.uploadSelection.size)})
+        </h5> }
+      </label>
+    </div>
+  }
+
   return <div>
     <label>
       { !file.uploadSelection && <h5 data-testid="file-uploaded-name">{file.upload_file_name}</h5> }
