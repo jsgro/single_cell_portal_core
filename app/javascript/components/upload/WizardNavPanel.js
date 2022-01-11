@@ -74,9 +74,9 @@ function VisualizationStatuses({ serverState }) {
   const isExpressionParsing = isMetadataParsing || processedExpFiles.some(f => f.parse_status === 'parsing')
   const isExpressionParsed = isMetadataParsed && isClusteringParsed && processedExpFiles.some(f => f.parse_status === 'parsed')
 
-  let clusterStatusMsg = <span className="success">clustering visuals <FontAwesomeIcon icon={faCheck}/></span>
+  let clusterStatusMsg = <span className="success">Clustering visuals <FontAwesomeIcon icon={faCheck}/></span>
   if (!isClusteringParsed) {
-    clusterStatusMsg = <span className="warning">no cluster visuals <FontAwesomeIcon icon={faQuestionCircle}/></span>
+    clusterStatusMsg = <span className="warning">No clustering visuals <FontAwesomeIcon icon={faQuestionCircle}/></span>
   }
   const clusterVizIndicator = <div>
     <OverlayTrigger
@@ -89,9 +89,9 @@ function VisualizationStatuses({ serverState }) {
     </OverlayTrigger>
   </div>
 
-  let expressionStatusMsg = <span className="success">expression visuals <FontAwesomeIcon icon={faCheck}/></span>
+  let expressionStatusMsg = <span className="success">Expression visuals <FontAwesomeIcon icon={faCheck}/></span>
   if (!isExpressionParsed) {
-    expressionStatusMsg = <span className="warning">no expression visuals <FontAwesomeIcon icon={faQuestionCircle}/></span>
+    expressionStatusMsg = <span className="warning">No expression visuals <FontAwesomeIcon icon={faQuestionCircle}/></span>
   }
   const expressionVizIndicator = <div>
     <OverlayTrigger
@@ -120,12 +120,12 @@ function expressionHelpContent(isExpressionParsing) {
 /** gets the popup message based on whether there are files parsing */
 function clusteringHelpContent(isClusteringParsing) {
   return <Popover id="cluster-viz-upload-info" className="tooltip-wide">
-    <div> A metadata file and a clustering file are required for cluster visualization</div>
+    <div>A metadata file and clustering file are required for cluster visualization.</div>
     { isClusteringParsing && parsingMessage }
   </Popover>
 }
 
-const parsingMessage = <div> Some files which will impact visualization are currently being processed </div>
+const parsingMessage = <div>Some files that will impact visualization are being processed.</div>
 
 const WizardNavPanel = withErrorBoundary(RawWizardNavPanel)
 export default WizardNavPanel

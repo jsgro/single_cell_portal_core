@@ -38,7 +38,7 @@ import GeneListStep from './GeneListStep'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 const POLLING_INTERVAL = 10 * 1000 // 10 seconds between state updates
-const CHUNK_SIZE = 10000000
+const CHUNK_SIZE = 10000000 // 10 MB
 const STEPS = [
   RawCountsStep,
   ProcessedExpressionStep,
