@@ -80,15 +80,55 @@ describe('Client-side file validation', () => {
     expect(errors[0][2]).toEqual('Cell names must be unique within a file. 1 duplicate found, including: CELL_0001')
   })
 
+  it('catches duplicate cell names in expression matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo1.csv',
+      content: 'GENE,X,Y\nItm2a,0,5\nEif2b2,3,0\nEif2b2,1,9'
+    })
+    const { errors } = await validateFileContent(file, 'Expression Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('duplicate:cells-within-file')
+  })
+
   it('catches missing headers in metadata file', async () => {
     const file = createMockFile({
-      fileName: 'foo.txt',
+      fileName: 'foo2.txt',
       content: 'NAME,biosample_id,CellID\nTYPE,numeric,numeric\nCELL_0001,id1,cell1'
     })
     const { errors } = await validateFileContent(file, 'Metadata', { use_metadata_convention: true })
     expect(errors).toHaveLength(1)
     expect(errors[0][1]).toEqual('format:cap:metadata-missing-column')
     expect(errors[0][2]).toContain(REQUIRED_CONVENTION_COLUMNS.slice(2).join(', '))
+  })
+
+  it('catches missing GENE header in expression matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo4.txt',
+      content: 'IS_NOT_GENE,X,Y\nItm2a,0,5\nEif2b2,3,0\nPf2b2,1,9'
+    })
+    const { errors } = await validateFileContent(file, 'Expression Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:cap:missing-gene-column')
+  })
+
+  it('catches non-numeric entry in expression matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo5.csv',
+      content: 'GENE,X,Y\nItm2a,1,5\nEif2b2,3,p\nPf2b2,1,9'
+    })
+    const { errors } = await validateFileContent(file, 'Expression Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:invalid-type:not-numeric')
+  })
+
+  it('catches row with wrong number of columns in expression matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo6.csv',
+      content: 'GENE,X,Y\nItm2a,8,9\nEif2b2,3,0\nPf2b2,1'
+    })
+    const { errors } = await validateFileContent(file, 'Expression Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:mismatch-column-number')
   })
 
   it('allows missing headers in metadata file if convention not used ', async () => {
