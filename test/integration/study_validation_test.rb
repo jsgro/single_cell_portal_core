@@ -8,6 +8,9 @@ require 'includes_helper'
 class StudyValidationTest < ActionDispatch::IntegrationTest
 
   before(:all) do
+    # make sure all studies/users have been removed as dangling references can sometimes cause false negatives/failures
+    StudyCleanupTools.destroy_all_studies_and_workspaces
+    User.destroy_all
     @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
     @sharing_user = FactoryBot.create(:user, test_array: @@users_to_clean)
     @random_seed = SecureRandom.uuid
