@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronUp, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
 
@@ -102,6 +102,12 @@ export function SavingOverlay({ file, updateFile }) {
 /** renders save and delete buttons for a given file */
 export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessages = {} }) {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
+  if (file.serverFile?.parse_status === 'failed') {
+    return <div className="text-center">
+      <div className="validation-error"><FontAwesomeIcon icon={faTimes}/> Parse failed</div>
+      <span className="detail">Check your email for details - this file will be removed from the server.</span>
+    </div>
+  }
   return <div className="flexbox-align-center button-panel">
     <SaveButton file={file} saveFile={saveFile} validationMessages={validationMessages}/>
     <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>

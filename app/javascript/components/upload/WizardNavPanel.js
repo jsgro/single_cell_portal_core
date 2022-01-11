@@ -72,7 +72,7 @@ function VisualizationStatuses({ serverState }) {
 
   const processedExpFiles = serverState.files.filter(processedFileFilter)
   const isExpressionParsing = isMetadataParsing || processedExpFiles.some(f => f.parse_status === 'parsing')
-  const isExpressionParsed = isMetadataParsed && processedExpFiles.some(f => f.parse_status === 'parsed')
+  const isExpressionParsed = isMetadataParsed && isClusteringParsed && processedExpFiles.some(f => f.parse_status === 'parsed')
 
   let clusterStatusMsg = <span className="success">clustering visuals <FontAwesomeIcon icon={faCheck}/></span>
   if (!isClusteringParsed) {
@@ -112,7 +112,7 @@ function VisualizationStatuses({ serverState }) {
 /** gets the popup message based on whether there are files parsing */
 function expressionHelpContent(isExpressionParsing) {
   return <Popover id="expression-viz-upload-info" className="tooltip-wide">
-    <div> A processed matrix file and a metadata file are required for gene expression visualization </div>
+    <div> A processed matrix file, metadata file, and clustering file are required for gene expression visualization </div>
     { isExpressionParsing && parsingMessage }
   </Popover>
 }
