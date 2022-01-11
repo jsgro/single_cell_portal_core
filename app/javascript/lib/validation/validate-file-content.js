@@ -256,6 +256,32 @@ function validateColumnNumber(line, isLastLine, headers, lineNum, dataObj) {
 }
 
 /**
+ * Verify row values are each unique for a file
+ * Per the logic in ingest pipeline check in Feature and Barcode files
+ * that the values in each row are unique from all other rows in the file.
+ */
+function validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj) {
+  const issues = []
+  const line = rawLine.toString().replace(/^"|,|\s|"$/g, '')
+
+  dataObj.rowValues = dataObj.rowValues ? dataObj.rowValues : new Set()
+  dataObj.duplicateRowValues = dataObj.duplicateRowValues ? dataObj.duplicateRowValues : new Set()
+
+  if (!dataObj.rowValues.has(line)) {
+    dataObj.rowValues.add(line)
+  } else {
+    dataObj.duplicateRowValues.add(rawLine)
+  }
+  if (isLastLine && dataObj.duplicateRowValues.size > 0) {
+    const nameTxt = (dataObj.duplicateRowValues.size > 1) ? 'duplicates' : 'duplicate'
+    const dupString = [...dataObj.duplicateRowValues].slice(0, 10).join(', ')
+    const msg = `Row values must be unique within a file. ${dataObj.duplicateRowValues.size} ${nameTxt} found, including: ${dupString}`
+    issues.push(['error', 'duplicate:values-within-file', msg])
+  }
+  return issues
+}
+
+/**
  * Verify cell names are each unique for a file
  * creates and uses 'cellNames' and 'duplicateCellNames' properties on dataObj to track
  * cell names between calls to this function
@@ -443,6 +469,7 @@ function validateMetadataLabelMatches(headers, line, isLastLine, dataObj) {
   }
   return issues
 }
+
 /** raises a warning if a group column has more than 200 unique values */
 function validateGroupColumnCounts(headers, line, isLastLine, dataObj) {
   const issues = []
@@ -492,6 +519,27 @@ function validateClusterCoordinates(headers) {
   return issues
 }
 
+/** parse a metadata file, and return an array of issues, along with file parsing info */
+export async function parseBarcodesFile(chunker, mimeType, fileOptions) {
+  let issues = []
+
+  const dataObj = {} // object to track multi-line validation concerns
+  await chunker.iterateLines((rawline, lineNum, isLastLine) => {
+    issues = issues.concat(validateUniqueRowValuesWithinFile(rawline, isLastLine, dataObj))
+  })
+  return { issues }
+}
+
+/** parse a metadata file, and return an array of issues, along with file parsing info */
+export async function parseFeaturesFile(chunker, mimeType, fileOptions) {
+  let issues = []
+
+  const dataObj = {} // object to track multi-line validation concerns
+  await chunker.iterateLines((rawline, lineNum, isLastLine) => {
+    issues = issues.concat(validateUniqueRowValuesWithinFile(rawline, isLastLine, dataObj))
+  })
+  return { issues }
+}
 
 /** parse a dense matrix file */
 export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
@@ -620,7 +668,9 @@ async function parseFile(file, fileType, fileOptions={}) {
     const parseFunctions = {
       'Cluster': parseClusterFile,
       'Metadata': parseMetadataFile,
-      'Expression Matrix': parseDenseMatrixFile
+      'Expression Matrix': parseDenseMatrixFile,
+      '10X Genes File': parseFeaturesFile,
+      '10X Barcodes File': parseBarcodesFile
     }
     if (parseFunctions[fileType]) {
       const chunker = new ChunkedLineReader(file)
