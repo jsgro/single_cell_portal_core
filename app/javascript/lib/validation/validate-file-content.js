@@ -543,7 +543,7 @@ export async function parseFeaturesFile(chunker, mimeType, fileOptions) {
 
 /** parse a dense matrix file */
 export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
-  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType)
   let issues = validateDenseHeader(headers)
 
   const dataObj = {} // object to track multi-line validation concerns
@@ -561,7 +561,7 @@ export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
 
 /** parse a metadata file, and return an array of issues, along with file parsing info */
 export async function parseMetadataFile(chunker, mimeType, fileOptions) {
-  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType)
   let issues = validateCapFormat(headers)
   issues = issues.concat(validateNoMetadataCoordinates(headers))
   if (fileOptions.use_metadata_convention) {
@@ -583,7 +583,7 @@ export async function parseMetadataFile(chunker, mimeType, fileOptions) {
 
 /** parse a cluster file, and return an array of issues, along with file parsing info */
 export async function parseClusterFile(chunker, mimeType) {
-  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType)
   let issues = validateCapFormat(headers)
   issues = issues.concat(validateClusterCoordinates(headers))
   // add other header validations here
@@ -599,17 +599,18 @@ export async function parseClusterFile(chunker, mimeType) {
   return { issues, delimiter, numColumns: headers[0].length }
 }
 
-/** reads in the specified number of header lines, sniffs the delimiter, and returns the
- * lines parsed by the sniffed delimiter
+/**
+ * reads in a two lines to be used as header lines, sniffs the delimiter, 
+ * and returns the lines parsed by the sniffed delimiter
  */
-export async function getParsedHeaderLines(chunker, mimeType, numHeaderLines=2) {
+export async function getParsedHeaderLines(chunker, mimeType) {
   const headerLines = []
   await chunker.iterateLines((line, lineNum, isLastLine) => {
     headerLines.push(line)
   }, 2)
-  if (headerLines.length < numHeaderLines || headerLines.some(hl => !hl)) {
+  if (headerLines.length < 2 || headerLines.some(hl => !hl)) {
     throw new ParseException('format:cap:missing-header-lines',
-      `Your file is missing newlines or is missing some of the required ${numHeaderLines} header lines`)
+      `Your file is missing newlines or is missing some of the required header lines`)
   }
   const delimiter = sniffDelimiter(headerLines, mimeType)
   const headers = headerLines.map(l => parseLine(l, delimiter))
