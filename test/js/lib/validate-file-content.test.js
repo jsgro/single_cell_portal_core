@@ -131,6 +131,26 @@ describe('Client-side file validation', () => {
     expect(errors[0][1]).toEqual('format:mismatch-column-number')
   })
 
+  it('catches duplicate row values in barcodes file', async () => {
+    const file = createMockFile({
+      fileName: 'foo6.tsv',
+      content: 'fake000\nfake001\nfake002\nfake000'
+    })
+    const { errors } = await validateFileContent(file, '10X Barcodes File')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('duplicate:values-within-file')
+  })
+
+  it('catches duplicate row values in features file', async () => {
+    const file = createMockFile({
+      fileName: 'foo6.tsv',
+      content: 'fake000\tboo\nfake001\tboo\nfake002\tbarr\nfake000\tboo'
+    })
+    const { errors } = await validateFileContent(file, '10X Genes File')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('duplicate:values-within-file')
+  })
+
   it('allows missing headers in metadata file if convention not used ', async () => {
     const file = createMockFile({
       fileName: 'foo.txt',
