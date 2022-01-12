@@ -15,6 +15,9 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   FILTER_DELIM = Api::V1::SearchController::FILTER_DELIMITER
 
   before(:all) do
+    # make sure all studies/users have been removed as dangling references can sometimes cause false negatives/failures
+    StudyCleanupTools.destroy_all_studies_and_workspaces
+    User.destroy_all
     @random_seed = SecureRandom.uuid
     @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
     @other_user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
@@ -339,7 +342,6 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'should log out user after inactivity' do
-    @user = User.first
     # save access token to prevent breaking downstream tests
     valid_token = @user.api_access_token.dup
     # mark study as false to show if a user is signed in or not

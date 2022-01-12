@@ -4,7 +4,10 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
 
   before(:all) do
     @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
-    @study = FactoryBot.create(:detached_study, name_prefix: 'Test Cluster Study', test_array: @@studies_to_clean)
+    @study = FactoryBot.create(:detached_study,
+                               name_prefix: 'Test Cluster Study',
+                               user: @user,
+                               test_array: @@studies_to_clean)
     @study_cluster_file_1 = FactoryBot.create(:cluster_file,
                                               name: 'cluster_1.txt', study: @study,
                                               cell_input: {

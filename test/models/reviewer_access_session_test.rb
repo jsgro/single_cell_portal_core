@@ -7,6 +7,7 @@ class ReviewerAccessSessionTest < ActiveSupport::TestCase
     @study = FactoryBot.create(:detached_study,
                                name_prefix: 'Reviewer Access Session Test',
                                public: false,
+                               user: @user,
                                test_array: @@studies_to_clean)
     @access = @study.build_reviewer_access
     @access.save!

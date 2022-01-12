@@ -25,6 +25,7 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
 
     @empty_study = FactoryBot.create(:detached_study,
                                      name_prefix: 'Empty study',
+                                     user: @user,
                                      test_array: @@studies_to_clean)
   end
 

@@ -4,7 +4,10 @@ class DelayedJobAccessorTest < ActiveSupport::TestCase
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @study = FactoryBot.create(:detached_study, name_prefix: 'DelayedJobAccessor Study', test_array: @@studies_to_clean)
+    @study = FactoryBot.create(:detached_study,
+                               name_prefix: 'DelayedJobAccessor Study',
+                               user: @user,
+                               test_array: @@studies_to_clean)
     @study_file = FactoryBot.create(:study_file, name: 'dense.txt', file_type: 'Expression Matrix', study: @study)
   end
 

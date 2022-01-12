@@ -98,7 +98,10 @@ class StudyTest < ActiveSupport::TestCase
 
   test 'should default to first available annotation' do
     user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    study = FactoryBot.create(:detached_study, name_prefix: 'Default Annotation Test', test_array: @@studies_to_clean)
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'Default Annotation Test',
+                              user: user,
+                              test_array: @@studies_to_clean)
     assert study.default_annotation.nil?
     FactoryBot.create(:metadata_file,
                       name: 'metadata.txt',
@@ -111,7 +114,10 @@ class StudyTest < ActiveSupport::TestCase
   end
 
   test 'should ignore email case for share checking' do
-    study = FactoryBot.create(:detached_study, name_prefix: 'Share Case Test', test_array: @@studies_to_clean)
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'Share Case Test',
+                              user: @user,
+                              test_array: @@studies_to_clean)
     share_user = FactoryBot.create(:user, test_array: @@users_to_clean)
     invalid_email = share_user.email.upcase
     share = study.study_shares.build(permission: 'View', email: invalid_email)
@@ -124,7 +130,10 @@ class StudyTest < ActiveSupport::TestCase
 
   # ensure that user-specified data embargoes expire on the date given
   test 'should lift embargo on date specified' do
-    study = FactoryBot.create(:detached_study, name_prefix: 'Embargo Test', test_array: @@studies_to_clean)
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'Embargo Test',
+                              user: @user,
+                              test_array: @@studies_to_clean)
     user = FactoryBot.create(:user, test_array: @@users_to_clean)
     assert_not study.embargo_active?
     assert_not study.embargoed?(user)

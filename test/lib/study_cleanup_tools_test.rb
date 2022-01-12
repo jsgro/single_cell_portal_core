@@ -6,7 +6,10 @@ class StudyCleanupToolsTest < ActiveSupport::TestCase
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @basic_study = FactoryBot.create(:study, name_prefix: 'Cleanup Security Checks', test_array: @@studies_to_clean)
+    @basic_study = FactoryBot.create(:study,
+                                     name_prefix: 'Cleanup Security Checks',
+                                     user: @user,
+                                     test_array: @@studies_to_clean)
   end
 
   test 'should validate hostname' do
