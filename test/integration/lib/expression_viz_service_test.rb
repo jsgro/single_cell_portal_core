@@ -192,6 +192,8 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
       assert_equal annotation, ideogram_opts[:annotation]
       assert_equal api_url + '?alt=media', ideogram_opts.dig(:ideogram_settings, :annotationsPath)
     end
+    # unset detached to avoid cleanup errors
+    study.update(detached: true)
   end
 
   test 'should load expression axis label' do

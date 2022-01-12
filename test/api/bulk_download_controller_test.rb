@@ -12,7 +12,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @taxon = Taxon.find_or_create_by!(common_name: 'mouse_fake1',
                            scientific_name: 'Mus musculusfake1',
-                           user: User.first,
+                           user: @user,
                            ncbi_taxid: 100901,
                            notes: 'fake mouse taxon 1 for testing')
     @genome_assembly = GenomeAssembly.find_or_create_by!(name: "GRCm38",
@@ -65,6 +65,9 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
 
   teardown do
     OmniAuth.config.mock_auth[:google_oauth2] = nil
+  end
+
+  after(:all) do
     @taxon.destroy
   end
 
