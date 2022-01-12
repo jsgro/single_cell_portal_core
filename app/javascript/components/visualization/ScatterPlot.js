@@ -81,8 +81,21 @@ function RawScatterPlot({
     setHiddenTraces(newShownTraces)
   }
 
+  /** Update layout, without recomputing traces */
+  function resizePlot() {
+    let scatter = Object.assign({}, scatterData)
+    const widthAndHeight = getScatterDimensions(scatter, dimensionProps)
+    scatter = Object.assign(scatter, widthAndHeight)
+    const layout = getPlotlyLayout(scatter)
+
+    Plotly.relayout(graphElementId, layout)
+
+    setScatterData(scatter)
+  }
+
   /** Process scatter plot data fetched from server */
   function processScatterPlot(clusterResponse=null) {
+    console.log('processScatterPlot')
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
@@ -158,7 +171,7 @@ function RawScatterPlot({
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   const widthAndHeight = getScatterDimensions(scatterData, dimensionProps, genes)
-  // Handles custom scatter legend updates and window resizing
+  // Handles custom scatter legend updates
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
     if (scatterData && !isLoading) {
@@ -166,7 +179,17 @@ function RawScatterPlot({
     }
     // look for updates of individual properties, so that we don't rerender if the containing array
     // happens to be a different instance
-  }, [hiddenTraces.join(','), widthAndHeight.height, widthAndHeight.width])
+  }, [hiddenTraces.join(',')])
+
+  // Handles window resizing
+  useUpdateEffect(() => {
+    // Don't update if graph hasn't loaded
+    if (scatterData && !isLoading) {
+      resizePlot()
+    }
+    // look for updates of individual properties, so that we don't rerender if the containing array
+    // happens to be a different instance
+  }, [widthAndHeight.height, widthAndHeight.width])
 
   // Handles Plotly `data` updates, e.g. changes in color profile
   useUpdateEffect(() => {
