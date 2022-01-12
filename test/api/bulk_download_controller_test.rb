@@ -309,7 +309,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     accessions = [@basic_study.accession, 'FakeHCAProject', study.accession, 'AnotherFakeHCAProject']
     scp_accessions = Api::V1::BulkDownloadController.find_matching_accessions(accessions)
     hca_accessions = Api::V1::BulkDownloadController.extract_hca_accessions(accessions)
-    assert_equal [@basic_study.accession, study.accession], scp_accessions
-    assert_equal %w[FakeHCAProject AnotherFakeHCAProject], hca_accessions
+    assert_equal [@basic_study.accession, study.accession].sort, scp_accessions.sort
+    assert_equal %w[FakeHCAProject AnotherFakeHCAProject].sort, hca_accessions.sort
   end
 end
