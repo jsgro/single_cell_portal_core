@@ -164,8 +164,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
                                auth_code: auth_code,
                                accessions: [study.accession],
                                directory: "#{file_type}--#{file_type}"
-                             )
-        )
+                             ))
         assert_response :success
         mock.verify
         files.each do |file|
@@ -176,25 +175,24 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
     assert_response :success
     auth_code = json['auth_code']
-    mock = Minitest::Mock.new
+    all_dirs_mock = Minitest::Mock.new
     file_types.each do |file_type|
-      files = 1.upto(5).map { |i| "#{file_type}/file_#{i}.#{file_type}" }
-      files.each do |file|
+      dir_files = 1.upto(5).map { |i| "#{file_type}/file_#{i}.#{file_type}" }
+      dir_files.each do |file|
         mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/#{file_type}/#{file}"
-        mock.expect :execute_gcloud_method, mock_signed_url,
-                    [:generate_signed_url, 0, study.bucket_id, file, { expires: 1.day.to_i }]
+        all_dirs_mock.expect :execute_gcloud_method, mock_signed_url,
+                             [:generate_signed_url, 0, study.bucket_id, file, { expires: 1.day.to_i }]
       end
     end
-    FireCloudClient.stub :new, mock do
+    FireCloudClient.stub :new, all_dirs_mock do
       execute_http_request(:get,
                            api_v1_bulk_download_generate_curl_config_path(
                              auth_code: auth_code,
                              accessions: [study.accession],
                              directory: 'all'
-                           )
-      )
+                           ))
       assert_response :success
-      mock.verify
+      all_dirs_mock.verify
       file_types.each do |file_type|
         1.upto(5).each do |i|
           assert json.include? "#{file_type}/file_#{i}.#{file_type}"
