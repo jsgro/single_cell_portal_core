@@ -8,7 +8,7 @@ import {
 import { log } from './metrics-api'
 
 // See note in logSearch
-let numSearchesSincePageLoad = 0
+let searchNumber = 0
 
 const filterNamesById = {}
 
@@ -75,8 +75,8 @@ function getFriendlyFilterListByFacet(facets) {
  * Log global study search metrics, one type of search done on home page
  */
 export function logSearch(type, searchParams, perfTimes) {
-  numSearchesSincePageLoad += 1
-  if (numSearchesSincePageLoad < 3) {
+  searchNumber += 1
+  if (searchNumber < 3) {
     // This prevents over-reporting searches.
     //
     // Loading home page triggers 2 searches, which is a side-effect / artifact
@@ -106,7 +106,7 @@ export function logSearch(type, searchParams, perfTimes) {
   const simpleProps = {
     terms, numTerms, genes, numGenes, page, preset,
     facetList, numFacets, numFilters,
-    perfTimes, numSearchesSincePageLoad,
+    perfTimes,
     type, context: 'global'
   }
   const props = Object.assign(simpleProps, filterListByFacet)
