@@ -81,29 +81,27 @@ function RawScatterPlot({
     setHiddenTraces(newShownTraces)
   }
 
-  /** Update layout, without recomputing traces */
-  function resizePlot() {
-    let scatter = Object.assign({}, scatterData)
+  /** Get new, updated scatter object instance, and new layout */
+  function getNewScatterAndLayout(scatter=null) {
+    if (!scatter) {
+      scatter = Object.assign({}, scatterData) // New instance forces render
+    }
     const widthAndHeight = getScatterDimensions(scatter, dimensionProps)
     scatter = Object.assign(scatter, widthAndHeight)
     const layout = getPlotlyLayout(scatter)
 
-    Plotly.relayout(graphElementId, layout)
+    return { scatter, layout }
+  }
 
+  /** Update layout, without recomputing traces */
+  function resizePlot() {
+    const { scatter, layout } = getNewScatterAndLayout()
+    Plotly.relayout(graphElementId, layout)
     setScatterData(scatter)
   }
 
-  /** Process scatter plot data fetched from server */
-  function processScatterPlot(clusterResponse=null) {
-    console.log('processScatterPlot')
-    let [scatter, perfTimes] =
-      (clusterResponse ? clusterResponse : [scatterData, null])
-
-    const widthAndHeight = getScatterDimensions(scatter, dimensionProps)
-    scatter = Object.assign(scatter, widthAndHeight)
-
-    const layout = getPlotlyLayout(scatter)
-
+  /** Update legend counts and recompute traces, without recomputing layout */
+  function updateCountsAndGetTraces(scatter) {
     const traceArgs = {
       genes,
       isAnnotatedScatter,
@@ -113,8 +111,22 @@ function RawScatterPlot({
       scatter
     }
     const [traces, labelCounts] = getPlotlyTraces(traceArgs)
-    const plotlyTraces = [traces]
     setCountsByLabel(labelCounts)
+    const plotlyTraces = [traces]
+    return plotlyTraces
+  }
+
+  /** Process scatter plot data fetched from server */
+  function processScatterPlot(clusterResponse=null) {
+    console.log('processScatterPlot')
+    let [scatter, perfTimes] =
+      (clusterResponse ? clusterResponse : [scatterData, null])
+
+    const sl = getNewScatterAndLayout(scatter)
+    scatter = sl.scatter
+    const layout = sl.layout
+
+    const plotlyTraces = updateCountsAndGetTraces(scatter)
 
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
@@ -170,7 +182,6 @@ function RawScatterPlot({
     })
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
-  const widthAndHeight = getScatterDimensions(scatterData, dimensionProps, genes)
   // Handles custom scatter legend updates
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
@@ -182,6 +193,7 @@ function RawScatterPlot({
   }, [hiddenTraces.join(',')])
 
   // Handles window resizing
+  const widthAndHeight = getScatterDimensions(scatterData, dimensionProps, genes)
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
     if (scatterData && !isLoading) {
