@@ -8,7 +8,7 @@ import {
 import { log } from './metrics-api'
 
 // See note in logSearch
-let searchNumber = 0
+let numSearchesSincePageLoad = 0
 
 const filterNamesById = {}
 
@@ -75,8 +75,8 @@ function getFriendlyFilterListByFacet(facets) {
  * Log global study search metrics, one type of search done on home page
  */
 export function logSearch(type, searchParams, perfTimes) {
-  searchNumber += 1
-  if (searchNumber < 3) {
+  numSearchesSincePageLoad += 1
+  if (numSearchesSincePageLoad < 3) {
     // This prevents over-reporting searches.
     //
     // Loading home page triggers 2 searches, which is a side-effect / artifact
@@ -106,7 +106,7 @@ export function logSearch(type, searchParams, perfTimes) {
   const simpleProps = {
     terms, numTerms, genes, numGenes, page, preset,
     facetList, numFacets, numFilters,
-    perfTimes,
+    perfTimes, numSearchesSincePageLoad,
     type, context: 'global'
   }
   const props = Object.assign(simpleProps, filterListByFacet)
@@ -139,11 +139,13 @@ export function logViolinPlot(
   log('plot:violin', props)
 }
 
+let numScatterPlotsSincePageLoad = 0
 /** Logs scatter plot metrics */
 export function logScatterPlot(
   { scatter, genes },
   perfTimes
 ) {
+  numScatterPlotsSincePageLoad += 1
   const props = {
     'numPoints': scatter.numPoints, // How many cells are we plotting?
     genes,
@@ -161,7 +163,8 @@ export function logScatterPlot(
     'isCorrelatedScatter': scatter.isCorrelatedScatter,
     'isAnnotatedScatter': scatter.isAnnotatedScatter,
     'isSpatial': scatter.isSpatial,
-    perfTimes
+    perfTimes,
+    numScatterPlotsSincePageLoad
   }
 
   log('plot:scatter', props)
