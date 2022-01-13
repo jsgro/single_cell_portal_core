@@ -93,4 +93,44 @@ class UserTest < ActiveSupport::TestCase
       assert_nil token
     end
   end
+
+  test 'should determine if user needs to accept updated Terra Terms of Service' do
+    mock = Minitest::Mock.new
+    user_registration = {
+      enabled: {
+        ldap: true,
+        allUsersGroup: true,
+        google: true,
+        tosAccepted: true,
+        adminEnabled: false
+      },
+      userInfo: {
+        userEmail: @user.email,
+        userSubjectId: @user.uid
+      }
+    }.with_indifferent_access
+    mock.expect :get_registration, user_registration
+    FireCloudClient.stub :new, mock do
+      assert_not @user.must_accept_terra_tos?
+      mock.verify
+    end
+
+    # negative test
+    user_registration[:enabled][:tosAccepted] = false
+    mock = Minitest::Mock.new
+    mock.expect :get_registration, user_registration
+    FireCloudClient.stub :new, mock do
+      assert @user.must_accept_terra_tos?
+      mock.verify
+    end
+
+    # failover test
+    user_registration[:enabled].delete(:tosAccepted)
+    mock = Minitest::Mock.new
+    mock.expect :get_registration, user_registration
+    FireCloudClient.stub :new, mock do
+      assert_not @user.must_accept_terra_tos?
+      mock.verify
+    end
+  end
 end
