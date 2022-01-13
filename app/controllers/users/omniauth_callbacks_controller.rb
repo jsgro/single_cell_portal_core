@@ -25,11 +25,19 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       # update a user's FireCloud status
       @user.delay.update_firecloud_status
       sign_in(@user)
+      @alert = nil
+      # check if user needs to accept updated Terra ToS
+      if @user.must_accept_terra_tos?
+        @alert = 'We have detected that Terra has updated their terms of service - please visit ' \
+                 "<a href='https://app.terra.bio' target='_blank'>Terra</a> to accept the updated terms.  Some " \
+                 'features may not function correctly until you do so.'
+      end
       if TosAcceptance.accepted?(@user)
         MetricsService.merge_identities_in_mixpanel(@user, cookies)
-        redirect_to request.env['omniauth.origin'] || site_path
+        requested_path = request.env['omniauth.origin'] || site_path
+        redirect_to requested_path, alert: @alert
       else
-        redirect_to accept_tos_path(@user.id)
+        redirect_to accept_tos_path(@user.id), alert: @alert
       end
     else
       redirect_to new_user_session_path
