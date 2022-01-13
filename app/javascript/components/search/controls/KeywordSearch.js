@@ -11,7 +11,7 @@ import { SearchSelectionContext } from 'providers/SearchSelectionProvider'
  * optionally takes a 'keywordValue' prop with the initial value for the field
  */
 export default function KeywordSearch({ keywordPrompt }) {
-  const placeholder = keywordPrompt ? keywordPrompt : 'Enter keyword'
+  const placeholder = keywordPrompt ? keywordPrompt : 'Search title and description text'
   const selectionContext = useContext(SearchSelectionContext)
   // show clear button after a search has been done,
   //  as long as the text hasn't been updated
@@ -42,6 +42,7 @@ export default function KeywordSearch({ keywordPrompt }) {
       onSubmit = {handleSubmit}
       className='study-keyword-search'
     >
+      <span className='badge text-search search-title'>Text search</span>
       <InputGroup>
         <input
           ref = {inputField}

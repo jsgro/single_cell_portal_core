@@ -18,15 +18,16 @@ export default function FacetsPanel() {
   const defaultFacets = searchFacetContext.facets.filter(facet => defaultFacetIds.includes(facet.id))
   const moreFacets = searchFacetContext.facets.filter(facet => moreFacetIds.includes(facet.id))
   return (
-    <>
-      <CombinedFacetControl controlDisplayName="cell type" facetIds={['cell_type', 'cell_type__custom']}/>
+    <div>
+      <span className='badge metadata-search search-title'>Metadata search</span>
       <CombinedFacetControl controlDisplayName="organ" facetIds={['organ', 'organ_region']}/>
       {
         defaultFacets.map((facet, i) => {
           return <FacetControl facet={facet} key={i}/>
         })
       }
+      <CombinedFacetControl controlDisplayName="cell type" facetIds={['cell_type', 'cell_type__custom']}/>
       <MoreFacetsButton facets={moreFacets} />
-    </>
+    </div>
   )
 }
