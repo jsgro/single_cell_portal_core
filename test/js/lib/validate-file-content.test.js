@@ -131,6 +131,36 @@ describe('Client-side file validation', () => {
     expect(errors[0][1]).toEqual('format:mismatch-column-number')
   })
 
+  it('catches row with wrong number of columns in sparse matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo6.mtx',
+      content: '%%MatrixMarket matrix coordinate integer general\n4 8 9\n4 3 0\n4 1'
+    })
+    const { errors } = await validateFileContent(file, 'MM Coordinate Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:mismatch-column-number')
+  })
+
+  it('catches missing header string in sparse matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo9.mtx',
+      content: '%%MMahrket matrix coordinate integer general\n4 8 9\n4 3 0\n4 1 2'
+    })
+    const { errors } = await validateFileContent(file, 'MM Coordinate Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:cap:missing-mtx-value')
+  })
+
+  it('catches empty row in sparse matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'fo06.mtx',
+      content: '%%MatrixMarket matrix coordinate integer general\n\n\n4 1 0'
+    })
+    const { errors } = await validateFileContent(file, 'MM Coordinate Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:empty-row')
+  })
+
   it('catches duplicate row values in barcodes file', async () => {
     const file = createMockFile({
       fileName: 'foo6.tsv',

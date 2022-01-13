@@ -249,7 +249,7 @@ function validateSparseColumnNumber(line, isLastLine, lineNum, dataObj) {
   dataObj.correctNumberOfColumns = dataObj.correctNumberOfColumns ? dataObj.correctNumberOfColumns : ''
 
   // use the first non-comment or header row to determine correct number of columns
-  if (!line.startsWith('%')) {
+  if (!line.startsWith('%') && !!line.trim()) {
     dataObj.correctNumberOfColumns = dataObj.correctNumberOfColumns ? dataObj.correctNumberOfColumns : line.split(' ').length
     if (dataObj.correctNumberOfColumns !== line.split(' ').length) {
       dataObj.rowsWithWrongColumnNumbers.push(lineNum)
@@ -297,7 +297,7 @@ function validateSparseNoBlankLines(line, isLastLine, lineNum, dataObj) {
 
     const msg = `Please ensure there are no blank rows in the file. ` +
     `Remove or replace the following ${rowText}: ${notedBadRows}, `
-    issues.push(['error', 'format:mismatch-column-number', msg])
+    issues.push(['error', 'format:empty-row', msg])
   }
 
   return issues
