@@ -13,7 +13,7 @@ const publicStudies = window.SCP.studyStats.public
 const compliantStudies = window.SCP.studyStats.compliant
 const percentage = (compliantStudies / publicStudies * 100).toFixed(0)
 const helpModalContent = (<div>
-  <h4 className="text-center">Metadata-powered Search</h4><br/>
+  <h4 className="text-center">Advanced Search</h4><br/>
   Single Cell Portal supports searching on specific facets of studies by ontology classifications.
   <br/><br/>
   For example, you can search on studies that

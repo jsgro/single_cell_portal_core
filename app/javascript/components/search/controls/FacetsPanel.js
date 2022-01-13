@@ -19,7 +19,13 @@ export default function FacetsPanel() {
   const moreFacets = searchFacetContext.facets.filter(facet => moreFacetIds.includes(facet.id))
   return (
     <div>
-      <span className='badge metadata-search search-title'>Metadata search</span>
+      <span
+        className='badge metadata-search search-title'
+        title='Search through metadata for values that may not appear in titles/descriptions, like cell type or disease'
+        data-toggle='tooltip'
+      >
+        Data search
+      </span>
       <CombinedFacetControl controlDisplayName="organ" facetIds={['organ', 'organ_region']}/>
       {
         defaultFacets.map((facet, i) => {
