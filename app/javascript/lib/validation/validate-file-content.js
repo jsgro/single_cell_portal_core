@@ -192,9 +192,25 @@ function validateGeneInHeader(headers) {
   return issues
 }
 
+/**
+ * Validate the first line in the Sparse Matrix begins with the string '%%MatrixMarket'
+ */
+function validateMTXHeaderLine(line, lineNum, dataObj) {
+  const issues = []
+  const mtxHeader = line.slice(0, 14)
+  if (lineNum !== 0) {
+    return issues
+  }
+  if (mtxHeader !== '%%MatrixMarket') {
+    const msg = 'The first line of the file must begin with the string "%%MatrixMarket". ' +
+     `However, the first value for this file currently is "${mtxHeader}".`
+    issues.push(['error', 'format:cap:missing-mtx-value', msg])
+  }
+
+  return issues
+}
 
 /**
- *
  * Validate all values are numbers outside first column cell name
  */
 function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
@@ -220,6 +236,70 @@ function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
     `Please ensure all values in ${rowText}: ${notedBadRows}, are numbers.`
     issues.push(['error', 'format:invalid-type:not-numeric', msg])
   }
+
+  return issues
+}
+
+/**
+ * Verify sparse matrix column numbers match
+ */
+function validateSparseColumnNumber(line, isLastLine, lineNum, dataObj) {
+  const issues = []
+  dataObj.rowsWithWrongColumnNumbers = dataObj.rowsWithWrongColumnNumbers ? dataObj.rowsWithWrongColumnNumbers : []
+  dataObj.correctNumberOfColumns = dataObj.correctNumberOfColumns ? dataObj.correctNumberOfColumns : ''
+
+  // use the first non-comment or header row to determine correct number of columns
+  if (!line.startsWith('%')) {
+    dataObj.correctNumberOfColumns = dataObj.correctNumberOfColumns ? dataObj.correctNumberOfColumns : line.split(' ').length
+    if (dataObj.correctNumberOfColumns !== line.split(' ').length) {
+      dataObj.rowsWithWrongColumnNumbers.push(lineNum)
+    }
+  }
+
+  const numBadRows = dataObj.rowsWithWrongColumnNumbers.length
+  if (isLastLine && numBadRows > 0) {
+    const rowText = numBadRows > 1 ? 'rows' : 'row'
+    const maxLinesToReport = 10
+    let notedBadRows = dataObj.rowsWithWrongColumnNumbers.slice(0, maxLinesToReport).join(', ')
+    if (numBadRows - maxLinesToReport > 0) {
+      notedBadRows += ` and ${numBadRows - maxLinesToReport} more rows`
+    }
+
+    const msg = `All rows must have the same number of columns - ` +
+    `please ensure the number of columns for ${rowText}: ${notedBadRows}, ` +
+    `matches the specificed number of columns-per-row.`
+    issues.push(['error', 'format:mismatch-column-number', msg])
+  }
+
+  return issues
+}
+
+/**
+ * Verify sparse matrix has no blank lines
+ */
+function validateSparseNoBlankLines(line, isLastLine, lineNum, dataObj) {
+  const issues = []
+  dataObj.blankLineRows = dataObj.blankLineRows ? dataObj.blankLineRows : []
+
+  // use the first non-comment or header row to determine correct number of columns
+  if (!line.trim()) {
+    dataObj.blankLineRows.push(lineNum)
+  }
+
+  const numBadRows = dataObj.blankLineRows.length
+  if (isLastLine && numBadRows > 0) {
+    const rowText = numBadRows > 1 ? 'rows' : 'row'
+    const maxLinesToReport = 10
+    let notedBadRows = dataObj.blankLineRows.slice(0, maxLinesToReport).join(', ')
+    if (numBadRows - maxLinesToReport > 0) {
+      notedBadRows += ` and ${numBadRows - maxLinesToReport} more rows`
+    }
+
+    const msg = `Please ensure there are no blank rows in the file. ` +
+    `Remove or replace the following ${rowText}: ${notedBadRows}, `
+    issues.push(['error', 'format:mismatch-column-number', msg])
+  }
+
   return issues
 }
 
@@ -559,6 +639,20 @@ export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
   return { issues, delimiter, numColumns: headers[0].length }
 }
 
+/** parse a sparse matrix file */
+export async function parseSparseMatrixFile(chunker, mimeType, fileOptions) {
+  let issues = []
+  const delimter = '  '
+  const dataObj = {} // object to track multi-line validation concerns
+  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
+    issues = issues.concat(validateMTXHeaderLine(rawLine, lineNum, dataObj))
+    issues = issues.concat(validateSparseColumnNumber(rawLine, isLastLine, lineNum, dataObj))
+    issues = issues.concat(validateSparseNoBlankLines(rawLine, isLastLine, lineNum, dataObj))
+    // add other line-by-line validations here
+  })
+  return { issues, delimter, numColumns: dataObj.correctNumberOfColumns}
+}
+
 /** parse a metadata file, and return an array of issues, along with file parsing info */
 export async function parseMetadataFile(chunker, mimeType, fileOptions) {
   const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType)
@@ -600,7 +694,7 @@ export async function parseClusterFile(chunker, mimeType) {
 }
 
 /**
- * reads in a two lines to be used as header lines, sniffs the delimiter, 
+ * reads in a two lines to be used as header lines, sniffs the delimiter,
  * and returns the lines parsed by the sniffed delimiter
  */
 export async function getParsedHeaderLines(chunker, mimeType) {
@@ -671,7 +765,8 @@ async function parseFile(file, fileType, fileOptions={}) {
       'Metadata': parseMetadataFile,
       'Expression Matrix': parseDenseMatrixFile,
       '10X Genes File': parseFeaturesFile,
-      '10X Barcodes File': parseBarcodesFile
+      '10X Barcodes File': parseBarcodesFile,
+      'MM Coordinate Matrix': parseSparseMatrixFile
     }
     if (parseFunctions[fileType]) {
       const chunker = new ChunkedLineReader(file)

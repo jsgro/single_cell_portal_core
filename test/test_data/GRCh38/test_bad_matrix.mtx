@@ -1,7 +1,7 @@
-%%MatrixMarket matrix coordinate integer general
+%%Matriarket matrix coordinate integer general
 %
 100 25 25
-37 13 10
+37 13
 40 10 11
 42 5 12
 47 19 13
@@ -12,6 +12,7 @@
 3 6 1
 6 9 2
 8 18 3
+
 16 16 4
 21 8 5
 23 17 6
