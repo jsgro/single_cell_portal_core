@@ -174,8 +174,8 @@ function validateSparseColumnNumber(line, isLastLine, lineNum, dataObj) {
   dataObj.rowsWithWrongColumnNumbers = dataObj.rowsWithWrongColumnNumbers ? dataObj.rowsWithWrongColumnNumbers : []
   dataObj.correctNumberOfColumns = dataObj.correctNumberOfColumns ? dataObj.correctNumberOfColumns : ''
 
-  // use the first non-comment or header row to determine correct number of columns
-  if (!line.startsWith('%') && !!line.trim()) {
+  // use the first non-comment, non-blank, non-header row to determine correct number of columns
+  if (!line.startsWith('%') && line.trim().length > 0) {
     dataObj.correctNumberOfColumns = dataObj.correctNumberOfColumns ? dataObj.correctNumberOfColumns : line.split(' ').length
     if (dataObj.correctNumberOfColumns !== line.split(' ').length) {
       dataObj.rowsWithWrongColumnNumbers.push(lineNum)
