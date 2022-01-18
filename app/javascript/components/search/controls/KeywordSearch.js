@@ -22,7 +22,7 @@ export default function KeywordSearch({ keywordPrompt }) {
   const [showTextSearchHelpModal, setTextShowSearchHelpModal] = useState(false)
 
   const textSearchModalContent = (<div>
-    <h4 className="text-center">Title and description Search</h4><br/>
+    <h4 className="text-center">Title and description search</h4><br/>
     Using the search box below will perform a text-based search of all study titles and descriptions, and will return
     those that contain any of the specified terms. You can quote (&quot;) phrases to find matches that contain the entire
     phrase, and you can combine both single terms and quoted phrases in your search.
