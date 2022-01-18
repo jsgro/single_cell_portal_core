@@ -202,23 +202,6 @@ nav.search-links, #search-panel {
     }
   }
 
-  #facets-accordion {
-    background: #eff2f5;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    .facet {
-      width: 98%;
-      display: block;
-      margin: 5px 2px;
-      .filters-box-searchable {
-        position: relative;
-        width: 98%;
-        border: none;
-        margin-top: -2px;
-      }
-    }
-  }
-
   .filters-box-header {
     margin: 5px 0px;
     display: flex;
@@ -240,7 +223,8 @@ nav.search-links, #search-panel {
   }
 
   #facets-accordion {
-    height: 300px;
+    background: #eff2f5;
+    overflow-x: hidden;
     .filters-box-searchable {
       margin-left: 0px;
     }
@@ -256,6 +240,17 @@ nav.search-links, #search-panel {
       width: 100%;
       display: block;
       border: 1px solid #ddd;
+    }
+    .facet {
+      width: 98%;
+      display: block;
+      margin: 5px 2px;
+      .filters-box-searchable {
+        position: relative;
+        width: 98%;
+        border: none;
+        margin-top: -2px;
+      }
     }
   }
 
