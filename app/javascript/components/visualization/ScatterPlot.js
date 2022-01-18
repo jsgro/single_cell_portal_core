@@ -13,7 +13,7 @@ import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
-import { getPlotDimensions } from 'lib/plot'
+import { getPlotDimensions, filterTrace } from 'lib/plot'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
@@ -310,7 +310,7 @@ export function getPlotlyTraces({
   hiddenTraces,
   scatter
 }) {
-  const trace = {
+  const unfilteredTrace = {
     type: is3D ? 'scatter3d' : 'scattergl',
     mode: 'markers',
     x: data.x,
@@ -326,6 +326,7 @@ export function getPlotlyTraces({
   let countsByLabel = null
 
   const isRefGroup = getIsRefGroup(scatter)
+  const trace = filterTrace(unfilteredTrace, hiddenTraces, null)
 
   if (isRefGroup) {
     // Use Plotly's groupby and filter transformation to make the traces
@@ -339,19 +340,6 @@ export function getPlotlyTraces({
         styles: legendStyles
       }
     ]
-
-    if (hiddenTraces.length > 0) {
-      trace.transforms.push({
-        type: 'filter',
-        target: data.annotations,
-        // For available operations, see:
-        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/transforms/filter.js
-        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/constants/filter_ops.js
-        // Plotly docs are rather sparse here.
-        operation: '}{',
-        value: hiddenTraces
-      })
-    }
   } else {
     const isGeneExpressionForColor = genes.length && !isCorrelatedScatter && !isAnnotatedScatter
     // for non-clustered plots, we pass in a single trace with all the points

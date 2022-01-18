@@ -37,6 +37,79 @@ export const labelFont = {
 
 export const lineColor = 'rgb(40, 40, 40)'
 
+/** takes a polotly trace argument and filters out cells based on params.  will return the original object,
+ * but with data arrays filtered as appropriate
+ * @param labelsToHide {String[]} array of label names to filter out
+ * @param cellsToShow {String[]} Array of cell names to show. If null, will show everything
+ */
+export function filterTrace(trace, labelsToHide, cellsToShow) {
+  const isHidingByLabel = labelsToHide && labelsToHide.length
+  const isHidingByCellName = !!cellsToShow
+  const hasZvalues = !!trace.z
+  const hasColors = !!trace.colors
+  if (!isHidingByLabel && !isHidingByCellName) {
+    return trace
+  }
+  const oldLength = trace.x.length
+  // initialize the other arrays (for now, assume they will be roughly the same length as the old array )
+  const fTrace = {
+    x: new Array(oldLength),
+    y: new Array(oldLength),
+    z: hasZvalues ? new Array(oldLength) : undefined,
+    annotations: new Array(oldLength),
+    cells: new Array(oldLength),
+    colors: hasColors ? new Array(oldLength) : undefined
+  }
+
+  const cellNameHash = {}
+  if (isHidingByCellName) {
+    // build up the indexes of the cells so we can quickly filter based on them
+    for (let i = 0; i < cellsToShow.length; i++) {
+      cellNameHash[cellsToShow[i]] = true
+    }
+  }
+  const labelNameHash = {}
+  if (isHidingByLabel) {
+    // build up the indexes of the labels so we can quickly filter based on them
+    for (let i = 0; i < labelsToHide.length; i++) {
+      labelNameHash[labelsToHide[i]] = true
+    }
+  }
+
+  let newI = 0
+  for (let i = 0; i < oldLength; i++) {
+    if (!isHidingByCellName || cellNameHash[trace.cells[i]]) {
+      if (!isHidingByLabel || !labelNameHash[trace.annotations[i]]) {
+        fTrace.x[newI] = trace.x[i]
+        fTrace.y[newI] = trace.y[i]
+        if (hasZvalues) {
+          fTrace.z[newI] = trace.z[i]
+        }
+        fTrace.cells[newI] = trace.cells[i]
+        fTrace.annotations[newI] = trace.annotations[i]
+        if (hasColors) {
+          fTrace.colors[i] = trace.colors[i]
+        }
+        newI++
+      }
+    }
+  }
+  // now fix the length of the new arrays to the number of values that were written
+  [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.colors, fTrace.cells].forEach(arr => {
+    if (arr) {
+      arr.length = newI
+    }
+  })
+  Object.assign(trace, fTrace)
+  if (!hasZvalues) {
+    delete trace.z
+  }
+  if (!hasColors) {
+    delete trace.colors
+  }
+  return trace
+}
+
 /**
  * Wrapper for Plotly.newPlot, to enable tests
  *
