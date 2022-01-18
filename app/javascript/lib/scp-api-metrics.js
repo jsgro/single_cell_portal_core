@@ -139,11 +139,13 @@ export function logViolinPlot(
   log('plot:violin', props)
 }
 
+let numScatterPlotsSincePageLoad = 0
 /** Logs scatter plot metrics */
 export function logScatterPlot(
   { scatter, genes },
   perfTimes
 ) {
+  numScatterPlotsSincePageLoad += 1
   const props = {
     'numPoints': scatter.numPoints, // How many cells are we plotting?
     genes,
@@ -161,7 +163,8 @@ export function logScatterPlot(
     'isCorrelatedScatter': scatter.isCorrelatedScatter,
     'isAnnotatedScatter': scatter.isAnnotatedScatter,
     'isSpatial': scatter.isSpatial,
-    perfTimes
+    perfTimes,
+    numScatterPlotsSincePageLoad
   }
 
   log('plot:scatter', props)
