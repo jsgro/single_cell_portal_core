@@ -28,7 +28,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       @alert = nil
       # check if user needs to accept updated Terra ToS
       if @user.must_accept_terra_tos?
-        @alert = 'We have detected that Terra has updated their terms of service - please visit ' \
+        @alert = 'Terra has updated their Terms of Service.  Please visit ' \
                  "<a href='https://app.terra.bio' target='_blank'>Terra</a> to accept the updated terms.  Some " \
                  'features may not function correctly until you do so.'
       end
