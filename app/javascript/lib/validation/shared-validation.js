@@ -1,3 +1,6 @@
+/**
+* @fileoverview Functions used in multiple file types validation
+*/
 
 /**
  * ParseException can be thrown when we encounter an error that prevents us from parsing the file further

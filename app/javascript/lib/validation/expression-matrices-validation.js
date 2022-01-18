@@ -1,4 +1,6 @@
-
+/**
+* @fileoverview Functions used for sparse (MTX), features, barcodes and dense file validation
+*/
 
 import {
   getParsedHeaderLines, parseLine,
