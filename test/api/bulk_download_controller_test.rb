@@ -198,10 +198,8 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
                            ))
       assert_response :success
       all_dirs_mock.verify
-      file_types.each do |file_type|
-        1.upto(5).each do |i|
-          assert json.include? "#{file_type}/file_#{i}.#{file_type}"
-        end
+      @files.values.flatten.each do |file|
+        assert json.include? file
       end
     end
   end
