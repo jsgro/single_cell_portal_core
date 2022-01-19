@@ -15,6 +15,24 @@ export function showMessage(message, key, logProps) {
   functionHolder.showMessage(message, key, logProps)
 }
 
+/** take a json-api error object and render a modal with the contents.
+ * For now, this just uses the 'detail' field of each error.
+ */
+export function showJsonApiErrorMessage(error, key, logProps) {
+  let message = ''
+  if (!error?.errors?.length) {
+    // we got a non-json API error, so try to render it as-is
+    message = error.toString()
+  } else {
+    message = <div>
+      { error.errors.map((error, index) =>
+        <div key={index} className="whitespace-pre-wrap">{error.detail}</div>
+      )}
+    </div>
+  }
+  showMessage(message, key, Object.assign(logProps, { jsonApiModal: true }))
+}
+
 /** Component to render a modal that can display messages in response to any call to 'showMessage' */
 export default function MessageModal() {
   const [show, setShow] = useState(false)
