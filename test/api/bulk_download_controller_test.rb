@@ -300,6 +300,36 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test 'should ignore empty/missing Azul entries' do
+    hca_project_id = SecureRandom.uuid
+    payload = {
+      file_ids: [@basic_study_metadata_file.id.to_s],
+      azul_files: {
+        FakeHCAStudy1: [
+          {
+            source: 'hca',
+            count: 1,
+            upload_file_size: 10.megabytes,
+            file_format: 'loom',
+            file_type: 'analysis_file',
+            accession: 'FakeHCAStudy1',
+            project_id: hca_project_id
+          }
+        ],
+        FakeHcaStudy2: []
+      }
+    }
+    execute_http_request(:post, api_v1_bulk_download_auth_code_path, request_payload: payload, user: @user)
+    assert_response :success
+
+    download_id = json['download_id']
+    download_request = DownloadRequest.find(download_id)
+    assert download_request.present?
+    azul_files = download_request.azul_files
+    assert azul_files.keys.include?('FakeHCAStudy1')
+    assert_not azul_files.keys.include?('FakeHCAStudy2')
+  end
+
   test 'should extract accessions from parameters' do
     study = FactoryBot.create(:detached_study,
                               name_prefix: 'Accession Test',
