@@ -320,7 +320,6 @@ nav.search-links, #search-panel {
 }
 
 .advanced-opts {
-  color: #fff !important;
   display: inline;
 }
 
@@ -367,11 +366,9 @@ nav.search-links, #search-panel {
 }
 
 span.search-title {
-  background-color: #4d72aa;
-  font-size: smaller;
+  border-bottom: 0.64px solid #4d72aa;
   display: block;
   margin: 3px 0;
-  opacity: 50%;
 }
 
 span.metadata-search {

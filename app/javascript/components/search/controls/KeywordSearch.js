@@ -59,8 +59,8 @@ export default function KeywordSearch({ keywordPrompt }) {
       onSubmit = {handleSubmit}
       className='study-keyword-search'
     >
-      <span className='badge text-search search-title'>
-        Description search {textSearchLink}
+      <span className='text-search search-title'>
+        Title/Description search {textSearchLink}
       </span>
       <InputGroup>
         <input

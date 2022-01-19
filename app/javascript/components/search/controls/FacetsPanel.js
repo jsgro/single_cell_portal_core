@@ -27,7 +27,7 @@ export default function FacetsPanel() {
   const compliantStudies = window.SCP.studyStats.compliant
   const percentage = Math.round(compliantStudies / publicStudies * 100)
   const helpModalContent = (<div>
-    <h4 className="text-center">Advanced search</h4><br/>
+    <h4 className="text-center">Metadata search</h4><br/>
     Single Cell Portal supports searching on facets of studies by ontology classifications.  This lets users
     search for studies using metadata that may not appear in titles or descriptions.
     <br/><br/>
@@ -59,9 +59,9 @@ export default function FacetsPanel() {
   return (
     <div>
       <span
-        className='badge metadata-search search-title'
+        className='metadata-search search-title'
       >
-        Data search { advancedOptsLink }
+        Metadata search { advancedOptsLink }
       </span>
       <CombinedFacetControl controlDisplayName="organ" facetIds={['organ', 'organ_region']}/>
       {
