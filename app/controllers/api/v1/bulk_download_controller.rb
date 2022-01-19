@@ -59,12 +59,17 @@ module Api
         totat = current_api_user.create_totat(half_hour, api_v1_bulk_download_generate_curl_config_path)
         valid_params = params.permit({ file_ids: [], azul_files: {} }).to_h
 
+        # discard any empty Azul entries - this can happen if row is selected, but no file types are checked
+        if valid_params[:azul_files].present?
+          valid_azul_files = valid_params[:azul_files].reject { |_, files| files.empty? }
+        end
+
         # for now, we don't do any permissions validation on the param values -- we'll do that during the actual download, since
         # quota/files/permissions may change between the creation of the download and the actual download.
         auth_download = DownloadRequest.create!(
           auth_code: totat[:totat],
           file_ids: valid_params[:file_ids],
-          azul_files: valid_params[:azul_files],
+          azul_files: valid_azul_files,
           user_id: current_api_user.id
         )
         auth_code_response = {
