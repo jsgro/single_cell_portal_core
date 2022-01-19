@@ -95,7 +95,6 @@ function RawScatterPlot({
 
   /** Update layout, without recomputing traces */
   function resizePlot() {
-    console.log('in resizePlot')
     const scatter = updateScatterLayout()
     Plotly.relayout(graphElementId, scatter.layout)
     setScatterData(scatter)
@@ -103,7 +102,6 @@ function RawScatterPlot({
 
   /** Update legend counts and recompute traces, without recomputing layout */
   function updateCountsAndGetTraces(scatter) {
-    console.log('updateCountsAndGetTraces')
     const traceArgs = {
       genes,
       isAnnotatedScatter,
@@ -120,7 +118,6 @@ function RawScatterPlot({
 
   /** Process scatter plot data fetched from server */
   function processScatterPlot(clusterResponse=null) {
-    console.log('processScatterPlot')
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
