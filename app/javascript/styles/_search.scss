@@ -366,13 +366,18 @@ nav.search-links, #search-panel {
 }
 
 span.search-title {
-  border-bottom: 0.64px solid #4d72aa;
+  font-weight: bold;
+  color: #666;
   display: block;
   margin: 3px 0;
 }
 
 span.metadata-search {
   width: 98%;
+}
+
+div.metadata-search-wrap {
+  margin-right: 0.75em;
 }
 
 span.text-search {

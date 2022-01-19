@@ -57,7 +57,7 @@ export default function FacetsPanel() {
   </a>
 
   return (
-    <div>
+    <div className='metadata-search-wrap'>
       <span
         className='metadata-search search-title'
       >

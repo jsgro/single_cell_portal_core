@@ -60,7 +60,7 @@ export default function KeywordSearch({ keywordPrompt }) {
       className='study-keyword-search'
     >
       <span className='text-search search-title'>
-        Title/Description search {textSearchLink}
+        Title and description search {textSearchLink}
       </span>
       <InputGroup>
         <input
