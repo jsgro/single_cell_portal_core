@@ -80,6 +80,8 @@ class AzulSearchService
   def self.get_facet_matches(result, facets)
     results_info = {}
     facets.each do |facet|
+      next if facet[:keyword_conversion]
+
       facet_name = facet[:id]
       RESULT_FACET_FIELDS.each do |result_field|
         azul_name = FacetNameConverter.convert_schema_column(:alexandria, :azul, facet_name)
@@ -137,10 +139,12 @@ class AzulSearchService
   def self.merge_facet_lists(*facet_lists)
     all_facets = {}
     facet_lists.compact.each do |facet_list|
-      facet_list.each do |facet|
+      # filter 'converted' facet matches so we don't show match badges in the UI
+      facet_list.reject { |facet| facet[:keyword_conversion] }.each do |facet|
         facet_identifier = facet[:id]
         all_facets[facet_identifier] ||= facet
-        next if facet[:filters].is_a? Hash # this is a numeric facet, and we only have one right now
+        # this is a numeric facet, and we only have one right now
+        next if facet[:filters].is_a? Hash
 
         facet[:filters].each do |f|
           all_facets[facet_identifier][:filters] << f unless all_facets.dig(facet_identifier, :filters).include? f
