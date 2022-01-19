@@ -82,26 +82,28 @@ function RawScatterPlot({
   }
 
   /** Get new, updated scatter object instance, and new layout */
-  function getNewScatterAndLayout(scatter=null) {
+  function updateScatterLayout(scatter=null) {
     if (!scatter) {
       scatter = Object.assign({}, scatterData) // New instance forces render
     }
     const widthAndHeight = getScatterDimensions(scatter, dimensionProps)
     scatter = Object.assign(scatter, widthAndHeight)
-    const layout = getPlotlyLayout(scatter)
+    scatter.layout = getPlotlyLayout(scatter)
 
-    return { scatter, layout }
+    return scatter
   }
 
   /** Update layout, without recomputing traces */
   function resizePlot() {
-    const { scatter, layout } = getNewScatterAndLayout()
-    Plotly.relayout(graphElementId, layout)
+    console.log('in resizePlot')
+    const scatter = updateScatterLayout()
+    Plotly.relayout(graphElementId, scatter.layout)
     setScatterData(scatter)
   }
 
   /** Update legend counts and recompute traces, without recomputing layout */
   function updateCountsAndGetTraces(scatter) {
+    console.log('updateCountsAndGetTraces')
     const traceArgs = {
       genes,
       isAnnotatedScatter,
@@ -122,9 +124,8 @@ function RawScatterPlot({
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
-    const sl = getNewScatterAndLayout(scatter)
-    scatter = sl.scatter
-    const layout = sl.layout
+    scatter = updateScatterLayout(scatter)
+    const layout = scatter.layout
 
     const plotlyTraces = updateCountsAndGetTraces(scatter)
 
@@ -186,7 +187,7 @@ function RawScatterPlot({
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
     if (scatterData && !isLoading) {
-      processScatterPlot()
+      updateCountsAndGetTraces(scatterData)
     }
     // look for updates of individual properties, so that we don't rerender if the containing array
     // happens to be a different instance

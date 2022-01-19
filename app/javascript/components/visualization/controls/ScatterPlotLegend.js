@@ -177,9 +177,6 @@ export default function ScatterPlotLegend({
   const [showIsEnabled, hideIsEnabled] =
     getShowHideEnabled(hiddenTraces, countsByLabel)
 
-  console.log('in ScatterPlotLegend, height:')
-  console.log(height)
-
   return (
     <div
       className={`scatter-legend ${filteredClass}`}
