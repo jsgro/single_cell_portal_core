@@ -158,7 +158,8 @@ class BulkDownloadService
     # collect array of study accession requiring acceptance of download agreement (checking for expiration)
     agreement_accessions = []
     DownloadAgreement.all.each do |agreement|
-      agreement_accessions << agreement.study.accession unless agreement.expired?
+      # we may have orphaned download agreements, so ensure this is nil-safed
+      agreement_accessions << agreement.study&.accession unless agreement.expired? || !agreement.study
     end
     requires_agreement = permitted_accessions & agreement_accessions
     if requires_agreement.any?
