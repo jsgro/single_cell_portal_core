@@ -20,7 +20,7 @@ export async function getParsedHeaderLines(chunker, mimeType) {
   await chunker.iterateLines((line, lineNum, isLastLine) => {
     headerLines.push(line)
   }, 2)
-  if (headerLines.length < 2 || headerLines.some(hl => !hl)) {
+  if (headerLines.length < 2 || headerLines.some(hl => hl.length === 0)) {
     throw new ParseException('format:cap:missing-header-lines',
         `Your file is missing newlines or some required header lines`)
   }
@@ -175,8 +175,10 @@ export function validateGroupColumnCounts(headers, line, isLastLine, dataObj) {
   if (isLastLine) {
     dataObj.groupCheckColumns.forEach(gcc => {
       if (gcc.uniqueVals.size > 200) {
-        issues.push(['warn', 'content:group-col-over-200',
-            `${gcc.colName} has over 200 unique values and so will not be visible in plots -- is this intended?`])
+        issues.push([
+          'warn', 'content:group-col-over-200',
+          `${gcc.colName} has over 200 unique values and so will not be visible in plots -- is this intended?`
+        ])
       }
     })
   }
