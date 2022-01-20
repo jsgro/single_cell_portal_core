@@ -143,8 +143,8 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
                               user: @user,
                               test_array: @@studies_to_clean)
     @files = {
-      csv: 1.upto(5).map { |i| "csv/file_#{i}.csv" },
-      xlsx: 1.upto(5).map { |i| "xlsx/file_#{i}.xlsx" }
+      csv: [ "csv/file_1.csv" ],
+      xlsx: [ "xlsx/file_2.xlsx" ]
     }
     # single directory test
     @files.each do |file_type, files|
@@ -159,7 +159,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
       auth_code = json['auth_code']
       mock = Minitest::Mock.new
       files.each do |file|
-        mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/#{file_type}/#{file}"
+        mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/#{file}"
         mock.expect :execute_gcloud_method, mock_signed_url,
                     [:generate_signed_url, 0, study.bucket_id, file, { expires: 1.day.to_i }]
       end
@@ -182,9 +182,9 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     auth_code = json['auth_code']
     all_dirs_mock = Minitest::Mock.new
-    @files.each do |file_type, dir_files|
+    @files.each do |_, dir_files|
       dir_files.each do |file|
-        mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/#{file_type}/#{file}"
+        mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/#{file}"
         all_dirs_mock.expect :execute_gcloud_method, mock_signed_url,
                              [:generate_signed_url, 0, study.bucket_id, file, { expires: 1.day.to_i }]
       end
