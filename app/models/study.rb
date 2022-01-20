@@ -1677,13 +1677,14 @@ class Study
     end
     Rails.logger.info "Removing workspace #{firecloud_project}/#{firecloud_workspace} in #{Rails.env} environment"
     begin
-      ApplicationController.firecloud_client.delete_workspace(firecloud_project, firecloud_workspace)
+      ApplicationController.firecloud_client.delete_workspace(firecloud_project, firecloud_workspace) unless detached
       DeleteQueueJob.new(self.metadata_file).delay.perform if self.metadata_file.present?
       destroy
     rescue => e
       Rails.logger.error "Error in removing #{firecloud_project}/#{firecloud_workspace}"
       Rails.logger.error "#{e.class.name}:"
       Rails.logger.error "#{e.message}"
+      destroy # ensure deletion of study, even if workspace is orphaned
     end
     Rails.logger.info "Workspace #{firecloud_project}/#{firecloud_workspace} successfully removed."
   end

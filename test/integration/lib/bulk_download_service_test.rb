@@ -181,7 +181,10 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
   end
 
   test 'should generate study manifest file' do
-    study = FactoryBot.create(:detached_study, name_prefix: "#{self.method_name}")
+    study = FactoryBot.create(:detached_study,
+                              user: @user,
+                              name_prefix: 'Study Manifest Test',
+                              test_array: @@studies_to_clean,)
     FactoryBot.create(:study_file,
                       study: study, file_type: 'Expression Matrix', name: 'test_exp_validate.tsv', taxon_id: Taxon.new.id,
                       expression_file_info: ExpressionFileInfo.new(
@@ -205,8 +208,6 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     assert_equal 2, rows.count
     raw_count_row = rows.find {|r| r['filename'] == 'test_exp_validate.tsv'}
     assert_equal 'true', raw_count_row['is_raw_counts']
-
-    study.destroy!
   end
 
   test 'should create map of study file types to counts' do

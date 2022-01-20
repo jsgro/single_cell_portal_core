@@ -351,6 +351,32 @@ class User
     end
   end
 
+  # determine if user needs to accept an updated Terra Terms of Service agreement
+  def must_accept_terra_tos?
+    return false unless registered_for_firecloud
+
+    begin
+      client = FireCloudClient.new(self, FireCloudClient::PORTAL_NAMESPACE)
+      user_registration = client.get_registration&.with_indifferent_access
+      tos_accepted = user_registration.dig('enabled', 'tosAccepted')
+      return false if tos_accepted.nil? # failover protection for when ToS acceptance is not enforced at API level
+
+      # return inverse as value of 'false' here means the user must accept the updated Terra ToS
+      !tos_accepted
+    rescue RuntimeError
+      # this most likely is not an actual error, but rather a 401/403 from orchestration API because request was
+      # rejected due to the user needing to accept the updated Terms of Service
+      # as such, no error reporting is necessary
+      true
+    rescue => e
+      # report error upstream to Sentry
+      # cannot report to MixPanel via MetricsService#report_error as there is no associated HTTP request
+      Rails.logger.error "Error checking user:#{id} Terra ToS status: #{e.class.name} - #{e.message}"
+      ErrorTracker.report_exception(e, self)
+      false # we don't know the status of the user here, so default to false
+    end
+  end
+
   # retrieve billing projects for a given user (if registered for firecloud)
   def get_billing_projects
     projects = {User: [], Owner: []}

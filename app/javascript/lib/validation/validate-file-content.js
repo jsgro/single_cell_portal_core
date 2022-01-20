@@ -20,6 +20,7 @@ import {
   validateUniqueCellNamesWithinFile, validateMetadataLabelMatches, validateGroupColumnCounts
 } from './shared-validation'
 
+import getSCPContext from 'providers/SCPContextProvider'
 
 // from lib/assets/metadata_schemas/alexandria_convention_schema.json (which in turn is from scp-ingest-pipeline/schemas)
 export const REQUIRED_CONVENTION_COLUMNS = [
@@ -397,10 +398,20 @@ function formatIssues(issues) {
   return { errors, warnings, summary }
 }
 
+/** determine trigger for file-validation event (e.g. upload vs. sync) **/
+function getValidationTrigger() {
+  const pageName = getSCPContext().analyticsPageName
+  if (pageName === 'studies-initialize-study') {
+    return 'upload'
+  } else if (pageName === 'studies-sync-study') {
+    return 'sync'
+  }
+}
 
 /** Get properties about this validation run to log to Mixpanel */
 function getLogProps(fileInfo, errorObj, perfTime) {
   const { errors, warnings, summary } = errorObj
+  const trigger = getValidationTrigger()
 
   // Avoid needless gotchas in downstream analysis
   let friendlyDelimiter = 'tab'
@@ -422,6 +433,7 @@ function getLogProps(fileInfo, errorObj, perfTime) {
   } else {
     return Object.assign(defaultProps, {
       status: 'failure',
+      trigger,
       summary,
       numErrors: errors.length,
       numWarnings: warnings.length,

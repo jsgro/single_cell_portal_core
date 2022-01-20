@@ -96,14 +96,20 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
   end
 
   test 'should get Study creation stats' do
-    new_study = FactoryBot.create(:detached_study, name_prefix: 'creation history stats', test_array: @@studies_to_clean)
+    new_study = FactoryBot.create(:detached_study,
+                                  name_prefix: 'creation history stats',
+                                  user: @user,
+                                  test_array: @@studies_to_clean)
     created_studies_info = SummaryStatsUtils.created_studies_info
     created_titles = created_studies_info.map{|creation| creation[:title]}
     assert created_titles.include?(new_study.name)
   end
 
   test 'should get Study deletion stats' do
-    new_study = FactoryBot.create(:detached_study, name_prefix: 'deletion history stats', test_array: @@studies_to_clean)
+    new_study = FactoryBot.create(:detached_study,
+                                  name_prefix: 'deletion history stats',
+                                  user: @user,
+                                  test_array: @@studies_to_clean)
     new_study.destroy
     deleted_studies_info = SummaryStatsUtils.deleted_studies_info
     titles = deleted_studies_info.map{|deletion| deletion[:title]}
@@ -111,7 +117,11 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
   end
 
   test 'should get Study update stats' do
-    new_study = FactoryBot.create(:detached_study, name_prefix: 'update history stats', public: false, test_array: @@studies_to_clean)
+    new_study = FactoryBot.create(:detached_study,
+                                  name_prefix: 'update history stats',
+                                  public: false,
+                                  user: @user,
+                                  test_array: @@studies_to_clean)
     new_study.update(public: true)
     cluster_file = FactoryBot.create(:cluster_file, name: 'clusterA.txt', study: new_study)
     cluster_file.update(description: 'test cluster file')
@@ -132,7 +142,10 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
     assert_equal studies.count, stats[:all]
     assert_equal existing_public, stats[:public]
     assert_equal existing_compliant, stats[:compliant]
-    new_study = FactoryBot.create(:detached_study, name_prefix: 'public compliant stats', test_array: @@studies_to_clean)
+    new_study = FactoryBot.create(:detached_study,
+                                  name_prefix: 'public compliant stats',
+                                  user: @user,
+                                  test_array: @@studies_to_clean)
     FactoryBot.create(:metadata_file, name: 'compliant.txt', study: new_study, use_metadata_convention: true)
     updated_stats = SummaryStatsUtils.study_counts
     updated_studies = studies.count

@@ -183,7 +183,6 @@ nav.search-links, #search-panel {
 
   .filters-box-searchable, #facets-accordion {
     width: 560px;
-    margin-left: -220px;
     border: 1px solid #aaa;
     background: #fff;
     position: absolute;
@@ -199,23 +198,6 @@ nav.search-links, #search-panel {
     }
     .filter-badge-list {
       white-space: normal
-    }
-  }
-
-  #facets-accordion {
-    background: #eff2f5;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    .facet {
-      width: 98%;
-      display: block;
-      margin: 5px 2px;
-      .filters-box-searchable {
-        position: relative;
-        width: 98%;
-        border: none;
-        margin-top: -2px;
-      }
     }
   }
 
@@ -240,7 +222,8 @@ nav.search-links, #search-panel {
   }
 
   #facets-accordion {
-    height: 300px;
+    background: #eff2f5;
+    overflow-x: hidden;
     .filters-box-searchable {
       margin-left: 0px;
     }
@@ -256,6 +239,17 @@ nav.search-links, #search-panel {
       width: 100%;
       display: block;
       border: 1px solid #ddd;
+    }
+    .facet {
+      width: 98%;
+      display: block;
+      margin: 5px 2px;
+      .filters-box-searchable {
+        position: relative;
+        width: 98%;
+        border: none;
+        margin-top: -2px;
+      }
     }
   }
 
@@ -274,7 +268,6 @@ nav.search-links, #search-panel {
 
   .combined-facet {
     width: auto;
-    margin-left: -300px;
     .filters-box-searchable {
       width: 390px;
       margin-left: 0;
@@ -322,10 +315,7 @@ nav.search-links, #search-panel {
 }
 
 .advanced-opts {
-  vertical-align: top;
-  display: inline-block;
-  padding: 0.65em 0.25em;
-  border-radius: 1em;
+  display: inline;
 }
 
 .new-feature {
@@ -368,4 +358,27 @@ nav.search-links, #search-panel {
 
 .download-url-modal .input-group {
   margin: 1em 0 2em 0;
+}
+
+span.search-title {
+  font-weight: bold;
+  color: #666;
+  display: block;
+  margin: 3px 0;
+}
+
+span.metadata-search {
+  width: 98%;
+}
+
+div.metadata-search-wrap {
+  margin-right: 0.75em;
+}
+
+span.text-search {
+  width: 312px;
+}
+
+.advanced-opts {
+  margin-top: 23px;
 }

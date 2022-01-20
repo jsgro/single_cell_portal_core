@@ -421,7 +421,7 @@ module Api
         # sanitize query string for regexp matching
         @query_string = params[:query]
         query_matcher = /#{Regexp.escape(@query_string)}/i
-        filter_list = user_signed_in? ? @search_facet.filters : @search_facet.public_filters
+        filter_list = @search_facet.filters_for_user(current_api_user)
         @matching_filters = filter_list.select { |filter| filter[:name] =~ query_matcher }
       end
 

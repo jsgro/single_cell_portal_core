@@ -7,6 +7,7 @@ class ReviewerAccessTest < ActiveSupport::TestCase
     @study = FactoryBot.create(:detached_study,
                                name_prefix: 'Reviewer Access Test',
                                public: false,
+                               user: @user,
                                test_array: @@studies_to_clean)
   end
 

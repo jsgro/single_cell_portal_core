@@ -66,10 +66,15 @@ class BulkDownloadService
         # pull out project manifest and process separately
         manifests, files = file_infos.partition { |f| f['file_type'] == 'Project Manifest' }
         manifest_info = manifests.first
-        manifest = hca_client.project_manifest_link(manifest_info['project_id'])
-        # add location directive to allow following 302 redirect to manifest location
-        manifest_config = "--location\nurl=\"#{manifest['Location']}\"\noutput=\"#{shortname}/#{manifest_info['name']}\""
-        azul_file_configs << manifest_config
+
+        # only generate manifest link if user has requested it
+        if manifest_info.present?
+          manifest = hca_client.project_manifest_link(manifest_info['project_id'])
+          # add location directive to allow following 302 redirect to manifest location
+          manifest_config = "--location\nurl=\"#{manifest['Location']}\"\noutput=\"#{shortname}/#{manifest_info['name']}\""
+          azul_file_configs << manifest_config
+        end
+
         # now process remainder of analysis/sequence files for download
         # each file_info hash will contain project IDs and file_types that can be used in a single query to Azul
         # to get all matching files
