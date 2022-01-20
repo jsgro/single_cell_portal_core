@@ -800,7 +800,7 @@ class ApiError extends Error {
   /** get a new instance based on an already-parsed-to-json http response */
   constructor(jsonResponse, httpStatus, path) {
     const rawString = jsonResponse.errors.map(err => err.detail).join('.\n')
-    const message = `API Error calling ${path} (${httpStatus}): ${rawString}`
+    const message = `API error calling ${path} (${httpStatus}): ${rawString}`
     super(message)
     this.errors = jsonResponse.errors
     this.path = path

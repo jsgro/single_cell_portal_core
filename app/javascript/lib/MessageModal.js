@@ -17,6 +17,7 @@ export function showMessage(message, key, logProps) {
 
 /** take a json-api error object and render a modal with the contents.
  * For now, this just uses the 'detail' field of each error.
+ * Details on JSON API error object format: https://jsonapi.org/format/#error-objects
  */
 export function showJsonApiErrorMessage(error, key, logProps) {
   let message = ''

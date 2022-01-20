@@ -133,6 +133,7 @@ module Api
           # there's a good argument that this should return a 403 rather than 422 when there are studies requested that the user
           # does not have access to.  However, our current default handling of 401/403 errors in the UX makes that undesirable
           # once SCP-4010 is addressed, this can be restored to 403.
+          # The response uses JSON API formatting -- details: https://jsonapi.org/format/#error-objects
           render json: { errors: [{status: 422, detail: e.message, title: 'Invalid studies requested' }] }, status: 422 and return
         end
 
@@ -382,7 +383,7 @@ module Api
           end
           if accessions_by_permission[:lacks_acceptance].any?
             error_msg += "Download agreement required for #{accessions_by_permission[:lacks_acceptance].join(', ')}. \n\n"
-            error_msg += "Visit the 'Download' tab at these url(s) and accept the agreement to enable download\n"
+            error_msg += 'Visit the "Download" tab at these URL(s) and accept the agreement to enable download:\n'
             error_msg += accessions_by_permission[:lacks_acceptance].map do |accession|
               RequestUtils.get_base_url + Rails.application.routes.url_helpers.view_study_path(accession: accession, study_name: '')
             end.join(' \n')
