@@ -1,12 +1,13 @@
-require "integration_test_helper"
+require 'integration_test_helper'
 require 'minitest/mock'
+require 'test_helper'
+require 'includes_helper'
 
 class ProfilesControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
 
   setup do
-    @user = User.find_or_create_by(email: 'profile.test@gmail.com', password:'password', password_confirmation: 'password',
-                                   uid: '54321', registered_for_firecloud: false)
+    @user = User.find_or_create_by(email: 'profile.test@gmail.com', password: 'password',
+                                   password_confirmation: 'password', uid: '54321', registered_for_firecloud: false)
     TosAcceptance.create(email: @user.email)
     sign_in @user
     auth_as_user @user
@@ -20,7 +21,11 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
   test 'should prevent updating Terra profile if not registered' do
 
     # use FireCloudProfile to help construct profile object
-    profile = FireCloudProfile.new(contactEmail: @user.email, email: @user.email, firstName: 'John', lastName: 'Doe',
+    profile = FireCloudProfile.new(
+      contactEmail: @user.email,
+      email: @user.email,
+      firstName: 'John',
+      lastName: 'Doe',
       institute: 'MIT',
       institutionalProgram: 'Biology',
       nonProfitStatus: 'true',

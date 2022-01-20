@@ -24,6 +24,7 @@ jobs:
           VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          RAILS_LOG_TO_STDOUT: true
         run: |
           bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json \
                                   -s secret/kdux/scp/staging/scp_service_account.json \

@@ -1,8 +1,6 @@
 require 'test_helper'
 
 class DataRepoClientTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include TestInstrumentor
 
   before(:all) do
     @data_repo_client = ApplicationController.data_repo_client

@@ -9,6 +9,7 @@ import DownloadSelectionTable, {
 import { bytesToSize } from 'lib/stats'
 
 import { fetchDownloadInfo } from 'lib/scp-api'
+import { showMessage, showJsonApiErrorMessage } from 'lib/MessageModal'
 
 const AZUL_COLUMNS = ['project_manifest', 'analysis', 'sequence']
 const SCP_COLUMNS = ['matrix', 'metadata', 'cluster']
@@ -58,6 +59,9 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
       setIsLoadingAzul(true)
       fetchDownloadInfo(studyAccessions).then(result => {
         renderFileTables(result)
+      }).catch(error => {
+        showJsonApiErrorMessage(error, 'fetch-download-summary-error', {})
+        setShow(false)
       })
     }
   }, [show, studyAccessions.join(',')])

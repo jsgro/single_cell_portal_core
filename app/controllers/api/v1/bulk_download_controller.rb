@@ -59,12 +59,17 @@ module Api
         totat = current_api_user.create_totat(half_hour, api_v1_bulk_download_generate_curl_config_path)
         valid_params = params.permit({ file_ids: [], azul_files: {} }).to_h
 
+        # discard any empty Azul entries - this can happen if row is selected, but no file types are checked
+        if valid_params[:azul_files].present?
+          valid_azul_files = valid_params[:azul_files].reject { |_, files| files.empty? }
+        end
+
         # for now, we don't do any permissions validation on the param values -- we'll do that during the actual download, since
         # quota/files/permissions may change between the creation of the download and the actual download.
         auth_download = DownloadRequest.create!(
           auth_code: totat[:totat],
           file_ids: valid_params[:file_ids],
-          azul_files: valid_params[:azul_files],
+          azul_files: valid_azul_files,
           user_id: current_api_user.id
         )
         auth_code_response = {
@@ -130,7 +135,11 @@ module Api
           # only validate accessions, if present.  TDR/HCA-only downloads will not have SCP accessions present
           self.class.check_accession_permissions(valid_accessions, current_api_user) if valid_accessions.any?
         rescue ArgumentError => e
-          render json: e.message, status: 403 and return
+          # there's a good argument that this should return a 403 rather than 422 when there are studies requested that the user
+          # does not have access to.  However, our current default handling of 401/403 errors in the UX makes that undesirable
+          # once SCP-4010 is addressed, this can be restored to 403.
+          # The response uses JSON API formatting -- details: https://jsonapi.org/format/#error-objects
+          render json: { errors: [{status: 422, detail: e.message, title: 'Invalid studies requested' }] }, status: 422 and return
         end
 
         @study_file_info = ::BulkDownloadService.get_download_info(valid_accessions)
@@ -373,12 +382,16 @@ module Api
         accessions_by_permission = ::BulkDownloadService.get_permitted_accessions(study_accessions: valid_accessions,
                                                                                   user: user)
         if accessions_by_permission[:forbidden].any? || accessions_by_permission[:lacks_acceptance].any?
-          error_msg = "Forbidden: cannot access one or more requested studies for download. "
+          error_msg = "Forbidden: cannot access one or more requested studies for download.\n "
           if accessions_by_permission[:forbidden].any?
             error_msg += "You do not have permission to view #{accessions_by_permission[:forbidden].join(', ')}"
           end
           if accessions_by_permission[:lacks_acceptance].any?
-            error_msg += "#{accessions_by_permission[:lacks_acceptance].join(', ')} require accepting a download agreement that can be found by viewing that study and going to the 'Download' tab"
+            error_msg += "Download agreement required for #{accessions_by_permission[:lacks_acceptance].join(', ')}. \n\n"
+            error_msg += 'Visit the "Download" tab at these URL(s) and accept the agreement to enable download:\n'
+            error_msg += accessions_by_permission[:lacks_acceptance].map do |accession|
+              RequestUtils.get_base_url + Rails.application.routes.url_helpers.view_study_path(accession: accession, study_name: '')
+            end.join(' \n')
           end
           raise ArgumentError, error_msg
         end

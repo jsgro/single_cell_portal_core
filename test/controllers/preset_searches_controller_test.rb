@@ -1,58 +1,61 @@
-require "integration_test_helper"
+require 'api_test_helper'
+require 'test_helper'
+require 'includes_helper'
 
 class PresetSearchesControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
+
+  before(:all) do
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:detached_study,
+                               user: @user,
+                               name_prefix: 'Preset Search Test Study',
+                               test_array: @@studies_to_clean)
+    @search = PresetSearch.create!(name: 'Test Search', search_terms: ['Preset Search'],
+                                   facet_filters: %w[species:NCBITaxon_9606 disease:MONDO_0000001],
+                                   accession_list: [@study.accession])
+  end
+
+  after(:all) do
+    PresetSearch.destroy_all
+  end
 
   def setup
-    @test_user = User.first
-    auth_as_user(@test_user)
-    sign_in @test_user
-    @search = PresetSearch.first
+    sign_in_and_update @user
   end
 
   teardown do
     OmniAuth.config.mock_auth[:google_oauth2] = nil
   end
 
-  test "gets index" do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
+  test 'gets index' do
     get preset_searches_path
     assert_response :success
     assert_select 'table#searches', 1, 'Did not preset search table'
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
-  test "gets new" do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
+  test 'gets new' do
     get new_preset_search_path
     assert_response :success
     assert_select 'form#preset-search-form', 1, 'Did not find preset search form'
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
-  test "creates updates and deletes preset search" do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
+  test 'creates updates and deletes preset search' do
     study_accession = Study.all.sample.accession
     terms = "test data \"this is a phrase\""
     facets = 'disease:MONDO_0000001+species:NCBITaxon_9606'
     preset_search_params = {
-        preset_search: {
-            name: 'My Preset Search',
-            accession_list: study_accession,
-            search_terms: terms,
-            facet_filters: facets
-        }
+      preset_search: {
+        name: 'My Preset Search',
+        accession_list: study_accession,
+        search_terms: terms,
+        facet_filters: facets
+      }
     }
     post preset_searches_path, params: preset_search_params
     follow_redirect!
     assert_response :success
     @preset_search = PresetSearch.find_by(name: 'My Preset Search')
-    assert @preset_search.present?, "Preset search did not get created"
+    assert @preset_search.present?, 'Preset search did not get created'
     assert_equal @preset_search.accession_list, [study_accession],
                  "Did not properly set accession list: #{study_accession} is not in #{@preset_search.accession_list}"
     assert_equal @preset_search.keyword_query_string, terms,
@@ -62,17 +65,17 @@ class PresetSearchesControllerTest < ActionDispatch::IntegrationTest
 
     new_terms = 'update'
     update_params = {
-        preset_search: {
-            search_terms: new_terms,
-            facet_filters: facets,
-            accession_list: study_accession
-        }
+      preset_search: {
+        search_terms: new_terms,
+        facet_filters: facets,
+        accession_list: study_accession
+      }
     }
     patch preset_search_path(@preset_search), params: update_params
     follow_redirect!
     assert_response :success
     @preset_search.reload
-    assert @preset_search.present?, "Preset search did not get loaded"
+    assert @preset_search.present?, 'Preset search did not get loaded'
     assert_equal @preset_search.keyword_query_string, new_terms,
                  "Search terms did not update: #{new_terms} is not in #{@preset_search.keyword_query_string}"
     assert_equal @preset_search.accession_list, [study_accession],
@@ -84,28 +87,19 @@ class PresetSearchesControllerTest < ActionDispatch::IntegrationTest
     delete preset_search_path(@preset_search)
     follow_redirect!
     assert_response :success
-    assert_equal 1, PresetSearch.count, "Did not delete search, expected count of 1 but found #{PresetSearch.count}"
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
+    assert_equal 1, PresetSearch.count,
+                 "Did not delete search, expected count of 1 but found #{PresetSearch.count}"
   end
 
-  test "shows preset search" do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
+  test 'shows preset search' do
     get preset_search_path(@search)
     assert_response :success
     assert_select 'dl#preset-search-attributes', 1, 'Did not find preset search attributes'
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
-  test "gets edit for preset search" do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
+  test 'gets edit for preset search' do
     get edit_preset_search_path(@search)
     assert_response :success
     assert_select 'form#preset-search-form', 1, 'Did not find preset search form'
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end

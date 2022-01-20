@@ -767,29 +767,45 @@ export default async function scpApi(
     } else {
       return [response, perfTimes, true]
     }
-  } else {
-    if (response.status === 401 || response.status === 403) {
-      showMessage(
-        <div>
-          Authentication failed<br/>
-          Your session may have timed out. Please sign in again.<br/><br/>
-        </div>,
-        'api-auth-failure',
-        {
-          source: 'api',
-          url,
-          isError: true,
-          messageType: 'error-client',
-          statusCode: response.status
-        }
-      )
-    }
+  } else if (response.status === 401 || response.status === 403) {
+    showMessage(
+      <div>
+        Authentication failed<br/>
+        Your session may have timed out. Please sign in again.<br/><br/>
+      </div>,
+      'api-auth-failure',
+      {
+        source: 'api',
+        url,
+        isError: true,
+        messageType: 'error-client',
+        statusCode: response.status
+      }
+    )
+    throw new Error(`Authentication error: ${response.status}`)
   }
   if (toJson) {
     const json = await response.json()
-    throw new Error(json.error || json.errors)
+    if (Array.isArray(json.errors)) {
+      throw new ApiError(json, response.status, path)
+    } else {
+      throw new Error(json.error || json.errors)
+    }
   }
   throw new Error(response)
+}
+
+/** custom class for handling json-api style API errors */
+class ApiError extends Error {
+  /** get a new instance based on an already-parsed-to-json http response */
+  constructor(jsonResponse, httpStatus, path) {
+    const rawString = jsonResponse.errors.map(err => err.detail).join('.\n')
+    const message = `API error calling ${path} (${httpStatus}): ${rawString}`
+    super(message)
+    this.errors = jsonResponse.errors
+    this.path = path
+    this.httpStatus = httpStatus
+  }
 }
 
 /**

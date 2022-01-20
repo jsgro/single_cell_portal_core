@@ -12,6 +12,7 @@ import { log } from 'lib/metrics-api'
 import { readFileBytes } from './io'
 import ChunkedLineReader from './chunked-line-reader'
 import { PARSEABLE_TYPES } from 'components/upload/upload-utils'
+import getSCPContext from 'providers/SCPContextProvider'
 
 // from lib/assets/metadata_schemas/alexandria_convention_schema.json (which in turn is from scp-ingest-pipeline/schemas)
 export const REQUIRED_CONVENTION_COLUMNS = [
@@ -177,9 +178,86 @@ function validateEqualCount(headers, annotTypes) {
   return issues
 }
 
+/**
+ * Verify "GENE" is present as the first column in the first row for an Expression Matrix file
+ * Todo: Accept files that are R-formatted as well via this ticket: SCP-3971
+ */
+function validateGeneInHeader(headers) {
+  const issues = []
+  if (headers[0].toUpperCase() !== 'GENE') {
+    const msg = 'Dense matrices require the first value of the file to be "GENE". ' +
+     `However, the first value for this file currently is "${headers[0]}".`
+    issues.push(['error', 'format:cap:missing-gene-column', msg])
+  }
+
+  return issues
+}
+
 
 /**
- * Verify cell names are each unique for a cluster or metadata file
+ *
+ * Validate all values are numbers outside first column cell name
+ */
+function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
+  const issues = []
+  dataObj.rowsWithNonNumericValues = dataObj.rowsWithNonNumericValues ? dataObj.rowsWithNonNumericValues : []
+  // skip first column
+  const lineWithoutFirstColumn = line.slice(1)
+
+  if (lineWithoutFirstColumn.some(isNaN)) {
+    dataObj.rowsWithNonNumericValues.push(lineNum)
+  }
+
+  const numBadRows = dataObj.rowsWithNonNumericValues.length
+  if (isLastLine && numBadRows > 0) {
+    const rowText = numBadRows > 1 ? 'rows' : 'row'
+    const maxLinesToReport = 10
+    let notedBadRows = dataObj.rowsWithNonNumericValues.slice(0, maxLinesToReport).join(', ')
+    if (numBadRows - maxLinesToReport > 0) {
+      notedBadRows += ` and ${numBadRows - maxLinesToReport} more rows`
+    }
+
+    const msg = `All values (other than the first column and header row) in a dense matrix file must be numeric. ` +
+    `Please ensure all values in ${rowText}: ${notedBadRows}, are numbers.`
+    issues.push(['error', 'format:invalid-type:not-numeric', msg])
+  }
+  return issues
+}
+
+
+/**
+ * Verify dense matrix column numbers match header column numbers
+ */
+function validateColumnNumber(line, isLastLine, headers, lineNum, dataObj) {
+  const issues = []
+  dataObj.rowsWithIncorrectColumnNumbers = dataObj.rowsWithIncorrectColumnNumbers ? dataObj.rowsWithIncorrectColumnNumbers : []
+  // use the first header row to determine the correct number of columns all rows should have
+  const correctNumberOfColumns = headers[0].length
+
+  if (correctNumberOfColumns !== line.length) {
+    dataObj.rowsWithIncorrectColumnNumbers.push(lineNum)
+  }
+
+  const numBadRows = dataObj.rowsWithIncorrectColumnNumbers.length
+  if (isLastLine && numBadRows > 0) {
+    const rowText = numBadRows > 1 ? 'rows' : 'row'
+    const maxLinesToReport = 10
+    let notedBadRows = dataObj.rowsWithIncorrectColumnNumbers.slice(0, maxLinesToReport).join(', ')
+    if (numBadRows - maxLinesToReport > 0) {
+      notedBadRows += ` and ${numBadRows - maxLinesToReport} more rows`
+    }
+
+    const msg = `All rows must have the same number of columns - ` +
+    `please ensure the number of columns for ${rowText}: ${notedBadRows}, ` +
+    `matches the file-header-specificed number of ${correctNumberOfColumns} columns-per-row.`
+    issues.push(['error', 'format:mismatch-column-number', msg])
+  }
+
+  return issues
+}
+
+/**
+ * Verify cell names are each unique for a file
  * creates and uses 'cellNames' and 'duplicateCellNames' properties on dataObj to track
  * cell names between calls to this function
  */
@@ -188,8 +266,8 @@ function validateUniqueCellNamesWithinFile(line, isLastLine, dataObj) {
 
   dataObj.cellNames = dataObj.cellNames ? dataObj.cellNames : new Set()
   dataObj.duplicateCellNames = dataObj.duplicateCellNames ? dataObj.duplicateCellNames : new Set()
-
   const cell = line[0]
+
   if (!dataObj.cellNames.has(cell)) {
     dataObj.cellNames.add(cell)
   } else {
@@ -237,7 +315,7 @@ function sniffDelimiter([line1, line2], mimeType) {
 /**
  * Verify cap format for a cluster or metadata file
  *
- * The "cap" of an SCP study file is its first two lines, i.e.:
+ * The "cap" of an SCP study file is its first "few" lines that contain structural data., i.e.:
  *  - Header (row 1), and
  *  - Annotation types (row 2)
  *
@@ -258,6 +336,22 @@ function validateCapFormat([headers, annotTypes]) {
     validateGroupOrNumeric(annotTypes),
     validateEqualCount(headers, annotTypes)
   )
+
+  return issues
+}
+
+/**
+ * Verify cap format for an expression matrix file
+ *
+ * The "cap" for an expression matrix file is the first row
+ */
+function validateDenseHeader([headers]) {
+  let issues = []
+  if (!headers) {
+    return [['error', 'format:cap:no-cap-row', 'File does not have a non-empty header row']]
+  }
+  issues = issues.concat(validateGeneInHeader(headers))
+
   return issues
 }
 
@@ -399,11 +493,29 @@ function validateClusterCoordinates(headers) {
   return issues
 }
 
+
+/** parse a dense matrix file */
+export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
+  let issues = validateDenseHeader(headers)
+
+  const dataObj = {} // object to track multi-line validation concerns
+  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
+    const line = parseLine(rawLine, delimiter)
+    issues = issues.concat(validateValuesAreNumeric(line, isLastLine, lineNum, dataObj))
+    issues = issues.concat(validateColumnNumber(line, isLastLine, headers, lineNum, dataObj))
+    issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
+    issues = issues.concat(validateMetadataLabelMatches(headers, line, isLastLine, dataObj))
+    issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
+    // add other line-by-line validations here
+  })
+  return { issues, delimiter, numColumns: headers[0].length }
+}
+
 /** parse a metadata file, and return an array of issues, along with file parsing info */
 export async function parseMetadataFile(chunker, mimeType, fileOptions) {
   const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
-
-  let issues = validateCapFormat(headers, delimiter)
+  let issues = validateCapFormat(headers)
   issues = issues.concat(validateNoMetadataCoordinates(headers))
   if (fileOptions.use_metadata_convention) {
     issues = issues.concat(validateRequiredMetadataColumns(headers))
@@ -425,8 +537,7 @@ export async function parseMetadataFile(chunker, mimeType, fileOptions) {
 /** parse a cluster file, and return an array of issues, along with file parsing info */
 export async function parseClusterFile(chunker, mimeType) {
   const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, 2)
-
-  let issues = validateCapFormat(headers, delimiter)
+  let issues = validateCapFormat(headers)
   issues = issues.concat(validateClusterCoordinates(headers))
   // add other header validations here
 
@@ -503,14 +614,14 @@ async function parseFile(file, fileType, fileOptions={}) {
   const parseResult = { fileInfo, issues: [] }
   try {
     fileInfo.isGzipped = await validateGzipEncoding(file)
-
     // if the file is compressed or we can't figure out the compression, don't try to parse further
     if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
       return { fileInfo, issues: [] }
     }
     const parseFunctions = {
       'Cluster': parseClusterFile,
-      'Metadata': parseMetadataFile
+      'Metadata': parseMetadataFile,
+      'Expression Matrix': parseDenseMatrixFile
     }
     if (parseFunctions[fileType]) {
       const chunker = new ChunkedLineReader(file)
@@ -562,11 +673,20 @@ function formatIssues(issues) {
   return { errors, warnings, summary }
 }
 
+/** determine trigger for file-validation event (e.g. upload vs. sync) **/
+function getValidationTrigger() {
+  const pageName = getSCPContext().analyticsPageName
+  if (pageName === 'studies-initialize-study') {
+    return 'upload'
+  } else if (pageName === 'studies-sync-study') {
+    return 'sync'
+  }
+}
 
 /** Get properties about this validation run to log to Mixpanel */
-
 function getLogProps(fileInfo, errorObj, perfTime) {
   const { errors, warnings, summary } = errorObj
+  const trigger = getValidationTrigger()
 
   // Avoid needless gotchas in downstream analysis
   let friendlyDelimiter = 'tab'
@@ -588,6 +708,7 @@ function getLogProps(fileInfo, errorObj, perfTime) {
   } else {
     return Object.assign(defaultProps, {
       status: 'failure',
+      trigger,
       summary,
       numErrors: errors.length,
       numWarnings: warnings.length,
@@ -598,4 +719,3 @@ function getLogProps(fileInfo, errorObj, perfTime) {
     })
   }
 }
-

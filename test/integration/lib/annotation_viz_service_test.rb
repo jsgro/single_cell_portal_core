@@ -1,13 +1,13 @@
 require 'test_helper'
 
 class AnnotationVizServiceTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @basic_study = FactoryBot.create(:detached_study, name_prefix: 'Basic Viz', test_array: @@studies_to_clean)
+    @basic_study = FactoryBot.create(:detached_study,
+                                     name_prefix: 'Basic Viz',
+                                     user: @user,
+                                     test_array: @@studies_to_clean)
     @basic_study_cluster_file = FactoryBot.create(:cluster_file,
                                                   name: 'cluster_1.txt', study: @basic_study,
                                                   annotation_input: [
@@ -99,7 +99,10 @@ class AnnotationVizServiceTest < ActiveSupport::TestCase
   end
 
   test 'should return non-plottable annotations' do
-    study = FactoryBot.create(:detached_study, name_prefix: 'No Valid Viz', test_array: @@studies_to_clean)
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'No Valid Viz',
+                              user: @user,
+                              test_array: @@studies_to_clean)
     FactoryBot.create(:cluster_file, name: 'cluster_1.txt', study: study, annotation_input: [
       { name: 'cluster', type: 'group', values: %w[A A A] }
     ])

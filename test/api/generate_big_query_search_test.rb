@@ -1,4 +1,4 @@
-require "test_helper"
+require 'test_helper'
 
 # Testing the and/or and filter logic is correctly generated for querying BQ
 class GenerateBigQuerySearchTest < ActiveSupport::TestCase

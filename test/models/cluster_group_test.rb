@@ -1,13 +1,13 @@
-require "test_helper"
+require 'test_helper'
 
 class ClusterGroupTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @study = FactoryBot.create(:detached_study, name_prefix: 'Basic Viz', test_array: @@studies_to_clean)
+    @study = FactoryBot.create(:detached_study,
+                               name_prefix: 'Basic Viz',
+                               user: @user,
+                               test_array: @@studies_to_clean)
     @cluster_file = FactoryBot.create(:cluster_file,
                                                   name: 'cluster_1.txt', study: @study,
                                                   cell_input: {
