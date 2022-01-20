@@ -96,7 +96,8 @@ class MetricsService
     props.merge!({
       appId: 'single-cell-portal',
       env: Rails.env,
-      registeredForTerra: user.registered_for_firecloud
+      registeredForTerra: user.registered_for_firecloud,
+      logger: 'app-backend'
     })
 
     headers = get_default_headers(user)
@@ -166,7 +167,8 @@ class MetricsService
       browser: browser.name,
       browser_version: browser.version,
       brand: request.query_parameters.dig('scpbr'),
-      env: Rails.env
+      env: Rails.env,
+      logger: 'app-backend'
     }
 
     # add study accession if this action was study-specific
