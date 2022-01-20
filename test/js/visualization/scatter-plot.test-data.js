@@ -1,20 +1,26 @@
 /** @fileoverview Mock responses for scatter plot tests */
 
 export const BASIC_PLOT_DATA = {
-  axes: {
-    aspects: null,
-    titles: {
-      magnitude: 'Expression',
-      x: 'X',
-      y: 'Y',
-      z: 'Z'
-    }
-  },
   scatter: {
     annotParams: {
       name: 'Category',
       type: 'group',
       scope: 'cluster'
+    },
+    axes: {
+      aspects: null,
+      titles: {
+        magnitude: 'Expression',
+        x: 'X',
+        y: 'Y',
+        z: 'Z'
+      }
+    },
+    data: {
+      x: [1, 2, 3, 4, 5, 6, 7, 8],
+      y: [1, 2, 3, 4, 5, 6, 7, 8],
+      cells: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+      annotations: ['s1', 's1', 's1', 's1', 's2', 's2', 's1', 's2']
     },
     genes: ['foo']
   },
@@ -26,13 +32,7 @@ export const BASIC_PLOT_DATA = {
   pointAlpha: 1,
   is3d: false,
   annotType: 'group',
-  annotName: 'biosample_id',
-  data: {
-    x: [1, 2, 3, 4, 5, 6, 7, 8],
-    y: [1, 2, 3, 4, 5, 6, 7, 8],
-    cells: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-    annotations: ['s1', 's1', 's1', 's1', 's2', 's2', 's1', 's2']
-  }
+  annotName: 'biosample_id'
 }
 
 /**
