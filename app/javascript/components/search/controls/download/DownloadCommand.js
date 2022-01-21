@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 
 import LoadingSpinner from 'lib/LoadingSpinner'
 import { fetchAuthCode, stringifyQuery } from 'lib/scp-api'
-import { _ } from '@databiosphere/bard-client/src/utils'
+import { _ as bardUtils } from '@databiosphere/bard-client/src/utils'
 
 /** component for rendering a copyable bulk download command for an array of file ids.
     Queries the server to retrieve the appropriate auth code. */
@@ -84,7 +84,7 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
  */
 function getDownloadCommand(authCode, downloadId) {
   // Get client os and determine correct curl invocation
-  const clientOS = _.info.os()
+  const clientOS = bardUtils.info.os()
   const curlExec = clientOS.match(/Win/) ? 'curl.exe' : 'curl'
   const queryParams = {
     auth_code: authCode,
