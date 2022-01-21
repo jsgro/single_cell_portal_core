@@ -122,6 +122,8 @@
               var authCode = response.authCode;
               var timeInterval = response.timeInterval; // token expires after this many seconds
               var expiresMinutes = timeInterval / 60;
+              const isWindows = !!window.navigator.platform.match(/Win/) // determine client OS for formatting
+              const curlExec = isWindows ? 'curl.exe' : 'curl'
               const accession = "<%= @study.accession %>"
               const curlSecureFlag = "<%= Rails.env.development? ? '-k' : '' %>"
               const matcher = /root-dir/
@@ -145,8 +147,8 @@
 
               // This is what the user will run in their terminal to download the data.
               var downloadCommand = (
-                  'curl &quot;' + url + '&quot; ' + curlSecureFlag + ' -o cfg.txt; ' +
-                  'curl -K cfg.txt && rm cfg.txt'
+                  `${curlExec} &quot;` + url + '&quot; ' + curlSecureFlag + ' -o cfg.txt; ' +
+                  `${curlExec} -K cfg.txt && rm cfg.txt`
               );
 
               var commandID = 'command-' + authCode;
