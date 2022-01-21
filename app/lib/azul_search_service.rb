@@ -180,24 +180,39 @@ class AzulSearchService
         upload_file_size: file_summary['totalSize'],
         file_format: file_summary['format'],
         accession: short_name,
-        project_id: project_id
+        project_id: project_id,
+        is_intermediate: file_summary['isIntermediate']
       }
       content = file_summary['contentDescription']
+      assigned_file_type = 'other'
+      puts file_summary
       case content
       when /Matrix/
-        file_info[:file_type] = 'analysis_file'
+        assigned_file_type = is_analysis_file(file_summary) ? 'analysis_file' : 'contributed_analysis_file'
       when /Sequence/
-        file_info[:file_type] = 'sequence_file'
+        assigned_file_type = 'sequence_file'
       else
         # fallback to guess file_type by extension
         FILE_EXT_BY_DOWNLOAD_TYPE.each_pair do |file_type, extensions|
           if extensions.include? file_summary['format']
-            file_info[:file_type] = file_type
+            if file_type == 'analysis_file' && !is_analysis_file(file_summary)
+              assigned_file_type = file_type = 'contributed_analysis_file'
+            else
+              assigned_file_type = file_type
+            end
           end
         end
       end
+      file_info[:file_type] = assigned_file_type
       file_info.with_indifferent_access
     end
+  end
+
+  # see SCP-3982 for the criteria for what we want to treat as the analyis files proper
+  def self.is_analysis_file(file_summary)
+    file_summary['isIntermediate'] == false &&
+      file_summary['fileSource'].include?('DCP/2 Analysis') &&
+      file_summary['format'] == 'loom'
   end
 
   # query Azul with project shortnames and return summary file information

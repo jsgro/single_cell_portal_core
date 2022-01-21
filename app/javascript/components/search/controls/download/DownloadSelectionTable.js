@@ -169,7 +169,7 @@ const COLUMNS = {
   analysis: {
     title: 'Analysis',
     types: ['analysis_file'],
-    info: 'Expression matrix files, including processed or raw count files',
+    info: 'Loom files of finalized raw counts.  This does not include contributor generated files or intermediate files. Those can be downloaded directly from HCA',
     default: true
   },
   sequence: {
