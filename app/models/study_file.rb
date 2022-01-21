@@ -768,11 +768,8 @@ class StudyFile
   # takes the form of :study_accession/:output_directory_name/:filename
   # supports Unix- and Windows-formatted paths
   def bulk_download_pathname(os: '')
-    path = "#{self.study.accession}/#{self.output_directory_name}/#{self.upload_file_name}"
-    if os =~ /Win/
-      path.gsub!(%r{/}, '\\') # reformat with backslashes once computed to include bulk_download_type
-    end
-    path
+    path = "#{study.accession}/#{output_directory_name}/#{upload_file_name}"
+    RequestUtils.format_path_for_os(path, os)
   end
 
   # Map of StudyFile#file_type to ::BULK_DOWNLOAD_TYPES, maintaining relationship for bundled files to parent

@@ -27,8 +27,6 @@ class BulkDownloadService
                                        context: 'study',
                                        os: '')
     curl_configs = ['--create-dirs', '--compressed']
-    # determine path delimiter for output filepaths
-    path_delimiter = os.match(/Win/) ? '\\' : '/'
     # create an array of all objects to be downloaded, including directory files
     download_objects = study_files.to_a + directory_files
     # Get signed URLs for all files in the requested download objects
@@ -52,7 +50,10 @@ class BulkDownloadService
       manifest_path = RequestUtils.get_base_url + Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)
       include_dirs = directory_files.any?
       manifest_config += "url=\"#{manifest_path}?auth_code=#{totat[:totat]}&include_dirs=#{include_dirs}\"\n"
-      manifest_config += "output=\"#{study.accession}#{path_delimiter}file_supplemental_info.tsv\""
+      output_path = RequestUtils.format_path_for_os(
+        "output=\"#{study.accession}/file_supplemental_info.tsv\"", os
+      )
+      manifest_config += output_path
       curl_configs << manifest_config
     end
     azul_studies = azul_files ? azul_files.keys : []
@@ -74,7 +75,10 @@ class BulkDownloadService
         if manifest_info.present?
           manifest = hca_client.project_manifest_link(manifest_info['project_id'])
           # add location directive to allow following 302 redirect to manifest location
-          manifest_config = "--location\nurl=\"#{manifest['Location']}\"\noutput=\"#{shortname}#{path_delimiter}#{manifest_info['name']}\""
+          manifest_output_path = RequestUtils.format_path_for_os(
+            "output=\"#{shortname}/#{manifest_info['name']}\"", os
+          )
+          manifest_config = "--location\nurl=\"#{manifest['Location']}\"\n#{manifest_output_path}"
           azul_file_configs << manifest_config
         end
 
@@ -95,7 +99,10 @@ class BulkDownloadService
         end
         requested_files = hca_client.files(query: file_query)
         requested_files.each do |file_entry|
-          file_config = "--location\nurl=\"#{file_entry['url']}\"\noutput=\"#{shortname}#{path_delimiter}#{file_entry['name']}\""
+          file_output_path = RequestUtils.format_path_for_os(
+            "#{shortname}/#{file_entry['name']}", os
+          )
+          file_config = "--location\nurl=\"#{file_entry['url']}\"\noutput=\"#{file_output_path}\""
           azul_file_configs << file_config
         end
       end
@@ -114,7 +121,8 @@ class BulkDownloadService
       numAzulFiles: azul_file_configs.count,
       numAzulAnalysisFiles: azul_analysis_files,
       numAzulSequenceFiles: azul_sequence_files,
-      context: context
+      context: context,
+      os: os
     }, user)
     curl_configs.join("\n\n")
   end

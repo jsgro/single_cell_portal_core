@@ -143,10 +143,7 @@ class DirectoryListing
   # supports Unix- and Windows-formatted paths
   def bulk_download_pathname(file, os: '')
     path = "#{study.accession}/#{bulk_download_folder(file)}"
-    if os =~ /Win/
-      path.gsub!(%r{/}, '\\') # reformat with backslashes once computed to include bulk_download_folder
-    end
-    path
+    RequestUtils.format_path_for_os(path, os)
   end
 
   # helper to get total number of bytes in directory
