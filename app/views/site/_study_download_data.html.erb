@@ -147,7 +147,7 @@
 
               // This is what the user will run in their terminal to download the data.
               var downloadCommand = (
-                  `${curlExec} &quot;` + url + '&quot; ' + curlSecureFlag + ' -o cfg.txt; ' +
+                  `${curlExec} &quot;${url}&quot; ${curlSecureFlag} -o cfg.txt; ' +
                   `${curlExec} -K cfg.txt && rm cfg.txt`
               );
 
