@@ -84,7 +84,8 @@ function RawScatterPlot({
   /** Get new, updated scatter object instance, and new layout */
   function updateScatterLayout(scatter=null) {
     if (!scatter) {
-      scatter = Object.assign({}, scatterData) // New instance forces render
+      // New instance forces render of legend (without recomputing traces)
+      scatter = Object.assign({}, scatterData)
     }
     const widthAndHeight = getScatterDimensions(scatter, dimensionProps)
     scatter = Object.assign(scatter, widthAndHeight)
@@ -102,15 +103,14 @@ function RawScatterPlot({
 
   /** Update legend counts and recompute traces, without recomputing layout */
   function updateCountsAndGetTraces(scatter) {
-    const traceArgs = {
+    const [traces, labelCounts] = getPlotlyTraces({
       genes,
       isAnnotatedScatter,
       isCorrelatedScatter,
       scatterColor,
       hiddenTraces,
       scatter
-    }
-    const [traces, labelCounts] = getPlotlyTraces(traceArgs)
+    })
     setCountsByLabel(labelCounts)
     const plotlyTraces = [traces]
     return plotlyTraces
@@ -184,7 +184,8 @@ function RawScatterPlot({
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
     if (scatterData && !isLoading) {
-      updateCountsAndGetTraces(scatterData)
+      const plotlyTraces = updateCountsAndGetTraces(scatterData)
+      Plotly.react(graphElementId, plotlyTraces, scatterData.layout)
     }
     // look for updates of individual properties, so that we don't rerender if the containing array
     // happens to be a different instance
@@ -285,10 +286,7 @@ export default ScatterPlot
  *   A) commonly shown in the default view, and
  *   B) also shown at right in single-gene view
  */
-function getIsRefGroup(scatter) {
-  const annotType = scatter.annotParams.type
-  const genes = scatter.genes
-  const isCorrelatedScatter = scatter.isCorrelatedScatter
+function getIsRefGroup(annotType, genes, isCorrelatedScatter) {
   const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
 
   return annotType === 'group' && !isGeneExpressionForColor
@@ -298,7 +296,14 @@ function getIsRefGroup(scatter) {
 function getScatterDimensions(scatter, dimensionProps, genes) {
   // if we don't have a server response yet so we don't know the annotation type,
   // guess based on the number of genes
-  const isRefGroup = scatter ? getIsRefGroup(scatter) : (genes.length === 0)
+  let isRefGroup
+  if (scatter) {
+    isRefGroup = getIsRefGroup(
+      scatter.annotParams.type, scatter.genes, scatter.isCorrelatedScatter
+    )
+  } else {
+    isRefGroup = genes.length === 0
+  }
 
   dimensionProps = Object.assign({
     hasLabelLegend: isRefGroup,
@@ -323,13 +328,12 @@ export function getPlotlyTraces({
   isCorrelatedScatter,
   scatterColor,
   hiddenTraces,
-  scatter
+  scatter: {
+    axes, data, pointAlpha, pointSize, is3D,
+    scatterColor: dataScatterColor,
+    annotParams: { name: annotName, type: annotType }
+  }
 }) {
-  const { axes, data, pointAlpha, pointSize, is3D } = scatter
-  const dataScatterColor = scatter.scatterColor
-  const annotName = scatter.annotParams.name
-  const annotType = scatter.annotParams.type
-
   const trace = {
     type: is3D ? 'scatter3d' : 'scattergl',
     mode: 'markers',
@@ -345,7 +349,7 @@ export function getPlotlyTraces({
 
   let countsByLabel = null
 
-  const isRefGroup = getIsRefGroup(scatter)
+  const isRefGroup = getIsRefGroup(annotType, genes, isCorrelatedScatter)
 
   if (isRefGroup) {
     // Use Plotly's groupby and filter transformation to make the traces
