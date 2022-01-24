@@ -120,9 +120,9 @@ class MetricsServiceTest < ActiveSupport::TestCase
       browser_version: browser.version,
       brand: nil,
       env: Rails.env,
+      logger: 'app-backend',
       authenticated: false,
-      distinct_id: user_id,
-      logger: "app-backend"
+      distinct_id: user_id
     }.with_indifferent_access
 
     expected_args = {

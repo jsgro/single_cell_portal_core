@@ -156,6 +156,7 @@ class MetricsService
     # browser: client browser name
     # browser_version: client browser version
     # os: client operating system
+    # logger: identifer that this event comes from the applications backend
     props = {
       appFullPath: self.sanitize_url(request.fullpath),
       appPath: self.get_page_name(request.parameters['controller'], request.parameters['action']),
