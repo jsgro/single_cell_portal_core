@@ -144,7 +144,7 @@ const COLUMNS = {
     types: ['Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File'],
     info: <span>
       Expression matrix files, including processed or raw count files.<br/>
-      <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610292-Matrix-Files" target="_blank" rel="nofollow noreferrer">
+      <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610292-Matrix-Files" target="_blank" rel="noopener noreferrer">
         Matrix file documentation
       </a>
     </span>,
@@ -155,7 +155,7 @@ const COLUMNS = {
     types: ['Cluster'],
     info: <span>
       Clustering coordinate files, including 2D and 3D clustering, as well as spatial.<br/>
-      <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060609792-Cluster-Files" target="_blank" rel="nofollow noreferrer">
+      <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060609792-Cluster-Files" target="_blank" rel="noopener noreferrer">
         Cluster file documentation.
       </a>
     </span>,
@@ -166,7 +166,7 @@ const COLUMNS = {
     types: ['Metadata'],
     info: <span>
       The listing of all cells in the study, along with associated metadata such as species, cell type, etc.<br/>
-      <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview" target="_blank" rel="nofollow noreferrer">
+      <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview" target="_blank" rel="noopener noreferrer">
         Metadata file documentation.
       </a>
     </span>,
@@ -182,7 +182,7 @@ const COLUMNS = {
     title: 'Analysis',
     types: ['analysis_file'],
     info: <span>
-      Loom files of <a href="https://broadinstitute.github.io/warp/docs/Pipelines/Optimus_Pipeline/Loom_schema/" target="_blank" rel="nofollow noreferrer">finalized raw counts.</a><br/>
+      Loom files of <a href="https://broadinstitute.github.io/warp/docs/Pipelines/Optimus_Pipeline/Loom_schema/" target="_blank" rel="noopener noreferrer">finalized raw counts.</a><br/>
        This does not include contributor generated files or intermediate files, which can be downloaded directly from HCA
     </span>,
     default: true
