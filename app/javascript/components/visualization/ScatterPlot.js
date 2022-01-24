@@ -110,6 +110,7 @@ function RawScatterPlot({
       isAnnotatedScatter,
       isCorrelatedScatter,
       scatterColor,
+      userPickedColors,
       hiddenTraces,
       scatter
     })
@@ -198,7 +199,7 @@ function RawScatterPlot({
     }
     // look for updates of individual properties, so that we don't rerender if the containing array
     // happens to be a different instance
-  }, [hiddenTraces.join(',')])
+  }, [hiddenTraces.join(','), Object.values(userPickedColors).join(',')])
 
   // Handles window resizing
   const widthAndHeight = getScatterDimensions(scatterData, dimensionProps, genes)
@@ -269,6 +270,7 @@ function RawScatterPlot({
           correlations={labelCorrelations}
           hiddenTraces={hiddenTraces}
           updateHiddenTraces={updateHiddenTraces}
+          userPickedColors={userPickedColors}
           updateUserPickedColors={updateUserPickedColors}
         />
         }
@@ -337,6 +339,7 @@ export function getPlotlyTraces({
   isAnnotatedScatter,
   isCorrelatedScatter,
   scatterColor,
+  userPickedColors,
   hiddenTraces,
   scatter: {
     axes, data, pointAlpha, pointSize, is3D,
@@ -364,7 +367,7 @@ export function getPlotlyTraces({
   if (isRefGroup) {
     // Use Plotly's groupby and filter transformation to make the traces
     // note these transforms are deprecated in the latest Plotly versions
-    const [legendStyles, labelCounts] = getStyles(data, pointSize)
+    const [legendStyles, labelCounts] = getStyles(data, pointSize, userPickedColors)
     countsByLabel = labelCounts
     trace.transforms = [
       {
