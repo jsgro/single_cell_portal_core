@@ -100,7 +100,7 @@ class ClusterVizService
   def self.default_subsampling(cluster)
     return nil if cluster.nil? || cluster.points < 100000
 
-    ClusterGroup::SUBSAMPLE_THRESHOLDS.select { |val| val <= 100000 }.max
+    ClusterGroup::SUBSAMPLE_THRESHOLDS.select { |val| val <= ClusterGroup::MAX_THRESHOLD }.max
   end
 
     # load custom coordinate-based annotation labels for a given cluster
