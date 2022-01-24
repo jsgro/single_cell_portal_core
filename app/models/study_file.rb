@@ -70,8 +70,10 @@ class StudyFile
   belongs_to :genome_annotation, optional: true
   belongs_to :study_file_bundle, optional: true
   embeds_one :expression_file_info
+  embeds_one :cluster_file_info
 
   accepts_nested_attributes_for :expression_file_info
+  accepts_nested_attributes_for :cluster_file_info
   validate :show_exp_file_info_errors
 
   # field definitions
