@@ -121,6 +121,45 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test 'should support Windows-formatted paths in output path map' do
+    study_file = @study.metadata_file
+    directory = @study.directory_listings.first
+    path_map = BulkDownloadService.generate_output_path_map([study_file], [directory], os: 'Windows')
+    path_map.values.each do |output_path|
+      assert output_path.match(%r{\\}).present?,
+             "#{output_path} did not match Windows-formatted paths: #{output_path}"
+      assert_not output_path.match(%r{/}).present?,
+                 "#{output_path} matched Mac OSX formatted path when it should not: #{output_path}"
+    end
+  end
+
+  test 'should support Windows-formatted paths in curl configuration' do
+    study_file = @study.metadata_file
+    os = 'Windows'
+    bucket_map = BulkDownloadService.generate_study_bucket_map([@study.accession])
+    path_map = BulkDownloadService.generate_output_path_map([study_file], [], os: os)
+    signed_url = "https://storage.googleapis.com/#{@study.bucket_id}/#{study_file.upload_file_name}"
+    output_path = study_file.bulk_download_pathname(os: os)
+    bad_output_path = study_file.bulk_download_pathname
+
+    # mock call to GCS
+    mock = Minitest::Mock.new
+    mock.expect :execute_gcloud_method, signed_url, [:generate_signed_url, Integer, String, String, Hash]
+
+    FireCloudClient.stub :new, mock do
+      configuration = BulkDownloadService.generate_curl_configuration(study_files: [study_file], user: @user,
+                                                                      directory_files: [],
+                                                                      study_bucket_map: bucket_map,
+                                                                      output_pathname_map: path_map,
+                                                                      os: os)
+      mock.verify
+      assert configuration.include?(signed_url), "Configuration does not include expected signed URL (#{signed_url}): #{configuration}"
+      assert configuration.include?(output_path), "Configuration does not include expected output path (#{output_path}): #{configuration}"
+      assert_not configuration.include?(bad_output_path),
+                 "Configuration should not include Mac OSX formatted output path (#{bad_output_path}): #{configuration}"
+    end
+  end
+
   # validate each study ID and bucket_id from bucket_map
   test 'should generate map of study ids to bucket names' do
     bucket_map = BulkDownloadService.generate_study_bucket_map(Study.pluck(:accession))

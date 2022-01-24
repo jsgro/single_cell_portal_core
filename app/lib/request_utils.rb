@@ -144,4 +144,14 @@ class RequestUtils
     end
     return nil
   end
+
+  # format a file path for a specific operating system
+  # will default to unix-style paths, unless Windows OS is specified
+  def self.format_path_for_os(path, os = '')
+    if os =~ /Win/
+      path.gsub(%r{/}, '\\')
+    else
+      path
+    end
+  end
 end
