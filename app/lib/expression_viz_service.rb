@@ -69,7 +69,7 @@ class ExpressionVizService
 
     # grab all cells present in the cluster, and use as keys to load expression scores
     # if a cell is not present for the gene, score gets set as 0.0
-    cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation) || []
+    cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
     case annotation[:scope]
     when 'cluster'
       # we can take a subsample of the same size for the annotations since the sort order is non-stochastic (i.e. the indices chosen are the same every time for all arrays)
@@ -213,7 +213,7 @@ class ExpressionVizService
       annotations = AnnotationVizService.sanitize_values_array(
         user_annotation.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation),
         'group'
-      ) || []
+      )
       cells = user_annotation.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
       cells.each_with_index do |cell, index|
         values[annotations[index]][:annotations] << annotations[index]
@@ -264,7 +264,7 @@ class ExpressionVizService
     }
     return viz_data if cluster.nil? || genes.empty?
 
-    cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation) || []
+    cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
     annotation_array = ClusterVizService.get_annotation_values_array(
       study, cluster, annotation, cells, subsample_annotation, subsample_threshold
     )
