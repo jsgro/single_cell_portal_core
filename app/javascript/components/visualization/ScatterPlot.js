@@ -52,6 +52,8 @@ function RawScatterPlot({
   const [hiddenTraces, setHiddenTraces] = useState([])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
+  // map of label name to color hex codes, for any labels the user has picked a color for
+  const [userPickedColors, setUserPickedColors] = useState({})
 
   /**
    * Handle user interaction with one or more labels in legend.
@@ -158,6 +160,13 @@ function RawScatterPlot({
     }
   }
 
+  /** updates the user picked color for the given label.  does *not* save change to the server */
+  function updateUserPickedColors(label, color) {
+    const newColors = Object.assign({}, userPickedColors)
+    newColors[label] = color
+    setUserPickedColors(newColors)
+  }
+
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     setIsLoading(true)
@@ -260,6 +269,7 @@ function RawScatterPlot({
           correlations={labelCorrelations}
           hiddenTraces={hiddenTraces}
           updateHiddenTraces={updateHiddenTraces}
+          updateUserPickedColors={updateUserPickedColors}
         />
         }
       </div>
