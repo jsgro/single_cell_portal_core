@@ -8,6 +8,8 @@ class ExpressionVizService
                                              consensus:,
                                              current_user:)
     render_data = {}
+    return render_data if cluster.nil?
+
     render_data[:y_axis_title] = load_expression_axis_title(study)
 
     if selected_annotation[:type] == 'group'
@@ -63,10 +65,13 @@ class ExpressionVizService
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     values = initialize_plotly_objects_by_annotation(annotation)
+    return values if cluster.nil?
+
     # grab all cells present in the cluster, and use as keys to load expression scores
     # if a cell is not present for the gene, score gets set as 0.0
-    cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    if annotation[:scope] == 'cluster'
+    cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation) || []
+    case annotation[:scope]
+    when 'cluster'
       # we can take a subsample of the same size for the annotations since the sort order is non-stochastic (i.e. the indices chosen are the same every time for all arrays)
       annotations = AnnotationVizService.sanitize_values_array(
         cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation),
@@ -76,9 +81,11 @@ class ExpressionVizService
         values[annotations[index]][:y] << gene['scores'][cell].to_f.round(4)
         values[annotations[index]][:cells] << cell
       end
-    elsif annotation[:scope] == 'user'
+    when 'user'
       # for user annotations, we have to load by id as names may not be unique to clusters
       user_annotation = UserAnnotation.find(annotation[:id])
+      return values if user_annotation.nil?
+
       subsample_annotation = user_annotation.formatted_annotation_identifier
       annotations = AnnotationVizService.sanitize_values_array(
         user_annotation.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation),
@@ -91,7 +98,7 @@ class ExpressionVizService
       end
     else
       # since annotations are in a hash format, subsampling isn't necessary as we're going to retrieve values by key lookup
-      annotations =  study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type]).cell_annotations
+      annotations = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])&.cell_annotations || {}
       cells.each do |cell|
         val = annotations[cell]
         # must check if key exists
@@ -102,32 +109,35 @@ class ExpressionVizService
       end
     end
     # remove any empty values as annotations may have created keys that don't exist in cluster
-    values.delete_if {|key, data| data[:y].empty?}
+    values.delete_if { |_, data| data[:y].empty? }
     values
   end
 
   # method to load a 2-d scatter of selected numeric annotation vs. gene expression
   def self.load_annotation_based_data_array_scatter(study, gene, cluster, annotation, subsample_threshold)
+    return {} if cluster.nil? || gene.empty?
 
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = ClusterVizService.get_annotation_values_array(study, cluster, annotation, cells, subsample_annotation, subsample_threshold)
+    annotation_array = ClusterVizService.get_annotation_values_array(
+      study, cluster, annotation, cells, subsample_annotation, subsample_threshold
+    )
 
-    viz_data = {
+    {
       x: annotation_array,
-      y: cells.map{ |cell| gene['scores'][cell].to_f.round(4) },
+      y: cells.map { |cell| gene['scores'][cell].to_f.round(4) },
       cells: cells,
       annotations: annotation_array
     }
-
-    viz_data
   end
 
   # load cluster_group data_array values, but use expression scores to set numerical color array
   # this is the scatter plot shown in the "scatter" tab next to "distribution" on gene-based views
   def self.load_expression_data_array_points(study, genes, cluster, annotation, subsample=nil,
     consensus: nil, include_coords: true, include_annotation: true, include_cells: true)
+    return {} if cluster.nil? || genes.empty?
+
     viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample,
       include_annotations: include_annotation, include_coords: include_coords)
 
@@ -151,6 +161,8 @@ class ExpressionVizService
   end
 
   def self.load_correlated_data_array_scatter(study, genes, cluster, annotation,  subsample_threshold=nil)
+    return {} if cluster.nil? || genes.empty?
+
     viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_coords: false)
 
     gene0_expression = viz_data[:cells].map { |cell| genes[0]['scores'][cell].to_f.round(4) }
@@ -165,6 +177,8 @@ class ExpressionVizService
   # will support a variety of consensus modes (default is mean)
   def self.load_gene_set_expression_boxplot_scores(study, genes, cluster, annotation, consensus, subsample_threshold=nil)
     values = initialize_plotly_objects_by_annotation(annotation)
+    return values if cluster.nil? || genes.empty?
+
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     # grab all cells present in the cluster, and use as keys to load expression scores
@@ -173,7 +187,8 @@ class ExpressionVizService
     # values hash will be assembled differently depending on annotation scope (cluster-based is array, study-based is a hash)
     cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
 
-    if annotation[:scope] == 'cluster'
+    case annotation[:scope]
+    when 'cluster'
       annotations = AnnotationVizService.sanitize_values_array(
         cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation),
         annotation[:type]
@@ -189,14 +204,16 @@ class ExpressionVizService
           values[annotations[index]][:y] << calculate_mean(genes, cell)
         end
       end
-    elsif annotation[:scope] == 'user'
+    when 'user'
       # for user annotations, we have to load by id as names may not be unique to clusters
       user_annotation = UserAnnotation.find(annotation[:id])
+      return values if user_annotation.nil?
+
       subsample_annotation = user_annotation.formatted_annotation_identifier
       annotations = AnnotationVizService.sanitize_values_array(
         user_annotation.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation),
         'group'
-      )
+      ) || []
       cells = user_annotation.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
       cells.each_with_index do |cell, index|
         values[annotations[index]][:annotations] << annotations[index]
@@ -211,7 +228,7 @@ class ExpressionVizService
       end
     else
       # no need to subsample annotation since they are in hash format (lookup done by key)
-      annotations =  study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type]).cell_annotations
+      annotations = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])&.cell_annotations || {}
       cells.each do |cell|
         val = annotations[cell]
         # must check if key exists
@@ -228,8 +245,9 @@ class ExpressionVizService
         end
       end
     end
+
     # remove any empty values as annotations may have created keys that don't exist in cluster
-    values.delete_if {|key, data| data[:y].empty?}
+    values.delete_if { |_, data| data[:y].empty? }
     values
   end
 
@@ -244,8 +262,12 @@ class ExpressionVizService
       cells: [],
       annotations: []
     }
-    cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    annotation_array = ClusterVizService.get_annotation_values_array(study, cluster, annotation, cells, subsample_annotation, subsample_threshold)
+    return viz_data if cluster.nil? || genes.empty?
+
+    cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation) || []
+    annotation_array = ClusterVizService.get_annotation_values_array(
+      study, cluster, annotation, cells, subsample_annotation, subsample_threshold
+    )
 
     cells.each_with_index do |cell, index|
       annotation_value = annotation_array[index]
@@ -310,6 +332,8 @@ class ExpressionVizService
                                   cluster: nil,
                                   collapse_by: nil,
                                   selected_annotation: nil)
+    return '' if cluster.nil?
+
     cells = cluster.concatenate_data_arrays('text', 'cells')
     row_data = []
     case file_type

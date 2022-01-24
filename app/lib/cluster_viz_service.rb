@@ -89,65 +89,31 @@ class ClusterVizService
   # only options allowed are 1000, 10000, 20000, and 100000
   # will only provide options if subsampling has completed for a cluster
   def self.subsampling_options(cluster)
-    num_points = cluster.points
-    if cluster.is_subsampling?
-      []
-    else
-      ClusterGroup::SUBSAMPLE_THRESHOLDS.select {|sample| sample < num_points}
-    end
+    return [] if cluster.nil? || cluster.is_subsampling?
+
+    ClusterGroup::SUBSAMPLE_THRESHOLDS.select { |sample| sample < cluster.points }
   end
 
   # return an array of values to use for subsampling dropdown scaled to number of cells in study
   # only options allowed are 1000, 10000, 20000, and 100000
   # will only provide options if subsampling has completed for a cluster
   def self.default_subsampling(cluster)
-    num_points = cluster.points
-    if num_points < 100000
-      return nil
-    else
-      ClusterGroup::SUBSAMPLE_THRESHOLDS.select{|val| val <= 100000}.max
-    end
-  end
+    return nil if cluster.nil? || cluster.points < 100000
 
-  # Convert cluster group data array points into JSON plot data for Plotly
-  def self.transform_coordinates(coordinates, study, cluster_group, selected_annotation)
-    plot_data = []
-    plot_type = cluster_group.is_3d? ? 'scatter3d' : 'scattergl'
-    coordinates.sort_by {|k,v| k}.each_with_index do |(cluster, data), index|
-      cluster_props = {
-        x: data[:x],
-        y: data[:y],
-        cells: data[:cells],
-        name: data[:name],
-        type: plot_type,
-        mode: 'markers',
-        marker: data[:marker],
-        opacity: study.default_cluster_point_alpha,
-      }
-
-      if !data[:annotations].nil?
-        cluster_props[:annotations] = data[:annotations]
-      end
-
-      if cluster_group.is_3d?
-        cluster_props[:z] = data[:z]
-        cluster_props[:textposition] = 'bottom right'
-      end
-
-      plot_data.push(cluster_props)
-    end
-
-    plot_data
+    ClusterGroup::SUBSAMPLE_THRESHOLDS.select { |val| val <= 100000 }.max
   end
 
     # load custom coordinate-based annotation labels for a given cluster
   def self.load_cluster_group_coordinate_labels(cluster)
+    annotations = []
+    return annotations if cluster.nil?
+
     # assemble source data
     x_array = cluster.concatenate_data_arrays('x', 'labels')
     y_array = cluster.concatenate_data_arrays('y', 'labels')
     z_array = cluster.concatenate_data_arrays('z', 'labels')
     text_array = cluster.concatenate_data_arrays('text', 'labels')
-    annotations = []
+
     # iterate through list of data objects to construct necessary annotations
     x_array.each_with_index do |point, index|
       annot = {
@@ -184,7 +150,9 @@ class ClusterVizService
   def self.compute_aspect_ratios(range)
     # determine largest range for computing aspect ratio
     extent = {}
-    range.each.map {|axis, domain| extent[axis] = domain.first.upto(domain.last).size - 1}
+    return { mode: 'manual' } if range.blank?
+
+    range.each.map { |axis, domain| extent[axis] = domain.first.upto(domain.last).size - 1 }
     largest_range = extent.values.max
 
     # now compute aspect mode and ratios
@@ -203,18 +171,20 @@ class ClusterVizService
   def self.load_cluster_group_data_array_points(study, cluster, annotation, subsample_threshold=nil, include_coords: true, include_cells: true, include_annotations: true)
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
+    return {} if cluster.nil?
 
     x_array = []
     y_array = []
     z_array = []
     cells = []
-    annotation_array = []
 
     data_source = cluster
     if annotation[:scope] == 'user'
       user_annotation = UserAnnotation.find(annotation[:id])
+      return {} if user_annotation.nil?
+
       subsample_annotation = user_annotation.formatted_annotation_identifier
-      data_source =user_annotation
+      data_source = user_annotation
     end
     if include_coords
       x_array = data_source.concatenate_data_arrays('x', 'coordinates', subsample_threshold, subsample_annotation)
@@ -250,21 +220,24 @@ class ClusterVizService
 
   # returns an array of the values for the given annotation, sorted by the cells of the given cells array
   def self.get_annotation_values_array(study, cluster, annotation, cells, subsample_annotation, subsample_threshold)
-    annotation_array = []
-    annotation_hash = {}
+    return [] if study.nil? || cluster.nil?
+
     # Construct the arrays based on scope
-    if annotation[:scope] == 'cluster'
+    case annotation[:scope]
+    when 'cluster'
       annotation_array = cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
-    elsif annotation[:scope] == 'user'
+    when 'user'
       # for user annotations, we have to load by id as names may not be unique to clusters
       user_annotation = UserAnnotation.find(annotation[:id])
+      return [] if user_annotation.nil?
+
       subsample_annotation = user_annotation.formatted_annotation_identifier
       annotation_array = user_annotation.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation)
     else
       # for study-wide annotations, load from study_metadata values instead of cluster-specific annotations
       metadata_obj = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])
-      annotation_hash = metadata_obj.cell_annotations
-      annotation_array = cells.map { |cell| annotation_hash[cell] }
+      annotation_hash = metadata_obj&.cell_annotations || {}
+      annotation_array = cells&.map { |cell| annotation_hash[cell] } || []
     end
     AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
   end
