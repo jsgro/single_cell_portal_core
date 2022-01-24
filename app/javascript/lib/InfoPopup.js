@@ -3,6 +3,7 @@ import { Popover, OverlayTrigger } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 import _uniqueId from 'lodash/uniqueId'
+
 /**
  * thin wrapper around OverlayTrigger and Popover to render popup help content
  * popup will work even when underlying element is disabled.
