@@ -185,7 +185,6 @@ class AzulSearchService
       }
       content = file_summary['contentDescription']
       assigned_file_type = 'other'
-      puts file_summary
       case content
       when /Matrix/
         assigned_file_type = is_analysis_file(file_summary) ? 'analysis_file' : 'contributed_analysis_file'
