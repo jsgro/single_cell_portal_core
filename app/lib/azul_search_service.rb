@@ -195,7 +195,7 @@ class AzulSearchService
         FILE_EXT_BY_DOWNLOAD_TYPE.each_pair do |file_type, extensions|
           if extensions.include? file_summary['format']
             if file_type == 'analysis_file' && !is_analysis_file(file_summary)
-              assigned_file_type = file_type = 'contributed_analysis_file'
+              assigned_file_type = 'contributed_analysis_file'
             else
               assigned_file_type = file_type
             end
