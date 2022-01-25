@@ -38,7 +38,7 @@ function MiscellaneousForm({
   return <div>
     <div className="row">
       <div className="col-md-12">
-        <p className="text-center">
+        <p className="form-terra">
           Any documentation or other support files. These will not be displayed directly, but will be avaialble for users to download.
         </p>
       </div>
