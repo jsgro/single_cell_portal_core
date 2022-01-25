@@ -33,6 +33,20 @@ module SingleCellPortal
 
     config.autoload_paths << Rails.root.join('lib')
 
+    # custom exceptions handling
+    # for API requests, custom app will
+    config.exceptions_app = lambda do |env|
+      case env['REQUEST_PATH']
+      when %r{/api/v1}
+        Api::V1::ExceptionsController.action(:render_error).call(env)
+      else
+        if Rails.env.development?
+          ActionDispatch::PublicExceptions.new(Rails.public_path)
+        else
+          ExceptionsController.action(:render_error).call(env)
+        end
+      end
+    end
     # Google OAuth2 Scopes
     # basic scopes are user profile, email, and openid, and do not require user consent to request during auth handshake
     BASIC_GOOGLE_SCOPES = %w(email profile userinfo.email userinfo.profile openid)

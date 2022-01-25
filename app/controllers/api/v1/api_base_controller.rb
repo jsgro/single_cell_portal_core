@@ -15,20 +15,9 @@ module Api
         render json: { error: exception.message }, status: :bad_request
       end
 
-      # this is needed to get stack traces of view errors on the console in development
-      # otherwise, e.g. errors in study_search_results_objects.rb would just be swallowed and returned as 500
-      # this also logs exceptions in Mixpanel/Sentry
-      # as per https://guides.rubyonrails.org/action_controller_overview.html#rescue-from, we are not rescuing from the
-      # base Exception class as this causes strange issues, like AbstractController::DoubleRenderError, among others
-      rescue_from NoMethodError, RuntimeError, Faraday::ConnectionFailed do |exception|
-        MetricsService.report_error(exception, request, current_api_user, @study)
-        ErrorTracker.report_exception(exception, current_api_user, params)
-        logger.error ([exception.message] + exception.backtrace).join($/)
-        if Rails.env.production?
-          render json: { error: 'An unexpected error has occurred' }, status: :internal_server_error
-        else
-          render json: { error: exception.message }, status: :internal_server_error
-        end
+      # always default to Api::V1::ExceptionsController for error rendering
+      def show_detailed_exceptions?
+        false
       end
 
       ##
