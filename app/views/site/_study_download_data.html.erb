@@ -147,9 +147,15 @@
 
               // This is what the user will run in their terminal to download the data.
               var downloadCommand = (
-                  `${curlExec} &quot;${url}&quot; ${curlSecureFlag} -o cfg.txt; ` +
-                  `${curlExec} -K cfg.txt; rm cfg.txt`
+                  `${curlExec} &quot;${url}&quot; ${curlSecureFlag} -o cfg.txt; `
               );
+
+              // depending on OS, format downstream commands to only clean up cfg.txt if curl is successful
+              if (isWindows) {
+                downloadCommand += `${curlExec} -K cfg.txt ; if ($?) { rm cfg.txt }`
+              } else {
+                downloadCommand += `${curlExec} -K cfg.txt && rm cfg.txt`
+              }
 
               var commandID = 'command-' + authCode;
               var commandContainer = $('#command-container-' + downloadObject);

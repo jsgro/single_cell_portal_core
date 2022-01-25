@@ -85,7 +85,8 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
 function getDownloadCommand(authCode, downloadId) {
   // Get client os and determine correct curl invocation
   const clientOS = bardUtils.info.os()
-  const curlExec = clientOS.match(/Win/) ? 'curl.exe' : 'curl'
+  const isWindows = clientOS.match(/Win/)
+  const curlExec = isWindows ? 'curl.exe' : 'curl'
   const queryParams = {
     auth_code: authCode,
     download_id: downloadId,
@@ -107,10 +108,16 @@ function getDownloadCommand(authCode, downloadId) {
   // This is what the user will run in their terminal to download the data.
   // To consider: check the node environment (either at compile or runtime)
   // instead of the hostname
-  const downloadCommand = (
-    `${curlExec} "${url}" -${curlSecureFlag}o cfg.txt; ` +
-    `${curlExec} -K cfg.txt; rm cfg.txt` // Removes only if curl succeeds
+  let downloadCommand = (
+    `${curlExec} "${url}" -${curlSecureFlag}o cfg.txt; `
   )
+
+  // depending on OS, format downstream commands to only clean up cfg.txt if curl is successful
+  if (isWindows) {
+    downloadCommand += `${curlExec} -K cfg.txt ; if ($?) { rm cfg.txt }`
+  } else {
+    downloadCommand += `${curlExec} -K cfg.txt && rm cfg.txt`
+  }
 
   return downloadCommand
 }
