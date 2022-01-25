@@ -35,12 +35,14 @@ window.Plotly = Plotly
   *   width, to instruct Plotly how large to render itself. this is useful for
   *   rendering to hidden divs
   * @param isCellSelecting whether plotly's lasso selection tool is enabled
-  * @plotPointsSelected {function} callback for when a user selects points on the plot, which corresponds
+  * @param plotPointsSelected {function} callback for when a user selects points on the plot, which corresponds
   *   to the plotly "points_selected" event
+  * @param canEdit {Boolean} whether the current user has permissions to edit this study
   */
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensionProps,
-  isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache
+  isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache,
+  canEdit
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [bulkCorrelation, setBulkCorrelation] = useState(null)
@@ -161,13 +163,6 @@ function RawScatterPlot({
     }
   }
 
-  /** updates the user picked color for the given label.  does *not* save change to the server */
-  function updateUserPickedColors(label, color) {
-    const newColors = Object.assign({}, userPickedColors)
-    newColors[label] = color
-    setUserPickedColors(newColors)
-  }
-
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     setIsLoading(true)
@@ -263,16 +258,20 @@ function RawScatterPlot({
         data-testid={graphElementId}
       >
         { scatterData && countsByLabel &&
-        <ScatterPlotLegend
-          name={scatterData.annotParams.name}
-          height={scatterData.height}
-          countsByLabel={countsByLabel}
-          correlations={labelCorrelations}
-          hiddenTraces={hiddenTraces}
-          updateHiddenTraces={updateHiddenTraces}
-          userPickedColors={userPickedColors}
-          updateUserPickedColors={updateUserPickedColors}
-        />
+          <ScatterPlotLegend
+            name={scatterData.annotParams.name}
+            height={scatterData.height}
+            countsByLabel={countsByLabel}
+            correlations={labelCorrelations}
+            hiddenTraces={hiddenTraces}
+            updateHiddenTraces={updateHiddenTraces}
+            userPickedColors={userPickedColors}
+            setUserPickedColors={setUserPickedColors}
+            customColors={scatterData.customColors}
+            clusterFileId={scatterData.clusterFileId}
+            studyAccession={studyAccession}
+            enableColorPicking={canEdit}
+          />
         }
       </div>
       <p className="help-block">
@@ -344,7 +343,8 @@ export function getPlotlyTraces({
   scatter: {
     axes, data, pointAlpha, pointSize, is3D,
     scatterColor: dataScatterColor,
-    annotParams: { name: annotName, type: annotType }
+    annotParams: { name: annotName, type: annotType },
+    customColors = {}
   }
 }) {
   const trace = {
@@ -367,7 +367,7 @@ export function getPlotlyTraces({
   if (isRefGroup) {
     // Use Plotly's groupby and filter transformation to make the traces
     // note these transforms are deprecated in the latest Plotly versions
-    const [legendStyles, labelCounts] = getStyles(data, pointSize, userPickedColors)
+    const [legendStyles, labelCounts] = getStyles(data, pointSize, customColors, userPickedColors)
     countsByLabel = labelCounts
     trace.transforms = [
       {

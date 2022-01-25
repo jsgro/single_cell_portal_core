@@ -20,9 +20,7 @@ export default function ScatterTab({
 }) {
   // maintain the map of plotly contexts to the params that generated the corresponding visualization
   const plotlyContextMap = useRef({})
-  const { scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol } = getScatterParams(
-    exploreInfo, exploreParams, isGene, isMultiGene
-  )
+  const { scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol } = getScatterParams(exploreParams, isGene, isMultiGene)
 
   const imagesForClusters = {}
   exploreInfo.imageFiles.map(file => {
@@ -67,6 +65,7 @@ export default function ScatterTab({
               }}
               {...params}
               dataCache={dataCache}
+              canEdit={exploreInfo.canEdit}
               dimensionProps={{
                 isMultiRow,
                 isTwoColumn: isTwoColRow,
@@ -121,7 +120,7 @@ function ImageDisplay({ file, bucketName }) {
  * note that we always pass and/or manipulate copies of the explore params for safety reasons, as we
  * never want to directly modify the exploreParams object
  */
-export function getScatterParams(exploreInfo, exploreParams, isGene, isMultiGene) {
+export function getScatterParams(exploreParams, isGene, isMultiGene) {
   let isTwoColumn = true
   let isMultiRow = false
   let firstRowSingleCol = false

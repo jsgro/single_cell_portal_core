@@ -87,14 +87,11 @@ class AnnotationVizService
     subsample_thresholds = Hash[
       study.cluster_groups.map {|cluster| [cluster.name, ClusterVizService.subsampling_options(cluster)] }
     ]
-    clusters_with_ids = study.cluster_groups.pluck(:id, :name).map{|c| { id: c[0].to_s, name: c[1]} }
-    # clusters_with_ids = raw_clusters_with_ids
     {
       default_cluster: study.default_cluster&.name,
       default_annotation: AnnotationVizService.get_selected_annotation(study),
       annotations: AnnotationVizService.available_annotations(study, cluster: nil, current_user: user),
       clusters: study.cluster_groups.pluck(:name),
-      clusters_with_ids: clusters_with_ids,
       subsample_thresholds: subsample_thresholds
     }
   end

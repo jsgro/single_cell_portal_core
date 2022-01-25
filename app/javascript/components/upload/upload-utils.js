@@ -33,6 +33,8 @@ const PROPERTIES_NOT_TO_SEND = [
   'requestCanceller'
 ]
 
+const PROPERTIES_AS_JSON = ['custom_color_updates']
+
 /** gets an object representing a new, empty study file.  Does not communicate to server */
 export function newStudyFileObj(studyId) {
   return {
@@ -203,10 +205,15 @@ export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
       })
     }
   } else if (obj[propertyName] && typeof obj[propertyName] === 'object') {
-    // iterate over the keys and add each as a nested form property
-    Object.keys(obj[propertyName]).forEach(subKey => {
-      addObjectPropertyToForm(obj[propertyName], subKey, formData, propertyName)
-    })
+    if (PROPERTIES_AS_JSON.includes(propertyName)) {
+      // serialize the object as json
+      formData.append(propString, JSON.stringify(obj[propertyName]))
+    } else {
+      // iterate over the keys and add each as a nested form property
+      Object.keys(obj[propertyName]).forEach(subKey => {
+        addObjectPropertyToForm(obj[propertyName], subKey, formData, propertyName)
+      })
+    }
   } else {
     // don't set null properties -- those are ones that haven't changed
     // and having them be sent as 'null' or '' can throw off validations
