@@ -51,4 +51,16 @@ class RequestUtilsTest < ActiveSupport::TestCase
     assert_equal invalid_output, sanitized_invalid_list,
                  "Did not correctly sanitize characters from list; #{invalid_output} != #{sanitized_invalid_list}"
   end
+
+  test 'should format file path for os' do
+    path = 'path/to/some/file.txt'
+    unix_os_list = ['Mac OS X', 'macOSX', 'Generic Linux', 'Android', 'iOS (iPhone)']
+    unix_os_list.each do |operating_system|
+      formatted_path = RequestUtils.format_path_for_os(path, operating_system)
+      assert_equal path, formatted_path
+    end
+    windows_path = RequestUtils.format_path_for_os(path, 'Windows')
+    expected_path = "path\\to\\some\\file.txt"
+    assert_equal expected_path, windows_path
+  end
 end

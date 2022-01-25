@@ -111,7 +111,7 @@ it('shows custom legend with default group scatter plot', async () => {
 describe('getPlotlyTraces handles expression graphs', () => {
   it('sorts points in order of expression', async () => {
     const plotData = _cloneDeep(BASIC_PLOT_DATA)
-    plotData.data.expression = [0.1, 0.0, 2, 4.5, 0, 6.5, 0, 3.1]
+    plotData.scatter.data.expression = [0.1, 0.0, 2, 4.5, 0, 6.5, 0, 3.1]
     plotData.genes = ['foo']
 
     const traces = getPlotlyTraces(plotData)
@@ -128,7 +128,7 @@ describe('getPlotlyTraces handles expression graphs', () => {
 
   it('resets the limits in cases of all zero expression', async () => {
     const plotData = _cloneDeep(BASIC_PLOT_DATA)
-    plotData.data.expression = [0, 0, 0, 0, 0, 0, 0, 0]
+    plotData.scatter.data.expression = [0, 0, 0, 0, 0, 0, 0, 0]
     plotData.genes = ['foo']
 
     const traces = getPlotlyTraces(plotData)
@@ -139,7 +139,7 @@ describe('getPlotlyTraces handles expression graphs', () => {
 
   it('reverses the colors of non-Reds color scales', async () => {
     const plotData = _cloneDeep(BASIC_PLOT_DATA)
-    plotData.data.expression = [0, 0, 0, 0, 0, 0, 0, 0]
+    plotData.scatter.data.expression = [0, 0, 0, 0, 0, 0, 0, 0]
     plotData.genes = ['foo']
 
     let traces = getPlotlyTraces(plotData)
