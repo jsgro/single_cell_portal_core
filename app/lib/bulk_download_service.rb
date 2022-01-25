@@ -26,7 +26,8 @@ class BulkDownloadService
                                        azul_files: nil,
                                        context: 'study',
                                        os: '')
-    curl_configs = ['--create-dirs', '--compressed']
+    curl_configs = %w(--create-dirs)
+    curl_configs << '--compressed' unless os =~ /Win/ # most Windows installations of curl do not support --compressed
     # create an array of all objects to be downloaded, including directory files
     download_objects = study_files.to_a + directory_files
     # Get signed URLs for all files in the requested download objects

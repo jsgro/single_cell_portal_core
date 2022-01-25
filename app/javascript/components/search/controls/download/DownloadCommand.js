@@ -109,7 +109,7 @@ function getDownloadCommand(authCode, downloadId) {
   // instead of the hostname
   const downloadCommand = (
     `${curlExec} "${url}" -${curlSecureFlag}o cfg.txt; ` +
-    `${curlExec} -K cfg.txt && rm cfg.txt` // Removes only if curl succeeds
+    `${curlExec} -K cfg.txt; rm cfg.txt` // Removes only if curl succeeds
   )
 
   return downloadCommand
