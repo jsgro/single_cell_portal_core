@@ -12,25 +12,22 @@ module Api
 
       rescue_from ActionController::ParameterMissing do |exception|
         MetricsService.report_error(exception, request, current_api_user, @study)
-        render json: {error: exception.message}, status: 400
-      end
-
-      rescue_from NoMethodError, Faraday::ConnectionFailed do |exception|
-        MetricsService.report_error(exception, request, current_api_user, @study)
-        render json: {error: exception.message}, status: 500
+        render json: { error: exception.message }, status: :bad_request
       end
 
       # this is needed to get stack traces of view errors on the console in development
       # otherwise, e.g. errors in study_search_results_objects.rb would just be swallowed and returned as 500
       # this also logs exceptions in Mixpanel/Sentry
-      rescue_from Exception do |exception|
+      # as per https://guides.rubyonrails.org/action_controller_overview.html#rescue-from, we are not rescuing from the
+      # base Exception class as this causes strange issues, like AbstractController::DoubleRenderError, among others
+      rescue_from NoMethodError, RuntimeError, Faraday::ConnectionFailed do |exception|
         MetricsService.report_error(exception, request, current_api_user, @study)
         ErrorTracker.report_exception(exception, current_api_user, params)
         logger.error ([exception.message] + exception.backtrace).join($/)
         if Rails.env.production?
-          render json: {error: "An unexpected error has occurred"}, status: 500
+          render json: { error: 'An unexpected error has occurred' }, status: :internal_server_error
         else
-          render json: {error: exception.message}, status: 500
+          render json: { error: exception.message }, status: :internal_server_error
         end
       end
 

@@ -1,104 +1,106 @@
 Rails.application.routes.draw do
   # bare domain redirect to homepage
-  get '/', to:redirect('/single_cell', status: 302)
+  get '/', to: redirect('/single_cell', status: 302)
 
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
   scope 'single_cell' do
-    # API Routes
-    namespace :api do
-      get '/', to:redirect('/single_cell/api/v1', status: 302)
-      namespace :v1 do
-        get '/', to: 'api_docs#swagger_ui', as: 'swagger_ui'
-        get 'oauth2_redirect', to: 'api_docs#oauth2_redirect', as: 'oauth2_redirect'
-        resources :api_docs, only: :index
-        namespace :schemas do
-          get 'studies'
-          get 'study_files'
-          get 'study_file_bundles'
-          get 'study_shares'
-          get 'directory_listings'
-        end
-        # convention metadata schemas endpoints
-        scope :metadata_schemas do
-          get '/', to: 'metadata_schemas#index', as: :metadata_schemas
-          get ':project_name/:version/:schema_format', to: 'metadata_schemas#load_schema', as: :metadata_schemas_load_convention_schema,
-              constraints: {version: /.*/}
-        end
-        resources :taxons, only: [:index, :show]
-        resources :reports, only: [:show], param: :report_name
-        resources :studies, only: [:index, :show, :create, :update, :destroy] do
-          post 'study_files/bundle', to: 'study_files#bundle', as: :study_files_bundle_files
-          resources :study_files, only: [:index, :show, :create, :update, :destroy] do
-            member do
-              post 'parse', to: 'study_files#parse'
-              patch 'chunk', to: 'study_files#chunk'
+    # API Routes, default all responses to JSON
+    defaults format: :json do
+      namespace :api do
+        get '/', to: redirect('/single_cell/api/v1', status: 302)
+        namespace :v1 do
+          get '/', to: 'api_docs#swagger_ui', as: 'swagger_ui', defaults: { format: :html }
+          get 'oauth2_redirect', to: 'api_docs#oauth2_redirect', as: 'oauth2_redirect', defaults: { format: :html }
+          resources :api_docs, only: :index
+          namespace :schemas do
+            get 'studies'
+            get 'study_files'
+            get 'study_file_bundles'
+            get 'study_shares'
+            get 'directory_listings'
+          end
+          # convention metadata schemas endpoints
+          scope :metadata_schemas do
+            get '/', to: 'metadata_schemas#index', as: :metadata_schemas
+            get ':project_name/:version/:schema_format', to: 'metadata_schemas#load_schema', as: :metadata_schemas_load_convention_schema,
+                constraints: {version: /.*/}
+          end
+          resources :taxons, only: [:index, :show]
+          resources :reports, only: [:show], param: :report_name
+          resources :studies, only: [:index, :show, :create, :update, :destroy] do
+            post 'study_files/bundle', to: 'study_files#bundle', as: :study_files_bundle_files
+            resources :study_files, only: [:index, :show, :create, :update, :destroy] do
+              member do
+                post 'parse', to: 'study_files#parse'
+                patch 'chunk', to: 'study_files#chunk'
+              end
             end
-          end
-          resources :study_file_bundles, only: [:index, :show, :create, :destroy]
-          resources :study_shares, only: [:index, :show, :create, :update, :destroy]
-          resources :directory_listings, only: [:index, :show, :create, :update, :destroy]
-          resources :external_resources, only: [:index, :show, :create, :update, :destroy]
-          member do
-            post 'sync', to: 'studies#sync_study'
-            get 'manifest', to: 'studies#generate_manifest'
-            get 'file_info', to: 'studies#file_info'
-          end
-
-          resource :explore, controller: 'visualization/explore', only: [:show] do
+            resources :study_file_bundles, only: [:index, :show, :create, :destroy]
+            resources :study_shares, only: [:index, :show, :create, :update, :destroy]
+            resources :directory_listings, only: [:index, :show, :create, :update, :destroy]
+            resources :external_resources, only: [:index, :show, :create, :update, :destroy]
             member do
-              get 'cluster_options'
-              get 'bam_file_info'
+              post 'sync', to: 'studies#sync_study'
+              get 'manifest', to: 'studies#generate_manifest'
+              get 'file_info', to: 'studies#file_info'
             end
-          end
-          resources :expression, controller: 'visualization/expression', only: [:show], param: :data_type
-          resources :clusters, controller: 'visualization/clusters',
-                    only: [:show, :index],
-                    param: :cluster_name,
-                    constraints: { cluster_name: /[^\/]+/ } # needed to allow '.' in cluster names
-          resources :annotations, controller: 'visualization/annotations',
-                    only: [:show, :index],
-                    param: :annotation_name,
-                    constraints: { annotation_name: /[^\/]+/ } do # needed to allow '.' in annotation names
-            member do
-              get 'cell_values', to: 'visualization/annotations#cell_values'
+
+            resource :explore, controller: 'visualization/explore', only: [:show] do
+              member do
+                get 'cluster_options'
+                get 'bam_file_info'
+              end
             end
+            resources :expression, controller: 'visualization/expression', only: [:show], param: :data_type
+            resources :clusters, controller: 'visualization/clusters',
+                      only: [:show, :index],
+                      param: :cluster_name,
+                      constraints: { cluster_name: /[^\/]+/ } # needed to allow '.' in cluster names
+            resources :annotations, controller: 'visualization/annotations',
+                      only: [:show, :index],
+                      param: :annotation_name,
+                      constraints: { annotation_name: /[^\/]+/ } do # needed to allow '.' in annotation names
+              member do
+                get 'cell_values', to: 'visualization/annotations#cell_values'
+              end
+            end
+            get 'annotations/gene_lists/:gene_list', to: 'visualization/annotations#gene_list',
+                constraints: { gene_list: /[^\/]+/ },
+                as: :annotations_gene_list
+
+            resources :user_annotations, only: [:create], params: :accession
           end
-          get 'annotations/gene_lists/:gene_list', to: 'visualization/annotations#gene_list',
-              constraints: { gene_list: /[^\/]+/ },
-              as: :annotations_gene_list
+          resource :current_user, only: [:update], controller: 'current_user'
 
-          resources :user_annotations, only: [:create], params: :accession
-        end
-        resource :current_user, only: [:update], controller: 'current_user'
+          get 'status', to: 'status#index'
+          scope :site do
+            get 'studies', to: 'site#studies', as: :site_studies
+            get 'studies/:accession', to: 'site#view_study', as: :site_study_view
+            get 'studies/:accession/download', to: 'site#download_data', as: :site_study_download_data
+            get 'studies/:accession/stream', to: 'site#stream_data', as: :site_study_stream_data
 
-        get 'status', to: 'status#index'
-        scope :site do
-          get 'studies', to: 'site#studies', as: :site_studies
-          get 'studies/:accession', to: 'site#view_study', as: :site_study_view
-          get 'studies/:accession/download', to: 'site#download_data', as: :site_study_download_data
-          get 'studies/:accession/stream', to: 'site#stream_data', as: :site_study_stream_data
-
-          # analysis routes
-          get 'analyses', to: 'site#analyses', as: :site_analyses
-          get 'analyses/:namespace/:name/:snapshot', to: 'site#get_analysis', as: :site_get_analysis
-          get 'studies/:accession/analyses/:namespace/:name/:snapshot', to: 'site#get_study_analysis_config', as: :site_get_study_analysis_config
-          post 'studies/:accession/analyses/:namespace/:name/:snapshot', to: 'site#submit_study_analysis', as: :site_submit_study_analysis
-          get 'studies/:accession/submissions', to: 'site#get_study_submissions', as: :site_get_study_submissions
-          get 'studies/:accession/submissions/:submission_id', to: 'site#get_study_submission', as: :site_get_study_submission
-          get 'studies/:accession/submissions/:submission_id/sync', to: 'site#sync_submission_outputs', as: :site_sync_submission_outputs
-          delete 'studies/:accession/submissions/:submission_id', to: 'site#get_study_submission', as: :site_abort_study_submission
-          delete 'studies/:accession/submissions/:submission_id/remove', to: 'site#get_study_submission_dir', as: :site_delete_study_submission_dir
-        end
-        scope :search do
-          get 'facets', to: 'search#facets', as: :search_facets
-          get 'facet_filters', to: 'search#facet_filters', as: :search_facet_filters
-          get '/', to: 'search#index', as: :search
-        end
-        scope :bulk_download do
-          post 'auth_code', to: 'bulk_download#auth_code', as: :bulk_download_auth_code
-          get 'summary', to: 'bulk_download#summary', as: :bulk_download_summary
-          post 'drs_info', to: 'bulk_download#drs_info', as: :bulk_download_drs_info
-          get 'generate_curl_config', to: 'bulk_download#generate_curl_config', as: :bulk_download_generate_curl_config
+            # analysis routes
+            get 'analyses', to: 'site#analyses', as: :site_analyses
+            get 'analyses/:namespace/:name/:snapshot', to: 'site#get_analysis', as: :site_get_analysis
+            get 'studies/:accession/analyses/:namespace/:name/:snapshot', to: 'site#get_study_analysis_config', as: :site_get_study_analysis_config
+            post 'studies/:accession/analyses/:namespace/:name/:snapshot', to: 'site#submit_study_analysis', as: :site_submit_study_analysis
+            get 'studies/:accession/submissions', to: 'site#get_study_submissions', as: :site_get_study_submissions
+            get 'studies/:accession/submissions/:submission_id', to: 'site#get_study_submission', as: :site_get_study_submission
+            get 'studies/:accession/submissions/:submission_id/sync', to: 'site#sync_submission_outputs', as: :site_sync_submission_outputs
+            delete 'studies/:accession/submissions/:submission_id', to: 'site#get_study_submission', as: :site_abort_study_submission
+            delete 'studies/:accession/submissions/:submission_id/remove', to: 'site#get_study_submission_dir', as: :site_delete_study_submission_dir
+          end
+          scope :search do
+            get 'facets', to: 'search#facets', as: :search_facets
+            get 'facet_filters', to: 'search#facet_filters', as: :search_facet_filters
+            get '/', to: 'search#index', as: :search
+          end
+          scope :bulk_download do
+            post 'auth_code', to: 'bulk_download#auth_code', as: :bulk_download_auth_code
+            get 'summary', to: 'bulk_download#summary', as: :bulk_download_summary
+            post 'drs_info', to: 'bulk_download#drs_info', as: :bulk_download_drs_info
+            get 'generate_curl_config', to: 'bulk_download#generate_curl_config', as: :bulk_download_generate_curl_config
+          end
         end
       end
     end
