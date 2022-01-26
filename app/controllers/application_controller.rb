@@ -80,8 +80,10 @@ class ApplicationController < ActionController::Base
   end
 
   # govern how errors are rendered, depending on environment
+  # development will show standard 'friendly' error pages, all other environments will use custom exceptions_app
+  # from https://github.com/rails/rails/blob/main/actionpack/lib/action_controller/metal/rescue.rb#L16
   def show_detailed_exceptions?
-    Rails.env.development? ? true : false
+    Rails.env.development?
   end
 
   # auth action for portal admins

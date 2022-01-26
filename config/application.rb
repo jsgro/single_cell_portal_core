@@ -33,18 +33,17 @@ module SingleCellPortal
 
     config.autoload_paths << Rails.root.join('lib')
 
-    # custom exceptions handling
-    # for API requests, custom app will
+    # custom exceptions handling to render responses based on controller
+    # uncaught API errors will now render as JSON responses w/ 500 status
+    # normal controller errors will show 500 page, except in development environment (will show normal error page)
+    # lambda allows for inspecting environment, which will include request parameters
     config.exceptions_app = lambda do |env|
-      case env['REQUEST_PATH']
-      when %r{/api/v1}
+      if env['action_dispatch.original_path']&.include?('api/v1')
         Api::V1::ExceptionsController.action(:render_error).call(env)
+      elsif Rails.env.development?
+        ActionDispatch::PublicExceptions.new(Rails.public_path)
       else
-        if Rails.env.development?
-          ActionDispatch::PublicExceptions.new(Rails.public_path)
-        else
-          ExceptionsController.action(:render_error).call(env)
-        end
+        ExceptionsController.action(:render_error).call(env)
       end
     end
     # Google OAuth2 Scopes

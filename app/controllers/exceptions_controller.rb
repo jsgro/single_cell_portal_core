@@ -1,3 +1,4 @@
+# custom exceptions controller to render error views
 class ExceptionsController < ApplicationController
   layout 'application'
 
@@ -7,8 +8,13 @@ class ExceptionsController < ApplicationController
     ErrorTracker.report_exception(@exception, current_user, @study, params)
     respond_to do |format|
       format.html { render action: 'render_error', status: :internal_server_error }
-      format.json { render json: { error: @exception.message }, status: :internal_server_error }
+      format.json do
+        render json: {
+          error: @exception.message,
+          error_class: @exception.class.name,
+          source: @exception.backtrace&.first
+        }, status: :internal_server_error
+      end
     end
   end
 end
-

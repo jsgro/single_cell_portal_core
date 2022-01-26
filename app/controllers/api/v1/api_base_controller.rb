@@ -15,7 +15,8 @@ module Api
         render json: { error: exception.message }, status: :bad_request
       end
 
-      # always default to Api::V1::ExceptionsController for error rendering
+      # always default to Api::V1::ExceptionsController for error rendering, regardless of environment
+      # from https://github.com/rails/rails/blob/main/actionpack/lib/action_controller/metal/rescue.rb#L16
       def show_detailed_exceptions?
         false
       end

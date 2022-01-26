@@ -1,6 +1,6 @@
-# lightweight wrapper to intercept all API-based exceptions and render JSON response
 module Api
   module V1
+    # lightweight wrapper to intercept all uncaught API-based exceptions and render JSON response
     class ExceptionsController < ApiBaseController
       def render_error
         @exception = request.env["action_dispatch.exception"]
@@ -10,7 +10,7 @@ module Api
         render json: {
           error: @exception.message,
           error_class: @exception.class.name,
-          source: @exception.backtrace.first
+          source: @exception.backtrace&.first
         }, status: :internal_server_error
       end
     end
