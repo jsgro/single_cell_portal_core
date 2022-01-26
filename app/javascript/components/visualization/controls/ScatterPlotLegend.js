@@ -275,7 +275,7 @@ export default function ScatterPlotLegend({
       <div className="scatter-legend-head">
         <div>
           <p className="scatter-legend-name">{name}</p>
-          {labels.length > 1 &&
+          {labels.length > 1 && !showColorControls &&
           <>
             <a
               role="button"
@@ -298,7 +298,7 @@ export default function ScatterPlotLegend({
           <div>
             { showColorControls && !isColorSaving &&
               <>
-                <span className="detail">Click a label to select a new color</span><br/>
+                <span>Click a label to select a new color</span><br/>
                 <div>
                   <a role="button" data-analytics-name="legend-color-picking-save" onClick={saveColors}>
                     Save colors <FontAwesomeIcon icon={faSave}/>

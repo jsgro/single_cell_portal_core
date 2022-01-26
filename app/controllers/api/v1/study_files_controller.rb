@@ -305,7 +305,6 @@ module Api
         if safe_file_params[:upload] && safe_file_params[:upload_file_name]
           safe_file_params[:upload].original_filename = safe_file_params[:upload_file_name]
         end
-
         if safe_file_params[:custom_color_updates]
           ClusterFileInfo.merge_color_updates(study_file, safe_file_params)
         end
