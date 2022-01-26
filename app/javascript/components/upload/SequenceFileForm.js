@@ -45,6 +45,7 @@ export default function SequenceFileForm({
     requiredFields = BAM_REQUIRED_FIELDS
   }
   const validationMessages = validateFile({ file, allFiles, requiredFields, allowedFileExts })
+  const humanTaxon = speciesOptions.find(opt => opt.label === 'human')
 
   return <div className="row top-margin" key={file._id}>
     <div className="col-md-12">
@@ -66,7 +67,7 @@ export default function SequenceFileForm({
             <input type="radio"
               name={`sequenceHuman-${file._id}`}
               value="true" checked={file.human_data}
-              onChange={e => updateFile(file._id, { human_data: true, file_type: 'Fastq', uploadSelection: null })}/>
+              onChange={e => updateFile(file._id, { human_data: true, file_type: 'Fastq', uploadSelection: null, taxon_id: humanTaxon.value })}/>
               &nbsp;Yes
           </label>
         </div>
@@ -108,6 +109,7 @@ export default function SequenceFileForm({
             <Select options={speciesOptions}
               data-analytics-name="sequence-species-select"
               value={selectedSpecies}
+              isDisabled={file.human_data}
               placeholder="Select one..."
               onChange={val => updateFile(file._id, { taxon_id: val.value })}/>
           </label>
