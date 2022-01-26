@@ -424,6 +424,7 @@ function getLogProps(fileInfo, errorObj, perfTime) {
   const defaultProps = {
     ...fileInfo,
     perfTime,
+    trigger,
     delimiter: friendlyDelimiter,
     numTableCells: fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
   }
@@ -433,7 +434,6 @@ function getLogProps(fileInfo, errorObj, perfTime) {
   } else {
     return Object.assign(defaultProps, {
       status: 'failure',
-      trigger,
       summary,
       numErrors: errors.length,
       numWarnings: warnings.length,
