@@ -152,7 +152,9 @@ export function validateMetadataLabelMatches(headers, line, isLastLine, dataObj)
 }
 
 
-/** raises a warning if a group column has more than 200 unique values */
+/**
+ * For cluster and metadata files raises a warning if a group column has more than 200 unique values
+ * */
 export function validateGroupColumnCounts(headers, line, isLastLine, dataObj) {
   const issues = []
   const excludedColumns = ['NAME']
