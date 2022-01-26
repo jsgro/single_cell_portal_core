@@ -147,8 +147,9 @@ function LegendEntry({
               <HexColorPicker color={pickedColor} onChange={setPickedColor}/>
             </div>
           </Modal.Body>
-          <Modal.Footer className="text-center">
+          <Modal.Footer>
             <button className="btn btn-primary" onClick={handleColorPicked}>Ok</button>
+            <button className="btn terra-btn-secondary" onClick={() => setShowColorPicker(false)}>Cancel</button>
           </Modal.Footer>
         </Modal>
       }
@@ -261,7 +262,7 @@ export default function ScatterPlotLegend({
     setUserPickedColors(newColors)
   }
 
-  /** resets any changes to user colors */
+  /** resets any unsaved changes to user colors */
   function cancelColors() {
     setUserPickedColors({})
     setShowColorControls(false)

@@ -306,7 +306,9 @@ module Api
           safe_file_params[:upload].original_filename = safe_file_params[:upload_file_name]
         end
         if safe_file_params[:custom_color_updates]
-          ClusterFileInfo.merge_color_updates(study_file, safe_file_params)
+          parsed_update = JSON.parse(safe_file_params[:custom_color_updates])
+          safe_file_params['cluster_file_info'] = {custom_colors: ClusterFileInfo.merge_color_updates(study_file, parsed_update)}
+          safe_file_params.delete(:custom_color_updates)
         end
 
         # manually check first if species/assembly was supplied by name
