@@ -219,7 +219,7 @@ function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
 
     const msg = `All values (other than the first column and header row) in a dense matrix file must be numeric. ` +
     `Please ensure all values in ${rowText}: ${notedBadRows}, are numbers.`
-    issues.push(['error', 'format:invalid-type:not-numeric', msg])
+    issues.push(['error', 'content:invalid-type:not-numeric', msg])
   }
   return issues
 }
@@ -444,7 +444,9 @@ function validateMetadataLabelMatches(headers, line, isLastLine, dataObj) {
   }
   return issues
 }
-/** raises a warning if a group column has more than 200 unique values */
+/**
+ * For cluster and metadata files raises a warning if a group column has more than 200 unique values
+ * */
 function validateGroupColumnCounts(headers, line, isLastLine, dataObj) {
   const issues = []
   const excludedColumns = ['NAME']
@@ -505,8 +507,6 @@ export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
     issues = issues.concat(validateValuesAreNumeric(line, isLastLine, lineNum, dataObj))
     issues = issues.concat(validateColumnNumber(line, isLastLine, headers, lineNum, dataObj))
     issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
-    issues = issues.concat(validateMetadataLabelMatches(headers, line, isLastLine, dataObj))
-    issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
     // add other line-by-line validations here
   })
   return { issues, delimiter, numColumns: headers[0].length }
