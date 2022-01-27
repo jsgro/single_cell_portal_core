@@ -77,6 +77,8 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
         "y"=>[7, 5, 3]
       },
       "pointSize"=>3,
+      "customColors"=>{},
+      "clusterFileId"=>@basic_study_cluster_file.id.to_s,
       "userSpecifiedRanges"=>nil,
       "showClusterPointBorders"=>false,
       "description"=>nil,
