@@ -40,8 +40,6 @@ module SingleCellPortal
     config.exceptions_app = lambda do |env|
       if env['action_dispatch.original_path']&.include?('api/v1')
         Api::V1::ExceptionsController.action(:render_error).call(env)
-      elsif Rails.env.development?
-        ActionDispatch::PublicExceptions.new(Rails.public_path)
       else
         ExceptionsController.action(:render_error).call(env)
       end
