@@ -4,7 +4,7 @@ module Api
     class ExceptionsController < ApiBaseController
       def render_error
         ::RequestUtils.log_exception(request, params, user: current_api_user, study: @study)
-        render json: ::RequestUtils.exception_json(request.env['action_dispatch.exception']),
+        render json: ::RequestUtils.exception_json(request),
                status: :internal_server_error
       end
     end

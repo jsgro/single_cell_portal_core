@@ -7,7 +7,7 @@ class ExceptionsController < ApplicationController
     respond_to do |format|
       format.html { render action: 'render_error', status: :internal_server_error }
       format.json do
-        render json: RequestUtils.exception_json(request.env['action_dispatch.exception']),
+        render json: RequestUtils.exception_json(request),
                status: :internal_server_error
       end
     end

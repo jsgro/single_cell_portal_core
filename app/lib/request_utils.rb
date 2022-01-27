@@ -163,7 +163,8 @@ class RequestUtils
   end
 
   # format exception JSON responses
-  def self.exception_json(exception)
+  def self.exception_json(request)
+    exception = request.env['action_dispatch.exception']
     {
       error: exception.message,
       error_class: exception.class.name,
