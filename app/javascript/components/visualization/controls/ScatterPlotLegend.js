@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { log } from 'lib/metrics-api'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPalette, faSave } from '@fortawesome/free-solid-svg-icons'
+import { faPalette } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { HexColorPicker, HexColorInput } from 'react-colorful'
 import _cloneDeep from 'lodash/cloneDeep'
@@ -304,7 +304,7 @@ export default function ScatterPlotLegend({
                     Cancel
                   </a><br/>
                   &nbsp;
-                  <a role="button" className="pull-right" data-analytics-name="legend-color-picking-reset" onClick={resetColors}>
+                  <a role="button" className="pull-right" data-analytics-name="legend-color-picker-reset" onClick={resetColors}>
                     Reset to defaults
                   </a>
                 </div>
