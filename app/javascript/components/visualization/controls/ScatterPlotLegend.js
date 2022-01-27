@@ -112,6 +112,7 @@ function LegendEntry({
     updateEditedCustomColors(label, pickedColor)
     setShowColorPicker(false)
   }
+
   // clicking the label will either hide the trace, or pop up a color picker
   const entryClickFunction = showColorControls ? () => setShowColorPicker(true) : toggleSelection
   return (
@@ -138,7 +139,7 @@ function LegendEntry({
           bsSize='small'>
           <Modal.Body>
             <div className="flexbox-align-center flexbox-column">
-              <span>Edit or select color</span>
+              <span>Select color</span>
               <span className="flexbox-align-center">
                 #<HexColorInput color={pickedColor} onChange={setPickedColor}/>
                 &nbsp;
@@ -148,7 +149,7 @@ function LegendEntry({
             </div>
           </Modal.Body>
           <Modal.Footer>
-            <button className="btn btn-primary" onClick={handleColorPicked}>Ok</button>
+            <button className="btn btn-primary" onClick={handleColorPicked}>OK</button>
             <button className="btn terra-btn-secondary" onClick={() => setShowColorPicker(false)}>Cancel</button>
           </Modal.Footer>
         </Modal>
@@ -296,21 +297,21 @@ export default function ScatterPlotLegend({
               <>
                 <span>Click a label to select a new color</span><br/>
                 <div>
-                  <a role="button" data-analytics-name="legend-color-picking-save" onClick={saveColors}>
-                    Save colors <FontAwesomeIcon icon={faSave}/>
+                  <a role="button" data-analytics-name="legend-color-picker-save" onClick={saveColors}>
+                    Save colors
                   </a>
-                  <a role="button" className="pull-right" data-analytics-name="legend-color-picking-save" onClick={cancelColors}>
+                  <a role="button" className="pull-right" data-analytics-name="legend-color-picker-cancel" onClick={cancelColors}>
                     Cancel
                   </a><br/>
                   &nbsp;
-                  <a role="button" className="pull-right" data-analytics-name="legend-color-picking-save" onClick={resetColors}>
+                  <a role="button" className="pull-right" data-analytics-name="legend-color-picking-reset" onClick={resetColors}>
                     Reset to defaults
                   </a>
                 </div>
               </>
             }
             { !showColorControls &&
-              <a role="button" data-analytics-name="legend-color-picking-show" onClick={() => setShowColorControls(true)}>
+              <a role="button" data-analytics-name="legend-color-picker-show" onClick={() => setShowColorControls(true)}>
                 Customize colors <FontAwesomeIcon icon={faPalette}/>
               </a>
             }
