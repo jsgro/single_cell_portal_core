@@ -4,13 +4,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPalette, faSave } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { HexColorPicker, HexColorInput } from 'react-colorful'
-import { store } from 'react-notifications-component'
+import _cloneDeep from 'lodash/cloneDeep'
 
 import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 import { getColorBrewerColor, scatterLabelLegendWidth } from 'lib/plot'
-import { formatFileForApi } from 'components/upload/upload-utils'
-import { updateStudyFile } from 'lib/scp-api'
-import { successNotification, failureNotification } from 'lib/MessageModal'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 /** Sort annotation labels naturally, but always put "unspecified" last */
@@ -52,7 +49,7 @@ function getActivity(isActive) {
  * set "Foo" could be green in the legend, but red in the plot.)
  *
 */
-export function getStyles(data, pointSize, customColors, userPickedColors) {
+export function getStyles(data, pointSize, customColors, editedCustomColors) {
   const countsByLabel = countValues(data.annotations)
 
   const labels = getLabels(countsByLabel)
@@ -64,7 +61,7 @@ export function getStyles(data, pointSize, customColors, userPickedColors) {
         value: {
           legendrank: index,
           marker: {
-            color: getColorForLabel(label, customColors, userPickedColors, index),
+            color: getColorForLabel(label, customColors, editedCustomColors, index),
             size: pointSize
           }
         }
@@ -77,10 +74,13 @@ export function getStyles(data, pointSize, customColors, userPickedColors) {
 /** Component for row in legend */
 function LegendEntry({
   label, numPoints, iconColor, correlations,
-  numLabels, hiddenTraces, updateHiddenTraces, showColorControls, updateUserPickedColors
+  numLabels, hiddenTraces, updateHiddenTraces, showColorControls, updateEditedCustomColors
 }) {
   let entry = label
+  // whether to show the color picker modal
   const [showColorPicker, setShowColorPicker] = useState(false)
+  // the current user-picked (though not necessarily saved) color
+  // note that the color picker components do not allow invalid inputs, so we don't need to do any additional validation
   const [pickedColor, setPickedColor] = useState(iconColor)
   const hasCorrelations = correlations !== null
   if (correlations) {
@@ -109,7 +109,7 @@ function LegendEntry({
 
   /** handle 'ok' press by updating the colors to the parent, and closing the dialog */
   function handleColorPicked() {
-    updateUserPickedColors(label, pickedColor)
+    updateEditedCustomColors(label, pickedColor)
     setShowColorPicker(false)
   }
   // clicking the label will either hide the trace, or pop up a color picker
@@ -193,25 +193,26 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
 /**
  * Get color for the label, which can be applied to e.g. the icon or the trace
  */
-function getColorForLabel(label, customColors={}, userPickedColors={}, i) {
-  return userPickedColors[label] ?? customColors[label] ?? getColorBrewerColor(i)
+function getColorForLabel(label, customColors={}, editedCustomColors={}, i) {
+  return editedCustomColors[label] ?? customColors[label] ?? getColorBrewerColor(i)
 }
 
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, hiddenTraces,
-  updateHiddenTraces, customColors, studyAccession, clusterFileId, userPickedColors, setUserPickedColors,
-  enableColorPicking=false
+  updateHiddenTraces, customColors, editedCustomColors, setEditedCustomColors,
+  enableColorPicking=false, saveCustomColors
 }) {
+  // is the user currently in color-editing mode
   const [showColorControls, setShowColorControls] = useState(false)
-  const [isColorSaving, setIsColorSaving] = useState(false)
+  // whether a request to the server to save colors is pending
   const labels = getLabels(countsByLabel)
   const numLabels = labels.length
 
   const legendEntries = labels
     .map((label, i) => {
       const numPoints = countsByLabel[label]
-      const iconColor = getColorForLabel(label, customColors, userPickedColors, i)
+      const iconColor = getColorForLabel(label, customColors, editedCustomColors, i)
 
       return (
         <LegendEntry
@@ -223,7 +224,7 @@ export default function ScatterPlotLegend({
           hiddenTraces={hiddenTraces}
           updateHiddenTraces={updateHiddenTraces}
           numLabels={numLabels}
-          updateUserPickedColors={updateUserPickedColors}
+          updateEditedCustomColors={updateEditedCustomColors}
           showColorControls={showColorControls}
         />
       )
@@ -234,40 +235,34 @@ export default function ScatterPlotLegend({
   const [showIsEnabled, hideIsEnabled] =
     getShowHideEnabled(hiddenTraces, countsByLabel)
 
-  /** Save any changes to the legend colors */
-  async function saveColors() {
-    const colorObj = {}
-    // merge the user picked colors with existing custom colors so previously saved values are preserved
-    colorObj[name] = Object.assign({}, customColors, userPickedColors)
-    const newFileObj = {
-      _id: clusterFileId,
-      custom_color_updates: colorObj
-    }
-    setIsColorSaving(true)
-    try {
-      await updateStudyFile({ studyAccession, studyFileId: clusterFileId, studyFileData: formatFileForApi(newFileObj) })
-      store.addNotification(successNotification(`Colors saved successfully`))
-    } catch (error) {
-      store.addNotification(failureNotification(<span>Error saving colors<br/>{error}</span>))
-    }
-
-    setIsColorSaving(false)
-    setShowColorControls(false)
-  }
-
   /** updates the user picked color for the given label.  does *not* save change to the server */
-  function updateUserPickedColors(label, color) {
-    const newColors = Object.assign({}, userPickedColors)
+  function updateEditedCustomColors(label, color) {
+    const newColors = _cloneDeep(editedCustomColors)
     newColors[label] = color
-    setUserPickedColors(newColors)
+    setEditedCustomColors(newColors)
   }
 
   /** resets any unsaved changes to user colors */
   function cancelColors() {
-    setUserPickedColors({})
+    setEditedCustomColors({})
     setShowColorControls(false)
   }
 
+  /** resets any unsaved changes to user colors and clears custom colors */
+  function resetColors() {
+    setEditedCustomColors({})
+    saveCustomColors({})
+    setShowColorControls(false)
+  }
+
+  /** save the colors to the server */
+  function saveColors() {
+    // merge the user picked colors with existing custom colors so previously saved values are preserved
+    const colorsToSave = _cloneDeep(customColors)
+    Object.assign(colorsToSave, editedCustomColors)
+    setShowColorControls(false)
+    saveCustomColors(colorsToSave)
+  }
 
   return (
     <div
@@ -297,7 +292,7 @@ export default function ScatterPlotLegend({
         </div>
         { enableColorPicking &&
           <div>
-            { showColorControls && !isColorSaving &&
+            { showColorControls &&
               <>
                 <span>Click a label to select a new color</span><br/>
                 <div>
@@ -306,12 +301,13 @@ export default function ScatterPlotLegend({
                   </a>
                   <a role="button" className="pull-right" data-analytics-name="legend-color-picking-save" onClick={cancelColors}>
                     Cancel
+                  </a><br/>
+                  &nbsp;
+                  <a role="button" className="pull-right" data-analytics-name="legend-color-picking-save" onClick={resetColors}>
+                    Reset to defaults
                   </a>
                 </div>
               </>
-            }
-            { showColorControls && isColorSaving &&
-              <LoadingSpinner/>
             }
             { !showColorControls &&
               <a role="button" data-analytics-name="legend-color-picking-show" onClick={() => setShowColorControls(true)}>

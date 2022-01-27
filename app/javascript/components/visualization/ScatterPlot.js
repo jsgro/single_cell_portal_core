@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 import _remove from 'lodash/remove'
 import Plotly from 'plotly.js-dist'
+import { store } from 'react-notifications-component'
 
-import { fetchCluster } from 'lib/scp-api'
+import { fetchCluster, updateStudyFile } from 'lib/scp-api'
 import { logScatterPlot } from 'lib/scp-api-metrics'
 import { log } from 'lib/metrics-api'
 import { useUpdateEffect } from 'hooks/useUpdate'
@@ -15,6 +16,8 @@ import { withErrorBoundary } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
 import { getPlotDimensions } from 'lib/plot'
 import LoadingSpinner from 'lib/LoadingSpinner'
+import { formatFileForApi } from 'components/upload/upload-utils'
+import { successNotification, failureNotification } from 'lib/MessageModal'
 
 // sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
 export const SCATTER_COLOR_OPTIONS = [
@@ -55,7 +58,7 @@ function RawScatterPlot({
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   // map of label name to color hex codes, for any labels the user has picked a color for
-  const [userPickedColors, setUserPickedColors] = useState({})
+  const [editedCustomColors, setEditedCustomColors] = useState({})
 
   /**
    * Handle user interaction with one or more labels in legend.
@@ -98,6 +101,34 @@ function RawScatterPlot({
     return scatter
   }
 
+  /** Save any changes to the legend colors */
+  async function saveCustomColors(newColors) {
+    const colorObj = {}
+    colorObj[annotation.name] = newColors
+    const newFileObj = {
+      _id: scatterData.clusterFileId,
+      custom_color_updates: colorObj
+    }
+    setIsLoading(true)
+    try {
+      const response = await updateStudyFile({
+        studyAccession,
+        studyFileId: scatterData.clusterFileId,
+        studyFileData: formatFileForApi(newFileObj)
+      })
+      store.addNotification(successNotification(`Colors saved successfully`))
+      const newScatterData = Object.assign({}, scatterData, {
+        customColors: response.cluster_file_info.custom_colors[annotation.name]
+      })
+      setEditedCustomColors({})
+      setIsLoading(false)
+      setScatterData(newScatterData)
+    } catch (error) {
+      store.addNotification(failureNotification(<span>Error saving colors<br/>{error}</span>))
+      setIsLoading(false)
+    }
+  }
+
   /** Update layout, without recomputing traces */
   function resizePlot() {
     const scatter = updateScatterLayout()
@@ -112,7 +143,7 @@ function RawScatterPlot({
       isAnnotatedScatter,
       isCorrelatedScatter,
       scatterColor,
-      userPickedColors,
+      editedCustomColors,
       hiddenTraces,
       scatter
     })
@@ -186,6 +217,7 @@ function RawScatterPlot({
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles custom scatter legend updates
+  const customColors = scatterData ? scatterData.customColors : {}
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
     if (scatterData && !isLoading) {
@@ -194,7 +226,7 @@ function RawScatterPlot({
     }
     // look for updates of individual properties, so that we don't rerender if the containing array
     // happens to be a different instance
-  }, [hiddenTraces.join(','), Object.values(userPickedColors).join(',')])
+  }, [hiddenTraces.join(','), Object.values(editedCustomColors).join(','), Object.values(customColors).join(',')])
 
   // Handles window resizing
   const widthAndHeight = getScatterDimensions(scatterData, dimensionProps, genes)
@@ -265,12 +297,11 @@ function RawScatterPlot({
             correlations={labelCorrelations}
             hiddenTraces={hiddenTraces}
             updateHiddenTraces={updateHiddenTraces}
-            userPickedColors={userPickedColors}
-            setUserPickedColors={setUserPickedColors}
-            customColors={scatterData.customColors}
-            clusterFileId={scatterData.clusterFileId}
-            studyAccession={studyAccession}
+            editedCustomColors={editedCustomColors}
+            setEditedCustomColors={setEditedCustomColors}
+            customColors={customColors}
             enableColorPicking={canEdit}
+            saveCustomColors={saveCustomColors}
           />
         }
       </div>
@@ -338,7 +369,7 @@ export function getPlotlyTraces({
   isAnnotatedScatter,
   isCorrelatedScatter,
   scatterColor,
-  userPickedColors,
+  editedCustomColors,
   hiddenTraces,
   scatter: {
     axes, data, pointAlpha, pointSize, is3D,
@@ -367,7 +398,7 @@ export function getPlotlyTraces({
   if (isRefGroup) {
     // Use Plotly's groupby and filter transformation to make the traces
     // note these transforms are deprecated in the latest Plotly versions
-    const [legendStyles, labelCounts] = getStyles(data, pointSize, customColors, userPickedColors)
+    const [legendStyles, labelCounts] = getStyles(data, pointSize, customColors, editedCustomColors)
     countsByLabel = labelCounts
     trace.transforms = [
       {
