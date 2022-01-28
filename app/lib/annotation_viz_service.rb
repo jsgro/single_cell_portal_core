@@ -111,7 +111,7 @@ class AnnotationVizService
   # returns a flat array of annotation objects, with name, scope, annotation_type, and values for each
   def self.available_annotations(study, cluster: nil, current_user: nil, annotation_type: nil)
     annotations = []
-    metadata_annots = available_metadata_annotations(study, annotation_type)
+    metadata_annots = available_metadata_annotations(study, annotation_type: annotation_type)
     annotations.concat(metadata_annots)
     cluster_annots = []
     if cluster.present?
@@ -139,8 +139,9 @@ class AnnotationVizService
     all_metadata = study.cell_metadata.to_a
     all_names = all_metadata.map(&:name)
     all_metadata.map do |annot|
-      # viewable if the type is numeric or there's no corresponding label
-      is_viewable = annot.annotation_type == 'numeric' || all_names.exclude?(annot.name + '__ontology_label')
+      # viewable if the type is numeric or there's no corresponding label and it's within the range of visualization values
+      is_viewable = annot.annotation_type == 'numeric' ||
+        all_names.exclude?(annot.name + '__ontology_label') && CellMetadatum::GROUP_VIZ_THRESHOLD === annot.values.size
       {
         name: annot.name,
         type: annot.annotation_type,
