@@ -108,7 +108,7 @@ function validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj) {
     const nameTxt = (dataObj.duplicateRowValues.size > 1) ? 'duplicates' : 'duplicate'
     const dupString = [...dataObj.duplicateRowValues].slice(0, 10).join(', ')
     const msg = `Row values must be unique within a file. ${dataObj.duplicateRowValues.size} ${nameTxt} found, including: ${dupString}`
-    issues.push(['error', 'duplicate:values-within-file', msg])
+    issues.push(['error', 'content:duplicate:values-within-file', msg])
   }
   return issues
 }
@@ -249,7 +249,7 @@ function validateGeneInHeader(headers) {
   const issues = []
   if (headers[0].toUpperCase() !== 'GENE') {
     const msg = 'Dense matrices require the first value of the file to be "GENE". ' +
-       `However, the first value for this file is "${headers[0]}".`
+      `However, the first value for this file is "${headers[0]}".`
     issues.push(['error', 'format:cap:missing-gene-column', msg])
   }
 
