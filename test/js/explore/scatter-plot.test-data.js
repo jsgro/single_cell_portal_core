@@ -816,6 +816,8 @@ export const MANY_LABELS_MOCKS = {
       identifier: 'Category--group--cluster'
     },
     subsample: 'all',
-    consensus: null
+    consensus: null,
+    clusterFileId: 'aaaaaaa1111112222234344',
+    customColors: {}
   }
 }
