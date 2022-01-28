@@ -111,17 +111,8 @@ class AnnotationVizService
   # returns a flat array of annotation objects, with name, scope, annotation_type, and values for each
   def self.available_annotations(study, cluster: nil, current_user: nil, annotation_type: nil)
     annotations = []
-    viewable = study.viewable_metadata
-    metadata = annotation_type.nil? ? viewable : viewable.select {|m| m.annotation_type == annotation_type}
-    metadata = metadata.map do |annot|
-      {
-        name: annot.name,
-        type: annot.annotation_type,
-        values: sanitize_values_array(annot.values, annot.annotation_type),
-        scope: 'study'
-      }
-    end
-    annotations.concat(metadata)
+    metadata_annots = available_metadata_annotations(study, annotation_type)
+    annotations.concat(metadata_annots)
     cluster_annots = []
     if cluster.present?
       cluster_annots = ClusterVizService.available_annotations_by_cluster(cluster, annotation_type)
@@ -139,32 +130,24 @@ class AnnotationVizService
       end
     end
     annotations.concat(cluster_annots)
-    # show 'invalid' annotations (e.g. cannot be visualized) as a courtesy, but don't allow selection
-    invalid_annots = []
-    study.cell_metadata.each do |meta|
-      unless meta.can_visualize?
-        invalid_annots << {
-          name: meta.name,
-          type: meta.annotation_type,
-          values: meta.values,
-          scope: 'invalid'
-        }
-      end
-    end
-    if cluster.present?
-      cluster.cell_annotations.each do |cell_annot|
-        unless cluster.can_visualize_cell_annotation?(cell_annot)
-          invalid_annots << {
-            name: cell_annot['name'],
-            type: cell_annot['annotation_type'],
-            values: cell_annot['values'],
-            scope: 'invalid'
-          }
-        end
-      end
-    end
-    annotations.concat(invalid_annots)
     annotations
+  end
+
+  # helper method to efficiently list out metadata annotations classed as valid/invalid for visualization
+  def self.available_metadata_annotations(study, annotation_type: nil)
+    # get all the metadata in a single query
+    all_metadata = study.cell_metadata.to_a
+    all_names = all_metadata.map(&:name)
+    all_metadata.map do |annot|
+      # viewable if the type is numeric or there's no corresponding label
+      is_viewable = annot.annotation_type == 'numeric' || all_names.exclude?(annot.name + '__ontology_label')
+      {
+        name: annot.name,
+        type: annot.annotation_type,
+        values: sanitize_values_array(annot.values, annot.annotation_type),
+        scope: is_viewable ? 'study' : 'invalid'
+      }
+    end
   end
 
   def self.annotation_cell_values_tsv(study, cluster, annotation)
