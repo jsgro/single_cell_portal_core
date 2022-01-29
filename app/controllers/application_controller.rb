@@ -116,10 +116,16 @@ class ApplicationController < ActionController::Base
   def set_study_default_options
     @default_cluster = @study.default_cluster
     @default_cluster_annotations = {
-      'Study Wide' => @study.viewable_metadata.map(&:annotation_select_option),
+      'Study Wide' => [],
       'Cluster-based' => [],
-      'Cannot Display' => @study.cell_metadata.reject(&:can_visualize?).map(&:annotation_select_option)
+      'Cannot Display'=> []
     }
+    metadata_annotations = AnnotationVizService.available_metadata_annotations(@study)
+    metadata_annotations.each do |annot|
+      annot_key = annot[:scope] == 'invalid' ? 'Cannot Display' : 'Study Wide'
+      @default_cluster_annotations[annot_key] << [annot[:name], "#{annot[:name]}--#{annot[:type]}--#{annot[:scope]}"]
+    end
+
     @default_cluster&.cell_annotations&.each do |cell_annotation|
       if @default_cluster&.can_visualize_cell_annotation?(cell_annotation)
         @default_cluster_annotations['Cluster-based'] << @default_cluster&.formatted_cell_annotation(cell_annotation)

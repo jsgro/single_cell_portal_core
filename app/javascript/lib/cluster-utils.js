@@ -2,6 +2,8 @@
  *  These live in a separate utility because multiple endpoints (explore, cluster, etc..)
  *  return annotationLists of the same basic structure */
 
+import { ParseException } from './validation/shared-validation'
+
 /** custom styling for cluster control-style select */
 export const clusterSelectStyle = {
   control: provided => ({
@@ -18,6 +20,7 @@ export const emptyDataParams = {
 }
 
 export const UNSPECIFIED_ANNOTATION_NAME = '--Unspecified--'
+const GROUP_VIZ_THRESHOLD_MAX = 200
 
 /** takes the server response and returns subsample default subsample for the cluster */
 export function getDefaultSubsampleForCluster(annotationList, clusterName) {
@@ -53,7 +56,14 @@ export function annotationKeyProperties(annotation) {
  */
 export function getAnnotationDisplayName(annotation) {
   if (annotation.scope === 'invalid') {
-    const annotLabel = annotation.values.length === 1 ? 'Only one label' : 'Too many labels'
+    let annotLabel = ''
+    if (annotation.values.length === 1) {
+      annotLabel = 'Only one value'
+    } else if (annotation.values.length > GROUP_VIZ_THRESHOLD_MAX) {
+      annotLabel = 'Too many values'
+    } else {
+      annotLabel = 'Ontology label used'
+    }
     return `${annotation.name} (${annotLabel})`
   } else {
     return annotation.name
