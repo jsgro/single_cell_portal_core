@@ -48,6 +48,7 @@ Rails.application.routes.draw do
             member do
               get 'cluster_options'
               get 'bam_file_info'
+              get 'study_user_info'
             end
           end
           resources :expression, controller: 'visualization/expression', only: [:show], param: :data_type

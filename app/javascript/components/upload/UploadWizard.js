@@ -13,11 +13,14 @@ import ReactNotification, { store } from 'react-notifications-component'
 import { Router, useLocation, navigate } from '@reach/router'
 import * as queryString from 'query-string'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheckCircle, faExclamationTriangle, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 
 import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
-import { createStudyFile, updateStudyFile, deleteStudyFile, fetchStudyFileInfo, sendStudyFileChunk, RequestCanceller } from 'lib/scp-api'
-import MessageModal from 'lib/MessageModal'
+import {
+  createStudyFile, updateStudyFile, deleteStudyFile,
+  fetchStudyFileInfo, sendStudyFileChunk, RequestCanceller
+} from 'lib/scp-api'
+import MessageModal, { successNotification, failureNotification } from 'lib/MessageModal'
 import UserProvider from 'providers/UserProvider'
 import ErrorBoundary from 'lib/ErrorBoundary'
 
@@ -368,34 +371,4 @@ export function renderUploadWizard(target, studyAccession, name) {
       name={name}/>,
     target
   )
-}
-
-
-/** returns a notification config object suitable for passing to store.addNotification */
-function successNotification(message) {
-  return {
-    type: 'success',
-    insert: 'top',
-    container: 'top-right',
-    title: '',
-    message: <><FontAwesomeIcon icon={faCheckCircle}/>{message}</>,
-    width: 425,
-    dismiss: {
-      duration: 3000,
-      showIcon: false
-    }
-  }
-}
-
-/** returns a notification config object suitable for passing to store.addNotification */
-function failureNotification(message) {
-  return {
-    ...successNotification(message),
-    type: 'danger',
-    message: <><FontAwesomeIcon icon={faExclamationTriangle}/>{message}</>,
-    dismiss: {
-      duration: 0,
-      showIcon: true
-    }
-  }
 }
