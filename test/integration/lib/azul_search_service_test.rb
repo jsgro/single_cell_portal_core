@@ -156,7 +156,7 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     other_files = summary.map { |project| project[:studyFiles].reject { |file| file[:file_type] == 'Project Manifest' } }
                          .flatten
     other_files.each do |file_info|
-      assert_equal %w[source count upload_file_size file_format accession project_id file_type], file_info.keys
+      assert_equal %w[source count upload_file_size file_format accession project_id file_type is_intermediate].sort, file_info.keys.sort
     end
   end
 

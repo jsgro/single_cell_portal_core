@@ -24,8 +24,10 @@ class BulkDownloadService
                                        study_bucket_map:,
                                        output_pathname_map:,
                                        azul_files: nil,
-                                       context: 'study')
-    curl_configs = ['--create-dirs', '--compressed']
+                                       context: 'study',
+                                       os: '')
+    curl_configs = %w(--create-dirs)
+    curl_configs << '--compressed' unless os =~ /Win/ # most Windows installations of curl do not support --compressed
     # create an array of all objects to be downloaded, including directory files
     download_objects = study_files.to_a + directory_files
     # Get signed URLs for all files in the requested download objects
@@ -49,7 +51,10 @@ class BulkDownloadService
       manifest_path = RequestUtils.get_base_url + Rails.application.routes.url_helpers.manifest_api_v1_study_path(study)
       include_dirs = directory_files.any?
       manifest_config += "url=\"#{manifest_path}?auth_code=#{totat[:totat]}&include_dirs=#{include_dirs}\"\n"
-      manifest_config += "output=\"#{study.accession}/file_supplemental_info.tsv\""
+      output_path = RequestUtils.format_path_for_os(
+        "output=\"#{study.accession}/file_supplemental_info.tsv\"", os
+      )
+      manifest_config += output_path
       curl_configs << manifest_config
     end
     azul_studies = azul_files ? azul_files.keys : []
@@ -66,10 +71,18 @@ class BulkDownloadService
         # pull out project manifest and process separately
         manifests, files = file_infos.partition { |f| f['file_type'] == 'Project Manifest' }
         manifest_info = manifests.first
-        manifest = hca_client.project_manifest_link(manifest_info['project_id'])
-        # add location directive to allow following 302 redirect to manifest location
-        manifest_config = "--location\nurl=\"#{manifest['Location']}\"\noutput=\"#{shortname}/#{manifest_info['name']}\""
-        azul_file_configs << manifest_config
+
+        # only generate manifest link if user has requested it
+        if manifest_info.present?
+          manifest = hca_client.project_manifest_link(manifest_info['project_id'])
+          # add location directive to allow following 302 redirect to manifest location
+          manifest_output_path = RequestUtils.format_path_for_os(
+            "output=\"#{shortname}/#{manifest_info['name']}\"", os
+          )
+          manifest_config = "--location\nurl=\"#{manifest['Location']}\"\n#{manifest_output_path}"
+          azul_file_configs << manifest_config
+        end
+
         # now process remainder of analysis/sequence files for download
         # each file_info hash will contain project IDs and file_types that can be used in a single query to Azul
         # to get all matching files
@@ -87,7 +100,10 @@ class BulkDownloadService
         end
         requested_files = hca_client.files(query: file_query)
         requested_files.each do |file_entry|
-          file_config = "--location\nurl=\"#{file_entry['url']}\"\noutput=\"#{shortname}/#{file_entry['name']}\""
+          file_output_path = RequestUtils.format_path_for_os(
+            "#{shortname}/#{file_entry['name']}", os
+          )
+          file_config = "--location\nurl=\"#{file_entry['url']}\"\noutput=\"#{file_output_path}\""
           azul_file_configs << file_config
         end
       end
@@ -106,7 +122,8 @@ class BulkDownloadService
       numAzulFiles: azul_file_configs.count,
       numAzulAnalysisFiles: azul_analysis_files,
       numAzulSequenceFiles: azul_sequence_files,
-      context: context
+      context: context,
+      os: os
     }, user)
     curl_configs.join("\n\n")
   end
@@ -153,7 +170,8 @@ class BulkDownloadService
     # collect array of study accession requiring acceptance of download agreement (checking for expiration)
     agreement_accessions = []
     DownloadAgreement.all.each do |agreement|
-      agreement_accessions << agreement.study.accession unless agreement.expired?
+      # we may have orphaned download agreements, so ensure this is nil-safed
+      agreement_accessions << agreement.study&.accession unless agreement.expired? || !agreement.study
     end
     requires_agreement = permitted_accessions & agreement_accessions
     if requires_agreement.any?
@@ -336,17 +354,18 @@ class BulkDownloadService
   # * *params*
   #   - +study_files+ (Array<StudyFile>) => Array of StudyFiles to be downloaded
   #   - +directories+ (Array<DirectoryListing>) => Array of DirectoryListings to be downloaded
+  #   - +os+ (String) => name of client operating system (for determining / vs \)
   #
   # * *returns*
   #   - (Hash<String, String>) => Map of study file IDs to output pathnames
-  def self.generate_output_path_map(study_files, directories=[])
+  def self.generate_output_path_map(study_files, directories=[], os: '')
     output_map = {}
     study_files.each do |study_file|
-      output_map[study_file.id.to_s] = study_file.bulk_download_pathname
+      output_map[study_file.id.to_s] = study_file.bulk_download_pathname(os: os)
     end
     directories.each do |directory|
       directory.files.each do |file|
-        output_map[file[:name]] = directory.bulk_download_pathname(file)
+        output_map[file[:name]] = directory.bulk_download_pathname(file, os: os)
       end
     end
     output_map

@@ -140,8 +140,10 @@ class DirectoryListing
   end
 
   # output path for bulk download
-  def bulk_download_pathname(file)
-    "#{self.study.accession}/#{bulk_download_folder(file)}"
+  # supports Unix- and Windows-formatted paths
+  def bulk_download_pathname(file, os: '')
+    path = "#{study.accession}/#{bulk_download_folder(file)}"
+    RequestUtils.format_path_for_os(path, os)
   end
 
   # helper to get total number of bytes in directory

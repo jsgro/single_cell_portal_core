@@ -1,6 +1,11 @@
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   window.SCP.studyAccession = '<%= @study.accession %>';
   window.SCP.renderExploreView(document.getElementById('study-visualize'), window.SCP.studyAccession)
+  <% if @study.has_streamable_files? %>
+    if (typeof window.SCP.readOnlyToken === 'undefined') {
+      window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
+    }
+  <% end %>
 </script>
 
 
@@ -11,11 +16,6 @@
   Minimal DOM scaffolding and server-side data for genomic visualizations.
   See partials referenced below and scp-igv.js for larger bodies of code.
   -->
-  <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-    if (typeof accessToken === 'undefined') {
-      window.accessToken = '<%= get_read_access_token(@study, current_user) %>';
-    }
-  </script>
   <% if @study.has_analysis_outputs?('infercnv', 'ideogram.js') and action_name == 'study' %>
     <div id="ideogram-container" style="margin-top: 12px">
       <div id="filters-container">
@@ -60,7 +60,7 @@
       window.fetch = function () {
         if (arguments[0].includes('https://www.googleapis.com')) {
           var myHeaders = new Headers({
-            'Authorization': 'Bearer ' + accessToken
+            'Authorization': 'Bearer ' + window.SCP.readOnlyToken
           });
           arguments[1] = {headers: myHeaders};
         }

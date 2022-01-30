@@ -26,25 +26,25 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     }.with_indifferent_access
 
     # check to see if Azul is up and responding as we expect it to
-    # the status information should indicate all services are up, and running a query for the ImmuneCellExhaustianHIV
-    # project should return exactly one match
+    # running a query for the ImmuneCellExhaustianHIV project should return exactly one match, as well as file
     # if either of these do not return correctly, or error, set a state to skip all tests w/o throwing an error
     @azul_is_ok = false
     begin
-      api_up = @hca_azul_client.api_available?
       project = @hca_azul_client.projects(query: @query_json, size: 1)
-      if api_up && get_entries_from_response(project, :projects).present?
+      file = @hca_azul_client.files(query: @query_json, size: 1)
+      if get_entries_from_response(project, :projects).present? && file.size == 1
         @azul_is_ok = true
       end
     rescue RestClient::Exception => e
       puts "Error in determining if Azul is healthy: #{e.message}"
     end
+    @skip_message = '-- skipping due to Azul API being unavailable or inconsistent --'
   end
 
   # skip a test if Azul is not up ; prevents unnecessary build failures due to releases/maintenance
   def skip_if_api_down
     unless @azul_is_ok
-      puts '-- skipping due to Azul API being unavailable or inconsistent --' ; skip
+      puts @skip_message; skip
     end
   end
 
@@ -62,12 +62,16 @@ class HcaAzulClientTest < ActiveSupport::TestCase
   end
 
   test 'should check if Azul is up' do
-    skip_if_api_down
+    unless @hca_azul_client.api_available?
+      puts @skip_message; skip
+    end
     assert @hca_azul_client.api_available?
   end
 
   test 'should get Azul service status info' do
-    skip_if_api_down
+    unless @hca_azul_client.api_available?
+      puts @skip_message; skip
+    end
     status = @hca_azul_client.service_information
     assert status['up']
     expected_keys = %w[api_endpoints elasticsearch up]
@@ -188,7 +192,7 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     expected_matches = ['cervical cancer', 'colorectal cancer', 'lower gum cancer', 'lung cancer', 'mandibular cancer',
                         'tongue cancer']
     expected_filters = expected_matches.map { |f| { id: f, name: f }.with_indifferent_access }
-    expected_facets = [{ id: 'disease', filters: expected_filters }.with_indifferent_access]
+    expected_facets = [{ id: 'disease', filters: expected_filters, keyword_conversion: true }.with_indifferent_access]
     mock = Minitest::Mock.new
     mock.expect :nil?, false
     mock.expect :find_filter_matches, expected_matches, ['cancer', { filter_list: :filters_with_external }]

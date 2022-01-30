@@ -129,19 +129,19 @@ module Api
           if params[:cluster_name] == '_default' || params[:cluster_name].empty?
             cluster = @study.default_cluster
             if cluster.nil?
-              render json: {error: 'No default cluster exists'}, status: 404 and return
+              render json: { error: 'No default cluster exists' }, status: 404 and return
             end
           else
             cluster_name = params[:cluster_name]
             cluster = @study.cluster_groups.find_by(name: cluster_name)
             if cluster.nil?
-              render json: {error: "No cluster named #{cluster_name} could be found"}, status: 404 and return
+              render json: { error: "No cluster named #{cluster_name} could be found"}, status: 404 and return
             end
           end
           begin
             viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
           rescue ArgumentError => e
-            render json: {error: e.message}, status: 404 and return
+            render json: { error: e.message }, status: 404 and return
           end
           render json: viz_data
         end
