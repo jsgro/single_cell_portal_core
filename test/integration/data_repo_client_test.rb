@@ -142,8 +142,8 @@ class DataRepoClientTest < ActiveSupport::TestCase
     skip_if_api_down
     snapshot = @data_repo_client.get_snapshot(@snapshot_id)
     assert snapshot.present?
-    expected_keys = %w[id name description createdDate source tables
-                       relationships profileId dataProject accessInformation].sort
+    expected_keys = %w[id name description createdDate creationInformation source tables relationships profileId
+                       dataProject accessInformation].sort
     assert_equal expected_keys, snapshot.keys.sort
   end
 
