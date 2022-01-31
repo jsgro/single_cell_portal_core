@@ -50,7 +50,7 @@ class SiteController < ApplicationController
 
     # filter list if in branding group mode
     if @selected_branding_group.present?
-      @viewable = @viewable.where(branding_group_id: @selected_branding_group.id)
+      @viewable = @viewable.where(:branding_group_ids.in => [@selected_branding_group.id])
     end
 
     # determine study/cell count based on viewable to user
