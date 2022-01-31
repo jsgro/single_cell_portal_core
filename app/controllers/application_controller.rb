@@ -79,6 +79,13 @@ class ApplicationController < ActionController::Base
     Current.user = nil
   end
 
+  # govern how errors are rendered, depending on environment
+  # development will show standard 'friendly' error pages, all other environments will use custom exceptions_app
+  # from https://github.com/rails/rails/blob/main/actionpack/lib/action_controller/metal/rescue.rb#L16
+  def show_detailed_exceptions?
+    Rails.env.development? || Rails.env.test?
+  end
+
   # auth action for portal admins
   def authenticate_admin
     unless current_user.admin?
@@ -272,18 +279,6 @@ class ApplicationController < ActionController::Base
       redirect_to merge_default_redirect_params(request.referrer, scpbr: params[:scpbr]),
                   alert: "We were unable to download the file #{study.accession}:#{params[:filename]} do to an error: " \
                          "#{view_context.simple_format(e.message)}.  #{SCP_SUPPORT_EMAIL}" and return
-    end
-  end
-
-  # generic exception handling for reporting to Mixpanel/Sentry
-  if !Rails.env.development? # Show stack trace for template errors in dev
-    rescue_from Exception do |exception|
-      MetricsService.report_error(exception, request, current_user, @study)
-      ErrorTracker.report_exception(exception, current_user, @study, params)
-      respond_to do |format|
-        format.html { render '/error_pages/500', layout: 'application', status: 500 }
-        format.json { render json: {error: exception.message}, status: 500}
-      end
     end
   end
 
