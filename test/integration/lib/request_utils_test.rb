@@ -63,4 +63,13 @@ class RequestUtilsTest < ActiveSupport::TestCase
     expected_path = "path\\to\\some\\file.txt"
     assert_equal expected_path, windows_path
   end
+
+  test 'should format exceptions as JSON' do
+    exception = ArgumentError.new('this is the error')
+    request = ActionDispatch::TestRequest.create('action_dispatch.exception' => exception)
+    json_response = RequestUtils.exception_json(request)
+    assert_equal %i[error error_class source], json_response.keys
+    assert_equal exception.message, json_response[:error]
+    assert_equal exception.class.name, json_response[:error_class]
+  end
 end
