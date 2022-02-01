@@ -188,7 +188,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:get, file_info_api_v1_study_path(@study.accession), user: @user)
     assert_response :success
     %w[study files feature_flags menu_options].each do |key|
-      assert json[key].present?
+      assert json.keys.include?(key), "Did not find #{key} in json response: #{json.keys}"
     end
     # validate that feature flags are represented
     @user.set_flag_option(@feature_flag.name, true)
