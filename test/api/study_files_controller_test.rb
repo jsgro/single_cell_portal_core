@@ -43,6 +43,9 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
       elsif attribute =~ /_at/
         # ignore timestamps as formatting & drift on milliseconds can cause comparison errors
         next
+      elsif attribute =~ /cluster_file_info/
+        # ignore the $oid field and just look at custom_colors
+        assert json[attribute]['custom_colors'] == value['custom_colors']
       else
         assert json[attribute] == value, "Attribute mismatch: #{attribute} is incorrect, expected #{value} but found #{json[attribute.to_s]}"
       end
@@ -171,6 +174,5 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
     @study_file.reload
     # confirm the annotation1 colors were completely replaced, and annotation2 colors were preserved
     assert_equal updated_annot2_color_hash.merge(annot2_color_hash), @study_file.cluster_file_info.custom_colors.with_indifferent_access
-
   end
 end
