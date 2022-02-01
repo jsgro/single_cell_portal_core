@@ -187,7 +187,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     sign_in_and_update(@user)
     execute_http_request(:get, file_info_api_v1_study_path(@study.accession), user: @user)
     assert_response :success
-    %i[study files feature_flags menu_options].each do |key|
+    %w[study files feature_flags menu_options].each do |key|
       assert json[key].present?
     end
     # validate that feature flags are represented
