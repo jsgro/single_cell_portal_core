@@ -389,19 +389,17 @@ export function getPlotlyTraces({
     opacity: pointAlpha ? pointAlpha : 1
   }
   if (is3D) {
-    trace.z = data.z
+    unfilteredTrace.z = data.z
   }
 
-  let countsByLabel = null
 
   const isRefGroup = getIsRefGroup(annotType, genes, isCorrelatedScatter)
-  const trace = filterTrace(unfilteredTrace, hiddenTraces, null)
+  const [traces, countsByLabel] = filterTrace(unfilteredTrace, hiddenTraces, null, isRefGroup)
 
   if (isRefGroup) {
     // Use Plotly's groupby and filter transformation to make the traces
     // note these transforms are deprecated in the latest Plotly versions
-    const [legendStyles, labelCounts] = getStyles(data, pointSize, customColors, editedCustomColors)
-    countsByLabel = labelCounts
+    const [legendStyles] = getStyles(traces, pointSize, customColors, editedCustomColors)
     trace.transforms = [
       {
         type: 'groupby',
@@ -410,6 +408,7 @@ export function getPlotlyTraces({
       }
     ]
   } else {
+    const trace = traces[0]
     const isGeneExpressionForColor = genes.length && !isCorrelatedScatter && !isAnnotatedScatter
     // for non-clustered plots, we pass in a single trace with all the points
     let colors
@@ -472,9 +471,9 @@ export function getPlotlyTraces({
       }
     }
   }
-  addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
+  addHoverLabel(traces, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
 
-  return [trace, countsByLabel]
+  return [traces, countsByLabel]
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */

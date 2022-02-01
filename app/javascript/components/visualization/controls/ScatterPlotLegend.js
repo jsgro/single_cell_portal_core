@@ -6,70 +6,15 @@ import Modal from 'react-bootstrap/lib/Modal'
 import { HexColorPicker, HexColorInput } from 'react-colorful'
 import _cloneDeep from 'lodash/cloneDeep'
 
-import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
-import { getColorBrewerColor, scatterLabelLegendWidth } from 'lib/plot'
-import LoadingSpinner from 'lib/LoadingSpinner'
 
-/** Sort annotation labels naturally, but always put "unspecified" last */
-function labelSort(a, b) {
-  if (a === UNSPECIFIED_ANNOTATION_NAME) {return 1}
-  if (b === UNSPECIFIED_ANNOTATION_NAME) {return -1}
-  return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
-}
+import { scatterLabelLegendWidth, getLabels, getColorForLabel } from 'lib/plot'
 
-/**
- * Return a hash of value=>count for the passed-in array
- * This is surprisingly quick even for large arrays, but we'd rather we
- * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
-*/
-function countValues(array) {
-  return array.reduce((acc, curr) => {
-    acc[curr] ||= 0
-    acc[curr] += 1
-    return acc
-  }, {})
-}
-
-/** Sort labels colors are assigned in right order */
-function getLabels(countsByLabel) {
-  return Object.keys(countsByLabel).sort(labelSort)
-}
 
 /** Convert state Boolean to attribute string */
 function getActivity(isActive) {
   return isActive ? 'active' : 'disabled'
 }
 
-/**
- * Get value for `style` prop in Plotly scatter plot `trace.transforms`.
- * Also calculate point counts for each label, `countsByLabel`.
- *
- * This is needed so that colors match between the custom Plotly legend
- * entries and each graphical trace in the plot.  (Without this, point
- * set "Foo" could be green in the legend, but red in the plot.)
- *
-*/
-export function getStyles(data, pointSize, customColors, editedCustomColors) {
-  const countsByLabel = countValues(data.annotations)
-
-  const labels = getLabels(countsByLabel)
-
-  const legendStyles = labels
-    .map((label, index) => {
-      return {
-        target: label,
-        value: {
-          legendrank: index,
-          marker: {
-            color: getColorForLabel(label, customColors, editedCustomColors, index),
-            size: pointSize
-          }
-        }
-      }
-    })
-
-  return [legendStyles, countsByLabel]
-}
 
 /** Component for row in legend */
 function LegendEntry({
@@ -191,12 +136,6 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
   return enabled
 }
 
-/**
- * Get color for the label, which can be applied to e.g. the icon or the trace
- */
-function getColorForLabel(label, customColors={}, editedCustomColors={}, i) {
-  return editedCustomColors[label] ?? customColors[label] ?? getColorBrewerColor(i)
-}
 
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
