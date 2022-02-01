@@ -85,10 +85,131 @@ module Api
       end
 
       # return JSON of the study, all study file objects, and any options values needed for the upload wizard
+      # also includes feature flags, with study flags taking precedence over user flags
+      swagger_path '/studies/{id}/file_info' do
+        operation :get do
+          key :tags, [
+            'Studies'
+          ]
+          key :summary, 'Get Study info'
+          key :description, 'Gets information about a single Study'
+          key :operationId, 'study_file_info_path'
+          parameter do
+            key :name, :id
+            key :in, :path
+            key :description, 'ID of Study to fetch'
+            key :required, true
+            key :type, :string
+          end
+          response 200 do
+            schema do
+              property :study do
+                key :description, 'Study object'
+                key :title, 'Study'
+                key :'$ref', :Study
+              end
+              property :files do
+                key :type, :array
+                key :title, 'Array<StudyFile>'
+                items do
+                  key :'$ref', :StudyFile
+                end
+              end
+              property :feature_flags do
+                key :type, :object
+                key :title, 'FeatureFlagOptions'
+                key :description, 'Hash of FeatureFlagOption values w/ defaults, e.g. flag_name => flag_value'
+              end
+              property :menu_options do
+                key :type, :object
+                key :title, 'MenuOptions'
+                key :description, 'Hash of select menu options for various views'
+                property :fonts do
+                  key :type, :array
+                  items do
+                    key :type, :string
+                  end
+                end
+                property :species do
+                  key :type, :array
+                  items do
+                    key :type, :object
+                    key :title, 'Species information'
+                    property :id do
+                      key :type, :string
+                    end
+                    property :common_name do
+                      key :type, :string
+                    end
+                  end
+                end
+                property :units do
+                  key :type, :array
+                  items do
+                    key :type, :string
+                    key :enum, ExpressionFileInfo::UNITS_VALUES
+                  end
+                end
+                property :library_preparation_protocol do
+                  key :type, :array
+                  items do
+                    key :type, :string
+                    key :enum, ExpressionFileInfo::LIBRARY_PREPARATION_VALUES
+                  end
+                end
+                property :modality do
+                  key :type, :array
+                  items do
+                    key :type, :string
+                    key :enum, ExpressionFileInfo::MODALITY_VALUES
+                  end
+                end
+                property :biosample_input_type do
+                  key :type, :array
+                  items do
+                    key :type, :string
+                    key :enum, ExpressionFileInfo::BIOSAMPLE_INPUT_TYPE_VALUES
+                  end
+                end
+                property :sequence_file_types do
+                  key :type, :array
+                  items do
+                    key :type, :string
+                    key :enum, %w[Fastq BAM]
+                  end
+                end
+                property :genome_assemblies do
+                  key :type, :array
+                  items do
+                    key :type, :object
+                    key :title, 'GenomeAssembly'
+                    property :id do
+                      key :type, :string
+                    end
+                    property :name do
+                      key :type, :string
+                    end
+                    property :taxon_id do
+                      key :type, :string
+                    end
+                  end
+                end
+              end
+            end
+          end
+
+          response 403 do
+            key :description, ApiBaseController.forbidden('edit Study')
+          end
+          extend SwaggerResponses::StudyControllerResponses
+        end
+      end
+
       def file_info
         response_obj = {
           study: @study.attributes,
           files: @study.study_files,
+          feature_flags: FeatureFlaggable.feature_flags_for_instances(current_api_user, @study),
           menu_options: {
             fonts: SUPPORTED_LABEL_FONTS,
             species: ActiveRecordUtils.pluck_to_hash(Taxon.sorted, [:id, :common_name])

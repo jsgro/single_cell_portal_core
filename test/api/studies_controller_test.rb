@@ -14,11 +14,13 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
                                public: true,
                                test_array: @@studies_to_clean)
     @random_seed = SecureRandom.uuid
+    @feature_flag = FeatureFlag.create(name: 'my_flag', default_value: false)
     sign_in_and_update @user
   end
 
   after(:all) do
     Study.where(name: /#{@random_seed}/).map(&:destroy_and_remove_workspace)
+    @feature_flag.destroy
   end
 
   teardown do
@@ -179,5 +181,28 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     }
     execute_http_request(:patch, api_v1_study_path(id: @study.id.to_s), request_payload: update_attributes, user: @user_2)
     assert_response 403
+  end
+
+  test 'should get study file_info hash' do
+    sign_in_and_update(@user)
+    execute_http_request(:get, file_info_api_v1_study_path(@study.accession), user: @user)
+    assert_response :success
+    %i[study files feature_flags menu_options].each do |key|
+      assert json[key].present?
+    end
+    # validate that feature flags are represented
+    @user.set_flag_option(@feature_flag.name, true)
+    @user.reload
+    execute_http_request(:get, file_info_api_v1_study_path(@study.accession), user: @user)
+    assert_response :success
+    returned_flag = json.dig('feature_flags', @feature_flag.name)
+    assert returned_flag
+    # confirm study overrides user flags
+    @study.set_flag_option(@feature_flag.name, false)
+    @study.reload
+    execute_http_request(:get, file_info_api_v1_study_path(@study.accession), user: @user)
+    assert_response :success
+    returned_flag = json.dig('feature_flags', @feature_flag.name)
+    assert_not returned_flag
   end
 end
