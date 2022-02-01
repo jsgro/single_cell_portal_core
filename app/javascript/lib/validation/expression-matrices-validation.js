@@ -233,7 +233,7 @@ function validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj) {
 function validateColumnNumber(line, isLastLine, secondLineOfFile, lineNum, dataObj) {
   const issues = []
   dataObj.rowsWithIncorrectColumnNumbers = dataObj.rowsWithIncorrectColumnNumbers ? dataObj.rowsWithIncorrectColumnNumbers : []
-  // use the first header row to determine the correct number of columns all rows should have
+  // use the first non-header row to determine the correct number of columns all rows should have
   const correctNumberOfColumns = secondLineOfFile.length
 
   if (correctNumberOfColumns !== line.length) {
