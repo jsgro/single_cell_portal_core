@@ -3,7 +3,7 @@
 */
 
 import {
-  getParsedHeaderLines, parseLine, validateUniqueCellNamesWithinFile
+  parseLine, validateUniqueCellNamesWithinFile, ParseException
 } from './shared-validation'
 
 
@@ -11,18 +11,26 @@ const whitespaceDelimiter = /\s+/
 
 /** Parse a dense matrix file */
 export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
-  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType)
-  let issues = validateDenseHeader(headers)
+  const { header, delimiter, firstTwoContentLines } = await getParsedDenseMatrixHeaderLine(chunker, mimeType)
+
+  let issues = validateDenseHeader(header, firstTwoContentLines)
+
+  // validating the header required extra lines from the file,
+  // return the file reader to the first non-header line to continue validating file
+  chunker.resetToFileStart()
+  await chunker.iterateLines(() => {}, 1)
+
+  const secondLineOfFile = firstTwoContentLines[0]
 
   const dataObj = {} // object to track multi-line validation concerns
   await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
     const line = parseLine(rawLine, delimiter)
     issues = issues.concat(validateValuesAreNumeric(line, isLastLine, lineNum, dataObj))
-    issues = issues.concat(validateColumnNumber(line, isLastLine, headers, lineNum, dataObj))
+    issues = issues.concat(validateColumnNumber(line, isLastLine, secondLineOfFile, lineNum, dataObj))
     issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
     // add other line-by-line validations here
   })
-  return { issues, delimiter, numColumns: headers[0].length }
+  return { issues, delimiter, numColumns: header[0].length }
 }
 
 /** Parse an MTX matrix file */
@@ -71,17 +79,122 @@ export async function parseFeaturesFile(chunker, mimeType, fileOptions) {
   return { issues }
 }
 
+
+/**
+ * Parse a dense matrix header and first few content rows
+ */
+async function getParsedDenseMatrixHeaderLine(chunker, mimeType) {
+  // a dense matrix has a single header line
+  const headerLine = []
+  // the lines following the header line are needed for R-formatted file header validation
+  const followingTwoLines = []
+
+  await chunker.iterateLines(line => {
+    headerLine.push(line)
+  }, 1)
+
+  if (headerLine.length < 1 || headerLine.some(hl => hl.length === 0)) {
+    throw new ParseException('format:cap:missing-header-lines',
+        `Your file is missing a required header line`)
+  }
+
+  // get the 2 lines following the header line
+  await chunker.iterateLines(line => {
+    followingTwoLines.push(line)
+  }, 2)
+
+  const delimiter = getDenseMatrixDelimiter(headerLine, followingTwoLines)
+
+  const header = headerLine.map(l => parseLine(l, delimiter))
+  const firstTwoContentLines = followingTwoLines.map(l => parseLine(l, delimiter))
+
+  return { header, delimiter, firstTwoContentLines }
+}
+
+
+/**
+ * Figure out the best delimiter to use for a dense matrix file
+ * This is unique from other files types due to the possibility of the file
+ * being R-formatted which allows for differing row lengths
+ */
+function getDenseMatrixDelimiter([headerLine], followingTwoLines) {
+  let delimiter
+  let bestDelimiter = ',' // fall back on comma -- which may give the most useful error message to the user
+
+  // start off checking for tab characters as first clue for delimiter to use
+  if (headerLine.indexOf('\t')>=0) {
+    delimiter = '\t'
+  } else if (headerLine.indexOf(',')>=0) {
+    delimiter = ','
+  }
+  // test the delimiter on the header line
+  const headerLineLength = headerLine.split(delimiter).length
+
+  // if the is no content in the file outside the header row
+  if (followingTwoLines.length < 2 || followingTwoLines.some(hl => hl.length === 0)) {
+    // ensure the delimter successfully broke up the line
+    if (headerLineLength > 1) {
+      bestDelimiter = delimiter
+    }
+  } else {
+    // test out the delimter for the first 2 non-header rows
+    const secondLineLength = followingTwoLines[0].split(delimiter).length
+    const thirdLineLength = followingTwoLines[1].split(delimiter).length
+
+    // ensure the delimter successfully broke up the line
+    if (secondLineLength > 1) {
+      // if the headerline and second line match in length use that demiliter
+      if (secondLineLength === headerLineLength) {
+        bestDelimiter = delimiter
+      } // otherwise check the first 3 lines lengths against each other (see r-formatting description for futher explanation)
+      else if (secondLineLength -1 === headerLineLength ||
+        thirdLineLength === secondLineLength ||
+        thirdLineLength === headerLineLength) {bestDelimiter = delimiter}
+    }
+  }
+
+  return bestDelimiter
+}
+
+
 /**
  * Verify cap format for an expression matrix file
  *
  * The "cap" for an expression matrix file is the first row also called the "header"
+ *
+ * A dense matrix header must start with the value 'GENE' or if the file is R-formatted it can:
+ *  - Not have GENE in the header and:
+ *    - Have one less entry in the header than each successive row OR
+ *    - Have "" as the last value in header.
  */
-function validateDenseHeader([headers]) {
-  let issues = []
-  if (!headers) {
+function validateDenseHeader([header], followingTwoLinesParsed) {
+  const issues = []
+  if (!header) {
     return [['error', 'format:cap:no-header-row', 'File does not have a non-empty header row']]
   }
-  issues = issues.concat(validateGeneInHeader(headers))
+  const secondLine = followingTwoLinesParsed[0]
+  let properlyFormatted = false
+
+  if (header[0].toUpperCase() !== 'GENE') {
+    if (header.length === secondLine.length) {
+      const lastVal = header[-1]
+      if (lastVal === '') {
+        properlyFormatted = true
+      } else {
+        properlyFormatted = false
+      }
+    } else if ((secondLine.length - 1) === header.length) {
+      properlyFormatted = true
+    } else {
+      properlyFormatted = false
+    }
+  } else {
+    properlyFormatted = true
+  }
+  if (!properlyFormatted) {
+    issues.push(['error', 'format:cap:missing-gene-column',
+    `Improperly formatted header row beginning with: '${header[0]}'`])
+  }
 
   return issues
 }
@@ -117,11 +230,11 @@ function validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj) {
 /**
  * Verify dense matrix column numbers match header column numbers
  */
-function validateColumnNumber(line, isLastLine, headers, lineNum, dataObj) {
+function validateColumnNumber(line, isLastLine, secondLineOfFile, lineNum, dataObj) {
   const issues = []
   dataObj.rowsWithIncorrectColumnNumbers = dataObj.rowsWithIncorrectColumnNumbers ? dataObj.rowsWithIncorrectColumnNumbers : []
   // use the first header row to determine the correct number of columns all rows should have
-  const correctNumberOfColumns = headers[0].length
+  const correctNumberOfColumns = secondLineOfFile.length
 
   if (correctNumberOfColumns !== line.length) {
     dataObj.rowsWithIncorrectColumnNumbers.push(lineNum)
@@ -130,6 +243,8 @@ function validateColumnNumber(line, isLastLine, headers, lineNum, dataObj) {
   const numBadRows = dataObj.rowsWithIncorrectColumnNumbers.length
   if (isLastLine && numBadRows > 0) {
     const rowText = numBadRows > 1 ? 'rows' : 'row'
+    const containText = numBadRows > 1 ? 'contain' : 'contains'
+
     const maxLinesToReport = 10
     let notedBadRows = dataObj.rowsWithIncorrectColumnNumbers.slice(0, maxLinesToReport).join(', ')
     if (numBadRows - maxLinesToReport > 0) {
@@ -138,7 +253,7 @@ function validateColumnNumber(line, isLastLine, headers, lineNum, dataObj) {
 
     const msg = `All rows must have the same number of columns. ` +
       `Please ensure the number of columns for ${rowText}: ${notedBadRows}, ` +
-      `matches the file-header-specified number of ${correctNumberOfColumns} columns-per-row.`
+      `${containText} the same number of columns-per-row.`
     issues.push(['error', 'format:mismatch-column-number', msg])
   }
 
@@ -235,22 +350,6 @@ function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
     const msg = `All values (other than the first column and header row) in a dense matrix file must be numeric. ` +
       `Please ensure all values in ${rowText}: ${notedBadRows}, are numbers.`
     issues.push(['error', 'content:invalid-type:not-numeric', msg])
-  }
-
-  return issues
-}
-
-
-/**
- * Verify "GENE" is present as the first column in the first row for an Expression Matrix file
- * Todo: Accept files that are R-formatted as well via this ticket: SCP-3971
- */
-function validateGeneInHeader(headers) {
-  const issues = []
-  if (headers[0].toUpperCase() !== 'GENE') {
-    const msg = 'Dense matrices require the first value of the file to be "GENE". ' +
-       `However, the first value for this file is "${headers[0]}".`
-    issues.push(['error', 'format:cap:missing-gene-column', msg])
   }
 
   return issues
