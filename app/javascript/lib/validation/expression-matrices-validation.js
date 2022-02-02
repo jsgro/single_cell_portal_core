@@ -177,7 +177,7 @@ function validateDenseHeader(header, nextTwoLines) {
   let specificMsg = ''
 
   if (header[0].toUpperCase() !== 'GENE') {
-    specificMsg = 'Try updating the first value of the header row to be "GENE".'
+    specificMsg = 'Try updating the first value of the header row to be "GENE". '
     if (header.length === secondLine.length && header.slice(-1) !== '') {
       specificMsg += 'Or try updating the final value of the header row to be a single space.'
       isValid = false
