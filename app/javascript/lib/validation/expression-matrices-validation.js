@@ -83,30 +83,30 @@ export async function parseFeaturesFile(chunker, mimeType, fileOptions) {
 /**
  * Parse a dense matrix header and first few content rows
  */
-async function getParsedDenseMatrixHeaderLine(chunker, mimeType) {
+async function getParsedDenseMatrixHeaderLine(chunker) {
   // a dense matrix has a single header line
-  const headerLine = []
+  let rawHeader = null
   // the lines following the header line are needed for R-formatted file header validation
-  const followingTwoLines = []
+  const rawNextTwoLines = []
 
   await chunker.iterateLines(line => {
-    headerLine.push(line)
+    rawHeader = line
   }, 1)
 
-  if (headerLine.length < 1 || headerLine.some(hl => hl.length === 0)) {
+  if (rawHeader.trim().length === 0) {
     throw new ParseException('format:cap:missing-header-lines',
         `Your file is missing a required header line`)
   }
 
   // get the 2 lines following the header line
   await chunker.iterateLines(line => {
-    followingTwoLines.push(line)
+    rawNextTwoLines.push(line)
   }, 2)
 
-  const delimiter = getDenseMatrixDelimiter(headerLine, followingTwoLines)
+  const delimiter = getDenseMatrixDelimiter(rawHeader, rawNextTwoLines)
 
-  const header = headerLine.map(l => parseLine(l, delimiter))
-  const firstTwoContentLines = followingTwoLines.map(l => parseLine(l, delimiter))
+  const header = parseLine(rawHeader, delimiter)
+  const firstTwoContentLines = rawNextTwoLines.map(l => parseLine(l, delimiter))
 
   return { header, delimiter, firstTwoContentLines }
 }
@@ -117,39 +117,39 @@ async function getParsedDenseMatrixHeaderLine(chunker, mimeType) {
  * This is unique from other files types due to the possibility of the file
  * being R-formatted which allows for differing row lengths
  */
-function getDenseMatrixDelimiter([headerLine], followingTwoLines) {
+function getDenseMatrixDelimiter(rawHeader, rawNextTwoLines) {
   let delimiter
   let bestDelimiter = ',' // fall back on comma -- which may give the most useful error message to the user
 
   // start off checking for tab characters as first clue for delimiter to use
-  if (headerLine.indexOf('\t')>=0) {
+  if (rawHeader.includes('\t')) {
     delimiter = '\t'
-  } else if (headerLine.indexOf(',')>=0) {
+  } else if (rawHeader.includes(',')) {
     delimiter = ','
   }
   // test the delimiter on the header line
-  const headerLineLength = headerLine.split(delimiter).length
+  const headerLength = rawHeader.split(delimiter).length
 
   // if the is no content in the file outside the header row
-  if (followingTwoLines.length < 2 || followingTwoLines.some(hl => hl.length === 0)) {
+  if (rawNextTwoLines.length < 2 || rawNextTwoLines.some(l => l.length === 0)) {
     // ensure the delimter successfully broke up the line
-    if (headerLineLength > 1) {
+    if (headerLength > 1) {
       bestDelimiter = delimiter
     }
   } else {
     // test out the delimter for the first 2 non-header rows
-    const secondLineLength = followingTwoLines[0].split(delimiter).length
-    const thirdLineLength = followingTwoLines[1].split(delimiter).length
+    const secondLineLength = rawNextTwoLines[0].split(delimiter).length
+    const thirdLineLength = rawNextTwoLines[1].split(delimiter).length
 
     // ensure the delimter successfully broke up the line
     if (secondLineLength > 1) {
       // if the headerline and second line match in length use that demiliter
-      if (secondLineLength === headerLineLength) {
+      if (secondLineLength === headerLength) {
         bestDelimiter = delimiter
       } // otherwise check the first 3 lines lengths against each other (see r-formatting description for futher explanation)
-      else if (secondLineLength -1 === headerLineLength ||
+      else if (secondLineLength -1 === headerLength ||
         thirdLineLength === secondLineLength ||
-        thirdLineLength === headerLineLength) {bestDelimiter = delimiter}
+        thirdLineLength === headerLength) {bestDelimiter = delimiter}
     }
   }
 
@@ -167,33 +167,31 @@ function getDenseMatrixDelimiter([headerLine], followingTwoLines) {
  *    - Have one less entry in the header than each successive row OR
  *    - Have "" as the last value in header.
  */
-function validateDenseHeader([header], followingTwoLinesParsed) {
+function validateDenseHeader(header, nextTwoLines) {
   const issues = []
   if (!header) {
     return [['error', 'format:cap:no-header-row', 'File does not have a non-empty header row']]
   }
-  const secondLine = followingTwoLinesParsed[0]
-  let properlyFormatted = false
+  const secondLine = nextTwoLines[0]
+  let isValid = false
+  let specificMsg = ''
 
   if (header[0].toUpperCase() !== 'GENE') {
-    if (header.length === secondLine.length) {
-      const lastVal = header[-1]
-      if (lastVal === '') {
-        properlyFormatted = true
-      } else {
-        properlyFormatted = false
-      }
-    } else if ((secondLine.length - 1) === header.length) {
-      properlyFormatted = true
-    } else {
-      properlyFormatted = false
-    }
+    specificMsg = 'Try updating the first value of the header row to be \'GENE\'.'
+  if (header.length === secondLine.length && header.slice(-1) !== '') {
+    specificMsg += 'Or try updating the final value of the header row to be a single space.'
+    isValid = false
+  } else if ((secondLine.length - 1) !== header.length) {
+      specificMsg += 'Or try updating the header row to have one less entry than each successive row.'
+      isValid = false
   } else {
-    properlyFormatted = true
+    isValid = true
   }
-  if (!properlyFormatted) {
+
+  if (!isValid) {
     issues.push(['error', 'format:cap:missing-gene-column',
-    `Improperly formatted header row beginning with: '${header[0]}'`])
+    `Improperly formatted header row beginning with: '${header[0]}'. ` +
+    `${specificMsg}`])
   }
 
   return issues
