@@ -173,19 +173,18 @@ function validateDenseHeader(header, nextTwoLines) {
     return [['error', 'format:cap:no-header-row', 'File does not have a non-empty header row']]
   }
   const secondLine = nextTwoLines[0]
-  let isValid = false
+  let isValid = true
   let specificMsg = ''
 
   if (header[0].toUpperCase() !== 'GENE') {
-    specificMsg = 'Try updating the first value of the header row to be \'GENE\'.'
-  if (header.length === secondLine.length && header.slice(-1) !== '') {
-    specificMsg += 'Or try updating the final value of the header row to be a single space.'
-    isValid = false
-  } else if ((secondLine.length - 1) !== header.length) {
+    specificMsg = 'Try updating the first value of the header row to be "GENE".'
+    if (header.length === secondLine.length && header.slice(-1) !== '') {
+      specificMsg += 'Or try updating the final value of the header row to be a single space.'
+      isValid = false
+    } else if ((secondLine.length - 1) !== header.length) {
       specificMsg += 'Or try updating the header row to have one less entry than each successive row.'
       isValid = false
-  } else {
-    isValid = true
+    }
   }
 
   if (!isValid) {
