@@ -4,7 +4,43 @@ if (typeof window.SCP.readOnlyToken === 'undefined') {
   window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
 }
 
-$('#study-file-<%= study_file.id %>').on('change', '.file-type', function() {
+/**
+* Transform issue message objects to HTML that can be shown to user.
+*
+* This function is a temporary backport of the issue messaging from
+* FileUploadControl.js.  It should be replaced when sync code migrates to
+* React (at the latest).
+*/
+function getIssuesHtml(fileName, errorMsgs, warningMsgs) {
+
+  let issuesHtml = ''
+
+  if (errorMsgs.length > 0) {
+    const errorListHtml = errorMsgs.map((error, index) => {
+      return `<li class="error-message">${error}</li>`
+    })
+    issuesHtml +=
+      '<div class="validation-error">' +
+        `Could not use ${fileName}:` +
+        `<ul class="validation-error">${errorListHtml}</ul>` +
+      '</div>'
+  }
+  if (warningMsgs.length > 0) {
+    const warningListHtml = errorMsgs.map((error, index) => {
+      return `<li class="error-message">${error}</li>`
+    })
+    issuesHtml +=
+      '<div class="validation-warning">' +
+        `Warnings:` +
+        `<ul class="validation-warning">${warningListHtml}</ul>` +
+      '</div>'
+  }
+
+  return issuesHtml
+}
+
+
+$('#study-file-<%= study_file.id %>').on('change', '.file-type', async function() {
     var form = $(this).closest('form');
     var fileName = form.find('.filename').val();
     var fileType = $(this).val();
@@ -12,9 +48,6 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', function() {
     var extraInfo = $('#study-file-<%= study_file.id %>-extra-info');
     var taxonTarget = form.find('.taxon-select-target');
     var submitBtn = $('#sync-study-file-<%= study_file.id %>');
-    const bucketName = '<%= @study.bucket_id %>'
-
-    window.SCP.validateRemoteFileContent(bucketName, fileName, fileType);
 
     // render fields & process entries based on file type
     if (fileType === 'Cluster') {
@@ -102,6 +135,27 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', function() {
             submitBtn.attr('disabled', false);
         }
     }
+
+    const bucketName = '<%= @study.bucket_id %>'
+    const fileOptions = {
+      use_metadata_convention: <%= study_file.use_metadata_convention %>
+    }
+
+    const results = await window.SCP.validateRemoteFileContent(
+      bucketName, fileName, fileType, fileOptions
+    );
+
+    console.log('results', results)
+    const errorMsgs = results.errors.map(error => error[2])
+    const warningMsgs = results.warnings.map(error => error[2])
+
+    const issuesHtml = getIssuesHtml(fileName, errorMsgs, warningMsgs)
+
+    console.log('issuesHtml', issuesHtml)
+    if (issuesHtml !== '') {
+      $(form).append(issuesHtml)
+    }
+
 });
 
 $("#sync-study-file-<%= study_file.id %>").click(function() {

@@ -35,7 +35,7 @@ export const FileTypeExtensions = {
  * @param allFiles {StudyFile[]} the array of all files for the study, used for name uniqueness checks
  * @param allowedFileExts { String[] } array of allowable extensions, ['*'] for all
  */
-async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExts=['*']) {
+export async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExts=['*']) {
   const otherFiles = allFiles.filter(f => f._id != file._id)
   const otherNames = otherFiles.map(f => f.name)
   const otherUploadFileNames = otherFiles.map(f => f.upload_file_name)
@@ -48,7 +48,7 @@ async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExt
     return { errorMsgs: [errorMsg], warningMsgs: [] }
   }
 
-  if (!allowedFileExts.includes('*') && !allowedFileExts.some(aft => selectedFile.name.endsWith(aft))) {
+  if (!allowedFileExts.includes('*') && !allowedFileExts.some(ext => selectedFile.name.endsWith(ext))) {
     const errorMsg = `Allowed extensions are ${allowedFileExts.join(' ')}`
     return { errorMsgs: [errorMsg], warningMsgs: [] }
   }
