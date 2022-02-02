@@ -81,7 +81,7 @@ export async function parseFeaturesFile(chunker, mimeType, fileOptions) {
 
 
 /**
- * Parse a dense matrix header and first few content rows
+ * Parse a dense matrix header row and first two content rows
  */
 async function getParsedDenseMatrixHeaderLine(chunker, mimeType) {
   // a dense matrix has a single header line
