@@ -81,7 +81,7 @@ export async function parseFeaturesFile(chunker, mimeType, fileOptions) {
 
 
 /**
- * Parse a dense matrix header and first few content rows
+ * Parse a dense matrix header row and first two content rows
  */
 async function getParsedDenseMatrixHeaderLine(chunker) {
   // a dense matrix has a single header line
@@ -251,7 +251,7 @@ function validateColumnNumber(line, isLastLine, secondLineOfFile, lineNum, dataO
 
     const msg = `All rows must have the same number of columns. ` +
       `Please ensure the number of columns for ${rowText}: ${notedBadRows}, ` +
-      `${containText} the same number of columns-per-row.`
+      `${containText} the same number of columns per row.`
     issues.push(['error', 'format:mismatch-column-number', msg])
   }
 
