@@ -92,7 +92,7 @@ module Api
             'Studies'
           ]
           key :summary, 'Get Study info'
-          key :description, 'Gets information about a single Study'
+          key :description, 'Gets attribute, file, feature flag, and configuration information about a single Study'
           key :operationId, 'study_file_info_path'
           parameter do
             key :name, :id
@@ -118,7 +118,7 @@ module Api
               property :feature_flags do
                 key :type, :object
                 key :title, 'FeatureFlagOptions'
-                key :description, 'Hash of FeatureFlagOption values w/ defaults, e.g. flag_name => flag_value'
+                key :description, 'Hash of FeatureFlagOption values with defaults, e.g. flag_name => flag_value'
               end
               property :menu_options do
                 key :type, :object
@@ -189,6 +189,7 @@ module Api
                     property :name do
                       key :type, :string
                     end
+                    # show ID of associated parent Taxon for storing belongs_to association
                     property :taxon_id do
                       key :type, :string
                     end
