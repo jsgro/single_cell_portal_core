@@ -162,7 +162,7 @@ export async function fetchFacets(mock=false) {
 }
 
 /**
- * Sets flag on If using mock data for all API responses.
+ * Sets flag on whether to use mock data for all API responses.
  *
  * This method is useful for tests and certain development scenarios,
  * e.g. when evolving a new API or to work around occasional API blockers.
@@ -321,13 +321,18 @@ export async function deleteStudyFile(studyAccession, fileId, mock=false) {
  * @param {String} bucketName bucket name
  * @param {String} fileName file name
 */
-export async function fetchBucketFile(bucketName, fileName, mock=false) {
+export async function fetchBucketFile(bucketName, fileName, maxBytes=null, mock=false) {
   const init = {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${window.SCP.readOnlyToken}`
     }
   }
+
+  if (maxBytes) {
+    init.headers.Range = `bytes=1-${maxBytes}`
+  }
+  init.headers = new Headers(init.headers)
   const url = `https://storage.googleapis.com/download/storage/v1/b/${bucketName}/o/${fileName}?alt=media`
 
   const response = await fetch(url, init).catch(error => error)

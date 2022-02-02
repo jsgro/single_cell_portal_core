@@ -1,5 +1,5 @@
 /**
-* @fileoverview Validates Single Cell Portal files on the user's computer
+* @fileoverview Client-side file validation (CSFV) for upload and sync
 *
 * Where feasible, these functions and data structures align with those in
 * Ingest Pipeline [1].  Such consistency across codebases eases QA, debugging,
@@ -12,6 +12,7 @@ import { log } from 'lib/metrics-api'
 import { readFileBytes } from './io'
 import ChunkedLineReader from './chunked-line-reader'
 import { PARSEABLE_TYPES } from 'components/upload/upload-utils'
+import { fetchBucketFile } from 'lib/scp-api'
 import {
   parseDenseMatrixFile, parseFeaturesFile, parseBarcodesFile, parseSparseMatrixFile
 } from './expression-matrices-validation'
@@ -22,7 +23,8 @@ import {
 
 import getSCPContext from 'providers/SCPContextProvider'
 
-// from lib/assets/metadata_schemas/alexandria_convention_schema.json (which in turn is from scp-ingest-pipeline/schemas)
+// from lib/assets/metadata_schemas/alexandria_convention_schema.json
+// (which in turn is from scp-ingest-pipeline/schemas)
 export const REQUIRED_CONVENTION_COLUMNS = [
   'biosample_id',
   'disease',
@@ -37,6 +39,14 @@ export const REQUIRED_CONVENTION_COLUMNS = [
   'species__ontology_label'
 ]
 
+/**
+ * 75 MiB, max number of bytes to read and validate from remote file for sync.
+ * Median fixed US bandwidth is 16 MiB/s (17 MB/s, 136 Mbps) as of 2021-12
+ * per https://www.speedtest.net/global-index/united-states.  > 80% of ingests
+ * are for files <= 75 MiB per https://mixpanel.com/s/2zbxu7.
+ * 75 MiB means sync CSFV fully scans > 80% files, typically in < 5 seconds.
+ */
+const MAX_SYNC_CSFV_BYTES = 10 * 1024 * 1024
 
 /**
  * Verify headers are unique and not empty
@@ -263,8 +273,8 @@ export async function parseMetadataFile(chunker, mimeType, fileOptions) {
   // add other header validations here
 
   const dataObj = {} // object to track multi-line validation concerns
-  await chunker.iterateLines((rawline, lineNum, isLastLine) => {
-    const line = parseLine(rawline, delimiter)
+  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
+    const line = parseLine(rawLine, delimiter)
     issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
     issues = issues.concat(validateMetadataLabelMatches(headers, line, isLastLine, dataObj))
     issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
@@ -320,7 +330,6 @@ export async function validateGzipEncoding(file) {
   return isGzipped
 }
 
-
 /** reads the file and returns a fileInfo object along with an array of issues */
 async function parseFile(file, fileType, fileOptions={}) {
   const fileInfo = {
@@ -333,6 +342,7 @@ async function parseFile(file, fileType, fileOptions={}) {
     delimiter: null,
     isGzipped: null
   }
+  console.log('in parseFile, file:', file)
   const parseResult = { fileInfo, issues: [] }
   try {
     fileInfo.isGzipped = await validateGzipEncoding(file)
@@ -367,19 +377,69 @@ async function parseFile(file, fileType, fileOptions={}) {
   return parseResult
 }
 
-/** Validate a local file, return { errors, warnings, summary } object, where errors is an array of errors, and summary
- * is a message like "Your file had 2 errors"
+/**
+ * Validate a File object, return { errors, warnings, summary } object, where:
+ *   - errors is an array of errors,
+ *   - warnings is an array of warnings, and
+ *   - summary is a message like "Your file had 2 errors"
  */
-export async function validateFileContent(file, fileType, fileOptions={}) {
+export async function validateFileContent(file, fileType, fileOptions={}, syncProps) {
   const startTime = performance.now()
   const { fileInfo, issues } = await parseFile(file, fileType, fileOptions)
   const perfTime = Math.round(performance.now() - startTime)
 
   const errorObj = formatIssues(issues)
-  const logProps = getLogProps(fileInfo, errorObj, perfTime)
+  const logProps = getLogProps(fileInfo, errorObj, perfTime, syncProps)
   log('file-validation', logProps)
 
   return errorObj
+}
+
+/**
+* Validate a file in a GCS bucket; used for sync
+*/
+export async function validateRemoteFileContent(bucketName, fileName, fileType) {
+  const syncProps = {}
+
+  const requestStart = performance.now()
+  const response = await fetchBucketFile(bucketName, fileName, MAX_SYNC_CSFV_BYTES)
+  syncProps['perfTime:transfer'] = Math.round(performance.now() - requestStart)
+
+  const contentRange = response.headers.get('content-range')
+  const contentLength = response.headers.get('content-length')
+  const contentType = response.headers.get('content-type')
+
+  const content = await response.text()
+
+  for (const pair of response.headers.entries()) {
+    console.log(`${pair[0] }: ${ pair[1]}`)
+  }
+
+  // Total size of the file in bytes
+  const size = parseInt(contentRange.split('/')[1])
+
+  // Total bytes downloaded, which can be much less than total file size
+  const sizeFetched = parseInt(contentLength) + 1
+
+  const fetchedCompleteFile = (size === sizeFetched)
+  Object.assign(syncProps, { sizeFetched, fetchedCompleteFile })
+
+  const file = new File(
+    [content], fileName, {
+      size,
+      type: contentType
+    }
+  )
+
+  console.log('fileName', fileName)
+  console.log('file', file)
+  console.log('content')
+  console.log(content)
+
+  const results = await validateFileContent(file, fileType, {}, syncProps)
+
+  console.log('results')
+  console.log(results)
 }
 
 /** take an array of [type, key, msg] issues, and format it */
@@ -409,7 +469,7 @@ function getValidationTrigger() {
 }
 
 /** Get properties about this validation run to log to Mixpanel */
-function getLogProps(fileInfo, errorObj, perfTime) {
+function getLogProps(fileInfo, errorObj, perfTime, syncProps) {
   const { errors, warnings, summary } = errorObj
   const trigger = getValidationTrigger()
 
@@ -424,8 +484,17 @@ function getLogProps(fileInfo, errorObj, perfTime) {
   const defaultProps = {
     ...fileInfo,
     perfTime,
-    delimiter: friendlyDelimiter,
-    numTableCells: fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
+    'perfTime:parseFile': perfTime,
+    'delimiter': friendlyDelimiter,
+    'numTableCells': fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
+  }
+
+  if (syncProps) {
+    Object.assign(defaultProps, syncProps)
+
+    // Top-level perfTime is duration for the whole event.
+    // The 'perfTime:foo' construct is also used in "plot:" events.
+    defaultProps.perfTime += syncProps['perfTime:transfer']
   }
 
   if (errors.length === 0) {
