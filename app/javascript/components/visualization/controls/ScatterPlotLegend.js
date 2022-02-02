@@ -1,8 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { log } from 'lib/metrics-api'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPalette } from '@fortawesome/free-solid-svg-icons'
+import Modal from 'react-bootstrap/lib/Modal'
+import { HexColorPicker, HexColorInput } from 'react-colorful'
+import _cloneDeep from 'lodash/cloneDeep'
 
 import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 import { getColorBrewerColor, scatterLabelLegendWidth } from 'lib/plot'
+import LoadingSpinner from 'lib/LoadingSpinner'
 
 /** Sort annotation labels naturally, but always put "unspecified" last */
 function labelSort(a, b) {
@@ -43,7 +49,7 @@ function getActivity(isActive) {
  * set "Foo" could be green in the legend, but red in the plot.)
  *
 */
-export function getStyles(data, pointSize) {
+export function getStyles(data, pointSize, customColors, editedCustomColors) {
   const countsByLabel = countValues(data.annotations)
 
   const labels = getLabels(countsByLabel)
@@ -55,7 +61,7 @@ export function getStyles(data, pointSize) {
         value: {
           legendrank: index,
           marker: {
-            color: getColorBrewerColor(index),
+            color: getColorForLabel(label, customColors, editedCustomColors, index),
             size: pointSize
           }
         }
@@ -68,10 +74,14 @@ export function getStyles(data, pointSize) {
 /** Component for row in legend */
 function LegendEntry({
   label, numPoints, iconColor, correlations,
-  numLabels, hiddenTraces, updateHiddenTraces
+  numLabels, hiddenTraces, updateHiddenTraces, showColorControls, updateEditedCustomColors
 }) {
   let entry = label
-
+  // whether to show the color picker modal
+  const [showColorPicker, setShowColorPicker] = useState(false)
+  // the current user-picked (though not necessarily saved) color
+  // note that the color picker components do not allow invalid inputs, so we don't need to do any additional validation
+  const [pickedColor, setPickedColor] = useState(iconColor)
   const hasCorrelations = correlations !== null
   if (correlations) {
     const correlation = Math.round(correlations[label] * 100) / 100
@@ -86,7 +96,7 @@ function LegendEntry({
   const shownClass = (isShown ? '' : 'shown')
 
   /** Toggle state of this legend filter, and accordingly upstream */
-  function toggleSelection() {
+  function toggleSelection(event) {
     const wasShown = !isShown
     updateHiddenTraces(label, wasShown)
 
@@ -97,18 +107,54 @@ function LegendEntry({
     log('click:scatterlegend:single', legendEntry)
   }
 
+  /** handle 'ok' press by updating the colors to the parent, and closing the dialog */
+  function handleColorPicked() {
+    updateEditedCustomColors(label, pickedColor)
+    setShowColorPicker(false)
+  }
+
+  // clicking the label will either hide the trace, or pop up a color picker
+  const entryClickFunction = showColorControls ? () => setShowColorPicker(true) : toggleSelection
   return (
-    <div
-      className={`scatter-legend-row ${shownClass}`}
-      role="button"
-      onClick={() => toggleSelection()}
-    >
-      <div className="scatter-legend-icon" style={iconStyle}></div>
-      <div className="scatter-legend-entry">
-        <span className="legend-label" title={entry}>{entry}</span>
-        <span className="num-points" title={`${numPoints} points in this group`}>{numPoints}</span>
+    <>
+      <div
+        className={`scatter-legend-row ${shownClass}`}
+        role="button"
+        onClick={entryClickFunction}
+      >
+        <div className="scatter-legend-icon" style={iconStyle}>
+          { showColorControls && <FontAwesomeIcon icon={faPalette} title="Change the color for this label"/> }
+        </div>
+        <div className="scatter-legend-entry">
+          <span className="legend-label" title={entry}>{entry}</span>
+          <span className="num-points" title={`${numPoints} points in this group`}>{numPoints}</span>
+        </div>
       </div>
-    </div>
+      { showColorPicker &&
+        <Modal
+          id='color-picker-modal'
+          show={showColorPicker}
+          onHide={() => setShowColorPicker(false)}
+          animation={false}
+          bsSize='small'>
+          <Modal.Body>
+            <div className="flexbox-align-center flexbox-column">
+              <span>Select color</span>
+              <span className="flexbox-align-center">
+                #<HexColorInput color={pickedColor} onChange={setPickedColor}/>
+                &nbsp;
+                <span className="preview-block" style={{ background: pickedColor }}></span>
+              </span>
+              <HexColorPicker color={pickedColor} onChange={setPickedColor}/>
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <button className="btn btn-primary" onClick={handleColorPicked}>OK</button>
+            <button className="btn terra-btn-secondary" onClick={() => setShowColorPicker(false)}>Cancel</button>
+          </Modal.Footer>
+        </Modal>
+      }
+    </>
   )
 }
 
@@ -145,18 +191,29 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
   return enabled
 }
 
+/**
+ * Get color for the label, which can be applied to e.g. the icon or the trace
+ */
+function getColorForLabel(label, customColors={}, editedCustomColors={}, i) {
+  return editedCustomColors[label] ?? customColors[label] ?? getColorBrewerColor(i)
+}
+
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, hiddenTraces,
-  updateHiddenTraces
+  updateHiddenTraces, customColors, editedCustomColors, setEditedCustomColors,
+  enableColorPicking=false, saveCustomColors
 }) {
+  // is the user currently in color-editing mode
+  const [showColorControls, setShowColorControls] = useState(false)
+  // whether a request to the server to save colors is pending
   const labels = getLabels(countsByLabel)
   const numLabels = labels.length
 
   const legendEntries = labels
     .map((label, i) => {
       const numPoints = countsByLabel[label]
-      const iconColor = getColorBrewerColor(i)
+      const iconColor = getColorForLabel(label, customColors, editedCustomColors, i)
 
       return (
         <LegendEntry
@@ -168,6 +225,8 @@ export default function ScatterPlotLegend({
           hiddenTraces={hiddenTraces}
           updateHiddenTraces={updateHiddenTraces}
           numLabels={numLabels}
+          updateEditedCustomColors={updateEditedCustomColors}
+          showColorControls={showColorControls}
         />
       )
     })
@@ -177,6 +236,35 @@ export default function ScatterPlotLegend({
   const [showIsEnabled, hideIsEnabled] =
     getShowHideEnabled(hiddenTraces, countsByLabel)
 
+  /** updates the user picked color for the given label.  does *not* save change to the server */
+  function updateEditedCustomColors(label, color) {
+    const newColors = _cloneDeep(editedCustomColors)
+    newColors[label] = color
+    setEditedCustomColors(newColors)
+  }
+
+  /** resets any unsaved changes to user colors */
+  function cancelColors() {
+    setEditedCustomColors({})
+    setShowColorControls(false)
+  }
+
+  /** resets any unsaved changes to user colors and clears custom colors */
+  function resetColors() {
+    setEditedCustomColors({})
+    saveCustomColors({})
+    setShowColorControls(false)
+  }
+
+  /** save the colors to the server */
+  function saveColors() {
+    // merge the user picked colors with existing custom colors so previously saved values are preserved
+    const colorsToSave = _cloneDeep(customColors)
+    Object.assign(colorsToSave, editedCustomColors)
+    setShowColorControls(false)
+    saveCustomColors(colorsToSave)
+  }
+
   return (
     <div
       className={`scatter-legend ${filteredClass}`}
@@ -184,7 +272,7 @@ export default function ScatterPlotLegend({
       <div className="scatter-legend-head">
         <div>
           <p className="scatter-legend-name">{name}</p>
-          {labels.length > 1 &&
+          {labels.length > 1 && !showColorControls &&
           <>
             <a
               role="button"
@@ -203,6 +291,32 @@ export default function ScatterPlotLegend({
           </>
           }
         </div>
+        { enableColorPicking &&
+          <div>
+            { showColorControls &&
+              <>
+                <span>Click a label to select a new color</span><br/>
+                <div>
+                  <a role="button" data-analytics-name="legend-color-picker-save" onClick={saveColors}>
+                    Save colors
+                  </a>
+                  <a role="button" className="pull-right" data-analytics-name="legend-color-picker-cancel" onClick={cancelColors}>
+                    Cancel
+                  </a><br/>
+                  &nbsp;
+                  <a role="button" className="pull-right" data-analytics-name="legend-color-picker-reset" onClick={resetColors}>
+                    Reset to defaults
+                  </a>
+                </div>
+              </>
+            }
+            { !showColorControls &&
+              <a role="button" data-analytics-name="legend-color-picker-show" onClick={() => setShowColorControls(true)}>
+                Customize colors <FontAwesomeIcon icon={faPalette}/>
+              </a>
+            }
+          </div>
+        }
       </div>
       {legendEntries}
     </div>

@@ -25,6 +25,7 @@ Rails.application.routes.draw do
             get ':project_name/:version/:schema_format', to: 'metadata_schemas#load_schema', as: :metadata_schemas_load_convention_schema,
                 constraints: {version: /.*/}
           end
+
           resources :taxons, only: [:index, :show]
           resources :reports, only: [:show], param: :report_name
           resources :studies, only: [:index, :show, :create, :update, :destroy] do
@@ -49,6 +50,7 @@ Rails.application.routes.draw do
               member do
                 get 'cluster_options'
                 get 'bam_file_info'
+                get 'study_user_info'
               end
             end
             resources :expression, controller: 'visualization/expression', only: [:show], param: :data_type

@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { Router } from '@reach/router'
 import _cloneDeep from 'lodash/clone'
+import ReactNotification from 'react-notifications-component'
 
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { getDefaultClusterParams } from 'lib/cluster-utils'
 import MessageModal from 'lib/MessageModal'
 
-import { fetchExplore, fetchAnnotationOptions } from 'lib/scp-api'
+import { fetchExplore, fetchStudyUserInfo } from 'lib/scp-api'
 import ErrorBoundary from 'lib/ErrorBoundary'
 import useExploreTabRouter from './ExploreTabRouter'
 
@@ -31,10 +32,11 @@ function RoutableExploreTab({ studyAccession }) {
     // after the explore info is received, fetch the user-specific annotations, but do it
     // after a timeout to ensure the visualization data gets fetched first
     window.setTimeout(async () => {
-      const userSpecificAnnotations = await fetchAnnotationOptions(studyAccession)
+      const userSpecificInfo = await fetchStudyUserInfo(studyAccession)
       setExploreInfo(oldExploreInfo => {
         const newInfo = _cloneDeep(oldExploreInfo)
-        newInfo.annotationList.annotations = userSpecificAnnotations
+        newInfo.annotationList.annotations = userSpecificInfo.annotations
+        newInfo.canEdit = userSpecificInfo.canEdit
         return newInfo
       })
     }, 500)
@@ -89,6 +91,7 @@ function createExploreParamsWithDefaults(exploreParams, exploreInfo) {
 export default function ExploreTab({ studyAccession }) {
   return (
     <ErrorBoundary>
+      <ReactNotification />
       <Router>
         <RoutableExploreTab studyAccession={studyAccession} default/>
       </Router>

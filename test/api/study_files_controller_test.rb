@@ -43,6 +43,9 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
       elsif attribute =~ /_at/
         # ignore timestamps as formatting & drift on milliseconds can cause comparison errors
         next
+      elsif attribute =~ /cluster_file_info/
+        # ignore the $oid field and just look at custom_colors
+        assert json[attribute]['custom_colors'] == value['custom_colors']
       else
         assert json[attribute] == value, "Attribute mismatch: #{attribute} is incorrect, expected #{value} but found #{json[attribute.to_s]}"
       end
@@ -119,5 +122,57 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
     assert_response 403
     @study_file.reload
     refute @study_file.description == description
+  end
+
+  # create, update & delete tested together to use new object to avoid delete/update running before create
+  test 'should correctly update custom colors' do
+    annot1_color_hash = {
+      'annotation1': {
+        'labelA': '#aabb00',
+        'labelB': '#bb2211'
+      }
+    }.with_indifferent_access
+    study_file_attributes = {
+      study_file: {
+        custom_color_updates: annot1_color_hash.to_json
+      }
+    }
+    execute_http_request(:patch, api_v1_study_study_file_path(study_id: @study.id, id: @study_file.id),
+      request_payload: study_file_attributes)
+    assert_response :success
+
+    @study_file.reload
+    # check that the colors were updated
+    assert_equal annot1_color_hash, @study_file.cluster_file_info.custom_colors.with_indifferent_access
+
+    annot2_color_hash = {
+      'annotation2': {
+        'labelA': '#aabb00',
+        'labelC': '#bb2211'
+      }
+    }.with_indifferent_access
+    study_file_attributes[:study_file][:custom_color_updates] = annot2_color_hash.to_json
+    execute_http_request(:patch, api_v1_study_study_file_path(study_id: @study.id, id: @study_file.id),
+      request_payload: study_file_attributes)
+    assert_response :success
+
+    @study_file.reload
+    # check that the new annotation colors were added, and the previous ones remain
+    assert_equal annot2_color_hash.merge(annot1_color_hash), @study_file.cluster_file_info.custom_colors.with_indifferent_access
+
+    updated_annot2_color_hash = {
+      'annotation1': {
+        'labelA': '#333333',
+        'labelC': '#999999'
+      }
+    }.with_indifferent_access
+    study_file_attributes[:study_file][:custom_color_updates] = updated_annot2_color_hash.to_json
+    execute_http_request(:patch, api_v1_study_study_file_path(study_id: @study.id, id: @study_file.id),
+      request_payload: study_file_attributes)
+    assert_response :success
+
+    @study_file.reload
+    # confirm the annotation1 colors were completely replaced, and annotation2 colors were preserved
+    assert_equal updated_annot2_color_hash.merge(annot2_color_hash), @study_file.cluster_file_info.custom_colors.with_indifferent_access
   end
 end
