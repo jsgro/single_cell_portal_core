@@ -26,7 +26,7 @@ export default class ChunkedLineReader {
   }
 
   /**
-   * Use this function to reset the reader to the start of the file
+   * Reset the reader to the start of the file
    */
   resetToFileStart() {
     this.linesRead = 0
