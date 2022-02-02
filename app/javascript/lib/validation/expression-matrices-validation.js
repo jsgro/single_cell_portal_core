@@ -253,7 +253,7 @@ function validateColumnNumber(line, isLastLine, secondLineOfFile, lineNum, dataO
 
     const msg = `All rows must have the same number of columns. ` +
       `Please ensure the number of columns for ${rowText}: ${notedBadRows}, ` +
-      `${containText} the same number of columns-per-row.`
+      `${containText} the same number of columns per row.`
     issues.push(['error', 'format:mismatch-column-number', msg])
   }
 
