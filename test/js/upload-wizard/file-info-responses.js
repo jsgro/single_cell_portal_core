@@ -538,5 +538,6 @@ export const EMPTY_STUDY = {
     'accession': 'SCP34'
   },
   files: [],
+  feature_flags: {},
   menu_options: BASIC_MENU_OPTIONS
 }

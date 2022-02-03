@@ -2,7 +2,6 @@ import React, { useEffect, useContext } from 'react'
 
 import ExpressionFileForm from './ExpressionFileForm'
 import { rawCountsFileFilter, expressionFileStructureHelp } from './RawCountsStep'
-import { UserContext } from 'providers/UserProvider'
 import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_PROCESSED_FILE = {
@@ -42,8 +41,7 @@ function ProcessedUploadForm({
   const rawCountsFiles = formState.files.filter(rawCountsFileFilter).filter(f => f.status != 'new')
   const rawCountsOptions = rawCountsFiles.map(rf => ({ label: rf.name, value: rf._id }))
 
-  const userState = useContext(UserContext)
-  const featureFlagState = userState.featureFlagsWithDefaults
+  const featureFlagState = serverState.feature_flags
   const rawCountsRequired = featureFlagState && featureFlagState.raw_counts_required_frontend
 
   const hasRawCounts = !!rawCountsFiles.filter(file => file.status === 'uploaded').length

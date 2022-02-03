@@ -1,7 +1,6 @@
 # RequestUtils: helper class for dealing with request parameters, sanitizing input, and setting
 # cache paths on visualization requests
 class RequestUtils
-
   # list of parameters to reject from :get_cache_key as they will be represented by request.path
   # format is always :json and therefore unnecessary
   # reviewerSession should be ignored as it is not a valid visualization parameter
@@ -143,5 +142,33 @@ class RequestUtils
       }
     end
     return nil
+  end
+
+  # format a file path for a specific operating system
+  # will default to unix-style paths, unless Windows OS is specified
+  def self.format_path_for_os(path, os = '')
+    if os =~ /Win/
+      path.gsub(%r{/}, '\\')
+    else
+      path
+    end
+  end
+
+  # handle upstream reporting/logging of errors in custom exceptions controllers
+  def self.log_exception(request, params, user: nil, study: nil)
+    @exception = request.env['action_dispatch.exception']
+    MetricsService.report_error(@exception, request, user, study)
+    ErrorTracker.report_exception(@exception, user, params)
+    Rails.logger.error ([@exception.message] + @exception.backtrace).join($/)
+  end
+
+  # format exception JSON responses
+  def self.exception_json(request)
+    exception = request.env['action_dispatch.exception']
+    {
+      error: exception.message,
+      error_class: exception.class.name,
+      source: exception.backtrace&.first
+    }
   end
 end

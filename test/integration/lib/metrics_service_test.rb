@@ -22,7 +22,8 @@ class MetricsServiceTest < ActiveSupport::TestCase
       clusterType: "3d",
       numClusterPoints: 15,
       canSubsample: false,
-      metadataFilePresent: false
+      metadataFilePresent: false,
+      logger:"app-backend"
     }
 
     # As passed from MetricsService.log to MetricsService.post_to_bard
@@ -119,6 +120,7 @@ class MetricsServiceTest < ActiveSupport::TestCase
       browser_version: browser.version,
       brand: nil,
       env: Rails.env,
+      logger: 'app-backend',
       authenticated: false,
       distinct_id: user_id
     }.with_indifferent_access
@@ -187,7 +189,8 @@ class MetricsServiceTest < ActiveSupport::TestCase
     event = 'fake-event'
     input_props = {
       foo: 'bar',
-      bing: 'baz'
+      bing: 'baz',
+      logger: "app-backend"
     }
 
     expected_output_props = input_props.merge(

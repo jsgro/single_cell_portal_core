@@ -119,4 +119,26 @@ class AnnotationVizServiceTest < ActiveSupport::TestCase
     assert species_annot.present?
     assert_equal 'invalid', species_annot[:scope]
   end
+
+  test 'should mark metadata ontology annotation validity' do
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'metadata ontology',
+                              user: @user,
+                              test_array: @@studies_to_clean)
+
+    FactoryBot.create(:metadata_file, name: 'metadata.txt', study: study, annotation_input: [
+      { name: 'species', type: 'group', values: %w[id1 id1 id2] },
+      { name: 'species__ontology_label', type: 'group', values: %w[dog dog cat] },
+    ])
+    annots = AnnotationVizService.available_annotations(study)
+    assert_equal 2, annots.size
+    species_annot = annots.detect { |a| a[:name] == 'species' }
+    assert species_annot.present?
+    assert_equal 'invalid', species_annot[:scope]
+
+    species_label_annot = annots.detect { |a| a[:name] == 'species__ontology_label' }
+    assert species_label_annot.present?
+    assert_equal 'study', species_label_annot[:scope]
+
+  end
 end

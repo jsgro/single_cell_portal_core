@@ -51,4 +51,25 @@ class RequestUtilsTest < ActiveSupport::TestCase
     assert_equal invalid_output, sanitized_invalid_list,
                  "Did not correctly sanitize characters from list; #{invalid_output} != #{sanitized_invalid_list}"
   end
+
+  test 'should format file path for os' do
+    path = 'path/to/some/file.txt'
+    unix_os_list = ['Mac OS X', 'macOSX', 'Generic Linux', 'Android', 'iOS (iPhone)']
+    unix_os_list.each do |operating_system|
+      formatted_path = RequestUtils.format_path_for_os(path, operating_system)
+      assert_equal path, formatted_path
+    end
+    windows_path = RequestUtils.format_path_for_os(path, 'Windows')
+    expected_path = "path\\to\\some\\file.txt"
+    assert_equal expected_path, windows_path
+  end
+
+  test 'should format exceptions as JSON' do
+    exception = ArgumentError.new('this is the error')
+    request = ActionDispatch::TestRequest.create('action_dispatch.exception' => exception)
+    json_response = RequestUtils.exception_json(request)
+    assert_equal %i[error error_class source], json_response.keys
+    assert_equal exception.message, json_response[:error]
+    assert_equal exception.class.name, json_response[:error_class]
+  end
 end
