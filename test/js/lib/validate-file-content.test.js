@@ -114,7 +114,7 @@ describe('Client-side file validation', () => {
   it('catches non-numeric entry in expression matrix file', async () => {
     const file = createMockFile({
       fileName: 'foo5.csv',
-      content: 'GENE,X,Y\nItm2a,1,5\nEif2b2,3,p\nPf2b2,1,9'
+      content: 'GENE,X,Y\nItm2a,p,5\nEif2b2,3,0\nPf2b2,1,9'
     })
     const { errors } = await validateFileContent(file, 'Expression Matrix')
     expect(errors).toHaveLength(1)
