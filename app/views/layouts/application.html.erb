@@ -32,7 +32,6 @@
       }
 
       window.SCP.userAccessToken = '<%= get_user_access_token(current_user) %>';
-      window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
       window.SCP.userSignedIn = <%= user_signed_in? %>;
       window.SCP.environment = '<%= Rails.env %>';
 
@@ -232,7 +231,7 @@
 <input type="hidden" id="user-provider-info" value='<%=
   {
     email: current_user&.email,
-    featureFlagsWithDefaults: FeatureFlaggable.feature_flags_for_instances(@selected_branding_group, current_user)
+    featureFlagsWithDefaults: FeatureFlaggable.feature_flags_for_instances(@selected_branding_group, current_user, @study)
   }.to_json %>'/>
 </body>
 </html>

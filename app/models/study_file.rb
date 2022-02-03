@@ -70,8 +70,10 @@ class StudyFile
   belongs_to :genome_annotation, optional: true
   belongs_to :study_file_bundle, optional: true
   embeds_one :expression_file_info
+  embeds_one :cluster_file_info
 
   accepts_nested_attributes_for :expression_file_info
+  accepts_nested_attributes_for :cluster_file_info
   validate :show_exp_file_info_errors
 
   # field definitions
@@ -766,8 +768,10 @@ class StudyFile
 
   # generate a download path to use with bulk_download
   # takes the form of :study_accession/:output_directory_name/:filename
-  def bulk_download_pathname
-    "#{self.study.accession}/#{self.output_directory_name}/#{self.upload_file_name}"
+  # supports Unix- and Windows-formatted paths
+  def bulk_download_pathname(os: '')
+    path = "#{study.accession}/#{output_directory_name}/#{upload_file_name}"
+    RequestUtils.format_path_for_os(path, os)
   end
 
   # Map of StudyFile#file_type to ::BULK_DOWNLOAD_TYPES, maintaining relationship for bundled files to parent

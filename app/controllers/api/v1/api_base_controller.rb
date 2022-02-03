@@ -12,26 +12,13 @@ module Api
 
       rescue_from ActionController::ParameterMissing do |exception|
         MetricsService.report_error(exception, request, current_api_user, @study)
-        render json: {error: exception.message}, status: 400
+        render json: { error: exception.message }, status: :bad_request
       end
 
-      rescue_from NoMethodError, Faraday::ConnectionFailed do |exception|
-        MetricsService.report_error(exception, request, current_api_user, @study)
-        render json: {error: exception.message}, status: 500
-      end
-
-      # this is needed to get stack traces of view errors on the console in development
-      # otherwise, e.g. errors in study_search_results_objects.rb would just be swallowed and returned as 500
-      # this also logs exceptions in Mixpanel/Sentry
-      rescue_from Exception do |exception|
-        MetricsService.report_error(exception, request, current_api_user, @study)
-        ErrorTracker.report_exception(exception, current_api_user, params)
-        logger.error ([exception.message] + exception.backtrace).join($/)
-        if Rails.env.production?
-          render json: {error: "An unexpected error has occurred"}, status: 500
-        else
-          render json: {error: exception.message}, status: 500
-        end
+      # always default to Api::V1::ExceptionsController for error rendering, regardless of environment
+      # from https://github.com/rails/rails/blob/main/actionpack/lib/action_controller/metal/rescue.rb#L16
+      def show_detailed_exceptions?
+        false
       end
 
       ##

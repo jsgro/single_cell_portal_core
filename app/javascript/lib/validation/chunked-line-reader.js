@@ -22,6 +22,18 @@ export default class ChunkedLineReader {
     this.chunkLines = []
     this.updateHasMoreChunks()
     this.updateHasMoreLines()
+    this.resetToFileStart()
+  }
+
+  /**
+   * Reset the reader to the start of the file
+   */
+  resetToFileStart() {
+    this.linesRead = 0
+    this.nextByteToRead = 0
+    this.chunkLines = []
+    this.updateHasMoreChunks()
+    this.updateHasMoreLines()
   }
 
   /**

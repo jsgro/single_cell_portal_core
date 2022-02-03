@@ -298,6 +298,10 @@ module Api
         # determine if this a single-study bulk download (from download tab) or from home page search
         search_context = params[:context] || 'unknown'
 
+        # determine what format we need for output paths based on client OS
+        browser = Browser.new(request.env['HTTP_USER_AGENT'])
+        os = browser&.platform&.name || 'Mac OS X'
+
         # branch based on whether they provided a download_id, file_ids, or accessions
         if params[:download_id]
           download_req = DownloadRequest.find(params[:download_id])
@@ -355,7 +359,7 @@ module Api
         # create maps to avoid Mongo timeouts when generating curl commands in parallel processes
         bucket_map = ::BulkDownloadService.generate_study_bucket_map(valid_accessions) if valid_accessions.any?
         if files_requested.any? || directories.any?
-          pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories)
+          pathname_map = ::BulkDownloadService.generate_output_path_map(files_requested, directories, os: os)
         end
 
         # generate curl config file
@@ -367,7 +371,8 @@ module Api
                                                                            study_bucket_map: bucket_map,
                                                                            output_pathname_map: pathname_map,
                                                                            azul_files: azul_files,
-                                                                           context: search_context)
+                                                                           context: search_context,
+                                                                           os: os)
         end_time = Time.zone.now
         runtime = TimeDifference.between(start_time, end_time).humanize
         logger.info "Curl configs generated for studies #{valid_accessions}, #{files_requested.size + directory_files.size} total files"

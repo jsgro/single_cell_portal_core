@@ -108,6 +108,10 @@ module Api
 
         def render_violin
           cluster = ClusterVizService.get_cluster_group(@study, params)
+          if cluster.nil?
+            render json: { error: 'Requested cluster not found' }, status: :not_found and return
+          end
+
           annotation = AnnotationVizService.get_selected_annotation(@study,
                                                                     cluster: cluster,
                                                                     annot_name: params[:annotation_name],

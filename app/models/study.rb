@@ -1000,6 +1000,16 @@ class Study
     self.expression_matrices.any_of({'expression_file_info.is_raw_counts' => false}, {expression_file_info: nil}).exists?
   end
 
+  def has_image_files?
+    study_files.by_type('Image').any?
+  end
+
+  # check if study has any files that can be streamed from the bucket for visualization
+  # this includes BAM, inferCNV Ideogram annotations, and Image files
+  def has_streamable_files?
+    has_bam_files? || has_analysis_outputs?('infercnv', 'ideogram.js') || has_image_files?
+  end
+
   # quick getter to return any cell metadata that can_visualize?
   def viewable_metadata
     viewable = []

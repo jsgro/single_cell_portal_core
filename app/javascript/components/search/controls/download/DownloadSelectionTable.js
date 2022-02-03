@@ -5,6 +5,7 @@ import _cloneDeep from 'lodash/cloneDeep'
 
 import { bytesToSize } from 'lib/stats'
 import LoadingSpinner from 'lib/LoadingSpinner'
+import InfoPopup from 'lib/InfoPopup'
 
 
 /** component that renders a list of studies so that individual studies/files can be selected
@@ -97,12 +98,8 @@ export default function DownloadSelectionTable({
                     { COLUMNS[colType].title }
                   </label>
                   &nbsp;
-                  <FontAwesomeIcon data-analytics-name="download-modal-column-info"
-                    data-toggle="tooltip"
-                    data-container="terra-table"
-                    data-original-title={COLUMNS[colType].info}
-                    className="action log-click help-icon"
-                    icon={faInfoCircle} />
+                  <InfoPopup dataAnalyticsName={`download-modal-column-info-${colType}`}
+                    content={<span>{COLUMNS[colType].info}</span>}/>
                 </td>
               })}
             </tr>
@@ -145,19 +142,34 @@ const COLUMNS = {
   matrix: {
     title: 'Matrix',
     types: ['Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File'],
-    info: 'Expression matrix files, including processed or raw count files',
+    info: <span>
+      Expression matrix files, including processed or raw count files.<br/>
+      <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610292-Matrix-Files" target="_blank" rel="noopener noreferrer">
+        Matrix file documentation
+      </a>
+    </span>,
     default: true
   },
   cluster: {
     title: 'Clustering',
     types: ['Cluster'],
-    info: 'Clustering coordinate files, including 2D and 3D clustering, as well as spatial',
+    info: <span>
+      Clustering coordinate files, including 2D and 3D clustering, as well as spatial.<br/>
+      <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060609792-Cluster-Files" target="_blank" rel="noopener noreferrer">
+        Cluster file documentation.
+      </a>
+    </span>,
     default: true
   },
   metadata: {
     title: 'Metadata',
     types: ['Metadata'],
-    info: 'The listing of all cells in the study, along with associated metadata such as species, cell type, etc.',
+    info: <span>
+      The listing of all cells in the study, along with associated metadata such as species, cell type, etc.<br/>
+      <a href="https://singlecell.zendesk.com/hc/en-us/articles/360060610232-Metadata-File-Overview" target="_blank" rel="noopener noreferrer">
+        Metadata file documentation.
+      </a>
+    </span>,
     default: true
   },
   project_manifest: {
@@ -169,7 +181,10 @@ const COLUMNS = {
   analysis: {
     title: 'Analysis',
     types: ['analysis_file'],
-    info: 'Expression matrix files, including processed or raw count files',
+    info: <span>
+      Loom files of <a href="https://broadinstitute.github.io/warp/docs/Pipelines/Optimus_Pipeline/Loom_schema/" target="_blank" rel="noopener noreferrer">finalized raw counts</a>.<br/>
+       This does not include contributor generated files or intermediate files, which can be downloaded directly from HCA.
+    </span>,
     default: true
   },
   sequence: {
