@@ -11,7 +11,7 @@ if (typeof window.SCP.readOnlyToken === 'undefined') {
 * FileUploadControl.js.  It should be replaced when sync code migrates to
 * React (at the latest).
 */
-function getIssuesHtml(fileName, errorMsgs, warningMsgs) {
+function getIssuesHtml(errorMsgs, warningMsgs, fileName, fileId) {
 
   let issuesHtml = ''
 
@@ -28,6 +28,12 @@ function getIssuesHtml(fileName, errorMsgs, warningMsgs) {
         `Errors found.  ${refresh} after you correct ${fileName}.` +
         `<ul class="validation-error">${errorListHtml}</ul>` +
       '</div>'
+
+    $(`#sync-study-file-${fileId}`)
+      .prop('disabled', true)
+      .attr('data-toggle', 'tooltip')
+      .attr('data-original-title', 'Fix validation errors, then refresh')
+      .attr('data-placement', 'left')
   }
   if (warningMsgs.length > 0) {
     const warningListHtml = errorMsgs.map((error, index) => {
@@ -48,6 +54,7 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
     var form = $(this).closest('form');
     var fileName = form.find('.filename').val();
     var fileType = $(this).val();
+    var fileId = '<%= study_file.id %>';
     var nameField = $('#study-file-<%= study_file.id %> #study_file_name');
     var extraInfo = $('#study-file-<%= study_file.id %>-extra-info');
     var taxonTarget = form.find('.taxon-select-target');
@@ -152,7 +159,7 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
     const errorMsgs = results.errors.map(error => error[2])
     const warningMsgs = results.warnings.map(error => error[2])
 
-    const issuesHtml = getIssuesHtml(fileName, errorMsgs, warningMsgs)
+    const issuesHtml = getIssuesHtml(errorMsgs, warningMsgs, fileName, fileId)
 
     console.log('issuesHtml', issuesHtml)
     if (issuesHtml !== '') {
