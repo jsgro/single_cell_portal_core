@@ -3,6 +3,17 @@ module Api
     class SearchController < ApiBaseController
       include StudySearchResultsObjects
 
+      # list of common 'stop words' to scrub from term-based search requests
+      # these are unhelpful in search contexts as they artificially inflate irrelevant results
+      # from https://gist.github.com/sebleier/554280
+      STOP_WORDS = %w[i me my myself we our ours ourselves you your yours yourself yourselves he him his himself she
+                      her hers herself it its itself they them their theirs themselves what which who whom this that
+                      these those am is are was were be been being have has had having do does did doing a an the and
+                      but if or because as until while of at by for with about against between into through during
+                      before after above below to from up down in out on off over under again further then once here
+                      there when where why how all any both each few more most other some such no nor not only own same
+                      so than too very s t can will just don should now].freeze
+
       # regex to match on 'sequence_file' and 'analysis_file' entries from TDR
       TDR_FILE_OUTPUT_TYPE_MATCH = /_file/.freeze
 
@@ -198,16 +209,18 @@ module Api
           # determine if search values contain possible study accessions
           possible_accessions = StudyAccession.sanitize_accessions(@search_terms.split)
           # determine query case based off of search terms (either :keyword or :phrase)
-          if @search_terms.include?("\"")
+          if @search_terms.include?('"')
             @term_list = self.class.extract_phrases_from_search(query_string: @search_terms)
             logger.info "Performing phrase-based search using #{@term_list}"
             @studies = self.class.generate_mongo_query_by_context(terms: @term_list, base_studies: @viewable,
                                                                   accessions: possible_accessions, query_context: :phrase)
             logger.info "Found #{@studies.count} studies in phrase search: #{@studies.pluck(:accession)}"
           else
-            @term_list = @search_terms.split
+            # filter & reconstitute query w/o stop words
+            @term_list = self.class.reject_stop_words_from_terms(@search_terms.split)
+            sanitized_terms = @term_list.join(' ')
             logger.info "Performing keyword-based search using #{@term_list}"
-            @studies = self.class.generate_mongo_query_by_context(terms: @search_terms, base_studies: @viewable,
+            @studies = self.class.generate_mongo_query_by_context(terms: sanitized_terms, base_studies: @viewable,
                                                                   accessions: possible_accessions, query_context: :keyword)
             logger.info "Found #{@studies.count} studies in keyword search: #{@studies.pluck(:accession)}"
 
@@ -479,16 +492,23 @@ module Api
       # extract any "quoted phrases" from query string and tokenize terms
       def self.extract_phrases_from_search(query_string:)
         terms = []
-        query_string.split("\"").each do |substring|
+        query_string.split('"').each do |substring|
           # when splitting on double quotes, phrases will not have any leading/trailing space
           # individual lists of terms will have one or the other, which is how we differentiate
+          # stop words should be excluded from this list as they are irrelevant in a search context, but should be
+          # honored in a quoted string as that is looking for an exact match
           if substring.start_with?(' ') || substring.end_with?(' ')
-            terms += substring.strip.split
+            terms += reject_stop_words_from_terms(substring.strip.split)
           else
             terms << substring
           end
         end
         terms.delete_if(&:blank?) # there is usually one blank entry if we had a quoted phrase, so remove it
+      end
+
+      # exclude known stop words from a list of terms to increase search result relevance
+      def self.reject_stop_words_from_terms(terms)
+        terms&.reject { |t| STOP_WORDS.include? t } || []
       end
 
       # escape regular expression control characters from list of search terms and format for search
