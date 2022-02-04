@@ -14,7 +14,7 @@ describe('Client-side file validation', () => {
     const fileType = 'Metadata'
 
     const fakeLog = jest.spyOn(MetricsApi, 'log')
-    fakeLog.mockImplementation(() => {})
+    fakeLog.mockImplementation(() => { })
 
     const expectedSummary = 'Your file had 1 error'
 
@@ -76,7 +76,7 @@ describe('Client-side file validation', () => {
     })
     const { errors } = await validateFileContent(file, 'Cluster')
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('duplicate:cells-within-file')
+    expect(errors[0][1]).toEqual('content:duplicate:cells-within-file')
     expect(errors[0][2]).toEqual('Cell names must be unique within a file. 1 duplicate found, including: CELL_0001')
   })
 
@@ -87,7 +87,7 @@ describe('Client-side file validation', () => {
     })
     const { errors } = await validateFileContent(file, 'Expression Matrix')
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('duplicate:cells-within-file')
+    expect(errors[0][1]).toEqual('content:duplicate:cells-within-file')
   })
 
   it('catches missing headers in metadata file', async () => {
@@ -118,7 +118,7 @@ describe('Client-side file validation', () => {
     })
     const { errors } = await validateFileContent(file, 'Expression Matrix')
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('format:invalid-type:not-numeric')
+    expect(errors[0][1]).toEqual('content:invalid-type:not-numeric')
   })
 
   it('catches row with wrong number of columns in expression matrix file', async () => {
@@ -168,7 +168,7 @@ describe('Client-side file validation', () => {
     })
     const { errors } = await validateFileContent(file, '10X Barcodes File')
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('duplicate:values-within-file')
+    expect(errors[0][1]).toEqual('content:duplicate:values-within-file')
   })
 
   it('catches duplicate row values in features file', async () => {
@@ -178,7 +178,7 @@ describe('Client-side file validation', () => {
     })
     const { errors } = await validateFileContent(file, '10X Genes File')
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('duplicate:values-within-file')
+    expect(errors[0][1]).toEqual('content:duplicate:values-within-file')
   })
 
   it('allows missing headers in metadata file if convention not used ', async () => {
@@ -197,7 +197,7 @@ describe('Client-side file validation', () => {
     })
     const { errors } = await validateFileContent(file, 'Metadata', { use_metadata_convention: false })
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('content:metadata:mismatched-id-label')
+    expect(errors[0][1]).toEqual('ontology:multiply-assigned-label')
     expect(errors[0][2]).toContain('Homo sapiens')
     expect(errors[0][2]).toContain('species')
   })

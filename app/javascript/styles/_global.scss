@@ -800,6 +800,10 @@ figcaption.ck-editor__editable {
   align-items: center;
 }
 
+.flexbox-column {
+  flex-direction: column;
+}
+
 .unset-background-border {
   background: unset;
   border: unset;

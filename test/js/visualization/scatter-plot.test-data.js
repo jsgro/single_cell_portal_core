@@ -32,7 +32,9 @@ export const BASIC_PLOT_DATA = {
   pointAlpha: 1,
   is3d: false,
   annotType: 'group',
-  annotName: 'biosample_id'
+  annotName: 'biosample_id',
+  clusterFileId: 'aaaaaaa1111112222234344',
+  customColors: {}
 }
 
 /**
@@ -257,8 +259,11 @@ export const MANY_LABELS_MOCKS = {
     imageFiles: [],
     clusterPointAlpha: 1,
     colorProfile: null,
-    bucketId: 'fc-968ec9be-fdba-49a1-ba2e-af49281c4a1d'
+    bucketId: 'fc-968ec9be-fdba-49a1-ba2e-af49281c4a1d',
+    clusterFileId: 'aaaaaaa1111112222234344',
+    customColors: {}
   },
+
   CLUSTER_RESPONSE: {
     data: {
       annotations: [
@@ -852,6 +857,8 @@ export const MANY_LABELS_MOCKS = {
       identifier: 'Category--group--cluster'
     },
     subsample: 'all',
-    consensus: null
+    consensus: null,
+    clusterFileId: 'aaaaaaa1111112222234344',
+    customColors: {}
   }
 }

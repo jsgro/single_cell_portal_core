@@ -365,7 +365,8 @@ export function log(name, props = {}) {
     appId: 'single-cell-portal',
     appPath: getAnalyticsPageName(),
     appFullPath: getAppFullPath(),
-    env
+    env,
+    logger: 'app-frontend'
   }, getDefaultProperties())
 
   const tab = getTabProperty()

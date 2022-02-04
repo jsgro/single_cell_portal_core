@@ -11,9 +11,9 @@ module Api
         before_action :set_study
         before_action :check_study_view_permission
 
-        # don't cache cluster_options, as those are user-dependent.
-        before_action :check_api_cache!, except: :cluster_options
-        after_action :write_api_cache!, except: :cluster_options
+        # don't cache cluster_options or study_user_info, as those are user-dependent.
+        before_action :check_api_cache!, except: [:cluster_options, :study_user_info]
+        after_action :write_api_cache!, except: [:cluster_options, :study_user_info]
 
 
         swagger_path '/studies/{study_id}/explore' do
@@ -113,6 +113,13 @@ module Api
           render json: {
             bamAndBaiFiles: @study.get_bam_files,
             gtfFiles: @study.get_genome_annotations_by_assembly
+          }
+        end
+
+        def study_user_info
+          render json: {
+            annotations: AnnotationVizService.available_annotations(@study, cluster: nil, current_user: current_api_user),
+            canEdit: @study.can_edit?(current_api_user)
           }
         end
 

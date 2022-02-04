@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react'
 import Modal from 'react-bootstrap/lib/Modal'
 import { log } from 'lib/metrics-api'
 import _clone from 'lodash/clone'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
+
 
 const functionHolder = {}
 
@@ -81,4 +84,33 @@ export default function MessageModal() {
       <button className="btn action" onClick={clearMessages}>OK</button>
     </Modal.Footer>
   </Modal>
+}
+
+/** returns a notification config object suitable for passing to ReactNotification store.addNotification */
+export function successNotification(message) {
+  return {
+    type: 'success',
+    insert: 'top',
+    container: 'top-right',
+    title: '',
+    message: <><FontAwesomeIcon icon={faCheckCircle}/>{message}</>,
+    width: 425,
+    dismiss: {
+      duration: 3000,
+      showIcon: false
+    }
+  }
+}
+
+/** returns a notification config object suitable for passing to ReactNotification store.addNotification */
+export function failureNotification(message) {
+  return {
+    ...successNotification(message),
+    type: 'danger',
+    message: <><FontAwesomeIcon icon={faExclamationTriangle}/>{message}</>,
+    dismiss: {
+      duration: 0,
+      showIcon: true
+    }
+  }
 }

@@ -202,8 +202,8 @@ export function stringifyQuery(paramObj, sort) {
 */
 export async function fetchStudyFileInfo(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/file_info`
-  const [exploreInit] = await scpApi(apiUrl, defaultInit(), mock, false)
-  return exploreInit
+  const [response] = await scpApi(apiUrl, defaultInit(), mock, false)
+  return response
 }
 
 /**
@@ -309,8 +309,8 @@ export async function deleteStudyFile(studyAccession, fileId, mock=false) {
   const init = Object.assign({}, defaultInit(), {
     method: 'DELETE'
   })
-  const [exploreInit] = await scpApi(apiUrl, init, mock, false)
-  return exploreInit
+  const [response] = await scpApi(apiUrl, init, mock, false)
+  return response
 }
 
 
@@ -348,11 +348,25 @@ export async function fetchBucketFile(bucketName, fileName, maxBytes=null, mock=
 */
 export async function fetchExplore(studyAccession, mock=false) {
   const apiUrl = `/studies/${studyAccession}/explore`
-  const [exploreInit] =
+  const [response] =
     await scpApi(apiUrl, defaultInit(), mock, false)
 
-  return exploreInit
+  return response
 }
+
+/**
+ * Returns user-specific information about a study (e.g. user annotations, permissions.)
+ *
+ * @param {String} studyAccession Study accession
+*/
+export async function fetchStudyUserInfo(studyAccession, mock=false) {
+  const apiUrl = `/studies/${studyAccession}/explore/study_user_info`
+  const [response] =
+    await scpApi(apiUrl, defaultInit(), mock, false)
+
+  return response
+}
+
 
 /**
 * Returns bam file information for the study, suitable for passing to IGV

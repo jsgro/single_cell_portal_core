@@ -489,6 +489,7 @@ function getLogProps(fileInfo, errorObj, perfTime, syncProps) {
   const defaultProps = {
     ...fileInfo,
     perfTime,
+    trigger,
     'perfTime:parseFile': perfTime,
     'delimiter': friendlyDelimiter,
     'numTableCells': fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
@@ -507,7 +508,6 @@ function getLogProps(fileInfo, errorObj, perfTime, syncProps) {
   } else {
     return Object.assign(defaultProps, {
       status: 'failure',
-      trigger,
       summary,
       numErrors: errors.length,
       numWarnings: warnings.length,
