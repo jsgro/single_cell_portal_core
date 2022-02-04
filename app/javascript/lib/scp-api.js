@@ -330,7 +330,7 @@ export async function fetchBucketFile(bucketName, fileName, maxBytes=null, mock=
   }
 
   if (maxBytes) {
-    init.headers.Range = `bytes=1-${maxBytes}`
+    init.headers.Range = `bytes=0-${maxBytes}`
   }
   init.headers = new Headers(init.headers)
   const url = `https://storage.googleapis.com/download/storage/v1/b/${bucketName}/o/${fileName}?alt=media`

@@ -116,11 +116,11 @@
 }
 
 .validation-error {
-  color: $danger-color;
+  color: $danger-color !important;
 }
 
 .validation-warning {
-  color: $warning-icon-color;
+  color: $warning-icon-color !important;
 }
 
 .prev-next-buttons {
