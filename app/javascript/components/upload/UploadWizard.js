@@ -51,7 +51,7 @@ const STEPS = [
 ]
 
 const MAIN_STEPS = STEPS.slice(0, 4)
-const SUPPLEMENTAL_STEPS = STEPS.slice(4, STEPS.length)
+const SUPPLEMENTAL_STEPS = STEPS.slice(4)
 
 
 /** shows the upload wizard */
