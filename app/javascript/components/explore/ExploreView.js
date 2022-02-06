@@ -29,7 +29,7 @@ function RoutableExploreTab({ studyAccession }) {
   async function loadStudyData() {
     const exploreResponse = await fetchExplore(studyAccession)
     setExploreInfo(exploreResponse)
-    // after the explore info is received, fetch the user-specific annotations, but do it
+    // after the explore info is received, fetch the user-specific study data, but do it
     // after a timeout to ensure the visualization data gets fetched first
     window.setTimeout(async () => {
       const userSpecificInfo = await fetchStudyUserInfo(studyAccession)
@@ -37,6 +37,12 @@ function RoutableExploreTab({ studyAccession }) {
         const newInfo = _cloneDeep(oldExploreInfo)
         newInfo.annotationList.annotations = userSpecificInfo.annotations
         newInfo.canEdit = userSpecificInfo.canEdit
+        if (userSpecificInfo.can_compute) {
+          // show the analysis tab
+          const fragment = document.createRange().createContextualFragment(userSpecificInfo.analysis_tab_content)
+          document.getElementById('study-analysis').appendChild(fragment)
+          document.getElementById('study-analysis-nav').classList.remove('hidden')
+        }
         return newInfo
       })
     }, 500)
