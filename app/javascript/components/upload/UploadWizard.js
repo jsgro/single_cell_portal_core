@@ -45,18 +45,27 @@ const STEPS = [
   ClusteringStep,
   SpatialStep,
   CoordinateLabelStep,
-  ImageStep,
   SequenceFileStep,
   GeneListStep,
   MiscellaneousStep
 ]
 
 const MAIN_STEPS = STEPS.slice(0, 4)
-const SUPPLEMENTAL_STEPS = STEPS.slice(4, 11)
+const SUPPLEMENTAL_STEPS = STEPS.slice(4)
 
 
 /** shows the upload wizard */
 export function RawUploadWizard({ studyAccession, name }) {
+  const [serverState, setServerState] = useState(null)
+  const [formState, setFormState] = useState(null)
+
+  const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
+
+  if (allowReferenceImageUpload && !STEPS.includes(ImageStep)) {
+    STEPS.splice(5, 0, ImageStep)
+    SUPPLEMENTAL_STEPS.splice(1, 0, ImageStep)
+  }
+
   const routerLocation = useLocation()
   const queryParams = queryString.parse(routerLocation.search)
   let currentStepIndex = STEPS.findIndex(step => step.name === queryParams.tab)
@@ -65,8 +74,6 @@ export function RawUploadWizard({ studyAccession, name }) {
   }
   const currentStep = STEPS[currentStepIndex]
 
-  const [serverState, setServerState] = useState(null)
-  const [formState, setFormState] = useState(null)
 
   // go through the files and compute any relevant derived properties, notably 'isDirty'
   if (serverState?.files && formState?.files) {
