@@ -134,7 +134,7 @@ describe('Client-side file validation', () => {
   it('catches row with wrong number of columns in sparse matrix file', async () => {
     const file = createMockFile({
       fileName: 'foo6.mtx',
-      content: '%%MatrixMarket matrix coordinate integer general\n4 8 9\n4 3 0\n4 1'
+      content: '%%MatrixMarket matrix coordinate integer general\n%\n4 8 9\n4 3 0\n4 1'
     })
     const { errors } = await validateFileContent(file, 'MM Coordinate Matrix')
     expect(errors).toHaveLength(1)
@@ -144,7 +144,7 @@ describe('Client-side file validation', () => {
   it('catches missing header string in sparse matrix file', async () => {
     const file = createMockFile({
       fileName: 'foo9.mtx',
-      content: '%%MMahrket matrix coordinate integer general\n4 8 9\n4 3 0\n4 1 2'
+      content: '%%MMahrket matrix coordinate integer general\n%\n4 8 9\n4 3 0\n4 1 2'
     })
     const { errors } = await validateFileContent(file, 'MM Coordinate Matrix')
     expect(errors).toHaveLength(1)
@@ -154,7 +154,7 @@ describe('Client-side file validation', () => {
   it('catches empty row in sparse matrix file', async () => {
     const file = createMockFile({
       fileName: 'fo06.mtx',
-      content: '%%MatrixMarket matrix coordinate integer general\n\n\n4 1 0'
+      content: '%%MatrixMarket matrix coordinate integer general\n%\n\n\n4 1 0'
     })
     const { errors } = await validateFileContent(file, 'MM Coordinate Matrix')
     expect(errors).toHaveLength(1)
@@ -164,7 +164,7 @@ describe('Client-side file validation', () => {
   it('reports no error with sparse matrix file that has rows with trailing whitespace', async () => {
     const file = createMockFile({
       fileName: 'fo06.mtx',
-      content: '%%MatrixMarket matrix coordinate integer general\n4 8 9  \n4 8 9   \n4 1 0'
+      content: '%%MatrixMarket matrix coordinate integer general\n%\n4 8 9  \n4 8 9   \n4 1 0'
     })
     const { errors } = await validateFileContent(file, 'MM Coordinate Matrix')
     expect(errors).toHaveLength(0)
