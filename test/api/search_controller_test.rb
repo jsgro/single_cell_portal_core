@@ -25,6 +25,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
                                name_prefix: "Search Testing Study #{@random_seed}",
                                public: true,
                                user: @user,
+                               initialized: true,
                                test_array: @@studies_to_clean)
     FactoryBot.create(:metadata_file, name: 'metadata.txt', study: @study, use_metadata_convention: true)
     seed_example_bq_data(@study)
@@ -33,6 +34,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
                                      name_prefix: "API Test Study #{@random_seed}",
                                      public: true,
                                      user: @other_user,
+                                     initialized: false,
                                      test_array: @@studies_to_clean)
     [@study, @other_study].each do |study|
       detail = study.build_study_detail
@@ -409,5 +411,12 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     sanitized_filter = Api::V1::SearchController.sanitize_filter_value("10X 3' v3")
     expected_value = "10X 3\\' v3"
     assert_equal expected_value, sanitized_filter
+  end
+
+  test 'should return initialized studies first in empty search' do
+    execute_http_request(:get, api_v1_search_path(type: 'study'))
+    assert_response :success
+    first_study = json['studies'].first['accession']
+    assert_equal @study.accession, first_study
   end
 end

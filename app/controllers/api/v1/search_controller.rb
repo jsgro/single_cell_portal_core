@@ -303,8 +303,10 @@ module Api
         when :popular
           @studies = @studies.sort_by(&:view_count).reverse
         else
-          # we have sort_type of :none, so preserve original ordering of :view_order
-          @studies = @studies.sort_by(&:view_order)
+          # we have sort_type of :none, so order by most recent initialized studies
+          # in order to sort by multiple attributes, use array notation to indicate which attribute to sort by first
+          # boolean values must be converted to an integer in order for this to work
+          @studies = @studies.sort_by { |study| [study.initialized? ? 1 : 0, study.created_at] }.reverse
         end
 
         # save list of study accessions for bulk_download/bulk_download_size calls, in order of results
