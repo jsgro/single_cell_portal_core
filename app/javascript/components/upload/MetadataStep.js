@@ -37,7 +37,7 @@ function MetadataForm({
   bucketName
 }) {
   const userState = useContext(UserContext)
-  const featureFlagState = userState.featureFlagsWithDefaults
+  const featureFlagState = serverState.feature_flags
   const conventionRequired = featureFlagState && featureFlagState.convention_required
 
   const file = formState.files.find(metadataFileFilter)

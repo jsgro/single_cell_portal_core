@@ -1,15 +1,25 @@
-require "test_helper"
+require 'test_helper'
 
 class SummaryStatsUtilsTest < ActiveSupport::TestCase
-  include ::SelfCleaningSuite
-  include ::TestInstrumentor
 
-  def setup
+  before(:all) do
     @now = DateTime.now
     @today = Time.zone.today
     @one_week_ago = @today - 1.week
     @one_month_ago = @today - 1.month
-    @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
+    # create some users
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    FactoryBot.create(:user, test_array: @@users_to_clean)
+    FactoryBot.create(:api_user, test_array: @@users_to_clean)
+    # create testing study with file in the bucket
+    @study = FactoryBot.create(:study,
+                               name_prefix: 'SummaryStatsUtils Study',
+                               public: true,
+                               user: @user,
+                               test_array: @@studies_to_clean,
+                               predefined_file_types: %w[cluster])
+    DirectoryListing.create!(name: 'csvs', file_type: 'csv', files: [{name: 'foo.csv', size: 100, generation: '12345'}],
+                             sync_status: true, study: @study)
   end
 
   test 'should get user counts' do
@@ -28,8 +38,6 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
   end
 
   test 'should get analysis submission counts' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     # manually insert a submission to check
     AnalysisSubmission.create!(submitter: User.first.email, submission_id: SecureRandom.uuid, analysis_name: 'test-analysis',
                                submitted_on: @now, firecloud_project: FireCloudClient::PORTAL_NAMESPACE,
@@ -43,8 +51,6 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
 
     # clean up
     AnalysisSubmission.destroy_all
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 
   test 'should get study creation counts' do
@@ -58,16 +64,12 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
   end
 
   test 'should verify all remote files' do
-    # from db/seeds.rb, we should have at least one missing file from the DirectoryListing called "csvs"
-    # there is a file called 'foo.csv' that is never created or uploaded to the bucket
-    # this DirectoryListing belongs to the API Test Study from db/seeds.rb
-    api_study = Study.find_by(name: "API Test Study #{@random_seed}")
     files_missing = SummaryStatsUtils.storage_sanity_check
     missing_csv = files_missing.detect {|entry| entry[:filename] == 'foo.csv'}
-    reason = "File missing from bucket: #{api_study.bucket_id}"
+    reason = "File missing from bucket: #{@study.bucket_id}"
     assert missing_csv.present?, "Did not find expected missing file of 'foo.csv'"
-    assert missing_csv[:study] == api_study.name
-    assert missing_csv[:owner] == api_study.user.email
+    assert missing_csv[:study] == @study.name
+    assert missing_csv[:owner] == @study.user.email
     assert missing_csv[:reason] == reason
   end
 
@@ -94,14 +96,20 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
   end
 
   test 'should get Study creation stats' do
-    new_study = FactoryBot.create(:detached_study, name_prefix: 'creation history stats', test_array: @@studies_to_clean)
+    new_study = FactoryBot.create(:detached_study,
+                                  name_prefix: 'creation history stats',
+                                  user: @user,
+                                  test_array: @@studies_to_clean)
     created_studies_info = SummaryStatsUtils.created_studies_info
     created_titles = created_studies_info.map{|creation| creation[:title]}
     assert created_titles.include?(new_study.name)
   end
 
   test 'should get Study deletion stats' do
-    new_study = FactoryBot.create(:detached_study, name_prefix: 'deletion history stats', test_array: @@studies_to_clean)
+    new_study = FactoryBot.create(:detached_study,
+                                  name_prefix: 'deletion history stats',
+                                  user: @user,
+                                  test_array: @@studies_to_clean)
     new_study.destroy
     deleted_studies_info = SummaryStatsUtils.deleted_studies_info
     titles = deleted_studies_info.map{|deletion| deletion[:title]}
@@ -109,7 +117,11 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
   end
 
   test 'should get Study update stats' do
-    new_study = FactoryBot.create(:detached_study, name_prefix: 'update history stats', public: false, test_array: @@studies_to_clean)
+    new_study = FactoryBot.create(:detached_study,
+                                  name_prefix: 'update history stats',
+                                  public: false,
+                                  user: @user,
+                                  test_array: @@studies_to_clean)
     new_study.update(public: true)
     cluster_file = FactoryBot.create(:cluster_file, name: 'clusterA.txt', study: new_study)
     cluster_file.update(description: 'test cluster file')
@@ -130,7 +142,10 @@ class SummaryStatsUtilsTest < ActiveSupport::TestCase
     assert_equal studies.count, stats[:all]
     assert_equal existing_public, stats[:public]
     assert_equal existing_compliant, stats[:compliant]
-    new_study = FactoryBot.create(:detached_study, name_prefix: 'public compliant stats', test_array: @@studies_to_clean)
+    new_study = FactoryBot.create(:detached_study,
+                                  name_prefix: 'public compliant stats',
+                                  user: @user,
+                                  test_array: @@studies_to_clean)
     FactoryBot.create(:metadata_file, name: 'compliant.txt', study: new_study, use_metadata_convention: true)
     updated_stats = SummaryStatsUtils.study_counts
     updated_studies = studies.count

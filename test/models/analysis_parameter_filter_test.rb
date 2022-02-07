@@ -1,13 +1,21 @@
-require "test_helper"
+require 'test_helper'
 
 class AnalysisParameterFilterTest < ActiveSupport::TestCase
-  def setup
-    @analysis_configuration = AnalysisConfiguration.first
+
+  before(:all) do
+    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
+    @analysis_configuration = AnalysisConfiguration.create(
+      namespace: 'single-cell-portal', name: 'split-cluster', snapshot: 1, user: @user,
+      configuration_namespace: 'single-cell-portal', configuration_name: 'split-cluster', configuration_snapshot: 2,
+      description: 'This is a test description.'
+    )
+  end
+
+  after(:all) do
+    AnalysisConfiguration.destroy_all
   end
 
   test 'should validate filter values' do
-    puts "#{File.basename(__FILE__)}: #{self.method_name}"
-
     input_parameter = @analysis_configuration.analysis_parameters.inputs.first
     param_filter = input_parameter.analysis_parameter_filters.build
 
@@ -22,7 +30,5 @@ class AnalysisParameterFilterTest < ActiveSupport::TestCase
     refute param_filter.valid?, 'Should not validate filter if multiple_values is blank with multiple = true'
     param_filter.multiple_values = %w(Cluster Metadata)
     assert param_filter.valid?, 'Should validate filter with multiple = true & multiple_values present'
-
-    puts "#{File.basename(__FILE__)}: #{self.method_name} successful!"
   end
 end

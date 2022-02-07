@@ -1,20 +1,26 @@
 /** @fileoverview Mock responses for scatter plot tests */
 
 export const BASIC_PLOT_DATA = {
-  axes: {
-    aspects: null,
-    titles: {
-      magnitude: 'Expression',
-      x: 'X',
-      y: 'Y',
-      z: 'Z'
-    }
-  },
   scatter: {
     annotParams: {
       name: 'Category',
       type: 'group',
       scope: 'cluster'
+    },
+    axes: {
+      aspects: null,
+      titles: {
+        magnitude: 'Expression',
+        x: 'X',
+        y: 'Y',
+        z: 'Z'
+      }
+    },
+    data: {
+      x: [1, 2, 3, 4, 5, 6, 7, 8],
+      y: [1, 2, 3, 4, 5, 6, 7, 8],
+      cells: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+      annotations: ['s1', 's1', 's1', 's1', 's2', 's2', 's1', 's2']
     },
     genes: ['foo']
   },
@@ -27,12 +33,8 @@ export const BASIC_PLOT_DATA = {
   is3d: false,
   annotType: 'group',
   annotName: 'biosample_id',
-  data: {
-    x: [1, 2, 3, 4, 5, 6, 7, 8],
-    y: [1, 2, 3, 4, 5, 6, 7, 8],
-    cells: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-    annotations: ['s1', 's1', 's1', 's1', 's2', 's2', 's1', 's2']
-  }
+  clusterFileId: 'aaaaaaa1111112222234344',
+  customColors: {}
 }
 
 /**
@@ -257,8 +259,11 @@ export const MANY_LABELS_MOCKS = {
     imageFiles: [],
     clusterPointAlpha: 1,
     colorProfile: null,
-    bucketId: 'fc-968ec9be-fdba-49a1-ba2e-af49281c4a1d'
+    bucketId: 'fc-968ec9be-fdba-49a1-ba2e-af49281c4a1d',
+    clusterFileId: 'aaaaaaa1111112222234344',
+    customColors: {}
   },
+
   CLUSTER_RESPONSE: {
     data: {
       annotations: [
@@ -852,6 +857,8 @@ export const MANY_LABELS_MOCKS = {
       identifier: 'Category--group--cluster'
     },
     subsample: 'all',
-    consensus: null
+    consensus: null,
+    clusterFileId: 'aaaaaaa1111112222234344',
+    customColors: {}
   }
 }

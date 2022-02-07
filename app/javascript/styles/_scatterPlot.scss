@@ -60,7 +60,13 @@
   height: 29px;
   margin: 0 10px 0 -1px;
   float: left;
-  border-radius: 2px 0 0 2px
+  border-radius: 2px 0 0 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  svg {
+    color: #fff;
+  }
 }
 
 .scatter-legend-entry {

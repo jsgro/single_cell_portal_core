@@ -305,6 +305,11 @@ module Api
         if safe_file_params[:upload] && safe_file_params[:upload_file_name]
           safe_file_params[:upload].original_filename = safe_file_params[:upload_file_name]
         end
+        if safe_file_params[:custom_color_updates]
+          parsed_update = JSON.parse(safe_file_params[:custom_color_updates])
+          safe_file_params['cluster_file_info'] = {custom_colors: ClusterFileInfo.merge_color_updates(study_file, parsed_update)}
+          safe_file_params.delete(:custom_color_updates)
+        end
 
         # manually check first if species/assembly was supplied by name
         species_name = safe_file_params[:species]
@@ -399,6 +404,8 @@ module Api
           if study_file.parseable?
             FileParseService.run_parse_job(@study_file, @study, current_api_user)
           else
+            # make sure we bundle non-parseable files if appropriate
+            FileParseService.create_bundle_from_file_options(study_file, @study)
             @study.delay.send_to_firecloud(study_file) # send data to FireCloud if upload was performed
           end
         end
@@ -658,7 +665,7 @@ module Api
                                            :description, :is_spatial, :file_type, :status, :human_fastq_url, :human_data, :use_metadata_convention,
                                            :cluster_type, :generation, :x_axis_label, :y_axis_label, :z_axis_label, :x_axis_min,
                                            :x_axis_max, :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :species, :assembly,
-                                           :parse_on_upload, spatial_cluster_associations: [],
+                                           :parse_on_upload, :custom_color_updates, spatial_cluster_associations: [],
                                            options: [:cluster_group_id, :font_family, :font_size, :font_color, :matrix_id,
                                                      :submission_id, :bam_id, :analysis_name, :visualization_name, :cluster_name,
                                                      :annotation_name, :cluster_file_id],

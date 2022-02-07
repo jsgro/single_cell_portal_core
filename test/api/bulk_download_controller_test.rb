@@ -2,15 +2,9 @@ require 'api_test_helper'
 require 'test_helper'
 require 'user_tokens_helper'
 require 'bulk_download_helper'
+require 'includes_helper'
 
 class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Requests::JsonHelpers
-  include Requests::HttpHelpers
-  include Minitest::Hooks
-  include ::SelfCleaningSuite
-  include TestInstrumentor
-
 
   SYNTH_STUDY_FOLDER = 'mouse_brain' # use the mouse_Brain study as it has all file types including genomic
 
@@ -18,7 +12,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @taxon = Taxon.find_or_create_by!(common_name: 'mouse_fake1',
                            scientific_name: 'Mus musculusfake1',
-                           user: User.first,
+                           user: @user,
                            ncbi_taxid: 100901,
                            notes: 'fake mouse taxon 1 for testing')
     @genome_assembly = GenomeAssembly.find_or_create_by!(name: "GRCm38",
@@ -71,6 +65,9 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
 
   teardown do
     OmniAuth.config.mock_auth[:google_oauth2] = nil
+  end
+
+  after(:all) do
     @taxon.destroy
   end
 
@@ -145,10 +142,15 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
                               public: false,
                               user: @user,
                               test_array: @@studies_to_clean)
-    file_types = %w[csv xlsx]
-    file_types.each do |file_type|
-      files = 1.upto(5).map { |i| "#{file_type}/file_#{i}.#{file_type}" }
-      file_list = files.map { |file| { generation: 12345, name: file, size: 100 }.with_indifferent_access }
+    @files = {
+      csv: [ "csv/file_1.csv" ],
+      xlsx: [ "xlsx/file_2.xlsx" ]
+    }
+    # single directory test
+    @files.each do |file_type, files|
+      file_list = files.map do |file|
+        { generation: (SecureRandom.rand * 100000).floor, name: file, size: 100 }.with_indifferent_access
+      end
       directory = DirectoryListing.create!(study: study, file_type: file_type, name: file_type,
                                            files: file_list, sync_status: true)
       assert directory.persisted?
@@ -157,7 +159,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
       auth_code = json['auth_code']
       mock = Minitest::Mock.new
       files.each do |file|
-        mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/#{file_type}/#{file}"
+        mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/#{file}"
         mock.expect :execute_gcloud_method, mock_signed_url,
                     [:generate_signed_url, 0, study.bucket_id, file, { expires: 1.day.to_i }]
       end
@@ -167,8 +169,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
                                auth_code: auth_code,
                                accessions: [study.accession],
                                directory: "#{file_type}--#{file_type}"
-                             )
-        )
+                             ))
         assert_response :success
         mock.verify
         files.each do |file|
@@ -176,32 +177,29 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
         end
       end
     end
+    # all directories test
     execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
     assert_response :success
     auth_code = json['auth_code']
-    mock = Minitest::Mock.new
-    file_types.each do |file_type|
-      files = 1.upto(5).map { |i| "#{file_type}/file_#{i}.#{file_type}" }
-      files.each do |file|
-        mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/#{file_type}/#{file}"
-        mock.expect :execute_gcloud_method, mock_signed_url,
-                    [:generate_signed_url, 0, study.bucket_id, file, { expires: 1.day.to_i }]
+    all_dirs_mock = Minitest::Mock.new
+    @files.each do |_, dir_files|
+      dir_files.each do |file|
+        mock_signed_url = "https://www.googleapis.com/storage/v1/b/#{study.bucket_id}/#{file}"
+        all_dirs_mock.expect :execute_gcloud_method, mock_signed_url,
+                             [:generate_signed_url, 0, study.bucket_id, file, { expires: 1.day.to_i }]
       end
     end
-    FireCloudClient.stub :new, mock do
+    FireCloudClient.stub :new, all_dirs_mock do
       execute_http_request(:get,
                            api_v1_bulk_download_generate_curl_config_path(
                              auth_code: auth_code,
                              accessions: [study.accession],
                              directory: 'all'
-                           )
-      )
+                           ))
       assert_response :success
-      mock.verify
-      file_types.each do |file_type|
-        1.upto(5).each do |i|
-          assert json.include? "#{file_type}/file_#{i}.#{file_type}"
-        end
+      all_dirs_mock.verify
+      @files.values.flatten.each do |file|
+        assert json.include? file
       end
     end
   end
@@ -305,6 +303,76 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test 'should ignore empty/missing Azul entries' do
+    hca_project_id = SecureRandom.uuid
+    payload = {
+      file_ids: [@basic_study_metadata_file.id.to_s],
+      azul_files: {
+        FakeHCAStudy1: [
+          {
+            source: 'hca',
+            count: 1,
+            upload_file_size: 10.megabytes,
+            file_format: 'loom',
+            file_type: 'analysis_file',
+            accession: 'FakeHCAStudy1',
+            project_id: hca_project_id
+          }
+        ],
+        FakeHcaStudy2: []
+      }
+    }
+    execute_http_request(:post, api_v1_bulk_download_auth_code_path, request_payload: payload, user: @user)
+    assert_response :success
+
+    download_id = json['download_id']
+    download_request = DownloadRequest.find(download_id)
+    assert download_request.present?
+    azul_files = download_request.azul_files
+    assert azul_files.keys.include?('FakeHCAStudy1')
+    assert_not azul_files.keys.include?('FakeHCAStudy2')
+  end
+
+  test 'should complete download request for HCA projects w/o analysis/sequence files' do
+    hca_project_id = SecureRandom.uuid
+    payload = {
+      file_ids: [],
+      azul_files: {
+        FakeHCAStudy1: [
+          {
+            count: 1,
+            upload_file_size: 1.megabyte,
+            file_type: 'Project Manifest',
+            project_id: hca_project_id,
+            name: 'FakeHCAStudy1.tsv'
+          }
+        ]
+      }
+    }
+    execute_http_request(:post, api_v1_bulk_download_auth_code_path, request_payload: payload, user: @user)
+    assert_response :success
+    download_id = json['download_id']
+    auth_code = json['auth_code']
+    mock = Minitest::Mock.new
+    manifest_info = {
+      Status: 302,
+      Location: 'https://service.azul.data.humancellatlas.org/manifest/files?catalog=dcp12&format=compact&' \
+                "filters=%7B%22projectId%22%3A+%7B%22is%22%3A+%5B%22#{hca_project_id}%22%5D%7D%7D&objectKey=" \
+                'manifests%2FFakeHCAStudy1.tsv'
+    }.with_indifferent_access
+    mock.expect :project_manifest_link, manifest_info, [hca_project_id]
+    ApplicationController.stub :hca_azul_client, mock do
+      execute_http_request(:get,
+                           api_v1_bulk_download_generate_curl_config_path(
+                             auth_code: auth_code, download_id: download_id
+                           ),
+                           user: @user)
+      assert_response :success
+      mock.verify
+      assert json.include? manifest_info[:Location]
+    end
+  end
+
   test 'should extract accessions from parameters' do
     study = FactoryBot.create(:detached_study,
                               name_prefix: 'Accession Test',
@@ -314,7 +382,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     accessions = [@basic_study.accession, 'FakeHCAProject', study.accession, 'AnotherFakeHCAProject']
     scp_accessions = Api::V1::BulkDownloadController.find_matching_accessions(accessions)
     hca_accessions = Api::V1::BulkDownloadController.extract_hca_accessions(accessions)
-    assert_equal [@basic_study.accession, study.accession], scp_accessions
-    assert_equal %w[FakeHCAProject AnotherFakeHCAProject], hca_accessions
+    assert_equal [@basic_study.accession, study.accession].sort, scp_accessions.sort
+    assert_equal %w[FakeHCAProject AnotherFakeHCAProject].sort, hca_accessions.sort
   end
 end

@@ -2,13 +2,12 @@ require 'test_helper'
 
 class IngestJobTest < ActiveSupport::TestCase
 
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
-
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @basic_study = FactoryBot.create(:detached_study, name_prefix: 'IngestJob Test', test_array: @@studies_to_clean)
+    @basic_study = FactoryBot.create(:detached_study,
+                                     name_prefix: 'IngestJob Test',
+                                     user: @user,
+                                     test_array: @@studies_to_clean)
 
     @basic_study_exp_file = FactoryBot.create(:study_file,
                                               name: 'dense.txt',

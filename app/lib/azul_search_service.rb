@@ -80,6 +80,8 @@ class AzulSearchService
   def self.get_facet_matches(result, facets)
     results_info = {}
     facets.each do |facet|
+      next if facet[:keyword_conversion]
+
       facet_name = facet[:id]
       RESULT_FACET_FIELDS.each do |result_field|
         azul_name = FacetNameConverter.convert_schema_column(:alexandria, :azul, facet_name)
@@ -137,10 +139,12 @@ class AzulSearchService
   def self.merge_facet_lists(*facet_lists)
     all_facets = {}
     facet_lists.compact.each do |facet_list|
-      facet_list.each do |facet|
+      # filter 'converted' facet matches so we don't show match badges in the UI
+      facet_list.reject { |facet| facet[:keyword_conversion] }.each do |facet|
         facet_identifier = facet[:id]
         all_facets[facet_identifier] ||= facet
-        next if facet[:filters].is_a? Hash # this is a numeric facet, and we only have one right now
+        # this is a numeric facet, and we only have one right now
+        next if facet[:filters].is_a? Hash
 
         facet[:filters].each do |f|
           all_facets[facet_identifier][:filters] << f unless all_facets.dig(facet_identifier, :filters).include? f
@@ -180,24 +184,38 @@ class AzulSearchService
         upload_file_size: file_summary['totalSize'],
         file_format: file_summary['format'],
         accession: short_name,
-        project_id: project_id
+        project_id: project_id,
+        is_intermediate: file_summary['isIntermediate']
       }
       content = file_summary['contentDescription']
+      assigned_file_type = 'other'
       case content
       when /Matrix/
-        file_info[:file_type] = 'analysis_file'
+        assigned_file_type = is_analysis_file(file_summary) ? 'analysis_file' : 'contributed_analysis_file'
       when /Sequence/
-        file_info[:file_type] = 'sequence_file'
+        assigned_file_type = 'sequence_file'
       else
         # fallback to guess file_type by extension
         FILE_EXT_BY_DOWNLOAD_TYPE.each_pair do |file_type, extensions|
           if extensions.include? file_summary['format']
-            file_info[:file_type] = file_type
+            if file_type == 'analysis_file' && !is_analysis_file(file_summary)
+              assigned_file_type = 'contributed_analysis_file'
+            else
+              assigned_file_type = file_type
+            end
           end
         end
       end
+      file_info[:file_type] = assigned_file_type
       file_info.with_indifferent_access
     end
+  end
+
+  # see SCP-3982 for the criteria for what we want to treat as the analyis files proper
+  def self.is_analysis_file(file_summary)
+    file_summary['isIntermediate'] == false &&
+      file_summary['fileSource'].include?('DCP/2 Analysis') &&
+      file_summary['format'] == 'loom'
   end
 
   # query Azul with project shortnames and return summary file information

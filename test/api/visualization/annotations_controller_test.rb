@@ -1,13 +1,8 @@
 require 'test_helper'
 require 'api_test_helper'
+require 'includes_helper'
 
 class AnnotationsControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Requests::JsonHelpers
-  include Requests::HttpHelpers
-  include Minitest::Hooks
-  include ::SelfCleaningSuite
-  include ::TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
@@ -86,7 +81,10 @@ class AnnotationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'index should return list of annotations' do
-    empty_study = FactoryBot.create(:detached_study, name_prefix: 'Empty Annotation Study', test_array: @@studies_to_clean)
+    empty_study = FactoryBot.create(:detached_study,
+                                    user: @user,
+                                    name_prefix: 'Empty Annotation Study',
+                                    test_array: @@studies_to_clean)
     sign_in_and_update @user
     execute_http_request(:get, api_v1_study_annotations_path(@basic_study))
     assert_equal 3, json.length

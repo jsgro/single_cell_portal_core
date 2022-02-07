@@ -1,11 +1,8 @@
 require 'test_helper'
 require 'integration_test_helper'
+require 'includes_helper'
 
 class FeatureFlagOptionsControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Minitest::Hooks
-  include ::SelfCleaningSuite
-  include ::TestInstrumentor
 
   before(:all) do
     @admin = FactoryBot.create(:admin_user, test_array: @@users_to_clean)

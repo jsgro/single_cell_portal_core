@@ -14,7 +14,7 @@ describe('Client-side file validation', () => {
     const fileType = 'Metadata'
 
     const fakeLog = jest.spyOn(MetricsApi, 'log')
-    fakeLog.mockImplementation(() => {})
+    fakeLog.mockImplementation(() => { })
 
     const expectedSummary = 'Your file had 1 error'
 
@@ -76,19 +76,109 @@ describe('Client-side file validation', () => {
     })
     const { errors } = await validateFileContent(file, 'Cluster')
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('duplicate:cells-within-file')
+    expect(errors[0][1]).toEqual('content:duplicate:cells-within-file')
     expect(errors[0][2]).toEqual('Cell names must be unique within a file. 1 duplicate found, including: CELL_0001')
+  })
+
+  it('catches duplicate cell names in expression matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo1.csv',
+      content: 'GENE,X,Y\nItm2a,0,5\nEif2b2,3,0\nEif2b2,1,9'
+    })
+    const { errors } = await validateFileContent(file, 'Expression Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('content:duplicate:cells-within-file')
   })
 
   it('catches missing headers in metadata file', async () => {
     const file = createMockFile({
-      fileName: 'foo.txt',
+      fileName: 'foo2.txt',
       content: 'NAME,biosample_id,CellID\nTYPE,numeric,numeric\nCELL_0001,id1,cell1'
     })
     const { errors } = await validateFileContent(file, 'Metadata', { use_metadata_convention: true })
     expect(errors).toHaveLength(1)
     expect(errors[0][1]).toEqual('format:cap:metadata-missing-column')
     expect(errors[0][2]).toContain(REQUIRED_CONVENTION_COLUMNS.slice(2).join(', '))
+  })
+
+  it('catches missing GENE header in expression matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo4.txt',
+      content: 'IS_NOT_GENE,X,Y\nItm2a,0,5\nEif2b2,3,0\nPf2b2,1,9'
+    })
+    const { errors } = await validateFileContent(file, 'Expression Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:cap:missing-gene-column')
+  })
+
+  it('catches non-numeric entry in expression matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo5.csv',
+      content: 'GENE,X,Y\nItm2a,p,5\nEif2b2,3,0\nPf2b2,1,9'
+    })
+    const { errors } = await validateFileContent(file, 'Expression Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('content:invalid-type:not-numeric')
+  })
+
+  it('catches row with wrong number of columns in expression matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo6.csv',
+      content: 'GENE,X,Y\nItm2a,8,9\nEif2b2,3,0\nPf2b2,1'
+    })
+    const { errors } = await validateFileContent(file, 'Expression Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:mismatch-column-number')
+  })
+
+  it('catches row with wrong number of columns in sparse matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo6.mtx',
+      content: '%%MatrixMarket matrix coordinate integer general\n4 8 9\n4 3 0\n4 1'
+    })
+    const { errors } = await validateFileContent(file, 'MM Coordinate Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:mismatch-column-number')
+  })
+
+  it('catches missing header string in sparse matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo9.mtx',
+      content: '%%MMahrket matrix coordinate integer general\n4 8 9\n4 3 0\n4 1 2'
+    })
+    const { errors } = await validateFileContent(file, 'MM Coordinate Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:cap:missing-mtx-value')
+  })
+
+  it('catches empty row in sparse matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'fo06.mtx',
+      content: '%%MatrixMarket matrix coordinate integer general\n\n\n4 1 0'
+    })
+    const { errors } = await validateFileContent(file, 'MM Coordinate Matrix')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:empty-row')
+  })
+
+  it('catches duplicate row values in barcodes file', async () => {
+    const file = createMockFile({
+      fileName: 'foo6.tsv',
+      content: 'fake000\nfake001\nfake002\nfake000'
+    })
+    const { errors } = await validateFileContent(file, '10X Barcodes File')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('content:duplicate:values-within-file')
+  })
+
+  it('catches duplicate row values in features file', async () => {
+    const file = createMockFile({
+      fileName: 'foo6.tsv',
+      content: 'fake000\tboo\nfake001\tboo\nfake002\tbarr\nfake000\tboo'
+    })
+    const { errors } = await validateFileContent(file, '10X Genes File')
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('content:duplicate:values-within-file')
   })
 
   it('allows missing headers in metadata file if convention not used ', async () => {
@@ -107,7 +197,7 @@ describe('Client-side file validation', () => {
     })
     const { errors } = await validateFileContent(file, 'Metadata', { use_metadata_convention: false })
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('content:metadata:mismatched-id-label')
+    expect(errors[0][1]).toEqual('ontology:multiply-assigned-label')
     expect(errors[0][2]).toContain('Homo sapiens')
     expect(errors[0][2]).toContain('species')
   })

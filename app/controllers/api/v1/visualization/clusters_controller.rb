@@ -129,19 +129,19 @@ module Api
           if params[:cluster_name] == '_default' || params[:cluster_name].empty?
             cluster = @study.default_cluster
             if cluster.nil?
-              render json: {error: 'No default cluster exists'}, status: 404 and return
+              render json: { error: 'No default cluster exists' }, status: 404 and return
             end
           else
             cluster_name = params[:cluster_name]
             cluster = @study.cluster_groups.find_by(name: cluster_name)
             if cluster.nil?
-              render json: {error: "No cluster named #{cluster_name} could be found"}, status: 404 and return
+              render json: { error: "No cluster named #{cluster_name} could be found"}, status: 404 and return
             end
           end
           begin
             viz_data = self.class.get_cluster_viz_data(@study, cluster, params)
           rescue ArgumentError => e
-            render json: {error: e.message}, status: 404 and return
+            render json: { error: e.message }, status: 404 and return
           end
           render json: viz_data
         end
@@ -235,27 +235,31 @@ module Api
           }
 
           coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(cluster)
+          custom_colors = cluster.study_file.cluster_file_info&.custom_colors || {}
+          custom_annotation_colors = custom_colors[annotation[:name]] || {}
           {
-            "data": plot_data,
-            "pointSize": study.default_cluster_point_size,
-            "userSpecifiedRanges": cluster.domain_ranges,
-            "showClusterPointBorders": study.show_cluster_point_borders?,
-            "description": cluster.study_file.description,
-            "is3D": cluster.is_3d?,
-            "isSubsampled": cluster.subsampled?,
-            "isAnnotatedScatter": is_annotated_scatter,
-            "isCorrelatedScatter": is_correlated_scatter,
-            "isSpatial": cluster.study_file.is_spatial,
-            "numPoints": cluster.points,
-            "axes": axes_full,
-            "hasCoordinateLabels": cluster.has_coordinate_labels?,
-            "coordinateLabels": coordinate_labels,
-            "pointAlpha": study.default_cluster_point_alpha,
-            "cluster": cluster.name,
-            "genes": genes.map {|g| g['name']},
-            "annotParams": annotation,
-            "subsample": subsample.nil? ? 'all' : subsample,
-            "consensus": consensus
+            data: plot_data,
+            pointSize: study.default_cluster_point_size,
+            userSpecifiedRanges: cluster.domain_ranges,
+            showClusterPointBorders: study.show_cluster_point_borders?,
+            description: cluster.study_file.description,
+            is3D: cluster.is_3d?,
+            isSubsampled: cluster.subsampled?,
+            isAnnotatedScatter: is_annotated_scatter,
+            isCorrelatedScatter: is_correlated_scatter,
+            isSpatial: cluster.study_file.is_spatial,
+            numPoints: cluster.points,
+            axes: axes_full,
+            hasCoordinateLabels: cluster.has_coordinate_labels?,
+            coordinateLabels: coordinate_labels,
+            pointAlpha: study.default_cluster_point_alpha,
+            cluster: cluster.name,
+            genes: genes.map {|g| g['name']},
+            annotParams: annotation,
+            subsample: subsample.nil? ? 'all' : subsample,
+            consensus: consensus,
+            customColors: custom_annotation_colors,
+            clusterFileId: cluster.study_file_id.to_s
           }
         end
 

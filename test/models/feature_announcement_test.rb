@@ -1,9 +1,6 @@
 require 'test_helper'
 
 class FeatureAnnouncementTest< ActiveSupport::TestCase
-  include Minitest::Hooks
-  include TestInstrumentor
-  include SelfCleaningSuite
 
   before(:all) do
     @feature_announcement = FeatureAnnouncement.create(

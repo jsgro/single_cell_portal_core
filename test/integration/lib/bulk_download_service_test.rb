@@ -3,13 +3,22 @@ require 'csv'
 require 'bulk_download_helper'
 
 class BulkDownloadServiceTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include TestInstrumentor
 
-  def setup
-    @user = User.find_by(email: 'testing.user.2@gmail.com')
-    @random_seed = File.open(Rails.root.join('.random_seed')).read.strip
-    @study = Study.find_by(name: "Testing Study #{@random_seed}")
+  before(:all) do
+    @user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    @study = FactoryBot.create(:study,
+                               name_prefix: 'BulkDownload Study',
+                               public: true,
+                               user: @user,
+                               test_array: @@studies_to_clean,
+                               predefined_file_types: %w[cluster metadata expression])
+    DirectoryListing.create!(name: 'fastq', file_type: 'fastq',
+                             files: [
+                               { name: '1_L1_001.fastq', size: 100, generation: '12345' },
+                               { name: '1_R1_001.fastq', size: 100, generation: '12345' },
+                               { name: '2_L1_001.fastq', size: 100, generation: '12345' },
+                               { name: '2_R1_001.fastq', size: 100, generation: '12345' },
+                             ], sync_status: true, study: @study)
   end
 
   test 'should update user download quota' do
@@ -93,7 +102,11 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     # mock call to GCS
     mock = Minitest::Mock.new
     mock.expect :execute_gcloud_method, signed_url, [:generate_signed_url, Integer, String, String, Hash]
-    mock.expect :execute_gcloud_method, dir_signed_url, [:generate_signed_url, Integer, String, String, Hash]
+    directory.files.each do |directory_file|
+      url = "https://storage.googleapis.com/#{@study.bucket_id}/#{directory_file[:name]}"
+      mock.expect :execute_gcloud_method, url, [:generate_signed_url, Integer, String, String, Hash]
+    end
+
     FireCloudClient.stub :new, mock do
       configuration = BulkDownloadService.generate_curl_configuration(study_files: [study_file], user: @user,
                                                                       directory_files: directory_file_list,
@@ -105,6 +118,45 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
       assert configuration.include?(dir_signed_url), "Configuration does not include expected directory signed URL (#{dir_signed_url}): #{configuration}"
       assert configuration.include?(dir_output_path), "Configuration does not include expected directory output path (#{dir_output_path}): #{configuration}"
       assert configuration.include?(manifest_path), "Configuration does not include manifest link (#{manifest_path}): #{configuration}"
+    end
+  end
+
+  test 'should support Windows-formatted paths in output path map' do
+    study_file = @study.metadata_file
+    directory = @study.directory_listings.first
+    path_map = BulkDownloadService.generate_output_path_map([study_file], [directory], os: 'Windows')
+    path_map.values.each do |output_path|
+      assert output_path.match(%r{\\}).present?,
+             "#{output_path} did not match Windows-formatted paths: #{output_path}"
+      assert_not output_path.match(%r{/}).present?,
+                 "#{output_path} matched Mac OSX formatted path when it should not: #{output_path}"
+    end
+  end
+
+  test 'should support Windows-formatted paths in curl configuration' do
+    study_file = @study.metadata_file
+    os = 'Windows'
+    bucket_map = BulkDownloadService.generate_study_bucket_map([@study.accession])
+    path_map = BulkDownloadService.generate_output_path_map([study_file], [], os: os)
+    signed_url = "https://storage.googleapis.com/#{@study.bucket_id}/#{study_file.upload_file_name}"
+    output_path = study_file.bulk_download_pathname(os: os)
+    bad_output_path = study_file.bulk_download_pathname
+
+    # mock call to GCS
+    mock = Minitest::Mock.new
+    mock.expect :execute_gcloud_method, signed_url, [:generate_signed_url, Integer, String, String, Hash]
+
+    FireCloudClient.stub :new, mock do
+      configuration = BulkDownloadService.generate_curl_configuration(study_files: [study_file], user: @user,
+                                                                      directory_files: [],
+                                                                      study_bucket_map: bucket_map,
+                                                                      output_pathname_map: path_map,
+                                                                      os: os)
+      mock.verify
+      assert configuration.include?(signed_url), "Configuration does not include expected signed URL (#{signed_url}): #{configuration}"
+      assert configuration.include?(output_path), "Configuration does not include expected output path (#{output_path}): #{configuration}"
+      assert_not configuration.include?(bad_output_path),
+                 "Configuration should not include Mac OSX formatted output path (#{bad_output_path}): #{configuration}"
     end
   end
 
@@ -168,7 +220,10 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
   end
 
   test 'should generate study manifest file' do
-    study = FactoryBot.create(:detached_study, name_prefix: "#{self.method_name}")
+    study = FactoryBot.create(:detached_study,
+                              user: @user,
+                              name_prefix: 'Study Manifest Test',
+                              test_array: @@studies_to_clean,)
     FactoryBot.create(:study_file,
                       study: study, file_type: 'Expression Matrix', name: 'test_exp_validate.tsv', taxon_id: Taxon.new.id,
                       expression_file_info: ExpressionFileInfo.new(
@@ -192,8 +247,6 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     assert_equal 2, rows.count
     raw_count_row = rows.find {|r| r['filename'] == 'test_exp_validate.tsv'}
     assert_equal 'true', raw_count_row['is_raw_counts']
-
-    study.destroy!
   end
 
   test 'should create map of study file types to counts' do

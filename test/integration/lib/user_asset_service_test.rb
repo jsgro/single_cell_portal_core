@@ -2,9 +2,6 @@ require 'test_helper'
 
 class UserAssetServiceTest < ActiveSupport::TestCase
 
-  include Minitest::Hooks
-  include TestInstrumentor
-
   TEST_DATA_DIR = Rails.root.join('test', 'test_data', 'branding_groups')
   TEST_FILES = UserAssetService.get_directory_entries(TEST_DATA_DIR)
 

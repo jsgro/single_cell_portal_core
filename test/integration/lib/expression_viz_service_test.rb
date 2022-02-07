@@ -1,13 +1,13 @@
 require "test_helper"
 
 class ExpressionVizServiceTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @basic_study = FactoryBot.create(:detached_study, name_prefix: 'Basic Viz', test_array: @@studies_to_clean)
+    @basic_study = FactoryBot.create(:detached_study,
+                                     name_prefix: 'Basic Viz',
+                                     user: @user,
+                                     test_array: @@studies_to_clean)
     @basic_study_cluster_file = FactoryBot.create(:cluster_file,
                                               name: 'cluster_1.txt', study: @basic_study,
                                               cell_input: {
@@ -153,7 +153,10 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
 
   test 'should load ideogram outputs' do
     # we need a non-detached study, so create one
-    study = FactoryBot.create(:detached_study, name: "Ideogram Study #{SecureRandom.uuid}", test_array: @@studies_to_clean)
+    study = FactoryBot.create(:detached_study,
+                              name: "Ideogram Study #{SecureRandom.uuid}",
+                              user: @user,
+                              test_array: @@studies_to_clean)
 
     cluster_file = FactoryBot.create(:cluster_file,
                                      name: 'cluster_1.txt', study: study,
@@ -189,6 +192,8 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
       assert_equal annotation, ideogram_opts[:annotation]
       assert_equal api_url + '?alt=media', ideogram_opts.dig(:ideogram_settings, :annotationsPath)
     end
+    # unset detached to avoid cleanup errors
+    study.update(detached: true)
   end
 
   test 'should load expression axis label' do

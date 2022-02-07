@@ -1,13 +1,8 @@
 require 'test_helper'
 require 'api_test_helper'
+require 'includes_helper'
 
 class ClustersControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Requests::JsonHelpers
-  include Requests::HttpHelpers
-  include Minitest::Hooks
-  include ::SelfCleaningSuite
-  include ::TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
@@ -65,6 +60,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
 
     empty_study = FactoryBot.create(:detached_study,
                                     name_prefix: 'Empty Cluster Study',
+                                    user: @user,
                                     test_array: @@studies_to_clean)
     execute_http_request(:get, api_v1_study_clusters_path(empty_study))
     assert_equal [], json
@@ -81,6 +77,8 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
         "y"=>[7, 5, 3]
       },
       "pointSize"=>3,
+      "customColors"=>{},
+      "clusterFileId"=>@basic_study_cluster_file.id.to_s,
       "userSpecifiedRanges"=>nil,
       "showClusterPointBorders"=>false,
       "description"=>nil,
@@ -111,6 +109,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
   test 'should load clusters with slashes in name' do
     slash_study = FactoryBot.create(:detached_study,
                                     name_prefix: 'Cluster Slash Study',
+                                    user: @user,
                                     test_array: @@studies_to_clean)
     cluster_with_slash = FactoryBot.create(:cluster_file,
                                            name: 'data/cluster_with_slash.txt',
@@ -148,6 +147,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
   test 'should set aspect ratio and domains when provided' do
     study = FactoryBot.create(:detached_study,
                               name_prefix: 'Domain Range Study',
+                              user: @user,
                               test_array: @@studies_to_clean)
     cluster_name = 'cluster_domains.txt'
     cluster_file = FactoryBot.create(:cluster_file,

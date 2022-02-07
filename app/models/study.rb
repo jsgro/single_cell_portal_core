@@ -1000,6 +1000,16 @@ class Study
     self.expression_matrices.any_of({'expression_file_info.is_raw_counts' => false}, {expression_file_info: nil}).exists?
   end
 
+  def has_image_files?
+    study_files.by_type('Image').any?
+  end
+
+  # check if study has any files that can be streamed from the bucket for visualization
+  # this includes BAM, inferCNV Ideogram annotations, and Image files
+  def has_streamable_files?
+    has_bam_files? || has_analysis_outputs?('infercnv', 'ideogram.js') || has_image_files?
+  end
+
   # quick getter to return any cell metadata that can_visualize?
   def viewable_metadata
     viewable = []
@@ -1605,6 +1615,8 @@ class Study
 
   # set the 'default_participant' entity in workspace data to allow users to upload sample information
   def set_default_participant
+    return if detached # skip if study is detached, which is common in test environment
+
     begin
       path = Rails.root.join('data', self.data_dir, 'default_participant.tsv')
       entity_file = File.new(path, 'w+')
@@ -1675,13 +1687,14 @@ class Study
     end
     Rails.logger.info "Removing workspace #{firecloud_project}/#{firecloud_workspace} in #{Rails.env} environment"
     begin
-      ApplicationController.firecloud_client.delete_workspace(firecloud_project, firecloud_workspace)
+      ApplicationController.firecloud_client.delete_workspace(firecloud_project, firecloud_workspace) unless detached
       DeleteQueueJob.new(self.metadata_file).delay.perform if self.metadata_file.present?
       destroy
     rescue => e
       Rails.logger.error "Error in removing #{firecloud_project}/#{firecloud_workspace}"
       Rails.logger.error "#{e.class.name}:"
       Rails.logger.error "#{e.message}"
+      destroy # ensure deletion of study, even if workspace is orphaned
     end
     Rails.logger.info "Workspace #{firecloud_project}/#{firecloud_workspace} successfully removed."
   end

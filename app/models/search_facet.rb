@@ -397,8 +397,9 @@ class SearchFacet
       # only process external numeric facet if unit is compatible
       if external_facet[:is_numeric] && external_facet[:unit] == unit
         Rails.logger.info "Merging #{external_facet} into '#{name}' facet filters"
-        values[:MIN] = external_facet[:min] if values[:MIN] > external_facet[:min]
-        values[:MAX] = external_facet[:max] if values[:MAX] < external_facet[:max]
+        # cast values to floats to get around nil comparison issue
+        values[:MIN] = external_facet[:min] if values[:MIN].to_f > external_facet[:min].to_f
+        values[:MAX] = external_facet[:max] if values[:MAX].to_f < external_facet[:max].to_f
       end
       return false if values.empty? # found no results, meaning an error occurred
 

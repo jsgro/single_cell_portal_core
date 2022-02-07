@@ -158,3 +158,18 @@
 #gene-list-upload {
 	display: none;
 }
+
+#color-picker-modal {
+  input {
+    font-family: 'Courier';
+    width: 5em;
+    border: 2px solid #333;
+    border-radius: 5px;
+    margin: 0.5em 0em;
+  }
+  .preview-block {
+    width: 2em;
+    height: 1.5em;
+    display: inline-block;
+  }
+}

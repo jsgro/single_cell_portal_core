@@ -48,7 +48,6 @@ describe('creation of study files', () => {
     expect(screen.getByTestId('spatial-status-badge')).toHaveClass('complete')
     expect(screen.getByTestId('coordinateLabels-status-badge')).toHaveClass('complete')
     expect(screen.getByTestId('sequence-status-badge')).toHaveClass('complete')
-    expect(screen.getByTestId('images-status-badge')).not.toHaveClass('complete')
 
     // now check that we can go back to a previously saved file and it shows correctly
     fireEvent.click(screen.getByText('Processed matrices'))

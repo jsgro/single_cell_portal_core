@@ -2,11 +2,9 @@
 require 'test_helper'
 
 class AzulSearchServiceTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
+    TestDataPopulator.create_sample_search_facets
     SearchFacet.update_all_facet_filters
     @azul_client = ApplicationController.hca_azul_client
     @facets = [
@@ -50,6 +48,10 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     @human_tcell_response = JSON.parse(tcell_json).with_indifferent_access
     @human_thymus_response = JSON.parse(thymus_json).with_indifferent_access
     @fibrosis_response = JSON.parse(fibrosis_json).with_indifferent_access
+  end
+
+  after(:all) do
+    SearchFacet.destroy_all
   end
 
   test 'should search Azul using facets' do
@@ -154,7 +156,7 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     other_files = summary.map { |project| project[:studyFiles].reject { |file| file[:file_type] == 'Project Manifest' } }
                          .flatten
     other_files.each do |file_info|
-      assert_equal %w[source count upload_file_size file_format accession project_id file_type], file_info.keys
+      assert_equal %w[source count upload_file_size file_format accession project_id file_type is_intermediate].sort, file_info.keys.sort
     end
   end
 

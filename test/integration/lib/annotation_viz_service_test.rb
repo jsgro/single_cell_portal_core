@@ -1,13 +1,13 @@
 require 'test_helper'
 
 class AnnotationVizServiceTest < ActiveSupport::TestCase
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @basic_study = FactoryBot.create(:detached_study, name_prefix: 'Basic Viz', test_array: @@studies_to_clean)
+    @basic_study = FactoryBot.create(:detached_study,
+                                     name_prefix: 'Basic Viz',
+                                     user: @user,
+                                     test_array: @@studies_to_clean)
     @basic_study_cluster_file = FactoryBot.create(:cluster_file,
                                                   name: 'cluster_1.txt', study: @basic_study,
                                                   annotation_input: [
@@ -99,7 +99,10 @@ class AnnotationVizServiceTest < ActiveSupport::TestCase
   end
 
   test 'should return non-plottable annotations' do
-    study = FactoryBot.create(:detached_study, name_prefix: 'No Valid Viz', test_array: @@studies_to_clean)
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'No Valid Viz',
+                              user: @user,
+                              test_array: @@studies_to_clean)
     FactoryBot.create(:cluster_file, name: 'cluster_1.txt', study: study, annotation_input: [
       { name: 'cluster', type: 'group', values: %w[A A A] }
     ])
@@ -115,5 +118,27 @@ class AnnotationVizServiceTest < ActiveSupport::TestCase
     species_annot = annots.detect { |a| a[:name] == 'species' }
     assert species_annot.present?
     assert_equal 'invalid', species_annot[:scope]
+  end
+
+  test 'should mark metadata ontology annotation validity' do
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'metadata ontology',
+                              user: @user,
+                              test_array: @@studies_to_clean)
+
+    FactoryBot.create(:metadata_file, name: 'metadata.txt', study: study, annotation_input: [
+      { name: 'species', type: 'group', values: %w[id1 id1 id2] },
+      { name: 'species__ontology_label', type: 'group', values: %w[dog dog cat] },
+    ])
+    annots = AnnotationVizService.available_annotations(study)
+    assert_equal 2, annots.size
+    species_annot = annots.detect { |a| a[:name] == 'species' }
+    assert species_annot.present?
+    assert_equal 'invalid', species_annot[:scope]
+
+    species_label_annot = annots.detect { |a| a[:name] == 'species__ontology_label' }
+    assert species_label_annot.present?
+    assert_equal 'study', species_label_annot[:scope]
+
   end
 end

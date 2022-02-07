@@ -1,4 +1,4 @@
-require "test_helper"
+require 'test_helper'
 
 ##
 #
@@ -11,7 +11,7 @@ require "test_helper"
 
 class FireCloudClientTest < ActiveSupport::TestCase
 
-  def setup
+  before(:all) do
     @fire_cloud_client = ApplicationController.firecloud_client
     @test_email = 'singlecelltest@gmail.com'
     @random_test_seed = SecureRandom.uuid # use same random seed to differentiate between entire runs
@@ -26,46 +26,32 @@ class FireCloudClientTest < ActiveSupport::TestCase
   # refresh the FireCloud API access token
   # test only checks expiry date as we can't be sure that the access_token will actually refresh fast enough
   def test_refresh_access_token
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     expires_at = @fire_cloud_client.expires_at
     assert !@fire_cloud_client.access_token_expired?, 'Token should not be expired for new clients'
     @fire_cloud_client.refresh_access_token!
     assert @fire_cloud_client.expires_at > expires_at, "Expiration date did not update, #{@fire_cloud_client.expires_at} is not greater than #{expires_at}"
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   # refresh the GCS Driver
   # test only checks issue date as we can't be sure that the storage_access_token will actually refresh fast enough
   def test_refresh_google_storage_driver
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     issued_at = @fire_cloud_client.storage_issued_at
     new_storage = @fire_cloud_client.refresh_storage_driver
     assert new_storage.present?, 'New storage did not get instantiated'
 
     new_issued_at = new_storage.service.credentials.client.issued_at
     assert new_issued_at > issued_at, "Storage driver did not update, #{new_issued_at} is not greater than #{issued_at}"
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   # assert status health check is returning true/false
   def test_firecloud_api_available
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # check that API is up
     api_available = @fire_cloud_client.api_available?
     assert [true, false].include?(api_available), 'Did not receive corret boolean response'
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   # get the current FireCloud API status
   def test_firecloud_api_status
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     status = @fire_cloud_client.api_status
     assert status.is_a?(Hash), "Did not get expected status Hash object; found #{status.class.name}"
     assert status['ok'].present?, 'Did not find root status message'
@@ -77,8 +63,6 @@ class FireCloudClientTest < ActiveSupport::TestCase
       assert status['systems'][service].present?, "Did not find required service: #{service}"
       assert [true, false].include?(status['systems'][service]['ok']), "Did not find expected 'ok' message of true/false; found: #{status['systems'][service]['ok']}"
     end
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   ##
@@ -89,18 +73,12 @@ class FireCloudClientTest < ActiveSupport::TestCase
 
   # test getting workspaces
   def test_workspaces
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     workspaces = @fire_cloud_client.workspaces(@fire_cloud_client.project)
     assert workspaces.any?, 'Did not find any workspaces'
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   # main workspace test: create, get, set & update acls, delete
   def test_create_and_manage_workspace
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # set workspace name
     workspace_name = "#{self.method_name}-#{@random_test_seed}"
 
@@ -138,17 +116,13 @@ class FireCloudClientTest < ActiveSupport::TestCase
     puts 'deleting workspace...'
     delete_message = @fire_cloud_client.delete_workspace(@fire_cloud_client.project, workspace_name)
     assert delete_message.has_key?('message'), 'Did not receive a delete confirmation'
-    # commented out for now while Rawls message is fixed 
+    # commented out for now while Rawls message is fixed
     # expected_confirmation = "Your Google bucket #{workspace['bucketName']} will be deleted within 24h."
     assert delete_message['message'].include?('202'), "Did not receive correct confirmation, expected '#{'202'}' but found '#{delete_message['message']}'"
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   # test CRUDing workspace entities
   def test_create_and_manage_workspace_entities
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # set workspace name
     workspace_name = "#{self.method_name}-#{@random_test_seed}"
 
@@ -221,8 +195,6 @@ class FireCloudClientTest < ActiveSupport::TestCase
     puts 'deleting workspace...'
     delete_message = @fire_cloud_client.delete_workspace(@fire_cloud_client.project, workspace_name)
     assert delete_message.has_key?('message'), 'Did not receive a delete confirmation'
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   ##
@@ -233,19 +205,13 @@ class FireCloudClientTest < ActiveSupport::TestCase
 
   # get queue status
   def test_get_submission_queue_status
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     status = @fire_cloud_client.get_submission_queue_status
     assert status.any?, 'Did not receive queue status object'
     assert status['workflowCountsByStatus'].any?, 'Did not receive queue count status'
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   # get available workflows
   def test_get_methods
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # get all available methods
     workflow_methods = @fire_cloud_client.get_methods(entityType: 'workflow')
     assert workflow_methods.any?, 'Did not find any workflow methods'
@@ -259,14 +225,10 @@ class FireCloudClientTest < ActiveSupport::TestCase
     method_payload = @fire_cloud_client.get_method(method_params['namespace'], method_params['name'], method_params['snapshotId'], true)
     assert method_payload.present?, "Did not retrieve requested method payload: '#{method_params['namespace']}/#{method_params['name']}/#{method_params['snapshotId']}'"
     assert method_payload.is_a?(String), "Method payload is wrong type, expected String but found #{method_payload.class}"
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   # get method configurations
   def test_get_configurations
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # get all available configurations
     workflow_configurations = @fire_cloud_client.get_configurations
     assert workflow_configurations.any?, 'Did not find any method configurations'
@@ -286,14 +248,10 @@ class FireCloudClientTest < ActiveSupport::TestCase
     assert config_with_payload.present?, "Did not retrieve requested configuration with payload object: '#{config_params['namespace']}/#{config_params['name']}/#{config_params['snapshotId']}'"
     assert config_with_payload.has_key?('payloadObject'), 'Configuration did not have payloadObject'
     assert config_with_payload['payloadObject'].is_a?(Hash), "Did not return correct object type for payload, expected Hash but found #{config_with_payload['payloadObject'].class}"
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   # create a method configuration template from a method
   def test_create_configuration_template
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     method = @fire_cloud_client.get_method('single-cell-portal', 'split-cluster', 1)
     assert method.present?, 'Did not retrieve a method to create a configuration template from'
 
@@ -306,15 +264,10 @@ class FireCloudClientTest < ActiveSupport::TestCase
     assert template_method['methodVersion'] == method['snapshotId'], "Configuration template method name is incorrect, expected '#{method['snapshotId']}' but found #{template_method['methodVersion']}"
     assert configuration_template['inputs'].any?, "Did not find any configuration inputs: #{configuration_template['inputs']}"
     assert configuration_template['outputs'].any?, "Did not find any configuration outputs: #{configuration_template['outputs']}"
-
-    # get random method
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   # manage configurations in a workspace: copy, list all, get
   def test_manage_workspace_configurations
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # set workspace name
     workspace_name = "#{self.method_name}-#{@random_test_seed}"
 
@@ -372,8 +325,6 @@ class FireCloudClientTest < ActiveSupport::TestCase
     puts 'deleting workspace...'
     delete_message = @fire_cloud_client.delete_workspace(@fire_cloud_client.project, workspace_name)
     assert delete_message.has_key?('message'), 'Did not receive a delete confirmation'
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   ##
@@ -384,8 +335,6 @@ class FireCloudClientTest < ActiveSupport::TestCase
 
   # main groups test - CRUD group & members
   def test_create_and_mange_user_groups
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # set group name
     group_name = "test-group-#{@random_test_seed}"
     puts 'creating group...'
@@ -423,8 +372,6 @@ class FireCloudClientTest < ActiveSupport::TestCase
     updated_groups = @fire_cloud_client.get_user_groups
     group_names = updated_groups.map {|g| g['groupName']}
     assert !group_names.include?(group_name), "Test group '#{group_name}' was not deleted: #{group_names.join(', ')}"
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   ##
@@ -435,19 +382,13 @@ class FireCloudClientTest < ActiveSupport::TestCase
 
   # get available billing projects
   def test_get_billing_projects
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # get all projects
     projects = @fire_cloud_client.get_billing_projects
     assert projects.any?, 'Did not find any billing projects'
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   # update a billing project's member list
   def test_update_billing_project_members
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # get all projects
     puts 'selecting project...'
     projects = @fire_cloud_client.get_billing_projects
@@ -496,8 +437,6 @@ class FireCloudClientTest < ActiveSupport::TestCase
     end
 
     assert !final_emails.include?(@test_email), "Did not successfully remove #{@test_email} from list of billing project members: #{emails.join(', ')}"
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   ##
@@ -508,8 +447,6 @@ class FireCloudClientTest < ActiveSupport::TestCase
 
   # get a workspace's GCS bucket
   def test_get_workspace_bucket
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # set workspace name
     workspace_name = "#{self.method_name}-#{@random_test_seed}"
 
@@ -526,14 +463,10 @@ class FireCloudClientTest < ActiveSupport::TestCase
     puts 'deleting workspace...'
     delete_message = @fire_cloud_client.delete_workspace(@fire_cloud_client.project, workspace_name)
     assert delete_message.has_key?('message'), 'Did not receive a delete confirmation'
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 
   # main File IO test for buckets: create, copy, download, delete
   def test_get_workspace_files
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}'"
-
     # set workspace name
     workspace_name = "#{self.method_name}-#{@random_test_seed}"
 
@@ -638,7 +571,5 @@ class FireCloudClientTest < ActiveSupport::TestCase
     puts 'deleting workspace...'
     delete_message = @fire_cloud_client.delete_workspace(@fire_cloud_client.project, workspace_name)
     assert delete_message.has_key?('message'), 'Did not receive a delete confirmation'
-
-    puts "#{File.basename(__FILE__)}: '#{self.method_name}' successful!"
   end
 end

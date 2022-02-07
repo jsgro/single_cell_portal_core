@@ -1,16 +1,12 @@
 require 'test_helper'
 require 'api_test_helper'
+require 'includes_helper'
 
 class ExploreControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-  include Requests::JsonHelpers
-  include Requests::HttpHelpers
-  include Minitest::Hooks
-  include TestInstrumentor
-  include SelfCleaningSuite
 
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
+    @user2 = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @basic_study = FactoryBot.create(:detached_study,
                                      name_prefix: 'Basic Explore',
                                      public: false,
@@ -30,7 +26,25 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
 
     @empty_study = FactoryBot.create(:detached_study,
                                      name_prefix: 'Empty study',
+                                     user: @user,
                                      test_array: @@studies_to_clean)
+
+    @public_study = FactoryBot.create(:detached_study,
+                                     name_prefix: 'Public Explore',
+                                     public: true,
+                                     user: @user,
+                                     test_array: @@studies_to_clean)
+    @public_study_cluster_file = FactoryBot.create(:cluster_file,
+                                                  name: 'clusterP.txt',
+                                                  file_type: 'Cluster',
+                                                  study: @public_study,
+                                                  annotation_input: [{name: 'foo', type: 'group', values: ['bar', 'bar', 'baz']}])
+    user_annot_data = {
+      label1: {name: 'label1', values: 'cell1,cell2'},
+      label2: {name: 'label2', values: 'cell3,cell4'}
+    }
+    UserAnnotationService.create_user_annotation(@public_study, 'user_annot',
+      user_annot_data, 'clusterP.txt', 'foo--group--cluster', nil, @user)
   end
 
   teardown do
@@ -78,6 +92,28 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
 
     execute_http_request(:get, cluster_options_api_v1_study_explore_path(@empty_study))
     assert_equal [], json['annotations']
+  end
+
+  test 'should get user-specific study info' do
+    sign_in_and_update @user
+    execute_http_request(:get, study_user_info_api_v1_study_explore_path(@public_study))
+    assert_response :success
+    assert_equal 2, json['annotations'].length
+    assert_equal 1, json['annotations'].select{|a| a['name'] == 'user_annot'}.length
+    assert_equal true, json['canEdit']
+
+    sign_in_and_update @user2
+    execute_http_request(:get, study_user_info_api_v1_study_explore_path(@public_study), user: @user2)
+    assert_response :success
+    assert_equal 1, json['annotations'].length
+    assert_equal 0, json['annotations'].select{|a| a['name'] == 'user_annot'}.length
+    assert_equal false, json['canEdit']
+
+    execute_http_request(:get, study_user_info_api_v1_study_explore_path(@public_study), user: nil)
+    assert_response :success
+    assert_equal 1, json['annotations'].length
+    assert_equal 0, json['annotations'].select{|a| a['name'] == 'user_annot'}.length
+    assert_equal false, json['canEdit']
   end
 
 

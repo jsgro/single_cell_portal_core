@@ -1,10 +1,6 @@
-require "test_helper"
+require 'test_helper'
 
 class UserTest < ActiveSupport::TestCase
-
-  include Minitest::Hooks
-  include TestInstrumentor
-  include SelfCleaningSuite
 
   before(:all) do
     @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
@@ -95,6 +91,46 @@ class UserTest < ActiveSupport::TestCase
     assert_nothing_raised do
       token = @user.token_for_storage_object(study)
       assert_nil token
+    end
+  end
+
+  test 'should determine if user needs to accept updated Terra Terms of Service' do
+    mock = Minitest::Mock.new
+    user_registration = {
+      enabled: {
+        ldap: true,
+        allUsersGroup: true,
+        google: true,
+        tosAccepted: true,
+        adminEnabled: false
+      },
+      userInfo: {
+        userEmail: @user.email,
+        userSubjectId: @user.uid
+      }
+    }.with_indifferent_access
+    mock.expect :get_registration, user_registration
+    FireCloudClient.stub :new, mock do
+      assert_not @user.must_accept_terra_tos?
+      mock.verify
+    end
+
+    # negative test
+    user_registration[:enabled][:tosAccepted] = false
+    mock = Minitest::Mock.new
+    mock.expect :get_registration, user_registration
+    FireCloudClient.stub :new, mock do
+      assert @user.must_accept_terra_tos?
+      mock.verify
+    end
+
+    # failover test
+    user_registration[:enabled].delete(:tosAccepted)
+    mock = Minitest::Mock.new
+    mock.expect :get_registration, user_registration
+    FireCloudClient.stub :new, mock do
+      assert_not @user.must_accept_terra_tos?
+      mock.verify
     end
   end
 end

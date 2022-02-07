@@ -2,9 +2,6 @@ require 'test_helper'
 
 class FacetNameConverterTest < ActiveSupport::TestCase
 
-  include Minitest::Hooks
-  include TestInstrumentor
-
   before(:all) do
     @scp_field_names = %i[study_name study_description disease species]
     @expected_conversions = {

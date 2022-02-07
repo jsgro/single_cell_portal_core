@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react'
 import Modal from 'react-bootstrap/lib/Modal'
 import { log } from 'lib/metrics-api'
 import _clone from 'lodash/clone'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
+
 
 const functionHolder = {}
 
@@ -13,6 +16,25 @@ const functionHolder = {}
   */
 export function showMessage(message, key, logProps) {
   functionHolder.showMessage(message, key, logProps)
+}
+
+/** take a json-api error object and render a modal with the contents.
+ * For now, this just uses the 'detail' field of each error.
+ * Details on JSON API error object format: https://jsonapi.org/format/#error-objects
+ */
+export function showJsonApiErrorMessage(error, key, logProps) {
+  let message = ''
+  if (!error?.errors?.length) {
+    // we got a non-json API error, so try to render it as-is
+    message = error.toString()
+  } else {
+    message = <div>
+      { error.errors.map((error, index) =>
+        <div key={index} className="whitespace-pre-wrap">{error.detail}</div>
+      )}
+    </div>
+  }
+  showMessage(message, key, Object.assign(logProps, { jsonApiModal: true }))
 }
 
 /** Component to render a modal that can display messages in response to any call to 'showMessage' */
@@ -62,4 +84,33 @@ export default function MessageModal() {
       <button className="btn action" onClick={clearMessages}>OK</button>
     </Modal.Footer>
   </Modal>
+}
+
+/** returns a notification config object suitable for passing to ReactNotification store.addNotification */
+export function successNotification(message) {
+  return {
+    type: 'success',
+    insert: 'top',
+    container: 'top-right',
+    title: '',
+    message: <><FontAwesomeIcon icon={faCheckCircle}/>{message}</>,
+    width: 425,
+    dismiss: {
+      duration: 3000,
+      showIcon: false
+    }
+  }
+}
+
+/** returns a notification config object suitable for passing to ReactNotification store.addNotification */
+export function failureNotification(message) {
+  return {
+    ...successNotification(message),
+    type: 'danger',
+    message: <><FontAwesomeIcon icon={faExclamationTriangle}/>{message}</>,
+    dismiss: {
+      duration: 0,
+      showIcon: true
+    }
+  }
 }

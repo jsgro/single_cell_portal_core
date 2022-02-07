@@ -2,13 +2,12 @@ require 'test_helper'
 
 class GenericProfilerTest < ActiveSupport::TestCase
 
-  include Minitest::Hooks
-  include SelfCleaningSuite
-  include TestInstrumentor
-
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @basic_study = FactoryBot.create(:detached_study, name_prefix: 'Profiler Test', test_array: @@studies_to_clean)
+    @basic_study = FactoryBot.create(:detached_study,
+                                     name_prefix: 'Profiler Test',
+                                     user: @user,
+                                     test_array: @@studies_to_clean)
     @basic_study_cluster_file = FactoryBot.create(:cluster_file,
                                                   name: 'cluster_1.txt', study: @basic_study,
                                                   cell_input: {
@@ -102,7 +101,7 @@ class GenericProfilerTest < ActiveSupport::TestCase
     assert args_file.include?('foo: "bar"')
     assert args_file.include?('bing: "baz"')
   end
-  
+
   test 'should capture error when writing report' do
     non_existent_file = Rails.root.join('does', 'not', 'exist.txt')
     profile = RubyProf.profile { puts "test" }
