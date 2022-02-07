@@ -420,20 +420,22 @@ export async function validateRemoteFileContent(
   }
 
   // Total size of the file in bytes
-  const size = parseInt(contentRange.split('/')[1])
+  const fileSizeTotal = parseInt(contentRange.split('/')[1])
+  console.log('contentRange', contentRange)
+  console.log('contentRange.split("/")', contentRange.split('/'))
+  console.log('fileSizeTotal', fileSizeTotal)
 
   // Total bytes downloaded, which can be much less than total file size
-  const sizeFetched = parseInt(contentLength) + 1
+  const fileSizeFetched = parseInt(contentLength)
 
-  const fetchedCompleteFile = (size === sizeFetched)
-  Object.assign(syncProps, { sizeFetched, fetchedCompleteFile })
+  const fetchedCompleteFile = (fileSizeTotal === fileSizeFetched)
+  Object.assign(syncProps, {
+    fileSizeFetched,
+    fileSizeTotal,
+    fetchedCompleteFile
+  })
 
-  const file = new File(
-    [content], fileName, {
-      size,
-      type: contentType
-    }
-  )
+  const file = new File([content], fileName, { type: contentType })
 
   console.log('fileName', fileName)
   console.log('file', file)
