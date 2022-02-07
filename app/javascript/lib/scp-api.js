@@ -582,11 +582,6 @@ export async function updateCurrentUser(updatedUser, mock=false) {
   await scpApi('/current_user', init, mock, true)
 }
 
-/** get information on the user's analysis/compute access for the given study */
-export async function fetchAnalysisAccess(studyAccession, mock=false) {
-  return await scpApi(`/studies/${studyAccession}/analysis_access`, defaultInit(), mock)
-}
-
 /**
  * Returns a list of matching filters for a given facet
  *
