@@ -3,17 +3,6 @@ module Api
     class SearchController < ApiBaseController
       include StudySearchResultsObjects
 
-      # list of common 'stop words' to scrub from term-based search requests
-      # these are unhelpful in search contexts as they artificially inflate irrelevant results
-      # from https://gist.github.com/sebleier/554280
-      STOP_WORDS = %w[i me my myself we our ours ourselves you your yours yourself yourselves he him his himself she
-                      her hers herself it its itself they them their theirs themselves what which who whom this that
-                      these those am is are was were be been being have has had having do does did doing a an the and
-                      but if or because as until while of at by for with about against between into through during
-                      before after above below to from up down in out on off over under again further then once here
-                      there when where why how all any both each few more most other some such no nor not only own same
-                      so than too very s t can will just don should now].freeze
-
       # regex to match on 'sequence_file' and 'analysis_file' entries from TDR
       TDR_FILE_OUTPUT_TYPE_MATCH = /_file/.freeze
 
@@ -508,7 +497,7 @@ module Api
 
       # exclude known stop words from a list of terms to increase search result relevance
       def self.reject_stop_words_from_terms(terms)
-        terms&.reject { |t| STOP_WORDS.include? t } || []
+        terms&.reject { |t| ::StudySearchService::STOP_WORDS.include? t } || []
       end
 
       # escape regular expression control characters from list of search terms and format for search
