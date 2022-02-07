@@ -32,21 +32,26 @@ class TerraAnalysisService
   # check if a user can run workflows on the given study
   def self.user_can_compute?(study, user)
     if user.nil? || !user.registered_for_firecloud?
-      false
-    else
-      begin
-        workspace_acl = ApplicationController.firecloud_client.get_workspace_acl(study.firecloud_project, study.firecloud_workspace)
-        if workspace_acl['acl'][user.email].nil?
-          # check if user has project-level permissions
-          user.is_billing_project_owner?(study.firecloud_project)
-        else
-          workspace_acl['acl'][user.email]['canCompute']
-        end
-      rescue => e
-        ErrorTracker.report_exception(e, user, { study: study.attributes.to_h.except('description')})
-        Rails.logger.error "Unable to retrieve compute permissions for #{user.email}: #{e.message}"
-        false
+      return false
+    end
+
+    services_up = ApplicationController.firecloud_client.services_available?(FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE, FireCloudClient::AGORA_SERVICE)
+    if !services_up
+      return false
+    end
+
+    begin
+      workspace_acl = ApplicationController.firecloud_client.get_workspace_acl(study.firecloud_project, study.firecloud_workspace)
+      if workspace_acl['acl'][user.email].nil?
+        # check if user has project-level permissions
+        user.is_billing_project_owner?(study.firecloud_project)
+      else
+        workspace_acl['acl'][user.email]['canCompute']
       end
+    rescue => e
+      ErrorTracker.report_exception(e, user, { study: study.attributes.to_h.except('description')})
+      Rails.logger.error "Unable to retrieve compute permissions for #{user.email}: #{e.message}"
+      false
     end
   end
 end
