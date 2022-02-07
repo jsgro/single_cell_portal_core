@@ -86,6 +86,9 @@ class BulkDownloadService
         # now process remainder of analysis/sequence files for download
         # each file_info hash will contain project IDs and file_types that can be used in a single query to Azul
         # to get all matching files
+        # if no other files, skip to next project
+        next if files.empty?
+
         project_id = files.first['project_id'] # project_id is same for all entries in this block
         file_query = { 'projectId' => { 'is' => [project_id] } }
         files.each do |file_info|
