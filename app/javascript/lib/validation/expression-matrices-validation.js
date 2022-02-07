@@ -361,7 +361,7 @@ function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
 function validateMTXHeaderLine(line) {
   const issues = []
   if (line[0] !== '%%MatrixMarket') {
-    const msg = `First line must begin with "%%MatrixMarket", not "${line}"`
+    const msg = `First line must begin with "%%MatrixMarket", not "${line[0]}"`
     issues.push(['error', 'format:cap:missing-mtx-value', msg])
   }
 
