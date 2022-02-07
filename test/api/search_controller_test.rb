@@ -419,4 +419,16 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     first_study = json['studies'].first['accession']
     assert_equal @study.accession, first_study
   end
+  
+  test 'should filter stop words from queries' do
+    terms = %w[human mouse study data]
+    filtered_terms = Api::V1::SearchController.reject_stop_words_from_terms(terms)
+    assert_equal terms, filtered_terms
+    stop_words = %w[in the about at on for]
+    filtered_terms = Api::V1::SearchController.reject_stop_words_from_terms(stop_words)
+    assert_empty filtered_terms
+    mixed_query = terms + stop_words
+    filtered_terms = Api::V1::SearchController.reject_stop_words_from_terms(mixed_query)
+    assert_equal terms, filtered_terms
+  end
 end

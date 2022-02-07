@@ -42,12 +42,15 @@ export async function parseSparseMatrixFile(chunker, mimeType, fileOptions) {
   await chunker.iterateLines(rawLine => {
     rawHeaderLine = rawLine
   }, 1)
+  const header = rawHeaderLine.trim().split(whitespaceDelimiter)
 
-  issues = validateMTXHeaderLine(rawHeaderLine)
+  issues = validateMTXHeaderLine(header)
 
   await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
-    issues = issues.concat(validateSparseColumnNumber(rawLine, isLastLine, lineNum, dataObj))
-    issues = issues.concat(validateSparseNoBlankLines(rawLine, isLastLine, lineNum, dataObj))
+    const line = rawLine.trim().split(whitespaceDelimiter)
+
+    issues = issues.concat(validateSparseColumnNumber(line, isLastLine, lineNum, dataObj))
+    issues = issues.concat(validateSparseNoBlankLines(line, isLastLine, lineNum, dataObj))
     // add other line-by-line validations here
   })
   return { issues, whitespaceDelimiter, numColumns: dataObj.correctNumberOfColumns }
@@ -265,7 +268,7 @@ function validateSparseNoBlankLines(line, isLastLine, lineNum, dataObj) {
   dataObj.blankLineRows = dataObj.blankLineRows ? dataObj.blankLineRows : []
 
   // if the line is empty, note it
-  if (line.trim().length === 0) {
+  if (line.length === 1 && line[0] === '') {
     dataObj.blankLineRows.push(lineNum)
   }
 
@@ -295,8 +298,8 @@ function validateSparseColumnNumber(line, isLastLine, lineNum, dataObj) {
   dataObj.correctNumberOfColumns = dataObj.correctNumberOfColumns ? dataObj.correctNumberOfColumns : ''
 
   // use the first non-comment, non-blank, non-header row to determine correct number of columns
-  if (!line.startsWith('%') && line.trim().length > 0) {
-    const numColumns = line.split(whitespaceDelimiter).length
+  if ((line[0] !== '%') && line.length > 1 && line[0] !== '') {
+    const numColumns = line.length
     dataObj.correctNumberOfColumns = dataObj.correctNumberOfColumns ? dataObj.correctNumberOfColumns : numColumns
     if (dataObj.correctNumberOfColumns !== numColumns) {
       dataObj.rowsWithWrongColumnNumbers.push(lineNum)
@@ -353,13 +356,12 @@ function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
 }
 
 /**
-   * Validate the first line in the sparse Matrix begins with the string '%%MatrixMarket'
+   * Validate the first line in the sparse matrix begins with '%%MatrixMarket'
    */
 function validateMTXHeaderLine(line) {
   const issues = []
-  const mtxHeader = line.slice(0, 14)
-  if (mtxHeader !== '%%MatrixMarket') {
-    const msg = `First line must begin with "%%MatrixMarket", not "${mtxHeader}"`
+  if (line[0] !== '%%MatrixMarket') {
+    const msg = `First line must begin with "%%MatrixMarket", not "${line[0]}"`
     issues.push(['error', 'format:cap:missing-mtx-value', msg])
   }
 
