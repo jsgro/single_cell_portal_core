@@ -207,6 +207,7 @@ module Api
       end
 
       def file_info
+        raise 'test error 56'
         response_obj = {
           study: @study.attributes,
           files: @study.study_files,

@@ -308,8 +308,16 @@ export function RawUploadWizard({ studyAccession, name }) {
         response.menu_options = oldState.menu_options
         return response
       })
+      setTimeout(pollServerState, POLLING_INTERVAL)
+    }).catch(response => {
+      // if the get fails, it's very likely that the error recur on a retry
+      // (user's session timed out, server downtime, internet connection issues)
+      // so to avoid repeated error messages, show one error, and stop polling
+      store.addNotification(failureNotification(<span>
+        Server connectivity failed--some functions may not be available.<br/>
+        You may want to reload the page or sign in again.
+      </span>))
     })
-    setTimeout(pollServerState, POLLING_INTERVAL)
   }
 
   // on initial load, load all the details of the study and study files
