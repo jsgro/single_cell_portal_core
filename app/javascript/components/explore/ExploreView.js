@@ -37,9 +37,9 @@ function RoutableExploreTab({ studyAccession }) {
         const newInfo = _cloneDeep(oldExploreInfo)
         newInfo.annotationList.annotations = userSpecificInfo.annotations
         newInfo.canEdit = userSpecificInfo.canEdit
-        if (userSpecificInfo.can_compute) {
+        if (userSpecificInfo.canCompute) {
           // show the analysis tab
-          const fragment = document.createRange().createContextualFragment(userSpecificInfo.analysis_tab_content)
+          const fragment = document.createRange().createContextualFragment(userSpecificInfo.analysisTabContent)
           document.getElementById('study-analysis').appendChild(fragment)
           document.getElementById('study-analysis-nav').classList.remove('hidden')
         }

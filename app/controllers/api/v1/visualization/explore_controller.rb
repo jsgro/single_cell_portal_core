@@ -140,9 +140,9 @@ module Api
           render json: {
             annotations: AnnotationVizService.available_annotations(@study, cluster: nil, current_user: current_api_user),
             canEdit: @study.can_edit?(current_api_user),
-            allow_firecloud_access: allow_firecloud_access,
-            can_compute: can_compute,
-            analysis_tab_content: analysis_tab_content
+            allowFirecloudAccess: allow_firecloud_access,
+            canCompute: can_compute,
+            analysisTabContent: analysis_tab_content
           }
         end
 
