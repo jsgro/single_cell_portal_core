@@ -161,6 +161,15 @@ describe('Client-side file validation', () => {
     expect(errors[0][1]).toEqual('format:empty-row')
   })
 
+  it('reports no error with sparse matrix file that has rows with trailing whitespace', async () => {
+    const file = createMockFile({
+      fileName: 'fo06.mtx',
+      content: '%%MatrixMarket matrix coordinate integer general\n4 8 9  \n4 8 9   \n4 1 0'
+    })
+    const { errors } = await validateFileContent(file, 'MM Coordinate Matrix')
+    expect(errors).toHaveLength(0)
+  })
+
   it('catches duplicate row values in barcodes file', async () => {
     const file = createMockFile({
       fileName: 'foo6.tsv',
