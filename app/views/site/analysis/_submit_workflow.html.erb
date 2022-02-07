@@ -1,6 +1,6 @@
 <h2>Submit a Workflow</h2>
 <p class="lead help-block">Configure and submit a workflow using the wizard below. You will be able to check the status of this workflow in the table above once submitted.</p>
-<%= form_for(:workflow, url: create_workspace_submission_path(@study.accession, @study.name), html: {class: 'form', id: 'workflow-submission'}, data: {remote: true}) do |f| %>
+<%= form_for(:workflow, url: create_workspace_submission_path(@study.accession, @study.url_safe_name), html: {class: 'form', id: 'workflow-submission'}, data: {remote: true}) do |f| %>
   <div id="workflow-wizard">
     <ul class="nav wizard">
       <li role="presentation" class="wizard-nav" id="select-workflow-nav"><a href="#select-workflow" data-toggle="tab">1. Select Workflow</a></li>
