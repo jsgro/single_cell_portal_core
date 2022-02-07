@@ -356,7 +356,7 @@ function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
 }
 
 /**
-   * Validate the first line in the sparse Matrix begins with '%%MatrixMarket'
+   * Validate the first line in the sparse matrix begins with '%%MatrixMarket'
    */
 function validateMTXHeaderLine(line) {
   const issues = []
