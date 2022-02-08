@@ -15,11 +15,11 @@ export function ParseException(key, msg) {
  * reads in a two lines to be used as header lines, sniffs the delimiter,
  * and returns the lines parsed by the sniffed delimiter
  */
-export async function getParsedHeaderLines(chunker, mimeType) {
+export async function getParsedHeaderLines(chunker, mimeType, timerStart) {
   const headerLines = []
   await chunker.iterateLines((line, lineNum, isLastLine) => {
     headerLines.push(line)
-  }, 2)
+  }, 2, timerStart)
   if (headerLines.length < 2 || headerLines.some(hl => hl.length === 0)) {
     throw new ParseException('format:cap:missing-header-lines',
       `Your file is missing newlines or some required header lines`)
@@ -67,7 +67,7 @@ export function parseLine(line, delimiter) {
   const splitLine = line.split(delimiter)
   const parsedLine = new Array(parseLine.length)
   for (let i = 0; i < splitLine.length; i++) {
-    parsedLine[i] = splitLine[i].trim().replaceAll(/^"|"$/g, '')
+    parsedLine[i] = splitLine[i].trim().replace(/^"|"$/g, '')
   }
   return parsedLine
 }
