@@ -119,7 +119,6 @@ export default function FileUploadControl({
     </label>
     <FileDownloadControl
       file={file}
-      bucketName={bucketName}
     />
     &nbsp;
     <button className={buttonClass} id={`fileButton-${file._id}`} data-testid="file-input-btn">
