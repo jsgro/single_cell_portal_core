@@ -40,14 +40,15 @@ export const REQUIRED_CONVENTION_COLUMNS = [
 ]
 
 /**
- * 75 MiB, max number of bytes to read and validate from remote file for sync.
+ * 50 MiB, max number of bytes to read and validate from remote file for sync.
  * Median fixed US bandwidth is 16 MiB/s (17 MB/s, 136 Mbps) as of 2021-12
  * per https://www.speedtest.net/global-index/united-states.  > 80% of ingests
- * are for files <= 75 MiB per https://mixpanel.com/s/2zbxu7.
+ * are for files <= 50 MiB per https://mixpanel.com/s/3EbFMj.
  *
- * So 75 MiB means sync CSFV fully scans > 80% files, usually in < 5 seconds.
+ * So 50 MiB means sync CSFV fully scans > 80% files, usually in < 5 seconds.
+ * Local tests gave 4.6 s (3.4 s remote read, 1.1 s validate; 138 Mbps down).
  */
-const MAX_SYNC_CSFV_BYTES = 75 * 1024 * 1024
+const MAX_SYNC_CSFV_BYTES = 50 * 1024 * 1024
 
 /**
  * Verify headers are unique and not empty
@@ -343,7 +344,6 @@ async function parseFile(file, fileType, fileOptions={}) {
     delimiter: null,
     isGzipped: null
   }
-  console.log('in parseFile, file:', file)
   const parseResult = { fileInfo, issues: [] }
   try {
     fileInfo.isGzipped = await validateGzipEncoding(file)
@@ -406,9 +406,8 @@ export async function validateRemoteFileContent(
 
   const requestStart = performance.now()
   const response = await fetchBucketFile(bucketName, fileName, MAX_SYNC_CSFV_BYTES)
-  syncProps['perfTime:transfer'] = Math.round(performance.now() - requestStart)
-
   const content = await response.text()
+  syncProps['perfTime:readRemote'] = Math.round(performance.now() - requestStart)
 
 
   const contentRange = response.headers.get('content-range')
@@ -421,9 +420,6 @@ export async function validateRemoteFileContent(
 
   // Total size of the file in bytes
   const fileSizeTotal = parseInt(contentRange.split('/')[1])
-  console.log('contentRange', contentRange)
-  console.log('contentRange.split("/")', contentRange.split('/'))
-  console.log('fileSizeTotal', fileSizeTotal)
 
   // Total bytes downloaded, which can be much less than total file size
   const fileSizeFetched = parseInt(contentLength)
@@ -437,15 +433,9 @@ export async function validateRemoteFileContent(
 
   const file = new File([content], fileName, { type: contentType })
 
-  console.log('fileName', fileName)
-  console.log('file', file)
-  console.log('content')
-  console.log(content)
-
   const results =
     await validateFileContent(file, fileType, fileOptions, syncProps)
 
-  console.log('0 results', results)
   return results
 }
 
@@ -502,7 +492,11 @@ function getLogProps(fileInfo, errorObj, perfTime, syncProps) {
 
     // Top-level perfTime is duration for the whole event.
     // The 'perfTime:foo' construct is also used in "plot:" events.
-    defaultProps.perfTime += syncProps['perfTime:transfer']
+    Object.keys(syncProps).forEach(key => {
+      if (key.startsWith('perfTime:')) {
+        defaultProps.perfTime += syncProps[key]
+      }
+    })
   }
 
   if (errors.length === 0) {
