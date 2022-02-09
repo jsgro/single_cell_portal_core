@@ -252,8 +252,8 @@ function validateClusterCoordinates(headers) {
 
 
 /** parse a metadata file, and return an array of issues, along with file parsing info */
-export async function parseMetadataFile(chunker, mimeType, fileOptions, timerStart) {
-  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, timerStart)
+export async function parseMetadataFile(chunker, mimeType, fileOptions, startTime) {
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, startTime)
   let issues = validateCapFormat(headers)
   issues = issues.concat(validateNoMetadataCoordinates(headers))
   if (fileOptions.use_metadata_convention) {
@@ -270,14 +270,14 @@ export async function parseMetadataFile(chunker, mimeType, fileOptions, timerSta
       issues = issues.concat(validateMetadataLabelMatches(headers, line, isLastLine, dataObj))
       issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
     // add other line-by-line validations here
-    }, startTime: timerStart
+    }, startTime
   })
   return { issues, delimiter, numColumns: headers[0].length }
 }
 
 /** parse a cluster file, and return an array of issues, along with file parsing info */
-export async function parseClusterFile(chunker, mimeType, timerStart) {
-  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, timerStart)
+export async function parseClusterFile(chunker, mimeType, startTime) {
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, startTime)
   let issues = validateCapFormat(headers)
   issues = issues.concat(validateClusterCoordinates(headers))
   // add other header validations here
@@ -289,7 +289,7 @@ export async function parseClusterFile(chunker, mimeType, timerStart) {
       issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
       issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
     // add other line-by-line validations here
-    }, startTime: timerStart
+    }, startTime
   })
 
   return { issues, delimiter, numColumns: headers[0].length }
@@ -339,7 +339,7 @@ async function parseFile(file, fileType, fileOptions={}) {
   }
   const parseResult = { fileInfo, issues: [] }
   try {
-    const timerStart = new Date().getTime() // start the CSFV timer
+    const startTime = new Date().getTime() // start the CSFV timer
     fileInfo.isGzipped = await validateGzipEncoding(file)
     // if the file is compressed or we can't figure out the compression, don't try to parse further
     if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
@@ -355,7 +355,7 @@ async function parseFile(file, fileType, fileOptions={}) {
     }
     if (parseFunctions[fileType]) {
       const chunker = new ChunkedLineReader(file)
-      const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions, timerStart)
+      const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions, startTime)
       fileInfo.linesRead = chunker.linesRead
       fileInfo.delimiter = delimiter
       fileInfo.numColumns = numColumns
