@@ -777,7 +777,7 @@ module Api
               # make sure file is not actually a folder by checking its size
               if file.size > 0
                 # fix content headers
-                fixed_file = StudySyncService.fix_file_content_headers(file)
+                fixed_file = ::StudySyncService.fix_file_content_headers(file)
                 # create a new entry
                 unsynced_file = StudyFile.new(study_id: @study.id, name: fixed_file.name, upload_file_name: fixed_file.name,
                                               upload_content_type: fixed_file.content_type,
