@@ -185,7 +185,7 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
 
   test 'should get study file_info hash' do
     sign_in_and_update(@user)
-    execute_http_request(:get, file_info_api_v1_study_path(@study.accession), user: @user)
+    execute_http_request(:get, file_info_api_v1_study_path(@study.accession, params: {include_options: true}), user: @user)
     assert_response :success
     %w[study files feature_flags menu_options].each do |key|
       assert json.keys.include?(key), "Did not find #{key} in json response: #{json.keys}"

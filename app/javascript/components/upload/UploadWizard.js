@@ -8,7 +8,7 @@
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import _cloneDeep from 'lodash/cloneDeep'
-import _isMatch from 'lodash/isEqual'
+import _isMatch from 'lodash/isMatch'
 import ReactNotification, { store } from 'react-notifications-component'
 import { Router, useLocation, navigate } from '@reach/router'
 import * as queryString from 'query-string'
@@ -37,7 +37,8 @@ import SequenceFileStep from './SequenceFileStep'
 import GeneListStep from './GeneListStep'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
-const CHUNK_SIZE = 10000000
+const POLLING_INTERVAL = 10 * 1000 // 10 seconds between state updates
+const CHUNK_SIZE = 10000000 // 10 MB
 const STEPS = [
   RawCountsStep,
   ProcessedExpressionStep,
@@ -76,12 +77,14 @@ export function RawUploadWizard({ studyAccession, name }) {
 
 
   // go through the files and compute any relevant derived properties, notably 'isDirty'
-  if (serverState?.files && formState?.files) {
+  if (formState?.files) {
     formState.files.forEach(file => {
-      const serverFile = serverState.files.find(sFile => sFile._id === file._id)
+      const serverFile = serverState.files ? serverState.files.find(sFile => sFile._id === file._id) : null
+      file.serverFile = serverFile
+
       // use isMatch to confirm that specified properties are equal, but ignore properties (like isDirty)
       // that only exist on the form state objects
-      if (!_isMatch(file, serverFile)) {
+      if (!_isMatch(file, serverFile) || file.status === 'new') {
         file.isDirty = true
       }
     })
@@ -260,7 +263,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   /** delete the file from the form, and also the server if it exists there */
   async function deleteFile(file) {
     const fileId = file._id
-    if (file.status === 'new') {
+    if (file.status === 'new' || file?.serverFile?.parse_status === 'failed') {
       deleteFileFromForm(fileId)
     } else {
       updateFile(fileId, { isDeleting: true })
@@ -296,12 +299,34 @@ export function RawUploadWizard({ studyAccession, name }) {
     })
   }
 
+  /** poll the server periodically for updates to files */
+  function pollServerState() {
+    fetchStudyFileInfo(studyAccession, false).then(response => {
+      response.files.forEach(file => formatFileFromServer(file))
+      setServerState(oldState => {
+        // copy over the menu options since they aren't included in the polling response
+        response.menu_options = oldState.menu_options
+        return response
+      })
+      setTimeout(pollServerState, POLLING_INTERVAL)
+    }).catch(response => {
+      // if the get fails, it's very likely that the error recur on a retry
+      // (user's session timed out, server downtime, internet connection issues)
+      // so to avoid repeated error messages, show one error, and stop polling
+      store.addNotification(failureNotification(<span>
+        Server connectivity failed--some functions may not be available.<br/>
+        You may want to reload the page or sign in again.
+      </span>))
+    })
+  }
+
   // on initial load, load all the details of the study and study files
   useEffect(() => {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
       setServerState(response)
       setFormState(_cloneDeep(response))
+      setTimeout(pollServerState, POLLING_INTERVAL)
     })
   }, [studyAccession])
 
