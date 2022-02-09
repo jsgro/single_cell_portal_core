@@ -1,11 +1,13 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { bytesToSize } from 'lib/stats'
+import { StudyContext } from 'components/upload/UploadWizard'
 
 /** renders a file download control for the given file object */
 export default function FileDownloadControl({ file }) {
   const fileName = file.upload_file_name
-  const studyAccession = window.SCP?.currentStudyAccession
-  const studyName = window.SCP?.currentStudyName
+  const studyObject = useContext(StudyContext)
+  const studyAccession = studyObject?.studyAccession
+  const studyName = studyObject?.studyName
 
   /** when button is clicked, open new window on method to redirect to signed URL */
   const handleDownloadClick = () => {
