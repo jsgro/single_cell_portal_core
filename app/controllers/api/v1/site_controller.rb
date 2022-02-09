@@ -636,17 +636,7 @@ module Api
       end
 
       def get_study_submissions
-        workspace = ApplicationController.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
-        @submissions = ApplicationController.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
-        # update any AnalysisSubmission records with new statuses
-        @submissions.each do |submission|
-          update_analysis_submission(submission)
-        end
-        # remove deleted submissions from list of runs
-        if !workspace['workspace']['attributes']['deleted_submissions'].blank?
-          deleted_submissions = workspace['workspace']['attributes']['deleted_submissions']['items']
-          @submissions.delete_if {|submission| deleted_submissions.include?(submission['submissionId'])}
-        end
+        @submissions = TerraAnalysisService.list_submissions(@study)
         render json: @submissions
       end
 
