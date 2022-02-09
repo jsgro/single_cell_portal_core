@@ -17,9 +17,11 @@ export function ParseException(key, msg) {
  */
 export async function getParsedHeaderLines(chunker, mimeType, timerStart) {
   const headerLines = []
-  await chunker.iterateLines((line, lineNum, isLastLine) => {
-    headerLines.push(line)
-  }, 2, timerStart)
+  await chunker.iterateLines({
+    func: (line, lineNum, isLastLine) => {
+      headerLines.push(line)
+    }, maxLines: 2, startTime: timerStart
+  })
   if (headerLines.length < 2 || headerLines.some(hl => hl.length === 0)) {
     throw new ParseException('format:cap:missing-header-lines',
       `Your file is missing newlines or some required header lines`)
@@ -183,6 +185,26 @@ export function validateGroupColumnCounts(headers, line, isLastLine, dataObj) {
         ])
       }
     })
+  }
+  return issues
+}
+
+/**
+ * Timeout the CSFV if taking longer than 10 seconds
+ *
+ */
+export function timeOutCSFV(timerStart, chunker) {
+  const maxTime = 10000 // in milliseconds this equates to 10 seconds
+  const maxRealTime = timerStart + maxTime
+  const currentTime = new Date().getTime()
+  const issues = []
+
+  if (currentTime > maxRealTime) {
+    // quit early by setting the file reader to the end of the file so it can't read anymore
+    chunker.setToFileEnd()
+    issues.push(['warn', 'timeout',
+      'Due to the size of the file, validation will occur after upload, please be aware '+
+        'the absense of errors/warnings here is NOT a reflection of the state of the file.'])
   }
   return issues
 }

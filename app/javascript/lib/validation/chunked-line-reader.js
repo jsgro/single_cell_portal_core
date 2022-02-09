@@ -6,9 +6,9 @@ const newlineRegex = /\r?\n/
  * reads lines from a file in a chunked way, so that the file does not have to be in memory all at once
  * Basic usage:
  * const chunker = new ChunkedLineReader(file)
- * chunker.iterateLines((line, lineNum, isLastLine) => {
+ * chunker.iterateLines({func: (line, lineNum, isLastLine) => {
  *   // do stuff
- * }) {
+ * }}) {
  * }
  */
 export default class ChunkedLineReader {
@@ -22,20 +22,7 @@ export default class ChunkedLineReader {
     this.chunkLines = []
     this.updateHasMoreChunks()
     this.updateHasMoreLines()
-    this.resetToFileStart()
-    this.shouldStopReadingFile()
   }
-
-  /**
-   * Exception thrown for issues arrising during file reading
-   * @param {} key 
-   * @param {*} msg 
-   */
-  FileReadingException(key, msg) {
-    this.message = msg
-    this.key = key
-  }
-
 
   /**
    * Reset the reader to the start of the file
@@ -49,25 +36,12 @@ export default class ChunkedLineReader {
   }
 
   /**
-   * Calculate if should stop reading file lines
-   */
-  shouldStopReadingFile(timerStart) {
-    const max = timerStart + 10000 // timerStart is in milliseoconds so add 10,000 milliseconds
-    const currentTime = new Date().getTime()
-    if (currentTime > max) {
-      throw new this.FileReadingException('time-limit-exceeded',
-      `This file is too large for full client side validation, you can continue and save it and wait for the serverside validation to confirm validation.`)
-    }
-  }
-
-  /**
    * iterates over the remaining lines in the file, calling func(line, lineNum, isLastLine) for each line
    * (lineNum is 0-indexed).
    * maxBytesPerLine can be set to avoid reading the entire file into memory in the event the file is missing
    * proper newlines
   */
-  async iterateLines(func, maxLines=Number.MAX_SAFE_INTEGER, startTime) {
-    const maxBytesPerLine=1000*1000*1024
+  async iterateLines({ func, maxLines = Number.MAX_SAFE_INTEGER, maxBytesPerLine = 1000*1000*1024, startTime }) {
     const prevLinesRead = this.linesRead
     while ((this.hasMoreChunks || this.chunkLines.length) &&
            !(this.linesRead === 0 && this.nextByteToRead > maxBytesPerLine) &&
@@ -81,9 +55,18 @@ export default class ChunkedLineReader {
         this.updateHasMoreLines()
         func(line, this.linesRead - 1, !this.hasMoreLines)
       }
-      this.shouldStopReadingFile(startTime)
     }
   }
+
+  /**
+   * Reset the reader to the end of the file
+   */
+  setToFileEnd() {
+    this.chunkLines = []
+    this.hasMoreChunks = false
+    this.hasMoreLines = false
+  }
+
 
   /**
    * reads a file as lines in a set of 'chunks'  Each chunk is determined by chunkSize
