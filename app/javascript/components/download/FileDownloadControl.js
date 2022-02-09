@@ -6,8 +6,8 @@ import { StudyContext } from 'components/upload/UploadWizard'
 export default function FileDownloadControl({ file }) {
   const fileName = file.upload_file_name
   const studyObject = useContext(StudyContext)
-  const studyAccession = studyObject?.studyAccession
-  const studyName = studyObject?.studyName
+  const studyAccession = studyObject?.accession
+  const studyName = studyObject?.url_safe_name
 
   /** when button is clicked, open new window on method to redirect to signed URL */
   const handleDownloadClick = () => {

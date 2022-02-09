@@ -67,10 +67,9 @@ export function RawUploadWizard({ studyAccession, name }) {
   const [formState, setFormState] = useState(null)
 
   // study attributes to pass to the StudyContext later for use throughout the RawUploadWizard component, if needed
-  const studyObj = {
-    studyAccession: serverState?.study?.accession,
-    studyName: serverState?.study?.url_safe_name
-  }
+  // use complete study object, rather than defaultStudyState so that any updates to study.rb will be reflected in
+  // this context
+  const studyObj = serverState?.study
 
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
 
