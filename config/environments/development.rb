@@ -63,7 +63,7 @@ Rails.application.configure do
     if env['action_dispatch.original_path']&.include?('api/v1')
       Api::V1::ExceptionsController.action(:render_error).call(env)
     else
-      ActionDispatch::PublicExceptions.new(Rails.public_path).call(env)
+      ActionDispatch::PublicExceptions.new(Rails.public_path)
     end
   end
 
