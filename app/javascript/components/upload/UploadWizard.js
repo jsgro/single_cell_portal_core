@@ -15,7 +15,7 @@ import * as queryString from 'query-string'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 
-import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
+import { formatFileFromServer, formatFileForApi, newStudyFileObj, StudyContext } from './upload-utils'
 import {
   createStudyFile, updateStudyFile, deleteStudyFile,
   fetchStudyFileInfo, sendStudyFileChunk, RequestCanceller
@@ -53,14 +53,6 @@ const STEPS = [
 
 const MAIN_STEPS = STEPS.slice(0, 4)
 const SUPPLEMENTAL_STEPS = STEPS.slice(4)
-
-const defaultStudyState = {
-  accession: null,
-  url_safe_name: null
-}
-
-// context to pass through UploadWizard
-export const StudyContext = React.createContext(defaultStudyState)
 
 /** shows the upload wizard */
 export function RawUploadWizard({ studyAccession, name }) {

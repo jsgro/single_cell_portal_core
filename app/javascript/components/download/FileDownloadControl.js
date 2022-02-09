@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { bytesToSize } from 'lib/stats'
-import { StudyContext } from 'components/upload/UploadWizard'
+import { StudyContext } from 'components/upload/upload-utils'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
 /** renders a file download control for the given file object */
@@ -20,7 +20,7 @@ export default function FileDownloadControl({ file }) {
     // don't show the control if there's no remote file, or if the user has already selected a replacement
     return null
   }
-  
+
   if (!file.upload_file_name && file.human_data) {
     // don't show the control if this is a sequence file hosted elsewhere
     return null
