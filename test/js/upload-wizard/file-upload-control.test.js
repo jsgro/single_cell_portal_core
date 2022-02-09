@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitForElementToBeRemoved } from '@testing-library/react'
+import { render, screen, cleanup, waitForElementToBeRemoved } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
 import FileUploadControl from 'components/upload/FileUploadControl'
@@ -209,5 +209,57 @@ describe('file upload control validates the selected file', () => {
       .toHaveTextContent('First row, first column must be "NAME" (case insensitive). Your value was "notNAME')
     expect(screen.getByTestId('file-content-validation'))
       .toHaveTextContent('Second row, first column must be "TYPE" (case insensitive). Your value was "foo"')
+  })
+
+  it('shows the file chooser button appropriately', async () => {
+    const file = {
+      _id: '123',
+      name: '',
+      status: 'new',
+      file_type: 'Cluster'
+    }
+    render((
+      <FileUploadControl
+        file={file}
+        allFiles={[file]}
+        allowedFileExts={['.txt']}
+        validationMessages={{}}/>
+    ))
+    expect(screen.queryAllByText('Choose file')).toHaveLength(1)
+    cleanup()
+
+    const file2 = {
+      _id: '123',
+      name: 'cluster.txt',
+      status: 'new',
+      file_type: 'Cluster',
+      upload_file_name: 'cluster.txt'
+    }
+    render((
+      <FileUploadControl
+        file={file2}
+        allFiles={[file2]}
+        allowedFileExts={['.txt']}
+        validationMessages={{}}/>
+    ))
+    expect(screen.queryAllByText('Replace')).toHaveLength(1)
+    cleanup()
+
+    const file3 = {
+      _id: '123',
+      name: 'cluster.txt',
+      upload_file_name: 'cluster.txt',
+      status: 'uploaded',
+      file_type: 'Cluster'
+    }
+    render((
+      <FileUploadControl
+        file={file3}
+        allFiles={[file3]}
+        allowedFileExts={['.txt']}
+        validationMessages={{}}/>
+    ))
+    expect(screen.queryAllByText('Choose file')).toHaveLength(0)
+    expect(screen.queryAllByText('Replace')).toHaveLength(0)
   })
 })
