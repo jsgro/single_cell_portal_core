@@ -20,6 +20,7 @@ export default class ChunkedLineReader {
     this.linesRead = 0
     this.currentFragment = null // currentFragment stores the parts of lines that cross chunk boundaries
     this.chunkLines = []
+    this.startTime = new Date().getTime() // start the CSFV timer
     this.updateHasMoreChunks()
     this.updateHasMoreLines()
   }
@@ -41,7 +42,7 @@ export default class ChunkedLineReader {
    * maxBytesPerLine can be set to avoid reading the entire file into memory in the event the file is missing
    * proper newlines
   */
-  async iterateLines({ func, maxLines = Number.MAX_SAFE_INTEGER, maxBytesPerLine = 1000*1000*1024, startTime }) {
+  async iterateLines({ func, maxLines = Number.MAX_SAFE_INTEGER, maxBytesPerLine = 1000*1000*1024 }) {
     const prevLinesRead = this.linesRead
     while ((this.hasMoreChunks || this.chunkLines.length) &&
            !(this.linesRead === 0 && this.nextByteToRead > maxBytesPerLine) &&

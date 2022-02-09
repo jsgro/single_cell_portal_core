@@ -17,7 +17,7 @@ import {
 } from './expression-matrices-validation'
 import {
   getParsedHeaderLines, parseLine, ParseException,
-  validateUniqueCellNamesWithinFile, validateMetadataLabelMatches, validateGroupColumnCounts
+  validateUniqueCellNamesWithinFile, validateMetadataLabelMatches, validateGroupColumnCounts, timeOutCSFV
 } from './shared-validation'
 
 import getSCPContext from 'providers/SCPContextProvider'
@@ -252,8 +252,8 @@ function validateClusterCoordinates(headers) {
 
 
 /** parse a metadata file, and return an array of issues, along with file parsing info */
-export async function parseMetadataFile(chunker, mimeType, fileOptions, startTime) {
-  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, startTime)
+export async function parseMetadataFile(chunker, mimeType, fileOptions) {
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType)
   let issues = validateCapFormat(headers)
   issues = issues.concat(validateNoMetadataCoordinates(headers))
   if (fileOptions.use_metadata_convention) {
@@ -265,19 +265,21 @@ export async function parseMetadataFile(chunker, mimeType, fileOptions, startTim
   const dataObj = {} // object to track multi-line validation concerns
   await chunker.iterateLines({
     func: (rawline, lineNum, isLastLine) => {
+      issues = issues.concat(timeOutCSFV(chunker))
+
       const line = parseLine(rawline, delimiter)
       issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
       issues = issues.concat(validateMetadataLabelMatches(headers, line, isLastLine, dataObj))
       issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
     // add other line-by-line validations here
-    }, startTime
+    }
   })
   return { issues, delimiter, numColumns: headers[0].length }
 }
 
 /** parse a cluster file, and return an array of issues, along with file parsing info */
-export async function parseClusterFile(chunker, mimeType, startTime) {
-  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType, startTime)
+export async function parseClusterFile(chunker, mimeType) {
+  const { headers, delimiter } = await getParsedHeaderLines(chunker, mimeType)
   let issues = validateCapFormat(headers)
   issues = issues.concat(validateClusterCoordinates(headers))
   // add other header validations here
@@ -285,11 +287,13 @@ export async function parseClusterFile(chunker, mimeType, startTime) {
   const dataObj = {} // object to track multi-line validation concerns
   await chunker.iterateLines({
     func: (rawLine, lineNum, isLastLine) => {
+      issues = issues.concat(timeOutCSFV(chunker))
+
       const line = parseLine(rawLine, delimiter)
       issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
       issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
     // add other line-by-line validations here
-    }, startTime
+    }
   })
 
   return { issues, delimiter, numColumns: headers[0].length }
@@ -339,7 +343,6 @@ async function parseFile(file, fileType, fileOptions={}) {
   }
   const parseResult = { fileInfo, issues: [] }
   try {
-    const startTime = new Date().getTime() // start the CSFV timer
     fileInfo.isGzipped = await validateGzipEncoding(file)
     // if the file is compressed or we can't figure out the compression, don't try to parse further
     if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
@@ -355,7 +358,7 @@ async function parseFile(file, fileType, fileOptions={}) {
     }
     if (parseFunctions[fileType]) {
       const chunker = new ChunkedLineReader(file)
-      const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions, startTime)
+      const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
       fileInfo.linesRead = chunker.linesRead
       fileInfo.delimiter = delimiter
       fileInfo.numColumns = numColumns

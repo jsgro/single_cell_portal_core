@@ -15,12 +15,12 @@ export function ParseException(key, msg) {
  * reads in a two lines to be used as header lines, sniffs the delimiter,
  * and returns the lines parsed by the sniffed delimiter
  */
-export async function getParsedHeaderLines(chunker, mimeType, startTime) {
+export async function getParsedHeaderLines(chunker, mimeType) {
   const headerLines = []
   await chunker.iterateLines({
     func: (line, lineNum, isLastLine) => {
       headerLines.push(line)
-    }, maxLines: 2, startTime
+    }, maxLines: 2
   })
   if (headerLines.length < 2 || headerLines.some(hl => hl.length === 0)) {
     throw new ParseException('format:cap:missing-header-lines',
@@ -193,9 +193,9 @@ export function validateGroupColumnCounts(headers, line, isLastLine, dataObj) {
  * Timeout the CSFV if taking longer than 10 seconds
  *
  */
-export function timeOutCSFV(startTime, chunker) {
+export function timeOutCSFV(chunker) {
   const maxTime = 10000 // in milliseconds this equates to 10 seconds
-  const maxRealTime = startTime + maxTime
+  const maxRealTime = chunker.startTime + maxTime
   const currentTime = new Date().getTime()
   const issues = []
 
