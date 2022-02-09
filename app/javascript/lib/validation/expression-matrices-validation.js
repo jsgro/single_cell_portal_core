@@ -11,8 +11,6 @@ const whitespaceDelimiter = /\s+/
 
 /** Parse a dense matrix file */
 export async function parseDenseMatrixFile(chunker, mimeType, fileOptions, timerStart) {
-  console.log('timerStartinbeginingofdense', timerStart)
-
   const { header, delimiter, firstTwoContentLines } = await getParsedDenseMatrixHeaderLine(chunker, timerStart)
 
   let issues = validateDenseHeader(header, firstTwoContentLines)
@@ -46,20 +44,24 @@ export async function parseSparseMatrixFile(chunker, mimeType, fileOptions, time
   const dataObj = {} // object to track multi-line validation concerns
 
   let rawHeaderLine = null
-  await chunker.iterateLines({ func: rawLine => {
-    rawHeaderLine = rawLine
-  }, maxLines: 1, startTime: timerStart})
+  await chunker.iterateLines({
+    func: rawLine => {
+      rawHeaderLine = rawLine
+    }, maxLines: 1, startTime: timerStart
+  })
   const header = rawHeaderLine.trim().split(whitespaceDelimiter)
 
   issues = validateMTXHeaderLine(header)
 
-  await chunker.iterateLines({func: (rawLine, lineNum, isLastLine) => {
-    const line = rawLine.trim().split(whitespaceDelimiter)
+  await chunker.iterateLines({
+    func: (rawLine, lineNum, isLastLine) => {
+      const line = rawLine.trim().split(whitespaceDelimiter)
 
-    issues = issues.concat(validateSparseColumnNumber(line, isLastLine, lineNum, dataObj))
-    issues = issues.concat(validateSparseNoBlankLines(line, isLastLine, lineNum, dataObj))
+      issues = issues.concat(validateSparseColumnNumber(line, isLastLine, lineNum, dataObj))
+      issues = issues.concat(validateSparseNoBlankLines(line, isLastLine, lineNum, dataObj))
     // add other line-by-line validations here
-  }, startTime: timerStart} )
+    }, startTime: timerStart
+  })
   return { issues, whitespaceDelimiter, numColumns: dataObj.correctNumberOfColumns }
 }
 
@@ -69,10 +71,12 @@ export async function parseBarcodesFile(chunker, mimeType, fileOptions, timerSta
   let issues = []
 
   const dataObj = {} // object to track multi-line validation concerns
-  await chunker.iterateLines({ func: (rawLine, lineNum, isLastLine) => {
-    issues = issues.concat(validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj))
+  await chunker.iterateLines({
+    func: (rawLine, lineNum, isLastLine) => {
+      issues = issues.concat(validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj))
     // add other line-by-line validations here
-  }, startTime: timerStart})
+    }, startTime: timerStart
+  })
   return { issues }
 }
 
@@ -82,10 +86,12 @@ export async function parseFeaturesFile(chunker, mimeType, fileOptions, timerSta
   let issues = []
 
   const dataObj = {} // object to track multi-line validation concerns
-  await chunker.iterateLines({func: (rawLine, lineNum, isLastLine) => {
-    issues = issues.concat(validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj))
+  await chunker.iterateLines({
+    func: (rawLine, lineNum, isLastLine) => {
+      issues = issues.concat(validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj))
     // add other line-by-line validations here
-  }, startTime: timerStart})
+    }, startTime: timerStart
+  })
   return { issues }
 }
 
@@ -98,12 +104,12 @@ async function getParsedDenseMatrixHeaderLine(chunker, timerStart) {
   let rawHeader = null
   // the lines following the header line are needed for R-formatted file header validation
   const rawNextTwoLines = []
-  console.log('indense header:', timerStart)
 
-  await chunker.iterateLines({func: line => {
-    console.log('inside iterate lines in desnse header')
-    rawHeader = line
-  }, maxLines: 1, startTime: timerStart})
+  await chunker.iterateLines({
+    func: line => {
+      rawHeader = line
+    }, maxLines: 1, startTime: timerStart
+  })
 
   if (rawHeader.trim().length === 0) {
     throw new ParseException('format:cap:missing-header-lines',
@@ -111,9 +117,11 @@ async function getParsedDenseMatrixHeaderLine(chunker, timerStart) {
   }
 
   // get the 2 lines following the header line
-  await chunker.iterateLines({func: line => {
-    rawNextTwoLines.push(line)
-  }, maxLines: 2, startTime: timerStart})
+  await chunker.iterateLines({
+    func: line => {
+      rawNextTwoLines.push(line)
+    }, maxLines: 2, startTime: timerStart
+  })
 
   const delimiter = getDenseMatrixDelimiter(rawHeader, rawNextTwoLines)
 

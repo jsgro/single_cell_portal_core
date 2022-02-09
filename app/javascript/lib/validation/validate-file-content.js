@@ -381,7 +381,6 @@ export async function validateFileContent(file, fileType, fileOptions={}) {
   const perfTime = Math.round(performance.now() - startTime)
 
   const errorObj = formatIssues(issues)
-  console.log('errorobj:', errorObj)
   const logProps = getLogProps(fileInfo, errorObj, perfTime)
   log('file-validation', logProps)
 
@@ -437,8 +436,7 @@ function getLogProps(fileInfo, errorObj, perfTime) {
   }
 
   if (errors.length === 0) {
-    console.log('warnings,', warnings)
-    if(warnings.flat().includes('timeout')){
+    if (warnings.flat().includes('timeout')) {
       return Object.assign({ status: 'timeout' }, defaultProps)
     }
     return Object.assign({ status: 'success' }, defaultProps)
