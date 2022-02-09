@@ -69,7 +69,7 @@ export function parseLine(line, delimiter) {
   const splitLine = line.split(delimiter)
   const parsedLine = new Array(parseLine.length)
   for (let i = 0; i < splitLine.length; i++) {
-    parsedLine[i] = splitLine[i].trim().replace(/^"|"$/g, '')
+    parsedLine[i] = splitLine[i].trim().replaceAll(/^"|"$/g, '')
   }
   return parsedLine
 }
@@ -203,8 +203,8 @@ export function timeOutCSFV(startTime, chunker) {
     // quit early by setting the file reader to the end of the file so it can't read anymore
     chunker.setToFileEnd()
     issues.push(['warn', 'timeout',
-      'Due to the size of the file, validation will occur after upload, please be aware '+
-        'the absense of errors/warnings here is NOT a reflection of the state of the file.'])
+      'Due to the size of the file, validation will occur after upload. Please be aware '+
+        'the absence of errors/warnings here is NOT an indication of the validity of the file.'])
   }
   return issues
 }
