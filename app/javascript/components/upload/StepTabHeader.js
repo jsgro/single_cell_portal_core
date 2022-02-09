@@ -27,8 +27,8 @@ export default function StepTabHeader({
     remainderText = <span className="detail"> &nbsp; + {stepFiles.length - 2} more</span>
   }
 
-  const stepHasValidFiles = stepFiles.some(f => f.status === 'uploaded' &&
-    (f.parse_status === 'parsed' || !PARSEABLE_TYPES.includes(f.file_type)))
+  const stepHasValidFiles = stepFiles.some(f => f.serverFile?.status === 'uploaded' &&
+    (f.serverFile?.parse_status === 'parsed' || !PARSEABLE_TYPES.includes(f.file_type)))
 
   const badgeTestId = `${step.name}-status-badge`
   let badgeContent = <span className="badge highlight" data-testid={badgeTestId}>{index + 1}</span>
