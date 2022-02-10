@@ -17,11 +17,10 @@
         <%= render partial: 'study_download_data' %>
       </div>
     <% end %>
-    <% if @allow_firecloud_access && @user_can_compute %>
-      <div class="tab-pane" id="study-analysis" role="tabpanel">
-        <%= render partial: 'study_analysis' %>
-      </div>
-    <% end %>
+
+    <div class="tab-pane" id="study-analysis" role="tabpanel">
+    </div>
+
     <% if @allow_firecloud_access && @allow_edits && @user_can_edit %>
       <div class="tab-pane" id="study-settings" role="tabpanel">
         <div class="row">

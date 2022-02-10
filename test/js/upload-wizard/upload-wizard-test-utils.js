@@ -24,6 +24,9 @@ export function getSelectByLabelText(screen, text) {
 export async function renderWizardWithStudy({
   studyInfo=EMPTY_STUDY, featureFlags={}, studyAccession='SCP1', studyName='Chickens'
 }) {
+  // merge featureFlags data into studyInfo.feature_flags since this is where the upload wizard looks now
+  studyInfo.feature_flags = featureFlags
+
   const studyInfoSpy = jest.spyOn(ScpApi, 'fetchStudyFileInfo')
   // pass in a clone of the response since it may get modified by the cache operations
   studyInfoSpy.mockImplementation(params => {

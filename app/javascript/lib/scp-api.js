@@ -200,8 +200,11 @@ export function stringifyQuery(paramObj, sort) {
  *
  * @param {String} studyAccession Study accession
 */
-export async function fetchStudyFileInfo(studyAccession, mock=false) {
-  const apiUrl = `/studies/${studyAccession}/file_info`
+export async function fetchStudyFileInfo(studyAccession, includeOptions=true, mock=false) {
+  let apiUrl = `/studies/${studyAccession}/file_info`
+  if (includeOptions) {
+    apiUrl += '?include_options=true'
+  }
   const [response] = await scpApi(apiUrl, defaultInit(), mock, false)
   return response
 }

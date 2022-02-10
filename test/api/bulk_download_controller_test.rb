@@ -333,6 +333,46 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     assert_not azul_files.keys.include?('FakeHCAStudy2')
   end
 
+  test 'should complete download request for HCA projects w/o analysis/sequence files' do
+    hca_project_id = SecureRandom.uuid
+    payload = {
+      file_ids: [],
+      azul_files: {
+        FakeHCAStudy1: [
+          {
+            count: 1,
+            upload_file_size: 1.megabyte,
+            file_type: 'Project Manifest',
+            project_id: hca_project_id,
+            name: 'FakeHCAStudy1.tsv'
+          }
+        ]
+      }
+    }
+    execute_http_request(:post, api_v1_bulk_download_auth_code_path, request_payload: payload, user: @user)
+    assert_response :success
+    download_id = json['download_id']
+    auth_code = json['auth_code']
+    mock = Minitest::Mock.new
+    manifest_info = {
+      Status: 302,
+      Location: 'https://service.azul.data.humancellatlas.org/manifest/files?catalog=dcp12&format=compact&' \
+                "filters=%7B%22projectId%22%3A+%7B%22is%22%3A+%5B%22#{hca_project_id}%22%5D%7D%7D&objectKey=" \
+                'manifests%2FFakeHCAStudy1.tsv'
+    }.with_indifferent_access
+    mock.expect :project_manifest_link, manifest_info, [hca_project_id]
+    ApplicationController.stub :hca_azul_client, mock do
+      execute_http_request(:get,
+                           api_v1_bulk_download_generate_curl_config_path(
+                             auth_code: auth_code, download_id: download_id
+                           ),
+                           user: @user)
+      assert_response :success
+      mock.verify
+      assert json.include? manifest_info[:Location]
+    end
+  end
+
   test 'should extract accessions from parameters' do
     study = FactoryBot.create(:detached_study,
                               name_prefix: 'Accession Test',

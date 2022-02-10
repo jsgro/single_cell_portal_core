@@ -16,7 +16,7 @@ const DEFAULT_NEW_METADATA_FILE = {
   use_metadata_convention: true
 }
 
-const metadataFileFilter = file => file.file_type === 'Metadata'
+export const metadataFileFilter = file => file.file_type === 'Metadata'
 const allowedFileExts = FileTypeExtensions.plainText
 export default {
   title: 'Metadata',
@@ -37,7 +37,7 @@ function MetadataForm({
   bucketName
 }) {
   const userState = useContext(UserContext)
-  const featureFlagState = userState.featureFlagsWithDefaults
+  const featureFlagState = serverState.feature_flags
   const conventionRequired = featureFlagState && featureFlagState.convention_required
 
   const file = formState.files.find(metadataFileFilter)
