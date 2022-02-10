@@ -866,6 +866,8 @@ class StudiesController < ApplicationController
     @study_file = @study.study_files.build
     @partial = 'study_file_form'
     if @study_file.update(study_file_params)
+      # fix content headers
+      StudySyncService.fix_file_content_headers(@study_file)
       if study_file_params[:file_type] == 'Expression Matrix' && !study_file_params[:y_axis_label].blank?
         # if user is supplying an expression axis label, update default options hash
         @study.update(default_options: @study.default_options.merge(expression_label: study_file_params[:y_axis_label]))
@@ -1298,12 +1300,10 @@ class StudiesController < ApplicationController
 
           # make sure file is not actually a folder by checking its size
           if file.size > 0
-            # fix content headers
-            fixed_file = StudySyncService.fix_file_content_headers(file)
             # create a new entry
-            unsynced_file = StudyFile.new(study_id: @study.id, name: fixed_file.name, upload_file_name: fixed_file.name,
-                                          upload_content_type: fixed_file.content_type, upload_file_size: fixed_file.size,
-                                          generation: fixed_file.generation, remote_location: fixed_file.name)
+            unsynced_file = StudyFile.new(study_id: @study.id, name: file.name, upload_file_name: file.name,
+                                          upload_content_type: file.content_type, upload_file_size: file.size,
+                                          generation: file.generation, remote_location: file.name)
             unsynced_file.build_expression_file_info
             @unsynced_files << unsynced_file
           end

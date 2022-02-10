@@ -1,38 +1,33 @@
 # collection of methods to be called during sync actions
 class StudySyncService
-  # handle setting the metadata headers for a GCS resource (e.g. file)
-  # this is used mainly to address issues when a user has directly pushed a file to a bucket via gsutil
-  # which can result in headers are not being set correctly that causes downstream issues when localizing files
+  # handle setting the content metadata headers (Content-Type, Content-Encoding) for a GCS resource (e.g. file)
+  # this is used mainly to address issues when a user has directly uploaded a file to a bucket via gsutil which can
+  # result in headers are not being set correctly that causes downstream issues when localizing files for parsing
   #
   # * *params*
-  #   - +file+ (Google::Cloud::Storage::File) => remote GCS file in workspace bucket
+  #   - +study_file+ (StudyFile) => recently synced StudyFile
   #
   # * *returns*
-  #  - (Google::Cloud::Storage::File)
-  def self.fix_file_content_headers(file)
-    return file unless file.is_a?(Google::Cloud::Storage::File) && gzipped?(file) # uncompressed files need no updates
+  #  - (Boolean) => T/F on whether headers were changed
+  def self.fix_file_content_headers(study_file)
+    return false unless study_file.is_a?(StudyFile) && study_file.study.present? && study_file.parseable?
 
-    Rails.logger.info "correcting headers on unsynced file #{file.name} in #{file.bucket}"
-    # determine what headers need to be changed, if any
-    case file.content_type
-    when /text/
-      Rails.logger.info "setting #{file.name} content_encoding to gzip based on content_type: #{file.content_type}"
-      file.content_encoding = 'gzip'
-    when /gzip/
-      Rails.logger.info "setting #{file.name} content_type to application/octet-stream, clearing content_encoding " \
-                        "based on content_type: #{file.content_type}"
-      # use block-style update for single PATCH request
-      file.update do |f|
-        f.content_type = 'application/octet-stream'
-        f.content_encoding = ''
-      end
-    when 'application/octet-stream'
-      Rails.logger.info "unsetting #{file.name} content_encoding based on content_type: #{file.content_type}"
-      file.content_encoding = ''
-    else
-      Rails.logger.info "skipping #{file.name} header correction due to unexpected content_type: #{file.content_type}"
+    study = study_file.study
+    file = ApplicationController.firecloud_client.get_workspace_file(study.bucket_id, study_file.bucket_location)
+    return false unless gzipped?(file) && study_file.remote_location.present? # skip uncompressed & SCP UI uploaded files
+
+    # at this point, we know the file is gzipped, and was not uploaded through the SCP UI
+    # set content_type to application/gzip and ensure there is no content_encoding header
+    # this mimics what happens when a user uploads a gzipped file through either the SCP or GCS UI
+    Rails.logger.info "correcting headers on synced file #{file.name} (#{file.content_type}) in #{file.bucket}"
+    file.update do |f|
+      f.content_type = 'application/gzip'
+      f.content_encoding = ''
     end
-    file
+
+    Rails.logger.info "headers updated on #{file.name} to content_type: #{file.content_type}, " \
+                      "content_encoding: #{file.content_encoding}"
+    true
   end
 
   # tell if a file has been gzipped
@@ -43,7 +38,9 @@ class StudySyncService
   # * *returns*
   #  - (Boolean)
   def self.gzipped?(file)
-    return true if file.name&.end_with?('.gz') || file.content_type == 'application/gzip'
+    if file.name&.end_with?('.gz') || file.content_type == 'application/gzip'
+      return true
+    end
 
     # read first two bytes into memory and check against StudyFile::GZIP_MAGIC_NUMBER
     begin
