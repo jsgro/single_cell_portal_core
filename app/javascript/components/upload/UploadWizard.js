@@ -15,7 +15,7 @@ import * as queryString from 'query-string'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 
-import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
+import { formatFileFromServer, formatFileForApi, newStudyFileObj, StudyContext } from './upload-utils'
 import {
   createStudyFile, updateStudyFile, deleteStudyFile,
   fetchStudyFileInfo, sendStudyFileChunk, RequestCanceller
@@ -54,11 +54,15 @@ const STEPS = [
 const MAIN_STEPS = STEPS.slice(0, 4)
 const SUPPLEMENTAL_STEPS = STEPS.slice(4)
 
-
 /** shows the upload wizard */
 export function RawUploadWizard({ studyAccession, name }) {
   const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
+
+  // study attributes to pass to the StudyContext later for use throughout the RawUploadWizard component, if needed
+  // use complete study object, rather than defaultStudyState so that any updates to study.rb will be reflected in
+  // this context
+  const studyObj = serverState?.study
 
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
 
@@ -332,54 +336,58 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   const nextStep = STEPS[currentStepIndex + 1]
   const prevStep = STEPS[currentStepIndex - 1]
-  return <div className="upload-wizard-react">
-    <div className="row">
-      <div className="col-md-12 wizard-top-bar">
-        <span>{serverState?.study?.name}</span> / &nbsp;
-        <a href={`/single_cell/study/${studyAccession}`}>View study</a>
-      </div>
-    </div>
-    <div className="row wizard-content">
-      <div className="col-md-3">
-        <WizardNavPanel {...{
-          formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
-          supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
-        }} />
-      </div>
-      <div className="col-md-9">
-        <div className="flexbox-align-center top-margin">
-          <h4>{currentStep.header}</h4>
-          <div className="prev-next-buttons">
-            { prevStep && <button
-              className="btn terra-tertiary-btn margin-right"
-              onClick={() => setCurrentStep(prevStep)}>
-              <FontAwesomeIcon icon={faChevronLeft}/> Previous
-            </button> }
-            { nextStep && <button
-              className="btn terra-tertiary-btn"
-              onClick={() => setCurrentStep(nextStep)}>
-              Next <FontAwesomeIcon icon={faChevronRight}/>
-            </button> }
+  return (
+    <StudyContext.Provider value={studyObj}>
+      <div className="upload-wizard-react">
+        <div className="row">
+          <div className="col-md-12 wizard-top-bar">
+            <span>{serverState?.study?.name}</span> / &nbsp;
+            <a href={`/single_cell/study/${studyAccession}`}>View study</a>
           </div>
         </div>
-        { !formState && <div className="padded text-center">
-          <LoadingSpinner data-testid="upload-wizard-spinner"/>
-        </div> }
-        { !!formState && <div>
-          <currentStep.component
-            setCurrentStep={setCurrentStep}
-            formState={formState}
-            serverState={serverState}
-            deleteFile={deleteFile}
-            updateFile={updateFile}
-            saveFile={saveFile}
-            addNewFile={addNewFile}
-          />
-        </div> }
+        <div className="row wizard-content">
+          <div className="col-md-3">
+            <WizardNavPanel {...{
+              formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
+              supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
+            }} />
+          </div>
+          <div className="col-md-9">
+            <div className="flexbox-align-center top-margin">
+              <h4>{currentStep.header}</h4>
+              <div className="prev-next-buttons">
+                { prevStep && <button
+                  className="btn terra-tertiary-btn margin-right"
+                  onClick={() => setCurrentStep(prevStep)}>
+                  <FontAwesomeIcon icon={faChevronLeft}/> Previous
+                </button> }
+                { nextStep && <button
+                  className="btn terra-tertiary-btn"
+                  onClick={() => setCurrentStep(nextStep)}>
+                  Next <FontAwesomeIcon icon={faChevronRight}/>
+                </button> }
+              </div>
+            </div>
+            { !formState && <div className="padded text-center">
+              <LoadingSpinner data-testid="upload-wizard-spinner"/>
+            </div> }
+            { !!formState && <div>
+              <currentStep.component
+                setCurrentStep={setCurrentStep}
+                formState={formState}
+                serverState={serverState}
+                deleteFile={deleteFile}
+                updateFile={updateFile}
+                saveFile={saveFile}
+                addNewFile={addNewFile}
+              />
+            </div> }
+          </div>
+        </div>
+        <MessageModal/>
       </div>
-    </div>
-    <MessageModal/>
-  </div>
+    </StudyContext.Provider>
+  )
 }
 
 /** Wraps the upload wirzard logic in a router and error handler */

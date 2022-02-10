@@ -22,7 +22,7 @@
 
       window.SCP.gaTrackingId = '<%= ENV['GA_TRACKING_ID'] %>';
       window.SCP.analyticsPageName = '<%= get_page_name %>';
-      window.SCP.currentStudyAccession = '<%= @study.try(:accession) ? @study.try(:accession) : "" %>'
+      window.SCP.currentStudyAccession = '<%= @study&.accession %>'
 
       // if we had search forms to preserve, recall and resubmit
       if ( localStorage.getItem('previous-search-url') ) {
