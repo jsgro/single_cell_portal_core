@@ -1,14 +1,19 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
-import { validateFileContent, REQUIRED_CONVENTION_COLUMNS } from 'lib/validation/validate-file-content'
+
+import {
+  validateFileContent, REQUIRED_CONVENTION_COLUMNS,
+  validateRemoteFileContent
+} from 'lib/validation/validate-file-content'
 import ValidationAlert from 'components/validation/ValidationAlert'
 import * as MetricsApi from 'lib/metrics-api'
+import * as ScpApi from 'lib/scp-api'
 
 import { createMockFile } from './file-mock-utils'
 
 describe('Client-side file validation', () => {
-  it('catches and logs errors via library interface', async () => {
+  it('catches and logs errors in local files', async () => {
     const file = createMockFile({ fileName: 'metadata_bad_type_header.txt' })
 
     const fileType = 'Metadata'

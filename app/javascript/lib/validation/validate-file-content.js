@@ -406,14 +406,25 @@ export async function validateRemoteFileContent(
 
   const requestStart = performance.now()
   const response = await fetchBucketFile(bucketName, fileName, MAX_SYNC_CSFV_BYTES)
-  const content = await response.text()
-  syncProps['perfTime:readRemote'] = Math.round(performance.now() - requestStart)
+  console.log('after fbf')
+  console.log('response')
+  console.log(response)
 
+  // Helpful for debugging
+  for (const pair of response.headers.entries()) {
+    console.log(`*** ${pair[0] }: ${ pair[1]}`)
+  }
+
+  const content = await response.text()
+  console.log('after fbf text')
+  syncProps['perfTime:readRemote'] = Math.round(performance.now() - requestStart)
 
   const contentRange = response.headers.get('content-range')
   const contentLength = response.headers.get('content-length')
   const contentType = response.headers.get('content-type')
 
+
+  // Helpful for debugging
   for (const pair of response.headers.entries()) {
     console.log(`${pair[0] }: ${ pair[1]}`)
   }
@@ -431,10 +442,18 @@ export async function validateRemoteFileContent(
     fetchedCompleteFile
   })
 
-  const file = new File([content], fileName, { type: contentType })
+  let cleanLineContent = content
+  if (!fetchedCompleteFile) {
+    cleanLineContent = content.split('\n').slice(0, -1).join('\n')
+  }
 
+  const file = new File([cleanLineContent], fileName, { type: contentType })
+
+  console.log('file', file)
   const results =
     await validateFileContent(file, fileType, fileOptions, syncProps)
+
+  console.log('inner results', file)
 
   return results
 }

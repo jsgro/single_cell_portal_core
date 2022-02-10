@@ -324,9 +324,11 @@ export async function deleteStudyFile(studyAccession, fileId, mock=false) {
 export async function fetchBucketFile(bucketName, fileName, maxBytes=null, mock=false) {
   const init = {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${window.SCP.readOnlyToken}`
-    }
+    headers: {}
+  }
+
+  if (window.SCP.readOnlyToken !== 'mock') {
+    init.headers.Authorization = `Bearer ${window.SCP.readOnlyToken}`
   }
 
   if (maxBytes) {
@@ -335,8 +337,15 @@ export async function fetchBucketFile(bucketName, fileName, maxBytes=null, mock=
   init.headers = new Headers(init.headers)
   const url = `https://storage.googleapis.com/download/storage/v1/b/${bucketName}/o/${fileName}?alt=media`
 
-  const response = await fetch(url, init).catch(error => error)
+  console.log('url', url)
+  console.log('init.headers')
+  console.log(init.headers)
 
+  const response = await fetch(url, init).catch(error => {
+    console.log(error)
+  })
+
+  console.log('return from fetchBucketFile')
   return response
 }
 
