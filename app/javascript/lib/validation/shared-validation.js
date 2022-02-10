@@ -203,8 +203,7 @@ export function timeOutCSFV(chunker) {
     // quit early by setting the file reader to the end of the file so it can't read anymore
     chunker.setToFileEnd()
     issues.push(['warn', 'timeout',
-      'Due to the size of the file, validation will occur after upload. Please be aware '+
-        'the absence of errors/warnings here is NOT an indication of the validity of the file.'])
+      'Due to this file\'s size, it will be fully validated after upload, and any errors will be emailed to you.'])
   }
   return issues
 }
