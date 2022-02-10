@@ -20,7 +20,7 @@ export default class ChunkedLineReader {
     this.linesRead = 0
     this.currentFragment = null // currentFragment stores the parts of lines that cross chunk boundaries
     this.chunkLines = []
-    this.startTime = new Date().getTime() // start the CSFV timer
+    this.startTime = Date.now() // start the CSFV timer
     this.updateHasMoreChunks()
     this.updateHasMoreLines()
   }

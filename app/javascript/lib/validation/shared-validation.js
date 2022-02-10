@@ -196,7 +196,7 @@ export function validateGroupColumnCounts(headers, line, isLastLine, dataObj) {
 export function timeOutCSFV(chunker) {
   const maxTime = 10000 // in milliseconds this equates to 10 seconds
   const maxRealTime = chunker.startTime + maxTime
-  const currentTime = new Date().getTime()
+  const currentTime = Date.now()
   const issues = []
 
   if (currentTime > maxRealTime) {
