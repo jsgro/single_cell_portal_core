@@ -16,8 +16,23 @@ describe('Client-side file validation', () => {
   })
 
   it('catches and logs errors in remote files', async () => {
-    const fakeFetchText = jest.spyOn(fetch, 'text')
-    fakeFetchText.mockImplementation(() => { })
+    // const fakeFetchText = jest.spyOn(fetch, 'text')
+    // fakeFetchText.mockImplementation(() => { })
+
+    // const mockSuccessResponse = 'mock success response'
+    // const mockTextPromise = Promise.resolve(mockSuccessResponse)
+    const mockFetchPromise = Promise.resolve({
+      ok: fetch.Response.ok,
+      headers: fetch.Response.headers,
+      text: () => {
+        mockTextPromise
+      }
+    })
+    jest.spyOn(global, 'fetch').mockImplementation(() => mockFetchPromise)
+    console.log('JSON.stringify(fetch.Response)')
+    console.log(JSON.stringify(fetch.Response))
+    console.log('JSON.stringify(fetch.Response.Headers)')
+    console.log(JSON.stringify(fetch.Response.Headers))
 
     window.SCP = {
       readOnlyToken: 'mock'

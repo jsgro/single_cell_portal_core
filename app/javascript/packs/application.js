@@ -29,9 +29,8 @@ import {
 } from 'lib/metrics-api'
 import * as ScpApi from 'lib/scp-api'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
-import {
-  validateFileContent, validateRemoteFileContent
-} from 'lib/validation/validate-file-content'
+import { validateFileContent } from 'lib/validation/validate-file-content'
+import { validateRemoteFileContent } from 'lib/validation/validate-remote-file-content'
 import { renderValidationAlert } from 'components/validation/ValidationAlert'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderUploadWizard } from 'components/upload/UploadWizard'
