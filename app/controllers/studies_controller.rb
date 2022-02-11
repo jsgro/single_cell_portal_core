@@ -1093,9 +1093,7 @@ class StudiesController < ApplicationController
                                   :firecloud_project, branding_group_ids: [],
                                   study_shares_attributes: [:id, :_destroy, :email, :permission],
                                   external_resources_attributes: [:id, :_destroy, :title, :description, :url, :publication_url],
-                                  study_detail_attributes: [:id, :full_description],
-                                  authors_attributes: [:id, :first_name, :last_name, :institution, :corresponding, :_destroy],
-                                  publications_attributes: [:id, :title, :journal, :citation, :url, :pmcid, :preprint, :_destroy])
+                                  study_detail_attributes: [:id, :full_description])
   end
 
   # study file params list

@@ -14,4 +14,8 @@ class Author
   belongs_to :study
 
   validates_presence_of :first_name, :last_name, :email
+  validates_format_of :email,
+                      with: Devise.email_regexp,
+                      message: 'is not a valid format',
+                      unless: proc { email.blank? }
 end

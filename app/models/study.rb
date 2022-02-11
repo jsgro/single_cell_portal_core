@@ -688,12 +688,17 @@ class Study
   validate :initialize_with_new_workspace, on: :create, if: Proc.new {|study| !study.use_existing_workspace && !study.detached}
   validate :initialize_with_existing_workspace, on: :create, if: Proc.new {|study| study.use_existing_workspace}
 
-  # populate specific errors for study shares since they share the same form
+  # populate specific errors for associations since they share the same form
   validate do |study|
-    study.study_shares.each do |study_share|
-      next if study_share.valid?
-      study_share.errors.full_messages.each do |msg|
-        errors.add(:base, "Share Error - #{msg}")
+    %i[study_shares authors publications].each do |association_name|
+      study.send(association_name).each_with_index do |model, index|
+        next if model.valid?
+
+        model.errors.full_messages.each do |msg|
+          indicator = "#{index + 1}#{(index + 1).ordinal}"
+          errors.add(:base, "#{indicator} #{model.class} Error - #{msg}")
+        end
+        errors.delete(association_name) if errors[association_name].present?
       end
     end
     # get errors for reviewer_access, if any

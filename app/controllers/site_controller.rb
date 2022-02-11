@@ -666,7 +666,6 @@ class SiteController < ApplicationController
       if api_status.is_a?(Hash)
         system_status = api_status['systems']
         sam_ok = system_status.dig(FireCloudClient::SAM_SERVICE, 'ok') == true # do equality check in case 'ok' node isn't present
-        agora_ok = system_status.dig(FireCloudClient::AGORA_SERVICE, 'ok')
         rawls_ok = system_status.dig(FireCloudClient::RAWLS_SERVICE, 'ok') == true
         buckets_ok = system_status.dig(FireCloudClient::BUCKETS_SERVICE, 'ok') == true
         @allow_downloads = buckets_ok
@@ -730,7 +729,9 @@ class SiteController < ApplicationController
                                                        :cluster_point_size, :cluster_point_alpha, :cluster_point_border],
                                   study_shares_attributes: [:id, :_destroy, :email, :permission],
                                   study_detail_attributes: [:id, :full_description],
-                                  reviewer_access_attributes: [:id, :expires_at])
+                                  reviewer_access_attributes: [:id, :expires_at],
+                                  authors_attributes: [:id, :first_name, :last_name, :email, :institution, :corresponding, :_destroy],
+                                  publications_attributes: [:id, :title, :journal, :citation, :url, :pmcid, :preprint, :_destroy])
   end
 
   # permit parameters for creating custom user annotation

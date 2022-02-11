@@ -1,0 +1,30 @@
+<div class="form-group row">
+  <div class="col-sm-2">
+    <%= f.label :first_name, class: 'sr-only' %>
+    <%= f.text_field :first_name, class: 'form-control', placeholder: 'First name' %>
+  </div>
+  <div class="col-sm-2">
+    <%= f.label :last_name, class: 'sr-only' %>
+    <%= f.text_field :last_name, class: 'form-control', placeholder: 'Last name' %>
+  </div>
+  <div class="col-sm-2">
+    <%= f.label :email, class: 'sr-only' %>
+    <%= f.text_field :email, class: 'form-control', placeholder: 'Email' %>
+  </div>
+  <div class="col-sm-4">
+    <%= f.label :institution, class: 'sr-only' %>
+    <%= f.text_field :institution, class: 'form-control', placeholder: 'Institution' %>
+  </div>
+  <div class="col-sm-1">
+    <div class="checkbox">
+      <label><%= f.check_box :corresponding %> Allow&nbsp;email?</label>
+    </div>
+  </div>
+  <div class="col-sm-1 text-right">
+    <%= f.link_to_remove "<span class='btn btn-sm btn-danger'><span class='fas fa-times'></span></span>".html_safe,
+                         data: {
+                           confirm: 'Are you sure?  This cannot be undone unless you reload the page before saving.'
+                         }
+    %>
+  </div>
+</div>

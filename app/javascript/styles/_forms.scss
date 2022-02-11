@@ -1,4 +1,4 @@
-#home-page-tabs, #study-tabs {
+#home-page-tabs, #study-tabs, #study-settings-tabs {
   border-bottom: none;
   li  {
     a {
@@ -99,11 +99,11 @@
     td:first-of-type {
       border-top-left-radius: 10px;
       border-left: none;
-    } 
+    }
     td:last-of-type {
       border-top-right-radius: 10px;
       border-right: none;
-    } 
+    }
   }
   tbody {
     label {

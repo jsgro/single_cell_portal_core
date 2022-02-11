@@ -1,0 +1,36 @@
+<div class="form-group row">
+  <div class="col-sm-6">
+    <%= f.label :title, class: 'sr-only' %>
+    <%= f.text_field :title, class: 'form-control', placeholder: 'Title' %>
+  </div>
+  <div class="col-sm-4">
+    <%= f.label :journal, class: 'sr-only' %>
+    <%= f.text_field :journal, class: 'form-control', placeholder: 'Journal' %>
+  </div>
+  <div class="col-sm-2">
+    <%= f.label :pmcid, class: 'sr-only' %>
+    <%= f.text_field :pmcid, class: 'form-control', placeholder: 'PubMed Central ID' %>
+  </div>
+</div>
+<div class="form-group row">
+  <div class="col-sm-6">
+    <%= f.label :citation, class: 'sr-only' %>
+    <%= f.text_field :citation, class: 'form-control', placeholder: 'Citation' %>
+  </div>
+  <div class="col-sm-4">
+    <%= f.label :url, class: 'sr-only' %>
+    <%= f.text_field :url, class: 'form-control', placeholder: 'URL' %>
+  </div>
+  <div class="col-sm-1">
+    <div class="checkbox">
+      <label><%= f.check_box :preprint %> Preprint?</label>
+    </div>
+  </div>
+  <div class="col-sm-1 text-right">
+    <%= f.link_to_remove "<span class='btn btn-sm btn-danger'><span class='fas fa-times'></span></span>".html_safe,
+                         data: {
+                           confirm: 'Are you sure?  This cannot be undone unless you reload the page before saving.'
+                         }
+    %>
+  </div>
+</div>

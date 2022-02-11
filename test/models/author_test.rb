@@ -15,4 +15,11 @@ class AuthorTest < ActiveSupport::TestCase
     @author.update(corresponding: true)
     assert_includes @study.authors.corresponding, @author
   end
+
+  test 'should validate email format' do
+    assert @author.valid?
+    @author.email = 'this is not an email'
+    assert_not @author.valid?
+    assert @author.errors
+  end
 end
