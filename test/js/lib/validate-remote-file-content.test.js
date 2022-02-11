@@ -18,7 +18,7 @@ describe('Client-side file validation for sync', () => {
     global.Headers = Headers
   })
 
-  it('sends Range request for remote file', async () => {
+  it('sends range request for remote file', async () => {
     const fakeLog = jest.spyOn(global, 'fetch')
     fakeLog.mockImplementation(() => { })
 
@@ -37,8 +37,8 @@ describe('Client-side file validation for sync', () => {
         bucketName, fileName, fileType, fileOptions
       )
     } catch (error) {
-      // Pass over.  Throws error due to inconsitency between `node-fetch`
-      // and browser fetch handling of Range responses.
+      // Pass over.  Throws error due to inconsistency between `node-fetch`
+      // and browser fetch handling of range responses.
       error
     }
 

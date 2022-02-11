@@ -34,7 +34,7 @@ export function updateSyncProps(contentRange, contentLength, syncProps) {
   return syncProps
 }
 
-/** Construct a File object from superficially-parsed Range response data */
+/** Construct a File object from superficially-parsed range response data */
 export function getFileFromRangeData(content, fileName, contentType, syncProps) {
   // If Range request didn't fetch the full file, then truncate the last
   // line, which is almost certainly incomplete and thus invalid.
@@ -54,7 +54,7 @@ export function getFileFromRangeData(content, fileName, contentType, syncProps) 
 export async function validateRemoteFileContent(
   bucketName, fileName, fileType, fileOptions
 ) {
-  // For handling incomplete Range response data, and analytics
+  // For handling incomplete range response data, and analytics
   let syncProps = {}
 
   const requestStart = performance.now()
