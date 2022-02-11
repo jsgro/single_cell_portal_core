@@ -377,7 +377,7 @@ export async function validateFileContent(file, fileType, fileOptions={}, syncPr
   const { fileInfo, issues } = await parseFile(file, fileType, fileOptions)
   const perfTime = Math.round(performance.now() - startTime)
 
-  if (!syncProps?.fetchedCompleteFile) {
+  if (syncProps?.fetchedCompleteFile === false) {
     const msg =
       'Due to this file\'s size, it will be fully validated after sync, ' +
       'and any errors will be emailed to you.'
