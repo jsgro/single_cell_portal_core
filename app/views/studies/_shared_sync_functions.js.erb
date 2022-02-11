@@ -9,7 +9,7 @@ if (typeof window.SCP.readOnlyToken === 'undefined') {
 *
 * This function is a temporary backport of the issue messaging from
 * FileUploadControl.js.  It should be replaced when sync code migrates to
-* React (at the latest).
+* React.
 */
 function getIssuesHtml(errorMsgs, warningMsgs, fileName, fileId) {
 
@@ -19,6 +19,17 @@ function getIssuesHtml(errorMsgs, warningMsgs, fileName, fileId) {
     const errorListHtml = errorMsgs.map((error, index) => {
       return `<li class="error-message">${error}</li>`
     })
+
+    const supportEmailAddress = 'scp-support@broadinstitute.zendesk.com'
+    const supportEmailLink =
+      `<a href="mailto:${supportEmailAddress}">` +
+        supportEmailAddress +
+      '</a>'
+    const supportMessage =
+      '<div>' +
+        `If you need help, let us know at ${supportEmailLink}.  ` +
+        'Please include the above errors, your file, and study accession.' +
+      '</div>'
 
     // Note errors and inform user how to try again
     const refresh =
@@ -30,6 +41,7 @@ function getIssuesHtml(errorMsgs, warningMsgs, fileName, fileId) {
       '<div class="validation-error">' +
         `${errorTxt} found.  ${refresh} after you correct ${fileName}.` +
         `<ul class="validation-error">${errorListHtml}</ul>` +
+        supportMessage +
       '</div>'
 
     // Disable the "Sync" button
@@ -175,7 +187,6 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
 
     const issuesHtml = getIssuesHtml(errorMsgs, warningMsgs, fileName, fileId)
 
-    console.log('issuesHtml', issuesHtml)
     if (issuesHtml !== '') {
       $(form).append(issuesHtml)
     }

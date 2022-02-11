@@ -76,7 +76,7 @@ export async function validateRemoteFileContent(
   const results =
     await validateFileContent(file, fileType, fileOptions, syncProps)
 
-  console.log('inner results', file)
+  console.log('inner results', results)
 
   return results
 }
