@@ -3,7 +3,7 @@
 */
 
 import {
-  parseLine, validateUniqueCellNamesWithinFile, ParseException
+  parseLine, validateUniqueCellNamesWithinFile, ParseException, timeOutCSFV
 } from './shared-validation'
 
 
@@ -11,24 +11,29 @@ const whitespaceDelimiter = /\s+/
 
 /** Parse a dense matrix file */
 export async function parseDenseMatrixFile(chunker, mimeType, fileOptions) {
-  const { header, delimiter, firstTwoContentLines } = await getParsedDenseMatrixHeaderLine(chunker, mimeType)
+  const { header, delimiter, firstTwoContentLines } = await getParsedDenseMatrixHeaderLine(chunker)
 
   let issues = validateDenseHeader(header, firstTwoContentLines)
 
   // validating the header required extra lines from the file,
   // return the file reader to the first non-header line to continue validating file
   chunker.resetToFileStart()
-  await chunker.iterateLines(() => { }, 1)
+  await chunker.iterateLines({ func: () => {}, maxLines: 1 })
 
   const secondLineOfFile = firstTwoContentLines[0]
 
   const dataObj = {} // object to track multi-line validation concerns
-  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
-    const line = parseLine(rawLine, delimiter)
-    issues = issues.concat(validateValuesAreNumeric(line, isLastLine, lineNum, dataObj))
-    issues = issues.concat(validateColumnNumber(line, isLastLine, secondLineOfFile, lineNum, dataObj))
-    issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
+  await chunker.iterateLines({
+    func: (rawLine, lineNum, isLastLine) => {
+    // check that it's still good time
+      issues = issues.concat(timeOutCSFV(chunker))
+
+      const line = parseLine(rawLine, delimiter)
+      issues = issues.concat(validateValuesAreNumeric(line, isLastLine, lineNum, dataObj))
+      issues = issues.concat(validateColumnNumber(line, isLastLine, secondLineOfFile, lineNum, dataObj))
+      issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
     // add other line-by-line validations here
+    }
   })
   return { issues, delimiter, numColumns: header[0].length }
 }
@@ -39,19 +44,24 @@ export async function parseSparseMatrixFile(chunker, mimeType, fileOptions) {
   const dataObj = {} // object to track multi-line validation concerns
 
   let rawHeaderLine = null
-  await chunker.iterateLines(rawLine => {
-    rawHeaderLine = rawLine
-  }, 1)
+  await chunker.iterateLines({
+    func: rawLine => {
+      rawHeaderLine = rawLine
+    }, maxLines: 1
+  })
   const header = rawHeaderLine.trim().split(whitespaceDelimiter)
 
   issues = validateMTXHeaderLine(header)
 
-  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
-    const line = rawLine.trim().split(whitespaceDelimiter)
+  await chunker.iterateLines({
+    func: (rawLine, lineNum, isLastLine) => {
+      issues = issues.concat(timeOutCSFV(chunker))
 
-    issues = issues.concat(validateSparseColumnNumber(line, isLastLine, lineNum, dataObj))
-    issues = issues.concat(validateSparseNoBlankLines(line, isLastLine, lineNum, dataObj))
+      const line = rawLine.trim().split(whitespaceDelimiter)
+      issues = issues.concat(validateSparseColumnNumber(line, isLastLine, lineNum, dataObj))
+      issues = issues.concat(validateSparseNoBlankLines(line, isLastLine, lineNum, dataObj))
     // add other line-by-line validations here
+    }
   })
   return { issues, whitespaceDelimiter, numColumns: dataObj.correctNumberOfColumns }
 }
@@ -62,9 +72,12 @@ export async function parseBarcodesFile(chunker, mimeType, fileOptions) {
   let issues = []
 
   const dataObj = {} // object to track multi-line validation concerns
-  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
-    issues = issues.concat(validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj))
+  await chunker.iterateLines({
+    func: (rawLine, lineNum, isLastLine) => {
+      issues = issues.concat(timeOutCSFV(chunker))
+      issues = issues.concat(validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj))
     // add other line-by-line validations here
+    }
   })
   return { issues }
 }
@@ -75,9 +88,12 @@ export async function parseFeaturesFile(chunker, mimeType, fileOptions) {
   let issues = []
 
   const dataObj = {} // object to track multi-line validation concerns
-  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
-    issues = issues.concat(validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj))
+  await chunker.iterateLines({
+    func: (rawLine, lineNum, isLastLine) => {
+      issues = issues.concat(timeOutCSFV(chunker))
+      issues = issues.concat(validateUniqueRowValuesWithinFile(rawLine, isLastLine, dataObj))
     // add other line-by-line validations here
+    }
   })
   return { issues }
 }
@@ -92,9 +108,11 @@ async function getParsedDenseMatrixHeaderLine(chunker) {
   // the lines following the header line are needed for R-formatted file header validation
   const rawNextTwoLines = []
 
-  await chunker.iterateLines(line => {
-    rawHeader = line
-  }, 1)
+  await chunker.iterateLines({
+    func: line => {
+      rawHeader = line
+    }, maxLines: 1
+  })
 
   if (rawHeader.trim().length === 0) {
     throw new ParseException('format:cap:missing-header-lines',
@@ -102,9 +120,11 @@ async function getParsedDenseMatrixHeaderLine(chunker) {
   }
 
   // get the 2 lines following the header line
-  await chunker.iterateLines(line => {
-    rawNextTwoLines.push(line)
-  }, 2)
+  await chunker.iterateLines({
+    func: line => {
+      rawNextTwoLines.push(line)
+    }, maxLines: 2
+  })
 
   const delimiter = getDenseMatrixDelimiter(rawHeader, rawNextTwoLines)
 
