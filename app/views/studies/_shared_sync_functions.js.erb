@@ -5,21 +5,20 @@ if (typeof window.SCP.readOnlyToken === 'undefined') {
 }
 
 /**
-* Transform issue message objects to HTML that can be shown to user.
+* Transform validation results to HTML that can be shown to user.
 *
 * This function is a temporary backport of the issue messaging from
 * FileUploadControl.js.  It should be replaced when sync code migrates to
 * React.
 */
-function getIssuesHtml(errorMsgs, warningMsgs, fileName, fileId) {
-
+function getIssuesHtml(results, fileName, fileId) {
   let issuesHtml = ''
 
-  if (errorMsgs.length > 0) {
-    const errorListHtml = errorMsgs.map((error, index) => {
-      return `<li class="error-message">${error}</li>`
-    })
+  const errorMsgs = results.errors.map(error => error[2])
+  const warningMsgs = results.warnings.map(warning => warning[2])
 
+  if (errorMsgs.length > 0) {
+    // Tell user how to get in touch
     const supportEmailAddress = 'scp-support@broadinstitute.zendesk.com'
     const supportEmailLink =
       `<a href="mailto:${supportEmailAddress}">` +
@@ -37,6 +36,9 @@ function getIssuesHtml(errorMsgs, warningMsgs, fileName, fileId) {
         'Refresh the page' +
       '</a>'
     const errorTxt = 'Error' + (errorMsgs.length > 0 ? 's' : '')
+    const errorListHtml = errorMsgs.map((error, index) => {
+      return `<li class="error-message">${error}</li>`
+    })
     issuesHtml +=
       '<div class="validation-error">' +
         `${errorTxt} found.  ${refresh} after you correct ${fileName}.` +
@@ -53,10 +55,11 @@ function getIssuesHtml(errorMsgs, warningMsgs, fileName, fileId) {
   }
 
   if (warningMsgs.length > 0) {
-    const warningListHtml = errorMsgs.map((error, index) => {
-      return `<li class="error-message">${error}</li>`
+    const warningListHtml = warningMsgs.map((warning, index) => {
+      return `<li class="warning-message">${warning}</li>`
     })
     issuesHtml +=
+      (errorMsgs.length > 0 ? '<br/>' : '') +
       '<div class="validation-warning">' +
         `Warnings:` +
         `<ul class="validation-warning">${warningListHtml}</ul>` +
@@ -182,10 +185,7 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
       bucketName, fileName, fileType, fileOptions
     );
 
-    const errorMsgs = results.errors.map(error => error[2])
-    const warningMsgs = results.warnings.map(error => error[2])
-
-    const issuesHtml = getIssuesHtml(errorMsgs, warningMsgs, fileName, fileId)
+    const issuesHtml = getIssuesHtml(results, fileName, fileId)
 
     if (issuesHtml !== '') {
       $(form).append(issuesHtml)
