@@ -44,6 +44,22 @@ class Study
   # associations and scopes
   belongs_to :user
   has_and_belongs_to_many :branding_groups
+
+  has_many :authors, dependent: :delete_all do
+    def corresponding
+      where(corresponding: true)
+    end
+  end
+  accepts_nested_attributes_for :authors, allow_destroy: :true
+
+  has_many :publications, dependent: :delete_all do
+    def published
+      where(preprint: false)
+    end
+  end
+  accepts_nested_attributes_for :publications, allow_destroy: :true
+
+
   has_many :study_files, dependent: :delete_all do
     # all study files not queued for deletion
     def available
