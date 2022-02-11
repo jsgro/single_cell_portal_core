@@ -340,7 +340,6 @@ export async function fetchBucketFile(bucketName, fileName, maxBytes=null, mock=
 
   const response = await fetch(url, init).catch(error => error)
 
-  console.log('return from fetchBucketFile')
   return response
 }
 

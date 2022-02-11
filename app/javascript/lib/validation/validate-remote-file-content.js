@@ -62,21 +62,13 @@ export async function validateRemoteFileContent(
   const contentRange = response.headers.get('content-range')
   const contentLength = response.headers.get('content-length')
   const contentType = response.headers.get('content-type')
-  console.log('contentRange', contentRange)
-  console.log('contentLength', contentLength)
-  console.log('contentType', contentType)
 
   syncProps = updateSyncProps(contentRange, contentLength, syncProps)
 
-  console.log('syncProps', syncProps)
-
   const file = getFileFromRangeData(content, fileName, contentType, syncProps)
 
-  console.log('file', file)
   const results =
     await validateFileContent(file, fileType, fileOptions, syncProps)
-
-  console.log('inner results', results)
 
   return results
 }
