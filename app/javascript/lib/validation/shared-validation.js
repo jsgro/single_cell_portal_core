@@ -10,7 +10,6 @@ export function ParseException(key, msg) {
   this.key = key
 }
 
-
 /**
  * reads in a two lines to be used as header lines, sniffs the delimiter,
  * and returns the lines parsed by the sniffed delimiter
@@ -92,7 +91,9 @@ export function validateUniqueCellNamesWithinFile(line, isLastLine, dataObj) {
   if (isLastLine && dataObj.duplicateCellNames.size > 0) {
     const nameTxt = (dataObj.duplicateCellNames.size > 1) ? 'duplicates' : 'duplicate'
     const dupString = [...dataObj.duplicateCellNames].slice(0, 10).join(', ')
-    const msg = `Cell names must be unique within a file. ${dataObj.duplicateCellNames.size} ${nameTxt} found, including: ${dupString}`
+    const msg =
+      'Cell names must be unique within a file. ' +
+      `${dataObj.duplicateCellNames.size} ${nameTxt} found, including: ${dupString}`
     issues.push(['error', 'content:duplicate:cells-within-file', msg])
   }
   return issues
@@ -100,14 +101,16 @@ export function validateUniqueCellNamesWithinFile(line, isLastLine, dataObj) {
 
 
 /**
- * Verify that, for id columns with a corresponding label column, no label is shared across two or more ids.
- * The main circumstance this is aimed at checking is the 'Excel drag error', in which by drag-copying a row, the
- * label is copied correctly, but the id string gets numerically incremented
+ * Verify that, for id columns with a corresponding label column, no label is
+ * shared across two or more ids.  The main circumstance this is aimed at
+ * checking is the 'Excel drag error', in which by drag-copying a row, the
+ * label is copied correctly, but the id string gets numerically incremented.
  */
 export function validateMetadataLabelMatches(headers, line, isLastLine, dataObj) {
   const issues = []
   const excludedColumns = ['NAME']
-  // if this is the first time through, identify the columns to check, and initialize data structures to track mismatches
+  // if this is the first time through, identify the columns to check, and
+  // initialize data structures to track mismatches
   if (!dataObj.dragCheckColumns) {
     dataObj.dragCheckColumns = headers[0].map((colName, index) => {
       const labelColumnIndex = headers[0].indexOf(`${colName}__ontology_label`)
@@ -136,7 +139,8 @@ export function validateMetadataLabelMatches(headers, line, isLastLine, dataObj)
       }
     }
   }
-  // only report out errors if this is the last line of the file so that a single, consolidated message can be displayed per column
+  // only report out errors if this is the last line of the file so that a
+  // single, consolidated message can be displayed per column
   if (isLastLine) {
     dataObj.dragCheckColumns.forEach(dcc => {
       if (dcc.mismatchedVals.size > 0) {

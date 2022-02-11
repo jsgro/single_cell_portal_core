@@ -1,3 +1,6 @@
+/**
+* @fileoverview Client-side file validation (CSFV) for sync
+*/
 
 import { validateFileContent } from './validate-file-content'
 import { fetchBucketFile } from 'lib/scp-api'

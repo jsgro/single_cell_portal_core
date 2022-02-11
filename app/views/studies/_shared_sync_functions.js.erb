@@ -1,5 +1,6 @@
 // shared JS functions for sync forms
 
+// Used for sync CSFV
 if (typeof window.SCP.readOnlyToken === 'undefined') {
   window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
 }

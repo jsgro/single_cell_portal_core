@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Tests for client-side file validation (CSFV) for sync
+ */
+
 import util from 'util'
 
 import fetch, { Headers } from 'node-fetch'

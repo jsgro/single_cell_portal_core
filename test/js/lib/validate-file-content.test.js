@@ -7,7 +7,6 @@ import {
 } from 'lib/validation/validate-file-content'
 import ValidationAlert from 'components/validation/ValidationAlert'
 import * as MetricsApi from 'lib/metrics-api'
-import * as ScpApi from 'lib/scp-api'
 
 import { createMockFile } from './file-mock-utils'
 

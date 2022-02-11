@@ -23,22 +23,3 @@ export async function readFileBytes(file, startByte=0, chunkSize=DEFAULT_CHUNK_S
   const stringContent = enc.decode(arrayBuffer)
   return stringContent
 }
-
-// /**
-//  * @param url GCS API URL
-//  * @param numLines GCS API URL
-//  */
-// async function readFromBucket(url, numLines, accessToken){
-//   const accessToken = SCP.userAccessToken;
-//   const apiUrl = '<%= study_file.api_url %>'
-
-
-//   console.log('accessToken', accessToken)
-//   console.log('apiUrl', apiUrl)
-
-//   const headers = new Headers({Authorization: 'Bearer ' + accessToken});
-
-//   async fetch
-// }
-
-// readFromBucket(2);
