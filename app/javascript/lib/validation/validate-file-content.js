@@ -439,8 +439,8 @@ function getLogProps(fileInfo, errorObj, perfTime) {
   }
 
   if (errors.length === 0) {
-    if (warnings.flat().includes('timeout')) {
-      return Object.assign({ status: 'timeout' }, defaultProps)
+    if (warnings.flat().includes('incomplete:timeout')) {
+      return Object.assign({ status: 'incomplete' }, defaultProps)
     }
     return Object.assign({ status: 'success' }, defaultProps)
   } else {

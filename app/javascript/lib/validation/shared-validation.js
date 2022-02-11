@@ -202,7 +202,7 @@ export function timeOutCSFV(chunker) {
   if (currentTime > maxRealTime) {
     // quit early by setting the file reader to the end of the file so it can't read anymore
     chunker.setToFileEnd()
-    issues.push(['warn', 'timeout',
+    issues.push(['warn', 'incomplete:timeout',
       'Due to this file\'s size, it will be fully validated after upload, and any errors will be emailed to you.'])
   }
   return issues
