@@ -130,13 +130,16 @@ if [[ "$TEST_FILEPATH" == "" ]]; then
 fi
 
 # configure and invoke command for rails tests
-if [[ "$MATCHING_TESTS" != "" ]] && [[ "$TEST_FILEPATH" != "" ]]; then
-  RAILS_ENV=test bin/rails test TEST_FILEPATH -n $MATCHING_TESTS
-elif [[ "$TEST_FILEPATH" != "" ]]; then
-  RAILS_ENV=test bin/rails test $TEST_FILEPATH
-else
-  RAILS_ENV=test bin/rails test
-fi
+#if [[ "$MATCHING_TESTS" != "" ]] && [[ "$TEST_FILEPATH" != "" ]]; then
+#  RAILS_ENV=test bin/rails test TEST_FILEPATH -n $MATCHING_TESTS
+#elif [[ "$TEST_FILEPATH" != "" ]]; then
+#  RAILS_ENV=test bin/rails test $TEST_FILEPATH
+#else
+#  RAILS_ENV=test bin/rails test
+#fi
+rm ./rails_test.log
+RAILS_ENV=test bin/rails test test/lib/github_reports_test.rb | tee rails_test.log
+
 code=$?
 if [[ $code -ne 0 ]]; then
   RETURN_CODE=$code
