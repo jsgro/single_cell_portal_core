@@ -116,7 +116,7 @@ async function getParsedDenseMatrixHeaderLine(chunker) {
 
   if (rawHeader.trim().length === 0) {
     throw new ParseException('format:cap:missing-header-lines',
-        `Your file is missing a required header line`)
+      `Your file is missing a required header line`)
   }
 
   // get the 2 lines following the header line
@@ -170,9 +170,9 @@ function getDenseMatrixDelimiter(rawHeader, rawNextTwoLines) {
       if (secondLineLength === headerLength) {
         bestDelimiter = delimiter
       } // otherwise check the first 3 lines lengths against each other (see r-formatting description for futher explanation)
-      else if (secondLineLength -1 === headerLength ||
+      else if (secondLineLength - 1 === headerLength ||
         thirdLineLength === secondLineLength ||
-        thirdLineLength === headerLength) {bestDelimiter = delimiter}
+        thirdLineLength === headerLength) { bestDelimiter = delimiter }
     }
   }
 
@@ -212,8 +212,8 @@ function validateDenseHeader(header, nextTwoLines) {
 
   if (!isValid) {
     issues.push(['error', 'format:cap:missing-gene-column',
-    `Improperly formatted header row beginning with: '${header[0]}'. ` +
-    `${specificMsg}`])
+      `Improperly formatted header row beginning with: '${header[0]}'. ` +
+      `${specificMsg}`])
   }
 
   return issues
@@ -369,7 +369,7 @@ function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
 
     const msg = `All values (other than the first column and header row) in a dense matrix file must be numeric. ` +
       `Please ensure all values in ${rowText}: ${notedBadRows}, are numbers.`
-    issues.push(['error', 'content:invalid-type:not-numeric', msg])
+    issues.push(['error', 'content:type:not-numeric', msg])
   }
 
   return issues

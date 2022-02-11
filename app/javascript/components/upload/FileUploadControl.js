@@ -134,7 +134,6 @@ export default function FileUploadControl({
     </label>
     <FileDownloadControl
       file={file}
-      bucketName={bucketName}
     />
     &nbsp;
     { !isFileOnServer &&
