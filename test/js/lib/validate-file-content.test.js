@@ -118,7 +118,7 @@ describe('Client-side file validation', () => {
     })
     const { errors } = await validateFileContent(file, 'Expression Matrix')
     expect(errors).toHaveLength(1)
-    expect(errors[0][1]).toEqual('content:invalid-type:not-numeric')
+    expect(errors[0][1]).toEqual('content:type:not-numeric')
   })
 
   it('catches row with wrong number of columns in expression matrix file', async () => {
