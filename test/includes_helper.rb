@@ -3,8 +3,6 @@ class ActionDispatch::IntegrationTest
   include ::SelfCleaningSuite
   include ::TestInstrumentor
   include ::Devise::Test::IntegrationHelpers
-  include ::Requests::JsonHelpers
-  include ::Requests::HttpHelpers
 end
 
 class ActionController::TestCase
