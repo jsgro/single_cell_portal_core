@@ -169,7 +169,7 @@ if [[ $RETURN_CODE -eq 0 ]]; then
   printf "\n### All test suites PASSED ###\n\n"
 else
   printf "\n### FAILURES and ERRORS ###\n"
-  sed 's/.*/ x &/' summary.txt
+  cat test_summary.txt
 fi
 
 echo "Exiting with code: $RETURN_CODE"
