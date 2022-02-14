@@ -321,7 +321,7 @@ export async function validateGzipEncoding(file) {
 }
 
 /** reads the file and returns a fileInfo object along with an array of issues */
-async function parseFile(file, fileType, fileOptions={}) {
+async function parseFile(file, fileType, fileOptions={}, syncProps) {
   const fileInfo = {
     fileSize: file.size,
     fileName: file.name,
@@ -333,6 +333,7 @@ async function parseFile(file, fileType, fileOptions={}) {
     isGzipped: null
   }
   const parseResult = { fileInfo, issues: [] }
+
   try {
     fileInfo.isGzipped = await validateGzipEncoding(file)
     // if the file is compressed or we can't figure out the compression, don't try to parse further
@@ -348,12 +349,23 @@ async function parseFile(file, fileType, fileOptions={}) {
       'MM Coordinate Matrix': parseSparseMatrixFile
     }
     if (parseFunctions[fileType]) {
-      const chunker = new ChunkedLineReader(file)
-      const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
+      let ignoreLastLine = false
+      if (syncProps?.fetchedCompleteFile === false) {
+        ignoreLastLine = true
+        const msg =
+          'Due to this file\'s size, it will be fully validated after sync, ' +
+          'and any errors will be emailed to you.'
+
+        parseResult.issues.push(['warn', 'incomplete:range-request', msg])
+      }
+
+      const chunker = new ChunkedLineReader(file, undefined, ignoreLastLine)
+      const { issues, delimiter, numColumns } =
+        await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
       fileInfo.linesRead = chunker.linesRead
       fileInfo.delimiter = delimiter
       fileInfo.numColumns = numColumns
-      parseResult.issues = issues
+      parseResult.issues = parseResult.issues.concat(issues)
     }
   } catch (error) {
     // get any unhandled or deliberate short-circuits
@@ -374,18 +386,9 @@ async function parseFile(file, fileType, fileOptions={}) {
  */
 export async function validateFileContent(file, fileType, fileOptions={}, syncProps) {
   const startTime = performance.now()
-  const { fileInfo, issues } = await parseFile(file, fileType, fileOptions)
+
+  const { fileInfo, issues } = await parseFile(file, fileType, fileOptions, syncProps)
   const perfTime = Math.round(performance.now() - startTime)
-
-  if (syncProps?.fetchedCompleteFile === false) {
-    const msg =
-      'Due to this file\'s size, it will be fully validated after sync, ' +
-      'and any errors will be emailed to you.'
-
-    issues.push(
-      ['warn', 'incomplete:range-request', msg]
-    )
-  }
 
   const errorObj = formatIssues(issues)
   const logProps = getLogProps(fileInfo, errorObj, perfTime, syncProps)

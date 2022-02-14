@@ -41,20 +41,6 @@ export function parseSizeProps(contentRange, contentLength, file) {
   }
 }
 
-/** Construct a File object from superficially-parsed range response data */
-export function getFileFromRangeData(content, fileName, contentType, syncProps) {
-  // If Range request didn't fetch the full file, then truncate the last
-  // line, which is almost certainly incomplete and thus invalid.
-  let cleanLineContent = content
-  if (!syncProps.fetchedCompleteFile) {
-    cleanLineContent = content.split('\n').slice(0, -1).join('\n')
-  }
-
-  const file = new File([cleanLineContent], fileName, { type: contentType })
-
-  return file
-}
-
 /**
 * Validate a file in a GCS bucket; used for sync
 */
@@ -73,7 +59,7 @@ export async function validateRemoteFileContent(
   const contentLength = response.headers.get('content-length')
   const contentType = response.headers.get('content-type')
 
-  const file = getFileFromRangeData(content, fileName, contentType, syncProps)
+  const file = new File([content], fileName, { type: contentType })
 
   const sizeProps = parseSizeProps(contentRange, contentLength, file)
   Object.assign(syncProps, sizeProps)
