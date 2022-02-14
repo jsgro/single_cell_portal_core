@@ -120,7 +120,8 @@ echo "Indexes initialized"
 echo "Running specified unit & integration tests..."
 # only run yarn ui-test if we haven't specified a single ruby test suite to run
 if [[ "$TEST_FILEPATH" == "" ]]; then
-  yarn ui-test
+  rm yarn_test.log
+  yarn ui-test 2>&1 | tee yarn_test.log
   code=$? # immediately capture exit code to prevent this from getting clobbered
   if [[ $code -ne 0 ]]; then
     RETURN_CODE=$code
@@ -138,9 +139,13 @@ fi
 #  RAILS_ENV=test bin/rails test
 #fi
 rm ./rails_test.log
-RAILS_ENV=test bin/rails test test/lib/github_reports_test.rb | tee rails_test.log
+RAILS_ENV=test bin/rails test test/lib/github* 2>&1 | tee rails_test.log
 
 code=$?
+
+grep "FAIL\|✕" yarn_test.log > test_summary.txt
+grep -A1 ")\sFailure:\|)\sError:" rails_test.log | grep -v ")\sFailure:\|)\sError:\|--" >> test_summary.txt
+
 if [[ $code -ne 0 ]]; then
   RETURN_CODE=$code
   first_test_to_fail=${first_test_to_fail-"rails test"}
@@ -160,7 +165,8 @@ echo "Total elapsed time: $min minutes, $sec seconds"
 if [[ $RETURN_CODE -eq 0 ]]; then
   printf "\n### All test suites PASSED ###\n\n"
 else
-  printf "\n### There were $FAILED_COUNT errors/failed test suites in this run, starting with $first_test_to_fail ###\n\n"
+  printf "\n### FAILURES and ERRORS ###\n"
+  cat test_summary.txt
 fi
 
 echo "Exiting with code: $RETURN_CODE"
