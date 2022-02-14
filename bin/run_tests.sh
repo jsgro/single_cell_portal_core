@@ -121,6 +121,7 @@ echo "Running specified unit & integration tests..."
 # only run yarn ui-test if we haven't specified a single ruby test suite to run
 if [[ "$TEST_FILEPATH" == "" ]]; then
   rm yarn_test.log
+  set -o pipefail
   yarn ui-test 2>&1 | tee yarn_test.log
   code=$? # immediately capture exit code to prevent this from getting clobbered
   if [[ $code -ne 0 ]]; then
@@ -131,22 +132,21 @@ if [[ "$TEST_FILEPATH" == "" ]]; then
 fi
 
 # configure and invoke command for rails tests
-#if [[ "$MATCHING_TESTS" != "" ]] && [[ "$TEST_FILEPATH" != "" ]]; then
-#  RAILS_ENV=test bin/rails test TEST_FILEPATH -n $MATCHING_TESTS
-#elif [[ "$TEST_FILEPATH" != "" ]]; then
-#  RAILS_ENV=test bin/rails test $TEST_FILEPATH
-#else
-#  RAILS_ENV=test bin/rails test
-#fi
 rm ./rails_test.log
-set -o pipefail
-RAILS_ENV=test bin/rails test test/lib/github* 2>&1 | tee rails_test.log
-
+if [[ "$MATCHING_TESTS" != "" ]] && [[ "$TEST_FILEPATH" != "" ]]; then
+  RAILS_ENV=test bin/rails test TEST_FILEPATH -n $MATCHING_TESTS 2>&1 | tee rails_test.log
+elif [[ "$TEST_FILEPATH" != "" ]]; then
+  RAILS_ENV=test bin/rails test $TEST_FILEPATH 2>&1 | tee rails_test.log
+else
+  RAILS_ENV=test bin/rails test 2>&1 | tee rails_test.log
+fi
 code=$?
-printf "Yarn test failures:\n" > test_summary.txt
+
+# consolidate and format results into test_summary.txt
+printf "--Yarn test failures--\n" > test_summary.txt
 grep "FAIL\|✕" yarn_test.log >> test_summary.txt
 printf "\n" >> test_summary.txt
-printf "Rails test failures:\n" >> test_summary.txt
+printf "--Rails test failures--\n" >> test_summary.txt
 grep -A1 ")\sFailure:\|)\sError:" rails_test.log | grep -v ")\sFailure:\|)\sError:\|--" | sed 's/^/ x  &/' >> test_summary.txt
 
 if [[ $code -ne 0 ]]; then
