@@ -1,4 +1,4 @@
-#home-page-tabs, #study-tabs, #study-settings-tabs {
+#home-page-tabs, #study-tabs {
   border-bottom: none;
   li  {
     a {
@@ -159,4 +159,8 @@
 .sublabel {
   margin-left: 1em;
   font-weight: normal;
+}
+
+hr.divider {
+  border-top: 1px solid #AAA;
 }

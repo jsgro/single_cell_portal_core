@@ -1,6 +1,6 @@
 <div id="reviewer-access-controls">
   <div class="form-group row">
-    <div class="col-md-2">
+    <div class="col-md-3">
       <% access_enabled = f.object.persisted? %>
       <%= label_tag :enable, 'Access enabled?' %><br />
       <div class="btn-group btn-toggle" data-toggle="buttons">
@@ -12,11 +12,11 @@
         </label>
       </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-3">
       <%= f.label :expires_at, 'Expiration date' %><br />
       <%= f.date_field :expires_at, class: 'form-control' %>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-6">
       <%= label_tag :reset, 'Reset access credentials?' %><br />
       <div class="btn-group btn-toggle" data-toggle="buttons">
         <label class="btn btn-default">
@@ -27,7 +27,10 @@
         </label>
       </div>
     </div>
-    <div class="col-md-6 left-border-0-5-gray">
+  </div>
+  <hr class="col-xs-12 divider" />
+  <div class="form-group row">
+    <div class="col-md-12">
       <h4>Current reviewer access credentials <a id="copy-reviewer-creds" class="btn btn-default btn-sm btn-copy"
                                              data-toggle="tooltip" title="" data-original-title="Show PIN & copy to clipboard">
                                              <i class="far fa-copy"></i></a>

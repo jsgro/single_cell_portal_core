@@ -1,4 +1,3 @@
-<h2>Study Settings</h2>
 <%= nested_form_for(@study, url: update_study_settings_path(accession: @study.accession, study_name: @study.url_safe_name.blank? ? params[:study_name] : @study.url_safe_name), html: {id: 'update-study-settings-form', multipart: true, data: {remote: true}}) do |f| %>
   <% if @study.errors.any? %>
     <div class="bs-callout bs-callout-danger">
@@ -10,33 +9,37 @@
       </ul>
     </div>
   <% end %>
-  <div id="settings-tab-root">
-    <ul class="nav nav-tabs" role="tablist" id="study-settings-tabs">
-      <li role="presentation" class="settings-nav active" id="settings-general-nav">
-        <a href="#settings-general" data-toggle="tab">General</a>
-      </li>
-      <li role="presentation" class="settings-nav" id="settings-viz-nav">
-        <a href="#settings-viz" data-toggle="tab">Visualizations</a>
-      </li>
-      <li role="presentation" class="settings-nav" id="settings-sharing-nav">
-        <a href="#settings-sharing" data-toggle="tab">Sharing/Access</a>
-      </li>
-      <li role="presentation" class="settings-nav" id="settings-authors-nav">
-        <a href="#settings-authors" data-toggle="tab">Authors/Publications</a>
-      </li>
-    </ul>
-    <div class="tab-content">
-      <div class="tab-pane active" id="settings-general">
-        <%= render partial: 'study_settings_general', locals: { f: f } %>
+  <div id="settings-tab-root" class="upload-wizard-react">
+    <div class="col-md-2">
+      <ul class="upload-wizard-steps" role="tablist" id="study-settings-tabs">
+        <li role="presentation" class="settings-nav active" id="settings-general-nav">
+          <a href="#settings-general" data-toggle="tab">General</a>
+        </li>
+        <li role="presentation" class="settings-nav" id="settings-viz-nav">
+          <a href="#settings-viz" data-toggle="tab">View Options</a>
+        </li>
+        <li role="presentation" class="settings-nav" id="settings-sharing-nav">
+          <a href="#settings-sharing" data-toggle="tab">Sharing/Access</a>
+        </li>
+        <li role="presentation" class="settings-nav" id="settings-authors-nav">
+          <a href="#settings-authors" data-toggle="tab">Authors/Publications</a>
+        </li>
+      </ul>
+    </div>
+    <div class="col-md-10">
+      <div class="tab-content">
+        <div class="tab-pane active" id="settings-general">
+          <%= render partial: 'study_settings_general', locals: { f: f } %>
+        </div>
+        <div class="tab-pane" id="settings-viz">
+          <%= render partial: 'study_settings_viz', locals: { f: f } %>
+        </div>
+        <div class="tab-pane" id="settings-sharing">
+          <%= render partial: 'study_settings_sharing', locals: { f: f } %>
+        </div>
+        <div class="tab-pane" id="settings-authors">
+          <%= render partial: 'study_settings_authors', locals: { f: f } %></div>
       </div>
-      <div class="tab-pane" id="settings-viz">
-        <%= render partial: 'study_settings_viz', locals: { f: f } %>
-      </div>
-      <div class="tab-pane" id="settings-sharing">
-        <%= render partial: 'study_settings_sharing', locals: { f: f } %>
-      </div>
-      <div class="tab-pane" id="settings-authors">
-        <%= render partial: 'study_settings_authors', locals: { f: f } %></div>
     </div>
   </div>
   <div class="form-group row">
