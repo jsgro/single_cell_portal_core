@@ -16,22 +16,29 @@ import { fetchBucketFile } from 'lib/scp-api'
  */
 export const MAX_SYNC_CSFV_BYTES = 50 * 1024 * 1024
 
-/** Add file-size-related entries to syncProps */
-export function updateSyncProps(contentRange, contentLength, syncProps) {
+/** Get file-size data for sync validation processing and logging */
+export function parseSizeProps(contentRange, contentLength, file) {
   // Total size of the file in bytes
-  const fileSizeTotal = parseInt(contentRange.split('/')[1])
+  let fileSizeTotal
 
   // Total bytes downloaded, which can be much less than total file size
-  const fileSizeFetched = parseInt(contentLength)
+  let fileSizeFetched
+
+  if (contentRange !== null) {
+    fileSizeTotal = parseInt(contentRange.split('/')[1])
+    fileSizeFetched = parseInt(contentLength)
+  } else {
+    fileSizeTotal = file.size
+    fileSizeFetched = fileSizeTotal
+  }
 
   const fetchedCompleteFile = (fileSizeTotal === fileSizeFetched)
-  Object.assign(syncProps, {
+
+  return {
     fileSizeFetched,
     fileSizeTotal,
     fetchedCompleteFile
-  })
-
-  return syncProps
+  }
 }
 
 /** Construct a File object from superficially-parsed range response data */
@@ -55,7 +62,7 @@ export async function validateRemoteFileContent(
   bucketName, fileName, fileType, fileOptions
 ) {
   // For handling incomplete range response data, and analytics
-  let syncProps = {}
+  const syncProps = {}
 
   const requestStart = performance.now()
   const response = await fetchBucketFile(bucketName, fileName, MAX_SYNC_CSFV_BYTES)
@@ -66,9 +73,10 @@ export async function validateRemoteFileContent(
   const contentLength = response.headers.get('content-length')
   const contentType = response.headers.get('content-type')
 
-  syncProps = updateSyncProps(contentRange, contentLength, syncProps)
-
   const file = getFileFromRangeData(content, fileName, contentType, syncProps)
+
+  const sizeProps = parseSizeProps(contentRange, contentLength, file)
+  Object.assign(syncProps, sizeProps)
 
   const results =
     await validateFileContent(file, fileType, fileOptions, syncProps)
