@@ -25,7 +25,6 @@ case $OPTION in
 done
 start=$(date +%s)
 RETURN_CODE=0
-FAILED_COUNT=0
 
 THIS_DIR="$(cd "$(dirname "$BASH_SOURCE")"; pwd)"
 BASE_DIR="$(dirname $THIS_DIR)"
@@ -118,21 +117,18 @@ bundle exec rake RAILS_ENV=test db:mongoid:create_indexes
 echo "Indexes initialized"
 
 echo "Running specified unit & integration tests..."
+
+# we're piping test results to other commands, so setting pipefail will preserve the failing exit code even if it
+# is not the last command in the pipe
+set -o pipefail
 # only run yarn ui-test if we haven't specified a single ruby test suite to run
 if [[ "$TEST_FILEPATH" == "" ]]; then
-  rm yarn_test.log
-  set -o pipefail
+  # "2>&1 | tee yarn_test.log" puts the output of the tests both into stdout and the yarn_test.log file
   yarn ui-test 2>&1 | tee yarn_test.log
-  code=$? # immediately capture exit code to prevent this from getting clobbered
-  if [[ $code -ne 0 ]]; then
-    RETURN_CODE=$code
-    first_test_to_fail=${first_test_to_fail-"yarn ui-test"}
-    ((FAILED_COUNT++))
-  fi
+  RETURN_CODE=$? # immediately capture exit code to prevent this from getting clobbered
 fi
 
 # configure and invoke command for rails tests
-rm ./rails_test.log
 if [[ "$MATCHING_TESTS" != "" ]] && [[ "$TEST_FILEPATH" != "" ]]; then
   RAILS_ENV=test bin/rails test TEST_FILEPATH -n $MATCHING_TESTS 2>&1 | tee rails_test.log
 elif [[ "$TEST_FILEPATH" != "" ]]; then
@@ -142,18 +138,19 @@ else
 fi
 code=$?
 
-# consolidate and format results into test_summary.txt
-printf "--Yarn test failures--\n" > test_summary.txt
+# consolidate and format test results into test_summary.txt
+printf " ** Yarn test failures **\n" > test_summary.txt
 grep "FAIL\|✕" yarn_test.log >> test_summary.txt
 printf "\n" >> test_summary.txt
-printf "--Rails test failures--\n" >> test_summary.txt
+printf " ** Rails test failures **\n" >> test_summary.txt
+# find the lines after the Failure/Error text, which have the actual test names that failed.
+# then strip out the Failure/Error lines, as well as the grep-inserted '--' lines
+# then prefix them with ' x  ' so they are easier to distinguish
 grep -A1 ")\sFailure:\|)\sError:" rails_test.log | grep -v ")\sFailure:\|)\sError:\|--" | sed 's/^/ x  &/' >> test_summary.txt
 
-if [[ $code -ne 0 ]]; then
-  RETURN_CODE=$code
-  first_test_to_fail=${first_test_to_fail-"rails test"}
-  ((FAILED_COUNT++))
-fi
+# the return code will be 1 if either the js or rails tests exited with 1
+(( RETURN_CODE = exit_status || $code ))
+
 if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
   echo "uploading all coverage data to codecov"
   bash <(curl -s https://raw.githubusercontent.com/broadinstitute/codecov-bash-uploader/main/codecov-verified.bash)
