@@ -139,6 +139,7 @@ fi
 #  RAILS_ENV=test bin/rails test
 #fi
 rm ./rails_test.log
+set -o pipefail
 RAILS_ENV=test bin/rails test test/lib/github* 2>&1 | tee rails_test.log
 
 code=$?
