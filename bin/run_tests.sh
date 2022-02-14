@@ -146,8 +146,8 @@ code=$?
 printf "Yarn test failures:\n" > test_summary.txt
 grep "FAIL\|✕" yarn_test.log >> test_summary.txt
 printf "\n" >> test_summary.txt
-printf "Rails test failures:\n" > test_summary.txt
-grep -A1 ")\sFailure:\|)\sError:" rails_test.log | grep -v ")\sFailure:\|)\sError:\|--" | sed '/^/ x  &' >> test_summary.txt
+printf "Rails test failures:\n" >> test_summary.txt
+grep -A1 ")\sFailure:\|)\sError:" rails_test.log | grep -v ")\sFailure:\|)\sError:\|--" | sed 's/^/ x  &/' >> test_summary.txt
 
 if [[ $code -ne 0 ]]; then
   RETURN_CODE=$code
