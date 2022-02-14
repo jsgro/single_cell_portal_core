@@ -139,14 +139,16 @@ fi
 code=$?
 
 # consolidate and format test results into test_summary.txt
-printf " ** Yarn test failures **\n" > test_summary.txt
+printf "*** Yarn test failures ***\n" > test_summary.txt
 grep "FAIL\|✕" yarn_test.log >> test_summary.txt
 printf "\n" >> test_summary.txt
-printf " ** Rails test failures **\n" >> test_summary.txt
+printf "*** Rails test failures ***\n" >> test_summary.txt
 # find the lines after the Failure/Error text, which have the actual test names that failed.
 # then strip out the Failure/Error lines, as well as the grep-inserted '--' lines
-# then prefix them with ' x  ' so they are easier to distinguish
-grep -A1 ")\sFailure:\|)\sError:" rails_test.log | grep -v ")\sFailure:\|)\sError:\|--" | sed 's/^/ x  &/' >> test_summary.txt
+# then prefix them with '  ' so they are easier to distinguish
+# we also grab the blank line before each Failure, so that the results are spaced out in the final output
+grep -A2 -B1 ")\sFailure:\|)\sError:" rails_test.log | \
+    grep -v ")\sFailure:\|)\sError:\|--" >> test_summary.txt
 
 # the return code will be 1 if either the js or rails tests exited with 1
 (( RETURN_CODE = exit_status || $code ))
@@ -166,7 +168,8 @@ if [[ $RETURN_CODE -eq 0 ]]; then
   printf "\n### All test suites PASSED ###\n\n"
 else
   printf "\n### FAILURES and ERRORS ###\n"
-  cat test_summary.txt
+  # output summary file to console, with indents around the non-header lines added for readability
+  sed 's/^[^\*]/  &/' test_summary.txt
 fi
 
 echo "Exiting with code: $RETURN_CODE"
