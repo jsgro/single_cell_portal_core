@@ -24,6 +24,9 @@
         <li role="presentation" class="settings-nav" id="settings-authors-nav">
           <a href="#settings-authors" data-toggle="tab">Authors/Publications</a>
         </li>
+        <li role="presentation" class="settings-nav" id="settings-resources-nav">
+          <a href="#settings-resources" data-toggle="tab">External Resources</a>
+        </li>
       </ul>
     </div>
     <div class="col-md-10">
@@ -38,7 +41,11 @@
           <%= render partial: 'study_settings_sharing', locals: { f: f } %>
         </div>
         <div class="tab-pane" id="settings-authors">
-          <%= render partial: 'study_settings_authors', locals: { f: f } %></div>
+          <%= render partial: 'study_settings_authors', locals: { f: f } %>
+        </div>
+        <div class="tab-pane" id="settings-resources">
+          <%= render partial: 'study_settings_resources', locals: { f: f } %>
+        </div>
       </div>
     </div>
   </div>

@@ -808,3 +808,33 @@ figcaption.ck-editor__editable {
   background: unset;
   border: unset;
 }
+
+.study-description-row {
+  display: flex;
+}
+
+#study-sidebar-content {
+  position: relative;
+  right: 0;
+  margin-left: 0;
+  border-left: 3px solid $action-color;
+  min-width: 350px;
+  max-width: 350px;
+  padding: 0 15px;
+  transition: all 0.3s;
+}
+
+#study-sidebar-content.closed {
+  right: -350px;
+  margin-left: -350px;
+}
+
+#toggle-study-resources {
+  position: relative;
+  left: 0;
+}
+
+#toggle-study-resources.closed {
+  position: relative;
+  left: -60px;
+}

@@ -1048,6 +1048,11 @@ class Study
     viewable
   end
 
+  # helper to determine if a study has any publications/external resources to link to from the study overview page
+  def has_linked_resources?
+    publications.any? || external_resources.any?
+  end
+
   ###
   #
   # DATA PATHS & URLS
