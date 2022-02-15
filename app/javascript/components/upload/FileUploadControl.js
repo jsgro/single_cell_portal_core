@@ -93,9 +93,12 @@ export default function FileUploadControl({
       })
     }
   }
-  let buttonText = file.upload_file_name ? 'Replace' : 'Choose file'
+  const isFileChosen = !!file.upload_file_name
+  const isFileOnServer = file.status !== 'new'
+
+  let buttonText = isFileChosen ? 'Replace' : 'Choose file'
   let buttonClass = 'fileinput-button btn terra-tertiary-btn'
-  if (!file.upload_file_name && !file.uploadSelection) {
+  if (!isFileChosen && !file.uploadSelection) {
     buttonClass = 'fileinput-button btn btn-primary'
   }
   if (fileValidation.validating) {
@@ -122,14 +125,16 @@ export default function FileUploadControl({
       bucketName={bucketName}
     />
     &nbsp;
-    <button className={buttonClass} id={`fileButton-${file._id}`} data-testid="file-input-btn">
-      { buttonText }
-      <input className="file-upload-input" data-testid="file-input"
-        type="file"
-        id={inputId}
-        onChange={handleFileSelection}
-        accept={inputAcceptExts.join(',')}/>
-    </button>
+    { !isFileOnServer &&
+      <button className={buttonClass} id={`fileButton-${file._id}`} data-testid="file-input-btn">
+        { buttonText }
+        <input className="file-upload-input" data-testid="file-input"
+          type="file"
+          id={inputId}
+          onChange={handleFileSelection}
+          accept={inputAcceptExts.join(',')}/>
+      </button>
+    }
 
     { fileValidation.errorMsgs?.length > 0 && <div className="validation-error" data-testid="file-content-validation">
       Could not use {fileValidation.filename}:
