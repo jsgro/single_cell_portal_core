@@ -808,3 +808,9 @@ figcaption.ck-editor__editable {
   background: unset;
   border: unset;
 }
+
+.no-wrap-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -340,20 +340,20 @@ export function RawUploadWizard({ studyAccession, name }) {
     <StudyContext.Provider value={studyObj}>
       <div className="upload-wizard-react">
         <div className="row">
-          <div className="col-md-12 wizard-top-bar">
-            <span>{serverState?.study?.name}</span> / &nbsp;
-            <a href={`/single_cell/study/${studyAccession}`}>View study</a>
+          <div className="col-md-12 wizard-top-bar no-wrap-ellipsis">
+          <a href={`/single_cell/study/${studyAccession}`}>View study</a> / &nbsp;
+            <span >{serverState?.study?.name}</span>
           </div>
         </div>
         <div className="row wizard-content">
-          <div className="col-md-3">
+          <div>
             <WizardNavPanel {...{
               formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
               supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
             }} />
           </div>
-          <div className="col-md-9">
-            <div className="flexbox-align-center top-margin">
+          <div>
+            <div className="flexbox-align-center top-margin margin-left">
               <h4>{currentStep.header}</h4>
               <div className="prev-next-buttons">
                 { prevStep && <button

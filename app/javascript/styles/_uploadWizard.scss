@@ -1,11 +1,9 @@
 .upload-wizard-react {
   .position-fixed {
     width: 25%;
-    min-width: 190px;
-    position: fixed;
+    min-width: 229px;
     height: calc(100% - 50px); // leave room for footer and navbar
     overflow-y: auto;
-    margin-left: -15px;
     background: rgb(219, 225, 232);
   }
   .wizard-top-bar {
@@ -13,11 +11,10 @@
     width: 100%;
     padding: 0.5em;
     padding-left: 1em;
-    position: fixed;
     z-index: 100;
   }
   .wizard-content {
-    margin-top: 34px;
+    display: flex;
     min-width: 730px;
   }
 }
@@ -118,7 +115,6 @@
 }
 
 .file-upload-overlay {
-  position: absolute;
   left: 0;
   top: 0;
   width: 100%;
@@ -149,4 +145,8 @@
 
 .prev-next-buttons {
   margin-left: auto;
+}
+
+.margin-left {
+  margin-left: 15px;
 }
