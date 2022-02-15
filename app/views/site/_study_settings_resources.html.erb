@@ -4,7 +4,7 @@
   studies in Single Cell Portal.
 </p>
 
-<% f.fields_for :external_resources do |resource| %>
+<%= f.fields_for :external_resources do |resource| %>
   <div class="form-group row">
     <div class="col-sm-3">
       <%= resource.label :title, class: 'sr-only' %>
