@@ -40,10 +40,10 @@ export default class ChunkedLineReader {
   /**
    * iterates over the remaining lines in the file, calling func(line, lineNum, isLastLine) for each line
    * (lineNum is 0-indexed).
-   * maxBytesPerLine can be set to avoid reading the entire file into memory in the event the file is missing
-   * proper newlines
+   * maxBytesPerLine (default: 1 GiB) can be set to avoid reading the entire file into memory in the event
+   * the file is missing proper newlines.
   */
-  async iterateLines(func, maxLines=Number.MAX_SAFE_INTEGER, maxBytesPerLine=1000*1000*1024) {
+  async iterateLines(func, maxLines=Number.MAX_SAFE_INTEGER, maxBytesPerLine=1000*1024*1024) {
     const prevLinesRead = this.linesRead
     while (
       (this.hasMoreChunks || this.chunkLines.length) &&
