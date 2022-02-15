@@ -1,6 +1,7 @@
 .upload-wizard-react {
   .position-fixed {
     width: 25%;
+    min-width: 190px;
     position: fixed;
     height: calc(100% - 50px); // leave room for footer and navbar
     overflow-y: auto;
@@ -9,6 +10,7 @@
   }
   .wizard-top-bar {
     background: #ddd;
+    width: 100%;
     padding: 0.5em;
     padding-left: 1em;
     position: fixed;
@@ -16,6 +18,7 @@
   }
   .wizard-content {
     margin-top: 34px;
+    min-width: 730px;
   }
 }
 
