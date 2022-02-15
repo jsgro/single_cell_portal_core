@@ -353,7 +353,7 @@ export function RawUploadWizard({ studyAccession, name }) {
             }} />
           </div>
           <div>
-            <div className="flexbox-align-center top-margin margin-left">
+            <div className="flexbox-align-center top-margin left-margin">
               <h4>{currentStep.header}</h4>
               <div className="prev-next-buttons">
                 { prevStep && <button
