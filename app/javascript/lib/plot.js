@@ -1,4 +1,5 @@
 import Plotly from 'plotly.js-dist'
+import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
 
 // Default plot colors, combining ColorBrewer sets 1-3 with tweaks to yellows.
 const colorBrewerList = [
@@ -37,77 +38,106 @@ export const labelFont = {
 
 export const lineColor = 'rgb(40, 40, 40)'
 
+/** returns an empty trace with arrays initialized based on expectedLength */
+function emptyTrace(expectedLength, hasZvalues, hasColors) {
+  const trace = {
+    x: new Array(expectedLength),
+    y: new Array(expectedLength),
+    annotations: new Array(expectedLength),
+    cells: new Array(expectedLength),
+    newLength: 0 // used to track the post-filter length -- NOT a plotly property
+  }
+  if (hasZvalues) {
+    trace.z = new Array(expectedLength)
+  }
+  if (hasColors) {
+    trace.colors = new Array(expectedLength)
+  }
+}
+
 /** takes a polotly trace argument and filters out cells based on params.  will return the original object,
  * but with data arrays filtered as appropriate
  * @param labelsToHide {String[]} array of label names to filter out
  * @param cellsToShow {String[]} Array of cell names to show. If null, will show everything
+ * @param groupByAnnotation {Boolean} whether to assemble separate traces for each label
  */
-export function filterTrace(trace, labelsToHide, cellsToShow) {
+export function filterTrace(trace, labelsToHide, cellsToShow, groupByAnnotation=false) {
   const isHidingByLabel = labelsToHide && labelsToHide.length
   const isHidingByCellName = !!cellsToShow
   const hasZvalues = !!trace.z
   const hasColors = !!trace.colors
-  if (!isHidingByLabel && !isHidingByCellName) {
-    return trace
-  }
   const oldLength = trace.x.length
-  // initialize the other arrays (for now, assume they will be roughly the same length as the old array )
-  const fTrace = {
-    x: new Array(oldLength),
-    y: new Array(oldLength),
-    z: hasZvalues ? new Array(oldLength) : undefined,
-    annotations: new Array(oldLength),
-    cells: new Array(oldLength),
-    colors: hasColors ? new Array(oldLength) : undefined
+  // if grouping by annotation, traceMap is a hash of annotation names to traces
+  // otherwise, traceMap will just have a single 'all' trace
+  const traceMap = {}
+  const estTraceLength = groupByAnnotation ? trace.x.length / 10 : trace.x.length
+  let rawCountsByLabel = { all: trace.x.length } // maintain a list of all cell counts by label for the legend
+  const countsByLabel = {}
+  if (groupByAnnotation) {
+    rawCountsByLabel = countValues(trace.annotations)
+  }
+  Object.keys(rawCountsByLabel).forEach(key => {
+    traceMap[key] = emptyTrace(estTraceLength, hasZvalues, hasColors)
+  })
+
+  if (!isHidingByLabel && !isHidingByCellName) {
+    return [[trace], rawCountsByLabel]
   }
 
   const cellNameHash = {}
   if (isHidingByCellName) {
-    // build up the indexes of the cells so we can quickly filter based on them
+    // build a hash of cell name => present so we can quickly filter
     for (let i = 0; i < cellsToShow.length; i++) {
       cellNameHash[cellsToShow[i]] = true
     }
   }
   const labelNameHash = {}
   if (isHidingByLabel) {
-    // build up the indexes of the labels so we can quickly filter based on them
+    // build a hash of label => present so we can quickly filter
     for (let i = 0; i < labelsToHide.length; i++) {
       labelNameHash[labelsToHide[i]] = true
     }
   }
 
-  let newI = 0
+  // this is the main filter/group loop.  Loop over every cell and determine whether it needs to be filtered,
+  // and if it needs to be grouped.
   for (let i = 0; i < oldLength; i++) {
+    // if we're not hiding by name, or the name is present in the list, include it
     if (!isHidingByCellName || cellNameHash[trace.cells[i]]) {
+      // if we're not hiding by label, or the label is present in the list, include it
       if (!isHidingByLabel || !labelNameHash[trace.annotations[i]]) {
-        fTrace.x[newI] = trace.x[i]
-        fTrace.y[newI] = trace.y[i]
+        const fTrace = groupByAnnotation ? traceMap[trace.annotations[i]] : traceMap.main
+        const newIndex = fTrace.newLength
+        fTrace.x[newIndex] = trace.x[i]
+        fTrace.y[newIndex] = trace.y[i]
         if (hasZvalues) {
-          fTrace.z[newI] = trace.z[i]
+          fTrace.z[newIndex] = trace.z[i]
         }
-        fTrace.cells[newI] = trace.cells[i]
-        fTrace.annotations[newI] = trace.annotations[i]
+        fTrace.cells[newIndex] = trace.cells[i]
+        fTrace.annotations[newIndex] = trace.annotations[i]
         if (hasColors) {
           fTrace.colors[i] = trace.colors[i]
         }
-        newI++
+        fTrace.newLength++
       }
     }
   }
-  // now fix the length of the new arrays to the number of values that were written
-  [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.colors, fTrace.cells].forEach(arr => {
-    if (arr) {
-      arr.length = newI
-    }
+  // now fix the length of the new arrays in each trace to the number of values that were written,
+  // and push the traces into an array
+  const traces = []
+  Object.keys(traceMap).forEach(key => {
+    const fTrace = traceMap[key]
+    const subArrays = [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.colors, fTrace.cells]
+    subArrays.forEach(arr => {
+      if (arr) {
+        arr.length = fTrace.newIndex
+      }
+    })
+    traces.push(fTrace)
+    countsByLabel[key] = fTrace.x.length
   })
-  Object.assign(trace, fTrace)
-  if (!hasZvalues) {
-    delete trace.z
-  }
-  if (!hasColors) {
-    delete trace.colors
-  }
-  return trace
+
+  return [traces, countsByLabel]
 }
 
 /**
@@ -128,6 +158,71 @@ export function plot(graphElementId, data, layout) {
     data,
     layout
   )
+}
+
+/**
+ * Get value for `style` prop in Plotly scatter plot `trace.transforms`.
+ * Also calculate point counts for each label, `countsByLabel`.
+ *
+ * This is needed so that colors match between the custom Plotly legend
+ * entries and each graphical trace in the plot.  (Without this, point
+ * set "Foo" could be green in the legend, but red in the plot.)
+ *
+*/
+export function getStyles(data, pointSize, customColors, editedCustomColors) {
+  const countsByLabel = countValues(data.annotations)
+
+  const labels = getLabels(countsByLabel)
+
+  const legendStyles = labels
+    .map((label, index) => {
+      return {
+        target: label,
+        value: {
+          legendrank: index,
+          marker: {
+            color: getColorForLabel(label, customColors, editedCustomColors, index),
+            size: pointSize
+          }
+        }
+      }
+    })
+
+  return [legendStyles, countsByLabel]
+}
+
+
+/**
+ * Get color for the label, which can be applied to e.g. the icon or the trace
+ */
+export function getColorForLabel(label, customColors={}, editedCustomColors={}, i) {
+  return editedCustomColors[label] ?? customColors[label] ?? getColorBrewerColor(i)
+}
+
+/** Sort annotation labels naturally, but always put "unspecified" last */
+function labelSort(a, b) {
+  if (a === UNSPECIFIED_ANNOTATION_NAME) {return 1}
+  if (b === UNSPECIFIED_ANNOTATION_NAME) {return -1}
+  return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
+}
+
+/** Sort labels colors are assigned in right order */
+export function getLabels(countsByLabel) {
+  return Object.keys(countsByLabel).sort(labelSort)
+}
+
+
+/**
+ * Return a hash of value=>count for the passed-in array
+ * This is surprisingly quick even for large arrays, but we'd rather we
+ * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
+*/
+function countValues(array) {
+  return array.reduce((acc, curr) => {
+    acc[curr] ||= 0
+    acc[curr] += 1
+    return acc
+  }, {})
 }
 
 // To consider: dedup this copy with the one that exists in application.js.

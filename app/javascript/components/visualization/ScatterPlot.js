@@ -9,12 +9,12 @@ import { logScatterPlot } from 'lib/scp-api-metrics'
 import { log } from 'lib/metrics-api'
 import { useUpdateEffect } from 'hooks/useUpdate'
 import PlotTitle from './PlotTitle'
-import ScatterPlotLegend, { getStyles } from './controls/ScatterPlotLegend'
+import ScatterPlotLegend from './controls/ScatterPlotLegend'
 import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
-import { withErrorBoundary } from 'lib/ErrorBoundary'
+import { withErrorBoundary, readableErrorMessage } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
-import { getPlotDimensions, filterTrace } from 'lib/plot'
+import { getPlotDimensions, filterTrace, getStyles } from 'lib/plot'
 import LoadingSpinner from 'lib/LoadingSpinner'
 import { formatFileForApi } from 'components/upload/upload-utils'
 import { successNotification, failureNotification } from 'lib/MessageModal'
@@ -209,12 +209,7 @@ function RawScatterPlot({
       genes,
       isAnnotatedScatter,
       isCorrelatedScatter
-    }).then(processScatterPlot).catch(error => {
-      Plotly.purge(graphElementId)
-      setErrorContent(error.message)
-      setShowError(true)
-      setIsLoading(false)
-    })
+    }).then(processScatterPlot)
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles custom scatter legend updates
@@ -399,14 +394,14 @@ export function getPlotlyTraces({
   if (isRefGroup) {
     // Use Plotly's groupby and filter transformation to make the traces
     // note these transforms are deprecated in the latest Plotly versions
-    const [legendStyles] = getStyles(traces, pointSize, customColors, editedCustomColors)
+    /*  const [legendStyles] = getStyles(traces, pointSize, customColors, editedCustomColors)
     trace.transforms = [
       {
         type: 'groupby',
         groups: data.annotations,
         styles: legendStyles
       }
-    ]
+    ] */
   } else {
     const trace = traces[0]
     const isGeneExpressionForColor = genes.length && !isCorrelatedScatter && !isAnnotatedScatter
