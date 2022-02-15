@@ -1,10 +1,14 @@
 import _uniqueId from 'lodash/uniqueId'
 import _get from 'lodash/get'
+import React from 'react'
 
 export const PARSEABLE_TYPES = ['Cluster', 'Coordinate Labels', 'Expression Matrix', 'MM Coordinate Matrix',
   '10X Genes File', '10X Barcodes File', 'Gene List', 'Metadata', 'Analysis Output']
 
 const EXPRESSION_INFO_TYPES = ['Expression Matrix', 'MM Coordinate Matrix']
+
+// context to pass through UploadWizard
+export const StudyContext = React.createContext(null)
 
 /** properties used to track file state on the form, but that should not be sent to the server
  *  this also includes properties that are only modifiable on the server (and so should also
@@ -30,7 +34,8 @@ const PROPERTIES_NOT_TO_SEND = [
   'status',
   'upload',
   'parse_status',
-  'requestCanceller'
+  'requestCanceller',
+  'serverFile'
 ]
 
 const PROPERTIES_AS_JSON = ['custom_color_updates']

@@ -17,12 +17,14 @@ export function ParseException(key, msg) {
  */
 export async function getParsedHeaderLines(chunker, mimeType) {
   const headerLines = []
-  await chunker.iterateLines((line, lineNum, isLastLine) => {
-    headerLines.push(line)
-  }, 2)
+  await chunker.iterateLines({
+    func: (line, lineNum, isLastLine) => {
+      headerLines.push(line)
+    }, maxLines: 2
+  })
   if (headerLines.length < 2 || headerLines.some(hl => hl.length === 0)) {
     throw new ParseException('format:cap:missing-header-lines',
-        `Your file is missing newlines or some required header lines`)
+      `Your file is missing newlines or some required header lines`)
   }
   const delimiter = sniffDelimiter(headerLines, mimeType)
   const headers = headerLines.map(l => parseLine(l, delimiter))
@@ -93,7 +95,7 @@ export function validateUniqueCellNamesWithinFile(line, isLastLine, dataObj) {
     const nameTxt = (dataObj.duplicateCellNames.size > 1) ? 'duplicates' : 'duplicate'
     const dupString = [...dataObj.duplicateCellNames].slice(0, 10).join(', ')
     const msg = `Cell names must be unique within a file. ${dataObj.duplicateCellNames.size} ${nameTxt} found, including: ${dupString}`
-    issues.push(['error', 'duplicate:cells-within-file', msg])
+    issues.push(['error', 'content:duplicate:cells-within-file', msg])
   }
   return issues
 }
@@ -110,11 +112,11 @@ export function validateMetadataLabelMatches(headers, line, isLastLine, dataObj)
   // if this is the first time through, identify the columns to check, and initialize data structures to track mismatches
   if (!dataObj.dragCheckColumns) {
     dataObj.dragCheckColumns = headers[0].map((colName, index) => {
-      const labelColumnIndex = headers[0].indexOf(`${colName }__ontology_label`)
+      const labelColumnIndex = headers[0].indexOf(`${colName}__ontology_label`)
       if (excludedColumns.includes(colName) ||
-          colName.endsWith('ontology_label') ||
-          headers[1][index] === 'numeric' ||
-          labelColumnIndex === -1) {
+        colName.endsWith('ontology_label') ||
+        headers[1][index] === 'numeric' ||
+        labelColumnIndex === -1) {
         return null
       }
       // for each column, track a hash of label=>value,
@@ -141,8 +143,8 @@ export function validateMetadataLabelMatches(headers, line, isLastLine, dataObj)
     dataObj.dragCheckColumns.forEach(dcc => {
       if (dcc.mismatchedVals.size > 0) {
         const labelString = [...dcc.mismatchedVals].slice(0, 10).join(', ')
-        const moreLabelsString = dcc.mismatchedVals.size > 10 ? ` and ${dcc.mismatchedVals.size - 10} others`: ''
-        issues.push(['error', 'content:metadata:mismatched-id-label',
+        const moreLabelsString = dcc.mismatchedVals.size > 10 ? ` and ${dcc.mismatchedVals.size - 10} others` : ''
+        issues.push(['error', 'ontology:multiply-assigned-label',
           `${dcc.colName} has different ID values mapped to the same label.
           Label(s) with more than one corresponding ID: ${labelString}${moreLabelsString}`])
       }
@@ -183,6 +185,25 @@ export function validateGroupColumnCounts(headers, line, isLastLine, dataObj) {
         ])
       }
     })
+  }
+  return issues
+}
+
+/**
+ * Timeout the CSFV if taking longer than 10 seconds
+ *
+ */
+export function timeOutCSFV(chunker) {
+  const maxTime = 10000 // in milliseconds this equates to 10 seconds
+  const maxRealTime = chunker.startTime + maxTime
+  const currentTime = Date.now()
+  const issues = []
+
+  if (currentTime > maxRealTime) {
+    // quit early by setting the file reader to the end of the file so it can't read anymore
+    chunker.setToFileEnd()
+    issues.push(['warn', 'incomplete:timeout',
+      'Due to this file\'s size, it will be fully validated after upload, and any errors will be emailed to you.'])
   }
   return issues
 }

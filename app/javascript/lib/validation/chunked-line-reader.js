@@ -6,9 +6,9 @@ const newlineRegex = /\r?\n/
  * reads lines from a file in a chunked way, so that the file does not have to be in memory all at once
  * Basic usage:
  * const chunker = new ChunkedLineReader(file)
- * chunker.iterateLines((line, lineNum, isLastLine) => {
+ * chunker.iterateLines({func: (line, lineNum, isLastLine) => {
  *   // do stuff
- * }) {
+ * }}) {
  * }
  */
 export default class ChunkedLineReader {
@@ -20,6 +20,18 @@ export default class ChunkedLineReader {
     this.linesRead = 0
     this.currentFragment = null // currentFragment stores the parts of lines that cross chunk boundaries
     this.chunkLines = []
+    this.startTime = Date.now() // start the CSFV timer
+    this.updateHasMoreChunks()
+    this.updateHasMoreLines()
+  }
+
+  /**
+   * Reset the reader to the start of the file
+   */
+  resetToFileStart() {
+    this.linesRead = 0
+    this.nextByteToRead = 0
+    this.chunkLines = []
     this.updateHasMoreChunks()
     this.updateHasMoreLines()
   }
@@ -30,7 +42,7 @@ export default class ChunkedLineReader {
    * maxBytesPerLine can be set to avoid reading the entire file into memory in the event the file is missing
    * proper newlines
   */
-  async iterateLines(func, maxLines=Number.MAX_SAFE_INTEGER, maxBytesPerLine=1000*1000*1024) {
+  async iterateLines({ func, maxLines = Number.MAX_SAFE_INTEGER, maxBytesPerLine = 1000*1000*1024 }) {
     const prevLinesRead = this.linesRead
     while ((this.hasMoreChunks || this.chunkLines.length) &&
            !(this.linesRead === 0 && this.nextByteToRead > maxBytesPerLine) &&
@@ -46,6 +58,16 @@ export default class ChunkedLineReader {
       }
     }
   }
+
+  /**
+   * Reset the reader to the end of the file
+   */
+  setToFileEnd() {
+    this.chunkLines = []
+    this.hasMoreChunks = false
+    this.hasMoreLines = false
+  }
+
 
   /**
    * reads a file as lines in a set of 'chunks'  Each chunk is determined by chunkSize

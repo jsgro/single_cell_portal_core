@@ -50,7 +50,7 @@ class SiteController < ApplicationController
 
     # filter list if in branding group mode
     if @selected_branding_group.present?
-      @viewable = @viewable.where(branding_group_id: @selected_branding_group.id)
+      @viewable = @viewable.where(:branding_group_ids.in => [@selected_branding_group.id])
     end
 
     # determine study/cell count based on viewable to user
@@ -159,24 +159,6 @@ class SiteController < ApplicationController
     set_study_permissions(@study.detached?)
     set_study_default_options
     set_study_download_options
-
-    if @allow_firecloud_access && @user_can_compute
-      # load list of previous submissions
-      workspace = ApplicationController.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
-      @submissions = ApplicationController.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
-
-      @submissions.each do |submission|
-        update_analysis_submission(submission)
-      end
-      # remove deleted submissions from list of runs
-      if !workspace['workspace']['attributes']['deleted_submissions'].blank?
-        deleted_submissions = workspace['workspace']['attributes']['deleted_submissions']['items']
-        @submissions.delete_if {|submission| deleted_submissions.include?(submission['submissionId'])}
-      end
-
-      # load list of available workflows
-      @workflows_list = load_available_workflows
-    end
   end
 
   def record_download_acceptance
@@ -402,17 +384,7 @@ class SiteController < ApplicationController
 
   # get all submissions for a study workspace
   def get_workspace_submissions
-    workspace = ApplicationController.firecloud_client.get_workspace(@study.firecloud_project, @study.firecloud_workspace)
-    @submissions = ApplicationController.firecloud_client.get_workspace_submissions(@study.firecloud_project, @study.firecloud_workspace)
-    # update any AnalysisSubmission records with new statuses
-    @submissions.each do |submission|
-      update_analysis_submission(submission)
-    end
-    # remove deleted submissions from list of runs
-    if !workspace['workspace']['attributes']['deleted_submissions'].blank?
-      deleted_submissions = workspace['workspace']['attributes']['deleted_submissions']['items']
-      @submissions.delete_if {|submission| deleted_submissions.include?(submission['submissionId'])}
-    end
+    @submissions = TerraAnalysisService.list_submissions(@study)
   end
 
   # retrieve analysis configuration and associated parameters
@@ -685,7 +657,6 @@ class SiteController < ApplicationController
     @allow_firecloud_access = false
     @allow_downloads = false
     @allow_edits = false
-    @allow_computes = false
     return if study_detached
     begin
       @allow_firecloud_access = AdminConfiguration.firecloud_access_enabled?
@@ -700,7 +671,6 @@ class SiteController < ApplicationController
         buckets_ok = system_status.dig(FireCloudClient::BUCKETS_SERVICE, 'ok') == true
         @allow_downloads = buckets_ok
         @allow_edits = sam_ok && rawls_ok
-        @allow_computes = sam_ok && rawls_ok && agora_ok
       end
     rescue => e
       logger.error "Error checking FireCloud API status: #{e.class.name} -- #{e.message}"
@@ -719,9 +689,6 @@ class SiteController < ApplicationController
     return if study_detached || !@allow_firecloud_access
     begin
       @user_can_edit = @study.can_edit?(current_user)
-      if @allow_computes
-        @user_can_compute = @study.can_compute?(current_user)
-      end
       if @allow_downloads
         @user_can_download = @user_can_edit ? true : @study.can_download?(current_user)
         @user_embargoed = @user_can_edit ? false : @study.embargoed?(current_user)
@@ -861,17 +828,6 @@ class SiteController < ApplicationController
   # load list of available workflows
   def load_available_workflows
     AnalysisConfiguration.available_analyses
-  end
-
-  # update AnalysisSubmissions when loading study analysis tab
-  # will not backfill existing workflows to keep our submission history clean
-  def update_analysis_submission(submission)
-    analysis_submission = AnalysisSubmission.find_by(submission_id: submission['submissionId'])
-    if analysis_submission.present?
-      workflow_status = submission['workflowStatuses'].keys.first # this only works for single-workflow analyses
-      analysis_submission.update(status: workflow_status)
-      analysis_submission.delay.set_completed_on # run in background to avoid UI blocking
-    end
   end
 
   # handle updates to reviewer access settings

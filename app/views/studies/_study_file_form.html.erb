@@ -1,3 +1,7 @@
+<%
+  allow_images = FeatureFlaggable.feature_flags_for_instances(@selected_branding_group, current_user, @study)['reference_image_upload']
+  file_type_hash = allow_images ? StudyFile::STUDY_FILE_TYPE_NAME_HASH : StudyFile::STUDY_FILE_TYPE_NAME_HASH.except('Image')
+%>
 <%= nested_form_for(study_file, url: sync_study_file_study_path(@study._id),
                     html: {multipart: true, id: "study-file-#{study_file._id}" ,
                            class: "bs-callout bs-callout-info unsynced-study-file" }, data: {remote: true}) do |f| %>
@@ -44,7 +48,7 @@
   <div class="form-group row">
     <div class="col-sm-4">
       <%= f.label :file_type %><br />
-      <%= f.select :file_type, options_for_select(StudyFile::STUDY_FILE_TYPE_NAME_HASH.invert, study_file.file_type), {include_blank: 'Please select a file type'}, class: 'form-control file-type' %>
+      <%= f.select :file_type, options_for_select(file_type_hash.invert, study_file.file_type), {include_blank: 'Please select a file type'}, class: 'form-control file-type' %>
     </div>
     <div class="col-sm-4 taxon-select-target">
       <% if StudyFile::TAXON_REQUIRED_TYPES.include?(study_file.file_type) || study_file.file_type == 'Analysis Output' %>

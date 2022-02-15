@@ -1,9 +1,20 @@
 # collection of methods for searching studies
-
 class StudySearchService
 
   MAX_GENE_SEARCH = 50
-  MAX_GENE_SEARCH_MSG = "For performance reasons, gene search is limited to #{MAX_GENE_SEARCH} genes. Please use multiple searches to view more genes."
+  MAX_GENE_SEARCH_MSG = "For performance reasons, gene search is limited to #{MAX_GENE_SEARCH} genes. Please use " \
+                        'multiple searches to view more genes.'.freeze
+
+  # list of common 'stop words' to scrub from term-based search requests
+  # these are unhelpful in search contexts as they artificially inflate irrelevant results
+  # from https://gist.github.com/sebleier/554280
+  STOP_WORDS = %w[i me my myself we our ours ourselves you your yours yourself yourselves he him his himself she
+                  her hers herself it its itself they them their theirs themselves what which who whom this that
+                  these those am is are was were be been being have has had having do does did doing a an the and
+                  but if or because as until while of at by for with about against between into through during
+                  before after above below to from up down in out on off over under again further then once here
+                  there when where why how all any both each few more most other some such no nor not only own same
+                  so than too very s t can will just don should now].freeze
 
   def self.find_studies_by_gene_param(gene_param, study_ids)
     genes = sanitize_gene_params(gene_param)

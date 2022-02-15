@@ -12,7 +12,7 @@ Rails.application.configure do
   config.eager_load = false
 
   # Show full error reports.
-  config.consider_all_requests_local = true
+  config.consider_all_requests_local = false
 
   # Enable/disable caching. By default caching is disabled.
   # Run rails dev:cache to toggle caching.
@@ -54,6 +54,18 @@ Rails.application.configure do
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true
+
+  # custom exceptions handling to render responses based on controller
+  # uncaught API errors will now render as JSON responses w/ 500 status
+  # normal controller errors will show normal error page for development mode
+  # lambda allows for inspecting environment, which will include request parameters
+  config.exceptions_app = lambda do |env|
+    if env['action_dispatch.original_path']&.include?('api/v1')
+      Api::V1::ExceptionsController.action(:render_error).call(env)
+    else
+      ActionDispatch::PublicExceptions.new(Rails.public_path)
+    end
+  end
 
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true

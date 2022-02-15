@@ -35,6 +35,7 @@ class ExpressionFileInfo
   LIBRARY_PREPARATION_VALUES = ["10x 3' v1",
                                 "10x 3' v2",
                                 "10x 3' v3",
+                                "10x 5' v1",
                                 "10x 5' v2",
                                 "10x 5' v3",
                                 'CEL-seq2',

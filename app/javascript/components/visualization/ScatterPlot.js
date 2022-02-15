@@ -120,7 +120,7 @@ function RawScatterPlot({
       })
       store.addNotification(successNotification(`Colors saved successfully`))
       const newScatterData = Object.assign({}, scatterData, {
-        customColors: response.cluster_file_info.custom_colors[annotation.name]
+        customColors: response.cluster_file_info?.custom_colors[scatterData.annotParams.name] ?? {}
       })
       setEditedCustomColors({})
       setIsLoading(false)

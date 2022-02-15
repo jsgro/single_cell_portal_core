@@ -8,9 +8,11 @@ describe('chunked line reader', () => {
     const chunker = new ChunkedLineReader(file)
     const expectedLines = ['line1', 'line2', 'line3']
     expect.assertions(7)
-    await chunker.iterateLines((line, lineNum, isLastLine) => {
-      expect(line).toEqual(expectedLines[lineNum])
-      expect(isLastLine).toEqual(lineNum === 2)
+    await chunker.iterateLines({
+      func: (line, lineNum, isLastLine) => {
+        expect(line).toEqual(expectedLines[lineNum])
+        expect(isLastLine).toEqual(lineNum === 2)
+      }
     })
     expect(chunker.linesRead).toEqual(3)
   })
@@ -21,9 +23,11 @@ describe('chunked line reader', () => {
     const expectedLines = ['line1', 'line2', 'line3', 'line4']
     expect.assertions(8)
 
-    await chunker.iterateLines((line, lineNum, isLastLine) => {
-      expect(line).toEqual(expectedLines[lineNum])
-      expect(isLastLine).toEqual(lineNum === 3)
+    await chunker.iterateLines({
+      func: (line, lineNum, isLastLine) => {
+        expect(line).toEqual(expectedLines[lineNum])
+        expect(isLastLine).toEqual(lineNum === 3)
+      }
     })
   })
 
@@ -32,9 +36,12 @@ describe('chunked line reader', () => {
     const chunker = new ChunkedLineReader(file, 5)
     const expectedLines = ['line1', 'line2', 'line3']
     expect.assertions(7)
-    await chunker.iterateLines((line, lineNum, isLastLine) => {
-      expect(line).toEqual(expectedLines[lineNum])
-      expect(isLastLine).toEqual(lineNum === 2)
+
+    await chunker.iterateLines({
+      func: (line, lineNum, isLastLine) => {
+        expect(line).toEqual(expectedLines[lineNum])
+        expect(isLastLine).toEqual(lineNum === 2)
+      }
     })
     expect(chunker.hasMoreLines).toEqual(false)
   })
@@ -44,9 +51,12 @@ describe('chunked line reader', () => {
     const chunker = new ChunkedLineReader(file, 6)
     const expectedLines = ['line1', 'line2', 'line3']
     expect.assertions(7)
-    await chunker.iterateLines((line, lineNum, isLastLine) => {
-      expect(line).toEqual(expectedLines[lineNum])
-      expect(isLastLine).toEqual(lineNum === 2)
+
+    await chunker.iterateLines({
+      func: (line, lineNum, isLastLine) => {
+        expect(line).toEqual(expectedLines[lineNum])
+        expect(isLastLine).toEqual(lineNum === 2)
+      }
     })
     expect(chunker.hasMoreLines).toEqual(false)
   })
@@ -57,9 +67,12 @@ describe('chunked line reader', () => {
 
     const expectedLines = ['line1', 'line2', 'line3', 'line4']
     expect.assertions(9)
-    await chunker.iterateLines((line, lineNum, isLastLine) => {
-      expect(line).toEqual(expectedLines[lineNum])
-      expect(isLastLine).toEqual(lineNum === 3)
+
+    await chunker.iterateLines({
+      func: (line, lineNum, isLastLine) => {
+        expect(line).toEqual(expectedLines[lineNum])
+        expect(isLastLine).toEqual(lineNum === 3)
+      }
     })
     expect(chunker.hasMoreLines).toEqual(false)
   })
@@ -69,10 +82,13 @@ describe('chunked line reader', () => {
     const chunker = new ChunkedLineReader(file, 7)
     const expectedLines = ['abcdefghij', 'klmnopqrstuv', 'wxyz123456']
     expect.assertions(6)
+
     // now check that we can read the same file correctly using the iterator
-    await chunker.iterateLines((line, lineNum, isLastLine) => {
-      expect(line).toEqual(expectedLines[lineNum])
-      expect(isLastLine).toEqual(lineNum === 2)
+    await chunker.iterateLines({
+      func: (line, lineNum, isLastLine) => {
+        expect(line).toEqual(expectedLines[lineNum])
+        expect(isLastLine).toEqual(lineNum === 2)
+      }
     })
   })
 })

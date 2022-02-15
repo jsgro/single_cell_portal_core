@@ -198,16 +198,18 @@ module Api
           # determine if search values contain possible study accessions
           possible_accessions = StudyAccession.sanitize_accessions(@search_terms.split)
           # determine query case based off of search terms (either :keyword or :phrase)
-          if @search_terms.include?("\"")
+          if @search_terms.include?('"')
             @term_list = self.class.extract_phrases_from_search(query_string: @search_terms)
             logger.info "Performing phrase-based search using #{@term_list}"
             @studies = self.class.generate_mongo_query_by_context(terms: @term_list, base_studies: @viewable,
                                                                   accessions: possible_accessions, query_context: :phrase)
             logger.info "Found #{@studies.count} studies in phrase search: #{@studies.pluck(:accession)}"
           else
-            @term_list = @search_terms.split
+            # filter & reconstitute query w/o stop words
+            @term_list = self.class.reject_stop_words_from_terms(@search_terms.split)
+            sanitized_terms = @term_list.join(' ')
             logger.info "Performing keyword-based search using #{@term_list}"
-            @studies = self.class.generate_mongo_query_by_context(terms: @search_terms, base_studies: @viewable,
+            @studies = self.class.generate_mongo_query_by_context(terms: sanitized_terms, base_studies: @viewable,
                                                                   accessions: possible_accessions, query_context: :keyword)
             logger.info "Found #{@studies.count} studies in keyword search: #{@studies.pluck(:accession)}"
 
@@ -303,8 +305,10 @@ module Api
         when :popular
           @studies = @studies.sort_by(&:view_count).reverse
         else
-          # we have sort_type of :none, so preserve original ordering of :view_order
-          @studies = @studies.sort_by(&:view_order)
+          # we have sort_type of :none, so order by most recent initialized studies
+          # in order to sort by multiple attributes, use array notation to indicate which attribute to sort by first
+          # boolean values must be converted to an integer in order for this to work
+          @studies = @studies.sort_by { |study| [study.initialized? ? 1 : 0, study.created_at] }.reverse
         end
 
         # save list of study accessions for bulk_download/bulk_download_size calls, in order of results
@@ -479,16 +483,23 @@ module Api
       # extract any "quoted phrases" from query string and tokenize terms
       def self.extract_phrases_from_search(query_string:)
         terms = []
-        query_string.split("\"").each do |substring|
+        query_string.split('"').each do |substring|
           # when splitting on double quotes, phrases will not have any leading/trailing space
           # individual lists of terms will have one or the other, which is how we differentiate
+          # stop words should be excluded from this list as they are irrelevant in a search context, but should be
+          # honored in a quoted string as that is looking for an exact match
           if substring.start_with?(' ') || substring.end_with?(' ')
-            terms += substring.strip.split
+            terms += reject_stop_words_from_terms(substring.strip.split)
           else
             terms << substring
           end
         end
         terms.delete_if(&:blank?) # there is usually one blank entry if we had a quoted phrase, so remove it
+      end
+
+      # exclude known stop words from a list of terms to increase search result relevance
+      def self.reject_stop_words_from_terms(terms)
+        terms&.reject { |t| ::StudySearchService::STOP_WORDS.include? t } || []
       end
 
       # escape regular expression control characters from list of search terms and format for search

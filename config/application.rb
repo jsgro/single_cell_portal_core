@@ -29,10 +29,21 @@ module SingleCellPortal
     config.middleware.use Rack::Brotli
 
     # Docker image for file parsing via scp-ingest-pipeline
-    config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.12.4'
+    config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.13.1'
 
     config.autoload_paths << Rails.root.join('lib')
 
+    # custom exceptions handling to render responses based on controller
+    # uncaught API errors will now render as JSON responses w/ 500 status
+    # normal controller errors will show 500 page, except in development environment (will show normal error page)
+    # lambda allows for inspecting environment, which will include request parameters
+    config.exceptions_app = lambda do |env|
+      if env['action_dispatch.original_path']&.include?('api/v1')
+        Api::V1::ExceptionsController.action(:render_error).call(env)
+      else
+        ExceptionsController.action(:render_error).call(env)
+      end
+    end
     # Google OAuth2 Scopes
     # basic scopes are user profile, email, and openid, and do not require user consent to request during auth handshake
     BASIC_GOOGLE_SCOPES = %w(email profile userinfo.email userinfo.profile openid)
