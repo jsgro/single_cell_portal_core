@@ -17,6 +17,6 @@ class Publication
 
   # generate link to PubMed Central entry
   def pmc_link
-    "https://www.ncbi.nlm.nih.gov/pmc/articles#{pmcid}"
+    "https://www.ncbi.nlm.nih.gov/pmc/articles/#{pmcid}"
   end
 end
