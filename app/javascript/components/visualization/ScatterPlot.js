@@ -14,7 +14,7 @@ import useErrorMessage from 'lib/error-message'
 import { computeCorrelations } from 'lib/stats'
 import { withErrorBoundary, readableErrorMessage } from 'lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
-import { getPlotDimensions, filterTrace, getStyles } from 'lib/plot'
+import { getPlotDimensions, filterTrace, getStyle, getSortedLabels, getColorForLabel } from 'lib/plot'
 import LoadingSpinner from 'lib/LoadingSpinner'
 import { formatFileForApi } from 'components/upload/upload-utils'
 import { successNotification, failureNotification } from 'lib/MessageModal'
@@ -57,6 +57,7 @@ function RawScatterPlot({
   const [hiddenTraces, setHiddenTraces] = useState([])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
+  const [activeTraceLabel, setActiveTraceLabel] = useState(null)
   // map of label name to color hex codes, for any labels the user has picked a color for
   const [editedCustomColors, setEditedCustomColors] = useState({})
 
@@ -146,11 +147,11 @@ function RawScatterPlot({
       scatterColor,
       editedCustomColors,
       hiddenTraces,
-      scatter
+      scatter,
+      activeTraceLabel
     })
     setCountsByLabel(labelCounts)
-    const plotlyTraces = [traces]
-    return plotlyTraces
+    return traces
   }
 
   /** Process scatter plot data fetched from server */
@@ -298,6 +299,8 @@ function RawScatterPlot({
             customColors={customColors}
             enableColorPicking={canEdit}
             saveCustomColors={saveCustomColors}
+            activeTraceLabel={activeTraceLabel}
+            setActiveTraceLabel={setActiveTraceLabel}
           />
         }
       </div>
@@ -372,7 +375,8 @@ export function getPlotlyTraces({
     scatterColor: dataScatterColor,
     annotParams: { name: annotName, type: annotType },
     customColors = {}
-  }
+  },
+  activeTraceLabel
 }) {
   const unfilteredTrace = {
     type: is3D ? 'scatter3d' : 'scattergl',
@@ -389,9 +393,20 @@ export function getPlotlyTraces({
 
 
   const isRefGroup = getIsRefGroup(annotType, genes, isCorrelatedScatter)
-  const [traces, countsByLabel] = filterTrace(unfilteredTrace, hiddenTraces, null, isRefGroup)
+  const [traces, countsByLabel] = filterTrace(unfilteredTrace, hiddenTraces, null, isRefGroup, activeTraceLabel)
 
   if (isRefGroup) {
+    const labels = getSortedLabels(countsByLabel)
+    traces.forEach(groupTrace => {
+      groupTrace.type = unfilteredTrace.type
+      groupTrace.mode = unfilteredTrace.mode
+      groupTrace.opacity = unfilteredTrace.opacity
+      const color = getColorForLabel(groupTrace.name, customColors, editedCustomColors, labels.indexOf(groupTrace.name))
+      groupTrace.marker = {
+        size: pointSize,
+        color
+      }
+    })
     // Use Plotly's groupby and filter transformation to make the traces
     // note these transforms are deprecated in the latest Plotly versions
     /*  const [legendStyles] = getStyles(traces, pointSize, customColors, editedCustomColors)
@@ -466,7 +481,7 @@ export function getPlotlyTraces({
       }
     }
   }
-  addHoverLabel(traces, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
+  // addHoverLabel(traces, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
 
   return [traces, countsByLabel]
 }

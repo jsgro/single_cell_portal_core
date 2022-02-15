@@ -7,7 +7,7 @@ import { HexColorPicker, HexColorInput } from 'react-colorful'
 import _cloneDeep from 'lodash/cloneDeep'
 
 
-import { scatterLabelLegendWidth, getLabels, getColorForLabel } from 'lib/plot'
+import { scatterLabelLegendWidth, getSortedLabels, getColorForLabel } from 'lib/plot'
 
 
 /** Convert state Boolean to attribute string */
@@ -146,7 +146,7 @@ export default function ScatterPlotLegend({
   // is the user currently in color-editing mode
   const [showColorControls, setShowColorControls] = useState(false)
   // whether a request to the server to save colors is pending
-  const labels = getLabels(countsByLabel)
+  const labels = getSortedLabels(countsByLabel)
   const numLabels = labels.length
 
   const legendEntries = labels

@@ -53,6 +53,7 @@ function emptyTrace(expectedLength, hasZvalues, hasColors) {
   if (hasColors) {
     trace.colors = new Array(expectedLength)
   }
+  return trace
 }
 
 /** takes a polotly trace argument and filters out cells based on params.  will return the original object,
@@ -71,16 +72,17 @@ export function filterTrace(trace, labelsToHide, cellsToShow, groupByAnnotation=
   // otherwise, traceMap will just have a single 'all' trace
   const traceMap = {}
   const estTraceLength = groupByAnnotation ? trace.x.length / 10 : trace.x.length
-  let rawCountsByLabel = { all: trace.x.length } // maintain a list of all cell counts by label for the legend
+  let rawCountsByLabel = { main: trace.x.length } // maintain a list of all cell counts by label for the legend
   const countsByLabel = {}
   if (groupByAnnotation) {
     rawCountsByLabel = countValues(trace.annotations)
   }
   Object.keys(rawCountsByLabel).forEach(key => {
     traceMap[key] = emptyTrace(estTraceLength, hasZvalues, hasColors)
+    traceMap[key].name = key
   })
 
-  if (!isHidingByLabel && !isHidingByCellName) {
+  if (!isHidingByLabel && !isHidingByCellName && !groupByAnnotation) {
     return [[trace], rawCountsByLabel]
   }
 
@@ -130,7 +132,7 @@ export function filterTrace(trace, labelsToHide, cellsToShow, groupByAnnotation=
     const subArrays = [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.colors, fTrace.cells]
     subArrays.forEach(arr => {
       if (arr) {
-        arr.length = fTrace.newIndex
+        arr.length = fTrace.newLength
       }
     })
     traces.push(fTrace)
@@ -169,10 +171,8 @@ export function plot(graphElementId, data, layout) {
  * set "Foo" could be green in the legend, but red in the plot.)
  *
 */
-export function getStyles(data, pointSize, customColors, editedCustomColors) {
-  const countsByLabel = countValues(data.annotations)
-
-  const labels = getLabels(countsByLabel)
+export function getStyles(countsByLabel, pointSize, customColors, editedCustomColors) {
+  const labels = getSortedLabels(countsByLabel)
 
   const legendStyles = labels
     .map((label, index) => {
@@ -207,7 +207,7 @@ function labelSort(a, b) {
 }
 
 /** Sort labels colors are assigned in right order */
-export function getLabels(countsByLabel) {
+export function getSortedLabels(countsByLabel) {
   return Object.keys(countsByLabel).sort(labelSort)
 }
 
