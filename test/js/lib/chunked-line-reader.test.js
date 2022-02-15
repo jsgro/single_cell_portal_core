@@ -75,4 +75,20 @@ describe('chunked line reader', () => {
       expect(isLastLine).toEqual(lineNum === 2)
     })
   })
+
+
+  it('makes File with clean lines from incomplete content ', async () => {
+    const file = createMockFile({ content: 'abcdefghij\nklmnopqrstuv\nwxy', fileName: 'test1' })
+
+    const chunker = new ChunkedLineReader(file, 7, true)
+
+    const expectedLines = ['abcdefghij', 'klmnopqrstuv']
+    expect.assertions(4)
+
+    // now check that we can read the same file correctly using the iterator
+    await chunker.iterateLines((line, lineNum, isLastLine) => {
+      expect(line).toEqual(expectedLines[lineNum])
+      expect(isLastLine).toEqual(lineNum === 1)
+    })
+  })
 })

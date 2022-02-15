@@ -9,8 +9,10 @@ import '@testing-library/jest-dom/extend-expect'
 
 import {
   validateRemoteFileContent,
-  MAX_SYNC_CSFV_BYTES, updateSyncProps, getFileFromRangeData
+  MAX_SYNC_CSFV_BYTES, getSizeProps
 } from 'lib/validation/validate-remote-file-content'
+
+const bucketName = 'broad-singlecellportal-public'
 
 describe('Client-side file validation for sync', () => {
   beforeAll(() => {
@@ -26,7 +28,6 @@ describe('Client-side file validation for sync', () => {
       readOnlyToken: 'test'
     }
 
-    const bucketName = 'broad-singlecellportal-public'
     const fileName =
         encodeURIComponent('test/DATA_MATRIX_LOG_TPM_mismatch_columns.txt')
     const fileType = 'Expression Matrix'
@@ -63,45 +64,20 @@ describe('Client-side file validation for sync', () => {
   })
 
   it('updates syncProps as needed for logging', async () => {
-    let syncProps = { 'perfTime:readRemote': 123456789 }
-    const contentRange = `bytes 0-${MAX_SYNC_CSFV_BYTES}/213832273`
+    const size = 213832273
+    const contentRange = `bytes 0-${MAX_SYNC_CSFV_BYTES}/${size}`
     const contentLength = '52428801'
+    const content = 'e'.repeat(parseInt(contentLength))
 
-    syncProps = updateSyncProps(contentRange, contentLength, syncProps)
+    const file = new File([content], 'many-e.txt', { type: 'plain/text' })
+    const sizeProps = getSizeProps(contentRange, contentLength, file)
 
-    const expectedSyncProps = {
-      'perfTime:readRemote': 123456789,
-      'fileSizeFetched': 52428801,
-      'fileSizeTotal': 213832273,
+    const expectedSizeProps = {
+      'fileSizeFetched': parseInt(contentLength),
+      'fileSizeTotal': size,
       'fetchedCompleteFile': false
     }
 
-    expect(syncProps).toEqual(expectedSyncProps)
-  })
-
-  it('makes File with clean lines from incomplete content ', async () => {
-    // Range request content can be an incomplete copy of the remote file's
-    // content.  In such cases, we need to truncate the last line, which is
-    // incomplete, to avoid false positive validation errors.
-
-    const syncProps = { 'fetchedCompleteFile': false }
-    const cleanContent =
-      'Foo\tBar\tBaz\n' +
-      'This\tline\tis\complete'
-    const fetchedContent =`${cleanContent}\nThis\tline\tis\incomple`
-    const fileName = 'very_big_file.txt'
-    const contentType = 'text/plain'
-
-    // Size in bytes
-    const cleanContentFileSize =
-      (new util.TextEncoder().encode(cleanContent)).length
-
-    const file = getFileFromRangeData(
-      fetchedContent, fileName, contentType, syncProps
-    )
-
-    // Ensure file size matches size of clean content, rather than (larger)
-    // size of fetched content that was passed into getFileFromRangeData
-    expect(file.size).toEqual(cleanContentFileSize)
+    expect(sizeProps).toEqual(sizeProps)
   })
 })

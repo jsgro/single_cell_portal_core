@@ -17,7 +17,7 @@ import { fetchBucketFile } from 'lib/scp-api'
 export const MAX_SYNC_CSFV_BYTES = 50 * 1024 * 1024
 
 /** Get file-size data for sync validation processing and logging */
-export function parseSizeProps(contentRange, contentLength, file) {
+export function getSizeProps(contentRange, contentLength, file) {
   // Total size of the file in bytes
   let fileSizeTotal
 
@@ -61,7 +61,7 @@ export async function validateRemoteFileContent(
 
   const file = new File([content], fileName, { type: contentType })
 
-  const sizeProps = parseSizeProps(contentRange, contentLength, file)
+  const sizeProps = getSizeProps(contentRange, contentLength, file)
   Object.assign(syncProps, sizeProps)
 
   const results =
