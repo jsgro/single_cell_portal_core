@@ -831,10 +831,12 @@ figcaption.ck-editor__editable {
 
 #toggle-study-resources {
   position: relative;
+  top: 0;
   left: 0;
+  transition: all 0.3s;
 }
 
 #toggle-study-resources.closed {
-  position: relative;
+  top: -30px;
   left: -60px;
 }

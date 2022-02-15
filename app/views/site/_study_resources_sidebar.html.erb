@@ -32,7 +32,7 @@
 
 </nav>
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-  $("#toggle-study-resources").on('click', function() {
+  $("#toggle-study-resources").click(function() {
     $("#study-sidebar-content").toggleClass("closed");
     $("#resource-btn").toggleClass('fa-angle-double-right fa-angle-double-left');
     $(this).toggleClass("closed")
