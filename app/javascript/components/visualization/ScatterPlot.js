@@ -223,7 +223,7 @@ function RawScatterPlot({
     }
     // look for updates of individual properties, so that we don't rerender if the containing array
     // happens to be a different instance
-  }, [hiddenTraces.join(','), Object.values(editedCustomColors).join(','), Object.values(customColors).join(',')])
+  }, [hiddenTraces.join(','), Object.values(editedCustomColors).join(','), Object.values(customColors).join(','), activeTraceLabel])
 
   // Handles window resizing
   const widthAndHeight = getScatterDimensions(scatterData, dimensionProps, genes)

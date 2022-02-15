@@ -19,7 +19,7 @@ function getActivity(isActive) {
 /** Component for row in legend */
 function LegendEntry({
   label, numPoints, iconColor, correlations,
-  numLabels, hiddenTraces, updateHiddenTraces, showColorControls, updateEditedCustomColors
+  numLabels, hiddenTraces, updateHiddenTraces, showColorControls, updateEditedCustomColors, setActiveTraceLabel
 }) {
   let entry = label
   // whether to show the color picker modal
@@ -66,6 +66,7 @@ function LegendEntry({
         className={`scatter-legend-row ${shownClass}`}
         role="button"
         onClick={entryClickFunction}
+        onHover={setActiveTraceLabel(label)}
       >
         <div className="scatter-legend-icon" style={iconStyle}>
           { showColorControls && <FontAwesomeIcon icon={faPalette} title="Change the color for this label"/> }
@@ -141,7 +142,7 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
 export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, hiddenTraces,
   updateHiddenTraces, customColors, editedCustomColors, setEditedCustomColors,
-  enableColorPicking=false, saveCustomColors
+  enableColorPicking=false, saveCustomColors, activeTraceLabel, setActiveTraceLabel
 }) {
   // is the user currently in color-editing mode
   const [showColorControls, setShowColorControls] = useState(false)
@@ -166,6 +167,7 @@ export default function ScatterPlotLegend({
           numLabels={numLabels}
           updateEditedCustomColors={updateEditedCustomColors}
           showColorControls={showColorControls}
+          setActiveTraceLabel={setActiveTraceLabel}
         />
       )
     })

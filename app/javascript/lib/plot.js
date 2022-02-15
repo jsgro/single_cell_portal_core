@@ -62,7 +62,7 @@ function emptyTrace(expectedLength, hasZvalues, hasColors) {
  * @param cellsToShow {String[]} Array of cell names to show. If null, will show everything
  * @param groupByAnnotation {Boolean} whether to assemble separate traces for each label
  */
-export function filterTrace(trace, labelsToHide, cellsToShow, groupByAnnotation=false) {
+export function filterTrace(trace, labelsToHide, cellsToShow, groupByAnnotation=false, activeTraceLabel) {
   const isHidingByLabel = labelsToHide && labelsToHide.length
   const isHidingByCellName = !!cellsToShow
   const hasZvalues = !!trace.z
@@ -127,7 +127,8 @@ export function filterTrace(trace, labelsToHide, cellsToShow, groupByAnnotation=
   // now fix the length of the new arrays in each trace to the number of values that were written,
   // and push the traces into an array
   const traces = []
-  Object.keys(traceMap).forEach(key => {
+  const sortedLabels = getSortedLabels(rawCountsByLabel, activeTraceLabel)
+  Object.keys(sortedLabels).forEach(key => {
     const fTrace = traceMap[key]
     const subArrays = [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.colors, fTrace.cells]
     subArrays.forEach(arr => {
@@ -199,15 +200,15 @@ export function getColorForLabel(label, customColors={}, editedCustomColors={}, 
   return editedCustomColors[label] ?? customColors[label] ?? getColorBrewerColor(i)
 }
 
-/** Sort annotation labels naturally, but always put "unspecified" last */
-function labelSort(a, b) {
-  if (a === UNSPECIFIED_ANNOTATION_NAME) {return 1}
-  if (b === UNSPECIFIED_ANNOTATION_NAME) {return -1}
-  return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
-}
 
 /** Sort labels colors are assigned in right order */
-export function getSortedLabels(countsByLabel) {
+export function getSortedLabels(countsByLabel, activeTraceLabel) {
+  /** Sort annotation labels naturally, but always put "unspecified" last, and the activeTraceLabel first */
+  function labelSort(a, b) {
+    if (a === UNSPECIFIED_ANNOTATION_NAME || b === activeTraceLabel) {return 1}
+    if (b === UNSPECIFIED_ANNOTATION_NAME || a === activeTraceLabel) {return -1}
+    return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
+  }
   return Object.keys(countsByLabel).sort(labelSort)
 }
 
