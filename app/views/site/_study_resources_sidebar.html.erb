@@ -5,17 +5,18 @@
     <h3>Related publications</h3>
     <% @study.publications.each do |publication| %>
 
-      <h4><%= publication.title %></h4>
+      <h4><%= link_to publication.title, publication.url, target: :_blank, rel: 'noopener noreferrer',
+                      'data-analytics-name' => 'publication-link-journal', title: "View on #{publication.journal}",
+                      data: { toggle: 'tooltip' } %>
+      </h4>
       <% if publication.citation %>
         <p class="help-block"><%= publication.citation %></p>
       <% end %>
       <% if publication.pmcid %>
-        <%= link_to publication.pmcid, publication.pmc_link,
-                    class: 'btn btn-sm btn-default publication-link margin-right-10', target: :_blank,
-                    rel: 'noopener noreferrer', 'data-analytics-name' => 'publication-link-pmc' %>
+        <%= link_to publication.pmcid, publication.pmc_link, class: 'btn btn-sm btn-default publication-link',
+                    target: :_blank, rel: 'noopener noreferrer', 'data-analytics-name' => 'publication-link-pmc' %>
       <% end %>
-      <%= link_to publication.journal, publication.url, class: 'btn btn-sm btn-default publication-link',
-                  target: :_blank, rel: 'noopener noreferrer', 'data-analytics-name' => 'publication-link-journal' %>
+
   <% end %>
 
   <% end %>
