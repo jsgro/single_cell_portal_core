@@ -352,7 +352,7 @@ export function RawUploadWizard({ studyAccession, name }) {
               supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
             }} />
           </div>
-          <div>
+          <div id="overflow-x-scroll">
             <div className="flexbox-align-center top-margin margin-left">
               <h4>{currentStep.header}</h4>
               <div className="prev-next-buttons">

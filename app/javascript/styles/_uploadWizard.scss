@@ -1,5 +1,5 @@
 .upload-wizard-react {
-  .position-fixed {
+  .wizard-side-panel {
     width: 25%;
     min-width: 229px;
     height: calc(100% - 50px); // leave room for footer and navbar
@@ -15,7 +15,6 @@
   }
   .wizard-content {
     display: flex;
-    min-width: 730px;
   }
 }
 
