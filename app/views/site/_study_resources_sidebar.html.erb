@@ -9,10 +9,10 @@
                       'data-analytics-name' => 'publication-link-journal', title: "View on #{publication.journal}",
                       data: { toggle: 'tooltip' } %>
       </h4>
-      <% if publication.citation %>
+      <% unless publication.citation.blank? %>
         <p class="help-block"><%= publication.citation %></p>
       <% end %>
-      <% if publication.pmcid %>
+      <% unless publication.pmcid.blank? %>
         <%= link_to publication.pmcid, publication.pmc_link, class: 'btn btn-sm btn-default publication-link',
                     target: :_blank, rel: 'noopener noreferrer', 'data-analytics-name' => 'publication-link-pmc' %>
       <% end %>
@@ -34,8 +34,8 @@
 </nav>
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   $("#toggle-study-resources").click(function() {
-    $("#study-sidebar-content").toggleClass("closed");
-    $("#resource-btn").toggleClass('fa-angle-double-right fa-angle-double-left');
+    $("#study-sidebar-content").toggleClass("closed")
+    $("#resource-btn").toggleClass('fa-angle-double-right fa-angle-double-left')
     $(this).toggleClass("closed")
   });
 </script>
