@@ -4,7 +4,6 @@
   <% if @study.publications.any? %>
     <h3>Related publications</h3>
     <% @study.publications.each do |publication| %>
-
       <h4><%= link_to publication.title, publication.url, target: :_blank, rel: 'noopener noreferrer',
                       'data-analytics-name' => 'publication-link-journal', title: "View on #{publication.journal}",
                       data: { toggle: 'tooltip' } %>
@@ -16,9 +15,7 @@
         <%= link_to publication.pmcid, publication.pmc_link, class: 'btn btn-sm btn-default publication-link',
                     target: :_blank, rel: 'noopener noreferrer', 'data-analytics-name' => 'publication-link-pmc' %>
       <% end %>
-
-  <% end %>
-
+    <% end %>
   <% end %>
   <% if @study.external_resources.any? %>
     <h3>Resources</h3>
