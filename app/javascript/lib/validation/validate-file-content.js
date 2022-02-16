@@ -17,7 +17,7 @@ import {
 } from './expression-matrices-validation'
 import {
   getParsedHeaderLines, parseLine, ParseException,
-  validateUniqueCellNamesWithinFile, validateMetadataLabelMatches, validateGroupColumnCounts
+  validateUniqueCellNamesWithinFile, validateMetadataLabelMatches, validateGroupColumnCounts, timeOutCSFV
 } from './shared-validation'
 
 import getSCPContext from 'providers/SCPContextProvider'
@@ -263,12 +263,16 @@ export async function parseMetadataFile(chunker, mimeType, fileOptions) {
   // add other header validations here
 
   const dataObj = {} // object to track multi-line validation concerns
-  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
-    const line = parseLine(rawLine, delimiter)
-    issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
-    issues = issues.concat(validateMetadataLabelMatches(headers, line, isLastLine, dataObj))
-    issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
+  await chunker.iterateLines({
+    func: (rawline, lineNum, isLastLine) => {
+      issues = issues.concat(timeOutCSFV(chunker))
+
+      const line = parseLine(rawline, delimiter)
+      issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
+      issues = issues.concat(validateMetadataLabelMatches(headers, line, isLastLine, dataObj))
+      issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
     // add other line-by-line validations here
+    }
   })
   return { issues, delimiter, numColumns: headers[0].length }
 }
@@ -281,11 +285,15 @@ export async function parseClusterFile(chunker, mimeType) {
   // add other header validations here
 
   const dataObj = {} // object to track multi-line validation concerns
-  await chunker.iterateLines((rawLine, lineNum, isLastLine) => {
-    const line = parseLine(rawLine, delimiter)
-    issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
-    issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
+  await chunker.iterateLines({
+    func: (rawLine, lineNum, isLastLine) => {
+      issues = issues.concat(timeOutCSFV(chunker))
+
+      const line = parseLine(rawLine, delimiter)
+      issues = issues.concat(validateUniqueCellNamesWithinFile(line, isLastLine, dataObj))
+      issues = issues.concat(validateGroupColumnCounts(headers, line, isLastLine, dataObj))
     // add other line-by-line validations here
+    }
   })
 
   return { issues, delimiter, numColumns: headers[0].length }
@@ -415,6 +423,7 @@ export async function validateFileContent(file, fileType, fileOptions={}, syncPr
 function formatIssues(issues) {
   const errors = issues.filter(issue => issue[0] === 'error')
   const warnings = issues.filter(issue => issue[0] === 'warn')
+
   let summary = ''
   if (errors.length > 0 || warnings.length) {
     const errorsTerm = (errors.length === 1) ? 'error' : 'errors'
@@ -472,6 +481,9 @@ function getLogProps(fileInfo, issueObj, perfTime, syncProps) {
   }
 
   if (errors.length === 0) {
+    if (warnings.flat().includes('incomplete')) {
+      return Object.assign({ status: 'incomplete' }, defaultProps)
+    }
     return Object.assign({ status: 'success' }, defaultProps)
   } else {
     return Object.assign(defaultProps, {
