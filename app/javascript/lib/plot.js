@@ -63,10 +63,10 @@ function emptyTrace(expectedLength, hasZvalues, hasExpression) {
  * @param groupByAnnotation {Boolean} whether to assemble separate traces for each label
  */
 export function filterTrace({
-  trace, labelsToHide, groupByAnnotation=false,
+  trace, hiddenTraces, groupByAnnotation=false,
   activeTraceLabel, expressionFilter, expressionData
 }) {
-  const isHidingByLabel = labelsToHide && labelsToHide.length
+  const isHidingByLabel = hiddenTraces && hiddenTraces.length
   const isFilteringByExpression = expressionFilter && expressionData &&
     (expressionFilter[0] != 0 || expressionFilter[1] != 1)
   const hasZvalues = !!trace.z
@@ -113,8 +113,8 @@ export function filterTrace({
   const labelNameHash = {}
   if (isHidingByLabel) {
     // build a hash of label => present so we can quickly filter
-    for (let i = 0; i < labelsToHide.length; i++) {
-      labelNameHash[labelsToHide[i]] = true
+    for (let i = 0; i < hiddenTraces.length; i++) {
+      labelNameHash[hiddenTraces[i]] = true
     }
   }
 
