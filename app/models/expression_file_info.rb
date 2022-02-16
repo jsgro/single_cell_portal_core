@@ -44,6 +44,7 @@ class ExpressionFileInfo
                                 '10x feature barcode/multiplexing', # scRNAseq
                                 '10x Ig enrichment', # targeted transcriptomic
                                 '10x multiome', # multiomic ATAC-seq
+                                '10x scATAC-seq', # scATAC-seq
                                 '10x TCR enrichment', # targeted transcriptomic
                                 '10x Visium', # spatial transcriptomic
                                 'CEL-seq2', # scRNAseq
@@ -55,7 +56,6 @@ class ExpressionFileInfo
                                 'MARS-seq', # scRNAseq
                                 'MERFISH', # spatial transcriptomic
                                 'osmFISH', # spatial transcriptomic
-                                'scATAC-seq/10x', # scATAC-seq
                                 'scATAC-seq/Fluidigm', # scATAC-seq
                                 'sci-ATAC-seq', # scATAC-seq
                                 'sci-RNA-seq', # scRNAseq
