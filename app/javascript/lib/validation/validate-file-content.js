@@ -379,10 +379,24 @@ async function parseFile(file, fileType, fileOptions={}, syncProps) {
 }
 
 /**
- * Validate a File object, return { errors, warnings, summary } object, where:
- *   - errors is an array of errors,
- *   - warnings is an array of warnings, and
- *   - summary is a message like "Your file had 2 errors"
+ * Validate a File object, log and return issues for upload or sync UI
+ *
+ *  @param {File} file File object to validate
+ *    Docs: https://developer.mozilla.org/en-US/docs/Web/API/File
+ *  @param {String} fileType SCP file type
+ *  @param {Object} [fileOptions]
+ *  @param {Object} [syncProps] Data about sync fetch, of the form:
+ *    {
+ *      'fetchedCompleteFile': Boolean,
+ *      'fileSizeFetched': Number,
+ *      'fileSizeTotal': Number,
+ *      'perfTimes:readRemote': Number
+ *    }
+ *
+ * @return {Object} issueObj Validation results, where:
+ *   - `errors` is an array of errors,
+ *   - `warnings` is an array of warnings, and
+ *   - `summary` is a message like "Your file had 2 errors"
  */
 export async function validateFileContent(file, fileType, fileOptions={}, syncProps) {
   const startTime = performance.now()
@@ -390,11 +404,11 @@ export async function validateFileContent(file, fileType, fileOptions={}, syncPr
   const { fileInfo, issues } = await parseFile(file, fileType, fileOptions, syncProps)
   const perfTime = Math.round(performance.now() - startTime)
 
-  const errorObj = formatIssues(issues)
-  const logProps = getLogProps(fileInfo, errorObj, perfTime, syncProps)
+  const issueObj = formatIssues(issues)
+  const logProps = getLogProps(fileInfo, issueObj, perfTime, syncProps)
   log('file-validation', logProps)
 
-  return errorObj
+  return issueObj
 }
 
 /** take an array of [type, key, msg] issues, and format it */
@@ -424,8 +438,8 @@ function getValidationTrigger() {
 }
 
 /** Get properties about this validation run to log to Mixpanel */
-function getLogProps(fileInfo, errorObj, perfTime, syncProps) {
-  const { errors, warnings, summary } = errorObj
+function getLogProps(fileInfo, issueObj, perfTime, syncProps) {
+  const { errors, warnings, summary } = issueObj
   const trigger = getValidationTrigger()
 
   // Avoid needless gotchas in downstream analysis
