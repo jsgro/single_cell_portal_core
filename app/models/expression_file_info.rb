@@ -32,41 +32,47 @@ class ExpressionFileInfo
   ].freeze
   validates :modality, inclusion: { in: MODALITY_VALUES }
 
-  LIBRARY_PREPARATION_VALUES = ["10x 3' v1",
-                                "10x 3' v2",
-                                "10x 3' v3",
-                                "10x 5' v1",
-                                "10x 5' v2",
-                                "10x 5' v3",
-                                'CEL-seq2',
-                                'Drop-seq',
-                                'inDrop',
-                                'MARS-seq',
-                                'sci-RNA-seq',
-                                'Seq-Well S^3',
-                                'Seq-Well v1',
-                                'Smart-like',
-                                'Smart-seq2/Fluidigm C1',
-                                'Smart-seq2/plate-based',
-                                # non-scRNAseq Assays
-                                # single cell ATAC-seq assays
-                                'dsc-ATAC-seq',
-                                'dsci-ATAC-seq',
-                                'scATAC-seq/10x',
-                                'scATAC-seq/Fluidigm',
-                                'sci-ATAC-seq',
-                                'scTHS-seq',
-                                'snATAC-seq',
-                                # spatial transcriptomics assays
-                                '10x Visium',
-                                'MERFISH',
-                                'osmFISH',
-                                'SeqFISH+',
-                                'Slide-seq',
-                                'smFISH',
-                                'STARmap', # Note WIP for EFO term: https://broadinstitute.zendesk.com/agent/tickets/139334
-                                # single cell ChIP-seq assays
-                                'Drop-ChIP'].freeze
+  LIBRARY_PREPARATION_VALUES = [
+                                "10x 3' v1", # scRNAseq
+                                "10x 3' v2", # scRNAseq
+                                "10x 3' v3", # scRNAseq
+                                "10x 5' v1", # scRNAseq
+                                "10x 5' v2", # scRNAseq
+                                "10x 5' v3", # scRNAseq
+                                '10x feature barcode/cell surface protein', # targeted proteomic
+                                '10x feature barcode/CRISPR', # expression perturbation
+                                '10x feature barcode/multiplexing', # scRNAseq
+                                '10x Ig enrichment', # targeted transcriptomic
+                                '10x multiome', # multiomic ATAC-seq
+                                '10x TCR enrichment', # targeted transcriptomic
+                                '10x Visium', # spatial transcriptomic
+                                'CEL-seq2', # scRNAseq
+                                'Drop-ChIP', # scChIP-seq
+                                'Drop-seq', # scRNAseq
+                                'dsc-ATAC-seq', # scATAC-seq
+                                'dsci-ATAC-seq', # scATAC-seq
+                                'inDrop', # scRNAseq
+                                'MARS-seq', # scRNAseq
+                                'MERFISH', # spatial transcriptomic
+                                'osmFISH', # spatial transcriptomic
+                                'scATAC-seq/10x', # scATAC-seq
+                                'scATAC-seq/Fluidigm', # scATAC-seq
+                                'sci-ATAC-seq', # scATAC-seq
+                                'sci-RNA-seq', # scRNAseq
+                                'scTHS-seq', # scATAC-seq
+                                'Seq-Well S^3', # scRNAseq
+                                'Seq-Well v1', # scRNAseq
+                                'SeqFISH+', # spatial transcriptomic
+                                'SHARE-seq', # multiomic ATAC-seq
+                                'Slide-seq', # spatial transcriptomic
+                                'Slide-seqV2', # spatial transcriptomic
+                                'Smart-like', # scRNAseq
+                                'Smart-seq2/Fluidigm C1', # scRNAseq
+                                'Smart-seq2/plate-based', # scRNAseq
+                                'smFISH', # spatial transcriptomic
+                                'snATAC-seq', # scATAC-seq
+                                'STARmap',  # spatial transcriptomic
+                              ].freeze
   validates :library_preparation_protocol, inclusion: { in: LIBRARY_PREPARATION_VALUES }
 
   validate :unset_units_unless_raw_counts
