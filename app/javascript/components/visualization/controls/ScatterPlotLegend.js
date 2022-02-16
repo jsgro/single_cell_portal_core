@@ -66,7 +66,7 @@ function LegendEntry({
         className={`scatter-legend-row ${shownClass}`}
         role="button"
         onClick={entryClickFunction}
-        onHover={setActiveTraceLabel(label)}
+        onMouseEnter={() => setActiveTraceLabel(label)}
       >
         <div className="scatter-legend-icon" style={iconStyle}>
           { showColorControls && <FontAwesomeIcon icon={faPalette} title="Change the color for this label"/> }

@@ -39,7 +39,7 @@ export const labelFont = {
 export const lineColor = 'rgb(40, 40, 40)'
 
 /** returns an empty trace with arrays initialized based on expectedLength */
-function emptyTrace(expectedLength, hasZvalues, hasColors) {
+function emptyTrace(expectedLength, hasZvalues, hasExpression) {
   const trace = {
     x: new Array(expectedLength),
     y: new Array(expectedLength),
@@ -50,23 +50,27 @@ function emptyTrace(expectedLength, hasZvalues, hasColors) {
   if (hasZvalues) {
     trace.z = new Array(expectedLength)
   }
-  if (hasColors) {
-    trace.colors = new Array(expectedLength)
+  if (hasExpression) {
+    trace.expression = new Array(expectedLength)
   }
   return trace
 }
 
-/** takes a polotly trace argument and filters out cells based on params.  will return the original object,
+/** takes a plotly trace argument and filters out cells based on params.  will return the original object,
  * but with data arrays filtered as appropriate
  * @param labelsToHide {String[]} array of label names to filter out
  * @param cellsToShow {String[]} Array of cell names to show. If null, will show everything
  * @param groupByAnnotation {Boolean} whether to assemble separate traces for each label
  */
-export function filterTrace(trace, labelsToHide, cellsToShow, groupByAnnotation=false, activeTraceLabel) {
+export function filterTrace({
+  trace, labelsToHide, groupByAnnotation=false,
+  activeTraceLabel, expressionFilter, expressionData
+}) {
   const isHidingByLabel = labelsToHide && labelsToHide.length
-  const isHidingByCellName = !!cellsToShow
+  const isFilteringByExpression = expressionFilter && expressionData &&
+    (expressionFilter[0] != 0 || expressionFilter[1] != 1)
   const hasZvalues = !!trace.z
-  const hasColors = !!trace.colors
+  const hasExpression = !!trace.expression
   const oldLength = trace.x.length
   // if grouping by annotation, traceMap is a hash of annotation names to traces
   // otherwise, traceMap will just have a single 'all' trace
@@ -78,21 +82,34 @@ export function filterTrace(trace, labelsToHide, cellsToShow, groupByAnnotation=
     rawCountsByLabel = countValues(trace.annotations)
   }
   Object.keys(rawCountsByLabel).forEach(key => {
-    traceMap[key] = emptyTrace(estTraceLength, hasZvalues, hasColors)
+    traceMap[key] = emptyTrace(estTraceLength, hasZvalues, hasExpression)
     traceMap[key].name = key
   })
 
-  if (!isHidingByLabel && !isHidingByCellName && !groupByAnnotation) {
+  if (!isHidingByLabel && !isFilteringByExpression && !groupByAnnotation) {
     return [[trace], rawCountsByLabel]
   }
 
-  const cellNameHash = {}
-  if (isHidingByCellName) {
-    // build a hash of cell name => present so we can quickly filter
-    for (let i = 0; i < cellsToShow.length; i++) {
-      cellNameHash[cellsToShow[i]] = true
+  let expFilterMin
+  let expFilterMax
+  let expMin = 99999999
+  let expMax = -99999999
+  if (isFilteringByExpression) {
+    // find the max and min so we can rescale
+    for (let i = 0; i < expressionData.length; i++) {
+      if (expressionData[i] < expMin) {
+        expMin = expressionData[i]
+      }
+      if (expressionData[i] > expMax) {
+        expMax = expressionData[i]
+      }
     }
+    // convert the expressionFilter, which is on a 0-1 scale, to the expression scale
+    const totalRange = expMax - expMin
+    expFilterMin = expMin + totalRange * expressionFilter[0]
+    expFilterMax = expMin + totalRange * expressionFilter[1]
   }
+
   const labelNameHash = {}
   if (isHidingByLabel) {
     // build a hash of label => present so we can quickly filter
@@ -104,8 +121,8 @@ export function filterTrace(trace, labelsToHide, cellsToShow, groupByAnnotation=
   // this is the main filter/group loop.  Loop over every cell and determine whether it needs to be filtered,
   // and if it needs to be grouped.
   for (let i = 0; i < oldLength; i++) {
-    // if we're not hiding by name, or the name is present in the list, include it
-    if (!isHidingByCellName || cellNameHash[trace.cells[i]]) {
+    // if we're not filtering by expression, or the cell is in the range, show it
+    if (!isFilteringByExpression || (expressionData[i] >= expFilterMin && expressionData[i] <= expFilterMax)) {
       // if we're not hiding by label, or the label is present in the list, include it
       if (!isHidingByLabel || !labelNameHash[trace.annotations[i]]) {
         const fTrace = groupByAnnotation ? traceMap[trace.annotations[i]] : traceMap.main
@@ -117,8 +134,8 @@ export function filterTrace(trace, labelsToHide, cellsToShow, groupByAnnotation=
         }
         fTrace.cells[newIndex] = trace.cells[i]
         fTrace.annotations[newIndex] = trace.annotations[i]
-        if (hasColors) {
-          fTrace.colors[i] = trace.colors[i]
+        if (hasExpression) {
+          fTrace.expression[newIndex] = trace.expression[i]
         }
         fTrace.newLength++
       }
@@ -126,21 +143,20 @@ export function filterTrace(trace, labelsToHide, cellsToShow, groupByAnnotation=
   }
   // now fix the length of the new arrays in each trace to the number of values that were written,
   // and push the traces into an array
-  const traces = []
   const sortedLabels = getSortedLabels(rawCountsByLabel, activeTraceLabel)
-  Object.keys(sortedLabels).forEach(key => {
+  const traces = sortedLabels.map(key => {
     const fTrace = traceMap[key]
-    const subArrays = [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.colors, fTrace.cells]
+    const subArrays = [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.expression, fTrace.cells]
     subArrays.forEach(arr => {
       if (arr) {
         arr.length = fTrace.newLength
       }
     })
-    traces.push(fTrace)
     countsByLabel[key] = fTrace.x.length
+    return fTrace
   })
-
-  return [traces, countsByLabel]
+  const expRange = isFilteringByExpression ? [expMin, expMax] : null
+  return [traces, countsByLabel, expRange]
 }
 
 /**
@@ -205,8 +221,8 @@ export function getColorForLabel(label, customColors={}, editedCustomColors={}, 
 export function getSortedLabels(countsByLabel, activeTraceLabel) {
   /** Sort annotation labels naturally, but always put "unspecified" last, and the activeTraceLabel first */
   function labelSort(a, b) {
-    if (a === UNSPECIFIED_ANNOTATION_NAME || b === activeTraceLabel) {return 1}
-    if (b === UNSPECIFIED_ANNOTATION_NAME || a === activeTraceLabel) {return -1}
+    if (a === UNSPECIFIED_ANNOTATION_NAME || a === activeTraceLabel) {return 1}
+    if (b === UNSPECIFIED_ANNOTATION_NAME || b === activeTraceLabel) {return -1}
     return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
   }
   return Object.keys(countsByLabel).sort(labelSort)

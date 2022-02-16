@@ -257,7 +257,7 @@ export function createCache() {
     if (!requestedAnnotation.name || scatter.annotParams.name === requestedAnnotation.name) {
       Fields.annotation.merge(cacheEntry, scatter)
     }
-    if (scatter.genes.length) {
+    if (scatter.genes.length || true) {
       Fields.expression.merge(cacheEntry, scatter)
     }
     return clusterResponse

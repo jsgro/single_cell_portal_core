@@ -9,6 +9,7 @@ import { logStudyGeneSearch } from 'lib/metrics-api'
 
 
 const SPATIAL_GROUPS_EMPTY = '--'
+const FILTER_RANGE_DELIMITER = '-'
 
 /**
  * manages view options and basic layout for the explore tab
@@ -109,7 +110,13 @@ function buildExploreParamsFromQuery(query) {
   exploreParams.heatmapFit = queryParams.heatmapFit ? queryParams.heatmapFit : ''
   exploreParams.bamFileName = queryParams.bamFileName ? queryParams.bamFileName : ''
   exploreParams.ideogramFileId = queryParams.ideogramFileId ? queryParams.ideogramFileId : ''
-
+  exploreParams.expressionFilter = [0, 1]
+  if (queryParams.expressionFilter) {
+    const filterArray = queryParams.expressionFilter.split(FILTER_RANGE_DELIMITER).map(parseFloat)
+    if (filterArray.filter(val => !isNaN(val)).length === 2) {
+      exploreParams.expressionFilter = filterArray
+    }
+  }
   return exploreParams
 }
 
@@ -130,7 +137,8 @@ function buildQueryFromParams(exploreParams) {
     distributionPoints: exploreParams.distributionPoints,
     heatmapFit: exploreParams.heatmapFit,
     bamFileName: exploreParams.bamFileName,
-    ideogramFileId: exploreParams.ideogramFileId
+    ideogramFileId: exploreParams.ideogramFileId,
+    expressionFilter: exploreParams.expressionFilter ? exploreParams.expressionFilter.join(FILTER_RANGE_DELIMITER) : undefined
   }
 
   if (querySafeOptions.spatialGroups === '' && exploreParams.userSpecified['spatialGroups']) {
@@ -149,7 +157,7 @@ function buildQueryFromParams(exploreParams) {
 /** controls list in which query string params are rendered into URL bar */
 const PARAM_LIST_ORDER = ['geneList', 'genes', 'cluster', 'spatialGroups', 'annotation', 'subsample', 'consensus',
   'tab', 'scatterColor', 'distributionPlot', 'distributionPoints',
-  'heatmapFit', 'heatmapRowCentering', 'bamFileName', 'ideogramFileId']
+  'heatmapFit', 'heatmapRowCentering', 'bamFileName', 'ideogramFileId', 'expressionFilter']
 /** sort function for passing to stringify to ensure url params are specified in a user-friendly order */
 function paramSorter(a, b) {
   return PARAM_LIST_ORDER.indexOf(a) - PARAM_LIST_ORDER.indexOf(b)
