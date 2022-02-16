@@ -342,7 +342,7 @@ export function RawUploadWizard({ studyAccession, name }) {
         <div className="row">
           <div className="col-md-12 wizard-top-bar no-wrap-ellipsis">
           <a href={`/single_cell/study/${studyAccession}`}>View study</a> / &nbsp;
-            <span >{serverState?.study?.name}</span>
+            <span title="{serverState?.study?.name}">{serverState?.study?.name}</span>
           </div>
         </div>
         <div className="row wizard-content">
