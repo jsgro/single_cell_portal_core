@@ -434,7 +434,8 @@ export default function ExploreDisplayTabs({
           <PlotDisplayControls
             shownTab={shownTab}
             exploreParams={exploreParamsWithDefaults}
-            updateExploreParams={updateExploreParams}/>
+            updateExploreParams={updateExploreParams}
+            allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
           <button className="action"
             onClick={clearExploreParams}
             title="reset all view options"

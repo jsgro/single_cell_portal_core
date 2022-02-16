@@ -4,6 +4,7 @@ import Select from 'lib/InstrumentedSelect'
 import { Slider, Rail, Handles, Tracks, Ticks } from 'react-compound-slider'
 
 import { Handle, Track, Tick } from 'components/search/controls/slider/components'
+import StudyGeneField from 'components/explore/StudyGeneField'
 import { SCATTER_COLOR_OPTIONS, defaultScatterColor } from 'components/visualization/ScatterPlot'
 import { DISTRIBUTION_PLOT_OPTIONS, DISTRIBUTION_POINTS_OPTIONS } from 'components/visualization/StudyViolinPlot'
 import { ROW_CENTERING_OPTIONS, FIT_OPTIONS } from 'components/visualization/Heatmap'
@@ -31,7 +32,7 @@ const railStyle = {
 
 
 /** the graph customization controls for the exlore tab */
-export default function RenderControls({ shownTab, exploreParams, updateExploreParams }) {
+export default function RenderControls({ shownTab, exploreParams, updateExploreParams, allGenes }) {
   const scatterColorValue = exploreParams.scatterColor ? exploreParams.scatterColor : defaultScatterColor
   let distributionPlotValue = DISTRIBUTION_PLOT_OPTIONS.find(opt => opt.value === exploreParams.distributionPlot)
   if (!distributionPlotValue) {
@@ -56,91 +57,83 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
   const filterValues = exploreParams.expressionFilter ?? [0, 1]
 
   return (
-    <div className="render-controls">
-      <Panel className={showScatter ? '' : 'hidden'}>
-        <Panel.Heading>
-          <Panel.Title>
-            Scatter
-          </Panel.Title>
-        </Panel.Heading>
-        <Panel.Body>
-          { showColorScale &&
-            <label className="labeled-select">Continuous color scale
-              <span className="detail"> (for numeric data)</span>
-              <Select
-                data-analytics-name="scatter-color-picker"
-                options={SCATTER_COLOR_OPTIONS.map(opt => ({ label: opt, value: opt }))}
-                value={{ label: scatterColorValue, value: scatterColorValue }}
-                clearable={false}
-                onChange={option => updateExploreParams({ scatterColor: option.value })}/>
-            </label>
-          }
-          <label className="labeled-select">Filters
-            <div>
-              Expression
-            </div>
-            <div>
-              <Slider
-                mode={1}
-                step={0.05}
-                domain={[0, 1.0]}
-                rootStyle={sliderStyle}
-                values={filterValues}
-                onChange={newValues => {
-                  updateExploreParams({ expressionFilter: newValues })
-                }}
-              >
-                <Rail>
-                  {({ getRailProps }) => (
-                    <div style={railStyle} {...getRailProps()} />
-                  )}
-                </Rail>
-                <Handles>
-                  {({ handles, getHandleProps }) => (
-                    <div className='slider-handles'>
-                      {handles.map(handle => (
-                        <Handle
-                          key={handle.id}
-                          handle={handle}
-                          domain={[0, 1]}
-                          getHandleProps={getHandleProps}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </Handles>
-                <Tracks left={false} right={false}>
-                  {({ tracks, getTrackProps }) => (
-                    <div className='slider-tracks'>
-                      {tracks.map(({ id, source, target }) => (
-                        <Track
-                          key={id}
-                          source={source}
-                          target={target}
-                          getTrackProps={getTrackProps}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </Tracks>
-                <Ticks count={3}>
-                  {({ ticks }) => (
-                    <div className='slider-ticks'>
-                      {ticks.map(tick => (
-                        <Tick key={tick.id} tick={tick} count={ticks.length} />
-                      ))}
-                    </div>
-                  )}
-                </Ticks>
-              </Slider>
-            </div>
-          </label>
-          <br/><br/><br/>
-          <div>
-            Annotations
-          </div>
-        </Panel.Body>
-      </Panel>
+    <div>
+      <div>
+        { showColorScale && <label className="labeled-select">Continuous color scale
+          <span className="detail"> (for numeric data)</span>
+          <Select
+            data-analytics-name="scatter-color-picker"
+            options={SCATTER_COLOR_OPTIONS.map(opt => ({ label: opt, value: opt }))}
+            value={{ label: scatterColorValue, value: scatterColorValue }}
+            clearable={false}
+            onChange={option => updateExploreParams({ scatterColor: option.value })}/>
+        </label>
+        }
+      </div>
+      <br/>
+      <div>
+        { showScatter && <div><label>Expression filter</label>
+          <Slider
+            mode={1}
+            step={0.05}
+            domain={[0, 1.0]}
+            rootStyle={sliderStyle}
+            values={filterValues}
+            onChange={newValues => {
+              updateExploreParams({ expressionFilter: newValues })
+            }}
+          >
+            <Rail>
+              {({ getRailProps }) => (
+                <div style={railStyle} {...getRailProps()} />
+              )}
+            </Rail>
+            <Handles>
+              {({ handles, getHandleProps }) => (
+                <div className='slider-handles'>
+                  {handles.map(handle => (
+                    <Handle
+                      key={handle.id}
+                      handle={handle}
+                      domain={[0, 1]}
+                      getHandleProps={getHandleProps}
+                    />
+                  ))}
+                </div>
+              )}
+            </Handles>
+            <Tracks left={false} right={false}>
+              {({ tracks, getTrackProps }) => (
+                <div className='slider-tracks'>
+                  {tracks.map(({ id, source, target }) => (
+                    <Track
+                      key={id}
+                      source={source}
+                      target={target}
+                      getTrackProps={getTrackProps}
+                    />
+                  ))}
+                </div>
+              )}
+            </Tracks>
+            <Ticks values={[0, 1]}>
+              {({ ticks }) => (
+                <div className='slider-ticks'>
+                  {ticks.map(tick => (
+                    <Tick key={tick.id} tick={tick} count={ticks.length}
+                      format={val => val == 0 ? 'min' : 'max'}
+                    />
+                  ))}
+                </div>
+              )}
+            </Ticks>
+          </Slider>
+          <br/><br/>
+          <StudyGeneField genes={[]} allGenes={allGenes} showUpload={false} placeholder='filter on other genes'/>
+          <br/>
+        </div>
+        }
+      </div>
       <Panel className={shownTab === 'distribution' ? '' : 'hidden'}>
         <Panel.Heading>
           <Panel.Title>

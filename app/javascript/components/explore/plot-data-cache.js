@@ -110,6 +110,10 @@ const Fields = {
 
   expression: {
     getFromEntry: (entry, genes, consensus) => {
+      if (!genes.length && Object.values(entry.expression).length) {
+        // HACK - DO NOT MERGE
+        return Object.values(entry.expression)[0]
+      }
       const key = getExpressionKey(genes, consensus)
       return entry.expression[key]
     },
@@ -257,9 +261,10 @@ export function createCache() {
     if (!requestedAnnotation.name || scatter.annotParams.name === requestedAnnotation.name) {
       Fields.annotation.merge(cacheEntry, scatter)
     }
-    if (scatter.genes.length || true) {
-      Fields.expression.merge(cacheEntry, scatter)
-    }
+    // HACK -- for now always attach expression data so that we can filter on it
+    // if (scatter.genes.length) {
+    Fields.expression.merge(cacheEntry, scatter)
+    // }
     return clusterResponse
   }
 
