@@ -13,7 +13,7 @@ const newlineRegex = /\r?\n/
  */
 export default class ChunkedLineReader {
   /** create a new chunk reader */
-  constructor(file, chunkSize=DEFAULT_CHUNK_SIZE, ignoreLastLine=false) {
+  constructor(file, ignoreLastLine=false, chunkSize=DEFAULT_CHUNK_SIZE) {
     this.file = file
     this.chunkSize = chunkSize
     this.ignoreLastLine = ignoreLastLine

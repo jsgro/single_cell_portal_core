@@ -382,7 +382,7 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
         parseResult.issues.push(['warn', 'incomplete:range-request', msg])
       }
 
-      const chunker = new ChunkedLineReader(file, undefined, ignoreLastLine)
+      const chunker = new ChunkedLineReader(file, ignoreLastLine)
       const { issues, delimiter, numColumns } =
         await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
       fileInfo.linesRead = chunker.linesRead
