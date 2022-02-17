@@ -77,16 +77,14 @@ export async function validateRemoteFileContent(
   const { fileInfo, issueObj, perfTime } = await parseFile(file, fileType, fileOptions, sizeProps)
 
   const totalTime = Math.round(performance.now() - startTime)
-  const otherProps = Object.assign(
-    sizeProps, {
-      'perfTime': totalTime,
-      'perfTimes:readRemote': readRemoteTime, // Fetch + raw parse
-      'perfTimes:parseFile': perfTime, // Processed parse + validate
-      'perfTime:other': totalTime - readRemoteTime - perfTime
-    }
-  )
+  const perfTimes = {
+    'perfTime': totalTime,
+    'perfTimes:readRemote': readRemoteTime, // Fetch + raw parse
+    'perfTimes:parseFile': perfTime, // Processed parse + validate
+    'perfTime:other': totalTime - readRemoteTime - perfTime
+  }
 
-  const logProps = getLogProps(fileInfo, issueObj, otherProps)
+  const logProps = getLogProps(fileInfo, issueObj, perfTimes)
   log('file-validation', logProps)
 
   return issueObj

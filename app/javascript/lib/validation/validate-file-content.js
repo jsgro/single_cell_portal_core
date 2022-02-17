@@ -336,10 +336,11 @@ export async function validateGzipEncoding(file) {
  * @returns {Object} result.issuesObj Errors, warnings, and summary
  * @returns {Number} result.perfTime How long this function took
  */
-export async function parseFile(file, fileType, fileOptions={}, sizeProps) {
+export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
   const startTime = performance.now()
 
   const fileInfo = {
+    ...sizeProps,
     fileSize: file.size,
     fileName: file.name,
     linesRead: 0,
@@ -355,7 +356,11 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps) {
     fileInfo.isGzipped = await validateGzipEncoding(file)
     // if the file is compressed or we can't figure out the compression, don't try to parse further
     if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
-      return { fileInfo, issues: [] }
+      return {
+        fileInfo,
+        issueObj: formatIssues([]),
+        perfTime: Math.round(performance.now() - startTime)
+      }
     }
     const parseFunctions = {
       'Cluster': parseClusterFile,
@@ -365,6 +370,7 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps) {
       '10X Barcodes File': parseBarcodesFile,
       'MM Coordinate Matrix': parseSparseMatrixFile
     }
+
     if (parseFunctions[fileType]) {
       let ignoreLastLine = false
       if (sizeProps?.fetchedCompleteFile === false) {
@@ -393,14 +399,8 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps) {
     }
   }
 
-  console.log('0 parseResult.issues')
-  console.log(parseResult.issues)
-
   const issueObj = formatIssues(parseResult.issues)
   const perfTime = Math.round(performance.now() - startTime)
-
-  console.log('0 issueObj')
-  console.log(issueObj)
 
   return {
     fileInfo,
@@ -464,8 +464,7 @@ function getValidationTrigger() {
 }
 
 /** Get properties about this validation run to log to Mixpanel */
-export function getLogProps(fileInfo, issueObj, otherProps) {
-  console.log('issueObj', issueObj)
+export function getLogProps(fileInfo, issueObj, perfTimes) {
   const { errors, warnings, summary } = issueObj
   const trigger = getValidationTrigger()
 
@@ -479,7 +478,7 @@ export function getLogProps(fileInfo, issueObj, otherProps) {
 
   const defaultProps = {
     ...fileInfo,
-    ...otherProps,
+    ...perfTimes,
     trigger,
     'delimiter': friendlyDelimiter,
     'numTableCells': fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
