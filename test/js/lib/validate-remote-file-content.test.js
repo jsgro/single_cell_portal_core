@@ -63,7 +63,7 @@ describe('Client-side file validation for sync', () => {
     )
   })
 
-  it('updates syncProps as needed for logging', async () => {
+  it('gets sizeProps for logging', async () => {
     const size = 213832273
     const contentRange = `bytes 0-${MAX_SYNC_CSFV_BYTES}/${size}`
     const contentLength = '52428801'
@@ -78,6 +78,6 @@ describe('Client-side file validation for sync', () => {
       'fetchedCompleteFile': false
     }
 
-    expect(sizeProps).toEqual(sizeProps)
+    expect(sizeProps).toEqual(expectedSizeProps)
   })
 })

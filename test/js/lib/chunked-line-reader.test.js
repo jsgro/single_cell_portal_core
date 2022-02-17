@@ -96,7 +96,7 @@ describe('chunked line reader', () => {
   it('makes File with clean lines from incomplete content ', async () => {
     const file = createMockFile({ content: 'abcdefghij\nklmnopqrstuv\nwxy', fileName: 'test1' })
 
-    const chunker = new ChunkedLineReader(file, 7, true)
+    const chunker = new ChunkedLineReader(file, true, 7)
 
     const expectedLines = ['abcdefghij', 'klmnopqrstuv']
     expect.assertions(4)

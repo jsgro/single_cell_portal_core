@@ -9,7 +9,7 @@ function SupportMessage({ studyAccession }) {
   return (
     <div>
     Need help? Email us at {supportEmailLink} with the errors,
-    your accession ({studyAccession}),
+    your study accession ({studyAccession}),
     and a description or attachment of your file
     </div>
   )
