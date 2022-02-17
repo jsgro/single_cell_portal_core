@@ -69,7 +69,7 @@ export function parseLine(line, delimiter) {
   const splitLine = line.split(delimiter)
   const parsedLine = new Array(parseLine.length)
   for (let i = 0; i < splitLine.length; i++) {
-    parsedLine[i] = splitLine[i].trim().replaceAll(/^"|"$/g, '')
+    parsedLine[i] = splitLine[i].trim().replace(/^"|"$/g, '')
   }
   return parsedLine
 }
