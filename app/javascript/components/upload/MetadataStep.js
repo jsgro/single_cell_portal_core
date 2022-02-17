@@ -16,7 +16,7 @@ const DEFAULT_NEW_METADATA_FILE = {
   use_metadata_convention: true
 }
 
-const metadataFileFilter = file => file.file_type === 'Metadata'
+export const metadataFileFilter = file => file.file_type === 'Metadata'
 const allowedFileExts = FileTypeExtensions.plainText
 export default {
   title: 'Metadata',
@@ -59,7 +59,7 @@ function MetadataForm({
       <div className="col-md-12">
         <div className="form-terra">
           <div className="row">
-            <div className="col-md-12" id="metadata-convention-explainer">
+            <div className="col-md-12" id="overflow-x-scroll">
               A <b>metadata file</b> lists all cells in the study
               <img src={metadataExplainerImage}/>
             </div>

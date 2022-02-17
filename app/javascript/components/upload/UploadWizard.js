@@ -8,14 +8,14 @@
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import _cloneDeep from 'lodash/cloneDeep'
-import _isMatch from 'lodash/isEqual'
+import _isMatch from 'lodash/isMatch'
 import ReactNotification, { store } from 'react-notifications-component'
 import { Router, useLocation, navigate } from '@reach/router'
 import * as queryString from 'query-string'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 
-import { formatFileFromServer, formatFileForApi, newStudyFileObj } from './upload-utils'
+import { formatFileFromServer, formatFileForApi, newStudyFileObj, StudyContext } from './upload-utils'
 import {
   createStudyFile, updateStudyFile, deleteStudyFile,
   fetchStudyFileInfo, sendStudyFileChunk, RequestCanceller
@@ -37,7 +37,8 @@ import SequenceFileStep from './SequenceFileStep'
 import GeneListStep from './GeneListStep'
 import LoadingSpinner from 'lib/LoadingSpinner'
 
-const CHUNK_SIZE = 10000000
+const POLLING_INTERVAL = 10 * 1000 // 10 seconds between state updates
+const CHUNK_SIZE = 10000000 // 10 MB
 const STEPS = [
   RawCountsStep,
   ProcessedExpressionStep,
@@ -45,18 +46,31 @@ const STEPS = [
   ClusteringStep,
   SpatialStep,
   CoordinateLabelStep,
-  ImageStep,
   SequenceFileStep,
   GeneListStep,
   MiscellaneousStep
 ]
 
 const MAIN_STEPS = STEPS.slice(0, 4)
-const SUPPLEMENTAL_STEPS = STEPS.slice(4, 11)
-
+const SUPPLEMENTAL_STEPS = STEPS.slice(4)
 
 /** shows the upload wizard */
 export function RawUploadWizard({ studyAccession, name }) {
+  const [serverState, setServerState] = useState(null)
+  const [formState, setFormState] = useState(null)
+
+  // study attributes to pass to the StudyContext later for use throughout the RawUploadWizard component, if needed
+  // use complete study object, rather than defaultStudyState so that any updates to study.rb will be reflected in
+  // this context
+  const studyObj = serverState?.study
+
+  const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
+
+  if (allowReferenceImageUpload && !STEPS.includes(ImageStep)) {
+    STEPS.splice(5, 0, ImageStep)
+    SUPPLEMENTAL_STEPS.splice(1, 0, ImageStep)
+  }
+
   const routerLocation = useLocation()
   const queryParams = queryString.parse(routerLocation.search)
   let currentStepIndex = STEPS.findIndex(step => step.name === queryParams.tab)
@@ -65,16 +79,16 @@ export function RawUploadWizard({ studyAccession, name }) {
   }
   const currentStep = STEPS[currentStepIndex]
 
-  const [serverState, setServerState] = useState(null)
-  const [formState, setFormState] = useState(null)
 
   // go through the files and compute any relevant derived properties, notably 'isDirty'
-  if (serverState?.files && formState?.files) {
+  if (formState?.files) {
     formState.files.forEach(file => {
-      const serverFile = serverState.files.find(sFile => sFile._id === file._id)
+      const serverFile = serverState.files ? serverState.files.find(sFile => sFile._id === file._id) : null
+      file.serverFile = serverFile
+
       // use isMatch to confirm that specified properties are equal, but ignore properties (like isDirty)
       // that only exist on the form state objects
-      if (!_isMatch(file, serverFile)) {
+      if (!_isMatch(file, serverFile) || file.status === 'new') {
         file.isDirty = true
       }
     })
@@ -253,7 +267,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   /** delete the file from the form, and also the server if it exists there */
   async function deleteFile(file) {
     const fileId = file._id
-    if (file.status === 'new') {
+    if (file.status === 'new' || file?.serverFile?.parse_status === 'failed') {
       deleteFileFromForm(fileId)
     } else {
       updateFile(fileId, { isDeleting: true })
@@ -289,65 +303,91 @@ export function RawUploadWizard({ studyAccession, name }) {
     })
   }
 
+  /** poll the server periodically for updates to files */
+  function pollServerState() {
+    fetchStudyFileInfo(studyAccession, false).then(response => {
+      response.files.forEach(file => formatFileFromServer(file))
+      setServerState(oldState => {
+        // copy over the menu options since they aren't included in the polling response
+        response.menu_options = oldState.menu_options
+        return response
+      })
+      setTimeout(pollServerState, POLLING_INTERVAL)
+    }).catch(response => {
+      // if the get fails, it's very likely that the error recur on a retry
+      // (user's session timed out, server downtime, internet connection issues)
+      // so to avoid repeated error messages, show one error, and stop polling
+      store.addNotification(failureNotification(<span>
+        Server connectivity failed--some functions may not be available.<br/>
+        You may want to reload the page or sign in again.
+      </span>))
+    })
+  }
+
   // on initial load, load all the details of the study and study files
   useEffect(() => {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
       setServerState(response)
       setFormState(_cloneDeep(response))
+      setTimeout(pollServerState, POLLING_INTERVAL)
     })
   }, [studyAccession])
 
   const nextStep = STEPS[currentStepIndex + 1]
   const prevStep = STEPS[currentStepIndex - 1]
-  return <div className="upload-wizard-react">
-    <div className="row">
-      <div className="col-md-12 wizard-top-bar">
-        <span>{serverState?.study?.name}</span> / &nbsp;
-        <a href={`/single_cell/study/${studyAccession}`}>View study</a>
-      </div>
-    </div>
-    <div className="row wizard-content">
-      <div className="col-md-3">
-        <WizardNavPanel {...{
-          formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
-          supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
-        }} />
-      </div>
-      <div className="col-md-9">
-        <div className="flexbox-align-center top-margin">
-          <h4>{currentStep.header}</h4>
-          <div className="prev-next-buttons">
-            { prevStep && <button
-              className="btn terra-tertiary-btn margin-right"
-              onClick={() => setCurrentStep(prevStep)}>
-              <FontAwesomeIcon icon={faChevronLeft}/> Previous
-            </button> }
-            { nextStep && <button
-              className="btn terra-tertiary-btn"
-              onClick={() => setCurrentStep(nextStep)}>
-              Next <FontAwesomeIcon icon={faChevronRight}/>
-            </button> }
+  return (
+    <StudyContext.Provider value={studyObj}>
+      <div className="upload-wizard-react">
+        <div className="row">
+          <div className="col-md-12 wizard-top-bar no-wrap-ellipsis">
+          <a href={`/single_cell/study/${studyAccession}`}>View study</a> / &nbsp;
+            <span title="{serverState?.study?.name}">{serverState?.study?.name}</span>
           </div>
         </div>
-        { !formState && <div className="padded text-center">
-          <LoadingSpinner data-testid="upload-wizard-spinner"/>
-        </div> }
-        { !!formState && <div>
-          <currentStep.component
-            setCurrentStep={setCurrentStep}
-            formState={formState}
-            serverState={serverState}
-            deleteFile={deleteFile}
-            updateFile={updateFile}
-            saveFile={saveFile}
-            addNewFile={addNewFile}
-          />
-        </div> }
+        <div className="row wizard-content">
+          <div>
+            <WizardNavPanel {...{
+              formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
+              supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
+            }} />
+          </div>
+          <div id="overflow-x-scroll">
+            <div className="flexbox-align-center top-margin left-margin">
+              <h4>{currentStep.header}</h4>
+              <div className="prev-next-buttons">
+                { prevStep && <button
+                  className="btn terra-tertiary-btn margin-right"
+                  onClick={() => setCurrentStep(prevStep)}>
+                  <FontAwesomeIcon icon={faChevronLeft}/> Previous
+                </button> }
+                { nextStep && <button
+                  className="btn terra-tertiary-btn"
+                  onClick={() => setCurrentStep(nextStep)}>
+                  Next <FontAwesomeIcon icon={faChevronRight}/>
+                </button> }
+              </div>
+            </div>
+            { !formState && <div className="padded text-center">
+              <LoadingSpinner data-testid="upload-wizard-spinner"/>
+            </div> }
+            { !!formState && <div>
+              <currentStep.component
+                setCurrentStep={setCurrentStep}
+                formState={formState}
+                serverState={serverState}
+                deleteFile={deleteFile}
+                updateFile={updateFile}
+                saveFile={saveFile}
+                addNewFile={addNewFile}
+              />
+            </div> }
+          </div>
+        </div>
+        <MessageModal/>
       </div>
-    </div>
-    <MessageModal/>
-  </div>
+    </StudyContext.Provider>
+  )
 }
 
 /** Wraps the upload wirzard logic in a router and error handler */

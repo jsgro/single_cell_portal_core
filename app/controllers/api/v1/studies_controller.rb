@@ -210,8 +210,10 @@ module Api
         response_obj = {
           study: @study.attributes,
           files: @study.study_files,
-          feature_flags: FeatureFlaggable.feature_flags_for_instances(current_api_user, @study),
-          menu_options: {
+          feature_flags: FeatureFlaggable.feature_flags_for_instances(current_api_user, @study)
+        }
+        if params[:include_options]
+          response_obj[:menu_options] = {
             fonts: SUPPORTED_LABEL_FONTS,
             species: ActiveRecordUtils.pluck_to_hash(Taxon.sorted, [:id, :common_name])
               .map { |k| k[:id] = k[:id].to_s; k }, # return the hash but with ids converted to strings
@@ -227,7 +229,7 @@ module Api
                 k
               end
           }
-        }
+        end
         render json: response_obj
       end
 
@@ -775,7 +777,9 @@ module Api
               # make sure file is not actually a folder by checking its size
               if file.size > 0
                 # create a new entry
-                unsynced_file = StudyFile.new(study_id: @study.id, name: file.name, upload_file_name: file.name, upload_content_type: file.content_type, upload_file_size: file.size, generation: file.generation, remote_location: file.name)
+                unsynced_file = StudyFile.new(study_id: @study.id, name: file.name, upload_file_name: file.name,
+                                              upload_content_type: file.content_type, upload_file_size: file.size,
+                                              generation: file.generation, remote_location: file.name)
                 @unsynced_files << unsynced_file
               end
             end

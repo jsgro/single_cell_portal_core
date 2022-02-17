@@ -16,14 +16,15 @@ const DEFAULT_NEW_PROCESSED_FILE = {
 }
 
 export const fileTypes = ['Expression Matrix', 'MM Coordinate Matrix']
-const processedFilter = file => fileTypes.includes(file.file_type) && !file.expression_file_info?.is_raw_counts
+export const processedFileFilter = file => fileTypes.includes(file.file_type) &&
+  !file.expression_file_info?.is_raw_counts
 
 export default {
   title: 'Processed matrices',
   header: 'Processed expression files',
   name: 'processed',
   component: ProcessedUploadForm,
-  fileFilter: processedFilter
+  fileFilter: processedFileFilter
 }
 
 /** form for uploading a parent expression file and any children */
@@ -36,7 +37,7 @@ function ProcessedUploadForm({
   deleteFile,
   setCurrentStep
 }) {
-  const processedParentFiles = formState.files.filter(processedFilter)
+  const processedParentFiles = formState.files.filter(processedFileFilter)
   const fileMenuOptions = serverState.menu_options
   const rawCountsFiles = formState.files.filter(rawCountsFileFilter).filter(f => f.status != 'new')
   const rawCountsOptions = rawCountsFiles.map(rf => ({ label: rf.name, value: rf._id }))
