@@ -18,4 +18,8 @@ class Author
                       with: Devise.email_regexp,
                       message: 'is not a valid format',
                       unless: proc { email.blank? }
+
+  def base_64_email
+    Base64.encode64(email)
+  end
 end

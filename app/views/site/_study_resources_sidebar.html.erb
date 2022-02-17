@@ -1,6 +1,18 @@
 <nav id="study-sidebar-content">
   <%= link_to "<i class='fas fa-angle-double-right' id='resource-btn'></i>".html_safe, '#',
               id: 'toggle-study-resources', class: 'btn btn-sm btn-default' %>
+  <% if @study.authors.corresponding.any? %>
+    <h3>Corresponding authors</h3>
+    <% @study.authors.corresponding.each do |author| %>
+      <%= link_to "#{author.first_name} #{author.last_name} <i class='fa fas fa-envelope'></i>".html_safe, '#',
+                  class: 'btn btn-sm btn-default corresponding-author',
+                  data: {
+                    contact: author.base_64_email, placement: 'top',
+                    'analytics-name' => 'email-corresponding-author'
+                  },
+                  title: "Send email to #{author.first_name} #{author.last_name}" %>
+    <% end %>
+  <% end %>
   <% if @study.publications.any? %>
     <h3>Related publications</h3>
     <% @study.publications.each do |publication| %>
@@ -34,5 +46,7 @@
     $("#study-sidebar-content").toggleClass("closed")
     $("#resource-btn").toggleClass('fa-angle-double-right fa-angle-double-left')
     $(this).toggleClass("closed")
-  });
+  })
+
+  $('.corresponding-author').click(function() { showAuthorPopover(this) })
 </script>
