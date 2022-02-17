@@ -4,10 +4,16 @@ import { supportEmailLink } from 'lib/error-utils'
 import _capitalize from 'lodash/capitalize'
 import pluralize from 'pluralize'
 
-const supportMessage = <div>
-  If you need help, let us know at {supportEmailLink}.
-  Please include the above errors, your file, and study accession.
-</div>
+/** Help users get reach us for support */
+function SupportMessage({ studyAccession }) {
+  return (
+    <div>
+    Need help? Email us at {supportEmailLink} with the errors,
+    your accession ({studyAccession}),
+    and a description or attachment of your file
+    </div>
+  )
+}
 
 const refresh =
   <a href="" data-analytics-name="sync-validation-refresh">
@@ -32,7 +38,9 @@ function Summary({ msgs, issueCategory, fileName=null, isSync=false }) {
  *
  * TODO (SCP-4119): Integrate this component into FileUploadControl.js
  */
-export default function ValidationMessage({ errorMsgs, warningMsgs, fileName, isSync=false }) {
+export default function ValidationMessage({
+  studyAccession, errorMsgs, warningMsgs, fileName, isSync=false
+}) {
   return (
     <>
       { errorMsgs?.length > 0 &&
@@ -42,7 +50,7 @@ export default function ValidationMessage({ errorMsgs, warningMsgs, fileName, is
           return <li className="validation-error" key={i}>{msg}</li>
         })}
         </ul>
-        {supportMessage}
+        <SupportMessage studyAccession={studyAccession} />
         <br/>
       </div>
       }
@@ -59,10 +67,13 @@ export default function ValidationMessage({ errorMsgs, warningMsgs, fileName, is
 }
 
 /** Convenience function to render this in a non-React part of the app */
-export function renderValidationMessage(target, errorMsgs, warningMsgs, fileName, isSync) {
+export function renderValidationMessage(
+  target, studyAccession, errorMsgs, warningMsgs, fileName, isSync
+) {
   ReactDOM.unmountComponentAtNode(target)
   ReactDOM.render(
     <ValidationMessage
+      studyAccession={studyAccession}
       errorMsgs={errorMsgs}
       warningMsgs={warningMsgs}
       fileName={fileName}

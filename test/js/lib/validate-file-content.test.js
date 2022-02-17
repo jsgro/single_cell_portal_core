@@ -316,6 +316,7 @@ describe('Client-side file validation', () => {
 
     render(
       <ValidationMessage
+        studyAccession={'SCP123'}
         errrorMsgs={errorMsgs}
         warningMsgs={warningMsgs}
         fileName={'invalid_file.txt'}

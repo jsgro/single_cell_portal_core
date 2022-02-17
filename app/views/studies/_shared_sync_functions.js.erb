@@ -120,11 +120,14 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
 
     $(form).remove('.validation-message-container')
     $(form).append('<div class="validation-message-container">')
+    const studyAccession = '<%= @study.accession %>'
     const errorMsgs = issues.errors.map(error => error[2])
     const warningMsgs = issues.warnings.map(warning => warning[2])
     const selector = `#${form.attr('id')} .validation-message-container`
     const target = document.querySelector(selector)
-    window.SCP.renderValidationMessage(target, errorMsgs, warningMsgs, fileName, true)
+    window.SCP.renderValidationMessage(
+      target, studyAccession, errorMsgs, warningMsgs, fileName, true
+    )
 
 
     if (issues.errors.length > 1) {
