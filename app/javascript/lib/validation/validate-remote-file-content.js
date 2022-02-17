@@ -2,7 +2,8 @@
 * @fileoverview Client-side file validation (CSFV) for sync
 */
 
-import { validateFileContent } from './validate-file-content'
+import { log } from 'lib/metrics-api'
+import { parseFile, getLogProps } from './validate-file-content'
 import { fetchBucketFile } from 'lib/scp-api'
 
 /**
@@ -42,18 +43,27 @@ export function getSizeProps(contentRange, contentLength, file) {
 }
 
 /**
-* Validate a file in a GCS bucket; used for sync
-*/
+ * Validate file in GCS bucket, log and return issues for sync UI
+ *
+ *  @param {String} bucketName Name of Google Cloud Storage bucket
+ *  @param {String} fileName Name of file object in GCS bucket
+ *  @param {String} fileType SCP file type
+ *  @param {Object} [fileOptions]
+ *
+ * @return {Object} issueObj Validation results, where:
+ *   - `errors` is an array of errors,
+ *   - `warnings` is an array of warnings, and
+ *   - `summary` is a message like "Your file had 2 errors"
+ */
 export async function validateRemoteFileContent(
   bucketName, fileName, fileType, fileOptions
 ) {
-  // For handling incomplete range response data, and analytics
-  const syncProps = {}
+  const startTime = performance.now()
 
   const requestStart = performance.now()
   const response = await fetchBucketFile(bucketName, fileName, MAX_SYNC_CSFV_BYTES)
   const content = await response.text()
-  syncProps['perfTime:readRemote'] = Math.round(performance.now() - requestStart)
+  const readRemoteTime = Math.round(performance.now() - requestStart)
 
   const contentRange = response.headers.get('content-range')
   const contentLength = response.headers.get('content-length')
@@ -62,10 +72,22 @@ export async function validateRemoteFileContent(
   const file = new File([content], fileName, { type: contentType })
 
   const sizeProps = getSizeProps(contentRange, contentLength, file)
-  Object.assign(syncProps, sizeProps)
 
-  const results =
-    await validateFileContent(file, fileType, fileOptions, syncProps)
+  // Equivalent block exists in validateFileContent
+  const { fileInfo, issueObj, perfTime } = await parseFile(file, fileType, fileOptions, sizeProps)
 
-  return results
+  const totalTime = Math.round(performance.now() - startTime)
+  const otherProps = Object.assign(
+    sizeProps, {
+      'perfTime': totalTime,
+      'perfTimes:readRemote': readRemoteTime, // Fetch + raw parse
+      'perfTimes:parseFile': perfTime, // Processed parse + validate
+      'perfTime:other': totalTime - readRemoteTime - perfTime
+    }
+  )
+
+  const logProps = getLogProps(fileInfo, issueObj, otherProps)
+  log('file-validation', logProps)
+
+  return issueObj
 }

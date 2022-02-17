@@ -328,8 +328,17 @@ export async function validateGzipEncoding(file) {
   return isGzipped
 }
 
-/** reads the file and returns a fileInfo object along with an array of issues */
-async function parseFile(file, fileType, fileOptions={}, syncProps) {
+/**
+ * Read File object, transform and validate it according to its SCP file type
+ *
+ * @returns {Object} result Validation results
+ * @returns {Object} result.fileInfo Data about the file and its parsing
+ * @returns {Object} result.issuesObj Errors, warnings, and summary
+ * @returns {Number} result.perfTime How long this function took
+ */
+export async function parseFile(file, fileType, fileOptions={}, sizeProps) {
+  const startTime = performance.now()
+
   const fileInfo = {
     fileSize: file.size,
     fileName: file.name,
@@ -358,7 +367,7 @@ async function parseFile(file, fileType, fileOptions={}, syncProps) {
     }
     if (parseFunctions[fileType]) {
       let ignoreLastLine = false
-      if (syncProps?.fetchedCompleteFile === false) {
+      if (sizeProps?.fetchedCompleteFile === false) {
         ignoreLastLine = true
         const msg =
           'Due to this file\'s size, it will be fully validated after sync, ' +
@@ -383,37 +392,45 @@ async function parseFile(file, fileType, fileOptions={}, syncProps) {
       parseResult.issues.push(['error', 'parse:unhandled', error.message])
     }
   }
-  return parseResult
+
+  console.log('0 parseResult.issues')
+  console.log(parseResult.issues)
+
+  const issueObj = formatIssues(parseResult.issues)
+  const perfTime = Math.round(performance.now() - startTime)
+
+  console.log('0 issueObj')
+  console.log(issueObj)
+
+  return {
+    fileInfo,
+    issueObj,
+    perfTime
+  }
 }
 
 /**
- * Validate a File object, log and return issues for upload or sync UI
+ * Validate a File object, log and return issues for upload UI
  *
  *  @param {File} file File object to validate
  *    Docs: https://developer.mozilla.org/en-US/docs/Web/API/File
  *  @param {String} fileType SCP file type
  *  @param {Object} [fileOptions]
- *  @param {Object} [syncProps] Data about sync fetch, of the form:
- *    {
- *      'fetchedCompleteFile': Boolean,
- *      'fileSizeFetched': Number,
- *      'fileSizeTotal': Number,
- *      'perfTimes:readRemote': Number
- *    }
  *
  * @return {Object} issueObj Validation results, where:
  *   - `errors` is an array of errors,
  *   - `warnings` is an array of warnings, and
  *   - `summary` is a message like "Your file had 2 errors"
  */
-export async function validateFileContent(file, fileType, fileOptions={}, syncProps) {
-  const startTime = performance.now()
+export async function validateFileContent(file, fileType, fileOptions={}) {
+  const { fileInfo, issueObj, perfTime } = await parseFile(file, fileType, fileOptions)
 
-  const { fileInfo, issues } = await parseFile(file, fileType, fileOptions, syncProps)
-  const perfTime = Math.round(performance.now() - startTime)
+  const otherProps = {
+    perfTime,
+    'perfTime:parseFile': perfTime
+  }
 
-  const issueObj = formatIssues(issues)
-  const logProps = getLogProps(fileInfo, issueObj, perfTime, syncProps)
+  const logProps = getLogProps(fileInfo, issueObj, otherProps)
   log('file-validation', logProps)
 
   return issueObj
@@ -447,7 +464,8 @@ function getValidationTrigger() {
 }
 
 /** Get properties about this validation run to log to Mixpanel */
-function getLogProps(fileInfo, issueObj, perfTime, syncProps) {
+export function getLogProps(fileInfo, issueObj, otherProps) {
+  console.log('issueObj', issueObj)
   const { errors, warnings, summary } = issueObj
   const trigger = getValidationTrigger()
 
@@ -461,23 +479,10 @@ function getLogProps(fileInfo, issueObj, perfTime, syncProps) {
 
   const defaultProps = {
     ...fileInfo,
-    perfTime,
+    ...otherProps,
     trigger,
-    'perfTime:parseFile': perfTime,
     'delimiter': friendlyDelimiter,
     'numTableCells': fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
-  }
-
-  if (syncProps) {
-    Object.assign(defaultProps, syncProps)
-
-    // Top-level perfTime is duration for the whole event.
-    // The 'perfTime:foo' construct is also used in "plot:" events.
-    Object.keys(syncProps).forEach(key => {
-      if (key.startsWith('perfTime:')) {
-        defaultProps.perfTime += syncProps[key]
-      }
-    })
   }
 
   if (errors.length === 0) {
