@@ -36,8 +36,8 @@ export default function ValidationMessage({ errorMsgs, warningMsgs, fileName, is
   return (
     <>
       { errorMsgs?.length > 0 &&
-      <div className="validation-error" data-testid="file-content-validation">
-        <Summary msgs={errorMsgs} issueCategory='error' fileName={fileName} isSync={true} />
+      <div className="validation-error" data-testid="validation-error">
+        <Summary msgs={errorMsgs} issueCategory='error' fileName={fileName} isSync={isSync} />
         <ul>{errorMsgs.map((msg, i) => {
           return <li className="validation-error" key={i}>{msg}</li>
         })}
@@ -47,7 +47,7 @@ export default function ValidationMessage({ errorMsgs, warningMsgs, fileName, is
       </div>
       }
       { warningMsgs?.length > 0 &&
-      <div className="validation-warning" data-testid="file-content-validation">
+      <div className="validation-warning" data-testid="validation-warning">
         <Summary msgs={warningMsgs} issueCategory='warning' />
         <ul>{ warningMsgs.map((msg, index) => {
           return <li className="validation-warning" key={index}>{msg}</li>

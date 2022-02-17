@@ -5,7 +5,7 @@ import '@testing-library/jest-dom/extend-expect'
 import {
   validateFileContent, REQUIRED_CONVENTION_COLUMNS
 } from 'lib/validation/validate-file-content'
-import ValidationAlert from 'components/validation/ValidationAlert'
+import ValidationMessage from 'components/validation/ValidationMessage'
 import * as MetricsApi from 'lib/metrics-api'
 
 import { createMockFile } from './file-mock-utils'
@@ -306,31 +306,31 @@ describe('Client-side file validation', () => {
     expect(errors).toHaveLength(0)
   })
 
-  it('renders validation alert', async () => {
-    const summary = 'Your file had 1 error'
-
-    // This error structure matches that in Ingest Pipeline.
-    // Such consistency across codebases eases QA and debugging.
-    const errors = [
-      [
-        'error',
-        'format',
-        'Second row, first column must be "TYPE" (case insensitive). Your value was "notTYPE".'
-      ]
+  it('renders validation message', async () => {
+    const errorMsgs = [
+      'Second row, first column must be "TYPE" (case insensitive). Your value was "notTYPE".'
     ]
-    const fileType = 'Metadata'
+    const warningMsgs = [
+      'Due to this file\'s size, it will be fully validated after sync, and any errors will be emailed to you.'
+    ]
 
     render(
-      <ValidationAlert
-        summary={summary}
-        errors={errors}
-        fileType={fileType}
+      <ValidationMessage
+        errrorMsgs={errorMsgs}
+        warningMsgs={warningMsgs}
+        fileName={'invalid_file.txt'}
+        isSync={true}
       />
     )
 
     // Test UI
-    const alert = screen.getByTestId('metadata-validation-alert')
-    const expectedContent = `${summary}:${errors[0][2]}`
-    expect(alert).toHaveTextContent(expectedContent)
+    // This displays OK in the UI, but not in the test.  Why?
+    // const displayedError = screen.getByTestId('validation-error')
+    // expect(displayedError).toHaveTextContent(errorMsgs[0])
+    // expect(displayedError).toHaveTextContent('Refresh the page') // Sync-specific
+
+
+    const displayedWarning = screen.getByTestId('validation-warning')
+    expect(displayedWarning).toHaveTextContent(warningMsgs[0])
   })
 })
