@@ -31,7 +31,7 @@ import * as ScpApi from 'lib/scp-api'
 import { getFeatureFlagsWithDefaults } from 'providers/UserProvider'
 import { validateFileContent } from 'lib/validation/validate-file-content'
 import { validateRemoteFileContent } from 'lib/validation/validate-remote-file-content'
-import { renderValidationAlert } from 'components/validation/ValidationAlert'
+import { renderValidationMessage } from 'components/validation/ValidationMessage'
 import { renderClusterAssociationSelect } from 'components/upload/ClusterAssociationSelect'
 import { renderUploadWizard } from 'components/upload/UploadWizard'
 import { renderRawAssociationSelect } from 'components/upload/RawAssociationSelect'
@@ -75,7 +75,7 @@ window.SCP.renderClusterAssociationSelect = renderClusterAssociationSelect
 window.SCP.renderRawAssociationSelect = renderRawAssociationSelect
 window.SCP.renderExploreView = renderExploreView
 window.SCP.getFeatureFlagsWithDefaults = getFeatureFlagsWithDefaults
-window.SCP.renderValidationAlert = renderValidationAlert
+window.SCP.renderValidationMessage = renderValidationMessage
 window.SCP.validateFileContent = validateFileContent
 window.SCP.validateRemoteFileContent = validateRemoteFileContent
 window.SCP.renderUploadWizard = renderUploadWizard

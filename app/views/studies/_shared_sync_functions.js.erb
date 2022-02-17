@@ -3,72 +3,6 @@
 // Used for sync CSFV
 window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
 
-/**
-* Transform validation results to HTML that can be shown to user.
-*
-* This function is a temporary backport of the issue messaging from
-* FileUploadControl.js.  It should be replaced when sync code migrates to
-* React.
-*/
-function getIssuesHtml(results, fileName, fileId) {
-  let issuesHtml = ''
-
-  const errorMsgs = results.errors.map(error => error[2])
-  const warningMsgs = results.warnings.map(warning => warning[2])
-
-  if (errorMsgs.length > 0) {
-    // Tell user how to get in touch
-    const supportEmailAddress = 'scp-support@broadinstitute.zendesk.com'
-    const supportEmailLink =
-      `<a href="mailto:${supportEmailAddress}">` +
-        supportEmailAddress +
-      '</a>'
-    const supportMessage =
-      '<div>' +
-        `If you need help, let us know at ${supportEmailLink}.  ` +
-        'Please include the above errors, your file, and study accession.' +
-      '</div>'
-
-    // Note errors and inform user how to try again
-    const refresh =
-      '<a href="" data-analytics-name="sync-validation-refresh">' +
-        'Refresh the page' +
-      '</a>'
-    const errorTxt = 'Error' + (errorMsgs.length > 0 ? 's' : '')
-    const errorListHtml = errorMsgs.map((error, index) => {
-      return `<li class="error-message">${error}</li>`
-    })
-    issuesHtml +=
-      '<div class="validation-error">' +
-        `${errorTxt} found.  ${refresh} after you correct ${fileName}.` +
-        `<ul class="validation-error">${errorListHtml}</ul>` +
-        supportMessage +
-      '</div>'
-
-    // Disable the "Sync" button
-    $(`#sync-study-file-${fileId}`)
-      .prop('disabled', true)
-      .attr('data-toggle', 'tooltip')
-      .attr('data-original-title', 'Fix validation errors, then refresh')
-      .attr('data-placement', 'left')
-  }
-
-  if (warningMsgs.length > 0) {
-    const warningListHtml = warningMsgs.map((warning, index) => {
-      return `<li class="warning-message">${warning}</li>`
-    })
-    issuesHtml +=
-      (errorMsgs.length > 0 ? '<br/>' : '') +
-      '<div class="validation-warning">' +
-        `Warnings:` +
-        `<ul class="validation-warning">${warningListHtml}</ul>` +
-      '</div>'
-  }
-
-  return issuesHtml
-}
-
-
 $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function() {
     var form = $(this).closest('form');
     var fileName = form.find('.filename').val();
@@ -180,14 +114,26 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
     }
 
     const bucketName = '<%= @study.bucket_id %>'
-    const results = await window.SCP.validateRemoteFileContent(
+    const issues = await window.SCP.validateRemoteFileContent(
       bucketName, fileName, fileType, fileOptions
     );
 
-    const issuesHtml = getIssuesHtml(results, fileName, fileId)
+    $(form).remove('.validation-message-container')
+    $(form).append('<div class="validation-message-container">')
+    const errorMsgs = issues.errors.map(error => error[2])
+    const warningMsgs = issues.warnings.map(warning => warning[2])
+    const selector = `#${form.attr('id')} .validation-message-container`
+    const target = document.querySelector(selector)
+    window.SCP.renderValidationMessage(target, errorMsgs, warningMsgs, fileName, true)
 
-    if (issuesHtml !== '') {
-      $(form).append(issuesHtml)
+
+    if (issues.errors.length > 1) {
+      // Disable the "Sync" button
+      $(`#sync-study-file-${fileId}`)
+        .prop('disabled', true)
+        .attr('data-toggle', 'tooltip')
+        .attr('data-original-title', 'Fix validation errors, then refresh')
+        .attr('data-placement', 'left')
     }
 
 });
