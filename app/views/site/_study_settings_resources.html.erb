@@ -21,7 +21,7 @@
     </div>
     <!-- publication_url is not used here to phase out external_resource instances used for publications -->
     <div class="col-sm-1 text-right">
-      <%= f.link_to_remove "<span class='btn btn-sm btn-danger'><span class='fas fa-times'></span></span>".html_safe,
+      <%= resource.link_to_remove "<span class='btn btn-sm btn-danger'><span class='fas fa-times'></span></span>".html_safe,
                            data: {
                              confirm: 'Are you sure?  This cannot be undone unless you reload the page before saving.'
                            }
