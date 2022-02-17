@@ -780,7 +780,9 @@ module Api
               # make sure file is not actually a folder by checking its size
               if file.size > 0
                 # create a new entry
-                unsynced_file = StudyFile.new(study_id: @study.id, name: file.name, upload_file_name: file.name, upload_content_type: file.content_type, upload_file_size: file.size, generation: file.generation, remote_location: file.name)
+                unsynced_file = StudyFile.new(study_id: @study.id, name: file.name, upload_file_name: file.name,
+                                              upload_content_type: file.content_type, upload_file_size: file.size,
+                                              generation: file.generation, remote_location: file.name)
                 @unsynced_files << unsynced_file
               end
             end

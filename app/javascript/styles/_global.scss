@@ -702,7 +702,7 @@ ul.pager li.dimmed {
   padding-right: 15px;
 }
 
-#metadata-convention-explainer {
+#overflow-x-scroll {
   overflow-x: scroll;
 }
 
@@ -847,4 +847,10 @@ figcaption.ck-editor__editable {
 
 .publication-link {
   margin-bottom: 10px;
+}
+
+.no-wrap-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
