@@ -16,8 +16,8 @@
   <% if @study.publications.any? %>
     <h3>Related publications</h3>
     <% @study.publications.each do |publication| %>
-      <h4><%= link_to publication.title, publication.url, target: :_blank, rel: 'noopener noreferrer',
-                      'data-analytics-name' => 'publication-link-journal', title: "View on #{publication.journal}",
+      <h4><%= link_to publication.title, publication.url, target: :_blank, rel: 'noopener',
+                      'data-analytics-name' => 'publication-link-journal', title: "View in #{publication.journal}",
                       data: { toggle: 'tooltip' } %>
       </h4>
       <% unless publication.citation.blank? %>
@@ -25,7 +25,7 @@
       <% end %>
       <% unless publication.pmcid.blank? %>
         <%= link_to publication.pmcid, publication.pmc_link, class: 'btn btn-sm btn-default publication-link',
-                    target: :_blank, rel: 'noopener noreferrer', 'data-analytics-name' => 'publication-link-pmc' %>
+                    target: :_blank, rel: 'noopener', 'data-analytics-name' => 'publication-link-pmc' %>
       <% end %>
     <% end %>
   <% end %>
@@ -34,7 +34,7 @@
     <% @study.external_resources.each do |resource| %>
       <p>
         <%= link_to resource.title, resource.url, class: 'btn btn-default navigation-form external-resource-link',
-                    target: :_blank, rel: 'noopener noreferrer', title: resource.description,
+                    target: :_blank, rel: 'noopener', title: resource.description,
                     data: { toggle: 'tooltip', 'analytics-name' => 'external-resource-link' } %>
       </p>
     <% end %>

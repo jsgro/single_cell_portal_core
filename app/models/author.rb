@@ -10,6 +10,8 @@ class Author
   field :email, type: String
   field :institution, type: String
   field :corresponding, type: Mongoid::Boolean, default: false
+  # ORCID, global identifier for academic authors, e.g. 0000-0001-2345-6789
+  field :orcid, type: String
 
   belongs_to :study
 
