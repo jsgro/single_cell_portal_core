@@ -417,15 +417,15 @@ function getValidationTrigger() {
   }
 }
 
-/** Trim messages logged to Mixpanel, to prevent 503 errors */
+/** Trim messages logged to Mixpanel, to prevent HTTP 413 errors */
 function getTrimmedIssueMessages(issues) {
   return issues.map(columns => {
-    columns[2].slice(0, 200) // Show up to 200 characters for each message
-  }).slice(0, 20) // Show up to 20 messages
+    return columns[2].slice(0, 200) // Show <= 200 characters for each message
+  }).slice(0, 20) // Show <= 20 messages
 }
 
 /** Get properties about this validation run to log to Mixpanel */
-function getLogProps(fileInfo, errorObj, perfTime) {
+export function getLogProps(fileInfo, errorObj, perfTime) {
   const { errors, warnings, summary } = errorObj
   const trigger = getValidationTrigger()
 
@@ -454,8 +454,8 @@ function getLogProps(fileInfo, errorObj, perfTime) {
     const errorMessages = getTrimmedIssueMessages(errors)
     const warningMessages = getTrimmedIssueMessages(warnings)
 
-    const errorTypes = new Set(errors.map(columns => columns[1]))
-    const warningTypes = new Set(warnings.map(columns => columns[1]))
+    const errorTypes = Array.from(new Set(errors.map(columns => columns[1])))
+    const warningTypes = Array.from(new Set(warnings.map(columns => columns[1])))
 
     return Object.assign(defaultProps, {
       status: 'failure',
