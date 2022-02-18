@@ -120,7 +120,7 @@ function validateTypeKeyword(annotTypes) {
  */
 function validateGroupOrNumeric(annotTypes) {
   const issues = []
-  const invalidTypes = []
+  const badValues = []
 
   // Skip the TYPE keyword
   const types = annotTypes.slice(1)
@@ -130,18 +130,27 @@ function validateGroupOrNumeric(annotTypes) {
       if (type === '') {
         // If the value is a blank space, store a higher visibility
         // string for error reporting
-        invalidTypes.push('<empty value>')
+        badValues.push('<empty value>')
       } else {
-        invalidTypes.push(type)
+        badValues.push(type)
       }
     }
   })
 
-  if (invalidTypes.length > 0) {
-    const badValues = `"${invalidTypes.join('", "')}"`
+  // TODO (SCP-4128): Generalize this pattern across validation rules
+  const valuesOrRows = 'values'
+  const numBad = badValues.length
+  if (numBad > 0) {
+    const maxToShow = 100
+    let notedBad = `"${badValues.slice(0, maxToShow).join('", "')}"`
+    const numMore = numBad - maxToShow
+    if (numMore > 0) {
+      notedBad += ` and ${numMore - maxToShow} more ${valuesOrRows}`
+    }
+
     const msg =
       'Second row, all columns after first must be "group" or "numeric". ' +
-      `Your values included ${badValues}`
+      `Your ${valuesOrRows} included ${notedBad}`
 
     issues.push(['error', 'format:cap:group-or-numeric', msg])
   }

@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
 
 import { bytesToSize } from 'lib/stats'
-import { validateFileContent } from 'lib/validation/validate-file-content'
 import FileDownloadControl from 'components/download/FileDownloadControl'
 import LoadingSpinner from 'lib/LoadingSpinner'
-
+import { StudyContext } from 'components/upload/upload-utils'
+import { validateFileContent } from 'lib/validation/validate-file-content'
+import ValidationMessage from 'components/validation/ValidationMessage'
 
 const plainTextExtensions = ['.txt', '.tsv', '.text', '.csv']
 const mtxExtensions = ['.mtx', '.mm', '.txt', '.text']
@@ -69,9 +70,11 @@ export default function FileUploadControl({
   bucketName
 }) {
   const [fileValidation, setFileValidation] = useState({
-    validating: false, errorMsgs: [], warningMsgs: [], filename: null
+    validating: false, errorMsgs: [], warningMsgs: [], fileName: null
   })
   const inputId = `file-input-${file._id}`
+
+  const study = useContext(StudyContext)
 
   /** handle user interaction with the file input */
   async function handleFileSelection(e) {
@@ -82,9 +85,9 @@ export default function FileUploadControl({
     if (FILE_TYPES_ALLOWING_SET_NAME.includes(file.file_type) && file.name && file.name !== file.upload_file_name) {
       newName = file.name
     }
-    setFileValidation({ validating: true, errorMsgs: [], warningMsgs: [], filename: selectedFile.name })
+    setFileValidation({ validating: true, errorMsgs: [], warningMsgs: [], fileName: selectedFile.name })
     const { errorMsgs, warningMsgs } = await validateSelectedFile(selectedFile, file, allFiles, allowedFileExts)
-    setFileValidation({ validating: false, errorMsgs, warningMsgs, filename: selectedFile.name })
+    setFileValidation({ validating: false, errorMsgs, warningMsgs, fileName: selectedFile.name })
     if (errorMsgs.length === 0) {
       updateFile(file._id, {
         uploadSelection: selectedFile,
@@ -147,19 +150,11 @@ export default function FileUploadControl({
       </button>
     }
 
-    { fileValidation.errorMsgs?.length > 0 && <div className="validation-error" data-testid="file-content-validation">
-      Could not use {fileValidation.filename}:
-      <ul className="validation-error" >
-        { fileValidation.errorMsgs.map((error, index) => <li key={index} className="error-message">{error}</li>) }
-      </ul>
-    </div> }
-    { fileValidation.warningMsgs?.length > 0 &&
-      <div className="validation-warning" data-testid="file-content-validation">
-        Warnings:
-        <ul className="validation-warning">
-          { fileValidation.warningMsgs.map((warn, index) => <li key={index} className="error-message">{warn}</li>) }
-        </ul>
-      </div>
-    }
+    <ValidationMessage
+      studyAccession={study.accession}
+      errorMsgs={fileValidation.errorMsgs}
+      warningMsgs={fileValidation.warningMsgs}
+      fileName={fileValidation.fileName}
+    />
   </div>
 }
