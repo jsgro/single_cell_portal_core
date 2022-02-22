@@ -1,0 +1,52 @@
+<nav id="study-sidebar-content">
+  <%= link_to "<i class='fas fa-angle-double-right' id='resource-btn'></i>".html_safe, '#',
+              id: 'toggle-study-resources', class: 'btn btn-sm btn-default' %>
+  <% if @study.authors.corresponding.any? %>
+    <h3>Corresponding authors</h3>
+    <% @study.authors.corresponding.each do |author| %>
+      <%= link_to "#{author.first_name} #{author.last_name} <i class='fa fas fa-envelope'></i>".html_safe, '#',
+                  class: 'btn btn-sm btn-default corresponding-author',
+                  data: {
+                    contact: author.base_64_email, placement: 'top',
+                    'analytics-name' => 'email-corresponding-author'
+                  },
+                  title: "Send email to #{author.first_name} #{author.last_name}" %>
+    <% end %>
+  <% end %>
+  <% if @study.publications.any? %>
+    <h3>Related publications</h3>
+    <% @study.publications.each do |publication| %>
+      <h4><%= link_to publication.title, publication.url, target: :_blank, rel: 'noopener',
+                      'data-analytics-name' => 'publication-link-journal', title: "View in #{publication.journal}",
+                      data: { toggle: 'tooltip' } %>
+      </h4>
+      <% unless publication.citation.blank? %>
+        <p class="help-block"><%= publication.citation %></p>
+      <% end %>
+      <% unless publication.pmcid.blank? %>
+        <%= link_to publication.pmcid, publication.pmc_link, class: 'btn btn-sm btn-default publication-link',
+                    target: :_blank, rel: 'noopener', 'data-analytics-name' => 'publication-link-pmc' %>
+      <% end %>
+    <% end %>
+  <% end %>
+  <% if @study.external_resources.any? %>
+    <h3>Resources</h3>
+    <% @study.external_resources.each do |resource| %>
+      <p>
+        <%= link_to resource.title, resource.url, class: 'btn btn-default navigation-form external-resource-link',
+                    target: :_blank, rel: 'noopener', title: resource.description,
+                    data: { toggle: 'tooltip', 'analytics-name' => 'external-resource-link' } %>
+      </p>
+    <% end %>
+  <% end %>
+
+</nav>
+<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+  $("#toggle-study-resources").click(function() {
+    $("#study-sidebar-content").toggleClass("closed")
+    $("#resource-btn").toggleClass('fa-angle-double-right fa-angle-double-left')
+    $(this).toggleClass("closed")
+  })
+
+  $('.corresponding-author').click(function() { showAuthorPopover(this) })
+</script>

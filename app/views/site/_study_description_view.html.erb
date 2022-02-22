@@ -1,9 +1,15 @@
-<div id="study-external-resources">
-  <%= render partial: '/layouts/external_resources_view', locals: {instance: @study} %>
+<div class="row" id="study-description-row">
+  <div class="col-md-12">
+    <div id="study-description-content" class="ck-content">
+      <%= @study.full_description.html_safe %>
+    </div>
+  </div>
+  <% if @study.has_linked_resources? || @study.authors.corresponding.any? %>
+    <%= render partial: 'study_resources_sidebar' %>
+  <% end %>
 </div>
-<div id="study-description-content" class="ck-content">
-  <%= @study.full_description.html_safe %>
-</div>
+
+
 <% if user_signed_in? && @study.can_edit?(current_user) %>
   <p><%= link_to "<i class='fas fa-fw fa-edit'></i> Edit description".html_safe, '#/', class: 'btn btn-primary', id: 'edit-study-description' %></p>
 
