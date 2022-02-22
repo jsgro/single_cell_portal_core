@@ -118,8 +118,8 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
             { showAzulSelectionPane &&
               <div>
                 <h4>Human Cell Atlas studies</h4>
-                <span className="detail">HCA studies are vailable under
-                  their <a href="https://data.humancellatlas.org/about/data-use-agreement" target="_blank" rel="noopener noreferrer">Data Use Agreement</a>
+                <span className="detail">Available under
+                  the <a href="https://data.humancellatlas.org/about/data-use-agreement" target="_blank" rel="noopener noreferrer">HCA Data Use Agreement</a>
                 </span>
                 <DownloadSelectionTable
                   isLoading={isLoadingAzul}
