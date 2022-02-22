@@ -34,9 +34,7 @@ function Summary({ msgs, issueCategory, fileName=null, showRefreshLink=false }) 
 }
 
 /**
- * Displays result of file validation issue for sync UI
- *
- * TODO (SCP-4119): Integrate this component into FileUploadControl.js
+ * Show result of file validation issue for upload UI or sync UI
  */
 export default function ValidationMessage({
   studyAccession, errorMsgs, warningMsgs, fileName, showRefreshLink=false
