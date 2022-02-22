@@ -814,17 +814,15 @@ figcaption.ck-editor__editable {
 }
 
 #study-sidebar-content {
-  background-color: #cddff6;
-  position: relative;
-  right: 0;
-  margin-left: 0;
-  border-left: 3px solid $action-color;
-  min-width: 350px;
-  max-width: 350px;
-  max-height: 600px;
-  overflow-y: auto;
-  padding: 10px 15px;
+  background-color: $dark-background-color;
+  color: #f6f6f6;
+  border-radius: 10px;
   transition: all 0.3s;
+  margin-right: 1em;
+  padding: 1em 1em 2em 1em;
+  a {
+    color: #e0e0e0;
+  }
 }
 
 #study-sidebar-content.closed {

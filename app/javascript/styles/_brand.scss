@@ -8,10 +8,10 @@
 
 .rectangle {
   height: 45px;
-  background-color: #344563 !important;
+  background-color: $dark-background-color !important;
   box-shadow: 0 2px 5px 0 rgba(0,0,0,0.26), 0 2px 10px 0 rgba(0,0,0,0.16);
   ul.dropdown-menu {
-    background-color: #344563 !important;
+    background-color: $dark-background-color !important;
   }
 }
 
@@ -23,7 +23,7 @@
 @media screen and (max-width: 768px) {
   ul.nav.navbar-nav.pull-right {
     margin-top: -7.5px;
-    background-color: #344563 !important;
+    background-color: $dark-background-color !important;
   }
   #breadcrumbs {
     display: none;
@@ -98,7 +98,7 @@
 }
 
 #scp-footer {
-  background-color: #344563 !important;
+  background-color: $dark-background-color !important;
   box-shadow: 0 2px 5px 0 rgba(0,0,0,0.26), 0 2px 10px 0 rgba(0,0,0,0.16);
   padding-top: 25px;
   padding-left: 25px;
