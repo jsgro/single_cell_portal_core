@@ -320,7 +320,7 @@ describe('Client-side file validation', () => {
         errrorMsgs={errorMsgs}
         warningMsgs={warningMsgs}
         fileName={'invalid_file.txt'}
-        isSync={true}
+        showRefreshLink={true}
       />
     )
 

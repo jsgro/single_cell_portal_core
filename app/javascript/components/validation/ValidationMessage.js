@@ -21,12 +21,12 @@ const refresh =
   </a>
 
 /** Summarize errors and warnings */
-function Summary({ msgs, issueCategory, fileName=null, isSync=false }) {
+function Summary({ msgs, issueCategory, fileName=null, showRefreshLink=false }) {
   // E.g. "Errors", "Warning"
   const issueTxt = pluralize(_capitalize(issueCategory), msgs.length)
 
   if (issueCategory === 'error') {
-    const redo = isSync ? refresh : 'Re-choose the file'
+    const redo = showRefreshLink ? refresh : 'Re-choose the file'
     return <p>{issueTxt} found.  {redo} after correcting {fileName}.</p>
   } else {
     return <p>{issueTxt}:</p>
@@ -39,13 +39,13 @@ function Summary({ msgs, issueCategory, fileName=null, isSync=false }) {
  * TODO (SCP-4119): Integrate this component into FileUploadControl.js
  */
 export default function ValidationMessage({
-  studyAccession, errorMsgs, warningMsgs, fileName, isSync=false
+  studyAccession, errorMsgs, warningMsgs, fileName, showRefreshLink=false
 }) {
   return (
     <>
       { errorMsgs?.length > 0 &&
       <div className="validation-error" data-testid="validation-error">
-        <Summary msgs={errorMsgs} issueCategory='error' fileName={fileName} isSync={isSync} />
+        <Summary msgs={errorMsgs} issueCategory='error' fileName={fileName} showRefreshLink={showRefreshLink} />
         <ul>{errorMsgs.map((msg, i) => {
           return <li className="validation-error" key={i}>{msg}</li>
         })}
@@ -68,7 +68,7 @@ export default function ValidationMessage({
 
 /** Convenience function to render this in a non-React part of the app */
 export function renderValidationMessage(
-  target, studyAccession, errorMsgs, warningMsgs, fileName, isSync
+  target, studyAccession, errorMsgs, warningMsgs, fileName, showRefreshLink
 ) {
   ReactDOM.unmountComponentAtNode(target)
   ReactDOM.render(
@@ -77,7 +77,7 @@ export function renderValidationMessage(
       errorMsgs={errorMsgs}
       warningMsgs={warningMsgs}
       fileName={fileName}
-      isSync={isSync}
+      showRefreshLink={showRefreshLink}
     />,
     target
   )
