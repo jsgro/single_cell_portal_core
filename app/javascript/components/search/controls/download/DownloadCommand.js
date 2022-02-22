@@ -32,7 +32,7 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
   }, [refreshNum])
 
   const downloadCommand = getDownloadCommand(authInfo.authCode, authInfo.downloadId)
-  const terminalDescription = isWindows ? 'Windows PowerShell window' : 'Mac/Linux/Unix terminal'
+  const terminalDescription = isWindows ? 'Windows PowerShell' : 'Mac/Linux/Unix'
 
   return <div className="download-url-modal row">
     <br/><br/><br/>
@@ -46,7 +46,7 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
     {
       !isLoading &&
       <div className="col-md-12">
-        <h4>Copy the command below and paste it into your {terminalDescription}</h4>
+        <h4>Copy the command below and paste it into your {terminalDescription} terminal</h4>
         This command is valid for one use within <span className='countdown'>
           {Math.floor(authInfo.timeInterval / 60)}
         </span> minutes.
