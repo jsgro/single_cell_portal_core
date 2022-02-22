@@ -463,7 +463,7 @@ function getValidationTrigger() {
   }
 }
 
-/** Trim messages logged to Mixpanel, to prevent HTTP 413 errors */
+/** Trim messages and number of errors, to prevent Mixpanel 413 errors */
 function getTrimmedIssueMessages(issues) {
   return issues.map(columns => {
     return columns[2].slice(0, 200) // Show <= 200 characters for each message
