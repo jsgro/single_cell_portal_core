@@ -463,6 +463,13 @@ function getValidationTrigger() {
   }
 }
 
+/** Trim messages and number of errors, to prevent Mixpanel 413 errors */
+function getTrimmedIssueMessages(issues) {
+  return issues.map(columns => {
+    return columns[2].slice(0, 200) // Show <= 200 characters for each message
+  }).slice(0, 20) // Show <= 20 messages
+}
+
 /** Get properties about this validation run to log to Mixpanel */
 export function getLogProps(fileInfo, issueObj, perfTimes) {
   const { errors, warnings, summary } = issueObj
@@ -490,15 +497,23 @@ export function getLogProps(fileInfo, issueObj, perfTimes) {
     }
     return Object.assign({ status: 'success' }, defaultProps)
   } else {
+    const errorMessages = getTrimmedIssueMessages(errors)
+    const warningMessages = getTrimmedIssueMessages(warnings)
+
+    const errorTypes = Array.from(new Set(errors.map(columns => columns[1])))
+    const warningTypes = Array.from(new Set(warnings.map(columns => columns[1])))
+
     return Object.assign(defaultProps, {
       status: 'failure',
       summary,
       numErrors: errors.length,
       numWarnings: warnings.length,
-      errors: errors.map(columns => columns[2]),
-      warnings: warnings.map(columns => columns[2]),
-      errorTypes: errors.map(columns => columns[1]),
-      warningTypes: warnings.map(columns => columns[1])
+      errors: errorMessages,
+      warnings: warningMessages,
+      numErrorTypes: errorTypes.length,
+      numWarningTypes: warningTypes.length,
+      errorTypes,
+      warningTypes
     })
   }
 }

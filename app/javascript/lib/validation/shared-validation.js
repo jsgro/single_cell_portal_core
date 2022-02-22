@@ -93,8 +93,9 @@ export function validateUniqueCellNamesWithinFile(line, isLastLine, dataObj) {
   if (isLastLine && dataObj.duplicateCellNames.size > 0) {
     const nameTxt = (dataObj.duplicateCellNames.size > 1) ? 'duplicates' : 'duplicate'
     const dupString = [...dataObj.duplicateCellNames].slice(0, 10).join(', ')
-    const msg = `Cell names must be unique within a file. 
-      ${dataObj.duplicateCellNames.size} ${nameTxt} found, including: ${dupString}`
+    const msg =
+      'Cell names must be unique within a file. ' +
+      `${dataObj.duplicateCellNames.size} ${nameTxt} found, including: ${dupString}`
     issues.push(['error', 'content:duplicate:cells-within-file', msg])
   }
   return issues

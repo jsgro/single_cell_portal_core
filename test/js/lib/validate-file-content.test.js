@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
 import {
-  validateFileContent, REQUIRED_CONVENTION_COLUMNS
+  validateFileContent, REQUIRED_CONVENTION_COLUMNS, getLogProps
 } from 'lib/validation/validate-file-content'
 import ValidationMessage from 'components/validation/ValidationMessage'
 import * as MetricsApi from 'lib/metrics-api'
@@ -54,6 +54,54 @@ describe('Client-side file validation', () => {
         warningTypes: []
       })
     )
+  })
+
+
+  it('prevents oversized log to Bard / Mixpanel', async () => {
+    // Confirms low-level protection against HTTP 413 errors, which can cause
+    // logging to Mixpanel to silently fail.
+
+    const expectedNumErrors = 30000
+    const expectedNumWarnings = 500
+    const bigError = 'e'.repeat(2000)
+    const bigWarning = 'w'.repeat(40000)
+
+    const manyErrors = Array(expectedNumErrors).fill(
+      ['error', 'foo:bar', bigError]
+    )
+    const manyWarnings = Array(expectedNumWarnings).fill(
+      ['warning', 'baz:moo', bigWarning]
+    )
+
+    const errorObj = {
+      errors: manyErrors,
+      warnings: manyWarnings,
+      summary: 'foo'
+    }
+
+    const fileInfo = {
+      delimiter: 'tab',
+      numColumns: 99999999,
+      linesRead: 99999999,
+      numTableCells: 9999999999999,
+      fileType: 'Metadata',
+      fileName: 'actually_a_huge_expression_file.txt',
+      fileSize: 99999999999999999,
+      fileMimeType: 'text/plain',
+      isGzipped: false,
+      status: 'failure',
+      summary: 'Your file had (insert massive number) errors'
+    }
+
+    const perfTime = 900
+    const logProps = getLogProps(fileInfo, errorObj, perfTime)
+
+    expect(logProps.numErrors).toEqual(expectedNumErrors)
+    expect(logProps.numWarnings).toEqual(expectedNumWarnings)
+    expect(logProps.errors).toHaveLength(20)
+    expect(logProps.warnings).toHaveLength(20)
+    expect(logProps.errors[0]).toHaveLength(200)
+    expect(logProps.warnings[0]).toHaveLength(200)
   })
 
   it('catches duplicate headers', async () => {
