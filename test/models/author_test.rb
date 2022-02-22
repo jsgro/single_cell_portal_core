@@ -20,6 +20,6 @@ class AuthorTest < ActiveSupport::TestCase
     assert @author.valid?
     @author.email = 'this is not an email'
     assert_not @author.valid?
-    assert @author.errors
+    assert_equal :email, @author.errors.first.attribute
   end
 end

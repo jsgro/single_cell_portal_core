@@ -15,11 +15,17 @@ class Author
 
   belongs_to :study
 
-  validates_presence_of :first_name, :last_name, :email
-  validates_format_of :email,
-                      with: Devise.email_regexp,
-                      message: 'is not a valid format',
-                      unless: proc { email.blank? }
+  validates :first_name, :last_name,
+            presence: true
+
+  validates :email,
+            presence: true,
+            if: proc { corresponding },
+            format: {
+              with: Devise.email_regexp,
+              message: 'is not a valid format',
+              unless: proc { email.blank? }
+            }
 
   def base_64_email
     Base64.encode64(email)
