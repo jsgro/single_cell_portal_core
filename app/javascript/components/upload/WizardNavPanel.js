@@ -19,7 +19,7 @@ function RawWizardNavPanel({
   const [othersExpanded, setOthersExpanded] = useState(true)
   const expansionIcon = othersExpanded ? faChevronUp : faChevronDown
 
-  return <div className="position-fixed">
+  return <div className="wizard-side-panel">
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-primary-steps">
       { mainSteps.map((step, index) =>
         <StepTabHeader key={index}

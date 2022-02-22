@@ -1,21 +1,20 @@
 .upload-wizard-react {
-  .position-fixed {
+  .wizard-side-panel {
     width: 25%;
-    position: fixed;
+    min-width: 229px;
     height: calc(100% - 50px); // leave room for footer and navbar
     overflow-y: auto;
-    margin-left: -15px;
     background: rgb(219, 225, 232);
   }
   .wizard-top-bar {
     background: #ddd;
+    width: 100%;
     padding: 0.5em;
     padding-left: 1em;
-    position: fixed;
     z-index: 100;
   }
   .wizard-content {
-    margin-top: 34px;
+    display: flex;
   }
 }
 
@@ -115,7 +114,6 @@
 }
 
 .file-upload-overlay {
-  position: absolute;
   left: 0;
   top: 0;
   width: 100%;
@@ -137,13 +135,17 @@
 }
 
 .validation-error {
-  color: $danger-color;
+  color: $danger-color !important;
 }
 
 .validation-warning {
-  color: $warning-icon-color;
+  color: $warning-icon-color !important;
 }
 
 .prev-next-buttons {
   margin-left: auto;
+}
+
+.left-margin {
+  margin-left: 15px;
 }
