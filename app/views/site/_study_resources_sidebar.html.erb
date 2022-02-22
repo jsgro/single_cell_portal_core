@@ -1,6 +1,8 @@
-<div id="study-sidebar-content" class="col-md-3">
+<nav id="study-sidebar-content">
+  <%= link_to "<i class='fas fa-angle-double-right' id='resource-btn'></i>".html_safe, '#',
+              id: 'toggle-study-resources', class: 'btn btn-sm btn-default' %>
   <% if @study.authors.corresponding.any? %>
-    <h4>Corresponding authors</h4>
+    <h3>Corresponding authors</h3>
     <% @study.authors.corresponding.each do |author| %>
       <%= link_to "#{author.first_name} #{author.last_name} <i class='fa fas fa-envelope'></i>".html_safe, '#',
                   class: 'btn btn-sm btn-default corresponding-author',
@@ -12,7 +14,7 @@
     <% end %>
   <% end %>
   <% if @study.publications.any? %>
-    <h4>Related publications</h4>
+    <h3>Related publications</h3>
     <% @study.publications.each do |publication| %>
       <h4><%= link_to publication.title, publication.url, target: :_blank, rel: 'noopener',
                       'data-analytics-name' => 'publication-link-journal', title: "View in #{publication.journal}",
@@ -28,16 +30,23 @@
     <% end %>
   <% end %>
   <% if @study.external_resources.any? %>
-    <h5>Resources</h5><p></p>
+    <h3>Resources</h3>
     <% @study.external_resources.each do |resource| %>
       <p>
-        <%= link_to resource.url,
-          target: :_blank, rel: 'noopener', title: resource.description,
-          data: { toggle: 'tooltip', 'analytics-name' => 'external-resource-link' } do %>
-          <%= resource.title %> <span class="fas fa-external-link-alt"></span>
-        <% end %>
+        <%= link_to resource.title, resource.url, class: 'btn btn-default navigation-form external-resource-link',
+                    target: :_blank, rel: 'noopener', title: resource.description,
+                    data: { toggle: 'tooltip', 'analytics-name' => 'external-resource-link' } %>
       </p>
     <% end %>
   <% end %>
 
-</div>
+</nav>
+<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+  $("#toggle-study-resources").click(function() {
+    $("#study-sidebar-content").toggleClass("closed")
+    $("#resource-btn").toggleClass('fa-angle-double-right fa-angle-double-left')
+    $(this).toggleClass("closed")
+  })
+
+  $('.corresponding-author').click(function() { showAuthorPopover(this) })
+</script>
