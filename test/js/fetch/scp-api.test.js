@@ -1,5 +1,5 @@
 // Without disabling eslint code, Promises are auto inserted
-/* eslint-disable*/
+/* eslint-disable */
 
 const fetch = require('node-fetch')
 import {mockPerformance} from './../mock-performance'

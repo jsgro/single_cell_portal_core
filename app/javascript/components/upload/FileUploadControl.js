@@ -48,7 +48,7 @@ async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExt
     return { errorMsgs: [errorMsg], warningMsgs: [] }
   }
 
-  if (!allowedFileExts.includes('*') && !allowedFileExts.some(aft => selectedFile.name.endsWith(aft))) {
+  if (!allowedFileExts.includes('*') && !allowedFileExts.some(ext => selectedFile.name.endsWith(ext))) {
     const errorMsg = `Allowed extensions are ${allowedFileExts.join(' ')}`
     return { errorMsgs: [errorMsg], warningMsgs: [] }
   }

@@ -866,6 +866,8 @@ class StudiesController < ApplicationController
     @study_file = @study.study_files.build
     @partial = 'study_file_form'
     if @study_file.update(study_file_params)
+      # fix content headers
+      StudySyncService.fix_file_content_headers(@study_file)
       if study_file_params[:file_type] == 'Expression Matrix' && !study_file_params[:y_axis_label].blank?
         # if user is supplying an expression axis label, update default options hash
         @study.update(default_options: @study.default_options.merge(expression_label: study_file_params[:y_axis_label]))
@@ -1295,6 +1297,7 @@ class StudiesController < ApplicationController
           # process sequence data file into appropriate directory listing
           process_directory_listing_file(file, file_type)
         else
+
           # make sure file is not actually a folder by checking its size
           if file.size > 0
             # create a new entry

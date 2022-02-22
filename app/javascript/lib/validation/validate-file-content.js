@@ -1,5 +1,5 @@
 /**
-* @fileoverview Validates Single Cell Portal files on the user's computer
+* @fileoverview Client-side file validation (CSFV) for upload and sync
 *
 * Where feasible, these functions and data structures align with those in
 * Ingest Pipeline [1].  Such consistency across codebases eases QA, debugging,
@@ -22,7 +22,8 @@ import {
 
 import getSCPContext from 'providers/SCPContextProvider'
 
-// from lib/assets/metadata_schemas/alexandria_convention_schema.json (which in turn is from scp-ingest-pipeline/schemas)
+// from lib/assets/metadata_schemas/alexandria_convention_schema.json
+// (which in turn is from scp-ingest-pipeline/schemas)
 export const REQUIRED_CONVENTION_COLUMNS = [
   'biosample_id',
   'disease',
@@ -36,7 +37,6 @@ export const REQUIRED_CONVENTION_COLUMNS = [
   'species',
   'species__ontology_label'
 ]
-
 
 /**
  * Verify headers are unique and not empty
@@ -328,10 +328,19 @@ export async function validateGzipEncoding(file) {
   return isGzipped
 }
 
+/**
+ * Read File object, transform and validate it according to its SCP file type
+ *
+ * @returns {Object} result Validation results
+ * @returns {Object} result.fileInfo Data about the file and its parsing
+ * @returns {Object} result.issuesObj Errors, warnings, and summary
+ * @returns {Number} result.perfTime How long this function took
+ */
+export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
+  const startTime = performance.now()
 
-/** reads the file and returns a fileInfo object along with an array of issues */
-async function parseFile(file, fileType, fileOptions={}) {
   const fileInfo = {
+    ...sizeProps,
     fileSize: file.size,
     fileName: file.name,
     linesRead: 0,
@@ -342,11 +351,16 @@ async function parseFile(file, fileType, fileOptions={}) {
     isGzipped: null
   }
   const parseResult = { fileInfo, issues: [] }
+
   try {
     fileInfo.isGzipped = await validateGzipEncoding(file)
     // if the file is compressed or we can't figure out the compression, don't try to parse further
     if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
-      return { fileInfo, issues: [] }
+      return {
+        fileInfo,
+        issueObj: formatIssues([]),
+        perfTime: Math.round(performance.now() - startTime)
+      }
     }
     const parseFunctions = {
       'Cluster': parseClusterFile,
@@ -356,13 +370,25 @@ async function parseFile(file, fileType, fileOptions={}) {
       '10X Barcodes File': parseBarcodesFile,
       'MM Coordinate Matrix': parseSparseMatrixFile
     }
+
     if (parseFunctions[fileType]) {
-      const chunker = new ChunkedLineReader(file)
-      const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
+      let ignoreLastLine = false
+      if (sizeProps?.fetchedCompleteFile === false) {
+        ignoreLastLine = true
+        const msg =
+          'Due to this file\'s size, it will be fully validated after sync, ' +
+          'and any errors will be emailed to you.'
+
+        parseResult.issues.push(['warn', 'incomplete:range-request', msg])
+      }
+
+      const chunker = new ChunkedLineReader(file, ignoreLastLine)
+      const { issues, delimiter, numColumns } =
+        await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
       fileInfo.linesRead = chunker.linesRead
       fileInfo.delimiter = delimiter
       fileInfo.numColumns = numColumns
-      parseResult.issues = issues
+      parseResult.issues = parseResult.issues.concat(issues)
     }
   } catch (error) {
     // get any unhandled or deliberate short-circuits
@@ -372,22 +398,42 @@ async function parseFile(file, fileType, fileOptions={}) {
       parseResult.issues.push(['error', 'parse:unhandled', error.message])
     }
   }
-  return parseResult
-}
 
-/** Validate a local file, return { errors, warnings, summary } object, where errors is an array of errors, and summary
- * is a message like "Your file had 2 errors"
- */
-export async function validateFileContent(file, fileType, fileOptions={}) {
-  const startTime = performance.now()
-  const { fileInfo, issues } = await parseFile(file, fileType, fileOptions)
+  const issueObj = formatIssues(parseResult.issues)
   const perfTime = Math.round(performance.now() - startTime)
 
-  const errorObj = formatIssues(issues)
-  const logProps = getLogProps(fileInfo, errorObj, perfTime)
+  return {
+    fileInfo,
+    issueObj,
+    perfTime
+  }
+}
+
+/**
+ * Validate a File object, log and return issues for upload UI
+ *
+ *  @param {File} file File object to validate
+ *    Docs: https://developer.mozilla.org/en-US/docs/Web/API/File
+ *  @param {String} fileType SCP file type
+ *  @param {Object} [fileOptions]
+ *
+ * @return {Object} issueObj Validation results, where:
+ *   - `errors` is an array of errors,
+ *   - `warnings` is an array of warnings, and
+ *   - `summary` is a message like "Your file had 2 errors"
+ */
+export async function validateFileContent(file, fileType, fileOptions={}) {
+  const { fileInfo, issueObj, perfTime } = await parseFile(file, fileType, fileOptions)
+
+  const otherProps = {
+    perfTime,
+    'perfTime:parseFile': perfTime
+  }
+
+  const logProps = getLogProps(fileInfo, issueObj, otherProps)
   log('file-validation', logProps)
 
-  return errorObj
+  return issueObj
 }
 
 /** take an array of [type, key, msg] issues, and format it */
@@ -425,8 +471,8 @@ function getTrimmedIssueMessages(issues) {
 }
 
 /** Get properties about this validation run to log to Mixpanel */
-export function getLogProps(fileInfo, errorObj, perfTime) {
-  const { errors, warnings, summary } = errorObj
+export function getLogProps(fileInfo, issueObj, perfTimes) {
+  const { errors, warnings, summary } = issueObj
   const trigger = getValidationTrigger()
 
   // Avoid needless gotchas in downstream analysis
@@ -439,10 +485,10 @@ export function getLogProps(fileInfo, errorObj, perfTime) {
 
   const defaultProps = {
     ...fileInfo,
-    perfTime,
+    ...perfTimes,
     trigger,
-    delimiter: friendlyDelimiter,
-    numTableCells: fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
+    'delimiter': friendlyDelimiter,
+    'numTableCells': fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
   }
 
   if (errors.length === 0) {

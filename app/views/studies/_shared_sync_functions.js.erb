@@ -1,9 +1,13 @@
 // shared JS functions for sync forms
 
-$('#study-file-<%= study_file.id %>').on('change', '.file-type', function() {
+// Used for sync CSFV
+window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
+
+$('#study-file-<%= study_file.id %>').on('change', '.file-type', async function() {
     var form = $(this).closest('form');
     var fileName = form.find('.filename').val();
     var fileType = $(this).val();
+    var fileId = '<%= study_file.id %>';
     var nameField = $('#study-file-<%= study_file.id %> #study_file_name');
     var extraInfo = $('#study-file-<%= study_file.id %>-extra-info');
     var taxonTarget = form.find('.taxon-select-target');
@@ -95,6 +99,46 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', function() {
             submitBtn.attr('disabled', false);
         }
     }
+
+    // FileUploadControl updates this more elegantly via React,
+    // but this direct approach is easier and as effective here.
+    let useConvention = false
+    if (fileType === 'Metadata') {
+      const conventionSelector =
+        '#study-file-<%= study_file.id %> ' +
+        '#study_file_use_metadata_convention_true'
+      useConvention = ($(conventionSelector)[0].checked === true)
+    }
+    const fileOptions = {
+      use_metadata_convention: useConvention
+    }
+
+    const bucketName = '<%= @study.bucket_id %>'
+    const issues = await window.SCP.validateRemoteFileContent(
+      bucketName, fileName, fileType, fileOptions
+    );
+
+    $(form).remove('.validation-message-container')
+    $(form).append('<div class="validation-message-container">')
+    const studyAccession = '<%= @study.accession %>'
+    const errorMsgs = issues.errors.map(error => error[2])
+    const warningMsgs = issues.warnings.map(warning => warning[2])
+    const selector = `#${form.attr('id')} .validation-message-container`
+    const target = document.querySelector(selector)
+    window.SCP.renderValidationMessage(
+      target, studyAccession, errorMsgs, warningMsgs, fileName, true
+    )
+
+
+    if (issues.errors.length > 1) {
+      // Disable the "Sync" button
+      $(`#sync-study-file-${fileId}`)
+        .prop('disabled', true)
+        .attr('data-toggle', 'tooltip')
+        .attr('data-original-title', 'Fix validation errors, then refresh')
+        .attr('data-placement', 'left')
+    }
+
 });
 
 $("#sync-study-file-<%= study_file.id %>").click(function() {
