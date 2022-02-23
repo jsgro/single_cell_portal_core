@@ -1,3 +1,4 @@
+require 'api_test_helper'
 require 'integration_test_helper'
 require 'test_helper'
 require 'includes_helper'
@@ -121,5 +122,68 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     assert_response 302
     follow_redirect!
     assert_equal site_path, path, 'Did not redirect to home page'
+  end
+
+  test 'should save/delete author and publication data from study settings tab' do
+    assert @study.authors.empty?
+    assert @study.publications.empty?
+    study_params = {
+      'study' => {
+        'authors_attributes' => {
+          '0' => {
+            'first_name' => 'Joe',
+            'last_name' => 'Smith',
+            'email' => 'j.smith@test.edu',
+            'institution' => 'Test University',
+            'corresponding' => '1',
+            '_destroy' => 'false'
+          }
+        },
+        'publications_attributes' => {
+          '0' => {
+            'title' => 'Div-Seq: Single nucleus RNA-Seq reveals dynamics of rare adult newborn neurons',
+            'journal' => 'Science',
+            'pmcid' => 'PMC5480621',
+            'citation' => 'Science. 2016 Aug 26; 353(6302): 925‚Äì928. Published online 2016 Jul 28.',
+            'url' => 'https://www.science.org/doi/10.1126/science.aad7038',
+            'preprint' => '0',
+            '_destroy' => 'false'
+          }
+        }
+      }
+    }
+    patch update_study_settings_path(accession: @study.accession, study_name: @study.url_safe_name),
+          params: study_params, xhr: true
+    assert_response :success
+    @study.reload
+    assert @study.authors.count == 1
+    assert @study.authors.corresponding.count == 1
+    assert @study.publications.count == 1
+    assert @study.publications.published.count == 1
+    author_id = @study.authors.first.id.to_s
+    publication_id = @study.publications.first.id.to_s
+    # test delete functionality
+    study_params = {
+      'study' => {
+        'authors_attributes' => {
+          '0' => {
+            'id' => author_id,
+            '_destroy' => 'true'
+          }
+        },
+        'publications_attributes' => {
+          '0' => {
+            'id' => publication_id,
+            '_destroy' => 'true'
+          }
+        }
+      }
+    }
+    patch update_study_settings_path(accession: @study.accession, study_name: @study.url_safe_name),
+          params: study_params, xhr: true
+    assert_response :success
+    @study.reload
+    assert @study.authors.empty?
+    assert @study.publications.empty?
   end
 end

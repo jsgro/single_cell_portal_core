@@ -4,6 +4,10 @@ import LoadingSpinner from 'lib/LoadingSpinner'
 import { fetchAuthCode, stringifyQuery } from 'lib/scp-api'
 import { _ as bardUtils } from '@databiosphere/bard-client/src/utils'
 
+// Get client os and determine correct curl invocation & UI language
+const clientOS = bardUtils.info.os()
+const isWindows = clientOS.match(/Win/)
+
 /** component for rendering a copyable bulk download command for an array of file ids.
     Queries the server to retrieve the appropriate auth code. */
 export default function DownloadCommand({ fileIds=[], azulFiles }) {
@@ -28,6 +32,7 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
   }, [refreshNum])
 
   const downloadCommand = getDownloadCommand(authInfo.authCode, authInfo.downloadId)
+  const terminalDescription = isWindows ? 'Windows PowerShell' : 'Mac/Linux/Unix'
 
   return <div className="download-url-modal row">
     <br/><br/><br/>
@@ -41,7 +46,7 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
     {
       !isLoading &&
       <div className="col-md-12">
-        <h4>Copy the command below and paste it into your Mac/Linux/Unix terminal</h4>
+        <h4>Copy the command below and paste it into your {terminalDescription} terminal</h4>
         This command is valid for one use within <span className='countdown'>
           {Math.floor(authInfo.timeInterval / 60)}
         </span> minutes.
@@ -83,9 +88,6 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
  * @returns {Object} Object for auth code, time interval, and download command
  */
 function getDownloadCommand(authCode, downloadId) {
-  // Get client os and determine correct curl invocation
-  const clientOS = bardUtils.info.os()
-  const isWindows = clientOS.match(/Win/)
   const curlExec = isWindows ? 'curl.exe' : 'curl'
   const queryParams = {
     auth_code: authCode,

@@ -30,7 +30,7 @@ describe('Upload wizard supports reference images', () => {
       content: 'crap\n'
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
-    expect(screen.getByTestId('file-content-validation')).toHaveTextContent(`Could not use ${badFileName}`)
+    expect(screen.getByTestId('validation-error')).toHaveTextContent(`after correcting ${badFileName}`)
 
     const imageFileName = 'chicken.jpeg'
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
