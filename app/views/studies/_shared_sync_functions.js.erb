@@ -135,7 +135,7 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
       target, studyAccession, errorMsgs, warningMsgs, fileName, true
     )
 
-    if (issues.errors.length > 1) {
+    if (issues.errors.length > 0) {
       // Disable the "Sync" button
       $(`#sync-study-file-${fileId}`)
         .prop('disabled', true)
