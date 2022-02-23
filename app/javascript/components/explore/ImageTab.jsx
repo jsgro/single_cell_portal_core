@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import BucketImage from 'components/visualization/BucketImage'
-import ScatterPlot from 'components/visualization/ScatterPlot'
+import BucketImage from '~/components/visualization/BucketImage'
+import ScatterPlot from '~/components/visualization/ScatterPlot'
 
 /** Display reference images (e.g. tissue stains) beside spatial scatter plots */
 export default function ImageTab({

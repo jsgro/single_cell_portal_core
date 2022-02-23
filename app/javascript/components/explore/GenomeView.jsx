@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react'
 import igv from '@single-cell-portal/igv'
 import _uniqueId from 'lodash/uniqueId'
 
-import LoadingSpinner from 'lib/LoadingSpinner'
-import { log } from 'lib/metrics-api'
-import { fetchBamFileInfo } from 'lib/scp-api'
-import { withErrorBoundary } from 'lib/ErrorBoundary'
-import { getReadOnlyToken, userHasTerraProfile } from 'providers/UserProvider'
-import { profileWarning } from 'lib/study-overview/terra-profile-warning'
+import LoadingSpinner from '~/lib/LoadingSpinner'
+import { log } from '~/lib/metrics-api'
+import { fetchBamFileInfo } from '~/lib/scp-api'
+import { withErrorBoundary } from '~/lib/ErrorBoundary'
+import { getReadOnlyToken, userHasTerraProfile } from '~/providers/UserProvider'
+import { profileWarning } from '~/lib/study-overview/terra-profile-warning'
 
 /** Component for displaying IGV for any BAM/BAI files provided with the study */
 function GenomeView({ studyAccession, bamFileName, uniqueGenes, isVisible, updateExploreParams }) {

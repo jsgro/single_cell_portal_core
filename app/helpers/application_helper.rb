@@ -408,5 +408,4 @@ module ApplicationHelper
     nonce = _content_security_policy_nonce(:script)
     tag_content&.gsub('module"', 'module" nonce="' + nonce + '"')&.gsub('localhost', 'https://localhost')&.html_safe
   end
-
 end

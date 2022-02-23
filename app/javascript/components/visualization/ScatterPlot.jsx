@@ -4,7 +4,7 @@ import _remove from 'lodash/remove'
 import Plotly from 'plotly.js-dist'
 import { store } from 'react-notifications-component'
 
-import { fetchCluster, updateStudyFile } from 'l~/ib/scp-api'
+import { fetchCluster, updateStudyFile } from '~/lib/scp-api'
 import { logScatterPlot } from '~/lib/scp-api-metrics'
 import { log } from '~/lib/metrics-api'
 import { useUpdateEffect } from '~/hooks/useUpdate'

@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react'
 import inject from '@rollup/plugin-inject'
 
 export default defineConfig({
+  'build': {
+    'assetsInlineLimit': 30000000
+  },
   'plugins': [
     // inject plugin needs to be first
     inject({

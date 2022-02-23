@@ -1,5 +1,6 @@
 
 import React, { useContext } from 'react'
+import ReactDOM from 'react-dom'
 import { Router, Link, useLocation } from '@reach/router'
 
 import GeneSearchView from '~/components/search/genes/GeneSearchView'
@@ -81,8 +82,13 @@ function RawHomePageContent() {
 }
 
 /** Include Reach router */
-export default function HomePageContentLegacy() {
+export default function HomePageContent() {
   return (<Router>
     <RawHomePageContent default/>
   </Router>)
+}
+
+/** helper function to render the homepage from non-react portions of the app */
+export function renderHomePageContent(target) {
+  ReactDOM.render(<HomePageContent/>, target)
 }

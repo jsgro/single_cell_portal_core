@@ -65,6 +65,11 @@
 
   </script>
 
+  <%= vite_stylesheet_tag %>
+  <%= nonced_vite_client_tag %>
+  <%= nonced_vite_react_refresh_tag %>
+  <%= nonced_vite_javascript_tag 'application' %>
+
   <%= stylesheet_link_tag 'application', media: 'all' %>
   <%= stylesheet_pack_tag 'application', media: 'all' %>
 
@@ -80,19 +85,7 @@
     </style>
   <% end %>
 
-    <%= vite_stylesheet_tag %>
-    <%= nonced_vite_client_tag %>
-    <%= nonced_vite_react_refresh_tag %>
-    <%= nonced_vite_javascript_tag 'application' %>
-    <!--
-      If using a TypeScript entrypoint file:
-        vite_typescript_tag 'application'
 
-      If using a .jsx or .tsx entrypoint, add the extension:
-        vite_javascript_tag 'application.jsx'
-
-      Visit the guide for more information: https://vite-ruby.netlify.app/guide/rails
-    -->
 
 </head>
 <body <%= @selected_branding_group.present? ? "data-branding-id=#{@selected_branding_group.name_as_id}" : nil %>>

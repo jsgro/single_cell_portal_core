@@ -5,11 +5,11 @@ import _cloneDeep from 'lodash/clone'
 import ReactNotification from 'react-notifications-component'
 
 import ExploreDisplayTabs from './ExploreDisplayTabs'
-import { getDefaultClusterParams } from 'lib/cluster-utils'
-import MessageModal from 'lib/MessageModal'
+import { getDefaultClusterParams } from '~/lib/cluster-utils'
+import MessageModal from '~/lib/MessageModal'
 
-import { fetchExplore, fetchStudyUserInfo } from 'lib/scp-api'
-import ErrorBoundary from 'lib/ErrorBoundary'
+import { fetchExplore, fetchStudyUserInfo } from '~/lib/scp-api'
+import ErrorBoundary from '~/lib/ErrorBoundary'
 import useExploreTabRouter from './ExploreTabRouter'
 
 /**

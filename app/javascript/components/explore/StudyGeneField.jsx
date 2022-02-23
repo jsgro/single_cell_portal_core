@@ -6,8 +6,8 @@ import Modal from 'react-bootstrap/lib/Modal'
 import CreatableSelect from 'react-select/creatable'
 import _differenceBy from 'lodash/differenceBy'
 
-import { getAutocompleteSuggestions } from 'lib/search-utils'
-import { log, logStudyGeneSearch } from 'lib/metrics-api'
+import { getAutocompleteSuggestions } from '~/lib/search-utils'
+import { log, logStudyGeneSearch } from '~/lib/metrics-api'
 
 
 /** renders the gene text input

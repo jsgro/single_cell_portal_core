@@ -1,11 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
+import ExploreView from '~/components/explore/ExploreView'
 
 import 'react-notifications-component/dist/theme.css'
 import '~/styles/application.scss'
-
-import $ from 'jquery'
-import HomePageContent from '~/components/HomePageContent'
 
 // To see this message, add the following to the `<head>` section in your
 // views/layouts/application.html.erb
@@ -13,14 +11,6 @@ import HomePageContent from '~/components/HomePageContent'
 //    <%= vite_client_tag %>
 //    <%= vite_javascript_tag 'application' %>
 console.log('Vite ⚡️ Rails')
-
-// If using a TypeScript entrypoint file:
-//     <%= vite_typescript_tag 'application' %>
-//
-// If you want to use .jsx or .tsx, add the extension:
-//     <%= vite_javascript_tag 'application.jsx' %>
-
-console.log('Visit the guide for more information: ', 'https://vite-ruby.netlify.app/guide/rails')
 
 // Example: Load Rails libraries in Vite.
 //
@@ -33,6 +23,20 @@ console.log('Visit the guide for more information: ', 'https://vite-ruby.netlify
 // // Import all channels.
 // const channels = import.meta.globEager('./**/*_channel.js')
 
-ReactDOM.render(
-  React.createElement(HomePageContent), document.getElementById('home-page-content')
-)
+
+const RENDERABLE_ROOT_COMPONENTS = {
+  ExploreView
+}
+
+/** helper function to render a component from outside vite/react */
+function renderComponent(targetId, componentName, args) {
+  ReactDOM.render(React.createElement(RENDERABLE_ROOT_COMPONENTS[componentName], args),
+    document.getElementById(targetId))
+}
+window.SCP.renderComponent = renderComponent
+
+if (window.SCP.componentsToRender?.length) {
+  window.SCP.componentsToRender.forEach(params => {
+    renderComponent(params.targetId, params.componentName, params.args)
+  })
+}

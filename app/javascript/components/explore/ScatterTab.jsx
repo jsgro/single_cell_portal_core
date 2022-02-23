@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faImage } from '@fortawesome/free-solid-svg-icons'
 
-import ScatterPlot from 'components/visualization/ScatterPlot'
-import BucketImage from 'components/visualization/BucketImage'
+import ScatterPlot from '~/components/visualization/ScatterPlot'
+import BucketImage from '~/components/visualization/BucketImage'
 
 // we allow 8 plotly contexts -- each plotly graph consumes 3 webgl contexts,
 // and chrome by defualt allows up to 32 simultaneous webgl contexts

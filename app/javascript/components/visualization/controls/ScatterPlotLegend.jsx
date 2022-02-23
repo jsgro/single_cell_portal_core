@@ -1,14 +1,13 @@
 import React, { useState } from 'react'
-import { log } from 'lib/metrics-api'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPalette } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { HexColorPicker, HexColorInput } from 'react-colorful'
 import _cloneDeep from 'lodash/cloneDeep'
 
-import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
-import { getColorBrewerColor, scatterLabelLegendWidth } from 'lib/plot'
-import LoadingSpinner from 'lib/LoadingSpinner'
+import { log } from '~/lib/metrics-api'
+import { UNSPECIFIED_ANNOTATION_NAME } from '~/lib/cluster-utils'
+import { getColorBrewerColor, scatterLabelLegendWidth } from '~/lib/plot'
 
 /** Sort annotation labels naturally, but always put "unspecified" last */
 function labelSort(a, b) {
@@ -127,7 +126,7 @@ function LegendEntry({
         </div>
         <div className="scatter-legend-entry">
           <span className="legend-label" title={entry}>{entry}</span>
-          <span className="num-points" title={`${numPoints} points in this group`}>{numPoints}</span>
+          <span className="num-points" title={`${numPoints} points in this crazy group`}>{numPoints}</span>
         </div>
       </div>
       { showColorPicker &&

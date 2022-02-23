@@ -19,6 +19,9 @@
 
       #%>
       <div id="home-page-content"></div>
+      <script  type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+        window.addEventListener('load', () => window.SCP.renderHomePageContent(document.getElementById('home-page-content')))
+      </script>
     </div>
   </div>
 </div>
