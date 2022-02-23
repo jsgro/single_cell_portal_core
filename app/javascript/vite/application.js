@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import ExploreView from '~/components/explore/ExploreView'
+import HomePageContent from '../components/HomePageContent'
 
 import 'react-notifications-component/dist/theme.css'
 import '~/styles/application.scss'
@@ -25,7 +26,8 @@ console.log('Vite ⚡️ Rails')
 
 
 const RENDERABLE_ROOT_COMPONENTS = {
-  ExploreView
+  ExploreView,
+  HomePageContent
 }
 
 /** helper function to render a component from outside vite/react */
