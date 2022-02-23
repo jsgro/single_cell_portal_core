@@ -178,6 +178,6 @@ class RequestUtils
   def self.static_asset_error?(exception)
     return false unless exception.is_a?(ActionController::RoutingError)
 
-    exception.message.match(/(assets|packs|apple-touch)/) ? true : false
+     /(assets|packs|apple-touch)/.match?(exception.message)
   end
 end
