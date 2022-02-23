@@ -1,0 +1,33 @@
+<h3>External resources</h3>
+<p class="help-block">
+  Add links to external resources for this study, such as code or data repositories, informational wikis, or other
+  studies in Single Cell Portal.
+</p>
+
+<%= f.fields_for :external_resources do |resource| %>
+  <div class="form-group row">
+    <div class="col-sm-3">
+      <%= resource.label :title, class: 'sr-only' %>
+      <%= resource.text_field :title, class: 'form-control external-resource-title', placeholder: 'Link name' %>
+    </div>
+    <div class="col-sm-3">
+      <%= resource.label :description, class: 'sr-only' %>
+      <%= resource.text_field :description, class: 'form-control external-resource-description',
+                       placeholder: 'Description (used as tooltip)' %>
+    </div>
+    <div class="col-sm-5">
+      <%= resource.label :url, class: 'sr-only' %>
+      <%= resource.text_field :url, class: 'form-control external-resource-url', placeholder: 'URL' %>
+    </div>
+    <!-- publication_url is not used here to phase out external_resource instances used for publications -->
+    <div class="col-sm-1 text-right">
+      <%= resource.link_to_remove "<span class='btn btn-sm btn-danger'><span class='fas fa-times'></span></span>".html_safe,
+                           data: {
+                             confirm: 'Are you sure?  This cannot be undone unless you reload the page before saving.'
+                           }
+      %>
+    </div>
+  </div>
+<% end %>
+<%= f.link_to_add "<span class='fas fa-plus'></span> Resource".html_safe, :external_resources,
+                  class: 'btn btn-primary', id: 'add-external-resource' %>

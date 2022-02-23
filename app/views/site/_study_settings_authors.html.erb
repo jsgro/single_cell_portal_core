@@ -1,0 +1,14 @@
+<h3>Authors</h3>
+<p class="help-block">
+  Enter information about corresponding authors.  This information will be used both for other users to
+  discover your study, and to allow limited correspondence with questions regarding your data.
+</p>
+<%= f.fields_for :authors %>
+<%= f.link_to_add "<span class='fas fa-plus'></span> Author".html_safe, :authors, class: 'btn btn-primary', id: 'add-author' %>
+<h3>Publications</h3>
+<p class="help-block">
+  Enter information about any publications associated with this study so that users can read more about your
+  data and analyses.
+</p>
+<%= f.fields_for :publications %>
+<%= f.link_to_add "<span class='fas fa-plus'></span> Publication".html_safe, :publications, class: 'btn btn-primary', id: 'add-publication' %>

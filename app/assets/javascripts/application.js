@@ -746,3 +746,28 @@ function updateRawCountsAssnSelect(parentForm, currentValues, isRequired) {
     .map(sf => ({ label: sf.upload_file_name, value: sf['_id']['$oid'] }))
   window.SCP.renderRawAssociationSelect(rawAssnTarget, currentValues, pairedHiddenField, matrixOpts, isRequired)
 }
+
+// dynamically show a Bootstrap popover w/ author contact information when clicking button in author/pubs sidebar
+function showAuthorPopover(element) {
+  const jqElement = $(element)
+  // if element already has popover enabled, toggle on click event and return
+  // this has better behavior than default 'click' trigger which needs two clicks initially
+  // prevents popover from closing when trying to copy email like 'focus' or 'hover' triggers do
+  if (jqElement.data('popover')) {
+    jqElement.popover('toggle')
+    return true
+  }
+  // base64 decode email from 'contact' data entry and append popover to button
+  const encodedEmail = jqElement.data('contact')
+  const email = atob(encodedEmail)
+  const contactLink = `<a href="mailto:${email}">${email}</a>`
+  jqElement.popover({
+    html: true,
+    content: contactLink,
+    trigger: 'manual',
+    container: 'body'
+  })
+  jqElement.popover('show')
+  // store fact that popover is enabled so that future clicks don't recreate instance
+  jqElement.data('popover', true)
+}

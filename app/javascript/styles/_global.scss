@@ -809,6 +809,46 @@ figcaption.ck-editor__editable {
   border: unset;
 }
 
+#study-description-row {
+  display: flex;
+}
+
+#study-sidebar-content {
+  background-color: #cddff6;
+  position: relative;
+  right: 0;
+  margin-left: 0;
+  border-left: 3px solid $action-color;
+  min-width: 350px;
+  max-width: 350px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding: 10px 15px;
+  transition: all 0.3s;
+}
+
+#study-sidebar-content.closed {
+  right: -350px;
+  margin-left: -350px;
+  overflow-y: inherit;
+}
+
+#toggle-study-resources {
+  position: relative;
+  top: 0;
+  left: 0;
+  transition: all 0.3s;
+}
+
+#toggle-study-resources.closed {
+  top: -40px;
+  left: -60px;
+}
+
+.publication-link {
+  margin-bottom: 10px;
+}
+
 .no-wrap-ellipsis {
   overflow: hidden;
   text-overflow: ellipsis;

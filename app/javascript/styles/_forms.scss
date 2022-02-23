@@ -99,11 +99,11 @@
     td:first-of-type {
       border-top-left-radius: 10px;
       border-left: none;
-    } 
+    }
     td:last-of-type {
       border-top-right-radius: 10px;
       border-right: none;
-    } 
+    }
   }
   tbody {
     label {
@@ -159,4 +159,8 @@
 .sublabel {
   margin-left: 1em;
   font-weight: normal;
+}
+
+hr.divider {
+  border-top: 1px solid #AAA;
 }
