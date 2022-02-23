@@ -13,6 +13,12 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
     var taxonTarget = form.find('.taxon-select-target');
     var submitBtn = $('#sync-study-file-<%= study_file.id %>');
 
+    $(`#sync-study-file-${fileId}`)
+      .prop('disabled', null)
+      .attr('data-toggle', null)
+      .attr('data-original-title', null)
+      .attr('data-placement', null)
+
     // render fields & process entries based on file type
     if (fileType === 'Cluster') {
         extraInfo.html("<%= j(render partial: 'cluster_axis_fields', locals: {f: f.dup}) %>");
@@ -99,12 +105,6 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
             submitBtn.attr('disabled', false);
         }
     }
-
-    $(`#sync-study-file-${fileId}`)
-      .prop('disabled', null)
-      .attr('data-toggle', null)
-      .attr('data-original-title', null)
-      .attr('data-placement', null)
 
     // FileUploadControl updates this more elegantly via React,
     // but this direct approach is easier and as effective here.
