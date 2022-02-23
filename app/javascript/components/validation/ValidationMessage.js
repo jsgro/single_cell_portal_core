@@ -10,7 +10,7 @@ function SupportMessage({ studyAccession }) {
     <div>
     Need help? Email us at {supportEmailLink} with the errors,
     your study accession ({studyAccession}),
-    and a description or attachment of your file
+    and a description or attachment of your file.
     </div>
   )
 }
@@ -31,6 +31,10 @@ function Summary({ msgs, issueCategory, fileName=null, showRefreshLink=false }) 
   } else {
     return <p>{issueTxt}:</p>
   }
+}
+
+function SyncSuggestion() {
+
 }
 
 /**

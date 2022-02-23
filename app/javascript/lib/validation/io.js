@@ -9,7 +9,10 @@
  * [1] https://stackoverflow.com/a/47976589
 */
 
-export const DEFAULT_CHUNK_SIZE = 1024 * 1024 // 1 MiB
+const MiB = 1024 * 1024 // 1 MiB
+
+export const GiB = MiB * 1000 // 1 GiB
+export const DEFAULT_CHUNK_SIZE = MiB
 
 /** Reads up to chunkSize bytes of the given file, starting at startByte */
 export async function readFileBytes(file, startByte=0, chunkSize=DEFAULT_CHUNK_SIZE) {

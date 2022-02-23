@@ -4,6 +4,8 @@ import { bytesToSize } from 'lib/stats'
 import FileDownloadControl from 'components/download/FileDownloadControl'
 import LoadingSpinner from 'lib/LoadingSpinner'
 import { StudyContext } from 'components/upload/upload-utils'
+import { UserContext } from 'providers/UserProvider'
+import { GiB } from 'lib/validation/io'
 import { validateFileContent } from 'lib/validation/validate-file-content'
 import ValidationMessage from 'components/validation/ValidationMessage'
 
@@ -42,15 +44,23 @@ async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExt
   const otherUploadFileNames = otherFiles.map(f => f.upload_file_name)
   const otherSelectedFileNames = otherFiles.map(f => f.uploadSelection?.name)
 
+  console.log('validateSelectedFile')
+
   if (otherNames.includes(selectedFile.name) ||
     otherUploadFileNames.includes(selectedFile.name) ||
     otherSelectedFileNames.includes(selectedFile.name)) {
+    // console.log('exiting validateSelectedFile 1')
+    // console.log('errorMsgs, warningMsgs')
+    // console.log(errorMsgs, warningMsgs)
     const errorMsg = `A file named ${selectedFile.name} already exists in your study`
     return { errorMsgs: [errorMsg], warningMsgs: [] }
   }
 
   if (!allowedFileExts.includes('*') && !allowedFileExts.some(ext => selectedFile.name.endsWith(ext))) {
     const errorMsg = `Allowed extensions are ${allowedFileExts.join(' ')}`
+    console.log('exiting validateSelectedFile 2')
+    console.log('errorMsgs, warningMsgs')
+    console.log(errorMsgs, warningMsgs)
     return { errorMsgs: [errorMsg], warningMsgs: [] }
   }
 
@@ -59,6 +69,21 @@ async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExt
   })
   const errorMsgs = errors.map(error => error[2])
   const warningMsgs = warnings.map(error => error[2])
+
+
+  if (selectedFile.size > GiB) {
+    const syncLink = `sync your file`
+
+    const msg =
+    <>
+      Your file is very large.
+      If it is already in a Terra workspace, ${syncLink} to add it faster.
+    </>
+    warningMsgs.push(msg)
+  }
+  console.log('exiting validateSelectedFile 3')
+  console.log('errorMsgs, warningMsgs')
+  console.log(errorMsgs, warningMsgs)
   return { errorMsgs, warningMsgs }
 }
 
@@ -75,9 +100,14 @@ export default function FileUploadControl({
   const inputId = `file-input-${file._id}`
 
   const study = useContext(StudyContext)
+  const user = useContext(UserContext)
+
+  console.log('user')
+  console.log(user)
 
   /** handle user interaction with the file input */
   async function handleFileSelection(e) {
+    console.log('in handleFileSelection')
     const selectedFile = e.target.files[0]
     let newName = selectedFile.name
 

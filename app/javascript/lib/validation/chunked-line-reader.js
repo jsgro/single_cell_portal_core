@@ -1,4 +1,4 @@
-import { DEFAULT_CHUNK_SIZE, readFileBytes } from './io'
+import { DEFAULT_CHUNK_SIZE, GiB, readFileBytes } from './io'
 
 const newlineRegex = /\r?\n/
 
@@ -43,7 +43,7 @@ export default class ChunkedLineReader {
    * maxBytesPerLine (default: 1 GiB) can be set to avoid reading the entire file into memory in the event
    * the file is missing proper newlines.
   */
-  async iterateLines({ func, maxLines = Number.MAX_SAFE_INTEGER, maxBytesPerLine = 1000*1000*1024 }) {
+  async iterateLines({ func, maxLines = Number.MAX_SAFE_INTEGER, maxBytesPerLine = GiB }) {
     const prevLinesRead = this.linesRead
     while (
       (this.hasMoreChunks || this.chunkLines.length) &&
