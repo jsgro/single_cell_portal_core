@@ -157,9 +157,9 @@ class RequestUtils
   # handle upstream reporting/logging of errors in custom exceptions controllers
   def self.log_exception(request, params, user: nil, study: nil)
     @exception = request.env['action_dispatch.exception']
-    MetricsService.report_error(@exception, request, user, study)
-    ErrorTracker.report_exception(@exception, user, params)
     Rails.logger.error ([@exception.message] + @exception.backtrace).join($/)
+    ErrorTracker.report_exception(@exception, user, params)
+    MetricsService.report_error(@exception, request, user, study)
   end
 
   # format exception JSON responses
