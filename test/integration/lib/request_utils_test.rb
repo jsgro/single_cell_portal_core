@@ -72,4 +72,18 @@ class RequestUtilsTest < ActiveSupport::TestCase
     assert_equal exception.message, json_response[:error]
     assert_equal exception.class.name, json_response[:error_class]
   end
+
+  test 'should ignore static asset errors' do
+    error = RuntimeError.new('this is a normal error')
+    assert_not RequestUtils.static_asset_error?(error)
+    paths = [
+      'No route matches [GET] "/apple-touch-icon-precomposed.png"',
+      'No route matches [GET] "/single_cell/packs/foo.js"',
+      'No route matches [GET] "/single_cell/assets/does-not-exist.css"'
+    ]
+    paths.each do |path|
+      asset_error = ActionController::RoutingError.new(path)
+      assert RequestUtils.static_asset_error?(asset_error)
+    end
+  end
 end
