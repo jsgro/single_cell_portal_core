@@ -2,7 +2,7 @@ import React from 'react'
 import Panel from 'react-bootstrap/lib/Panel'
 
 import Select from '~/lib/InstrumentedSelect'
-import { SCATTER_COLOR_OPTIONS, defaultScatterColor } from '~/components/visualization/ScatterPlot'
+import { SCATTER_COLOR_OPTIONS, defaultScatterColor } from '~/lib/plot'
 import { DISTRIBUTION_PLOT_OPTIONS, DISTRIBUTION_POINTS_OPTIONS } from '~/components/visualization/StudyViolinPlot'
 import { ROW_CENTERING_OPTIONS, FIT_OPTIONS } from '~/components/visualization/Heatmap'
 

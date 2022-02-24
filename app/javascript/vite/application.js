@@ -17,7 +17,7 @@ const entryPoints = [
 entryPoints.forEach(entryPoint => {
   if (document.getElementById(entryPoint.elementId)) {
     ReactDOM.render(
-      React.createElement(HomePageContent, {
+      React.createElement(entryPoint.component, {
         studyAccession: window.SCP.studyAccession
       }), document.getElementById(entryPoint.elementId)
     )

@@ -23,6 +23,8 @@ module.exports = {
     'node_modules'
   ],
   moduleNameMapper: {
-    "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/test/js/jest-mocks/file-mock.js"
+    '^~/(.*)$': '$1', // strip off the ~/, as jest doesn't need it since it has configured module directories
+    '\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$': '<rootDir>/test/js/jest-mocks/file-mock.js'
+
   }
 }

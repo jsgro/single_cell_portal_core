@@ -14,18 +14,12 @@ import useErrorMessage from '~/lib/error-message'
 import { computeCorrelations } from '~/lib/stats'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
-import { getPlotDimensions } from '~/lib/plot'
+import { getPlotDimensions, defaultScatterColor } from '~/lib/plot'
 import LoadingSpinner from '~/lib/LoadingSpinner'
 import { formatFileForApi } from '~/components/upload/upload-utils'
 import { successNotification, failureNotification } from '~/lib/MessageModal'
 
-// sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
-export const SCATTER_COLOR_OPTIONS = [
-  'Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu', 'Reds', 'Blues', 'Picnic',
-  'Rainbow', 'Portland', 'Jet', 'Hot', 'Blackbody', 'Earth', 'Electric', 'Viridis', 'Cividis'
-]
 
-export const defaultScatterColor = 'Reds'
 window.Plotly = Plotly
 
 /** Renders the appropriate scatter plot for the given study and params
@@ -365,7 +359,7 @@ function shouldReverseScale(scatterColor) {
 }
 
 /** get the array of plotly traces for plotting */
-export function getPlotlyTraces({
+function getPlotlyTraces({
   genes,
   isAnnotatedScatter,
   isCorrelatedScatter,
@@ -616,7 +610,7 @@ const baseCamera = {
 }
 
 /** Gets Plotly layout scene props for 3D scatter plot */
-export function get3DScatterProps({
+function get3DScatterProps({
   userSpecifiedRanges, axes, hasCoordinateLabels,
   coordinateLabels
 }) {
@@ -656,3 +650,5 @@ export function get3DScatterProps({
 function getDragMode(isCellSelecting) {
   return isCellSelecting ? 'lasso' : 'lasso, select'
 }
+
+ScatterPlot.getPlotlyTraces = getPlotlyTraces
