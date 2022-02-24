@@ -65,12 +65,13 @@
 
   </script>
 
+  <%= stylesheet_link_tag 'application', media: 'all' %>
+  <%= nonced_javascript_include_tag 'application' %>
+
   <%= vite_stylesheet_tag %>
   <%= nonced_vite_client_tag %>
   <%= nonced_vite_react_refresh_tag %>
   <%= nonced_vite_javascript_tag 'application' %>
-
-  <%= stylesheet_link_tag 'application', media: 'all' %>
 
   <%= render partial: '/layouts/tcell' %>
 

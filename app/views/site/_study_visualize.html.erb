@@ -1,6 +1,5 @@
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   window.SCP.studyAccession = '<%= @study.accession %>';
-  window.SCP.renderComponentFromRails('study-visualize', 'ExploreView', {studyAccession: window.SCP.studyAccession})
 
   <% if @study.has_streamable_files? %>
     if (typeof window.SCP.readOnlyToken === 'undefined') {

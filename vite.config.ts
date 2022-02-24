@@ -9,10 +9,6 @@ export default defineConfig({
   },
   'plugins': [
     // inject plugin needs to be first
-    inject({
-      $: 'jquery',
-      jQuery: 'jquery'
-    }),
     RubyPlugin(),
     react()
   ],

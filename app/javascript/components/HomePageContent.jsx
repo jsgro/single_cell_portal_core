@@ -87,8 +87,3 @@ export default function HomePageContent() {
     <RawHomePageContent default/>
   </Router>)
 }
-
-/** helper function to render the homepage from non-react portions of the app */
-export function renderHomePageContent(target) {
-  ReactDOM.render(<HomePageContent/>, target)
-}

@@ -29,7 +29,7 @@
 
 // TODO (SCP-3249): Modernize Morpheus, then remove this
 //= require morpheus-external-r
-
+console.log('')
 var fileUploading = false;
 var PAGE_RENDERED = false;
 var OPEN_MODAL = '';
