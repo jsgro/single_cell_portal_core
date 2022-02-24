@@ -1,0 +1,40 @@
+<h3>Sharing</h3>
+<p class="help-block">
+  Share this study with collaborators and grant access rights to this study and the associated Terra workspace.
+</p>
+<div class="form-group">
+  <%= f.fields_for :study_shares do |share| %>
+    <% if share.object.show_share? %>
+      <div class="form-group row">
+        <div class="col-sm-6">
+          <%= share.label :email %>
+          <% if !share.object.new_record? %>
+            <span class="fas fa-exclamation-triangle text-danger" data-toggle="tooltip" data-placement="right" title="Editing share emails is not permitted.  If the email is incorrect, please delete the share and create a new one."></span>
+          <% end %>
+          <br />
+          <%= share.text_field :email, class: 'form-control share-email', readonly: !share.object.new_record?, autocomplete: 'no' %>
+        </div>
+        <div class="col-sm-5">
+          <%= share.label :permission %><br />
+          <%= share.select :permission, options_for_select(StudyShare::PERMISSION_TYPES, share.object.permission), {}, class: 'form-control share-permission' %>
+          <span class="help-block share-description"><%= StudyShare::PERMISSION_DESCRIPTION_MAP[share.object.permission] %></span>
+        </div>
+        <div class="col-sm-1">
+          <%= share.label :delete, "&nbsp;".html_safe %><br />
+          <%= share.link_to_remove "<span class='btn btn-sm btn-danger'><span class='fas fa-times'></span></span>".html_safe, data: {confirm: 'Are you sure?  This cannot be undone unless you reload the page before saving.'} %>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+  <%= f.link_to_add "<span class='fas fa-plus'></span> Share study".html_safe, :study_shares, class: 'btn btn-primary', id: 'add-study-share' %>
+</div>
+<div class="form-group">
+  <h3>Reviewer access</h3>
+  <p class="help-block">
+    Set up anonymous "reviewer" access for allowing publication reviewers to view your study while it
+    is still private.  Reviewers can interact with any enabled visualizations, but cannot download data or view the
+    associated Terra workspace.  If enabled, you can send the access URL & PIN to your corresponding editor to allow
+    reviewers to view your study.
+  </p>
+  <%= f.fields_for :reviewer_access %>
+</div>

@@ -725,7 +725,10 @@ module Api
                                       study_shares_attributes: [:id, :_destroy, :email, :permission],
                                       study_detail_attributes: [:id, :full_description],
                                       :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails,
-                                                           :cluster_point_size, :cluster_point_alpha, :cluster_point_border])
+                                                           :cluster_point_size, :cluster_point_alpha, :cluster_point_border],
+                                      external_resources_attributes: [:id, :_destroy, :title, :description, :url, :publication_url],
+                                      authors_attributes: [:id, :first_name, :last_name, :institution, :corresponding, :_destroy],
+                                      publications_attributes: [:id, :title, :journal, :citation, :url, :pmcid, :preprint, :_destroy])
       end
 
       # sub-method to iterate through list of GCP bucket files and build up necessary sync list objects

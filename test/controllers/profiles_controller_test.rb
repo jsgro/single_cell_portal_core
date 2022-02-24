@@ -1,3 +1,4 @@
+require 'api_test_helper'
 require 'integration_test_helper'
 require 'minitest/mock'
 require 'test_helper'
