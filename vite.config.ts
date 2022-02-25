@@ -3,6 +3,7 @@ import RubyPlugin from 'vite-plugin-ruby'
 import react from '@vitejs/plugin-react'
 import inject from '@rollup/plugin-inject'
 
+
 export default defineConfig({
   'build': {
     'assetsInlineLimit': 30000000
@@ -10,7 +11,13 @@ export default defineConfig({
   'plugins': [
     // inject plugin needs to be first
     RubyPlugin(),
-    react()
+    react({
+      babel: {
+        plugins: [
+          ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]
+        ]
+      }
+    })
   ],
   'server': {
     'hmr': {
