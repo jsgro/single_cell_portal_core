@@ -24,4 +24,7 @@ class Author
   def base_64_email
     Base64.encode64(email)
   end
+
+  # search definitions
+  index({"first_name" => "text", "last_name" => "text", "institution" => "text"}, {background: true})
 end

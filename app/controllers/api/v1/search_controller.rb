@@ -516,7 +516,8 @@ module Api
       def self.generate_mongo_query_by_context(terms:, base_studies:, accessions:, query_context:)
         case query_context
         when :keyword
-          base_studies.any_of({:$text => {:$search => terms}}, {:accession.in => accessions})
+          author_match_study_ids = Author.where(:$text => {:$search => terms}).pluck(:study_id)
+          base_studies.any_of({:$text => {:$search => terms}}, {:accession.in => accessions}, {:id.in => author_match_study_ids})
         when :phrase
           study_regex = escape_terms_for_regex(term_list: terms)
           base_studies.any_of({name: study_regex}, {description: study_regex}, {:accession.in => accessions})

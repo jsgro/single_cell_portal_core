@@ -13,7 +13,7 @@ import { closeModal } from 'components/search/controls/SearchPanel'
  * optionally takes a 'keywordValue' prop with the initial value for the field
  */
 export default function KeywordSearch({ keywordPrompt }) {
-  const placeholder = keywordPrompt ? keywordPrompt : 'Search title and description text'
+  const placeholder = keywordPrompt ? keywordPrompt : 'Search...'
   const selectionContext = useContext(SearchSelectionContext)
   // show clear button after a search has been done,
   //  as long as the text hasn't been updated
@@ -22,8 +22,8 @@ export default function KeywordSearch({ keywordPrompt }) {
   const [showTextSearchHelpModal, setTextShowSearchHelpModal] = useState(false)
 
   const textSearchModalContent = (<div>
-    <h4 className="text-center">Title and description search</h4><br/>
-    Using the search box below will perform a text-based search of all study titles and descriptions, and will return
+    <h4 className="text-center">Title, author, and description search</h4><br/>
+    Using the search box below will perform a text-based search of all study titles, descriptions and author names. The search will return
     those that contain any of the specified terms. You can quote (&quot;) phrases to find matches that contain the entire
     phrase, and you can combine both single terms and quoted phrases in your search.
   </div>)
@@ -60,7 +60,7 @@ export default function KeywordSearch({ keywordPrompt }) {
       className='study-keyword-search'
     >
       <span className='text-search search-title'>
-        Title and description search {textSearchLink}
+        Title, author, and description search {textSearchLink}
       </span>
       <InputGroup>
         <input
