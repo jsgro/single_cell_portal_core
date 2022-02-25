@@ -5,16 +5,18 @@ import inject from '@rollup/plugin-inject'
 
 
 export default defineConfig({
-  'build': {
-    'assetsInlineLimit': 30000000
-  },
   'plugins': [
     // inject plugin needs to be first
     RubyPlugin(),
     react({
       babel: {
-        plugins: [
-          ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]
+        'presets': [
+          [
+            '@babel/preset-react',
+            {
+              'runtime': 'automatic' // defaults to classic
+            }
+          ]
         ]
       }
     })
