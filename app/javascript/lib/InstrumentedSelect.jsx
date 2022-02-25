@@ -1,5 +1,6 @@
 import React, { useRef } from 'react'
-import Select from 'react-select'
+import S from 'react-select'
+const Select = S.default ? S.default : S // necessary for CJS imports.  see https://github.com/vitejs/vite/issues/2139
 import { log, getLabelTextForElement } from '~/lib/metrics-api'
 /**
  * Thin wrapper around react-select that sends menu:change events

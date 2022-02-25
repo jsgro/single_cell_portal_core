@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Panel from 'react-bootstrap/lib/Panel'
-import Switch from 'react-switch'
+import S from 'react-switch'
+const Switch = S.default ? S.default : S // necessary for CJS imports.  see https://github.com/vitejs/vite/issues/2139
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus, faMinus, faTimes, faListUl } from '@fortawesome/free-solid-svg-icons'
 import _difference from 'lodash/difference'

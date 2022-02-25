@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { Router } from '@reach/router'
 import _cloneDeep from 'lodash/clone'
-import ReactNotification from 'react-notifications-component'
+import { ReactNotifications } from 'react-notifications-component'
 
 import ExploreDisplayTabs from './ExploreDisplayTabs'
 import { getDefaultClusterParams } from '~/lib/cluster-utils'
@@ -98,7 +98,7 @@ function createExploreParamsWithDefaults(exploreParams, exploreInfo) {
 export default function ExploreTab({ studyAccession }) {
   return (
     <ErrorBoundary>
-      <ReactNotification />
+      <ReactNotifications />
       <Router>
         <RoutableExploreTab studyAccession={studyAccession} default/>
       </Router>
