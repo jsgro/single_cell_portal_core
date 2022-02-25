@@ -2,6 +2,7 @@ import React from 'react'
 import { render, screen, cleanup, waitForElementToBeRemoved } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
+import { StudyContext } from 'components/upload/upload-utils'
 import FileUploadControl from 'components/upload/FileUploadControl'
 import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 
@@ -22,12 +23,16 @@ describe('file upload control defaults the name of the file', () => {
     const updateFileHolder = { updateFile: () => {} }
     const updateFileSpy = jest.spyOn(updateFileHolder, 'updateFile')
 
-    render(<FileUploadControl
-      file={file}
-      allFiles={[file]}
-      updateFile={updateFileHolder.updateFile}
-      allowedFileExts={['.txt']}
-      validationMessages={{}}/>)
+    render(
+      <StudyContext.Provider value={{ accession: 'SCP123' }}>
+        <FileUploadControl
+          file={file}
+          allFiles={[file]}
+          updateFile={updateFileHolder.updateFile}
+          allowedFileExts={['.txt']}
+          validationMessages={{}}/>
+      </StudyContext.Provider>
+    )
 
     expect(screen.getByRole('button')).toHaveTextContent('Choose file')
     expect(screen.queryByTestId('file-name-validation')).toBeNull()
@@ -58,12 +63,14 @@ describe('file upload control validates the selected file', () => {
     const updateFileSpy = jest.spyOn(updateFileHolder, 'updateFile')
 
     render((
-      <FileUploadControl
-        file={file}
-        allFiles={[file]}
-        updateFile={updateFileHolder.updateFile}
-        allowedFileExts={['.txt']}
-        validationMessages={{}}/>
+      <StudyContext.Provider value={{ accession: 'SCP123' }}>
+        <FileUploadControl
+          file={file}
+          allFiles={[file]}
+          updateFile={updateFileHolder.updateFile}
+          allowedFileExts={['.txt']}
+          validationMessages={{}}/>
+      </StudyContext.Provider>
     ))
 
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
@@ -72,8 +79,8 @@ describe('file upload control validates the selected file', () => {
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
     expect(updateFileSpy).toHaveBeenCalledTimes(0)
-    expect(screen.getByTestId('file-content-validation')).toHaveTextContent('Could not use cluster.foo')
-    expect(screen.getByTestId('file-content-validation')).toHaveTextContent('Allowed extensions are .txt')
+    expect(screen.getByTestId('validation-error')).toHaveTextContent('after correcting cluster.foo')
+    expect(screen.getByTestId('validation-error')).toHaveTextContent('Allowed extensions are .txt')
   })
 
   it('validates the name uniqueness', async () => {
@@ -93,12 +100,14 @@ describe('file upload control validates the selected file', () => {
     const updateFileSpy = jest.spyOn(updateFileHolder, 'updateFile')
 
     render((
-      <FileUploadControl
-        file={file}
-        allFiles={[file, otherFile]}
-        updateFile={updateFileHolder.updateFile}
-        allowedFileExts={['.txt']}
-        validationMessages={{}}/>
+      <StudyContext.Provider value={{ accession: 'SCP123' }}>
+        <FileUploadControl
+          file={file}
+          allFiles={[file, otherFile]}
+          updateFile={updateFileHolder.updateFile}
+          allowedFileExts={['.txt']}
+          validationMessages={{}}/>
+      </StudyContext.Provider>
     ))
 
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
@@ -107,8 +116,8 @@ describe('file upload control validates the selected file', () => {
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
     expect(updateFileSpy).toHaveBeenCalledTimes(0)
-    expect(screen.getByTestId('file-content-validation')).toHaveTextContent('Could not use cluster.txt')
-    expect(screen.getByTestId('file-content-validation'))
+    expect(screen.getByTestId('validation-error')).toHaveTextContent('after correcting cluster.txt')
+    expect(screen.getByTestId('validation-error'))
       .toHaveTextContent('A file named cluster.txt already exists in your study')
   })
 
@@ -129,12 +138,14 @@ describe('file upload control validates the selected file', () => {
     const updateFileSpy = jest.spyOn(updateFileHolder, 'updateFile')
 
     render((
-      <FileUploadControl
-        file={file}
-        allFiles={[file, otherFile]}
-        updateFile={updateFileHolder.updateFile}
-        allowedFileExts={['.txt']}
-        validationMessages={{}}/>
+      <StudyContext.Provider value={{ accession: 'SCP123' }}>
+        <FileUploadControl
+          file={file}
+          allFiles={[file, otherFile]}
+          updateFile={updateFileHolder.updateFile}
+          allowedFileExts={['.txt']}
+          validationMessages={{}}/>
+      </StudyContext.Provider>
     ))
 
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
@@ -143,7 +154,7 @@ describe('file upload control validates the selected file', () => {
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
     expect(updateFileSpy).toHaveBeenCalledTimes(0)
-    expect(screen.getByTestId('file-content-validation'))
+    expect(screen.getByTestId('validation-error'))
       .toHaveTextContent('A file named cluster1.txt already exists in your study')
   })
 
@@ -159,12 +170,14 @@ describe('file upload control validates the selected file', () => {
     const updateFileSpy = jest.spyOn(updateFileHolder, 'updateFile')
 
     render((
-      <FileUploadControl
-        file={file}
-        allFiles={[file]}
-        updateFile={updateFileHolder.updateFile}
-        allowedFileExts={['.txt']}
-        validationMessages={{}}/>
+      <StudyContext.Provider value={{ accession: 'SCP123' }}>
+        <FileUploadControl
+          file={file}
+          allFiles={[file]}
+          updateFile={updateFileHolder.updateFile}
+          allowedFileExts={['.txt']}
+          validationMessages={{}}/>
+      </StudyContext.Provider>
     ))
 
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
@@ -173,8 +186,8 @@ describe('file upload control validates the selected file', () => {
     }, true)
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
     expect(updateFileSpy).toHaveBeenCalledTimes(0)
-    expect(screen.getByTestId('file-content-validation')).toHaveTextContent('Could not use cluster.txt')
-    expect(screen.getByTestId('file-content-validation'))
+    expect(screen.getByTestId('validation-error')).toHaveTextContent('after correcting cluster.txt')
+    expect(screen.getByTestId('validation-error'))
       .toHaveTextContent('First row, first column must be "NAME" (case insensitive). Your value was "notNAME')
   })
 
@@ -190,12 +203,14 @@ describe('file upload control validates the selected file', () => {
     const updateFileSpy = jest.spyOn(updateFileHolder, 'updateFile')
 
     render((
-      <FileUploadControl
-        file={file}
-        allFiles={[file]}
-        updateFile={updateFileHolder.updateFile}
-        allowedFileExts={['.txt']}
-        validationMessages={{}}/>
+      <StudyContext.Provider value={{ accession: 'SCP123' }}>
+        <FileUploadControl
+          file={file}
+          allFiles={[file]}
+          updateFile={updateFileHolder.updateFile}
+          allowedFileExts={['.txt']}
+          validationMessages={{}}/>
+      </StudyContext.Provider>
     ))
 
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
@@ -204,10 +219,10 @@ describe('file upload control validates the selected file', () => {
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
     expect(updateFileSpy).toHaveBeenCalledTimes(0)
-    expect(screen.getByTestId('file-content-validation')).toHaveTextContent('Could not use cluster.txt')
-    expect(screen.getByTestId('file-content-validation'))
+    expect(screen.getByTestId('validation-error')).toHaveTextContent('after correcting cluster.txt')
+    expect(screen.getByTestId('validation-error'))
       .toHaveTextContent('First row, first column must be "NAME" (case insensitive). Your value was "notNAME')
-    expect(screen.getByTestId('file-content-validation'))
+    expect(screen.getByTestId('validation-error'))
       .toHaveTextContent('Second row, first column must be "TYPE" (case insensitive). Your value was "foo"')
   })
 
@@ -219,11 +234,13 @@ describe('file upload control validates the selected file', () => {
       file_type: 'Cluster'
     }
     render((
-      <FileUploadControl
-        file={file}
-        allFiles={[file]}
-        allowedFileExts={['.txt']}
-        validationMessages={{}}/>
+      <StudyContext.Provider value={{ accession: 'SCP123' }}>
+        <FileUploadControl
+          file={file}
+          allFiles={[file]}
+          allowedFileExts={['.txt']}
+          validationMessages={{}}/>
+      </StudyContext.Provider>
     ))
     expect(screen.queryAllByText('Choose file')).toHaveLength(1)
     cleanup()
@@ -236,11 +253,13 @@ describe('file upload control validates the selected file', () => {
       upload_file_name: 'cluster.txt'
     }
     render((
-      <FileUploadControl
-        file={file2}
-        allFiles={[file2]}
-        allowedFileExts={['.txt']}
-        validationMessages={{}}/>
+      <StudyContext.Provider value={{ accession: 'SCP123' }}>
+        <FileUploadControl
+          file={file2}
+          allFiles={[file2]}
+          allowedFileExts={['.txt']}
+          validationMessages={{}}/>
+      </StudyContext.Provider>
     ))
     expect(screen.queryAllByText('Replace')).toHaveLength(1)
     cleanup()
@@ -253,11 +272,13 @@ describe('file upload control validates the selected file', () => {
       file_type: 'Cluster'
     }
     render((
-      <FileUploadControl
-        file={file3}
-        allFiles={[file3]}
-        allowedFileExts={['.txt']}
-        validationMessages={{}}/>
+      <StudyContext.Provider value={{ accession: 'SCP123' }}>
+        <FileUploadControl
+          file={file3}
+          allFiles={[file3]}
+          allowedFileExts={['.txt']}
+          validationMessages={{}}/>
+      </StudyContext.Provider>
     ))
     expect(screen.queryAllByText('Choose file')).toHaveLength(0)
     expect(screen.queryAllByText('Replace')).toHaveLength(0)

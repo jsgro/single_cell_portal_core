@@ -120,7 +120,7 @@ function validateTypeKeyword(annotTypes) {
  */
 function validateGroupOrNumeric(annotTypes) {
   const issues = []
-  const invalidTypes = []
+  const badValues = []
 
   // Skip the TYPE keyword
   const types = annotTypes.slice(1)
@@ -130,18 +130,27 @@ function validateGroupOrNumeric(annotTypes) {
       if (type === '') {
         // If the value is a blank space, store a higher visibility
         // string for error reporting
-        invalidTypes.push('<empty value>')
+        badValues.push('<empty value>')
       } else {
-        invalidTypes.push(type)
+        badValues.push(type)
       }
     }
   })
 
-  if (invalidTypes.length > 0) {
-    const badValues = `"${invalidTypes.join('", "')}"`
+  // TODO (SCP-4128): Generalize this pattern across validation rules
+  const valuesOrRows = 'values'
+  const numBad = badValues.length
+  if (numBad > 0) {
+    const maxToShow = 100
+    let notedBad = `"${badValues.slice(0, maxToShow).join('", "')}"`
+    const numMore = numBad - maxToShow
+    if (numMore > 0) {
+      notedBad += ` and ${numMore - maxToShow} more ${valuesOrRows}`
+    }
+
     const msg =
       'Second row, all columns after first must be "group" or "numeric". ' +
-      `Your values included ${badValues}`
+      `Your ${valuesOrRows} included ${notedBad}`
 
     issues.push(['error', 'format:cap:group-or-numeric', msg])
   }
@@ -463,6 +472,13 @@ function getValidationTrigger() {
   }
 }
 
+/** Trim messages and number of errors, to prevent Mixpanel 413 errors */
+function getTrimmedIssueMessages(issues) {
+  return issues.map(columns => {
+    return columns[2].slice(0, 200) // Show <= 200 characters for each message
+  }).slice(0, 20) // Show <= 20 messages
+}
+
 /** Get properties about this validation run to log to Mixpanel */
 export function getLogProps(fileInfo, issueObj, perfTimes) {
   const { errors, warnings, summary } = issueObj
@@ -490,15 +506,23 @@ export function getLogProps(fileInfo, issueObj, perfTimes) {
     }
     return Object.assign({ status: 'success' }, defaultProps)
   } else {
+    const errorMessages = getTrimmedIssueMessages(errors)
+    const warningMessages = getTrimmedIssueMessages(warnings)
+
+    const errorTypes = Array.from(new Set(errors.map(columns => columns[1])))
+    const warningTypes = Array.from(new Set(warnings.map(columns => columns[1])))
+
     return Object.assign(defaultProps, {
       status: 'failure',
       summary,
       numErrors: errors.length,
       numWarnings: warnings.length,
-      errors: errors.map(columns => columns[2]),
-      warnings: warnings.map(columns => columns[2]),
-      errorTypes: errors.map(columns => columns[1]),
-      warningTypes: warnings.map(columns => columns[1])
+      errors: errorMessages,
+      warnings: warningMessages,
+      numErrorTypes: errorTypes.length,
+      numWarningTypes: warningTypes.length,
+      errorTypes,
+      warningTypes
     })
   }
 }

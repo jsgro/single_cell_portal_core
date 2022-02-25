@@ -1,7 +1,7 @@
 /** React component for displaying the file upload wizard
  *
  * All the state for both the user's changes, and the state of the study as known from the server are
- * managed here as formState, and serverState, respectively.  This component owns many state-maniuplation
+ * managed here as formState, and serverState, respectively.  This component owns many state-manipulation
  * methods, like updateFile.  Any update to any file will trigger a re-render of the entire upload widget.
  */
 

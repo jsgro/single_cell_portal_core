@@ -41,7 +41,7 @@ describe('it allows uploading of expression matrices', () => {
       content: '%%MatrixMarket matrix coordinate integer general\n8 10 2\n1 1 1\n1 7 2\n'
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
-    expect(screen.getByTestId('file-content-validation')).toHaveTextContent(`Could not use ${badFileName}`)
+    expect(screen.getByTestId('validation-error')).toHaveTextContent(`after correcting ${badFileName}`)
 
     const mtxFileName = 'raw_counts.mtx'
     fireFileSelectionEvent(screen.getAllByTestId('file-input')[0], {

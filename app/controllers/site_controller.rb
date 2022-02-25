@@ -730,7 +730,7 @@ class SiteController < ApplicationController
                                   study_shares_attributes: [:id, :_destroy, :email, :permission],
                                   study_detail_attributes: [:id, :full_description],
                                   reviewer_access_attributes: [:id, :expires_at],
-                                  authors_attributes: [:id, :first_name, :last_name, :email, :institution, :corresponding, :_destroy],
+                                  authors_attributes: [:id, :first_name, :last_name, :email, :institution, :corresponding, :orcid, :_destroy],
                                   publications_attributes: [:id, :title, :journal, :citation, :url, :pmcid, :preprint, :_destroy],
                                   external_resources_attributes: [:id, :_destroy, :title, :description, :url],
     )
