@@ -9,7 +9,7 @@ import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isMatch'
-import ReactNotification, { store } from 'react-notifications-component'
+import { ReactNotifications, store } from 'react-notifications-component'
 import { Router, useLocation, navigate } from '@reach/router'
 import * as queryString from 'query-string'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -19,10 +19,10 @@ import { formatFileFromServer, formatFileForApi, newStudyFileObj, StudyContext }
 import {
   createStudyFile, updateStudyFile, deleteStudyFile,
   fetchStudyFileInfo, sendStudyFileChunk, RequestCanceller
-} from 'lib/scp-api'
-import MessageModal, { successNotification, failureNotification } from 'lib/MessageModal'
-import UserProvider from 'providers/UserProvider'
-import ErrorBoundary from 'lib/ErrorBoundary'
+} from '~/lib/scp-api'
+import MessageModal, { successNotification, failureNotification } from '~/lib/MessageModal'
+import UserProvider from '~/providers/UserProvider'
+import ErrorBoundary from '~/lib/ErrorBoundary'
 
 import WizardNavPanel from './WizardNavPanel'
 import ClusteringStep from './ClusteringStep'
@@ -341,7 +341,7 @@ export function RawUploadWizard({ studyAccession, name }) {
       <div className="upload-wizard-react">
         <div className="row">
           <div className="col-md-12 wizard-top-bar no-wrap-ellipsis">
-          <a href={`/single_cell/study/${studyAccession}`}>View study</a> / &nbsp;
+            <a href={`/single_cell/study/${studyAccession}`}>View study</a> / &nbsp;
             <span title="{serverState?.study?.name}">{serverState?.study?.name}</span>
           </div>
         </div>
@@ -394,7 +394,7 @@ export function RawUploadWizard({ studyAccession, name }) {
 export default function UploadWizard({ studyAccession, name }) {
   return <ErrorBoundary>
     <UserProvider>
-      <ReactNotification />
+      <ReactNotifications />
       <Router>
         <RawUploadWizard studyAccession={studyAccession} name={name} default/>
       </Router>

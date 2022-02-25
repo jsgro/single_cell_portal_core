@@ -1,24 +1,19 @@
 import { defineConfig } from 'vite'
-import RubyPlugin from 'vite-plugin-ruby'
+import rubyPlugin from 'vite-plugin-ruby'
 import react from '@vitejs/plugin-react'
-import inject from '@rollup/plugin-inject'
 
 
 export default defineConfig({
+  'mode': 'development', // < this is important
+  'build': {
+    minify: false,
+    sourcemap: true // < this allows the browser to point you to the correct file
+  },
   'plugins': [
     // inject plugin needs to be first
-    RubyPlugin(),
+    rubyPlugin(),
     react({
-      babel: {
-        'presets': [
-          [
-            '@babel/preset-react',
-            {
-              'runtime': 'automatic' // defaults to classic
-            }
-          ]
-        ]
-      }
+      jsxRuntime: 'classic'
     })
   ],
   'server': {
