@@ -772,3 +772,8 @@ function showAuthorPopover(element) {
   // store fact that popover is enabled so that future clicks don't recreate instance
   jqElement.data('popover', true)
 }
+
+window.SCP.componentsToRender = []
+window.SCP.renderComponent = function(targetId, componentName, props) {
+  window.SCP.componentsToRender.push({targetId: targetId, componentName: componentName, props: props})
+}

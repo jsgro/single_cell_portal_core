@@ -4,7 +4,7 @@ import { faChevronDown, faChevronUp, faTimes } from '@fortawesome/free-solid-svg
 import Modal from 'react-bootstrap/lib/Modal'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
 
-import LoadingSpinner from 'lib/LoadingSpinner'
+import LoadingSpinner from '~/lib/LoadingSpinner'
 import FileUploadControl from './FileUploadControl'
 
 /** renders its children inside an expandable form with a header for file selection */

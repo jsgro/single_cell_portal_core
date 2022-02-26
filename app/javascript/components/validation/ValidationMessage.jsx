@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { supportEmailLink } from 'lib/error-utils'
+import { supportEmailLink } from '~/lib/error-utils'
 import _capitalize from 'lodash/capitalize'
 import pluralize from 'pluralize'
 

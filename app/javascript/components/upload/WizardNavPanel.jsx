@@ -3,12 +3,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faChevronUp, faTimes, faCheck, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StepTabHeader from './StepTabHeader'
-import { withErrorBoundary } from 'lib/ErrorBoundary'
+import { withErrorBoundary } from '~/lib/ErrorBoundary'
 import { OverlayTrigger, Popover } from 'react-bootstrap'
 import { clusterFileFilter } from './ClusteringStep'
 import { metadataFileFilter } from './MetadataStep'
 import { processedFileFilter } from './ProcessedExpressionStep'
-import LoadingSpinner from 'lib/LoadingSpinner'
+import LoadingSpinner from '~/lib/LoadingSpinner'
 
 
 /** renders a list of the steps and summary study information */

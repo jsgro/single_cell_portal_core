@@ -1,10 +1,10 @@
 import React from 'react'
 
-import Select from 'lib/InstrumentedSelect'
+import Select from '~/lib/InstrumentedSelect'
 import ExpandableFileForm from './ExpandableFileForm'
 import { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField } from './form-components'
-import BucketImage from 'components/visualization/BucketImage'
+import BucketImage from '~/components/visualization/BucketImage'
 import { validateFile } from './upload-utils'
 
 const allowedFileExts = FileTypeExtensions.image

@@ -1,7 +1,7 @@
 import React, { useContext } from 'react'
-import { bytesToSize } from 'lib/stats'
-import { StudyContext } from 'components/upload/upload-utils'
-import LoadingSpinner from 'lib/LoadingSpinner'
+import { bytesToSize } from '~/lib/stats'
+import { StudyContext } from '~/components/upload/upload-utils'
+import LoadingSpinner from '~/lib/LoadingSpinner'
 
 /** renders a file download control for the given file object */
 export default function FileDownloadControl({ file }) {

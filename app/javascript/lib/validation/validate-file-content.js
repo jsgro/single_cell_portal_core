@@ -8,10 +8,10 @@
 * [1] E.g. https://github.com/broadinstitute/scp-ingest-pipeline/blob/development/ingest/validation/validate_metadata.py
 */
 
-import { log } from 'lib/metrics-api'
+import { log } from '~/lib/metrics-api'
 import { readFileBytes } from './io'
 import ChunkedLineReader from './chunked-line-reader'
-import { PARSEABLE_TYPES } from 'components/upload/upload-utils'
+import { PARSEABLE_TYPES } from '~/components/upload/upload-utils'
 import {
   parseDenseMatrixFile, parseFeaturesFile, parseBarcodesFile, parseSparseMatrixFile
 } from './expression-matrices-validation'
@@ -20,7 +20,7 @@ import {
   validateUniqueCellNamesWithinFile, validateMetadataLabelMatches, validateGroupColumnCounts, timeOutCSFV
 } from './shared-validation'
 
-import getSCPContext from 'providers/SCPContextProvider'
+import getSCPContext from '~/providers/SCPContextProvider'
 
 // from lib/assets/metadata_schemas/alexandria_convention_schema.json
 // (which in turn is from scp-ingest-pipeline/schemas)

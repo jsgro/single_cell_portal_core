@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 
-import Select from 'lib/InstrumentedSelect'
+import Select from '~/lib/InstrumentedSelect'
 
 /** find the forms on the page that are not the form this component is rendered in, and non-spatial */
 // function getOtherNonSpatialForms(parentForm) {

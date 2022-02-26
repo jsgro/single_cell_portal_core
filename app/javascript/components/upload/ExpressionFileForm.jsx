@@ -1,7 +1,7 @@
 import React from 'react'
 import _kebabCase from 'lodash/kebabCase'
 
-import Select from 'lib/InstrumentedSelect'
+import Select from '~/lib/InstrumentedSelect'
 import MTXBundledFilesForm from './MTXBundledFilesForm'
 import { FileTypeExtensions } from './FileUploadControl'
 import ExpandableFileForm from './ExpandableFileForm'
@@ -137,7 +137,7 @@ export default function ExpressionFileForm({
 function ExpressionFileInfoSelect({ label, propertyName, rawOptions, file, updateFile }) {
   const selectOptions = rawOptions.map(opt => ({ label: opt, value: opt }))
   let selectedOption = selectOptions.find(opt => opt.value === file.expression_file_info[propertyName])
-  // if the value is undefined, sometimes react-select will not rerender
+  // if the variable passed to 'value' in react-select is undefined, sometimes react-select will not rerender
   // this can happen if the server returns different data than was submitted by the user
   if (!selectedOption) {
     selectedOption = null

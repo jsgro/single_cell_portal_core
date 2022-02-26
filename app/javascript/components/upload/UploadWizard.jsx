@@ -35,7 +35,7 @@ import MetadataStep from './MetadataStep'
 import MiscellaneousStep from './MiscellaneousStep'
 import SequenceFileStep from './SequenceFileStep'
 import GeneListStep from './GeneListStep'
-import LoadingSpinner from 'lib/LoadingSpinner'
+import LoadingSpinner from '~/lib/LoadingSpinner'
 
 const POLLING_INTERVAL = 10 * 1000 // 10 seconds between state updates
 const CHUNK_SIZE = 10000000 // 10 MB
@@ -400,15 +400,4 @@ export default function UploadWizard({ studyAccession, name }) {
       </Router>
     </UserProvider>
   </ErrorBoundary>
-}
-
-
-/** convenience method for drawing/updating the component from non-react portions of SCP */
-export function renderUploadWizard(target, studyAccession, name) {
-  ReactDOM.render(
-    <UploadWizard
-      studyAccession={studyAccession}
-      name={name}/>,
-    target
-  )
 }

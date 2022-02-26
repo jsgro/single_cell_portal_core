@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import Modal from 'react-bootstrap/lib/Modal'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
 
-import LoadingSpinner from 'lib/LoadingSpinner'
+import LoadingSpinner from '~/lib/LoadingSpinner'
 
 /** renders a 'Add File' button that occupies a full row */
 export function AddFileButton({ newFileTemplate, addNewFile }) {

@@ -10,15 +10,10 @@
           </a>
         </div>
       <% end %>
-      <%#
-        This is where React integrates into Rails.
-
-        Ensure any updates to this ID are reflected in the ReactDOM.render call
-        in app/javascript/packs/application.js
-
-
-      #%>
       <div id="home-page-content"></div>
+      <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+        window.SCP.renderComponent('home-page-content', 'HomePageContent', {})
+      </script>
     </div>
   </div>
 </div>

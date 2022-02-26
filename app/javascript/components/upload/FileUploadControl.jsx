@@ -1,11 +1,11 @@
 import React, { useState, useContext } from 'react'
 
-import { bytesToSize } from 'lib/stats'
-import FileDownloadControl from 'components/download/FileDownloadControl'
-import LoadingSpinner from 'lib/LoadingSpinner'
-import { StudyContext } from 'components/upload/upload-utils'
-import { validateFileContent } from 'lib/validation/validate-file-content'
-import ValidationMessage from 'components/validation/ValidationMessage'
+import { bytesToSize } from '~/lib/stats'
+import FileDownloadControl from '~/components/download/FileDownloadControl'
+import LoadingSpinner from '~/lib/LoadingSpinner'
+import { StudyContext } from '~/components/upload/upload-utils'
+import { validateFileContent } from '~/lib/validation/validate-file-content'
+import ValidationMessage from '~/components/validation/ValidationMessage'
 
 const plainTextExtensions = ['.txt', '.tsv', '.text', '.csv']
 const mtxExtensions = ['.mtx', '.mm', '.txt', '.text']

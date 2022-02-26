@@ -1,11 +1,11 @@
 import React, { useEffect, useContext } from 'react'
-import metadataExplainerImage from 'images/metadata-convention-explainer.jpg'
+import metadataExplainerImage from '~/images/metadata-convention-explainer.jpg'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Popover, OverlayTrigger } from 'react-bootstrap'
 
 
-import { UserContext } from 'providers/UserProvider'
+import { UserContext } from '~/providers/UserProvider'
 import ExpandableFileForm from './ExpandableFileForm'
 import { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField } from './form-components'

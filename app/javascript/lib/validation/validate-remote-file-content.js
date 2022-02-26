@@ -2,9 +2,9 @@
 * @fileoverview Client-side file validation (CSFV) for sync
 */
 
-import { log } from 'lib/metrics-api'
+import { log } from '~/lib/metrics-api'
 import { parseFile, getLogProps } from './validate-file-content'
-import { fetchBucketFile } from 'lib/scp-api'
+import { fetchBucketFile } from '~/lib/scp-api'
 
 /**
  * 50 MiB, max number of bytes to read and validate from remote file for sync.

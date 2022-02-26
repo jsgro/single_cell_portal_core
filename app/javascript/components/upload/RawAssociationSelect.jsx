@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 
-import Select from 'lib/InstrumentedSelect'
+import Select from '~/lib/InstrumentedSelect'
 
 /** updates the raw_counts_associations hidden field with the selections, which should be an array of id strings */
 function updateHiddenField(hiddenField, selections) {

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 
-import Select from 'lib/InstrumentedSelect'
+import Select from '~/lib/InstrumentedSelect'
 import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
 import { TextFormField, SaveDeleteButtons } from './form-components'
 import { SavingOverlay } from './ExpandableFileForm'
