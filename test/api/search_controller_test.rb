@@ -206,7 +206,6 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
 
     # test author keyword search
     @author = FactoryBot.create(:author, study: @study, last_name: 'Doe', first_name: 'john')
-    @study.update(author: @author)
     search_terms = 'Doe'
     execute_http_request(:get, api_v1_search_path(type: 'study', terms: search_terms))
     assert_response :success
