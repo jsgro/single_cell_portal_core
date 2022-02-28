@@ -968,7 +968,8 @@ class Study
         terms: {}
     }
     terms.each do |term|
-      text_blob = "#{self.name} #{self.description}"
+      author_names = authors.pluck(:first_name, :last_name).flatten.join(' ')
+      text_blob = "#{self.name} #{self.description} #{author_names}"
       score = text_blob.scan(/#{::Regexp.escape(term)}/i).size
       if score > 0
         weights[:total] += score
