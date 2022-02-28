@@ -72,17 +72,3 @@ export default function ClusterAssociationSelect({ initialValue, parentForm, hid
     </label>
   )
 }
-
-/** convenience method for drawing/updating the component from non-react portions of SCP */
-export function renderClusterAssociationSelect(target, opts, initialValue, isNew, hiddenField) {
-  const parentForm = $(target).closest('form')[0]
-  ReactDOM.render(
-    <ClusterAssociationSelect
-      initialValue={initialValue}
-      parentForm={parentForm}
-      hiddenField={hiddenField}
-      isNew={isNew}
-      opts={opts}/>,
-    target
-  )
-}

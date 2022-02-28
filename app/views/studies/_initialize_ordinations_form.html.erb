@@ -136,7 +136,10 @@
          current_values = study_file.spatial_cluster_associations.map {|aid| opts.find {|opt| opt[:value] == aid }} %>
       const opts = <%= opts.to_json.html_safe %>
       const current_values = <%= current_values.to_json.html_safe %>
-      window.SCP.renderClusterAssociationSelect(clusterAssnTarget, opts, current_values, isNew, pairedHiddenField)
+      const parentForm = $(target).closest('form')[0]
+      initialValue, parentForm, hiddenField, opts, isNew
+      window.SCP.renderComponent(clusterAssnTarget, 'ClusterAssociationSelect',
+        {opts: opts, initialValue: current_values, isNew: isNew, hiddenField: pairedHiddenField})
     }
 
     updateClusterAssnSelect()

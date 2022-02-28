@@ -745,7 +745,14 @@ function updateRawCountsAssnSelect(parentForm, currentValues, isRequired) {
   const pairedHiddenField = $(`${parentForm} .raw_counts_associations`)[0]
   const matrixOpts = window.SCP.currentStudyFiles.filter(sf => sf?.expression_file_info?.is_raw_counts)
     .map(sf => ({ label: sf.upload_file_name, value: sf['_id']['$oid'] }))
-  window.SCP.renderRawAssociationSelect(rawAssnTarget, currentValues, pairedHiddenField, matrixOpts, isRequired)
+  const parentFormEl = $(rawAssnTarget).closest('.expression-file-info-fields')[0]
+  window.SCP.renderComponent(rawAssnTarget, 'RawAssociationSelect', {
+    parentForm: parentFormEl,
+    initialValue: currentValues,
+    hiddenField: pairedHiddenField,
+    opts: matrixOpts,
+    isRequired: isRequired
+  })
 }
 
 // dynamically show a Bootstrap popover w/ author contact information when clicking button in author/pubs sidebar
@@ -774,6 +781,6 @@ function showAuthorPopover(element) {
 }
 
 window.SCP.componentsToRender = []
-window.SCP.renderComponent = function(targetId, componentName, props) {
-  window.SCP.componentsToRender.push({targetId: targetId, componentName: componentName, props: props})
+window.SCP.renderComponent = function(target, componentName, props) {
+  window.SCP.componentsToRender.push({target: target, componentName: componentName, props: props})
 }

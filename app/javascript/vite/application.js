@@ -38,16 +38,28 @@ const componentsToExport = {
   HomePageContent, ExploreView, UploadWizard, ValidationMessage, ClusterAssociationSelect, RawAssociationSelect
 }
 
-/** helper to render React components from non-react portions of the app */
-function renderComponent(targetId, componentName, props) {
+/** helper to render React components from non-react portions of the app
+ * @param {String|Element} target - the html element to render on, can be either an element or an id
+ * @param {String} componentName - the component to render -- must be included in the `componentsToExport` above
+ * @param {Object} props - the props to pass to the component
+*/
+function renderComponent(target, componentName, props) {
+  let targetEl = target
+  if (typeof target === 'string' || target instanceof String) {
+    targetEl = document.getElementById(target)
+  }
+  ReactDOM.unmountComponentAtNode(targetEl)
   ReactDOM.render(React.createElement(componentsToExport[componentName], props),
-    document.getElementById(targetId))
+    targetEl)
 }
+
+/** put the function globally accessible, replacing the pre-registration 'renderComponent'
+ * setup in assets/application.js */
 window.SCP.renderComponent = renderComponent
 
 /** render any components that were registered to render prior to this script loading */
 window.SCP.componentsToRender.forEach(componentToRender => {
-  renderComponent(componentToRender.targetId, componentToRender.componentName, componentToRender.props)
+  renderComponent(componentToRender.target, componentToRender.componentName, componentToRender.props)
 })
 
 window.SCP.log = log
