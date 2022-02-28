@@ -522,9 +522,8 @@ module Api
         when :phrase
           study_regex = escape_terms_for_regex(term_list: terms)
           terms_formatted_for_author_phrase_search = "\"#{terms.join('')}\""
-          author_match_study_ids = Author.where(:$text => {:$search => terms_formatted_for_author_phrase_search}).pluck(:study_id)
-          
-          base_studies.any_of({name: study_regex}, {description: study_regex}, {:accession.in => accessions},  {:id.in => author_match_study_ids})
+          author_match_study_ids = Author.any_of({first_name: study_regex}, {last_name: study_regex}).pluck(:study_id)
+          base_studies.any_of({name: study_regex}, {description: study_regex}, {:accession.in => accessions}, {:id.in => author_match_study_ids})
         when :inferred
           # in order to maintain the same behavior as normal facets, we run each facet separately and get matching accessions
           # this gives us an array of arrays of matching accessions; now find the intersection (:&)

@@ -22,10 +22,15 @@ export default function KeywordSearch({ keywordPrompt }) {
   const [showTextSearchHelpModal, setTextShowSearchHelpModal] = useState(false)
 
   const textSearchModalContent = (<div>
-    <h4 className="text-center">Title, author, and description search</h4><br/>
-    Using the search box below will perform a text-based search of all study titles, descriptions and author names. The search will return
-    those that contain any of the specified terms. You can quote (&quot;) phrases to find matches that contain the entire
-    phrase, and you can combine both single terms and quoted phrases in your search.
+    <h4 className="text-center">Title, author, and description search</h4>
+    <p>Use the seach box below to perform a text-based search on study titles, decriptions and authors.</p>
+    <ul>
+      <li>A search without (&quot;)s will return any study that contains any of the specified terms.</li>
+      <li>To search for an exact phrase within a study title or description use (&quot;)s around the entire phrase like:</li>
+      <p>&quot;single cell&quot;</p>
+      <li> To search for studies that contain an exact phrase and/or the other search term/s, combine single terms and quoted phrase like:</li>
+      <p>&quot;single cell&quot; Smith</p>
+    </ul>
   </div>)
 
   const textSearchLink = <a className="action advanced-opts"
