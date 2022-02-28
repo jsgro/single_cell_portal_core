@@ -21,11 +21,11 @@ const refresh =
   </a>
 
 /** Summarize errors and warnings */
-function Summary({ messages, issueCategory, fileName=null, showRefreshLink=false }) {
+function Summary({ messages, category, fileName=null, showRefreshLink=false }) {
   // E.g. "Errors", "Warning"
-  const issueTxt = pluralize(_capitalize(issueCategory), messages.length)
+  const issueTxt = pluralize(_capitalize(category), messages.length)
 
-  if (issueCategory === 'error') {
+  if (category === 'error') {
     const redo = showRefreshLink ? refresh : 'Re-choose the file'
     return <p>{issueTxt} found.  {redo} after correcting {fileName}.</p>
   } else {
@@ -37,14 +37,17 @@ function Summary({ messages, issueCategory, fileName=null, showRefreshLink=false
  * Show result of file validation issue for upload UI or sync UI
  */
 export default function ValidationMessage({
-  studyAccession, messages, fileName, showRefreshLink=false
+  studyAccession, issues, fileName, showRefreshLink=false
 }) {
+  const errorMsgs = issues.errors?.map(error => error[2])
+  const warningMsgs = issues.warnings?.map(warning => warning[2])
+
   return (
     <>
-      { messages.errors?.length > 0 &&
+      { errorMsgs?.length > 0 &&
       <div className="validation-error" data-testid="validation-error">
-        <Summary msgs={messages.errors} issueCategory='error' fileName={fileName} showRefreshLink={showRefreshLink} />
-        <ul>{messages.errors.map((msg, i) => {
+        <Summary messages={errorMsgs} category='error' fileName={fileName} showRefreshLink={showRefreshLink} />
+        <ul>{errorMsgs.map((msg, i) => {
           return <li className="validation-error" key={i}>{msg}</li>
         })}
         </ul>
@@ -52,15 +55,15 @@ export default function ValidationMessage({
         <br/>
       </div>
       }
-      { messages.warnings?.length > 0 &&
+      { warningMsgs?.length > 0 &&
       <div className="validation-warning" data-testid="validation-warning">
-        <Summary msgs={messages.warnings} issueCategory='warning' />
-        <ul>{ messages.warnings.map((msg, index) => {
+        <Summary messages={warningMsgs} category='warning' />
+        <ul>{ warningMsgs.map((msg, index) => {
           return <li className="validation-warning" key={index}>{msg}</li>
         })}</ul>
       </div>
       }
-      { messages.suggestSync &&
+      { issues?.suggestSync &&
       <div className="validation-info" data-testid="validation-info">
       Your file is large.  If it is already in a Terra
       workspace, <a href="sync" data-analytics-name="sync-suggestion">sync your file</a> to add it faster.
@@ -72,13 +75,13 @@ export default function ValidationMessage({
 
 /** Convenience function to render this in a non-React part of the app */
 export function renderValidationMessage(
-  target, studyAccession, messages, fileName, showRefreshLink
+  target, studyAccession, issues, fileName, showRefreshLink
 ) {
   ReactDOM.unmountComponentAtNode(target)
   ReactDOM.render(
     <ValidationMessage
       studyAccession={studyAccession}
-      messages={messages}
+      issues={issues}
       fileName={fileName}
       showRefreshLink={showRefreshLink}
     />,

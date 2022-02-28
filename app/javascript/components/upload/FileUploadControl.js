@@ -34,11 +34,11 @@ export const FileTypeExtensions = {
 export default function FileUploadControl({
   file, allFiles, updateFile,
   allowedFileExts=['*'],
-  validationMessages={},
+  validationIssues={},
   bucketName
 }) {
   const [fileValidation, setFileValidation] = useState({
-    validating: false, messages: {}, fileName: null
+    validating: false, issues: {}, fileName: null
   })
   const inputId = `file-input-${file._id}`
 
@@ -57,10 +57,10 @@ export default function FileUploadControl({
     if (FILE_TYPES_ALLOWING_SET_NAME.includes(file.file_type) && file.name && file.name !== file.upload_file_name) {
       newName = file.name
     }
-    setFileValidation({ validating: true, messages: {}, fileName: selectedFile.name })
-    const messages = await validateLocalFile(selectedFile, file, allFiles, allowedFileExts)
-    setFileValidation({ validating: false, messages, fileName: selectedFile.name })
-    if (messages.errors.length === 0) {
+    setFileValidation({ validating: true, issues: {}, fileName: selectedFile.name })
+    const issues = await validateLocalFile(selectedFile, file, allFiles, allowedFileExts)
+    setFileValidation({ validating: false, issues, fileName: selectedFile.name })
+    if (issues.errors.length === 0) {
       updateFile(file._id, {
         uploadSelection: selectedFile,
         upload_file_name: newName,
@@ -124,7 +124,7 @@ export default function FileUploadControl({
 
     <ValidationMessage
       studyAccession={study.accession}
-      messages={fileValidation.messages}
+      issues={fileValidation.issues}
       fileName={fileValidation.fileName}
     />
   </div>

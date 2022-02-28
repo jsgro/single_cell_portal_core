@@ -13,43 +13,34 @@ function formatIssues(issues) {
   const errors = issues.filter(issue => issue[0] === 'error')
   const warnings = issues.filter(issue => issue[0] === 'warn')
 
-  let summary = ''
-  if (errors.length > 0 || warnings.length) {
-    const errorsTerm = (errors.length === 1) ? 'error' : 'errors'
-    const warningsTerm = (warnings.length === 1) ? 'warning' : 'warnings'
-    summary = `Your file had ${errors.length} ${errorsTerm}`
-    if (warnings.length) {
-      summary = `${summary}, ${warnings.length} ${warningsTerm}`
-    }
-  }
-  return { errors, warnings, summary }
+  return { errors, warnings }
 }
 
-/**
- * Validate a File object, log and return issues for upload UI
- *
- *  @param {File} file File object to validate
- *    Docs: https://developer.mozilla.org/en-US/docs/Web/API/File
- *  @param {String} fileType SCP file type
- *  @param {Object} [fileOptions]
- *
- * @return {Object} issueObj Validation results, where:
- *   - `errors` is an array of errors,
- *   - `warnings` is an array of warnings, and
- *   - `summary` is a message like "Your file had 2 errors"
- */
-export async function validateFileContent(file, fileType, fileOptions={}) {
-  const { fileInfo, issueObj, perfTime } = await parseFile(file, fileType, fileOptions)
+// /**
+//  * Validate a File object, log and return issues for upload UI
+//  *
+//  *  @param {File} file File object to validate
+//  *    Docs: https://developer.mozilla.org/en-US/docs/Web/API/File
+//  *  @param {String} fileType SCP file type
+//  *  @param {Object} [fileOptions]
+//  *
+//  * @return {Object} issueObj Validation results, where:
+//  *   - `errors` is an array of errors,
+//  *   - `warnings` is an array of warnings, and
+//  *   - `summary` is a message like "Your file had 2 errors"
+//  */
+// export async function validateFileContent(file, fileType, fileOptions={}) {
+//   const { fileInfo, issueObj, perfTime } = await parseFile(file, fileType, fileOptions)
 
-  const perfTimes = {
-    perfTime,
-    'perfTime:parseFile': perfTime
-  }
+//   const perfTimes = {
+//     perfTime,
+//     'perfTime:parseFile': perfTime
+//   }
 
-  logFileValidation(fileInfo, issueObj, perfTimes)
+//   logFileValidation(fileInfo, issueObj, perfTimes)
 
-  return issueObj
-}
+//   return issueObj
+// }
 
 /** Validate name uniqueness and file extension */
 function validateFileName(file, studyFile, allStudyFiles, allowedFileExts=['*']) {
@@ -83,11 +74,11 @@ function validateFileName(file, studyFile, allStudyFiles, allowedFileExts=['*'])
  * @param allStudyFiles {StudyFile[]} the array of all files for the study, used for name uniqueness checks
  * @param allowedFileExts { String[] } array of allowable extensions, ['*'] for all
  */
-export async function validateLocalFile(file, studyFile, allStudyFiles, allowedFileExts=['*']) {
+export async function validateLocalFile(file, studyFile, allStudyFiles=[], allowedFileExts=['*']) {
   const nameIssues = validateFileName(file, studyFile, allStudyFiles, allowedFileExts)
 
   let issuesObj
-
+  console.log('nameIssues', nameIssues)
   if (nameIssues.length === 0) {
     const fileOptions = {
       use_metadata_convention: studyFile.use_metadata_convention
@@ -102,21 +93,15 @@ export async function validateLocalFile(file, studyFile, allStudyFiles, allowedF
       perfTime,
       'perfTime:parseFile': perfTime
     }
+
     logFileValidation(fileInfo, issuesObj, perfTimes)
   } else {
     issuesObj = formatIssues(nameIssues)
   }
 
-  const messages = {
-    errors: issuesObj.errors.map(error => error[2]),
-    warnings: issuesObj.warnings.map(warning => warning[2]),
-    suggestSync: (file.size >= GiB)
-  }
+  issuesObj.suggestSync = (file.size >= GiB)
 
-  console.log('exiting validateLocalFile 3')
-  console.log('messages')
-  console.log(messages)
-  return messages
+  return issuesObj
 }
 
 
@@ -169,7 +154,7 @@ export function getSizeProps(contentRange, contentLength, file) {
 *   - `warnings` is an array of warnings, and
 *   - `summary` is a message like "Your file had 2 errors"
 */
-export async function validateRemoteFileContent(
+export async function validateRemoteFile(
   bucketName, fileName, fileType, fileOptions
 ) {
   const startTime = performance.now()
@@ -188,7 +173,9 @@ export async function validateRemoteFileContent(
   const sizeProps = getSizeProps(contentRange, contentLength, file)
 
   // Equivalent block exists in validateFileContent
-  const { fileInfo, issueObj, perfTime } = await parseFile(file, fileType, fileOptions, sizeProps)
+  const { fileInfo, issues, perfTime } = await parseFile(file, fileType, fileOptions, sizeProps)
+
+  const issuesObj = formatIssues(issues)
 
   const totalTime = Math.round(performance.now() - startTime)
   const perfTimes = {
@@ -198,7 +185,7 @@ export async function validateRemoteFileContent(
     'perfTime:other': totalTime - readRemoteTime - perfTime
   }
 
-  logFileValidation(fileInfo, issueObj, perfTimes)
+  logFileValidation(fileInfo, issuesObj, perfTimes)
 
-  return issueObj
+  return issuesObj
 }
