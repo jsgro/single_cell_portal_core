@@ -38,7 +38,7 @@ export default function FileUploadControl({
   bucketName
 }) {
   const [fileValidation, setFileValidation] = useState({
-    validating: false, errorMsgs: [], warningMsgs: [], fileName: null
+    validating: false, messages: {}, fileName: null
   })
   const inputId = `file-input-${file._id}`
 
@@ -50,7 +50,6 @@ export default function FileUploadControl({
 
   /** handle user interaction with the file input */
   async function handleFileSelection(e) {
-    console.log('in handleFileSelection')
     const selectedFile = e.target.files[0]
     let newName = selectedFile.name
 
@@ -58,10 +57,10 @@ export default function FileUploadControl({
     if (FILE_TYPES_ALLOWING_SET_NAME.includes(file.file_type) && file.name && file.name !== file.upload_file_name) {
       newName = file.name
     }
-    setFileValidation({ validating: true, issues: {}, fileName: selectedFile.name })
-    const issues = await validateLocalFile(selectedFile, file, allFiles, allowedFileExts)
-    setFileValidation({ validating: false, issues, fileName: selectedFile.name })
-    if (issues.errors.length === 0) {
+    setFileValidation({ validating: true, messages: {}, fileName: selectedFile.name })
+    const messages = await validateLocalFile(selectedFile, file, allFiles, allowedFileExts)
+    setFileValidation({ validating: false, messages, fileName: selectedFile.name })
+    if (messages.errors.length === 0) {
       updateFile(file._id, {
         uploadSelection: selectedFile,
         upload_file_name: newName,
@@ -125,7 +124,7 @@ export default function FileUploadControl({
 
     <ValidationMessage
       studyAccession={study.accession}
-      issues={fileValidation.issues}
+      messages={fileValidation.messages}
       fileName={fileValidation.fileName}
     />
   </div>

@@ -3,7 +3,7 @@
  */
 
 import { GiB } from 'lib/validation/io'
-import { parseFile, getLogProps } from './validate-file-content'
+import { parseFile } from './validate-file-content'
 import { logFileValidation } from './log-validation'
 import { fetchBucketFile } from 'lib/scp-api'
 
@@ -75,26 +75,6 @@ function validateFileName(file, studyFile, allStudyFiles, allowedFileExts=['*'])
   return issues
 }
 
-/** Suggest using sync if large file is detected */
-function getSyncSuggestion(file) {
-  if (file.size < GiB) {return ''}
-
-  return (
-    'Your file is very large.  ' +
-    'If it is already in a Terra workspace,  ' +
-    'sync your file to add it faster.'
-  )
-
-  // return (
-  //   <>
-  //     Your file is very large.
-  //     If it is already in a Terra workspace,
-  //     <a href="sync" data-analytics-name="sync-suggestion">sync your file</a>
-  //     to add it faster.
-  //   </>
-  // )
-}
-
 /** checks name uniqueness, file extension, and then file content.
  * The first two checks short-circuit the latter, since those will often just mean the user
  * has local the wrong file, and showing a string of validation errors would be confusing
@@ -106,26 +86,31 @@ function getSyncSuggestion(file) {
 export async function validateLocalFile(file, studyFile, allStudyFiles, allowedFileExts=['*']) {
   const nameIssues = validateFileName(file, studyFile, allStudyFiles, allowedFileExts)
 
-  const fileOptions = {
-    use_metadata_convention: studyFile.use_metadata_convention
+  let issuesObj
+
+  if (nameIssues.length === 0) {
+    const fileOptions = {
+      use_metadata_convention: studyFile.use_metadata_convention
+    }
+    const studyFileType = studyFile.file_type
+    const { fileInfo, issues, perfTime } = await parseFile(file, studyFileType, fileOptions)
+
+    const allIssues = issues.concat(nameIssues)
+    issuesObj = formatIssues(allIssues)
+
+    const perfTimes = {
+      perfTime,
+      'perfTime:parseFile': perfTime
+    }
+    logFileValidation(fileInfo, issuesObj, perfTimes)
+  } else {
+    issuesObj = formatIssues(nameIssues)
   }
-  const { fileInfo, issues, perfTime } = await parseFile(file, fileType, fileOptions)
-
-  const allIssues = issues.concat(nameIssues)
-  const issuesObj = formatIssues(allIssues)
-
-  const perfTimes = {
-    perfTime,
-    'perfTime:parseFile': perfTime
-  }
-  logFileValidation(fileInfo, issuesObj, perfTimes)
-
-  const syncSuggestion = getSyncSuggestion(file)
 
   const messages = {
     errors: issuesObj.errors.map(error => error[2]),
     warnings: issuesObj.warnings.map(warning => warning[2]),
-    infos: [syncSuggestion]
+    suggestSync: (file.size >= GiB)
   }
 
   console.log('exiting validateLocalFile 3')
