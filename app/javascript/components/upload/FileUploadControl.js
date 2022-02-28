@@ -5,8 +5,7 @@ import FileDownloadControl from 'components/download/FileDownloadControl'
 import LoadingSpinner from 'lib/LoadingSpinner'
 import { StudyContext } from 'components/upload/upload-utils'
 import { UserContext } from 'providers/UserProvider'
-import { GiB } from 'lib/validation/io'
-import { validateFileContent } from 'lib/validation/validate-file-content'
+import { validateLocalFile } from 'lib/validation/validate-file'
 import ValidationMessage from 'components/validation/ValidationMessage'
 
 const plainTextExtensions = ['.txt', '.tsv', '.text', '.csv']
@@ -30,62 +29,6 @@ export const FileTypeExtensions = {
   bai: baiExtensions
 }
 
-/** checks name uniqueness, file extension, and then file content.
- * The first two checks short-circuit the latter, since those will often just mean the user
- * has selected the wrong file, and showing a string of validation errors would be confusing
- * @param selectedFile {File} the File object from the input
- * @param file {StudyFile} the JS object corresponding to the StudyFile
- * @param allFiles {StudyFile[]} the array of all files for the study, used for name uniqueness checks
- * @param allowedFileExts { String[] } array of allowable extensions, ['*'] for all
- */
-async function validateSelectedFile(selectedFile, file, allFiles, allowedFileExts=['*']) {
-  const otherFiles = allFiles.filter(f => f._id != file._id)
-  const otherNames = otherFiles.map(f => f.name)
-  const otherUploadFileNames = otherFiles.map(f => f.upload_file_name)
-  const otherSelectedFileNames = otherFiles.map(f => f.uploadSelection?.name)
-
-  console.log('validateSelectedFile')
-
-  if (otherNames.includes(selectedFile.name) ||
-    otherUploadFileNames.includes(selectedFile.name) ||
-    otherSelectedFileNames.includes(selectedFile.name)) {
-    // console.log('exiting validateSelectedFile 1')
-    // console.log('errorMsgs, warningMsgs')
-    // console.log(errorMsgs, warningMsgs)
-    const errorMsg = `A file named ${selectedFile.name} already exists in your study`
-    return { errorMsgs: [errorMsg], warningMsgs: [] }
-  }
-
-  if (!allowedFileExts.includes('*') && !allowedFileExts.some(ext => selectedFile.name.endsWith(ext))) {
-    const errorMsg = `Allowed extensions are ${allowedFileExts.join(' ')}`
-    console.log('exiting validateSelectedFile 2')
-    console.log('errorMsgs, warningMsgs')
-    console.log(errorMsgs, warningMsgs)
-    return { errorMsgs: [errorMsg], warningMsgs: [] }
-  }
-
-  const { errors, warnings } = await validateFileContent(selectedFile, file.file_type, {
-    use_metadata_convention: file.use_metadata_convention
-  })
-  const errorMsgs = errors.map(error => error[2])
-  const warningMsgs = warnings.map(error => error[2])
-
-
-  if (selectedFile.size > GiB) {
-    const syncLink = `sync your file`
-
-    const msg =
-    <>
-      Your file is very large.
-      If it is already in a Terra workspace, ${syncLink} to add it faster.
-    </>
-    warningMsgs.push(msg)
-  }
-  console.log('exiting validateSelectedFile 3')
-  console.log('errorMsgs, warningMsgs')
-  console.log(errorMsgs, warningMsgs)
-  return { errorMsgs, warningMsgs }
-}
 
 /** renders a file upload control for the given file object */
 export default function FileUploadControl({
@@ -115,10 +58,10 @@ export default function FileUploadControl({
     if (FILE_TYPES_ALLOWING_SET_NAME.includes(file.file_type) && file.name && file.name !== file.upload_file_name) {
       newName = file.name
     }
-    setFileValidation({ validating: true, errorMsgs: [], warningMsgs: [], fileName: selectedFile.name })
-    const { errorMsgs, warningMsgs } = await validateSelectedFile(selectedFile, file, allFiles, allowedFileExts)
-    setFileValidation({ validating: false, errorMsgs, warningMsgs, fileName: selectedFile.name })
-    if (errorMsgs.length === 0) {
+    setFileValidation({ validating: true, issues: {}, fileName: selectedFile.name })
+    const issues = await validateLocalFile(selectedFile, file, allFiles, allowedFileExts)
+    setFileValidation({ validating: false, issues, fileName: selectedFile.name })
+    if (issues.errors.length === 0) {
       updateFile(file._id, {
         uploadSelection: selectedFile,
         upload_file_name: newName,
@@ -182,8 +125,7 @@ export default function FileUploadControl({
 
     <ValidationMessage
       studyAccession={study.accession}
-      errorMsgs={fileValidation.errorMsgs}
-      warningMsgs={fileValidation.warningMsgs}
+      issues={fileValidation.issues}
       fileName={fileValidation.fileName}
     />
   </div>

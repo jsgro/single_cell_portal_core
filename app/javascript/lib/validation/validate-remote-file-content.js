@@ -79,8 +79,8 @@ export async function validateRemoteFileContent(
   const totalTime = Math.round(performance.now() - startTime)
   const perfTimes = {
     'perfTime': totalTime,
-    'perfTimes:readRemote': readRemoteTime, // Fetch + raw parse
-    'perfTimes:parseFile': perfTime, // Processed parse + validate
+    'perfTime:readRemote': readRemoteTime, // Fetch + raw parse
+    'perfTime:parseFile': perfTime, // Processed parse + validate
     'perfTime:other': totalTime - readRemoteTime - perfTime
   }
 
