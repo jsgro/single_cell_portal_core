@@ -9,7 +9,7 @@
  * [1] https://stackoverflow.com/a/47976589
 */
 
-const MiB = 1024 * 1024 // 1 MiB
+export const MiB = 1024 * 1024 // 1 MiB
 
 export const GiB = MiB * 1000 // 1 GiB
 export const DEFAULT_CHUNK_SIZE = MiB
