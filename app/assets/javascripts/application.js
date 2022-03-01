@@ -787,3 +787,5 @@ window.SCP.componentsToRender = []
 window.SCP.renderComponent = function(target, componentName, props) {
   window.SCP.componentsToRender.push({target: target, componentName: componentName, props: props})
 }
+// needed for morpheus import
+window.global = {}

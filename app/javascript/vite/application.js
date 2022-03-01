@@ -18,7 +18,7 @@ import { validateRemoteFileContent } from '~/lib/validation/validate-remote-file
 import {
   logPageView, logClick, logMenuChange, setupPageTransitionLog, log, logCopy, logContextMenu
 } from '~/lib/metrics-api'
-import * as ScpApi from 'lib/scp-api'
+import * as ScpApi from '~/lib/scp-api'
 
 window.SCP = window.SCP ? window.SCP : {}
 
