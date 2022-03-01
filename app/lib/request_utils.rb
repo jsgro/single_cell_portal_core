@@ -157,9 +157,11 @@ class RequestUtils
   # handle upstream reporting/logging of errors in custom exceptions controllers
   def self.log_exception(request, params, user: nil, study: nil)
     @exception = request.env['action_dispatch.exception']
-    MetricsService.report_error(@exception, request, user, study)
-    ErrorTracker.report_exception(@exception, user, params)
     Rails.logger.error ([@exception.message] + @exception.backtrace).join($/)
+    return nil if static_asset_error?(@exception) # skip reporting if this is a static asset load error
+
+    ErrorTracker.report_exception(@exception, user, params)
+    MetricsService.report_error(@exception, request, user, study)
   end
 
   # format exception JSON responses
@@ -170,5 +172,12 @@ class RequestUtils
       error_class: exception.class.name,
       source: exception.backtrace&.first
     }
+  end
+
+  # determine if this is a 404 when trying to load a non-existent static asset
+  def self.static_asset_error?(exception)
+    return false unless exception.is_a?(ActionController::RoutingError)
+
+     /(assets|packs|apple-touch)/.match?(exception.message)
   end
 end

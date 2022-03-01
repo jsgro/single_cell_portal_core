@@ -182,11 +182,12 @@ class MetricsService
     }
 
     # configure properties/headers depending on user presence
-    if user.present?
+    # only pass user token if user is registered for Terra to avoid 4xx/5xx errors
+    if user.present? && user.registered_for_firecloud
       props.merge!({ authenticated: true, registeredForTerra: user.registered_for_firecloud })
       headers.merge!({'Authorization' => "Bearer #{user.token_for_api_call.dig('access_token')}"})
     else
-      props.merge!({ authenticated: false, distinct_id: request.cookies['user_id'] })
+      props.merge!({ authenticated: user.present?, distinct_id: request.cookies['user_id'] })
     end
 
     post_body = {'event' => 'error', 'properties' => props}.to_json
