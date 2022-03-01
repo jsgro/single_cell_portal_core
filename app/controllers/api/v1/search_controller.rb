@@ -517,12 +517,10 @@ module Api
         case query_context
         when :keyword
           author_match_study_ids = Author.where(:$text => {:$search => terms}).pluck(:study_id)
-         
           base_studies.any_of({:$text => {:$search => terms}}, {:accession.in => accessions}, {:id.in => author_match_study_ids})
         when :phrase
           study_regex = escape_terms_for_regex(term_list: terms)
-          terms_formatted_for_author_phrase_search = "\"#{terms.join('')}\""
-          author_match_study_ids = Author.any_of({first_name: study_regex}, {last_name: study_regex}).pluck(:study_id)
+          author_match_study_ids = Author.any_of({first_name: study_regex}, {last_name: study_regex}, {institution: study_regex}).pluck(:study_id)
           base_studies.any_of({name: study_regex}, {description: study_regex}, {:accession.in => accessions}, {:id.in => author_match_study_ids})
         when :inferred
           # in order to maintain the same behavior as normal facets, we run each facet separately and get matching accessions
