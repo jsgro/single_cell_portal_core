@@ -114,7 +114,7 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
     }
 
     const bucketName = '<%= @study.bucket_id %>'
-    const messages = await window.SCP.validateRemoteFile(
+    const issues = await window.SCP.validateRemoteFile(
       bucketName, fileName, fileType, fileOptions
     );
 
@@ -124,11 +124,11 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
     const selector = `#${form.attr('id')} .validation-message-container`
     const target = document.querySelector(selector)
     window.SCP.renderValidationMessage(
-      target, studyAccession, messages, fileName, true
+      target, studyAccession, issues, fileName, true
     )
 
 
-    if (issues.errors.length > 1) {
+    if (issues.errors.length > 0) {
       // Disable the "Sync" button
       $(`#sync-study-file-${fileId}`)
         .prop('disabled', true)
