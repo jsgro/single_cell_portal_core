@@ -46,18 +46,8 @@ export default function ValidationMessage({
 
   const hasLargeFile = issues.infos?.find(info => info[1] === 'size:large')
 
-  let syncSuggestion = ''
-  if (!isSync && isUserRegisteredForTerra() && hasLargeFile) {
-    syncSuggestion = (
-      <>
-      Your file is large.  If it is already in a Terra
-      workspace,{' '}
-        <a href="sync" target="_blank" data-analytics-name="sync-suggestion">
-          sync your file
-        </a>{' '}
-      to add it faster.
-      </>)
-  }
+  // TODO (SCP-4149): Suggest sync for users not registered for Terra, tailor docs
+  const suggestSync = (!isSync && isUserRegisteredForTerra() && hasLargeFile)
 
   return (
     <>
@@ -80,9 +70,15 @@ export default function ValidationMessage({
         })}</ul>
       </div>
       }
-      { syncSuggestion !== '' &&
+      { suggestSync &&
       <div className="validation-info" data-testid="validation-info">
-        { syncSuggestion}
+        <>
+      Your file is large.  If it is already in a Google bucket,{' '}
+          <a href="sync" target="_blank" data-analytics-name="sync-suggestion">
+          sync your file
+          </a>{' '}
+      to add it faster.
+        </>
       </div>
       }
     </>
