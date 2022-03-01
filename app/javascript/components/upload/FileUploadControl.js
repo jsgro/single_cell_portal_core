@@ -4,7 +4,6 @@ import { bytesToSize } from 'lib/stats'
 import FileDownloadControl from 'components/download/FileDownloadControl'
 import LoadingSpinner from 'lib/LoadingSpinner'
 import { StudyContext } from 'components/upload/upload-utils'
-import { UserContext } from 'providers/UserProvider'
 import { validateLocalFile } from 'lib/validation/validate-file'
 import ValidationMessage from 'components/validation/ValidationMessage'
 
@@ -43,10 +42,6 @@ export default function FileUploadControl({
   const inputId = `file-input-${file._id}`
 
   const study = useContext(StudyContext)
-  const user = useContext(UserContext)
-
-  console.log('user')
-  console.log(user)
 
   /** handle user interaction with the file input */
   async function handleFileSelection(e) {

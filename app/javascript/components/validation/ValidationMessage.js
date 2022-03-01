@@ -1,8 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { supportEmailLink } from 'lib/error-utils'
 import _capitalize from 'lodash/capitalize'
 import pluralize from 'pluralize'
+
+import { supportEmailLink } from 'lib/error-utils'
+import { isUserRegisteredForTerra } from 'providers/UserProvider'
 
 /** Help users get reach us for support */
 function SupportMessage({ studyAccession }) {
@@ -37,16 +39,31 @@ function Summary({ messages, category, fileName=null, showRefreshLink=false }) {
  * Show result of file validation issue for upload UI or sync UI
  */
 export default function ValidationMessage({
-  studyAccession, issues, fileName, showRefreshLink=false
+  studyAccession, issues, fileName, isSync=false
 }) {
   const errorMsgs = issues.errors?.map(error => error[2])
   const warningMsgs = issues.warnings?.map(warning => warning[2])
+
+  const hasLargeFile = issues.infos?.find(info => info[1] === 'size:large')
+
+  let syncSuggestion = ''
+  if (!isSync && isUserRegisteredForTerra() && hasLargeFile) {
+    syncSuggestion = (
+      <>
+      Your file is large.  If it is already in a Terra
+      workspace,{' '}
+        <a href="sync" target="_blank" data-analytics-name="sync-suggestion">
+          sync your file
+        </a>{' '}
+      to add it faster.
+      </>)
+  }
 
   return (
     <>
       { errorMsgs?.length > 0 &&
       <div className="validation-error" data-testid="validation-error">
-        <Summary messages={errorMsgs} category='error' fileName={fileName} showRefreshLink={showRefreshLink} />
+        <Summary messages={errorMsgs} category='error' fileName={fileName} showRefreshLink={isSync} />
         <ul>{errorMsgs.map((msg, i) => {
           return <li className="validation-error" key={i}>{msg}</li>
         })}
@@ -63,10 +80,9 @@ export default function ValidationMessage({
         })}</ul>
       </div>
       }
-      { issues?.suggestSync &&
+      { syncSuggestion !== '' &&
       <div className="validation-info" data-testid="validation-info">
-      Your file is large.  If it is already in a Terra
-      workspace, <a href="sync" data-analytics-name="sync-suggestion">sync your file</a> to add it faster.
+        { syncSuggestion}
       </div>
       }
     </>
@@ -75,7 +91,7 @@ export default function ValidationMessage({
 
 /** Convenience function to render this in a non-React part of the app */
 export function renderValidationMessage(
-  target, studyAccession, issues, fileName, showRefreshLink
+  target, studyAccession, issues, fileName, isSync
 ) {
   ReactDOM.unmountComponentAtNode(target)
   ReactDOM.render(
@@ -83,7 +99,7 @@ export function renderValidationMessage(
       studyAccession={studyAccession}
       issues={issues}
       fileName={fileName}
-      showRefreshLink={showRefreshLink}
+      isSync={isSync}
     />,
     target
   )

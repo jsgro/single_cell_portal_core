@@ -99,7 +99,9 @@ export async function validateLocalFile(file, studyFile, allStudyFiles=[], allow
     issuesObj = formatIssues(nameIssues)
   }
 
-  issuesObj.suggestSync = (file.size >= GiB)
+  if (file.size >= GiB) {
+    issuesObj.infos = [['info', 'size:large', '']]
+  }
 
   return issuesObj
 }

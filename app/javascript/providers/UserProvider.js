@@ -28,6 +28,11 @@ export function isUserLoggedIn() {
   return !!getAccessToken()
 }
 
+/** Returns true if user is registered for Terra */
+export function isUserRegisteredForTerra() {
+  return ('SCP' in window) ? window.SCP.registeredForTerra : 'test'
+}
+
 /**
  * returns true if the signed-in user has completed their Terra profile by
  * checking if a pet service account token has been issued via getReadOnlyToken
