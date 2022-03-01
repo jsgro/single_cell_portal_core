@@ -23,7 +23,7 @@ export default function KeywordSearch({ keywordPrompt }) {
 
   const textSearchModalContent = (<div>
     <h4 className="text-center">Title, author, and description search</h4>
-    <p>Use the seach box below to perform a text-based search on study titles, decriptions and authors.</p>
+    <p>Use the seach box below to perform a text-based search on study titles, decriptions and authors*.</p>
     <ul>
       <li>A search without (&quot;)s will return any study that contains any of the specified terms.</li>
       <li>To search for an exact phrase within a study title or description use (&quot;)s around the entire phrase like:</li>
@@ -31,6 +31,7 @@ export default function KeywordSearch({ keywordPrompt }) {
       <li> To search for studies that contain an exact phrase and/or the other search term/s, combine single terms and quoted phrase like:</li>
       <p>&quot;single cell&quot; Smith</p>
     </ul>
+    <p>*Structured data for authors is new in SCP, and many studies lack it, so author search results may be limited.</p>
   </div>)
 
   const textSearchLink = <a className="action advanced-opts"
