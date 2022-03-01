@@ -16,32 +16,6 @@ function formatIssues(issues) {
   return { errors, warnings }
 }
 
-// /**
-//  * Validate a File object, log and return issues for upload UI
-//  *
-//  *  @param {File} file File object to validate
-//  *    Docs: https://developer.mozilla.org/en-US/docs/Web/API/File
-//  *  @param {String} fileType SCP file type
-//  *  @param {Object} [fileOptions]
-//  *
-//  * @return {Object} issueObj Validation results, where:
-//  *   - `errors` is an array of errors,
-//  *   - `warnings` is an array of warnings, and
-//  *   - `summary` is a message like "Your file had 2 errors"
-//  */
-// export async function validateFileContent(file, fileType, fileOptions={}) {
-//   const { fileInfo, issueObj, perfTime } = await parseFile(file, fileType, fileOptions)
-
-//   const perfTimes = {
-//     perfTime,
-//     'perfTime:parseFile': perfTime
-//   }
-
-//   logFileValidation(fileInfo, issueObj, perfTimes)
-
-//   return issueObj
-// }
-
 /** Validate name uniqueness and file extension */
 function validateFileName(file, studyFile, allStudyFiles, allowedFileExts=['*']) {
   const otherFiles = allStudyFiles.filter(f => f._id != studyFile._id)
