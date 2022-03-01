@@ -6,10 +6,9 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import ReactDOM from 'react-dom'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isMatch'
-import { ReactNotifications, store } from 'react-notifications-component'
+import { ReactNotifications, Store } from 'react-notifications-component'
 import { Router, useLocation, navigate } from '@reach/router'
 import * as queryString from 'query-string'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -120,7 +119,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   /** handle response from server after an upload by updating the serverState with the updated file response */
   function handleSaveResponse(response, oldFileId, uploadingMoreChunks, requestCanceller) {
     if (requestCanceller.wasCancelled) {
-      store.addNotification(failureNotification(`${updatedFile.name} save cancelled`))
+      Store.addNotification(failureNotification(`${updatedFile.name} save cancelled`))
       updateFile(oldFileId, { isSaving: false, requestCanceller: null })
       return
     }
@@ -155,7 +154,7 @@ export function RawUploadWizard({ studyAccession, name }) {
       return newFormState
     })
     if (!uploadingMoreChunks) {
-      store.addNotification(successNotification(`${updatedFile.name} saved successfully`))
+      Store.addNotification(successNotification(`${updatedFile.name} saved successfully`))
     }
   }
 
@@ -257,7 +256,7 @@ export function RawUploadWizard({ studyAccession, name }) {
         handleSaveResponse(response, studyFileId, false, requestCanceller)
       }
     } catch (error) {
-      store.addNotification(failureNotification(<span>{file.name} failed to save<br/>{error}</span>))
+      Store.addNotification(failureNotification(<span>{file.name} failed to save<br/>{error}</span>))
       updateFile(studyFileId, {
         isSaving: false
       })
@@ -274,9 +273,9 @@ export function RawUploadWizard({ studyAccession, name }) {
       try {
         await deleteFileFromServer(fileId)
         deleteFileFromForm(fileId)
-        store.addNotification(successNotification(`${file.name} deleted successfully`))
+        Store.addNotification(successNotification(`${file.name} deleted successfully`))
       } catch (error) {
-        store.addNotification(failureNotification(<span>{file.name} failed to delete<br/>{error.message}</span>))
+        Store.addNotification(failureNotification(<span>{file.name} failed to delete<br/>{error.message}</span>))
         updateFile(fileId, {
           isDeleting: false
         })
@@ -317,7 +316,7 @@ export function RawUploadWizard({ studyAccession, name }) {
       // if the get fails, it's very likely that the error recur on a retry
       // (user's session timed out, server downtime, internet connection issues)
       // so to avoid repeated error messages, show one error, and stop polling
-      store.addNotification(failureNotification(<span>
+      Store.addNotification(failureNotification(<span>
         Server connectivity failed--some functions may not be available.<br/>
         You may want to reload the page or sign in again.
       </span>))

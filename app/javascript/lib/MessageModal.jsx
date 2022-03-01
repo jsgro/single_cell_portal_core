@@ -86,7 +86,7 @@ export default function MessageModal() {
   </Modal>
 }
 
-/** returns a notification config object suitable for passing to ReactNotification store.addNotification */
+/** returns a notification config object suitable for passing to ReactNotification Store.addNotification */
 export function successNotification(message) {
   return {
     type: 'success',
@@ -102,7 +102,7 @@ export function successNotification(message) {
   }
 }
 
-/** returns a notification config object suitable for passing to ReactNotification store.addNotification */
+/** returns a notification config object suitable for passing to ReactNotification Store.addNotification */
 export function failureNotification(message) {
   return {
     ...successNotification(message),

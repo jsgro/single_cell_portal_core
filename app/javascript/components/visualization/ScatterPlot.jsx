@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 import _remove from 'lodash/remove'
 import Plotly from 'plotly.js-dist'
-import { store } from 'react-notifications-component'
+import { Store } from 'react-notifications-component'
 
 import { fetchCluster, updateStudyFile } from '~/lib/scp-api'
 import { logScatterPlot } from '~/lib/scp-api-metrics'
@@ -111,7 +111,7 @@ function RawScatterPlot({
         studyFileId: scatterData.clusterFileId,
         studyFileData: formatFileForApi(newFileObj)
       })
-      store.addNotification(successNotification(`Colors saved successfully`))
+      Store.addNotification(successNotification(`Colors saved successfully`))
       const newScatterData = Object.assign({}, scatterData, {
         customColors: response.cluster_file_info?.custom_colors[scatterData.annotParams.name] ?? {}
       })
@@ -119,7 +119,7 @@ function RawScatterPlot({
       setIsLoading(false)
       setScatterData(newScatterData)
     } catch (error) {
-      store.addNotification(failureNotification(<span>Error saving colors<br/>{error}</span>))
+      Store.addNotification(failureNotification(<span>Error saving colors<br/>{error}</span>))
       setIsLoading(false)
     }
   }
