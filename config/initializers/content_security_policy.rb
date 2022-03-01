@@ -63,7 +63,7 @@ SecureHeaders::Configuration.default do |config|
     # enable connections to live reload server
     allowed_connect_sources.push('https://localhost:3035')
     allowed_connect_sources.push('wss://localhost:3035')
-    # 3038 is the Vite reload server
+    # 3036 is the Vite reload server
     allowed_connect_sources.push('wss://localhost:3036')
     allowed_connect_sources.push('ws://localhost:3036')
     allowed_connect_sources.push('ws://127.0.0.1:3036')

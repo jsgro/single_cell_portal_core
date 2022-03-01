@@ -30,7 +30,6 @@
 
 // TODO (SCP-3249): Modernize Morpheus, then remove this
 //= require morpheus-external-r
-console.log('')
 var fileUploading = false;
 var PAGE_RENDERED = false;
 var OPEN_MODAL = '';
@@ -780,7 +779,11 @@ function showAuthorPopover(element) {
   jqElement.data('popover', true)
 }
 
+/** store a list of components to be rendered once our Vite/React JS loads */
 window.SCP.componentsToRender = []
+/** Adds somethign to the list of stuff to render once all JS loads.  target can be either an
+ * id string or a dom node.
+ */
 window.SCP.renderComponent = function(target, componentName, props) {
   window.SCP.componentsToRender.push({target: target, componentName: componentName, props: props})
 }
