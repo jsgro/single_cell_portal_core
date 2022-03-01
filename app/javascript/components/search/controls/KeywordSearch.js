@@ -34,8 +34,8 @@ export default function KeywordSearch({ keywordPrompt }) {
   </div>)
 
   const textSearchLink = <a className="action advanced-opts"
-                            onClick={() => setTextShowSearchHelpModal(true)}
-                            data-analytics-name="search-help">
+    onClick={() => setTextShowSearchHelpModal(true)}
+    data-analytics-name="search-help">
     <FontAwesomeIcon icon={faQuestionCircle} />
   </a>
 

@@ -23,10 +23,11 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     @other_user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @study = FactoryBot.create(:detached_study,
                                name_prefix: "Search Testing Study #{@random_seed}",
-                               public: true,                              
+                               public: true,
                                user: @user,
                                initialized: true,
                                test_array: @@studies_to_clean)
+    @author = FactoryBot.create(:author, study: @study, last_name: 'Doe', first_name: 'john', institution: 'MIT')
     FactoryBot.create(:metadata_file, name: 'metadata.txt', study: @study, use_metadata_convention: true)
     seed_example_bq_data(@study)
     FactoryBot.create(:cluster_file, name: 'cluster_example.txt', study: @study)
@@ -204,9 +205,21 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'testing', json['studies'].first['term_matches'].first
     assert_equal 'API Test Study', json['studies'].last['term_matches'].first
 
-    # test author keyword search
-    @author = FactoryBot.create(:author, study: @study, last_name: 'Doe', first_name: 'john')
+    # test author keyword search for name
     search_terms = 'Doe'
+    execute_http_request(:get, api_v1_search_path(type: 'study', terms: search_terms))
+    assert_response :success
+    author_match_study_ids = Author.where(:$text => {:$search => search_terms}).pluck(:study_id)
+    expected_accessions = Study.viewable(@user).where(:id.in => author_match_study_ids).pluck(:accession)
+    matching_accessions = json['matching_accessions']
+    assert_equal expected_accessions, matching_accessions,
+                  "Did not return correct array of matching accessions, expected #{expected_accessions} but found #{matching_accessions}"
+    
+    assert_equal search_terms, json['studies'].first['term_matches'].first
+
+
+    # test author keyword search for institution
+    search_terms = 'MIT'
     execute_http_request(:get, api_v1_search_path(type: 'study', terms: search_terms))
     assert_response :success
     author_match_study_ids = Author.where(:$text => {:$search => search_terms}).pluck(:study_id)
