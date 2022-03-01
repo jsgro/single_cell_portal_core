@@ -1,8 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import 'react-notifications-component/dist/theme.css'
-import '~/styles/application.scss'
+import morpheus from 'morpheus-app'
+import { Spinner } from 'spin.js'
 
+import '~/styles/application.scss'
 import HomePageContent from '~/components/HomePageContent'
 import ExploreView from '~/components/explore/ExploreView'
 import UploadWizard from '~/components/upload/UploadWizard'
@@ -16,7 +18,9 @@ import { validateRemoteFileContent } from '~/lib/validation/validate-remote-file
 import {
   logPageView, logClick, logMenuChange, setupPageTransitionLog, log, logCopy, logContextMenu
 } from '~/lib/metrics-api'
+import * as ScpApi from 'lib/scp-api'
 
+window.SCP = window.SCP ? window.SCP : {}
 
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI
@@ -53,6 +57,11 @@ function renderComponent(target, componentName, props) {
     targetEl)
 }
 
+// SCP expects these variables to be global.
+//
+// If adding a new variable here, also add it to .eslintrc.js
+
+
 /** put the function globally accessible, replacing the pre-registration 'renderComponent'
  * setup in assets/application.js */
 window.SCP.renderComponent = renderComponent
@@ -66,3 +75,7 @@ window.SCP.log = log
 window.SCP.getFeatureFlagsWithDefaults = getFeatureFlagsWithDefaults
 window.SCP.validateFileContent = validateFileContent
 window.SCP.validateRemoteFileContent = validateRemoteFileContent
+window.SCP.API = ScpApi
+
+window.Spinner = Spinner
+window.morpheus = morpheus
