@@ -126,7 +126,7 @@ function LegendEntry({
         </div>
         <div className="scatter-legend-entry">
           <span className="legend-label" title={entry}>{entry}</span>
-          <span className="num-points" title={`${numPoints} points in this crazy group`}>{numPoints}</span>
+          <span className="num-points" title={`${numPoints} points in this group`}>{numPoints}</span>
         </div>
       </div>
       { showColorPicker &&
