@@ -28,7 +28,7 @@ export default function KeywordSearch({ keywordPrompt }) {
       <li>A search without quotes (i.e. not wrapped in &quot;) will return any study that contains any of the specified terms.</li>
       <li>To search for an exact phrase within a study title or description use quotes around the entire phrase like:</li>
       <p>&quot;single cell&quot;</p>
-      <li> To search for studies that contain an exact phrase and/or the other search term/s, combine single terms and quoted phrase like:</li>
+      <li> To search for studies that contain an exact phrase and/or the other search terms, combine single terms and quoted phrases like:</li>
       <p>&quot;single cell&quot; Smith</p>
     </ul>
     <p>*Structured data for authors is new in SCP, and many studies lack it, so author search results may be limited.</p>
