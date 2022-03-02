@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { mount } from 'enzyme'
+import { render, fireEvent } from '@testing-library/react'
 
 import { PropsStudySearchProvider } from 'providers/StudySearchProvider'
 import GeneKeyword from 'components/search/genes/GeneKeyword'
@@ -9,10 +9,10 @@ import { GeneSearchContext } from 'providers/GeneSearchProvider'
 
 describe('Search query display text', () => {
   it('shows blank search form with place holder text present', async () => {
-    const wrapper = mount((
+    const { container } = render((
       <GeneKeyword placeholder={'I am a place holder'} />
     ))
-    expect(wrapper.find('.gene-keyword-search').text().trim()).toEqual('I am a place holder')
+    expect(container.querySelector('.gene-keyword-search').textContent.trim()).toEqual('I am a place holder')
   })
 
   it('shows study result matches search param', async () => {
@@ -26,14 +26,14 @@ describe('Search query display text', () => {
       isLoaded: false,
       isError: false
     }
-    const wrapper = mount((
+    const { container } = render((
       <PropsStudySearchProvider searchParams={{ terms: 'PTEN', page: 1 }}>
         <GeneSearchContext.Provider value={searchState}>
           <GeneKeyword placeholder={'I am a place holder'} />
         </GeneSearchContext.Provider>
       </PropsStudySearchProvider>
     ))
-    expect(wrapper.find('.gene-keyword-search').text().trim()).toEqual('PTEN')
+    expect(container.querySelector('.gene-keyword-search').textContent.trim()).toEqual('PTEN')
   })
 
   it('show matching multiple params and strips off surronding quotes on search params', async () => {
@@ -47,14 +47,14 @@ describe('Search query display text', () => {
       isLoaded: false,
       isError: false
     }
-    const wrapper = mount((
+    const { container } = render((
       <PropsStudySearchProvider searchParams={{ terms: '"PTEN", NA', page: 1 }}>
         <GeneSearchContext.Provider value={searchState}>
           <GeneKeyword placeholder={'I am a place holder'} />
         </GeneSearchContext.Provider>
       </PropsStudySearchProvider>
     ))
-    expect(wrapper.find('.gene-keyword-search').text().trim()).toEqual('PTEN,NA')
+    expect(container.querySelector('.gene-keyword-search').textContent.trim()).toEqual('PTEN,NA')
   })
 
   it('show that searching on no entered genes provides the generic results ', async () => {
@@ -68,16 +68,16 @@ describe('Search query display text', () => {
       isLoaded: false,
       isError: false
     }
-    const wrapper = mount((
+    const { container } = render((
       <PropsStudySearchProvider searchParams={{ terms: '', page: 1 }}>
         <GeneSearchContext.Provider value={searchState}>
           <GeneKeyword placeholder={'I am a place holder'} />
         </GeneSearchContext.Provider>
       </PropsStudySearchProvider>
     ))
-    expect(wrapper.find('.gene-keyword-search').text().trim()).toEqual('I am a place holder')
-    wrapper.find('.input-group-append').simulate('click')
-    expect(wrapper.find('.gene-keyword-search').text().trim()).toEqual('I am a place holder')
+    expect(container.querySelector('.gene-keyword-search').textContent.trim()).toEqual('I am a place holder')
+    fireEvent.click(container.querySelector('.gene-keyword-search'))
+    expect(container.querySelector('.gene-keyword-search').textContent.trim()).toEqual('I am a place holder')
   })
 })
 
