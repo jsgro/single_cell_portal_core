@@ -21,11 +21,13 @@ jobs:
           sudo mv vault /usr/local/bin
       - name: Load secrets and run tests
         env:
-          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           RAILS_LOG_TO_STDOUT: true
+          VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
+          VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
         run: |
+          export VAULT_TOKEN=$( vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_SECRET_ID )
           bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json \
                                   -s secret/kdux/scp/staging/scp_service_account.json \
                                   -r secret/kdux/scp/staging/read_only_service_account.json \
