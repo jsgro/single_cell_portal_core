@@ -1,5 +1,5 @@
 import React from 'react'
-import { mount } from 'enzyme'
+import { render, screen, fireEvent } from '@testing-library/react'
 import * as Reach from '@reach/router'
 
 import MoreFacetsButton from 'components/search/controls/MoreFacetsButton'
@@ -39,25 +39,25 @@ describe('Basic "More facets" capability for faceted search', () => {
     const routerNav = jest.spyOn(Reach, 'navigate')
 
     const moreButton = () => {
-      return wrapper.find('#more-facets-button').first()
+      return container.querySelector('#more-facets-button')
     }
-    const wrapper = mount((
+    const { container } = render((
       <PropsStudySearchProvider searchParams={{ terms: '', facets: {}, page: 1 }}>
         <MoreFacetsButton facets={testFacets}/>
       </PropsStudySearchProvider>
     ))
-    expect(moreButton()).toHaveLength(1)
-    expect(moreButton().hasClass('active')).toEqual(false)
-    wrapper.find('#more-facets-button > a').simulate('click')
-    expect(moreButton().hasClass('active')).toEqual(true)
+    expect(moreButton()).toBeTruthy()
+    expect(moreButton().classList.contains('active')).toEqual(false)
+    fireEvent.click(container.querySelector('#more-facets-button > a'))
+    expect(moreButton().classList.contains('active')).toEqual(true)
 
-    wrapper.find('#facet-sex > a').simulate('click')
-    expect(wrapper.find('#facet-sex button.facet-apply-button').hasClass('disabled')).toEqual(true)
+    fireEvent.click(container.querySelector('#facet-sex > a'))
+    expect(container.querySelector('#facet-sex button.facet-apply-button').classList.contains('disabled')).toEqual(true)
 
-    wrapper.find('#facet-sex input#female').simulate('change', { target: { checked: true } })
-    expect(wrapper.find('#facet-sex button.facet-apply-button').hasClass('active')).toEqual(true)
+    fireEvent.click(container.querySelector('#facet-sex input#female'))
+    expect(container.querySelector('#facet-sex button.facet-apply-button').classList.contains('active')).toEqual(true)
 
-    wrapper.find('#facet-sex button.facet-apply-button').simulate('click')
+    fireEvent.click(container.querySelector('#facet-sex button.facet-apply-button'))
     expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=sex%3Afemale')
   })
 })
@@ -67,27 +67,26 @@ describe('Filter slider works within more facets', () => {
     const routerNav = jest.spyOn(Reach, 'navigate')
 
     const ageFacet = () => {
-      return wrapper.find('#facet-organism-age').first()
+      return container.querySelector('#facet-organism-age')
     }
-    const wrapper = mount((
+    const { container } = render((
       <PropsStudySearchProvider searchParams={{ terms: '', facets: {}, page: 1 }}>
         <MoreFacetsButton facets={testFacets}/>
       </PropsStudySearchProvider>
     ))
-    wrapper.find('#more-facets-button > a').simulate('click')
+    fireEvent.click(container.querySelector('#more-facets-button > a'))
+    fireEvent.click(container.querySelector('#facet-organism-age > a'))
 
-    wrapper.find('#facet-organism-age > a').simulate('click')
+    expect(ageFacet().querySelectorAll('input[type="number"]')).toHaveLength(2)
+    expect(ageFacet().querySelectorAll('input[type="number"]')[0].value).toEqual('1')
+    expect(ageFacet().querySelectorAll('input[type="number"]')[1].value).toEqual('180')
+    expect(ageFacet().querySelectorAll('select')[0].value).toEqual('years')
 
-    expect(ageFacet().find('input[type="number"]')).toHaveLength(2)
-    expect(ageFacet().find('input[type="number"]').first().props().value).toEqual(1)
-    expect(ageFacet().find('input[type="number"]').last().props().value).toEqual(180)
-    expect(ageFacet().find('select').first().props().value).toEqual('years')
-
-    ageFacet().find('input[type="number"]').first().simulate('change', {
+    fireEvent.change(ageFacet().querySelector('input[type="number"]'), {
       target: { value: 50 }
     })
-    expect(ageFacet().find('button.facet-apply-button').hasClass('active')).toEqual(true)
-    ageFacet().find('button.facet-apply-button').simulate('click')
+    expect(ageFacet().querySelector('button.facet-apply-button').classList.contains('active')).toEqual(true)
+    fireEvent.click(container.querySelector('button.facet-apply-button'))
     expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&facets=organism_age%3A50%7C180%7Cyears')
   })
 })
