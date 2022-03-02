@@ -2,7 +2,7 @@
  * @fileoverview Client-side file validation (CSFV) for upload and sync UI
  */
 
-import { GiB, MiB } from 'lib/validation/io'
+import { oneGiB, oneMiB } from 'lib/validation/io'
 import { parseFile } from './validate-file-content'
 import { logFileValidation } from './log-validation'
 import { fetchBucketFile } from 'lib/scp-api'
@@ -72,7 +72,7 @@ export async function validateLocalFile(file, studyFile, allStudyFiles=[], allow
     issuesObj = formatIssues(nameIssues)
   }
 
-  if (file.size >= GiB) {
+  if (file.size >= oneGiB) {
     issuesObj.infos = [['info', 'size:large', '']]
   }
 
@@ -89,7 +89,7 @@ export async function validateLocalFile(file, studyFile, allStudyFiles=[], allow
 * So 50 MiB means sync CSFV fully scans > 80% files, usually in < 5 seconds.
 * Local tests gave 4.6 s (3.4 s remote read, 1.1 s validate; 138 Mbps down).
 */
-export const MAX_SYNC_CSFV_BYTES = 50 * MiB
+export const MAX_SYNC_CSFV_BYTES = 50 * oneMiB
 
 /** Get file-size data for sync validation processing and logging */
 export function getSizeProps(contentRange, contentLength, file) {
