@@ -52,7 +52,6 @@ export async function validateLocalFile(file, studyFile, allStudyFiles=[], allow
   const nameIssues = validateFileName(file, studyFile, allStudyFiles, allowedFileExts)
 
   let issuesObj
-  console.log('nameIssues', nameIssues)
   if (nameIssues.length === 0) {
     const fileOptions = {
       use_metadata_convention: studyFile.use_metadata_convention
