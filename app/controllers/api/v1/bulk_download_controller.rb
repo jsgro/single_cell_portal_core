@@ -407,10 +407,7 @@ module Api
       def self.find_matching_accessions(raw_accessions)
         accessions = RequestUtils.split_query_param_on_delim(parameter: raw_accessions)
         sanitized_accessions = StudyAccession.sanitize_accessions(accessions)
-        detached_accessions = Study.where(detached: true).pluck(:accession)
-        # get intersection of requested & viewable accessions, and discard detached studies
-        allowed_accessions = sanitized_accessions - detached_accessions
-        Study.where(:accession.in => allowed_accessions).pluck(:accession)
+        Study.where(detached: false, :accession.in => sanitized_accessions).pluck(:accession)
       end
 
       # extract out HCA "accessions" (project shortnames) by filtering out SCP accessions
