@@ -8,7 +8,6 @@
 * [1] E.g. https://github.com/broadinstitute/scp-ingest-pipeline/blob/development/ingest/validation/validate_metadata.py
 */
 
-import { log } from 'lib/metrics-api'
 import { readFileBytes } from './io'
 import ChunkedLineReader from './chunked-line-reader'
 import { PARSEABLE_TYPES } from 'components/upload/upload-utils'
@@ -19,8 +18,6 @@ import {
   getParsedHeaderLines, parseLine, ParseException,
   validateUniqueCellNamesWithinFile, validateMetadataLabelMatches, validateGroupColumnCounts, timeOutCSFV
 } from './shared-validation'
-
-import getSCPContext from 'providers/SCPContextProvider'
 
 // from lib/assets/metadata_schemas/alexandria_convention_schema.json
 // (which in turn is from scp-ingest-pipeline/schemas)
@@ -342,7 +339,7 @@ export async function validateGzipEncoding(file) {
  *
  * @returns {Object} result Validation results
  * @returns {Object} result.fileInfo Data about the file and its parsing
- * @returns {Object} result.issuesObj Errors, warnings, and summary
+ * @returns {Object} result.issues Array of [category, type, message]
  * @returns {Number} result.perfTime How long this function took
  */
 export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
@@ -367,7 +364,7 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
     if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
       return {
         fileInfo,
-        issueObj: formatIssues([]),
+        issues: [],
         perfTime: Math.round(performance.now() - startTime)
       }
     }
@@ -408,121 +405,13 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
     }
   }
 
-  const issueObj = formatIssues(parseResult.issues)
   const perfTime = Math.round(performance.now() - startTime)
+
+  const issues = parseResult.issues
 
   return {
     fileInfo,
-    issueObj,
+    issues,
     perfTime
-  }
-}
-
-/**
- * Validate a File object, log and return issues for upload UI
- *
- *  @param {File} file File object to validate
- *    Docs: https://developer.mozilla.org/en-US/docs/Web/API/File
- *  @param {String} fileType SCP file type
- *  @param {Object} [fileOptions]
- *
- * @return {Object} issueObj Validation results, where:
- *   - `errors` is an array of errors,
- *   - `warnings` is an array of warnings, and
- *   - `summary` is a message like "Your file had 2 errors"
- */
-export async function validateFileContent(file, fileType, fileOptions={}) {
-  const { fileInfo, issueObj, perfTime } = await parseFile(file, fileType, fileOptions)
-
-  const otherProps = {
-    perfTime,
-    'perfTime:parseFile': perfTime
-  }
-
-  const logProps = getLogProps(fileInfo, issueObj, otherProps)
-  log('file-validation', logProps)
-
-  return issueObj
-}
-
-/** take an array of [type, key, msg] issues, and format it */
-function formatIssues(issues) {
-  const errors = issues.filter(issue => issue[0] === 'error')
-  const warnings = issues.filter(issue => issue[0] === 'warn')
-
-  let summary = ''
-  if (errors.length > 0 || warnings.length) {
-    const errorsTerm = (errors.length === 1) ? 'error' : 'errors'
-    const warningsTerm = (warnings.length === 1) ? 'warning' : 'warnings'
-    summary = `Your file had ${errors.length} ${errorsTerm}`
-    if (warnings.length) {
-      summary = `${summary}, ${warnings.length} ${warningsTerm}`
-    }
-  }
-  return { errors, warnings, summary }
-}
-
-/** determine trigger for file-validation event (e.g. upload vs. sync) **/
-function getValidationTrigger() {
-  const pageName = getSCPContext().analyticsPageName
-  if (pageName === 'studies-initialize-study') {
-    return 'upload'
-  } else if (pageName === 'studies-sync-study') {
-    return 'sync'
-  }
-}
-
-/** Trim messages and number of errors, to prevent Mixpanel 413 errors */
-function getTrimmedIssueMessages(issues) {
-  return issues.map(columns => {
-    return columns[2].slice(0, 200) // Show <= 200 characters for each message
-  }).slice(0, 20) // Show <= 20 messages
-}
-
-/** Get properties about this validation run to log to Mixpanel */
-export function getLogProps(fileInfo, issueObj, perfTimes) {
-  const { errors, warnings, summary } = issueObj
-  const trigger = getValidationTrigger()
-
-  // Avoid needless gotchas in downstream analysis
-  let friendlyDelimiter = 'tab'
-  if (fileInfo.delimiter === ',') {
-    friendlyDelimiter = 'comma'
-  } else if (fileInfo.delimiter === ' ') {
-    friendlyDelimiter = 'space'
-  }
-
-  const defaultProps = {
-    ...fileInfo,
-    ...perfTimes,
-    trigger,
-    'delimiter': friendlyDelimiter,
-    'numTableCells': fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
-  }
-
-  if (errors.length === 0) {
-    if (warnings.flat().includes('incomplete')) {
-      return Object.assign({ status: 'incomplete' }, defaultProps)
-    }
-    return Object.assign({ status: 'success' }, defaultProps)
-  } else {
-    const errorMessages = getTrimmedIssueMessages(errors)
-    const warningMessages = getTrimmedIssueMessages(warnings)
-
-    const errorTypes = Array.from(new Set(errors.map(columns => columns[1])))
-    const warningTypes = Array.from(new Set(warnings.map(columns => columns[1])))
-
-    return Object.assign(defaultProps, {
-      status: 'failure',
-      summary,
-      numErrors: errors.length,
-      numWarnings: warnings.length,
-      errors: errorMessages,
-      warnings: warningMessages,
-      numErrorTypes: errorTypes.length,
-      numWarningTypes: warningTypes.length,
-      errorTypes,
-      warningTypes
-    })
   }
 }
