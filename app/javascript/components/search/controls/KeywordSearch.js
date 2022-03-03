@@ -13,7 +13,7 @@ import { closeModal } from 'components/search/controls/SearchPanel'
  * optionally takes a 'keywordValue' prop with the initial value for the field
  */
 export default function KeywordSearch({ keywordPrompt }) {
-  const placeholder = keywordPrompt ? keywordPrompt : 'Search...'
+  const placeholder = keywordPrompt ? keywordPrompt : 'Search'
   const selectionContext = useContext(SearchSelectionContext)
   // show clear button after a search has been done,
   //  as long as the text hasn't been updated
