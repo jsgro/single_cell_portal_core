@@ -31,7 +31,7 @@ export default function KeywordSearch({ keywordPrompt }) {
       <li> To search for studies that contain an exact phrase and/or the other search terms, combine single terms and quoted phrases like:</li>
       <p>&quot;single cell&quot; Smith</p>
     </ul>
-    <p>*Structured data for authors is new in SCP, and many studies lack it, so author search results may be limited.</p>
+    <p>* Structured data for authors is new in SCP, and many studies lack it, so author search results may be limited.</p>
   </div>)
 
   const textSearchLink = <a className="action advanced-opts"
