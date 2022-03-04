@@ -80,7 +80,7 @@ function RawHomePageContent() {
 }
 
 /** Include Reach router */
-export function HomePageContentLegacy() {
+export function HomePageContent() {
   return (<Router>
     <RawHomePageContent default/>
   </Router>)
@@ -88,5 +88,5 @@ export function HomePageContentLegacy() {
 
 /** Until refactor is done, this merely sets appropriate component */
 export default function HomePageContent() {
-  return (<HomePageContentLegacy />)
+  return (<HomePageContent />)
 }
