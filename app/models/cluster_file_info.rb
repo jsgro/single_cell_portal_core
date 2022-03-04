@@ -5,6 +5,8 @@ class ClusterFileInfo
 
   field :custom_colors, type: Hash, default: {}
 
+  COLOR_ENCODE_TRANSFORM = %i[encode64 decode64]
+
   # decode base64 annotation/label names back into human-readable text
   def decoded_custom_colors
     self.class.transform_custom_colors(custom_colors, :decode64)
@@ -12,7 +14,7 @@ class ClusterFileInfo
 
   # helper to transform a nested custom color hash to/from base64
   def self.transform_custom_colors(hash, transform = :encode64)
-    raise ArgumentError, "#{transform} is not a valid Base64 transform" unless Base64.respond_to?(transform)
+    raise ArgumentError, "#{transform} is not a valid transform" unless COLOR_ENCODE_TRANSFORM.include?(transform)
 
     hash.map do |key, nested_hash|
       {
