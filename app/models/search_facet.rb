@@ -301,11 +301,7 @@ class SearchFacet
   # takes :cross_dataset_search_backend feature flag into account
   # this is to prevent large list of filters resulting in empty search responses
   def filters_for_user(user)
-    if user
-      user.feature_flag_for(:cross_dataset_search_backend) ? filters_with_external : filters
-    else
-      public_filters
-    end
+    user.present? ? filters_with_external : public_filters
   end
 
   # helper to know if column is numeric
@@ -351,7 +347,7 @@ class SearchFacet
 
   # determine if any filters are a partial match for a given value
   def filters_match?(filter_value, filter_list: :filters)
-    flatten_filters(filter_list).detect { |filter| filter.match?(/#{filter_value}/i) }.present?
+    flatten_filters(filter_list).detect { |filter| filter.match?(/#{Regexp.quote(filter_value)}/i) }.present?
   end
 
   # find all possible matches for a partial filter value

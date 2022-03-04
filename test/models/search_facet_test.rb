@@ -198,12 +198,6 @@ class SearchFacetTest < ActiveSupport::TestCase
       ]
     )
     assert_equal organ_facet.public_filters, organ_facet.filters_for_user(nil)
-    assert_equal organ_facet.filters, organ_facet.filters_for_user(user)
-    # test XDSS integration
-    flag_name = 'cross_dataset_search_backend'
-    FeatureFlag.find_or_create_by!(name: flag_name, default_value: false)
-    user.set_flag_option(flag_name, true)
-    user.reload
     assert_equal organ_facet.filters_with_external, organ_facet.filters_for_user(user)
   end
 
