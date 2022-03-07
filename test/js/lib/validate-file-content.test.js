@@ -165,6 +165,19 @@ describe('Client-side file validation', () => {
     expect(errors[0][1]).toEqual('content:type:not-numeric')
   })
 
+  it('catches empty entry in expression matrix file', async () => {
+    const content =
+    'GENE\tBM19_4dpp_r1_TAAGCAGTGGTA\tBM19_4dpp_r1_AAGCAGTGGTAT\n' +
+    'A1BG\t0.0\t0.0\n' +
+    'A1BG-AS1\t0.0\t0.0\n' +
+    'A1CF\t\t\n'
+
+    const file = createMockFile({ fileName: 'foo5b.tsv', content })
+    const { errors } = await validateLocalFile(file, { file_type: 'Expression Matrix' })
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('content:type:not-numeric')
+  })
+
   it('catches row with wrong number of columns in expression matrix file', async () => {
     const file = createMockFile({
       fileName: 'foo6.csv',
