@@ -178,9 +178,9 @@ const COLUMNS = {
     info: 'List of available project files and associated project-level metadata.',
     default: true
   },
-  loom: {
+  analysis: {
     title: 'Loom',
-    types: ['loom_file'],
+    types: ['analysis_file'],
     info: <span>
       Loom files of <a href="https://broadinstitute.github.io/warp/docs/Pipelines/Optimus_Pipeline/Loom_schema/" target="_blank" rel="noopener noreferrer">finalized raw counts</a>.<br/>
        This does not include contributor generated files or intermediate files, which can be downloaded directly from HCA.
