@@ -787,5 +787,12 @@ window.SCP.componentsToRender = []
 window.SCP.renderComponent = function(target, componentName, props) {
   window.SCP.componentsToRender.push({target: target, componentName: componentName, props: props})
 }
+
+window.SCP.eventsToLog = []
+/** store any log calls that are made before the JS renders */
+window.SCP.log = function(name, props) {
+  window.SCP.eventsToLog.push({name: name, props: props})
+}
 // needed for morpheus import
 window.global = {}
+

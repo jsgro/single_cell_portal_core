@@ -3,7 +3,7 @@
 
 const fetch = require('node-fetch')
 import {logClick, logClickLink, logMenuChange, setMetricsApiMockFlag} from 'lib/metrics-api'
-import { mount } from 'enzyme';
+import { screen, render, fireEvent } from '@testing-library/react'
 import React from 'react';
 
 describe('Library for client-side usage analytics', () => {
@@ -30,10 +30,8 @@ describe('Library for client-side usage analytics', () => {
     jest.spyOn(global, 'fetch').mockImplementation(() => {
       mockFetchPromise
     })
-    const targetWrapper = mount(
-      <a href="#" onClick={(e) => logClick(e)}>Text that is linked</a>
-    )
-    targetWrapper.find('a').simulate('click')
+    render(<a href="#" onClick={(e) => logClick(e)}>Text that is linked</a>)
+    fireEvent.click(screen.getByText('Text that is linked'))
 
     expect(global.fetch).toHaveBeenCalledWith(
       expect.anything(), // URL

@@ -65,13 +65,17 @@ function renderComponent(target, componentName, props) {
 /** put the function globally accessible, replacing the pre-registration 'renderComponent'
  * setup in assets/application.js */
 window.SCP.renderComponent = renderComponent
-
 /** render any components that were registered to render prior to this script loading */
 window.SCP.componentsToRender.forEach(componentToRender => {
   renderComponent(componentToRender.target, componentToRender.componentName, componentToRender.props)
 })
 
+/** assing the global log function, and log any events that were queued */
 window.SCP.log = log
+window.SCP.eventsToLog.forEach(eventToLog => {
+  log(eventToLog.name, eventToLog.props)
+})
+
 window.SCP.getFeatureFlagsWithDefaults = getFeatureFlagsWithDefaults
 window.SCP.validateFileContent = validateFileContent
 window.SCP.validateRemoteFileContent = validateRemoteFileContent
