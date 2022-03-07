@@ -32,11 +32,11 @@ const LinkableSearchTabs = function(props) {
     <div>
       <nav className="nav search-links" data-analytics-name="search" role="tablist">
         <Link to={`${basePath}/app/studies${location.search}`}
-              className={showGenesTab ? '' : 'active'}>
+          className={showGenesTab ? '' : 'active'}>
           <span className="fas fa-book"></span> Search studies
         </Link>
         <Link to={`${basePath}/app/genes${location.search}`}
-              className={showGenesTab ? 'active' : ''}>
+          className={showGenesTab ? 'active' : ''}>
           <span className="fas fa-dna"></span> Search genes
         </Link>
       </nav>
@@ -79,14 +79,9 @@ function RawHomePageContent() {
   )
 }
 
-/** Include Reach router */
-export function HomePageContent() {
+/** Wraps in a Router object to use React hooks for routable parameters */
+export default function HomePageContent() {
   return (<Router>
     <RawHomePageContent default/>
   </Router>)
-}
-
-/** Until refactor is done, this merely sets appropriate component */
-export default function HomePageContent() {
-  return (<HomePageContent />)
 }
