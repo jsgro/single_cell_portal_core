@@ -158,7 +158,7 @@ describe('Client-side file validation', () => {
   it('catches non-numeric entry in expression matrix file', async () => {
     const file = createMockFile({
       fileName: 'foo5.csv',
-      content: 'GENE,X,Y\nItm2a,p,5\nEif2b2,3,0\nPf2b2,1,9'
+      content: 'GENE,X,Y\nItm2a,p,5\nEif2b2,3,0\nPf2b2,1,9' // has an invalid value "p"
     })
     const { errors } = await validateLocalFile(file, { file_type: 'Expression Matrix' })
     expect(errors).toHaveLength(1)
@@ -166,13 +166,15 @@ describe('Client-side file validation', () => {
   })
 
   it('catches empty entry in expression matrix file', async () => {
-    const content =
-    'GENE\tBM19_4dpp_r1_TAAGCAGTGGTA\tBM19_4dpp_r1_AAGCAGTGGTAT\n' +
-    'A1BG\t0.0\t0.0\n' +
-    'A1BG-AS1\t0.0\t0.0\n' +
-    'A1CF\t\t\n'
-
-    const file = createMockFile({ fileName: 'foo5b.tsv', content })
+    const file = createMockFile({
+      fileName: 'foo5b.tsv',
+      content: (
+        'GENE\tBM19_4dpp_r1_TAAGCAGTGGTA\tBM19_4dpp_r1_AAGCAGTGGTAT\n' +
+        'A1BG\t0.0\t0.0\n' +
+        'A1BG-AS1\t0.0\t0.0\n' +
+        'A1CF\t\t\n' // There's an empty value on this line.
+      )
+    })
     const { errors } = await validateLocalFile(file, { file_type: 'Expression Matrix' })
     expect(errors).toHaveLength(1)
     expect(errors[0][1]).toEqual('content:type:not-numeric')

@@ -348,7 +348,7 @@ function validateSparseColumnNumber(line, isLastLine, lineNum, dataObj) {
 function hasEmptyOrNonNumericValue(array) {
   for (let i = 0; i < array.length; i++) {
     const value = array[i]
-    if (value === '' || Number.isNaN(value)) {return true}
+    if (value === '' || isNaN(value)) {return true}
   }
   return false
 }
