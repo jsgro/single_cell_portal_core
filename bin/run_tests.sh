@@ -107,6 +107,7 @@ bin/delayed_job restart $PASSENGER_APP_ENV -n 6 || { echo "FAILED to start DELAY
 if [[ "$TEST_FILEPATH" == "" ]]; then
   echo "Precompiling assets, yarn and webpacker..."
   export NODE_OPTIONS="--max-old-space-size=4096"
+  RAILS_ENV=test bundle exec vite install
   RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:clean
   RAILS_ENV=test NODE_ENV=test yarn install --force --trace
   RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:precompile
