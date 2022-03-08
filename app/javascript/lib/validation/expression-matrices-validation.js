@@ -345,8 +345,12 @@ function validateSparseColumnNumber(line, isLastLine, lineNum, dataObj) {
 }
 
 /** Determine if value passes `content:type:not-numeric` rule */
-function isEmptyOrNonNumeric(value) {
-  return value === '' || Number.isNaN(value)
+function hasEmptyOrNonNumericValue(array) {
+  for (let i = 0; i < array.length; i++) {
+    const value = array[i]
+    if (value === '' || Number.isNaN(value)) {return true}
+  }
+  return false
 }
 
 /**
@@ -358,7 +362,7 @@ function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
   // skip first column
   const lineWithoutFirstColumn = line.slice(1)
 
-  if (lineWithoutFirstColumn.some(isEmptyOrNonNumeric)) {
+  if (hasEmptyOrNonNumericValue(lineWithoutFirstColumn)) {
     dataObj.rowsWithNonNumericValues.push(lineNum)
   }
 
