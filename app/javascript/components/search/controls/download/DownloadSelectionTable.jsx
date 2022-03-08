@@ -179,7 +179,7 @@ const COLUMNS = {
     default: true
   },
   analysis: {
-    title: 'Analysis',
+    title: 'Loom',
     types: ['analysis_file'],
     info: <span>
       Loom files of <a href="https://broadinstitute.github.io/warp/docs/Pipelines/Optimus_Pipeline/Loom_schema/" target="_blank" rel="noopener noreferrer">finalized raw counts</a>.<br/>
