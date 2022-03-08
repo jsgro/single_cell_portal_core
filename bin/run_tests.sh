@@ -154,9 +154,7 @@ grep -A2 -B1 ")\sFailure:\|)\sError:" rails_test.log | \
     grep -v ")\sFailure:\|)\sError:\|--" >> test_summary.txt
 
 # the return code will be 1 if either the js or rails tests exited with 1
-if [[ $code -ne 0 ]]; then
-  RETURN_CODE=$code
-fi
+(( RETURN_CODE = RETURN_CODE || $code ))
 
 if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
   echo "uploading all coverage data to codecov"
