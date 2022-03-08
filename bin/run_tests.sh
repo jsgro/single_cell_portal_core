@@ -125,7 +125,10 @@ set -o pipefail
 if [[ "$TEST_FILEPATH" == "" ]]; then
   # "2>&1 | tee yarn_test.log" puts the output of the tests both into stdout and the yarn_test.log file
   yarn ui-test 2>&1 | tee yarn_test.log
-  RETURN_CODE=$? # immediately capture exit code to prevent this from getting clobbered
+  code=$? # immediately capture exit code to prevent this from getting clobbered
+  if [[ $code -ne 0 ]]; then
+    RETURN_CODE=$code
+  fi
 fi
 
 # configure and invoke command for rails tests
@@ -151,7 +154,9 @@ grep -A2 -B1 ")\sFailure:\|)\sError:" rails_test.log | \
     grep -v ")\sFailure:\|)\sError:\|--" >> test_summary.txt
 
 # the return code will be 1 if either the js or rails tests exited with 1
-(( RETURN_CODE = exit_status || $code ))
+if [[ $code -ne 0 ]]; then
+  RETURN_CODE=$code
+fi
 
 if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
   echo "uploading all coverage data to codecov"
