@@ -125,10 +125,7 @@ set -o pipefail
 if [[ "$TEST_FILEPATH" == "" ]]; then
   # "2>&1 | tee yarn_test.log" puts the output of the tests both into stdout and the yarn_test.log file
   yarn ui-test 2>&1 | tee yarn_test.log
-  code=$? # immediately capture exit code to prevent this from getting clobbered
-  if [[ $code -ne 0 ]]; then
-    RETURN_CODE=$code
-  fi
+  RETURN_CODE=$? # immediately capture exit code to prevent this from getting clobbered
 fi
 
 # configure and invoke command for rails tests
