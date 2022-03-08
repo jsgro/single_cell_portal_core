@@ -143,7 +143,7 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
 
     @study_file.reload
     # check that the colors were updated
-    assert_equal annot1_color_hash, @study_file.cluster_file_info.custom_colors.with_indifferent_access
+    assert_equal annot1_color_hash, @study_file.cluster_file_info.decoded_custom_colors.with_indifferent_access
 
     annot2_color_hash = {
       'annotation2': {
@@ -158,7 +158,7 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
 
     @study_file.reload
     # check that the new annotation colors were added, and the previous ones remain
-    assert_equal annot2_color_hash.merge(annot1_color_hash), @study_file.cluster_file_info.custom_colors.with_indifferent_access
+    assert_equal annot2_color_hash.merge(annot1_color_hash), @study_file.cluster_file_info.decoded_custom_colors.with_indifferent_access
 
     updated_annot2_color_hash = {
       'annotation1': {
@@ -173,6 +173,6 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
 
     @study_file.reload
     # confirm the annotation1 colors were completely replaced, and annotation2 colors were preserved
-    assert_equal updated_annot2_color_hash.merge(annot2_color_hash), @study_file.cluster_file_info.custom_colors.with_indifferent_access
+    assert_equal updated_annot2_color_hash.merge(annot2_color_hash), @study_file.cluster_file_info.decoded_custom_colors.with_indifferent_access
   end
 end

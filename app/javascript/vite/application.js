@@ -1,6 +1,5 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import 'react-notifications-component/dist/theme.css'
 import morpheus from 'morpheus-app'
 import { Spinner } from 'spin.js'
 
@@ -11,10 +10,10 @@ import UploadWizard from '~/components/upload/UploadWizard'
 import ValidationMessage from '~/components/validation/ValidationMessage'
 import ClusterAssociationSelect from '~/components/upload/ClusterAssociationSelect'
 import RawAssociationSelect from '~/components/upload/RawAssociationSelect'
-import { validateFileContent } from '~/lib/validation/validate-file-content'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 import checkMissingAuthToken from '~/lib/user-auth-tokens'
-import { validateRemoteFileContent } from '~/lib/validation/validate-remote-file-content'
+import { validateRemoteFile } from '~/lib/validation/validate-file'
+
 import {
   logPageView, logClick, logMenuChange, setupPageTransitionLog, log, logCopy, logContextMenu
 } from '~/lib/metrics-api'
@@ -77,8 +76,7 @@ window.SCP.eventsToLog.forEach(eventToLog => {
 })
 
 window.SCP.getFeatureFlagsWithDefaults = getFeatureFlagsWithDefaults
-window.SCP.validateFileContent = validateFileContent
-window.SCP.validateRemoteFileContent = validateRemoteFileContent
+window.SCP.validateRemoteFile = validateRemoteFile
 window.SCP.API = ScpApi
 
 window.Spinner = Spinner

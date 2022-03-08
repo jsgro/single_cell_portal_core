@@ -1,16 +1,13 @@
 /**
  * @fileoverview Tests for client-side file validation (CSFV) for sync
  */
-
-import util from 'util'
-
 import fetch, { Headers } from 'node-fetch'
 import '@testing-library/jest-dom/extend-expect'
 
 import {
-  validateRemoteFileContent,
+  validateRemoteFile,
   MAX_SYNC_CSFV_BYTES, getSizeProps
-} from 'lib/validation/validate-remote-file-content'
+} from 'lib/validation/validate-file'
 
 const bucketName = 'broad-singlecellportal-public'
 
@@ -34,7 +31,7 @@ describe('Client-side file validation for sync', () => {
     const fileOptions = {}
 
     try {
-      await validateRemoteFileContent(
+      await validateRemoteFile(
         bucketName, fileName, fileType, fileOptions
       )
     } catch (error) {

@@ -1,6 +1,5 @@
 
 import React, { useContext } from 'react'
-import ReactDOM from 'react-dom'
 import { Router, Link, useLocation } from '@reach/router'
 
 import GeneSearchView from '~/components/search/genes/GeneSearchView'
