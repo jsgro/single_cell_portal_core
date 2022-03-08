@@ -151,7 +151,7 @@ describe('Client-side file validation', () => {
       content: 'IS_NOT_GENE,X,Y\nItm2a,0,5\nEif2b2,3,0\nPf2b2,1,9'
     })
     const { errors } = await validateLocalFile(file, { file_type: 'Expression Matrix' })
-    expect(errors).toHaveLength(1)
+    expect(errors).toHaveLength(3)
     expect(errors[0][1]).toEqual('format:cap:missing-gene-column')
   })
 
