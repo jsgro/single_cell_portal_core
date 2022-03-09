@@ -403,11 +403,11 @@ module Api
       end
 
       # find valid StudyAccessions from query parameters
-      # only returns accessions currently in use
+      # only returns accessions currently in use that are not detached and have no workspace
       def self.find_matching_accessions(raw_accessions)
         accessions = RequestUtils.split_query_param_on_delim(parameter: raw_accessions)
         sanitized_accessions = StudyAccession.sanitize_accessions(accessions)
-        Study.where(:accession.in => sanitized_accessions).pluck(:accession)
+        Study.where(detached: false, :accession.in => sanitized_accessions).pluck(:accession)
       end
 
       # extract out HCA "accessions" (project shortnames) by filtering out SCP accessions
@@ -449,9 +449,11 @@ module Api
       end
 
       # find matching study files, either directly by id, or via a list of accessions and file types
+      # ignore detached studies to avoid issues downloading
       def self.load_study_files(ids: [], accessions: [], file_types: [])
         if ids.any?
-          StudyFile.where(:id.in => ids)
+          detached = Study.where(detached: true).pluck(:id)
+          StudyFile.where(:id.in => ids, :study_id.nin => detached)
         elsif accessions.any? && file_types.any?
           ::BulkDownloadService.get_requested_files(file_types: file_types, study_accessions: accessions)
         else

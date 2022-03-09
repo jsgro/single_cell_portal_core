@@ -129,9 +129,11 @@ $('#study-file-<%= study_file.id %>').on('change', '.file-type', async function(
     const studyAccession = '<%= @study.accession %>'
     const selector = `#${form.attr('id')} .validation-message-container`
     const target = document.querySelector(selector)
-    window.SCP.renderValidationMessage(
-      target, studyAccession, issues, fileName, true
-    )
+    window.SCP.renderComponent(target, 'ValidationMessage', {
+      studyAccession: studyAccession,
+      issues: issues,
+      fileName: fileName,
+      isSync: true})
 
     if (issues.errors.length > 0) {
       // Disable the "Sync" button

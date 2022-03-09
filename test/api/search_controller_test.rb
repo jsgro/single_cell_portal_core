@@ -166,8 +166,11 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
       assert_response :success
       expected_accessions = unit == 'days' ? [] : @convention_accessions
       matching_accessions = json['matching_accessions']
-      assert_equal expected_accessions, matching_accessions,
-                   "Facet query: #{facet_query} returned incorrect matches; expected #{expected_accessions} but found #{matching_accessions}"
+      expected_accessions.each do |accession|
+        assert_includes matching_accessions, accession,
+                        "Facet query: #{facet_query} returned incorrect matches; expected #{expected_accessions} but found #{matching_accessions}"
+
+      end
     end
   end
 
@@ -214,7 +217,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     matching_accessions = json['matching_accessions']
     assert_equal expected_accessions, matching_accessions,
                   "Did not return correct array of matching accessions, expected #{expected_accessions} but found #{matching_accessions}"
-    
+
     assert_equal search_terms, json['studies'].first['term_matches'].first
 
 
@@ -227,7 +230,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     matching_accessions = json['matching_accessions']
     assert_equal expected_accessions, matching_accessions,
                   "Did not return correct array of matching accessions, expected #{expected_accessions} but found #{matching_accessions}"
-    
+
     assert_equal search_terms, json['studies'].first['term_matches'].first
 
     # test regex escaping
@@ -272,20 +275,25 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
     expected_accessions = @convention_accessions
-    assert_equal expected_accessions, json['matching_accessions'],
-                 "Did not find expected accessions before inferred search, expected #{expected_accessions} but found #{json['matching_accessions']}"
+    expected_accessions.each do |accession|
+      assert_includes json['matching_accessions'], accession,
+                      "Did not find expected accessions before inferred search, expected #{expected_accessions} but found #{json['matching_accessions']}"
 
+    end
     # now update non-convention study to include a filter display value in its description
     # this should be picked up by the "inferred" search
     @other_study.study_detail.update(full_description: HOMO_SAPIENS_FILTER[:name])
     execute_http_request(:get, api_v1_search_path(type: 'study', facets: facet_query))
     assert_response :success
     inferred_accessions = expected_accessions + [@other_study.accession]
-    assert_equal inferred_accessions, json['matching_accessions'],
-                 "Did not find expected accessions after inferred search, expected #{inferred_accessions} but found #{json['matching_accessions']}"
-    inferred_study = json['studies'].last # inferred matches should be at the end
-    assert inferred_study['inferred_match'],
-           "Did not mark last search results as inferred_match: #{inferred_study['inferred_match']} != true"
+    inferred_accessions.each do |accession|
+      assert_includes json['matching_accessions'], accession,
+                      "Did not find expected accessions after inferred search, expected #{inferred_accessions} but found #{json['matching_accessions']}"
+    end
+    # inferred match will be the last study, but given the number of Azul results present it will note be rendered
+    # as it is likely 20+ pages deep
+    assert_equal @other_study.accession, json['matching_accessions'].last
+           "Did not mark last search results as inferred_match: #{json['matching_accessions'].last} != #{@other_study.accession}"
   end
 
   test 'should run inferred search using facets and phrase' do
@@ -445,7 +453,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     first_study = json['studies'].first['accession']
     assert_equal @study.accession, first_study
   end
-  
+
   test 'should filter stop words from queries' do
     terms = %w[human mouse study data]
     filtered_terms = Api::V1::SearchController.reject_stop_words_from_terms(terms)

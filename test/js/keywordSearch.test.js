@@ -1,26 +1,25 @@
 import React from 'react'
-import * as Reach from '@reach/router'
-import { mount } from 'enzyme'
+import { render, fireEvent } from '@testing-library/react'
 
 import KeywordSearch from 'components/search/controls/KeywordSearch'
-import { PropsStudySearchProvider } from 'providers/StudySearchProvider';
+import { PropsStudySearchProvider } from 'providers/StudySearchProvider'
 
 describe('<KeywordSearch/> rendering>', () => {
   it('should render </KeywordSearch> elements', () => {
-    const example = mount(<KeywordSearch/>)
-    expect(example.exists('.study-keyword-search')).toEqual(true)
-    expect(example.exists('.fa-search')).toEqual(true)
+    const { container } = render(<KeywordSearch/>)
+    expect(container.getElementsByClassName('study-keyword-search')).toHaveLength(1)
+    expect(container.getElementsByClassName('fa-search')).toHaveLength(1)
   })
 
   it('should show the clear button after text is entered', () => {
-    const routerNav = jest.spyOn(Reach, 'navigate')
-    const example = mount(
-      <PropsStudySearchProvider searchParams={{terms: ''}}>
+    const { container } = render(
+      <PropsStudySearchProvider searchParams={{ terms: '' }}>
         <KeywordSearch/>
       </PropsStudySearchProvider>
     )
-    expect(example.exists('button .fa-times')).toEqual(false)
-    example.find('input[name="keywordText"]').first().simulate('change', {target: {value: 'test123'}});
-     expect(example.exists('button .fa-times')).toEqual(true)
+    expect(container.getElementsByClassName('fa-times')).toHaveLength(0)
+    const input = container.querySelector('input[name="keywordText"]')
+    fireEvent.change(input, { target: { value: 'test123' } })
+    expect(container.getElementsByClassName('fa-times')).toHaveLength(1)
   })
 })

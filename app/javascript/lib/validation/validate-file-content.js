@@ -10,7 +10,7 @@
 
 import { readFileBytes } from './io'
 import ChunkedLineReader from './chunked-line-reader'
-import { PARSEABLE_TYPES } from 'components/upload/upload-utils'
+import { PARSEABLE_TYPES } from '~/components/upload/upload-utils'
 import {
   parseDenseMatrixFile, parseFeaturesFile, parseBarcodesFile, parseSparseMatrixFile
 } from './expression-matrices-validation'

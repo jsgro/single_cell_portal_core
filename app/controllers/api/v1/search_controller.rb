@@ -253,10 +253,9 @@ module Api
         # convert to array to allow appending external search results (Azul, TDR, etc.)
         @studies = @studies.to_a
 
-        # perform Azul search, if enabled, and there are facets/terms provided by user
+        # perform Azul search if there are facets/terms provided by user
         # run this before inferred search so that they are weighted and sorted correctly
-        if api_user_signed_in? && current_api_user.feature_flag_for('cross_dataset_search_backend') &&
-          (@facets.present? || @term_list.present?)
+        if @facets.present? || @term_list.present?
           begin
             @studies, @studies_by_facet = ::AzulSearchService.append_results_to_studies(@studies,
                                                                                         selected_facets: @facets,

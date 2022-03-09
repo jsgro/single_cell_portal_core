@@ -1,20 +1,27 @@
 import React from 'react'
-import { mount } from 'enzyme'
+import { screen, render, fireEvent } from '@testing-library/react'
 
 import CreateAnnotation from 'components/visualization/controls/CreateAnnotation'
 
 describe('create annotation toggles appropriately', () => {
-  it('lets you open the pane', async () => {
-    const wrapper = mount((
+  it('shows the loading spinner while waiting for explore data', async () => {
+    const { container } = render(
       <CreateAnnotation
         isSelecting={false}
+        annotationList={null}
         setIsSelecting={() => {}}/>
-    ))
-    let panel = wrapper.find('Panel.create-annotation').first()
-    expect(panel.prop('expanded')).toEqual(false)
-    const createButton = wrapper.find('button[data-analytics-name="toggle-create-annotation"]').first()
-    createButton.simulate('click')
-    panel = wrapper.find('Panel.create-annotation').first()
-    expect(panel.prop('expanded')).toEqual(true)
+    )
+    let panel = container.querySelectorAll('Panel.create-annotation')[0]
+    expect(screen.queryByText('Create')).toEqual(null)
+    expect(container.querySelector('.gene-load-spinner')).toBeTruthy()
+
+    const { container: container2 } = render(
+      <CreateAnnotation
+        isSelecting={false}
+        annotationList={{annotations: [], clusters: []}}
+        setIsSelecting={() => {}}/>
+    )
+    expect(screen.getByText('Create')).toBeTruthy()
+    expect(container2.querySelector('.gene-load-spinner')).toBeFalsy()
   })
 })

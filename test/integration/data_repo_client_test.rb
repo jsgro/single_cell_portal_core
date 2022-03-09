@@ -142,9 +142,9 @@ class DataRepoClientTest < ActiveSupport::TestCase
     skip_if_api_down
     snapshot = @data_repo_client.get_snapshot(@snapshot_id)
     assert snapshot.present?
-    expected_keys = %w[id name description createdDate creationInformation source tables relationships profileId
-                       dataProject accessInformation].sort
-    assert_equal expected_keys, snapshot.keys.sort
+    # look for subset of keys to prevent test breaking if response structure changes
+    expected_keys = %w[id name description createdDate source].sort
+    assert_equal expected_keys, expected_keys & snapshot.keys
   end
 
   test 'should get file in snapshot' do
