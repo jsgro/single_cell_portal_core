@@ -390,15 +390,7 @@ module ApplicationHelper
   # see https://github.com/github/secure_headers/blob/main/lib/secure_headers/view_helper.rb
   def nonced_vite_javascript_tag(*args, &block)
     opts = extract_options(args).merge(nonce: _content_security_policy_nonce(:script))
-    begin
-      vite_javascript_tag(*args, **opts, &block)
-    rescue Exception => e
-      unless Rails.env.test?
-        raise e
-      end
-      Rails.logger.info("Vite bundle is not available in testing -- skipping")
-      nil
-    end
+    vite_javascript_tag(*args, **opts, &block)
   end
 
   # helper for rendering Vite javascript assets with a nonce
