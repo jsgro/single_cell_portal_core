@@ -118,31 +118,11 @@ module Api
 
         def study_user_info
           allow_firecloud_access = AdminConfiguration.firecloud_access_enabled?
-          can_compute = false
-          analysis_tab_content = nil
-          if allow_firecloud_access
-            can_compute = TerraAnalysisService.user_can_compute?(@study, current_api_user)
-            if can_compute
-              submissions = TerraAnalysisService.list_submissions(@study)
-              workflows_list = AnalysisConfiguration.available_analyses
-              # The analysis tab code wasn't worth porting over to React/API due to how rarely it is used, so we just
-              # render the template as a string and pass it via API to get put on the page
-              # See https://marcqualie.com/2020/07/rendering-templates-in-rails-api-controllers for technical detail
-              analysis_tab_content = ActionController::Renderer.for(ApplicationController)
-                .render(partial: '/site/study_analysis', locals: {
-                  '@submissions': submissions,
-                  '@workflows_list': workflows_list,
-                  '@study': @study
-                })
-            end
-          end
 
           render json: {
             annotations: AnnotationVizService.available_annotations(@study, cluster: nil, current_user: current_api_user),
             canEdit: @study.can_edit?(current_api_user),
             allowFirecloudAccess: allow_firecloud_access,
-            canCompute: can_compute,
-            analysisTabContent: analysis_tab_content
           }
         end
 
