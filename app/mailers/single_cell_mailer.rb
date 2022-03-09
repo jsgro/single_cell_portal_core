@@ -300,7 +300,6 @@ class SingleCellMailer < ApplicationMailer
 
     # get user, submission, and study stats
     @user_stats = SummaryStatsUtils.daily_total_and_active_user_counts
-    @submissions = SummaryStatsUtils.analysis_submission_count
     @studies_created = SummaryStatsUtils.daily_study_creation_count
 
     @deletion_info = []

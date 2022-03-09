@@ -117,12 +117,9 @@ module Api
         end
 
         def study_user_info
-          allow_firecloud_access = AdminConfiguration.firecloud_access_enabled?
-
           render json: {
             annotations: AnnotationVizService.available_annotations(@study, cluster: nil, current_user: current_api_user),
             canEdit: @study.can_edit?(current_api_user),
-            allowFirecloudAccess: allow_firecloud_access,
           }
         end
 
