@@ -217,11 +217,25 @@ export function getLogPlotProps() {
 }
 
 /**
+ * Extract the number of files that have been chosen for download
+ */
+function getNumAzulFiles(azulFiles) {
+  let numAzulFilesChosen = 0
+  for (const val of Object.entries(azulFiles)) {
+    if (val[1].length > 0) {
+      numAzulFilesChosen += val[1].length
+    }
+  }
+  return numAzulFilesChosen
+}
+
+/**
  * Log when a download is authorized.
  * This is our best web-client-side methodology for measuring downloads.
  */
-export function logDownloadAuthorization(perfTimes) {
-  const props = { perfTimes }
+export function logDownloadAuthorization(perfTimes, fileIds, azulFiles) {
+  const numAzulFilesChosen = getNumAzulFiles(azulFiles)
+  const props = { perfTimes, 'numSCPFiles': fileIds.length, 'numAzulFiles': numAzulFilesChosen }
   log('download-authorization', props)
   ga('send', 'event', 'advanced-search', 'download-authorization') // eslint-disable-line no-undef, max-len
 }

@@ -90,7 +90,7 @@ export async function fetchAuthCode(fileIds, azulFiles, mock=false) {
   })
   const [authCode, perfTimes] = await scpApi('/bulk_download/auth_code', init, mock)
 
-  logDownloadAuthorization(perfTimes)
+  logDownloadAuthorization(perfTimes, fileIds, azulFiles)
 
   return authCode
 }
