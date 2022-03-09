@@ -42,6 +42,7 @@
     $("#toggle-study-resources > span").toggleClass('fa-angle-right fa-angle-left')
 
   })
-
-  $('.corresponding-author').click(function() { showAuthorPopover(this) })
+  $('.corresponding-author').each( function(index) {
+    window.SCP.renderComponent(this, 'AuthorEmailPopup', { dataEl: this })
+  })
 </script>

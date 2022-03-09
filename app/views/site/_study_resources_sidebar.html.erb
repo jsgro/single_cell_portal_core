@@ -5,11 +5,10 @@
       <%= link_to '#',
                   class: 'corresponding-author',
                   data: {
-                    contact: author.base_64_email, placement: 'top',
-                    'analytics-name' => 'email-corresponding-author'
+                    email: author.base_64_email, placement: 'top',
+                    name: author.first_name + ' ' + author.last_name
                   },
                   title: "Send email to #{author.first_name} #{author.last_name}" do %>
-        <%= author.first_name %> <%= author.last_name %> <i class='fa fas fa-envelope'></i>
       <% end %>
       <br/>
     <% end %>
