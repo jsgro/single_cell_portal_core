@@ -36,6 +36,7 @@ node_modules/*
 /app/assets/javascripts/igv.js
 /public/packs
 /public/packs-test
+/public/assets
 /node_modules
 yarn-debug.log*
 yarn-error.log*
@@ -48,3 +49,13 @@ coverage
 
 # Ignore output of genome references pipeline
 scripts/genomes/output/
+
+# Vite Ruby
+/public/vite
+/public/vite-dev
+/public/vite-test
+node_modules
+# Vite uses dotenv and suggests to ignore local-only env files. See
+# https://vitejs.dev/guide/env-and-mode.html#env-files
+*.local
+

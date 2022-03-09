@@ -1,7 +1,7 @@
-.notification__item {
+.rnc__notification-item {
   border: 1px solid #bbb;
   border-radius: 5px;
-  .notification__message {
+  .rnc__notification__message {
     display: flex;
     align-items: center;
     svg {
@@ -11,41 +11,42 @@
     }
 
   }
-  .notification__content .notification__close {
+  .rnc__notification-content .rnc__notification-close-mark {
     background: none;
+    top: 0.5em;
     &:after {
       color: $action-color;
       font-size: 1.75em;
     }
   }
-  &.notification__item--success {
+  &.rnc__notification-item--success {
     background-color: #f1f6ed;
     border-left: 1px solid #bbb;
-    .notification__title {
+    .notification-title {
       color: #333;
     }
-    .notification__message {
+    .rnc__notification-message {
       color: #333;
     }
     svg {
       color: $success-color;
+      margin-right: 1em;
     }
 
   }
 
-  &.notification__item--danger {
+  &.rnc__notification-item--danger {
     background-color: #fef4e9;
     border-left: 1px solid #bbb;
-    .notification__title {
+    .rnc__notification-title {
       color: #333;
     }
-    .notification__message {
+    .rnc__notification-message {
       color: #333;
     }
     svg {
       color: #f79916;
+      margin-right: 1em;
     }
   }
 }
-
-
