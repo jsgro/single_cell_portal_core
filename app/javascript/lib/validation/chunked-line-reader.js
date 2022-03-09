@@ -13,10 +13,11 @@ const newlineRegex = /\r?\n/
  */
 export default class ChunkedLineReader {
   /** create a new chunk reader */
-  constructor(file, ignoreLastLine=false, chunkSize=DEFAULT_CHUNK_SIZE) {
+  constructor(file, ignoreLastLine=false, isGzipped=false, chunkSize=DEFAULT_CHUNK_SIZE) {
     this.file = file
-    this.chunkSize = chunkSize
     this.ignoreLastLine = ignoreLastLine
+    this.isGzipped = isGzipped
+    this.chunkSize = chunkSize
     this.nextByteToRead = 0
     this.linesRead = 0
     this.currentFragment = null // currentFragment stores the parts of lines that cross chunk boundaries
@@ -45,12 +46,19 @@ export default class ChunkedLineReader {
   */
   async iterateLines({ func, maxLines = Number.MAX_SAFE_INTEGER, maxBytesPerLine = oneGiB }) {
     const prevLinesRead = this.linesRead
+    const numTimesCalled = 0
     while (
       (this.hasMoreChunks || this.chunkLines.length) &&
       !(this.linesRead === 0 && this.nextByteToRead > maxBytesPerLine) &&
       this.linesRead < prevLinesRead + maxLines
     ) {
       if (!this.chunkLines.length && this.hasMoreChunks) {
+        console.log('before this.readNextChunk')
+        console.log('this')
+        console.log(this)
+        console.log('prevLinesRead', prevLinesRead)
+        console.log('maxLines', maxLines)
+
         await this.readNextChunk()
       }
       if (this.chunkLines.length) {
@@ -87,7 +95,7 @@ export default class ChunkedLineReader {
     }
     const startByte = this.nextByteToRead
     const isLastChunk = startByte + this.chunkSize >= this.file.size
-    const chunkString = await readFileBytes(this.file, startByte, this.chunkSize)
+    const chunkString = await readFileBytes(this.file, startByte, this.chunkSize, this.isGzipped)
 
     const lines = chunkString.split(newlineRegex)
 

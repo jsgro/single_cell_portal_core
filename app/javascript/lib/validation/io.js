@@ -9,19 +9,60 @@
  * [1] https://stackoverflow.com/a/47976589
 */
 
+import { decompressSync, gunzipSync, gunzip, strFromU8 } from 'fflate'
+
 export const oneMiB = 1024 * 1024 // 1 MiB, i.e. mebibyte
 export const oneGiB = oneMiB * 1024 // 1 GiB, i.e. gebibyte
 export const DEFAULT_CHUNK_SIZE = oneMiB
 
 /** Reads up to chunkSize bytes of the given file, starting at startByte */
-export async function readFileBytes(file, startByte=0, chunkSize=DEFAULT_CHUNK_SIZE) {
+export async function readFileBytes(file, startByte=0, chunkSize=DEFAULT_CHUNK_SIZE, isGzipped=false) {
+  console.log('in readFileBytes, isGzipped:')
+  console.log(isGzipped)
   const nextSlice = startByte + chunkSize
 
+  console.log('in readFileBytes, nextSlice:')
+  console.log(nextSlice)
   const blob = file.slice(startByte, nextSlice)
+  console.log('in readFileBytes, blob:')
+  console.log(blob)
+
 
   const arrayBuffer = await blob.arrayBuffer()
-  const enc = new TextDecoder('utf-8')
 
-  const stringContent = enc.decode(arrayBuffer)
+  let stringContent = ''
+  if (!isGzipped) {
+    console.log('0')
+    console.log('1')
+    const enc = new TextDecoder('utf-8')
+    console.log('3')
+    stringContent = enc.decode(arrayBuffer)
+    console.log('4')
+  } else {
+    console.log('a')
+    const uint8Array = new Uint8Array(arrayBuffer)
+
+    console.log('b')
+    // stringContent = strFromU8(gunzipSync(uint8Array))
+    const t0 = Date.now()
+    await new Promise((resolve, reject) => {
+      gunzip(uint8Array, (err, gunzipped) => {
+        stringContent += strFromU8(gunzipped)
+        resolve()
+      })
+      // If the archive has data.xml, log it here
+      // unzip(uint8Array, (err, result) => err ? reject(err) : resolve(result));
+      // Conversion to string
+      // console.log(strFromU8(unzipped['data.xml']))
+    })
+    const t1 = Date.now()
+    console.log(`time to gunzip: ${ t1 - t0 } ms`)
+    console.log('c')
+  }
+
+  console.log('in readFileBytes, isGzipped:')
+  console.log(isGzipped)
+  // console.log(stringContent)
+
   return stringContent
 }

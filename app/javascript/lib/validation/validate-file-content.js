@@ -310,6 +310,7 @@ export async function parseClusterFile(chunker, mimeType) {
  * Throws an exception if the gzip is conflicted, since we don't want to parse further in that case
 */
 export async function validateGzipEncoding(file) {
+  console.log('in validateGzipEncoding')
   const GZIP_MAGIC_NUMBER = '\x1F'
   const fileName = file.name
   let isGzipped = null
@@ -345,6 +346,8 @@ export async function validateGzipEncoding(file) {
 export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
   const startTime = performance.now()
 
+  console.log('in parseFile')
+
   const fileInfo = {
     ...sizeProps,
     fileSize: file.size,
@@ -356,12 +359,16 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
     delimiter: null,
     isGzipped: null
   }
+
+  console.log('in parseFile 0')
   const parseResult = { fileInfo, issues: [] }
 
   try {
     fileInfo.isGzipped = await validateGzipEncoding(file)
     // if the file is compressed or we can't figure out the compression, don't try to parse further
-    if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
+    console.log('in parseFile, fileInfo.isGzipped:')
+    console.log(fileInfo.isGzipped)
+    if (!PARSEABLE_TYPES.includes(fileType)) {
       return {
         fileInfo,
         issues: [],
@@ -387,8 +394,16 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
 
         parseResult.issues.push(['warn', 'incomplete:range-request', msg])
       }
+      console.log('in validate-file-content, initializing ChunkedLineReader')
+      let chunker
+      if (!fileInfo.isGzipped) {
+        console.log('calling chunker, not gzipped')
+        chunker = new ChunkedLineReader(file, ignoreLastLine)
+      } else {
+        console.log('calling chunker, gzipped')
+        chunker = new ChunkedLineReader(file, ignoreLastLine, true, 50*1024**2)
+      }
 
-      const chunker = new ChunkedLineReader(file, ignoreLastLine)
       const { issues, delimiter, numColumns } =
         await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
       fileInfo.linesRead = chunker.linesRead
