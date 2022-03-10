@@ -28,20 +28,12 @@ class ApiSiteControllerTest < ActionDispatch::IntegrationTest
                             study: @study)
     @study.external_resources.create(url: 'https://singlecell.broadinstitute.org', title: 'SCP',
                                                   description: 'Link to Single Cell Portal')
-    AnalysisConfiguration.create(namespace: 'single-cell-portal', name: 'split-cluster', snapshot: 1,
-                                 user: @user, configuration_namespace: 'single-cell-portal',
-                                 configuration_name: 'split-cluster', configuration_snapshot: 2,
-                                 description: 'This is a test description.')
   end
 
   teardown do
     OmniAuth.config.mock_auth[:google_oauth2] = nil
     reset_user_tokens
     @study.update(public: true, detached: false)
-  end
-
-  after(:all) do
-    AnalysisConfiguration.destroy_all
   end
 
   test 'should get all studies' do
@@ -68,28 +60,6 @@ class ApiSiteControllerTest < ActionDispatch::IntegrationTest
     sign_in_and_update @other_user
     execute_http_request(:get, api_v1_site_study_view_path(accession: @study.accession), user: @other_user)
     assert_response 403
-  end
-
-  test 'should get all analyses' do
-    sign_in_and_update @user
-    execute_http_request(:get, api_v1_site_analyses_path)
-    assert_response :success
-    assert json.size == 1, "Did not find correct number of analyses, expected 1 but found #{json.size}"
-  end
-
-  test 'should get one analysis' do
-    sign_in_and_update @user
-    @analysis_configuration = AnalysisConfiguration.first
-    execute_http_request(:get, api_v1_site_get_analysis_path(namespace: @analysis_configuration.namespace,
-                                                             name: @analysis_configuration.name,
-                                                             snapshot: @analysis_configuration.snapshot))
-    assert_response :success
-    assert json['name'] == @analysis_configuration.name,
-           "Did not load correct analysis name, expected '#{@analysis_configuration.name}' but found '#{json['name']}'"
-    assert json['description'] == @analysis_configuration.description,
-           "Description did not match; expected '#{@analysis_configuration.description}' but found '#{json['description']}'"
-    assert json['required_inputs'] == @analysis_configuration.required_inputs(true),
-           "Required inputs do not match; expected '#{@analysis_configuration.required_inputs(true)}' but found #{json['required_inputs']}"
   end
 
   test 'should respond 410 on detached study' do
