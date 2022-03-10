@@ -368,7 +368,12 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
     // if the file is compressed or we can't figure out the compression, don't try to parse further
     console.log('in parseFile, fileInfo.isGzipped:')
     console.log(fileInfo.isGzipped)
-    if (!PARSEABLE_TYPES.includes(fileType)) {
+    console.log('in parseFile, fileInfo:')
+    console.log(fileInfo)
+    if (
+      !PARSEABLE_TYPES.includes(fileType) ||
+      file.size > sizeProps?.fileSizeTotal && fileInfo.isGzipped // Avoids bug in sync gzip CSFV
+    ) {
       return {
         fileInfo,
         issues: [],
