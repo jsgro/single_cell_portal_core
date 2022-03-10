@@ -46,7 +46,7 @@ export default class ChunkedLineReader {
   */
   async iterateLines({ func, maxLines = Number.MAX_SAFE_INTEGER, maxBytesPerLine = oneGiB }) {
     const prevLinesRead = this.linesRead
-    const numTimesCalled = 0
+    if (this.isGzipped && maxLines === Number.MAX_SAFE_INTEGER) {maxLines = 500}
     while (
       (this.hasMoreChunks || this.chunkLines.length) &&
       !(this.linesRead === 0 && this.nextByteToRead > maxBytesPerLine) &&
@@ -59,13 +59,19 @@ export default class ChunkedLineReader {
         console.log('prevLinesRead', prevLinesRead)
         console.log('maxLines', maxLines)
 
+        const t0 = Date.now()
         await this.readNextChunk()
+        const time = Date.now() - t0
+        console.log(`readNextChunk time: ${ time } ms`)
       }
       if (this.chunkLines.length) {
+        const t0 = Date.now()
         this.linesRead++ // convenience tracker
         const line = this.chunkLines.shift()
         this.updateHasMoreLines()
         func(line, this.linesRead - 1, !this.hasMoreLines)
+        const time = Date.now() - t0
+        console.log(`updateHasMoreLines, func time: ${ time } ms`)
       }
     }
   }

@@ -43,21 +43,19 @@ export async function readFileBytes(file, startByte=0, chunkSize=DEFAULT_CHUNK_S
     const uint8Array = new Uint8Array(arrayBuffer)
 
     console.log('b')
-    // stringContent = strFromU8(gunzipSync(uint8Array))
+
     const t0 = Date.now()
+
     await new Promise((resolve, reject) => {
+      // Examples: https://github.com/101arrowz/fflate#usage
+      // See also:
+      // - https://github.com/101arrowz/fflate/discussions/30
+      // - https://github.com/101arrowz/fflate/discussions/119
       gunzip(uint8Array, (err, gunzipped) => {
         stringContent += strFromU8(gunzipped)
         resolve()
       })
-      // If the archive has data.xml, log it here
-      // unzip(uint8Array, (err, result) => err ? reject(err) : resolve(result));
-      // Conversion to string
-      // console.log(strFromU8(unzipped['data.xml']))
     })
-    const t1 = Date.now()
-    console.log(`time to gunzip: ${ t1 - t0 } ms`)
-    console.log('c')
   }
 
   console.log('in readFileBytes, isGzipped:')

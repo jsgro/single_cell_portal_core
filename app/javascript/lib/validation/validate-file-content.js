@@ -8,7 +8,7 @@
 * [1] E.g. https://github.com/broadinstitute/scp-ingest-pipeline/blob/development/ingest/validation/validate_metadata.py
 */
 
-import { readFileBytes } from './io'
+import { readFileBytes, oneMiB } from './io'
 import ChunkedLineReader from './chunked-line-reader'
 import { PARSEABLE_TYPES } from '~/components/upload/upload-utils'
 import {
@@ -401,7 +401,7 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
         chunker = new ChunkedLineReader(file, ignoreLastLine)
       } else {
         console.log('calling chunker, gzipped')
-        chunker = new ChunkedLineReader(file, ignoreLastLine, true, 50*1024**2)
+        chunker = new ChunkedLineReader(file, ignoreLastLine, true, 50*oneMiB)
       }
 
       const { issues, delimiter, numColumns } =
