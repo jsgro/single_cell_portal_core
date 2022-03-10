@@ -6,6 +6,7 @@ import { Spinner } from 'spin.js'
 import '~/styles/application.scss'
 import HomePageContent from '~/components/HomePageContent'
 import ExploreView from '~/components/explore/ExploreView'
+import { AuthorEmailPopup } from '~/lib/InfoPopup'
 import UploadWizard from '~/components/upload/UploadWizard'
 import ValidationMessage from '~/components/validation/ValidationMessage'
 import ClusterAssociationSelect from '~/components/upload/ClusterAssociationSelect'
@@ -38,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 const componentsToExport = {
-  HomePageContent, ExploreView, UploadWizard, ValidationMessage, ClusterAssociationSelect, RawAssociationSelect
+  HomePageContent, ExploreView, UploadWizard, ValidationMessage, ClusterAssociationSelect, RawAssociationSelect, AuthorEmailPopup
 }
 
 /** helper to render React components from non-react portions of the app
