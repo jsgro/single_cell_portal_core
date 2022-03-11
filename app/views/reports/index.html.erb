@@ -18,15 +18,6 @@
             <%= link_to 'Export', api_v1_report_url('studies'), class: 'btn btn-default' %>
           </td>
         </tr>
-        <tr>
-          <td>Submission Report</td>
-          <td>Info about Terra workflow submissions via SCP</td>
-          <td>
-            <%= link_to 'View', '#', class: 'btn btn-primary view-report', id: 'view-submission-data',
-                        data: {'loading-text' => 'Loading... ', toggle: 'button' } %>
-            <%= link_to 'Export', export_submission_report_path, class: 'btn btn-default' %>
-          </td>
-        </tr>
       <% end %>
     </table>
   </div>
@@ -41,8 +32,7 @@
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   const reportTarget = $('#report-table')
   const REPORTS = {
-    'view-study-data': '<%= api_v1_report_url('studies') %>',
-    'view-submission-data': '<%= export_submission_report_path %>'
+    'view-study-data': '<%= api_v1_report_url('studies') %>'
   }
   let table
   $('.view-report').on('click', function(event) {
