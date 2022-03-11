@@ -75,6 +75,8 @@ function defaultPostInit(mock=false) {
  * Docs: https:///singlecell.broadinstitute.org/single_cell/api/swagger_docs/v1#!/Search/search_auth_code_path
  *
  * @param {Boolean} mock If using mock data.  Helps development, tests.
+ * @param {Array} fileIds The ids of the SCP sourced files selected for download
+ * @param {Object} azulFiles Object with arrays of file info for the Azul sourced files selected for download
  * @returns {Promise} Promise object described in "Example return" above
  *
  * @example
