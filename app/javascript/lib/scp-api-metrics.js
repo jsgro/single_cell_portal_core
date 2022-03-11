@@ -217,7 +217,7 @@ export function getLogPlotProps() {
 }
 
 /**
- * Extract the number of files that have been chosen for download
+ * Extract the number of Azul files that have been chosen for download
  */
 function getNumAzulFiles(azulFiles) {
   let numAzulFilesChosen = 0
@@ -230,7 +230,7 @@ function getNumAzulFiles(azulFiles) {
 }
 
 /**
- * Log when a download is authorized.
+ * Log when a download is authorized and the number of files from each source that are being downloaded.
  * This is our best web-client-side methodology for measuring downloads.
  */
 export function logDownloadAuthorization(perfTimes, fileIds, azulFiles) {
