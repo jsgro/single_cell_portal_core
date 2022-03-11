@@ -1,6 +1,6 @@
 import * as Reach from '@reach/router'
 import React from 'react'
-import { mount } from 'enzyme';
+import { render } from '@testing-library/react'
 
 import useExploreTabRouter from 'components/explore/ExploreTabRouter'
 
@@ -8,7 +8,7 @@ import useExploreTabRouter from 'components/explore/ExploreTabRouter'
  * so we have this mock component which puts the return values of useExploreTabRouter
  * onto a passed-in object so they can be accessed for testing
  */
-function FakeRouterComponent({testObj}) {
+function FakeRouterComponent({ testObj }) {
   const { exploreParams, updateExploreParams } = useExploreTabRouter()
   testObj.exploreParams = exploreParams
   testObj.updateExploreParams = updateExploreParams
@@ -34,7 +34,7 @@ describe('dataParams are appropriately managed on the url', () => {
     locationMock.mockImplementation(() => ({ search: '' }))
 
     const testObj = {}
-    const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
+    render(<FakeRouterComponent testObj={testObj}/>)
 
     expect(testObj.exploreParams.cluster).toEqual('')
     expect(testObj.exploreParams.annotation).toEqual({ name: '', type: '', scope: '' })
@@ -52,7 +52,7 @@ describe('dataParams are appropriately managed on the url', () => {
     mockWindowLocationSearch(searchString)
 
     const testObj = {}
-    const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
+    render(<FakeRouterComponent testObj={testObj}/>)
 
     expect(testObj.exploreParams.cluster).toEqual('foo')
     expect(testObj.exploreParams.annotation).toEqual({ name: 'bar', type: 'group', scope: 'study' })
@@ -76,7 +76,7 @@ describe('dataParams are appropriately managed on the url', () => {
     mockWindowLocationSearch(urlString)
 
     const testObj = {}
-    const wrapper = mount(<FakeRouterComponent testObj={testObj}/>)
+    render(<FakeRouterComponent testObj={testObj}/>)
 
     expect(testObj.exploreParams).toEqual({
       cluster: 'foo',

@@ -28,6 +28,19 @@
           <a href="#settings-resources" data-toggle="tab">External resources</a>
         </li>
       </ul>
+      <br/>
+      <h5>Management pages</h5>
+      <ul class="list-style-none">
+        <li role="presentation">
+          <%= scp_link_to "Upload/Edit data", initialize_study_path(@study), class: "#{@study.url_safe_name}-upload" %>
+        </li>
+        <li>
+          <%= scp_link_to "Sync workspace", sync_study_path(@study), class: "#{@study.url_safe_name}-sync sync-button" %>
+        </li>
+        <li>
+          <%= scp_link_to "Study details", study_path(@study), class: " #{@study.url_safe_name}-sync sync-button" %>
+        </li>
+      </ul>
     </div>
     <div class="col-md-10">
       <div class="tab-content">
@@ -51,13 +64,7 @@
   </div>
   <div class="form-group row">
     <div class="col-xs-12 text-center">
-      <%= link_to 'Update settings', '#', class: 'btn btn-lg btn-success', id: 'update-study-settings' %>
-    </div>
-  </div>
-  <div class="form-group row">
-    <div class="col-xs-12 text-center">
-      <%= scp_link_to "<span class='fas fa-upload'></span> Upload/Edit data".html_safe, initialize_study_path(@study), class: "btn btn-sm btn-primary #{@study.url_safe_name}-upload" %>
-      <%= scp_link_to "<span class='fas fa-sync-alt'></span> Sync workspace".html_safe, sync_study_path(@study), class: "btn btn-sm btn-warning #{@study.url_safe_name}-sync sync-button" %>
+      <%= link_to 'Update settings', '#', class: 'btn btn-primary', id: 'update-study-settings' %>
     </div>
   </div>
 <% end %>

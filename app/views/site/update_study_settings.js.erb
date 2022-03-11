@@ -8,7 +8,9 @@ closeModalSpinner('#update-study-settings-spinner', '#update-study-settings-moda
         $('#study-summary').html("<%= escape_javascript(render partial: 'study_description_view') %>");
         $('#study-download').html("<%= escape_javascript(render partial: 'study_download_data') %>");
         <% if @study.initialized? %>
-          window.SCP.renderExploreView(document.getElementById('study-visualize'), window.SCP.studyAccession)
+          window.SCP.renderComponent('study-visualize', 'ExploreView', {
+            studyAccession: window.SCP.studyAccession
+          })
         <% end %>
     <% else %>
         showMessageModal("", "An error occurred while saving: <br /><%= @study.errors.full_messages.join(', ').html_safe %>");

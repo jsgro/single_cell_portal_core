@@ -4,7 +4,7 @@
 
 import {
   formatTerms, getNumFacetsAndFilters
-} from 'providers/StudySearchProvider'
+} from '~/providers/StudySearchProvider'
 import { log } from './metrics-api'
 
 // See note in logSearch

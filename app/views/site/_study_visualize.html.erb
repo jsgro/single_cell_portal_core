@@ -1,6 +1,6 @@
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   window.SCP.studyAccession = '<%= @study.accession %>';
-  window.SCP.renderExploreView(document.getElementById('study-visualize'), window.SCP.studyAccession)
+  window.SCP.renderComponent('study-visualize', 'ExploreView', {studyAccession: window.SCP.studyAccession})
   <% if @study.has_streamable_files? %>
     if (typeof window.SCP.readOnlyToken === 'undefined') {
       window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'

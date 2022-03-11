@@ -5,7 +5,9 @@
       <%# if images are enabled, we need the read-only token so we can show already-uploaded images from the bucket for reference %>
       window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
     <% end %>
-    $(document).ready(function() {
-      window.SCP.renderUploadWizard(document.getElementById('upload-wizard-target'), '<%= @study.accession %>', '<%= @study.name %>')
-    })
+    const wizardProps = {
+      studyAccession: '<%= @study.accession %>',
+      name: '<%= @study.name %>'
+    }
+    window.SCP.renderComponent('upload-wizard-target', 'UploadWizard', wizardProps)
   </script>

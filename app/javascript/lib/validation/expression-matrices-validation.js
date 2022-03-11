@@ -172,7 +172,7 @@ function getDenseMatrixDelimiter(rawHeader, rawNextTwoLines) {
       } // otherwise check the first 3 lines lengths against each other (see r-formatting description for futher explanation)
       else if (secondLineLength - 1 === headerLength ||
         thirdLineLength === secondLineLength ||
-        thirdLineLength === headerLength) { bestDelimiter = delimiter }
+        thirdLineLength === headerLength) {bestDelimiter = delimiter}
     }
   }
 
@@ -344,6 +344,14 @@ function validateSparseColumnNumber(line, isLastLine, lineNum, dataObj) {
   return issues
 }
 
+/** Determine if value passes `content:type:not-numeric` rule */
+function hasEmptyOrNonNumericValue(array) {
+  for (let i = 0; i < array.length; i++) {
+    const value = array[i]
+    if (value === '' || isNaN(value)) {return true}
+  }
+  return false
+}
 
 /**
  * Validate all values are numbers outside first column cell name
@@ -354,7 +362,7 @@ function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
   // skip first column
   const lineWithoutFirstColumn = line.slice(1)
 
-  if (lineWithoutFirstColumn.some(isNaN)) {
+  if (hasEmptyOrNonNumericValue(lineWithoutFirstColumn)) {
     dataObj.rowsWithNonNumericValues.push(lineNum)
   }
 
@@ -368,7 +376,7 @@ function validateValuesAreNumeric(line, isLastLine, lineNum, dataObj) {
     }
 
     const msg = `All values (other than the first column and header row) in a dense matrix file must be numeric. ` +
-      `Please ensure all values in ${rowText}: ${notedBadRows}, are numbers.`
+      `Please ensure all values in ${rowText} ${notedBadRows} are numbers.`
     issues.push(['error', 'content:type:not-numeric', msg])
   }
 

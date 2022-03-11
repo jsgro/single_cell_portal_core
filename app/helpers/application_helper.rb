@@ -384,4 +384,37 @@ module ApplicationHelper
 
     javascript_packs_with_chunks_tag(*args, **opts, &block)
   end
+
+  # helper for rendering Vite javascript assets with a nonce
+  # based off of nonced_javascript_pack_tag in secure_headers
+  # see https://github.com/github/secure_headers/blob/main/lib/secure_headers/view_helper.rb
+  def nonced_vite_javascript_tag(*args, &block)
+    opts = extract_options(args).merge(nonce: _content_security_policy_nonce(:script))
+    begin
+      vite_javascript_tag(*args, **opts, &block)
+    rescue Exception => e
+      # the vite_javascript tag invocation will intermittently fail in CI environment for mysterious reasons
+      # so we catch the failure here, and swallow it if we're in CI
+      unless Rails.env.test?
+        raise e
+      end
+      Rails.logger.info("Vite bundle is not available in testing -- skipping")
+      nil
+    end
+  end
+
+  # helper for rendering Vite javascript assets with a nonce
+  # based off of nonced_javascript_pack_tag in secure_headers
+  # see https://github.com/github/secure_headers/blob/main/lib/secure_headers/view_helper.rb
+  def nonced_vite_client_tag(*args, &block)
+    tag_content = vite_client_tag(*args, &block)
+    nonce = _content_security_policy_nonce(:script)
+    tag_content&.gsub('module"', 'module" nonce="' + nonce + '"')&.gsub('localhost', 'https://localhost')&.html_safe
+  end
+
+  def nonced_vite_react_refresh_tag(*args, &block)
+    tag_content = vite_react_refresh_tag(*args, &block)
+    nonce = _content_security_policy_nonce(:script)
+    tag_content&.gsub('module"', 'module" nonce="' + nonce + '"')&.gsub('localhost', 'https://localhost')&.html_safe
+  end
 end

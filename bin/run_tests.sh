@@ -107,6 +107,8 @@ bin/delayed_job restart $PASSENGER_APP_ENV -n 6 || { echo "FAILED to start DELAY
 if [[ "$TEST_FILEPATH" == "" ]]; then
   echo "Precompiling assets, yarn and webpacker..."
   export NODE_OPTIONS="--max-old-space-size=4096"
+  RAILS_ENV=test bundle exec vite install
+  git checkout .
   RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:clean
   RAILS_ENV=test NODE_ENV=test yarn install --force --trace
   RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:precompile
@@ -151,7 +153,7 @@ grep -A2 -B1 ")\sFailure:\|)\sError:" rails_test.log | \
     grep -v ")\sFailure:\|)\sError:\|--" >> test_summary.txt
 
 # the return code will be 1 if either the js or rails tests exited with 1
-(( RETURN_CODE = exit_status || $code ))
+(( RETURN_CODE = RETURN_CODE || $code ))
 
 if [[ "$CODECOV_TOKEN" != "" ]] && [[ "$CI" == "true" ]]; then
   echo "uploading all coverage data to codecov"

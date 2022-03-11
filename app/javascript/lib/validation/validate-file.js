@@ -2,10 +2,10 @@
  * @fileoverview Client-side file validation (CSFV) for upload and sync UI
  */
 
-import { oneGiB, oneMiB } from 'lib/validation/io'
+import { oneGiB, oneMiB } from '~/lib/validation/io'
 import { parseFile } from './validate-file-content'
 import { logFileValidation } from './log-validation'
-import { fetchBucketFile } from 'lib/scp-api'
+import { fetchBucketFile } from '~/lib/scp-api'
 
 
 /** take an array of [category, type, msg] issues, and format it */

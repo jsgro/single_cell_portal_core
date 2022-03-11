@@ -1,4 +1,4 @@
-import { mount } from 'enzyme'
+import { render } from '@testing-library/react'
 import { highlightText, shortenDescription, descriptionCharacterLimit } from 'components/search/results/StudySearchResult'
 
 
@@ -37,7 +37,8 @@ note that Release data is not corrected for batch-effects, but is stratified by 
   it('shortens description for study descriptions > descriptionCharacterLimit', () => {
     const expectedText = text.slice(0, descriptionCharacterLimit)
     const keywordTerms = []
-    const actualText = mount(shortenDescription(text, keywordTerms)).find('.studyDescription').text()
+    const { container } = render(shortenDescription(text, keywordTerms))
+    const actualText = container.getElementsByClassName('studyDescription')[0].textContent
     expect(actualText).toEqual(expectedText)
   })
 
@@ -50,16 +51,14 @@ note that Release data is not corrected for batch-effects, but is stratified by 
  technical attributes of the analyzed HCA DCP data. Additionally, you can view all HCA Release study pages and\
  search genes across all projects by visiting the Single Cell Portal Release Pag'
     const keywordTerms = ['study']
-    const wrapper = mount(shortenDescription(text, keywordTerms))
-    // Find span tag with openingText
-    const openingTextSpan= wrapper.find('span.openingText')
+    const { container } = render(shortenDescription(text, keywordTerms))
     // Span tag for opening text should not exist
-    expect(openingTextSpan).toHaveLength(0)
+    expect(container.getElementsByClassName('openingText')).toHaveLength(0)
 
     // Find span with matched text
-    const matchedDescription= wrapper.find('span.studyDescription')
+    const matchedDescription = container.getElementsByClassName('studyDescription')
     expect(matchedDescription).toHaveLength(1)
-    const actualMatchedDescription = matchedDescription.text()
+    const actualMatchedDescription = matchedDescription[0].textContent
     expect(actualMatchedDescription).toEqual(expectedText)
   })
 
@@ -68,19 +67,19 @@ note that Release data is not corrected for batch-effects, but is stratified by 
     const expectedMatchedDescription= 'hat Release data is not corrected for batch-effects, but is stratified by organ and (in some cases) developmental stage as described below. '
     const keywordTerms = ['developmental']
 
-    const wrapper = mount(shortenDescription(text, keywordTerms))
+    const { container } = render(shortenDescription(text, keywordTerms))
 
     // Find span tag with openingText
-    const openingTextSpan= wrapper.find('span.openingText')
+    const openingTextSpan = container.getElementsByClassName('openingText')
     expect(openingTextSpan).toHaveLength(1)
-    const actualopeningText = openingTextSpan.text()
+    const actualopeningText = openingTextSpan[0].textContent
     expect(actualopeningText).toEqual(expectedOpeningText)
 
 
     // Find span with matched text
-    const matchedDescription= wrapper.find('span.studyDescription')
+    const matchedDescription = container.getElementsByClassName('studyDescription')
     expect(matchedDescription).toHaveLength(1)
-    const actualMatchedDescription = matchedDescription.text()
+    const actualMatchedDescription = matchedDescription[0].textContent
     expect(actualMatchedDescription).toEqual(expectedMatchedDescription)
   })
 })

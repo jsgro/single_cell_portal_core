@@ -1,11 +1,14 @@
-<div class="row" id="study-description-row">
-  <div class="col-md-12">
+<div id="study-description-row">
+  <div id="study-description-container">
     <div id="study-description-content" class="ck-content">
       <%= @study.full_description.html_safe %>
     </div>
   </div>
   <% if @study.has_sidebar_content? %>
-    <%= render partial: 'study_resources_sidebar' %>
+    <div id="study-sidebar-container">
+      <button id="toggle-study-resources" class="terra-tertiary-btn" title="Toggle display of sidebar"><span class="fas fa-lg fa-angle-right"></span></button>
+      <%= render partial: 'study_resources_sidebar' %>
+    </div>
   <% end %>
 </div>
 
@@ -33,3 +36,13 @@
   </script>
 
 <% end %>
+<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+  $("#toggle-study-resources").click(function() {
+    $("#study-sidebar-container").toggleClass('closed')
+    $("#toggle-study-resources > span").toggleClass('fa-angle-right fa-angle-left')
+
+  })
+  $('.corresponding-author').each( function(index) {
+    window.SCP.renderComponent(this, 'AuthorEmailPopup', { dataEl: this })
+  })
+</script>
