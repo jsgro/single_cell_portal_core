@@ -15,7 +15,7 @@ import useErrorMessage from '~/lib/error-message'
 import { computeCorrelations } from '~/lib/stats'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
-import { getPlotDimensions, filterTrace, getSortedLabels, getColorForLabel } from '~/lib/plot'
+import { getPlotDimensions, filterTrace, getSortedLabels, getColorForLabel, defaultScatterColor, sortTraceByExpression } from '~/lib/plot'
 import LoadingSpinner from '~/lib/LoadingSpinner'
 import { formatFileForApi } from '~/components/upload/upload-utils'
 import { successNotification, failureNotification } from '~/lib/MessageModal'
@@ -391,10 +391,15 @@ function getPlotlyTraces({
 
 
   const isRefGroup = getIsRefGroup(annotType, genes, isCorrelatedScatter)
+  const isGeneExpressionForColor = !isCorrelatedScatter && !isAnnotatedScatter && genes.length
+
+  const startTime = performance.now()
   const [traces, countsByLabel, expRange] = filterTrace({
     trace: unfilteredTrace,
     hiddenTraces, groupByAnnotation: isRefGroup, activeTraceLabel, expressionFilter, expressionData: data.expression
   })
+  const perfTime = performance.now() - startTime
+  console.log(`Filter/group done in ${perfTime}ms`)
 
   if (isRefGroup) {
     const labels = getSortedLabels(countsByLabel)
@@ -409,51 +414,17 @@ function getPlotlyTraces({
       }
     })
   } else {
-    const filteredTrace = traces[0]
-    const filteredLength = filteredTrace.expression.length
-    const sortedTrace = {
-      type: is3D ? 'scatter3d' : 'scattergl',
-      mode: 'markers'
-    }
-    const isGeneExpressionForColor = genes.length && !isCorrelatedScatter && !isAnnotatedScatter
     // for non-clustered plots, we pass in a single trace with all the points
+    let workingTrace = traces[0]
     let colors
     if (isGeneExpressionForColor) {
-      // sort the points by order of expression
-      const expressionsWithIndices = new Array(filteredLength)
-      for (let i = 0; i < filteredLength; i++) {
-        expressionsWithIndices[i] = [filteredTrace.expression[i], i]
-      }
-      expressionsWithIndices.sort((a, b) => a[0] - b[0])
-
-      // initialize the other arrays (see )
-      sortedTrace.x = new Array(filteredLength)
-      sortedTrace.y = new Array(filteredLength)
-      if (is3D) {
-        sortedTrace.z = new Array(filteredLength)
-      }
-      sortedTrace.annotations = new Array(filteredLength)
-      sortedTrace.cells = new Array(filteredLength)
-
-      colors = new Array(filteredLength)
-
-      // now that we know the indices, reorder the other data arrays
-      for (let i = 0; i < expressionsWithIndices.length; i++) {
-        const sortedIndex = expressionsWithIndices[i][1]
-        sortedTrace.x[i] = filteredTrace.x[sortedIndex]
-        sortedTrace.y[i] = filteredTrace.y[sortedIndex]
-        if (is3D) {
-          sortedTrace.z[i] = filteredTrace.z[sortedIndex]
-        }
-        sortedTrace.cells[i] = filteredTrace.cells[sortedIndex]
-        sortedTrace.annotations[i] = filteredTrace.annotations[sortedIndex]
-        colors[i] = expressionsWithIndices[i][0]
-      }
+      workingTrace = sortTraceByExpression(workingTrace)
+      colors = workingTrace.expression
     } else {
-      colors = isGeneExpressionForColor ? filteredTrace.expression : filteredTrace.annotations
+      colors = isGeneExpressionForColor ? workingTrace.expression : workingTrace.annotations
     }
 
-    sortedTrace.marker = {
+    workingTrace.marker = {
       line: { color: 'rgb(40,40,40)', width: 0 },
       size: pointSize
     }
@@ -462,7 +433,7 @@ function getPlotlyTraces({
       const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
       const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
 
-      Object.assign(sortedTrace.marker, {
+      Object.assign(workingTrace.marker, {
         showscale: true,
         colorscale: appliedScatterColor,
         reversescale: shouldReverseScale(appliedScatterColor),
@@ -472,17 +443,17 @@ function getPlotlyTraces({
       // if expression values are all zero, set max/min manually so the zeros still look like zero
       // see SCP-2957
       if (genes.length && !colors.some(val => val !== 0)) {
-        sortedTrace.marker.cmin = 0
-        sortedTrace.marker.cmax = 1
+        workingTrace.marker.cmin = 0
+        workingTrace.marker.cmax = 1
       } else {
         if (expRange) {
           // if the data was filtered, manually set the range to the unfiltered range
-          sortedTrace.marker.cmin = expRange[0]
-          sortedTrace.marker.cmax = expRange[1]
+          workingTrace.marker.cmin = expRange[0]
+          workingTrace.marker.cmax = expRange[1]
         }
       }
     }
-    traces[0] = sortedTrace
+    traces[0] = workingTrace
   }
   traces.forEach(trace => {
     addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)

@@ -75,7 +75,7 @@ export function filterTrace({
   // if grouping by annotation, traceMap is a hash of annotation names to traces
   // otherwise, traceMap will just have a single 'all' trace
   const traceMap = {}
-  const estTraceLength = groupByAnnotation ? trace.x.length / 10 : trace.x.length
+  const estTraceLength = groupByAnnotation ? Math.round(trace.x.length / 10) : trace.x.length
   let rawCountsByLabel = { main: trace.x.length } // maintain a list of all cell counts by label for the legend
   const countsByLabel = {}
   if (groupByAnnotation) {
@@ -157,6 +157,46 @@ export function filterTrace({
   })
   const expRange = isFilteringByExpression ? [expMin, expMax] : null
   return [traces, countsByLabel, expRange]
+}
+
+/** sort the passsed in trace by expression value */
+export function sortTraceByExpression(trace) {
+  const hasZ = !!trace.z
+  const traceLength = trace.x.length
+  const sortedTrace = {
+    type: trace.type,
+    mode: trace.mode
+  }
+  // sort the points by order of expression
+  const expressionsWithIndices = new Array(traceLength)
+  for (let i = 0; i < traceLength; i++) {
+    expressionsWithIndices[i] = [trace.expression[i], i]
+  }
+  expressionsWithIndices.sort((a, b) => a[0] - b[0])
+
+  // initialize the other arrays (see )
+  sortedTrace.x = new Array(traceLength)
+  sortedTrace.y = new Array(traceLength)
+  if (hasZ) {
+    sortedTrace.z = new Array(traceLength)
+  }
+  sortedTrace.annotations = new Array(traceLength)
+  sortedTrace.cells = new Array(traceLength)
+  sortedTrace.expression = new Array(traceLength)
+
+  // now that we know the indices, reorder the other data arrays
+  for (let i = 0; i < expressionsWithIndices.length; i++) {
+    const sortedIndex = expressionsWithIndices[i][1]
+    sortedTrace.x[i] = trace.x[sortedIndex]
+    sortedTrace.y[i] = trace.y[sortedIndex]
+    if (hasZ) {
+      sortedTrace.z[i] = trace.z[sortedIndex]
+    }
+    sortedTrace.cells[i] = trace.cells[sortedIndex]
+    sortedTrace.annotations[i] = trace.annotations[sortedIndex]
+    sortedTrace.expression[i] = expressionsWithIndices[i][0]
+  }
+  return sortedTrace
 }
 
 /**
