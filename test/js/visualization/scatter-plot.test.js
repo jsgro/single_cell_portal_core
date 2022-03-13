@@ -6,7 +6,7 @@ import '@testing-library/jest-dom/extend-expect'
 import Plotly from 'plotly.js-dist'
 
 import * as ScpApi from 'lib/scp-api'
-import ScatterPlot, { getPlotlyTraces } from 'components/visualization/ScatterPlot'
+import ScatterPlot from 'components/visualization/ScatterPlot'
 import * as ScpApiMetrics from 'lib/scp-api-metrics'
 import * as MetricsApi from 'lib/metrics-api'
 
@@ -114,7 +114,7 @@ describe('getPlotlyTraces handles expression graphs', () => {
     plotData.scatter.data.expression = [0.1, 0.0, 2, 4.5, 0, 6.5, 0, 3.1]
     plotData.genes = ['foo']
 
-    const traces = getPlotlyTraces(plotData)
+    const traces = ScatterPlot.getPlotlyTraces(plotData)
     expect(traces).toHaveLength(2)
     const trace = traces[0]
     expect(trace.type).toEqual('scattergl')
@@ -131,7 +131,7 @@ describe('getPlotlyTraces handles expression graphs', () => {
     plotData.scatter.data.expression = [0, 0, 0, 0, 0, 0, 0, 0]
     plotData.genes = ['foo']
 
-    const traces = getPlotlyTraces(plotData)
+    const traces = ScatterPlot.getPlotlyTraces(plotData)
     const trace = traces[0]
     expect(trace.marker.cmin).toEqual(0)
     expect(trace.marker.cmax).toEqual(1)
@@ -142,7 +142,7 @@ describe('getPlotlyTraces handles expression graphs', () => {
     plotData.scatter.data.expression = [0, 0, 0, 0, 0, 0, 0, 0]
     plotData.genes = ['foo']
 
-    let traces = getPlotlyTraces(plotData)
+    let traces = ScatterPlot.getPlotlyTraces(plotData)
     // check that it doesn't reverse Reds when Reds is applied as the default
     // Note that if the defaultScatterColor is ever changed to a non-Reds colorscale,
     // this test will need to be updated
@@ -150,12 +150,12 @@ describe('getPlotlyTraces handles expression graphs', () => {
 
     // check that does not reverse Reds when that is the explicitly specified colorscale
     plotData.scatterColor = 'Reds'
-    traces = getPlotlyTraces(plotData)
+    traces = ScatterPlot.getPlotlyTraces(plotData)
     expect(traces[0].marker.reversescale).toEqual(false)
 
     // check that it does reverse a non-Reds color scale that is specified
     plotData.scatterColor = 'Greens'
-    traces = getPlotlyTraces(plotData)
+    traces = ScatterPlot.getPlotlyTraces(plotData)
     expect(traces[0].marker.reversescale).toEqual(true)
   })
 })

@@ -1,5 +1,5 @@
 import Plotly from 'plotly.js-dist'
-import { UNSPECIFIED_ANNOTATION_NAME } from 'lib/cluster-utils'
+import { UNSPECIFIED_ANNOTATION_NAME } from '~/lib/cluster-utils'
 
 // Default plot colors, combining ColorBrewer sets 1-3 with tweaks to yellows.
 const colorBrewerList = [
@@ -272,6 +272,14 @@ export function arrayMax(arr) {
   }
   return max
 }
+
+// sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
+export const SCATTER_COLOR_OPTIONS = [
+  'Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu', 'Reds', 'Blues', 'Picnic',
+  'Rainbow', 'Portland', 'Jet', 'Hot', 'Blackbody', 'Earth', 'Electric', 'Viridis', 'Cividis'
+]
+
+export const defaultScatterColor = 'Reds'
 
 /** Get width and height available for plot components, since they may be first rendered hidden */
 export function getPlotDimensions({

@@ -1,9 +1,7 @@
-<h2>Study Settings</h2>
 <%= nested_form_for(@study, url: update_study_settings_path(accession: @study.accession, study_name: @study.url_safe_name.blank? ? params[:study_name] : @study.url_safe_name), html: {id: 'update-study-settings-form', multipart: true, data: {remote: true}}) do |f| %>
   <% if @study.errors.any? %>
     <div class="bs-callout bs-callout-danger">
       <h4><%= pluralize(@study.errors.count, "error") %> prohibited this study from being saved:</h4>
-
       <ul>
         <% @study.errors.full_messages.each do |message| %>
           <li><%= message %></li>
@@ -11,154 +9,62 @@
       </ul>
     </div>
   <% end %>
-  <div class="form-group row">
-    <div class="col-md-12">
-      <%= f.label :name %><br/>
-      <%= f.text_field :name, class: 'form-control', autocomplete: 'off' %>
+  <div id="settings-tab-root" class="upload-wizard-react">
+    <div class="col-md-2">
+      <ul class="upload-wizard-steps" role="tablist" id="study-settings-tabs">
+        <li role="presentation" class="settings-nav active" id="settings-general-nav">
+          <a href="#settings-general" data-toggle="tab">General</a>
+        </li>
+        <li role="presentation" class="settings-nav" id="settings-viz-nav">
+          <a href="#settings-viz" data-toggle="tab">View options</a>
+        </li>
+        <li role="presentation" class="settings-nav" id="settings-sharing-nav">
+          <a href="#settings-sharing" data-toggle="tab">Sharing/Access</a>
+        </li>
+        <li role="presentation" class="settings-nav" id="settings-authors-nav">
+          <a href="#settings-authors" data-toggle="tab">Authors/Publications</a>
+        </li>
+        <li role="presentation" class="settings-nav" id="settings-resources-nav">
+          <a href="#settings-resources" data-toggle="tab">External resources</a>
+        </li>
+      </ul>
+      <br/>
+      <h5>Management pages</h5>
+      <ul class="list-style-none">
+        <li role="presentation">
+          <%= scp_link_to "Upload/Edit data", initialize_study_path(@study), class: "#{@study.url_safe_name}-upload" %>
+        </li>
+        <li>
+          <%= scp_link_to "Sync workspace", sync_study_path(@study), class: "#{@study.url_safe_name}-sync sync-button" %>
+        </li>
+        <li>
+          <%= scp_link_to "Study details", study_path(@study), class: " #{@study.url_safe_name}-sync sync-button" %>
+        </li>
+      </ul>
     </div>
-  </div>
-  <div class="form-group row">
-    <div class="col-md-4">
-      <%= f.label :embargo, 'Data release date' %>&nbsp;<span class='fas fa-question-circle' data-toggle='tooltip' title='Setting a data release date will prevent downloads for everyone except study owners & shared users, and will expire at 12AM on the date specified (leave blank to allow downloads)' data-placement='right'></span><br />
-      <%= f.date_field :embargo, class: 'form-control' %>
-    </div>
-    <div class="col-md-4">
-      <%= f.label :public %><br />
-      <%= f.select :public, options_for_select([['Yes',1],['No',0]], @study.public? ? 1: 0), {}, {class: 'form-control'} %>
-    </div>
-    <div class="col-md-4">
-      <%= f.label :cell_count %><br/>
-      <%= f.text_field :cell_count, class: 'form-control' %>
-    </div>
-  </div>
-  <% if @study.can_visualize_clusters? && @study.default_cluster.present? %>
-    <h4>Study Default View Options</h4>
-    <p class="help-block">Use this form to choose what the default expression axis label, cluster, annotation, color profile, and cluster point display properties are when someone views your study.</p>
-    <div class="well well-sm" id="default-study-options-form">
-      <%= f.fields_for :default_options do |opts| %>
-        <div class="form-group row">
-          <div class="col-sm-4">
-            <%= opts.label :cluster, 'Default Cluster' %><br />
-            <%= opts.select :cluster, options_for_select(@study.cluster_groups.map(&:name), @default_cluster.name), {}, class: 'form-control' %>
-          </div>
-          <div class="col-sm-4">
-            <%= opts.label :annotation, 'Default Annotation' %><br />
-            <%= opts.select :annotation, grouped_options_for_select(@default_cluster_annotations, @study.default_annotation), {},class: 'form-control' %>
-          </div>
-          <div class="col-sm-4">
-            <%= opts.label :color_profile, "Default Color Profile <i class='fas fa-info-circle' title='The default color profile only applies to the selected annotation (if the type is numeric)' data-toggle='tooltip'></i>".html_safe %><br />
-            <%= opts.select :color_profile, options_for_select(SiteController::COLORSCALE_THEMES, @study.default_color_profile), {include_blank: 'N/A'} , class: 'form-control', disabled: @study.default_annotation_type == 'group' %>
-          </div>
+    <div class="col-md-10">
+      <div class="tab-content">
+        <div class="tab-pane active" id="settings-general">
+          <%= render partial: 'study_settings_general', locals: { f: f } %>
         </div>
-        <div class="form-group row">
-          <div class="col-sm-4">
-            <%= opts.label :cluster_point_size, "Size of Cluster Points (in px) <i class='fas fa-fw fa-question-circle' data-toggle='tooltip' title='Global value for the size of all cluster points, in pixels.'></i>".html_safe %><br />
-            <%= opts.number_field :cluster_point_size, value: @study.default_cluster_point_size, class: 'form-control' %>
-          </div>
-          <div class="col-sm-4">
-            <%= opts.label :cluster_point_border, 'Show Cluster Point Borders?' %><br />
-            <%= opts.select :cluster_point_border, options_for_select([['Yes', true],['No', false]], @study.show_cluster_point_borders?), {}, class: 'form-control' %>
-          </div>
-          <div class="col-sm-4">
-            <%= opts.label :cluster_point_alpha, "Cluster Point Opacity <i class='fas fa-fw fa-question-circle' data-toggle='tooltip' title='Global value for the transparency (alpha) of all cluster points.  Only values between 0 and 1 are accepted.'></i>".html_safe %><br />
-            <%= opts.number_field :cluster_point_alpha, value: @study.default_cluster_point_alpha, in: 0.0..1.0, step: 0.05, class: 'form-control' %>
-          </div>
+        <div class="tab-pane" id="settings-viz">
+          <%= render partial: 'study_settings_viz', locals: { f: f } %>
         </div>
-        <div class="form-group row">
-          <div class="col-sm-12">
-            <%= opts.label :expression_label, 'Expression axis label' %>&nbsp;<span class="fas fa-question-circle" data-toggle="tooltip" data-placement="right" title='This is displayed as the axis label for box & scatter plots showing expression values.  This label is global to all expression values.'></span> <br />
-            <%= opts.text_field :expression_label, value: @study.default_options[:expression_label], placeholder: @study.default_expression_label, class: 'form-control' %>
-          </div>
+        <div class="tab-pane" id="settings-sharing">
+          <%= render partial: 'study_settings_sharing', locals: { f: f } %>
         </div>
-      <% end %>
-    </div>
-    <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-        $('#study_default_options_annotation').change(function() {
-            var annotType = $(this).val().split('--')[1];
-            var colorProfile = $('#study_default_options_color_profile');
-            if (annotType == 'group') {
-                colorProfile.val('');
-                colorProfile.attr('disabled', true);
-            } else {
-                colorProfile.attr('disabled', false);
-            }
-        });
-
-        $('#study_default_options_cluster_point_alpha').change(function () {
-            var formElement = $(this);
-            var alpha = parseFloat(formElement.val());
-            if (alpha < 0) {
-                formElement.val(0.0);
-            } else if (alpha > 1) {
-                formElement.val(1.0);
-            }
-        });
-
-        $('#study_default_options_cluster').change(function(){
-            var cluster = $(this).val();
-            $.get("<%= load_annotation_options_study_path(@study) %>?cluster=" + cluster, function() {
-                $(document).ready(function() {
-                    var newAnnotType = $('#study_default_options_annotation').val().split('--')[1];
-                    var colorProfile = $('#study_default_options_color_profile');
-                    if (newAnnotType == 'group') {
-                        colorProfile.val('');
-                        colorProfile.attr('disabled', true);
-                    } else {
-                        colorProfile.attr('disabled', false);
-                    }
-                });
-            })
-        });
-    </script>
-  <% end %>
-  <div class="form-group">
-    <h3>Reviewer Access</h3>
-    <p class="help-block">
-      Use this form to set up anonymous "reviewer" access for allowing publication reviewers to view your study while it
-      is still private.  Reviewers can interact with any enabled visualizations, but cannot download data or view the
-      associated Terra workspace.  If enabled, you can send the access URL & PIN to your corresponding editor to allow
-      reviewers to view your study.
-    </p>
-    <%= f.fields_for :reviewer_access %>
-  </div>
-  <div class="form-group">
-    <h3>Sharing</h3>
-    <%= f.fields_for :study_shares do |share| %>
-      <% if share.object.show_share? %>
-        <div class="well well-sm">
-          <div class="form-group row">
-            <div class="col-sm-6">
-              <%= share.label :email %>
-              <% if !share.object.new_record? %>
-                <span class="fas fa-exclamation-triangle text-danger" data-toggle="tooltip" data-placement="right" title="Editing share emails is not permitted.  If the email is incorrect, please delete the share and create a new one."></span>
-              <% end %>
-              <br />
-              <%= share.text_field :email, class: 'form-control share-email', readonly: !share.object.new_record?, autocomplete: 'no' %>
-            </div>
-            <div class="col-sm-5">
-              <%= share.label :permission %><br />
-              <%= share.select :permission, options_for_select(StudyShare::PERMISSION_TYPES, share.object.permission), {}, class: 'form-control share-permission' %>
-              <span class="help-block share-description"><%= StudyShare::PERMISSION_DESCRIPTION_MAP[share.object.permission] %></span>
-            </div>
-            <div class="col-sm-1">
-              <%= share.label :delete, "&nbsp;".html_safe %><br />
-              <%= share.link_to_remove "<span class='btn btn-sm btn-danger'><span class='fas fa-times'></span></span>".html_safe, data: {confirm: 'Are you sure?  This cannot be undone unless you reload the page before saving.'} %>
-            </div>
-          </div>
+        <div class="tab-pane" id="settings-authors">
+          <%= render partial: 'study_settings_authors', locals: { f: f } %>
         </div>
-      <% end %>
-    <% end %>
-    <%= f.link_to_add "<span class='fas fa-plus'></span> Share study".html_safe, :study_shares, class: 'btn btn-primary', id: 'add-study-share' %>
-  </div>
-  <div class="form-group row">
-    <div class="col-xs-12 text-center">
-      <%= link_to 'Update study settings', '#', class: 'btn btn-lg btn-success', id: 'update-study-settings' %>
+        <div class="tab-pane" id="settings-resources">
+          <%= render partial: 'study_settings_resources', locals: { f: f } %>
+        </div>
+      </div>
     </div>
   </div>
   <div class="form-group row">
     <div class="col-xs-12 text-center">
-      <%= scp_link_to "<span class='fas fa-upload'></span> Upload/Edit data".html_safe, initialize_study_path(@study), class: "btn btn-sm btn-primary #{@study.url_safe_name}-upload" %>
-      <%= scp_link_to "<span class='fas fa-sync-alt'></span> Sync workspace".html_safe, sync_study_path(@study), class: "btn btn-sm btn-warning #{@study.url_safe_name}-sync sync-button" %>
+      <%= link_to 'Update settings', '#', class: 'btn btn-primary', id: 'update-study-settings' %>
     </div>
   </div>
 <% end %>

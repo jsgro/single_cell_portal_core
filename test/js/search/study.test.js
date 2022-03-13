@@ -1,6 +1,6 @@
 import React from 'react'
 import * as ReactAll from 'react'
-import { mount } from 'enzyme'
+import { render } from '@testing-library/react'
 
 import StudySearchResult from 'components/search/results/StudySearchResult'
 
@@ -31,7 +31,7 @@ const numericFacetMatchedStudy = {
   cell_count: 130,
   facet_matches: {
     facet_search_weight: 1,
-    organism_age: [{min: 30, max: 50, unit: 'years'}]
+    organism_age: [{ min: 30, max: 50, unit: 'years' }]
   }
 }
 
@@ -41,7 +41,7 @@ const numericFacetMatchedRange0Study = {
   cell_count: 130,
   facet_matches: {
     facet_search_weight: 1,
-    organism_age: [{min: 0, max: 50, unit: 'years'}]
+    organism_age: [{ min: 0, max: 50, unit: 'years' }]
   }
 }
 
@@ -52,39 +52,39 @@ const facetUnmatchedStudy = {
 
 describe('Facet match badges', () => {
   it('renders no badges with no matches', async () => {
-    const wrapper = mount((
+    const { container } = render((
       <StudySearchResult study={facetUnmatchedStudy}/>
     ))
-    expect(wrapper.find('.facet-match').length).toEqual(0)
+    expect(container.getElementsByClassName('facet-match')).toHaveLength(0)
   })
 
   it('renders one badges with one match', async () => {
-    const wrapper = mount((
+    const { container } = render((
       <StudySearchResult study={facetMatchedStudy}/>
     ))
-    expect(wrapper.find('.facet-match').length).toEqual(1)
-    expect(wrapper.find('.facet-match').first().text().trim()).toEqual('blood')
+    expect(container.getElementsByClassName('facet-match')).toHaveLength(1)
+    expect(container.getElementsByClassName('facet-match')[0].textContent.trim()).toEqual('blood')
   })
 
   it('renders two badges with two matches', async () => {
-    const wrapper = mount((
+    const { container } = render((
       <StudySearchResult study={complexFacetMatchedStudy}/>
     ))
-    expect(wrapper.find('.facet-match').length).toEqual(2)
-    expect(wrapper.find('.facet-match').first().text().trim()).toEqual('blood')
-    expect(wrapper.find('.facet-match').last().text().trim()).toEqual('mouse,human')
+    expect(container.getElementsByClassName('facet-match')).toHaveLength(2)
+    expect(container.getElementsByClassName('facet-match')[0].textContent.trim()).toEqual('blood')
+    expect(container.getElementsByClassName('facet-match')[1].textContent.trim()).toEqual('mouse,human')
   })
 
   it('renders badges for numeric facets', async () => {
-    const wrapper = mount((
+    const { container } = render((
       <StudySearchResult study={numericFacetMatchedStudy}/>
     ))
-    expect(wrapper.find('.facet-match').length).toEqual(1)
-    expect(wrapper.find('.facet-match').first().text().trim()).toEqual('organism age 30-50 years')
-    const wrapper2 = mount((
+    expect(container.getElementsByClassName('facet-match')).toHaveLength(1)
+    expect(container.getElementsByClassName('facet-match')[0].textContent.trim()).toEqual('organism age 30-50 years')
+    const { container: container2 } = render((
       <StudySearchResult study={numericFacetMatchedRange0Study}/>
     ))
-    expect(wrapper2.find('.facet-match').length).toEqual(1)
-    expect(wrapper2.find('.facet-match').first().text().trim()).toEqual('organism age 0-50 years')
+    expect(container2.getElementsByClassName('facet-match')).toHaveLength(1)
+    expect(container2.getElementsByClassName('facet-match')[0].textContent.trim()).toEqual('organism age 0-50 years')
   })
 })

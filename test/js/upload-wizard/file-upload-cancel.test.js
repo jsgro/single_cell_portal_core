@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, waitForElementToBeRemoved, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 import _cloneDeep from 'lodash/cloneDeep'
-import ReactNotification from 'react-notifications-component'
+import { ReactNotifications } from 'react-notifications-component'
 
 import { RawUploadWizard } from 'components/upload/UploadWizard'
 import MockRouter from '../lib/MockRouter'
@@ -30,7 +30,7 @@ describe('cancels a study file upload', () => {
     const deleteFileSpy = jest.spyOn(ScpApi, 'deleteStudyFile')
     deleteFileSpy.mockImplementation(() => new Promise(() => {}))
     render(<>
-      <ReactNotification/>
+      <ReactNotifications/>
       <MockRouter>
         <RawUploadWizard studyAccession="SCP1" name="Chicken study"/>
       </MockRouter>

@@ -9,9 +9,9 @@ import _remove from 'lodash/remove'
 import $ from 'jquery'
 import { getDefaultProperties } from '@databiosphere/bard-client'
 
-import { getAccessToken } from 'providers/UserProvider'
-import { getBrandingGroup } from 'lib/scp-api'
-import getSCPContext from 'providers/SCPContextProvider'
+import { getAccessToken } from '~/providers/UserProvider'
+import { getBrandingGroup } from '~/lib/scp-api'
+import getSCPContext from '~/providers/SCPContextProvider'
 import { setupWebVitalsLog, addPerfMetrics } from './metrics-perf'
 
 let metricsApiMock = false

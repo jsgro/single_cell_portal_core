@@ -1,9 +1,0 @@
-process.env.NODE_ENV = process.env.NODE_ENV || 'development'
-// we copy over the NODE_ENV to a property called VIEW_ENV, which is used in user-facing JS
-// this allows this property to easily be toggled here for development, without impacting build steps
-process.env.VIEW_ENV = process.env.NODE_ENV
-
-const environment = require('./environment')
-
-environment.splitChunks()
-module.exports = environment.toWebpackConfig()

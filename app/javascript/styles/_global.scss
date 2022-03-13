@@ -702,7 +702,7 @@ ul.pager li.dimmed {
   padding-right: 15px;
 }
 
-#metadata-convention-explainer {
+#overflow-x-scroll {
   overflow-x: scroll;
 }
 
@@ -807,4 +807,57 @@ figcaption.ck-editor__editable {
 .unset-background-border {
   background: unset;
   border: unset;
+}
+
+#study-description-row {
+  display: flex;
+}
+
+#study-sidebar-container {
+  border-left: 1px solid #ccc;
+  flex-basis: 25%;
+  flex-shrink: 0;
+  &.closed {
+    flex-shrink: 2;
+    #study-sidebar-content {
+      display: none;
+    }
+  }
+}
+
+#study-sidebar-content {
+  margin-right: 1em;
+  padding: 0.5em 1em 2em 2em;
+  h5 {
+    margin-bottom: 0.5em;
+  }
+  h5:not(:first-of-type) {
+    margin-top: 1em;
+  }
+}
+
+#toggle-study-resources {
+  margin-left: 1em;
+}
+
+.publication-link {
+  margin-bottom: 10px;
+}
+
+.no-wrap-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-style-none {
+  list-style: none;
+  padding-inline-start: 0px;
+  li {
+    margin: 1em
+  }
+}
+
+.underline {
+  text-decoration: underline;
 }

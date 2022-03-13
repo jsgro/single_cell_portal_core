@@ -2,9 +2,13 @@ class AddBqOrganismAgeColumn < Mongoid::Migration
   # note this operation is safe to run even if your BQ table already has the given column
   def self.up
     client = BigQueryClient.new.client
-    dataset = client.dataset(CellMetadatum::BIGQUERY_DATASET)
-    table = dataset.table(CellMetadatum::BIGQUERY_TABLE)
-    table.schema {|s| s.numeric('organism_age__seconds', mode: :nullable)}
+    [CellMetadatum::BIGQUERY_DATASET, 'cell_metadata_test'].each do |dataset_name|
+      dataset = client.dataset(dataset_name)
+      if dataset.present? # ensure test dataset exists to avoid migration failure
+        table = dataset.table(CellMetadatum::BIGQUERY_TABLE)
+        table.schema {|s| s.numeric('organism_age__seconds', mode: :nullable)}
+      end
+    end
   end
 
   def self.down

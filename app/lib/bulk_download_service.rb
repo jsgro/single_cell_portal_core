@@ -206,7 +206,8 @@ class BulkDownloadService
       file_types += ['Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File']
     end
 
-    studies = Study.where(:accession.in => study_accessions)
+    # ignore detached studies
+    studies = Study.where(:accession.in => study_accessions, detached: false)
     # get requested files, excluding externally stored sequence data
     base_file_selector = StudyFile.where(human_fastq_url: nil, :study_id.in => studies.pluck(:id))
     file_types.present? ? base_file_selector.where(:file_type.in => file_types) : base_file_selector
@@ -234,13 +235,15 @@ class BulkDownloadService
   end
 
   # Get a preview of the number of files/total bytes by StudyAccession and file_type
+  # Will ignore detached studies by default to avoid errors trying to download from missing buckets
   #
   # * *params*
   #   - +study_accessions+ (Array<String>) => Array of StudyAccession values from which to pull files
   # * *return*
   #   - (Hash) => Array of study objects, each one containing a study_files array with name, type, and upload_file_size
   def self.get_download_info(study_accessions)
-    Study.where(:accession.in => study_accessions).map { |study| BulkDownloadService.study_download_info(study) }
+    studies = Study.where(:accession.in => study_accessions, detached: false)
+    studies.map { |study| BulkDownloadService.study_download_info(study) }
   end
 
   # Get download preview information for a single study

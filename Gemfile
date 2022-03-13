@@ -4,7 +4,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby '2.6.6'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '6.1.4.4'
+gem 'rails', '6.1.4.6'
 # Use SCSS for stylesheets
 gem 'sass-rails', '>= 6'
 # Use CoffeeScript for .coffee assets and views
@@ -61,7 +61,6 @@ gem 'parallel'
 gem 'ruby_native_statistics'
 gem 'mongoid_rails_migrations'
 gem 'secure_headers'
-gem 'webpacker'
 gem 'swagger-blocks'
 gem 'sentry-raven'
 gem 'travis'
@@ -76,6 +75,7 @@ gem 'ruby-prof-flamegraph'
 gem 'carrierwave', '~> 2.0'
 gem 'carrierwave-mongoid', :require => 'carrierwave/mongoid'
 gem 'uuid'
+gem 'vite_rails'
 
 group :development, :test do
   # Access an IRB console on exception pages or by using <%= console %> in views

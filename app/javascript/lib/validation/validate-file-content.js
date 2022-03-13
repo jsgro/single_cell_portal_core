@@ -1,5 +1,5 @@
 /**
-* @fileoverview Validates Single Cell Portal files on the user's computer
+* @fileoverview Client-side file validation (CSFV) for upload and sync
 *
 * Where feasible, these functions and data structures align with those in
 * Ingest Pipeline [1].  Such consistency across codebases eases QA, debugging,
@@ -8,10 +8,9 @@
 * [1] E.g. https://github.com/broadinstitute/scp-ingest-pipeline/blob/development/ingest/validation/validate_metadata.py
 */
 
-import { log } from 'lib/metrics-api'
 import { readFileBytes } from './io'
 import ChunkedLineReader from './chunked-line-reader'
-import { PARSEABLE_TYPES } from 'components/upload/upload-utils'
+import { PARSEABLE_TYPES } from '~/components/upload/upload-utils'
 import {
   parseDenseMatrixFile, parseFeaturesFile, parseBarcodesFile, parseSparseMatrixFile
 } from './expression-matrices-validation'
@@ -20,9 +19,8 @@ import {
   validateUniqueCellNamesWithinFile, validateMetadataLabelMatches, validateGroupColumnCounts, timeOutCSFV
 } from './shared-validation'
 
-import getSCPContext from 'providers/SCPContextProvider'
-
-// from lib/assets/metadata_schemas/alexandria_convention_schema.json (which in turn is from scp-ingest-pipeline/schemas)
+// from lib/assets/metadata_schemas/alexandria_convention_schema.json
+// (which in turn is from scp-ingest-pipeline/schemas)
 export const REQUIRED_CONVENTION_COLUMNS = [
   'biosample_id',
   'disease',
@@ -36,7 +34,6 @@ export const REQUIRED_CONVENTION_COLUMNS = [
   'species',
   'species__ontology_label'
 ]
-
 
 /**
  * Verify headers are unique and not empty
@@ -120,7 +117,7 @@ function validateTypeKeyword(annotTypes) {
  */
 function validateGroupOrNumeric(annotTypes) {
   const issues = []
-  const invalidTypes = []
+  const badValues = []
 
   // Skip the TYPE keyword
   const types = annotTypes.slice(1)
@@ -130,18 +127,27 @@ function validateGroupOrNumeric(annotTypes) {
       if (type === '') {
         // If the value is a blank space, store a higher visibility
         // string for error reporting
-        invalidTypes.push('<empty value>')
+        badValues.push('<empty value>')
       } else {
-        invalidTypes.push(type)
+        badValues.push(type)
       }
     }
   })
 
-  if (invalidTypes.length > 0) {
-    const badValues = `"${invalidTypes.join('", "')}"`
+  // TODO (SCP-4128): Generalize this pattern across validation rules
+  const valuesOrRows = 'values'
+  const numBad = badValues.length
+  if (numBad > 0) {
+    const maxToShow = 100
+    let notedBad = `"${badValues.slice(0, maxToShow).join('", "')}"`
+    const numMore = numBad - maxToShow
+    if (numMore > 0) {
+      notedBad += ` and ${numMore - maxToShow} more ${valuesOrRows}`
+    }
+
     const msg =
       'Second row, all columns after first must be "group" or "numeric". ' +
-      `Your values included ${badValues}`
+      `Your ${valuesOrRows} included ${notedBad}`
 
     issues.push(['error', 'format:cap:group-or-numeric', msg])
   }
@@ -328,10 +334,19 @@ export async function validateGzipEncoding(file) {
   return isGzipped
 }
 
+/**
+ * Read File object, transform and validate it according to its SCP file type
+ *
+ * @returns {Object} result Validation results
+ * @returns {Object} result.fileInfo Data about the file and its parsing
+ * @returns {Object} result.issues Array of [category, type, message]
+ * @returns {Number} result.perfTime How long this function took
+ */
+export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
+  const startTime = performance.now()
 
-/** reads the file and returns a fileInfo object along with an array of issues */
-async function parseFile(file, fileType, fileOptions={}) {
   const fileInfo = {
+    ...sizeProps,
     fileSize: file.size,
     fileName: file.name,
     linesRead: 0,
@@ -342,11 +357,16 @@ async function parseFile(file, fileType, fileOptions={}) {
     isGzipped: null
   }
   const parseResult = { fileInfo, issues: [] }
+
   try {
     fileInfo.isGzipped = await validateGzipEncoding(file)
     // if the file is compressed or we can't figure out the compression, don't try to parse further
     if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
-      return { fileInfo, issues: [] }
+      return {
+        fileInfo,
+        issues: [],
+        perfTime: Math.round(performance.now() - startTime)
+      }
     }
     const parseFunctions = {
       'Cluster': parseClusterFile,
@@ -356,13 +376,25 @@ async function parseFile(file, fileType, fileOptions={}) {
       '10X Barcodes File': parseBarcodesFile,
       'MM Coordinate Matrix': parseSparseMatrixFile
     }
+
     if (parseFunctions[fileType]) {
-      const chunker = new ChunkedLineReader(file)
-      const { issues, delimiter, numColumns } = await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
+      let ignoreLastLine = false
+      if (sizeProps?.fetchedCompleteFile === false) {
+        ignoreLastLine = true
+        const msg =
+          'Due to this file\'s size, it will be fully validated after sync, ' +
+          'and any errors will be emailed to you.'
+
+        parseResult.issues.push(['warn', 'incomplete:range-request', msg])
+      }
+
+      const chunker = new ChunkedLineReader(file, ignoreLastLine)
+      const { issues, delimiter, numColumns } =
+        await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
       fileInfo.linesRead = chunker.linesRead
       fileInfo.delimiter = delimiter
       fileInfo.numColumns = numColumns
-      parseResult.issues = issues
+      parseResult.issues = parseResult.issues.concat(issues)
     }
   } catch (error) {
     // get any unhandled or deliberate short-circuits
@@ -372,87 +404,14 @@ async function parseFile(file, fileType, fileOptions={}) {
       parseResult.issues.push(['error', 'parse:unhandled', error.message])
     }
   }
-  return parseResult
-}
 
-/** Validate a local file, return { errors, warnings, summary } object, where errors is an array of errors, and summary
- * is a message like "Your file had 2 errors"
- */
-export async function validateFileContent(file, fileType, fileOptions={}) {
-  const startTime = performance.now()
-  const { fileInfo, issues } = await parseFile(file, fileType, fileOptions)
   const perfTime = Math.round(performance.now() - startTime)
 
-  const errorObj = formatIssues(issues)
-  const logProps = getLogProps(fileInfo, errorObj, perfTime)
-  log('file-validation', logProps)
+  const issues = parseResult.issues
 
-  return errorObj
-}
-
-/** take an array of [type, key, msg] issues, and format it */
-function formatIssues(issues) {
-  const errors = issues.filter(issue => issue[0] === 'error')
-  const warnings = issues.filter(issue => issue[0] === 'warn')
-
-  let summary = ''
-  if (errors.length > 0 || warnings.length) {
-    const errorsTerm = (errors.length === 1) ? 'error' : 'errors'
-    const warningsTerm = (warnings.length === 1) ? 'warning' : 'warnings'
-    summary = `Your file had ${errors.length} ${errorsTerm}`
-    if (warnings.length) {
-      summary = `${summary}, ${warnings.length} ${warningsTerm}`
-    }
-  }
-  return { errors, warnings, summary }
-}
-
-/** determine trigger for file-validation event (e.g. upload vs. sync) **/
-function getValidationTrigger() {
-  const pageName = getSCPContext().analyticsPageName
-  if (pageName === 'studies-initialize-study') {
-    return 'upload'
-  } else if (pageName === 'studies-sync-study') {
-    return 'sync'
-  }
-}
-
-/** Get properties about this validation run to log to Mixpanel */
-function getLogProps(fileInfo, errorObj, perfTime) {
-  const { errors, warnings, summary } = errorObj
-  const trigger = getValidationTrigger()
-
-  // Avoid needless gotchas in downstream analysis
-  let friendlyDelimiter = 'tab'
-  if (fileInfo.delimiter === ',') {
-    friendlyDelimiter = 'comma'
-  } else if (fileInfo.delimiter === ' ') {
-    friendlyDelimiter = 'space'
-  }
-
-  const defaultProps = {
-    ...fileInfo,
-    perfTime,
-    trigger,
-    delimiter: friendlyDelimiter,
-    numTableCells: fileInfo.numColumns ? fileInfo.numColumns * fileInfo.linesRead : 0
-  }
-
-  if (errors.length === 0) {
-    if (warnings.flat().includes('incomplete')) {
-      return Object.assign({ status: 'incomplete' }, defaultProps)
-    }
-    return Object.assign({ status: 'success' }, defaultProps)
-  } else {
-    return Object.assign(defaultProps, {
-      status: 'failure',
-      summary,
-      numErrors: errors.length,
-      numWarnings: warnings.length,
-      errors: errors.map(columns => columns[2]),
-      warnings: warnings.map(columns => columns[2]),
-      errorTypes: errors.map(columns => columns[1]),
-      warningTypes: warnings.map(columns => columns[1])
-    })
+  return {
+    fileInfo,
+    issues,
+    perfTime
   }
 }

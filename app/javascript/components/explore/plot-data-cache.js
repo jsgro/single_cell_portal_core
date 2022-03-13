@@ -1,5 +1,5 @@
-import { fetchCluster, fetchClusterUrl } from 'lib/scp-api'
-import { STEP_NOT_NEEDED } from 'lib/metrics-perf'
+import { fetchCluster, fetchClusterUrl } from '~/lib/scp-api'
+import { STEP_NOT_NEEDED } from '~/lib/metrics-perf'
 
 /**
   @fileoverview Transparent caching mechanism for calls to fetchCluster

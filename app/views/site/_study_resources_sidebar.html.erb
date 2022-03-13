@@ -1,0 +1,49 @@
+<div id="study-sidebar-content">
+  <% if @study.authors.corresponding.any? %>
+    <h5>Corresponding authors</h5>
+    <% @study.authors.corresponding.each do |author| %>
+      <%= link_to '#',
+                  class: 'corresponding-author',
+                  data: {
+                    email: author.base_64_email, placement: 'top',
+                    name: author.first_name + ' ' + author.last_name
+                  },
+                  title: "Send email to #{author.first_name} #{author.last_name}" do %>
+      <% end %>
+      <br/>
+    <% end %>
+  <% end %>
+  <% if @study.publications.any? %>
+    <h5>Related publications</h5>
+    <% @study.publications.each do |publication| %>
+      <%= link_to publication.url, target: :_blank, rel: 'noopener',
+                      'data-analytics-name' => 'publication-link-journal', title: "View in #{publication.journal}",
+                      data: { toggle: 'tooltip' } do %>
+        <span class="underline"><%= publication.title %></span> <span class="fas fa-external-link-alt"></span>
+      <% end %>
+      <% unless publication.citation.blank? %>
+        <div class="detail margin-left"><%= publication.citation %></div>
+      <% end %>
+      <% unless publication.pmcid.blank? %>
+        <%= link_to publication.pmc_link, class: 'publication-link margin-left',
+                    target: :_blank, rel: 'noopener', 'data-analytics-name' => 'publication-link-pmc' do %>
+          <%= publication.pmcid %> <span class="fas fa-external-link-alt"></span>
+        <% end %>
+      <% end %>
+      <br/><br/>
+    <% end %>
+  <% end %>
+  <% if @study.external_resources.any? %>
+    <h5>Resources</h5>
+    <% @study.external_resources.each do |resource| %>
+      <p>
+        <%= link_to resource.url, class: 'navigation-form external-resource-link',
+                    target: :_blank, rel: 'noopener', title: resource.description,
+                    data: { toggle: 'tooltip', 'analytics-name' => 'external-resource-link' } do %>
+          <%= resource.title %> <span class="fas fa-external-link-alt"></span>
+        <% end %>
+
+      </p>
+    <% end %>
+  <% end %>
+</div>

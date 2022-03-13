@@ -12,6 +12,7 @@
 // Read Sprockets README (https://github.com/rails/sprockets#sprockets-directives) for details
 // about supported directives.
 //
+//= require jquery
 //= require jquery_ujs
 //= require dataTables/jquery.dataTables
 //= require dataTables/bootstrap/3/jquery.dataTables.bootstrap
@@ -29,7 +30,6 @@
 
 // TODO (SCP-3249): Modernize Morpheus, then remove this
 //= require morpheus-external-r
-
 var fileUploading = false;
 var PAGE_RENDERED = false;
 var OPEN_MODAL = '';
@@ -744,5 +744,30 @@ function updateRawCountsAssnSelect(parentForm, currentValues, isRequired) {
   const pairedHiddenField = $(`${parentForm} .raw_counts_associations`)[0]
   const matrixOpts = window.SCP.currentStudyFiles.filter(sf => sf?.expression_file_info?.is_raw_counts)
     .map(sf => ({ label: sf.upload_file_name, value: sf['_id']['$oid'] }))
-  window.SCP.renderRawAssociationSelect(rawAssnTarget, currentValues, pairedHiddenField, matrixOpts, isRequired)
+  const parentFormEl = $(rawAssnTarget).closest('.expression-file-info-fields')[0]
+  window.SCP.renderComponent(rawAssnTarget, 'RawAssociationSelect', {
+    parentForm: parentFormEl,
+    initialValue: currentValues,
+    hiddenField: pairedHiddenField,
+    opts: matrixOpts,
+    isRequired: isRequired
+  })
 }
+
+/** store a list of components to be rendered once our Vite/React JS loads */
+window.SCP.componentsToRender = []
+/** Adds somethign to the list of stuff to render once all JS loads.  target can be either an
+ * id string or a dom node.
+ */
+window.SCP.renderComponent = function(target, componentName, props) {
+  window.SCP.componentsToRender.push({target: target, componentName: componentName, props: props})
+}
+
+window.SCP.eventsToLog = []
+/** store any log calls that are made before the JS renders */
+window.SCP.log = function(name, props) {
+  window.SCP.eventsToLog.push({name: name, props: props})
+}
+// needed for morpheus import
+window.global = {}
+

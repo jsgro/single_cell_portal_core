@@ -235,7 +235,7 @@ module Api
           }
 
           coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(cluster)
-          custom_colors = cluster.study_file.cluster_file_info&.custom_colors || {}
+          custom_colors = cluster.study_file.cluster_file_info&.decoded_custom_colors || {}
           custom_annotation_colors = custom_colors[annotation[:name]] || {}
           {
             data: plot_data,

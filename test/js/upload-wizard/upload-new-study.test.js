@@ -189,7 +189,7 @@ async function testMetadataUpload({ createFileSpy }) {
   })
   await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
   expect(screen.queryByTestId('file-selection-name')).toBeFalsy()
-  expect(screen.getByTestId('file-content-validation')).toHaveTextContent(`Could not use ${badFileName}`)
+  expect(screen.getByTestId('validation-error')).toHaveTextContent(`after correcting ${badFileName}`)
   fireEvent.mouseOver(saveButton())
   expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
 
@@ -238,7 +238,7 @@ async function testClusterUpload({ createFileSpy }) {
   })
   await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
   expect(screen.queryByTestId('file-selection-name')).toBeFalsy()
-  expect(screen.getByTestId('file-content-validation')).toHaveTextContent(`Could not use ${badFileName}`)
+  expect(screen.getByTestId('validation-error')).toHaveTextContent(`after correcting ${badFileName}`)
   fireEvent.mouseOver(saveButton())
   expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
 
@@ -296,7 +296,7 @@ async function testSpatialUpload({ createFileSpy }) {
   })
   await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
   expect(screen.queryByTestId('file-selection-name')).toBeFalsy()
-  expect(screen.getByTestId('file-content-validation')).toHaveTextContent(`Could not use ${badFileName}`)
+  expect(screen.getByTestId('validation-error')).toHaveTextContent(`after correcting ${badFileName}`)
   fireEvent.mouseOver(saveButton())
   expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
 
@@ -342,7 +342,7 @@ async function testCoordinateLabelUpload({ createFileSpy }) {
   })
   await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
   expect(screen.queryByTestId('file-selection-name')).toBeFalsy()
-  expect(screen.getByTestId('file-content-validation')).toHaveTextContent(`Could not use ${badFileName}`)
+  expect(screen.getByTestId('validation-error')).toHaveTextContent(`after correcting ${badFileName}`)
   fireEvent.mouseOver(saveButton())
   expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
 
@@ -394,7 +394,7 @@ async function testSequenceFileUpload({ createFileSpy }) {
   })
   await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
   expect(screen.queryByTestId('file-selection-name')).toBeFalsy()
-  expect(screen.getByTestId('file-content-validation')).toHaveTextContent(`Could not use ${badFileName}`)
+  expect(screen.getByTestId('validation-error')).toHaveTextContent(`after correcting ${badFileName}`)
   fireEvent.mouseOver(saveButton())
   expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file')
 

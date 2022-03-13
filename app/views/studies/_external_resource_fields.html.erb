@@ -15,10 +15,7 @@
       <br />
       <%= f.text_field :url, class: 'form-control external-resource-url' %>
     </div>
-    <div class="col-sm-2">
-      <%= f.label :publication_url, 'Is this a publication?' %>
-      <%= f.select :publication_url, options_for_select([['Yes', 1],['No', 0]], f.object.publication_url ? 1 : 0), {}, class: 'form-control external-resource-publication-url' %>
-    </div>
+    <!-- publication_url is not used here to phase out external_resource instances used for publications -->
     <div class="col-sm-1">
       <%= f.label :delete, "&nbsp;".html_safe %><br />
       <%= f.link_to_remove "<span class='btn btn-sm btn-danger'><span class='fas fa-times'></span></span>".html_safe, data: {confirm: 'Are you sure?  This cannot be undone unless you reload the page before saving.'} %>

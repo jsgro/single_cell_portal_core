@@ -184,6 +184,9 @@ export function calculatePerfTimes(perfTimes) {
   const perfEntry =
     performance.getEntriesByType('resource')
       .filter(entry => entry.name === perfTimes.url)[0]
+  if (!perfEntry) {
+    return {}
+  }
 
   const transfer = perfEntry.responseEnd - perfEntry.responseStart
 

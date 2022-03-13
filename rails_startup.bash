@@ -23,7 +23,6 @@ echo "*** COMPLETED ***"
 if [[ $PASSENGER_APP_ENV = "production" ]] || [[ $PASSENGER_APP_ENV = "staging" ]] || [[ $PASSENGER_APP_ENV = "pentest" ]]
 then
     echo "*** PRECOMPILING ASSETS ***"
-    # see https://github.com/rails/webpacker/issues/1189#issuecomment-359360326
     export NODE_OPTIONS="--max-old-space-size=4096"
     sudo -E -u app -H bundle exec rake NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV SECRET_KEY_BASE=$SECRET_KEY_BASE assets:clean
     sudo -E -u app -H NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV yarn install
@@ -40,7 +39,6 @@ elif [[ $PASSENGER_APP_ENV = "development" ]]; then
     if [ $? -ne 0 ]; then
        sudo -E -u app -H yarn install --force
     fi
-    sudo -E -u app -H /home/app/webapp/bin/webpack
 fi
 echo "*** CREATING CRON ENV FILES ***"
 echo "export PROD_DATABASE_PASSWORD='$PROD_DATABASE_PASSWORD'" >| /home/app/.cron_env
@@ -138,7 +136,7 @@ echo "*** LOCALIZING USER ASSETS ***"
 echo "*** COMPLETED ***"
 
 echo "*** ADDING REPORTING CRONS ***"
-(crontab -u app -l ; echo "5 0 * * Sun . /home/app/.cron_env ; cd /home/app/webapp/; /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV \"ReportTimePoint.weekly_returning_users\" >> /home/app/webapp/log/cron_out.log 2>&1") | crontab -u app -
+(crontab -u app -l ; echo "5 0 * * Sun . /home/app/.cron_env ; cd /home/app/webapp/; /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV \"ReportTimePoint.create_point(ReportTimePoint::WEEKLY_RETURNING_USERS)\" >> /home/app/webapp/log/cron_out.log 2>&1") | crontab -u app -
 (crontab -u app -l ; echo "@daily . /home/app/.cron_env ; cd /home/app/webapp/; /home/app/webapp/bin/rails runner -e $PASSENGER_APP_ENV \"AnalysisSubmission.update_running_submissions\" >> /home/app/webapp/log/cron_out.log 2>&1") | crontab -u app -
 echo "*** COMPLETED ***"
 

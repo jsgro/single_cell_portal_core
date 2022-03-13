@@ -725,7 +725,10 @@ module Api
                                       study_shares_attributes: [:id, :_destroy, :email, :permission],
                                       study_detail_attributes: [:id, :full_description],
                                       :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails,
-                                                           :cluster_point_size, :cluster_point_alpha, :cluster_point_border])
+                                                           :cluster_point_size, :cluster_point_alpha, :cluster_point_border],
+                                      external_resources_attributes: [:id, :_destroy, :title, :description, :url, :publication_url],
+                                      authors_attributes: [:id, :first_name, :last_name, :institution, :corresponding, :_destroy],
+                                      publications_attributes: [:id, :title, :journal, :citation, :url, :pmcid, :preprint, :_destroy])
       end
 
       # sub-method to iterate through list of GCP bucket files and build up necessary sync list objects
@@ -777,7 +780,9 @@ module Api
               # make sure file is not actually a folder by checking its size
               if file.size > 0
                 # create a new entry
-                unsynced_file = StudyFile.new(study_id: @study.id, name: file.name, upload_file_name: file.name, upload_content_type: file.content_type, upload_file_size: file.size, generation: file.generation, remote_location: file.name)
+                unsynced_file = StudyFile.new(study_id: @study.id, name: file.name, upload_file_name: file.name,
+                                              upload_content_type: file.content_type, upload_file_size: file.size,
+                                              generation: file.generation, remote_location: file.name)
                 @unsynced_files << unsynced_file
               end
             end
