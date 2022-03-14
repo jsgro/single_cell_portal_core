@@ -20,11 +20,8 @@ export function createMockFile({
       if (!isGzipped) {
         return content.slice(startByte, startByte + chunkSize)
       } else {
-        console.log('in gunzip mock')
         content = fs.readFileSync(filePath + fileName)
         const gunzippedContent = strFromU8(gunzipSync(content))
-        console.log('gunzippedContent')
-        console.log(gunzippedContent)
         return gunzippedContent
       }
     })

@@ -30,8 +30,7 @@ export function getLogProps(fileInfo, issueObj, perfTimes) {
   } else if (fileInfo.delimiter === ' ') {
     friendlyDelimiter = 'space'
   }
-  console.log('perfTimes')
-  console.log(perfTimes)
+
   const defaultProps = {
     ...fileInfo,
     ...perfTimes,

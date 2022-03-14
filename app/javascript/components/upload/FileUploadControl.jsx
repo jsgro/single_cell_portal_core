@@ -29,9 +29,6 @@ export default function FileUploadControl({
   async function handleFileSelection(e) {
     const selectedFile = e.target.files[0]
 
-    console.log('in FileUploadControl, selectedFile:')
-    console.log('hello fast Monday refresh')
-    console.log(selectedFile)
     let newName = selectedFile.name
 
     // for cluster files, don't change an existing specified name

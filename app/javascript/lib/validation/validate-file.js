@@ -49,10 +49,7 @@ function validateFileName(file, studyFile, allStudyFiles, allowedFileExts=['*'])
  * @param allowedFileExts { String[] } array of allowable extensions, ['*'] for all
  */
 async function validateLocalFile(file, studyFile, allStudyFiles=[], allowedFileExts=['*']) {
-  console.log('fast refresh validate-file!')
   const nameIssues = validateFileName(file, studyFile, allStudyFiles, allowedFileExts)
-
-  console.log('after nameIssues')
 
   let issuesObj
   if (nameIssues.length === 0) {

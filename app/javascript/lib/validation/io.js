@@ -17,32 +17,18 @@ export const DEFAULT_CHUNK_SIZE = oneMiB
 
 /** Reads up to chunkSize bytes of the given file, starting at startByte */
 export async function readFileBytes(file, startByte=0, chunkSize=DEFAULT_CHUNK_SIZE, isGzipped=false) {
-  console.log('in readFileBytes, isGzipped:')
-  console.log(isGzipped)
   const nextSlice = startByte + chunkSize
 
-  console.log('in readFileBytes, nextSlice:')
-  console.log(nextSlice)
   const blob = file.slice(startByte, nextSlice)
-  console.log('in readFileBytes, blob:')
-  console.log(blob)
-
 
   const arrayBuffer = await blob.arrayBuffer()
 
   let stringContent = ''
   if (!isGzipped) {
-    console.log('0')
-    console.log('1')
     const enc = new TextDecoder('utf-8')
-    console.log('3')
     stringContent = enc.decode(arrayBuffer)
-    console.log('4')
   } else {
-    console.log('a')
     const uint8Array = new Uint8Array(arrayBuffer)
-
-    console.log('b')
 
     await new Promise((resolve, reject) => {
       // Examples: https://github.com/101arrowz/fflate#usage
@@ -55,10 +41,6 @@ export async function readFileBytes(file, startByte=0, chunkSize=DEFAULT_CHUNK_S
       })
     })
   }
-
-  console.log('in readFileBytes, isGzipped:')
-  console.log(isGzipped)
-  // console.log(stringContent)
 
   return stringContent
 }
