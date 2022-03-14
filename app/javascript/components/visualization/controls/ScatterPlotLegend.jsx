@@ -52,7 +52,6 @@ export function getStyles(data, pointSize, customColors, editedCustomColors) {
   const countsByLabel = countValues(data.annotations)
 
   const labels = getLabels(countsByLabel)
-
   const legendStyles = labels
     .map((label, index) => {
       return {
@@ -194,6 +193,9 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
  * Get color for the label, which can be applied to e.g. the icon or the trace
  */
 function getColorForLabel(label, customColors={}, editedCustomColors={}, i) {
+  if (label === '--Unspecified--' && !editedCustomColors[label] && !customColors[label]) {
+    return 'rgba(80, 80, 80, 0.4)'
+  }
   return editedCustomColors[label] ?? customColors[label] ?? getColorBrewerColor(i)
 }
 
