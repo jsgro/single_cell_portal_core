@@ -237,8 +237,8 @@ function getNumAzulFiles(azulFiles) {
  * This is our best web-client-side methodology for measuring downloads.
  */
 export function logDownloadAuthorization(perfTimes, fileIds, azulFiles) {
-  const numAzulFilesChosen = getNumAzulFiles(azulFiles)
-  const props = { perfTimes, 'numSCPFiles': fileIds.length, 'numAzulFiles': numAzulFilesChosen }
+  const numAzulFiles = getNumAzulFiles(azulFiles)
+  const props = { perfTimes, 'numSCPFiles': fileIds.length, numAzulFiles }
   log('download-authorization', props)
   ga('send', 'event', 'advanced-search', 'download-authorization') // eslint-disable-line no-undef, max-len
 }
