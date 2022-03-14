@@ -3,7 +3,7 @@
  */
 
 import { oneGiB, oneMiB } from '~/lib/validation/io'
-import { parseFile } from './validate-file-content'
+import ValidateFileContent from './validate-file-content'
 import { logFileValidation } from './log-validation'
 import { fetchBucketFile } from '~/lib/scp-api'
 
@@ -48,9 +48,8 @@ function validateFileName(file, studyFile, allStudyFiles, allowedFileExts=['*'])
  * @param allStudyFiles {StudyFile[]} the array of all files for the study, used for name uniqueness checks
  * @param allowedFileExts { String[] } array of allowable extensions, ['*'] for all
  */
-export async function validateLocalFile(file, studyFile, allStudyFiles=[], allowedFileExts=['*']) {
-  console.log('in validateLocalFile')
-
+async function validateLocalFile(file, studyFile, allStudyFiles=[], allowedFileExts=['*']) {
+  console.log('fast refresh validate-file!')
   const nameIssues = validateFileName(file, studyFile, allStudyFiles, allowedFileExts)
 
   console.log('after nameIssues')
@@ -61,7 +60,7 @@ export async function validateLocalFile(file, studyFile, allStudyFiles=[], allow
       use_metadata_convention: studyFile.use_metadata_convention
     }
     const studyFileType = studyFile.file_type
-    const { fileInfo, issues, perfTime } = await parseFile(file, studyFileType, fileOptions)
+    const { fileInfo, issues, perfTime } = await ValidateFileContent.parseFile(file, studyFileType, fileOptions)
 
     const allIssues = issues.concat(nameIssues)
     issuesObj = formatIssues(allIssues)
@@ -93,10 +92,10 @@ export async function validateLocalFile(file, studyFile, allStudyFiles=[], allow
 * So 50 MiB means sync CSFV fully scans > 80% files, usually in < 5 seconds.
 * Local tests gave 4.6 s (3.4 s remote read, 1.1 s validate; 138 Mbps down).
 */
-export const MAX_SYNC_CSFV_BYTES = 50 * oneMiB
+const MAX_SYNC_CSFV_BYTES = 50 * oneMiB
 
 /** Get file-size data for sync validation processing and logging */
-export function getSizeProps(contentRange, contentLength, file) {
+function getSizeProps(contentRange, contentLength, file) {
   // Total size of the file in bytes
   let fileSizeTotal
 
@@ -133,7 +132,7 @@ export function getSizeProps(contentRange, contentLength, file) {
 *   - `warnings` is an array of warnings, and
 *   - `summary` is a message like "Your file had 2 errors"
 */
-export async function validateRemoteFile(
+async function validateRemoteFile(
   bucketName, fileName, fileType, fileOptions
 ) {
   const startTime = performance.now()
@@ -152,7 +151,7 @@ export async function validateRemoteFile(
   const sizeProps = getSizeProps(contentRange, contentLength, file)
 
   // Equivalent block exists in validateFileContent
-  const { fileInfo, issues, perfTime } = await parseFile(file, fileType, fileOptions, sizeProps)
+  const { fileInfo, issues, perfTime } = await ValidateFileContent.parseFile(file, fileType, fileOptions, sizeProps)
 
   const issuesObj = formatIssues(issues)
 
@@ -168,3 +167,13 @@ export async function validateRemoteFile(
 
   return issuesObj
 }
+
+export default function ValidateFile() {
+  return ''
+}
+
+ValidateFile.validateLocalFile = validateLocalFile
+
+ValidateFile.validateRemoteFile = validateRemoteFile
+ValidateFile.getSizeProps = getSizeProps
+ValidateFile.MAX_SYNC_CSFV_BYTES = MAX_SYNC_CSFV_BYTES

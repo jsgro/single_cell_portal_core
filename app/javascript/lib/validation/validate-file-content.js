@@ -310,7 +310,6 @@ export async function parseClusterFile(chunker, mimeType) {
  * Throws an exception if the gzip is conflicted, since we don't want to parse further in that case
 */
 export async function validateGzipEncoding(file) {
-  console.log('in validateGzipEncoding')
   const GZIP_MAGIC_NUMBER = '\x1F'
   const fileName = file.name
   let isGzipped = null
@@ -343,7 +342,7 @@ export async function validateGzipEncoding(file) {
  * @returns {Object} result.issues Array of [category, type, message]
  * @returns {Number} result.perfTime How long this function took
  */
-export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
+async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
   const startTime = performance.now()
 
   console.log('in parseFile')
@@ -399,13 +398,10 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
 
         parseResult.issues.push(['warn', 'incomplete:range-request', msg])
       }
-      console.log('in validate-file-content, initializing ChunkedLineReader')
       let chunker
       if (!fileInfo.isGzipped) {
-        console.log('calling chunker, not gzipped')
         chunker = new ChunkedLineReader(file, ignoreLastLine)
       } else {
-        console.log('calling chunker, gzipped')
         chunker = new ChunkedLineReader(file, ignoreLastLine, true, 50*oneMiB)
       }
 
@@ -435,3 +431,9 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
     perfTime
   }
 }
+
+export default function ValidateFileContent() {
+  return ''
+}
+
+ValidateFileContent.parseFile = parseFile

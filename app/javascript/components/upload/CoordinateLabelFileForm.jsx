@@ -1,7 +1,7 @@
 import React from 'react'
 
 import Select from '~/lib/InstrumentedSelect'
-import { FileTypeExtensions } from './FileUploadControl'
+import { FileTypeExtensions } from './upload-utils'
 import { TextFormField } from './form-components'
 import ExpandableFileForm from './ExpandableFileForm'
 import { validateFile } from './upload-utils'

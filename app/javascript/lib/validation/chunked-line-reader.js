@@ -25,6 +25,11 @@ export default class ChunkedLineReader {
     this.startTime = Date.now() // start the CSFV timer
     this.updateHasMoreChunks()
     this.updateHasMoreLines()
+    this.perfTime = {
+      readFileBytes: 0,
+      iterateLines: 0,
+      func: 0
+    }
   }
 
   /**
@@ -45,8 +50,11 @@ export default class ChunkedLineReader {
    * the file is missing proper newlines.
   */
   async iterateLines({ func, maxLines = Number.MAX_SAFE_INTEGER, maxBytesPerLine = oneGiB }) {
+    const t0 = Date.now()
+
     const prevLinesRead = this.linesRead
     if (this.isGzipped && maxLines === Number.MAX_SAFE_INTEGER) {maxLines = 500}
+
     while (
       (this.hasMoreChunks || this.chunkLines.length) &&
       !(this.linesRead === 0 && this.nextByteToRead > maxBytesPerLine) &&
@@ -58,6 +66,7 @@ export default class ChunkedLineReader {
         console.log(this)
         console.log('prevLinesRead', prevLinesRead)
         console.log('maxLines', maxLines)
+        console.log('******** HELLO')
 
         const t0 = Date.now()
         await this.readNextChunk()
@@ -65,15 +74,19 @@ export default class ChunkedLineReader {
         console.log(`readNextChunk time: ${ time } ms`)
       }
       if (this.chunkLines.length) {
-        const t0 = Date.now()
         this.linesRead++ // convenience tracker
         const line = this.chunkLines.shift()
         this.updateHasMoreLines()
         func(line, this.linesRead - 1, !this.hasMoreLines)
-        const time = Date.now() - t0
-        console.log(`updateHasMoreLines, func time: ${ time } ms`)
       }
     }
+
+    this.perfTime.iterateLines += Date.now() - t0
+
+    // This is typically our validation `func`tion.  To measure performantly,
+    // we indirectly calculate it.  Direct measurement would unduly slow down
+    // the tight inner loop on each line.
+    this.perfTime.func += this.perfTime.iterateLines - this.perfTime.readFileBytes
   }
 
   /**
@@ -87,12 +100,12 @@ export default class ChunkedLineReader {
 
 
   /**
-   * reads a file as lines in a set of 'chunks'  Each chunk is determined by chunkSize
+   * Reads a file as lines in a set of 'chunks'  Each chunk is determined by chunkSize.
    * This handles tracking lines that span chunk boundaries -- such lines will be excluded
    * from the chunk they start in, and included in full in the subsequent chunk.
    * Note that this means some chunks may be "empty" if there are lines that span entire chunks.
    *
-   * So e.g. if an expression file has a 4.5MB long header row listing the cells, the first four calls
+   * So e.g. if an expression file has a 4.5 MB long header row listing the cells, the first four calls
    * to 'readNextChunk' will put an empty into chunkLines, and then the fifth call will return the full line.
    */
   async readNextChunk() {
@@ -101,7 +114,10 @@ export default class ChunkedLineReader {
     }
     const startByte = this.nextByteToRead
     const isLastChunk = startByte + this.chunkSize >= this.file.size
+
+    const t0 = Date.now()
     const chunkString = await readFileBytes(this.file, startByte, this.chunkSize, this.isGzipped)
+    this.perfTime.readFileBytes += Date.now() - t0
 
     const lines = chunkString.split(newlineRegex)
 

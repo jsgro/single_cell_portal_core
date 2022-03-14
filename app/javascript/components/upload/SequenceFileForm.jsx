@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react'
 
 import Select from '~/lib/InstrumentedSelect'
-import FileUploadControl, { FileTypeExtensions } from './FileUploadControl'
+import FileUploadControl from './FileUploadControl'
 import { TextFormField, SaveDeleteButtons } from './form-components'
 import { SavingOverlay } from './ExpandableFileForm'
-import { validateFile } from './upload-utils'
+import { validateFile, FileTypeExtensions } from './upload-utils'
 
 const REQUIRED_FIELDS = [{ label: 'species', propertyName: 'taxon_id' }]
 const BAM_REQUIRED_FIELDS = REQUIRED_FIELDS.concat([{ label: 'Genome assembly', propertyName: 'genome_assembly_id' }])

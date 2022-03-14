@@ -9,7 +9,7 @@
  * [1] https://stackoverflow.com/a/47976589
 */
 
-import { decompressSync, gunzipSync, gunzip, strFromU8 } from 'fflate'
+import { gunzip, strFromU8 } from 'fflate'
 
 export const oneMiB = 1024 * 1024 // 1 MiB, i.e. mebibyte
 export const oneGiB = oneMiB * 1024 // 1 GiB, i.e. gebibyte
@@ -43,8 +43,6 @@ export async function readFileBytes(file, startByte=0, chunkSize=DEFAULT_CHUNK_S
     const uint8Array = new Uint8Array(arrayBuffer)
 
     console.log('b')
-
-    const t0 = Date.now()
 
     await new Promise((resolve, reject) => {
       // Examples: https://github.com/101arrowz/fflate#usage

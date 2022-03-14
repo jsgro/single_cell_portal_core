@@ -1,6 +1,7 @@
 import * as Io from 'lib/validation/io'
 const fs = require('fs')
 import { fireEvent } from '@testing-library/react'
+import { gunzipSync, strFromU8 } from 'fflate'
 
 
 /** creates a File object with the given content and/or filename.  If no content is specified,
@@ -15,8 +16,17 @@ export function createMockFile({
   }
   if (mockIO) {
     const readFileSpy = jest.spyOn(Io, 'readFileBytes')
-    readFileSpy.mockImplementation((_file, startByte, chunkSize=Io.DEFAULT_CHUNK_SIZE) => {
-      return content.slice(startByte, startByte + chunkSize)
+    readFileSpy.mockImplementation((_file, startByte, chunkSize=Io.DEFAULT_CHUNK_SIZE, isGzipped=false) => {
+      if (!isGzipped) {
+        return content.slice(startByte, startByte + chunkSize)
+      } else {
+        console.log('in gunzip mock')
+        content = fs.readFileSync(filePath + fileName)
+        const gunzippedContent = strFromU8(gunzipSync(content))
+        console.log('gunzippedContent')
+        console.log(gunzippedContent)
+        return gunzippedContent
+      }
     })
   }
   return new File([content], fileName, { type: contentType })

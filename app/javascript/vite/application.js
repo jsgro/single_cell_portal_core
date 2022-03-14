@@ -12,7 +12,8 @@ import ClusterAssociationSelect from '~/components/upload/ClusterAssociationSele
 import RawAssociationSelect from '~/components/upload/RawAssociationSelect'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 import checkMissingAuthToken from '~/lib/user-auth-tokens'
-import { validateRemoteFile } from '~/lib/validation/validate-file'
+import ValidateFile from '~/lib/validation/validate-file'
+const { validateRemoteFile } = ValidateFile
 
 import {
   logPageView, logClick, logMenuChange, setupPageTransitionLog, log, logCopy, logContextMenu
