@@ -345,8 +345,6 @@ export async function validateGzipEncoding(file) {
 async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
   const startTime = performance.now()
 
-  console.log('in parseFile')
-
   const fileInfo = {
     ...sizeProps,
     fileSize: file.size,
@@ -359,16 +357,11 @@ async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
     isGzipped: null
   }
 
-  console.log('in parseFile 0')
   const parseResult = { fileInfo, issues: [] }
 
   try {
     fileInfo.isGzipped = await validateGzipEncoding(file)
     // if the file is compressed or we can't figure out the compression, don't try to parse further
-    console.log('in parseFile, fileInfo.isGzipped:')
-    console.log(fileInfo.isGzipped)
-    console.log('in parseFile, fileInfo:')
-    console.log(fileInfo)
     if (
       !PARSEABLE_TYPES.includes(fileType) ||
       file.size > sizeProps?.fileSizeTotal && fileInfo.isGzipped // Avoids bug in sync gzip CSFV
