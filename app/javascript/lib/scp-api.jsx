@@ -74,6 +74,8 @@ function defaultPostInit(mock=false) {
  *
  * Docs: https:///singlecell.broadinstitute.org/single_cell/api/swagger_docs/v1#!/Search/search_auth_code_path
  *
+ * @param {Array} fileIds The ids of the SCP sourced files selected for download
+ * @param {Object} azulFiles Object with arrays of file info for the Azul sourced files selected for download
  * @param {Boolean} mock If using mock data.  Helps development, tests.
  * @returns {Promise} Promise object described in "Example return" above
  *
@@ -90,7 +92,7 @@ export async function fetchAuthCode(fileIds, azulFiles, mock=false) {
   })
   const [authCode, perfTimes] = await scpApi('/bulk_download/auth_code', init, mock)
 
-  logDownloadAuthorization(perfTimes)
+  logDownloadAuthorization(perfTimes, fileIds, azulFiles)
 
   return authCode
 }

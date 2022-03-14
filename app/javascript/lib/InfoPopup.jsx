@@ -26,3 +26,25 @@ export default function InfoPopup({
     <span className="log-click" data-analytics-name={dataAnalyticsName}>{target}</span>
   </OverlayTrigger>
 }
+
+/** wrapper around InfoPopup to render author contact email address in a popup
+ * if dataEl is specified, the name and email params will be read from the data attributes of the element,
+ * and email will be assumed to have been base64 encoded.
+*/
+export function AuthorEmailPopup({
+  dataEl,
+  name,
+  email
+}) {
+  if (dataEl) {
+    name = dataEl.dataset.name
+    email = atob(dataEl.dataset.email)
+  }
+  const target = <span data-analytics-name='email-corresponding-author'>{ name } <i className='fa fas fa-envelope'></i></span>
+  const mailToLink = `mailto:${ email }`
+  const content = <span>Send email to {name}<br/> <a href={mailToLink}>{email}</a></span>
+  return <InfoPopup
+    target={target}
+    content={content}
+  />
+}
