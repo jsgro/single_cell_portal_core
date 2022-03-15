@@ -9,7 +9,7 @@
 */
 
 import { readFileBytes, oneMiB } from './io'
-import ChunkedLineReader from './chunked-line-reader'
+import ChunkedLineReader, { GZIP_MAX_LINES } from './chunked-line-reader'
 import { PARSEABLE_TYPES } from '~/components/upload/upload-utils'
 import {
   parseDenseMatrixFile, parseFeaturesFile, parseBarcodesFile, parseSparseMatrixFile
@@ -404,6 +404,14 @@ async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
       fileInfo.delimiter = delimiter
       fileInfo.numColumns = numColumns
       parseResult.issues = parseResult.issues.concat(issues)
+
+      if (fileInfo.isGzipped && fileInfo.linesRead === GZIP_MAX_LINES + 1) {
+        const msg =
+        'Due to this file\'s size, it will be fully validated after upload, ' +
+        'and any errors will be emailed to you.'
+
+        parseResult.issues.push(['warn', 'incomplete:gzip-line-limit', msg])
+      }
     }
   } catch (error) {
     // get any unhandled or deliberate short-circuits

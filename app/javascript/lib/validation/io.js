@@ -35,6 +35,11 @@ export async function readFileBytes(file, startByte=0, chunkSize=DEFAULT_CHUNK_S
       // See also:
       // - https://github.com/101arrowz/fflate/discussions/30
       // - https://github.com/101arrowz/fflate/discussions/119
+      //
+      // Consider refactoring ChunkedLineReader to enable real streaming-gunzip,
+      // to mitigate UI freezes for non-tiny gzipped files.  This might
+      // make sense to do as part of a larger refactor to parallelize
+      // byte-upload and file validation.
       gunzip(uint8Array, (err, gunzipped) => {
         stringContent += strFromU8(gunzipped)
         resolve()

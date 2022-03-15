@@ -1,5 +1,8 @@
 import { DEFAULT_CHUNK_SIZE, oneGiB, readFileBytes } from './io'
 
+/** Mitigates UI freezes caused by faux-streaming gunzi; see note in io.js */
+export const GZIP_MAX_LINES = 500
+
 const newlineRegex = /\r?\n/
 
 /**
@@ -46,7 +49,9 @@ export default class ChunkedLineReader {
   */
   async iterateLines({ func, maxLines = Number.MAX_SAFE_INTEGER, maxBytesPerLine = oneGiB }) {
     const prevLinesRead = this.linesRead
-    if (this.isGzipped && maxLines === Number.MAX_SAFE_INTEGER) {maxLines = 500}
+    if (this.isGzipped && maxLines === Number.MAX_SAFE_INTEGER) {
+      maxLines = GZIP_MAX_LINES
+    }
 
     while (
       (this.hasMoreChunks || this.chunkLines.length) &&
