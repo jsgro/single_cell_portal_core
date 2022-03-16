@@ -538,11 +538,7 @@ class IngestJob
   def get_job_analytics
     file_type = self.study_file.file_type
 
-    if self.study_file.remote_location.present?
-      trigger = 'sync'
-    else
-      trigger = 'upload'
-    end
+    trigger = self.study_file.remote_location.present? ?  'sync' : 'upload'
 
     # Event properties to log to Mixpanel.
     # Mixpanel uses camelCase for props; snake_case would degrade Mixpanel UX.
