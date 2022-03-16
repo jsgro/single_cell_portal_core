@@ -59,8 +59,8 @@ function emptyTrace(expectedLength, hasZvalues, hasExpression) {
 
 /** takes a plotly trace argument and filters out cells based on params.  will return the original object,
  * but with data arrays filtered as appropriate
- * @param labelsToHide {String[]} array of label names to filter out
- * @param cellsToShow {String[]} Array of cell names to show. If null, will show everything
+ * @param hiddenTraces {String[]} array of label names to filter out
+ * @param activeTraceLabel if specified, the traces will be sorted such that the activeTrace is plotted on top
  * @param groupByAnnotation {Boolean} whether to assemble separate traces for each label
  */
 PlotUtils.filterTrace = function({

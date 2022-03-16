@@ -110,10 +110,6 @@ const Fields = {
 
   expression: {
     getFromEntry: (entry, genes, consensus) => {
-      if (!genes.length && Object.values(entry.expression).length) {
-        // HACK - DO NOT MERGE
-        return Object.values(entry.expression)[0]
-      }
       const key = getExpressionKey(genes, consensus)
       return entry.expression[key]
     },
@@ -132,7 +128,7 @@ const Fields = {
       }
     },
     merge: (entry, scatter) => {
-      if (scatter.data.expression && scatter.genes.length) {
+      if (scatter.data.expression) {
         Fields.expression.putInEntry(entry, scatter.genes, scatter.consensus, scatter.data.expression)
       } else {
         scatter.data.expression = Fields.expression.getFromEntry(entry, scatter.genes, scatter.consensus)
@@ -261,9 +257,9 @@ export function createCache() {
     if (!requestedAnnotation.name || scatter.annotParams.name === requestedAnnotation.name) {
       Fields.annotation.merge(cacheEntry, scatter)
     }
-
-    Fields.expression.merge(cacheEntry, scatter)
-
+    if (scatter.genes.length) {
+      Fields.expression.merge(cacheEntry, scatter)
+    }
     return clusterResponse
   }
 
@@ -318,6 +314,7 @@ export function createCache() {
     }
     return { fields, promises }
   }
+
   return cache
 }
 

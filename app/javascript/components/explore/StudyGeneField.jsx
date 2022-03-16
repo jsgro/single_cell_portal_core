@@ -14,7 +14,7 @@ import { log, logStudyGeneSearch } from '~/lib/metrics-api'
   * This shares a lot of logic with search/genes/GeneKeyword, but is kept as a separate component for
   * now, as the need for autocomplete raises additional complexity
   */
-export default function StudyGeneField({ genes, searchGenes, allGenes, speciesList, showUpload=true, placeholder='Genes (e.g. "PTEN NF2")' }) {
+export default function StudyGeneField({ genes, searchGenes, allGenes, speciesList }) {
   const [inputText, setInputText] = useState('')
 
   const rawSuggestions = getAutocompleteSuggestions(inputText, allGenes)
@@ -149,7 +149,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
             // the default blur behavior removes any entered free text,
             // we want to instead auto-convert entered free text to a gene tag
             onBlur={syncGeneArrayToInputText}
-            placeholder={placeholder}
+            placeholder={'Genes (e.g. "PTEN NF2")'}
             styles={{
               // if more genes are entered than fit, use a vertical scrollbar
               // this is probably not optimal UX, but good enough for first release and monitoring
@@ -166,13 +166,13 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
             }}
           />
         </div>
-        { showUpload && <label htmlFor="gene-list-upload"
+        <label htmlFor="gene-list-upload"
           data-toggle="tooltip"
           className="icon-button"
           title="Upload a list of genes to search from a file">
           <input id="gene-list-upload" type="file" onChange={e => readGeneListFile(e.target.files[0])}/>
           <FontAwesomeIcon className="action fa-lg" icon={faFileUpload} />
-        </label> }
+        </label>
       </div>
       <Modal
         show={showEmptySearchModal}
