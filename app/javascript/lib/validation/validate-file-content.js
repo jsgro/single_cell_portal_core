@@ -39,7 +39,7 @@ export const REQUIRED_CONVENTION_COLUMNS = [
 /**
  * Gzip decompression requires reading the whole file, given the current
  * approach in ChunkedLineReader.  To avoid consuming too much memory, this
- * limits CSFV to only processing gzipped files that have sizes <= 50 MiB in
+ * limits CSFV to only processing gzipped files that are <= 50 MiB in
  * (compressed) size.  Because decompression currently reads whole file,
  * this means that chunk size === file size.  When decompressed, a 50 MiB
  * chunk can consume ~500 MiB in RAM.
