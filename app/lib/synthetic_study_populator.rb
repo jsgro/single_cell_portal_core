@@ -21,7 +21,7 @@ class SyntheticStudyPopulator
   # populates the synthetic study specified in the given folder (e.g. ./db/seed/synthetic_studies/blood)
   # destroys any existing studies and workspace data corresponding to that study
   def self.populate(study_folder, user: User.first, detached: false, update_files: false)
-    tudy_path = study_folder
+    study_path = study_folder
     if study_folder.exclude?('/')
       study_path = DEFAULT_SYNTHETIC_STUDY_PATH.join(study_folder).to_s
       if !File.directory?(study_path)
@@ -142,7 +142,7 @@ class SyntheticStudyPopulator
         end
       ensure
         if local_file
-          File.close(local_file)
+          local_file.close
         end
       end
     end
