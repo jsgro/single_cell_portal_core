@@ -286,6 +286,10 @@ Rails.application.routes.draw do
     get 'app', to: 'site#index'
     get 'app/*path', to: 'site#index'
 
+    # avoid exception for igv css map missing -- just return no content.
+    # this file is only requested in development
+    get '*a/igv.css.map', to: -> (env) { [204, {}, ['']] }
+
     root to: 'site#index'
     end
 end
