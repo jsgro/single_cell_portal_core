@@ -35,6 +35,17 @@ export const REQUIRED_CONVENTION_COLUMNS = [
   'species__ontology_label'
 ]
 
+
+/**
+ * Gzip decompression requires reading the whole file, given the current
+ * approach in ChunkedLineReader.  To avoid consuming too much memory, this
+ * limits CSFV to only processing gzipped files that have sizes <= 50 MiB in
+ * (compressed) size.  Because decompression currently reads whole file,
+ * this means that chunk size === file size.  When decompressed, a 50 MiB
+ * chunk can consume ~500 MiB in RAM.
+ */
+const MAX_GZIP_FILESIZE = 50 * oneMiB
+
 /**
  * Verify headers are unique and not empty
  */
@@ -364,7 +375,10 @@ async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
     // if the file is compressed or we can't figure out the compression, don't try to parse further
     if (
       !PARSEABLE_TYPES.includes(fileType) ||
-      file.size > sizeProps?.fileSizeTotal && fileInfo.isGzipped // Avoids bug in sync gzip CSFV
+      fileInfo.isGzipped && (
+        file.size > sizeProps?.fileSizeTotal || // CSFV for gzip needs whole file
+        file.size >= MAX_GZIP_FILESIZE // See comment for MAX_GZIP_FILESIZE
+      )
     ) {
       return {
         fileInfo,
@@ -395,7 +409,7 @@ async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
       if (!fileInfo.isGzipped) {
         chunker = new ChunkedLineReader(file, ignoreLastLine)
       } else {
-        chunker = new ChunkedLineReader(file, ignoreLastLine, true, 50*oneMiB)
+        chunker = new ChunkedLineReader(file, ignoreLastLine, true, MAX_GZIP_FILESIZE)
       }
 
       const { issues, delimiter, numColumns } =
