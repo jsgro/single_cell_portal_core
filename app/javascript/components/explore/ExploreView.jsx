@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import ReactDOM from 'react-dom'
 import { Router } from '@reach/router'
 import _cloneDeep from 'lodash/clone'
 import { ReactNotifications } from 'react-notifications-component'
@@ -96,14 +95,5 @@ export default function ExploreTab({ studyAccession }) {
         <RoutableExploreTab studyAccession={studyAccession} default/>
       </Router>
     </ErrorBoundary>
-  )
-}
-
-/** convenience function for rendering this in a non-React part of the application */
-export function renderExploreView(target, studyAccession) {
-  ReactDOM.unmountComponentAtNode(target)
-  ReactDOM.render(
-    <ExploreTab studyAccession={studyAccession}/>,
-    target
   )
 }

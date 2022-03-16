@@ -15,7 +15,11 @@ import useErrorMessage from '~/lib/error-message'
 import { computeCorrelations } from '~/lib/stats'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
-import { getPlotDimensions, filterTrace, getSortedLabels, getColorForLabel, defaultScatterColor, sortTraceByExpression } from '~/lib/plot'
+import PlotUtils from '~/lib/plot'
+const {
+  getPlotDimensions, filterTrace, getSortedLabels, getColorForLabel,
+  defaultScatterColor, sortTraceByExpression
+} = PlotUtils
 import LoadingSpinner from '~/lib/LoadingSpinner'
 import { formatFileForApi } from '~/components/upload/upload-utils'
 import { successNotification, failureNotification } from '~/lib/MessageModal'

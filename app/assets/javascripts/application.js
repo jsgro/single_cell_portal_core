@@ -406,8 +406,6 @@ var plotlyLabelFont = {
     color: '#333'
 };
 
-var plotlyDefaultLineColor = 'rgb(40, 40, 40)';
-
 // set error state on blank text boxes or selects
 function setErrorOnBlank(selector) {
     selector.map(function() {

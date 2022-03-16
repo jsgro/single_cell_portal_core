@@ -1,5 +1,5 @@
-import Plotly from 'plotly.js-dist'
 import { UNSPECIFIED_ANNOTATION_NAME } from '~/lib/cluster-utils'
+import { log } from '~/lib/metrics-api'
 
 // Default plot colors, combining ColorBrewer sets 1-3 with tweaks to yellows.
 const colorBrewerList = [
@@ -10,33 +10,34 @@ const colorBrewerList = [
   '#bc80bd', '#ccebc5', '#ffed6f'
 ]
 
-export const ideogramHeight = 140
+const PlotUtils = function() {
+  return 'placeholder component'
+}
 
-export const scatterLabelLegendWidth = 260
 
 /**
  * Used in both categorical scatter plots and violin plots, to ensure
  * they use consistent friendly colors for annotations, etc.
  */
-export function getColorBrewerColor(index) {
+PlotUtils.getColorBrewerColor = function(index) {
   return colorBrewerList[index % 27]
 }
 
 // default title font settings for axis titles in plotly
-export const titleFont = {
+PlotUtils.titleFont = {
   family: 'Helvetica Neue',
   size: 16,
   color: '#333'
 }
 
 // default label font settings for colorbar titles in plotly
-export const labelFont = {
+PlotUtils.labelFont = {
   family: 'Helvetica Neue',
   size: 12,
   color: '#333'
 }
 
-export const lineColor = 'rgb(40, 40, 40)'
+PlotUtils.lineColor = 'rgb(40, 40, 40)'
 
 /** returns an empty trace with arrays initialized based on expectedLength */
 function emptyTrace(expectedLength, hasZvalues, hasExpression) {
@@ -62,7 +63,7 @@ function emptyTrace(expectedLength, hasZvalues, hasExpression) {
  * @param cellsToShow {String[]} Array of cell names to show. If null, will show everything
  * @param groupByAnnotation {Boolean} whether to assemble separate traces for each label
  */
-export function filterTrace({
+PlotUtils.filterTrace = function({
   trace, hiddenTraces, groupByAnnotation=false,
   activeTraceLabel, expressionFilter, expressionData
 }) {
@@ -143,7 +144,7 @@ export function filterTrace({
   }
   // now fix the length of the new arrays in each trace to the number of values that were written,
   // and push the traces into an array
-  const sortedLabels = getSortedLabels(rawCountsByLabel, activeTraceLabel)
+  const sortedLabels = PlotUtils.getSortedLabels(rawCountsByLabel, activeTraceLabel)
   const traces = sortedLabels.map(key => {
     const fTrace = traceMap[key]
     const subArrays = [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.expression, fTrace.cells]
@@ -160,7 +161,7 @@ export function filterTrace({
 }
 
 /** sort the passsed in trace by expression value */
-export function sortTraceByExpression(trace) {
+PlotUtils.sortTraceByExpression = function(trace) {
   const hasZ = !!trace.z
   const traceLength = trace.x.length
   const sortedTrace = {
@@ -200,65 +201,15 @@ export function sortTraceByExpression(trace) {
 }
 
 /**
- * Wrapper for Plotly.newPlot, to enable tests
- *
- * Having this function in a separate module is needed for mocking in related
- * test (study-violin-plot.test.js), due to (1) and buggy workaround (2).
- *
- * 1) SVG path getTotalLength method is undefined in jsdom library used by Jest
- *    Details: https://github.com/jsdom/jsdom/issues/1330
- *
- * 2) jest.mock() does not work when module name has ".js" in it
- *    Details: https://github.com/facebook/jest/issues/6420
- */
-export function plot(graphElementId, data, layout) {
-  Plotly.newPlot(
-    graphElementId,
-    data,
-    layout
-  )
-}
-
-/**
- * Get value for `style` prop in Plotly scatter plot `trace.transforms`.
- * Also calculate point counts for each label, `countsByLabel`.
- *
- * This is needed so that colors match between the custom Plotly legend
- * entries and each graphical trace in the plot.  (Without this, point
- * set "Foo" could be green in the legend, but red in the plot.)
- *
-*/
-export function getStyles(countsByLabel, pointSize, customColors, editedCustomColors) {
-  const labels = getSortedLabels(countsByLabel)
-
-  const legendStyles = labels
-    .map((label, index) => {
-      return {
-        target: label,
-        value: {
-          legendrank: index,
-          marker: {
-            color: getColorForLabel(label, customColors, editedCustomColors, index),
-            size: pointSize
-          }
-        }
-      }
-    })
-
-  return [legendStyles, countsByLabel]
-}
-
-
-/**
  * Get color for the label, which can be applied to e.g. the icon or the trace
  */
-export function getColorForLabel(label, customColors={}, editedCustomColors={}, i) {
-  return editedCustomColors[label] ?? customColors[label] ?? getColorBrewerColor(i)
+PlotUtils.getColorForLabel = function(label, customColors={}, editedCustomColors={}, i) {
+  return editedCustomColors[label] ?? customColors[label] ?? PlotUtils.getColorBrewerColor(i)
 }
 
 
 /** Sort labels colors are assigned in right order */
-export function getSortedLabels(countsByLabel, activeTraceLabel) {
+PlotUtils.getSortedLabels = function(countsByLabel, activeTraceLabel) {
   /** Sort annotation labels naturally, but always put "unspecified" last, and the activeTraceLabel first */
   function labelSort(a, b) {
     if (a === UNSPECIFIED_ANNOTATION_NAME || a === activeTraceLabel) {return 1}
@@ -282,14 +233,11 @@ function countValues(array) {
   }, {})
 }
 
-// To consider: dedup this copy with the one that exists in application.js.
-export const plotlyDefaultLineColor = 'rgb(40, 40, 40)'
-
 /**
  * More memory- and time-efficient analog of Math.min
  * From https://stackoverflow.com/a/13440842/10564415.
 */
-export function arrayMin(arr) {
+PlotUtils.arrayMin = function(arr) {
   let len = arr.length; let min = Infinity
   while (len--) {
     if (arr[len] < min) {
@@ -303,7 +251,7 @@ export function arrayMin(arr) {
  * More memory- and time-efficient analog of Math.max
  * From https://stackoverflow.com/a/13440842/10564415.
 */
-export function arrayMax(arr) {
+PlotUtils.arrayMax = function(arr) {
   let len = arr.length; let max = -Infinity
   while (len--) {
     if (arr[len] > max) {
@@ -313,16 +261,11 @@ export function arrayMax(arr) {
   return max
 }
 
-// sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
-export const SCATTER_COLOR_OPTIONS = [
-  'Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu', 'Reds', 'Blues', 'Picnic',
-  'Rainbow', 'Portland', 'Jet', 'Hot', 'Blackbody', 'Earth', 'Electric', 'Viridis', 'Cividis'
-]
-
-export const defaultScatterColor = 'Reds'
+PlotUtils.ideogramHeight = 140
+PlotUtils.scatterLabelLegendWidth = 260
 
 /** Get width and height available for plot components, since they may be first rendered hidden */
-export function getPlotDimensions({
+PlotUtils.getPlotDimensions = function({
   isTwoColumn=false,
   isMultiRow=false,
   verticalPad=250,
@@ -339,7 +282,7 @@ export function getPlotDimensions({
   }
   if (hasLabelLegend) {
     const factor = isTwoColumn ? 2 : 1
-    horizontalPad += scatterLabelLegendWidth * factor
+    horizontalPad += PlotUtils.scatterLabelLegendWidth * factor
   }
   let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
 
@@ -348,7 +291,7 @@ export function getPlotDimensions({
   let galleryHeight = $(window).height() - verticalPad
 
   if (showRelatedGenesIdeogram) {
-    galleryHeight -= ideogramHeight
+    galleryHeight -= PlotUtils.ideogramHeight
   }
 
   if (hasTitle) {
@@ -374,3 +317,46 @@ export function getPlotDimensions({
 
   return { width, height }
 }
+
+/** return a trivial tab manager that handles focus and sizing
+ * We implement our own trivial tab manager as it seems to be the only way
+ * (after 2+ hours of digging) to prevent morpheus auto-scrolling
+ * to a heatmap once it's rendered
+ */
+PlotUtils.morpheusTabManager = function($target) {
+  return {
+    add: options => {
+      $target.empty()
+      $target.append(options.$el)
+      return { id: $target.attr('id'), $panel: $target }
+    },
+    setTabTitle: () => {},
+    setActiveTab: () => {},
+    getActiveTabId: () => {},
+    getWidth: () => $target.actual('width'),
+    getHeight: () => $target.actual('height'),
+    getTabCount: () => 1
+  }
+}
+
+/** Log performance timing for Morpheus dot plots and heatmaps */
+PlotUtils.logMorpheusPerfTime = function(target, plotType, genes) {
+  const graphId = target.slice(1) // e.g. #dotplot-1 -> dotplot-1
+  performance.measure(graphId, `perfTimeStart-${graphId}`)
+  const perfTime = Math.round(
+    performance.getEntriesByName(graphId)[0].duration
+  )
+
+  log(`plot:${plotType}`, { perfTime, genes })
+}
+
+PlotUtils.dotPlotColorScheme = {
+  // Blue, purple, red.  These red and blue hues are accessible, per WCAG.
+  colors: ['#0000BB', '#CC0088', '#FF0000'],
+
+  // TODO: Incorporate expression units, once such metadata is available.
+  values: [0, 0.5, 1]
+}
+
+
+export default PlotUtils

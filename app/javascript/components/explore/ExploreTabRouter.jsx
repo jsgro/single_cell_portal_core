@@ -4,7 +4,8 @@ import * as queryString from 'query-string'
 
 import { stringifyQuery, geneParamToArray, geneArrayToParam } from '~/lib/scp-api'
 import { getIdentifierForAnnotation } from '~/lib/cluster-utils'
-import { DEFAULT_ROW_CENTERING } from '~/components/visualization/Heatmap'
+import PlotOptions from '~/components/visualization/plot-options'
+const { DEFAULT_ROW_CENTERING } = PlotOptions
 import { logStudyGeneSearch } from '~/lib/metrics-api'
 
 

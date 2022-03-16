@@ -6,7 +6,8 @@ import { HexColorPicker, HexColorInput } from 'react-colorful'
 import _cloneDeep from 'lodash/cloneDeep'
 
 import { log } from '~/lib/metrics-api'
-import { scatterLabelLegendWidth, getSortedLabels, getColorForLabel } from '~/lib/plot'
+import PlotUtils from '~/lib/plot'
+const { scatterLabelLegendWidth, getSortedLabels, getColorForLabel } = PlotUtils
 
 /** Convert state Boolean to attribute string */
 function getActivity(isActive) {

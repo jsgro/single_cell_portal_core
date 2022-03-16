@@ -4,26 +4,17 @@ import _capitalize from 'lodash/capitalize'
 import Plotly from 'plotly.js-dist'
 
 import { fetchExpressionViolin } from '~/lib/scp-api'
-import { getColorBrewerColor, arrayMin, arrayMax, plotlyDefaultLineColor } from '~/lib/plot'
+import PlotUtils from '~/lib/plot'
+const {
+  getColorBrewerColor, arrayMin, arrayMax, plotlyDefaultLineColor,
+  DISTRIBUTION_PLOT_OPTIONS, defaultDistributionPlot, DISTRIBUTION_POINTS_OPTIONS, defaultDistributionPoints
+} = PlotUtils
 import { useUpdateEffect } from '~/hooks/useUpdate'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
 import useErrorMessage from '~/lib/error-message'
 import { logViolinPlot } from '~/lib/scp-api-metrics'
 import LoadingSpinner from '~/lib/LoadingSpinner'
 
-export const DISTRIBUTION_PLOT_OPTIONS = [
-  { label: 'Violin plot', value: 'violin' },
-  { label: 'Box plot', value: 'box' }
-]
-export const defaultDistributionPlot = DISTRIBUTION_PLOT_OPTIONS[0].value
-
-export const DISTRIBUTION_POINTS_OPTIONS = [
-  { label: 'None', value: 'none' },
-  { label: 'All', value: 'all' },
-  { label: 'Outliers', value: 'outliers' },
-  { label: 'Suspected outliers', value: 'suspectedoutliers' }
-]
-export const defaultDistributionPoints = DISTRIBUTION_POINTS_OPTIONS[0].value
 
 /** displays a violin plot of expression data for the given gene and study
  * @param studyAccession {String} the study accession

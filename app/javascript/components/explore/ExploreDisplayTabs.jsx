@@ -16,7 +16,8 @@ import GeneListSelector from '~/components/visualization/controls/GeneListSelect
 import InferCNVIdeogramSelector from '~/components/visualization/controls/InferCNVIdeogramSelector'
 import { createCache } from './plot-data-cache'
 import ScatterTab from './ScatterTab'
-import { getPlotDimensions } from '~/lib/plot'
+import PlotUtils from '~/lib/plot'
+const getPlotDimensions = PlotUtils.getPlotDimensions
 import ScatterPlot from '~/components/visualization/ScatterPlot'
 import StudyViolinPlot from '~/components/visualization/StudyViolinPlot'
 import DotPlot from '~/components/visualization/DotPlot'

@@ -4,10 +4,11 @@ import { Slider, Rail, Handles, Tracks, Ticks } from 'react-compound-slider'
 
 import Select from '~/lib/InstrumentedSelect'
 import { Handle, Track, Tick } from '~/components/search/controls/slider/components'
-import StudyGeneField from '~/components/explore/StudyGeneField'
-import { SCATTER_COLOR_OPTIONS, defaultScatterColor } from '~/lib/plot'
-import { DISTRIBUTION_PLOT_OPTIONS, DISTRIBUTION_POINTS_OPTIONS } from '~/components/visualization/StudyViolinPlot'
-import { ROW_CENTERING_OPTIONS, FIT_OPTIONS } from '~/components/visualization/Heatmap'
+import PlotOptions from './plot-options'
+const {
+  SCATTER_COLOR_OPTIONS, defaultScatterColor, DISTRIBUTION_PLOT_OPTIONS, DISTRIBUTION_POINTS_OPTIONS,
+  ROW_CENTERING_OPTIONS, FIT_OPTIONS
+} = PlotOptions
 
 const sliderStyle = {
   margin: '5%',
