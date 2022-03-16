@@ -1,6 +1,6 @@
 import { DEFAULT_CHUNK_SIZE, oneGiB, readFileBytes } from './io'
 
-/** Mitigates UI freezes caused by faux-streaming gunzi; see note in io.js */
+/** Mitigates UI freezes caused by faux-streaming gunzip; see note in io.js */
 export const GZIP_MAX_LINES = 500
 
 const newlineRegex = /\r?\n/
