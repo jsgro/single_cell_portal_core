@@ -537,14 +537,19 @@ class IngestJob
   #   - (Hash) => Hash of job statistics to use with IngestJob#log_to_mixpanel
   def get_job_analytics
     file_type = self.study_file.file_type
+
+    trigger = self.study_file.remote_location.present? ?  'sync' : 'upload'
+
     # Event properties to log to Mixpanel.
     # Mixpanel uses camelCase for props; snake_case would degrade Mixpanel UX.
     job_props = {
       perfTime: self.get_total_runtime_ms, # Latency in milliseconds
+      fileName: self.study_file.name,
       fileType: file_type,
       fileSize: self.study_file.upload_file_size,
       action: self.action,
       studyAccession: self.study.accession,
+      trigger: trigger,
       jobStatus: self.failed? ? 'failed' : 'success'
     }
 
