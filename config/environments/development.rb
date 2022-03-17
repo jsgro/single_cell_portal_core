@@ -151,6 +151,6 @@ Rails.application.configure do
   config.profile_performance = false
 
   # show mongo logs in the console
-  Mongoid.logger = Logger.new($stdout)
-  Mongo::Logger.logger = Logger.new($stdout)
+  # Mongoid.logger = Logger.new($stdout)
+  # Mongo::Logger.logger = Logger.new($stdout)
 end

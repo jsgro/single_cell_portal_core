@@ -217,11 +217,28 @@ export function getLogPlotProps() {
 }
 
 /**
- * Log when a download is authorized.
+ * Extract the number of Azul files that have been chosen for download
+ */
+function getNumAzulFiles(azulFiles) {
+  let totalNumFiles = 0
+  for (const studyEntry of Object.entries(azulFiles)) {
+    const [azulStudyId, fileList] = studyEntry
+    totalNumFiles += fileList.length
+  }
+
+  return totalNumFiles
+}
+
+/**
+ * Log when a download is authorized and the number of files from each source that are being downloaded.
+ * fileIds is an array containing the file ids for SCP sourced files
+ * azulFiles is an object with file info sourced from HCA files
+ *
  * This is our best web-client-side methodology for measuring downloads.
  */
-export function logDownloadAuthorization(perfTimes) {
-  const props = { perfTimes }
+export function logDownloadAuthorization(perfTimes, fileIds, azulFiles) {
+  const numAzulFiles = getNumAzulFiles(azulFiles)
+  const props = { perfTimes, 'numSCPFiles': fileIds.length, numAzulFiles }
   log('download-authorization', props)
   ga('send', 'event', 'advanced-search', 'download-authorization') // eslint-disable-line no-undef, max-len
 }
