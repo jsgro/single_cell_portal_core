@@ -409,7 +409,7 @@ async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
       if (!fileInfo.isGzipped) {
         chunker = new ChunkedLineReader(file, ignoreLastLine)
       } else {
-        chunker = new ChunkedLineReader(file, ignoreLastLine, true, MAX_GZIP_FILESIZE)
+        chunker = new ChunkedLineReader(file, ignoreLastLine, true)
       }
 
       const { issues, delimiter, numColumns } =

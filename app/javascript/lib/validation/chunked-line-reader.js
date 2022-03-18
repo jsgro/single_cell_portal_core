@@ -1,4 +1,4 @@
-import { DEFAULT_CHUNK_SIZE, oneGiB, readFileBytes } from './io'
+import { DEFAULT_CHUNK_SIZE, oneGiB, readFileBytes, readGzipFile } from './io'
 
 /** Mitigates UI freezes caused by faux-streaming gunzip; see note in io.js */
 export const GZIP_MAX_LINES = 500
@@ -96,7 +96,12 @@ export default class ChunkedLineReader {
     const startByte = this.nextByteToRead
     const isLastChunk = startByte + this.chunkSize >= this.file.size
 
-    const chunkString = await readFileBytes(this.file, startByte, this.chunkSize, this.isGzipped)
+    let chunkString
+    if (!this.isGzipped) {
+      chunkString = await readFileBytes(this.file, startByte, this.chunkSize)
+    } else {
+      chunkString = await readGzipFile(this.file)
+    }
 
     const lines = chunkString.split(newlineRegex)
 
