@@ -30,6 +30,8 @@ class SyntheticStudyPopulator
     # copy the files to a temp directory, since CarrierWave will delete them after upload
     temp_file_dir = "/tmp/synthetic_studies/#{synthetic_study_folder}"
     FileUtils.mkdir_p(temp_file_dir)
+    # clear the tmp file directory just in case it already existed
+    FileUtils.rm_rf(Dir["#{temp_file_dir}/*"])
     FileUtils.cp_r("#{synthetic_study_path}/.", temp_file_dir)
 
     puts("Populating synthetic study from #{temp_file_dir}")
