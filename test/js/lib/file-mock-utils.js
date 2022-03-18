@@ -16,16 +16,17 @@ export function createMockFile({
   }
   if (mockIO) {
     const readFileSpy = jest.spyOn(Io, 'readFileBytes')
-    readFileSpy.mockImplementation((_file, startByte, chunkSize=Io.DEFAULT_CHUNK_SIZE, isGzipped=false) => {
-      if (!isGzipped) {
-        return content.slice(startByte, startByte + chunkSize)
-      } else {
-        content = fs.readFileSync(filePath + fileName)
-        const gunzippedContent = strFromU8(gunzipSync(content))
-        return gunzippedContent
-      }
+    readFileSpy.mockImplementation((_file, startByte, chunkSize=Io.DEFAULT_CHUNK_SIZE) => {
+      return content.slice(startByte, startByte + chunkSize)
+    })
+    const readGzipSpy = jest.spyOn(Io, 'readGzipFile')
+    readGzipSpy.mockImplementation(_file => {
+      content = fs.readFileSync(filePath + fileName)
+      const gunzippedContent = strFromU8(gunzipSync(content))
+      return gunzippedContent
     })
   }
+
   return new File([content], fileName, { type: contentType })
 }
 
