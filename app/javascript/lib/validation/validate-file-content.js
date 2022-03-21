@@ -373,12 +373,11 @@ async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
   try {
     fileInfo.isGzipped = await validateGzipEncoding(file)
     // if the file is compressed or we can't figure out the compression, don't try to parse further
+    const isFileFragment = file.size > sizeProps?.fileSizeTotal // likely a partial download from a GCP bucket
     if (
       !PARSEABLE_TYPES.includes(fileType) ||
-      fileInfo.isGzipped && (
-        file.size > sizeProps?.fileSizeTotal || // CSFV for gzip needs whole file
-        file.size >= MAX_GZIP_FILESIZE // See comment for MAX_GZIP_FILESIZE
-      )
+      fileInfo.isGzipped && (isFileFragment || file.size >= MAX_GZIP_FILESIZE)
+      // current gunzip implementation needs a whole file; see comment for MAX_GZIP_FILESIZE
     ) {
       return {
         fileInfo,
@@ -405,12 +404,7 @@ async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
 
         parseResult.issues.push(['warn', 'incomplete:range-request', msg])
       }
-      let chunker
-      if (!fileInfo.isGzipped) {
-        chunker = new ChunkedLineReader(file, ignoreLastLine)
-      } else {
-        chunker = new ChunkedLineReader(file, ignoreLastLine, true)
-      }
+      const chunker = new ChunkedLineReader(file, ignoreLastLine, fileInfo.isGzipped)
 
       const { issues, delimiter, numColumns } =
         await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
