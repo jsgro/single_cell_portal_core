@@ -201,21 +201,21 @@ module Api
           if @search_terms.include?('"')
             @term_list = self.class.extract_phrases_from_search(query_string: @search_terms)
             logger.info "Performing phrase-based search using #{@term_list}"
-            full_search_matches = self.class.generate_mongo_query_by_context(terms: @term_list, base_studies: @viewable,
+            search_match_obj = self.class.generate_mongo_query_by_context(terms: @term_list, base_studies: @viewable,
                                                                   accessions: possible_accessions, query_context: :phrase)
-            @studies = full_search_matches[:studies]
-            @match_by_data = full_search_matches[:results_matched_by_data]
+            @studies = search_match_obj[:studies]
+            @match_by_data = search_match_obj[:results_matched_by_data]
             logger.info "Found #{@studies.count} studies in phrase search: #{@studies.pluck(:accession)}"
           else
             # filter & reconstitute query w/o stop words
             @term_list = self.class.reject_stop_words_from_terms(@search_terms.split)
             sanitized_terms = @term_list.join(' ')
             logger.info "Performing keyword-based search using #{@term_list}"
-            full_search_matches = self.class.generate_mongo_query_by_context(terms: sanitized_terms, base_studies: @viewable,
+            search_match_obj = self.class.generate_mongo_query_by_context(terms: sanitized_terms, base_studies: @viewable,
                                                                   accessions: possible_accessions, query_context: :keyword)
 
-            @studies = full_search_matches[:studies]
-            @match_by_data = full_search_matches[:results_matched_by_data]
+            @studies = search_match_obj[:studies]
+            @match_by_data = search_match_obj[:results_matched_by_data]
             logger.info "Found #{@studies.count} studies in keyword search: #{@studies.pluck(:accession)}"
 
           end
@@ -258,8 +258,6 @@ module Api
         # convert to array to allow appending external search results (Azul, TDR, etc.)
         @studies = @studies.to_a
 
-        # num_scp_studies = @studies.length
-        # puts('num_scp_studies:', num_scp_studies)
         # perform Azul search if there are facets/terms provided by user
         # run this before inferred search so that they are weighted and sorted correctly
         if @facets.present? || @term_list.present?
@@ -277,9 +275,6 @@ module Api
             ErrorTracker.report_exception(e, current_api_user,
                                           { facets: @facets }, { terms: @term_list })
           end
-          # updated_num_scp_studies = @studies.length
-          # puts('updated_num_scp_studies:', updated_num_scp_studies)
-          # puts('hhhh:', updated_num_scp_studies - num_scp_studies)
         end
 
         # determine sort order for pagination; minus sign (-) means a descending search
@@ -334,12 +329,12 @@ module Api
           if facets_to_keywords.any?
             @inferred_terms = facets_to_keywords.values.flatten
             logger.info "Running inferred search using #{facets_to_keywords}"
-            full_search_matches = inferred_studies = self.class.generate_mongo_query_by_context(terms: facets_to_keywords,
+            search_match_obj = inferred_studies = self.class.generate_mongo_query_by_context(terms: facets_to_keywords,
                                                                           base_studies: @viewable,
                                                                           accessions: @matching_accessions,
                                                                           query_context: :inferred)
-            @studies = full_search_matches[:studies]
-            @match_by_data = full_search_matches[:results_matched_by_data]
+            @studies = search_match_obj[:studies]
+            @match_by_data = search_match_obj[:results_matched_by_data]
             @inferred_accessions = inferred_studies.pluck(:accession)
             logger.info "Found #{@inferred_accessions.count} inferred matches: #{@inferred_accessions}"
             @matching_accessions += @inferred_accessions

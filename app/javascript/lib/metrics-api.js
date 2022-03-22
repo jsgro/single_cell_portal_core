@@ -303,28 +303,6 @@ export function logStudyGeneSearch(genes, trigger, speciesList, otherProps) {
 }
 
 
-/** log a study search from the home page */
-export function logStudySearch(resultsMeta, otherProps) {
-  const { numMatchesByAccession, numMatchesByText, numMatchesByAuthor } = resultsMeta
-
-  // Properties
-  const logProps = {
-    scope: 'global',
-    context: 'study',
-    numMatchesByAccession,
-    numMatchesByText,
-    numMatchesByAuthor
-  }
-
-  // Merge log props from custom event
-  if (otherProps) {
-    Object.assign(logProps, otherProps)
-  }
-
-  log('search-results', logProps)
-}
-
-
 /**
  * Removes study name from URL, as it might have identifying information.
  * Terra UI omits workspace name in logs; this follows that precedent.

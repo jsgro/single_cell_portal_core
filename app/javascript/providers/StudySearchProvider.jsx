@@ -11,7 +11,6 @@ import {
 } from '~/lib/scp-api'
 import SearchSelectionProvider from './SearchSelectionProvider'
 import { buildParamsFromQuery as buildGeneParamsFromQuery } from './GeneSearchProvider'
-import { logStudySearch } from '~/lib/metrics-api'
 
 
 const emptySearch = {
@@ -121,16 +120,7 @@ export function PropsStudySearchProvider(props) {
     // reset the scroll in case they scrolled down to read prior results
     window.scrollTo(0, 0)
 
-    // add the logging
-    // and add the search results here too
-
-
     fetchSearch('study', searchParams).then(results => {
-      // console.log('results:', results)
-      // console.log('resultsMeta:', results)
-
-      // logStudySearch(resultsMeta)
-
       setSearchState({
         params: searchParams,
         isError: false,

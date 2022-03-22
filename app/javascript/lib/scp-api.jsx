@@ -673,11 +673,8 @@ export async function fetchSearch(type, searchParams, mock=false) {
   const path = `/search?${buildSearchQueryString(type, searchParams)}`
 
   const [searchResults, perfTimes] = await scpApi(path, defaultInit(), mock)
-  console.log('searhres:', searchResults)
 
   logSearch(type, searchParams, perfTimes, searchResults)
-  // logSearch(type, searchParams, perfTimes)
-  // add meta stuff as param to this ^
 
   return searchResults
 }
