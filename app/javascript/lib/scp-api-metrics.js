@@ -71,10 +71,11 @@ function getFriendlyFilterListByFacet(facets) {
   return filterListByFacet
 }
 
+//emily here
 /**
  * Log global study search metrics, one type of search done on home page
  */
-export function logSearch(type, searchParams, perfTimes) {
+export function logSearch(type, searchParams, perfTimes, searchResults) {
   searchNumber += 1
   if (searchNumber < 3) {
     // This prevents over-reporting searches.
@@ -87,6 +88,7 @@ export function logSearch(type, searchParams, perfTimes) {
     // search.  This was considered very early for separate reasons, but
     // abandoned as it was invasive.  The clearly-brittle nature of preventing
     // these artifactual searches shifts that cost-benefit, somewhat.
+    console.log('in here')
     return
   }
 
@@ -97,6 +99,11 @@ export function logSearch(type, searchParams, perfTimes) {
   const facets = searchParams.facets
   const page = searchParams.page
   const preset = searchParams.preset
+  const matchByData = searchResults?.matchByData
+
+  // perfTime:frontend:other
+
+  console.log('searchResults:', searchResults)
 
   const [numFacets, numFilters] = getNumFacetsAndFilters(facets)
   const facetList = facets ? Object.keys(facets) : []
@@ -107,7 +114,7 @@ export function logSearch(type, searchParams, perfTimes) {
     terms, numTerms, genes, numGenes, page, preset,
     facetList, numFacets, numFilters,
     perfTimes,
-    type, context: 'global'
+    type, context: 'global', matchByData
   }
   const props = Object.assign(simpleProps, filterListByFacet)
 

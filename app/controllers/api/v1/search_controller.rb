@@ -201,16 +201,21 @@ module Api
           if @search_terms.include?('"')
             @term_list = self.class.extract_phrases_from_search(query_string: @search_terms)
             logger.info "Performing phrase-based search using #{@term_list}"
-            @studies = self.class.generate_mongo_query_by_context(terms: @term_list, base_studies: @viewable,
+            full_search_matches = self.class.generate_mongo_query_by_context(terms: @term_list, base_studies: @viewable,
                                                                   accessions: possible_accessions, query_context: :phrase)
+            @studies = full_search_matches[:studies]
+            @match_by_data = full_search_matches[:results_matched_by_data]
             logger.info "Found #{@studies.count} studies in phrase search: #{@studies.pluck(:accession)}"
           else
             # filter & reconstitute query w/o stop words
             @term_list = self.class.reject_stop_words_from_terms(@search_terms.split)
             sanitized_terms = @term_list.join(' ')
             logger.info "Performing keyword-based search using #{@term_list}"
-            @studies = self.class.generate_mongo_query_by_context(terms: sanitized_terms, base_studies: @viewable,
+            full_search_matches = self.class.generate_mongo_query_by_context(terms: sanitized_terms, base_studies: @viewable,
                                                                   accessions: possible_accessions, query_context: :keyword)
+
+            @studies = full_search_matches[:studies]
+            @match_by_data = full_search_matches[:results_matched_by_data]
             logger.info "Found #{@studies.count} studies in keyword search: #{@studies.pluck(:accession)}"
 
           end
@@ -253,6 +258,8 @@ module Api
         # convert to array to allow appending external search results (Azul, TDR, etc.)
         @studies = @studies.to_a
 
+        # num_scp_studies = @studies.length
+        # puts('num_scp_studies:', num_scp_studies)
         # perform Azul search if there are facets/terms provided by user
         # run this before inferred search so that they are weighted and sorted correctly
         if @facets.present? || @term_list.present?
@@ -270,6 +277,9 @@ module Api
             ErrorTracker.report_exception(e, current_api_user,
                                           { facets: @facets }, { terms: @term_list })
           end
+          # updated_num_scp_studies = @studies.length
+          # puts('updated_num_scp_studies:', updated_num_scp_studies)
+          # puts('hhhh:', updated_num_scp_studies - num_scp_studies)
         end
 
         # determine sort order for pagination; minus sign (-) means a descending search
@@ -324,10 +334,12 @@ module Api
           if facets_to_keywords.any?
             @inferred_terms = facets_to_keywords.values.flatten
             logger.info "Running inferred search using #{facets_to_keywords}"
-            inferred_studies = self.class.generate_mongo_query_by_context(terms: facets_to_keywords,
+            full_search_matches = inferred_studies = self.class.generate_mongo_query_by_context(terms: facets_to_keywords,
                                                                           base_studies: @viewable,
                                                                           accessions: @matching_accessions,
                                                                           query_context: :inferred)
+            @studies = full_search_matches[:studies]
+            @match_by_data = full_search_matches[:results_matched_by_data]
             @inferred_accessions = inferred_studies.pluck(:accession)
             logger.info "Found #{@inferred_accessions.count} inferred matches: #{@inferred_accessions}"
             @matching_accessions += @inferred_accessions
@@ -516,21 +528,56 @@ module Api
         case query_context
         when :keyword
           author_match_study_ids = Author.where(:$text => {:$search => terms}).pluck(:study_id)
-          base_studies.any_of({:$text => {:$search => terms}}, {:accession.in => accessions}, {:id.in => author_match_study_ids})
+
+          matches_by_text = base_studies.where({:$text => {:$search => terms}})
+          matches_by_accession =  base_studies.where({:accession.in => accessions})
+          matches_by_author = base_studies.where({:id.in => author_match_study_ids})
+
+          results_matched_by_data = {
+            numMatchesByAccession: matches_by_accession.length,
+            numMatchesByText: matches_by_text.length,
+            numMatchesByAuthor: matches_by_author.length
+          }
+          studies = base_studies.any_of(matches_by_text, matches_by_accession, matches_by_author)
+
+          return {:studies => studies, :results_matched_by_data => results_matched_by_data}
+
         when :phrase
           study_regex = escape_terms_for_regex(term_list: terms)
           author_match_study_ids = Author.any_of({first_name: study_regex}, {last_name: study_regex}, {institution: study_regex}).pluck(:study_id)
-          base_studies.any_of({name: study_regex}, {description: study_regex}, {:accession.in => accessions}, {:id.in => author_match_study_ids})
+
+          matches_by_name = base_studies.any_of({name: study_regex})
+          matches_by_description = base_studies.any_of({description: study_regex})
+          matches_by_accession = base_studies.any_of({:accession.in => accessions})
+          matches_by_author = base_studies.any_of({:id.in => author_match_study_ids})
+
+          results_matched_by_data = {
+            numMatchesByAccession: matches_by_accession.length,
+            numMatchesByName: matches_by_name.length,
+            numMatchesByDescription: matches_by_description.length,
+            numMatchesByAuthor: matches_by_author.length
+          }
+
+          studies = base_studies.any_of(matches_by_name, matches_by_description, matches_by_accession, matches_by_author)
+          return {:studies => studies, :results_matched_by_data => results_matched_by_data}
+
         when :inferred
           # in order to maintain the same behavior as normal facets, we run each facet separately and get matching accessions
           # this gives us an array of arrays of matching accessions; now find the intersection (:&)
           filters = terms.values.map {|keywords| escape_terms_for_regex(term_list: keywords)}
           accessions_by_filter = filters.map {|filter| base_studies.any_of({name: filter}, {description: filter})
                                                            .where(:accession.nin => accessions).pluck(:accession)}
-          base_studies.where(:accession.in => accessions_by_filter.inject(:&))
+
+
+          studies = base_studies.where(:accession.in => accessions_by_filter.inject(:&))
+
+          return {:studies => studies, :results_matched_by_data => {}}
+
         else
           # no matching query case, so perform normal text-index search
-          base_studies.any_of({:$text => {:$search => terms}}, {:accession.in => accessions})
+          studies= base_studies.any_of({:$text => {:$search => terms}}, {:accession.in => accessions})
+          return {:studies => studies, :results_matched_by_data => {}}
+    
         end
       end
 
