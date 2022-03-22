@@ -329,16 +329,16 @@ module Api
           if facets_to_keywords.any?
             @inferred_terms = facets_to_keywords.values.flatten
             logger.info "Running inferred search using #{facets_to_keywords}"
-            search_match_obj = inferred_studies = self.class.generate_mongo_query_by_context(terms: facets_to_keywords,
+            search_match_obj = self.class.generate_mongo_query_by_context(terms: facets_to_keywords,
                                                                           base_studies: @viewable,
                                                                           accessions: @matching_accessions,
                                                                           query_context: :inferred)
-            @studies = search_match_obj[:studies]
+            @inferred_studies = search_match_obj[:studies]
             @match_by_data = search_match_obj[:results_matched_by_data]
-            @inferred_accessions = inferred_studies.pluck(:accession)
+            @inferred_accessions = @inferred_studies.pluck(:accession)
             logger.info "Found #{@inferred_accessions.count} inferred matches: #{@inferred_accessions}"
             @matching_accessions += @inferred_accessions
-            @studies += inferred_studies.sort_by { |study| -study.search_weight(@inferred_terms)[:total] }
+            @studies += @inferred_studies.sort_by { |study| -study.search_weight(@inferred_terms)[:total] }
           end
         end
 

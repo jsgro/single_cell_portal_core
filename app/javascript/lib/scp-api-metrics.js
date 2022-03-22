@@ -74,7 +74,7 @@ function getFriendlyFilterListByFacet(facets) {
 /**
  * Log global study search metrics, one type of search done on home page
  */
-export function logSearch(type, searchParams, perfTimes, searchResults={}) {
+export function logSearch(type, searchParams, perfTimes, searchResults) {
   searchNumber += 1
   if (searchNumber < 3) {
     // This prevents over-reporting searches.
