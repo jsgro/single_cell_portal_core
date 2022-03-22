@@ -81,16 +81,6 @@ Rails.application.routes.draw do
             get 'studies/:accession/download', to: 'site#download_data', as: :site_study_download_data
             get 'studies/:accession/stream', to: 'site#stream_data', as: :site_study_stream_data
 
-            # analysis routes
-            get 'analyses', to: 'site#analyses', as: :site_analyses
-            get 'analyses/:namespace/:name/:snapshot', to: 'site#get_analysis', as: :site_get_analysis
-            get 'studies/:accession/analyses/:namespace/:name/:snapshot', to: 'site#get_study_analysis_config', as: :site_get_study_analysis_config
-            post 'studies/:accession/analyses/:namespace/:name/:snapshot', to: 'site#submit_study_analysis', as: :site_submit_study_analysis
-            get 'studies/:accession/submissions', to: 'site#get_study_submissions', as: :site_get_study_submissions
-            get 'studies/:accession/submissions/:submission_id', to: 'site#get_study_submission', as: :site_get_study_submission
-            get 'studies/:accession/submissions/:submission_id/sync', to: 'site#sync_submission_outputs', as: :site_sync_submission_outputs
-            delete 'studies/:accession/submissions/:submission_id', to: 'site#get_study_submission', as: :site_abort_study_submission
-            delete 'studies/:accession/submissions/:submission_id/remove', to: 'site#get_study_submission_dir', as: :site_delete_study_submission_dir
           end
           scope :search do
             get 'facets', to: 'search#facets', as: :search_facets
@@ -295,6 +285,10 @@ Rails.application.routes.draw do
     # let react routing handle app and all subpaths under 'app'
     get 'app', to: 'site#index'
     get 'app/*path', to: 'site#index'
+
+    # avoid exception for igv css map missing -- just return no content.
+    # this file is only requested in development
+    get '*a/igv.css.map', to: -> (env) { [204, {}, ['']] }
 
     root to: 'site#index'
     end

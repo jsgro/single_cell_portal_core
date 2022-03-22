@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen, waitForElementToBeRemoved } from '@testing-library/react'
 import _cloneDeep from 'lodash/cloneDeep'
-import ReactNotification from 'react-notifications-component'
+import { ReactNotifications } from 'react-notifications-component'
 
 import MockRouter from '../lib/MockRouter'
 import { UserContext } from 'providers/UserProvider'
@@ -36,7 +36,7 @@ export async function renderWizardWithStudy({
 
   const renderResult = render(
     <UserContext.Provider value={{ featureFlagsWithDefaults: featureFlags }}>
-      <ReactNotification/>
+      <ReactNotifications/>
       <MockRouter>
         <RawUploadWizard studyAccession={studyAccession} name={studyName}/>
       </MockRouter>

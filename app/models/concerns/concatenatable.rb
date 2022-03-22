@@ -7,7 +7,8 @@ module Concatenatable
   # concatenate the values together into a single contiguous array
   def concatenate_arrays(query)
     arrays = where(query)
-    ids = arrays.pluck(:id, :array_index).sort_by(&:last).map(&:first)
-    ids.map { |id| find(id).values }.reduce([], :+)
+    arr_vals = arrays.pluck(:array_index, :values)
+    arr_vals = arr_vals.sort_by(&:first)
+    arr_vals.reduce([]) { |aggregate, arr_val|  aggregate.concat(arr_val.last) }
   end
 end

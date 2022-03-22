@@ -2,7 +2,7 @@ import React from 'react'
 import StudyResults from 'components/search/results/StudyResults'
 import PagingControl from 'components/search/results/PagingControl'
 import StudySearchResult from 'components/search/results/StudySearchResult'
-import { mount } from 'enzyme'
+import { render } from '@testing-library/react'
 
 describe('<StudyResults/> rendering>', () => {
   const props = {
@@ -20,15 +20,15 @@ describe('<StudyResults/> rendering>', () => {
     }
   }
   it('should render <StudyResults/> elements', () => {
-    const wrapper = mount(<StudyResults changePage ={props.changePage} results={props.results} StudyComponent={ StudySearchResult }/>)
-    expect(wrapper.find(PagingControl)).toHaveLength(2)
-    expect(wrapper.find(StudySearchResult)).toHaveLength(props.results.studies.length)
+    const { container } = render(<StudyResults changePage ={props.changePage} results={props.results} StudyComponent={StudySearchResult}/>)
+    expect(container.getElementsByClassName('pagination')).toHaveLength(2)
+    expect(container.getElementsByClassName('study-label')).toHaveLength(props.results.studies.length)
   })
 
   it('should render the custom study component element', () => {
-    let customComponent = () => { return <div className="test123">yo</div> }
-    const wrapper = mount(<StudyResults changePage ={props.changePage} results={props.results} StudyComponent={ customComponent }/>)
-    expect(wrapper.find(PagingControl)).toHaveLength(2)
-    expect(wrapper.find('.test123')).toHaveLength(props.results.studies.length)
+    const customComponent = () => {return <div className="test123">yo</div>}
+    const { container } = render(<StudyResults changePage ={props.changePage} results={props.results} StudyComponent={customComponent}/>)
+    expect(container.getElementsByClassName('pagination')).toHaveLength(2)
+    expect(container.getElementsByClassName('test123')).toHaveLength(props.results.studies.length)
   })
 })

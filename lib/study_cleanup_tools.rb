@@ -64,7 +64,8 @@ module StudyCleanupTools
     # than just leaving them be.  Otherwise the deletion attempt hangs for several minutes
     corrupted_workspace_names = ['upload-wizard-test-pb6y0',
     'download-agreement-686b0d44c83659cd70616a3f0874fde5',
-    'testing-study-6ec03b371c7cf59262df98424ff516e1']
+    'testing-study-6ec03b371c7cf59262df98424ff516e1',
+    'new-study-99f2a94b-f8a6-4efb-aa3b-4ecef24e1dad']
     workspaces.each do |workspace|
       ws_attr = workspace.dig('workspace')
       ws_name = ws_attr['name']

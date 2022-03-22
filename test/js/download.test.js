@@ -2,7 +2,8 @@
 // ESLint unexpectedly converts use `done` in `it` to a Promise, so disable it
 
 import React from 'react'
-import { mount } from 'enzyme'
+import { render, fireEvent, screen } from '@testing-library/react'
+import '@testing-library/jest-dom/extend-expect'
 // import { act } from 'react-dom/test-utils';
 
 const fetch = require('node-fetch')
@@ -23,29 +24,27 @@ describe('Download components for faceted search', () => {
   })
 
   it('shows expected tooltip for unauthenticated users', async () => {
-    const wrapper = mount((
+    const { container } = render((
       <UserContext.Provider value={{ accessToken: ''}}>
         <DownloadButton searchResults={{ matchingAccessions: ['SCP1', 'SCP2'], terms: 'foo', facets: [] }}/>
       </UserContext.Provider>
     ))
-    expect(wrapper.find('DownloadButton')).toHaveLength(1)
-    expect(wrapper.find('#download-button').prop('disabled')).toEqual(true)
-    wrapper.find('#download-button > span').simulate('mouseenter')
-    const tooltipHint = wrapper.find('OverlayTrigger').prop('overlay').props['children']
-    expect(tooltipHint).toBe('To download, please sign in')
+    const button = container.querySelector('#download-button')
+    expect(button.disabled).toEqual(true)
+    fireEvent.mouseOver(container.querySelector('span'))
+    expect(screen.getByRole('tooltip')).toHaveTextContent('To download, please sign in')
   })
 
   it('shows expected tooltip if no search has been performed', async () => {
-    const wrapper = mount((
+    const { container } = render((
       <UserContext.Provider value={{ accessToken: 'test'}}>
         <DownloadButton searchResults={{ matchingAccessions: ['SCP1', 'SCP2'], terms: '', facets: [] }}/>
       </UserContext.Provider>
     ))
-    expect(wrapper.find('#download-button').prop('disabled')).toEqual(true)
-    wrapper.find('#download-button > span').simulate('mouseenter')
-    const tooltipHint = wrapper.find('OverlayTrigger').prop('overlay').props['children']
-
-    expect(tooltipHint).toBe('To download, first do a search that returns results')
+    const button = container.querySelector('#download-button')
+    expect(button.disabled).toEqual(true)
+    fireEvent.mouseOver(container.querySelector('span'))
+    expect(screen.getByRole('tooltip')).toHaveTextContent('To download, first do a search that returns results')
   })
 
   it('is enabled and shows the modal for signed in users who perform a search', async () => {
@@ -60,13 +59,15 @@ describe('Download components for faceted search', () => {
     })
     jest.spyOn(global, 'fetch').mockImplementation(() => mockFetchPromise)
 
-    const wrapper = mount((
+    const { container } = render((
       <UserContext.Provider value={{ accessToken: 'test'}}>
         <DownloadButton searchResults={{ matchingAccessions: ['SCP1', 'SCP2'], terms: 'foo', facets: [] }}/>
       </UserContext.Provider>
     ))
-    expect(wrapper.find('#download-button').prop('disabled')).toEqual(false)
-    wrapper.find('#download-button').simulate('click')
-    expect(wrapper.find('DownloadSelectionModal')).toHaveLength(1)
+    const button = container.querySelector('#download-button')
+    expect(button.disabled).toEqual(false)
+    fireEvent.click(button)
+    // bootstrap puts
+    expect(screen.getAllByRole('dialog')).toHaveLength(2)
   })
 })

@@ -18,6 +18,11 @@
   }
 }
 
+.image-scroll-container {
+  overflow-x: scroll;
+  max-width: 78vw;
+}
+
 .upload-wizard-steps {
   list-style: none;
   width: 100%;

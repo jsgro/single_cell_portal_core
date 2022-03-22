@@ -259,4 +259,30 @@ class BulkDownloadServiceTest < ActiveSupport::TestCase
     assert_equal metadata_count, file_map['Metadata']
     assert_equal cluster_count, file_map['Cluster']
   end
+
+  test 'should ignore detached studies' do
+    study = FactoryBot.create(:detached_study,
+                              user: @user,
+                              name_prefix: 'Detached Test',
+                              test_array: @@studies_to_clean,)
+    FactoryBot.create(:study_file,
+                      study: study, file_type: 'Expression Matrix', name: 'test_exp_validate.tsv', taxon_id: Taxon.new.id,
+                      expression_file_info: ExpressionFileInfo.new(
+                        units: 'raw counts',
+                        library_preparation_protocol: 'MARS-seq',
+                        biosample_input_type: 'Whole cell',
+                        modality: 'Transcriptomic: targeted',
+                        is_raw_counts: true
+                      ))
+
+    FactoryBot.create(:study_file, study: study, file_type: 'Metadata', name: 'metadata.tsv')
+    accessions = Api::V1::BulkDownloadController.find_matching_accessions(study.accession)
+    assert_empty accessions
+    file_ids = study.study_files.pluck(:id)
+    files = Api::V1::BulkDownloadController.load_study_files(ids: file_ids)
+    assert_empty files
+    study_files = Api::V1::BulkDownloadController.load_study_files(accessions: [study.accession],
+                                                                   file_types: %w(Expression Metadata))
+    assert_empty study_files
+  end
 end

@@ -1,52 +1,49 @@
-<nav id="study-sidebar-content">
-  <%= link_to "<i class='fas fa-angle-double-right' id='resource-btn'></i>".html_safe, '#',
-              id: 'toggle-study-resources', class: 'btn btn-sm btn-default' %>
+<div id="study-sidebar-content">
   <% if @study.authors.corresponding.any? %>
-    <h3>Corresponding authors</h3>
+    <h5>Corresponding authors</h5>
     <% @study.authors.corresponding.each do |author| %>
-      <%= link_to "#{author.first_name} #{author.last_name} <i class='fa fas fa-envelope'></i>".html_safe, '#',
-                  class: 'btn btn-sm btn-default corresponding-author',
+      <%= link_to '#',
+                  class: 'corresponding-author',
                   data: {
-                    contact: author.base_64_email, placement: 'top',
-                    'analytics-name' => 'email-corresponding-author'
+                    email: author.base_64_email, placement: 'top',
+                    name: author.first_name + ' ' + author.last_name
                   },
-                  title: "Send email to #{author.first_name} #{author.last_name}" %>
+                  title: "Send email to #{author.first_name} #{author.last_name}" do %>
+      <% end %>
+      <br/>
     <% end %>
   <% end %>
   <% if @study.publications.any? %>
-    <h3>Related publications</h3>
+    <h5>Related publications</h5>
     <% @study.publications.each do |publication| %>
-      <h4><%= link_to publication.title, publication.url, target: :_blank, rel: 'noopener',
+      <%= link_to publication.url, target: :_blank, rel: 'noopener',
                       'data-analytics-name' => 'publication-link-journal', title: "View in #{publication.journal}",
-                      data: { toggle: 'tooltip' } %>
-      </h4>
+                      data: { toggle: 'tooltip' } do %>
+        <span class="underline"><%= publication.title %></span> <span class="fas fa-external-link-alt"></span>
+      <% end %>
       <% unless publication.citation.blank? %>
-        <p class="help-block"><%= publication.citation %></p>
+        <div class="detail margin-left"><%= publication.citation %></div>
       <% end %>
       <% unless publication.pmcid.blank? %>
-        <%= link_to publication.pmcid, publication.pmc_link, class: 'btn btn-sm btn-default publication-link',
-                    target: :_blank, rel: 'noopener', 'data-analytics-name' => 'publication-link-pmc' %>
+        <%= link_to publication.pmc_link, class: 'publication-link margin-left',
+                    target: :_blank, rel: 'noopener', 'data-analytics-name' => 'publication-link-pmc' do %>
+          <%= publication.pmcid %> <span class="fas fa-external-link-alt"></span>
+        <% end %>
       <% end %>
+      <br/><br/>
     <% end %>
   <% end %>
   <% if @study.external_resources.any? %>
-    <h3>Resources</h3>
+    <h5>Resources</h5>
     <% @study.external_resources.each do |resource| %>
       <p>
-        <%= link_to resource.title, resource.url, class: 'btn btn-default navigation-form external-resource-link',
+        <%= link_to resource.url, class: 'navigation-form external-resource-link',
                     target: :_blank, rel: 'noopener', title: resource.description,
-                    data: { toggle: 'tooltip', 'analytics-name' => 'external-resource-link' } %>
+                    data: { toggle: 'tooltip', 'analytics-name' => 'external-resource-link' } do %>
+          <%= resource.title %> <span class="fas fa-external-link-alt"></span>
+        <% end %>
+
       </p>
     <% end %>
   <% end %>
-
-</nav>
-<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-  $("#toggle-study-resources").click(function() {
-    $("#study-sidebar-content").toggleClass("closed")
-    $("#resource-btn").toggleClass('fa-angle-double-right fa-angle-double-left')
-    $(this).toggleClass("closed")
-  })
-
-  $('.corresponding-author').click(function() { showAuthorPopover(this) })
-</script>
+</div>
