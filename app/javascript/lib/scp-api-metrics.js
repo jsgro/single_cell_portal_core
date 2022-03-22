@@ -99,7 +99,7 @@ export function logSearch(type, searchParams, perfTimes, searchResults) {
   const facets = searchParams.facets
   const page = searchParams.page
   const preset = searchParams.preset
-  const matchByData = searchResults?.matchByData
+  const scpStudiesMatchData = searchResults?.matchByData
 
   // perfTime:frontend:other
 
@@ -114,7 +114,7 @@ export function logSearch(type, searchParams, perfTimes, searchResults) {
     terms, numTerms, genes, numGenes, page, preset,
     facetList, numFacets, numFilters,
     perfTimes,
-    type, context: 'global', matchByData
+    type, context: 'global', scpStudiesMatchData
   }
   const props = Object.assign(simpleProps, filterListByFacet)
 
