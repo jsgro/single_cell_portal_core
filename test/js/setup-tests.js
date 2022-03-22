@@ -1,5 +1,7 @@
 import { configure } from 'enzyme'
 import Adapter from 'enzyme-adapter-react-16'
+// Mock `window.location` with Jest spies and extend expect
+import 'jest-location-mock'
 
 configure({ adapter: new Adapter() })
 
