@@ -43,8 +43,6 @@ export async function readGzipFile(file) {
   // byte-upload and file validation.
   const uint8Array = new Uint8Array(arrayBuffer)
 
-  // const stringContent = strFromU8(gunzipSync(uint8Array))
-
   let stringContent = ''
   await new Promise((resolve, reject) => {
     // Examples: https://github.com/101arrowz/fflate#usage
@@ -65,6 +63,8 @@ export async function readGzipFile(file) {
     })
   })
 
+  // This is the slower-but-intuitive synchronous approach noted above
+  // const stringContent = strFromU8(gunzipSync(uint8Array))
 
   return stringContent
 }
