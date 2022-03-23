@@ -1,4 +1,3 @@
-import _uniqueId from 'lodash/uniqueId'
 import _get from 'lodash/get'
 import React from 'react'
 
@@ -22,7 +21,6 @@ const PROPERTIES_NOT_TO_SEND = [
   'isSaving',
   'isDeleting',
   'isError',
-  'oldId',
   'generation',
   'created_at',
   'updated_at',
@@ -44,7 +42,7 @@ const PROPERTIES_AS_JSON = ['custom_color_updates']
 export function newStudyFileObj(studyId) {
   return {
     name: '',
-    _id: _uniqueId('newFile-'), // we just need a temp id to give to form controls, the real id will come from the server
+    _id: generateMongoId(),
     status: 'new',
     description: '',
     parse_status: 'unparsed',
@@ -96,7 +94,6 @@ export function findBundleChildren(file, files) {
       f.study_file_bundle_id
     ]
     return parentFields.includes(file._id) ||
-      (file.oldId && parentFields.includes(file.oldId)) ||
       file.study_file_bundle_id && parentFields.includes(file.study_file_bundle_id)
   })
 }
@@ -170,7 +167,7 @@ function validateBundleParent(file, allFiles, validationMessages) {
   const parentId = file.options?.matrix_id || file.options?.bam_id || file.options?.cluster_file_id
   if (parentId) {
     // don't allow saving until parent file is saved and a real id is returned from the server
-    const parentSaved = parent.status != 'new' && !parentId.includes('newFile')
+    const parentSaved = parent.status != 'new'
     if (!parentSaved) {
       validationMessages['parentSaved'] = 'Parent file must be saved first'
     }
@@ -228,4 +225,10 @@ export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
   }
 }
 
-
+/** generates an id string suitable as a mongo id (24-character hex), see
+ * https://stackoverflow.com/questions/10593337/is-there-any-way-to-create-mongodb-like-id-strings-without-mongodb
+*/
+export function generateMongoId() {
+  const sFunc = n => Math.floor(n).toString(16)
+  return sFunc(Date.now() / 1000) + ' '.repeat(16).replace(/./g, () => sFunc(Math.random() * 16))
+}
