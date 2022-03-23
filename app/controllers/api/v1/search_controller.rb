@@ -522,6 +522,7 @@ module Api
       def self.generate_mongo_query_by_context(terms:, base_studies:, accessions:, query_context:)
         case query_context
         when :keyword
+          puts('in keyword')
           author_match_study_ids = Author.where(:$text => {:$search => terms}).pluck(:study_id)
 
           matches_by_text = base_studies.where({:$text => {:$search => terms}})
@@ -529,12 +530,12 @@ module Api
           matches_by_author = base_studies.where({:id.in => author_match_study_ids})
 
           results_matched_by_data = {
-            numMatchesByAccession: matches_by_accession.length,
-            numMatchesByText: matches_by_text.length,
-            numMatchesByAuthor: matches_by_author.length
+            'numResults:scp:accession': matches_by_accession.length,
+            'numResults:scp:text': matches_by_text.length,
+            'numResults:scp:author': matches_by_author.length
           }
+          
           studies = base_studies.any_of(matches_by_text, matches_by_accession, matches_by_author)
-
           return {:studies => studies, :results_matched_by_data => results_matched_by_data}
 
         when :phrase
@@ -547,13 +548,16 @@ module Api
           matches_by_author = base_studies.any_of({:id.in => author_match_study_ids})
 
           results_matched_by_data = {
-            numMatchesByAccession: matches_by_accession.length,
-            numMatchesByName: matches_by_name.length,
-            numMatchesByDescription: matches_by_description.length,
-            numMatchesByAuthor: matches_by_author.length
+            'numResults:scp:accession': matches_by_accession.length,
+            'numResults:scp:name': matches_by_name.length,
+            'numResults:scp:description': matches_by_description.length,
+            'numResults:scp:author': matches_by_author.length
           }
 
           studies = base_studies.any_of(matches_by_name, matches_by_description, matches_by_accession, matches_by_author)
+          results_matched_by_data['numResults:scp'] = studies.length # Total number of SCP results
+          # Azul study results to be added with SCP-4202
+
           return {:studies => studies, :results_matched_by_data => results_matched_by_data}
 
         when :inferred
@@ -563,9 +567,7 @@ module Api
           accessions_by_filter = filters.map {|filter| base_studies.any_of({name: filter}, {description: filter})
                                                            .where(:accession.nin => accessions).pluck(:accession)}
 
-
           studies = base_studies.where(:accession.in => accessions_by_filter.inject(:&))
-
           return {:studies => studies, :results_matched_by_data => {}}
 
         else

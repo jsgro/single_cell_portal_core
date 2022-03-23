@@ -108,9 +108,9 @@ export function logSearch(type, searchParams, perfTimes, searchResults) {
     terms, numTerms, genes, numGenes, page, preset,
     facetList, numFacets, numFilters,
     perfTimes,
-    type, context: 'global', scpStudiesMatchData
+    type, context: 'global'
   }
-  const props = Object.assign(simpleProps, filterListByFacet)
+  const props = Object.assign(simpleProps, filterListByFacet, scpStudiesMatchData)
 
   log('search', props)
 

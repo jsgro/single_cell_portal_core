@@ -302,7 +302,6 @@ export function logStudyGeneSearch(genes, trigger, speciesList, otherProps) {
   log('search', logProps)
 }
 
-
 /**
  * Removes study name from URL, as it might have identifying information.
  * Terra UI omits workspace name in logs; this follows that precedent.
