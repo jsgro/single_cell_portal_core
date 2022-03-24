@@ -184,6 +184,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
                  "Did not return correct array of matching accessions, expected #{expected_accessions} but found #{matching_accessions}"
 
     assert_equal @random_seed, json['studies'].first['term_matches'].first
+    assert_equal 2, json['match_by_data']['numResults:scp:text']
 
     # test exact phrase
     search_phrase = '"API Test Study"'
@@ -195,6 +196,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
                  "Did not return correct array of matching accessions, expected #{quoted_accessions} but found #{found_accessions}"
 
     assert_equal search_phrase.gsub(/\"/, ''), json['studies'].first['term_matches'].first
+    assert_equal 1, json['match_by_data']['numResults:scp:name']
 
     # test combination
     search_phrase += ' testing'
@@ -219,7 +221,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
                   "Did not return correct array of matching accessions, expected #{expected_accessions} but found #{matching_accessions}"
 
     assert_equal search_terms, json['studies'].first['term_matches'].first
-
+    assert_equal 1, json['match_by_data']['numResults:scp:author']
 
     # test author keyword search for institution
     search_terms = 'MIT'
@@ -232,6 +234,7 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
                   "Did not return correct array of matching accessions, expected #{expected_accessions} but found #{matching_accessions}"
 
     assert_equal search_terms, json['studies'].first['term_matches'].first
+    assert_equal 1, json['match_by_data']['numResults:scp:author']
 
     # test regex escaping
     execute_http_request(:get, api_v1_search_path(type: 'study', terms: 'foobar scp-105 [('))
