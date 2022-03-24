@@ -232,3 +232,21 @@ export function generateMongoId() {
   const sFunc = n => Math.floor(n).toString(16)
   return sFunc(Date.now() / 1000) + ' '.repeat(16).replace(/./g, () => sFunc(Math.random() * 16))
 }
+
+const plainTextExtensions = ['.txt', '.tsv', '.text', '.csv']
+const mtxExtensions = ['.mtx', '.mm', '.txt', '.text']
+const imageExtensions = ['.jpeg', '.jpg', '.png', '.bmp']
+const miscExtensions = ['.txt', '.text', '.tsv', '.csv', '.jpg', '.jpeg', '.png', '.pdf',
+  '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.zip', '.loom', '.h5', '.h5ad', '.h5an',
+  '.ipynb', '.Rda', '.rda', '.Rds', '.rds']
+const sequenceExtensions = ['.fq', '.fastq', '.fq.tar.gz', '.fastq.tar.gz', '.fq.gz', '.fastq.gz', '.bam']
+const baiExtensions = ['.bai']
+
+export const FileTypeExtensions = {
+  plainText: plainTextExtensions.concat(plainTextExtensions.map(ext => `${ext}.gz`)),
+  mtx: mtxExtensions.concat(mtxExtensions.map(ext => `${ext}.gz`)),
+  image: imageExtensions,
+  misc: miscExtensions.concat(miscExtensions.map(ext => `${ext}.gz`)),
+  sequence: sequenceExtensions,
+  bai: baiExtensions
+}

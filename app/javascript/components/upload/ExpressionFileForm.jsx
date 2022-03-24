@@ -3,7 +3,7 @@ import _kebabCase from 'lodash/kebabCase'
 
 import Select from '~/lib/InstrumentedSelect'
 import MTXBundledFilesForm from './MTXBundledFilesForm'
-import { FileTypeExtensions } from './FileUploadControl'
+import { FileTypeExtensions } from './upload-utils'
 import ExpandableFileForm from './ExpandableFileForm'
 
 import { TextFormField } from './form-components'

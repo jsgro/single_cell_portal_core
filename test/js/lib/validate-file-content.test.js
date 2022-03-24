@@ -2,13 +2,15 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
-import { validateLocalFile } from 'lib/validation/validate-file'
+import ValidateFile from 'lib/validation/validate-file'
 import { REQUIRED_CONVENTION_COLUMNS } from 'lib/validation/validate-file-content'
 import { getLogProps } from 'lib/validation/log-validation'
 import ValidationMessage from 'components/validation/ValidationMessage'
 import * as MetricsApi from 'lib/metrics-api'
 
 import { createMockFile } from './file-mock-utils'
+
+const validateLocalFile = ValidateFile.validateLocalFile
 
 describe('Client-side file validation', () => {
   it('catches and logs errors in files', async () => {
@@ -299,10 +301,18 @@ describe('Client-side file validation', () => {
     expect(errors[0][1]).toEqual('encoding:invalid-gzip-magic-number')
   })
 
-  it('passes valid gzip file', async () => {
-    // Confirms no false positive due to gzip-related content
-    const file = createMockFile({ fileName: 'foo.gz', content: '\x1F\x2E3lkjf3' })
-    const { errors } = await validateLocalFile(file, { file_type: 'Cluster' })
+  it('fails invalid gzipped file', async () => {
+    // Confirms this validation does not report false negatives
+    const file = createMockFile({ fileName: 'expression_matrix_example_bad.txt.gz' })
+    const { errors } = await validateLocalFile(file, { file_type: 'Expression Matrix' })
+    expect(errors[0][1]).toEqual('format:cap:missing-gene-column')
+    expect(errors).toHaveLength(2)
+  })
+
+  it('passes valid gzipped file', async () => {
+    // Confirms this validation does not report false positives
+    const file = createMockFile({ fileName: 'expression_matrix_example.txt.gz' })
+    const { errors } = await validateLocalFile(file, { file_type: 'Expression Matrix' })
     expect(errors).toHaveLength(0)
   })
 

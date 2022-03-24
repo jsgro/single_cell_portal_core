@@ -7,7 +7,7 @@ import { Popover, OverlayTrigger } from 'react-bootstrap'
 
 import { UserContext } from '~/providers/UserProvider'
 import ExpandableFileForm from './ExpandableFileForm'
-import { FileTypeExtensions } from './FileUploadControl'
+import { FileTypeExtensions } from './upload-utils'
 import { TextFormField } from './form-components'
 import { validateFile } from './upload-utils'
 
