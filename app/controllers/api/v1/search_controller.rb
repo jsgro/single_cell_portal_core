@@ -522,7 +522,6 @@ module Api
       def self.generate_mongo_query_by_context(terms:, base_studies:, accessions:, query_context:)
         case query_context
         when :keyword
-          puts('in keyword')
           author_match_study_ids = Author.where(:$text => {:$search => terms}).pluck(:study_id)
 
           matches_by_text = base_studies.where({:$text => {:$search => terms}})
