@@ -74,7 +74,7 @@ function getFriendlyFilterListByFacet(facets) {
 /**
  * Log global study search metrics, one type of search done on home page
  */
-export function logSearch(type, searchParams, perfTimes) {
+export function logSearch(type, searchParams, perfTimes, searchResults) {
   searchNumber += 1
   if (searchNumber < 3) {
     // This prevents over-reporting searches.
@@ -97,6 +97,7 @@ export function logSearch(type, searchParams, perfTimes) {
   const facets = searchParams.facets
   const page = searchParams.page
   const preset = searchParams.preset
+  const scpStudiesMatchData = searchResults?.matchByData
 
   const [numFacets, numFilters] = getNumFacetsAndFilters(facets)
   const facetList = facets ? Object.keys(facets) : []
@@ -109,7 +110,7 @@ export function logSearch(type, searchParams, perfTimes) {
     perfTimes,
     type, context: 'global'
   }
-  const props = Object.assign(simpleProps, filterListByFacet)
+  const props = Object.assign(simpleProps, filterListByFacet, scpStudiesMatchData)
 
   log('search', props)
 

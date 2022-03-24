@@ -676,7 +676,7 @@ export async function fetchSearch(type, searchParams, mock=false) {
 
   const [searchResults, perfTimes] = await scpApi(path, defaultInit(), mock)
 
-  logSearch(type, searchParams, perfTimes)
+  logSearch(type, searchParams, perfTimes, searchResults)
 
   return searchResults
 }
