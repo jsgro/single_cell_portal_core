@@ -430,7 +430,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
           }
       ].to_json
     else
-      raise RuntimeError.new("Invalid FireCloud ACL permission setting: #{permission}; must be member of #{WORKSPACE_PERMISSIONS.join(', ')}")
+      raise RuntimeError.new("Invalid FireCloud ACL permission setting: '#{permission}'; must be member of #{WORKSPACE_PERMISSIONS.join(', ')}")
     end
   end
 
@@ -1052,7 +1052,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       path = self.api_root + "/api/groups/#{group_name}/#{user_role}/#{user_email}"
       process_firecloud_request(:put, path)
     else
-      raise RuntimeError.new("Invalid FireCloud user group role: #{user_role}; must be one of '#{USER_GROUP_ROLES.join(', ')}'")
+      raise RuntimeError.new("Invalid FireCloud user group role: '#{user_role}'; must be one of '#{USER_GROUP_ROLES.join(', ')}'")
     end
   end
 
@@ -1070,7 +1070,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       path = self.api_root + "/api/groups/#{group_name}/#{user_role}/#{user_email}"
       process_firecloud_request(:delete, path)
     else
-      raise RuntimeError.new("Invalid FireCloud user group role: #{user_role}; must be one of '#{USER_GROUP_ROLES.join(', ')}'")
+      raise RuntimeError.new("Invalid FireCloud user group role: '#{user_role}'; must be one of '#{USER_GROUP_ROLES.join(', ')}'")
     end
   end
 
@@ -1169,7 +1169,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       }.to_json
       process_firecloud_request(:post, path, project_payload)
     else
-      raise RuntimeError.new("Invalid billing account: #{billing_account}; must begin with 'billingAccounts/'")
+      raise RuntimeError.new("Invalid billing account: '#{billing_account}'; must begin with 'billingAccounts/'")
     end
   end
 
@@ -1199,7 +1199,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       path = self.api_root + "/api/billing/#{project_id}/#{role}/#{email}"
       process_firecloud_request(:put, path)
     else
-      raise RuntimeError.new("Invalid billing account role: #{role}; must be a member of '#{BILLING_PROJECT_ROLES.join(', ')}'")
+      raise RuntimeError.new("Invalid billing account role: '#{role}'; must be a member of '#{BILLING_PROJECT_ROLES.join(', ')}'")
     end
   end
 
@@ -1217,7 +1217,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       path = self.api_root + "/api/billing/#{project_id}/#{role}/#{email}"
       process_firecloud_request(:delete, path)
     else
-      raise RuntimeError.new("Invalid billing account role: #{role}; must be a member of '#{BILLING_PROJECT_ROLES.join(', ')}'")
+      raise RuntimeError.new("Invalid billing account role: '#{role}'; must be a member of '#{BILLING_PROJECT_ROLES.join(', ')}'")
     end
   end
 

@@ -205,21 +205,21 @@ class GenericProfiler
   # validate arguments for :profile_clustering and :profile_expression
   def self.validate_cluster_args(study_accession)
     study = Study.find_by(accession: study_accession)
-    raise ArgumentError.new("#{study_accession} is not valid") if study.nil?
+    raise ArgumentError.new("'#{study_accession}' is not valid") if study.nil?
     cluster = study.default_cluster
     annotation = study.default_annotation
-    raise ArgumentError.new("#{study_accession} cannot visualize clusters") if (cluster.nil? || annotation.nil?)
+    raise ArgumentError.new("'#{study_accession}' cannot visualize clusters") if (cluster.nil? || annotation.nil?)
     true
   end
 
   # validate arguments for :profile_expression
   def self.validate_expression_args(study, genes, plot_type, consensus)
-    raise ArgumentError.new("#{study.accession} has no gene expression data") if study.genes.empty?
-    raise ArgumentError.new("#{plot_type} is not a valid plot type") if !EXPRESSION_PLOT_TYPES.include?(plot_type)
-    raise ArgumentError.new("#{consensus} is not a valid consensus") if !CONSENSUS_TYPES.include?(consensus)
+    raise ArgumentError.new("'#{study.accession}' has no gene expression data") if study.genes.empty?
+    raise ArgumentError.new("'#{plot_type}' is not a valid plot type") if !EXPRESSION_PLOT_TYPES.include?(plot_type)
+    raise ArgumentError.new("'#{consensus}' is not a valid consensus") if !CONSENSUS_TYPES.include?(consensus)
     if genes.present?
       names = extract_gene_names(genes)
-      raise ArgumentError.new("#{genes} not present in #{study.accession}") if study.genes.where(:name.in => names).empty?
+      raise ArgumentError.new("'#{genes}' not present in '#{study.accession}'") if study.genes.where(:name.in => names).empty?
     end
     true
   end
