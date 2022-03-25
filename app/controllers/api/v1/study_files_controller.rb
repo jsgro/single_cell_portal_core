@@ -338,13 +338,14 @@ module Api
 
         # log the name properties to help with understanding SCP-4159
         MetricsService.log('file-update', {
-          status: 'info',
           studyAccession: @study.accession,
           message: 'name info',
           uploadFilename: safe_file_params[:upload_file_name],
           originalFilename: safe_file_params[:upload].original_filename,
           filename: safe_file_params[:name],
-          fileId: @study_file._id.to_s
+          fileId: @study_file._id.to_s,
+          fileType: @study_file.file_type,
+          fileSize: @study_file.upload_file_size
         }, current_api_user)
 
         study_file.update!(safe_file_params)
