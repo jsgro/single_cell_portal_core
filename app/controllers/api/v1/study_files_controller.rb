@@ -341,7 +341,7 @@ module Api
           studyAccession: @study.accession,
           message: 'name info',
           uploadFilename: safe_file_params[:upload_file_name],
-          originalFilename: safe_file_params[:upload].original_filename,
+          originalFilename: safe_file_params[:upload]&.original_filename,
           filename: safe_file_params[:name],
           fileId: @study_file._id.to_s,
           fileType: @study_file.file_type,
