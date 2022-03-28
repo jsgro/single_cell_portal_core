@@ -9,7 +9,7 @@ import {
   RAW_COUNTS_FILE, PROCESSED_MATRIX_FILE, METADATA_FILE,
   CLUSTER_FILE, COORDINATE_LABEL_FILE, FASTQ_FILE
 } from './file-info-responses'
-import { renderWizardWithStudy, getSelectByLabelText, saveButton } from './upload-wizard-test-utils'
+import { renderWizardWithStudy, getSelectByLabelText, saveButton, mockCreateStudyFile } from './upload-wizard-test-utils'
 
 const processedFileName = 'example_processed_dense.txt'
 const rawCountsFileName = 'example_raw_counts.txt'
@@ -60,11 +60,11 @@ describe('creation of study files', () => {
 async function testRawCountsUpload({ createFileSpy }) {
   const formData = new FormData()
 
-  createFileSpy.mockImplementation(() => ({
+  mockCreateStudyFile({
     ...RAW_COUNTS_FILE,
     name: rawCountsFileName,
     upload_file_name: rawCountsFileName
-  }))
+  }, createFileSpy)
   expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw count expression files')
 
   expect(saveButton()).toBeDisabled()
@@ -115,15 +115,14 @@ async function testProcessedUpload({ createFileSpy }) {
   const formData = new FormData()
 
   // mock the create file response with a file that has the right name and associated raw counts files
-  createFileSpy.mockImplementation(() => ({
+  mockCreateStudyFile({
     ...PROCESSED_MATRIX_FILE,
     name: processedFileName,
     upload_file_name: processedFileName,
     expression_file_info: {
-      ...PROCESSED_MATRIX_FILE.expression_file_info,
-      raw_counts_associations: [RAW_COUNTS_FILE._id.$oid]
+      ...PROCESSED_MATRIX_FILE.expression_file_info
     }
-  }))
+  }, createFileSpy)
 
   fireEvent.click(screen.getByText('Processed matrices'))
   expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Processed expression files')
@@ -173,7 +172,7 @@ async function testProcessedUpload({ createFileSpy }) {
 async function testMetadataUpload({ createFileSpy }) {
   const formData = new FormData()
 
-  createFileSpy.mockImplementation(() => _cloneDeep(METADATA_FILE))
+  mockCreateStudyFile(METADATA_FILE, createFileSpy)
 
   fireEvent.click(screen.getByText('Metadata'))
   expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Metadata')
@@ -222,7 +221,7 @@ async function testMetadataUpload({ createFileSpy }) {
 async function testClusterUpload({ createFileSpy }) {
   const formData = new FormData()
 
-  createFileSpy.mockImplementation(() => _cloneDeep(CLUSTER_FILE))
+  mockCreateStudyFile(CLUSTER_FILE, createFileSpy)
 
   fireEvent.click(screen.getByText('Clustering'))
   expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Clustering')
@@ -279,7 +278,7 @@ async function testSpatialUpload({ createFileSpy }) {
     name: goodFileName,
     upload_file_name: goodFileName
   }
-  createFileSpy.mockImplementation(() => spatialResponse)
+  mockCreateStudyFile(spatialResponse, createFileSpy)
 
   fireEvent.click(screen.getByText('Spatial transcriptomics'))
   expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Spatial transcriptomics')
@@ -327,7 +326,7 @@ async function testSpatialUpload({ createFileSpy }) {
 async function testCoordinateLabelUpload({ createFileSpy }) {
   const formData = new FormData()
 
-  createFileSpy.mockImplementation(() => _cloneDeep(COORDINATE_LABEL_FILE))
+  mockCreateStudyFile(COORDINATE_LABEL_FILE, createFileSpy)
 
   fireEvent.click(screen.getByText('Coordinate labels'))
   expect(screen.getByTestId('coordinateLabels-status-badge')).not.toHaveClass('complete')
@@ -378,7 +377,7 @@ async function testCoordinateLabelUpload({ createFileSpy }) {
 async function testSequenceFileUpload({ createFileSpy }) {
   const formData = new FormData()
 
-  createFileSpy.mockImplementation(() => _cloneDeep(FASTQ_FILE))
+  mockCreateStudyFile(FASTQ_FILE, createFileSpy)
 
   fireEvent.click(screen.getByText('Sequence files'))
 

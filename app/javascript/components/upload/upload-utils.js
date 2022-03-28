@@ -166,8 +166,9 @@ function validateRequiredFields(file, requiredFields, validationMessages) {
 function validateBundleParent(file, allFiles, validationMessages) {
   const parentId = file.options?.matrix_id || file.options?.bam_id || file.options?.cluster_file_id
   if (parentId) {
-    // don't allow saving until parent file is saved and a real id is returned from the server
-    const parentSaved = parent.status != 'new'
+    // don't allow saving until parent file is saved
+    const parentFile = allFiles.find(f => f._id === parentId)
+    const parentSaved = parentFile && (parentFile.status !== 'new' || parentFile.isSaving)
     if (!parentSaved) {
       validationMessages['parentSaved'] = 'Parent file must be saved first'
     }

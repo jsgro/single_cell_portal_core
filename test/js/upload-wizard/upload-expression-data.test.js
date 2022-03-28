@@ -1,17 +1,14 @@
 import { screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
-import _cloneDeep from 'lodash/cloneDeep'
 import selectEvent from 'react-select-event'
 
-import * as ScpApi from 'lib/scp-api'
-
 import {
-  RAW_COUNTS_MTX_FILE, BARCODES_FILE, FEATURES_FILE, EMPTY_STUDY, RAW_COUNTS_FILE
+  RAW_COUNTS_MTX_FILE, BARCODES_FILE, FEATURES_FILE, EMPTY_STUDY
 } from './file-info-responses'
 
 import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 
-import { renderWizardWithStudy, getSelectByLabelText } from './upload-wizard-test-utils'
+import { renderWizardWithStudy, getSelectByLabelText, mockCreateStudyFile } from './upload-wizard-test-utils'
 
 describe('it allows uploading of expression matrices', () => {
   beforeAll(() => {
@@ -20,12 +17,11 @@ describe('it allows uploading of expression matrices', () => {
   })
 
   it('uploads a raw counts mtx file', async () => {
-    const createFileSpy = jest.spyOn(ScpApi, 'createStudyFile')
+    const createFileSpy = mockCreateStudyFile(RAW_COUNTS_MTX_FILE)
     const { container } = await renderWizardWithStudy({})
 
     const formData = new FormData()
 
-    createFileSpy.mockImplementation(() => _cloneDeep(RAW_COUNTS_MTX_FILE))
     expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw count expression files')
     fireEvent.click(screen.getByLabelText('Sparse matrix (.mtx)'))
 
@@ -82,7 +78,7 @@ describe('it allows uploading of expression matrices', () => {
     // Now check that we can upload the barcodes and features files
     // start with barcodes
     subForms = container.querySelectorAll('.sub-form')
-    createFileSpy.mockImplementation(() => _cloneDeep(BARCODES_FILE))
+    mockCreateStudyFile(BARCODES_FILE, createFileSpy)
 
     fireEvent.mouseOver(subForms[1].querySelector('button[data-testid="file-save"]'))
     expect(screen.getByRole('tooltip')).not.toHaveTextContent('Parent file must be saved first')
@@ -100,7 +96,7 @@ describe('it allows uploading of expression matrices', () => {
 
     // now upload the features file
     subForms = container.querySelectorAll('.sub-form')
-    createFileSpy.mockImplementation(() => _cloneDeep(FEATURES_FILE))
+    mockCreateStudyFile(FEATURES_FILE, createFileSpy)
 
     fireEvent.mouseOver(subForms[0].querySelector('button[data-testid="file-save"]'))
     expect(screen.getByRole('tooltip')).toHaveTextContent('You must select a file to upload')
