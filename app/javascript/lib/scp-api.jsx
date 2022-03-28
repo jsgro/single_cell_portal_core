@@ -84,7 +84,7 @@ function defaultPostInit(mock=false) {
  * // returns {authCode: 123456, timeInterval: 1800}
  * fetchAuthCode(true)
  */
-export async function fetchAuthCode(fileIds, azulFiles, mock=false) {
+export async function fetchAuthCode(fileIds=[], azulFiles=[], mock=false) {
   const init = defaultPostInit(mock)
   init.body = JSON.stringify({
     file_ids: fileIds,
