@@ -220,7 +220,7 @@ export function getLogPlotProps() {
 /**
  * Extract the number of Azul files that have been chosen for download
  */
-function getNumAzulFiles(azulFiles) {
+function getNumAzulFiles(azulFiles={}) {
   let totalNumFiles = 0
   for (const studyEntry of Object.entries(azulFiles)) {
     const [azulStudyId, fileList] = studyEntry
