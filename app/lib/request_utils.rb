@@ -83,12 +83,20 @@ class RequestUtils
   # raises Argument error if any of the strings are not valid ids
   def self.validate_id_list(id_list_string)
     ids = id_list_string.split(',').map(&:strip)
+    ids.each {|id| validate_mongo_id(id) }
+    ids
+  end
+
+  # confirms the passed-in string is a valid mongo id (24-char hex)
+  # raises Argument error if not a valid id
+  # returns the string for convenience in chaining
+  def self.validate_mongo_id(id_string)
     begin
-      ids.each {|id| BSON::ObjectId.from_string(id) }
+      BSON::ObjectId.from_string(id_string)
     rescue
       raise ArgumentError, 'IDs must be valid MongoDB ObjectId values'
     end
-    ids
+    id_string
   end
 
   # return the hostname (and port, if present) for this instance

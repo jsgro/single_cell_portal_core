@@ -862,7 +862,12 @@ async function scpApiXmlHttp({ apiUrl, init, formData, onProgress, requestCancel
       } else if (request.status === 401 || request.status === 403) {
         reject('Authorization failed. You may need to sign in again')
       } else {
-        reject(JSON.parse(request.response).error)
+        try {
+          reject(JSON.parse(request.response).error)
+        } catch (e) {
+          // fall back to plain text if the response isn't json
+          reject(request.response)
+        }
       }
     }
     request.onerror = () => {
