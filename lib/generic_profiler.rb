@@ -219,7 +219,7 @@ class GenericProfiler
     raise ArgumentError.new("'#{consensus}' is not a valid consensus") if !CONSENSUS_TYPES.include?(consensus)
     if genes.present?
       names = extract_gene_names(genes)
-      raise ArgumentError.new("'#{genes}' not present in '#{study.accession}'") if study.genes.where(:name.in => names).empty?
+      raise ArgumentError.new("\"#{genes}\" not present in #{study.accession}") if study.genes.where(:name.in => names).empty?
     end
     true
   end
