@@ -1070,7 +1070,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       path = self.api_root + "/api/groups/#{group_name}/#{user_role}/#{user_email}"
       process_firecloud_request(:delete, path)
     else
-      raise RuntimeError.new("Invalid FireCloud user group role: '#{user_role}'; must be one of '#{USER_GROUP_ROLES.join(', ')}'")
+      raise RuntimeError.new("Invalid FireCloud user group role \"#{user_role}\"; must be one of '#{USER_GROUP_ROLES.join(\", \")}\"")
     end
   end
 
