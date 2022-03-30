@@ -121,7 +121,7 @@ module FeatureFlaggable
   #   - (Mongoid::Errors::Validations) => if save fails
   def set_flag_option(flag_name, flag_value)
     parent_flag = FeatureFlag.find_by(name: flag_name)
-    raise NameError, "'#{flag_name}' is not a valid feature flag name" if parent_flag.nil?
+    raise NameError, "\"#{flag_name}\" is not a valid feature flag name" if parent_flag.nil?
 
     option = get_flag_option(flag_name) || feature_flag_options.build(feature_flag: parent_flag)
     option.update!(value: flag_value)
