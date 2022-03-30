@@ -397,13 +397,10 @@ function getPlotlyTraces({
   const isRefGroup = getIsRefGroup(annotType, genes, isCorrelatedScatter)
   const isGeneExpressionForColor = !isCorrelatedScatter && !isAnnotatedScatter && genes.length
 
-  const startTime = performance.now()
   const [traces, countsByLabel, expRange] = filterTrace({
     trace: unfilteredTrace,
     hiddenTraces, groupByAnnotation: isRefGroup, activeTraceLabel, expressionFilter, expressionData: data.expression
   })
-  const perfTime = performance.now() - startTime
-  console.log(`Filter/group done in ${perfTime}ms`)
 
   if (isRefGroup) {
     const labels = getSortedLabels(countsByLabel)

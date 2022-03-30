@@ -98,11 +98,12 @@ PlotUtils.filterTrace = function({
   if (isFilteringByExpression) {
     // find the max and min so we can rescale
     for (let i = 0; i < expressionData.length; i++) {
-      if (expressionData[i] < expMin) {
-        expMin = expressionData[i]
+      const expValue = expressionData[i]
+      if (expValue < expMin) {
+        expMin = expValue
       }
-      if (expressionData[i] > expMax) {
-        expMax = expressionData[i]
+      if (expValue > expMax) {
+        expMax = expValue
       }
     }
     // convert the expressionFilter, which is on a 0-1 scale, to the expression scale
@@ -175,7 +176,8 @@ PlotUtils.sortTraceByExpression = function(trace) {
   }
   expressionsWithIndices.sort((a, b) => a[0] - b[0])
 
-  // initialize the other arrays (see )
+  // initialize the other arrays with their size
+  // (see https://codeabitwiser.com/2015/01/high-performance-javascript-arrays-pt1/ for performance rationale)
   sortedTrace.x = new Array(traceLength)
   sortedTrace.y = new Array(traceLength)
   if (hasZ) {
