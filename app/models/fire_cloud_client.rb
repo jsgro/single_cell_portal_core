@@ -1169,7 +1169,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       }.to_json
       process_firecloud_request(:post, path, project_payload)
     else
-      raise RuntimeError.new("Invalid billing account: '#{billing_account}'; must begin with 'billingAccounts/'")
+      raise RuntimeError.new("Invalid billing account \"#{billing_account}\"; must begin with \"billingAccounts/\"")
     end
   end
 
