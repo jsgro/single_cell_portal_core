@@ -1217,7 +1217,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
       path = self.api_root + "/api/billing/#{project_id}/#{role}/#{email}"
       process_firecloud_request(:delete, path)
     else
-      raise RuntimeError.new("Invalid billing account role: '#{role}'; must be a member of '#{BILLING_PROJECT_ROLES.join(', ')}'")
+      raise RuntimeError.new("Invalid billing account role \"#{role}\"; must be a member of \"#{BILLING_PROJECT_ROLES.join(\", \")}\"")
     end
   end
 
