@@ -417,7 +417,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
         raise ArgumentError.new("Invalid values for \"#{name}: #{invalid.join(\",\")}\", must be a member of \"#{control}\"")
       end
     else
-      raise ArgumentError.new("invalid value for '#{name}: #{value}'; must be a member of '#{control}'") if !control.include?(value)
+      raise ArgumentError.new("Invalid value for \"#{name}: #{value}\"; must be a member of \"#{control}\"") if !control.include?(value)
     end
   end
 end
