@@ -205,7 +205,7 @@ class GenericProfiler
   # validate arguments for :profile_clustering and :profile_expression
   def self.validate_cluster_args(study_accession)
     study = Study.find_by(accession: study_accession)
-    raise ArgumentError.new("'#{study_accession}' is not valid") if study.nil?
+    raise ArgumentError.new("\"#{study_accession}\" is not valid") if study.nil?
     cluster = study.default_cluster
     annotation = study.default_annotation
     raise ArgumentError.new("'#{study_accession}' cannot visualize clusters") if (cluster.nil? || annotation.nil?)
