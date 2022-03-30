@@ -14,7 +14,7 @@ class ClusterFileInfo
 
   # helper to transform a nested custom color hash to/from base64
   def self.transform_custom_colors(hash, transform = :encode64)
-    raise ArgumentError, "'#{transform}' is not a valid transform" unless COLOR_ENCODE_TRANSFORM.include?(transform)
+    raise ArgumentError, "\"#{transform}]\" is not a valid transform" unless COLOR_ENCODE_TRANSFORM.include?(transform)
 
     hash.map do |key, nested_hash|
       {
