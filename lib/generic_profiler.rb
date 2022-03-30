@@ -208,7 +208,7 @@ class GenericProfiler
     raise ArgumentError.new("\"#{study_accession}\" is not valid") if study.nil?
     cluster = study.default_cluster
     annotation = study.default_annotation
-    raise ArgumentError.new("'#{study_accession}' cannot visualize clusters") if (cluster.nil? || annotation.nil?)
+    raise ArgumentError.new("\"#{study_accession}\" cannot visualize clusters") if (cluster.nil? || annotation.nil?)
     true
   end
 
