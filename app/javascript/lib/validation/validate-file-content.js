@@ -8,8 +8,8 @@
 * [1] E.g. https://github.com/broadinstitute/scp-ingest-pipeline/blob/development/ingest/validation/validate_metadata.py
 */
 
-import { readFileBytes } from './io'
-import ChunkedLineReader from './chunked-line-reader'
+import { readFileBytes, oneMiB } from './io'
+import ChunkedLineReader, { GZIP_MAX_LINES } from './chunked-line-reader'
 import { PARSEABLE_TYPES } from '~/components/upload/upload-utils'
 import {
   parseDenseMatrixFile, parseFeaturesFile, parseBarcodesFile, parseSparseMatrixFile
@@ -34,6 +34,17 @@ export const REQUIRED_CONVENTION_COLUMNS = [
   'species',
   'species__ontology_label'
 ]
+
+
+/**
+ * Gzip decompression requires reading the whole file, given the current
+ * approach in ChunkedLineReader.  To avoid consuming too much memory, this
+ * limits CSFV to only processing gzipped files that are <= 50 MiB in
+ * (compressed) size.  Because decompression currently reads whole file,
+ * this means that chunk size === file size.  When decompressed, a 50 MiB
+ * chunk can consume ~500 MiB in RAM.
+ */
+const MAX_GZIP_FILESIZE = 50 * oneMiB
 
 /**
  * Verify headers are unique and not empty
@@ -342,7 +353,7 @@ export async function validateGzipEncoding(file) {
  * @returns {Object} result.issues Array of [category, type, message]
  * @returns {Number} result.perfTime How long this function took
  */
-export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
+async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
   const startTime = performance.now()
 
   const fileInfo = {
@@ -356,12 +367,18 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
     delimiter: null,
     isGzipped: null
   }
+
   const parseResult = { fileInfo, issues: [] }
 
   try {
     fileInfo.isGzipped = await validateGzipEncoding(file)
     // if the file is compressed or we can't figure out the compression, don't try to parse further
-    if (fileInfo.isGzipped || !PARSEABLE_TYPES.includes(fileType)) {
+    const isFileFragment = file.size > sizeProps?.fileSizeTotal // likely a partial download from a GCP bucket
+    if (
+      !PARSEABLE_TYPES.includes(fileType) ||
+      fileInfo.isGzipped && (isFileFragment || file.size >= MAX_GZIP_FILESIZE)
+      // current gunzip implementation needs a whole file; see comment for MAX_GZIP_FILESIZE
+    ) {
       return {
         fileInfo,
         issues: [],
@@ -387,14 +404,22 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
 
         parseResult.issues.push(['warn', 'incomplete:range-request', msg])
       }
+      const chunker = new ChunkedLineReader(file, ignoreLastLine, fileInfo.isGzipped)
 
-      const chunker = new ChunkedLineReader(file, ignoreLastLine)
       const { issues, delimiter, numColumns } =
         await parseFunctions[fileType](chunker, fileInfo.fileMimeType, fileOptions)
       fileInfo.linesRead = chunker.linesRead
       fileInfo.delimiter = delimiter
       fileInfo.numColumns = numColumns
       parseResult.issues = parseResult.issues.concat(issues)
+
+      if (fileInfo.isGzipped && fileInfo.linesRead === GZIP_MAX_LINES + 1) {
+        const msg =
+        'Due to this file\'s size, it will be fully validated after upload, ' +
+        'and any errors will be emailed to you.'
+
+        parseResult.issues.push(['warn', 'incomplete:gzip-line-limit', msg])
+      }
     }
   } catch (error) {
     // get any unhandled or deliberate short-circuits
@@ -415,3 +440,9 @@ export async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
     perfTime
   }
 }
+
+export default function ValidateFileContent() {
+  return ''
+}
+
+ValidateFileContent.parseFile = parseFile

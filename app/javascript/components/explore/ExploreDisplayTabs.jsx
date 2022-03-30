@@ -72,9 +72,10 @@ export default function ExploreDisplayTabs({
   // a plotly points_selected event
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
   const plotContainerClass = 'explore-plot-tab-content'
+
   const {
     enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs
-  } = getEnabledTabs(exploreInfo, exploreParams)
+  } = getEnabledTabs(exploreInfo, exploreParamsWithDefaults)
 
   // exploreParams object without genes specified, to pass to cluster comparison plots
   const referencePlotDataParams = _clone(exploreParams)
@@ -163,7 +164,8 @@ export default function ExploreDisplayTabs({
     // if a user switches to a numeric annotation, change the tab to annotated scatter (SCP-3833)
     if (newParams.annotation?.type === 'numeric' &&
       exploreParamsWithDefaults.genes.length &&
-      exploreParamsWithDefaults.annotation?.type !== 'numeric') {
+      exploreParamsWithDefaults.annotation?.type !== 'numeric'
+    ) {
       updateParams.tab = 'annotatedScatter'
     }
     updateExploreParams(updateParams)

@@ -50,7 +50,10 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
     distributionPointsValue = DISTRIBUTION_POINTS_OPTIONS[0]
   }
 
-  const showScatter = shownTab === 'scatter'
+  const showScatter = (
+    shownTab === 'scatter' &&
+    (exploreParams.annotation.type === 'numeric' || exploreParams.genes.length)
+  )
   const showColorScale = !!(showScatter && (exploreParams.annotation.type === 'numeric' || exploreParams.genes.length))
   const filterValues = exploreParams.expressionFilter ?? [0, 1]
   const showExpressionFilter = ENABLE_EXPRESSION_FILTER && exploreParams.genes.length && showScatter

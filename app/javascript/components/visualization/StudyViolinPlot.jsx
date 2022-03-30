@@ -173,8 +173,8 @@ function getViolinTraces(
   const data = Object.entries(resultValues)
     .sort((a, b) => a[0].localeCompare(b[0], 'en', { numeric: true, ignorePunctuation: true }))
     .map(([traceName, traceData], index) => {
-    // Plotly violin trace creation, adding to main array
-    // get inputs for plotly violin creation
+      // Plotly violin trace creation, adding to main array
+      // get inputs for plotly violin creation
       const dist = traceData.y
 
       // Replace the none selection with bool false for plotly
@@ -184,7 +184,7 @@ function getViolinTraces(
 
       // Check if there is a distribution before adding trace
       if (arrayMax(dist) !== arrayMin(dist) && plotType === 'violin') {
-      // Make a violin plot if there is a distribution
+        // Make a violin plot if there is a distribution
         return {
           type: 'violin',
           name: traceName,
@@ -213,7 +213,7 @@ function getViolinTraces(
           }
         }
       } else {
-      // Make a boxplot for data with no distribution
+        // Make a boxplot for data with no distribution
         return {
           type: 'box',
           name: traceName,

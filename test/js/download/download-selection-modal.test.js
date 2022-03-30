@@ -115,7 +115,6 @@ const EXAMPLE_HUMAN_SYNTH_STUDY_DOWNLOAD_INFO = [
 ]
 
 describe('Download selection modal', () => {
-
   it('shows the correct total size, and generates a command with selected file ids', async () => {
     const fetchDownloadInfo = jest.spyOn(ScpApi, 'fetchDownloadInfo')
     // pass in a clone of the response since it may get modified by the cache operations
@@ -130,7 +129,7 @@ describe('Download selection modal', () => {
     ))
 
     render((
-      <DownloadSelectionModal studyAccessions={['SCP12', 'SCP1', 'SCP35', 'SCP42']} show={true} setShow={()=>{}}/>
+      <DownloadSelectionModal studyAccessions={['SCP12', 'SCP1', 'SCP35', 'SCP42']} show={true} setShow={() => {}}/>
     ))
     await waitForElementToBeRemoved(() => screen.getByTestId('bulk-download-loading-icon'))
     expect(screen.getByTestId('download-size-amount')).toHaveTextContent('3.1 MB')
@@ -146,7 +145,7 @@ describe('Download selection modal', () => {
 
     fireEvent.click(screen.getByText('NEXT'))
     await waitForElementToBeRemoved(() => screen.getByTestId('bulk-download-loading-icon'))
-    expect(screen.getByRole('textbox')).toHaveValue('curl "undefined/single_cell/api/v1/bulk_download/generate_curl_config?auth_code=TViAHJmA&context=global&download_id=aaaBBB" -o cfg.txt; curl -K cfg.txt && rm cfg.txt')
+    expect(screen.getByRole('textbox')).toHaveValue('curl "http://localhost/single_cell/api/v1/bulk_download/generate_curl_config?auth_code=TViAHJmA&context=global&download_id=aaaBBB" -o cfg.txt; curl -K cfg.txt && rm cfg.txt')
     expect(fetchAuthCode).toHaveBeenLastCalledWith([
       '60403d30cc7ba03f94477640',
       '60a2cf62cc7ba082358b545f',
@@ -157,5 +156,4 @@ describe('Download selection modal', () => {
       '60a5ba20cc7ba0360a9ac255'
     ], {})
   })
-
 })

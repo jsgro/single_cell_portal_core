@@ -1,4 +1,7 @@
-import { DEFAULT_CHUNK_SIZE, oneGiB, readFileBytes } from './io'
+import { DEFAULT_CHUNK_SIZE, oneGiB, readFileBytes, readGzipFile } from './io'
+
+/** Mitigates UI freezes caused by faux-streaming gunzip; see note in io.js */
+export const GZIP_MAX_LINES = 500
 
 const newlineRegex = /\r?\n/
 
@@ -13,10 +16,11 @@ const newlineRegex = /\r?\n/
  */
 export default class ChunkedLineReader {
   /** create a new chunk reader */
-  constructor(file, ignoreLastLine=false, chunkSize=DEFAULT_CHUNK_SIZE) {
+  constructor(file, ignoreLastLine=false, isGzipped=false, chunkSize=DEFAULT_CHUNK_SIZE) {
     this.file = file
-    this.chunkSize = chunkSize
     this.ignoreLastLine = ignoreLastLine
+    this.isGzipped = isGzipped
+    this.chunkSize = chunkSize
     this.nextByteToRead = 0
     this.linesRead = 0
     this.currentFragment = null // currentFragment stores the parts of lines that cross chunk boundaries
@@ -45,6 +49,10 @@ export default class ChunkedLineReader {
   */
   async iterateLines({ func, maxLines = Number.MAX_SAFE_INTEGER, maxBytesPerLine = oneGiB }) {
     const prevLinesRead = this.linesRead
+    if (this.isGzipped && maxLines === Number.MAX_SAFE_INTEGER) {
+      maxLines = GZIP_MAX_LINES
+    }
+
     while (
       (this.hasMoreChunks || this.chunkLines.length) &&
       !(this.linesRead === 0 && this.nextByteToRead > maxBytesPerLine) &&
@@ -73,12 +81,12 @@ export default class ChunkedLineReader {
 
 
   /**
-   * reads a file as lines in a set of 'chunks'  Each chunk is determined by chunkSize
+   * Reads a file as lines in a set of 'chunks'  Each chunk is determined by chunkSize.
    * This handles tracking lines that span chunk boundaries -- such lines will be excluded
    * from the chunk they start in, and included in full in the subsequent chunk.
    * Note that this means some chunks may be "empty" if there are lines that span entire chunks.
    *
-   * So e.g. if an expression file has a 4.5MB long header row listing the cells, the first four calls
+   * So e.g. if an expression file has a 4.5 MB long header row listing the cells, the first four calls
    * to 'readNextChunk' will put an empty into chunkLines, and then the fifth call will return the full line.
    */
   async readNextChunk() {
@@ -87,7 +95,13 @@ export default class ChunkedLineReader {
     }
     const startByte = this.nextByteToRead
     const isLastChunk = startByte + this.chunkSize >= this.file.size
-    const chunkString = await readFileBytes(this.file, startByte, this.chunkSize)
+
+    let chunkString
+    if (!this.isGzipped) {
+      chunkString = await readFileBytes(this.file, startByte, this.chunkSize)
+    } else {
+      chunkString = await readGzipFile(this.file)
+    }
 
     const lines = chunkString.split(newlineRegex)
 

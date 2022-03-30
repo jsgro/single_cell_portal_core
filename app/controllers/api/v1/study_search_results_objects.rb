@@ -13,7 +13,8 @@ module Api
           total_studies: @results.total_entries,
           total_pages: @results.total_pages,
           matching_accessions: @matching_accessions,
-          preset_search: params[:preset_search]
+          preset_search: params[:preset_search],
+          match_by_data: @match_by_data
         }
         if @selected_branding_group.present?
           response_obj[:scpbr] = @selected_branding_group.name_as_id
