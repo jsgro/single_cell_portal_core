@@ -214,9 +214,9 @@ class GenericProfiler
 
   # validate arguments for :profile_expression
   def self.validate_expression_args(study, genes, plot_type, consensus)
-    raise ArgumentError.new("'#{study.accession}' has no gene expression data") if study.genes.empty?
-    raise ArgumentError.new("'#{plot_type}' is not a valid plot type") if !EXPRESSION_PLOT_TYPES.include?(plot_type)
-    raise ArgumentError.new("'#{consensus}' is not a valid consensus") if !CONSENSUS_TYPES.include?(consensus)
+    raise ArgumentError.new("\"#{study.accession}\" has no gene expression data") if study.genes.empty?
+    raise ArgumentError.new("\"#{plot_type}\" is not a valid plot type") if !EXPRESSION_PLOT_TYPES.include?(plot_type)
+    raise ArgumentError.new("\"#{consensus}\" is not a valid consensus") if !CONSENSUS_TYPES.include?(consensus)
     if genes.present?
       names = extract_gene_names(genes)
       raise ArgumentError.new("\"#{genes}\" not present in #{study.accession}") if study.genes.where(:name.in => names).empty?
