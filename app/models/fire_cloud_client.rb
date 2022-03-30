@@ -430,7 +430,7 @@ class FireCloudClient < Struct.new(:user, :project, :access_token, :api_root, :s
           }
       ].to_json
     else
-      raise RuntimeError.new("Invalid FireCloud ACL permission setting: '#{permission}'; must be member of #{WORKSPACE_PERMISSIONS.join(', ')}")
+      raise RuntimeError.new("Invalid FireCloud ACL permission setting \"#{permission}"; must be member of #{WORKSPACE_PERMISSIONS.join(', ')}")
     end
   end
 
