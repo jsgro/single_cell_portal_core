@@ -12,5 +12,159 @@
     "adcy5"
   ],
   "can_visualize_clusters": true,
-  "is_default_annotation_numeric": true
+  "is_default_annotation_numeric": true,
+  "annotation_list": {
+    "default_cluster": "cluster.tsv",
+    "default_annotation": {
+      "name": "Intensity",
+      "type": "numeric",
+      "scope": "cluster",
+      "values": [],
+      "identifier": "Intensity--numeric--cluster"
+    },
+    "annotations": [
+      {
+        "name": "biosample_id",
+        "type": "group",
+        "values": [
+          "AE_D06_02"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "biosample_type",
+        "type": "group",
+        "values": [
+          "PrimaryBioSample_PrimaryCulture"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "disease",
+        "type": "group",
+        "values": [
+          "MONDO_0018076"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "disease__ontology_label",
+        "type": "group",
+        "values": [
+          "tuberculosis"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "organ",
+        "type": "group",
+        "values": [
+          "UBERON_0000178"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "organ__ontology_label",
+        "type": "group",
+        "values": [
+          "blood"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "library_preparation_protocol",
+        "type": "group",
+        "values": [
+          "EFO_0009899"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "library_preparation_protocol__ontology_label",
+        "type": "group",
+        "values": [
+          "10x 3' v2"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "donor_id",
+        "type": "group",
+        "values": [
+          "AE_D06"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "species",
+        "type": "group",
+        "values": [
+          "NCBITaxon_9606"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "species__ontology_label",
+        "type": "group",
+        "values": [
+          "Homo sapiens"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "sex",
+        "type": "group",
+        "values": [
+          "unknown"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "is_living",
+        "type": "group",
+        "values": [
+          "unknown"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "cell_type",
+        "type": "group",
+        "values": [
+          "CL_0000066"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "cell_type__ontology_label",
+        "type": "group",
+        "values": [
+          "epithelial cell"
+        ],
+        "scope": "invalid"
+      },
+      {
+        "name": "Category",
+        "type": "group",
+        "values": [
+          "A"
+        ],
+        "scope": "invalid",
+        "cluster_name": "cluster.tsv"
+      },
+      {
+        "name": "Intensity",
+        "type": "numeric",
+        "values": [],
+        "scope": "cluster",
+        "cluster_name": "cluster.tsv"
+      }
+    ],
+    "clusters": [
+      "cluster.tsv"
+    ],
+    "subsample_thresholds": {
+      "cluster.tsv": []
+    }
+  }
 }
