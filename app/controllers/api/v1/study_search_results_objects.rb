@@ -60,6 +60,8 @@ module Api
           if @gene_results.present?
             study_obj[:gene_matches] = @gene_results[:genes_by_study][study.id].uniq
             study_obj[:can_visualize_clusters] = study.can_visualize_clusters?
+            is_numeric = study.default_annotation.split('--')[1] == 'numeric'
+            study_obj[:is_default_annotation_numeric] = is_numeric
           end
         else
           study_obj = {

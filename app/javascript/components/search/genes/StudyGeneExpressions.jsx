@@ -4,6 +4,7 @@ import _clone from 'lodash/clone'
 import StudySearchResult, { getByline } from '~/components/search/results/StudySearchResult'
 import DotPlot from '~/components/visualization/DotPlot'
 import StudyViolinPlot from '~/components/visualization/StudyViolinPlot'
+import ScatterPlot from '~/components/visualization/ScatterPlot'
 import ClusterSelector from '~/components/visualization/controls/ClusterSelector'
 import AnnotationSelector from '~/components/visualization/controls/AnnotationSelector'
 import SubsampleSelector from '~/components/visualization/controls/SubsampleSelector'
@@ -46,6 +47,14 @@ export default function StudyGeneExpressions({ study }) {
       genes={study.gene_matches}
       {...controlClusterParams}
       annotationValues={annotationValues}/>
+  } else if (study.is_default_annotation_numeric) {
+    // render annotated scatter plot if study has default annotation of type "numeric"
+    studyRenderComponent = <ScatterPlot
+      studyAccession={study.accession}
+      genes={study.gene_matches}
+      {...clusterParams}
+      isAnnotatedScatter={true}
+    />
   } else {
     // render violin for single genes or collapsed
     studyRenderComponent = <StudyViolinPlot
