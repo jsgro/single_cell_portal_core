@@ -84,7 +84,7 @@ function defaultPostInit(mock=false) {
  * // returns {authCode: 123456, timeInterval: 1800}
  * fetchAuthCode(true)
  */
-export async function fetchAuthCode(fileIds, azulFiles, mock=false) {
+export async function fetchAuthCode(fileIds=[], azulFiles=[], mock=false) {
   const init = defaultPostInit(mock)
   init.body = JSON.stringify({
     file_ids: fileIds,
@@ -676,7 +676,7 @@ export async function fetchSearch(type, searchParams, mock=false) {
 
   const [searchResults, perfTimes] = await scpApi(path, defaultInit(), mock)
 
-  logSearch(type, searchParams, perfTimes)
+  logSearch(type, searchParams, perfTimes, searchResults)
 
   return searchResults
 }
@@ -862,7 +862,12 @@ async function scpApiXmlHttp({ apiUrl, init, formData, onProgress, requestCancel
       } else if (request.status === 401 || request.status === 403) {
         reject('Authorization failed. You may need to sign in again')
       } else {
-        reject(JSON.parse(request.response).error)
+        try {
+          reject(JSON.parse(request.response).error)
+        } catch (e) {
+          // fall back to plain text if the response isn't json
+          reject(request.response)
+        }
       }
     }
     request.onerror = () => {

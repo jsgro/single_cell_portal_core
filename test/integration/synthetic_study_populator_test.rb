@@ -39,6 +39,7 @@ class SyntheticStudyPopulatorTest < ActionDispatch::IntegrationTest
   # this test covers both convention data and raw/processed expression matrix files
   # validates that repeated cells are permitted across matrix files
   test 'should be able to populate a study with convention metadata' do
+    skip 'test fails for unexplained reasons in CI only (see SCP-4189)'
     # SyntheticStudyPopulator does have logic for deleting existing sutdies on populate
     # but this is for belt-and-suspenders to make sure the delete is successful
     Study.find_by(name: SYNTH_STUDY_INFO[:name])&.destroy_and_remove_workspace

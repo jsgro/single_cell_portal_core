@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { FileTypeExtensions } from './FileUploadControl'
+import { FileTypeExtensions } from './upload-utils'
 import { TextFormField } from './form-components'
 import { validateFile } from './upload-utils'
 import ExpandableFileForm from './ExpandableFileForm'

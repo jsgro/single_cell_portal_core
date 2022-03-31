@@ -46,6 +46,30 @@ export async function renderWizardWithStudy({
   return renderResult
 }
 
+/** mocks the create file API call to return the given file, but with an id that matches what was actually saved
+*/
+export function mockCreateStudyFile(returnFileObj, createFileSpy) {
+  if (!createFileSpy) {
+    createFileSpy = jest.spyOn(ScpApi, 'createStudyFile')
+  }
+  // do a deep clone to be safe against subsequent object updates
+  const returnFile = _cloneDeep(returnFileObj)
+  createFileSpy.mockImplementation(saveFile => {
+    // read the generated ID from the FormData, so we can return it and it will be matched in the UX
+    // do the same for other id-related fields
+    const idToAssign = saveFile.studyFileData.get('study_file[_id]')
+    returnFile._id = { $oid: idToAssign }
+    if (saveFile.studyFileData.get('study_file[options][matrix_id]')) {
+      returnFile.options = { matrix_id: saveFile.studyFileData.get('study_file[options][matrix_id]') }
+    }
+    if (saveFile.studyFileData.get('study_file[expression_file_info_attributes][raw_counts_associations][]')) {
+      returnFile.expression_file_info.raw_counts_associations = saveFile.studyFileData.getAll('study_file[expression_file_info_attributes][raw_counts_associations][]')
+    }
+    return returnFile
+  })
+  return createFileSpy
+}
+
 /** gets the current save button */
 export function saveButton() {
   return screen.getByTestId('file-save')

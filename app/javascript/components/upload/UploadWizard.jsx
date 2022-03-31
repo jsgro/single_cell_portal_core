@@ -117,17 +117,19 @@ export function RawUploadWizard({ studyAccession, name }) {
   }
 
   /** handle response from server after an upload by updating the serverState with the updated file response */
-  function handleSaveResponse(response, oldFileId, uploadingMoreChunks, requestCanceller) {
+  function handleSaveResponse(response, uploadingMoreChunks, requestCanceller) {
+    const updatedFile = formatFileFromServer(response)
+    const fileId = updatedFile._id
     if (requestCanceller.wasCancelled) {
       Store.addNotification(failureNotification(`${updatedFile.name} save cancelled`))
-      updateFile(oldFileId, { isSaving: false, requestCanceller: null })
+      updateFile(fileId, { isSaving: false, requestCanceller: null })
       return
     }
-    const updatedFile = formatFileFromServer(response)
+
     // first update the serverState
     setServerState(prevServerState => {
       const newServerState = _cloneDeep(prevServerState)
-      let fileIndex = newServerState.files.findIndex(f => f.name === updatedFile.name)
+      let fileIndex = newServerState.files.findIndex(f => f._id === fileId)
       if (fileIndex < 0) {
         // this is a new file -- add it to the end of the list
         fileIndex = newServerState.files.length
@@ -138,7 +140,7 @@ export function RawUploadWizard({ studyAccession, name }) {
     // then update the form state
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
-      const fileIndex = newFormState.files.findIndex(f => f._id === oldFileId)
+      const fileIndex = newFormState.files.findIndex(f => f._id === fileId)
       const formFile = _cloneDeep(updatedFile)
       if (uploadingMoreChunks) {
         // copy over the previous files saving states
@@ -147,9 +149,7 @@ export function RawUploadWizard({ studyAccession, name }) {
         formFile.saveProgress = oldFormFile.saveProgress
         formFile.cancelUpload = oldFormFile.cancelUpload
       }
-      if (oldFileId != updatedFile._id) { // we saved a new file and got back a fresh id
-        formFile.oldId = oldFileId
-      }
+
       newFormState.files[fileIndex] = formFile
       return newFormState
     })
@@ -239,7 +239,7 @@ export function RawUploadWizard({ studyAccession, name }) {
           onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
         })
       }
-      handleSaveResponse(response, studyFileId, isChunked, requestCanceller)
+      handleSaveResponse(response, isChunked, requestCanceller)
       // copy over the new id from the server
       studyFileId = response._id
       requestCanceller.fileId = studyFileId
@@ -253,7 +253,7 @@ export function RawUploadWizard({ studyAccession, name }) {
             onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
           })
         }
-        handleSaveResponse(response, studyFileId, false, requestCanceller)
+        handleSaveResponse(response, false, requestCanceller)
       }
     } catch (error) {
       Store.addNotification(failureNotification(<span>{file.name} failed to save<br/>{error}</span>))

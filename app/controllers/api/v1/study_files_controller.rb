@@ -188,8 +188,17 @@ module Api
 
       # POST /single_cell/api/v1/studies/:study_id/study_files
       def create
-        @study_file = StudyFile.new(study: @study)
         begin
+          new_id = params['study_file']['_id']
+          # if an id is specified, and is not in use, use it
+          if new_id
+            if StudyFile.find(new_id).present?
+              raise 'Duplicate ID -- please refresh the page and retry'
+            end
+            @study_file = StudyFile.new(study: @study, _id: RequestUtils.validate_mongo_id(new_id))
+          else
+            @study_file = StudyFile.new(study: @study)
+          end
           result = perform_update(@study_file)
           MetricsService.log('file-create', format_log_props('success', nil), current_api_user)
           render :show
@@ -299,7 +308,6 @@ module Api
             is_chunked = false # the chunk sent happens to be the entire file
           end
         end
-
         # Somewhere in Rails automagic, the upload filename is set as the study file name
         # We want to have it be the upload_file_name sent by the frontend
         if safe_file_params[:upload] && safe_file_params[:upload_file_name]
@@ -317,7 +325,9 @@ module Api
         assembly_name = safe_file_params[:assembly]
         safe_file_params.delete(:assembly)
         set_taxon_and_assembly_by_name({species: species_name, assembly: assembly_name})
-        # clear the id so that it doesn't get overwritten (which would be a problem for new files)
+        # clear the id so that it doesn't get overwritten -- this would be a security hole for existing files
+        # and for new files the id will have been set along with creation of the StudyFile object in the `create`
+        # method above
         safe_file_params.delete(:_id)
 
         parse_on_upload = safe_file_params[:parse_on_upload]
@@ -325,6 +335,18 @@ module Api
 
         # check if the name of the file has changed as we won't be able to tell after we saved
         name_changed = study_file.persisted? && study_file.name != safe_file_params[:name]
+
+        # log the name properties to help with understanding SCP-4159
+        MetricsService.log('file-update', {
+          studyAccession: @study.accession,
+          message: 'name info',
+          uploadFilename: safe_file_params[:upload_file_name],
+          originalFilename: safe_file_params[:upload]&.original_filename,
+          filename: safe_file_params[:name],
+          fileId: @study_file._id.to_s,
+          fileType: @study_file.file_type,
+          fileSize: @study_file.upload_file_size
+        }, current_api_user)
 
         study_file.update!(safe_file_params)
 

@@ -4,10 +4,9 @@
 import fetch, { Headers } from 'node-fetch'
 import '@testing-library/jest-dom/extend-expect'
 
-import {
-  validateRemoteFile,
-  MAX_SYNC_CSFV_BYTES, getSizeProps
-} from 'lib/validation/validate-file'
+import ValidateFile from 'lib/validation/validate-file'
+
+const { validateRemoteFile, MAX_SYNC_CSFV_BYTES, getSizeProps } = ValidateFile
 
 const bucketName = 'broad-singlecellportal-public'
 
