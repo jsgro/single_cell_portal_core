@@ -18,7 +18,7 @@ import { getDefaultClusterParams, getAnnotationValues, emptyDataParams } from '~
   */
 export default function StudyGeneExpressions({ study }) {
   const [clusterParams, setClusterParams] = useState(_clone(emptyDataParams))
-  const [annotationList, setAnnotationList] = useState(null)
+  const [annotationList, setAnnotationList] = useState(study.annotation_list ?? null)
   let controlClusterParams = _clone(clusterParams)
 
   if (annotationList && !clusterParams.cluster) {

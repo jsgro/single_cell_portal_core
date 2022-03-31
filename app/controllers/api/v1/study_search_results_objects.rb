@@ -62,6 +62,7 @@ module Api
             study_obj[:can_visualize_clusters] = study.can_visualize_clusters?
             is_numeric = study.default_annotation.split('--')[1] == 'numeric'
             study_obj[:is_default_annotation_numeric] = is_numeric
+            study_obj[:annotation_list] = AnnotationVizService.get_study_annotation_options(study, current_api_user)
           end
         else
           study_obj = {
