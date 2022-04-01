@@ -147,7 +147,7 @@ PlotUtils.filterTrace = function({
   }
   // now fix the length of the new arrays in each trace to the number of values that were written,
   // and push the traces into an array
-  const sortedLabels = PlotUtils.getSortedLabels(rawCountsByLabel, activeTraceLabel)
+  const sortedLabels = PlotUtils.getPlotSortedLabels(rawCountsByLabel, activeTraceLabel, false)
   const traces = sortedLabels.map(key => {
     const fTrace = traceMap[key]
     const subArrays = [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.expression, fTrace.cells]
@@ -209,16 +209,36 @@ PlotUtils.sortTraceByExpression = function(trace) {
  * Get color for the label, which can be applied to e.g. the icon or the trace
  */
 PlotUtils.getColorForLabel = function(label, customColors={}, editedCustomColors={}, i) {
+  if (label === '--Unspecified--' && !editedCustomColors[label] && !customColors[label]) {
+    return 'rgba(80, 80, 80, 0.4)'
+  }
   return editedCustomColors[label] ?? customColors[label] ?? PlotUtils.getColorBrewerColor(i)
 }
 
 
-/** Sort labels colors are assigned in right order */
-PlotUtils.getSortedLabels = function(countsByLabel, activeTraceLabel) {
-  /** Sort annotation labels naturally, but always put "unspecified" last, and the activeTraceLabel first */
+/** Returns an array of labels, sorted in the order in which they should be plotted (last is 'on top') */
+PlotUtils.getPlotSortedLabels = function(countsByLabel, activeTraceLabel) {
+  const unspecifiedIsActive = activeTraceLabel === UNSPECIFIED_ANNOTATION_NAME
+  /** Sort annotation labels by number of cells (largest first), but always put the activeTraceLabel last
+   * and the unspecified annotations first
+   * If the activeLabel *is* the unspecified cells, then put them last
+  */
+  function labelCountsSort(a, b) {
+    if (activeTraceLabel === a[0] || (UNSPECIFIED_ANNOTATION_NAME === b[0] && !unspecifiedIsActive)) {return 1}
+    if (activeTraceLabel === b[0] || (UNSPECIFIED_ANNOTATION_NAME === a[0] && !unspecifiedIsActive)) {return -1}
+    return b[1] - a[1]
+  }
+  const sortedEntries = Object.entries(countsByLabel).sort(labelCountsSort)
+  return sortedEntries.map(entry => entry[0])
+}
+
+
+/** Returns an array of labels, sorted in the order in which they should be displayed in the legend */
+PlotUtils.getLegendSortedLabels = function(countsByLabel) {
+  /** Sort annotation labels lexicographically, but always put the unspecified annotations last */
   function labelSort(a, b) {
-    if (a === UNSPECIFIED_ANNOTATION_NAME || a === activeTraceLabel) {return 1}
-    if (b === UNSPECIFIED_ANNOTATION_NAME || b === activeTraceLabel) {return -1}
+    if (UNSPECIFIED_ANNOTATION_NAME === a) {return 1}
+    if (UNSPECIFIED_ANNOTATION_NAME === b) {return -1}
     return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
   }
   return Object.keys(countsByLabel).sort(labelSort)

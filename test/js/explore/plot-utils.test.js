@@ -36,6 +36,19 @@ describe('Plot grouping function cache', () => {
     expect(countsByLabel).toEqual({ a: 2, b: 2, c: 1 })
   })
 
+  it('sorts traces based on number of points', async () => {
+    const data = {
+      x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0],
+      y: [4, 5, 6, 7, 8, 7, 8, 9, 0, 1],
+      annotations: ['a', 'd', 'c', 'a', 'b', 'd', 'd', 'd', 'b', 'a'],
+      cells: ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10']
+    }
+
+    const [traces] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true })
+    expect(traces).toHaveLength(4)
+    expect(traces.map(t => t.name)).toEqual(['d', 'a', 'b', 'c'])
+  })
+
   it('puts the active annotation as the last trace', async () => {
     const data = {
       x: [1, 2, 3, 4, 5],
@@ -50,6 +63,23 @@ describe('Plot grouping function cache', () => {
     expect(traces2[2].name).toEqual('b')
     const [traces3] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true, activeTraceLabel: 'a' })
     expect(traces3[2].name).toEqual('a')
+  })
+
+  it('puts unspecified annotations as the first plotted trace', async () => {
+    const data = {
+      x: [1, 2, 3, 4, 5, 6],
+      y: [4, 5, 6, 7, 8, 9],
+      annotations: ['a', '--Unspecified--', 'c', 'a', '--Unspecified--', 'a'],
+      cells: ['c1', 'c2', 'c3', 'c4', 'c5', 'c6']
+    }
+
+    const [traces] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true })
+    expect(traces.map(t => t.name)).toEqual(['--Unspecified--', 'a', 'c'])
+  })
+
+  it('puts unspecified annotations as the last legend trace', async () => {
+    const sortedLabels = PlotUtils.getLegendSortedLabels({ 'a': 12, '--Unspecified--': 5, 'b': 6, 'z': 20 })
+    expect(sortedLabels).toEqual(['--Unspecified--', 'z', 'a', 'b'])
   })
 
   it('hides traces by name', async () => {

@@ -16,7 +16,7 @@ import { computeCorrelations } from '~/lib/stats'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 import PlotUtils from '~/lib/plot'
-const { getPlotDimensions, filterTrace, getSortedLabels, getColorForLabel, sortTraceByExpression } = PlotUtils
+const { getPlotDimensions, filterTrace, getLegendSortedLabels, getColorForLabel, sortTraceByExpression } = PlotUtils
 import PlotOptions from './plot-options'
 const { defaultScatterColor } = PlotOptions
 import LoadingSpinner from '~/lib/LoadingSpinner'
@@ -404,7 +404,7 @@ function getPlotlyTraces({
   })
 
   if (isRefGroup) {
-    const labels = getSortedLabels(countsByLabel)
+    const labels = getLegendSortedLabels(countsByLabel)
     traces.forEach(groupTrace => {
       groupTrace.type = unfilteredTrace.type
       groupTrace.mode = unfilteredTrace.mode
