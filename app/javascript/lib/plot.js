@@ -71,7 +71,7 @@ PlotUtils.filterTrace = function({
 }) {
   const isHidingByLabel = hiddenTraces && hiddenTraces.length
   const isFilteringByExpression = expressionFilter && expressionData &&
-    (expressionFilter[0] != 0 || expressionFilter[1] != 1)
+    (expressionFilter[0] !== 0 || expressionFilter[1] !== 1)
   const hasZvalues = !!trace.z
   const hasExpression = !!trace.expression
   const oldLength = trace.x.length
