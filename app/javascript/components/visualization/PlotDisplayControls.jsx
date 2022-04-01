@@ -33,8 +33,10 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
     distributionPointsValue = DISTRIBUTION_POINTS_OPTIONS[0]
   }
 
-  const showScatter = shownTab === 'scatter' &&
-                      (exploreParams.annotation.type === 'numeric' || exploreParams.genes.length)
+  const showScatter = (
+    shownTab === 'scatter' &&
+    (exploreParams.annotation.type === 'numeric' || exploreParams.genes.length)
+  )
 
   return (
     <div className="render-controls">

@@ -9,6 +9,7 @@
 
 class SyntheticStudyPopulator
   DEFAULT_SYNTHETIC_STUDY_PATH = Rails.root.join('db', 'seed', 'synthetic_studies')
+  DEFAULT_EXAMPLE_STUDY_PATH = Rails.root.join('db', 'seed', 'example_studies')
   # populates all studies defined in db/seed/synthetic_studies
   def self.populate_all(user: User.first)
     study_names = Dir.glob(DEFAULT_SYNTHETIC_STUDY_PATH.join('*')).select {|f| File.directory? f}
@@ -19,20 +20,26 @@ class SyntheticStudyPopulator
 
   # populates the synthetic study specified in the given folder (e.g. ./db/seed/synthetic_studies/blood)
   # destroys any existing studies and workspace data corresponding to that study
-  def self.populate(synthetic_study_folder, user: User.first, detached: false, update_files: false)
-    synthetic_study_path = synthetic_study_folder
-    if (synthetic_study_folder.exclude?('/'))
-      synthetic_study_path = DEFAULT_SYNTHETIC_STUDY_PATH.join(synthetic_study_folder).to_s
+  def self.populate(study_folder, user: User.first, detached: false, update_files: false)
+    study_path = study_folder
+    if study_folder.exclude?('/')
+      study_path = DEFAULT_SYNTHETIC_STUDY_PATH.join(study_folder).to_s
+      if !File.directory?(study_path)
+        study_path = DEFAULT_EXAMPLE_STUDY_PATH.join(study_folder).to_s
+      end
+      if !File.directory?(study_path)
+        raise "No directory found for #{study_folder}"
+      end
     end
-    study_info_file = File.read(synthetic_study_path + '/study_info.json')
+    study_info_file = File.read(study_path + '/study_info.json')
     study_config = JSON.parse(study_info_file)
 
     # copy the files to a temp directory, since CarrierWave will delete them after upload
-    temp_file_dir = "/tmp/synthetic_studies/#{synthetic_study_folder}"
+    temp_file_dir = "/tmp/synthetic_studies/#{study_folder}"
     FileUtils.mkdir_p(temp_file_dir)
-    FileUtils.cp_r("#{synthetic_study_path}/.", temp_file_dir)
+    FileUtils.cp_r("#{study_path}/.", temp_file_dir)
 
-    puts("Populating synthetic study from #{temp_file_dir}")
+    puts("Populating study from #{temp_file_dir}")
     study = create_study(study_config, user, detached, update_files)
     add_files(study, study_config, temp_file_dir, user)
     study
@@ -80,18 +87,38 @@ class SyntheticStudyPopulator
     study
   end
 
-  def self.add_files(study, study_config, synthetic_study_folder, user)
+  def self.add_files(study, study_config, study_folder, user)
     file_infos = study_config['files']
     file_infos.each do |finfo|
-      File.open("#{synthetic_study_folder}/#{finfo['filename']}") do |infile|
+      local_file = nil
+      begin
         study_file_params = {
           file_type: finfo['type'],
           name: finfo['name'] ? finfo['name'] : finfo['filename'],
-          upload: infile,
           use_metadata_convention: finfo['use_metadata_convention'] ? true : false,
           status: study.detached ? 'new' : 'uploading',
           study: study
         }
+        if finfo['bucket_url'] && !study.detached
+          puts "moving file from remote bucket into workspace -- you must be signed into gsutil for this to work"
+          puts "getting file info from bucket"
+          bucket_file_info = `gsutil stat #{finfo['bucket_url']}`
+          bucket_file_size = bucket_file_info.match(/Content-Length:\s*([0-9]*)/)[1]
+          puts "File listed as #{bucket_file_size} bytes, beginning copy"
+          gsutil_command = "gsutil cp #{finfo['bucket_url']} #{study.gs_url}"
+          puts gsutil_command
+          exit_status = system(gsutil_command)
+          if !exit_status
+            raise 'Copy file failed -- stopping study population'
+          end
+          study_file_params[:status] = 'uploaded'
+          study_file_params[:upload_file_size] = bucket_file_size
+          study_file_params[:remote_location] = finfo['filename']
+          study_file_params[:upload_file_name] = finfo['filename']
+        else
+          local_file = File.open("#{study_folder}/#{finfo['filename']}")
+          study_file_params[:upload] = local_file
+        end
 
         study_file_params.merge!(process_genomic_file_params(study, finfo))
         study_file_params.merge!(process_coordinate_file_params(study, finfo))
@@ -113,13 +140,17 @@ class SyntheticStudyPopulator
             study.send_to_firecloud(study_file)
           end
         end
+      ensure
+        if local_file
+          local_file.close
+        end
       end
     end
   end
 
   def self.process_expression_file_params(study, file_info)
     exp_params = {}
-    if file_info['type'] == 'Expression Matrix'
+    if file_info['type'] == 'Expression Matrix' || file_info['type'] == 'MM Coordinate Matrix'
       exp_finfo_params = file_info['expression_file_info']
       if exp_finfo_params.present?
         exp_file_info = ExpressionFileInfo.new(

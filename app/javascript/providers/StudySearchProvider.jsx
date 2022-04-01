@@ -12,6 +12,7 @@ import {
 import SearchSelectionProvider from './SearchSelectionProvider'
 import { buildParamsFromQuery as buildGeneParamsFromQuery } from './GeneSearchProvider'
 
+
 const emptySearch = {
   params: {
     terms: '',
