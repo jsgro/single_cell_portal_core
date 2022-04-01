@@ -94,6 +94,7 @@ describe('dataParams are appropriately managed on the url', () => {
       heatmapFit: '',
       scatterColor: '',
       tab: '',
+      expressionFilter: [0, 1],
       userSpecified: {
         annotation: true,
         bamFileName: true,

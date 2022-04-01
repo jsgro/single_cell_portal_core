@@ -16,10 +16,9 @@ import { computeCorrelations } from '~/lib/stats'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 import PlotUtils from '~/lib/plot'
-const {
-  getPlotDimensions, filterTrace, getSortedLabels, getColorForLabel,
-  defaultScatterColor, sortTraceByExpression
-} = PlotUtils
+const { getPlotDimensions, filterTrace, getSortedLabels, getColorForLabel, sortTraceByExpression } = PlotUtils
+import PlotOptions from './plot-options'
+const { defaultScatterColor } = PlotOptions
 import LoadingSpinner from '~/lib/LoadingSpinner'
 import { formatFileForApi } from '~/components/upload/upload-utils'
 import { successNotification, failureNotification } from '~/lib/MessageModal'
@@ -43,7 +42,7 @@ window.Plotly = Plotly
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensionProps,
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache,
-  canEdit, expressionFilter
+  canEdit, expressionFilter=[0, 1]
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [bulkCorrelation, setBulkCorrelation] = useState(null)
@@ -362,7 +361,9 @@ function shouldReverseScale(scatterColor) {
   return shownColor !== 'Reds'
 }
 
-/** get the array of plotly traces for plotting */
+/** get the array of plotly traces for plotting
+ * returns [traces, countsByLabel, isRefGroup]
+*/
 function getPlotlyTraces({
   genes,
   isAnnotatedScatter,

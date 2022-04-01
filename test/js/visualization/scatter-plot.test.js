@@ -114,8 +114,9 @@ describe('getPlotlyTraces handles expression graphs', () => {
     plotData.scatter.data.expression = [0.1, 0.0, 2, 4.5, 0, 6.5, 0, 3.1]
     plotData.genes = ['foo']
 
-    const traces = ScatterPlot.getPlotlyTraces(plotData)
-    expect(traces).toHaveLength(2)
+    const [traces] = ScatterPlot.getPlotlyTraces(plotData)
+    // should return just a single trace, since we are plotting by expression rather than annotation
+    expect(traces).toHaveLength(1)
     const trace = traces[0]
     expect(trace.type).toEqual('scattergl')
     expect(trace.x).toEqual([2, 5, 7, 1, 3, 8, 4, 6])
@@ -131,7 +132,7 @@ describe('getPlotlyTraces handles expression graphs', () => {
     plotData.scatter.data.expression = [0, 0, 0, 0, 0, 0, 0, 0]
     plotData.genes = ['foo']
 
-    const traces = ScatterPlot.getPlotlyTraces(plotData)
+    const [traces] = ScatterPlot.getPlotlyTraces(plotData)
     const trace = traces[0]
     expect(trace.marker.cmin).toEqual(0)
     expect(trace.marker.cmax).toEqual(1)
@@ -142,7 +143,7 @@ describe('getPlotlyTraces handles expression graphs', () => {
     plotData.scatter.data.expression = [0, 0, 0, 0, 0, 0, 0, 0]
     plotData.genes = ['foo']
 
-    let traces = ScatterPlot.getPlotlyTraces(plotData)
+    let [traces] = ScatterPlot.getPlotlyTraces(plotData)
     // check that it doesn't reverse Reds when Reds is applied as the default
     // Note that if the defaultScatterColor is ever changed to a non-Reds colorscale,
     // this test will need to be updated
@@ -150,12 +151,12 @@ describe('getPlotlyTraces handles expression graphs', () => {
 
     // check that does not reverse Reds when that is the explicitly specified colorscale
     plotData.scatterColor = 'Reds'
-    traces = ScatterPlot.getPlotlyTraces(plotData)
+    traces = ScatterPlot.getPlotlyTraces(plotData)[0]
     expect(traces[0].marker.reversescale).toEqual(false)
 
     // check that it does reverse a non-Reds color scale that is specified
     plotData.scatterColor = 'Greens'
-    traces = ScatterPlot.getPlotlyTraces(plotData)
+    traces = ScatterPlot.getPlotlyTraces(plotData)[0]
     expect(traces[0].marker.reversescale).toEqual(true)
   })
 })

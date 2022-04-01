@@ -1,0 +1,133 @@
+import PlotUtils from 'lib/plot'
+
+describe('Plot grouping function cache', () => {
+  it('makes traces based on the annotation groups', async () => {
+    const data = {
+      x: [1, 2, 3, 4, 5],
+      y: [4, 5, 6, 7, 8],
+      annotations: ['a', 'b', 'c', 'a', 'b'],
+      cells: ['c1', 'c2', 'c3', 'c4', 'c5']
+    }
+
+    const [traces, countsByLabel] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true })
+    expect(traces).toHaveLength(3)
+    expect(traces[0]).toEqual({
+      x: [1, 4],
+      y: [4, 7],
+      annotations: ['a', 'a'],
+      cells: ['c1', 'c4'],
+      name: 'a'
+    })
+    expect(traces[1]).toEqual({
+      x: [2, 5],
+      y: [5, 8],
+      annotations: ['b', 'b'],
+      cells: ['c2', 'c5'],
+      name: 'b'
+    })
+    expect(traces[2]).toEqual({
+      x: [3],
+      y: [6],
+      annotations: ['c'],
+      cells: ['c3'],
+      name: 'c'
+    })
+
+    expect(countsByLabel).toEqual({ a: 2, b: 2, c: 1 })
+  })
+
+  it('puts the active annotation as the last trace', async () => {
+    const data = {
+      x: [1, 2, 3, 4, 5],
+      y: [4, 5, 6, 7, 8],
+      annotations: ['a', 'b', 'c', 'a', 'b'],
+      cells: ['c1', 'c2', 'c3', 'c4', 'c5']
+    }
+
+    const [traces] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true })
+    expect(traces[2].name).toEqual('c')
+    const [traces2] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true, activeTraceLabel: 'b' })
+    expect(traces2[2].name).toEqual('b')
+    const [traces3] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true, activeTraceLabel: 'a' })
+    expect(traces3[2].name).toEqual('a')
+  })
+
+  it('hides traces by name', async () => {
+    const data = {
+      x: [1, 2, 3, 4, 5],
+      y: [4, 5, 6, 7, 8],
+      annotations: ['a', 'b', 'c', 'a', 'b'],
+      cells: ['c1', 'c2', 'c3', 'c4', 'c5']
+    }
+
+    const [allTraces] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true, hiddenTraces: [] })
+    expect(allTraces.find(t => t.name === 'a').cells).toHaveLength(2)
+
+    const [traces] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true, hiddenTraces: ['a'] })
+    expect(traces.find(t => t.name === 'a').cells).toHaveLength(0)
+
+    const [traces2] = PlotUtils.filterTrace({
+      trace: data, groupByAnnotation: true, hiddenTraces: ['a'], activeTraceLabel: 'b'
+    })
+    expect(traces2.map(t => t.name)).toEqual(['a', 'c', 'b'])
+
+    const [traces3] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true, hiddenTraces: ['b', 'c'] })
+    expect(traces3.find(t => t.name === 'b').cells).toHaveLength(0)
+    expect(traces3.find(t => t.name === 'c').cells).toHaveLength(0)
+
+    const [traces4] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true, hiddenTraces: ['b', 'c', 'a'] })
+    expect(traces4.map(t => t.cells.length)).toEqual([0, 0, 0])
+  })
+
+  it('sorts expression data ', async () => {
+    const data = {
+      x: [1, 2, 3, 4, 5],
+      y: [4, 5, 6, 7, 8],
+      annotations: ['a', 'b', 'c', 'a', 'b'],
+      cells: ['c1', 'c2', 'c3', 'c4', 'c5'],
+      expression: [0, 4, 1, 5.5, 0]
+    }
+
+    const [traces] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: false })
+    expect(traces).toHaveLength(1)
+    expect(traces[0].x).toEqual([1, 2, 3, 4, 5])
+
+    const sortedTrace = PlotUtils.sortTraceByExpression(traces[0])
+    expect(sortedTrace).toEqual({
+      x: [1, 5, 3, 2, 4],
+      y: [4, 8, 6, 5, 7],
+      annotations: ['a', 'b', 'c', 'b', 'a'],
+      cells: ['c1', 'c5', 'c3', 'c2', 'c4'],
+      expression: [0, 0, 1, 4, 5.5]
+    })
+  })
+
+  it('filters on expression data ', async () => {
+    const data = {
+      x: [1, 2, 3, 4, 5],
+      y: [4, 5, 6, 7, 8],
+      annotations: ['a', 'b', 'c', 'a', 'b'],
+      cells: ['c1', 'c2', 'c3', 'c4', 'c5'],
+      expression: [0, 4, 1, 5.5, 0]
+    }
+
+    const [traces] = PlotUtils.filterTrace({
+      trace: data, groupByAnnotation: false, expressionData: data.expression, expressionFilter: [0.5, 1]
+    })
+    expect(traces[0]).toEqual({
+      x: [2, 4],
+      y: [5, 7],
+      annotations: ['b', 'a'],
+      cells: ['c2', 'c4'],
+      expression: [4, 5.5],
+      name: 'main'
+    })
+
+    const [trace2] = PlotUtils.filterTrace({
+      trace: data, groupByAnnotation: false, expressionData: data.expression, expressionFilter: [0, 1]
+    })
+    expect(trace2[0]).toEqual({
+      ...data
+    })
+  })
+})

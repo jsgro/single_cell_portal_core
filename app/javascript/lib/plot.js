@@ -62,9 +62,11 @@ function emptyTrace(expectedLength, hasZvalues, hasExpression) {
  * @param hiddenTraces {String[]} array of label names to filter out
  * @param activeTraceLabel if specified, the traces will be sorted such that the activeTrace is plotted on top
  * @param groupByAnnotation {Boolean} whether to assemble separate traces for each label
+ *
+ * For performance
  */
 PlotUtils.filterTrace = function({
-  trace, hiddenTraces, groupByAnnotation=false,
+  trace, hiddenTraces=[], groupByAnnotation=false,
   activeTraceLabel, expressionFilter, expressionData
 }) {
   const isHidingByLabel = hiddenTraces && hiddenTraces.length
@@ -155,6 +157,7 @@ PlotUtils.filterTrace = function({
       }
     })
     countsByLabel[key] = fTrace.x.length
+    delete fTrace.newLength
     return fTrace
   })
   const expRange = isFilteringByExpression ? [expMin, expMax] : null
