@@ -79,7 +79,7 @@ describe('Plot grouping function cache', () => {
 
   it('puts unspecified annotations as the last legend trace', async () => {
     const sortedLabels = PlotUtils.getLegendSortedLabels({ 'a': 12, '--Unspecified--': 5, 'b': 6, 'z': 20 })
-    expect(sortedLabels).toEqual(['--Unspecified--', 'z', 'a', 'b'])
+    expect(sortedLabels).toEqual(['a', 'b', 'z', '--Unspecified--'])
   })
 
   it('hides traces by name', async () => {
