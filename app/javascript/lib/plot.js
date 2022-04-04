@@ -79,18 +79,18 @@ PlotUtils.filterTrace = function({
   // otherwise, traceMap will just have a single 'all' trace
   const traceMap = {}
   const estTraceLength = groupByAnnotation ? Math.round(trace.x.length / 10) : trace.x.length
-  let rawCountsByLabel = { main: trace.x.length } // maintain a list of all cell counts by label for the legend
+  let unfilteredCountsByLabel = { main: trace.x.length } // maintain a list of all cell counts by label for the legend
   const countsByLabel = {}
   if (groupByAnnotation) {
-    rawCountsByLabel = countValues(trace.annotations)
+    unfilteredCountsByLabel = countValues(trace.annotations)
   }
-  Object.keys(rawCountsByLabel).forEach(key => {
+  Object.keys(unfilteredCountsByLabel).forEach(key => {
     traceMap[key] = emptyTrace(estTraceLength, hasZvalues, hasExpression)
     traceMap[key].name = key
   })
 
   if (!isHidingByLabel && !isFilteringByExpression && !groupByAnnotation) {
-    return [[trace], rawCountsByLabel]
+    return [[trace], unfilteredCountsByLabel]
   }
 
   let expFilterMin
@@ -147,7 +147,7 @@ PlotUtils.filterTrace = function({
   }
   // now fix the length of the new arrays in each trace to the number of values that were written,
   // and push the traces into an array
-  const sortedLabels = PlotUtils.getPlotSortedLabels(rawCountsByLabel, activeTraceLabel, false)
+  const sortedLabels = PlotUtils.getPlotSortedLabels(unfilteredCountsByLabel, activeTraceLabel, false)
   const traces = sortedLabels.map(key => {
     const fTrace = traceMap[key]
     const subArrays = [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.expression, fTrace.cells]

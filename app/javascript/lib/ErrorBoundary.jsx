@@ -4,7 +4,7 @@ import { supportEmailLink } from '~/lib/error-utils'
 /** convert to readable message  e.g.
  * "foobar is not defined    in ResultsPanel (at HomePageContent.js:22)"
  */
-export function readableErrorMessage(error, info) {
+function readableErrorMessage(error, info) {
   // the first line of info stack seems to always be blank,
   // so add the second one to the message
 

@@ -15,10 +15,10 @@ PlotOptions.ROW_CENTERING_OPTIONS = [
 PlotOptions.DEFAULT_ROW_CENTERING = ''
 
 PlotOptions.FIT_OPTIONS = [
-  /* { label: <span>None</span>, value: '' },
+  { label: <span>None</span>, value: '' },
   { label: <span><FontAwesomeIcon icon={faArrowsAltV}/> Rows</span>, value: 'rows' },
   { label: <span><FontAwesomeIcon icon={faArrowsAltH}/> Columns</span>, value: 'cols' },
-  { label: <span><FontAwesomeIcon icon={faArrowsAlt}/> Both</span>, value: 'both' } */
+  { label: <span><FontAwesomeIcon icon={faArrowsAlt}/> Both</span>, value: 'both' }
 ]
 PlotOptions.DEFAULT_FIT = ''
 
@@ -34,7 +34,6 @@ PlotOptions.dotPlotColorScheme = {
   // Blue, purple, red.  These red and blue hues are accessible, per WCAG.
   colors: ['#0000BB', '#CC0088', '#FF0000'],
 
-  // TODO: Incorporate expression units, once such metadata is available.
   values: [0, 0.5, 1]
 }
 
