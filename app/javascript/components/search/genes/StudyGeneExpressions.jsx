@@ -20,7 +20,8 @@ export default function StudyGeneExpressions({ study }) {
   const [clusterParams, setClusterParams] = useState(_clone(emptyDataParams))
   const [annotationList, setAnnotationList] = useState(study.annotation_list ?? null)
   let controlClusterParams = _clone(clusterParams)
-
+const defaultAnnotation = getAnnotationFromIdentifier(study.default_annotation)
+const defaultAnnotationIsNumeric = defaultAnnotation?.type === 'numeric'
   if (annotationList && !clusterParams.cluster) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
     controlClusterParams = Object.assign(controlClusterParams, getDefaultClusterParams(annotationList))
