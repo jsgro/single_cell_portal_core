@@ -342,7 +342,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
     until  ['parsed', 'failed'].include? uploaded_matrix.parse_status  do
       puts "After #{seconds_slept} seconds, #{new_matrix} is #{uploaded_matrix.parse_status}."
       if seconds_slept >= max_seconds_to_sleep
-        raise "Sleep timeout after #{seconds_slept} seconds when waiting for parse of #{new_matrix}."
+        raise "Sleep timeout after #{seconds_slept} seconds when waiting for parse of \"#{new_matrix}\"."
       end
       sleep(sleep_increment)
       seconds_slept += sleep_increment
