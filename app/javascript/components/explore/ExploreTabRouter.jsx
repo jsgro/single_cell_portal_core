@@ -3,7 +3,7 @@ import { navigate, useLocation } from '@reach/router'
 import * as queryString from 'query-string'
 
 import { stringifyQuery, geneParamToArray, geneArrayToParam } from '~/lib/scp-api'
-import { getIdentifierForAnnotation } from '~/lib/cluster-utils'
+import { getIdentifierForAnnotation, getAnnotationForIdentifier } from '~/lib/cluster-utils'
 import { DEFAULT_ROW_CENTERING } from '~/components/visualization/Heatmap'
 import { logStudyGeneSearch } from '~/lib/metrics-api'
 
@@ -75,9 +75,8 @@ function buildExploreParamsFromQuery(query) {
     type: ''
   }
   if (queryParams.annotation) {
-    const [name, type, scope] = queryParams.annotation.split('--')
-    annotation = { name, type, scope }
-    if (name && name.length > 0) {
+    annotation = getAnnotationForIdentifier(queryParams.annotation)
+    if (annotation.name && annotation.name.length > 0) {
       exploreParams.userSpecified.annotation = true
     }
   }
