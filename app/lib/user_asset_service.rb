@@ -227,7 +227,7 @@ class UserAssetService
   #   - +TypeError+ => invalid asset type
   def self.verify_asset_type(asset_type)
     if asset_type.present? && !ASSET_TYPES.include?(asset_type.to_s)
-      raise TypeError.new("#{asset_type} is not a registered asset type: #{ASSET_TYPES.join(', ')}")
+      raise TypeError.new("\"#{asset_type}\" is not a registered asset type: \"#{ASSET_TYPES.join(', ')}\"")
     end
   end
 end
