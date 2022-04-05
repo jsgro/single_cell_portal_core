@@ -206,9 +206,15 @@ export default function ScatterPlotLegend({
     saveCustomColors(colorsToSave)
   }
 
+  /** collect general information when a user's mouse enters the legend  */
+  function logMouseEnter() {
+    log('hover:scatterlegend', { numLabels })
+  }
+
   return (
     <div
       className={`scatter-legend ${filteredClass}`}
+      onMouseEnter={logMouseEnter}
       style={style}>
       <div className="scatter-legend-head">
         <div>
