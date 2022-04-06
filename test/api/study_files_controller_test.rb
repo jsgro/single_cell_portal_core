@@ -12,9 +12,10 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
                                name_prefix: 'StudyFile Study',
                                public: true,
                                user: @user,
-                               test_array: @@studies_to_clean,
-                               predefined_file_types: %w[cluster])
-    @study_file = @study.study_files.first
+                               test_array: @@studies_to_clean)
+    @study_file = FactoryBot.create(:cluster_file,
+                               name: 'clusterA.txt',
+                               study: @study)
   end
 
   setup do
@@ -85,6 +86,19 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:delete, api_v1_study_study_file_path(study_id: @study.id, id: study_file_id))
     assert_response 204, "Did not successfully delete study file, expected response of 204 but found #{@response.response_code}"
   end
+
+  test 'can update cluster name' do
+    cluster_file = @study_file
+    update_attributes = {
+      study_file: {
+        name: 'updated name'
+      }
+    }
+    execute_http_request(:patch, api_v1_study_study_file_path(study_id: @study.id, id: cluster_file._id), request_payload: update_attributes)
+    assert_equal 'updated name', json['name']
+    assert_equal 'updated name', @study.cluster_groups.first.reload.name
+  end
+
 
   # create a study file bundle using the study_files_controller method
   test 'should create study file bundle' do
