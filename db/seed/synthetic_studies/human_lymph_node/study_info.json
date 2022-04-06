@@ -26,11 +26,14 @@
     {
       "type": "Cluster",
       "filename": "cluster.tsv"
-    }
-    ,
+    },
     {
       "type": "Cluster",
       "filename": "cluster2.tsv"
+    },
+    {
+      "type": "Cluster",
+      "filename": "bullseye_cluster.tsv"
     }
   ]
 }

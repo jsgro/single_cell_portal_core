@@ -1,0 +1,132 @@
+NAME	X	Y	Category
+TYPE	numeric	numeric	group
+AD_1	0	0	Outer cells
+AD_2	10	0	Outer cells
+AD_3	10	10	Outer cells
+AD_4	0	10	Outer cells
+AD_5	5	5	Center
+AD_6	5.05	5.05	Middle
+AD_7	4.95	4.95	Middle
+AD_8	5.05	4.95	Middle
+AD_9	4.95	5.05	Middle
+AD_10	5.051	5.053	Inner ring
+AD_11	4.954	4.952	Inner ring
+AD_12	5.042	4.93	Inner ring
+AD_13	4.96	5.047	Inner ring
+AD_14	5.151	5.153	Inner ring
+AD_15	4.854	4.852	Inner ring
+AD_16	5.092	4.893	Inner ring
+AD_17	4.98	5.017	Inner ring
+AD_18	5.056	5.023	Bigger ring
+AD_19	4.854	4.962	Bigger ring
+AD_20	5.022	4.97	Bigger ring
+AD_21	4.97	5.027	Bigger ring
+AD_22	5.158	5.151	Bigger ring
+AD_23	4.954	4.91	Bigger ring
+AD_24	5.082	4.793	Bigger ring
+AD_25	4.99	5.011	Bigger ring
+AD_26	5.156	5.223	Bigger ring
+AD_27	4.754	4.862	Bigger ring
+AD_28	5.182	4.87	Bigger ring
+AD_29	4.87	5.127	Bigger ring
+AD_30	5.178	5.191	Bigger ring
+AD_31	4.854	4.812	Bigger ring
+AD_32	5.182	4.693	Bigger ring
+AD_33	4.89	5.111	Bigger ring
+AD_34	5.05	5.05	Outer cells
+AD_35	4.95	4.95	Outer cells
+AD_36	5.05	4.95	Outer cells
+AD_37	4.95	5.05	Outer cells
+AD_38	5.051	5.053	Outer cells
+AD_39	4.954	4.952	Outer cells
+AD_40	5.042	4.93	Outer cells
+AD_41	4.96	5.047	Outer cells
+AD_42	5.151	5.153	Outer cells
+AD_43	4.854	4.852	Outer cells
+AD_44	5.092	4.893	Outer cells
+AD_45	4.98	5.017	Outer cells
+AD_46	5.056	5.023	Outer cells
+AD_47	4.854	4.962	Outer cells
+AD_48	5.022	4.97	Outer cells
+AD_49	4.97	5.027	Outer cells
+AD_50	5.158	5.151	Outer cells
+AD_51	4.954	4.91	Outer cells
+AD_52	5.082	4.793	Outer cells
+AD_53	4.99	5.011	Outer cells
+AD_54	5.156	5.223	Outer cells
+AD_55	4.754	4.862	Outer cells
+AD_56	5.182	4.87	Outer cells
+AD_57	4.87	5.127	Outer cells
+AD_58	5.178	5.191	Outer cells
+AD_59	4.854	4.812	Outer cells
+AD_60	5.182	4.693	Outer cells
+AD_61	4.89	5.111	Outer cells
+AD_62	4.554	4.562	Outer cells
+AD_63	5.322	4.67	Outer cells
+AD_64	4.67	5.227	Outer cells
+AD_65	5.258	5.251	Outer cells
+AD_66	4.754	4.71	Outer cells
+AD_67	5.282	4.593	Outer cells
+AD_68	4.69	5.211	Outer cells
+AD_69	5.356	5.023	Outer cells
+AD_70	4.654	4.962	Outer cells
+AD_71	5.082	4.77	Outer cells
+AD_72	4.97	5.327	Outer cells
+AD_73	5.278	5.051	Outer cells
+AD_74	4.754	5.212	Outer cells
+AD_75	5.082	4.593	Outer cells
+AD_76	4.79	5.211	Outer cells
+AD_77	4.964	4.852
+AD_78	5.142	4.83
+AD_79	4.963	5.044
+AD_80	5.153	5.158
+AD_81	4.854	4.852
+AD_82	5.092	4.893
+AD_83	4.98	5.017
+AD_84	5.056	5.023
+AD_85	4.854	4.962
+AD_86	5.022	4.97
+AD_87	4.97	5.027
+AD_88	5.158	5.151
+AD_89	8	4.91
+AD_90	5.082	4.793
+AD_91	4.99	5.011
+AD_92	5.156	6
+AD_93	4	4.862
+AD_94	5.182	4.87
+AD_95	4.87	4
+AD_96	5.178	5.191
+AD_97	4.854	4.812
+AD_98	4	4.693
+AD_99	3	5.111
+AD_100	4.1	5.05
+AD_101	4.95	4.95
+AD_102	5.05	3
+AD_103	4.95	5.05
+AD_104	5.051	5.053
+AD_105	4.954	4.952
+AD_106	6.3	4.93
+AD_107	4.96	5.047
+AD_108	5.151	5.153
+AD_109	4.854	4.3
+AD_110	5.092	4.893
+AD_111	4.98	5.9
+AD_112	5.7	5.023
+AD_113	4.854	4.962
+AD_114	5.022	4.97
+AD_115	4.97	5.027
+AD_116	5.158	4.2
+AD_117	4.954	4.91
+AD_118	6.5	4.952
+AD_119	5.042	4.93
+AD_120	4.96	5.047
+AD_121	3.9	6.1
+AD_122	6.2	4.852
+AD_123	5.092	4.893
+AD_124	4.98	4.1
+AD_125	5.056	5.023
+AD_126	4.854	4.962
+AD_127	5.022	4.97
+AD_128	3.8	5.027
+AD_129	5.158	5.151
+AD_130	4.954	4.91
