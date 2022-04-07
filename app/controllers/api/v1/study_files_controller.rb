@@ -342,7 +342,7 @@ module Api
           message: 'name info',
           uploadFilename: safe_file_params[:upload_file_name],
           originalFilename: safe_file_params[:upload]&.original_filename,
-          filename: safe_file_params[:name],
+          fileName: safe_file_params[:name],
           fileId: study_file._id.to_s,
           fileType: study_file.file_type,
           fileSize: study_file.upload_file_size
@@ -373,7 +373,7 @@ module Api
           end
         end
 
-        if ['Expression Matrix', 'MMc Coordinate Matrix'].include?(study_file.file_type) && !safe_file_params[:y_axis_label].blank?
+        if ['Expression Matrix', 'MM Coordinate Matrix'].include?(study_file.file_type) && !safe_file_params[:y_axis_label].blank?
           # if user is supplying an expression axis label, update default options hash
           options = study.default_options.dup
           options.merge!(expression_label: safe_file_params[:y_axis_label])
