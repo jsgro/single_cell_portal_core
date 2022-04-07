@@ -48,11 +48,7 @@
 
 /** Like hover state for React Select */
 .scatter-legend-row:hover {
-  border-color: #AAB;
-}
-
-.scatter-legend-row:hover {
-  border-color: #AAB;
+  border-color: $action-color;
 }
 
 .scatter-legend-icon {

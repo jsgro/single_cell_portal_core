@@ -1,5 +1,6 @@
 import React from 'react'
-import { dotPlotColorScheme } from './DotPlot'
+import PlotUtils from '~/lib/plot'
+const { dotPlotColorScheme } = PlotUtils
 import { Popover, OverlayTrigger } from 'react-bootstrap'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'

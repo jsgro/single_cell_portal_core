@@ -7,72 +7,19 @@ import _cloneDeep from 'lodash/cloneDeep'
 
 import { log } from '~/lib/metrics-api'
 import { UNSPECIFIED_ANNOTATION_NAME } from '~/lib/cluster-utils'
-import { getColorBrewerColor, scatterLabelLegendWidth } from '~/lib/plot'
-
-/** Sort annotation labels naturally, but always put "unspecified" last */
-function labelSort(a, b) {
-  if (a === UNSPECIFIED_ANNOTATION_NAME) {return 1}
-  if (b === UNSPECIFIED_ANNOTATION_NAME) {return -1}
-  return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
-}
-
-/**
- * Return a hash of value=>count for the passed-in array
- * This is surprisingly quick even for large arrays, but we'd rather we
- * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
-*/
-function countValues(array) {
-  return array.reduce((acc, curr) => {
-    acc[curr] ||= 0
-    acc[curr] += 1
-    return acc
-  }, {})
-}
-
-/** Sort labels colors are assigned in right order */
-function getLabels(countsByLabel) {
-  return Object.keys(countsByLabel).sort(labelSort)
-}
+import PlotUtils from '~/lib/plot'
+const { scatterLabelLegendWidth, getColorForLabel, getLegendSortedLabels } = PlotUtils
 
 /** Convert state Boolean to attribute string */
 function getActivity(isActive) {
   return isActive ? 'active' : 'disabled'
 }
 
-/**
- * Get value for `style` prop in Plotly scatter plot `trace.transforms`.
- * Also calculate point counts for each label, `countsByLabel`.
- *
- * This is needed so that colors match between the custom Plotly legend
- * entries and each graphical trace in the plot.  (Without this, point
- * set "Foo" could be green in the legend, but red in the plot.)
- *
-*/
-export function getStyles(data, pointSize, customColors, editedCustomColors) {
-  const countsByLabel = countValues(data.annotations)
-
-  const labels = getLabels(countsByLabel)
-  const legendStyles = labels
-    .map((label, index) => {
-      return {
-        target: label,
-        value: {
-          legendrank: index,
-          marker: {
-            color: getColorForLabel(label, customColors, editedCustomColors, index),
-            size: pointSize
-          }
-        }
-      }
-    })
-
-  return [legendStyles, countsByLabel]
-}
 
 /** Component for row in legend */
 function LegendEntry({
   label, numPoints, iconColor, correlations,
-  numLabels, hiddenTraces, updateHiddenTraces, showColorControls, updateEditedCustomColors
+  numLabels, hiddenTraces, updateHiddenTraces, showColorControls, updateEditedCustomColors, setActiveTraceLabel
 }) {
   let entry = label
   // whether to show the color picker modal
@@ -119,6 +66,8 @@ function LegendEntry({
         className={`scatter-legend-row ${shownClass}`}
         role="button"
         onClick={entryClickFunction}
+        onMouseEnter={() => setActiveTraceLabel(label)}
+        onMouseLeave={() => setActiveTraceLabel(null)}
       >
         <div className="scatter-legend-icon" style={iconStyle}>
           { showColorControls && <FontAwesomeIcon icon={faPalette} title="Change the color for this label"/> }
@@ -189,26 +138,17 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
   return enabled
 }
 
-/**
- * Get color for the label, which can be applied to e.g. the icon or the trace
- */
-function getColorForLabel(label, customColors={}, editedCustomColors={}, i) {
-  if (label === '--Unspecified--' && !editedCustomColors[label] && !customColors[label]) {
-    return 'rgba(80, 80, 80, 0.4)'
-  }
-  return editedCustomColors[label] ?? customColors[label] ?? getColorBrewerColor(i)
-}
 
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, hiddenTraces,
   updateHiddenTraces, customColors, editedCustomColors, setEditedCustomColors,
-  enableColorPicking=false, saveCustomColors
+  enableColorPicking=false, saveCustomColors, activeTraceLabel, setActiveTraceLabel
 }) {
   // is the user currently in color-editing mode
   const [showColorControls, setShowColorControls] = useState(false)
   // whether a request to the server to save colors is pending
-  const labels = getLabels(countsByLabel)
+  const labels = getLegendSortedLabels(countsByLabel)
   const numLabels = labels.length
 
   const legendEntries = labels
@@ -228,6 +168,7 @@ export default function ScatterPlotLegend({
           numLabels={numLabels}
           updateEditedCustomColors={updateEditedCustomColors}
           showColorControls={showColorControls}
+          setActiveTraceLabel={setActiveTraceLabel}
         />
       )
     })
@@ -266,9 +207,15 @@ export default function ScatterPlotLegend({
     saveCustomColors(colorsToSave)
   }
 
+  /** collect general information when a user's mouse enters the legend  */
+  function logMouseEnter() {
+    log('hover:scatterlegend', { numLabels })
+  }
+
   return (
     <div
       className={`scatter-legend ${filteredClass}`}
+      onMouseEnter={logMouseEnter}
       style={style}>
       <div className="scatter-legend-head">
         <div>

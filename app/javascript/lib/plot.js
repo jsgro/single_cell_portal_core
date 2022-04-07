@@ -1,4 +1,5 @@
-import Plotly from 'plotly.js-dist'
+import { UNSPECIFIED_ANNOTATION_NAME } from '~/lib/cluster-utils'
+import { log } from '~/lib/metrics-api'
 
 // Default plot colors, combining ColorBrewer sets 1-3 with tweaks to yellows.
 const colorBrewerList = [
@@ -9,62 +10,259 @@ const colorBrewerList = [
   '#bc80bd', '#ccebc5', '#ffed6f'
 ]
 
-export const ideogramHeight = 140
+const PlotUtils = function() {
+  return 'placeholder component'
+}
 
-export const scatterLabelLegendWidth = 260
 
 /**
  * Used in both categorical scatter plots and violin plots, to ensure
  * they use consistent friendly colors for annotations, etc.
  */
-export function getColorBrewerColor(index) {
+PlotUtils.getColorBrewerColor = function(index) {
   return colorBrewerList[index % 27]
 }
 
 // default title font settings for axis titles in plotly
-export const titleFont = {
+PlotUtils.titleFont = {
   family: 'Helvetica Neue',
   size: 16,
   color: '#333'
 }
 
 // default label font settings for colorbar titles in plotly
-export const labelFont = {
+PlotUtils.labelFont = {
   family: 'Helvetica Neue',
   size: 12,
   color: '#333'
 }
 
-export const lineColor = 'rgb(40, 40, 40)'
+PlotUtils.lineColor = 'rgb(40, 40, 40)'
 
-/**
- * Wrapper for Plotly.newPlot, to enable tests
- *
- * Having this function in a separate module is needed for mocking in related
- * test (study-violin-plot.test.js), due to (1) and buggy workaround (2).
- *
- * 1) SVG path getTotalLength method is undefined in jsdom library used by Jest
- *    Details: https://github.com/jsdom/jsdom/issues/1330
- *
- * 2) jest.mock() does not work when module name has ".js" in it
- *    Details: https://github.com/facebook/jest/issues/6420
- */
-export function plot(graphElementId, data, layout) {
-  Plotly.newPlot(
-    graphElementId,
-    data,
-    layout
-  )
+/** returns an empty trace with arrays initialized based on expectedLength */
+function emptyTrace(expectedLength, hasZvalues, hasExpression) {
+  const trace = {
+    x: new Array(expectedLength),
+    y: new Array(expectedLength),
+    annotations: new Array(expectedLength),
+    cells: new Array(expectedLength),
+    newLength: 0 // used to track the post-filter length -- NOT a plotly property
+  }
+  if (hasZvalues) {
+    trace.z = new Array(expectedLength)
+  }
+  if (hasExpression) {
+    trace.expression = new Array(expectedLength)
+  }
+  return trace
 }
 
-// To consider: dedup this copy with the one that exists in application.js.
-export const plotlyDefaultLineColor = 'rgb(40, 40, 40)'
+/** takes a plotly trace argument and filters out cells based on params.  will return the original object,
+ * but with data arrays filtered as appropriate
+ * @param hiddenTraces {String[]} array of label names to filter out
+ * @param activeTraceLabel if specified, the traces will be sorted such that the activeTrace is plotted on top
+ * @param groupByAnnotation {Boolean} whether to assemble separate traces for each label
+ *
+ * For performance, see https://docs.google.com/document/d/1JKmXp9gEY2Y_cshypBwLrpgBEKYcpBmMna0nf_7eeNw
+ */
+PlotUtils.filterTrace = function({
+  trace, hiddenTraces=[], groupByAnnotation=false,
+  activeTraceLabel, expressionFilter, expressionData
+}) {
+  const isHidingByLabel = hiddenTraces && hiddenTraces.length
+  const isFilteringByExpression = expressionFilter && expressionData &&
+    (expressionFilter[0] !== 0 || expressionFilter[1] !== 1)
+  const hasZvalues = !!trace.z
+  const hasExpression = !!trace.expression
+  const oldLength = trace.x.length
+  // if grouping by annotation, traceMap is a hash of annotation names to traces
+  // otherwise, traceMap will just have a single 'all' trace
+  const traceMap = {}
+  const estTraceLength = groupByAnnotation ? Math.round(trace.x.length / 10) : trace.x.length
+  let unfilteredCountsByLabel = { main: trace.x.length } // maintain a list of all cell counts by label for the legend
+  const countsByLabel = {}
+  if (groupByAnnotation) {
+    unfilteredCountsByLabel = countValues(trace.annotations)
+  }
+  Object.keys(unfilteredCountsByLabel).forEach(key => {
+    traceMap[key] = emptyTrace(estTraceLength, hasZvalues, hasExpression)
+    traceMap[key].name = key
+  })
+
+  if (!isHidingByLabel && !isFilteringByExpression && !groupByAnnotation) {
+    return [[trace], unfilteredCountsByLabel]
+  }
+
+  let expFilterMin
+  let expFilterMax
+  let expMin = 99999999
+  let expMax = -99999999
+  if (isFilteringByExpression) {
+    // find the max and min so we can rescale
+    for (let i = 0; i < expressionData.length; i++) {
+      const expValue = expressionData[i]
+      if (expValue < expMin) {
+        expMin = expValue
+      }
+      if (expValue > expMax) {
+        expMax = expValue
+      }
+    }
+    // convert the expressionFilter, which is on a 0-1 scale, to the expression scale
+    const totalRange = expMax - expMin
+    expFilterMin = expMin + totalRange * expressionFilter[0]
+    expFilterMax = expMin + totalRange * expressionFilter[1]
+  }
+
+  const labelNameHash = {}
+  if (isHidingByLabel) {
+    // build a hash of label => present so we can quickly filter
+    for (let i = 0; i < hiddenTraces.length; i++) {
+      labelNameHash[hiddenTraces[i]] = true
+    }
+  }
+
+  // this is the main filter/group loop.  Loop over every cell and determine whether it needs to be filtered,
+  // and if it needs to be grouped.
+  for (let i = 0; i < oldLength; i++) {
+    // if we're not filtering by expression, or the cell is in the range, show it
+    if (!isFilteringByExpression || (expressionData[i] >= expFilterMin && expressionData[i] <= expFilterMax)) {
+      // if we're not hiding by label, or the label is present in the list, include it
+      if (!isHidingByLabel || !labelNameHash[trace.annotations[i]]) {
+        const fTrace = groupByAnnotation ? traceMap[trace.annotations[i]] : traceMap.main
+        const newIndex = fTrace.newLength
+        fTrace.x[newIndex] = trace.x[i]
+        fTrace.y[newIndex] = trace.y[i]
+        if (hasZvalues) {
+          fTrace.z[newIndex] = trace.z[i]
+        }
+        fTrace.cells[newIndex] = trace.cells[i]
+        fTrace.annotations[newIndex] = trace.annotations[i]
+        if (hasExpression) {
+          fTrace.expression[newIndex] = trace.expression[i]
+        }
+        fTrace.newLength++
+      }
+    }
+  }
+  // now fix the length of the new arrays in each trace to the number of values that were written,
+  // and push the traces into an array
+  const sortedLabels = PlotUtils.getPlotSortedLabels(unfilteredCountsByLabel, activeTraceLabel, false)
+  const traces = sortedLabels.map(key => {
+    const fTrace = traceMap[key]
+    const subArrays = [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.expression, fTrace.cells]
+    subArrays.forEach(arr => {
+      if (arr) {
+        arr.length = fTrace.newLength
+      }
+    })
+    countsByLabel[key] = fTrace.x.length
+    delete fTrace.newLength
+    return fTrace
+  })
+  const expRange = isFilteringByExpression ? [expMin, expMax] : null
+  return [traces, countsByLabel, expRange]
+}
+
+/** sort the passsed in trace by expression value */
+PlotUtils.sortTraceByExpression = function(trace) {
+  const hasZ = !!trace.z
+  const traceLength = trace.x.length
+  const sortedTrace = {
+    type: trace.type,
+    mode: trace.mode
+  }
+  // sort the points by order of expression
+  const expressionsWithIndices = new Array(traceLength)
+  for (let i = 0; i < traceLength; i++) {
+    expressionsWithIndices[i] = [trace.expression[i], i]
+  }
+  expressionsWithIndices.sort((a, b) => a[0] - b[0])
+
+  // initialize the other arrays with their size
+  // (see https://codeabitwiser.com/2015/01/high-performance-javascript-arrays-pt1/ for performance rationale)
+  sortedTrace.x = new Array(traceLength)
+  sortedTrace.y = new Array(traceLength)
+  if (hasZ) {
+    sortedTrace.z = new Array(traceLength)
+  }
+  sortedTrace.annotations = new Array(traceLength)
+  sortedTrace.cells = new Array(traceLength)
+  sortedTrace.expression = new Array(traceLength)
+
+  // now that we know the indices, reorder the other data arrays
+  for (let i = 0; i < expressionsWithIndices.length; i++) {
+    const sortedIndex = expressionsWithIndices[i][1]
+    sortedTrace.x[i] = trace.x[sortedIndex]
+    sortedTrace.y[i] = trace.y[sortedIndex]
+    if (hasZ) {
+      sortedTrace.z[i] = trace.z[sortedIndex]
+    }
+    sortedTrace.cells[i] = trace.cells[sortedIndex]
+    sortedTrace.annotations[i] = trace.annotations[sortedIndex]
+    sortedTrace.expression[i] = expressionsWithIndices[i][0]
+  }
+  return sortedTrace
+}
+
+/**
+ * Get color for the label, which can be applied to e.g. the icon or the trace
+ */
+PlotUtils.getColorForLabel = function(label, customColors={}, editedCustomColors={}, i) {
+  if (label === '--Unspecified--' && !editedCustomColors[label] && !customColors[label]) {
+    return 'rgba(80, 80, 80, 0.4)'
+  }
+  return editedCustomColors[label] ?? customColors[label] ?? PlotUtils.getColorBrewerColor(i)
+}
+
+
+/** Returns an array of labels, sorted in the order in which they should be plotted (last is 'on top') */
+PlotUtils.getPlotSortedLabels = function(countsByLabel, activeTraceLabel) {
+  const unspecifiedIsActive = activeTraceLabel === UNSPECIFIED_ANNOTATION_NAME
+  /** Sort annotation labels by number of cells (largest first), but always put the activeTraceLabel last
+   * and the unspecified annotations first
+   * If the activeLabel *is* the unspecified cells, then put them last
+  */
+  function labelCountsSort(a, b) {
+    if (activeTraceLabel === a[0] || (UNSPECIFIED_ANNOTATION_NAME === b[0] && !unspecifiedIsActive)) {return 1}
+    if (activeTraceLabel === b[0] || (UNSPECIFIED_ANNOTATION_NAME === a[0] && !unspecifiedIsActive)) {return -1}
+    return b[1] - a[1]
+  }
+  const sortedEntries = Object.entries(countsByLabel).sort(labelCountsSort)
+  return sortedEntries.map(entry => entry[0])
+}
+
+
+/** Returns an array of labels, sorted in the order in which they should be displayed in the legend */
+PlotUtils.getLegendSortedLabels = function(countsByLabel) {
+  /** Sort annotation labels lexicographically, but always put the unspecified annotations last */
+  function labelSort(a, b) {
+    if (UNSPECIFIED_ANNOTATION_NAME === a) {return 1}
+    if (UNSPECIFIED_ANNOTATION_NAME === b) {return -1}
+    return a.localeCompare(b, 'en', { numeric: true, ignorePunctuation: true })
+  }
+  return Object.keys(countsByLabel).sort(labelSort)
+}
+
+
+/**
+ * Return a hash of value=>count for the passed-in array
+ * This is surprisingly quick even for large arrays, but we'd rather we
+ * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
+*/
+function countValues(array) {
+  return array.reduce((acc, curr) => {
+    acc[curr] ||= 0
+    acc[curr] += 1
+    return acc
+  }, {})
+}
 
 /**
  * More memory- and time-efficient analog of Math.min
  * From https://stackoverflow.com/a/13440842/10564415.
 */
-export function arrayMin(arr) {
+PlotUtils.arrayMin = function(arr) {
   let len = arr.length; let min = Infinity
   while (len--) {
     if (arr[len] < min) {
@@ -78,7 +276,7 @@ export function arrayMin(arr) {
  * More memory- and time-efficient analog of Math.max
  * From https://stackoverflow.com/a/13440842/10564415.
 */
-export function arrayMax(arr) {
+PlotUtils.arrayMax = function(arr) {
   let len = arr.length; let max = -Infinity
   while (len--) {
     if (arr[len] > max) {
@@ -88,16 +286,11 @@ export function arrayMax(arr) {
   return max
 }
 
-// sourced from https://github.com/plotly/plotly.js/blob/master/src/components/colorscale/scales.js
-export const SCATTER_COLOR_OPTIONS = [
-  'Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu', 'Reds', 'Blues', 'Picnic',
-  'Rainbow', 'Portland', 'Jet', 'Hot', 'Blackbody', 'Earth', 'Electric', 'Viridis', 'Cividis'
-]
-
-export const defaultScatterColor = 'Reds'
+PlotUtils.ideogramHeight = 140
+PlotUtils.scatterLabelLegendWidth = 260
 
 /** Get width and height available for plot components, since they may be first rendered hidden */
-export function getPlotDimensions({
+PlotUtils.getPlotDimensions = function({
   isTwoColumn=false,
   isMultiRow=false,
   verticalPad=250,
@@ -114,7 +307,7 @@ export function getPlotDimensions({
   }
   if (hasLabelLegend) {
     const factor = isTwoColumn ? 2 : 1
-    horizontalPad += scatterLabelLegendWidth * factor
+    horizontalPad += PlotUtils.scatterLabelLegendWidth * factor
   }
   let width = (baseWidth - horizontalPad) / (isTwoColumn ? 2 : 1)
 
@@ -123,7 +316,7 @@ export function getPlotDimensions({
   let galleryHeight = $(window).height() - verticalPad
 
   if (showRelatedGenesIdeogram) {
-    galleryHeight -= ideogramHeight
+    galleryHeight -= PlotUtils.ideogramHeight
   }
 
   if (hasTitle) {
@@ -149,3 +342,46 @@ export function getPlotDimensions({
 
   return { width, height }
 }
+
+/** return a trivial tab manager that handles focus and sizing
+ * We implement our own trivial tab manager as it seems to be the only way
+ * (after 2+ hours of digging) to prevent morpheus auto-scrolling
+ * to a heatmap once it's rendered
+ */
+PlotUtils.morpheusTabManager = function($target) {
+  return {
+    add: options => {
+      $target.empty()
+      $target.append(options.$el)
+      return { id: $target.attr('id'), $panel: $target }
+    },
+    setTabTitle: () => {},
+    setActiveTab: () => {},
+    getActiveTabId: () => {},
+    getWidth: () => $target.actual('width'),
+    getHeight: () => $target.actual('height'),
+    getTabCount: () => 1
+  }
+}
+
+/** Log performance timing for Morpheus dot plots and heatmaps */
+PlotUtils.logMorpheusPerfTime = function(target, plotType, genes) {
+  const graphId = target.slice(1) // e.g. #dotplot-1 -> dotplot-1
+  performance.measure(graphId, `perfTimeStart-${graphId}`)
+  const perfTime = Math.round(
+    performance.getEntriesByName(graphId)[0].duration
+  )
+
+  log(`plot:${plotType}`, { perfTime, genes })
+}
+
+PlotUtils.dotPlotColorScheme = {
+  // Blue, purple, red.  These red and blue hues are accessible, per WCAG.
+  colors: ['#0000BB', '#CC0088', '#FF0000'],
+
+  // TODO: Incorporate expression units, once such metadata is available.
+  values: [0, 0.5, 1]
+}
+
+
+export default PlotUtils

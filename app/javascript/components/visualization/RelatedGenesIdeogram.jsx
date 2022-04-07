@@ -14,7 +14,8 @@
 import React, { useEffect } from 'react'
 import Ideogram from 'ideogram'
 
-import { ideogramHeight } from '~/lib/plot'
+import PlotUtils from '~/lib/plot'
+const ideogramHeight = PlotUtils.ideogramHeight
 import { logStudyGeneSearch, log } from '~/lib/metrics-api'
 
 /** Handle clicks on Ideogram annotations */
