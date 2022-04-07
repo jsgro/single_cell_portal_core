@@ -63,7 +63,7 @@ function emptyTrace(expectedLength, hasZvalues, hasExpression) {
  * @param activeTraceLabel if specified, the traces will be sorted such that the activeTrace is plotted on top
  * @param groupByAnnotation {Boolean} whether to assemble separate traces for each label
  *
- * For performance
+ * For performance, see https://docs.google.com/document/d/1JKmXp9gEY2Y_cshypBwLrpgBEKYcpBmMna0nf_7eeNw
  */
 PlotUtils.filterTrace = function({
   trace, hiddenTraces=[], groupByAnnotation=false,
