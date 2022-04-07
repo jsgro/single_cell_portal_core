@@ -174,15 +174,12 @@ function studyTypeBadge(study) {
 }
 
 function logSelectSearchResult(study, logProps={}) {
-  console.log('in logSelectSearchResult; study, logProps')
-  console.log(study)
-  console.log(logProps)
-  delete logProps.studies
-
   logProps = Object.assign({
-    studyAccession: study.accession
-  }, study, logProps)
+    studyAccession: study.accession,
+    rank: logProps.rank
+  }, study, logProps.results)
 
+  delete logProps.results // Remove nested property; flattened above
   delete logProps.accession // Redundant with more-conventional studyAccession
 
   // We don't log study name, like Terra doesn't log workspace name, per
@@ -190,18 +187,19 @@ function logSelectSearchResult(study, logProps={}) {
   delete logProps.name
   delete logProps.study_url // Has name
   delete logProps.description // Too similar to name
+  delete logProps.studies // Includes above
 
-  // if (logProps.matchByData !== null) {
-  //   // Flatten matchByData object
-  //   logProps = Object.assign(logProps.matchByData, logProps)
-  // }
-  // delete logProps.matchByData
+  // Objects can't be queried in Mixpanel, so flatten matchByData
+  if (logProps.matchByData !== null) {
+    logProps = Object.assign(logProps.matchByData, logProps)
+  }
+  delete logProps.matchByData
 
   let refinedLogProps = {}
   Object.entries(logProps).forEach(([key, value]) => {
     if (key.includes('_count')) {
-      // E.g. gene_count -> numGene.
-      // Counts of "foo" in Mixpanel are conventionally structured as numFoo.
+      // Counts of "foo" in Mixpanel are conventionally structured as numFoos.
+      // So convert e.g. `gene_count` to `numGenes`.
       key = `num${ `${key[0].toUpperCase() + key.slice(1).replace('_count', '') }s`}`
     }
     refinedLogProps[key] = value
@@ -230,6 +228,7 @@ export default function StudySearchResult({ study, logProps }) {
       dangerouslySetInnerHTML={displayStudyTitle}
       title="View in HCA Data Browser"
       data-toggle="tooltip"
+      onClick={() => {logSelectSearchResult(study, logProps)}}
     ></a>
   }
   return (

@@ -70,7 +70,7 @@ export default function StudyResults({ results, changePage, StudyComponent }) {
             prepareRow(row)
             return (
               <tr {...row.getRowProps(getRowProps(row))}>
-                {row.cells.map((cell, i) => {
+                {row.cells.map(cell => {
                   return (
                     <td key={true} {...cell.getCellProps()}>
                       <ErrorBoundary>
