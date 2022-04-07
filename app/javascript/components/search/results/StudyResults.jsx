@@ -70,11 +70,17 @@ export default function StudyResults({ results, changePage, StudyComponent }) {
             prepareRow(row)
             return (
               <tr {...row.getRowProps(getRowProps(row))}>
-                {row.cells.map(cell => {
+                {row.cells.map((cell, i) => {
                   return (
                     <td key={true} {...cell.getCellProps()}>
                       <ErrorBoundary>
-                        <StudyComponent study={cell.value}/>
+                        <StudyComponent
+                          study={cell.value}
+                          logProps={{
+                            results,
+                            rank: (i + 1)
+                          }}
+                        />
                       </ErrorBoundary>
                     </td>
                   )

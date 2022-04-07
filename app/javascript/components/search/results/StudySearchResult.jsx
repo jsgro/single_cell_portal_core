@@ -1,10 +1,13 @@
 /* eslint-disable require-jsdoc */
 import React from 'react'
+import camelcaseKeys from 'camelcase-keys'
+import _cloneDeep from 'lodash/cloneDeep'
 
 
 export const descriptionCharacterLimit = 750
 export const summaryWordLimit = 150
 import { getDisplayNameForFacet } from '~/providers/SearchFacetProvider'
+import { log } from '~/lib/metrics-api'
 
 
 const lengthOfHighlightTag = 21
@@ -170,8 +173,46 @@ function studyTypeBadge(study) {
   }
 }
 
+function logSelectSearchResult(study, logProps={}) {
+  console.log('in logSelectSearchResult; study, logProps')
+  console.log(study)
+  console.log(logProps)
+  delete logProps.studies
+
+  logProps = Object.assign({
+    studyAccession: study.accession
+  }, study, logProps)
+
+  delete logProps.accession // Redundant with more-conventional studyAccession
+
+  // We don't log study name, like Terra doesn't log workspace name, per
+  // original DSP Mixpanel design doc
+  delete logProps.name
+  delete logProps.study_url // Has name
+  delete logProps.description // Too similar to name
+
+  // if (logProps.matchByData !== null) {
+  //   // Flatten matchByData object
+  //   logProps = Object.assign(logProps.matchByData, logProps)
+  // }
+  // delete logProps.matchByData
+
+  let refinedLogProps = {}
+  Object.entries(logProps).forEach(([key, value]) => {
+    if (key.includes('_count')) {
+      // E.g. gene_count -> numGene.
+      // Counts of "foo" in Mixpanel are conventionally structured as numFoo.
+      key = `num${ `${key[0].toUpperCase() + key.slice(1).replace('_count', '') }s`}`
+    }
+    refinedLogProps[key] = value
+  })
+  refinedLogProps = camelcaseKeys(refinedLogProps)
+
+  log('select-search-result', refinedLogProps)
+}
+
 /** Displays a brief summary of a study, with a link to the study page */
-export default function StudySearchResult({ study }) {
+export default function StudySearchResult({ study, logProps }) {
   const termMatches = study.term_matches
   const studyTitle = highlightText(study.name, termMatches).styledText
   const studyDescription = formatDescription(study.description, termMatches)
@@ -180,6 +221,7 @@ export default function StudySearchResult({ study }) {
     <a
       href={study.study_url}
       dangerouslySetInnerHTML={displayStudyTitle}
+      onClick={() => {logSelectSearchResult(study, logProps)}}
     ></a>
   if (study.study_source !== 'SCP') {
     studyLink = <a
