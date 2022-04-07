@@ -7,8 +7,8 @@ class DownloadRequest
 
   field :auth_code, type: String
   field :file_ids # Mongo ids of study files to download
-  field :tdr_files, type: String # Hash of TDR project shortnames to arrays of access urls
-  field :azul_files, type: String # Hash of Azul file summaries (Project Manifests, analysis_files, etc)
+  field :tdr_files, type: String # String representation of a hash of TDR project shortnames to arrays of access urls
+  field :azul_files, type: String # String representation of a hash of Azul file summaries (Project Manifests, analysis_files, etc)
   field :user_id # User making the request
 
   before_save :sanitize_hashes
