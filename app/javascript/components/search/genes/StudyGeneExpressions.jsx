@@ -22,7 +22,7 @@ import {
  */
 function getBasicAnnotations(study) {
   let basicAnnotationList = null
-  if (study.annotation_list?.annotations.length > 0) {
+  if (study.annotation_list?.can_visualize_clusters) {
     basicAnnotationList = study.annotation_list
     basicAnnotationList.annotations = basicAnnotationList.annotations.filter(a => a.scope !== 'user')
   }
