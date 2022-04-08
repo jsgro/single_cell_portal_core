@@ -24,7 +24,7 @@ class DownloadRequest
     end
   end
   
-  # decode JSON-ified tdr files back into their original hash format
+  # decode JSON-ified TDR files back into their original hash format
   def decoded_tdr_files
     self.class.transform_files(tdr_files, :decode)
   end
