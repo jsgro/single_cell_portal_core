@@ -19,7 +19,7 @@ class DownloadRequest
   # in the way the DB can accept
   def sanitize_hashes 
     if self.azul_files.is_a?(Hash)
-    self.tdr_files =  self.class.transform_files(tdr_files, :encode)
+      self.tdr_files = self.class.transform_files(tdr_files, :encode)
       self.azul_files = self.class.transform_files(azul_files, :encode)
     end
   end
