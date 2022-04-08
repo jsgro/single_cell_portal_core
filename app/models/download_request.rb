@@ -35,7 +35,7 @@ class DownloadRequest
   end
 
   # helper to transform a hash to/from JSON for storage in the DB
-  # transformation options are encode which will result in JSON-ifing the hash or
+  # transformation options are encode which will result in JSON-ifying the hash or
   # decode which will return the JSON-ified files back to thier original hash format
   # This is necessary to work around MongoDBs constraints on '.' and '$' in hash keys
   def self.transform_files(file_data, transform = :encode)  
