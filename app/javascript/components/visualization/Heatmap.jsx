@@ -1,31 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react'
 import _uniqueId from 'lodash/uniqueId'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowsAltV, faArrowsAltH, faArrowsAlt } from '@fortawesome/free-solid-svg-icons'
 
 import { log } from '~/lib/metrics-api'
 import { getExpressionHeatmapURL, getAnnotationCellValuesURL, getGeneListColsURL } from '~/lib/scp-api'
-import { morpheusTabManager, logMorpheusPerfTime } from './DotPlot'
+import PlotUtils from '~/lib/plot'
+const { morpheusTabManager, logMorpheusPerfTime } = PlotUtils
 import { useUpdateEffect } from '~/hooks/useUpdate'
 import useErrorMessage, { morpheusErrorHandler } from '~/lib/error-message'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
 import LoadingSpinner from '~/lib/LoadingSpinner'
 
-export const ROW_CENTERING_OPTIONS = [
-  { label: 'None', value: '' },
-  { label: 'Z-score [(v - mean) / stdev]', value: 'z-score' },
-  { label: 'Robust z-score [(v - median) / MAD]', value: 'robust z-score' }
-]
-
-export const DEFAULT_ROW_CENTERING = ''
-
-export const FIT_OPTIONS = [
-  { label: <span>None</span>, value: '' },
-  { label: <span><FontAwesomeIcon icon={faArrowsAltV}/> Rows</span>, value: 'rows' },
-  { label: <span><FontAwesomeIcon icon={faArrowsAltH}/> Columns</span>, value: 'cols' },
-  { label: <span><FontAwesomeIcon icon={faArrowsAlt}/> Both</span>, value: 'both' }
-]
-export const DEFAULT_FIT = ''
 
 /** renders a morpheus powered heatmap for the given params
   * @param genes {Array[String]} array of gene names
