@@ -8,7 +8,10 @@ import {
 import { log } from './metrics-api'
 
 // See note in logSearch
-let searchNumber = 0
+let numSearchRequests = 0
+
+// Number of searches insofar as usage analytics is concerned
+export let numSearches = 0
 
 const filterNamesById = {}
 
@@ -71,12 +74,34 @@ function getFriendlyFilterListByFacet(facets) {
   return filterListByFacet
 }
 
+/** Format parts of query entered by the user to ease analysis in Mixpanel */
+export function formatQueryUserInput(searchedTerms, searchedGenes, searchedFacets) {
+  const terms = formatTerms(searchedTerms)
+  const termString = searchedTerms // Helps breakdowns by full query
+  const numTerms = terms.length
+
+  const genes = formatTerms(searchedGenes)
+  const geneString = searchedGenes
+  const numGenes = genes.length
+
+  const facets = searchedFacets
+  const [numFacets, numFilters] = getNumFacetsAndFilters(facets)
+  const facetList = facets ? Object.keys(facets) : []
+  const filterListByFacet = getFriendlyFilterListByFacet(facets)
+
+  return {
+    terms, termString, numTerms,
+    genes, geneString, numGenes,
+    numFacets, numFilters, facetList, filterListByFacet
+  }
+}
+
 /**
  * Log global study search metrics, one type of search done on home page
  */
 export function logSearch(type, searchParams, perfTimes, searchResults) {
-  searchNumber += 1
-  if (searchNumber < 3) {
+  numSearchRequests += 1
+  if (numSearchRequests < 3) {
     // This prevents over-reporting searches.
     //
     // Loading home page triggers 2 searches, which is a side-effect / artifact
@@ -90,24 +115,22 @@ export function logSearch(type, searchParams, perfTimes, searchResults) {
     return
   }
 
-  const terms = formatTerms(searchParams.terms)
-  const numTerms = terms.length
-  const genes = formatTerms(searchParams.genes)
-  const numGenes = genes.length
-  const facets = searchParams.facets
+  numSearches += 1 // Number of searches insofar as usage analytics is concerned
+
+  const {
+    terms, termString, numTerms,
+    genes, geneString, numGenes,
+    numFacets, numFilters, facetList, filterListByFacet
+  } = formatQueryUserInput(searchParams.terms, searchParams.genes, searchParams.facets)
+
   const page = searchParams.page
   const preset = searchParams.preset
   const scpStudiesMatchData = searchResults?.matchByData
 
-  const [numFacets, numFilters] = getNumFacetsAndFilters(facets)
-  const facetList = facets ? Object.keys(facets) : []
-
-  const filterListByFacet = getFriendlyFilterListByFacet(facets)
-
   const simpleProps = {
-    terms, numTerms, genes, numGenes, page, preset,
+    terms, termString, numTerms, genes, geneString, numGenes, page, preset,
     facetList, numFacets, numFilters,
-    perfTimes,
+    perfTimes, numSearches,
     type, context: 'global'
   }
   const props = Object.assign(simpleProps, filterListByFacet, scpStudiesMatchData)

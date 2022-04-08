@@ -4,10 +4,12 @@ import camelcaseKeys from 'camelcase-keys'
 import _cloneDeep from 'lodash/cloneDeep'
 
 
-export const descriptionCharacterLimit = 750
-export const summaryWordLimit = 150
 import { getDisplayNameForFacet } from '~/providers/SearchFacetProvider'
 import { log } from '~/lib/metrics-api'
+import { numSearches, formatQueryUserInput } from '~/lib/scp-api-metrics'
+
+export const descriptionCharacterLimit = 750
+export const summaryWordLimit = 150
 
 
 const lengthOfHighlightTag = 21
@@ -173,14 +175,26 @@ function studyTypeBadge(study) {
   }
 }
 
+/**
+ * Log analytics about search result selection to Mixpanel
+ *
+ * TODO (SCP-): Refine logging of search result selection
+ */
 function logSelectSearchResult(study, logProps={}) {
-  logProps = Object.assign({
-    studyAccession: study.accession,
-    rank: logProps.rank
-  }, study, logProps.results)
-
+  logProps = Object.assign(
+    {
+      studyAccession: study.accession,
+      rank: logProps.rank
+    },
+    study,
+    logProps.results // Log flat properties, not nested object
+  )
   delete logProps.results // Remove nested property; flattened above
   delete logProps.accession // Redundant with more-conventional studyAccession
+
+  // Number of searches done before this result was selected.
+  // This is needed to easily analyze changes in click-through rate (CTR).
+  logProps.numSearches = numSearches
 
   // We don't log study name, like Terra doesn't log workspace name, per
   // original DSP Mixpanel design doc
@@ -198,13 +212,27 @@ function logSelectSearchResult(study, logProps={}) {
   let refinedLogProps = {}
   Object.entries(logProps).forEach(([key, value]) => {
     if (key.includes('_count')) {
-      // Counts of "foo" in Mixpanel are conventionally structured as numFoos.
+      // Counts of "foo" in Mixpanel are conventionally structured as `numFoos`.
       // So convert e.g. `gene_count` to `numGenes`.
       key = `num${ `${key[0].toUpperCase() + key.slice(1).replace('_count', '') }s`}`
     }
     refinedLogProps[key] = value
   })
   refinedLogProps = camelcaseKeys(refinedLogProps)
+
+  const {
+    terms, termString, numTerms,
+    genes, geneString, numGenes,
+    numFacets, numFilters, facetList, filterListByFacet
+  } = formatQueryUserInput(logProps.terms, logProps.genes, logProps.facets)
+
+  refinedLogProps = Object.assign(refinedLogProps, {
+    terms, termString, numTerms,
+    genes, geneString, numGenes,
+    numFacets, numFilters, facetList, filterListByFacet
+  })
+  delete refinedLogProps.termList
+  delete refinedLogProps.geneList
 
   log('select-search-result', refinedLogProps)
 }
