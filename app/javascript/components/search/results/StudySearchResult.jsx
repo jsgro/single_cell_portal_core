@@ -189,11 +189,6 @@ function studyTypeBadge(study) {
  * TODO (SCP-4257): Eliminate duplicate default/custom search event logging
  */
 export function logSelectSearchResult(study, logProps={}) {
-  console.log('study')
-  console.log(JSON.stringify(study))
-  console.log('logProps')
-  console.log(JSON.stringify(logProps))
-
   logProps = Object.assign(
     {
       studyAccession: study.accession,
@@ -252,15 +247,13 @@ export function logSelectSearchResult(study, logProps={}) {
   const formattedQueryUserInput = formatQueryUserInput(
     logProps['results:terms'],
     logProps['results:genes'],
-    logProps['results:facets']
+    {} // logProps['results:facets'] // TODO as part of SCP-4256
   )
 
   Object.entries(formattedQueryUserInput).forEach(([key, value]) => {
     refinedLogProps[`results:${key}`] = value
   })
 
-  console.log('refinedLogProps')
-  console.log(refinedLogProps)
   log('select-search-result', refinedLogProps)
 }
 
