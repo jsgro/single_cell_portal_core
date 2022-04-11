@@ -178,19 +178,41 @@ function studyTypeBadge(study) {
 /**
  * Log analytics about search result selection to Mixpanel
  *
- * TODO (SCP-): Refine logging of search result selection
+ * This logging differentiates properties about the selected result from
+ * properties about other aspects of the search -- e.g. the full result set
+ * and query -- by prefixing the latter with a "namespace", i.e. `results:`.
+ *
+ * @param {Object} study Selected result
+ * @param {Object} logProps Other properties to log
+ *
+ * TODO (SCP-4256): Refine logged properties for search result selection
+ * TODO (SCP-4257): Eliminate duplicate default/custom search event logging
  */
-function logSelectSearchResult(study, logProps={}) {
+export function logSelectSearchResult(study, logProps={}) {
+  console.log('study')
+  console.log(JSON.stringify(study))
+  console.log('logProps')
+  console.log(JSON.stringify(logProps))
+
   logProps = Object.assign(
     {
       studyAccession: study.accession,
-      rank: logProps.rank
+      context: 'study',
+      scope: 'global'
     },
     study,
-    logProps.results // Log flat properties, not nested object
+    logProps
   )
-  delete logProps.results // Remove nested property; flattened above
   delete logProps.accession // Redundant with more-conventional studyAccession
+
+  Object.entries(logProps.results).forEach(([key, value]) => {
+    if (['termList', 'geneList'].includes(key)) {
+      // Redundant with pre-existing `terms` and `genes` Mixpanel props
+      return
+    }
+    logProps[`results:${key}`] = value
+  })
+  delete logProps.results // Remove nested property; flattened above
 
   // Number of searches done before this result was selected.
   // This is needed to easily analyze changes in click-through rate (CTR).
@@ -201,39 +223,44 @@ function logSelectSearchResult(study, logProps={}) {
   delete logProps.name
   delete logProps.study_url // Has name
   delete logProps.description // Too similar to name
-  delete logProps.studies // Includes above
+  delete logProps['results:studies'] // Includes above
 
   // Objects can't be queried in Mixpanel, so flatten matchByData
-  if (logProps.matchByData !== null) {
-    logProps = Object.assign(logProps.matchByData, logProps)
+  if (logProps['results:matchByData'] !== null) {
+    Object.entries(logProps['results:matchByData']).forEach(([key, value]) => {
+      logProps[`results:${key}`] = value
+    })
   }
-  delete logProps.matchByData
+  delete logProps['results:matchByData']
 
   let refinedLogProps = {}
   Object.entries(logProps).forEach(([key, value]) => {
-    if (key.includes('_count')) {
-      // Counts of "foo" in Mixpanel are conventionally structured as `numFoos`.
-      // So convert e.g. `gene_count` to `numGenes`.
-      key = `num${ `${key[0].toUpperCase() + key.slice(1).replace('_count', '') }s`}`
+    // Counts of "foo" in Mixpanel are conventionally structured as `numFoos`.
+    if (key.slice(-6) === '_count') {
+      const namespace = key.includes('results:') ? 'results:' : ''
+      // Convert e.g. `gene_count` to `numGenes`
+      key = `${namespace}num${key[0].toUpperCase() + key.slice(1).replace('_count', '') }s`
+    }
+    if (key.slice(0, 13) === 'results:total') {
+      // Convert e.g. `totalPages` to `numPages`
+      key = `results:num${key.replace('results:total', '')}`
     }
     refinedLogProps[key] = value
   })
   refinedLogProps = camelcaseKeys(refinedLogProps)
 
-  const {
-    terms, termString, numTerms,
-    genes, geneString, numGenes,
-    numFacets, numFilters, facetList, filterListByFacet
-  } = formatQueryUserInput(logProps.terms, logProps.genes, logProps.facets)
+  const formattedQueryUserInput = formatQueryUserInput(
+    logProps['results:terms'],
+    logProps['results:genes'],
+    logProps['results:facets']
+  )
 
-  refinedLogProps = Object.assign(refinedLogProps, {
-    terms, termString, numTerms,
-    genes, geneString, numGenes,
-    numFacets, numFilters, facetList, filterListByFacet
+  Object.entries(formattedQueryUserInput).forEach(([key, value]) => {
+    refinedLogProps[`results:${key}`] = value
   })
-  delete refinedLogProps.termList
-  delete refinedLogProps.geneList
 
+  console.log('refinedLogProps')
+  console.log(refinedLogProps)
   log('select-search-result', refinedLogProps)
 }
 

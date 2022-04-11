@@ -8,7 +8,7 @@ module Api
       include Concerns::StudyAware
       include Concerns::Authenticator
       include Swagger::Blocks
-      # include ::RealIpLogger
+      include ::RealIpLogger
 
       rescue_from ActionController::ParameterMissing do |exception|
         MetricsService.report_error(exception, request, current_api_user, @study)
