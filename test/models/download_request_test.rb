@@ -2,7 +2,8 @@ require 'test_helper'
 
 class DownloadRequestTest < ActiveSupport::TestCase
 
-  before(:all) do
+  test 'should transform azul_file hashes to JSON and back' do
+
     @azul_hash = {
         'Fake.HCA.Study.1' => [
           {
@@ -18,16 +19,17 @@ class DownloadRequestTest < ActiveSupport::TestCase
         'Fake.HcaS.tu.d.y.2' => []
       }
       
-    @encoded_azul_hash = "{\"Fake.HCA.Study.1\":[{\"source\":\"hca\",\"count\":1,\"upload_file_size\":10485760,\"file_format\":\"loom\",\"file_type\":\"analysis_file\",\"accession\":\"FakeHCAStudy1\",\"project_id\":\"hca_project_id\"}],\"Fake.HcaS.tu.d.y.2\":[]}"
+    @stringified_azul_hash = "{\"Fake.HCA.Study.1\"=>[{\"source\"=>\"hca\", \"count\"=>1, \"upload_file_size\"=>10485760, \"file_format\"=>\"loom\", \"file_type\"=>\"analysis_file\", \"accession\"=>\"FakeHCAStudy1\", \"project_id\"=>\"hca_project_id\"}], \"Fake.HcaS.tu.d.y.2\"=>[]}"
 
-  end
+    download_req = DownloadRequest.create!(
+      azul_files: @azul_hash
+    )
 
-  test 'should transform azul_file hashes to JSON and back' do
-    assert_equal @encoded_azul_hash, DownloadRequest.transform_files(@azul_hash)
-    assert_equal @azul_hash, DownloadRequest.transform_files(@encoded_azul_hash, :decode)
-    assert_raises ArgumentError do
-        DownloadRequest.transform_files(@azul_hash, :foo)
-    end
+    download_req.save!
+
+    assert_equal @azul_hash , download_req.azul_files_as_hash
+    assert_equal @stringified_azul_hash, download_req.azul_files
+
   end
 end
 

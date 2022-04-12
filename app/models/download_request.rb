@@ -11,36 +11,27 @@ class DownloadRequest
   field :azul_files, type: String # String representation of a hash of Azul file summaries (Project Manifests, analysis_files, etc)
   field :user_id # User making the request
 
-  before_save :sanitize_hashes
+  before_save :stringify_hashes
 
-  ALLOWED_TRANSFORMS = %i[encode decode]
-
-  # This is called before the data is saved to the DB to ensure the file hashes are encoded
-  # in the way the DB can accept
-  def sanitize_hashes 
+  # This is called before the data is saved to the DB to ensure the file hashes are encoded as JSON strings
+  # This is necessary to work around MongoDBs constraints on '.' and '$' in hash keys
+  def stringify_hashes 
     if self.azul_files.is_a?(Hash)
-      self.tdr_files = self.class.transform_files(tdr_files, :encode)
-      self.azul_files = self.class.transform_files(azul_files, :encode)
+      self.azul_files = ActiveSupport::JSON.encode(azul_files)
+    end
+    if self.tdr_files.is_a?(Hash)
+      self.tdr_files = ActiveSupport::JSON.encode(tdr_files)
     end
   end
   
   # decode JSON-ified TDR files back into their original hash format
-  def decoded_tdr_files
-    self.class.transform_files(tdr_files, :decode)
+  def tdr_files_as_hash
+    ActiveSupport::JSON.decode(tdr_files.gsub('=>', ':'))
   end
 
   # decode JSON-ified azul files back into their original hash format
-  def decoded_azul_files
-    self.class.transform_files(azul_files, :decode)
+  def azul_files_as_hash
+    ActiveSupport::JSON.decode(azul_files.gsub('=>', ':'))
   end
 
-  # helper to transform a hash to/from JSON for storage in the DB
-  # transformation options are encode which will result in JSON-ifying the hash or
-  # decode which will return the JSON-ified files back to thier original hash format
-  # This is necessary to work around MongoDBs constraints on '.' and '$' in hash keys
-  def self.transform_files(file_data, transform = :encode)  
-    raise ArgumentError, "#{transform} is not a valid transform" unless ALLOWED_TRANSFORMS.include?(transform)
-    file_data = transform.eql?(:encode) ? ActiveSupport::JSON.encode(file_data) : ActiveSupport::JSON.decode(file_data.gsub('=>', ':'))
-    return file_data
-    end
 end

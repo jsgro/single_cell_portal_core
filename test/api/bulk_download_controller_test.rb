@@ -324,7 +324,7 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     download_id = json['download_id']
     download_request = DownloadRequest.find(download_id)
     assert download_request.present?
-    azul_files = download_request.decoded_azul_files
+    azul_files = download_request.azul_files_as_hash
     assert azul_files.keys.include?('FakeHCAStudy1')
     assert_not azul_files.keys.include?('FakeHCAStudy2')
   end

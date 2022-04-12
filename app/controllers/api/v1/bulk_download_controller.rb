@@ -307,7 +307,7 @@ module Api
           download_req = DownloadRequest.find(params[:download_id])
           render json: { error: 'Invalid download_id provided' }, status: 400 and return if download_req.blank?
 
-          azul_files = download_req.decoded_azul_files
+          azul_files = download_req.azul_files_as_hash
           file_ids = download_req.file_ids
         elsif params[:file_ids]
           begin
