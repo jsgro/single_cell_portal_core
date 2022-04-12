@@ -130,10 +130,9 @@ describe('Apply applies all changes made in the search panel', () => {
         'termSearchWeight': 3,
         'rank': 3,
         'results:type': 'study',
-        'results:terms': ['blood'],
         'results:currentPage': 1,
-        'results:numStudies': 28,
-        'results:numPages': 3,
+        'results:numTotalStudies': 28,
+        'results:numTotalPages': 3,
         'results:matchingAccessions': [
           'fetalLiverAndCordBloodCiteSeq', 'AdultHemOrgans', 'SCP97',
           'HumanTissueTcellActivation', 'nktpbmcZhou', 'HumanDCsFromPre-cDCs',
@@ -148,20 +147,20 @@ describe('Apply applies all changes made in the search panel', () => {
           'HeterogeneityCD4TCells', 'AcuteSkinInflammation'
         ],
         'results:presetSearch': null,
-        'results:facets': [],
         'numSearches': 0,
         'results:numResults:scp:accession': 0,
         'results:numResults:scp:text': 3,
         'results:numResults:scp:author': 0,
-        'results:termString': 'blood',
-        'results:numTerms': 1,
-        'results:genes': [],
-        'results:geneString': undefined,
-        'results:numGenes': 0,
-        'results:numFacets': 0,
-        'results:numFilters': 0,
-        'results:facetList': [],
-        'results:filterListByFacet': {}
+        'query:terms': ['blood'],
+        'query:termString': 'blood',
+        'query:numTerms': 1,
+        'query:genes': [],
+        'query:geneString': undefined,
+        'query:numGenes': 0,
+        'query:numFacets': 0,
+        'query:numFilters': 0,
+        'query:facetList': [],
+        'query:filterListByFacet': {}
       }
     )
   })

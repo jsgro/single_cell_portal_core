@@ -75,7 +75,7 @@ function getFriendlyFilterListByFacet(facets) {
 }
 
 /** Format parts of query entered by the user to ease analysis in Mixpanel */
-export function formatQueryUserInput(searchedTerms, searchedGenes, searchedFacets) {
+export function getSearchQueryLogProps(searchedTerms, searchedGenes, searchedFacets) {
   const terms = formatTerms(searchedTerms)
   const termString = searchedTerms // Helps breakdowns by full query
   const numTerms = terms.length
@@ -121,7 +121,7 @@ export function logSearch(type, searchParams, perfTimes, searchResults) {
     terms, termString, numTerms,
     genes, geneString, numGenes,
     numFacets, numFilters, facetList, filterListByFacet
-  } = formatQueryUserInput(searchParams.terms, searchParams.genes, searchParams.facets)
+  } = getSearchQueryLogProps(searchParams.terms, searchParams.genes, searchParams.facets)
 
   const page = searchParams.page
   const preset = searchParams.preset

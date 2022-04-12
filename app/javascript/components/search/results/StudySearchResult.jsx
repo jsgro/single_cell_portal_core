@@ -1,12 +1,11 @@
 /* eslint-disable require-jsdoc */
 import React from 'react'
 import camelcaseKeys from 'camelcase-keys'
-import _cloneDeep from 'lodash/cloneDeep'
 
 
 import { getDisplayNameForFacet } from '~/providers/SearchFacetProvider'
 import { log } from '~/lib/metrics-api'
-import { numSearches, formatQueryUserInput } from '~/lib/scp-api-metrics'
+import { numSearches, getSearchQueryLogProps } from '~/lib/scp-api-metrics'
 
 export const descriptionCharacterLimit = 750
 export const summaryWordLimit = 150
@@ -213,8 +212,9 @@ export function logSelectSearchResult(study, logProps={}) {
   // This is needed to easily analyze changes in click-through rate (CTR).
   logProps.numSearches = numSearches
 
-  // We don't log study name, like Terra doesn't log workspace name, per
-  // original DSP Mixpanel design doc
+  // We don't log study name, like Terra doesn't log workspace name, as it
+  // might contain PII per original DSP Mixpanel design doc:
+  // https://docs.google.com/document/d/1di8uwv-nDMNJp83Gs9Q_mlZp3q1DFboXGPLzbsbPyn8/edit
   delete logProps.name
   delete logProps.study_url // Has name
   delete logProps.description // Too similar to name
@@ -228,31 +228,36 @@ export function logSelectSearchResult(study, logProps={}) {
   }
   delete logProps['results:matchByData']
 
+  const logPropsByRailsKey = {
+    'results:totalStudies': 'results:numTotalStudies',
+    'results:totalPages': 'results:numTotalPages',
+    'results:gene_count': 'results:numGenes',
+    'results:cell_count': 'results:numCells',
+    'gene_count': 'numGenes',
+    'cell_count': 'numCells'
+  }
   let refinedLogProps = {}
   Object.entries(logProps).forEach(([key, value]) => {
-    // Counts of "foo" in Mixpanel are conventionally structured as `numFoos`.
-    if (key.slice(-6) === '_count') {
-      const namespace = key.includes('results:') ? 'results:' : ''
-      // Convert e.g. `gene_count` to `numGenes`
-      key = `${namespace}num${key[0].toUpperCase() + key.slice(1).replace('_count', '') }s`
-    }
-    if (key.slice(0, 13) === 'results:total') {
-      // Convert e.g. `totalPages` to `numPages`
-      key = `results:num${key.replace('results:total', '')}`
+    if (key in logPropsByRailsKey) {
+      key = logPropsByRailsKey[key]
     }
     refinedLogProps[key] = value
   })
+
   refinedLogProps = camelcaseKeys(refinedLogProps)
 
-  const formattedQueryUserInput = formatQueryUserInput(
+  const searchQueryLogProps = getSearchQueryLogProps(
     logProps['results:terms'],
     logProps['results:genes'],
     {} // logProps['results:facets'] // TODO as part of SCP-4256
   )
 
-  Object.entries(formattedQueryUserInput).forEach(([key, value]) => {
-    refinedLogProps[`results:${key}`] = value
+  // Distinguish query parameters from "results" parameters
+  Object.entries(searchQueryLogProps).forEach(([key, value]) => {
+    delete refinedLogProps[`results:${key}`]
+    refinedLogProps[`query:${key}`] = value
   })
+  delete refinedLogProps[`results:facets`] // Refactor as part of SCP-4256
 
   log('select-search-result', refinedLogProps)
 }
