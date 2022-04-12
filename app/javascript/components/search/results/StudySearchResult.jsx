@@ -184,7 +184,7 @@ function studyTypeBadge(study) {
  * @param {Object} study Selected result
  * @param {Object} logProps Other properties to log
  *
- * TODO (SCP-4256): Refine logged properties for search result selection
+ * TODO (SCP-4256): Refine search result selection logging
  * TODO (SCP-4257): Eliminate duplicate default/custom search event logging
  */
 export function logSelectSearchResult(study, logProps={}) {
