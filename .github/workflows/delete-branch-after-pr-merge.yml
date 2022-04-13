@@ -1,4 +1,4 @@
-name: Delete Feature Branch after Merge
+name: Delete feature branch after merge
 
 # Controls when the workflow will run
 on:
