@@ -65,7 +65,7 @@ export default function DownloadSelectionTable({
         isLoading &&
         <div className="text-center greyed">
           Loading file information<br/>
-          <LoadingSpinner data-testid="bulk-download-loading-icon"/>
+          <LoadingSpinner testId="bulk-download-loading-icon"/>
         </div>
       }
       {

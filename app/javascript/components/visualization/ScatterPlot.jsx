@@ -310,7 +310,7 @@ function RawScatterPlot({
       </p>
       {
         isLoading &&
-        <LoadingSpinner data-testid={`${graphElementId}-loading-icon`}/>
+        <LoadingSpinner testId={`${graphElementId}-loading-icon`}/>
       }
     </div>
   )

@@ -88,13 +88,18 @@ module Api
         usage_stats_params = {
           page_views: {
             event: 'page:view:site-study',
-            type: 'general',
+            type: 'unique',
             where_string: "properties[\"studyAccession\"] == \"#{@study.accession}\""
           },
           file_downloads: {
             event: 'click:link',
             type: 'general',
             where_string: "properties[\"studyAccession\"] == \"#{@study.accession}\" and properties[\"text\"] == \"file-download:study-single\""
+          },
+          bulk_downloads: {
+            event: 'file-download:curl-config',
+            type: 'general',
+            where_string: "\"#{@study.accession}\" in properties[\"studyAccessions\"]"
           }
         }
 

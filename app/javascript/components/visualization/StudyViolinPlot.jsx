@@ -127,7 +127,7 @@ function RawStudyViolinPlot({
       >
       </div>
       {
-        isLoading && <LoadingSpinner data-testid={`${graphElementId}-loading-icon`}/>
+        isLoading && <LoadingSpinner testId={`${graphElementId}-loading-icon`}/>
       }
       {/* we have to explicitly test length > 0 below, just asserting .length would
        sometimes render a zero to the page*/}
