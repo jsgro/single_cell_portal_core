@@ -84,6 +84,31 @@ module Api
       def show
       end
 
+      def usage_stats
+        usage_stats_params = {
+          page_views: {
+            event: 'page:view:site-study',
+            type: 'general',
+            where_string: "properties[\"studyAccession\"] == \"#{@study.accession}\""
+          },
+          file_downloads: {
+            event: 'click:link',
+            type: 'general',
+            where_string: "properties[\"studyAccession\"] == \"#{@study.accession}\" and properties[\"text\"] == \"file-download:study-single\""
+          }
+        }
+
+        responses = Parallel.map(usage_stats_params.keys) do |key|
+          response = MixpanelClient.fetch_segmentation_query(usage_stats_params[key])
+        end
+        usage_stats = {}
+        usage_stats_params.keys.each_with_index do |key, index|
+          usage_stats[key] = responses[index]
+        end
+
+        render json: usage_stats
+      end
+
       # return JSON of the study, all study file objects, and any options values needed for the upload wizard
       # also includes feature flags, with study flags taking precedence over user flags
       swagger_path '/studies/{id}/file_info' do
