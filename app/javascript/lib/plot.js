@@ -114,35 +114,24 @@ PlotUtils.filterTrace = function({
     expFilterMax = expMin + totalRange * expressionFilter[1]
   }
 
-  const labelNameHash = {}
-  if (isHidingByLabel) {
-    // build a hash of label => present so we can quickly filter
-    for (let i = 0; i < hiddenTraces.length; i++) {
-      labelNameHash[hiddenTraces[i]] = true
-    }
-  }
-
   // this is the main filter/group loop.  Loop over every cell and determine whether it needs to be filtered,
   // and if it needs to be grouped.
   for (let i = 0; i < oldLength; i++) {
     // if we're not filtering by expression, or the cell is in the range, show it
     if (!isFilteringByExpression || (expressionData[i] >= expFilterMin && expressionData[i] <= expFilterMax)) {
-      // if we're not hiding by label, or the label is present in the list, include it
-      if (!isHidingByLabel || !labelNameHash[trace.annotations[i]]) {
-        const fTrace = groupByAnnotation ? traceMap[trace.annotations[i]] : traceMap.main
-        const newIndex = fTrace.newLength
-        fTrace.x[newIndex] = trace.x[i]
-        fTrace.y[newIndex] = trace.y[i]
-        if (hasZvalues) {
-          fTrace.z[newIndex] = trace.z[i]
-        }
-        fTrace.cells[newIndex] = trace.cells[i]
-        fTrace.annotations[newIndex] = trace.annotations[i]
-        if (hasExpression) {
-          fTrace.expression[newIndex] = trace.expression[i]
-        }
-        fTrace.newLength++
+      const fTrace = groupByAnnotation ? traceMap[trace.annotations[i]] : traceMap.main
+      const newIndex = fTrace.newLength
+      fTrace.x[newIndex] = trace.x[i]
+      fTrace.y[newIndex] = trace.y[i]
+      if (hasZvalues) {
+        fTrace.z[newIndex] = trace.z[i]
       }
+      fTrace.cells[newIndex] = trace.cells[i]
+      fTrace.annotations[newIndex] = trace.annotations[i]
+      if (hasExpression) {
+        fTrace.expression[newIndex] = trace.expression[i]
+      }
+      fTrace.newLength++
     }
   }
   // now fix the length of the new arrays in each trace to the number of values that were written,
@@ -158,6 +147,8 @@ PlotUtils.filterTrace = function({
     })
     countsByLabel[key] = fTrace.x.length
     delete fTrace.newLength
+    fTrace.visible = hiddenTraces.includes(key) ? 'legendonly' : true
+
     return fTrace
   })
   const expRange = isFilteringByExpression ? [expMin, expMax] : null
